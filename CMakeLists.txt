@@ -73,5 +73,12 @@ include(ArtMake)
 include(BuildPlugins)
 include(CetTest)
 
+# Extra parts for the XDAQ GUI
+add_subdirectory(otsdaq-utilities)
+
+# UPS Version files
+add_subdirectory(ups)
+
+# WebGUI
 FILE(COPY WebGUI DESTINATION Data)
 INSTALL(DIRECTORY WebGUI DESTINATION ${product}/${version}/Data)
