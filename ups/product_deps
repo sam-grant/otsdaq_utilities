@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
 parent otsdaq_utilities	v1_00_00
-defaultqual	e7:s15
+defaultqual	s15
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -27,13 +27,9 @@ end_product_list
 # s7  - with art v1_13_01
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier		otsdaq
-e7:s15:prof         e7:s15:eth:prof
-e7:s15:debug        e7:s15:eth:debug
-e7:s11:prof         e7:s11:eth:prof
-e7:s11:debug        e7:s11:eth:debug
-e7:s8:prof		e7:s8:eth:prof
-e7:s8:debug		e7:s8:eth:debug
+qualifier   	 otsdaq
+s15:prof         s15:prof
+s15:debug        s15:debug
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
