@@ -1,0 +1,265 @@
+//=====================================================================================
+//
+//	Created Jan, 2013
+//	by Ryan Rivera ((rrivera at fnal.gov))
+//
+//	DesktopWindowContentCode.js
+//
+//  Requirements: 
+//   1. paste the following: 
+//				
+//				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+//				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+//
+//		...anywhere inside the <head></head> tag of a window content html page
+//	 2. for proper functionality certain handlers are used:
+//   		cannot overwrite handlers for window: onfocus, onscroll, onblur, onmousemove
+//			(if you must overwrite, try to call the DesktopContent handlers from your handlers)
+//
+//	Recommendations:
+//	 1. use Debug to output status and errors, e.g.:
+//				Debug.log("this is my status",Debug.LOW_PRIORITY); //LOW_PRIORITY, MED_PRIORITY, HIGH_PRIORITY
+//	 2. call window.focus() to bring your window to the front of the Desktop
+//
+//	The code of Requirement #1 should be inserted in the header of each page that will be 
+//  the content of a window in the ots desktop.
+//
+//  This code handles bringing the window to the front when the content
+//  is clicked or scrolled.
+//
+//	This code also handles server requests and response handlers for the content code:
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>)
+//			... to make server request, returnHandler is called with response in req and integer reqIndex if user defined
+//
+//		-DesktopContent.getXMLValue(req, name)
+//			... to get string value from XML server response. field name is needed.
+//
+//=====================================================================================
+
+var DesktopContent = DesktopContent || {}; //define Desktop namespace
+
+if (typeof Debug == 'undefined') 
+	alert('ERROR: Debug is undefined! Must include Debug.js before DesktopWindowContentCode.js');
+if (typeof Globals == 'undefined') 
+	alert('ERROR: Globals is undefined! Must include Globals.js before DesktopWindowContentCode.js');
+	
+DesktopContent._isFocused = false;
+DesktopContent._theWindow = 0;
+DesktopContent._myDesktopFrame = 0;
+DesktopContent._zMailbox = 0;
+DesktopContent._mouseOverXmailbox = 0;
+DesktopContent._mouseOverYmailbox = 0;
+
+DesktopContent._serverUrnLid = 0;
+DesktopContent._localUrnLid = 0;
+
+DesktopContent._cookieCodeMailbox = 0;
+DesktopContent._updateTimeMailbox = 0;
+DesktopContent._needToLoginMailbox = 0;
+
+DesktopContent.lastCookieCode = 0;
+DesktopContent.lastCookieTime = 0;
+//=====================================================================================
+//initialize content's place in the world
+// caution when using "window" anywhere outside this function because
+//  desktop window can be at different levels depending on page depth (page may be inside frame)
+// use instead DesktopContent._theWindow
+DesktopContent.init = function() {
+    
+    var tmpCnt = 0;
+    DesktopContent._theWindow = self;
+    while(tmpCnt++ < 5 && DesktopContent._theWindow &&  //while can not find the top window frame in the desktop
+          DesktopContent._theWindow.window.name.search("DesktopWindowFrame") < 0)
+        DesktopContent._theWindow = DesktopContent._theWindow.parent;
+    DesktopContent._theWindow = DesktopContent._theWindow.window;
+        
+	DesktopContent._myDesktopFrame        = DesktopContent._theWindow.parent.document.getElementById(DesktopContent._theWindow.name);
+	DesktopContent._zMailbox              = DesktopContent._theWindow.parent.document.getElementById("Desktop-windowZmailbox");
+	DesktopContent._mouseOverXmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverXmailbox");
+	DesktopContent._mouseOverYmailbox     = DesktopContent._theWindow.parent.document.getElementById("Desktop-mouseOverYmailbox");
+	
+	DesktopContent._cookieCodeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-cookieCodeMailbox");
+	DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
+    DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
+    
+	window.onfocus = DesktopContent.handleFocus;
+	window.onmousedown = DesktopContent.handleFocus;
+	window.onscroll = DesktopContent.handleScroll;
+	window.onblur = DesktopContent.handleBlur;	
+	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
+    
+    DesktopContent._serverUrnLid = ((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
+    if(typeof DesktopContent._serverUrnLid == 'undefined')
+        Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
+    Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+    DesktopContent._localUrnLid = DesktopContent.getParameter(0);
+    if(typeof DesktopContent._localUrnLid == 'undefined')
+        DesktopContent._localUrnLid = 0;
+    Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
+}
+
+//DesktopContent.getParameter ~
+//	returns the value of the url GET parameter specified by index
+DesktopContent.getParameter = function(index) {	
+	// Debug.log(window.location)
+	var ps = (window.location.search.substr(1)).split('&');
+	if(index >= ps.length) return; //return undefined
+	var vs = ps[index].split('=');
+	if(vs.length < 2) return; //return undefined	
+	return vs[1]; //return value
+}
+
+DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
+
+	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
+	
+	//commented below because, at times, desktop window movement led to wrong focus assumptions 
+	//if(DesktopContent._isFocused ) {Debug.log("already"); return; }//only focus when unfocused
+	DesktopContent._isFocused = true;					
+	DesktopContent._myDesktopFrame.parentNode.parentNode.style.zIndex = DesktopContent._zMailbox.innerHTML;
+	DesktopContent._zMailbox.innerHTML = parseInt(DesktopContent._zMailbox.innerHTML) + 1;
+	return true;
+}
+DesktopContent.handleBlur = function(e) {			
+	DesktopContent._isFocused = false;
+}
+DesktopContent.handleScroll = function(e) {			
+	window.focus();
+}
+DesktopContent.mouseMove = function(mouseEvent) {			
+	if(!DesktopContent._myDesktopFrame) return; //only happens if not part of desktop
+	
+	//add window frame position(absolute) + iframe position within window + mouse position within iframe
+	DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
+		parseInt(DesktopContent._myDesktopFrame.offsetLeft) + parseInt(mouseEvent.clientX);
+	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
+		parseInt(DesktopContent._myDesktopFrame.offsetTop) + parseInt(mouseEvent.clientY);
+}
+
+DesktopContent.init(); //initialize handlers
+
+
+//=====================================================================================
+// XML request helpers
+//=====================================================================================
+
+//DesktopContent.XMLHttpRequest
+// forms request properly for ots server, POSTs data
+// and when request is returned, returnHandler is called with 
+// req result on success, if failure do to bad url called with 0
+//
+// For proper request need: urnLid, cookieCode
+//
+// Handler always receives standard xml response if server is ok:
+//  <ROOT>
+//      <HEADER><CookieCode value=''/></HEADER>
+//      <DATA> ... </DATA>
+//  </ROOT>
+//
+// Where CookieCode and DisplayName can change upon every server response
+DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler) {
+	
+	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1") //do nothing because cookie code invalid
+		return;
+		
+    var req = new XMLHttpRequest();
+
+    if(progressHandler) req.upload.addEventListener("progress", progressHandler, false); //add progress listener if defined
+        
+	req.onreadystatechange = function() {
+        if (req.readyState==4) {  //when readyState=4 return complete, status=200 for success, status=400 for fail
+	        if(req.status==200)
+			{
+	        	//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+	        	
+                DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
+                
+				//check if failed due to cookieCode and go to login prompt
+				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) {
+					alert("Request failed do to insufficient account permissions."); return;
+				}
+				
+				if(req.responseText == Globals.REQ_USER_LOCKOUT_RESPONSE) {
+					alert("Request failed because another user has locked ots. Put your mouse over the lock icon at the top of the dashboard to see who."); return;
+				}				
+                
+				if(req.responseText == Globals.REQ_NO_LOGIN_RESPONSE) {
+                    DesktopContent._needToLoginMailbox.innerHTML = "1"; //set flag for need to login
+					alert("Login has expired.");
+                    return;
+				}
+                    
+                //handle cookie code mailbox
+                DesktopContent.lastCookieCode = DesktopContent.getXMLValue(req,'CookieCode');
+                if (typeof DesktopContent.lastCookieCode == 'undefined') { //clear req, server failed
+                    Debug.log("Request Failed - Missing Cookie in Response",Debug.HIGH_PRIORITY);
+                    if(DesktopContent._needToLoginMailbox)
+                    {
+                    	DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
+                        req = 0;
+        				alert('Server Failure, alert ots admins');
+                    }
+                }
+                else { //check if should update cc mailbox
+                    
+                    //check twice to handle race conditions with other content code
+                    if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent.lastCookieTime) //then current code is newer
+                    {
+                        DesktopContent._updateTimeMailbox.innerHTML = DesktopContent.lastCookieTime;
+                        DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent.lastCookieCode;
+                        
+                        setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+                    }
+                }
+                
+			}
+			else {
+				Debug.log("Request Failed - Bad Address",Debug.HIGH_PRIORITY);
+				req = 0;
+                DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
+				alert('Server Failure, alert ots admins');
+				return; //do not call handler for failed server for user code.. (maybe do?)
+			}
+            
+			if(returnHandler) returnHandler(req, reqIndex);
+		}
+    }
+    
+	var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
+    data = "CookieCode="+cc+"&"+data;
+    
+    var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
+
+    requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
+    //Debug.log("Post " + requestURL + "\n\tData: " + data);
+	req.open("POST",requestURL,true);
+	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+	req.send(data);	
+}
+
+//check cookie code race conditions
+DesktopContent.checkCookieCodeRace = function() {
+    //Debug.log("Checking cookie race conditions");
+    if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent.lastCookieTime) //then current code is newer
+    {
+        Debug.log("Cookie race occured!");
+
+        DesktopContent._updateTimeMailbox.innerHTML = DesktopContent.lastCookieTime;
+        DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent.lastCookieCode;
+    }
+}
+
+//returns xml entry value for an attribute
+DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
+	if(req && req.responseXML && req.responseXML.getElementsByTagName(name).length > 0)
+		return req.responseXML.getElementsByTagName(name)[0].getAttribute(attribute);
+	else
+		return undefined;
+}
+
+//returns xml entry value for attribue 'value'
+DesktopContent.getXMLValue = function(req, name) {
+	return DesktopContent.getXMLAttributeValue(req,name,"value");
+}
+

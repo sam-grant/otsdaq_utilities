@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>ots</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="../css/ots.css">
+		<link rel="stylesheet" type="text/css" href="../css/Desktop.css">
+
+		<style type="text/css">		
+			
+		</style>		
+		
+		<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'>
+		<script type="text/JavaScript" src="../js/Debug.js"></script>	
+		<script type="text/JavaScript" src="../js/Desktop.js"></script>
+		<script type="text/JavaScript" src="../js/DesktopDashboard.js"></script>
+		<script type="text/JavaScript" src="../js/DesktopWindow.js"></script>
+		
+		<script>
+			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			Debug.log("Application URN-LID #" + urnLid);
+
+			function init() {
+				Debug.log("Desktop Height = " + document.body.scrollHeight,Debug.MED_PRIORITY);
+				Desktop.init();
+			}
+			
+			function newWindow() { 
+				Desktop.desktop.addWindow("Name","Subname","../html/Supervisor.html");
+			}
+		</script>
+		
+	</head>	
+	
+	<body onload='init();'>
+	</body>
+	
+</html>

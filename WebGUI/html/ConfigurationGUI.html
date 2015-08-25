@@ -1,0 +1,465 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>ConfigurationGUI</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(200,200,200);
+			}
+			
+			#clearDiv {
+				clear: both;
+			}
+			
+			a {
+				color: blue;
+			}
+			
+			#display {
+				padding: 20px;
+			}
+						
+		</style>
+		
+		
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		
+		
+		<script>		
+			
+			//Start by offering two views (System Configurations) (Sub-Configurations)
+			//	and default to System Configurations
+			//
+			//High Level Goals:
+			//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
+			//		- Be able to edit the versions associated with the System Config while 
+			//		viewing other System Configs for inspiration
+			//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
+			//		- Be able to edit a sub-config, and view others to copy chunks from them
+			//
+		
+		
+			//In System Configuration mode:
+			//	List the existing configuration aliases
+			//		with possibly ability to scroll through associated sub-configs
+			//
+		
+			//In Sub-Configuration mode:
+			//	List the existing versions
+			//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
+			//	Some Sub-Configurations will need special views:
+			//		ability to add chips (of certain types) to system config...
+			//
+		
+			var _MAX_CHUNK_SIZE = 100; //100 rows per page
+		
+			var _currentAlias;
+			var _editingCell = false;
+			var _editingCellEl;
+			var _versionIsChanged = false;
+			var _version;
+			var _dataOffset = 0;
+			
+		
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+		
+			//functions:			
+				//init()
+				//setupSystemConfigMode()
+				//setupSubSystemConfigMode()
+				//setupSpecificSystemConfig(configAlias)
+				//setupSpecificSubSystemConfig(subConfigAlias)
+				//configRequestHandler(req)
+				//subConfigRequestHandler(req)
+				//specificConfigRequestHandler(req)
+				//specificSubConfigRequestHandler(req)
+		
+		
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+							
+			
+			//init called once body has loaded
+			function init() {			
+				Debug.log("CfgGUI init");
+						
+				setupSystemConfigMode();
+			}	
+			
+			//return name without "Configuration" unless it is start of the name 
+				//or part of the word "Configurations"
+			function niceName(str) {	
+				var i = str.search("Configuration");
+				return str.substr(0,(i && str[i+13] != 's')?i:str.length);
+			}
+			
+			function setupSystemConfigMode() {
+
+				DesktopContent.XMLHttpRequest("request?RequestType=getSystemConfigurations", "", configRequestHandler);		
+			}
+			
+			function setupSubSystemConfigMode() {
+
+				DesktopContent.XMLHttpRequest("request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
+			}
+
+			function setupSpecificSystemConfig(configAlias) {
+
+				DesktopContent.XMLHttpRequest("request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
+			}
+			
+			function setupSpecificSubSystemConfig(subConfigAlias,version) {
+				var v = "";
+				if(version) v = "&version="+version;
+				DesktopContent.XMLHttpRequest("request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
+					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
+			}
+			
+			function configRequestHandler(req) {				
+				Debug.log("CfgGUI requestHandler req " + req.responseText);
+				
+				var aliases = req.responseXML.getElementsByTagName("SystemConfigurationAlias");
+				var keys = req.responseXML.getElementsByTagName("SystemConfigurationKey");
+				var kocsHdr = req.responseXML.getElementsByTagName("SystemConfigurationKOCs");
+								
+				var el = document.getElementById("display");
+
+				var str = "";
+				var kocAliases, kocVersions;
+
+				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
+				for(var i=0;i<aliases.length;++i)
+				{		
+					str += "<a href='javascript:setupSpecificSystemConfig(\"" + aliases[i].getAttribute("value") +
+						"\");'>";
+					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
+					str += "<br><table><tr>";
+
+					kocAliases = kocsHdr[i].getElementsByTagName("KOC_alias");
+					kocVersions = kocsHdr[i].getElementsByTagName("KOC_version");
+					Debug.log("CfgGUI requestHandler kocAliases.length " + kocAliases.length);
+					
+					for(var j=0;j<kocAliases.length;++j)
+					{
+						str += "<td align='center'>";
+						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + kocAliases[j].getAttribute("value") +
+							"\");'>";
+						str += niceName(kocAliases[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
+						str += "</td>";
+					}
+					str += "</tr></table><br>";
+				}				
+				//Debug.log("CfgGUI requestHandler str " + str);
+				el.innerHTML = str;
+			}
+
+			function subConfigRequestHandler(req) {					
+				Debug.log("CfgGUI requestHandler req " + req.responseText);
+				
+				var aliases = req.responseXML.getElementsByTagName("SystemSubConfigurationAlias");
+				var keyHdr = req.responseXML.getElementsByTagName("SystemSubConfigurationVersions");
+				
+				var el = document.getElementById("display");
+
+				var str = "";
+				var keyVersions;
+
+				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
+				for(var i=0;i<aliases.length;++i)
+				{					
+					str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + aliases[i].getAttribute("value") +
+						"\");'>";
+					str += niceName(aliases[i].getAttribute("value"));
+					str += "</a><br><table><tr>";
+
+					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
+					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
+					
+					for(var j=0;j<keyVersions.length;++j)
+					{
+						str += "<td align='center'>";
+						str += "version" + "<br>" + keyVersions[j].getAttribute("value");
+						str += "</td>";
+					}
+					str += "</tr></table><br>";
+				}				
+				//Debug.log("CfgGUI requestHandler str " + str);
+				el.innerHTML = str;
+			}
+
+
+			function specificConfigRequestHandler(req) {	
+				Debug.log("CfgGUI specificConfigRequestHandler req " + req.responseText);
+				
+				var alias = DesktopContent.getXMLValue(req,"SystemConfigurationAlias");
+				var key = DesktopContent.getXMLValue(req,"SystemConfigurationKey");
+				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationKey");
+
+				var kocAliases = req.responseXML.getElementsByTagName("KOC_alias");
+				var kocVersions = req.responseXML.getElementsByTagName("KOC_currentVersion");
+				
+				var el = document.getElementById("display");
+
+				var str = "";
+				
+				var kocExistingVersions;
+
+				str += "<h3><u>Specific System Configuration View</u></h3>";
+				str += "<b>" + alias + "</b> (key: " + key + ")<br>";
+				
+				if(historicalKeys.length)
+				{
+					str += "View Historical " + alias + " key: ";
+
+					for(var i=0;i<historicalKeys.length;++i)
+						str += " " + historicalKeys[i].getAttribute("value");
+				}
+				else 
+					str += "No Historical keys exist for " + alias + ".<br>";
+				
+				
+				str += "<br><a href='javascript:addNewKocForSpecificConfig()'>Add new KOC</a> to "  + alias + "<br><br>";
+				//Debug.log("CfgGUI specificConfigRequestHandler KOC length " + kocAliases.length + " - " + kocVersions.length);
+				for(var i=0;i<kocAliases.length && i<kocVersions.length;++i)
+				{
+					str += "<b>" + niceName(kocAliases[i].getAttribute("value")) + "</b> (Current version: " + 
+						kocVersions[i].getAttribute("value") + 
+						") <a href='javascript:changeKocVersionForSpecificConfig()'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
+					
+					str += "Existing versions: " + kocVersions[i].getAttribute("value");
+
+					kocExistingVersions = kocVersions[i].getElementsByTagName("KOC_existingVersion");
+					for(var j=0;j<kocExistingVersions.length;++j)
+						str += " " + kocExistingVersions[j].getAttribute("value");
+					
+					str += "<br><br>";		
+				}
+
+				el.innerHTML = str;
+			}
+			
+			function specificSubConfigRequestHandler(req) {	
+				Debug.log("specificSubConfigRequestHandler requestHandler req " + req.responseText);
+				
+				var subAlias = DesktopContent.getXMLValue(req,"SubSystemConfigurationAlias");
+				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
+				
+				
+				var kocVersionHdr = req.responseXML.getElementsByTagName("SubSystemConfigurationVersions");
+				if(!kocVersionHdr.length)
+				{
+					alert("Error?! No versions returned for subAlias: " + subAlias);
+					return;
+				}
+				var kocVersions = kocVersionHdr[0].getElementsByTagName("VersionKey");
+				
+				var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
+				
+				var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+				var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+				
+				var el = document.getElementById("display");
+				
+
+				//reset globals
+				_currentAlias = subAlias;
+				_version = version;
+				_editingCell = false;
+				_editingCellEl = 0;
+				_versionIsChanged = false;
+				_dataOffset = rows[0].getAttribute("value") | 0;
+
+				var str = "";
+				
+
+				str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
+				str += "<b>" + subAlias + "</b> (version: " + version + ")<br>";
+
+				str += "<br>All versions:";
+				for(var j=0;j<kocVersions.length;++j)
+				{
+					str += " ";
+					if(kocVersions[j].getAttribute("value") != version)
+						str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
+						"\",\"" + kocVersions[j].getAttribute("value") + "\");'>";
+					str += kocVersions[j].getAttribute("value");
+					if(kocVersions[j].getAttribute("value") != version)
+						str += "</a>";
+				}
+				
+				//display table
+				str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+				str += "<tr>";
+				str += "<th>Row</th>"; //insert row index column
+				for(var c=0;c<colHdrs.length;++c)
+				{
+					str += "<th>";
+					str += colHdrs[c].getAttribute("value");
+					str += "</th>";					
+					
+				}
+				str += "</tr>";
+				
+				for(var r=0;r<rows.length;++r)
+				{
+					var rowEntries = rows[r].getElementsByTagName("Entry");
+					str += "<tr>";
+					str += "<td>" + (_dataOffset + r) + "</td>"; //insert row index column
+					for(var c=0;c<colHdrs.length;++c)
+					{
+						str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";
+						//str += "<input type='text' value='";
+						str += rowEntries[c].getAttribute("value");
+						//str += "'>";
+						str += "</td>";					
+						
+					}
+					str += "</tr>";
+				}
+					
+				str += "</table>";
+				
+				
+				el.innerHTML = str;
+			}
+			
+			function selectThisCell(r,c,el) {	
+				
+				if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
+					return;
+				
+				_editingCell = true;
+				_editingCellEl = el;
+				
+				var v = el.innerHTML;				
+				var str = "";
+				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+				str += v;
+				str += "'>";
+				str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
+						"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
+				str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
+				str += "</div>";
+				
+				el.innerHTML = str;
+			}
+			
+			function keyHandler(e) {
+				var TABKEY = 9;
+				var ENTERKEY = 13;
+				var UPKEY = 38;
+				var DNKEY = 40;
+				var ESCKEY = 27;
+				//Debug.log("key " + e.keyCode);
+				if(e.keyCode == TABKEY) {
+					//this.value += "    ";
+					if(e.preventDefault) {
+						e.preventDefault();
+					}
+					return false;
+				}
+			}
+			
+			function editCellOK(r,c) {	
+				
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
+				
+				var str = "";
+				str += _editingCellEl.getElementsByTagName("input")[0].value;
+				_editingCellEl.innerHTML = str;
+
+				_editingCell = false;
+				_editingCellEl = 0;		
+				
+				if(!_versionIsChanged)
+				{
+					_versionIsChanged = true;
+					
+					//give button for saving changes
+	
+					var el = document.getElementById("display");
+					var dispStr = el.innerHTML;
+					str = "";
+					str += "<br><div><input type='button' onmouseup='saveSubSystemAsNewVersion()' value='Save Changes as New Version'/></div>";
+					el.innerHTML = str + dispStr + str;
+				}
+			}
+			
+			function editCellCancel() {	
+				var str = _editingCellEl.innerHTML;
+				var i = str.indexOf("value=")+7;
+				str = str.substr(i,str.indexOf(">")-1-i);
+				
+				_editingCellEl.innerHTML = str;
+				_editingCell = false;
+				_editingCellEl = 0;
+			}
+
+			function saveSubSystemAsNewVersion() {	
+				Debug.log("CfgGUI saveSubSystemAsNewVersion");
+				
+				//create data string from html table
+				var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
+				var el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");				
+				
+				var cells;
+				for(var r=1;r<rows.length;++r) //skip header row
+				{
+					cells = rows[r].getElementsByTagName("td");
+
+					for(var c=1;c<cells.length;++c) //skip row index column
+						dataStr += encodeURIComponent(cells[c].innerHTML) + ","; //replaces all special characters					
+					dataStr += ";";
+				}
+				
+				var req = "request?RequestType=saveSpecificSubSystemConfiguration" + 
+						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
+						"&subAlias=" + _currentAlias + "&version="+_version;
+				Debug.log(dataStr);
+				Debug.log(req);
+				DesktopContent.XMLHttpRequest("request?RequestType=saveSpecificSubSystemConfiguration" + 
+					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
+					"&subAlias=" + _currentAlias + "&version="+_version, "data=" + dataStr, saveSubSystemAsNewVersionHandler);	
+				
+			}
+			
+			function saveSubSystemAsNewVersionHandler(req) {	
+				Debug.log("saveSubSystemAsNewVersionHandler requestHandler req " + req.responseText);
+
+				var err = DesktopContent.getXMLValue(req,"Error");
+				Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
+
+				var subConfigAlias = DesktopContent.getXMLValue(req,"savedAlias");
+				var version = DesktopContent.getXMLValue(req,"savedVersion");
+
+				Debug.log("saveSubSystemAsNewVersionHandler requestHandler subConfigAlias " + subConfigAlias + " version " + version);
+				setupSpecificSubSystemConfig(subConfigAlias,version);
+			}
+			
+			function changeKocVersionForSpecificConfig() {
+				//TODO
+				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
+			}
+
+			function addNewKocForSpecificConfig(req) {
+				//TODO
+				Debug.log("CfgGUI addNewKocForSpecificConfig");
+			}
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:init();'>	
+			
+		<h1>Configuration GUI</h1>
+		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
+		<div id='display'></div>
+		
+	</body>
+	
+</html>
