@@ -1,0 +1,42 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>ots</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/Desktop.css">
+
+		<style type="text/css">		
+			
+		</style>		
+		
+		<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'>
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Desktop.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopDashboard.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindow.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopIcons.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
+		
+		<script>
+			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			Debug.log("Application URN-LID #" + urnLid);
+
+			function init() {
+				Desktop.init();				
+			}			
+			
+			function newWindow() {
+           	 	Desktop.desktop.addWindow("FecName","Subname","http://rulinux01.dhcp.fnal.gov:1983/urn:xdaq-application:lid=253/");
+                //Desktop.desktop.addWindow("Name","Subname","/WebPath/html/Supervisor.html");
+			}
+            
+        </script>
+		
+	</head>	
+	
+	<body onload='init();'>
+	</body>
+	
+</html>
