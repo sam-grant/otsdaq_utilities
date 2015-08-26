@@ -56,7 +56,7 @@ find_ups_boost( v1_50_0 filesystem
 
 # Include at the top level to make sure include directory is visible
 # everywhere.
-include(ProcessSmc)
+#include(ProcessSmc)
 
 # Needed if using old art with new cetbuildtools / CMake.
 check_ups_version(art "$ENV{ART_VERSION}" v1_11_00 PRODUCT_OLDER_VAR have_old_art)

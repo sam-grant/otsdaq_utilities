@@ -19,6 +19,7 @@ fcldir      -
 #
 product		 version	optional
 otsdaq           v1_00_00       
+xdaq             v11_2_7
 cetbuildtools    v4_12_05        -       only_for_build
 end_product_list
 
