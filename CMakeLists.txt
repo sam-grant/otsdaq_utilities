@@ -80,5 +80,5 @@ add_subdirectory(otsdaq-utilities)
 add_subdirectory(ups)
 
 # WebGUI
-FILE(COPY WebGUI DESTINATION Data)
-INSTALL(DIRECTORY WebGUI DESTINATION ${product}/${version}/Data)
+FILE(COPY WebGUI DESTINATION .)
+INSTALL(DIRECTORY WebGUI DESTINATION ${product}/${version})
