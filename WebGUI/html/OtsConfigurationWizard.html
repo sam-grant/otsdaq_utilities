@@ -1,15 +1,37 @@
- <!DOCTYPE html>
-<html>
-<head>
-  <title>Ots Configuration Wizard</title>
-  <script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-  <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-  <script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-</head>
-<body>
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>ots</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/Desktop.css">
 
-<h1>This is a Heading</h1>
-<p>This is a paragraph.</p>
+		<style type="text/css">		
+			
+		</style>		
+		
+		<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'>
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Desktop.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopDashboard.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindow.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopIcons.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
+		
+		<script>
+			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			Debug.log("Application URN-LID #" + urnLid);
 
-</body>
-</html> 
+			function init() {
+				Desktop.init(window.parent.window.location.pathname.split("/")[2]);
+				Desktop.desktop.icons.resetWithPermissions(1);
+			}			            
+        </script>
+		
+	</head>	
+	
+	<body onload='init();'>
+	</body>
+	
+</html>

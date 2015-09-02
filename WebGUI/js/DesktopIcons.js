@@ -44,7 +44,8 @@ else {
 		var _defaultIconWidth = 64;
 		var _defaultIconHeight = 64;   
 		var _defaultIconTextWidth = 90; 
-		var _defaultIconTextHeight = 32;     
+		var _defaultIconTextHeight = 32; 
+		var _permissions = 0;
         
         var _iconsElement;
         
@@ -134,11 +135,38 @@ else {
             Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
             
             this.iconsElement.innerHTML = ""; //clear current icons
-	    _numOfIcons = 0;
-
-           	for(var i=0;i<this.iconAlts.length;++i) //add icons
+            _numOfIcons = 0;
+            ////////////
+		    if(Desktop.desktop.sequence)
+		    {
+		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.sequence, iconRequestHandler);
+	      		_permissions = 1;
+		    	return;
+	      	}else
+	      	{
+		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+		    	_permissions = permissions;
+	      		return;
+	      		
+	      	}
+		    ////////////
+           	/*for(var i=0;i<this.iconAlts.length;++i) //add icons
            		if(permissions >= this.iconPermissionsNeeded[i])
-           			this.addIcon(this.iconAlts[i],this.iconTitles[i],this.iconLinks[i],this.iconUniques[i],this.iconImages[i]);           
+           			this.addIcon(this.iconAlts[i],this.iconTitles[i],this.iconLinks[i],this.iconUniques[i],this.iconImages[i]);    */       
+      	}
+      	
+      	//_iconRequestHandler
+      	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
+      	var iconRequestHandler = function(req){
+      		//TODO make permissions work
+      		var iconArray = req.responseText.split(","); 
+      		console.log(iconArray);
+      		var numberOfIconFields = 6;
+     		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
+      		{
+           		if(_permissions >= iconArray[i+3])
+           			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2],iconArray[i+4]);       
+      		}
       	}
       	
       	// this.addIcon ~~

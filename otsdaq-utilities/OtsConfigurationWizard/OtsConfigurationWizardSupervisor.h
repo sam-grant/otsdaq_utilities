@@ -35,14 +35,18 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    OtsConfigurationWizardSupervisor         (xdaq::ApplicationStub * s                                         ) throw (xdaq::exception::Exception);
+    OtsConfigurationWizardSupervisor         (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
     virtual ~OtsConfigurationWizardSupervisor(void                                                              );
     void init                  		  		 (void                                                              );
     void destroy                      		 (void                                                              );
     void Default                      		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-                              
+    void Verification                 		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void generateURL                         (                                                                  );
+    void RequestIcons                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
+    std::string				securityCode_;
 
 };
 

@@ -21,8 +21,9 @@ else if (typeof Globals == 'undefined')
 else
 	Desktop.desktop; //this is THE global desktop variable
 
-Desktop.init = function() {
-	Desktop.desktop = Desktop.createDesktop();
+Desktop.init = function(sequence) {
+	
+	Desktop.desktop = Desktop.createDesktop(sequence);
 	if(Desktop.desktop)
 		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
 }
@@ -32,14 +33,14 @@ Desktop.init = function() {
 //call createDesktop to create instance of a desktop
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-Desktop.createDesktop = function() {	
+Desktop.createDesktop = function(sequence) {	
 	
 	if (typeof Debug == 'undefined') return 0; //fail if debug not defined just to force consistent behavior
 	
 	if(false === (this instanceof Desktop.createDesktop)) {
 		//here to correct if called as "var v = Desktop.createDesktop();"
 		//	instead of "var v = new Desktop.createDesktop();"
-        return new Desktop.createDesktop();
+        return new Desktop.createDesktop(sequence);
     }
 	
 	//------------------------------------------------------------------
@@ -83,7 +84,7 @@ Desktop.createDesktop = function() {
 	this.dashboard;
 	this.login;    
 	this.icons;   
-	
+	this.sequence = sequence;
 	this.checkMailboxTimer;
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
@@ -591,7 +592,7 @@ Desktop.createDesktop = function() {
 	this.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
 
 	//add login
-	this.login = _login = new Desktop.login(true); //pass true to enable login
+	this.login = _login = new Desktop.login(this.sequence?false:true); //pass true to enable login
 	_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
 	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
