@@ -159,7 +159,17 @@ else {
       	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
       	var iconRequestHandler = function(req){
       		//TODO make permissions work
-      		var iconArray = req.responseText.split(","); 
+      		if(Desktop.desktop.sequence){
+      			var iconArray = req.responseText.split(","); 
+
+      		}else
+      		{
+          		var iconArray = Desktop.getXMLValue(req,"iconList"); 
+          		console.log("icon Array unsplit: " + iconArray);
+          		iconArray = iconArray.split(","); 
+          		console.log("icon Array split: " + iconArray);
+
+      		}
       		console.log(iconArray);
       		var numberOfIconFields = 6;
      		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
@@ -167,6 +177,8 @@ else {
            		if(_permissions >= iconArray[i+3])
            			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2],iconArray[i+4]);       
       		}
+     		
+     		_permissions = 0;
       	}
       	
       	// this.addIcon ~~
@@ -195,7 +207,7 @@ else {
 			div.style.marginLeft = (_defaultIconTextWidth-_defaultIconWidth-2)/2 + "px"; //extra 2 for border
 			
 			//define icon content
-			if(picfn){ //if icon image			
+			if(picfn != "0"){ //if icon image			
 				div.style.backgroundImage = "url(../images/iconImages/" + picfn+")";
 				
 				var div2 = document.createElement("div");

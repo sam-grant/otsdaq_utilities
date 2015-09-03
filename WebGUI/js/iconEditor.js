@@ -69,7 +69,7 @@ function checkForChanges(){
 
 function iconSelected(selectedValue){
 
-    console.log(selectedValue);
+    //console.log(selectedValue);
 
     checkForChanges();
 
@@ -136,14 +136,15 @@ function iconSelected(selectedValue){
     
     if(selectedValue != "new")
     {
-	altField.value = megaLibrary_[selectedValue][0];
-	titleField.value = megaLibrary_[selectedValue][1];
-	uniqueField.value = megaLibrary_[selectedValue][2];
-	permissionNeededField.value = megaLibrary_[selectedValue][3];
-	imageField.value = megaLibrary_[selectedValue][4];
-	linkField.value = megaLibrary_[selectedValue][5];
+    	//console.log(selectedValue);
+		altField.value = megaLibrary_[selectedValue][0];
+		titleField.value = megaLibrary_[selectedValue][1];
+		uniqueField.value = megaLibrary_[selectedValue][2];
+		permissionNeededField.value = megaLibrary_[selectedValue][3];
+		imageField.value = megaLibrary_[selectedValue][4];
+		linkField.value = megaLibrary_[selectedValue][5];
 
-	console.log("new");
+	//console.log("new");
     }	
 
     altField.setAttribute("oninput", "activateSave()");
@@ -188,7 +189,7 @@ function iconSelected(selectedValue){
 		if(megaLibrary_[it][0] == selectedValue)
 		{
 		    var index = it;
-		    console.log(index);
+		    //console.log(index);
 		    
 		}
 	
@@ -228,7 +229,7 @@ function iconSelected(selectedValue){
 function deleteIcon(index){
 
     changesMade_ = true;
-    console.log(index);
+    //console.log(index);
  
     megaLibrary_.splice(index, 1);
     chooseIcon();
@@ -239,17 +240,24 @@ function deleteIcon(index){
 function addIcon(){
 
     changesMade_ = true;
-    
+    //console.log("addIcon()");
+    //console.log(megaLibrary_.length);
+
     var currentIcon =[document.getElementsByTagName("input")[0].value,
-		      document.getElementsByTagName("input")[1].value,
-		      document.getElementsByTagName("input")[2].value,
-		      document.getElementsByTagName("input")[3].value,
-		      document.getElementsByTagName("input")[4].value,
-		      document.getElementsByTagName("input")[5].value];
+				      document.getElementsByTagName("input")[1].value,
+				      document.getElementsByTagName("input")[2].value,
+				      document.getElementsByTagName("input")[3].value,
+				      document.getElementsByTagName("input")[4].value,
+				      document.getElementsByTagName("input")[5].value];
 
     megaLibrary_.push(currentIcon);
+    //console.log(megaLibrary_.length);
+
     chooseIcon();
-    iconSelected(megaLibrary_[megaLibrary_.length][1]);
+    
+    //console.log(megaLibrary_[megaLibrary_.length-1][1]);
+//    //console.log(megaLibrary_[megaLibrary_.length][1]);
+    iconSelected(megaLibrary_.length-1);
 
 
 
@@ -263,8 +271,8 @@ function saveIcon(){
 	alert("No changes have been made!");
 	return;
     }
-    console.log("saveIcon()");
-    console.log(megaLibrary_);
+    //console.log("saveIcon()");
+    //console.log(megaLibrary_);
     saveClicked_ = true;
     checkForChanges();    
     var currentIcon =[document.getElementsByTagName("input")[0].value,
@@ -281,20 +289,30 @@ function saveIcon(){
             break;
         }
     }
-    console.log(opt);
+    //console.log(opt);
     megaLibrary_[opt-2] = currentIcon;
-    console.log(megaLibrary_);
+    //console.log(megaLibrary_);
     
 }
 
 function submitChangesToServer(){
 
-    console.log("SubmitChangesToServer()");
+    //console.log("SubmitChangesToServer()");
     var iconList = "iconList=";
-    for(var icon =0; icon < (megaLibrary_.length-1); icon++)
-    	for(var details=0; details < (megaLibrary_[icon].length-1); details++)
-    		iconList += megaLibrary_[icon][details] + ",";
     
+    //console.log("Mega Library Size: " + megaLibrary_.length-1);
+    //console.log("Mega Library 0 Size: " + megaLibrary_[0].length-1);
+
+    for(var icon = 0; icon < (megaLibrary_.length); icon++)
+    {
+    	for(var details=0; details < (megaLibrary_[icon].length); details++)
+    	{
+    		//console.log(megaLibrary_[icon][details]);
+    		iconList += (megaLibrary_[icon][details] + ",");
+    	}
+    }
+    	//console.log(iconList);
+
     iconList = iconList.substring(0, iconList.length - 1);
 
     console.log(iconList);
@@ -304,7 +322,7 @@ function submitChangesToServer(){
 function activateSave(){
     
     //Called by oninput() from input fields
-    console.log("activateSave()");
+    //console.log("activateSave()");
     changesMade_ = true;
 
 }
@@ -320,6 +338,8 @@ var iconEditorHandler = function(req){
 	var iconArray = req.responseText.split(","); 
 	console.log(iconArray);
 	var numberOfIconFields = 6;
+	megaLibrary_.length = 0;
+	
 	for(var i=0;i<(iconArray.length-1);i+=numberOfIconFields) //add icons
 	    megaLibrary_.push([iconArray[i], iconArray[i+1], iconArray[i+2], iconArray[i+3], iconArray[i+4], iconArray[i+5]]);
 	console.log(megaLibrary_);

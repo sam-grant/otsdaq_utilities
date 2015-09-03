@@ -156,10 +156,10 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     	std::cout << "Opened File: " << iconFileName << std::endl;
         while(std::getline(iconFile, line))
     	{
-    		iconList = line;
+    		iconList += line;
     		lineNumber++;
     	}
-    	std::cout << __COUT_HDR__ << std::to_string(lineNumber) << iconList << std::endl;
+    	//std::cout << __COUT_HDR__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
 
     	//Close file
         iconFile.close();
