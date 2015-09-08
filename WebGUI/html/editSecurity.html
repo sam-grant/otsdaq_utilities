@@ -16,18 +16,20 @@
 
 <body onload="init()">
   <h1>Edit Security</h1>
+  <h2 id="state"></h2>
   <ul>
 
   <li>
   	
   <div class="shape">
+  	<div class="glow" id="NoSecurity">
   	<a href="#" class="overlay round"></a>
   	
   	<div class="details">
   		<span class="heading">No Security</span>
   		<hr />
   		<p>Users do not have to provide any authentication to access the OTS software and server. <b>Anybody with the address of the server</b> can access it.</p>		
-  		<a href="http://www.yahoo.com" class="button">VIEW</a>
+  		<a href="#" onclick="setSecurity('NoSecurity')" class="button">Select</a>
   	</div>
   	
   	<div class="bg"></div>
@@ -35,7 +37,7 @@
   	<div class="base">
   		<img src="../images/windowContentImages/editSecurity-noSecurity.png" alt="" />
   	</div>
-  	
+   </div>	
   </div>	
   	
   </li>
@@ -43,18 +45,19 @@
   <li>
   	
   <div class="shape">
-  	<a href="#" class="overlay hexagon"></a>
+	<div class="glow" id="DigestAccessAuthentication">
+	<a href="#" class="overlay round"></a>
   	<div class="details">
   		<span class="heading">Digest Access Authentication</span>
   		<hr />
-  		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>		
-  		<a href="#" class="button">VIEW</a>		
+  		<p>This method of security uses a traditional username and password, but hashes them prior to sending them over the network. Read more <a href="https://en.wikipedia.org/wiki/Digest_access_authentication" target="_blank">here</a>.</p>		
+  		<a href="#" onclick="setSecurity('DigestAccessAuthentication')" class="button">Select</a>		
   	</div>
   	<div class="bg"></div>	<div class="base">
   		<img src="../images/windowContentImages/editSecurity-Digest.png" alt="" />
   	</div>
   </div>	
-  	
+  </div>  	
   </li>
 
   
@@ -62,40 +65,21 @@
   <li>
   	
   <div class="shape">
+	<div class="glow" id="Kerberos">
   	<a href="#"  class="overlay round"></a>
   	<div class="details">
   		<span class="heading">Kerberos</span>
   		<hr />
-  		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>		
-  		<a href="#" class="button">VIEW</a>		
+  		<p>The official security authentication of Fermilab. Read more <a href="https://en.wikipedia.org/wiki/Kerberos_%28protocol%29" target="_blank">here</a>.</p>		
+  		<a href="#" onclick="setSecurity('Kerberos')" class="button">Select</a>		
   	</div>
   	<div class="bg"></div>
   	<div class="base">
   		<img src="../images/windowContentImages/editSecurity-Cerberus.png" alt="" />
   	</div>
   </div>	
-  	
+  </div> 	
   </li>
-
-  <li>
-  	
-  <div class="shape">
-  	<a href="#"  class="overlay hexagon"></a>
-  	<div class="details">
-  		<span class="heading">UI KIT</span>
-  		<hr />
-  		<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>		
-  		<a href="#" class="button">VIEW</a>		
-  	</div>
-  	<div class="bg"></div>
-  	<div class="base">
-  		<img src="http://www.queness.com/resources/html/masking-images-with-shape/img/5.jpg" alt="" />
-  	</div>
-  </div>	
-  	
-  </li>
-
- 
 
   	
   </ul>

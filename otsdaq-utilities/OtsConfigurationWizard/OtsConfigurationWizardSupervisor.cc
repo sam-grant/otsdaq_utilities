@@ -187,7 +187,75 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
+	  std::cout << __COUT_HDR__ << std::endl;
+	    //if sequence doesn't match up -> return
+	    cgicc::Cgicc cgi(in);
+	    std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+	    std::string submittedSecurity = CgiDataUtilities::postData(cgi, "selection");
+	    std::string securityFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/security.dat";
 
+
+
+
+	    if(securityCode_.compare(submittedSequence) != 0)
+	    {
+	    	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+	    	return;
+	    }else
+	    {
+	    	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
+	    }
+
+
+	    if(submittedSecurity != "")
+	    {
+	    	std::cout << "Selection exists!" << std::endl;
+	    	std::cout << submittedSecurity << std::endl;
+
+	    	std::ofstream writeSecurityFile;
+
+	    	writeSecurityFile.open(securityFileName.c_str());
+	        if(writeSecurityFile.is_open())
+	        	writeSecurityFile << submittedSecurity;
+	        else
+	        	std::cout << __COUT_HDR__ << "Error writing file!" << std::endl;
+
+
+	        writeSecurityFile.close();
+	    }
+
+
+	    //Always return the file
+	    std::ifstream securityFile;
+	    std::string line;
+		std::string security = "";
+		int lineNumber = 0;
+
+		securityFile.open(securityFileName.c_str());
+
+	    if(!securityFile)
+	    {
+			std::cout<<"Error opening file: "<< securityFileName << std::endl;
+			system("pause");
+			return;
+	    }
+	    if(securityFile.is_open())
+	    {
+	    	std::cout << "Opened File: " << securityFileName << std::endl;
+	        while(std::getline(securityFile, line))
+	    	{
+	        	security += line;
+	    		lineNumber++;
+	    	}
+	    	//std::cout << __COUT_HDR__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
+
+	    	//Close file
+	        securityFile.close();
+	    }
+
+	    *out << security;
+
+	    return;
 
 
 

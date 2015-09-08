@@ -1,3 +1,10 @@
+h1{
+	color : white;
+}
+h2{
+	color : rgba(255,188,18,1);	
+}
+
 body {
 	background: #1b1e24;
 }
@@ -152,3 +159,8 @@ ul li {
 		background: #fff;
 		color: #2f3644;				
 	}
+	
+	
+.glow{
+  	margin: auto;
+}
