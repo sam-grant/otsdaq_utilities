@@ -44,6 +44,7 @@ public:
     void generateURL                         (                                                                  );
     void RequestIcons                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void EditSecurity                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
     std::string				securityCode_;

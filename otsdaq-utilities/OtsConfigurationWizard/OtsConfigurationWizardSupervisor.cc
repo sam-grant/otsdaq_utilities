@@ -25,6 +25,7 @@ OtsConfigurationWizardSupervisor::OtsConfigurationWizardSupervisor(xdaq::Applica
     xgi::bind (this, &OtsConfigurationWizardSupervisor::Verification,        securityCode_);
     xgi::bind (this, &OtsConfigurationWizardSupervisor::RequestIcons,       "requestIcons");
     xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           "iconEditor");
+    xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       "editSecurity");
     init();
 
 
@@ -92,8 +93,20 @@ void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output
 void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
     std::cout << __COUT_HDR__ << std::endl;
-    //TODO Security Check
-    *out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/iconEditor.html";
+
+    cgicc::Cgicc cgi(in);
+    std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+    if(securityCode_.compare(submittedSequence) != 0)
+    {
+    	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+    	return;
+    }else
+    {
+    	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
+    }
+
+
+    *out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/iconEditor.html,Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/editSecurity.html";
     return;
 }
 //========================================================================================================================
@@ -105,7 +118,10 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     cgicc::Cgicc cgi(in);
     std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
     std::string submittedIconList = CgiDataUtilities::postData(cgi, "iconList");
-    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsConfiguration/iconList.txt";
+    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/iconList.txt";
+
+
+
 
     if(securityCode_.compare(submittedSequence) != 0)
     {
@@ -136,8 +152,6 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 
 
     //Always return the file
-
-//    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsConfiguration/iconList.txt";
     std::ifstream iconFile;
     std::string line;
 	std::string iconList = "";
@@ -168,4 +182,13 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     *out << iconList;
 
     return;
+}
+
+//========================================================================================================================
+void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+{
+
+
+
+
 }
