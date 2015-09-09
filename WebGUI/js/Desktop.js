@@ -86,6 +86,7 @@ Desktop.createDesktop = function(sequence) {
 	this.icons;   
 	this.sequence = sequence;
 	this.checkMailboxTimer;
+	this.security = window.parent.window.location.pathname.split("/")[2];
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
 
@@ -510,7 +511,6 @@ Desktop.createDesktop = function(sequence) {
 	this.resetDesktop = function(permissions) {
         
 		_needToLoginMailbox.innerHTML = ""; //reset mailbox
-        
 		//update icons based on permissions
 		Desktop.desktop.icons.resetWithPermissions(permissions);
 		

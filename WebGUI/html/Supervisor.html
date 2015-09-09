@@ -21,10 +21,19 @@
 		
 		<script>
 			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			var securityType = ((window.location.search.substr(1)).split('='))[3];
+			Debug.log("securityType: " +  securityType);
 			Debug.log("Application URN-LID #" + urnLid);
 
 			function init() {
-				Desktop.init();				
+				var param;
+				if(securityType == "DigestAccessAuthentication")
+					Desktop.init(undefined);
+				else
+				{
+					Desktop.init(securityType);
+					Desktop.desktop.icons.resetWithPermissions();
+				}
 			}			
 			
 			function newWindow() {

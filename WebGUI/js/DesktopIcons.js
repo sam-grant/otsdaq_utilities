@@ -137,17 +137,27 @@ else {
             this.iconsElement.innerHTML = ""; //clear current icons
             _numOfIcons = 0;
             ////////////
-		    if(Desktop.desktop.sequence)
+            
+		    if(Desktop.desktop.sequence == "NoSecurity") //This is satisfied for No Security on OTS
 		    {
+		    	console.log("NoSecurity");
+		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+	      		_permissions = 255;
+		    	return;
+	      	}
+		    else if(Desktop.desktop.sequence) //This is satisfied for OtsWizardConfiguration
+			{
+		    	console.log("OtsWizardConfiguration");
 		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.sequence, iconRequestHandler);
 	      		_permissions = 1;
 		    	return;
-	      	}else
+			}
+	      	else //This is satisfied for Digest Access Authorization on OTS | the default value if the security settings are not found
 	      	{
+		    	console.log("default");
 		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
 		    	_permissions = permissions;
 	      		return;
-	      		
 	      	}
 		    ////////////
            	/*for(var i=0;i<this.iconAlts.length;++i) //add icons
@@ -170,7 +180,8 @@ else {
           		console.log("icon Array split: " + iconArray);
 
       		}
-      		console.log(iconArray);
+      		console.log(_permissions);
+     		console.log(iconArray);
       		var numberOfIconFields = 6;
      		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
       		{
@@ -185,6 +196,7 @@ else {
       	//	adds an icon with alt text, subtext wording underneath and image icon (if picfn defined)
       	this.addIcon = function(alt, subtext, linkurl, uniqueWin, picfn) {
       	      		
+      		console.log("this.addIcon");
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 			
