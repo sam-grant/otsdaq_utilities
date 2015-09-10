@@ -118,7 +118,7 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     cgicc::Cgicc cgi(in);
     std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
     std::string submittedIconList = CgiDataUtilities::postData(cgi, "iconList");
-    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/iconList.txt";
+    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/iconList.dat";
 
 
 
