@@ -18,6 +18,11 @@ echo
 echo "=================="
 
 CURRENT_AWESOME_BASE=$PWD
+if [ "x$OTSDAQ_DIR" == "x" ]; then
+    echo "OTSDAQ_DIR is not defined. Please run setup scripts"
+    return
+fi
+
 if [ -d "$OTSDAQ_DIR" ]; then
     echo "Checking in $OTSDAQ_DIR"
     cd $OTSDAQ_DIR
