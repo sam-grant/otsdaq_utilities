@@ -2,6 +2,7 @@
 
 if [ "x$1" == "x" ]; then
     echo "Usage: parameter 1 is the comment for git commit"
+    echo "Note: git status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
     return
 fi
 
