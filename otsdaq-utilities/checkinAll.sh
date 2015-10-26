@@ -18,7 +18,7 @@ echo
 if [ "x$1" == "x" ]; then
     echo "Usage Error: parameter 1 is the comment for git commit"    
     echo "Note: git status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-    exit
+    echo "WARNING: without comment, script will only do git pull and git status"
 fi
 
 echo "Finding paths..."
@@ -58,8 +58,12 @@ for p in ${REPO_DIR[@]}; do
 	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
 	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
 	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
-	git commit -m "$1" .
-	git push   
+
+	if [ "x$1" != "x" ]; then
+	    git commit -m "$1" .
+	    git push   
+	fi
+
 	cd $CURRENT_AWESOME_BASE
 	echo
 	echo "=================="
