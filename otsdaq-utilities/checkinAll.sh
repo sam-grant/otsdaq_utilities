@@ -61,6 +61,7 @@ for p in ${REPO_DIR[@]}; do
 
 	if [ "x$1" != "x" ]; then
 	    git commit -m "$1" .
+	    git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
 	    git push   
 	fi
 
