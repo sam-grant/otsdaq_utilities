@@ -3,6 +3,8 @@
 #
 # ./path/to/script/checkinAll.sh "comment for git commit"
 #
+# If no comment is given, the script will only pull updates - it will not checkin.
+#
 
 #/bin/bash
 
