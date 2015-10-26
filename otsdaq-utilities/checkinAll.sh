@@ -60,8 +60,7 @@ for p in ${REPO_DIR[@]}; do
 	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
 
 	if [ "x$1" != "x" ]; then
-	    git commit -m "$1" .
-	    git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	    git commit -m "$1" .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
 	    git push   
 	fi
 
