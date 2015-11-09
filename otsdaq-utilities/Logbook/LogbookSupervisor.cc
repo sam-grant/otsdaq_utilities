@@ -336,7 +336,7 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 	std::cout << __COUT_HDR__ << "experiment " << experiment << std::endl;
 
 	//check that directory doesn't already exist
-std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
+	std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
 			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + experiment;
 
 	std::cout << __COUT_HDR__ << "dirPath " << dirPath << std::endl;

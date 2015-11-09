@@ -1,6 +1,8 @@
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
+	
+		
 		<title>Supervisor</title>
 		<style type="text/css">			
 			body {
@@ -16,7 +18,17 @@
 		
 		<script>		
 				
+			function test(write)
+			{
 			
+				var addr = document.getElementById("addr").value;
+				var data = document.getElementById("data").value; 
+				
+				Debug.log("Testing command " + write + " addr " + addr + " data " + data);
+			    
+				DesktopContent.XMLHttpRequest("Request", 		//update experiment list 
+						"write="+write+"&addr="+addr+"&data="+data, 0);// handleGetExperimentListRequest);	
+			}
 			
 		</script>
 		
@@ -25,21 +37,15 @@
 	
 	<body>	
 		<br><br><br>
-		<a href='javascript:test();'><input type='button' value='Btn'/></a>
+		
 		Hello I'm the FECSupervisor
 		<div id='myDiv'></div>
-		<input type='button' value='Btn'/>
-		<input type='button' value='Btn'/>
-		<br><br><br>
-		Hello I'm the FECSupervisor
-		<br><br><br>
-		Hello I'm the FECSupervisor
-		<br><br><br>
-		Hello I'm the FECSupervisor
-		<br><br><br>
-		Hello I'm the FECSupervisor
-		<br><br><br>
-		Hello I'm the FECSupervisor
+		addr <input type='text' id='addr' value='01'/> <br>
+		data <input type='text' id='data' value='ABCD'/> <br>
+		
+		
+		<a href='javascript:test(1);'><input type='button' value='Write'/></a>
+		<a href='javascript:test(0);'><input type='button' value='Read'/></a>
 	
 	
 	</body>
