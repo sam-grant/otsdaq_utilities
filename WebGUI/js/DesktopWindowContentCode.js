@@ -158,7 +158,7 @@ DesktopContent.init(); //initialize handlers
 //  </ROOT>
 //
 // Where CookieCode and DisplayName can change upon every server response
-DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler) {
+DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler, sequence) {
 	
 	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1") //do nothing because cookie code invalid
 		return;
@@ -171,10 +171,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
         if (req.readyState==4) {  //when readyState=4 return complete, status=200 for success, status=400 for fail
 	        if(req.status==200)
 			{
-	        	//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+	        	Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
 	        	
                 DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
-                
+               
 				//check if failed due to cookieCode and go to login prompt
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) {
 					alert("Request failed do to insufficient account permissions."); return;
@@ -189,30 +189,30 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 					alert("Login has expired.");
                     return;
 				}
-                    
-                //handle cookie code mailbox
-                DesktopContent.lastCookieCode = DesktopContent.getXMLValue(req,'CookieCode');
-                if (typeof DesktopContent.lastCookieCode == 'undefined') { //clear req, server failed
-                    Debug.log("Request Failed - Missing Cookie in Response",Debug.HIGH_PRIORITY);
-                    if(DesktopContent._needToLoginMailbox)
-                    {
-                    	DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
-                        req = 0;
-        				alert('Server Failure, alert ots admins');
-                    }
+                if(!sequence){    
+	                //handle cookie code mailbox
+	                DesktopContent.lastCookieCode = DesktopContent.getXMLValue(req,'CookieCode');
+	                if (typeof DesktopContent.lastCookieCode == 'undefined') { //clear req, server failed
+	                    Debug.log("Request Failed - Missing Cookie in Response",Debug.HIGH_PRIORITY);
+	                    if(DesktopContent._needToLoginMailbox)
+	                    {
+	                    	DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
+	                        req = 0;
+	        				alert('Server Failure, alert ots admins');
+	                    }
+	                }
+	                else { //check if should update cc mailbox
+	                    
+	                    //check twice to handle race conditions with other content code
+	                    if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent.lastCookieTime) //then current code is newer
+	                    {
+	                        DesktopContent._updateTimeMailbox.innerHTML = DesktopContent.lastCookieTime;
+	                        DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent.lastCookieCode;
+	                        
+	                        setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+	                    }
+	                }
                 }
-                else { //check if should update cc mailbox
-                    
-                    //check twice to handle race conditions with other content code
-                    if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent.lastCookieTime) //then current code is newer
-                    {
-                        DesktopContent._updateTimeMailbox.innerHTML = DesktopContent.lastCookieTime;
-                        DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent.lastCookieCode;
-                        
-                        setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
-                    }
-                }
-                
 			}
 			else {
 				Debug.log("Request Failed - Bad Address",Debug.HIGH_PRIORITY);
@@ -225,10 +225,16 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 			if(returnHandler) returnHandler(req, reqIndex);
 		}
     }
-    
-	var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-    data = "CookieCode="+cc+"&"+data;
-    
+	
+    if(!sequence)
+    {        
+		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
+	    data = "CookieCode="+cc+"&"+data;
+    }
+    else
+    {   	
+	    data = "sequence="+sequence+"&"+data;
+    }
     var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
 
     requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;

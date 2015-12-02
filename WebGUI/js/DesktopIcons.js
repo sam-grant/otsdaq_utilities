@@ -44,7 +44,8 @@ else {
 		var _defaultIconWidth = 64;
 		var _defaultIconHeight = 64;   
 		var _defaultIconTextWidth = 90; 
-		var _defaultIconTextHeight = 32;     
+		var _defaultIconTextHeight = 32; 
+		var _permissions = 0;
         
         var _iconsElement;
         
@@ -134,17 +135,68 @@ else {
             Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
             
             this.iconsElement.innerHTML = ""; //clear current icons
-	    _numOfIcons = 0;
-
-           	for(var i=0;i<this.iconAlts.length;++i) //add icons
+            _numOfIcons = 0;
+            ////////////
+            
+		    if(Desktop.desktop.sequence == "NoSecurity") //This is satisfied for No Security on OTS
+		    {
+		    	console.log("NoSecurity");
+		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+	      		_permissions = 255;
+		    	return;
+	      	}
+		    else if(Desktop.desktop.sequence) //This is satisfied for OtsWizardConfiguration
+			{
+		    	console.log("OtsWizardConfiguration");
+		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.sequence, iconRequestHandler);
+	      		_permissions = 1;
+		    	return;
+			}
+	      	else //This is satisfied for Digest Access Authorization on OTS | the default value if the security settings are not found
+	      	{
+		    	console.log("default");
+		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+		    	_permissions = permissions;
+	      		return;
+	      	}
+		    ////////////
+           	/*for(var i=0;i<this.iconAlts.length;++i) //add icons
            		if(permissions >= this.iconPermissionsNeeded[i])
-           			this.addIcon(this.iconAlts[i],this.iconTitles[i],this.iconLinks[i],this.iconUniques[i],this.iconImages[i]);           
+           			this.addIcon(this.iconAlts[i],this.iconTitles[i],this.iconLinks[i],this.iconUniques[i],this.iconImages[i]);    */       
+      	}
+      	
+      	//_iconRequestHandler
+      	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
+      	var iconRequestHandler = function(req){
+      		//TODO make permissions work
+      		if(Desktop.desktop.sequence){
+      			var iconArray = req.responseText.split(","); 
+
+      		}else
+      		{
+          		var iconArray = Desktop.getXMLValue(req,"iconList"); 
+          		console.log("icon Array unsplit: " + iconArray);
+          		iconArray = iconArray.split(","); 
+          		console.log("icon Array split: " + iconArray);
+
+      		}
+      		console.log(_permissions);
+     		console.log(iconArray);
+      		var numberOfIconFields = 6;
+     		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
+      		{
+           		if(_permissions >= iconArray[i+3])
+           			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2],iconArray[i+4]);       
+      		}
+     		
+     		_permissions = 0;
       	}
       	
       	// this.addIcon ~~
       	//	adds an icon with alt text, subtext wording underneath and image icon (if picfn defined)
       	this.addIcon = function(alt, subtext, linkurl, uniqueWin, picfn) {
       	      		
+      		console.log("this.addIcon");
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 			
@@ -167,7 +219,7 @@ else {
 			div.style.marginLeft = (_defaultIconTextWidth-_defaultIconWidth-2)/2 + "px"; //extra 2 for border
 			
 			//define icon content
-			if(picfn){ //if icon image			
+			if(picfn != "0"){ //if icon image			
 				div.style.backgroundImage = "url(../images/iconImages/" + picfn+")";
 				
 				var div2 = document.createElement("div");

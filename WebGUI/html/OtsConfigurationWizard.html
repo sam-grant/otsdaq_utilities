@@ -21,26 +21,12 @@
 		
 		<script>
 			var urnLid = ((window.location.search.substr(1)).split('='))[1];
-			var securityType = ((window.location.search.substr(1)).split('='))[3];
-			Debug.log("securityType: " +  securityType);
 			Debug.log("Application URN-LID #" + urnLid);
 
 			function init() {
-				var param;
-				if(securityType == "DigestAccessAuthentication")
-					Desktop.init(undefined);
-				else
-				{
-					Desktop.init(securityType);
-					Desktop.desktop.icons.resetWithPermissions();
-				}
-			}			
-			
-			function newWindow() {
-           	 	Desktop.desktop.addWindow("FecName","Subname","http://rulinux01.dhcp.fnal.gov:1983/urn:xdaq-application:lid=253/");
-                //Desktop.desktop.addWindow("Name","Subname","/WebPath/html/Supervisor.html");
-			}
-            
+				Desktop.init(window.parent.window.location.pathname.split("/")[2]);
+				Desktop.desktop.icons.resetWithPermissions(1);
+			}			            
         </script>
 		
 	</head>	
