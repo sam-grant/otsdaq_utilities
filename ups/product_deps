@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v1_00_00
+parent otsdaq_utilities	v1_00_01
 defaultqual	e7:s15
 
 # These optional lines define the installed directories where
@@ -18,9 +18,9 @@ fcldir      -
 
 #
 product		 version	optional
-otsdaq           v1_00_00       
+otsdaq           v1_00_01       
 xdaq             v11_2_7
-cetbuildtools    v4_12_05        -       only_for_build
+cetbuildtools    v4_17_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
