@@ -40,12 +40,12 @@
 
 
 #define ROOT_BROWSER_PATH			getenv("ROOT_BROWSER_PATH")
-#define ROOT_DISPLAY_CONFIG_PATH		getenv("ROOT_DISPLAY_CONFIG_PATH")
+#define ROOT_DISPLAY_CONFIG_PATH	getenv("ROOT_DISPLAY_CONFIG_PATH")
 
 #define LIVEDQM_DIR 				std::string("LIVE DQM")
-#define PRE_MADE_ROOT_CFG_DIR 			std::string("Pre-made Views")
+#define PRE_MADE_ROOT_CFG_DIR 		std::string("Pre-made Views")
 
-#define PRE_MADE_ROOT_CFG_FILE_EXT		std::string(".rcfg")
+#define PRE_MADE_ROOT_CFG_FILE_EXT	std::string(".rcfg")
 
 #define ROOT_VIEWER_PERMISSIONS_THRESHOLD 	100
 
@@ -59,12 +59,12 @@ XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 //========================================================================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
         xdaq::Application        (s),
-        SOAPMessenger          (this),
-        RunControlStateMachine ("VisualSupervisor"),
+        SOAPMessenger            (this),
+        RunControlStateMachine   ("VisualSupervisor"),
         theRemoteWebUsers_       (this),
         theConfigurationManager_ (new ConfigurationManager),//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
         theDataManager_          (theConfigurationManager_),
-        loadedRunNumber_	 (-1)
+        loadedRunNumber_	     (-1)
 {
 
     xgi::bind(this, &VisualSupervisor::Default, "Default" );
