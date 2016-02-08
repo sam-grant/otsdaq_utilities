@@ -13,6 +13,7 @@ cet_make(LIBRARY_NAME Visualization
 		 ConfigurationInterface
 		 XmlUtilities
 		 SOAPUtilities
+         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 

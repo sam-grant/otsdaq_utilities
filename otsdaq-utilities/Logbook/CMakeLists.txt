@@ -6,6 +6,7 @@ cet_make(LIBRARY_NAME Logbook
 		 SOAPUtilities
 		 CgiDataUtilities
 		 WebUsersUtilities
+         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 install_headers()
