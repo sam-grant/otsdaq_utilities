@@ -105,8 +105,16 @@ void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output
     	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
     }
 
+    //an icon is 6 fields.. give comma-separated
+    	//0 - alt = text for mouse over
+    	//1 - subtext = text below icon
+    	//2 - uniqueWin = if true, only one window is allowed, else multiple instances of window
+    	//3 - permissions = security level needed to see icon
+    	//4 - picfn = icon image filename
+    	//5 - linkurl = url of the window to open
 
-    *out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/iconEditor.html,Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/editSecurity.html";
+    *out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/iconEditor.html" <<
+    		",Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/editSecurity.html";
     return;
 }
 //========================================================================================================================
