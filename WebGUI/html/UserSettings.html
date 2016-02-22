@@ -242,7 +242,7 @@
 				}
 				
 				//get current settings from server
-				DesktopContent.XMLHttpRequest("request?RequestType=getSettings&accounts=1", "", settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", "", settingsRequestHandler);				
 			}
 			
 			//called to extract color string into form
@@ -666,7 +666,7 @@
 				data += "layout=" + layoutStr + "&";
 				
 				Debug.log("Settings Save Preferences -- " + data);
-				DesktopContent.XMLHttpRequest("request?RequestType=setSettings", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", data, settingsRequestHandler);
 			}
 			
 			function defaultColors() {
@@ -744,7 +744,7 @@
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 				
 			}
 			
@@ -775,7 +775,7 @@
 				_triedNewAccount = true;
 				_oldAccountSize = _accountsArray[0].length; //save to give feedback on success
 				
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 				
 			}
 			function reallyDelete() {	
@@ -786,7 +786,7 @@
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
 				data += "displayname=" + _accountsArray[1][_theDeleteIndex].getAttribute('value') + "&";
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 			}
 			
 			function lockToUsername(i, lock) {
@@ -795,7 +795,7 @@
 				var data = "";
 				data += "lock=" + (lock?"1":"0") + "&";
 				data += "username=" + _accountsArray[0][i].getAttribute('value');
-				DesktopContent.XMLHttpRequest("request?RequestType=setUserWithLock&accounts=1", data, settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1", data, settingsRequestHandler);				
 			}
 		</script>
 		

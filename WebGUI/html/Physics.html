@@ -278,7 +278,7 @@
 				document.body.onmouseup = handleMouseUp;
 
 				//get state machine from server
-				DesktopContent.XMLHttpRequest("request?RequestType=getStateMachine", "", smRequestHandler);	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);	
 				
 				window.setTimeout(redrawPhysics,1000); //for firefox drawing glitch
 				window.setTimeout(redrawPhysics,5000); //for firefox drawing glitch
@@ -343,7 +343,7 @@
                 switch(_parameterInitCount)
                 {
                 case 0: //ConfigurationAlias
-                    DesktopContent.XMLHttpRequest("request?RequestType=getAliasList", "", initTransitionParameters);	
+                    DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", initTransitionParameters);	
                     break;
                 default:;
                 }
@@ -412,7 +412,7 @@
 			    
 			   // _statusMonitor.subscribeTo("StateMachineStatus");			    
 
-				DesktopContent.XMLHttpRequest("request?RequestType=getCurrentState", "", currStateRequestHandler);	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", currStateRequestHandler);	
 			    
 			}
 
@@ -507,7 +507,7 @@
                     //if first time, start checking for complete with server
     			    if(_transitionProgress == -1)
     			    {                       	
-    			    	DesktopContent.XMLHttpRequest("request?RequestType=getCurrentState", "", handleCheckTransitionProgress);	
+    			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);	
     			    }
 
                     //Debug.log("Physics _transitionProgress to state " + _transitionProgress);
@@ -529,7 +529,7 @@
                             if(_transitionResultingState != _stateNames[_currState]) 
                             {
                             	alert("Error! State result not anticipated. Attempting to re-align with server.");
-                				DesktopContent.XMLHttpRequest("request?RequestType=getStateMachine", "", smRequestHandler);                            	
+                				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);                            	
                             }
                             _selectedTransition = -1;
                             _context.clearRect(0, 0, _canvas.width, _canvas.height);
@@ -598,7 +598,7 @@
 		    	_progressBar.style.width = _transitionProgress + "%";
             	
             	if(_transitionProgress < 100)			    	
-			    	DesktopContent.XMLHttpRequest("request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
+			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
             }
             
             //handleMouseMove ~~
