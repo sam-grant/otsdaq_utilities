@@ -88,7 +88,7 @@ else {
 		    if(Desktop.desktop.sequence == "NoSecurity") //This is satisfied for No Security on OTS
 		    {
 		    	console.log("NoSecurity");
-		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
 	      		_permissions = 255;
 		    	return;
 	      	}
@@ -102,7 +102,7 @@ else {
 	      	else //This is satisfied for Digest Access Authorization on OTS | the default value if the security settings are not found
 	      	{
 		    	console.log("default");
-		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
+		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
 		    	_permissions = permissions;
 	      		return;
 	      	}       

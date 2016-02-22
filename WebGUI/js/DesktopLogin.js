@@ -305,7 +305,7 @@ else {
 			if ((code != null && code != "") &&
 				(_user != null && _user != "")) {
 				//if cookie found, submit cookieCode and jumbled user to server to check if valid					
-				Desktop.XMLHttpRequest("loginRequest?RequestType=checkCookie","uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,_handleCookieCheck);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=checkCookie","uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,_handleCookieCheck);
 			}
 			else {					
 				Debug.log("No cookie found",Debug.LOW_PRIORITY);
@@ -352,7 +352,7 @@ else {
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("loginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
 	      	}
 		}
 		
@@ -393,7 +393,7 @@ else {
                 
 				//try again
 				_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("loginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 				Debug.log("UUID: " + _uid);
 				return;
 			} 
@@ -470,14 +470,14 @@ else {
        		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.HIGH_PRIORITY);  
        		
        		if(_cookieCode && !_killLogoutInfiniteLoop)
-       			Desktop.XMLHttpRequest("loginRequest?RequestType=logout"); //server logout
+       			Desktop.XMLHttpRequest("LoginRequest?RequestType=logout"); //server logout
 			_deleteCookies(); //local logout			
 			
        		//start new session
 			if(!_killLogoutInfiniteLoop)
 			{
 	     		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("loginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
 				Debug.log("UUID: " + _uid)
 			}
 			
@@ -547,7 +547,7 @@ else {
        		if(document.getElementById('loginInputRememberMe').checked) _saveUsernameCookie(); 
        		else _deleteUsernameCookie();
        		
-       		Desktop.XMLHttpRequest("loginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
+       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
        			+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),_handleLoginAttempt);        		
 		}
 			
@@ -573,7 +573,7 @@ else {
 		
 		this.activeSessionLogoutOption = function() {
 			Debug.log("Desktop activeSessionLogoutOption");
-       		Desktop.XMLHttpRequest("loginRequest?RequestType=logout","LogoutOthers=1"); //server logout of other active sessions
+       		Desktop.XMLHttpRequest("LoginRequest?RequestType=logout","LogoutOthers=1"); //server logout of other active sessions
 			_closeLoginPrompt(1); //clear login prompt - pass 1 just so it will check new username
 		
 		}
@@ -599,7 +599,7 @@ else {
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
 		_uid = _getUniqueUserId();
-		if(enabled)	Desktop.XMLHttpRequest("loginRequest?RequestType=sessionId",
+		if(enabled)	Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 						"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 		Debug.log("UUID: " + _uid);
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);

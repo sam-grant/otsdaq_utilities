@@ -193,7 +193,7 @@ Desktop.createDesktop = function(sequence) {
 		if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
 		{
 			_sysMsgCounter = 0; //reset    		
-			Desktop.XMLHttpRequest("request?RequestType=getSystemMessages","",_handleSystemMessages);
+			Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
 		}
 	}
 	
