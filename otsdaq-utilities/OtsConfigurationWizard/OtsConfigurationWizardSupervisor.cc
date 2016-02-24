@@ -5,6 +5,7 @@
 #include <xdaq/NamespaceURI.h>
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq-core/WebUsersUtilities/WebUsers.h"
 
 #include <iostream>
 #include <fstream>
@@ -27,8 +28,6 @@ OtsConfigurationWizardSupervisor::OtsConfigurationWizardSupervisor(xdaq::Applica
     xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           "iconEditor");
     xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       "editSecurity");
     init();
-
-
 
 }
 
@@ -203,33 +202,41 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 	    std::string securityFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/security.dat";
 
 
-
-
+	    //SECURITY CHECK START ****
 	    if(securityCode_.compare(submittedSequence) != 0)
 	    {
 	    	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 	    	return;
-	    }else
+	    }
+	    else
 	    {
 	    	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
 	    }
+	    //SECURITY CHECK END ****
+
 
 
 	    if(submittedSecurity != "")
 	    {
-	    	std::cout << "Selection exists!" << std::endl;
-	    	std::cout << submittedSecurity << std::endl;
+	    	std::cout << __COUT_HDR__ << "Selection exists!" << std::endl;
+	    	std::cout << __COUT_HDR__ <<  submittedSecurity << std::endl;
 
-	    	std::ofstream writeSecurityFile;
+	    	if (strcmp(submittedSecurity.c_str(), "ResetSecurityUserData") == 0)
+			{
+				WebUsers::deleteUserData();
+			}
+	    	else
+	    	{
+				std::ofstream writeSecurityFile;
 
-	    	writeSecurityFile.open(securityFileName.c_str());
-	        if(writeSecurityFile.is_open())
-	        	writeSecurityFile << submittedSecurity;
-	        else
-	        	std::cout << __COUT_HDR__ << "Error writing file!" << std::endl;
+				writeSecurityFile.open(securityFileName.c_str());
+				if(writeSecurityFile.is_open())
+					writeSecurityFile << submittedSecurity;
+				else
+					std::cout << __COUT_HDR__ << "Error writing file!" << std::endl;
 
-
-	        writeSecurityFile.close();
+				writeSecurityFile.close();
+	    	}
 	    }
 
 
@@ -249,7 +256,7 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 	    }
 	    if(securityFile.is_open())
 	    {
-	    	std::cout << "Opened File: " << securityFileName << std::endl;
+	    	std::cout << __COUT_HDR__ << "Opened File: " << securityFileName << std::endl;
 	        while(std::getline(securityFile, line))
 	    	{
 	        	security += line;

@@ -39,8 +39,8 @@ else {
 		//create private members variables ----------------------
 		//------------------------------------------------------------------
 		
-		var _DEFAULT_SESSION_STRING_LEN = 256;
-		var _DEFAULT_COOKIE_STRING_LEN = 256;
+		var _DEFAULT_SESSION_STRING_LEN = 512;
+		var _DEFAULT_COOKIE_STRING_LEN = 512;
 		var _DEFAULT_COOKIE_DURATION_DAYS = 1;
 		var _DEFAULT_REMEMBER_ME_DURATION_DAYS = 30;
 		var _DEFAULT_PASSWORD_MIN_LEN = 4;
@@ -58,6 +58,7 @@ else {
 		var _cookieTime = 0;
 		var _sessionId = 0; 
 		var _uid = 0;
+		var _badSessionIdCount = 0;
 		
 		var _areLoginInputsValid = false;
 		var _killLogoutInfiniteLoop = false;
@@ -390,14 +391,20 @@ else {
                 	_loginPrompt();
                 	return; //do nothing, because server failed
                 }
-                
 				//try again
 				_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+				
 				Debug.log("UUID: " + _uid);
+				++_badSessionIdCount;
+				if (_badSessionIdCount < 10)
+	                Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+				else
+					alert("Cannot establish session ID - failed 10 times");
+				
 				return;
 			} 
-			
+			_badSessionIdCount = 0;
+
 			//successfully received session ID			
 			_sessionId = req.responseText;			
 			_checkCookieLogin();
