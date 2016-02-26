@@ -175,7 +175,12 @@ function showVisualSelection(){
 
 function confirm(){
 	if(prompt("Are you sure? This will delete all use data. Type 15091420 to continue")==15091420)
-		setSecurity('ResetSecurityUserData');
+		if(confirm("I know exactly what I'm doing.")){
+			setSecurity('ResetSecurityUserData');
+		}
+		else
+			alert("Mission aborted!");
+
 	else
 		alert("Mission aborted!");
 }
