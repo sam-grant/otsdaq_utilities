@@ -279,7 +279,7 @@
 				if(serverAlert) alert("Message from Server: " + serverAlert);
 
 				//get username with lock, "" means no one has lock
-				_usernameWithLock = DesktopContent.getXMLValue(req,"username_with_lock");	
+				_usernameWithLock = DesktopContent.getXMLValue(req,"username_with_lock");				
 				
 				//pass preferences to Desktop	but remove user accounts from message to Desktop
 				var uaStart = req.responseText.indexOf("<users_accounts v"); 

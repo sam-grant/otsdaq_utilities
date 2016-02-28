@@ -330,7 +330,7 @@ else {
 				_applyUserPreferences(req);
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
-				if(activeSessionCount)
+				if(activeSessionCount && _loginDiv) //only if the login div exists
 				{
 					Debug.log("Found other active sessions: " + activeSessionCount,Debug.LOW_PRIORITY);			
 					_offerActiveSessionOptions(activeSessionCount);
@@ -349,7 +349,7 @@ else {
 				else
 					_keptFeedbackText = "ots Server failed.";
 				_keepFeedbackText = true;
-	      		for(var i=1;i<3;++i) document.getElementById('loginInput'+i).value = ""; //clear input boxes
+	      		for(var i=1;i<3;++i) if(document.getElementById('loginInput'+i)) document.getElementById('loginInput'+i).value = ""; //clear input boxes
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
@@ -593,8 +593,7 @@ else {
 		//handle class construction ----------------------
 		//------------------------------------------------------------------
 		
-		
-		this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login			
+				
 			
 		//initially 
 			//submit unique uid and get session ID from server using GetSessionId request
@@ -606,8 +605,14 @@ else {
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
 		_uid = _getUniqueUserId();
-		if(enabled)	Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+		if(enabled)	
+		{
+			this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
+			Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 						"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+		}
+		else
+       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
 		Debug.log("UUID: " + _uid);
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);
 	}	
