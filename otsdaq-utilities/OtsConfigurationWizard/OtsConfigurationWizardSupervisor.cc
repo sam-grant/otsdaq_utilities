@@ -10,6 +10,9 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <thread>         // std::this_thread::sleep_for
+#include <chrono>         // std::chrono::seconds
+
 using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
@@ -58,10 +61,34 @@ void OtsConfigurationWizardSupervisor::generateURL()
     	securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
     }
 
-	std::cout << "****************************************************************"
-			  << "\n" << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
-  			  << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_
-			  << "\n****************************************************************" << std::endl;
+
+	//////////////////////////////////////////////////////////////////////
+	//display otsdaq main url for user convenience (e.g. for 10 seconds)
+	pid_t pid = fork();
+	if (pid == 0)
+	{
+		// child process
+		int i = 0;
+		for (; i < 5; ++i)
+		{
+			std::this_thread::sleep_for (std::chrono::seconds(2));
+			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
+		  			  << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
+			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
+		}
+		exit(0); //done
+	}
+	else if (pid < 0)
+	{
+		// fork failed
+		std::cout << __COUT_HDR__ << "fork() failed!" << std::endl;
+		exit(0);
+	}
+	//parent process continues
+	//////////////////////////////////////////////////////////////////////
 
     return;
 }

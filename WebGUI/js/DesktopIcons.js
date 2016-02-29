@@ -14,10 +14,10 @@
 
 
 if (typeof Debug == 'undefined') 
-	console.log('ERROR: Debug is undefined! Must include Debug.js before Desktop.js');
+	Debug.log('ERROR: Debug is undefined! Must include Debug.js before Desktop.js');
 	
 if (typeof Desktop == 'undefined') 
-	console.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
+	Debug.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
 else {
 
 		
@@ -83,50 +83,50 @@ else {
             
             this.iconsElement.innerHTML = ""; //clear current icons
             _numOfIcons = 0;
+            _permissions = permissions;
             ////////////
-            
-		    if(Desktop.desktop.sequence == "NoSecurity") //This is satisfied for No Security on OTS
-		    {
-		    	console.log("NoSecurity");
+
+	    	Debug.log("Desktop Security: " + Desktop.desktop.security);
+	    	
+		    if(!Desktop.desktop.security || 
+		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
+					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
 		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
-	      		_permissions = 255;
 		    	return;
 	      	}
-		    else if(Desktop.desktop.sequence) //This is satisfied for OtsWizardConfiguration
+		    else //unknown security, assume it is the sequence for OtsWizardConfiguration
 			{
-		    	console.log("OtsWizardConfiguration");
-		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.sequence, iconRequestHandler);
+		    	Debug.log("OtsWizardConfiguration");
+		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.security, iconRequestHandler);
 	      		_permissions = 1;
 		    	return;
 			}
-	      	else //This is satisfied for Digest Access Authorization on OTS | the default value if the security settings are not found
-	      	{
-		    	console.log("default");
-		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
-		    	_permissions = permissions;
-	      		return;
-	      	}       
+	      	 
       	}
       	
       	//_iconRequestHandler
       	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
       	var iconRequestHandler = function(req) {
-      		
-      		if(Desktop.desktop.sequence && Desktop.desktop.sequence != "NoSecurity")
-      		{ 
-      			var iconArray = req.responseText.split(","); 
 
-      		}
+      		var iconArray;
+		    if(!Desktop.desktop.security || 
+		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
+					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
+		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
+				Debug.log("icon Array unsplit: " + iconArray);
+				iconArray = iconArray.split(","); 
+			}
       		else
-      		{
-          		var iconArray = Desktop.getXMLValue(req,"iconList"); 
-          		console.log("icon Array unsplit: " + iconArray);
-          		iconArray = iconArray.split(","); 
-          		console.log("icon Array split: " + iconArray);
+      		{ 
+      			iconArray = req.responseText.split(","); 
       		}
+			Debug.log("icon Array split: " + iconArray);
+          		
       	
-      		console.log(_permissions);
-     		console.log(iconArray);
+      		Debug.log(_permissions);
+     		Debug.log(iconArray);
 
      	    //an icon is 6 fields.. give comma-separated
      	    	//0 - alt = text for mouse over
@@ -149,7 +149,7 @@ else {
       	//	adds an icon with alt text, subtext wording underneath and image icon (if picfn defined)
       	this.addIcon = function(alt, subtext, linkurl, uniqueWin, picfn) {
       	      		
-      		console.log("this.addIcon");
+      		Debug.log("this.addIcon");
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 			

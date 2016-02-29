@@ -125,6 +125,10 @@
 				color: #444444;			
 			}
 			
+			#jumpToAccounts {
+				width: 100%;
+			}
+			
 		</style>
 		
 		
@@ -454,6 +458,10 @@
 				displayAccounts();
 			}
 			
+			function launchConfigWizard() {	
+				DesktopContent.XMLHttpRequest("Request?RequestType=launchConfig");	//attempt to launch the config wizard at the server			
+			}
+			
 			function displayAccounts() {		
 			
 				Debug.log("Settings displayAccounts");
@@ -466,7 +474,8 @@
 				
 				if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
 				{
-					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";					
+					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";	
+					//FIXME for launching Wizard htmlStr += "<a href='javascript:launchConfigWizard()' style='color:#880000; float:right;'>Launch Config Wizard</a>";					
 					el.innerHTML = htmlStr;					
 				}
 				else

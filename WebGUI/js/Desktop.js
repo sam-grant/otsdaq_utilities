@@ -21,26 +21,29 @@ else if (typeof Globals == 'undefined')
 else
 	Desktop.desktop; //this is THE global desktop variable
 
-Desktop.init = function(sequence) {
+Desktop.init = function(security) {
 	
-	Desktop.desktop = Desktop.createDesktop(sequence);
+	Desktop.desktop = Desktop.createDesktop(security);
 	if(Desktop.desktop)
 		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
 }
 
+Desktop.SECURITY_TYPE_NONE = "NoSecurity";
+Desktop.SECURITY_TYPE_DIGEST_ACCESS = "DigestAccessAuthentication";
+		
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 //call createDesktop to create instance of a desktop
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-Desktop.createDesktop = function(sequence) {	
+Desktop.createDesktop = function(security) {	
 	
 	if (typeof Debug == 'undefined') return 0; //fail if debug not defined just to force consistent behavior
 	
 	if(false === (this instanceof Desktop.createDesktop)) {
 		//here to correct if called as "var v = Desktop.createDesktop();"
 		//	instead of "var v = new Desktop.createDesktop();"
-        return new Desktop.createDesktop(sequence);
+        return new Desktop.createDesktop(security);
     }
 	
 	//------------------------------------------------------------------
@@ -84,9 +87,8 @@ Desktop.createDesktop = function(sequence) {
 	this.dashboard;
 	this.login;    
 	this.icons;   
-	this.sequence = sequence;
 	this.checkMailboxTimer;
-	this.security = window.parent.window.location.pathname.split("/")[2];
+	this.security = security;
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
 
@@ -592,8 +594,9 @@ Desktop.createDesktop = function(sequence) {
 	this.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
 
 	//add login
-	this.login = _login = new Desktop.login(this.sequence?false:true); //pass true to enable login
-	_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
+	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
+	if(_login.loginDiv)
+		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
 	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
     

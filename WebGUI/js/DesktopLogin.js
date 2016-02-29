@@ -28,11 +28,11 @@ else {
 	//define Desktop.login to return dashboard class	
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
-	Desktop.login = function(enabled) {
+	Desktop.login = function() {
         if(false === (this instanceof Desktop.login)) {
 			//here to correct if called as "var v = Desktop.login();"
 			//	instead of "var v = new Desktop.login();"
-	        return new Desktop.login(enabled);
+	        return new Desktop.login();
 	    }
 	    
 	    //------------------------------------------------------------------
@@ -605,14 +605,16 @@ else {
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
 		_uid = _getUniqueUserId();
-		if(enabled)	
+		if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
 		{
 			this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
 			Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 						"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 		}
-		else
+		else if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	 //straight to login attempt for no security
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
+		//else //no login prompt at all
+		
 		Debug.log("UUID: " + _uid);
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);
 	}	
