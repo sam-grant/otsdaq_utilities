@@ -424,10 +424,17 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
     else if (Command == "getGeometry")
     {
         std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
+
+        //FIXME -- this crashes when the file doesn't exist!
         theDataManager_.load("Run1684.geo","Geometry");
+
+        std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
 
         DOMElement* geometryParent = xmldoc.addTextElementToData("geometry", "");
         const Visual3DShapes& shapes = theDataManager_.getVisual3DGeometry().getShapes();
+
+        std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
+
 
         DOMElement* objectParent;
         char str[40];

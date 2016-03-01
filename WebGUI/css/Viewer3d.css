@@ -1,31 +1,31 @@
 
-	#3dViewer-hudMouseOver * { 
+	#Viewer3d-hudMouseOver * { 
 		-webkit-user-select: 	none;
 		-moz-user-select: 		none;
 		user-select:			none;
 	}
 		
-	#3dViewer-hudMouseOver {
+	#Viewer3d-hudMouseOver {
 		padding: 5px;
 	}
 	
-	#3dViewer-hud {
+	#Viewer3d-hud {
 		background-color: rgb(70,70,70);	
 		border: 1px solid white;
 		border-radius: 5px;		
 		padding: 10px;	
 	}
 	
-	#3dViewer-hudEventNumberControls {
+	#Viewer3d-hudEventNumberControls {
 		display: none;
 		font-size: 12px;		
 	}
 
-	#3dViewer-hudRunNumberControls {
+	#Viewer3d-hudRunNumberControls {
 		font-size: 12px;		
 	}
 	
-	#3dViewer-hudRunNumberControls input[type=text] {
+	#Viewer3d-hudRunNumberControls input[type=text] {
 		-webkit-user-select: 	text;
 		-moz-user-select: 		text;
 		user-select:			text;	
