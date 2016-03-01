@@ -21,26 +21,29 @@ else if (typeof Globals == 'undefined')
 else
 	Desktop.desktop; //this is THE global desktop variable
 
-Desktop.init = function(sequence) {
+Desktop.init = function(security) {
 	
-	Desktop.desktop = Desktop.createDesktop(sequence);
+	Desktop.desktop = Desktop.createDesktop(security);
 	if(Desktop.desktop)
 		Debug.log("Desktop.desktop Initalized Successfully",Debug.LOW_PRIORITY);
 }
 
+Desktop.SECURITY_TYPE_NONE = "NoSecurity";
+Desktop.SECURITY_TYPE_DIGEST_ACCESS = "DigestAccessAuthentication";
+		
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 //call createDesktop to create instance of a desktop
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-Desktop.createDesktop = function(sequence) {	
+Desktop.createDesktop = function(security) {	
 	
 	if (typeof Debug == 'undefined') return 0; //fail if debug not defined just to force consistent behavior
 	
 	if(false === (this instanceof Desktop.createDesktop)) {
 		//here to correct if called as "var v = Desktop.createDesktop();"
 		//	instead of "var v = new Desktop.createDesktop();"
-        return new Desktop.createDesktop(sequence);
+        return new Desktop.createDesktop(security);
     }
 	
 	//------------------------------------------------------------------
@@ -84,9 +87,8 @@ Desktop.createDesktop = function(sequence) {
 	this.dashboard;
 	this.login;    
 	this.icons;   
-	this.sequence = sequence;
 	this.checkMailboxTimer;
-	this.security = window.parent.window.location.pathname.split("/")[2];
+	this.security = security;
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
 
@@ -135,7 +137,7 @@ Desktop.createDesktop = function(sequence) {
     //  check div mailboxes that are shared by window content code and take action if necessary
     //	check for settings change
 	var _checkMailboxes = function(win) {
-	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode()) return; //don't do things if not through login
+	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
 	    
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) {
@@ -191,8 +193,7 @@ Desktop.createDesktop = function(sequence) {
 	    //system messages check
 	    ++_sysMsgCounter;
 		if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
-		{
-			_sysMsgCounter = 0; //reset    		
+		{  		
 			Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
 		}
 	}
@@ -208,7 +209,9 @@ Desktop.createDesktop = function(sequence) {
 		Desktop.desktop.dashboard.displayUserLock(userLock);	
 		
 		var tmp = Desktop.getXMLValue(req,"systemMessages");
-	    if(!tmp) return; //did not find return string			 
+	    if(!tmp) return; //did not find return string		
+	    
+		_sysMsgCounter = 0; //reset system message counter to setup next request 		
 		
 	    //disallow repeats (due to broadcast messages hanging around)
     	//if(_lastSystemMessage == tmp) return;    	
@@ -592,8 +595,9 @@ Desktop.createDesktop = function(sequence) {
 	this.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD); //start timer for checking foreground window changes due to iFrame content code
 
 	//add login
-	this.login = _login = new Desktop.login(this.sequence?false:true); //pass true to enable login
-	_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
+	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
+	if(_login.loginDiv)
+		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
 	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
     

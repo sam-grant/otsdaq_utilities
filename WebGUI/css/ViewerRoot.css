@@ -1,12 +1,12 @@
 /* Interface stylesheet for Javascript ROOT Web Page. */
 	
-	#RootViewer-hudMouseOver * { 
+	#ViewerRoot-hudMouseOver * { 
 		-webkit-user-select: 	none;
 		-moz-user-select: 		none;
 		user-select:			none;
 	}
 	
-	#RootViewer-hud input[type='text'] {
+	#ViewerRoot-hud input[type='text'] {
 		-webkit-user-select: 	auto;
 		-moz-user-select: 		auto;
 		user-select:			auto;	
@@ -14,11 +14,11 @@
 		text-align: right;
 	}
 	
-	#RootViewer-hudMouseOver {
+	#ViewerRoot-hudMouseOver {
 		padding: 5px;
 	}
 	
-	#RootViewer-hud {
+	#ViewerRoot-hud {
 		background-color: rgba(70,70,70,0.8);	
 		border: 1px solid white;
 		border-radius: 5px;		
@@ -26,7 +26,7 @@
 		font-size: 14px;
 	}
 
-	#RootViewer-hudDirBrowser {
+	#ViewerRoot-hudDirBrowser {
 		overflow: auto; /*scroll auto;*/
 		width: 50px;
 		height: 50px;
@@ -37,21 +37,21 @@
     	white-space: nowrap;	
 	}
 	
-	#RootViewer-hudDirBrowser-header {
+	#ViewerRoot-hudDirBrowser-header {
 		font-size: 12px;
 		color: RGB(200,200,200);
 	}
 	
-	#RootViewer-hudDirBrowser a {
+	#ViewerRoot-hudDirBrowser a {
 		text-decoration: none;
 	}
 	
-	.RootViewer-hudDirBrowser-item {
+	.ViewerRoot-hudDirBrowser-item {
 		font-size: 14px;
 	}
 	
 
-	#RootViewer-hudDirBrowser input[type='text'] {
+	#ViewerRoot-hudDirBrowser input[type='text'] {
 		text-align: left;
 	}
 	

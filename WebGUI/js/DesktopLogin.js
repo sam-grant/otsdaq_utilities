@@ -28,11 +28,11 @@ else {
 	//define Desktop.login to return dashboard class	
 	////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////
-	Desktop.login = function(enabled) {
+	Desktop.login = function() {
         if(false === (this instanceof Desktop.login)) {
 			//here to correct if called as "var v = Desktop.login();"
 			//	instead of "var v = new Desktop.login();"
-	        return new Desktop.login(enabled);
+	        return new Desktop.login();
 	    }
 	    
 	    //------------------------------------------------------------------
@@ -138,7 +138,8 @@ else {
 			str += "<b><u>Welcome to ots!</u></b><br /><br />";
 			str += "<table><td align='right'><div id='Desktop-loginContent'></div></td></table></td></table>";
 			ldiv.innerHTML = str;
-			_loginDiv.appendChild(ldiv); //add centering elements to page
+			if(_loginDiv) _loginDiv.appendChild(ldiv); //add centering elements to page
+			else return; //abandon, no login element being displayed
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
@@ -323,6 +324,8 @@ else {
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
+			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
+				_user = _displayName;
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);
@@ -330,7 +333,7 @@ else {
 				_applyUserPreferences(req);
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
-				if(activeSessionCount)
+				if(activeSessionCount && _loginDiv) //only if the login div exists
 				{
 					Debug.log("Found other active sessions: " + activeSessionCount,Debug.LOW_PRIORITY);			
 					_offerActiveSessionOptions(activeSessionCount);
@@ -349,7 +352,7 @@ else {
 				else
 					_keptFeedbackText = "ots Server failed.";
 				_keepFeedbackText = true;
-	      		for(var i=1;i<3;++i) document.getElementById('loginInput'+i).value = ""; //clear input boxes
+	      		for(var i=1;i<3;++i) if(document.getElementById('loginInput'+i)) document.getElementById('loginInput'+i).value = ""; //clear input boxes
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
@@ -495,8 +498,9 @@ else {
 		// The public getCookieCode function does not actually check the cookie
 		// it is the server which controls if a cookieCode is still valid.
 		// This function just refreshes the cookie and returns the local cookieCode value.
-		this.getCookieCode = function() {
-			_setCookie(_cookieCode); //refresh cookies
+		// Note: should only refresh from user activity, not auto
+		this.getCookieCode = function(doNotRefresh) {
+			if(!doNotRefresh) _setCookie(_cookieCode); //refresh cookies
 			return _cookieCode;
 		}
         
@@ -593,8 +597,7 @@ else {
 		//handle class construction ----------------------
 		//------------------------------------------------------------------
 		
-		
-		this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login			
+				
 			
 		//initially 
 			//submit unique uid and get session ID from server using GetSessionId request
@@ -606,8 +609,16 @@ else {
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
 		_uid = _getUniqueUserId();
-		if(enabled)	Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+		if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
+		{
+			this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
+			Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 						"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+		}
+		else if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	 //straight to login attempt for no security
+       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
+		//else //no login prompt at all
+		
 		Debug.log("UUID: " + _uid);
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);
 	}	

@@ -19,7 +19,7 @@ ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception
         theRemoteWebUsers_(this)
 {
 
-    xgi::bind (this, &ChatSupervisor::Default,                "Default" );
+    xgi::bind (this, &ChatSupervisor::Default,              "Default" );
     xgi::bind (this, &ChatSupervisor::Chat,                	"Chat" );
 
     ChatLastUpdateIndex = 1; //skip 0
@@ -60,10 +60,10 @@ void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::ex
 //		Does not refresh cookie for automatic update checks.
 void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-    std::cout << __COUT_HDR__ << std::endl;
     cgicc::Cgicc cgi(in);
 
     std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
+    std::cout << __COUT_HDR__ << "Command: " << Command << std::endl;
 
     //Commands
     	//RefreshChat
@@ -79,7 +79,7 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions, "0", Command != "RefreshChat")) //only refresh cookie if not automatic refresh
 	{
-	    std::cout << __COUT_HDR__ << "Failed " << std::endl;
+	    std::cout << __COUT_HDR__ << "Failed login: " << cookieCode << std::endl;
 		*out << cookieCode;
 		return;
 	}
