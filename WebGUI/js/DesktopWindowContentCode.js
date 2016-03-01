@@ -171,7 +171,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
         if (req.readyState==4) {  //when readyState=4 return complete, status=200 for success, status=400 for fail
 	        if(req.status==200)
 			{
-	        	//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+	        	Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
 	        	
                 DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
                

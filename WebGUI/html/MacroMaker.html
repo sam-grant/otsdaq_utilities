@@ -10,49 +10,90 @@
 				background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);
 				overflow: auto;
 			}
+		
+		#fecList {
+		    padding:5px;	
+	    }	
+	    
+		#main {
+		    padding:5px;
+		}
+		
+		#history {
+		    padding:5px;
+		}
+		
+		#macroLib {
+		    padding:5px;
+		}
+		
+		#instruction {
+		    padding:5px;
+		}
+		
+		.mainBlock {
+			position:absolute;
+		}
+	
 			
-					
 		</style>
 
 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 
 
 
 		<script>		
-						
-				
-			//functions:			
-				//init()		
-			
-			
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-			
-			//init called once body has loaded
-			function init() {					
-							
-				Debug.log("MacroMaker init");
-								
-				
-			}
 			
 		</script>
 
 	</head>
 
 
-	<body onload='Javascript:init();'>
-
-		<h1>MacroMaker</h1>
+	<body onload='Macromaker:init();'>
 	
-		<div id='calsDiv'></div>
+	    <div class='mainBlock' id='fecList'>
+		    <h3>List of FECS</h3>
+			FEC1<br>
+			FEC2<br>
+			FEC3
+		</div>
 		
-		<hr width='60%' />
+		<div class='mainBlock' id='macroLib'>
+		    <h3>Macro Library</h3>
+			MAC1<br>
+			MAC2<br>
+			MAC3
+		</div>
 		
-		<div id='statusDiv'></div>
+		<div class='mainBlock' id='main'>
+			<div id="nav">
+			<p><small>Manual Commands<a style="margin-left:15px" href=""><u>Macro Maker</u></a></small></p>
+		    </div>
+	        <h3>Manual Commands</h3>
+	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" /><button onclick="enterAddress()" style="color: black">Enter</button></p>
+	        <div id="output1">Please enter an address.</div>
+	       
+	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px"/><button onclick="enterData()" style="color: black">Enter</button></p>
+	        <div id="output2">Please enter your data.</div>
+	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" style="color: black" >Write</button></p>
+		</div>
+		
+		<div class='mainBlock' id='instruction'>
+		  <h3>Instructions</h3>
+          <p>To read or write:<br>1. Select one or more FECs from the list of FECs;
+          <br>2. Enter the target address above. If you choose to write, you also need to enter the data;
+          <br>3. Select either "Write" or "Read" to finish your manual command.
+		</div>
+		
+		<div class='mainBlock' id='history'>
+		   <h3>Command History</h3>
+           <div id="historyContent" style="overflow:scroll;padding:5px;">Scroll to see the history of commands. Click to rerun. <br></div>
+		</div>
+	
 
 
 	</body>
