@@ -138,7 +138,8 @@ else {
 			str += "<b><u>Welcome to ots!</u></b><br /><br />";
 			str += "<table><td align='right'><div id='Desktop-loginContent'></div></td></table></td></table>";
 			ldiv.innerHTML = str;
-			_loginDiv.appendChild(ldiv); //add centering elements to page
+			if(_loginDiv) _loginDiv.appendChild(ldiv); //add centering elements to page
+			else return; //abandon, no login element being displayed
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
@@ -323,6 +324,8 @@ else {
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
+			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
+				_user = _displayName;
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);
@@ -495,8 +498,9 @@ else {
 		// The public getCookieCode function does not actually check the cookie
 		// it is the server which controls if a cookieCode is still valid.
 		// This function just refreshes the cookie and returns the local cookieCode value.
-		this.getCookieCode = function() {
-			_setCookie(_cookieCode); //refresh cookies
+		// Note: should only refresh from user activity, not auto
+		this.getCookieCode = function(doNotRefresh) {
+			if(!doNotRefresh) _setCookie(_cookieCode); //refresh cookies
 			return _cookieCode;
 		}
         

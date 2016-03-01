@@ -137,7 +137,7 @@ Desktop.createDesktop = function(security) {
     //  check div mailboxes that are shared by window content code and take action if necessary
     //	check for settings change
 	var _checkMailboxes = function(win) {
-	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode()) return; //don't do things if not through login
+	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
 	    
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) {
@@ -193,8 +193,7 @@ Desktop.createDesktop = function(security) {
 	    //system messages check
 	    ++_sysMsgCounter;
 		if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
-		{
-			_sysMsgCounter = 0; //reset    		
+		{  		
 			Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
 		}
 	}
@@ -210,7 +209,9 @@ Desktop.createDesktop = function(security) {
 		Desktop.desktop.dashboard.displayUserLock(userLock);	
 		
 		var tmp = Desktop.getXMLValue(req,"systemMessages");
-	    if(!tmp) return; //did not find return string			 
+	    if(!tmp) return; //did not find return string		
+	    
+		_sysMsgCounter = 0; //reset system message counter to setup next request 		
 		
 	    //disallow repeats (due to broadcast messages hanging around)
     	//if(_lastSystemMessage == tmp) return;    	
