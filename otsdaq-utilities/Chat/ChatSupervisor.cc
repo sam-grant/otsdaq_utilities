@@ -60,7 +60,7 @@ void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::ex
 //		Does not refresh cookie for automatic update checks.
 void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-    //std::cout << __COUT_HDR__ << std::endl;
+    std::cout << __COUT_HDR__ << std::endl;
     cgicc::Cgicc cgi(in);
 
     std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
@@ -79,6 +79,7 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions, "0", Command != "RefreshChat")) //only refresh cookie if not automatic refresh
 	{
+	    std::cout << __COUT_HDR__ << "Failed " << std::endl;
 		*out << cookieCode;
 		return;
 	}
