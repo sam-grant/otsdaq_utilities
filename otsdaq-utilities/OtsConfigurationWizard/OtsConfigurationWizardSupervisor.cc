@@ -18,6 +18,7 @@ using namespace ots;
 
 
 #define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA")) + "/OtsWizardData/security.dat"
+#define ICON_FILE_NAME 			std::string(getenv("SERVICE_DATA")) + "/OtsWizardData/iconList.dat";
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
@@ -158,7 +159,7 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     cgicc::Cgicc cgi(in);
     std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
     std::string submittedIconList = CgiDataUtilities::postData(cgi, "iconList");
-    std::string iconFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/iconList.dat";
+    std::string iconFileName = ICON_FILE_NAME;
 
 
 
