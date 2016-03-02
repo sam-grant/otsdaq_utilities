@@ -35,6 +35,11 @@
 //		-DesktopContent.getXMLValue(req, name)
 //			... to get string value from XML server response. field name is needed.
 //
+//  ... or to get element by tag name 
+//		var els = req.responseXML.getElementsByTagName(name);
+//		for(var i=0;i<els.length;++i)
+//			Debug.log(els[i].getAttribute("value"));
+//
 //=====================================================================================
 
 var DesktopContent = DesktopContent || {}; //define Desktop namespace
@@ -168,7 +173,8 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
     if(progressHandler) req.upload.addEventListener("progress", progressHandler, false); //add progress listener if defined
         
 	req.onreadystatechange = function() {
-        if (req.readyState==4) {  //when readyState=4 return complete, status=200 for success, status=400 for fail
+        if (req.readyState==4) 
+        {  //when readyState=4 return complete, status=200 for success, status=400 for fail
 	        if(req.status==200)
 			{
 	        	Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
@@ -214,7 +220,8 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 	                }
                 }
 			}
-			else {
+			else 
+			{
 				Debug.log("Request Failed - Bad Address",Debug.HIGH_PRIORITY);
 				req = 0;
                 DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
@@ -258,8 +265,9 @@ DesktopContent.checkCookieCodeRace = function() {
 
 //returns xml entry value for an attribute
 DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
-	if(req && req.responseXML && req.responseXML.getElementsByTagName(name).length > 0)
-		return req.responseXML.getElementsByTagName(name)[0].getAttribute(attribute);
+	var els;
+	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
+		return els[0].getAttribute(attribute);
 	else
 		return undefined;
 }
