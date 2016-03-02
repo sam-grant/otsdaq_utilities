@@ -13,7 +13,11 @@
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 
+
 using namespace ots;
+
+
+#define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA")) + "/OtsWizardData/security.dat"
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
@@ -224,84 +228,79 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-	  std::cout << __COUT_HDR__ << std::endl;
-	    //if sequence doesn't match up -> return
-	    cgicc::Cgicc cgi(in);
-	    std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
-	    std::string submittedSecurity = CgiDataUtilities::postData(cgi, "selection");
-	    std::string securityFileName = std::string(getenv("OTSDAQDEMO_REPO")) + "/Data/ServiceData/OtsWizardData/security.dat";
+	std::cout << __COUT_HDR__ << std::endl;
+	//if sequence doesn't match up -> return
+	cgicc::Cgicc cgi(in);
+	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+	std::string submittedSecurity = CgiDataUtilities::postData(cgi, "selection");
+	std::string securityFileName = SECURITY_FILE_NAME;
 
 
-	    //SECURITY CHECK START ****
-	    if(securityCode_.compare(submittedSequence) != 0)
-	    {
-	    	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
-	    	return;
-	    }
-	    else
-	    {
-	    	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
-	    }
-	    //SECURITY CHECK END ****
-
-
-
-	    if(submittedSecurity != "")
-	    {
-	    	std::cout << __COUT_HDR__ << "Selection exists!" << std::endl;
-	    	std::cout << __COUT_HDR__ <<  submittedSecurity << std::endl;
-
-	    	if (strcmp(submittedSecurity.c_str(), "ResetSecurityUserData") == 0)
-			{
-				WebUsers::deleteUserData();
-			}
-	    	else
-	    	{
-				std::ofstream writeSecurityFile;
-
-				writeSecurityFile.open(securityFileName.c_str());
-				if(writeSecurityFile.is_open())
-					writeSecurityFile << submittedSecurity;
-				else
-					std::cout << __COUT_HDR__ << "Error writing file!" << std::endl;
-
-				writeSecurityFile.close();
-	    	}
-	    }
-
-
-	    //Always return the file
-	    std::ifstream securityFile;
-	    std::string line;
-		std::string security = "";
-		int lineNumber = 0;
-
-		securityFile.open(securityFileName.c_str());
-
-	    if(!securityFile)
-	    {
-			std::cout<<"Error opening file: "<< securityFileName << std::endl;
-			system("pause");
-			return;
-	    }
-	    if(securityFile.is_open())
-	    {
-	    	std::cout << __COUT_HDR__ << "Opened File: " << securityFileName << std::endl;
-	        while(std::getline(securityFile, line))
-	    	{
-	        	security += line;
-	    		lineNumber++;
-	    	}
-	    	//std::cout << __COUT_HDR__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
-
-	    	//Close file
-	        securityFile.close();
-	    }
-
-	    *out << security;
-
-	    return;
+	//SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		return;
+	}
+	else
+	{
+		std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
+	}
+	//SECURITY CHECK END ****
 
 
 
+	if(submittedSecurity != "")
+	{
+		std::cout << __COUT_HDR__ << "Selection exists!" << std::endl;
+		std::cout << __COUT_HDR__ <<  submittedSecurity << std::endl;
+
+		if (strcmp(submittedSecurity.c_str(), "ResetSecurityUserData") == 0)
+		{
+			WebUsers::deleteUserData();
+		}
+		else
+		{
+			std::ofstream writeSecurityFile;
+
+			writeSecurityFile.open(securityFileName.c_str());
+			if(writeSecurityFile.is_open())
+				writeSecurityFile << submittedSecurity;
+			else
+				std::cout << __COUT_HDR__ << "Error writing file!" << std::endl;
+
+			writeSecurityFile.close();
+		}
+	}
+
+
+	//Always return the file
+	std::ifstream securityFile;
+	std::string line;
+	std::string security = "";
+	int lineNumber = 0;
+
+	securityFile.open(securityFileName.c_str());
+
+	if(!securityFile)
+	{
+		std::cout<<"Error opening file: "<< securityFileName << std::endl;
+		system("pause");
+		return;
+	}
+	if(securityFile.is_open())
+	{
+		std::cout << __COUT_HDR__ << "Opened File: " << securityFileName << std::endl;
+		while(std::getline(securityFile, line))
+		{
+			security += line;
+			lineNumber++;
+		}
+		//std::cout << __COUT_HDR__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
+
+		//Close file
+		securityFile.close();
+	}
+
+	*out << security;
 }

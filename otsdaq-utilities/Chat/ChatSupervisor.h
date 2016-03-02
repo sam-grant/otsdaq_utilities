@@ -49,8 +49,8 @@ public:
 private:
 
 
-    SupervisorConfiguration              	theSupervisorsConfiguration_;
-    RemoteWebUsers						theRemoteWebUsers_;
+    SupervisorConfiguration    	theSupervisorsConfiguration_;
+    RemoteWebUsers				theRemoteWebUsers_;
 
     //"Chat History" database associations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     	//Maintain list of most recent chats and active display names
@@ -58,9 +58,9 @@ private:
     		//each new chat is a string/displayName pair and is given a running index (0 is skipped)
 	std::vector<std::string> 	ChatHistoryEntry_, ChatHistoryAuthor_;
 	std::vector<time_t> 		ChatHistoryTime_;
-	std::vector<uint64_t>			ChatHistoryIndex_;
+	std::vector<uint64_t>		ChatHistoryIndex_;
 
-	uint64_t						ChatLastUpdateIndex;
+	uint64_t					ChatLastUpdateIndex;
 
 	std::vector<std::string> 	ChatUsers_;
 	std::vector<time_t> 		ChatUsersTime_;
@@ -71,7 +71,7 @@ private:
 	};
 
 
-	uint64_t						incrementAndGetLastUpdate();
+	uint64_t					incrementAndGetLastUpdate();
 	bool						isLastUpdateIndexStale(uint64_t last);
 	bool						isChatOld(uint64_t chatIndex, uint64_t last);
 
