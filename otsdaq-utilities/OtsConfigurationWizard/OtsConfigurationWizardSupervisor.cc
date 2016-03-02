@@ -72,12 +72,12 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		for (; i < 5; ++i)
 		{
 			std::this_thread::sleep_for (std::chrono::seconds(2));
-			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
-			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
-			std::cout << __COUT_HDR__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
+			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
 		  			  << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
-			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
-			std::cout << __COUT_HDR__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
+			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
 		}
 		exit(0); //done
 	}
@@ -126,7 +126,8 @@ void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output
     {
     	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
     	return;
-    }else
+    }
+    else
     {
     	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
     }
@@ -147,7 +148,8 @@ void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output
 void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
     std::cout << __COUT_HDR__ << std::endl;
-    //TODO Security Check;
+
+
     //if sequence doesn't match up -> return
     cgicc::Cgicc cgi(in);
     std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
@@ -156,15 +158,16 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 
 
 
-
-    if(securityCode_.compare(submittedSequence) != 0)
+    //Security Check ================
+    if(securityCode_ != submittedSequence)
     {
     	std::cout << __COUT_HDR__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
     	return;
-    }else
-    {
-    	std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
     }
+    //Security Check complete ================
+
+    std::cout << __COUT_HDR__ << "***Successfully authenticated security sequence." << std::endl;
+
 
 
     if(submittedIconList != "")
