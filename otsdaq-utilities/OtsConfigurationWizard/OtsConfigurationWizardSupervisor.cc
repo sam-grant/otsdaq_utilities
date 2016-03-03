@@ -84,7 +84,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
 			std::cout << __COUT_HDR_P__ << "******************************************************************** " << std::endl;
 		}
-		exit(0); //done
+		_Exit(0); //done, exit child
 	}
 	else if (pid < 0)
 	{
