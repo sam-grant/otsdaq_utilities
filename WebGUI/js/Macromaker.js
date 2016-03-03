@@ -19,7 +19,7 @@
 	function init() 
 	{			
 			Debug.log("init() was called");
-			DesktopContent.XMLHttpRequest("MacroMaker?RequestType=FEClist","",FEClistHandlerFunction);
+			DesktopContent.XMLHttpRequest("MacroMaker?RequestType=FEWlist","",FEClistHandlerFunction);
 			block1El = document.getElementById('fecList');//red
 			block2El = document.getElementById('macroLib');//yellow
 			block3El = document.getElementById('main');//blue
@@ -84,7 +84,7 @@
 	{
 		Debug.log("FEClistHandlerFunction() was called. Req: " + req.responseText);
 
-		var FECElements = req.responseXML.getElementsByTagName("FEC");
+		var FECElements = req.responseXML.getElementsByTagName("FEW");
 		var fecdata = "";
 		for(var i=0;i<FECElements.length;++i)
 		{
@@ -109,40 +109,71 @@
 
     function callWrite()
     {
-        //call write() in .cc, 
-			var contentEl = document.getElementById('historyContent');
-			var addressStr = document.getElementById('addressInput').value;
-			var dataStr = document.getElementById('dataInput').value;
-			var now = Date();
-			var time = now.toString();
-			var str = " was written into address ";
-			var update = time.concat(" Data ",dataStr,str,addressStr,"<br\>");
-			var newContent = contentEl.innerHTML.concat(update);
-			contentEl.innerHTML = newContent;
-			
+		 var reminderEl = document.getElementById('reminder');
+
 			if(document.getElementById("FECcheck").checked)
 			{
-				 DesktopContent.XMLHttpRequest("MacroMaker?RequestType=writeData&Address=addressStr&Data=dataStr","",writeHandlerFunction);
-		    }
+				 var contentEl = document.getElementById('historyContent');
+			     var addressStr = document.getElementById('addressInput').value;
+				 var dataStr = document.getElementById('dataInput').value;
+				 DesktopContent.XMLHttpRequest("MacroMaker?RequestType=writeData&Address="+addressStr+"&Data="+dataStr,"",writeHandlerFunction);
+//var time = Date().toString();
+				 var update = "Write ".concat(dataStr," into ",addressStr,"<br\>");
+				 var newContent = contentEl.innerHTML.concat(update);
+				 contentEl.innerHTML = newContent;
+				 updateScroll()
+				 reminderEl.innerHTML = "Data written."
+			}
+			else
+				 reminderEl.innerHTML = "Please select a FEC from the list."
     }
 
     function callRead()
     {
-        //call read() in .cc, 
-        var contentEl = document.getElementById('historyContent');
-        var addressStr = document.getElementById('addressInput').value;
-        var dataStr = "data";//will be data from read()
-        var now = Date();
-        var time = now.toString();
-        var update = time.concat(" Data ",dataStr," was read from address ",addressStr,"<br\>");
-        var newContent = contentEl.innerHTML.concat(update);
-        contentEl.innerHTML = newContent;
+		 var reminderEl = document.getElementById('reminder');
+
+			if(document.getElementById("FECcheck").checked)
+			{
+				var format = document.getElementById("addressFormat");
+				var formatIndex = format.options[format.selectedIndex].value;
+				var addressStr = document.getElementById('addressInput').value;
+	            var dataStr = document.getElementById('dataInput').value;
+	            //HERE,SEND DIFFERENT GETDATA FOR TWO CASES
+	            if(formatIndex === 1)
+	            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr,"",readHandlerFunction);
+	            else 
+		            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr,"",readHandlerFunction);
+
+			}
+			else
+				 reminderEl.innerHTML = "Please select a FEC from the list."
     }
     
-    function writeHandlerFunction()
+    function writeHandlerFunction(req)
 	{
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
 
+    }
+    
+    function readHandlerFunction(req)
+	{
+		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
+		var dataOutput = DesktopContent.getXMLValue(req,"readData");
+		var reminderEl = document.getElementById('reminder');
+		
+		var contentEl = document.getElementById('historyContent');
+	    var addressStr = document.getElementById('addressInput').value;
+		//var time = Date().toString();
+		var update = "Read ".concat(dataOutput," from ",addressStr,"<br\>");
+		var newContent = contentEl.innerHTML.concat(update);
+		contentEl.innerHTML = newContent;
+		updateScroll()
+		reminderEl.innerHTML = ("Data read from address ").concat(addressStr," is ",dataOutput);
+	}
+    
+    function updateScroll(){
+        var element = document.getElementById("historyContent");
+        element.scrollTop = element.scrollHeight;
     }
 
 //    function enterAddress(){

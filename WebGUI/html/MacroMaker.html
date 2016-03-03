@@ -4,6 +4,7 @@
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
+		
 		<style type="text/css">			
 			body {
 				background-color: rgb(200,200,200);
@@ -75,10 +76,16 @@
 		    </div>
 	        <h3>Manual Commands</h3>
 	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" /><button onclick="clearAddress()" style="color: black">Clear</button></p>
-	        <div id="output1">Please enter an address.</div>
+	        <div id="output1">The address is in
+	           <select id="addressFormat" style="color:black;margin-bottom:10px">
+			    <option value="1" selected="selected">hex</option>
+			    <option value="2">dec</option>
+			   </select>
+			format.</div>
 	       
 	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px"/><button onclick="clearData()" style="color: black">Clear</button></p>
 	        <div id="output2">Please enter your data.</div>
+	        <div id="reminder"></div>
 	        
 	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" style="color: black">Write</button></p>
 		</div>
