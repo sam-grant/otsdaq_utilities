@@ -21,10 +21,18 @@
 				var types = ["number","numbers","numbers"];
 									
 				//write to a particular div
-	            var el = document.getElementById('membersDiv');  
+	            var el = document.getElementById('box1Div');  
 	            MultiSelectBox.createSelectBox(el,
-	            		"members",
+	            		"box1",
 	            		"Multi-Select Box Example",
+						keys,vals,types,noMultiSelect);
+	            
+	            //for fun, make a second
+				//write to a particular div
+	            var el = document.getElementById('box2Div');  
+	            MultiSelectBox.createSelectBox(el,
+	            		"box2",
+	            		"Multi-Select Box Example 2",
 						keys,vals,types,noMultiSelect);
             }
             //////////// end make search box
@@ -43,10 +51,23 @@
     
     <style>
       
-        .evenMember:hover, .oddMember:hover, .inactiveMember:hover {
+        .evenMember:hover, .oddMember:hover, .inactiveMember:hover 
+		{
             background-color : rgba(81, 203, 238, 1);
         }
-    
+    	
+		#box1Div
+    	{
+    		position:absolute;
+    		left:200px;
+    		top:300px;			
+    	}
+		#box2Div
+		{
+			position:absolute;
+			left:300px;
+			top:10px;			
+		}
     </style>
 
 </head>
@@ -54,8 +75,12 @@
 
  
     <center>
-	<div id='membersDiv'>
+	<div id='box1Div'>
 	</div>
+    
+	<div id='box2Div'>
+	</div>
+    
     </center>
 
 
