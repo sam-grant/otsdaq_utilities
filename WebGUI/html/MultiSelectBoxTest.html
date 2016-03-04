@@ -1,0 +1,65 @@
+<html>
+<head>
+
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+
+	<script src="../js/js_lib/MultiSelectBox.js"></script>
+    <script>
+
+        function init()
+        {
+            
+            _omni = document.body; //for base.js
+            
+            
+            //////////// make search box
+            {	
+				var noMultiSelect = false; // true or false (false for multiselect functionality) 
+				
+				var keys = ["one","two","three"];
+				var vals = ["One little piggy","two little piggies","three little piggies"];
+				var types = ["number","numbers","numbers"];
+									
+				//write to a particular div
+	            var el = document.getElementById('membersDiv');  
+	            MultiSelectBox.createSelectBox(el,
+	            		"members",
+	            		"Multi-Select Box Example",
+						keys,vals,types,noMultiSelect);
+            }
+            //////////// end make search box
+
+            
+        }
+
+        function newSelectionHandler(el)
+        {
+            var splits = el.id.split('_');
+            var i = splits[splits.length-1] | 0;
+            MultiSelectBox.dbg("Chosen element index:",i);
+        }
+        
+    </script>
+    
+    <style>
+      
+        .evenMember:hover, .oddMember:hover, .inactiveMember:hover {
+            background-color : rgba(81, 203, 238, 1);
+        }
+    
+    </style>
+
+</head>
+<body onload='init();'>
+
+ 
+    <center>
+	<div id='membersDiv'>
+	</div>
+    </center>
+
+
+
+</body>
+</html>
+
