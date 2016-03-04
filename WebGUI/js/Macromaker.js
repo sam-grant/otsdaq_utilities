@@ -8,8 +8,6 @@
 	//Function List:
 		//init
 	    //redrawWindow
-		//enterAddress
-		//enterData
 		//callWrite
 		//callRead
 
@@ -113,10 +111,15 @@
 
 			if(document.getElementById("FECcheck").checked)
 			{
+				 var addressFormat = document.getElementById("addressFormat");
+			     var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			     var dataFormat = document.getElementById("dataFormat");
+			     var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+			     
 				 var contentEl = document.getElementById('historyContent');
 			     var addressStr = document.getElementById('addressInput').value;
 				 var dataStr = document.getElementById('dataInput').value;
-				 DesktopContent.XMLHttpRequest("MacroMaker?RequestType=writeData&Address="+addressStr+"&Data="+dataStr,"",writeHandlerFunction);
+				 DesktopContent.XMLHttpRequest("MacroMaker?RequestType=writeData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr,"",writeHandlerFunction);
 //var time = Date().toString();
 				 var update = "Write ".concat(dataStr," into ",addressStr,"<br\>");
 				 var newContent = contentEl.innerHTML.concat(update);
@@ -134,17 +137,17 @@
 
 			if(document.getElementById("FECcheck").checked)
 			{
-				var format = document.getElementById("addressFormat");
-				var formatIndex = format.options[format.selectedIndex].value;
+				var addressFormat = document.getElementById("addressFormat");
+				var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+				var dataFormat = document.getElementById("dataFormat");
+				var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+			
 				var addressStr = document.getElementById('addressInput').value;
 	            var dataStr = document.getElementById('dataInput').value;
 	            //HERE,SEND DIFFERENT GETDATA FOR TWO CASES
-	            if(formatIndex === 1)
-	            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr,"",readHandlerFunction);
-	            else 
-		            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr,"",readHandlerFunction);
-
-			}
+	           
+	            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
+	       	}
 			else
 				 reminderEl.innerHTML = "Please select a FEC from the list."
     }

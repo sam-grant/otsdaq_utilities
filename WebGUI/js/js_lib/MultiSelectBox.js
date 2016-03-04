@@ -1,7 +1,19 @@
   //////////////////////////////////////////////////////////////////////////
  //////// Functions and variables to be included by other pages ///////////        
 //////////////////////////////////////////////////////////////////////////
-	
+//	
+// To make a Multi-Select Box
+//  	create a div element and call in JavaScript...
+//
+//	MultiSelectBox.createSelectBox(el,name,title,vals)
+//
+//	This function is called by user to actually create the multi select box
+// 	These parameters are optional and can be omitted or set to 0: 
+//		keys, types, handler, noMultiSelect 
+// Note: handler is the string name of the function
+//
+// Example usage: WebGUI/html/MultiSelectBox.html
+//
 //////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
@@ -100,8 +112,11 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 	MultiSelectBox.dbg(selectList);
 }
 
-
-MultiSelectBox.createSelectBox = function(el,name,title,keys,vals,types,noMultiSelect)
+//This function is called by user to actually create the multi select box
+// These parameters are optional and can be omitted or set to 0: 
+//		keys, types, handler, noMultiSelect 
+// Note: handler is the string name of the function
+MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,noMultiSelect)
 {
 	if(!el) return;
 
@@ -120,6 +135,9 @@ MultiSelectBox.createSelectBox = function(el,name,title,keys,vals,types,noMultiS
 		str += "</b></div>";
 	}
 	
+	if(!keys) keys = vals;
+	if(!types) types = vals;
+	
 	//make selbox
 	str += "<div class='mySelect' unselectable='on' id='" + 
 			name + "' style='float:left' name='" + name + "' >";
@@ -130,7 +148,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,keys,vals,types,noMultiS
 			"id='" + name + "-option_" + i + "' " +
 			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
 			noMultiSelect + "); ";
-		str += "newSelectionHandler(this);"; //selection handler
+		if(handler)
+			str += handler + "(this);"; //user selection handler
 		str += "' ";
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes

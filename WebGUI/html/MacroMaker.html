@@ -78,13 +78,19 @@
 	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" /><button onclick="clearAddress()" style="color: black">Clear</button></p>
 	        <div id="output1">The address is in
 	           <select id="addressFormat" style="color:black;margin-bottom:10px">
-			    <option value="1" selected="selected">hex</option>
-			    <option value="2">dec</option>
+			    <option style="color:black" value="1" selected="selected">hex</option>
+			    <option style="color:black" value="2">dec</option>
 			   </select>
 			format.</div>
 	       
 	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px"/><button onclick="clearData()" style="color: black">Clear</button></p>
-	        <div id="output2">Please enter your data.</div>
+	        <div id="output2">The data is in
+	           <select id="dataFormat" style="color:black;margin-bottom:10px">
+			    <option style="color:black" value="1" selected="selected">hex</option>
+			    <option style="color:black" value="2">dec</option>
+			   </select>
+			format.</div>
+			
 	        <div id="reminder"></div>
 	        
 	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" style="color: black">Write</button></p>
@@ -92,9 +98,10 @@
 		
 		<div class='mainBlock' id='instruction'>
 		  <h3>Instructions</h3>
-          <p>To read or write:<br>1. Select one or more FECs from the list of FECs;
+          <p style="text-align:justify">To read or write:<br>1. Select one or more FECs from the list of FECs;
           <br>2. Enter the target address above. If you choose to write, you also need to enter the data;
-          <br>3. Select either "Write" or "Read" to finish your manual command.
+          <br>3. Select the format of your address and data (hex/dec). If you choose to read, the data format selected will be expected. 
+          <br>4. Select either "Write" or "Read" to finish your manual command.
 		</div>
 		
 		<div class='mainBlock' id='history'>

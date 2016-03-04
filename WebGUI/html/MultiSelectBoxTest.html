@@ -8,9 +8,7 @@
 
         function init()
         {
-            
-            _omni = document.body; //for base.js
-            
+                      
             
             //////////// make search box
             {	
@@ -25,7 +23,9 @@
 	            MultiSelectBox.createSelectBox(el,
 	            		"box1",
 	            		"Multi-Select Box Example",
-						keys,vals,types,noMultiSelect);
+						vals,keys,types,"box1SelectionHandler",noMultiSelect);
+	            
+	            noMultiSelect = true;
 	            
 	            //for fun, make a second
 				//write to a particular div
@@ -33,20 +33,26 @@
 	            MultiSelectBox.createSelectBox(el,
 	            		"box2",
 	            		"Multi-Select Box Example 2",
-						keys,vals,types,noMultiSelect);
+						vals,keys,types,"box2SelectionHandler",noMultiSelect);
             }
             //////////// end make search box
 
             
         }
 
-        function newSelectionHandler(el)
+        function box1SelectionHandler(el)
         {
             var splits = el.id.split('_');
             var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("Chosen element index:",i);
+            MultiSelectBox.dbg("box 1 Chosen element index:",i);
         }
         
+        function box2SelectionHandler(el)
+        {
+            var splits = el.id.split('_');
+            var i = splits[splits.length-1] | 0;
+            MultiSelectBox.dbg("box 2 Chosen element index:",i);
+        }
     </script>
     
     <style>
@@ -66,7 +72,7 @@
 		{
 			position:absolute;
 			left:300px;
-			top:10px;			
+			top:700px;			
 		}
     </style>
 
@@ -75,6 +81,7 @@
 
  
     <center>
+    
 	<div id='box1Div'>
 	</div>
     
