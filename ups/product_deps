@@ -1,6 +1,6 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v1_00_01
+parent otsdaq_utilities	v1_00_02
 defaultqual	e7:s15
 
 # These optional lines define the installed directories where
@@ -18,9 +18,9 @@ fcldir      -
 
 #
 product		 version	optional
-otsdaq           v1_00_01       
-xdaq             v11_2_7
-cetbuildtools    v4_17_02        -       only_for_build
+otsdaq           v1_00_02       
+xdaq             v13_0_0
+cetbuildtools    v4_18_02        -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -28,9 +28,11 @@ end_product_list
 # s7  - with art v1_13_01
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier   	 otsdaq         notes
-e7:s15:prof      e7:s15:prof    -std=c++1y
-e7:s15:debug     e7:s15:debug   -std=c++1y
+qualifier   	 otsdaq         xdaq 	 notes
+e9:s21:prof      e9:s21:prof    e9:prof	 -std=c++1y
+e9:s21:debug     e9:s21:debug   e9:debug -std=c++1y
+e7:s15:prof      e7:s15:prof    e7:prof	 -std=c++1y
+e7:s15:debug     e7:s15:debug   e7:debug -std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:

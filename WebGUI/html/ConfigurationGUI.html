@@ -98,23 +98,23 @@
 			
 			function setupSystemConfigMode() {
 
-				DesktopContent.XMLHttpRequest("request?RequestType=getSystemConfigurations", "", configRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
 			}
 			
 			function setupSubSystemConfigMode() {
 
-				DesktopContent.XMLHttpRequest("request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
 			}
 
 			function setupSpecificSystemConfig(configAlias) {
 
-				DesktopContent.XMLHttpRequest("request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
 			}
 			
 			function setupSpecificSubSystemConfig(subConfigAlias,version) {
 				var v = "";
 				if(version) v = "&version="+version;
-				DesktopContent.XMLHttpRequest("request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
 					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
 			}
 			
@@ -416,12 +416,12 @@
 					dataStr += ";";
 				}
 				
-				var req = "request?RequestType=saveSpecificSubSystemConfiguration" + 
+				var req = "Request?RequestType=saveSpecificSubSystemConfiguration" + 
 						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
 						"&subAlias=" + _currentAlias + "&version="+_version;
 				Debug.log(dataStr);
 				Debug.log(req);
-				DesktopContent.XMLHttpRequest("request?RequestType=saveSpecificSubSystemConfiguration" + 
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificSubSystemConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
 					"&subAlias=" + _currentAlias + "&version="+_version, "data=" + dataStr, saveSubSystemAsNewVersionHandler);	
 				
@@ -443,6 +443,7 @@
 			function changeKocVersionForSpecificConfig() {
 				//TODO
 				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
+				
 			}
 
 			function addNewKocForSpecificConfig(req) {

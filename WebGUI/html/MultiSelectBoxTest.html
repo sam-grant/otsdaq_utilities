@@ -1,0 +1,97 @@
+<html>
+<head>
+
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+
+	<script src="../js/js_lib/MultiSelectBox.js"></script>
+    <script>
+
+        function init()
+        {
+                      
+            
+            //////////// make search box
+            {	
+				var noMultiSelect = false; // true or false (false for multiselect functionality) 
+				
+				var keys = ["one","two","three"];
+				var vals = ["One little piggy","two little piggies","three little piggies"];
+				var types = ["number","numbers","numbers"];
+									
+				//write to a particular div
+	            var el = document.getElementById('box1Div');  
+	            MultiSelectBox.createSelectBox(el,
+	            		"box1",
+	            		"Multi-Select Box Example",
+						vals,keys,types,"box1SelectionHandler",noMultiSelect);
+	            
+	            noMultiSelect = true;
+	            
+	            //for fun, make a second
+				//write to a particular div
+	            var el = document.getElementById('box2Div');  
+	            MultiSelectBox.createSelectBox(el,
+	            		"box2",
+	            		"Multi-Select Box Example 2",
+						vals,keys,types,"box2SelectionHandler",noMultiSelect);
+            }
+            //////////// end make search box
+
+            
+        }
+
+        function box1SelectionHandler(el)
+        {
+            var splits = el.id.split('_');
+            var i = splits[splits.length-1] | 0;
+            MultiSelectBox.dbg("box 1 Chosen element index:",i);
+        }
+        
+        function box2SelectionHandler(el)
+        {
+            var splits = el.id.split('_');
+            var i = splits[splits.length-1] | 0;
+            MultiSelectBox.dbg("box 2 Chosen element index:",i);
+        }
+    </script>
+    
+    <style>
+      
+        .evenMember:hover, .oddMember:hover, .inactiveMember:hover 
+		{
+            background-color : rgba(81, 203, 238, 1);
+        }
+    	
+		#box1Div
+    	{
+    		position:absolute;
+    		left:200px;
+    		top:300px;			
+    	}
+		#box2Div
+		{
+			position:absolute;
+			left:300px;
+			top:700px;			
+		}
+    </style>
+
+</head>
+<body onload='init();'>
+
+ 
+    <center>
+    
+	<div id='box1Div'>
+	</div>
+    
+	<div id='box2Div'>
+	</div>
+    
+    </center>
+
+
+
+</body>
+</html>
+

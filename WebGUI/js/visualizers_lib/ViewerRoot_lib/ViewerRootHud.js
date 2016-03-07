@@ -1,7 +1,7 @@
-//Hud "class" for RootViewer
+//Hud "class" for ViewerRoot
 
 
-RootViewer.createHud = function() {
+ViewerRoot.createHud = function() {
 		
 	var hudMouseOverDiv;
 	var animationTargetTop, isDropDownAnimating, isDropDownDown;
@@ -23,10 +23,10 @@ RootViewer.createHud = function() {
 	var currDirPtr = dirStruct[0]; //pointer to the directory level that is currently displayed
 	
 	this.handleWindowResize = function() {
-		//Debug.log("RootViewer Hud handleWindowResize");
+		//Debug.log("ViewerRoot Hud handleWindowResize");
 		
-		if(RootViewer.hudAutoHide)
-			this.hudMouseOverDiv.style.left = window.innerWidth - this.hudMouseOverDiv.offsetWidth - RootViewer.HUD_MARGIN_RIGHT + "px";
+		if(ViewerRoot.hudAutoHide)
+			this.hudMouseOverDiv.style.left = window.innerWidth - this.hudMouseOverDiv.offsetWidth - ViewerRoot.HUD_MARGIN_RIGHT + "px";
 		else
 		{
 			this.hudMouseOverDiv.style.left = window.innerWidth - this.hudMouseOverDiv.offsetWidth + "px";
@@ -36,29 +36,29 @@ RootViewer.createHud = function() {
 		hudDirBrowserDiv.style.width = this.hudDiv.offsetWidth - 45 + "px";
 		hudDirBrowserDiv.style.height = window.innerHeight - 190 + "px";
 				
-		if(RootViewer.userPermissions >= RootViewer.ADMIN_PERMISSIONS_THRESHOLD)
-			document.getElementById("RootViewer-hudAdminControlsIcon").style.display = "block";
+		if(ViewerRoot.userPermissions >= ViewerRoot.ADMIN_PERMISSIONS_THRESHOLD)
+			document.getElementById("ViewerRoot-hudAdminControlsIcon").style.display = "block";
 		else
-			document.getElementById("RootViewer-hudAdminControlsIcon").style.display = "none";
+			document.getElementById("ViewerRoot-hudAdminControlsIcon").style.display = "none";
 	}
 	
 	this.checkboxUpdate = function(i) {
 		var chk = document.getElementById("hudCheckbox" + i);
-		Debug.log("RootViewer Hud checkboxUpdate " + i + "=" + chk.checked);
+		Debug.log("ViewerRoot Hud checkboxUpdate " + i + "=" + chk.checked);
 		
-		if(i==0) RootViewer.autoRefreshDefault = chk.checked; 	//auto refresh
+		if(i==0) ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
 		else if(i==1) 
 		{
-			RootViewer.hudAutoHide = chk.checked; 				//auto hide
-			RootViewer.handleWindowResize();
+			ViewerRoot.hudAutoHide = chk.checked; 				//auto hide
+			ViewerRoot.handleWindowResize();
 		}
 		else if(i==2) 
 		{
-			RootViewer.pauseRefresh = chk.checked; 	//pause auto refresh
+			ViewerRoot.pauseRefresh = chk.checked; 	//pause auto refresh
 			
 			//reset auto refresh array with re-activation of auto refresh
 			//	just in case...
-			if(!RootViewer.pauseRefresh) RootViewer.autoRefreshMatchArr = []; 
+			if(!ViewerRoot.pauseRefresh) ViewerRoot.autoRefreshMatchArr = []; 
 		}
 				
 	}
@@ -67,41 +67,41 @@ RootViewer.createHud = function() {
 		v = parseInt(v);
 		if(!v || v < 1) v = 1;
 		if(v > 9999999) v = 9999999;
-		Debug.log("RootViewer Hud handlerRefreshPeriodChange " + v);
+		Debug.log("ViewerRoot Hud handlerRefreshPeriodChange " + v);
 		document.getElementById("hudAutoRefreshPeriod").value = v;
-		RootViewer.autoRefreshPeriod = v;
-		if(RootViewer.autoRefreshTimer) window.clearInterval(RootViewer.autoRefreshTimer);
-		RootViewer.autoRefreshTimer = window.setInterval(RootViewer.autoRefreshTick,
-			RootViewer.autoRefreshPeriod);
+		ViewerRoot.autoRefreshPeriod = v;
+		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
+		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
+			ViewerRoot.autoRefreshPeriod);
 	}
 	
 	this.radioSelect = function(i) {
-		Debug.log("RootViewer Hud radioSelect " + i);
-		RootViewer.nextObjectMode = i;
+		Debug.log("ViewerRoot Hud radioSelect " + i);
+		ViewerRoot.nextObjectMode = i;
 	}
 	
 	this.handleDirContents = function(req) {
-		//Debug.log("RootViewer Hud handleDirContents " + req.responseText);
+		//Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
 		
 		var path = DesktopContent.getXMLValue(req,'path');
 		if(!path) 
 		{
-			Debug.log("RootViewer Hud handleDirContents no path returned");
+			Debug.log("ViewerRoot Hud handleDirContents no path returned");
 			return;
 		}
 		
 		//add results into directory structure
 		//var paths = path.split("/");
-		//Debug.log("RootViewer Hud handleDirContents " + paths.length + ":" + paths);
+		//Debug.log("ViewerRoot Hud handleDirContents " + paths.length + ":" + paths);
 		
 		//find path
 		var baseDir = findDir(path);
 		if(!baseDir)
 		{
-			Debug.log("RootViewer Hud handleDirContents path not found");
+			Debug.log("ViewerRoot Hud handleDirContents path not found");
 			return;
 		}		
-		//Debug.log("RootViewer Hud handleDirContents baseDir " + baseDir);
+		//Debug.log("ViewerRoot Hud handleDirContents baseDir " + baseDir);
 		
 		
 		baseDir[TUPLE_CONTENT] = []; //clear all current content
@@ -116,7 +116,7 @@ RootViewer.createHud = function() {
 		for(var i=0;i<files.length;++i) //add files
 			baseDir[TUPLE_CONTENT][baseDir[TUPLE_CONTENT].length] = [TUPLE_TYPE_FILE,files[i].getAttribute("value").replace(/[\/]+/g, ''),0,baseDir];
 
-		//Debug.log("RootViewer Hud handleDirContents baseDir " + baseDir);
+		//Debug.log("ViewerRoot Hud handleDirContents baseDir " + baseDir);
 		
 		redrawDirectoryDisplay();
 	}
@@ -130,8 +130,8 @@ RootViewer.createHud = function() {
 		{
 			currDir = dirStruct[0];
 			currPath = currDir[TUPLE_NAME] + "/";
-			//Debug.log("RootViewer Hud findDir " + currPath);
-			//Debug.log("RootViewer Hud findDir path to find " + path);
+			//Debug.log("ViewerRoot Hud findDir " + currPath);
+			//Debug.log("ViewerRoot Hud findDir path to find " + path);
 		}
 
 		if(currDir[TUPLE_TYPE] & TUPLE_TYPE_DIR == 0) return 0; //current path is not a directory, path not found
@@ -178,13 +178,13 @@ RootViewer.createHud = function() {
 			tabSz = 0;
 			path = getPath(currDirPtr);
 			applyStr = true;
-			//Debug.log("RootViewer Hud redrawDirectoryDisplay FIRST path " + path);
+			//Debug.log("ViewerRoot Hud redrawDirectoryDisplay FIRST path " + path);
 
 			locPath = path.length>DIR_BRW_HDR_MAX_SIZE?("..." + path.substr(path.length-DIR_BRW_HDR_MAX_SIZE+3)):path;
-			str += "<div id='RootViewer-hudDirBrowser-header'>";
-			str += "<a title='Refresh " + path + "' href='Javascript:RootViewer.hud.changeDirectory(\"" + 
+			str += "<div id='ViewerRoot-hudDirBrowser-header'>";
+			str += "<a title='Refresh " + path + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				path + "\");'>" + locPath + "</a>";
-			str += "<a title='Change to Parent Directory' style='float:right' href='Javascript:RootViewer.hud.changeDirectory(\"" + 
+			str += "<a title='Change to Parent Directory' style='float:right' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				getPath(currDirPtr[TUPLE_PARENT]) + "\");'> cd .. </a>";
 			str += "</div>";
 		}
@@ -194,37 +194,37 @@ RootViewer.createHud = function() {
 			locPath = path + currDir[TUPLE_CONTENT][i][TUPLE_NAME];
 			if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_DIR) locPath += "/"; //if directory add slash
 						
-			str += "<div class='RootViewer-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container			
+			str += "<div class='ViewerRoot-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container			
 			
 			dirClr = currDir[TUPLE_CONTENT][i][TUPLE_NAME].indexOf(".root") >= 0?"#B9E6E6":"gray";
 			if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_DIR_EXPANDED)  //dir currently expanded, so action is to minimize it
 			{
-				str += "<a title='Collapse Directory' href='Javascript:RootViewer.hud.collapseDirectory(\"" + locPath + "\");'> + </a> ";
+				str += "<a title='Collapse Directory' href='Javascript:ViewerRoot.hud.collapseDirectory(\"" + locPath + "\");'> + </a> ";
 				
-				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:RootViewer.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
+				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 			}
 			else if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_DIR)  //dir currently minimized, so action is to expand it
 			{
-				str += "<a title='Expand Directory' style='color:gray' href='Javascript:RootViewer.getDirectoryContents(\"" + locPath + "\");'> - </a> ";
+				str += "<a title='Expand Directory' style='color:gray' href='Javascript:ViewerRoot.getDirectoryContents(\"" + locPath + "\");'> - </a> ";
 				
-				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:RootViewer.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
+				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 			}
 			else if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_FILE)	//file, so action is to launch it
 			{
 				if(locPath.indexOf(".root") > 0) //root file
 				{
-					str += "<a title='Open Root File' href='Javascript:RootViewer.rootReq(\"" + locPath + "\");'>" +
-							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/RootViewer_lib/img/histo.png'>";
+					str += "<a title='Open Root File' href='Javascript:ViewerRoot.rootReq(\"" + locPath + "\");'>" +
+							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/histo.png'>";
 					str += currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 				}
 				else if(locPath.indexOf(".rcfg") > 0) //root config file
 				{
-					str += "<a title='Open Root File' href='Javascript:RootViewer.rootConfigReq(\"" + locPath + "\");'>" +
-							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/RootViewer_lib/img/histo3d.png'>";
+					str += "<a title='Open Root File' href='Javascript:ViewerRoot.rootConfigReq(\"" + locPath + "\");'>" +
+							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/histo3d.png'>";
 					str += currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 				}
 				else
-					Debug.log("RootViewer Hud redrawDirectoryDisplay unknown file extension");
+					Debug.log("ViewerRoot Hud redrawDirectoryDisplay unknown file extension");
 			}
 			else
 				alert("Impossible DIRECTORY error!! Notify admins");
@@ -238,18 +238,18 @@ RootViewer.createHud = function() {
 		}
 		
 		//if admin pre-made view directory, add ability to MAKE directory or SAVE new premade view
-		if(RootViewer.userPermissions >= RootViewer.ADMIN_PERMISSIONS_THRESHOLD &&
+		if(ViewerRoot.userPermissions >= ViewerRoot.ADMIN_PERMISSIONS_THRESHOLD &&
 				path.indexOf(PRE_MADE_ROOT_CFG_DIR) >= 0)
 		{
-			Debug.log("RootViewer Hud redrawDirectoryDisplay path " + path);
+			Debug.log("ViewerRoot Hud redrawDirectoryDisplay path " + path);
 
 			var iconArr = ["folderopen","page","remove"];
 			var captionArr = ["Make New Directory","Save New View","Delete Pre-made File/Folder!"];
 			for(var i=0;i<3;++i)
 			{
-				str += "<div class='RootViewer-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container	
-				str += "<a style='color:gray' title='Admin action: " + captionArr[i] + "' href='Javascript:RootViewer.hud.toggleAdminControls(" + i + ",\"" + path + "\");'>" + 
-					"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/RootViewer_lib/img/" + iconArr[i] + ".gif'>";
+				str += "<div class='ViewerRoot-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container	
+				str += "<a style='color:gray' title='Admin action: " + captionArr[i] + "' href='Javascript:ViewerRoot.hud.toggleAdminControls(" + i + ",\"" + path + "\");'>" + 
+					"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/" + iconArr[i] + ".gif'>";
 				str += captionArr[i] + "</a>";	
 				str += "</div>"; //close item container
 			}			
@@ -264,7 +264,7 @@ RootViewer.createHud = function() {
 
 	//minimize directory is done by removing the structure from dirPath
 	this.collapseDirectory = function(dirPath) {
-		Debug.log("RootViewer Hud collapseDirectory  " + dirPath);	
+		Debug.log("ViewerRoot Hud collapseDirectory  " + dirPath);	
 		
 		var baseDir = findDir(dirPath);
 
@@ -275,9 +275,9 @@ RootViewer.createHud = function() {
 	}
 	
 	this.changeDirectory = function(dirPath) {
-		Debug.log("RootViewer Hud changeDirectory  " + dirPath);
+		Debug.log("ViewerRoot Hud changeDirectory  " + dirPath);
 		currDirPtr = findDir(dirPath);	
-		RootViewer.getDirectoryContents(dirPath);
+		ViewerRoot.getDirectoryContents(dirPath);
 	}
 	
 	
@@ -285,8 +285,8 @@ RootViewer.createHud = function() {
 	var animateDropDown = function() {			
 		var dir = (animationTargetTop - hudMouseOverDiv.offsetTop > 0)? 1: -1;
 		
-		var tmpTop = hudMouseOverDiv.offsetTop + dir*RootViewer.HUD_DROP_DOWN_SPEED;
-		if(Math.abs(tmpTop - animationTargetTop) <= RootViewer.HUD_DROP_DOWN_SPEED) //done
+		var tmpTop = hudMouseOverDiv.offsetTop + dir*ViewerRoot.HUD_DROP_DOWN_SPEED;
+		if(Math.abs(tmpTop - animationTargetTop) <= ViewerRoot.HUD_DROP_DOWN_SPEED) //done
 		{
 			hudMouseOverDiv.style.top = animationTargetTop + "px";
 			isDropDownAnimating = false;
@@ -302,7 +302,7 @@ RootViewer.createHud = function() {
 		
 		if(isDropDownAnimating) return; //do nothing if animating currently
 
-		if(!RootViewer.hudAutoHide) return; //if not autohide lock size
+		if(!ViewerRoot.hudAutoHide) return; //if not autohide lock size
 		
 		if(!isDropDownDown) //start animation
 		{
@@ -326,7 +326,7 @@ RootViewer.createHud = function() {
 			} 
 		}		        
 
-		if(!RootViewer.hudAutoHide) return RootViewer.hud.handleWindowResize(); //if not autohide lock size
+		if(!ViewerRoot.hudAutoHide) return ViewerRoot.hud.handleWindowResize(); //if not autohide lock size
 		
 		if(isDropDownDown) //start animation
 		{
@@ -343,11 +343,11 @@ RootViewer.createHud = function() {
 	//  2 - delete
 	this.toggleAdminControls = function(type, path) {
 		displayingAdminControls = !displayingAdminControls;
-		Debug.log("RootViewer Hud toggleAdminControls  " + displayingAdminControls);
+		Debug.log("ViewerRoot Hud toggleAdminControls  " + displayingAdminControls);
 		
 		if(displayingAdminControls) //show admin controls in browser window
 		{
-			Debug.log("RootViewer Hud toggleAdminControls  " + type + ": " + path);
+			Debug.log("ViewerRoot Hud toggleAdminControls  " + type + ": " + path);
 			
 			adminControlsPath = path;
 			hudDirBrowserDiv.innerHTML = ""; //clear all
@@ -358,8 +358,8 @@ RootViewer.createHud = function() {
 			{
 				str += "Make a new ROOT Viewer<br>Configuration Directory<br>at path:<br><br>" + path + "<br>";
 				str += "<input type='text' id='hudAdminControlField' onkeyup='document.getElementById(\"hudAdminControlStatus\").innerHTML=\"\";' size='20' value=''><br>";
-				str += "<input type='button' onmouseup=\"RootViewer.hud.popUpVerification(" +
-					"'Are you sure you want to create directory with name &quot;REPLACE&quot;?','RootViewer.hud.makeConfigDir');\" value='Make New Directory'>";
+				str += "<input type='button' onmouseup=\"ViewerRoot.hud.popUpVerification(" +
+					"'Are you sure you want to create directory with name &quot;REPLACE&quot;?','ViewerRoot.hud.makeConfigDir');\" value='Make New Directory'>";
 			}
 			else if(type == 1) //new file
 			{
@@ -369,40 +369,40 @@ RootViewer.createHud = function() {
 				str += "<div ><input type='checkbox' id='hudSaveFileRunWildCardCheckbox'>" + 
 					"<label for='hudSaveFileRunWildCardCheckbox' >" + "Use Wildcard Run #" + "</label></div>";	
 
-				str += "<input type='button' onmouseup=\"RootViewer.hud.popUpVerification(" +
-					"'Are you sure you want to save a file with name &quot;REPLACE&quot;?','RootViewer.hud.saveConfigFile');\" value='Save New File'>";
+				str += "<input type='button' onmouseup=\"ViewerRoot.hud.popUpVerification(" +
+					"'Are you sure you want to save a file with name &quot;REPLACE&quot;?','ViewerRoot.hud.saveConfigFile');\" value='Save New File'>";
 			}
 			else if(type == 2) //delete path
 			{
 				str += "Delete a ROOT Viewer<br>Configuration Directory or File<br>at path:<br><br>" + path + "<br>";
 				str += "<input type='text' id='hudAdminControlField' onkeyup='document.getElementById(\"hudAdminControlStatus\").innerHTML=\"\";' size='20' value=''><br>";
-				str += "<input type='button' onmouseup=\"RootViewer.hud.popUpVerification(" +
-					"'Are you sure you want to delete file or directory with name &quot;REPLACE&quot;?','RootViewer.hud.removeConfigPath');\" value='Delete Path'>";
+				str += "<input type='button' onmouseup=\"ViewerRoot.hud.popUpVerification(" +
+					"'Are you sure you want to delete file or directory with name &quot;REPLACE&quot;?','ViewerRoot.hud.removeConfigPath');\" value='Delete Path'>";
 			
 			}
 			
 			str += "<br><div id='hudAdminControlStatus'></div>";
 			str += "<br>";
-			str += "<a href='javascript:RootViewer.hud.toggleAdminControls();' title='Return to ROOT Browser'><u>Return to Browser</u></a>";
+			str += "<a href='javascript:ViewerRoot.hud.toggleAdminControls();' title='Return to ROOT Browser'><u>Return to Browser</u></a>";
 			hudDirBrowserDiv.innerHTML = str;
 			
 		}
 		else //return to showing current directory
-			RootViewer.hud.changeDirectory(getPath(currDirPtr));	//return and refresh directory contents from server
+			ViewerRoot.hud.changeDirectory(getPath(currDirPtr));	//return and refresh directory contents from server
 	}
 
 	this.makeConfigDir = function() {
 		var dir = document.getElementById('hudAdminControlField').value;
-		Debug.log("RootViewer Hud makeConfigDir  " + dir);
+		Debug.log("ViewerRoot Hud makeConfigDir  " + dir);
 
-		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, RootViewer.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
 			
 	}
 
 	this.saveConfigFile = function() {
 		
 		//create file string based on current configuration
-		if(RootViewer.numPositionsTiled < 1) 
+		if(ViewerRoot.numPositionsTiled < 1) 
 		{
 			document.getElementById('hudAdminControlStatus').innerHTML = "You must have at least 1 Root object in your configuration to save it.";
 			return;			
@@ -414,39 +414,39 @@ RootViewer.createHud = function() {
 		var fileStr = "";
 		
 		fileStr += "<ROOT><DATA>";	
-		fileStr += "<numPositionsTiled>" + RootViewer.numPositionsTiled + "</numPositionsTiled>";	
+		fileStr += "<numPositionsTiled>" + ViewerRoot.numPositionsTiled + "</numPositionsTiled>";	
 		fileStr += "<runNumWildcard>" + (wildcard?1:0) + "</runNumWildcard>";	
 		
-		for(var i=0;i<RootViewer.rootElArr.length;++i)
+		for(var i=0;i<ViewerRoot.rootElArr.length;++i)
 		{
-			fileStr += "<rootObjName>" + RootViewer.rootObjNameArr[i] + "</rootObjName>";	
-			fileStr += "<rootPos>" + RootViewer.rootPosArr[i] + "</rootPos>";	
-			fileStr += "<rootIsTransparent>" + (RootViewer.rootIsTransparentArr[i]?1:0) + "</rootIsTransparent>";	
-			fileStr += "<rootIsAutoRefresh>" + (RootViewer.rootIsAutoRefreshArr[i]?1:0) + "</rootIsAutoRefresh>";
+			fileStr += "<rootObjName>" + ViewerRoot.rootObjNameArr[i] + "</rootObjName>";	
+			fileStr += "<rootPos>" + ViewerRoot.rootPosArr[i] + "</rootPos>";	
+			fileStr += "<rootIsTransparent>" + (ViewerRoot.rootIsTransparentArr[i]?1:0) + "</rootIsTransparent>";	
+			fileStr += "<rootIsAutoRefresh>" + (ViewerRoot.rootIsAutoRefreshArr[i]?1:0) + "</rootIsAutoRefresh>";
 		}
 
 		fileStr += "</DATA></ROOT>";
-		Debug.log("RootViewer Hud saveConfigFile fileStr  " + fileStr);
+		Debug.log("ViewerRoot Hud saveConfigFile fileStr  " + fileStr);
 		
 		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=save", 
-				"path="+adminControlsPath+"&name="+file+"&config="+fileStr, RootViewer.hud.adminControlsReqHandler);
+				"path="+adminControlsPath+"&name="+file+"&config="+fileStr, ViewerRoot.hud.adminControlsReqHandler);
 	}
 
 	this.removeConfigPath = function() {
 
 		var target = document.getElementById('hudAdminControlField').value;
-		Debug.log("RootViewer Hud removeConfigPath  " + target);		
+		Debug.log("ViewerRoot Hud removeConfigPath  " + target);		
 
-		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=delete", "path="+adminControlsPath+"&name="+target, RootViewer.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=delete", "path="+adminControlsPath+"&name="+target, ViewerRoot.hud.adminControlsReqHandler);
 	}
 
 	this.adminControlsReqHandler = function(req) {
-		Debug.log("RootViewer Hud adminControlsReqHandler  " + req.responseText);
+		Debug.log("ViewerRoot Hud adminControlsReqHandler  " + req.responseText);
 
 		var status = DesktopContent.getXMLValue(req,'status');
 		
 		if(status == "1") //success indicated
-			RootViewer.hud.toggleAdminControls();
+			ViewerRoot.hud.toggleAdminControls();
 		else
 			document.getElementById('hudAdminControlStatus').innerHTML = status;
 	}
@@ -474,9 +474,9 @@ RootViewer.createHud = function() {
 		hudPopUpDiv = document.createElement("div");
 		hudPopUpDiv.setAttribute("class", "hudPopUpDiv");			
 		var str = "<div id='hudPopUpText'>" + prompt + "</div>" +
-			"<input type='submit' onmouseup='RootViewer.hud.clearPopUpVerification(" + func + ");' value='Yes'> " +
+			"<input type='submit' onmouseup='ViewerRoot.hud.clearPopUpVerification(" + func + ");' value='Yes'> " +
 			"&nbsp;&nbsp;&nbsp;" + 
-			"<input type='submit' onmouseup='RootViewer.hud.clearPopUpVerification();' value='Cancel'>";
+			"<input type='submit' onmouseup='ViewerRoot.hud.clearPopUpVerification();' value='Cancel'>";
 		hudPopUpDiv.innerHTML = str;
 		el.appendChild(hudPopUpDiv);
 	}
@@ -493,12 +493,12 @@ RootViewer.createHud = function() {
 	}
 	
 	hudMouseOverDiv = this.hudMouseOverDiv = document.createElement('div');	
-	hudMouseOverDiv.setAttribute("id", "RootViewer-hudMouseOver");//RootViewer.hudAutoHide?"RootViewer-hudMouseOver":"RootViewer-hudMouseOver-locked");
+	hudMouseOverDiv.setAttribute("id", "ViewerRoot-hudMouseOver");//ViewerRoot.hudAutoHide?"ViewerRoot-hudMouseOver":"ViewerRoot-hudMouseOver-locked");
 	hudMouseOverDiv.style.position = "absolute";	
     hudMouseOverDiv.style.zIndex = 100;
 	
 	this.hudDiv = document.createElement('div');	
-	this.hudDiv.setAttribute("id","RootViewer-hud");// RootViewer.hudAutoHide?"RootViewer-hud":"RootViewer-hud-locked");
+	this.hudDiv.setAttribute("id","ViewerRoot-hud");// ViewerRoot.hudAutoHide?"ViewerRoot-hud":"ViewerRoot-hud-locked");
 	
 	
 
@@ -511,41 +511,41 @@ RootViewer.createHud = function() {
 	var chkDefaults = [""]; //"checked" for default true	
 	str += "<div style='float:right'>"
 	for(var i=0;i<chkLabels.length;++i)
-		str += "<input type='checkbox' id='hudCheckbox" + i + "' onchange='RootViewer.hud.checkboxUpdate(" + i + 
+		str += "<input type='checkbox' id='hudCheckbox" + i + "' onchange='ViewerRoot.hud.checkboxUpdate(" + i + 
 					");' " + chkDefaults[i] + "><label for='hudCheckbox" + i + "' >" + chkLabels[i] + "</label>";
 	str += "</div>";
 	
 	var radioLabels = ["Tile","Replace", "Superimpose"];
-	var radioDefault = RootViewer.nextObjectMode;
+	var radioDefault = ViewerRoot.nextObjectMode;
 	for(var i=0;i<radioLabels.length;++i)
 		str += "<input type='radio' id='newRootObjectModeRadio" + i + "' " + (i==radioDefault?"checked":"") +
-		" onchange='RootViewer.hud.radioSelect(" + i + ");'" +
+		" onchange='ViewerRoot.hud.radioSelect(" + i + ");'" +
 		" name='newRootObjectModeRadio' value='0' /><label for='newRootObjectModeRadio" + i + "'>" + radioLabels[i] + "</label><br>";
 		
 	str += "<hr>";
 	
-	str += "<div id='RootViewer-hudDirBrowser'></div>";
+	str += "<div id='ViewerRoot-hudDirBrowser'></div>";
 	//var histos = ["TH1F","TH2F","TProfile","TCanvas"];
 	//for(var i=0;i<histos.length;++i)
-	//	str += "<a href='javascript:RootViewer.rootReq(\""+histos[i]+"\");'>"+histos[i]+"</a><br>";
+	//	str += "<a href='javascript:ViewerRoot.rootReq(\""+histos[i]+"\");'>"+histos[i]+"</a><br>";
 	str += "<hr>";
 	
-	str += "<div id='RootViewer-hudAdminControlsIcon' " + 
-		"style='float:left;margin: -2px 0 -20px 20px; cursor: pointer;' onmouseup='RootViewer.hud.toggleAdminControls();' " +
+	str += "<div id='ViewerRoot-hudAdminControlsIcon' " + 
+		"style='float:left;margin: -2px 0 -20px 20px; cursor: pointer;' onmouseup='ViewerRoot.hud.toggleAdminControls();' " +
 		"title='Admin Controls'><img width='18px' src='/WebPath/images/dashboardImages/icon-Settings.png'></div>";
 	
 	str += "<div style='float:right; margin:-3px 0 -20px 0;'>";
-	str += "Refresh Period: <input type='text' id='hudAutoRefreshPeriod' onchange='RootViewer.hud.handlerRefreshPeriodChange(this.value);' size='6' value='" + 
-		RootViewer.autoRefreshPeriod + "'> ms</div>";
+	str += "Refresh Period: <input type='text' id='hudAutoRefreshPeriod' onchange='ViewerRoot.hud.handlerRefreshPeriodChange(this.value);' size='6' value='" + 
+		ViewerRoot.autoRefreshPeriod + "'> ms</div>";
 		
 	str += "<br>";
 		
-	str += "<a href='javascript:RootViewer.clearAll();' title='Clear ROOT objects from view'>Clear</a>";
+	str += "<a href='javascript:ViewerRoot.clearAll();' title='Clear ROOT objects from view'>Clear</a>";
 	
-	str += "<div style='float:right;' ><input type='checkbox' id='hudCheckbox" + chkLabels.length + "' onchange='RootViewer.hud.checkboxUpdate(" + chkLabels.length + 
+	str += "<div style='float:right;' ><input type='checkbox' id='hudCheckbox" + chkLabels.length + "' onchange='ViewerRoot.hud.checkboxUpdate(" + chkLabels.length + 
 	");' " + "" + "><label for='hudCheckbox" + chkLabels.length + "' >" + "Auto-Hide" + "</label></div>";	
 	
-	str += "<div style='float:right;margin-right:10px;' ><input type='checkbox' id='hudCheckbox" + (chkLabels.length+1) + "' onchange='RootViewer.hud.checkboxUpdate(" + (chkLabels.length+1) + 
+	str += "<div style='float:right;margin-right:10px;' ><input type='checkbox' id='hudCheckbox" + (chkLabels.length+1) + "' onchange='ViewerRoot.hud.checkboxUpdate(" + (chkLabels.length+1) + 
 	");' " + "" + "><label for='hudCheckbox" + (chkLabels.length+1) + "' >" + "Pause Refresh" + "</label></div>";
 	
 	this.hudDiv.innerHTML = str;
@@ -557,20 +557,20 @@ RootViewer.createHud = function() {
 	
     hudMouseOverDiv.appendChild(this.hudDiv);        
 
-    hudMouseOverDiv.style.width = RootViewer.HUD_WIDTH + "px";
+    hudMouseOverDiv.style.width = ViewerRoot.HUD_WIDTH + "px";
     hudMouseOverDiv.onmouseover = mouseOverDropDown;
     hudMouseOverDiv.onmouseout = mouseOutDropDown;
-    RootViewer.omni.appendChild(hudMouseOverDiv);
+    ViewerRoot.omni.appendChild(hudMouseOverDiv);
 	
-    hudDirBrowserDiv = document.getElementById('RootViewer-hudDirBrowser');	
+    hudDirBrowserDiv = document.getElementById('ViewerRoot-hudDirBrowser');	
     
     /*
     hudAdminSettingsDiv = document.createElement('div');	
-    hudAdminSettingsDiv.setAttribute("id", "RootViewer-hudAdminSettings");
+    hudAdminSettingsDiv.setAttribute("id", "ViewerRoot-hudAdminSettings");
     hudMouseOverDiv.appendChild(hudAdminSettingsDiv);  
     */
     
-    if(RootViewer.hudAutoHide)
+    if(ViewerRoot.hudAutoHide)
     {
 		//setup dropdown effect
         hudMouseOverDiv.style.top = 15 - hudMouseOverDiv.offsetHeight + "px";//hudMouseOverDiv.offsetHeight - 15 + "px";

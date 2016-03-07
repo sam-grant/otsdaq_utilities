@@ -125,6 +125,10 @@
 				color: #444444;			
 			}
 			
+			#jumpToAccounts {
+				width: 100%;
+			}
+			
 		</style>
 		
 		
@@ -242,7 +246,7 @@
 				}
 				
 				//get current settings from server
-				DesktopContent.XMLHttpRequest("request?RequestType=getSettings&accounts=1", "", settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", "", settingsRequestHandler);				
 			}
 			
 			//called to extract color string into form
@@ -279,7 +283,7 @@
 				if(serverAlert) alert("Message from Server: " + serverAlert);
 
 				//get username with lock, "" means no one has lock
-				_usernameWithLock = DesktopContent.getXMLValue(req,"username_with_lock");	
+				_usernameWithLock = DesktopContent.getXMLValue(req,"username_with_lock");				
 				
 				//pass preferences to Desktop	but remove user accounts from message to Desktop
 				var uaStart = req.responseText.indexOf("<users_accounts v"); 
@@ -454,6 +458,10 @@
 				displayAccounts();
 			}
 			
+			function launchConfigWizard() {	
+				DesktopContent.XMLHttpRequest("Request?RequestType=launchConfig");	//attempt to launch the config wizard at the server			
+			}
+			
 			function displayAccounts() {		
 			
 				Debug.log("Settings displayAccounts");
@@ -466,7 +474,8 @@
 				
 				if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
 				{
-					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";					
+					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";	
+					//FIXME for launching Wizard htmlStr += "<a href='javascript:launchConfigWizard()' style='color:#880000; float:right;'>Launch Config Wizard</a>";					
 					el.innerHTML = htmlStr;					
 				}
 				else
@@ -666,7 +675,7 @@
 				data += "layout=" + layoutStr + "&";
 				
 				Debug.log("Settings Save Preferences -- " + data);
-				DesktopContent.XMLHttpRequest("request?RequestType=setSettings", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", data, settingsRequestHandler);
 			}
 			
 			function defaultColors() {
@@ -744,7 +753,7 @@
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 				
 			}
 			
@@ -775,7 +784,7 @@
 				_triedNewAccount = true;
 				_oldAccountSize = _accountsArray[0].length; //save to give feedback on success
 				
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 				
 			}
 			function reallyDelete() {	
@@ -786,7 +795,7 @@
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
 				data += "displayname=" + _accountsArray[1][_theDeleteIndex].getAttribute('value') + "&";
-				DesktopContent.XMLHttpRequest("request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 			}
 			
 			function lockToUsername(i, lock) {
@@ -795,7 +804,7 @@
 				var data = "";
 				data += "lock=" + (lock?"1":"0") + "&";
 				data += "username=" + _accountsArray[0][i].getAttribute('value');
-				DesktopContent.XMLHttpRequest("request?RequestType=setUserWithLock&accounts=1", data, settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1", data, settingsRequestHandler);				
 			}
 		</script>
 		

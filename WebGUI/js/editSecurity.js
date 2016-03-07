@@ -1,5 +1,5 @@
 var selectedSecurityChoice_ = "";
-var IDs_ = ['NoSecurity', 'DigestAccessAuthentication', 'Kerberos'];
+var IDs_ = ['NoSecurity', 'DigestAccessAuthentication', 'ResetSecurityUserData'];//'Kerberos','ResetSecurityUserData'];
 var selection_ = [];
 INTERVAL_ = 10;
 state_ = document.getElementById("state");
@@ -173,6 +173,18 @@ function showVisualSelection(){
 
 }
 
+function confirm(){
+	if(prompt("Are you sure? This will delete all use data. Type 15091420 to continue")==15091420)
+		if(confirm("I know exactly what I'm doing.")){
+			setSecurity('ResetSecurityUserData');
+		}
+		else
+			alert("Mission aborted!");
+
+	else
+		alert("Mission aborted!");
+}
+
 function setSecurity(id){
 	
 	if(id == 'NoSecurity'){
@@ -184,6 +196,9 @@ function setSecurity(id){
 	}else if(id == 'Kerberos'){
 		console.log("Kerberos selected.")
 		selectedSecurityChoice_= 'Kerberos';
+	}else if(id == 'ResetSecurityUserData'){
+		console.log("Reset Data selected.")
+		selectedSecurityChoice_= 'ResetSecurityUserData';
 	}else{
 		console.log("Selection not recognized!");
 		return;

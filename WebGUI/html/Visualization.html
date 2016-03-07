@@ -1,10 +1,10 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
 	<head>
+		<title>Visualization</title>
 
 		<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'>
 				
-		<title>Visualization</title>
 		<style type="text/css">			
 			body {
 				background-color: rgb(50,50,50);
@@ -57,12 +57,12 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 
 		
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/RootViewer.css" />
-		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/RootViewer.js"></script>
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/2dViewer.css">
-		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/2dViewer.js"></script>
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/3dViewer.css">
-		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/3dViewer.js"></script>
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/ViewerRoot.css" />
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/ViewerRoot.js"></script>
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/Viewer2d.css">
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/Viewer2d.js"></script>
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/Viewer3d.css">
+		<script type="text/JavaScript" src="/WebPath/js/visualizers_lib/Viewer3d.js"></script>
 		
 		
 		<script>		
@@ -95,8 +95,8 @@
 				if(!DesktopContent._needToLoginMailbox) dropDownDiv.style.display = 'none'; //hide from public users				
 
 
-				//2dViewer.launch();//
-				RootViewer.launch();
+				//Viewer2d.launch();//
+				ViewerRoot.launch();
 			}	
 			
 			function mouseOverDropDown() {
@@ -152,13 +152,13 @@
 			function initVisualizer() {
 				var v = getRadioGroupValue("viewType");
 				Debug.log("initVisualizer: " +  v);			
-				if(v == 0)
-					RootViewer.launch();	
-				else if(v == 1)
-					2dViewer.launch();	
-				else if(v == 2)
-					3dViewer.launch();
-					
+//				if(v == 0)
+					ViewerRoot.launch();	
+//				else if(v == 1)
+//					Viewer2d.launch();	
+//				else if(v == 2)
+//					Viewer3d.launch();
+
 			}
 			
 			function getRadioGroupValue(name) {

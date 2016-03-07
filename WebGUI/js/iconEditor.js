@@ -38,7 +38,7 @@ function chooseIcon(){
     iconOption = document.createElement("option");
     icon_list.appendChild(iconOption);
     iconOption.value="new";
-    iconOption.innerHTML="New Device";
+    iconOption.innerHTML="Create New Icon";
     icon_list.setAttribute("onchange","iconSelected(this.value)");
     
     for(a = 0; a < megaLibrary_.length; a++)

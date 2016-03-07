@@ -1,3 +1,4 @@
+include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME OtsConfigurationWizard
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
@@ -8,6 +9,7 @@ cet_make(LIBRARY_NAME OtsConfigurationWizard
 		 WebUsersUtilities
 		 SOAPUtilities
 		 XmlUtilities
+         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 install_headers()

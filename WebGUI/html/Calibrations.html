@@ -89,7 +89,8 @@
 			
 			//init called once body has loaded
 			function init() {					
-											
+				Debug.log("Calibrations init");
+				
 				//1. get Alias List
 				//2. start status monitoring
 					//req data:
@@ -262,7 +263,7 @@
 			function aliasListRequest() {			
 												
 				//get current calRequest from server
-				DesktopContent.XMLHttpRequest("request?RequestType=getAliasList", "", aliasListRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", aliasListRequestHandler);				
 			}
 			
 
@@ -318,7 +319,8 @@
 					_aliasArr[_selectedCalibration].getAttribute('value') + " - " + 
 					_keyArr[_selectedCalibration].getAttribute('value'));
 					
-				DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateInput=Configure", "ConfigurationAlias="+_aliasArr[_selectedCalibration].getAttribute('value'), configureHandler);
+				//FIXME?this crashes the ots Supervisor
+				//DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateInput=Configure", "ConfigurationAlias="+_aliasArr[_selectedCalibration].getAttribute('value'), configureHandler);
 			}
 			
 			function configureHandler(req) 

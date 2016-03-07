@@ -14,10 +14,10 @@
 
 
 if (typeof Debug == 'undefined') 
-	console.log('ERROR: Debug is undefined! Must include Debug.js before Desktop.js');
+	Debug.log('ERROR: Debug is undefined! Must include Debug.js before Desktop.js');
 	
 if (typeof Desktop == 'undefined') 
-	console.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
+	Debug.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
 else {
 
 		
@@ -55,59 +55,6 @@ else {
 		//create public members variables ----------------------
 		//------------------------------------------------------------------
 		this.iconsElement;
-
-		this.iconAlts = [
-   			//"Open a FEC",
-   			"Calibrate",
-   			"Physics",
-   			//"PhysicsLore",
-   			"Chat",
-   			"System Status",
-   			"Logbook",
-   			"Visualize",
-   			"Configure"
-   			];
-		this.iconTitles =  [
-		                    //"FEC",
-		                    "CAL",	"PHY",	
-		                    //"PHY",	
-		                    "CHAT",	"SYS",	"LOG", 
-		                    "VIS", 	"CFG"];
-		this.iconUniques = [
-		                    //0,
-		                    1,		1,		
-		                    //1,	
-		                    1,		1,		1,		
-		                    0,		1];
-		this.iconPermissionsNeeded = 
-   						   [
-   						    //100,
-   						    100,	1,		
-   						    //1,
-   						    1,		1,		1,		
-   						   	1,		10];
-		this.iconImages = [		//use 0 for text only ICON
-   			//"icon-FecSupervisor.png",
-   			0,//"icon-Calibrations.png",
-   			"icon-Physics.gif",
-   			//"icon-Physics.gif",
-   			"icon-Chat.png",
-			"icon-SystemStatus.png",
-			"icon-Logbook1.png",
-			"icon-Visualizer.png",
-			0
-			];
-		this.iconLinks = [
-  			//"/WebPath/html/FecDirectory.html",//"http://rulinux01.dhcp.fnal.gov:1983/urn:xdaq-application:lid=253/",
-  			"/WebPath/html/Calibrations.html",
-  			"/WebPath/html/Physics.html",
-  			//"/WebPath/html/PhysicsLore.html",
-  			"/urn:xdaq-application:lid=250/",//"/WebPath/html/Chat.html"
-  			"/WebPath/html/SystemStatus.html",
-  			"/urn:xdaq-application:lid=260/",//"/WebPath/html/Logbook.html"
-  			"/WebPath/html/Visualization.html?urn=270",//"/urn:xdaq-application:lid=242/" //"/WebPath/html/Visualization.html"//"/WebPath/js/WebGL/RotatingPlanes/OldRotating3D.html"
-  			"/urn:xdaq-application:lid=280/"
-  			];
 		
 		
 		//------------------------------------------------------------------
@@ -136,52 +83,58 @@ else {
             
             this.iconsElement.innerHTML = ""; //clear current icons
             _numOfIcons = 0;
+            _permissions = permissions;
             ////////////
-            
-		    if(Desktop.desktop.sequence == "NoSecurity") //This is satisfied for No Security on OTS
-		    {
-		    	console.log("NoSecurity");
-		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
-	      		_permissions = 255;
+
+	    	Debug.log("Desktop Security: " + Desktop.desktop.security);
+	    	
+		    if(!Desktop.desktop.security || 
+		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
+					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
+		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
 		    	return;
 	      	}
-		    else if(Desktop.desktop.sequence) //This is satisfied for OtsWizardConfiguration
+		    else //unknown security, assume it is the sequence for OtsWizardConfiguration
 			{
-		    	console.log("OtsWizardConfiguration");
-		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.sequence, iconRequestHandler);
+		    	Debug.log("OtsWizardConfiguration");
+		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.security, iconRequestHandler);
 	      		_permissions = 1;
 		    	return;
 			}
-	      	else //This is satisfied for Digest Access Authorization on OTS | the default value if the security settings are not found
-	      	{
-		    	console.log("default");
-		    	Desktop.XMLHttpRequest("request?RequestType=getDesktopIcons", "", iconRequestHandler);
-		    	_permissions = permissions;
-	      		return;
-	      	}
-		    ////////////
-           	/*for(var i=0;i<this.iconAlts.length;++i) //add icons
-           		if(permissions >= this.iconPermissionsNeeded[i])
-           			this.addIcon(this.iconAlts[i],this.iconTitles[i],this.iconLinks[i],this.iconUniques[i],this.iconImages[i]);    */       
+	      	 
       	}
       	
       	//_iconRequestHandler
       	//adds the icons from the hardcoded, C++ in OtsConfigurationWizard
-      	var iconRequestHandler = function(req){
-      		//TODO make permissions work
-      		if(Desktop.desktop.sequence){
-      			var iconArray = req.responseText.split(","); 
+      	var iconRequestHandler = function(req) {
 
-      		}else
-      		{
-          		var iconArray = Desktop.getXMLValue(req,"iconList"); 
-          		console.log("icon Array unsplit: " + iconArray);
-          		iconArray = iconArray.split(","); 
-          		console.log("icon Array split: " + iconArray);
-
+      		var iconArray;
+		    if(!Desktop.desktop.security || 
+		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
+					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
+		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
+				Debug.log("icon Array unsplit: " + iconArray);
+				iconArray = iconArray.split(","); 
+			}
+      		else
+      		{ 
+      			iconArray = req.responseText.split(","); 
       		}
-      		console.log(_permissions);
-     		console.log(iconArray);
+			Debug.log("icon Array split: " + iconArray);
+          		
+      	
+      		Debug.log(_permissions);
+     		Debug.log(iconArray);
+
+     	    //an icon is 6 fields.. give comma-separated
+     	    	//0 - alt = text for mouse over
+     	    	//1 - subtext = text below icon
+     	    	//2 - uniqueWin = if true, only one window is allowed, else multiple instances of window
+     	    	//3 - permissions = security level needed to see icon
+     	    	//4 - picfn = icon image filename
+     	    	//5 - linkurl = url of the window to open
       		var numberOfIconFields = 6;
      		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
       		{
@@ -196,7 +149,7 @@ else {
       	//	adds an icon with alt text, subtext wording underneath and image icon (if picfn defined)
       	this.addIcon = function(alt, subtext, linkurl, uniqueWin, picfn) {
       	      		
-      		console.log("this.addIcon");
+      		Debug.log("this.addIcon");
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 			

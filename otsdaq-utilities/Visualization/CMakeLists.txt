@@ -1,3 +1,4 @@
+include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Visualization
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
@@ -13,6 +14,7 @@ cet_make(LIBRARY_NAME Visualization
 		 ConfigurationInterface
 		 XmlUtilities
 		 SOAPUtilities
+         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 

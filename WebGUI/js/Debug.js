@@ -23,18 +23,28 @@ Debug.HIGH_PRIORITY = 0;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
 
-Debug.log = function(str,num) {
-
-	if(num == undefined) num = 0; //make num optional and default to 0
-	
-	if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
-
-	//TODO - change this log code based on browser
-	if(Debug.mode && num <= Debug.level) {
-		console.log(str);
-	}
-	
+if (Debug.mode)
+{
+	Debug.log = console.log.bind(window.console);
 }
+else
+{	//do nothing with log functions
+	console.log = function(){}
+	Debug.log = function(){}
+}
+
+//Debug.log = function(str,num) {
+//
+//	if(num == undefined) num = 0; //make num optional and default to 0
+//	
+//	if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
+//
+//	//TODO - change this log code based on browser
+//	if(Debug.mode && num <= Debug.level) {
+//		console.log(str);
+//	}
+//	
+//}
 
 Debug.log("Debug mode is on at level: " + Debug.level);
 Debug.log("This is an example for posterity that is not printed due to debug priority",Debug.level+1);
