@@ -17,7 +17,7 @@
 	function init() 
 	{			
 			Debug.log("init() was called");
-			DesktopContent.XMLHttpRequest("MacroMaker?RequestType=FEWlist","",FEWlistHandlerFunction);
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FEWlist","",FEWlistHandlerFunction);
 			block1El = document.getElementById('fecList');//red
 			block2El = document.getElementById('macroLib');//yellow
 			block3El = document.getElementById('main');//blue

@@ -52,16 +52,9 @@ private:
    //MacroMaker 							 	theMacroMaker_				 ;
 //
 //	void printStatus();
-//	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 //	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 //	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-//
-
-//	void printStatus();
-//	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-//	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-//	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-//
 //
 //
 //private:
@@ -71,7 +64,7 @@ private:
 //	ConfigurationManager*    theConfigurationManager_;
 //
 //
-//    void getFEWlist(HttpXmlDocument& xmldoc);
+    void getFEWlist(HttpXmlDocument& xmldoc);
 
 };
 

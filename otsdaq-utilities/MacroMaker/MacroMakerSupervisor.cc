@@ -79,8 +79,6 @@ void MacroMakerSupervisor::destroy(void)
 //========================================================================================================================
 void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/MacroMaker.html?urn=" <<
-		getenv("MACROMAKER_SUPERVISOR_ID") << "=securityType=" << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -93,14 +91,6 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 
 	std::cout << __COUT_HDR__ << "Command: " << Command << std::endl;
 
-	if(Command.size() == 0) //home landing page
-	{
-		*out << "<!DOCTYPE HTML><html lang='en'><head><title>MacroMaker</title></head>" <<
-			"<frameset col='100%' row='100%'>" <<
-			"<frame src='/WebPath/html/MacroMaker.html?urn=" <<
-			"'></frameset></html>";
-		return;
-	}
 
 	//FIXME -- need to lock out MacroMaker vs State machine
 
@@ -124,7 +114,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 
 	HttpXmlDocument xmldoc(cookieCode);
 
-	//theMacroMaker_.handleRequest(Command,xmldoc,cgi);
+	handleRequest(Command,xmldoc,cgi);
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
@@ -254,81 +244,86 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////	}
 //}
 //
-//void MacroMaker::handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
-//{
+void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+
+	if(Command == "FEWlist")
+		getFEWlist(xmldoc);
+//	else if(Command == "writeData")
+//		writeData(xmldoc,cgi);
+//	else if(Command == "readData")
+//	    readData(xmldoc,cgi);
+
+}
+
+void MacroMakerSupervisor::getFEWlist(HttpXmlDocument& xmldoc)
+{
+
+	std::cout << __COUT_HDR__ << std::endl;
+	 SupervisorDescriptors::const_iterator it =
+	    		theSupervisorsConfiguration_.getFEWDescriptors().begin();
+	    for (; it != theSupervisorsConfiguration_.getFEWDescriptors().end();
+	    		it++)
+	    {
+			xmldoc.addTextElementToData("FEW",
+					"FEWNAME");
+
+	    }
+}
 //
-////	if(Command == "FEWlist")
-////		getFEWlist(xmldoc);
-////	else if(Command == "writeData")
-////		writeData(xmldoc,cgi);
-////	else if(Command == "readData")
-////	    readData(xmldoc,cgi);
+void MacroMaker::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	//xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(SupervisorDescriptor, "SupervisorCookieCheck", parameters);
+
 //
-//}
+//	std::string Address = CgiDataUtilities::getData(cgi, "Address");
+//	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+//	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
+//	int addressFormatIndex = std::stoi(addressFormat);
 //
-//void MacroMaker::getFEWlist(HttpXmlDocument& xmldoc)
-//{
+//	std::cout << __COUT_HDR__ << "Raw address from server: " << Address << std::endl;
+//	std::cout << __COUT_HDR__ << "Raw data from server: " << Data << std::endl;
+//	std::cout << __COUT_HDR__ << "Format: " << addressFormatIndex << std::endl;
 //
-////	std::cout << __COUT_HDR__ << std::endl;
-////	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
-////		xmldoc.addTextElementToData("FEW",
-////				theFEWInterfacesManager_->theFEWInterfaces_[i]->getFEWType());
-////	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
-////		xmldoc.addTextElementToData("FEW",
-////				theFEWInterfacesManager_->theFEWInterfaces_[i]->getFEWType());
-//}
+//	std::uint64_t addr;
+//	if (addressFormatIndex == 1)
+//	  {
+//		//converting Address from std::string to uint64_t IN HEX
+//		std::stringstream ss;
+//		ss.str(Address);
+//		ss >> std::hex >> addr;
+//		std::cout << __COUT_HDR__ << "I am in if" << std::endl;
 //
-//void MacroMaker::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
-//{
-////
-////	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-////	std::string Data = CgiDataUtilities::getData(cgi, "Data");
-////	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
-////	int addressFormatIndex = std::stoi(addressFormat);
-////
-////	std::cout << __COUT_HDR__ << "Raw address from server: " << Address << std::endl;
-////	std::cout << __COUT_HDR__ << "Raw data from server: " << Data << std::endl;
-////	std::cout << __COUT_HDR__ << "Format: " << addressFormatIndex << std::endl;
-////
-////	std::uint64_t addr;
-////	if (addressFormatIndex == 1)
-////	  {
-////		//converting Address from std::string to uint64_t IN HEX
-////		std::stringstream ss;
-////		ss.str(Address);
-////		ss >> std::hex >> addr;
-////		std::cout << __COUT_HDR__ << "I am in if" << std::endl;
-////
-////	  }
-////	else
-////	{
-////		//std::stringstream stream(Address);
-////	  //  stream >> std::hex >> addr;
-////
-////		//converting Address to uint64_t IN DEC
-////		std::string s(Address);
-////		std::stringstream strm(s);
-////		strm >> std::hex >> addr;
-////		std::cout << __COUT_HDR__ << "I am in else" << std::endl;
-////	}
-////
-////	std::cout << __COUT_HDR__ << "Address sending to ZEDRyan: " << addr << std::endl;
-////
-////	//Converting Data to uint64_t
-////	    std::stringstream stream(Data);
-////	    std::uint64_t mywriteval;
-////	    stream >> std::hex >> mywriteval;
-////
-////	std::string writeValue(8,0);
-////	memcpy(&writeValue[0],&mywriteval,8);
-////	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
-////		((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(addr, writeValue);
-////
-////	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
-////	printf("0x%16.16lX",mywriteval);
-////	std::cout << std::endl;
-//}
+//	  }
+//	else
+//	{
+//		//std::stringstream stream(Address);
+//	  //  stream >> std::hex >> addr;
 //
+//		//converting Address to uint64_t IN DEC
+//		std::string s(Address);
+//		std::stringstream strm(s);
+//		strm >> std::hex >> addr;
+//		std::cout << __COUT_HDR__ << "I am in else" << std::endl;
+//	}
+//
+//	std::cout << __COUT_HDR__ << "Address sending to ZEDRyan: " << addr << std::endl;
+//
+//	//Converting Data to uint64_t
+//	    std::stringstream stream(Data);
+//	    std::uint64_t mywriteval;
+//	    stream >> std::hex >> mywriteval;
+//
+//	std::string writeValue(8,0);
+//	memcpy(&writeValue[0],&mywriteval,8);
+//	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
+//		((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(addr, writeValue);
+//
+//	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
+//	printf("0x%16.16lX",mywriteval);
+//	std::cout << std::endl;
+}
+
 //void MacroMaker::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 //{
 ////
