@@ -17,7 +17,7 @@
 	function init() 
 	{			
 			Debug.log("init() was called");
-			DesktopContent.XMLHttpRequest("MacroMaker?RequestType=FEWlist","",FEClistHandlerFunction);
+			DesktopContent.XMLHttpRequest("MacroMaker?RequestType=FEWlist","",FEWlistHandlerFunction);
 			block1El = document.getElementById('fecList');//red
 			block2El = document.getElementById('macroLib');//yellow
 			block3El = document.getElementById('main');//blue
@@ -80,10 +80,10 @@
 		historybox.style.height =  h*0.9 + "px";
 	}
 			 
-	function FEClistHandlerFunction(req) 
+	function FEWlistHandlerFunction(req) 
 	{
-		Debug.log("FEClistHandlerFunction() was called. Req: " + req.responseText);
-		var FECElements = req.responseXML.getElementsByTagName("FEW");
+		Debug.log("FEWlistHandlerFunction() was called. Req: " + req.responseText);
+		var FEWElements = req.responseXML.getElementsByTagName("FEW");
 		
 		//Make search box for the list
 		var noMultiSelect = false; 									
@@ -92,10 +92,10 @@
 	    var vals = [];
 	    var types = [];
 
-	    for(var i=0;i<FECElements.length;++i)
+	    for(var i=0;i<FEWElements.length;++i)
 		{
 			keys[i] = "one";
-			vals[i] = FECElements[i].getAttribute("value");
+			vals[i] = FEWElements[i].getAttribute("value");
 			types[i] = "number";
 			
 			Debug.log(vals[i]);
@@ -103,7 +103,7 @@
 	    var listoffecs = document.getElementById('list');  
 		MultiSelectBox.createSelectBox(listoffecs,
 				"box1",
-				"List of Available FECs",
+				"List of Available FEWs",
 				vals,keys,types,"listSelectionHandler",noMultiSelect);
 	    			            
 	    //End of making box
@@ -131,7 +131,7 @@
     {
 		 var reminderEl = document.getElementById('reminder');
 
-			//if(document.getElementById("FECcheck").checked||true)//CHANGE THIS
+			//if(document.getElementById("FEWcheck").checked||true)//CHANGE THIS
 			//{
 				 var addressFormat = document.getElementById("addressFormat");
 			     var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
@@ -150,14 +150,14 @@
 				 reminderEl.innerHTML = "Data written."
 			//}
 			//else
-			//	 reminderEl.innerHTML = "Please select a FEC from the list."
+			//	 reminderEl.innerHTML = "Please select a FEW from the list."
     }
 
     function callRead()
     {
 		 var reminderEl = document.getElementById('reminder');
 
-		//	if(document.getElementById("FECcheck").checked)
+		//	if(document.getElementById("FEWcheck").checked)
 			//{
 				var addressFormat = document.getElementById("addressFormat");
 				var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
@@ -170,7 +170,7 @@
 	            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
 	       	//}
 			//else
-				// reminderEl.innerHTML = "Please select a FEC from the list."
+				// reminderEl.innerHTML = "Please select a FEW from the list."
     }
     
     function writeHandlerFunction(req)

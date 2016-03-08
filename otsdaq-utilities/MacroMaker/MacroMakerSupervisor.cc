@@ -31,6 +31,23 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub * s) throw (xda
 
     init();
 
+    SupervisorDescriptors::const_iterator it =
+    		theSupervisorsConfiguration_.getFEWDescriptors().begin();
+    for (; it != theSupervisorsConfiguration_.getFEWDescriptors().end();
+    		it++)
+    {
+		std::cout << __COUT_HDR__<< "PixelFEWSupervisor instance " << it->first << std::endl;
+		std::cout << __COUT_HDR__<< "Look! Here's a FEW! @@@" << std::endl;
+
+    }
+    it = theSupervisorsConfiguration_.getFERDescriptors().begin();
+    for (; it != theSupervisorsConfiguration_.getFERDescriptors().end();
+    		it++)
+    {
+		std::cout << __COUT_HDR__<< "PixelFERSupervisor instance " << it->first << std::endl;
+		std::cout << __COUT_HDR__<< "Look! Here's a FER! @@@" << std::endl;
+
+    }
 }
 
 //========================================================================================================================
@@ -120,9 +137,9 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 //#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 //#include "otsdaq-core/Supervisor/SupervisorsInfo.h"
 //#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-////#include "otsdaq-demo/DetectorWriter/FEWInterfacesManager.h"
+//#include "otsdaq-demo/DetectorWriter/FEWInterfacesManager.h"
 ////#include "otsdaq-demo/DetectorWriter/FEWVInterface.h"
-////#include "otsdaq-demo/DetectorWriter/FECZEDRyanInterface.h"
+////#include "otsdaq-demo/DetectorWriter/FEWZEDRyanInterface.h"
 //
 //#include <iostream>
 //#include <stdio.h>
@@ -149,7 +166,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////
 ////	theConfigurationManager_ = new ConfigurationManager;
 ////    theFEWInterfacesManager_ = new FEWInterfacesManager(theConfigurationManager_, supervisorInstance_);
-////	theConfigurationManager_->setupFECSupervisorConfiguration(theConfigurationKey_,supervisorInstance_);
+////	theConfigurationManager_->setupFEWSupervisorConfiguration(theConfigurationKey_,supervisorInstance_);
 ////	theFEWInterfacesManager_->createInterfaces();
 //}
 //
@@ -165,28 +182,28 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////	//super_->getSupervisorsStatus();
 ////	//super_->theSupervisorsConfiguration_;
 //////	SupervisorDescriptors::const_iterator it =
-//////			superConfiguration_->getFECDescriptors().begin();
-//////	for (; it != superConfiguration_->getFECDescriptors().end();
+//////			superConfiguration_->getFEWDescriptors().begin();
+//////	for (; it != superConfiguration_->getFEWDescriptors().end();
 //////			it++) {
 //////		std::string state = "";
 //////		//send(it->second,"StateMachineStateRequest");
 //////
-//////		superInfo_->getFECSupervisorInfo(it->first).setStatus(
+//////		superInfo_->getFEWSupervisorInfo(it->first).setStatus(
 //////				state);
 //////		std::cout << __COUT_HDR__<< "PixelFEWSupervisor instance " << it->first << " is in FSM state " << state << std::endl;
 //////		//it->write(1,0);
 //////		std::cout << __COUT_HDR__<< "Look! Here's a FEW! @@@" << std::endl;
 //////
 //////	}
-//////	it = superConfiguration_->getFEDDescriptors().begin();
-//////	for (; it != superConfiguration_->getFEDDescriptors().end();
+//////	it = superConfiguration_->getFERDescriptors().begin();
+//////	for (; it != superConfiguration_->getFERDescriptors().end();
 //////			it++) {
 //////		std::string state = "";
 //////		//		send(it->second,"StateMachineStateRequest");
-//////		superInfo_->getFEDSupervisorInfo(it->first).setStatus(
+//////		superInfo_->getFERSupervisorInfo(it->first).setStatus(
 //////				state);
-//////		std::cout << __COUT_HDR__<< "PixelFEDSupervisor instance " << it->first << " is in FSM state " << state << std::endl;
-//////		std::cout << __COUT_HDR__<< "Look! Here's a FED! @@@" << std::endl;
+//////		std::cout << __COUT_HDR__<< "PixelFERSupervisor instance " << it->first << " is in FSM state " << state << std::endl;
+//////		std::cout << __COUT_HDR__<< "Look! Here's a FER! @@@" << std::endl;
 //////	}
 ////
 //////	//example
@@ -212,8 +229,8 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////
 ////		if (FEWType == "OtsUDPHardware"){
 ////			std::cout << __COUT_HDR__<< "Type: " << FEWType << std::endl;
-////			((FECZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(0x000000064, writeValue);
-////			((FECZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceRead(0x000000064, readValue);
+////			((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(0x000000064, writeValue);
+////			((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceRead(0x000000064, readValue);
 ////		}
 ////		else
 ////			std::cout << __COUT_HDR__<< "FEW type not recognized" << std::endl;
@@ -305,7 +322,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////	std::string writeValue(8,0);
 ////	memcpy(&writeValue[0],&mywriteval,8);
 ////	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
-////		((FECZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(addr, writeValue);
+////		((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceWrite(addr, writeValue);
 ////
 ////	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
 ////	printf("0x%16.16lX",mywriteval);
@@ -345,7 +362,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 ////
 ////	std::string readValue = "";
 ////	for(unsigned int i=0;i<theFEWInterfacesManager_->theFEWInterfaces_.size();++i)
-////	    ((FECZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceRead(addr, readValue);
+////	    ((FEWZEDRyanInterface *)(theFEWInterfacesManager_->theFEWInterfaces_[i]))->interfaceRead(addr, readValue);
 ////
 ////	std::cout << __COUT_HDR__ <<"\tReading message:-";
 ////
