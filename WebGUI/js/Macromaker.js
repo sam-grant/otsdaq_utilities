@@ -27,6 +27,8 @@
 
 			window.onresize = redrawWindow;
 			redrawWindow(); //redraw window for first time
+			
+			//
 	}
 	
 	function redrawWindow() 
@@ -81,19 +83,39 @@
 	function FEClistHandlerFunction(req) 
 	{
 		Debug.log("FEClistHandlerFunction() was called. Req: " + req.responseText);
-
 		var FECElements = req.responseXML.getElementsByTagName("FEW");
-		var fecdata = "";
-		for(var i=0;i<FECElements.length;++i)
+		
+		//Make search box for the list
+		var noMultiSelect = false; 									
+				
+	    var keys = [];
+	    var vals = [];
+	    var types = [];
+
+	    for(var i=0;i<FECElements.length;++i)
 		{
-			fecdata = fecdata.concat(FECElements[i].getAttribute("value"),"<br\>");
-			var listoffecs = document.getElementById('list');
-			listoffecs.innerHTML = fecdata;
-			Debug.log(fecdata);
+			keys[i] = "one";
+			vals[i] = FECElements[i].getAttribute("value");
+			types[i] = "number";
+			
+			Debug.log(vals[i]);
 		}
+	    var listoffecs = document.getElementById('list');  
+		MultiSelectBox.createSelectBox(listoffecs,
+				"box1",
+				"List of Available FECs",
+				vals,keys,types,"listSelectionHandler",noMultiSelect);
+	    			            
+	    //End of making box
 	}
 
-	
+	function listSelectionHandler(listoffecs)
+	{
+	 	 var splits = listoffecs.id.split('_');
+		 var i = splits[splits.length-1] | 0;
+		 MultiSelectBox.dbg("Chosen element index:",i);
+	}
+	        
             
             
     function clearData(){
@@ -109,8 +131,8 @@
     {
 		 var reminderEl = document.getElementById('reminder');
 
-			if(document.getElementById("FECcheck").checked)
-			{
+			//if(document.getElementById("FECcheck").checked||true)//CHANGE THIS
+			//{
 				 var addressFormat = document.getElementById("addressFormat");
 			     var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
 			     var dataFormat = document.getElementById("dataFormat");
@@ -126,17 +148,17 @@
 				 contentEl.innerHTML = newContent;
 				 updateScroll()
 				 reminderEl.innerHTML = "Data written."
-			}
-			else
-				 reminderEl.innerHTML = "Please select a FEC from the list."
+			//}
+			//else
+			//	 reminderEl.innerHTML = "Please select a FEC from the list."
     }
 
     function callRead()
     {
 		 var reminderEl = document.getElementById('reminder');
 
-			if(document.getElementById("FECcheck").checked)
-			{
+		//	if(document.getElementById("FECcheck").checked)
+			//{
 				var addressFormat = document.getElementById("addressFormat");
 				var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
 				var dataFormat = document.getElementById("dataFormat");
@@ -144,18 +166,16 @@
 			
 				var addressStr = document.getElementById('addressInput').value;
 	            var dataStr = document.getElementById('dataInput').value;
-	            //HERE,SEND DIFFERENT GETDATA FOR TWO CASES
 	           
 	            DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
-	       	}
-			else
-				 reminderEl.innerHTML = "Please select a FEC from the list."
+	       	//}
+			//else
+				// reminderEl.innerHTML = "Please select a FEC from the list."
     }
     
     function writeHandlerFunction(req)
 	{
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
-
     }
     
     function readHandlerFunction(req)

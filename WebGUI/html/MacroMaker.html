@@ -4,6 +4,7 @@
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
 		
 		<style type="text/css">			
 			body {
@@ -44,6 +45,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 
 
@@ -57,10 +59,7 @@
 	<body onload='Macromaker:init();'>
 	
 	    <div class='mainBlock' id='fecList'>
-		    <h3>List of FECS</h3>
-			<form action="demo_form.asp" method="get">
-	        <p><div id='list'>Loading</div><input type="checkbox" id="FECcheck"></p>
-	        </form>
+	        <div id='list'></div>
 		</div>
 		
 		<div class='mainBlock' id='macroLib'>
@@ -75,7 +74,7 @@
 			<p><small>Manual Commands<a style="margin-left:15px" href=""><u>Macro Maker</u></a></small></p>
 		    </div>
 	        <h3>Manual Commands</h3>
-	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" /><button onclick="clearAddress()" style="color: black">Clear</button></p>
+	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" placeholder="0x000000064"/><button onclick="clearAddress()" style="color: black">Clear</button></p>
 	        <div id="output1">The address is in
 	           <select id="addressFormat" style="color:black;margin-bottom:10px">
 			    <option style="color:black" value="1" selected="selected">hex</option>
@@ -83,7 +82,7 @@
 			   </select>
 			format.</div>
 	       
-	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px"/><button onclick="clearData()" style="color: black">Clear</button></p>
+	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px" placeholder="0xABCDEF"/><button onclick="clearData()" style="color: black">Clear</button></p>
 	        <div id="output2">The data is in
 	           <select id="dataFormat" style="color:black;margin-bottom:10px">
 			    <option style="color:black" value="1" selected="selected">hex</option>
