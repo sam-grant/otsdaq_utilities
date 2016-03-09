@@ -259,23 +259,39 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 void MacroMakerSupervisor::getFEWlist(HttpXmlDocument& xmldoc)
 {
 	std::cout << __COUT_HDR__ << std::endl;
+	SOAPParameters parameters;
 	 SupervisorDescriptors::const_iterator it =
 	    		theSupervisorsConfiguration_.getFEWDescriptors().begin();
 	 for (;it != theSupervisorsConfiguration_.getFEWDescriptors().end();it++)
 	 {
 		 std::stringstream buffer;
          buffer << "FEW Instance " << it->first << std::endl;
+         //it->second
+         xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it->second,
+         			"MacroMakerSupervisorRequest",parameters);
 		 xmldoc.addTextElementToData("FEW", buffer.str());
 	 }
 }
 
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-//	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(SupervisorDescriptor, "SupervisorCookieCheck", parameters);
-//
-//
 //	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 //	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+//
+//	SOAPParameters parameters;
+//		parameters.addParameter("Address",Address);
+//		parameters.addParameter("Data",Data);
+//
+//	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEWDescriptors().begin()->second,
+//			"MacroMakerSupervisorRequest",parameters);
+//			//Selected FEW Descriptor,
+//			//Request Test Name,
+//			//Parameters
+//	std::cout << __COUT_HDR__ << std::endl;
+
+//
+//
+
 //	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
 //	int addressFormatIndex = std::stoi(addressFormat);
 //
@@ -319,7 +335,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 //
 //	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
 //	printf("0x%16.16lX",mywriteval);
-	std::cout << std::endl;
+//	std::cout << std::endl;
 }
 
 //void MacroMaker::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
