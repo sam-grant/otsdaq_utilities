@@ -1,6 +1,6 @@
 #include "OtsConfigurationWizardSupervisor.h"
 
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/Macros/OTSMacros.h"
 
 #include <xdaq/NamespaceURI.h>
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"

@@ -1,13 +1,13 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/Macros/OTSMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 
-#include "otsdaq-core/ConfigurationDataFormats/ConfigurationAliases.h"
-#include "otsdaq-core/ConfigurationDataFormats/Configurations.h"
-#include "otsdaq-core/ConfigurationDataFormats/DetectorConfiguration.h"
-#include "otsdaq-core/ConfigurationDataFormats/FSSRDACsConfiguration.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/ConfigurationAliases.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/Configurations.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/DetectorConfiguration.h"
+#include "otsdaq-demo/UserConfigurationDataFormats/FSSRDACsConfiguration.h"
 #include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
 
 

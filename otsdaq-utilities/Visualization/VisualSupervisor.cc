@@ -1,5 +1,5 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/Macros/OTSMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"

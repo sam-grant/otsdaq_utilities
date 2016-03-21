@@ -1,5 +1,5 @@
 #include "otsdaq-utilities/Chat/ChatSupervisor.h"
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/Macros/OTSMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 

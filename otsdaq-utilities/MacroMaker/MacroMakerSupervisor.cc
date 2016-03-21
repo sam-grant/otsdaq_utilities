@@ -1,6 +1,6 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/Macros/OTSMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
@@ -123,13 +123,13 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 //
 //
 //#include "otsdaq-core/Supervisor/MacroMaker.h"
-//#include "otsdaq-core/OTSMacros.h"
+//#include "otsdaq-core/Macros/OTSMacros.h"
 //#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 //#include "otsdaq-core/Supervisor/SupervisorsInfo.h"
 //#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-//#include "otsdaq-demo/DetectorWriter/FEWInterfacesManager.h"
-////#include "otsdaq-demo/DetectorWriter/FEWVInterface.h"
-////#include "otsdaq-demo/DetectorWriter/FEWZEDRyanInterface.h"
+//#include "otsdaq-demo/FEInterfaces/FEWInterfacesManager.h"
+////#include "otsdaq-demo/FEInterfaces/FEVInterface.h"
+////#include "otsdaq-demo/FEInterfaces/FEWZEDRyanInterface.h"
 //
 //#include <iostream>
 //#include <stdio.h>
