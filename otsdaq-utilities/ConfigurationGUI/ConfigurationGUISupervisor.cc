@@ -60,35 +60,35 @@ theRemoteWebUsers_  (this)
 	ConfigurationManager *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 
 	std::cout << __COUT_HDR_L__ << "aliasMap size: " << aliasMap.size() << std::endl;
 	std::cout << __COUT_HDR_L__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
 
+
+	std::set<std::string> listOfKocs;
+	std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+	while (it != aliasMap.end())
 	{
-		std::set<std::string> listOfKocs;
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
-		while (it != aliasMap.end())
+		//for each configuration alias and key
+		//get KOC version numbers
+
+		std::cout << __COUT_HDR_L__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+
+		listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
+		std::cout << __COUT_HDR_L__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+
+		for (auto& koc : listOfKocs)
 		{
-			//for each configuration alias and key
-			//get KOC version numbers
+			unsigned int conditionVersion = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),koc);
 
-			std::cout << __COUT_HDR_L__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-			listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second.key());
-			std::cout << __COUT_HDR_L__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-			{
-				unsigned int cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second.key(),*sit);
-
-				std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-			}
-			++it;
-
+			std::cout << "\tKoc: " << koc << " Version: " << conditionVersion << std::endl;
 		}
+		++it;
+
 	}
+
 
 	std::cout << __COUT_HDR__ << std::endl;
 	std::cout << __COUT_HDR__ << std::endl;
@@ -100,23 +100,23 @@ theRemoteWebUsers_  (this)
 	//Get KOC keys for Alias key
 
 
+
+
+	auto mapIt = allCfgInfo.begin();
+	while(mapIt != allCfgInfo.end())
 	{
+		std::cout << __COUT_HDR_L__ << "KOC Alias: " << mapIt->first << std::endl;
+		std::cout << __COUT_HDR_L__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
 
-		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
-		while(it != allCfgInfo.end())
+		//get version key for the current system subconfiguration key
+		for (std::set<int>::iterator vit=mapIt->second.versions_.begin(); vit!=mapIt->second.versions_.end(); ++vit)
 		{
-			std::cout << __COUT_HDR_L__ << "KOC Alias: " << it->first << std::endl;
-			std::cout << __COUT_HDR_L__ << "\t\tExisting Versions: " << it->second.versions_.size() << std::endl;
+			std::cout << __COUT_HDR_L__ << "\t\t" << *vit << std::endl;
 
-			//get version key for the current system subconfiguration key
-			for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
-			{
-				std::cout << __COUT_HDR_L__ << "\t\t" << *vit << std::endl;
-
-			}
-			++it;
 		}
+		++mapIt;
 	}
+
 
 	return;
 
@@ -137,7 +137,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->loadConfigurationByPtr(allCfgInfo[chosenSubConfig].configurationPtr_, 0, versionToCopy, allCfgInfo[chosenSubConfig].configurationTypeId_);
+			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -177,7 +177,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->loadConfigurationByPtr(allCfgInfo[chosenSubConfig].configurationPtr_, 0, versionToCopy, allCfgInfo[chosenSubConfig].configurationTypeId_);
+			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -214,7 +214,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->loadConfigurationByPtr(allCfgInfo[chosenSubConfig].configurationPtr_, 0, versionToCopy, allCfgInfo[chosenSubConfig].configurationTypeId_);
+			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -346,17 +346,17 @@ theRemoteWebUsers_  (this)
 	//proof of concept.. change a KOC version (this makes a new backbone version?!)
 	std::cout << __COUT_HDR__ << "\t\t**************************** Edit a KOC for a System Alias" << std::endl;
 
-	cfgMgr->__GET_CONFIG__(ConfigurationAliases)->print();
-	cfgMgr->__GET_CONFIG__(DefaultConfigurations)->print();
-	cfgMgr->__GET_CONFIG__(Configurations)->print();
-	cfgMgr->__GET_CONFIG__(VersionAliases)->print();
+	cfgMgr->getConfiguration<ConfigurationAliases>()->print();
+	cfgMgr->getConfiguration<DefaultConfigurations>()->print();
+	cfgMgr->getConfiguration<Configurations>()->print();
+	cfgMgr->getConfiguration<VersionAliases>()->print();
 
 	{
 		std::string specSystemAlias = "Physics";
 		std::string KOCAlias = "FSSRDACsConfiguration";
 		int newVersion = 3;
 
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(specSystemAlias);
 		if(it != aliasMap.end())
@@ -368,10 +368,10 @@ theRemoteWebUsers_  (this)
 			std::cout << __COUT_HDR__ << "Changing to new version: " << newVersion << std::endl;
 
 			std::set<std::string> listOfKocs;
-			listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second.key());
+			listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
 			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 			{
-				unsigned int cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second.key(),*sit);
+				unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
 
 				std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
@@ -388,9 +388,9 @@ theRemoteWebUsers_  (this)
 
 			chosenSubConfig = "ConfigurationAliases";
 			int temporaryVersion;
-			int versionToCopy = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getViewVersion();
+			int versionToCopy = cfgMgr->getConfiguration<ConfigurationAliases>()->getViewVersion();
 			//cfgMgr->__GET_CONFIG__(DefaultConfigurations)->print();
-			///////////////////////cfgMgr->__GET_CONFIG__(Configurations)->print();
+			///////////////////////cfgMgr->getConfiguration<Configurations>()->print();
 			//cfgMgr->__GET_CONFIG__(VersionAliases)
 
 			std::cout << __COUT_HDR__ << "\t\ttemporaryVersion versionToCopy: " << versionToCopy << std::endl;
@@ -669,7 +669,7 @@ throw (xgi::exception::Exception)
 		//<configuration alias=xxx key=xxx>...</configuration>
 		//...
 
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
 
 		std::set<std::string> listOfKocs;
@@ -688,14 +688,14 @@ throw (xgi::exception::Exception)
 			parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 			//get KOCs alias and version for the current system configuration key
-			assert(cfgMgr->__GET_CONFIG__(Configurations));
+			assert(cfgMgr->getConfiguration<Configurations>());
 			{
-				listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second.key());
+				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
 				//std::cout << __COUT_HDR__ << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 				{
-					unsigned int cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second.key(),*sit);
+					unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
 
 					//std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
@@ -772,7 +772,7 @@ throw (xgi::exception::Exception)
 
 		std::cout << __COUT_HDR__ << "getSpecificSystemConfiguration: " << alias << std::endl;
 
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(alias);
 		if(it != aliasMap.end())
@@ -797,15 +797,15 @@ throw (xgi::exception::Exception)
 			parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 			//get KOCs alias and version for the current system configuration key
-			assert(cfgMgr->__GET_CONFIG__(Configurations));
+			assert(cfgMgr->getConfiguration<Configurations>());
 			{
-				listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second.key());
+				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
 				//std::cout << __COUT_HDR__ << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 				{
 					//current version
-					unsigned int cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second.key(),*sit);
+					unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
 
 					//all existing versions
 					versions = allCfgInfo.find(*sit)->second.versions_;
@@ -843,7 +843,7 @@ throw (xgi::exception::Exception)
 
 					cfgMgr->loadConfigurationBackbone(*vit);
 
-					std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+					std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 					it = aliasMap.find(alias);
 					if(it != aliasMap.end())
@@ -917,7 +917,7 @@ throw (xgi::exception::Exception)
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
-				cfgMgr->loadConfigurationByPtr(allCfgInfo[subAlias].configurationPtr_, 0, version, allCfgInfo[subAlias].configurationTypeId_);
+				cfgMgr->getConfigurationByName(subAlias, 0, version);
 			else
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
@@ -1055,7 +1055,7 @@ throw (xgi::exception::Exception)
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
-				cfgMgr->loadConfigurationByPtr(allCfgInfo[subAlias].configurationPtr_, 0, version, allCfgInfo[subAlias].configurationTypeId_);
+				cfgMgr->getConfigurationByName(subAlias, 0, version);
 			else
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
