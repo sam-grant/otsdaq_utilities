@@ -7,6 +7,10 @@
 #include "otsdaq-core/ConfigurationPluginDataFormats/ConfigurationAliases.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/Configurations.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/DetectorConfiguration.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/DefaultConfigurations.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/VersionAliases.h"
+
 #include "otsdaq-demo/UserConfigurationDataFormats/FSSRDACsConfiguration.h"
 #include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
 
