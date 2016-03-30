@@ -141,7 +141,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
+			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -181,7 +181,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
+			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -218,7 +218,7 @@ theRemoteWebUsers_  (this)
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
-			cfgMgr->getConfigurationByName(chosenSubConfig, 0, versionToCopy);
+			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
@@ -921,7 +921,7 @@ throw (xgi::exception::Exception)
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
-				cfgMgr->getConfigurationByName(subAlias, 0, version);
+				cfgMgr->getVersionedConfigurationByName(subAlias, version);
 			else
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
@@ -1059,7 +1059,7 @@ throw (xgi::exception::Exception)
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
-				cfgMgr->getConfigurationByName(subAlias, 0, version);
+				cfgMgr->getVersionedConfigurationByName(subAlias, version);
 			else
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
