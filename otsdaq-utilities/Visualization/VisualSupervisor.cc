@@ -313,7 +313,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                 else //turns out was a root object path
                 {
                 	TString json = TBufferJSON::ConvertToJSON(histo);
-                	std::cout << __COUT_HDR__ << "json " << json << std::endl;
+                	//std::cout << __COUT_HDR__ << "json " << json << std::endl;
 
                     TBufferFile tbuff(TBuffer::kWrite);
 
