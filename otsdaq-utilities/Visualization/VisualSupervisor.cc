@@ -313,16 +313,16 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                 else //turns out was a root object path
                 {
                 	TString json = TBufferJSON::ConvertToJSON(histo);
-                	std::cout << __COUT_HDR__ << "json " << json << std::endl;
+                	//std::cout << __COUT_HDR__ << "json " << json << std::endl;
 
                     TBufferFile tbuff(TBuffer::kWrite);
 
                     std::string rootType = histo->ClassName();
-                    std::cout << __COUT_HDR__ << "rootType " << rootType << std::endl;
+                    //std::cout << __COUT_HDR__ << "rootType " << rootType << std::endl;
 
                     histo->Streamer(tbuff);
 
-                    std::cout << __COUT_HDR__ << "histo length " << tbuff.Length() << std::endl;
+                    //std::cout << __COUT_HDR__ << "histo length " << tbuff.Length() << std::endl;
 
                     std::string dest;
                     binaryBufferToHexString(tbuff.Buffer(), tbuff.Length(), dest);
