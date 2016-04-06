@@ -592,7 +592,7 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e) throw 
 {
     std::cout << __COUT_HDR__ << std::endl;
     theConfigurationKey_ = theConfigurationManager_->makeConfigurationKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationKey").c_str()));
-    theConfigurationManager_->setupVisualSupervisorConfiguration(theConfigurationKey_);
+    theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationKey_,0);
     theDataManager_.configure();
 }
 
