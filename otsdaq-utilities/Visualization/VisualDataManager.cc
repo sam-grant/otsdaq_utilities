@@ -8,12 +8,13 @@ using namespace ots;
 
 
 //========================================================================================================================
-VisualDataManager::VisualDataManager(ConfigurationManager* configurationManager) :
-        cProcessName_           ("VisualSupervisor"),
-        theConfigurationManager_(configurationManager),
-        theDataListener_        (0),
-        theLiveDQMHistos_       (0),
-        theFileDQMHistos_       ("FileDQMHistos")
+VisualDataManager::VisualDataManager(ConfigurationManager* configurationManager)
+: DataManager(configurationManager, 0)
+, cProcessName_           ("VisualSupervisor")
+, theConfigurationManager_(configurationManager)
+, theDataListener_        (0)
+, theLiveDQMHistos_       (0)
+, theFileDQMHistos_       ("FileDQMHistos")
 {}
 
 //========================================================================================================================
@@ -55,7 +56,7 @@ void VisualDataManager::start(std::string runNumber)
     if(theLiveDQMHistos_ != 0)
         theLiveDQMHistos_->book(fileName.str(), theConfigurationManager_);
 
-    DataManager::startProcess(cProcessName_);
+    DataManager::startProcess(cProcessName_, runNumber);
 }
 
 //========================================================================================================================

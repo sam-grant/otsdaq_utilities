@@ -1,3 +1,4 @@
+include_directories(${MPI_INCLUDE_PATH})
 include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Visualization
 		 LIBRARIES
@@ -15,6 +16,7 @@ cet_make(LIBRARY_NAME Visualization
 		 XmlUtilities
 		 SOAPUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
+         
 )
 
 

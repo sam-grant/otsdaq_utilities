@@ -62,7 +62,7 @@ private:
 //	ConfigurationManager*    theConfigurationManager_;
 //
 //
-    void getFEWlist(HttpXmlDocument& xmldoc);
+    void getFElist(HttpXmlDocument& xmldoc);
 
 };
 
