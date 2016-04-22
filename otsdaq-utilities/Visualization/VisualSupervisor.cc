@@ -9,6 +9,8 @@
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 #include "otsdaq-core/RootUtilities/DQMHistos.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationKey.h"
+#include "otsdaq-core/DataManager/DataManagerSingleton.h"
+
 
 //ROOT documentation
 //http://root.cern.ch/root/html/index.html
@@ -57,15 +59,22 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //========================================================================================================================
-VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-        xdaq::Application        (s),
-        SOAPMessenger            (this),
-        RunControlStateMachine   ("VisualSupervisor"),
-        theRemoteWebUsers_       (this),
-        theConfigurationManager_ (new ConfigurationManager),//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-        theDataManager_          (theConfigurationManager_),
-        loadedRunNumber_	     (-1)
+VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception)
+: xdaq::Application        (s)
+, SOAPMessenger            (this)
+, RunControlStateMachine   ("VisualSupervisor")
+, supervisorType_          ("Visual")
+, supervisorInstance_      (this->getApplicationDescriptor()->getInstance())
+, theRemoteWebUsers_       (this)
+, theConfigurationManager_ (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
+, theDataManager_          (0)
+, loadedRunNumber_	       (-1)
 {
+	theDataManager_ = (VisualDataManager*)DataManagerSingleton<DataManager>::getInstance(
+			supervisorType_,
+			supervisorInstance_,
+			theConfigurationManager_);
+
 
     xgi::bind(this, &VisualSupervisor::Default, "Default" );
     xgi::bind(this, &VisualSupervisor::request, "request");
@@ -183,15 +192,15 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
     HttpXmlDocument xmldoc(cookieCode);
 
 
-    //    if (Command == "getHisto" && theDataManager_.getLiveDQMHistos() != 0)
+    //    if (Command == "getHisto" && theDataManager_->getLiveDQMHistos() != 0)
     //    {
-    //       // TH1I* histo = (TH1I*)theDataManager_.getLiveDQMHistos()->get("Planes/Plane_0_Occupancy");
+    //       // TH1I* histo = (TH1I*)theDataManager_->getLiveDQMHistos()->get("Planes/Plane_0_Occupancy");
     //
-    //        //        theDataManager_.load("Run185_Histo.root","Histograms");
-    //        //TH1F*     histo1d  = theDataManager_.getFileDQMHistos().getHisto1D();
-    //        //TCanvas*  canvas   = theDataManager_.getFileDQMHistos().getCanvas ();
-    //        //TH2F*     histo2d  = theDataManager_.getFileDQMHistos().getHisto2D();
-    //        //TProfile* profile  = theDataManager_.getFileDQMHistos().getProfile();
+    //        //        theDataManager_->load("Run185_Histo.root","Histograms");
+    //        //TH1F*     histo1d  = theDataManager_->getFileDQMHistos().getHisto1D();
+    //        //TCanvas*  canvas   = theDataManager_->getFileDQMHistos().getCanvas ();
+    //        //TH2F*     histo2d  = theDataManager_->getFileDQMHistos().getHisto2D();
+    //        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
     //
     //    }
     if (Command == "getDirectoryContents")
@@ -225,7 +234,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
             if(path == "/")
             {
 
-                if(theDataManager_.getLiveDQMHistos() != 0)
+                if(theDataManager_->getLiveDQMHistos() != 0)
                     xmldoc.addTextElementToData("dir", LIVEDQM_DIR + ".root"); //add to xml
 
                 //check for ROOT_DISPLAY_CONFIG_PATH
@@ -280,10 +289,10 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
         TFile* rootFile;
 
-        if(theDataManager_.getLiveDQMHistos() != 0 && LDQM_pos == 0)
+        if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
         {
             std::cout << __COUT_HDR__ << "Attempting to get LIVE file." << std::endl;
-            rootFile = theDataManager_.getLiveDQMHistos()->getFile();
+            rootFile = theDataManager_->getLiveDQMHistos()->getFile();
             rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
         }
         else
@@ -378,7 +387,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
 
         if(Run != (int)loadedRunNumber_ || loadedRunNumber_ == (unsigned int)-1)
         {
-            theDataManager_.load("Run1684.root","Monicelli");
+            theDataManager_->load("Run1684.root","Monicelli");
             loadedRunNumber_ = Run;
         }
 
@@ -386,7 +395,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         DOMElement* eventParent;
         char str[40];
 
-        const Visual3DEvents& events = theDataManager_.getVisual3DEvents();
+        const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
         std::cout << __COUT_HDR__ << "Preparing hits xml" << std::endl;
         int numberOfEvents = 0;
         for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() && numberOfEvents < 10000; it++, numberOfEvents++)
@@ -426,12 +435,12 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
 
         //FIXME -- this crashes when the file doesn't exist!
-        theDataManager_.load("Run1684.geo","Geometry");
+        theDataManager_->load("Run1684.geo","Geometry");
 
         std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
 
         DOMElement* geometryParent = xmldoc.addTextElementToData("geometry", "");
-        const Visual3DShapes& shapes = theDataManager_.getVisual3DGeometry().getShapes();
+        const Visual3DShapes& shapes = theDataManager_->getVisual3DGeometry().getShapes();
 
         std::cout << __COUT_HDR__ << "getGeometry" << std::endl;
 
@@ -593,28 +602,28 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e) throw 
     std::cout << __COUT_HDR__ << std::endl;
     theConfigurationKey_ = theConfigurationManager_->makeConfigurationKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationKey").c_str()));
     theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationKey_,0);
-    theDataManager_.configure();
+    theDataManager_->configure();
 }
 
 //========================================================================================================================
 void VisualSupervisor::transitionHalting(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
 {
     std::cout << __COUT_HDR__ << std::endl;
-    theDataManager_.halt();
+    theDataManager_->halt();
 }
 
 //========================================================================================================================
 void VisualSupervisor::transitionStarting(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
 {
     std::cout << __COUT_HDR__ << std::endl;
-    theDataManager_.start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+    theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
 }
 
 //========================================================================================================================
 void VisualSupervisor::transitionStopping(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
 {
     std::cout << __COUT_HDR__ << std::endl;
-    theDataManager_.stop();
+    theDataManager_->stop();
 }
 
 

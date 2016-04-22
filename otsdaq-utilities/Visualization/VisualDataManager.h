@@ -1,5 +1,5 @@
-#ifndef _ots_VisualDataManager_h
-#define _ots_VisualDataManager_h
+#ifndef _ots_VisualDataManager_h_
+#define _ots_VisualDataManager_h_
 
 #include "otsdaq-core/DataManager/DataListener.h"  // Make sure this is always first because <sys/types.h> (defined in Socket.h) must be first
 #include "otsdaq-core/DataManager/DataManager.h"
@@ -24,7 +24,7 @@ class ConfigurationManager;
 class VisualDataManager : public DataManager
 {
 public:
-    VisualDataManager(ConfigurationManager* configurationManager);
+    VisualDataManager(std::string supervisorType, unsigned int supervisorInstance, ConfigurationManager* configurationManager);
     virtual ~VisualDataManager(void);
 
 
@@ -42,7 +42,6 @@ public:
     const Visual3DGeometry& getVisual3DGeometry (void);
 
 private:
-    const std::string            cProcessName_;
     ConfigurationManager*      theConfigurationManager_;
     DataListener*              theDataListener_;
     DQMHistos*                 theLiveDQMHistos_;
