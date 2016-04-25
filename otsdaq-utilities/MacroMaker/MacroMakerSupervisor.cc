@@ -21,33 +21,28 @@ XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 
 //========================================================================================================================
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-        xdaq::Application(s   ),
-        SOAPMessenger  (this),
-        theRemoteWebUsers_(this)
+xdaq::Application(s   ),
+SOAPMessenger  (this),
+theRemoteWebUsers_(this)
 {
 
-    xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" );
-    xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
+	xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" );
+	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
-    init();
+	init();
 
-    SupervisorDescriptors::const_iterator it =
-    		theSupervisorsConfiguration_.getFEDescriptors().begin();
-    for (; it != theSupervisorsConfiguration_.getFEDescriptors().end();
-    		it++)
-    {
-		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it->first << std::endl;
+	//getARTDAQFEDescriptors
+	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
+	{
+		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it.first << std::endl;
 		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+	}
+	for (const auto& it: theSupervisorsConfiguration_.getFEDataManagerDescriptors())
+	{
+		std::cout << __COUT_HDR__<< "PixelFEDataManagerSupervisor instance " << it.first << std::endl;
+		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+	}
 
-    }
-    it = theSupervisorsConfiguration_.getARTDAQFEDescriptors().begin();
-    for (; it != theSupervisorsConfiguration_.getARTDAQFEDescriptors().end();
-    		it++)
-    {
-		std::cout << __COUT_HDR__<< "PixelARTDAQFESupervisor instance " << it->first << std::endl;
-		std::cout << __COUT_HDR__<< "Look! Here's a ARTDAQFE! @@@" << std::endl;
-
-    }
 }
 
 //========================================================================================================================
@@ -58,7 +53,7 @@ MacroMakerSupervisor::~MacroMakerSupervisor(void)
 //========================================================================================================================
 void MacroMakerSupervisor::init(void)
 {
- 	//called by constructor
+	//called by constructor
 	theSupervisorsConfiguration_.init(getApplicationContext());
 	std::cout << __COUT_HDR__<< "#######################################" << std::endl;
 	std::cout << __COUT_HDR__<< "#######################################" << std::endl;
@@ -72,25 +67,24 @@ void MacroMakerSupervisor::init(void)
 //========================================================================================================================
 void MacroMakerSupervisor::destroy(void)
 {
- 	//called by destructor
-    
+	//called by destructor
+
 }
 
 //========================================================================================================================
 void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
-{
-}
+		{
+		}
 
 //========================================================================================================================
 void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)throw (xgi::exception::Exception)
-{
+		{
 	std::cout << __COUT_HDR__ << std::endl;
 
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-
+	std::cout << __COUT_HDR__ << "Is it ever coming in here? " << Command << std::endl;
 	std::cout << __COUT_HDR__ << "Command: " << Command << std::endl;
-
 
 	//FIXME -- need to lock out MacroMaker vs State machine
 
@@ -99,7 +93,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 	//Else, error message is returned in cookieCode
 	uint8_t userPermissions;
 	std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
-		CgiDataUtilities::postData(cgi,"CookieCode");
+			CgiDataUtilities::postData(cgi,"CookieCode");
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions)) //only refresh cookie if not automatic refresh
 	{
@@ -118,7 +112,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
-}
+		}
 
 //
 //
@@ -246,96 +240,112 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 //
 void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-
 	if(Command == "FElist")
 		getFElist(xmldoc);
 	else if(Command == "writeData")
 		writeData(xmldoc,cgi);
-//	else if(Command == "readData")
-//	    readData(xmldoc,cgi);
-
+	//	else if(Command == "readData")
+	//	    readData(xmldoc,cgi);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
-	std::cout << __COUT_HDR__ << std::endl;
-	SOAPParameters parameters;
-	 SupervisorDescriptors::const_iterator it =
-	    		theSupervisorsConfiguration_.getFEDescriptors().begin();
-	 for (;it != theSupervisorsConfiguration_.getFEDescriptors().end();it++)
-	 {
-		 std::stringstream bufARTDAQFE;
-         bufARTDAQFE << "FE Instance " << it->first << std::endl;
-         //it->second
-         xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it->second,
-         			"MacroMakerSupervisorRequest",parameters);
-		 xmldoc.addTextElementToData("FE", bufARTDAQFE.str());
-	 }
+	std::cout << __COUT_HDR__ << "Getting FE list!!!!!!!!!" << std::endl;
+
+
+//	std::map<std::string, ConfigurationKey>::const_iterator it;
+//			const std::map<std::string, ConfigurationKey>& aliasMap =
+//					theConfigurationManager_->getConfigurationAliasesMap();
+//	char intConv[10];
+//
+//	it = aliasMap.begin();
+//
+//	while (it != aliasMap.end())
+//	{
+//		sprintf(intConv, "%d", it->second.key());
+//		it++;
+//	}
+
+
+//	SOAPParameters parameters;
+//	SupervisorDescriptors::const_iterator it =
+//			theSupervisorsConfiguration_.getFEDescriptors().begin();
+//	std::cout << __COUT_HDR__ << it->first << "...and..." << it->second << std::endl;
+//
+//	for (;it != theSupervisorsConfiguration_.getFEDescriptors().end();it++)
+//	{
+//		std::stringstream bufARTDAQFE;
+//		bufARTDAQFE << "FE Instance " << it->first << std::endl;
+//		//it->second
+//		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it->second,
+//				"MacroMakerSupervisorRequest",parameters);
+//		xmldoc.addTextElementToData("FE", bufARTDAQFE.str());
+//	}
 }
 
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-//	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-//	std::string Data = CgiDataUtilities::getData(cgi, "Data");
-//
-//	SOAPParameters parameters;
-//		parameters.addParameter("Address",Address);
-//		parameters.addParameter("Data",Data);
-//
-//	xoap::MessageReARTDAQFEence retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEDescriptors().begin()->second,
-//			"MacroMakerSupervisorRequest",parameters);
-//			//Selected FE Descriptor,
-//			//Request Test Name,
-//			//Parameters
-//	std::cout << __COUT_HDR__ << std::endl;
+	//	std::string Address = CgiDataUtilities::getData(cgi, "Address");
+	//	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+	//
+	//	SOAPParameters parameters;
+	//		parameters.addParameter("Address",Address);
+	//		parameters.addParameter("Data",Data);
+	//
+	//	xoap::MessageReARTDAQFEence retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEDescriptors().begin()->second,
+	//			"MacroMakerSupervisorRequest",parameters);
+	//			//Selected FE Descriptor,
+	//			//Request Test Name,
+	//			//Parameters
+	//	std::cout << __COUT_HDR__ << std::endl;
 
-//
-//
+	//
+	//
 
-//	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
-//	int addressFormatIndex = std::stoi(addressFormat);
-//
-//	std::cout << __COUT_HDR__ << "Raw address from server: " << Address << std::endl;
-//	std::cout << __COUT_HDR__ << "Raw data from server: " << Data << std::endl;
-//	std::cout << __COUT_HDR__ << "Format: " << addressFormatIndex << std::endl;
-//
-//	std::uint64_t addr;
-//	if (addressFormatIndex == 1)
-//	  {
-//		//converting Address from std::string to uint64_t IN HEX
-//		std::stringstream ss;
-//		ss.str(Address);
-//		ss >> std::hex >> addr;
-//		std::cout << __COUT_HDR__ << "I am in if" << std::endl;
-//
-//	  }
-//	else
-//	{
-//		//std::stringstream stream(Address);
-//	  //  stream >> std::hex >> addr;
-//
-//		//converting Address to uint64_t IN DEC
-//		std::string s(Address);
-//		std::stringstream strm(s);
-//		strm >> std::hex >> addr;
-//		std::cout << __COUT_HDR__ << "I am in else" << std::endl;
-//	}
-//
-//	std::cout << __COUT_HDR__ << "Address sending to ZEDRyan: " << addr << std::endl;
-//
-//	//Converting Data to uint64_t
-//	    std::stringstream stream(Data);
-//	    std::uint64_t mywriteval;
-//	    stream >> std::hex >> mywriteval;
-//
-//	std::string writeValue(8,0);
-//	memcpy(&writeValue[0],&mywriteval,8);
-//	for(unsigned int i=0;i<theFEInterfacesManager_->theFEInterfaces_.size();++i)
-//		((FEZEDRyanInterface *)(theFEInterfacesManager_->theFEInterfaces_[i]))->interfaceWrite(addr, writeValue);
-//
-//	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
-//	printf("0x%16.16lX",mywriteval);
-//	std::cout << std::endl;
+	//	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
+	//	int addressFormatIndex = std::stoi(addressFormat);
+	//
+	//	std::cout << __COUT_HDR__ << "Raw address from server: " << Address << std::endl;
+	//	std::cout << __COUT_HDR__ << "Raw data from server: " << Data << std::endl;
+	//	std::cout << __COUT_HDR__ << "Format: " << addressFormatIndex << std::endl;
+	//
+	//	std::uint64_t addr;
+	//	if (addressFormatIndex == 1)
+	//	  {
+	//		//converting Address from std::string to uint64_t IN HEX
+	//		std::stringstream ss;
+	//		ss.str(Address);
+	//		ss >> std::hex >> addr;
+	//		std::cout << __COUT_HDR__ << "I am in if" << std::endl;
+	//
+	//	  }
+	//	else
+	//	{
+	//		//std::stringstream stream(Address);
+	//	  //  stream >> std::hex >> addr;
+	//
+	//		//converting Address to uint64_t IN DEC
+	//		std::string s(Address);
+	//		std::stringstream strm(s);
+	//		strm >> std::hex >> addr;
+	//		std::cout << __COUT_HDR__ << "I am in else" << std::endl;
+	//	}
+	//
+	//	std::cout << __COUT_HDR__ << "Address sending to ZEDRyan: " << addr << std::endl;
+	//
+	//	//Converting Data to uint64_t
+	//	    std::stringstream stream(Data);
+	//	    std::uint64_t mywriteval;
+	//	    stream >> std::hex >> mywriteval;
+	//
+	//	std::string writeValue(8,0);
+	//	memcpy(&writeValue[0],&mywriteval,8);
+	//	for(unsigned int i=0;i<theFEInterfacesManager_->theFEInterfaces_.size();++i)
+	//		((FEZEDRyanInterface *)(theFEInterfacesManager_->theFEInterfaces_[i]))->interfaceWrite(addr, writeValue);
+	//
+	//	std::cout << __COUT_HDR__ <<"\tValue written by user:-";
+	//	printf("0x%16.16lX",mywriteval);
+	//	std::cout << std::endl;
 }
 
 //void MacroMaker::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)

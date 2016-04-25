@@ -4,7 +4,6 @@
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-//#include "otsdaq-core/Supervisor/MacroMaker.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -29,6 +28,7 @@ namespace ots
 {
 
 class HttpXmlDocument;
+
 
 class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
 {

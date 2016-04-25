@@ -25,6 +25,11 @@
 		    padding:5px;
 		}
 		
+		#historyContent {
+			overflow:scroll;
+			padding:5px;
+		}
+		
 		#macroLib {
 		    padding:5px;
 		}
@@ -37,7 +42,31 @@
 			position:absolute;
 		}
 	
-			
+		.historyContent{
+            padding:0.5em 0 0 0;
+        }
+        
+        .inputBox{
+            color:black;
+            margin-right:5px;
+            width:90px;
+        }
+        
+        .select{
+        	color:black;
+        }
+        
+        .dropdown{
+        	color:black;
+        	margin-bottom:10px;
+        }
+        
+        @media only screen and (max-height: 400px){
+        	#instruction{
+        	display:none;
+        	}
+        }
+        
 		</style>
 
 
@@ -59,6 +88,7 @@
 	<body onload='Macromaker:init();'>
 	
 	    <div class='mainBlock' id='fecList'>
+	        <h3>List of Available FEs</h3>
 	        <div id='list'></div>
 		</div>
 		
@@ -71,28 +101,28 @@
 		
 		<div class='mainBlock' id='main'>
 			<div id="nav">
-			<p><small>Manual Commands<a style="margin-left:15px" href=""><u>Macro Maker</u></a></small></p>
+			<p><small>Manual Commands<a style="margin-left:15px" href="#"><u>Macro Maker</u></a></small></p>
 		    </div>
 	        <h3>Manual Commands</h3>
-	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" placeholder="0x000000064"/><button onclick="clearAddress()" style="color: black">Clear</button></p>
+	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
 	        <div id="output1">The address is in
-	           <select id="addressFormat" style="color:black;margin-bottom:10px">
-			    <option style="color:black" value="1" selected="selected">hex</option>
-			    <option style="color:black" value="2">dec</option>
+	           <select id="addressFormat" class="dropdown">
+			    <option class="select" value="1" selected="selected">hex</option>
+			    <option class="select" value="2">dec</option>
 			   </select>
 			format.</div>
 	       
-	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px" placeholder="0xABCDEF"/><button onclick="clearData()" style="color: black">Clear</button></p>
+	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
 	        <div id="output2">The data is in
-	           <select id="dataFormat" style="color:black;margin-bottom:10px">
-			    <option style="color:black" value="1" selected="selected">hex</option>
-			    <option style="color:black" value="2">dec</option>
+	           <select id="dataFormat" class="dropdown">
+			    <option class="select" value="1" selected="selected">hex</option>
+			    <option class="select" value="2">dec</option>
 			   </select>
 			format.</div>
 			
 	        <div id="reminder"></div>
 	        
-	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" style="color: black">Write</button></p>
+	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" class="select">Write</button></p>
 		</div>
 		
 		<div class='mainBlock' id='instruction'>
@@ -105,7 +135,7 @@
 		
 		<div class='mainBlock' id='history'>
 		   <h3>Command History</h3>
-           <div id="historyContent" style="overflow:scroll;padding:5px;">Scroll to see the history of commands. Click to rerun. <br></div>
+           <div id="historyContent">Scroll to see the history of commands. Click to rerun. <br></div>
 		</div>
 
 	</body>
