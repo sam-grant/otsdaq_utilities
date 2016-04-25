@@ -70,7 +70,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 , theDataManager_          (0)
 , loadedRunNumber_	       (-1)
 {
-	theDataManager_ = (VisualDataManager*)DataManagerSingleton<DataManager>::getInstance(
+	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 			supervisorType_,
 			supervisorInstance_,
 			theConfigurationManager_);

@@ -67,15 +67,24 @@ void VisualDataManager::configure()
 		{
 			std::cout << __PRETTY_FUNCTION__ << "Consumer Name: " << itConsumerName << std::endl;
 			std::cout << __PRETTY_FUNCTION__ << "Consumer Type: " << dataManagerConfiguration->getConsumerType(supervisorType_, supervisorInstance_, itProcessID, itConsumerName) << std::endl;
-			if(dataManagerConfiguration->getConsumerStatus(supervisorType_, supervisorInstance_,itProcessID,itConsumerName))
+			std::cout << __PRETTY_FUNCTION__ << "Consumer Type: " << dataManagerConfiguration->getConsumerStatus(supervisorType_, supervisorInstance_, itProcessID, itConsumerName) << std::endl;
+			if(dataManagerConfiguration->getConsumerStatus(supervisorType_, supervisorInstance_, itProcessID, itConsumerName))
 			{
+				std::cout << __PRETTY_FUNCTION__ << "I SHOULD CREATE DQM!!!Consumer Name: " << dataManagerConfiguration->getConsumerType(supervisorType_, supervisorInstance_, itProcessID, itConsumerName) << std::endl;
+				std::cout << __PRETTY_FUNCTION__ << "I SHOULD CREATE DQM!!!Consumer Name: " << dataManagerConfiguration->getConsumerType(supervisorType_, supervisorInstance_, itProcessID, itConsumerName) << std::endl;
 				if(dataManagerConfiguration->getConsumerType(supervisorType_, supervisorInstance_, itProcessID, itConsumerName) == "DQMHistos")
-//				{
-				    aDataProcessor = new DQMHistos    (supervisorType_, supervisorInstance_, itProcessID, itConsumerName);
+				{
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+					std::cout << __PRETTY_FUNCTION__ << "CREATING DQM!!!Consumer Name: " << itConsumerName << std::endl;
+				    aDataProcessor = new DQMHistosConsumer    (supervisorType_, supervisorInstance_, itProcessID, itConsumerName);
 					//theEventBuilderMap_   [itProcessID] = new AssociativeMemoryEventBuilder(cProcessName_+processName.str()+"EventBuilder");
 					//DataManager::addConsumer     (cProcessName_+processName.str(), theEventBuilderMap_[itProcessID]);
 
-//				}
+				}
 				aDataProcessor->registerToProcess();
 			}
 		}
