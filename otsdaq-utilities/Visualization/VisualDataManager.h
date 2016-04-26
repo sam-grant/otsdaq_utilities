@@ -3,7 +3,7 @@
 
 #include "otsdaq-core/DataManager/DataListener.h"  // Make sure this is always first because <sys/types.h> (defined in Socket.h) must be first
 #include "otsdaq-core/DataManager/DataManager.h"
-#include "otsdaq-core/RootUtilities/DQMHistos.h"
+#include "otsdaq-core/DataManager/DQMHistosConsumer.h"
 #include "otsdaq-core/MonicelliInterface/Visual3DEvent.h"
 #include "otsdaq-core/MonicelliInterface/Visual3DGeometry.h"
 #include "otsdaq-core/MonicelliInterface/MonicelliEventAnalyzer.h"
