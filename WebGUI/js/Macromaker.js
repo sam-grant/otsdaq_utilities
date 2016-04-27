@@ -8,6 +8,7 @@
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
+	var ELEMENTINDEX = 0;
 	
 	function init() 
 	{			
@@ -72,7 +73,7 @@
 	function FElistHandlerFunction(req) 
 	{
 		Debug.log("FElistHandlerFunction() was called. Req: " + req.responseText);
-		var FEElements = req.responseXML.getElementsByTagName("FEW");
+		var FEElements = req.responseXML.getElementsByTagName("FE");
 		
 		//Make search box for the list
 		var noMultiSelect = false; 									
@@ -100,8 +101,9 @@
 	function listSelectionHandler(listoffecs)
 	{
 	 	 var splits = listoffecs.id.split('_');
-		 var i = splits[splits.length-1] | 0;
-		 MultiSelectBox.dbg("Chosen element index:",i);
+	 	 console.log(splits);
+		 ELEMENTINDEX = splits[splits.length-1] | 0;
+		 MultiSelectBox.dbg("Chosen element index:",ELEMENTINDEX);
 	}
             
     function clearData()
@@ -133,8 +135,8 @@
 			 var dataStr = data.toString();
 		 }
 		 var contentEl = document.getElementById('historyContent');
-		 DesktopContent.XMLHttpRequest("MacroMaker?RequestType=writeData&Address="+addressStr+
-				 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr,"",writeHandlerFunction);
+		 DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
+				 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&elementIndex="+ELEMENTINDEX,"",writeHandlerFunction);
 		 var update = "<div id = \"" + DIVINDEX + "\" class=\"historyContent\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
 				 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
 		 contentEl.innerHTML += update;
@@ -155,7 +157,7 @@
 			var addressStr = document.getElementById('addressInput').value;
 		else
 			var addressStr = address.toString();
-		DesktopContent.XMLHttpRequest("MacroMaker?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
     }
     
     function writeHandlerFunction(req)

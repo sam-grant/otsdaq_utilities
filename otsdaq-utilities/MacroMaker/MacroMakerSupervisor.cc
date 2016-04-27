@@ -5,6 +5,9 @@
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
 #include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
+#include "otsdaq-core/ConfigurationDataFormats/ConfigurationKey.h"
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
+
 
 
 #include <xdaq/NamespaceURI.h>
@@ -30,18 +33,30 @@ theRemoteWebUsers_(this)
 	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
 	init();
+	SupervisorDescriptors::const_iterator it;
+	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
+	std::cout << __COUT_HDR__<< "PixelFESupervisor instance size " <<
+			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
+	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
+	{
+		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it->first <<
+				"...and..." << it->second << std::endl;
+		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
 
-	//getARTDAQFEDescriptors
-	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
-	{
-		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it.first << std::endl;
-		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
 	}
-	for (const auto& it: theSupervisorsConfiguration_.getFEDataManagerDescriptors())
-	{
-		std::cout << __COUT_HDR__<< "PixelFEDataManagerSupervisor instance " << it.first << std::endl;
-		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
-	}
+
+
+//	//getARTDAQFEDescriptors
+//	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
+//	{
+//		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it.first << std::endl;
+//		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+//	}
+//	for (const auto& it: theSupervisorsConfiguration_.getFEDataManagerDescriptors())
+//	{
+//		std::cout << __COUT_HDR__<< "PixelFEDataManagerSupervisor instance " << it.first << std::endl;
+//		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+//	}
 
 }
 
@@ -83,7 +98,6 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	std::cout << __COUT_HDR__ << "Is it ever coming in here? " << Command << std::endl;
 	std::cout << __COUT_HDR__ << "Command: " << Command << std::endl;
 
 	//FIXME -- need to lock out MacroMaker vs State machine
@@ -252,11 +266,46 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
 	std::cout << __COUT_HDR__ << "Getting FE list!!!!!!!!!" << std::endl;
 
+	SOAPParameters parameters; //params for xoap to send
+	parameters.addParameter("Request", "GetInterfaces");
 
-//	std::map<std::string, ConfigurationKey>::const_iterator it;
-//			const std::map<std::string, ConfigurationKey>& aliasMap =
-//					theConfigurationManager_->getConfigurationAliasesMap();
-//	char intConv[10];
+	SOAPParameters retParameters;  //params for xoap to recv
+	retParameters.addParameter("FEList");
+
+	SupervisorDescriptors::const_iterator it;
+	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
+
+	std::cout << __COUT_HDR__<< "PixelFESupervisor instance size " <<
+			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
+
+	//loop through each front end, and send xoap request for front end list
+	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
+	{
+		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it->first <<
+				"...and..." << it->second << std::endl;
+		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+
+		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+				it->second,
+				"MacroMakerSupervisorRequest",
+				parameters);
+
+		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
+
+		receive(retMsg, retParameters);
+		std::string retMsgFEList = retParameters.getValue("FEList");
+
+		std::cout << __COUT_HDR__<< "FE List received : " <<
+				retMsgFEList << std::endl;
+
+		xmldoc.addTextElementToData("FE", retMsgFEList.c_str());
+	}
+
+
+
+
+	return;
+
 //
 //	it = aliasMap.begin();
 //
@@ -268,16 +317,16 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 
 //	SOAPParameters parameters;
-//	SupervisorDescriptors::const_iterator it =
+//	SupervisorDescriptors::const_iterator it1 =
 //			theSupervisorsConfiguration_.getFEDescriptors().begin();
-//	std::cout << __COUT_HDR__ << it->first << "...and..." << it->second << std::endl;
+//	std::cout << __COUT_HDR__ << it1->first << "...and..." << it1->second << std::endl;
 //
-//	for (;it != theSupervisorsConfiguration_.getFEDescriptors().end();it++)
+//	for (;it1 != theSupervisorsConfiguration_.getFEDescriptors().end();it1++)
 //	{
 //		std::stringstream bufARTDAQFE;
-//		bufARTDAQFE << "FE Instance " << it->first << std::endl;
+//		bufARTDAQFE << "FE Instance " << it1->first << std::endl;
 //		//it->second
-//		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it->second,
+//		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it1->second,
 //				"MacroMakerSupervisorRequest",parameters);
 //		xmldoc.addTextElementToData("FE", bufARTDAQFE.str());
 //	}
@@ -285,12 +334,42 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-	//	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-	//	std::string Data = CgiDataUtilities::getData(cgi, "Data");
-	//
-	//	SOAPParameters parameters;
-	//		parameters.addParameter("Address",Address);
-	//		parameters.addParameter("Data",Data);
+	std::cout << __COUT_HDR__ << "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
+    std::string theIndexFromSelectBox = CgiDataUtilities::getData(cgi, "elementIndex");
+	std::cout << __COUT_HDR__ <<"The index from select box is: "<< theIndexFromSelectBox << std::endl;
+
+	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
+
+	//Copying map keys to a vector, so we can access them by index coming from cgi
+	std::vector<int> forAccessingMapByIndex;
+	  for(const auto& iter : FESupervisors){
+		  forAccessingMapByIndex.push_back(iter.first);
+	  }
+    unsigned int FEIndex = forAccessingMapByIndex[atoi(theIndexFromSelectBox.c_str())];
+	std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+
+
+    //Don't think this existence check would be necessary after the mapping
+	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+	if (it == FESupervisors.end())
+	{
+		std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
+		return;
+	}
+	std::string Address = CgiDataUtilities::getData(cgi, "Address");
+	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+
+
+	SOAPParameters parameters; //params for xoap to send
+	parameters.addParameter("Request", "UniversalWrite");
+	parameters.addParameter("InterfaceIndex", theIndexFromSelectBox);
+//	parameters.addParameter("Address",Address);
+//	parameters.addParameter("Data",Data);
+
+	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+			it->second,
+			"MacroMakerSupervisorRequest",
+			parameters);
 	//
 	//	xoap::MessageReARTDAQFEence retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEDescriptors().begin()->second,
 	//			"MacroMakerSupervisorRequest",parameters);
