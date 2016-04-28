@@ -4,7 +4,7 @@
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-//#include "otsdaq-core/Supervisor/MacroMaker.h"
+#include "otsdaq-core/CoreSupervisors/FESupervisor.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -28,7 +28,9 @@
 namespace ots
 {
 
+class ConfigurationManager;
 class HttpXmlDocument;
+
 
 class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
 {
@@ -48,18 +50,18 @@ public:
 private:
     SupervisorConfiguration              	theSupervisorsConfiguration_;
     RemoteWebUsers							theRemoteWebUsers_;
-
+    FESupervisor*			 				theFESupervisor_;
 //	void printStatus();
 	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 //	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 //
 //
-//private:
 //	SupervisorConfiguration* superConfiguration_;
 //	SupervisorsInfo* 		 superInfo_;
 //	FEWInterfacesManager*    theFEWInterfacesManager_;
-//	ConfigurationManager*    theConfigurationManager_;
+	ConfigurationManager*    theConfigurationManager_;
+
 //
 //
     void getFElist(HttpXmlDocument& xmldoc);
