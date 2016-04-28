@@ -8,7 +8,6 @@
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
-	var ELEMENTINDEX = 0;
 	
 	function init() 
 	{			
@@ -20,7 +19,6 @@
 		block4El = document.getElementById('instruction');
 		block5El = document.getElementById('history');
 		historybox = document.getElementById('historyContent');
-
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 	}
@@ -34,9 +32,9 @@
 		var h = window.innerHeight;
 		
 		//square [x,y] [w,h]
-		var _MARGIN = 10;
+		var _MARGIN = 5;
 		
-		var b1 = [_MARGIN, _MARGIN, w/3-_MARGIN, h/2-_MARGIN]; //left column red
+		var b1 = [_MARGIN, _MARGIN, w/3, h/2-_MARGIN]; //left column red
 		var b2 = [_MARGIN, h/2, w/3-_MARGIN, h/2-_MARGIN]; //left column red
 		var b3 = [w/3, _MARGIN, w/3, h/2-_MARGIN]; //top middle yellow
 		var b4 = [w/3, h/2, w/3, h/2-_MARGIN]; //bottom middle blue
@@ -136,7 +134,7 @@
 		 }
 		 var contentEl = document.getElementById('historyContent');
 		 DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
-				 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&elementIndex="+ELEMENTINDEX,"",writeHandlerFunction);
+				 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&selectionList="+selected,"",writeHandlerFunction);
 		 var update = "<div id = \"" + DIVINDEX + "\" class=\"historyContent\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
 				 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
 		 contentEl.innerHTML += update;

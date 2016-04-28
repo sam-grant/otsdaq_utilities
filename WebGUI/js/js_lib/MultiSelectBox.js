@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-
+var selected = [];
 var MultiSelectBox = MultiSelectBox || {}; //define MultiSelectBox namespace
 
 if(window.console && console && console.log)
@@ -110,6 +110,7 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
         }
 
 	MultiSelectBox.dbg(selectList);
+	selected = selectList;
 }
 
 //This function is called by user to actually create the multi select box
