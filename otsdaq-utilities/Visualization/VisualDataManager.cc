@@ -55,6 +55,7 @@ void VisualDataManager::configure()
 							supervisorInstance_,
 							itProcessID,
 							itProducerName,
+							strtoul(dataManagerConfiguration->getProducerParameter(supervisorType_, supervisorInstance_, itProcessID, itProducerName,"BufferSize").c_str(),NULL,10),
 							dataManagerConfiguration->getProducerParameter(supervisorType_, supervisorInstance_, itProcessID, itProducerName, "IP"),
 							strtoul(dataManagerConfiguration->getProducerParameter(supervisorType_, supervisorInstance_, itProcessID, itProducerName,"Port").c_str(),NULL,10));
 
