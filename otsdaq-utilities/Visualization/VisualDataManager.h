@@ -28,7 +28,7 @@ public:
     virtual ~VisualDataManager(void);
 
 
-    void configure(void);
+    //void configure(void);
     void halt     (void);
     void start    (std::string runNumber);
     void stop     (void);
