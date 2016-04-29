@@ -14,6 +14,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
 
@@ -121,9 +122,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 
 
 	HttpXmlDocument xmldoc(cookieCode);
-
 	handleRequest(Command,xmldoc,cgi);
-
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 		}
@@ -258,8 +257,8 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		getFElist(xmldoc);
 	else if(Command == "writeData")
 		writeData(xmldoc,cgi);
-	//	else if(Command == "readData")
-	//	    readData(xmldoc,cgi);
+	else if(Command == "readData")
+		readData(xmldoc,cgi);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -289,8 +288,6 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 				it->second,
 				"MacroMakerSupervisorRequest",
 				parameters);
-
-		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
 
 		receive(retMsg, retParameters);
 		std::string retMsgFEList = retParameters.getValue("FEList");
@@ -335,42 +332,61 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	std::cout << __COUT_HDR__ << "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
-    std::string theIndexFromSelectBox = CgiDataUtilities::getData(cgi, "elementIndex");
-	std::cout << __COUT_HDR__ <<"The index from select box is: "<< theIndexFromSelectBox << std::endl;
+	std::string Address = CgiDataUtilities::getData(cgi, "Address");
+	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+	std::string FEIndexList = CgiDataUtilities::getData(cgi, "selectionList");
+	SOAPParameters parameters; //params for xoap to send
+		parameters.addParameter("Request", "UniversalWrite");
+//		parameters.addParameter("Address",Address);
+//		parameters.addParameter("Data",Data);
+	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for WRITE, behold: "
+			<< FEIndexList <<std::endl;
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////THIS CHUNK BELOW CONVERTS (0,1,0,1) TO (1,3)////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+    std::vector<int> parsingStr;
+    std::vector<int> selectedIndices;
+    std::stringstream ss(FEIndexList);
+    unsigned int i = 0;
+    while (ss >> i)
+    {
+        parsingStr.push_back(i);
+        if (ss.peek() == ',') ss.ignore();
+    }
+    for (i=0; i < parsingStr.size(); i++)
+        if (parsingStr.at(i)) selectedIndices.push_back(i);
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////END OF CHUNK//////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
-	//Copying map keys to a vector, so we can access them by index coming from cgi
+	//Copying map keys to a vector, so we can access them by indices coming from cgi
 	std::vector<int> forAccessingMapByIndex;
-	  for(const auto& iter : FESupervisors){
-		  forAccessingMapByIndex.push_back(iter.first);
-	  }
-    unsigned int FEIndex = forAccessingMapByIndex[atoi(theIndexFromSelectBox.c_str())];
-	std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+    for(const auto& it : FESupervisors)
+	    forAccessingMapByIndex.push_back(it.first);
 
+    for(i=0; i < selectedIndices.size(); i++)
+    {
+        unsigned int FEIndex = forAccessingMapByIndex[selectedIndices.at(i)];
+	    std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
 
-    //Don't think this existence check would be necessary after the mapping
-	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-	if (it == FESupervisors.end())
-	{
-		std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
-		return;
-	}
-	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-	std::string Data = CgiDataUtilities::getData(cgi, "Data");
+	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+        if (it == FESupervisors.end())
+	    {
+			std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
+			return;
+	    }
 
+	    xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+				it->second,
+				"MacroMakerSupervisorRequest",
+				parameters);
+	    receive(retMsg);
+	 //   xmldoc.addTextElementToData("FEWrite", retMsg);
+    }
 
-	SOAPParameters parameters; //params for xoap to send
-	parameters.addParameter("Request", "UniversalWrite");
-	parameters.addParameter("InterfaceIndex", theIndexFromSelectBox);
-//	parameters.addParameter("Address",Address);
-//	parameters.addParameter("Data",Data);
-
-	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-			it->second,
-			"MacroMakerSupervisorRequest",
-			parameters);
-	//
 	//	xoap::MessageReARTDAQFEence retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEDescriptors().begin()->second,
 	//			"MacroMakerSupervisorRequest",parameters);
 	//			//Selected FE Descriptor,
@@ -427,19 +443,71 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//	std::cout << std::endl;
 }
 
-//void MacroMaker::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
-//{
-////
-////	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-////	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
-////    int addressFormatIndex = std::stoi(addressFormat);
-////    std::string dataFormat = CgiDataUtilities::getData(cgi, "dataFormat");
-////    int dataFormatIndex = std::stoi(dataFormat);
-////
-////	std::cout << __COUT_HDR__ << "Raw address from server: " << Address << std::endl;
-////	std::cout << __COUT_HDR__ << "Address format: " << addressFormatIndex << std::endl;
-////	std::cout << __COUT_HDR__ << "Data format: " << dataFormatIndex << std::endl;
-////
+void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	std::cout << __COUT_HDR__ << "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
+	std::string Address = CgiDataUtilities::getData(cgi, "Address");
+	std::string FEIndexList = CgiDataUtilities::getData(cgi, "selectionList");
+
+	SOAPParameters parameters; //params for xoap to send
+	parameters.addParameter("Request", "UniversalRead");
+//		parameters.addParameter("Address",Address);
+
+	SOAPParameters retParameters;
+    retParameters.addParameter("dataRead");
+
+	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for READ, behold: "
+			<< FEIndexList <<std::endl;
+
+	///////////////////////////////////////////////////////////////////////////////////////////
+	///////////THIS CHUNK BELOW CONVERTS (0,1,0,1) TO (1,3)////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+    std::vector<int> parsingStr;
+    std::vector<int> selectedIndices;
+    std::stringstream ss(FEIndexList);
+    unsigned int i = 0;
+    while (ss >> i)
+    {
+        parsingStr.push_back(i);
+        if (ss.peek() == ',') ss.ignore();
+    }
+    for (i=0; i < parsingStr.size(); i++)
+        if (parsingStr.at(i)) selectedIndices.push_back(i);
+    ///////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////END OF CHUNK//////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////
+
+	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
+
+	//Copying map keys to a vector, so we can access them by indices coming from cgi
+	std::vector<int> forAccessingMapByIndex;
+    for(const auto& it : FESupervisors)
+	    forAccessingMapByIndex.push_back(it.first);
+
+    for(i=0; i < selectedIndices.size(); i++)
+    {
+        unsigned int FEIndex = forAccessingMapByIndex[selectedIndices.at(i)];
+	    std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+
+	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+        if (it == FESupervisors.end())
+	    {
+			std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
+			return;
+	    }
+
+	    xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+				it->second,
+				"MacroMakerSupervisorRequest",
+				parameters);
+
+	    receive(retMsg,retParameters);
+		std::string dataReadReturnMsg = retParameters.getValue("dataRead");
+		std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
+	    xmldoc.addTextElementToData("readData",dataReadReturnMsg);
+    }
+
+
 ////	std::uint64_t addr;
 ////    if (addressFormatIndex == 1)
 ////      {
@@ -482,7 +550,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 ////	printf(toJS,"0x%16.16lX",myreadval);
 ////	std::cout <<  std::endl;
 //
-//}
+}
 //
 //
 //

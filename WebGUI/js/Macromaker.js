@@ -8,7 +8,6 @@
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
-	var ELEMENTINDEX = 0;
 	
 	function init() 
 	{			
@@ -20,7 +19,6 @@
 		block4El = document.getElementById('instruction');
 		block5El = document.getElementById('history');
 		historybox = document.getElementById('historyContent');
-
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 	}
@@ -34,9 +32,9 @@
 		var h = window.innerHeight;
 		
 		//square [x,y] [w,h]
-		var _MARGIN = 10;
+		var _MARGIN = 5;
 		
-		var b1 = [_MARGIN, _MARGIN, w/3-_MARGIN, h/2-_MARGIN]; //left column red
+		var b1 = [_MARGIN, _MARGIN, w/3, h/2-_MARGIN]; //left column red
 		var b2 = [_MARGIN, h/2, w/3-_MARGIN, h/2-_MARGIN]; //left column red
 		var b3 = [w/3, _MARGIN, w/3, h/2-_MARGIN]; //top middle yellow
 		var b4 = [w/3, h/2, w/3, h/2-_MARGIN]; //bottom middle blue
@@ -118,46 +116,77 @@
 
     function callWrite(address,data)
     {
-		//if(document.getElementById("FEWcheck").checked||true)//CHANGE THIS
-		 var addressFormat = document.getElementById("addressFormat");
-		 var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
-		 var dataFormat = document.getElementById("dataFormat");
-		 var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
-		 
-		 if (typeof address === 'undefined') 
-		 { 
-			 var addressStr = document.getElementById('addressInput').value;
-			 var dataStr = document.getElementById('dataInput').value;
-		 }
-		 else
-		 {
-			 var addressStr = address.toString();
-			 var dataStr = data.toString();
-		 }
-		 var contentEl = document.getElementById('historyContent');
-		 DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
-				 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&elementIndex="+ELEMENTINDEX,"",writeHandlerFunction);
-		 var update = "<div id = \"" + DIVINDEX + "\" class=\"historyContent\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
-				 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
-		 contentEl.innerHTML += update;
-		 DIVINDEX++;
-		 updateScroll();
-		//else
-		//	 reminderEl.innerHTML = "Please select a FEW from the list."
+    	var reminderEl = document.getElementById('reminder');
+		if(isArrayAllZero(selected))//CHANGE THIS
+			reminderEl.innerHTML = "Please select at least one interface from the list";
+		else 
+		{ 
+			var addressFormat = document.getElementById("addressFormat");
+			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var dataFormat = document.getElementById("dataFormat");
+			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+			 
+			if (typeof address === 'undefined') 
+			{ 
+				var addressStr = document.getElementById('addressInput').value;
+				var dataStr = document.getElementById('dataInput').value;
+				if(addressStr == "") 
+				{
+					reminderEl.innerHTML = "Please enter an address to write to";
+					return;
+				}
+				else if(dataStr == "") 
+				{
+					reminderEl.innerHTML = "Please enter your data";
+					return;
+				}
+			}
+			else
+			{
+				var addressStr = address.toString();
+				var dataStr = data.toString();
+			}
+			console.log(addressStr);
+			var contentEl = document.getElementById('historyContent');
+			var innerClass = "class=\"innerClass1\"";
+			if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
+					 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&selectionList="+selected,"",writeHandlerFunction);
+			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
+					 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
+			contentEl.innerHTML += update;
+			DIVINDEX++;
+			updateScroll();
+			reminderEl.innerHTML = "Data successfully written!";
+		}
     }
 
     function callRead(address)
     {
-		var addressFormat = document.getElementById("addressFormat");
-		var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
-		var dataFormat = document.getElementById("dataFormat");
-		var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
-	
-		if (typeof address === 'undefined') 
-			var addressStr = document.getElementById('addressInput').value;
-		else
-			var addressStr = address.toString();
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex,"",readHandlerFunction);
+    	var reminderEl = document.getElementById('reminder');
+    	if(isArrayAllZero(selected))
+    		reminderEl.innerHTML = "Please select at least one interface from the list";
+    	else 
+    	{ 
+			var addressFormat = document.getElementById("addressFormat");
+			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var dataFormat = document.getElementById("dataFormat");
+			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+		
+			if (typeof address === 'undefined') 
+			{
+				var addressStr = document.getElementById('addressInput').value;
+				if(addressStr == "") 
+				{
+					reminderEl.innerHTML = "Please enter an address to read from";
+					return;
+				}
+			}
+			else
+				var addressStr = address.toString();
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+
+					"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&selectionList="+selected,"",readHandlerFunction);
+    	}
     }
     
     function writeHandlerFunction(req)
@@ -167,22 +196,33 @@
     
     function readHandlerFunction(req,address)
 	{
+    	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if (typeof address === 'undefined') 
 		    var addressStr = document.getElementById('addressInput').value;
 		else
 		    var addressStr = address.toString();
+		var innerClass = "class=\"innerClass1\"";
+		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
-		var update = "<div id = \"" + DIVINDEX + "\" class=\"historyContent\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callRead(" 
+		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callRead(" 
 				+ addressStr + ")\">Read " + dataOutput + " from register " + addressStr + "</div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		updateScroll();
+		reminderEl.innerHTML = "Data read: " + dataOutput;
 	}
     
     function updateScroll()
     {
         var element = document.getElementById("historyContent");
         element.scrollTop = element.scrollHeight;
+    }
+    
+    function isArrayAllZero(arr){
+        for(var j = 0; j < arr.length; j++){
+          if (arr[j]!==0) return false;
+        }
+        return true;
     }
