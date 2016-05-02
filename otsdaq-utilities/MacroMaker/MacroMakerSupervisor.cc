@@ -43,7 +43,6 @@ theRemoteWebUsers_(this)
 		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it->first <<
 				"...and..." << it->second << std::endl;
 		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
-
 	}
 
 
@@ -93,7 +92,7 @@ void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (x
 		}
 
 //========================================================================================================================
-void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)throw (xgi::exception::Exception)
+void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception)
 		{
 	std::cout << __COUT_HDR__ << std::endl;
 
@@ -337,8 +336,9 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string FEIndexList = CgiDataUtilities::getData(cgi, "selectionList");
 	SOAPParameters parameters; //params for xoap to send
 		parameters.addParameter("Request", "UniversalWrite");
-//		parameters.addParameter("Address",Address);
-//		parameters.addParameter("Data",Data);
+		parameters.addParameter("Address",Address);
+		parameters.addParameter("Data",Data);
+		std::cout << __COUT_HDR__ << "Address: " << Address << " Data: " << Data << std::endl;
 	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for WRITE, behold: "
 			<< FEIndexList <<std::endl;
 
@@ -451,11 +451,10 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
 	SOAPParameters parameters; //params for xoap to send
 	parameters.addParameter("Request", "UniversalRead");
-//		parameters.addParameter("Address",Address);
+	parameters.addParameter("Address",Address);
 
 	SOAPParameters retParameters;
-    retParameters.addParameter("dataRead");
-
+    retParameters.addParameter("dataResult");
 	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for READ, behold: "
 			<< FEIndexList <<std::endl;
 
@@ -501,8 +500,11 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 				"MacroMakerSupervisorRequest",
 				parameters);
 
+
 	    receive(retMsg,retParameters);
-		std::string dataReadReturnMsg = retParameters.getValue("dataRead");
+		//std::string dataReadReturnMsg = retParameters.getValue("dataResult");
+	    //Why is the thing above not working??
+	    std::string dataReadReturnMsg = "123456";
 		std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
 	    xmldoc.addTextElementToData("readData",dataReadReturnMsg);
     }
