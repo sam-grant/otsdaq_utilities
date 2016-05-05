@@ -1,13 +1,14 @@
 // Created by swu at fnal dot gov
 //  February 2016
 //
-//
+//3 global vars: DIVINDEX, FEELEMENTS and selected
 	//Function List:
 		//init
 	    //redrawWindow
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
+	var FEELEMENTS = [];
 	
 	function init() 
 	{			
@@ -71,7 +72,8 @@
 	function FElistHandlerFunction(req) 
 	{
 		Debug.log("FElistHandlerFunction() was called. Req: " + req.responseText);
-		var FEElements = req.responseXML.getElementsByTagName("FE");
+	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
+		console.log(FEELEMENTS);
 		
 		//Make search box for the list
 		var noMultiSelect = false; 									
@@ -80,12 +82,11 @@
 	    var vals = [];
 	    var types = [];
 
-	    for(var i=0;i<FEElements.length;++i)
+	    for(var i=0;i<FEELEMENTS.length;++i)
 		{
 			keys[i] = "one";
-			vals[i] = FEElements[i].getAttribute("value");
+			vals[i] = FEELEMENTS[i].getAttribute("value");
 			types[i] = "number";
-			
 			Debug.log(vals[i]);
 		}
 	    var listoffecs = document.getElementById('list');  
@@ -100,8 +101,8 @@
 	{
 	 	 var splits = listoffecs.id.split('_');
 	 	 console.log(splits);
-		 ELEMENTINDEX = splits[splits.length-1] | 0;
-		 MultiSelectBox.dbg("Chosen element index:",ELEMENTINDEX);
+		 elementIndex = splits[splits.length-1] | 0;
+		 MultiSelectBox.dbg("Chosen element index:",elementIndex);
 	}
             
     function clearData()
@@ -117,7 +118,7 @@
     function callWrite(address,data)
     {
     	var reminderEl = document.getElementById('reminder');
-		if(isArrayAllZero(selected))//CHANGE THIS
+		if(isArrayAllZero(selected))
 			reminderEl.innerHTML = "Please select at least one interface from the list";
 		else 
 		{ 
@@ -146,14 +147,28 @@
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
-			console.log(addressStr);
+			var selectionStrArray = [];
+			var supervisorIndexArray = [];
+			var interfaceIndexArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) 
+			    {
+					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					selectionStrArray.push(oneInterface);
+					supervisorIndexArray.push(oneInterface.split(":")[1]);
+					interfaceIndexArray.push(oneInterface.split(":")[2]);
+			    }
+			}
 			var contentEl = document.getElementById('historyContent');
 			var innerClass = "class=\"innerClass1\"";
 			if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
-					 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&selectionList="+selected,"",writeHandlerFunction);
-			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
-					 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr
+					+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr
+					+"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
+			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
+					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
+					+ addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
 			contentEl.innerHTML += update;
 			DIVINDEX++;
 			updateScroll();
@@ -184,8 +199,20 @@
 			}
 			else
 				var addressStr = address.toString();
+			var supervisorIndexArray = [];
+			var interfaceIndexArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) 
+				{
+					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					supervisorIndexArray.push(oneInterface.split(":")[1]);
+					interfaceIndexArray.push(oneInterface.split(":")[2]);
+				}
+			}
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+
-					"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&selectionList="+selected,"",readHandlerFunction);
+					"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&supervisorIndex="+
+					supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
     	}
     }
     
@@ -199,14 +226,21 @@
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
+		console.log(dataOutput);
 		if (typeof address === 'undefined') 
 		    var addressStr = document.getElementById('addressInput').value;
 		else
 		    var addressStr = address.toString();
+		var selectionStrArray = [];
+		for (var i = 0; i < selected.length; i++) 
+		{
+			if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+		}
 		var innerClass = "class=\"innerClass1\"";
 		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
-		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callRead(" 
+		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" 
 				+ addressStr + ")\">Read " + dataOutput + " from register " + addressStr + "</div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
@@ -226,3 +260,5 @@
         }
         return true;
     }
+
+    

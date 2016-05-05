@@ -55,6 +55,7 @@ private:
 	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	std::vector<std::string> interfaceList;
 //
 //
 //	SupervisorConfiguration* superConfiguration_;
