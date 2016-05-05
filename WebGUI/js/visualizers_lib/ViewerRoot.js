@@ -477,13 +477,15 @@ ViewerRoot.handleWindowResize = function() {
 	ViewerRoot.omni.style.height = h + "px";
 	
 	ViewerRoot.hud.handleWindowResize();	
-	ViewerRoot.resizeRootObjects();
+	ViewerRoot.resizeRootObjects(true);
 }
 
 // ViewerRoot.resizeRootObjects ~~
 //		Resize all root objects based on positions and tile arrangement
 //		if isForNewObject = true, then redraw all reports except last(new) report
-//		do not need to redraw for normal window resize, because obj's handler handles
+//		OLD: do not need to redraw for normal window resize, because obj's handler handles
+//		NEW: now on window resize the object is not redrawn.. the <svg class=root_canvas> size
+//			does not get updated.. So just redraw for normal window resize case.
 ViewerRoot.resizeRootObjects = function(needToRedraw) {
 	
 	ViewerRoot.rootContainer.style.width = ViewerRoot.w + "px";
