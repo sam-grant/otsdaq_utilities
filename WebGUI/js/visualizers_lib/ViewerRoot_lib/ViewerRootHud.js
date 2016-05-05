@@ -81,7 +81,7 @@ ViewerRoot.createHud = function() {
 	}
 	
 	this.handleDirContents = function(req) {
-		//Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
+		Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
 		
 		var path = DesktopContent.getXMLValue(req,'path');
 		if(!path) 

@@ -610,7 +610,7 @@ ViewerRoot.getDirectoryContents = function(path) {
 
 // ViewerRoot.getDirContentsHandler ~~
 ViewerRoot.getDirContentsHandler = function(req) {
-	//Debug.log("ViewerRoot getDirContentsHandler " + req.responseText );
+	Debug.log("ViewerRoot getDirContentsHandler " + req.responseText);
 	
 	var permissions = DesktopContent.getXMLValue(req,'permissions');
 	if(!permissions) 
