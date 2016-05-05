@@ -69,8 +69,9 @@
 
    // wrapper for console.log, avoids missing console in IE
    JSROOT.console = function(value) {
-     if ((typeof console != 'undefined') && (typeof console.log == 'function'))
-        console.log(value);
+     //if ((typeof console != 'undefined') && (typeof console.log == 'function'))
+     //   console.log(value);
+	   Debug.log(value); //RAR - switched to otsdaq priority style console
    }
 
    // This is part of the JSON-R code, found on

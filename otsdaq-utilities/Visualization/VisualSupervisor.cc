@@ -168,7 +168,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
     //comment to remove security
     bool AutomaticRefresh = Command == "getRoot" || Command == "getEvents";
     std::string userWithLock;
-    if(0 && !theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
+    if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
             cookieCode, &userPermissions, "0", !AutomaticRefresh, &userWithLock)) //only refresh cookie if not automatic refresh
     {
         *out << cookieCode;
@@ -176,6 +176,10 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         return;
     }
     //**** end LOGIN GATEWAY CODE ***//
+
+
+    std::cout << __COUT_HDR__ << "userPermissions " << (int)userPermissions << std::endl;
+    std::cout << __COUT_HDR__ << "userWithLock " << userWithLock << std::endl;
 
     //**** start LOCK GATEWAY CODE ***//
     std::string username = "";

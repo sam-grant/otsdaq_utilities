@@ -115,18 +115,16 @@ else {
 					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
 		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
 		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
-				Debug.log("icon Array unsplit: " + iconArray);
+				//Debug.log("icon Array unsplit: " + iconArray);
 				iconArray = iconArray.split(","); 
 			}
       		else
       		{ 
       			iconArray = req.responseText.split(","); 
       		}
-			Debug.log("icon Array split: " + iconArray);
-          		
-      	
-      		Debug.log(_permissions);
-     		Debug.log(iconArray);
+		    
+			//Debug.log("icon Array split: " + iconArray);
+      		//Debug.log(_permissions);
 
      	    //an icon is 6 fields.. give comma-separated
      	    	//0 - alt = text for mouse over
@@ -149,7 +147,7 @@ else {
       	//	adds an icon with alt text, subtext wording underneath and image icon (if picfn defined)
       	this.addIcon = function(alt, subtext, linkurl, uniqueWin, picfn) {
       	      		
-      		Debug.log("this.addIcon");
+      		//Debug.log("this.addIcon");
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 			
