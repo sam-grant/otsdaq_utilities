@@ -81,11 +81,18 @@
 	    var keys = [];
 	    var vals = [];
 	    var types = [];
-
+	    var fullnames = [];
+	    //Only displays the first 11 letters, mouse over display full name
 	    for(var i=0;i<FEELEMENTS.length;++i)
 		{
 			keys[i] = "one";
-			vals[i] = FEELEMENTS[i].getAttribute("value");
+			fullnames[i] = FEELEMENTS[i].getAttribute("value");
+			var sp = fullnames[i].split(":");
+			if (sp[0].length < 11) vals[i] = fullnames[i];
+			else{
+				var display = sp[0].substr(0,11)+"...:"+sp[1]+":"+sp[2];
+				vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
+			}
 			types[i] = "number";
 			Debug.log(vals[i]);
 		}

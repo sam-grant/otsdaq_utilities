@@ -42,6 +42,7 @@
 		a {	
 			color: #c4e9f5;
 		}
+		
 		#history {
 		    padding:5px;
 		}
@@ -163,18 +164,20 @@
 		    </div>
 	        <h3>Manual Commands</h3>
 	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
-	        <div id="output1" class="formatSelection">The address is in
+	        <div id="output1" class="formatSelection">Address is in
 	           <select id="addressFormat" class="dropdown">
 			    <option class="select" value="1" selected="selected">hex</option>
 			    <option class="select" value="2">dec</option>
+			    <option class="select" value="3">ascii</option>
 			   </select>
 			format.</div>
 	       
 	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
-	        <div id="output2" class="formatSelection">The data is in
+	        <div id="output2" class="formatSelection">Data is in
 	           <select id="dataFormat" class="dropdown">
 			    <option class="select" value="1" selected="selected">hex</option>
 			    <option class="select" value="2">dec</option>
+			    <option class="select" value="3">ascii</option>
 			   </select>
 			format.</div>
 			

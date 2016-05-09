@@ -432,50 +432,38 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	SOAPParameters retParameters;
     retParameters.addParameter("dataResult");
 	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for READ, behold: "
-			<< supervisorIndexArray << interfaceIndexArray << std::endl;
+			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
 
-	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
-	std::vector<int> interfaceIndices;
-	std::istringstream f(interfaceIndexArray);
-	std::string s;
-	while (getline(f, s, ',')) interfaceIndices.push_back(std::stoi(s));
-	std::vector<int> supervisorIndices;
-	std::istringstream g(supervisorIndexArray);
-	std::string t;
-	while (getline(f, t, ',')) supervisorIndices.push_back(std::stoi(t));
+	unsigned int FEIndex = stoi(supervisorIndexArray);
+	unsigned int interfaceIndex = stoi(interfaceIndexArray);
 
-	 for(unsigned int i=0; i < supervisorIndices.size(); i++)
-	 {
-		unsigned int FEIndex = supervisorIndices[i];
-		unsigned int interfaceIndex = interfaceIndices[i];
 
-		parameters.addParameter("InterfaceIndex",interfaceIndex);
+	parameters.addParameter("InterfaceIndex",interfaceIndex);
 
-		std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-		std::cout << __COUT_HDR__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+	std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+	std::cout << __COUT_HDR__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
 
-	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-        if (it == FESupervisors.end())
-	    {
-			std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
-			return;
-	    }
+	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+	if (it == FESupervisors.end())
+	{
+		std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
+		return;
+	}
 
-	    xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-				it->second,
-				"MacroMakerSupervisorRequest",
-				parameters);
+	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+			it->second,
+			"MacroMakerSupervisorRequest",
+			parameters);
 
-	    receive(retMsg,retParameters);
-		//std::string dataReadReturnMsg = retParameters.getValue("dataResult");
-	    //Why is the thing above not working??
-	    std::string dataReadReturnMsg = "123456";
-		std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
-	    xmldoc.addTextElementToData("readData",dataReadReturnMsg);
-    }
+	receive(retMsg,retParameters);
+	std::string dataReadReturnMsg = retParameters.getValue("dataResult");
+	//Why is the thing above not working??
+	//std::string dataReadReturnMsg = "123456";
+	std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
+	xmldoc.addTextElementToData("readData",dataReadReturnMsg);
 
 
 ////	std::uint64_t addr;
