@@ -9,13 +9,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
 
 using namespace ots;
 
 
-#define LOGBOOK_PATH 					getenv("LOGBOOK_DATA_PATH") + "/"
+const std::string LOGBOOK_PATH = getenv("LOGBOOK_DATA_PATH") + std::string("/");
 #define LOGBOOK_EXPERIMENT_LIST_PATH 	LOGBOOK_PATH + "experiment_list.xml"
 #define LOGBOOK_EXPERIMENT_DIR_PREFACE	"log_"
 #define LOGBOOK_UPLOADS_PATH 			"uploads/" 	//within experiment directory
@@ -54,28 +55,28 @@ XDAQ_INSTANTIATOR_IMPL(LogbookSupervisor)
 
 //========================================================================================================================
 LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-        xdaq::Application(s   ),
-        SOAPMessenger  (this),
-        theRemoteWebUsers_(this)
+xdaq::Application(s   ),
+SOAPMessenger  (this),
+theRemoteWebUsers_(this)
 {
 
-    xgi::bind (this, &LogbookSupervisor::Default,                	"Default" );
-    xgi::bind (this, &LogbookSupervisor::Log,                		"Log" );
-    xgi::bind (this, &LogbookSupervisor::LogImage,               	"LogImage" );
-    xgi::bind (this, &LogbookSupervisor::LogReport,             	"LogReport" );
+	xgi::bind (this, &LogbookSupervisor::Default,                	"Default" );
+	xgi::bind (this, &LogbookSupervisor::Log,                		"Log" );
+	xgi::bind (this, &LogbookSupervisor::LogImage,               	"LogImage" );
+	xgi::bind (this, &LogbookSupervisor::LogReport,             	"LogReport" );
 
-    xoap::bind(this, &LogbookSupervisor::MakeSystemLogbookEntry,   	"MakeSystemLogbookEntry"      	, XDAQ_NS_URI);
-    
-    //init allowed file upload types
-    allowedFileUploadTypes_.push_back("image/png"); matchingFileUploadTypes_.push_back("png");
-    allowedFileUploadTypes_.push_back("image/jpeg"); matchingFileUploadTypes_.push_back("jpeg");
-    allowedFileUploadTypes_.push_back("image/gif"); matchingFileUploadTypes_.push_back("gif");
-    allowedFileUploadTypes_.push_back("image/bmp"); matchingFileUploadTypes_.push_back("bmp");
-    allowedFileUploadTypes_.push_back("application/pdf"); matchingFileUploadTypes_.push_back("pdf");
-    allowedFileUploadTypes_.push_back("application/zip"); matchingFileUploadTypes_.push_back("zip");
-    allowedFileUploadTypes_.push_back("text/plain"); matchingFileUploadTypes_.push_back("txt");
-    
-    init();
+	xoap::bind(this, &LogbookSupervisor::MakeSystemLogbookEntry,   	"MakeSystemLogbookEntry"      	, XDAQ_NS_URI);
+
+	//init allowed file upload types
+	allowedFileUploadTypes_.push_back("image/png"); matchingFileUploadTypes_.push_back("png");
+	allowedFileUploadTypes_.push_back("image/jpeg"); matchingFileUploadTypes_.push_back("jpeg");
+	allowedFileUploadTypes_.push_back("image/gif"); matchingFileUploadTypes_.push_back("gif");
+	allowedFileUploadTypes_.push_back("image/bmp"); matchingFileUploadTypes_.push_back("bmp");
+	allowedFileUploadTypes_.push_back("application/pdf"); matchingFileUploadTypes_.push_back("pdf");
+	allowedFileUploadTypes_.push_back("application/zip"); matchingFileUploadTypes_.push_back("zip");
+	allowedFileUploadTypes_.push_back("text/plain"); matchingFileUploadTypes_.push_back("txt");
+
+	init();
 
 
 }
@@ -88,107 +89,149 @@ LogbookSupervisor::~LogbookSupervisor(void)
 //========================================================================================================================
 void LogbookSupervisor::init(void)
 {
- 	//called by constructor
+	//called by constructor
 	theSupervisorsConfiguration_.init(getApplicationContext());
-    
-    getActiveExperiment();	//init active experiment
-    std::cout << __COUT_HDR__ << "Active Experiment is " << activeExperiment_ << std::endl;
-    mostRecentDayIndex_ = 0;
+
+
+	if(1) //check if LOGBOOK_PATH and subpaths event exist?! (if not, attempt to create)
+	{
+		std::string path = LOGBOOK_PATH;
+		DIR *dir = opendir(path.c_str());
+		if(dir)
+			closedir(dir);
+		else if(-1 == mkdir(path.c_str(),0755))
+		{
+			//lets create the service folder (for first time)
+			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+					path << std::endl;
+			assert(false);
+		}
+
+		path = LOGBOOK_PATH + LOGBOOK_UPLOADS_PATH;
+		dir = opendir(path.c_str());
+		if(dir)
+			closedir(dir);
+		else if(-1 == mkdir((path+LOGBOOK_UPLOADS_PATH).c_str(),0755))
+		{
+			//lets create the service folder (for first time)
+			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+					(path+LOGBOOK_UPLOADS_PATH) << std::endl;
+			assert(false);
+		}
+
+		path = LOGBOOK_PATH + LOGBOOK_LOGBOOKS_PATH;
+		dir = opendir(path.c_str());
+		if(dir)
+			closedir(dir);
+		else if(-1 == mkdir(path.c_str(),0755))
+		{
+			//lets create the service folder (for first time)
+			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+					path << std::endl;
+			assert(false);
+		}
+	}
+
+	getActiveExperiment();	//init active experiment
+	std::cout << __COUT_HDR__ << "Active Experiment is " << activeExperiment_ << std::endl;
+	mostRecentDayIndex_ = 0;
 }
 
 //========================================================================================================================
 void LogbookSupervisor::destroy(void)
 {
- 	//called by destructor
-    
+	//called by destructor
+
 }
 
 //========================================================================================================================
-void LogbookSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void LogbookSupervisor::Default(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-    std::cout << __COUT_HDR__ << " active experiment " << activeExperiment_ << std::endl;
+	std::cout << __COUT_HDR__ << " active experiment " << activeExperiment_ << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Logbook.html?urn=" <<
-		getenv("LOGBOOK_SUPERVISOR_ID") << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
+			getenv("LOGBOOK_SUPERVISOR_ID") << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
 }
 
 //========================================================================================================================
 //xoap::MakeSystemLogbookEntry
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
-xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageReference msg) throw (xoap::exception::Exception)
+xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageReference msg)
+throw (xoap::exception::Exception)
 {
-    SOAPParameters parameters("EntryText");
-//	SOAPParametersV parameters(1);
-//	parameters[0].setName("EntryText");
+	SOAPParameters parameters("EntryText");
+	//	SOAPParametersV parameters(1);
+	//	parameters[0].setName("EntryText");
 	receive(msg, parameters);
-std::string EntryText = parameters.getValue("EntryText");
+	std::string EntryText = parameters.getValue("EntryText");
 
-    std::cout << __COUT_HDR__ << "Received External Supervisor System Entry " << EntryText << std::endl;
-    std::cout << __COUT_HDR__ << "Active Experiment is  " << activeExperiment_ << std::endl;
+	std::cout << __COUT_HDR__ << "Received External Supervisor System Entry " << EntryText << std::endl;
+	std::cout << __COUT_HDR__ << "Active Experiment is  " << activeExperiment_ << std::endl;
 
-std::string retStr = "Success";
-    
+	std::string retStr = "Success";
 
- std::string logPath, logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
-        (std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
-    
-    
-    char dayIndexStr[20];
-    HttpXmlDocument logXml;
-    char fileIndex[40];
-    xercesc::DOMElement* entryEl;
-    DIR *dir;
 
-    if(activeExperiment_ == "")
-    {
-        retStr = "Warning - Currently, no Active Experiment.";
-        std::cout << __COUT_HDR__ << retStr << std::endl;
-        goto XOAP_CLEANUP;
-    }
-    
-    //check that directory exists
-    dir = opendir(logDirPath.c_str());
-    if(!dir)
-    {
-        retStr = "Error - Active Experiment directory missing.";
-        std::cout << __COUT_HDR__ << retStr << std::endl;
-        goto XOAP_CLEANUP;
-    }
-    closedir(dir);
+	std::string logPath, logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
+			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
 
-    sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
-    
-    logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
-    std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
-    
-    logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
-                                        //because empty XML file is valid structure
-                                        //entry structure:
-                                        //  <XML_LOGBOOK_ENTRY>
-                                        //		<XML_LOGBOOK_ENTRY_TIME>
-                                        //		<XML_LOGBOOK_ENTRY_CREATOR>
-                                        //      <XML_LOGBOOK_ENTRY_TEXT>
-                                        //      <XML_LOGBOOK_ENTRY_FILE value=fileType0>
-                                        //      <XML_LOGBOOK_ENTRY_FILE value=fileType1> ...
-                                        //  </XML_LOGBOOK_ENTRY>
 
-    entryEl = logXml.addTextElementToData(XML_LOGBOOK_ENTRY);
-    
-    sprintf(fileIndex,"%lu_%lu",time(0),clock()); //create unique time label for entry time(0)_clock()
-    logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TIME, fileIndex, entryEl);
-    logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_CREATOR, "SYSTEM LOG", entryEl);
-    logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TEXT, EntryText, entryEl);
-    logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_SUBJECT, "System Log", entryEl);
-    
-    logXml.saveXmlDocument(logPath);
+	char dayIndexStr[20];
+	HttpXmlDocument logXml;
+	char fileIndex[40];
+	xercesc::DOMElement* entryEl;
+	DIR *dir;
 
-XOAP_CLEANUP:
+	if(activeExperiment_ == "")
+	{
+		retStr = "Warning - Currently, no Active Experiment.";
+		std::cout << __COUT_HDR__ << retStr << std::endl;
+		goto XOAP_CLEANUP;
+	}
+
+	//check that directory exists
+	dir = opendir(logDirPath.c_str());
+	if(!dir)
+	{
+		retStr = "Error - Active Experiment directory missing.";
+		std::cout << __COUT_HDR__ << retStr << std::endl;
+		goto XOAP_CLEANUP;
+	}
+	closedir(dir);
+
+	sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
+
+	logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
+	std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
+
+	logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
+	//because empty XML file is valid structure
+	//entry structure:
+	//  <XML_LOGBOOK_ENTRY>
+	//		<XML_LOGBOOK_ENTRY_TIME>
+	//		<XML_LOGBOOK_ENTRY_CREATOR>
+	//      <XML_LOGBOOK_ENTRY_TEXT>
+	//      <XML_LOGBOOK_ENTRY_FILE value=fileType0>
+	//      <XML_LOGBOOK_ENTRY_FILE value=fileType1> ...
+	//  </XML_LOGBOOK_ENTRY>
+
+	entryEl = logXml.addTextElementToData(XML_LOGBOOK_ENTRY);
+
+	sprintf(fileIndex,"%lu_%lu",time(0),clock()); //create unique time label for entry time(0)_clock()
+	logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TIME, fileIndex, entryEl);
+	logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_CREATOR, "SYSTEM LOG", entryEl);
+	logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TEXT, EntryText, entryEl);
+	logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_SUBJECT, "System Log", entryEl);
+
+	logXml.saveXmlDocument(logPath);
+
+	XOAP_CLEANUP:
 
 	//fill return parameters
 	SOAPParameters retParameters("Status",retStr);
-//	SOAPParametersV retParameters(1);
-//	retParameters[0].setName("Status");
-//	retParameters[0].setValue(retStr);
+	//	SOAPParametersV retParameters(1);
+	//	retParameters[0].setName("Status");
+	//	retParameters[0].setValue(retStr);
 
 	return SOAPUtilities::makeSOAPMessageReference("LogbookEntryStatusResponse",retParameters);
 }
@@ -197,13 +240,14 @@ XOAP_CLEANUP:
 //LogImage
 //	Since xdaq's headers are wrong for images, browsers get confused if not wrapped in an html page.
 //	This function wraps an uploaded logbook entry image at src for display to user.
-void LogbookSupervisor::LogImage(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void LogbookSupervisor::LogImage(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-    cgicc::Cgicc cgi(in);
-    std::string src = CgiDataUtilities::getData(cgi,"src");
-    std::cout << __COUT_HDR__ << " Get Log Image " << src << std::endl;
+	cgicc::Cgicc cgi(in);
+	std::string src = CgiDataUtilities::getData(cgi,"src");
+	std::cout << __COUT_HDR__ << " Get Log Image " << src << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookImage.html?urn=" <<
-		getenv("LOGBOOK_SUPERVISOR_ID") << "&src=" << src << "'></frameset></html>";
+			getenv("LOGBOOK_SUPERVISOR_ID") << "&src=" << src << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -212,13 +256,14 @@ void LogbookSupervisor::LogImage(xgi::Input * in, xgi::Output * out ) throw (xgi
 //	NOTE: to create pdf with command line:
 //			paps LogbookData/experiment_list.xml > test.ps
 //			ps2pdfwr test.ps test.pdf
-void LogbookSupervisor::LogReport(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void LogbookSupervisor::LogReport(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-    cgicc::Cgicc cgi(in);
-    std::string activeExperiment = CgiDataUtilities::getData(cgi,"activeExperiment");
-    std::cout << __COUT_HDR__ << " Start Log Report for " << activeExperiment << std::endl;
+	cgicc::Cgicc cgi(in);
+	std::string activeExperiment = CgiDataUtilities::getData(cgi,"activeExperiment");
+	std::cout << __COUT_HDR__ << " Start Log Report for " << activeExperiment << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><header><title>ots Logbook Reports</title></header><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookReport.html?urn=" <<
-		getenv("LOGBOOK_SUPERVISOR_ID") << "&activeExperiment=" << activeExperiment << "'></frameset></html>";
+			getenv("LOGBOOK_SUPERVISOR_ID") << "&activeExperiment=" << activeExperiment << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -254,7 +299,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 	FILE *fp = fopen(std::string((std::string)ACTIVE_EXPERIMENT_PATH).c_str(),"w");
 	if(!fp)
 	{
-	    std::cout << __COUT_HDR__ << "FATAL ERROR!!! - file write" << std::endl;
+		std::cout << __COUT_HDR__ << "FATAL ERROR!!! - file write" << std::endl;
 		return;
 	}
 
@@ -269,10 +314,10 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 		entryNeeded = true;
 
 	activeExperiment_ = experiment;
-    std::cout << __COUT_HDR__ << "Active Experiment set to " << activeExperiment_ << std::endl;
+	std::cout << __COUT_HDR__ << "Active Experiment set to " << activeExperiment_ << std::endl;
 
-    if(entryNeeded)
-    	theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorsConfiguration_.getSupervisorDescriptor(),"Experiment was made active."); //make system logbook entry
+	if(entryNeeded)
+		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorsConfiguration_.getSupervisorDescriptor(),"Experiment was made active."); //make system logbook entry
 
 }
 
@@ -395,7 +440,7 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 		if(!dir) //check if uploads directory exists within experiment directory
 		{
 			std::cout << __COUT_HDR__ << "Creating uploads directory" << std::endl;
-			if(-1 == mkdir(dirPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) //make uploads directory
+			if(-1 == mkdir(dirPath.c_str(),0755)) //make uploads directory
 			{
 				if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - uploads directory for " + experiment + " was not created.");
 				std::cout << __COUT_HDR__ << "Uploads directory failure." << std::endl;
@@ -409,9 +454,11 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 				", re-added to list of experiments.");
 		return;
 	}
-	if(-1 == mkdir(dirPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) ||
+	std::cout << __COUT_HDR__ << "Creating experiment and uploads directory at: " <<
+			dirPath << std::endl;
+	if(-1 == mkdir(dirPath.c_str(),0755) ||
 			-1 == mkdir((dirPath + "/" +
-					(std::string)LOGBOOK_UPLOADS_PATH).c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+					(std::string)LOGBOOK_UPLOADS_PATH).c_str(),0755))
 	{
 		if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - directory, " + experiment + ", could not be created.");
 		return;
@@ -502,7 +549,7 @@ void LogbookSupervisor::removeExperiment(std::string experiment, std::string rem
 		return;
 	}
 	fprintf(fp,"%s -- %s Experiment removed by %s.\n",asctime(localtime(&((time_t const&)(time(0))))),
-		experiment.c_str(), remover.c_str());
+			experiment.c_str(), remover.c_str());
 	fclose(fp);
 
 	expXml.saveXmlDocument((std::string)LOGBOOK_EXPERIMENT_LIST_PATH); //save database
@@ -527,7 +574,7 @@ void LogbookSupervisor::refreshLogbook(time_t date, unsigned char duration,
 	if(xmldoc) xmldoc->addTextElementToData(XML_ACTIVE_EXPERIMENT,experiment); //for success
 
 	//check that directory exists
-std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
+	std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
 			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + experiment;
 
 	if(out) *out << __COUT_HDR__ << "dirPath " << dirPath << std::endl;
@@ -581,7 +628,7 @@ std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_
 		baseDay = (date/(60*60*24));
 	closedir(dir);
 
-std::string entryPath;
+	std::string entryPath;
 	char dayIndexStr[20];
 	FILE *fp;
 
@@ -629,42 +676,42 @@ std::string entryPath;
 //      all names have time_t creation time + "_" + incremented index
 void LogbookSupervisor::cleanUpPreviews()
 {
-    std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH;
-    
-    DIR *dir = opendir(previewPath.c_str());
+	std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH;
+
+	DIR *dir = opendir(previewPath.c_str());
 	if(!dir)
 	{
 		std::cout << __COUT_HDR__ << "Error - Previews directory missing: " << previewPath << std::endl;
 		return;
 	}
-    
-    struct dirent *entry;
-    time_t dirCreateTime;
-    unsigned int i;
-    
-    while((entry = readdir(dir))) //loop through all entries in directory and remove anything expired
-    {
-        if( strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0
-           && strcmp(entry->d_name, ".svn") != 0 )
-        {
-            //replace _ with space so sscanf works
-            for(i=0;i<strlen(entry->d_name);++i)
-            	if(entry->d_name[i] == '_')
-            	{	entry->d_name[i] = ' '; break; 	}
-            sscanf(entry->d_name,"%li",&dirCreateTime);
 
-            if((time(0) - dirCreateTime) > LOGBOOK_PREVIEW_EXPIRATION_TIME)
-            {
-                std::cout << __COUT_HDR__ << "Expired" << std::endl;
+	struct dirent *entry;
+	time_t dirCreateTime;
+	unsigned int i;
 
-                entry->d_name[i] = '_'; //put _ back
+	while((entry = readdir(dir))) //loop through all entries in directory and remove anything expired
+	{
+		if( strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0
+				&& strcmp(entry->d_name, ".svn") != 0 )
+		{
+			//replace _ with space so sscanf works
+			for(i=0;i<strlen(entry->d_name);++i)
+				if(entry->d_name[i] == '_')
+				{	entry->d_name[i] = ' '; break; 	}
+			sscanf(entry->d_name,"%li",&dirCreateTime);
 
-                std::cout << __COUT_HDR__ << "rm -rf " << previewPath + (std::string)entry->d_name <<  std::endl;
-                system(((std::string)("rm -rf " + previewPath + (std::string)entry->d_name)).c_str());
-            }
-        }
-    }
-        
+			if((time(0) - dirCreateTime) > LOGBOOK_PREVIEW_EXPIRATION_TIME)
+			{
+				std::cout << __COUT_HDR__ << "Expired" << std::endl;
+
+				entry->d_name[i] = '_'; //put _ back
+
+				std::cout << __COUT_HDR__ << "rm -rf " << previewPath + (std::string)entry->d_name <<  std::endl;
+				system(((std::string)("rm -rf " + previewPath + (std::string)entry->d_name)).c_str());
+			}
+		}
+	}
+
 	closedir(dir);
 }
 
@@ -673,27 +720,27 @@ void LogbookSupervisor::cleanUpPreviews()
 //	savePostPreview
 //      save post to preview directory named with time and incremented index
 void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text, const std::vector<cgicc::FormFile> &files, std::string creator,
-                                          HttpXmlDocument *xmldoc)
+		HttpXmlDocument *xmldoc)
 {
 	if(activeExperiment_ == "") //no active experiment!
 	{
-        if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - no active experiment currently!");
-        return;
+		if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - no active experiment currently!");
+		return;
 	}
 
-    char fileIndex[40];
-    sprintf(fileIndex,"%lu_%lu",time(0),clock()); //create unique time label for entry time(0)_clock()
-    std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + (std::string)fileIndex;
-    
-    std::cout << __COUT_HDR__ << "previewPath " << previewPath << std::endl;
-    if(-1 == mkdir(previewPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
-    {
-        if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - preview could not be generated.");
-        return;
-    }
-    
-    //new directory created successfully, save text and files
-    //entry structure:
+	char fileIndex[40];
+	sprintf(fileIndex,"%lu_%lu",time(0),clock()); //create unique time label for entry time(0)_clock()
+	std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + (std::string)fileIndex;
+
+	std::cout << __COUT_HDR__ << "previewPath " << previewPath << std::endl;
+	if(-1 == mkdir(previewPath.c_str(),0755))
+	{
+		if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - preview could not be generated.");
+		return;
+	}
+
+	//new directory created successfully, save text and files
+	//entry structure:
 	//  <XML_LOGBOOK_ENTRY>
 	//		<XML_LOGBOOK_ENTRY_TIME>
 	//		<XML_LOGBOOK_ENTRY_CREATOR>
@@ -702,59 +749,59 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 	//      <XML_LOGBOOK_ENTRY_FILE value=fileType0>
 	//      <XML_LOGBOOK_ENTRY_FILE value=fileType1> ...
 	//  </XML_LOGBOOK_ENTRY>
-    
-    escapeLogbookEntry(text);
-    escapeLogbookEntry(subject);
-    std::cout << __COUT_HDR__ << "~~subject " << subject << std::endl << "~~text " << text << std::endl;
-    
-    HttpXmlDocument previewXml;
-    
-    previewXml.addTextElementToData(XML_LOGBOOK_ENTRY);
-    previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TIME, fileIndex, XML_LOGBOOK_ENTRY);
-    if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_TIME,fileIndex); //return time
-    previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_CREATOR, creator, XML_LOGBOOK_ENTRY);
-    if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_CREATOR,creator); //return creator
-    previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TEXT, text, XML_LOGBOOK_ENTRY);
-    if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_TEXT,text); //return text
-    previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_SUBJECT, subject, XML_LOGBOOK_ENTRY);
-    if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_SUBJECT,subject); //return subject
-    
-    std::cout << __COUT_HDR__ << "file size " << files.size() << std::endl;
-    
-    std::string filename;
-    std::ofstream myfile;
-    for (unsigned int i=0; i<files.size(); ++i)
-    {
-        
-        previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_FILE, files[i].getDataType(), XML_LOGBOOK_ENTRY);
-        if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_FILE,files[i].getDataType()); //return file type
-        
-        if((filename = validateUploadFileType(files[i].getDataType())) == "") //invalid file type
-        {
-            if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - invalid file type, " +
-                                                    files[i].getDataType() + ".");
-            return;
-        }
-        
-        //file validated, so save upload to temp directory
-        sprintf(fileIndex,"%d",i);
-        filename = previewPath + "/" + (std::string)LOGBOOK_PREVIEW_UPLOAD_PREFACE +
-            (std::string)fileIndex + "." + filename;
-        
-        std::cout << __COUT_HDR__ << "file " << i << " - " << filename << std::endl;
-        myfile.open(filename.c_str());
-        if (myfile.is_open())
-        {
-            files[i].writeToStream(myfile);
-            myfile.close();
-        }        
-    }
-    
-    //save xml doc for preview entry
-    previewXml.saveXmlDocument(previewPath + "/" + (std::string)LOGBOOK_PREVIEW_FILE);
-    
-    if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"1"); //1 indicates success!
-    if(xmldoc) xmldoc->addTextElementToData(XML_PREVIEW_INDEX,"1"); //1 indicates is a preview post
+
+	escapeLogbookEntry(text);
+	escapeLogbookEntry(subject);
+	std::cout << __COUT_HDR__ << "~~subject " << subject << std::endl << "~~text " << text << std::endl;
+
+	HttpXmlDocument previewXml;
+
+	previewXml.addTextElementToData(XML_LOGBOOK_ENTRY);
+	previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TIME, fileIndex, XML_LOGBOOK_ENTRY);
+	if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_TIME,fileIndex); //return time
+	previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_CREATOR, creator, XML_LOGBOOK_ENTRY);
+	if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_CREATOR,creator); //return creator
+	previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_TEXT, text, XML_LOGBOOK_ENTRY);
+	if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_TEXT,text); //return text
+	previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_SUBJECT, subject, XML_LOGBOOK_ENTRY);
+	if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_SUBJECT,subject); //return subject
+
+	std::cout << __COUT_HDR__ << "file size " << files.size() << std::endl;
+
+	std::string filename;
+	std::ofstream myfile;
+	for (unsigned int i=0; i<files.size(); ++i)
+	{
+
+		previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_FILE, files[i].getDataType(), XML_LOGBOOK_ENTRY);
+		if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_FILE,files[i].getDataType()); //return file type
+
+		if((filename = validateUploadFileType(files[i].getDataType())) == "") //invalid file type
+		{
+			if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - invalid file type, " +
+					files[i].getDataType() + ".");
+			return;
+		}
+
+		//file validated, so save upload to temp directory
+		sprintf(fileIndex,"%d",i);
+		filename = previewPath + "/" + (std::string)LOGBOOK_PREVIEW_UPLOAD_PREFACE +
+				(std::string)fileIndex + "." + filename;
+
+		std::cout << __COUT_HDR__ << "file " << i << " - " << filename << std::endl;
+		myfile.open(filename.c_str());
+		if (myfile.is_open())
+		{
+			files[i].writeToStream(myfile);
+			myfile.close();
+		}
+	}
+
+	//save xml doc for preview entry
+	previewXml.saveXmlDocument(previewPath + "/" + (std::string)LOGBOOK_PREVIEW_FILE);
+
+	if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"1"); //1 indicates success!
+	if(xmldoc) xmldoc->addTextElementToData(XML_PREVIEW_INDEX,"1"); //1 indicates is a preview post
 }
 
 //========================================================================================================================
@@ -766,22 +813,22 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve,
 		HttpXmlDocument *xmldoc)
 {
-    
-    std::cout << __COUT_HDR__ << "previewNumber " << previewNumber << (approve?" Accepted":" Cancelled") << std::endl;
-    
-    std::string sysCmd, previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + previewNumber;
-    
-    if (approve) {
-        //move from preview to logbook
-        
-        HttpXmlDocument previewXml;
-        previewXml.loadXmlDocument(previewPath + "/" + (std::string)LOGBOOK_PREVIEW_FILE);
-        
-        std::string logPath, logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
-            (std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
-        
-        //check that directory exists
-        DIR *dir = opendir(logDirPath.c_str());
+
+	std::cout << __COUT_HDR__ << "previewNumber " << previewNumber << (approve?" Accepted":" Cancelled") << std::endl;
+
+	std::string sysCmd, previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + previewNumber;
+
+	if (approve) {
+		//move from preview to logbook
+
+		HttpXmlDocument previewXml;
+		previewXml.loadXmlDocument(previewPath + "/" + (std::string)LOGBOOK_PREVIEW_FILE);
+
+		std::string logPath, logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
+				(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
+
+		//check that directory exists
+		DIR *dir = opendir(logDirPath.c_str());
 		if(!dir)
 		{
 			std::cout << __COUT_HDR__ << "Error - Active Experiment directory missing: " << logPath << std::endl;
@@ -789,38 +836,38 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 		}
 		closedir(dir);
 
-        char dayIndexStr[20];
-        sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
-        
-        logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
-        std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
-        
-        HttpXmlDocument logXml;
-        logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
-        									//because empty XML file is valid structure
-											//entry structure:
-											//  <XML_LOGBOOK_ENTRY>
-        									//		<XML_LOGBOOK_ENTRY_TIME>
-											//		<XML_LOGBOOK_ENTRY_CREATOR>
-											//      <XML_LOGBOOK_ENTRY_TEXT>
-											//      <XML_LOGBOOK_ENTRY_FILE value=fileType0>
-											//      <XML_LOGBOOK_ENTRY_FILE value=fileType1> ...
-											//  </XML_LOGBOOK_ENTRY>
+		char dayIndexStr[20];
+		sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
 
-        logXml.copyDataChildren(previewXml);	//Copy from previewXML to logXML
-        logXml.saveXmlDocument(logPath);
+		logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
+		std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
 
-        //Move upload files
-        std::vector<std::string> fileTypes;
-        previewXml.getAllMatchingValues(XML_LOGBOOK_ENTRY_FILE,fileTypes);
-        std::string entryTimeLabel = previewXml.getMatchingValue(XML_LOGBOOK_ENTRY_TIME);
-        std::string fileExtension, previewFilename, logFilename;
-        char fileIndex[10];
-        for(unsigned int i=0;i<fileTypes.size();++i)
-        {
-        	if((fileExtension = validateUploadFileType(fileTypes[i])) == "") //invalid file type
+		HttpXmlDocument logXml;
+		logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
+		//because empty XML file is valid structure
+		//entry structure:
+		//  <XML_LOGBOOK_ENTRY>
+		//		<XML_LOGBOOK_ENTRY_TIME>
+		//		<XML_LOGBOOK_ENTRY_CREATOR>
+		//      <XML_LOGBOOK_ENTRY_TEXT>
+		//      <XML_LOGBOOK_ENTRY_FILE value=fileType0>
+		//      <XML_LOGBOOK_ENTRY_FILE value=fileType1> ...
+		//  </XML_LOGBOOK_ENTRY>
+
+		logXml.copyDataChildren(previewXml);	//Copy from previewXML to logXML
+		logXml.saveXmlDocument(logPath);
+
+		//Move upload files
+		std::vector<std::string> fileTypes;
+		previewXml.getAllMatchingValues(XML_LOGBOOK_ENTRY_FILE,fileTypes);
+		std::string entryTimeLabel = previewXml.getMatchingValue(XML_LOGBOOK_ENTRY_TIME);
+		std::string fileExtension, previewFilename, logFilename;
+		char fileIndex[10];
+		for(unsigned int i=0;i<fileTypes.size();++i)
+		{
+			if((fileExtension = validateUploadFileType(fileTypes[i])) == "") //invalid file type
 			{
-        		std::cout << __COUT_HDR__ << "Failed - invalid file type: " << fileTypes[i] << std::endl;
+				std::cout << __COUT_HDR__ << "Failed - invalid file type: " << fileTypes[i] << std::endl;
 				continue;
 			}
 
@@ -832,15 +879,15 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 
 			sysCmd =  "mv " + (previewPath + "/" + previewFilename) + " " +
 					(logDirPath + "/" + (std::string)LOGBOOK_UPLOADS_PATH + logFilename);
-		    std::cout << __COUT_HDR__ << sysCmd << std::endl;
-		    system(sysCmd.c_str());
-        }
-    }
-    
-    //remove preview directory
-    sysCmd = "rm -rf " + previewPath;
-    std::cout << __COUT_HDR__ << sysCmd <<  std::endl;
-    system(sysCmd.c_str());
+			std::cout << __COUT_HDR__ << sysCmd << std::endl;
+			system(sysCmd.c_str());
+		}
+	}
+
+	//remove preview directory
+	sysCmd = "rm -rf " + previewPath;
+	std::cout << __COUT_HDR__ << sysCmd <<  std::endl;
+	system(sysCmd.c_str());
 }
 
 //========================================================================================================================
@@ -848,11 +895,11 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 //      returns "" if file type is invalide, else returns file extension to use
 std::string LogbookSupervisor::validateUploadFileType(const std::string fileType)
 {    
-    for (unsigned int i=0; i<allowedFileUploadTypes_.size(); ++i)
-        if (allowedFileUploadTypes_[i] == fileType)
-            return matchingFileUploadTypes_[i];        //found and done
+	for (unsigned int i=0; i<allowedFileUploadTypes_.size(); ++i)
+		if (allowedFileUploadTypes_[i] == fileType)
+			return matchingFileUploadTypes_[i];        //found and done
 
-    return ""; //not valid, return ""
+	return ""; //not valid, return ""
 }
 
 //========================================================================================================================
@@ -861,7 +908,7 @@ std::string LogbookSupervisor::validateUploadFileType(const std::string fileType
 //      reserved: ", ', &, <, >, \n, double-space
 void LogbookSupervisor::escapeLogbookEntry(std::string &entry)
 {
-        //NOTE: should already be taken care of by web gui javascript! do we care to check?
+	//NOTE: should already be taken care of by web gui javascript! do we care to check?
 
 }
 
@@ -890,9 +937,9 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 	days /= 60*60*24; //get days
 	sprintf(dayIndexStr,"%6.6lu",days);
 
-std::string logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
-	            (std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
-std::string logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
+	std::string logDirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
+			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
+	std::string logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
 
 	std::cout << __COUT_HDR__ << "logPath=" << logPath << std::endl;
 
@@ -950,39 +997,40 @@ std::string logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment
 //	Log
 //		Handles Web Interface requests to Logbook supervisor.
 //		Does not refresh cookie for automatic update checks.
-void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
-    std::string Command;
-    if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
-        Command = cgi("RequestType"); //get command from form, if PreviewEntry
+	std::string Command;
+	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
+		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-    std::cout << __COUT_HDR__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	std::cout << __COUT_HDR__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
-    //Commands
-    	//CreateExperiment
-    	//RemoveExperiment
-    	//GetExperimentList
-    	//SetActiveExperiment
-    	//RefreshLogbook
-        //PreviewEntry
-    	//ApproveEntry
-    	//AdminRemoveRestoreEntry
+	//Commands
+	//CreateExperiment
+	//RemoveExperiment
+	//GetExperimentList
+	//SetActiveExperiment
+	//RefreshLogbook
+	//PreviewEntry
+	//ApproveEntry
+	//AdminRemoveRestoreEntry
 
-    //**** start LOGIN GATEWAY CODE ***//
-    //If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
-    //Else, error message is returned in cookieCode
-    uint8_t userPermissions;
-    std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
-        CgiDataUtilities::postData(cgi,"CookieCode");
+	//**** start LOGIN GATEWAY CODE ***//
+	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
+	//Else, error message is returned in cookieCode
+	uint8_t userPermissions;
+	std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
+			CgiDataUtilities::postData(cgi,"CookieCode");
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions, "0", Command != "RefreshLogbook")) //only refresh cookie if not automatic refresh
 	{
 		*out << cookieCode;
-        std::cout << __COUT_HDR__ << "Invalid Cookie Code" << std::endl;
+		std::cout << __COUT_HDR__ << "Invalid Cookie Code" << std::endl;
 		return;
 	}
-    //**** end LOGIN GATEWAY CODE ***//
+	//**** end LOGIN GATEWAY CODE ***//
 
 
 	HttpXmlDocument xmldoc(cookieCode);
@@ -992,10 +1040,10 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	if(Command == "CreateExperiment")
 	{
 		//check that  user is admin
-			//check that experiment directory does not exist, and it is not in xml list
-			//create experiment
-				//create directory
-				//add to experiments list
+		//check that experiment directory does not exist, and it is not in xml list
+		//create experiment
+		//create directory
+		//add to experiments list
 
 		if(userPermissions < ADMIN_PERMISSIONS_THRESHOLD)
 		{
@@ -1005,17 +1053,21 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 
 		//user is admin
 
+		std::cout << __COUT_HDR__ << "Admin" << std::endl;
+
 		//get creator name
-	std::string creator;
+		std::string creator;
 		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 				cookieCode,&creator);
 
 		createExperiment(CgiDataUtilities::postData(cgi,"Experiment"), creator, &xmldoc);
+
+		std::cout << __COUT_HDR__ << "Created" << std::endl;
 	}
 	else if(Command == "RemoveExperiment")
 	{
 		//check that  user is admin
-			//remove from xml list, but do not remove directory (requires manual delete so mistakes aren't made)
+		//remove from xml list, but do not remove directory (requires manual delete so mistakes aren't made)
 
 		if(userPermissions < ADMIN_PERMISSIONS_THRESHOLD)
 		{
@@ -1024,7 +1076,7 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 		}
 
 		//get remover name
-	std::string remover;
+		std::string remover;
 		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 				cookieCode,&remover);
 		removeExperiment(CgiDataUtilities::postData(cgi,"Experiment"), remover, &xmldoc);
@@ -1032,7 +1084,7 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	else if(Command == "GetExperimentList")
 	{
 		//check that  user is admin
-			//remove from xml list, but do not remove directory (requires manual delete so mistakes aren't made)
+		//remove from xml list, but do not remove directory (requires manual delete so mistakes aren't made)
 
 		if(userPermissions < ADMIN_PERMISSIONS_THRESHOLD)
 		{
@@ -1046,8 +1098,8 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	else if(Command == "SetActiveExperiment")
 	{
 		//check that  user is admin
-			//check that experiment exists
-			//set active experiment
+		//check that experiment exists
+		//set active experiment
 
 		if(userPermissions < ADMIN_PERMISSIONS_THRESHOLD)
 		{
@@ -1061,8 +1113,8 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	{
 		//returns logbook for currently active experiment based on date and duration parameters
 
-	std::string Date = CgiDataUtilities::postData(cgi,"Date");
-	std::string Duration = CgiDataUtilities::postData(cgi,"Duration");
+		std::string Date = CgiDataUtilities::postData(cgi,"Date");
+		std::string Duration = CgiDataUtilities::postData(cgi,"Duration");
 
 		time_t date;
 		unsigned char duration;
@@ -1074,36 +1126,36 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	}
 	else if(Command == "PreviewEntry")
 	{
-        //cleanup temporary folder
+		//cleanup temporary folder
 		//NOTE: all input parameters for PreviewEntry will be attached to form
 		//	so use cgi(xxx) to get values.
-        //increment number for each temporary preview, previewPostTempIndex_
-        //save entry and uploads to previewPath / previewPostTempIndex_ /.
+		//increment number for each temporary preview, previewPostTempIndex_
+		//save entry and uploads to previewPath / previewPostTempIndex_ /.
 
-        cleanUpPreviews();
-	std::string EntryText = cgi("EntryText");
+		cleanUpPreviews();
+		std::string EntryText = cgi("EntryText");
 		std::cout << __COUT_HDR__ << "EntryText " << EntryText <<  std::endl;
-	std::string EntrySubject = cgi("EntrySubject");
+		std::string EntrySubject = cgi("EntrySubject");
 		std::cout << __COUT_HDR__ << "EntrySubject " << EntrySubject <<  std::endl;
 
 		//get creator name
-	std::string creator;
+		std::string creator;
 		if(theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 				cookieCode,&creator))
 			savePostPreview(EntrySubject,EntryText,cgi.getFiles(),creator,&xmldoc);
 		else
-	        xmldoc.addTextElementToData(XML_STATUS,"Failed - could not get username info.");
-    }
+			xmldoc.addTextElementToData(XML_STATUS,"Failed - could not get username info.");
+	}
 	else if(Command == "ApproveEntry")
 	{
-        //If Approve = "1", then previewed Log entry specified by PreviewNumber
-        //  is moved to logbook
-        //Else the specified Log entry is deleted.
-	std::string PreviewNumber = CgiDataUtilities::postData(cgi,"PreviewNumber");
-	std::string Approve = CgiDataUtilities::postData(cgi,"Approve");
+		//If Approve = "1", then previewed Log entry specified by PreviewNumber
+		//  is moved to logbook
+		//Else the specified Log entry is deleted.
+		std::string PreviewNumber = CgiDataUtilities::postData(cgi,"PreviewNumber");
+		std::string Approve = CgiDataUtilities::postData(cgi,"Approve");
 
-        movePreviewEntry(PreviewNumber,Approve=="1",&xmldoc);
-    }
+		movePreviewEntry(PreviewNumber,Approve=="1",&xmldoc);
+	}
 	else if(Command == "AdminRemoveRestoreEntry")
 	{
 
@@ -1113,11 +1165,11 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 			goto CLEANUP;
 		}
 
-	std::string EntryId = CgiDataUtilities::postData(cgi,"EntryId");
+		std::string EntryId = CgiDataUtilities::postData(cgi,"EntryId");
 		bool Hide = CgiDataUtilities::postData(cgi,"Hide")=="1"?true:false;
 
 		//get creator name
-	std::string hider;
+		std::string hider;
 		if(!theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 				cookieCode,&hider))
 
@@ -1133,7 +1185,7 @@ void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out ) throw (xgi::exc
 	else
 		std::cout << __COUT_HDR__ << "Command request not recognized." << std::endl;
 
-CLEANUP:
+	CLEANUP:
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*)out);
