@@ -36,8 +36,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 	else
 	{
 		//For fancy priority management use this:
-		Debug.log = function(str,num) { 	//make num optional and default to lowest priority	
+		Debug.log = function(str,num) { 		
+				//make num optional and default to lowest priority
 				if(num === undefined) num = Debug.LOW_PRIORITY;
+				
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
