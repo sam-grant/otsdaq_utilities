@@ -99,7 +99,7 @@ void LogbookSupervisor::init(void)
 		DIR *dir = opendir(path.c_str());
 		if(dir)
 			closedir(dir);
-		else if(-1 == mkdir(path.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
 			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
@@ -111,7 +111,7 @@ void LogbookSupervisor::init(void)
 		dir = opendir(path.c_str());
 		if(dir)
 			closedir(dir);
-		else if(-1 == mkdir((path+LOGBOOK_UPLOADS_PATH).c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+		else if(-1 == mkdir((path+LOGBOOK_UPLOADS_PATH).c_str(),0755))
 		{
 			//lets create the service folder (for first time)
 			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
@@ -123,7 +123,7 @@ void LogbookSupervisor::init(void)
 		dir = opendir(path.c_str());
 		if(dir)
 			closedir(dir);
-		else if(-1 == mkdir(path.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
 			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
@@ -440,7 +440,7 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 		if(!dir) //check if uploads directory exists within experiment directory
 		{
 			std::cout << __COUT_HDR__ << "Creating uploads directory" << std::endl;
-			if(-1 == mkdir(dirPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) //make uploads directory
+			if(-1 == mkdir(dirPath.c_str(),0755)) //make uploads directory
 			{
 				if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - uploads directory for " + experiment + " was not created.");
 				std::cout << __COUT_HDR__ << "Uploads directory failure." << std::endl;
@@ -456,9 +456,9 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 	}
 	std::cout << __COUT_HDR__ << "Creating experiment and uploads directory at: " <<
 			dirPath << std::endl;
-	if(-1 == mkdir(dirPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) ||
+	if(-1 == mkdir(dirPath.c_str(),0755) ||
 			-1 == mkdir((dirPath + "/" +
-					(std::string)LOGBOOK_UPLOADS_PATH).c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+					(std::string)LOGBOOK_UPLOADS_PATH).c_str(),0755))
 	{
 		if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - directory, " + experiment + ", could not be created.");
 		return;
@@ -733,7 +733,7 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 	std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + (std::string)fileIndex;
 
 	std::cout << __COUT_HDR__ << "previewPath " << previewPath << std::endl;
-	if(-1 == mkdir(previewPath.c_str(),S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH))
+	if(-1 == mkdir(previewPath.c_str(),0755))
 	{
 		if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - preview could not be generated.");
 		return;
