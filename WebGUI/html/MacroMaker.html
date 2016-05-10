@@ -166,18 +166,18 @@
 	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
 	        <div id="output1" class="formatSelection">Address is in
 	           <select id="addressFormat" class="dropdown">
-			    <option class="select" value="1" selected="selected">hex</option>
-			    <option class="select" value="2">dec</option>
-			    <option class="select" value="3">ascii</option>
+			    <option class="select" value="hex" selected="selected">hex</option>
+			    <option class="select" value="dec">dec</option>
+			    <option class="select" value="ascii">ascii</option>
 			   </select>
 			format.</div>
 	       
 	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
 	        <div id="output2" class="formatSelection">Data is in
 	           <select id="dataFormat" class="dropdown">
-			    <option class="select" value="1" selected="selected">hex</option>
-			    <option class="select" value="2">dec</option>
-			    <option class="select" value="3">ascii</option>
+			    <option class="select" value="hex" selected="selected">hex</option>
+			    <option class="select" value="dec">dec</option>
+			    <option class="select" value="ascii">ascii</option>
 			   </select>
 			format.</div>
 			
@@ -193,7 +193,7 @@
 		  <h3>Instructions</h3>
           <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
           <br>2. Enter the address to read from/write to. Data is also required for a write.
-          <br>3. Select the format of your address and data (hex/dec). For a read, the data format selected will be expected. 
+          <br>3. Select the format of your address and data (hex/dec/ascii). The data format selected will be expected for a read output. 
           <br>4. Select either "Write" or "Read" to finish your manual command.
 		</div>
 		

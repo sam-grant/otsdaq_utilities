@@ -130,14 +130,15 @@
 		else 
 		{ 
 			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var addressFormatStr = addressFormat.value;
 			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
-			 
+			var dataFormatStr = dataFormat.value;
+			
 			if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('addressInput').value;
-				var dataStr = document.getElementById('dataInput').value;
+				var addressStr = document.getElementById('addressInput').value.toString();
+				var dataStr = document.getElementById('dataInput').value.toString();
+				console.log(typeof(addressStr))
 				if(addressStr == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to write to";
@@ -170,12 +171,17 @@
 			var contentEl = document.getElementById('historyContent');
 			var innerClass = "class=\"innerClass1\"";
 			if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr
-					+"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr
-					+"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
+			
 			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
 					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
-					+ addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
+					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]" + dataStr + " into register [" + addressFormatStr + "] "+ addressStr + "</div>";
+			
+			var convertedAddress = convertToHex(addressFormatStr,addressStr);
+			var convertedData = convertToHex(dataFormatStr,dataStr);
+
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="
+					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
+					+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
 			contentEl.innerHTML += update;
 			DIVINDEX++;
 			updateScroll();
@@ -191,13 +197,13 @@
     	else 
     	{ 
 			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var addressFormatStr = addressFormat.value;
 			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+			var dataFormatStr = dataFormat.value;
 		
 			if (typeof address === 'undefined') 
 			{
-				var addressStr = document.getElementById('addressInput').value;
+				var addressStr = document.getElementById('addressInput').value.toString();
 				if(addressStr == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to read from";
@@ -217,9 +223,10 @@
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
 			}
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+
-					"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&supervisorIndex="+
-					supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
+			var convertedAddress = convertToHex(addressFormatStr,addressStr);
+			
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+convertedAddress+
+				"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
     	}
     }
     
@@ -230,10 +237,14 @@
     
     function readHandlerFunction(req,address)
 	{
+    	var addressFormat = document.getElementById("addressFormat");
+		var addressFormatStr = addressFormat.value;
+		var dataFormat = document.getElementById("dataFormat");
+		var dataFormatStr = dataFormat.value;
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
-		console.log(dataOutput);
+		var convertedOutput = convertFromHex(dataFormatStr,dataOutput);
 		if (typeof address === 'undefined') 
 		    var addressStr = document.getElementById('addressInput').value;
 		else
@@ -247,8 +258,8 @@
 		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
 		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
-				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" 
-				+ addressStr + ")\">Read " + dataOutput + " from register " + addressStr + "</div>";
+				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
+				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]" + convertedOutput + " from register [" + addressFormatStr + "]" + addressStr + "</div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		updateScroll();
@@ -261,11 +272,47 @@
         element.scrollTop = element.scrollHeight;
     }
     
-    function isArrayAllZero(arr){
-        for(var j = 0; j < arr.length; j++){
+    function isArrayAllZero(arr)
+    {
+        for(var j = 0; j < arr.length; j++)
+        {
           if (arr[j]!==0) return false;
         }
         return true;
     }
+    
+    function convertToHex(format,target)
+    {
+		switch (format) 
+		{
+			case "hex": 
+				return target;
+			case "dec": //dec
+				return Number(target).toString(16);
+			case "ascii": //ascii
+				var output = [];
+				for(var i = target.length-1; i>=0; i--)
+					 output.push(target.charCodeAt(i).toString(16));
+				return output.join('');
+		}
+    }
+    
+    function convertFromHex(format,target)
+    {
+		switch (format) 
+		{
+			case "hex":
+				return target;
+			case "dec":
+				return parseInt(target,16).toString();
+			case "ascii":
+				var str = '';
+				for (var i = 0; i < target.length; i += 2)
+				str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
+				return str;
+		}
+    }
+    
+    
 
     
