@@ -83,8 +83,12 @@
             outline: none;
         }
         
-        p small {
-      		color:#001626;
+        .hide {
+      		color:#001626 !important;
+      	}
+      	
+      	p small {
+      		color: #c4e9f5;
       	}
       	
         .select{
@@ -102,8 +106,8 @@
         	margin: 12px 0 0 50px;
         }
         
-        #reminder{
-        	color: #993333;
+        .red{
+        	color: #993333 !important;
         }
         
         .dropdown{
@@ -143,7 +147,7 @@
 	<body onload='Macromaker:init();'>
 	
 	    <div class='mainBlock' id='fecList'>
-	        <p><small>.</small></p>
+	        <p class="hide"><small>.</small></p>
 	        <h3>List of Available FEs</h3>
 	        <div id='list'></div>
 		</div>
@@ -165,7 +169,7 @@
 	        <h3>Manual Commands</h3>
 	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
 	        <div id="output1" class="formatSelection">Address is in
-	           <select id="addressFormat" class="dropdown">
+	           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
 			    <option class="select" value="hex" selected="selected">hex</option>
 			    <option class="select" value="dec">dec</option>
 			    <option class="select" value="ascii">ascii</option>
@@ -180,8 +184,8 @@
 			    <option class="select" value="ascii">ascii</option>
 			   </select>
 			format.</div>
-			
-	        <b><div id="reminder"></div></b>
+			<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
+	        <b><div id="reminder" class="red"></div></b>
 	        
 	        <div id="readwrite">
 	        	<button onclick="callRead()" class="select">Read</button>
@@ -198,13 +202,13 @@
 		</div>
 		
 		<div class='mainBlock' id='history'>
-	    <p><small>.</small></p>
+	    <p><small>Note: * indicates LSB->MSB</small></p>
 		   <h3>Command History</h3>
            <div id="historyContent">Scroll to see the history of commands. Click to rerun. <br></div>
 		</div>
-
+		
 	</body>
-
+	
 </html>
 
  

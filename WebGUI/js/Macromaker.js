@@ -174,11 +174,13 @@
 			
 			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
 					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
-					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]" + dataStr + " into register [" + addressFormatStr + "] "+ addressStr + "</div>";
+					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]"
+					+ dataStr + LSBchecker() + " into register [" + addressFormatStr + "] " 
+					+ addressStr + LSBchecker() + "</div>";
 			
-			var convertedAddress = convertToHex(addressFormatStr,addressStr);
-			var convertedData = convertToHex(dataFormatStr,dataStr);
-
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
+			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr));
+					
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="
 					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
@@ -223,7 +225,7 @@
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
 			}
-			var convertedAddress = convertToHex(addressFormatStr,addressStr);
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
 			
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+convertedAddress+
 				"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
@@ -244,7 +246,11 @@
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
-		var convertedOutput = convertFromHex(dataFormatStr,dataOutput);
+		
+		var convertedOutput;
+		if (Number(dataOutput)===0) convertedOutput = "<b class='red'>Time out Error</b>";
+		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
+		
 		if (typeof address === 'undefined') 
 		    var addressStr = document.getElementById('addressInput').value;
 		else
@@ -259,11 +265,12 @@
 		var contentEl = document.getElementById('historyContent');
 		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
 				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
-				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]" + convertedOutput + " from register [" + addressFormatStr + "]" + addressStr + "</div>";
+				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]" + convertedOutput + LSBchecker()
+				+ " from register [" + addressFormatStr + "]" + addressStr + LSBchecker() + "</div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		updateScroll();
-		reminderEl.innerHTML = "Data read: " + dataOutput;
+		reminderEl.innerHTML = "Data read: " + convertedOutput;
 	}
     
     function updateScroll()
@@ -301,18 +308,57 @@
     {
 		switch (format) 
 		{
-			case "hex":
-				return target;
-			case "dec":
-				return parseInt(target,16).toString();
-			case "ascii":
-				var str = '';
-				for (var i = 0; i < target.length; i += 2)
-				str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
-				return str;
+	      case "hex":
+			return target;
+		  case "dec":
+			return parseInt(target,16).toString();
+		  case "ascii":
+			var str = '';
+			for (var i = 0; i < target.length; i += 2)
+			str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
+			return str;
 		}
     }
     
+    function toggleLSBF() //Only listens to addressFormat
+    {
+        var addressFormat = document.getElementById("addressFormat");
+        var addressFormatStr = addressFormat.value;
+        switch (addressFormatStr) {
+          case "hex":
+            document.getElementById("lsbFirst").checked = true;
+            document.getElementById("lsbFirst").disabled = false;
+            break;
+          case "dec":
+            document.getElementById("lsbFirst").checked = false;
+            document.getElementById("lsbFirst").disabled = true;
+            break;
+          case "ascii":
+            document.getElementById("lsbFirst").checked = false;
+            document.getElementById("lsbFirst").disabled = false;
+            break;
+        }
+    }
+    
+    function reverseLSB(original)
+    {
+    	if(document.getElementById("lsbFirst").checked)
+		{
+			var str = '';
+			if(original.length%2) 
+				original = "0"+original;
+			for (var i = original.length-2; i > -2; i -= 2)
+			  str += original.substr(i,2);
+			return str;
+		}
+    	else return original;
+    }
+    
+    function LSBchecker()
+    {
+    	if(document.getElementById("lsbFirst").checked) return "*";
+    	else return "";
+    }
     
 
     
