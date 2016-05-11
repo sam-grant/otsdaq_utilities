@@ -70,12 +70,23 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 , theDataManager_          (0)
 , loadedRunNumber_	       (-1)
 {
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 			supervisorType_,
 			supervisorInstance_,
 			theConfigurationManager_);
 
 
+	std::cout << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
     xgi::bind(this, &VisualSupervisor::Default, "Default" );
     xgi::bind(this, &VisualSupervisor::request, "request");
 
@@ -117,7 +128,7 @@ void VisualSupervisor::init(void)
 void VisualSupervisor::destroy(void)
 {
     //called by destructor
-
+	delete theConfigurationManager_;
 }
 
 //========================================================================================================================
