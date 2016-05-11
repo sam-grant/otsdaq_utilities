@@ -1,9 +1,8 @@
 #ifndef _ots_VisualDataManager_h_
 #define _ots_VisualDataManager_h_
 
-#include "otsdaq-core/DataManager/DataListener.h"  // Make sure this is always first because <sys/types.h> (defined in Socket.h) must be first
 #include "otsdaq-core/DataManager/DataManager.h"
-#include "otsdaq-core/DataManager/DQMHistosConsumer.h"
+#include "otsdaq-core/DataProcessorPlugins/DQMHistosConsumer.h"
 #include "otsdaq-core/MonicelliInterface/Visual3DEvent.h"
 #include "otsdaq-core/MonicelliInterface/Visual3DGeometry.h"
 #include "otsdaq-core/MonicelliInterface/MonicelliEventAnalyzer.h"
@@ -17,9 +16,6 @@ namespace ots
 {
 
 class ConfigurationManager;
-//class DataListener;
-//class DQMHistos;
-//class DataStreamer;
 
 class VisualDataManager : public DataManager
 {
@@ -43,7 +39,6 @@ public:
 
 private:
     ConfigurationManager*      theConfigurationManager_;
-    DataListener*              theDataListener_;
     DQMHistos*                 theLiveDQMHistos_;
     DQMHistos                  theFileDQMHistos_;
     MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
