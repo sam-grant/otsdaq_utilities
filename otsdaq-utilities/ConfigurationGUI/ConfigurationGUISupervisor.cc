@@ -1,5 +1,6 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
-#include "otsdaq-core/Macros/OTSMacros.h"
+#include <messagefacility/MessageLogger/MessageLogger.h>
+#include "otsdaq-core/Macros/CoutHeaderMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
@@ -52,9 +53,8 @@ theRemoteWebUsers_  (this)
 
 	//how do we know which version numbers of a KOC exist already?
 
-	std::cout << __COUT_HDR__ << "comment/uncomment here for debugging Configuration!" << std::endl;
+	mf::LogDebug(__FILE__) << "comment/uncomment here for debugging Configuration!" << std::endl;
 	return;
-	std::cout << __COUT_HDR__ << std::endl;
 
 
 	//new user
@@ -67,8 +67,8 @@ theRemoteWebUsers_  (this)
 	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 
-	std::cout << __COUT_HDR_L__ << "aliasMap size: " << aliasMap.size() << std::endl;
-	std::cout << __COUT_HDR_L__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
+	mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "aliasMap size: " << aliasMap.size() << std::endl;
+	mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
 
 
 	std::set<std::string> listOfKocs;
@@ -78,25 +78,20 @@ theRemoteWebUsers_  (this)
 		//for each configuration alias and key
 		//get KOC version numbers
 
-		std::cout << __COUT_HDR_L__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+		mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-		std::cout << __COUT_HDR_L__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+		mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 		for (auto& koc : listOfKocs)
 		{
 			unsigned int conditionVersion = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),koc);
 
-			std::cout << "\tKoc: " << koc << " Version: " << conditionVersion << std::endl;
+			mf::LogDebug(__FILE__) << "\tKoc: " << koc << " Version: " << conditionVersion << std::endl;
 		}
 		++it;
 
 	}
-
-
-	std::cout << __COUT_HDR__ << std::endl;
-	std::cout << __COUT_HDR__ << std::endl;
-	std::cout << __COUT_HDR__ << std::endl;
 
 
 	//Get KOC list
@@ -109,13 +104,13 @@ theRemoteWebUsers_  (this)
 	auto mapIt = allCfgInfo.begin();
 	while(mapIt != allCfgInfo.end())
 	{
-		std::cout << __COUT_HDR_L__ << "KOC Alias: " << mapIt->first << std::endl;
-		std::cout << __COUT_HDR_L__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
+		mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "KOC Alias: " << mapIt->first << std::endl;
+		mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
 		for (std::set<int>::iterator vit=mapIt->second.versions_.begin(); vit!=mapIt->second.versions_.end(); ++vit)
 		{
-			std::cout << __COUT_HDR_L__ << "\t\t" << *vit << std::endl;
+			mf::LogDebug(__FILE__) << __COUT_HDR_L__ << "\t\t" << *vit << std::endl;
 
 		}
 		++mapIt;
@@ -126,18 +121,18 @@ theRemoteWebUsers_  (this)
 
 
 	//Choose a sub config
-	std::cout << __COUT_HDR__ << "\t\t**************************** Choose a sub config" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Choose a sub config" << std::endl;
 	std::string chosenSubConfig = "FSSRDACsConfiguration"; //must be less than allCfgInfo.size() //TODO Alfredo: ask why this std::string is hardcoded
 
 	{
 		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
 
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is in database: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is in database: " <<
 				(isInDatabase?"YES":"NO") << std::endl;
 
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
@@ -146,7 +141,7 @@ theRemoteWebUsers_  (this)
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 	}
 
@@ -155,29 +150,29 @@ theRemoteWebUsers_  (this)
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR__ << "\t\t******** view " <<
+		mf::LogDebug(__FILE__) << "\t\t******** view " <<
 				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 
-		std::cout << __COUT_HDR__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Cols " << colInfo.size() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
 
-	std::cout << __COUT_HDR__ << "\t\t**************************** Choose a different sub config" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Choose a different sub config" << std::endl;
 
 
 	{
 		int versionToCopy = 2; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
 
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is in database: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is in database: " <<
 				(isInDatabase?"YES":"NO") << std::endl;
 
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
@@ -186,35 +181,35 @@ theRemoteWebUsers_  (this)
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 	}
 
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR__ << "\t\t******** view " <<
+		mf::LogDebug(__FILE__) << "\t\t******** view " <<
 				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 
-		std::cout << __COUT_HDR__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Cols " << colInfo.size() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
 
-	std::cout << __COUT_HDR__ << "\t\t**************************** Choose a different sub config" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Choose a different sub config" << std::endl;
 
 	{
 		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
 
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is in database: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is in database: " <<
 				(isInDatabase?"YES":"NO") << std::endl;
 
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 
 		if(!isInConfiguration) //load configuration view
@@ -223,45 +218,47 @@ theRemoteWebUsers_  (this)
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is loaded: " <<
+		mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is loaded: " <<
 				(isInConfiguration?"YES":"NO") << std::endl;
 	}
 
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR__ << "\t\t******** view " <<
+		mf::LogDebug(__FILE__) << "\t\t******** view " <<
 				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 
-		std::cout << __COUT_HDR__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Cols " << colInfo.size() << std::endl;
+		mf::LogDebug(__FILE__) << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
 
 	int versionToCopy = 0;
 	//	Make a copy of a view
-	std::cout << __COUT_HDR__ << "\t\t**************************** Make a copy of a view" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Make a copy of a view" << std::endl;
 	int temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
-	std::cout << __COUT_HDR__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
+	mf::LogDebug(__FILE__) << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
 
 	//	Edit copy
-	std::cout << __COUT_HDR__ << "\t\t**************************** Edit copy" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Edit copy" << std::endl;
 
 	//view temp version
 	//general base class
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR__ << "\t\t******** Before change" << std::endl;
+		mf::LogDebug(__FILE__) << "\t\t******** Before change" << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getTemporaryView(temporaryVersion);
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 
-		cfgViewPtr->print();
+		std::stringstream ss;
+		cfgViewPtr->print(ss);
+		mf::LogDebug(__FILE__) << ss.str();
 
 
 		//edit something
@@ -279,37 +276,40 @@ theRemoteWebUsers_  (this)
 		cfgViewPtr->addRow();
 
 		//after change
-		std::cout << __COUT_HDR__ << "\t\t******** After change" << std::endl;
+		mf::LogDebug(__FILE__) << "\t\t******** After change" << std::endl;
 
 
-		cfgViewPtr->print();
+
+		std::stringstream ss2;
+		cfgViewPtr->print(ss2);
+		mf::LogDebug(__FILE__) << ss2.str();
 
 
 		// add a new col for example
 		//		int cret = cfgViewPtr->addColumn("TestCol","TEST_COL","TIMESTAMP WITH TIMEZONE");
-		//		std::cout << __COUT_HDR__ << "\t\t******** After change col: " << cret << std::endl;
+		//		mf::LogDebug(__FILE__) << "\t\t******** After change col: " << cret << std::endl;
 		//		colInfo = cfgViewPtr->getColumnsInfo();
-		//		std::cout << __COUT_HDR__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		//		std::cout << __COUT_HDR__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
+		//		mf::LogDebug(__FILE__) << "\t\tNumber of Cols " << colInfo.size() << std::endl;
+		//		mf::LogDebug(__FILE__) << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 		//
 		//		for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
 		//		{
-		//			std::cout << __COUT_HDR__ << "\t\tRow " << r << ": " ;
+		//			mf::LogDebug(__FILE__) << "\t\tRow " << r << ": " ;
 		//
 		//			for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
 		//				if(colInfo[c].getViewType() == "NUMBER")
 		//				{
 		//					int num;
 		//					cfgViewPtr->getValue(num,r,c);
-		//					std::cout << "\t " << num;
+		//					mf::LogDebug(__FILE__) << "\t " << num;
 		//				}
 		//				else
 		//				{
 		//				std::string val;
 		//					cfgViewPtr->getValue(val,r,c);
-		//					std::cout << "\t " << val;
+		//					mf::LogDebug(__FILE__) << "\t " << val;
 		//				}
-		//			std::cout << std::endl;
+		//			mf::LogDebug(__FILE__) << std::endl;
 		//		}
 
 	}
@@ -330,7 +330,7 @@ theRemoteWebUsers_  (this)
 	//		DACList::const_iterator rdit = dacs.begin();
 	//		while(rdit != dacs.end())
 	//		{
-	//			std::cout << __COUT_HDR__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
+	//			mf::LogDebug(__FILE__) << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
 	//			rocDacs.setDAC(rdit->first,7,1);
 	//
 	//			rdit++;
@@ -338,22 +338,24 @@ theRemoteWebUsers_  (this)
 	//	}
 
 	//	Save as new sub-config version
-	std::cout << __COUT_HDR__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Save as new sub-config version" << std::endl;
 
 	int newAssignedVersion = 0;//cfgMgr->saveNewConfiguration(allCfgInfo[chosenSubConfig].configurationPtr_,temporaryVersion);
 
-	std::cout << __COUT_HDR__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 
 
 
 
 	//proof of concept.. change a KOC version (this makes a new backbone version?!)
-	std::cout << __COUT_HDR__ << "\t\t**************************** Edit a KOC for a System Alias" << std::endl;
+	mf::LogDebug(__FILE__) << "\t\t**************************** Edit a KOC for a System Alias" << std::endl;
 
-	cfgMgr->getConfiguration<ConfigurationAliases>()->print();
-	cfgMgr->getConfiguration<DefaultConfigurations>()->print();
-	cfgMgr->getConfiguration<Configurations>()->print();
-	cfgMgr->getConfiguration<VersionAliases>()->print();
+	std::stringstream ss;
+	cfgMgr->getConfiguration<ConfigurationAliases>()->print(ss);
+	cfgMgr->getConfiguration<DefaultConfigurations>()->print(ss);
+	cfgMgr->getConfiguration<Configurations>()->print(ss);
+	cfgMgr->getConfiguration<VersionAliases>()->print(ss);
+	mf::LogDebug(__FILE__) << ss.str();
 
 	{
 		std::string specSystemAlias = "Physics";
@@ -365,11 +367,11 @@ theRemoteWebUsers_  (this)
 		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(specSystemAlias);
 		if(it != aliasMap.end())
 		{
-			std::cout << __COUT_HDR__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			mf::LogDebug(__FILE__) << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
-			std::cout << __COUT_HDR__ << "Alias exists: " << specSystemAlias << std::endl;
-			std::cout << __COUT_HDR__ << "Sub system alias: " << KOCAlias << std::endl;
-			std::cout << __COUT_HDR__ << "Changing to new version: " << newVersion << std::endl;
+			mf::LogDebug(__FILE__) << "Alias exists: " << specSystemAlias << std::endl;
+			mf::LogDebug(__FILE__) << "Sub system alias: " << KOCAlias << std::endl;
+			mf::LogDebug(__FILE__) << "Changing to new version: " << newVersion << std::endl;
 
 			std::set<std::string> listOfKocs;
 			listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
@@ -377,18 +379,18 @@ theRemoteWebUsers_  (this)
 			{
 				unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
 
-				std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
+				mf::LogDebug(__FILE__) << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
 				std::set<int> versions = allCfgInfo.find(*sit)->second.versions_;
-				std::cout << "\t\tAll versions: ";
+				mf::LogDebug(__FILE__) << "\t\tAll versions: ";
 				for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
-					std::cout << " " << *vit;
-				std::cout << std::endl;
+					mf::LogDebug(__FILE__) << " " << *vit;
+				mf::LogDebug(__FILE__) << std::endl;
 			}
 
 			//need to change
 
-			std::cout << __COUT_HDR__ << "\t\t**************************** Make temporary backbone" << std::endl;
+			mf::LogDebug(__FILE__) << "\t\t**************************** Make temporary backbone" << std::endl;
 
 			chosenSubConfig = "ConfigurationAliases";
 			int temporaryVersion;
@@ -397,25 +399,25 @@ theRemoteWebUsers_  (this)
 			///////////////////////cfgMgr->getConfiguration<Configurations>()->print();
 			//cfgMgr->__GET_CONFIG__(VersionAliases)
 
-			std::cout << __COUT_HDR__ << "\t\ttemporaryVersion versionToCopy: " << versionToCopy << std::endl;
+			mf::LogDebug(__FILE__) << "\t\ttemporaryVersion versionToCopy: " << versionToCopy << std::endl;
 
 			assert(allCfgInfo.find(chosenSubConfig) != allCfgInfo.end());
 
 			bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-			std::cout << __COUT_HDR__ << "Version " << versionToCopy << " is in database: " <<
+			mf::LogDebug(__FILE__) << "Version " << versionToCopy << " is in database: " <<
 					(isInDatabase?"YES":"NO") << std::endl;
 
 			temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
 			//FSSRDACsConfiguration
 			//allCfgInfo["ConfigurationAliases"].configurationPtr_->createTemporaryView(versionToCopy);
-			std::cout << __COUT_HDR__ << "\t\ttemporaryVersion ConfigurationAliases: " << temporaryVersion << std::endl;
+			mf::LogDebug(__FILE__) << "\t\ttemporaryVersion ConfigurationAliases: " << temporaryVersion << std::endl;
 
 
 
 
 		}
 		else
-			std::cout << __COUT_HDR__ << "Alias doesnt exist: " << specSystemAlias << std::endl;
+			mf::LogDebug(__FILE__) << "Alias doesnt exist: " << specSystemAlias << std::endl;
 
 
 
@@ -442,7 +444,7 @@ theRemoteWebUsers_  (this)
    		//for each configuration alias and key
    			//get KOC version numbers
 
-		std::cout << __COUT_HDR__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+		mf::LogDebug(__FILE__) << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		//cfgMgr->loadConfiguration(cfgMgr->theConfigurations_,&(it->second));
 		//cfgMgr->loadConfiguration(cfgMgr->theDefaultConfigurations_,&(it->second));
@@ -452,14 +454,14 @@ theRemoteWebUsers_  (this)
 		if(cfgMgr->getConfigurations())	// get Kocs
 		{
 			listOfKocs = cfgMgr->getConfigurations()->getListOfKocs(it->second.key());
-			std::cout << __COUT_HDR__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+			mf::LogDebug(__FILE__) << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 
 			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 			{
 				unsigned int cv = cfgMgr->getConfigurations()->getConditionVersion(it->second.key(),*sit);
 
-				std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
+				mf::LogDebug(__FILE__) << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
 			}
 		}
@@ -482,7 +484,7 @@ theRemoteWebUsers_  (this)
 				//for each configuration alias and key
 					//get KOC version numbers
 
-			   std::cout << __COUT_HDR__ << "\tFssr Name: " << dit->first << " - Row: " << dit->second << std::endl;
+			   mf::LogDebug(__FILE__) << "\tFssr Name: " << dit->first << " - Row: " << dit->second << std::endl;
 
 
 
@@ -497,7 +499,7 @@ theRemoteWebUsers_  (this)
 			   		DACList::const_iterator rdit = dacs.begin();
 			   		while(rdit != dacs.end())
 			   		{
-						   std::cout << __COUT_HDR__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
+						   mf::LogDebug(__FILE__) << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
 							rocDacs.setDAC(rdit->first,7,1);
 
 						   rdit++;
@@ -509,7 +511,7 @@ theRemoteWebUsers_  (this)
 					rdit = dacs.begin();
 					while(rdit != dacs.end())
 					{
-						   std::cout << __COUT_HDR__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
+						   mf::LogDebug(__FILE__) << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
 						   rdit++;
 
 					}
@@ -532,13 +534,13 @@ theRemoteWebUsers_  (this)
    	//createTemporaryView
 
 	 */
-	std::cout << __COUT_HDR__ << "done getAliasList" << std::endl;
+	mf::LogDebug(__FILE__) << "done getAliasList" << std::endl;
 
 
 	//clear config managers
 	for (std::map<std::string, ConfigurationManager *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
-		std::cout << __COUT_HDR__ << it->first << std::endl;
+		mf::LogDebug(__FILE__) << it->first << std::endl;
 		delete it->second;
 		it->second = 0;
 	}
@@ -577,7 +579,7 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR__ << std::endl;
+	mf::LogDebug(__FILE__) << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
 			getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
 
@@ -587,14 +589,14 @@ throw (xgi::exception::Exception)
 void ConfigurationGUISupervisor::request(xgi::Input * in, xgi::Output * out)
 throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR__ << std::endl;
+	mf::LogDebug(__FILE__) << std::endl;
 
 	cgicc::Cgicc cgi(in);
 	std::string Command;
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //from GET or POST
 
-	std::cout << __COUT_HDR__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	mf::LogDebug(__FILE__) << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//getSystemConfigurations
@@ -619,7 +621,7 @@ throw (xgi::exception::Exception)
 			cookieCode, &userPermissions, "0", !AutomaticRefresh, &userWithLock)) //only refresh cookie if not automatic refresh
 	{
 		*out << cookieCode;
-		std::cout << __COUT_HDR__ << "Invalid Cookie Code" << std::endl;
+		mf::LogDebug(__FILE__) << "Invalid Cookie Code" << std::endl;
 		return;
 	}
 	//**** end LOGIN GATEWAY CODE ***//
@@ -632,7 +634,7 @@ throw (xgi::exception::Exception)
 	if(userWithLock != "" && userWithLock != username)
 	{
 		*out << RemoteWebUsers::REQ_USER_LOCKOUT_RESPONSE;
-		std::cout << __COUT_HDR__ << "User " << username << " is locked out. " << userWithLock << " has lock." << std::endl;
+		mf::LogDebug(__FILE__) << "User " << username << " is locked out. " << userWithLock << " has lock." << std::endl;
 		return;
 	}
 	//**** end LOCK GATEWAY CODE ***//
@@ -640,7 +642,7 @@ throw (xgi::exception::Exception)
 	if(userPermissions < USER_PERMISSIONS_THRESHOLD)
 	{
 		*out << RemoteWebUsers::REQ_NO_PERMISSION_RESPONSE;
-		std::cout << __COUT_HDR__ << "User " << username << " has insufficient permissions: " << userPermissions << "." << std::endl;
+		mf::LogDebug(__FILE__) << "User " << username << " has insufficient permissions: " << userPermissions << "." << std::endl;
 		return;
 	}
 
@@ -650,9 +652,9 @@ throw (xgi::exception::Exception)
 
 	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
 	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
-	std::cout << __COUT_HDR__ << "ConfigurationManager backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
+	mf::LogDebug(__FILE__) << "ConfigurationManager backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
 	ConfigurationManager* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
-	std::cout << __COUT_HDR__ << "ConfigurationManager backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
+	mf::LogDebug(__FILE__) << "ConfigurationManager backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
 
 	char tmpIntStr[100];
 	DOMElement* parentEl;
@@ -683,7 +685,7 @@ throw (xgi::exception::Exception)
 			//for each configuration alias and key
 			//get KOC version numbers
 
-			//std::cout << __COUT_HDR__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			//mf::LogDebug(__FILE__) << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 			//add system configuration alias and key
 			xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
@@ -695,13 +697,13 @@ throw (xgi::exception::Exception)
 			assert(cfgMgr->getConfiguration<Configurations>());
 			{
 				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-				//std::cout << __COUT_HDR__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+				//mf::LogDebug(__FILE__) << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 				{
 					unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
 
-					//std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
+					//mf::LogDebug(__FILE__) << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
 					xmldoc.addTextElementToParent("KOC_alias", *sit, parentEl);
 					sprintf(tmpIntStr,"%u",cv);
@@ -731,7 +733,7 @@ throw (xgi::exception::Exception)
 			//for each subconfiguration alias
 			//get existing version keys
 
-			//std::cout << __COUT_HDR__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			//mf::LogDebug(__FILE__) << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 			//add system subconfiguration alias
 			xmldoc.addTextElementToData("SystemSubConfigurationAlias", it->first);
@@ -740,7 +742,7 @@ throw (xgi::exception::Exception)
 			//get version key for the current system subconfiguration key
 			for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
 			{
-				//std::cout << __COUT_HDR__ << "\t\t" << *vit << std::endl;
+				//mf::LogDebug(__FILE__) << "\t\t" << *vit << std::endl;
 
 				sprintf(tmpIntStr,"%d",*vit);
 				xmldoc.addTextElementToParent("VersionKey", tmpIntStr, parentEl);
@@ -774,7 +776,7 @@ throw (xgi::exception::Exception)
 
 		std::string alias = cgi("alias"); //from GET
 
-		std::cout << __COUT_HDR__ << "getSpecificSystemConfiguration: " << alias << std::endl;
+		mf::LogDebug(__FILE__) << "getSpecificSystemConfiguration: " << alias << std::endl;
 
 		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
@@ -792,7 +794,7 @@ throw (xgi::exception::Exception)
 
 			//get all KOC alias and version numbers
 
-			//std::cout << __COUT_HDR__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			//mf::LogDebug(__FILE__) << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 			//add system configuration alias and key
 			xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
@@ -804,7 +806,7 @@ throw (xgi::exception::Exception)
 			assert(cfgMgr->getConfiguration<Configurations>());
 			{
 				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-				//std::cout << __COUT_HDR__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+				//mf::LogDebug(__FILE__) << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
 				{
@@ -814,14 +816,14 @@ throw (xgi::exception::Exception)
 					//all existing versions
 					versions = allCfgInfo.find(*sit)->second.versions_;
 
-					//std::cout << "\tKoc: " << *sit << " Version: " << cv << std::endl;
+					//mf::LogDebug(__FILE__) << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
 					xmldoc.addTextElementToParent("KOC_alias", *sit, parentEl);
 					sprintf(tmpIntStr,"%u",cv);
 					parentElKoc = xmldoc.addTextElementToParent("KOC_currentVersion", tmpIntStr, parentEl);
 					for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
 					{
-						//std::cout << __COUT_HDR__ << "\t\t" << *vit << std::endl;
+						//mf::LogDebug(__FILE__) << "\t\t" << *vit << std::endl;
 						if(*vit == (int)cv) continue;
 						sprintf(tmpIntStr,"%d",*vit);
 						xmldoc.addTextElementToParent("KOC_existingVersion", tmpIntStr, parentElKoc);
@@ -838,7 +840,7 @@ throw (xgi::exception::Exception)
 
 			for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
 			{
-				std::cout << __COUT_HDR__ << "Configurations Version \t\t" << *vit << std::endl;
+				mf::LogDebug(__FILE__) << "Configurations Version \t\t" << *vit << std::endl;
 				if(*vit != backboneVersion)
 				{
 					//found a different configurations version then current version:
@@ -898,7 +900,7 @@ throw (xgi::exception::Exception)
 		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
 		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
 
-		std::cout << __COUT_HDR__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
+		mf::LogDebug(__FILE__) << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		//verify alias and version exists
@@ -907,17 +909,17 @@ throw (xgi::exception::Exception)
 
 		if(it == allCfgInfo.end())
 		{
-			std::cout << __COUT_HDR__ << "SubSystemConfiguration not found" << std::endl;
+			mf::LogDebug(__FILE__) << "SubSystemConfiguration not found" << std::endl;
 		}
 		else if(it->second.versions_.find(version) == it->second.versions_.end())
 		{
-			std::cout << __COUT_HDR__ << "Version not found" << std::endl;
+			mf::LogDebug(__FILE__) << "Version not found" << std::endl;
 		}
 		else
 		{
 			//load current version
 			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR__ << "Version " << version << " is loaded: " <<
+			mf::LogDebug(__FILE__) << "Version " << version << " is loaded: " <<
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
@@ -926,12 +928,12 @@ throw (xgi::exception::Exception)
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
 			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR__ << "Version " << version << " is loaded: " <<
+			mf::LogDebug(__FILE__) << "Version " << version << " is loaded: " <<
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration)
 			{
-				std::cout << __COUT_HDR__ << "Version could not be loaded" << std::endl;
+				mf::LogDebug(__FILE__) << "Version could not be loaded" << std::endl;
 			}
 			else
 			{
@@ -950,7 +952,7 @@ throw (xgi::exception::Exception)
 				{
 					//get 'columns' of sub config
 
-					std::cout << __COUT_HDR__ << "\t\t******** view " <<
+					mf::LogDebug(__FILE__) << "\t\t******** view " <<
 							allCfgInfo[subAlias].configurationPtr_->getViewVersion() << std::endl;
 					ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getViewP();
 
@@ -958,7 +960,7 @@ throw (xgi::exception::Exception)
 					std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 					for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 					{
-						std::cout << __COUT_HDR__ << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
+						mf::LogDebug(__FILE__) << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
 								<< colInfo[i].getViewName() << " " << colInfo[i].getViewType() << std::endl;
 
 						xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
@@ -969,7 +971,7 @@ throw (xgi::exception::Exception)
 
 					for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
 					{
-						//std::cout << __COUT_HDR__ << "\t\tRow " << r << ": " ;
+						//mf::LogDebug(__FILE__) << "\t\tRow " << r << ": " ;
 
 						sprintf(tmpIntStr,"%d",r);
 						DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
@@ -979,7 +981,7 @@ throw (xgi::exception::Exception)
 							{
 								int num;
 								cfgViewPtr->getValue(num,r,c);
-								//std::cout << "\t " << num;
+								//mf::LogDebug(__FILE__) << "\t " << num;
 
 								sprintf(tmpIntStr,"%d",num);
 								xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
@@ -988,11 +990,11 @@ throw (xgi::exception::Exception)
 							{
 								std::string val;
 								cfgViewPtr->getValue(val,r,c);
-								//std::cout << "\t " << val;
+								//mf::LogDebug(__FILE__) << "\t " << val;
 
 								xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
 							}
-						//std::cout << std::endl;
+						//mf::LogDebug(__FILE__) << std::endl;
 					}
 				}
 			}
@@ -1004,7 +1006,7 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveSpecificSubSystemConfiguration")
 	{
-		std::cout << __COUT_HDR__ << "saveSpecificSubSystemConfiguration" << std::endl;
+		mf::LogDebug(__FILE__) << "saveSpecificSubSystemConfiguration" << std::endl;
 		//TODO
 		// CHECK MUST HAVE LOCK!!
 
@@ -1029,10 +1031,10 @@ throw (xgi::exception::Exception)
 		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.find(subAlias);
 
 
-		std::cout << __COUT_HDR__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
+		mf::LogDebug(__FILE__) << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
-		std::cout << __COUT_HDR__ << "data: " << data << std::endl;
+		mf::LogDebug(__FILE__) << "data: " << data << std::endl;
 
 		//FIXME CHECK MUST HAVE LOCK!!
 		// CHECK MUST HAVE LOCK!!
@@ -1041,13 +1043,13 @@ throw (xgi::exception::Exception)
 		// CHECK MUST HAVE LOCK!!
 		if(it == allCfgInfo.end())
 		{
-			std::cout << __COUT_HDR__ << "SubSystemConfiguration not found" << std::endl;
+			mf::LogDebug(__FILE__) << "SubSystemConfiguration not found" << std::endl;
 
 			xmldoc.addTextElementToData("Error", "SubSystemConfiguration not found");
 		}
 		else if(it->second.versions_.find(version) == it->second.versions_.end())
 		{
-			std::cout << __COUT_HDR__ << "Version not found" << std::endl;
+			mf::LogDebug(__FILE__) << "Version not found" << std::endl;
 
 			xmldoc.addTextElementToData("Error", "Version not found");
 		}
@@ -1055,7 +1057,7 @@ throw (xgi::exception::Exception)
 		{
 			//load current version
 			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR__ << "Version " << version << " is loaded: " <<
+			mf::LogDebug(__FILE__) << "Version " << version << " is loaded: " <<
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
@@ -1064,12 +1066,12 @@ throw (xgi::exception::Exception)
 				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
 
 			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR__ << "Version " << version << " is loaded: " <<
+			mf::LogDebug(__FILE__) << "Version " << version << " is loaded: " <<
 					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration)
 			{
-				std::cout << __COUT_HDR__ << "Version could not be loaded" << std::endl;
+				mf::LogDebug(__FILE__) << "Version could not be loaded" << std::endl;
 
 				xmldoc.addTextElementToData("Error", "Version could not be loaded");
 			}
@@ -1077,7 +1079,7 @@ throw (xgi::exception::Exception)
 			{
 				int temporaryVersion = allCfgInfo[subAlias].configurationPtr_->createTemporaryView(version);
 
-				std::cout << __COUT_HDR__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
+				mf::LogDebug(__FILE__) << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 				ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getTemporaryView(temporaryVersion);
 				std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 
@@ -1100,26 +1102,26 @@ throw (xgi::exception::Exception)
 					if(r >= (int)cfgViewPtr->getNumberOfRows())
 					{
 						cfgViewPtr->addRow();
-						std::cout << __COUT_HDR__ << "Row added" << std::endl;
+						mf::LogDebug(__FILE__) << "Row added" << std::endl;
 					}
 
 					while(j < k && j != (int)(std::string::npos))
 					{
-						//std::cout << r << "|" << c << "][" << i << "|" << k << "][";
-						//std::cout << data.substr(i,j-i) << "|";
+						//mf::LogDebug(__FILE__) << r << "|" << c << "][" << i << "|" << k << "][";
+						//mf::LogDebug(__FILE__) << data.substr(i,j-i) << "|";
 						if(colInfo[c].getViewType() == "NUMBER")
 						{
-							//std::cout << atoi(data.substr(i,j-i).c_str()) << "|";
+							//mf::LogDebug(__FILE__) << atoi(data.substr(i,j-i).c_str()) << "|";
 							cfgViewPtr->setValue(atoi(data.substr(i,j-i).c_str()),r,c);
 							//cfgViewPtr->getValue(cellNum,r,c);
-							//std::cout << cellNum << " ";
+							//mf::LogDebug(__FILE__) << cellNum << " ";
 						}
 						else
 						{
-							//std::cout << data.substr(i,j-i) << "|";
+							//mf::LogDebug(__FILE__) << data.substr(i,j-i) << "|";
 							cfgViewPtr->setValue(data.substr(i,j-i),r,c);
 							//cfgViewPtr->getValue(cellStr,r,c);
-							//std::cout << cellStr << " ";
+							//mf::LogDebug(__FILE__) << cellStr << " ";
 						}
 						i=j+1;
 						j = data.find(',',i); //find next cell delimiter
@@ -1127,7 +1129,7 @@ throw (xgi::exception::Exception)
 					}
 					++r;
 					c = 0;
-					std::cout << std::endl;
+					mf::LogDebug(__FILE__) << std::endl;
 
 					i = k+1;
 					j = data.find(',',i); //find next cell delimiter
@@ -1138,11 +1140,11 @@ throw (xgi::exception::Exception)
 				while(r < (int)cfgViewPtr->getNumberOfRows())
 				{
 					cfgViewPtr->deleteRow(r);
-					std::cout << __COUT_HDR__ << "Row deleted" << std::endl;
+					mf::LogDebug(__FILE__) << "Row deleted" << std::endl;
 				}
 
 
-				std::cout << __COUT_HDR__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+				mf::LogDebug(__FILE__) << "\t\t**************************** Save as new sub-config version" << std::endl;
 
 				int newAssignedVersion = cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
 
@@ -1150,18 +1152,18 @@ throw (xgi::exception::Exception)
 				sprintf(tmpIntStr,"%d",newAssignedVersion);
 				xmldoc.addTextElementToData("savedVersion", tmpIntStr);
 
-				std::cout << __COUT_HDR__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+				mf::LogDebug(__FILE__) << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 
 			}
 		}
 	}
 	else if(Command == "changeKocVersionForSpecificConfig")
 	{
-		std::cout << __COUT_HDR__ << "changeKocVersionForSpecificConfig" << std::endl;
+		mf::LogDebug(__FILE__) << "changeKocVersionForSpecificConfig" << std::endl;
 		//TODO
 	}
 	else
-		std::cout << __COUT_HDR__ << "Command request not recognized." << std::endl;
+		mf::LogDebug(__FILE__) << "Command request not recognized." << std::endl;
 
 
 
@@ -1183,7 +1185,7 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	std::cout << __COUT_HDR__ << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
+	mf::LogDebug(__FILE__) << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
@@ -1207,7 +1209,7 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 	for (std::map<std::string, time_t> ::iterator it=userLastUseTime_.begin(); it!=userLastUseTime_.end(); ++it)
 		if(now - it->second > CONFIGURATION_MANAGER_EXPIRATION_TIME) // expired!
 		{
-			std::cout << __COUT_HDR__ << now << ":" << it->second << " = " << now - it->second << std::endl;
+			mf::LogDebug(__FILE__) << now << ":" << it->second << " = " << now - it->second << std::endl;
 			delete userConfigurationManagers_[it->first]; //call destructor
 			assert(userConfigurationManagers_.erase(it->first));	//erase by key
 			userLastUseTime_.erase(it);								//erase by iterator

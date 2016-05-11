@@ -1,5 +1,6 @@
 #include "otsdaq-utilities/Logbook/LogbookSupervisor.h"
-#include "otsdaq-core/Macros/OTSMacros.h"
+#include <messagefacility/MessageLogger/MessageLogger.h>
+#include "otsdaq-core/Macros/CoutHeaderMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
@@ -102,7 +103,7 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+			mf::LogDebug(__FILE__) << "Service directory creation failed: " <<
 					path << std::endl;
 			assert(false);
 		}
@@ -114,7 +115,7 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir((path+LOGBOOK_UPLOADS_PATH).c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+			mf::LogDebug(__FILE__) << "Service directory creation failed: " <<
 					(path+LOGBOOK_UPLOADS_PATH) << std::endl;
 			assert(false);
 		}
@@ -126,14 +127,14 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::cout << __COUT_HDR__ << "Service directory creation failed: " <<
+			mf::LogDebug(__FILE__) << "Service directory creation failed: " <<
 					path << std::endl;
 			assert(false);
 		}
 	}
 
 	getActiveExperiment();	//init active experiment
-	std::cout << __COUT_HDR__ << "Active Experiment is " << activeExperiment_ << std::endl;
+	mf::LogDebug(__FILE__) << "Active Experiment is " << activeExperiment_ << std::endl;
 	mostRecentDayIndex_ = 0;
 }
 
@@ -148,7 +149,7 @@ void LogbookSupervisor::destroy(void)
 void LogbookSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR__ << " active experiment " << activeExperiment_ << std::endl;
+	mf::LogDebug(__FILE__) << " active experiment " << activeExperiment_ << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Logbook.html?urn=" <<
 			getenv("LOGBOOK_SUPERVISOR_ID") << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
 }
@@ -166,8 +167,8 @@ throw (xoap::exception::Exception)
 	receive(msg, parameters);
 	std::string EntryText = parameters.getValue("EntryText");
 
-	std::cout << __COUT_HDR__ << "Received External Supervisor System Entry " << EntryText << std::endl;
-	std::cout << __COUT_HDR__ << "Active Experiment is  " << activeExperiment_ << std::endl;
+	mf::LogDebug(__FILE__) << "Received External Supervisor System Entry " << EntryText << std::endl;
+	mf::LogDebug(__FILE__) << "Active Experiment is  " << activeExperiment_ << std::endl;
 
 	std::string retStr = "Success";
 
@@ -185,7 +186,7 @@ throw (xoap::exception::Exception)
 	if(activeExperiment_ == "")
 	{
 		retStr = "Warning - Currently, no Active Experiment.";
-		std::cout << __COUT_HDR__ << retStr << std::endl;
+		mf::LogDebug(__FILE__) << retStr << std::endl;
 		goto XOAP_CLEANUP;
 	}
 
@@ -194,7 +195,7 @@ throw (xoap::exception::Exception)
 	if(!dir)
 	{
 		retStr = "Error - Active Experiment directory missing.";
-		std::cout << __COUT_HDR__ << retStr << std::endl;
+		mf::LogDebug(__FILE__) << retStr << std::endl;
 		goto XOAP_CLEANUP;
 	}
 	closedir(dir);
@@ -202,7 +203,7 @@ throw (xoap::exception::Exception)
 	sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
 
 	logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
-	std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
+	mf::LogDebug(__FILE__) << "logPath " << logPath << std::endl;
 
 	logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
 	//because empty XML file is valid structure
@@ -245,7 +246,7 @@ throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
 	std::string src = CgiDataUtilities::getData(cgi,"src");
-	std::cout << __COUT_HDR__ << " Get Log Image " << src << std::endl;
+	mf::LogDebug(__FILE__) << " Get Log Image " << src << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookImage.html?urn=" <<
 			getenv("LOGBOOK_SUPERVISOR_ID") << "&src=" << src << "'></frameset></html>";
 }
@@ -261,7 +262,7 @@ throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
 	std::string activeExperiment = CgiDataUtilities::getData(cgi,"activeExperiment");
-	std::cout << __COUT_HDR__ << " Start Log Report for " << activeExperiment << std::endl;
+	mf::LogDebug(__FILE__) << " Start Log Report for " << activeExperiment << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><header><title>ots Logbook Reports</title></header><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookReport.html?urn=" <<
 			getenv("LOGBOOK_SUPERVISOR_ID") << "&activeExperiment=" << activeExperiment << "'></frameset></html>";
 }
@@ -299,7 +300,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 	FILE *fp = fopen(std::string((std::string)ACTIVE_EXPERIMENT_PATH).c_str(),"w");
 	if(!fp)
 	{
-		std::cout << __COUT_HDR__ << "FATAL ERROR!!! - file write" << std::endl;
+		mf::LogDebug(__FILE__) << "FATAL ERROR!!! - file write" << std::endl;
 		return;
 	}
 
@@ -314,7 +315,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 		entryNeeded = true;
 
 	activeExperiment_ = experiment;
-	std::cout << __COUT_HDR__ << "Active Experiment set to " << activeExperiment_ << std::endl;
+	mf::LogDebug(__FILE__) << "Active Experiment set to " << activeExperiment_ << std::endl;
 
 	if(entryNeeded)
 		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorsConfiguration_.getSupervisorDescriptor(),"Experiment was made active."); //make system logbook entry
@@ -348,8 +349,8 @@ void LogbookSupervisor::getExperiments(HttpXmlDocument *xmldoc, std::ostringstre
 	HttpXmlDocument expXml;
 	if(!expXml.loadXmlDocument((std::string)LOGBOOK_EXPERIMENT_LIST_PATH))
 	{
-		std::cout << __COUT_HDR__ << "Fatal Error - Experiment database." << std::endl;
-		std::cout << __COUT_HDR__ << "Creating empty experiment database." << std::endl;
+		mf::LogDebug(__FILE__) << "Fatal Error - Experiment database." << std::endl;
+		mf::LogDebug(__FILE__) << "Creating empty experiment database." << std::endl;
 
 		expXml.addTextElementToData((std::string)XML_EXPERIMENTS_ROOT);
 		expXml.saveXmlDocument((std::string)LOGBOOK_EXPERIMENT_LIST_PATH);
@@ -378,13 +379,13 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 		return;
 	}
 
-	std::cout << __COUT_HDR__ << "experiment " << experiment << std::endl;
+	mf::LogDebug(__FILE__) << "experiment " << experiment << std::endl;
 
 	//check that directory doesn't already exist
 	std::string dirPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_LOGBOOKS_PATH +
 			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + experiment;
 
-	std::cout << __COUT_HDR__ << "dirPath " << dirPath << std::endl;
+	mf::LogDebug(__FILE__) << "dirPath " << dirPath << std::endl;
 
 	bool directoryExists = false;
 	DIR *dir = opendir(dirPath.c_str());
@@ -411,7 +412,7 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 			if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - Experiment, " + experiment + ", already exists.");
 			return;
 		}
-	std::cout << __COUT_HDR__ << "experiments count: " << exps.size() << std::endl;
+	mf::LogDebug(__FILE__) << "experiments count: " << exps.size() << std::endl;
 
 
 	//everything checks out, add experiment!
@@ -433,17 +434,17 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 
 		//check uploads folder
 		dirPath += "/" + (std::string)LOGBOOK_UPLOADS_PATH;
-		std::cout << __COUT_HDR__ << "Checking uploads directory" << std::endl;
+		mf::LogDebug(__FILE__) << "Checking uploads directory" << std::endl;
 
 		directoryExists = false;
 		dir = opendir(dirPath.c_str());
 		if(!dir) //check if uploads directory exists within experiment directory
 		{
-			std::cout << __COUT_HDR__ << "Creating uploads directory" << std::endl;
+			mf::LogDebug(__FILE__) << "Creating uploads directory" << std::endl;
 			if(-1 == mkdir(dirPath.c_str(),0755)) //make uploads directory
 			{
 				if(xmldoc) xmldoc->addTextElementToData(XML_ADMIN_STATUS,"Failed - uploads directory for " + experiment + " was not created.");
-				std::cout << __COUT_HDR__ << "Uploads directory failure." << std::endl;
+				mf::LogDebug(__FILE__) << "Uploads directory failure." << std::endl;
 				return;
 			}
 		}
@@ -454,7 +455,7 @@ void LogbookSupervisor::createExperiment(std::string experiment, std::string cre
 				", re-added to list of experiments.");
 		return;
 	}
-	std::cout << __COUT_HDR__ << "Creating experiment and uploads directory at: " <<
+	mf::LogDebug(__FILE__) << "Creating experiment and uploads directory at: " <<
 			dirPath << std::endl;
 	if(-1 == mkdir(dirPath.c_str(),0755) ||
 			-1 == mkdir((dirPath + "/" +
@@ -510,7 +511,7 @@ void LogbookSupervisor::webUserSetActiveExperiment(std::string experiment, HttpX
 //		record remover in log file REMOVE_EXPERIMENT_LOG_PATH
 void LogbookSupervisor::removeExperiment(std::string experiment, std::string remover, HttpXmlDocument *xmldoc)
 {
-	std::cout << __COUT_HDR__ << "experiment " << experiment << std::endl;
+	mf::LogDebug(__FILE__) << "experiment " << experiment << std::endl;
 
 	//check that experiment listing exists
 	HttpXmlDocument expXml;
@@ -537,9 +538,9 @@ void LogbookSupervisor::removeExperiment(std::string experiment, std::string rem
 	//remove experiment from xml
 	xercesc::DOMElement* parent = expXml.getMatchingElement(XML_EXPERIMENTS_ROOT);
 	xercesc::DOMElement* child = expXml.getMatchingElement(XML_EXPERIMENT,i);
-	std::cout << __COUT_HDR__ << "experiments original count: " << expXml.getChildrenCount(parent) << std::endl;
+	mf::LogDebug(__FILE__) << "experiments original count: " << expXml.getChildrenCount(parent) << std::endl;
 	expXml.recursiveRemoveChild(child, parent);
-	std::cout << __COUT_HDR__ << "experiments new count: " << expXml.getChildrenCount(parent) << std::endl;
+	mf::LogDebug(__FILE__) << "experiments new count: " << expXml.getChildrenCount(parent) << std::endl;
 
 	//update removed experiments log
 	FILE *fp = fopen(((std::string)REMOVE_EXPERIMENT_LOG_PATH).c_str(),"a");
@@ -681,7 +682,7 @@ void LogbookSupervisor::cleanUpPreviews()
 	DIR *dir = opendir(previewPath.c_str());
 	if(!dir)
 	{
-		std::cout << __COUT_HDR__ << "Error - Previews directory missing: " << previewPath << std::endl;
+		mf::LogDebug(__FILE__) << "Error - Previews directory missing: " << previewPath << std::endl;
 		return;
 	}
 
@@ -702,11 +703,11 @@ void LogbookSupervisor::cleanUpPreviews()
 
 			if((time(0) - dirCreateTime) > LOGBOOK_PREVIEW_EXPIRATION_TIME)
 			{
-				std::cout << __COUT_HDR__ << "Expired" << std::endl;
+				mf::LogDebug(__FILE__) << "Expired" << std::endl;
 
 				entry->d_name[i] = '_'; //put _ back
 
-				std::cout << __COUT_HDR__ << "rm -rf " << previewPath + (std::string)entry->d_name <<  std::endl;
+				mf::LogDebug(__FILE__) << "rm -rf " << previewPath + (std::string)entry->d_name <<  std::endl;
 				system(((std::string)("rm -rf " + previewPath + (std::string)entry->d_name)).c_str());
 			}
 		}
@@ -732,7 +733,7 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 	sprintf(fileIndex,"%lu_%lu",time(0),clock()); //create unique time label for entry time(0)_clock()
 	std::string previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + (std::string)fileIndex;
 
-	std::cout << __COUT_HDR__ << "previewPath " << previewPath << std::endl;
+	mf::LogDebug(__FILE__) << "previewPath " << previewPath << std::endl;
 	if(-1 == mkdir(previewPath.c_str(),0755))
 	{
 		if(xmldoc) xmldoc->addTextElementToData(XML_STATUS,"Failed - preview could not be generated.");
@@ -752,7 +753,7 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 
 	escapeLogbookEntry(text);
 	escapeLogbookEntry(subject);
-	std::cout << __COUT_HDR__ << "~~subject " << subject << std::endl << "~~text " << text << std::endl;
+	mf::LogDebug(__FILE__) << "~~subject " << subject << std::endl << "~~text " << text << std::endl;
 
 	HttpXmlDocument previewXml;
 
@@ -766,7 +767,7 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 	previewXml.addTextElementToParent(XML_LOGBOOK_ENTRY_SUBJECT, subject, XML_LOGBOOK_ENTRY);
 	if(xmldoc) xmldoc->addTextElementToData(XML_LOGBOOK_ENTRY_SUBJECT,subject); //return subject
 
-	std::cout << __COUT_HDR__ << "file size " << files.size() << std::endl;
+	mf::LogDebug(__FILE__) << "file size " << files.size() << std::endl;
 
 	std::string filename;
 	std::ofstream myfile;
@@ -788,7 +789,7 @@ void LogbookSupervisor::savePostPreview(std::string &subject, std::string &text,
 		filename = previewPath + "/" + (std::string)LOGBOOK_PREVIEW_UPLOAD_PREFACE +
 				(std::string)fileIndex + "." + filename;
 
-		std::cout << __COUT_HDR__ << "file " << i << " - " << filename << std::endl;
+		mf::LogDebug(__FILE__) << "file " << i << " - " << filename << std::endl;
 		myfile.open(filename.c_str());
 		if (myfile.is_open())
 		{
@@ -814,7 +815,7 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 		HttpXmlDocument *xmldoc)
 {
 
-	std::cout << __COUT_HDR__ << "previewNumber " << previewNumber << (approve?" Accepted":" Cancelled") << std::endl;
+	mf::LogDebug(__FILE__) << "previewNumber " << previewNumber << (approve?" Accepted":" Cancelled") << std::endl;
 
 	std::string sysCmd, previewPath = (std::string)LOGBOOK_PATH + (std::string)LOGBOOK_PREVIEWS_PATH + previewNumber;
 
@@ -831,7 +832,7 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 		DIR *dir = opendir(logDirPath.c_str());
 		if(!dir)
 		{
-			std::cout << __COUT_HDR__ << "Error - Active Experiment directory missing: " << logPath << std::endl;
+			mf::LogDebug(__FILE__) << "Error - Active Experiment directory missing: " << logPath << std::endl;
 			return;
 		}
 		closedir(dir);
@@ -840,7 +841,7 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 		sprintf(dayIndexStr,"%6.6lu",time(0)/(60*60*24)); //get today's index
 
 		logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
-		std::cout << __COUT_HDR__ << "logPath " << logPath << std::endl;
+		mf::LogDebug(__FILE__) << "logPath " << logPath << std::endl;
 
 		HttpXmlDocument logXml;
 		logXml.loadXmlDocument(logPath);    //NOTE: on failure, no need to do anything
@@ -867,7 +868,7 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 		{
 			if((fileExtension = validateUploadFileType(fileTypes[i])) == "") //invalid file type
 			{
-				std::cout << __COUT_HDR__ << "Failed - invalid file type: " << fileTypes[i] << std::endl;
+				mf::LogDebug(__FILE__) << "Failed - invalid file type: " << fileTypes[i] << std::endl;
 				continue;
 			}
 
@@ -879,14 +880,14 @@ void LogbookSupervisor::movePreviewEntry(std::string previewNumber, bool approve
 
 			sysCmd =  "mv " + (previewPath + "/" + previewFilename) + " " +
 					(logDirPath + "/" + (std::string)LOGBOOK_UPLOADS_PATH + logFilename);
-			std::cout << __COUT_HDR__ << sysCmd << std::endl;
+			mf::LogDebug(__FILE__) << sysCmd << std::endl;
 			system(sysCmd.c_str());
 		}
 	}
 
 	//remove preview directory
 	sysCmd = "rm -rf " + previewPath;
-	std::cout << __COUT_HDR__ << sysCmd <<  std::endl;
+	mf::LogDebug(__FILE__) << sysCmd <<  std::endl;
 	system(sysCmd.c_str());
 }
 
@@ -923,7 +924,7 @@ void LogbookSupervisor::escapeLogbookEntry(std::string &entry)
 //				XML_LOGBOOK_ENTRY_HIDDEN_TIME
 void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,const std::string &hider)
 {
-	std::cout << __COUT_HDR__ << "Hide=" << hide << " for entryid " << entryId << std::endl;
+	mf::LogDebug(__FILE__) << "Hide=" << hide << " for entryid " << entryId << std::endl;
 
 	//get path to entries file for entry at entryId
 	char dayIndexStr[20];
@@ -941,13 +942,13 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 			(std::string)LOGBOOK_EXPERIMENT_DIR_PREFACE + activeExperiment_;
 	std::string logPath = logDirPath + "/" + LOGBOOK_FILE_PREFACE + activeExperiment_ + "_" + (std::string)dayIndexStr + LOGBOOK_FILE_EXTENSION;
 
-	std::cout << __COUT_HDR__ << "logPath=" << logPath << std::endl;
+	mf::LogDebug(__FILE__) << "logPath=" << logPath << std::endl;
 
 	//locate entry
 	HttpXmlDocument logXml;
 	if(!logXml.loadXmlDocument(logPath))
 	{
-		std::cout << __COUT_HDR__ << "Failure - log XML did not load" << std::endl;
+		mf::LogDebug(__FILE__) << "Failure - log XML did not load" << std::endl;
 		return;
 	}
 
@@ -957,11 +958,11 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 		if(allEntryIds[i] == entryId) break;
 	if(i == allEntryIds.size())
 	{
-		std::cout << __COUT_HDR__ << "Failure - entry not found" << std::endl;
+		mf::LogDebug(__FILE__) << "Failure - entry not found" << std::endl;
 		return;
 	}
 
-	std::cout << __COUT_HDR__ << "found " << logXml.getMatchingValue(XML_LOGBOOK_ENTRY_TEXT,i) << std::endl;
+	mf::LogDebug(__FILE__) << "found " << logXml.getMatchingValue(XML_LOGBOOK_ENTRY_TEXT,i) << std::endl;
 
 	xercesc::DOMElement* hiddenParentEl, *entryParentEl = logXml.getMatchingElement(XML_LOGBOOK_ENTRY,i); //get entry element
 
@@ -972,7 +973,7 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 	{
 		if(hiddenParentEl)
 		{
-			std::cout << __COUT_HDR__ << "Hidden tag already applied to entry." << std::endl;
+			mf::LogDebug(__FILE__) << "Hidden tag already applied to entry." << std::endl;
 			return;
 		}
 		hiddenParentEl = logXml.addTextElementToParent(XML_LOGBOOK_ENTRY_HIDDEN,"1",entryParentEl); //add hidden parent with value "1"
@@ -984,14 +985,14 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 	{
 		if(!hiddenParentEl)
 		{
-			std::cout << __COUT_HDR__ << "Entry already was not hidden." << std::endl;
+			mf::LogDebug(__FILE__) << "Entry already was not hidden." << std::endl;
 			return;
 		}
 
 		logXml.recursiveRemoveChild(hiddenParentEl,entryParentEl); //remove hidden parent
 	}
 	logXml.saveXmlDocument(logPath);
-	std::cout << __COUT_HDR__ << "Success." << std::endl;
+	mf::LogDebug(__FILE__) << "Success." << std::endl;
 }
 //========================================================================================================================
 //	Log
@@ -1005,7 +1006,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-	std::cout << __COUT_HDR__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	mf::LogDebug(__FILE__) << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//CreateExperiment
@@ -1027,7 +1028,7 @@ throw (xgi::exception::Exception)
 			cookieCode, &userPermissions, "0", Command != "RefreshLogbook")) //only refresh cookie if not automatic refresh
 	{
 		*out << cookieCode;
-		std::cout << __COUT_HDR__ << "Invalid Cookie Code" << std::endl;
+		mf::LogDebug(__FILE__) << "Invalid Cookie Code" << std::endl;
 		return;
 	}
 	//**** end LOGIN GATEWAY CODE ***//
@@ -1053,7 +1054,7 @@ throw (xgi::exception::Exception)
 
 		//user is admin
 
-		std::cout << __COUT_HDR__ << "Admin" << std::endl;
+		mf::LogDebug(__FILE__) << "Admin" << std::endl;
 
 		//get creator name
 		std::string creator;
@@ -1062,7 +1063,7 @@ throw (xgi::exception::Exception)
 
 		createExperiment(CgiDataUtilities::postData(cgi,"Experiment"), creator, &xmldoc);
 
-		std::cout << __COUT_HDR__ << "Created" << std::endl;
+		mf::LogDebug(__FILE__) << "Created" << std::endl;
 	}
 	else if(Command == "RemoveExperiment")
 	{
@@ -1121,8 +1122,10 @@ throw (xgi::exception::Exception)
 		sscanf(Date.c_str(),"%li",&date);		//scan for unsigned long
 		sscanf(Duration.c_str(),"%hhu",&duration); 	//scan for unsigned char
 
-		std::cout << __COUT_HDR__ << "date " << date << " duration " << (int)duration << std::endl;
-		refreshLogbook(date, duration, &xmldoc, (std::ostringstream *)&std::cout);
+		mf::LogDebug(__FILE__) << "date " << date << " duration " << (int)duration << std::endl;
+		std::stringstream str;
+		refreshLogbook(date, duration, &xmldoc, (std::ostringstream *)&str);
+		mf::LogDebug(__FILE__) << str.str();
 	}
 	else if(Command == "PreviewEntry")
 	{
@@ -1134,9 +1137,9 @@ throw (xgi::exception::Exception)
 
 		cleanUpPreviews();
 		std::string EntryText = cgi("EntryText");
-		std::cout << __COUT_HDR__ << "EntryText " << EntryText <<  std::endl;
+		mf::LogDebug(__FILE__) << "EntryText " << EntryText <<  std::endl;
 		std::string EntrySubject = cgi("EntrySubject");
-		std::cout << __COUT_HDR__ << "EntrySubject " << EntrySubject <<  std::endl;
+		mf::LogDebug(__FILE__) << "EntrySubject " << EntrySubject <<  std::endl;
 
 		//get creator name
 		std::string creator;
@@ -1183,7 +1186,7 @@ throw (xgi::exception::Exception)
 		xmldoc.addTextElementToData(XML_ADMIN_STATUS,"1"); //success
 	}
 	else
-		std::cout << __COUT_HDR__ << "Command request not recognized." << std::endl;
+		mf::LogDebug(__FILE__) << "Command request not recognized." << std::endl;
 
 	CLEANUP:
 
