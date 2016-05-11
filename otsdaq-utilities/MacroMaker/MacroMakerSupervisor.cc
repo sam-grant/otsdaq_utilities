@@ -11,7 +11,7 @@
 
 
 #include <xdaq/NamespaceURI.h>
-
+#include <string>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -43,7 +43,6 @@ theRemoteWebUsers_(this)
 		std::cout << __COUT_HDR__<< "PixelFESupervisor instance " << it->first <<
 				"...and..." << it->second << std::endl;
 		std::cout << __COUT_HDR__<< "Look! Here's a FE! @@@" << std::endl;
-
 	}
 
 
@@ -89,12 +88,12 @@ void MacroMakerSupervisor::destroy(void)
 
 //========================================================================================================================
 void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
-		{
-		}
+{
+}
 
 //========================================================================================================================
-void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)throw (xgi::exception::Exception)
-		{
+void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception)
+{
 	std::cout << __COUT_HDR__ << std::endl;
 
 	cgicc::Cgicc cgi(in);
@@ -125,7 +124,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)th
 	handleRequest(Command,xmldoc,cgi);
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
-		}
+}
 
 //
 //
@@ -295,38 +294,17 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		std::cout << __COUT_HDR__<< "FE List received : " <<
 				retMsgFEList << std::endl;
 
-		xmldoc.addTextElementToData("FE", retMsgFEList.c_str());
+		std::istringstream f(retMsgFEList);
+		std::string oneInterface;
+		while (std::getline(f, oneInterface)){
+			std::stringstream buffer;
+			buffer << oneInterface.substr(0,oneInterface.rfind(":")+1)
+				   << std::to_string(it->first) << oneInterface.substr(oneInterface.rfind(":"),oneInterface.length())<< std::endl;
+			interfaceList.push_back(buffer.str());
+		    xmldoc.addTextElementToData("FE", buffer.str());
+		}
 	}
-
-
-
-
 	return;
-
-//
-//	it = aliasMap.begin();
-//
-//	while (it != aliasMap.end())
-//	{
-//		sprintf(intConv, "%d", it->second.key());
-//		it++;
-//	}
-
-
-//	SOAPParameters parameters;
-//	SupervisorDescriptors::const_iterator it1 =
-//			theSupervisorsConfiguration_.getFEDescriptors().begin();
-//	std::cout << __COUT_HDR__ << it1->first << "...and..." << it1->second << std::endl;
-//
-//	for (;it1 != theSupervisorsConfiguration_.getFEDescriptors().end();it1++)
-//	{
-//		std::stringstream bufARTDAQFE;
-//		bufARTDAQFE << "FE Instance " << it1->first << std::endl;
-//		//it->second
-//		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(it1->second,
-//				"MacroMakerSupervisorRequest",parameters);
-//		xmldoc.addTextElementToData("FE", bufARTDAQFE.str());
-//	}
 }
 
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
@@ -334,43 +312,41 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::cout << __COUT_HDR__ << "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string Data = CgiDataUtilities::getData(cgi, "Data");
-	std::string FEIndexList = CgiDataUtilities::getData(cgi, "selectionList");
+	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
+	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
+
 	SOAPParameters parameters; //params for xoap to send
 		parameters.addParameter("Request", "UniversalWrite");
-//		parameters.addParameter("Address",Address);
-//		parameters.addParameter("Data",Data);
-	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for WRITE, behold: "
-			<< FEIndexList <<std::endl;
+		parameters.addParameter("Address",Address);
+		parameters.addParameter("Data",Data);
 
-	///////////////////////////////////////////////////////////////////////////////////////////
-	///////////THIS CHUNK BELOW CONVERTS (0,1,0,1) TO (1,3)////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////
-    std::vector<int> parsingStr;
-    std::vector<int> selectedIndices;
-    std::stringstream ss(FEIndexList);
-    unsigned int i = 0;
-    while (ss >> i)
-    {
-        parsingStr.push_back(i);
-        if (ss.peek() == ',') ss.ignore();
-    }
-    for (i=0; i < parsingStr.size(); i++)
-        if (parsingStr.at(i)) selectedIndices.push_back(i);
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////END OF CHUNK//////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////
+		std::cout << __COUT_HDR__ << "Address: " << Address << " Data: " << Data << std::endl;
+
+	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for WRITE, behold: "
+			<< supervisorIndexArray << interfaceIndexArray <<std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
-	//Copying map keys to a vector, so we can access them by indices coming from cgi
-	std::vector<int> forAccessingMapByIndex;
-    for(const auto& it : FESupervisors)
-	    forAccessingMapByIndex.push_back(it.first);
+	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
+	std::vector<int> interfaceIndices;
+	std::istringstream f(interfaceIndexArray);
+	std::string s;
+	while (getline(f, s, ',')) interfaceIndices.push_back(std::stoi(s));
+	std::vector<int> supervisorIndices;
+	std::istringstream g(supervisorIndexArray);
+	std::string t;
+	while (getline(g, t, ',')) supervisorIndices.push_back(std::stoi(t));
 
-    for(i=0; i < selectedIndices.size(); i++)
+
+    for(unsigned int i=0; i < supervisorIndices.size(); i++)
     {
-        unsigned int FEIndex = forAccessingMapByIndex[selectedIndices.at(i)];
+    	unsigned int FEIndex = supervisorIndices[i];
+    	unsigned int interfaceIndex = interfaceIndices[i];
+
+    	parameters.addParameter("InterfaceIndex",interfaceIndex);
+
 	    std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+	    std::cout << __COUT_HDR__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
 
 	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
         if (it == FESupervisors.end())
@@ -384,7 +360,6 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 				"MacroMakerSupervisorRequest",
 				parameters);
 	    receive(retMsg);
-	 //   xmldoc.addTextElementToData("FEWrite", retMsg);
     }
 
 	//	xoap::MessageReARTDAQFEence retMsg = SOAPMessenger::sendWithSOAPReply(theSupervisorsConfiguration_.getFEDescriptors().begin()->second,
@@ -447,65 +422,48 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	std::cout << __COUT_HDR__ << "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-	std::string FEIndexList = CgiDataUtilities::getData(cgi, "selectionList");
+	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
+	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
 
 	SOAPParameters parameters; //params for xoap to send
 	parameters.addParameter("Request", "UniversalRead");
-//		parameters.addParameter("Address",Address);
+	parameters.addParameter("Address",Address);
 
 	SOAPParameters retParameters;
-    retParameters.addParameter("dataRead");
-
+    retParameters.addParameter("dataResult");
 	std::cout << __COUT_HDR__ <<"Here comes the array from multiselect box for READ, behold: "
-			<< FEIndexList <<std::endl;
-
-	///////////////////////////////////////////////////////////////////////////////////////////
-	///////////THIS CHUNK BELOW CONVERTS (0,1,0,1) TO (1,3)////////////////////////////////////
-	///////////////////////////////////////////////////////////////////////////////////////////
-    std::vector<int> parsingStr;
-    std::vector<int> selectedIndices;
-    std::stringstream ss(FEIndexList);
-    unsigned int i = 0;
-    while (ss >> i)
-    {
-        parsingStr.push_back(i);
-        if (ss.peek() == ',') ss.ignore();
-    }
-    for (i=0; i < parsingStr.size(); i++)
-        if (parsingStr.at(i)) selectedIndices.push_back(i);
-    ///////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////END OF CHUNK//////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////////////////////
+			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
-	//Copying map keys to a vector, so we can access them by indices coming from cgi
-	std::vector<int> forAccessingMapByIndex;
-    for(const auto& it : FESupervisors)
-	    forAccessingMapByIndex.push_back(it.first);
 
-    for(i=0; i < selectedIndices.size(); i++)
-    {
-        unsigned int FEIndex = forAccessingMapByIndex[selectedIndices.at(i)];
-	    std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+	unsigned int FEIndex = stoi(supervisorIndexArray);
+	unsigned int interfaceIndex = stoi(interfaceIndexArray);
 
-	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-        if (it == FESupervisors.end())
-	    {
-			std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
-			return;
-	    }
 
-	    xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-				it->second,
-				"MacroMakerSupervisorRequest",
-				parameters);
+	parameters.addParameter("InterfaceIndex",interfaceIndex);
 
-	    receive(retMsg,retParameters);
-		std::string dataReadReturnMsg = retParameters.getValue("dataRead");
-		std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
-	    xmldoc.addTextElementToData("readData",dataReadReturnMsg);
-    }
+	std::cout << __COUT_HDR__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+	std::cout << __COUT_HDR__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+
+	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+	if (it == FESupervisors.end())
+	{
+		std::cout << __COUT_HDR__ << "ERROR!? FE Index doesn't exist" << std::endl;
+		return;
+	}
+
+	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+			it->second,
+			"MacroMakerSupervisorRequest",
+			parameters);
+
+	receive(retMsg,retParameters);
+	std::string dataReadReturnMsg = retParameters.getValue("dataResult");
+	//Why is the thing above not working??
+	//std::string dataReadReturnMsg = "123456";
+	std::cout << __COUT_HDR__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
+	xmldoc.addTextElementToData("readData",dataReadReturnMsg);
 
 
 ////	std::uint64_t addr;

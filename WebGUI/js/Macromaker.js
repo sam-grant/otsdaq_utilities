@@ -1,13 +1,14 @@
 // Created by swu at fnal dot gov
 //  February 2016
 //
-//
+//3 global vars: DIVINDEX, FEELEMENTS and selected
 	//Function List:
 		//init
 	    //redrawWindow
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
+	var FEELEMENTS = [];
 	
 	function init() 
 	{			
@@ -71,7 +72,8 @@
 	function FElistHandlerFunction(req) 
 	{
 		Debug.log("FElistHandlerFunction() was called. Req: " + req.responseText);
-		var FEElements = req.responseXML.getElementsByTagName("FE");
+	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
+		console.log(FEELEMENTS);
 		
 		//Make search box for the list
 		var noMultiSelect = false; 									
@@ -79,13 +81,19 @@
 	    var keys = [];
 	    var vals = [];
 	    var types = [];
-
-	    for(var i=0;i<FEElements.length;++i)
+	    var fullnames = [];
+	    //Only displays the first 11 letters, mouse over display full name
+	    for(var i=0;i<FEELEMENTS.length;++i)
 		{
 			keys[i] = "one";
-			vals[i] = FEElements[i].getAttribute("value");
+			fullnames[i] = FEELEMENTS[i].getAttribute("value");
+			var sp = fullnames[i].split(":");
+			if (sp[0].length < 11) vals[i] = fullnames[i];
+			else{
+				var display = sp[0].substr(0,11)+"...:"+sp[1]+":"+sp[2];
+				vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
+			}
 			types[i] = "number";
-			
 			Debug.log(vals[i]);
 		}
 	    var listoffecs = document.getElementById('list');  
@@ -100,8 +108,8 @@
 	{
 	 	 var splits = listoffecs.id.split('_');
 	 	 console.log(splits);
-		 ELEMENTINDEX = splits[splits.length-1] | 0;
-		 MultiSelectBox.dbg("Chosen element index:",ELEMENTINDEX);
+		 elementIndex = splits[splits.length-1] | 0;
+		 MultiSelectBox.dbg("Chosen element index:",elementIndex);
 	}
             
     function clearData()
@@ -117,19 +125,20 @@
     function callWrite(address,data)
     {
     	var reminderEl = document.getElementById('reminder');
-		if(isArrayAllZero(selected))//CHANGE THIS
+		if(isArrayAllZero(selected))
 			reminderEl.innerHTML = "Please select at least one interface from the list";
 		else 
 		{ 
 			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var addressFormatStr = addressFormat.value;
 			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
-			 
+			var dataFormatStr = dataFormat.value;
+			
 			if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('addressInput').value;
-				var dataStr = document.getElementById('dataInput').value;
+				var addressStr = document.getElementById('addressInput').value.toString();
+				var dataStr = document.getElementById('dataInput').value.toString();
+				console.log(typeof(addressStr))
 				if(addressStr == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to write to";
@@ -146,14 +155,33 @@
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
-			console.log(addressStr);
+			var selectionStrArray = [];
+			var supervisorIndexArray = [];
+			var interfaceIndexArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) 
+			    {
+					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					selectionStrArray.push(oneInterface);
+					supervisorIndexArray.push(oneInterface.split(":")[1]);
+					interfaceIndexArray.push(oneInterface.split(":")[2]);
+			    }
+			}
 			var contentEl = document.getElementById('historyContent');
 			var innerClass = "class=\"innerClass1\"";
 			if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="+addressStr+
-					 "&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&Data="+dataStr+"&selectionList="+selected,"",writeHandlerFunction);
-			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callWrite(" 
-					 + addressStr + "," + dataStr + ")\">Write " + dataStr + " into register " + addressStr + "</div>";
+			
+			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
+					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
+					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]" + dataStr + " into register [" + addressFormatStr + "] "+ addressStr + "</div>";
+			
+			var convertedAddress = convertToHex(addressFormatStr,addressStr);
+			var convertedData = convertToHex(dataFormatStr,dataStr);
+
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="
+					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
+					+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
 			contentEl.innerHTML += update;
 			DIVINDEX++;
 			updateScroll();
@@ -169,13 +197,13 @@
     	else 
     	{ 
 			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatIndex = addressFormat.options[addressFormat.selectedIndex].value;
+			var addressFormatStr = addressFormat.value;
 			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatIndex = dataFormat.options[dataFormat.selectedIndex].value;
+			var dataFormatStr = dataFormat.value;
 		
 			if (typeof address === 'undefined') 
 			{
-				var addressStr = document.getElementById('addressInput').value;
+				var addressStr = document.getElementById('addressInput').value.toString();
 				if(addressStr == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to read from";
@@ -184,8 +212,21 @@
 			}
 			else
 				var addressStr = address.toString();
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+addressStr+
-					"&addressFormat="+addressFormatIndex+"&dataFormat="+dataFormatIndex+"&selectionList="+selected,"",readHandlerFunction);
+			var supervisorIndexArray = [];
+			var interfaceIndexArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) 
+				{
+					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					supervisorIndexArray.push(oneInterface.split(":")[1]);
+					interfaceIndexArray.push(oneInterface.split(":")[2]);
+				}
+			}
+			var convertedAddress = convertToHex(addressFormatStr,addressStr);
+			
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+convertedAddress+
+				"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
     	}
     }
     
@@ -196,18 +237,29 @@
     
     function readHandlerFunction(req,address)
 	{
+    	var addressFormat = document.getElementById("addressFormat");
+		var addressFormatStr = addressFormat.value;
+		var dataFormat = document.getElementById("dataFormat");
+		var dataFormatStr = dataFormat.value;
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
+		var convertedOutput = convertFromHex(dataFormatStr,dataOutput);
 		if (typeof address === 'undefined') 
 		    var addressStr = document.getElementById('addressInput').value;
 		else
 		    var addressStr = address.toString();
+		var selectionStrArray = [];
+		for (var i = 0; i < selected.length; i++) 
+		{
+			if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+		}
 		var innerClass = "class=\"innerClass1\"";
 		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
-		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString() + "\" onclick=\"callRead(" 
-				+ addressStr + ")\">Read " + dataOutput + " from register " + addressStr + "</div>";
+		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
+				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]" + convertedOutput + " from register [" + addressFormatStr + "]" + addressStr + "</div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		updateScroll();
@@ -220,9 +272,47 @@
         element.scrollTop = element.scrollHeight;
     }
     
-    function isArrayAllZero(arr){
-        for(var j = 0; j < arr.length; j++){
+    function isArrayAllZero(arr)
+    {
+        for(var j = 0; j < arr.length; j++)
+        {
           if (arr[j]!==0) return false;
         }
         return true;
     }
+    
+    function convertToHex(format,target)
+    {
+		switch (format) 
+		{
+			case "hex": 
+				return target;
+			case "dec": //dec
+				return Number(target).toString(16);
+			case "ascii": //ascii
+				var output = [];
+				for(var i = target.length-1; i>=0; i--)
+					 output.push(target.charCodeAt(i).toString(16));
+				return output.join('');
+		}
+    }
+    
+    function convertFromHex(format,target)
+    {
+		switch (format) 
+		{
+			case "hex":
+				return target;
+			case "dec":
+				return parseInt(target,16).toString();
+			case "ascii":
+				var str = '';
+				for (var i = 0; i < target.length; i += 2)
+				str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
+				return str;
+		}
+    }
+    
+    
+
+    

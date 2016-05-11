@@ -10,7 +10,7 @@
 			body {
 				background-color: #001626;
 				color: #c4e9f5 !important;
-				<!--background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
+				<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
 				overflow: auto;
 			}
 		
@@ -42,6 +42,7 @@
 		a {	
 			color: #c4e9f5;
 		}
+		
 		#history {
 		    padding:5px;
 		}
@@ -81,9 +82,11 @@
             width:90px;
             outline: none;
         }
+        
         p small {
       		color:#001626;
       	}
+      	
         .select{
         	color:#001626;  
         	margin:0 5px 0 5px;
@@ -91,6 +94,7 @@
         	display: inline;
         	border-radius: 1px;
         }
+        
 		.formatSelection{
 			margin:5px 0 0 0;
 		}
@@ -115,6 +119,7 @@
         li {
          	color: #c4e9f5;
         }
+        
         @media only screen and (max-height: 400px){
         	#instruction{
         	display:none;
@@ -155,22 +160,24 @@
 		
 		<div class='mainBlock' id='main'>
 			<div id="nav">
-			<p><small><a>Manual Commands</a><a style="margin-left:15px" href="#">Macro Maker</a></small></p>
+			<p><small><a>Manual Commands</a><a style="margin-left:15px" href="MacroMaker2.html">Macro Maker</a></small></p>
 		    </div>
 	        <h3>Manual Commands</h3>
 	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
-	        <div id="output1" class="formatSelection">The address is in
+	        <div id="output1" class="formatSelection">Address is in
 	           <select id="addressFormat" class="dropdown">
-			    <option class="select" value="1" selected="selected">hex</option>
-			    <option class="select" value="2">dec</option>
+			    <option class="select" value="hex" selected="selected">hex</option>
+			    <option class="select" value="dec">dec</option>
+			    <option class="select" value="ascii">ascii</option>
 			   </select>
 			format.</div>
 	       
 	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
-	        <div id="output2" class="formatSelection">The data is in
+	        <div id="output2" class="formatSelection">Data is in
 	           <select id="dataFormat" class="dropdown">
-			    <option class="select" value="1" selected="selected">hex</option>
-			    <option class="select" value="2">dec</option>
+			    <option class="select" value="hex" selected="selected">hex</option>
+			    <option class="select" value="dec">dec</option>
+			    <option class="select" value="ascii">ascii</option>
 			   </select>
 			format.</div>
 			
@@ -184,9 +191,9 @@
 		
 		<div class='mainBlock' id='instruction'>
 		  <h3>Instructions</h3>
-          <p style="text-align:justify">To read or write:<br>1. Select one or more FEWs from the list of FEWs;
-          <br>2. Enter the target address above. If you choose to write, you also need to enter the data;
-          <br>3. Select the format of your address and data (hex/dec). If you choose to read, the data format selected will be expected. 
+          <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
+          <br>2. Enter the address to read from/write to. Data is also required for a write.
+          <br>3. Select the format of your address and data (hex/dec/ascii). The data format selected will be expected for a read output. 
           <br>4. Select either "Write" or "Read" to finish your manual command.
 		</div>
 		
