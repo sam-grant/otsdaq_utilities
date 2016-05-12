@@ -22,6 +22,11 @@
 		    padding:5px;
 		}
 		
+		#maker {
+		    padding:5px;
+		    display:none;
+		}
+		
 		h3 {	
 			color: #c4e9f5 !important;
 			background-color: #993333;
@@ -41,6 +46,7 @@
 		}
 		a {	
 			color: #c4e9f5;
+			cursor: pointer; 
 		}
 		
 		#history {
@@ -60,6 +66,16 @@
 		    padding:5px;
 		}
 		
+		#sequence {
+			display:none;
+			padding:5px;
+		}
+		
+		#sequenceContent {
+			overflow:scroll;
+			padding:5px;
+		}
+		
 		.mainBlock {
 			position:absolute;
 		}
@@ -74,6 +90,12 @@
 		    padding: 0.2em 0.2em 0.2em 0.1em;
 		    cursor: pointer; 
 		}
+		
+		.seqDiv{
+		    padding: 0.2em 0.2em 0.2em 0.1em;
+		    cursor: pointer; 
+		    border: 1px solid #993333;
+		}
         
         .inputBox{
             background-color: #c4e9f5;
@@ -87,6 +109,10 @@
       		color:#001626 !important;
       	}
       	
+      	.center {
+      		margin-top:5px;
+      		text-align:center;
+      	}
       	p small {
       		color: #c4e9f5;
       	}
@@ -102,26 +128,55 @@
 		.formatSelection{
 			margin:5px 0 0 0;
 		}
-        #readwrite{
-        	margin: 12px 0 0 50px;
+        .buttonGroup{
+        	margin: 12px 0 10px 25px;
         }
         
         .red{
         	color: #993333 !important;
         }
-        
+
         .dropdown{
         	color:#001626;
         	margin-bottom:10px;
         	border-radius:1px;
         }
+        
+        #address{
+        	margin: 5px 0 0 0;
+        }
+        #data{
+        	margin: 5px 0 0 22px;
+        }
 
+		#twoButtons{
+        	margin-top: 50px;
+        }
+        
         ul{
         	margin: 0 0 0 10;
         	list-style: none;
         }
         li {
          	color: #c4e9f5;
+        }
+        
+        #popup{
+        	width:400px;
+        	height:300px;
+        	background-color: #129793;
+        	z-index:999;
+        	position: fixed;
+			top: 40%;
+			left: 50%;
+			margin-top: -100px;
+			margin-left: -200px;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+			display:none;
         }
         
         @media only screen and (max-height: 400px){
@@ -133,6 +188,19 @@
 			}
         }
         
+        @media only screen and (min-width: 1215px){
+        	.center{
+	            width:50%;
+	    		margin: 0 auto; 
+            }
+        }
+        
+        @media only screen and (min-width: 819px)and(max-width: 1215px) {
+        	.center{
+	            width:75%;
+	    		margin: 0 auto; 
+            }
+        }
 		</style>
 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
@@ -140,57 +208,83 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
-
+		
+		
 	</head>
 
 
 	<body onload='Macromaker:init();'>
 	
 	    <div class='mainBlock' id='fecList'>
-	        <p class="hide"><small>.</small></p>
 	        <h3>List of Available FEs</h3>
 	        <div id='list'></div>
 		</div>
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			<ul>
-				<li>Macro 1</li>
-				<li>Macro 2</li>
-				<li>Macro 3</li>
-				<li>Macro 4</li>
-			</ul>
+			<div id="listOfMacros"></div>
+		</div>
+		
+		<div class='mainBlock' id='sequence'>
+	        <h3>Macro Sequence</h3>
+	        <div id="sequenceContent"><b>Click to delete unwanted commands.</b><br></div>
+		</div>
+		
+		
+		<div id="nav" class="center">
+			<p><small><a onclick="toggleDisplay(0)">Manual Commands</a><a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a></small></p>
 		</div>
 		
 		<div class='mainBlock' id='main'>
-			<div id="nav">
-			<p><small><a>Manual Commands</a><a style="margin-left:15px" href="MacroMaker2.html">Macro Maker</a></small></p>
-		    </div>
 	        <h3>Manual Commands</h3>
-	        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
-	        <div id="output1" class="formatSelection">Address is in
-	           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
-			    <option class="select" value="hex" selected="selected">hex</option>
-			    <option class="select" value="dec">dec</option>
-			    <option class="select" value="ascii">ascii</option>
-			   </select>
-			format.</div>
-	       
-	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
-	        <div id="output2" class="formatSelection">Data is in
-	           <select id="dataFormat" class="dropdown">
-			    <option class="select" value="hex" selected="selected">hex</option>
-			    <option class="select" value="dec">dec</option>
-			    <option class="select" value="ascii">ascii</option>
-			   </select>
-			format.</div>
-			<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
-	        <b><div id="reminder" class="red"></div></b>
-	        
-	        <div id="readwrite">
-	        	<button onclick="callRead()" class="select">Read</button>
-	        	<button onclick="callWrite()" class="select">Write</button>
-	        </div>
+	        <div class="center">
+		        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
+		        <div id="output1" class="formatSelection">Address is in
+		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format.</div>
+		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
+		        <div id="output2" class="formatSelection">Data is in
+		           <select id="dataFormat" class="dropdown">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format.</div>
+				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
+		        <b><div id="reminder" class="red"></div></b>
+		        
+		        <div class="buttonGroup">
+		        	<button onclick="callRead()" class="select">Read</button>
+		        	<button onclick="callWrite()" class="select">Write</button>
+		        </div>
+		    </div>
+		</div>
+		
+		<div class='mainBlock' id='maker'>
+	        <h3>Macro Maker</h3>
+	        <div class="center">
+		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearMacroAddress()" class="select">Clear</button></p>
+			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearMacroData()" class="select">Clear</button></p>
+				
+				<div class="buttonGroup">
+		        	<button onclick="addCommand('write')" class="select">Add Write</button>
+		        	<button onclick="addCommand('read')" class="select">Add Read</button>
+		        </div>
+		        
+		        <p>Milliseconds:  <input type="text" id="delayInput" class="inputBox"/></p>
+		        <div class="buttonGroup">
+		        	<button onclick="addCommand('delay')" class="select">Add Delay</button>
+		        </div>
+		        <b><div id="macroReminder" class="red"></div></b>
+		        <div id="twoButtons" class="buttonGroup bottom">
+		            <button onclick="clearAll()" class="select">Clear All</button>
+		        	<button onclick="saveMacro()" class="select">Save as Macro</button>
+		        </div>
+		    </div>
 		</div>
 		
 		<div class='mainBlock' id='instruction'>
@@ -202,9 +296,21 @@
 		</div>
 		
 		<div class='mainBlock' id='history'>
-	    <p><small>Note: * indicates LSB->MSB</small></p>
 		   <h3>Command History</h3>
-           <div id="historyContent">Scroll to see the history of commands. Click to rerun. <br></div>
+           <div id="historyContent"><b>Scroll to see the history of commands. Click to rerun. </b><br></div>
+		</div>
+		
+		<div id="popup">
+			<h2>Save your Macro</h2>
+			<div>
+				<p><b>Macro Name</b></p>
+				<textarea id="macroName" cols="30" rows="1"></textarea>
+				<p><b>Macro Notes</b></p>
+				<textarea id="macroNotes" cols="30" rows="6"></textarea>
+				<div class="buttongroup">
+					<button class="select" onclick="hidePopup()">Cancel</button><button class="select" onclick="saveAsMacro()">Save as Macro</button>
+				</div>
+			</div>
 		</div>
 		
 	</body>
