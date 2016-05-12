@@ -8,6 +8,7 @@
 		//callWrite
 		//callRead
 	var DIVINDEX = 0;
+	var SEQINDEX = 0;
 	var FEELEMENTS = [];
 	
 	function init() 
@@ -19,7 +20,10 @@
 		block3El = document.getElementById('main');
 		block4El = document.getElementById('instruction');
 		block5El = document.getElementById('history');
+		block6El = document.getElementById('sequence');
+		block7El = document.getElementById('maker');
 		historybox = document.getElementById('historyContent');
+		sequencebox = document.getElementById('sequenceContent');
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 	}
@@ -35,11 +39,13 @@
 		//square [x,y] [w,h]
 		var _MARGIN = 5;
 		
-		var b1 = [_MARGIN, _MARGIN, w/3, h/2-_MARGIN]; //left column red
-		var b2 = [_MARGIN, h/2, w/3-_MARGIN, h/2-_MARGIN]; //left column red
-		var b3 = [w/3, _MARGIN, w/3, h/2-_MARGIN]; //top middle yellow
-		var b4 = [w/3, h/2, w/3, h/2-_MARGIN]; //bottom middle blue
-		var b5 = [w*2/3,_MARGIN,w/3-_MARGIN, h-2*_MARGIN]; //right column green
+		var b1 = [_MARGIN, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN]; //left top
+		var b2 = [_MARGIN, h/2+2*_MARGIN, w/3-_MARGIN, h/2-_MARGIN]; //left bottom
+		var b3 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN]; //top middle 
+		var b4 = [w/3, h/2+2*_MARGIN, w/3, h/2-_MARGIN]; //bottom middle 
+		var b5 = [w*2/3,_MARGIN+4*_MARGIN,w/3-_MARGIN, h-2*_MARGIN]; //right 
+		var b6 = [_MARGIN, _MARGIN+4*_MARGIN,w/3-2*_MARGIN, h-2*_MARGIN]; //left
+		var b7 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN];//middle
 		
 		block1El.style.left = b1[0] + "px";
 		block1El.style.top =  b1[1] + "px";
@@ -66,7 +72,18 @@
 		block5El.style.width =  b5[2] + "px";
 		block5El.style.height =  b5[3] + "px";
 		
+		block6El.style.left = b6[0] + "px";
+		block6El.style.top =  b6[1] + "px";
+		block6El.style.width =  b6[2] + "px";
+		block6El.style.height =  b6[3] + "px";
+		
+		block7El.style.left = b7[0] + "px";
+		block7El.style.top =  b7[1] + "px";
+		block7El.style.width =  b7[2] + "px";
+		block7El.style.height =  b7[3] + "px";
+		
 		historybox.style.height =  h*0.9 + "px";
+		sequencebox.style.height =  h*0.9 + "px";
 	}
 			 
 	function FElistHandlerFunction(req) 
@@ -117,10 +134,20 @@
          document.getElementById('dataInput').value = "";
     }
     
+    function clearMacroData()
+    {
+		document.getElementById('macroDataInput').value = "";
+    }
+
     function clearAddress()
     {
          document.getElementById('addressInput').value = "";
     }
+    
+    function clearMacroAddress()
+	{
+		 document.getElementById('macroAddressInput').value = "";
+	}
 
     function callWrite(address,data)
     {
@@ -174,9 +201,9 @@
 			
 			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
 					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
-					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]"
-					+ dataStr + LSBchecker() + " into register [" + addressFormatStr + "] " 
-					+ addressStr + LSBchecker() + "</div>";
+					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]<b>"
+					+ dataStr + LSBchecker() + "</b> into register [" + addressFormatStr + "]<b> " 
+					+ addressStr + LSBchecker() + "</b></div>";
 			
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
 			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr));
@@ -248,7 +275,7 @@
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		
 		var convertedOutput;
-		if (Number(dataOutput)===0) convertedOutput = "<b class='red'>Time out Error</b>";
+		if (Number(dataOutput)===0) convertedOutput = "<span class='red'>Time out Error</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
 		
 		if (typeof address === 'undefined') 
@@ -265,8 +292,8 @@
 		var contentEl = document.getElementById('historyContent');
 		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
 				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
-				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]" + convertedOutput + LSBchecker()
-				+ " from register [" + addressFormatStr + "]" + addressStr + LSBchecker() + "</div>";
+				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]<b>" + convertedOutput + LSBchecker()
+				+ "</b> from register [" + addressFormatStr + "]<b>" + addressStr + LSBchecker() + "</b></div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		updateScroll();
@@ -360,5 +387,117 @@
     	else return "";
     }
     
-
+    function toggleDisplay(onMacro)
+    {
+    	 var fecListEl = document.getElementById("fecList");
+    	 var macroLibEl = document.getElementById("macroLib");
+    	 var sequenceEl = document.getElementById("sequence");
+    	 var instructionEl = document.getElementById("instruction");
+    	 var mainEl = document.getElementById("main");
+    	 var makerEl = document.getElementById("maker");
+    	 
+    	 if (onMacro) {
+    		 fecListEl.style.display = "none";
+    		 macroLibEl.style.display = "none";
+    		 sequenceEl.style.display = "block";
+    		 instructionEl.style.display = "none";
+    		 mainEl.style.display = "none";
+    		 makerEl.style.display = "block";
+    	 } else {
+    		 fecListEl.style.display = "block";
+    		 macroLibEl.style.display = "block";
+    		 sequenceEl.style.display = "none";
+    		 instructionEl.style.display = "block";
+    		 mainEl.style.display = "block";
+    		 makerEl.style.display = "none";
+    	 }
+    }
     
+    function addCommand(command)
+    {
+    	var macroReminderEl = document.getElementById('macroReminder');
+		var addressStr = document.getElementById('macroAddressInput').value.toString();
+		var dataStr = document.getElementById('macroDataInput').value.toString();
+		var delayStr = document.getElementById('delayInput').value;
+		var contentEl = document.getElementById('sequenceContent');
+		switch(command)
+		{
+		case 'write':
+			if(addressStr === "") 
+				{
+					macroReminderEl.innerHTML = "Please enter an address to write to";
+					return;
+				} else if(dataStr === "") {
+					macroReminderEl.innerHTML = "Please enter your data";
+					return;
+				} else {
+				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Write <b>"
+						+ dataStr + "</b> into <b>" 
+						+ addressStr + "</b></div>";
+				break;
+				}
+		case 'read':
+			if(addressStr === "") 
+				{
+					macroReminderEl.innerHTML = "Please enter an address to read from";
+					return;
+				} else {
+				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Read from <b>"
+						+ addressStr + "</b></div>";
+				break;
+				}
+		case 'delay':
+			if(delayStr === "") 
+				{
+					macroReminderEl.innerHTML = "Please enter a delay";
+					return;
+				} else {
+				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Delay: <b>"
+						+ delayStr + "</b> ms</div>";
+				break;
+				}
+		}
+		contentEl.innerHTML += update;
+		SEQINDEX++;
+		updateScroll();
+    }
+   
+    function removeCommand(seqIndex)
+    {
+    	var child = document.getElementById("seq"+seqIndex);
+		var parent = document.getElementById('sequenceContent');
+		parent.removeChild(child);
+    }
+    
+    function clearAll()
+    {
+    	var contentEl = document.getElementById('sequenceContent');
+    	contentEl.innerHTML = "<b>Click to delete unwanted commands.</b><br>";
+    }
+    
+    function saveMacro()
+    {
+    	 var popup = document.getElementById("popup");
+    	 popup.style.display = "block";
+    }
+    
+    function hidePopup()
+    {
+    	var popup = document.getElementById("popup");
+        popup.style.display = "none";
+        document.getElementById("macroName").value="";
+        document.getElementById("macroNotes").value="";
+    }
+
+    function saveAsMacro()
+    {
+    	var macroName = document.getElementById("macroName").value;
+    	var macroNotes = document.getElementById("macroNotes").value;
+    	var x = "This will work tomorrow";
+    	var macroLibEl = document.getElementById('listOfMacros');
+    	var newMacro = "<div title='Sequence: " + x + "\nNotes: "
+    			+ macroNotes + "\nCreated: " + Date().toString()
+				+ "'>" + macroName + "</br></div>"; 
+    	macroLibEl.innerHTML += newMacro;
+    	hidePopup();
+    }
