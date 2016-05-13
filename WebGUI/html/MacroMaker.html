@@ -76,6 +76,12 @@
 			padding:5px;
 		}
 		
+		#listOfMacros {
+			overflow:scroll;
+			padding:5px;
+			margin: 0 10px 20px 0;
+		}
+		
 		.mainBlock {
 			position:absolute;
 		}
@@ -92,9 +98,21 @@
 		}
 		
 		.seqDiv{
-		    padding: 0.2em 0.2em 0.2em 0.1em;
+		    padding: 0.2em 0.2em 0.2em 0.2em;
+		    margin: 0.2em 0.2em 0.2em 0.2em;
 		    cursor: pointer; 
-		    border: 1px solid #993333;
+		    border: 1.5px solid #993333;
+		    width:85%;
+		    border-radius:2px;
+		}
+		
+		.macroDiv{
+		    padding: 0.2em 0.2em 0.2em 0.2em;
+		    margin: 0.2em 0.2em 0.2em 0.2em;
+		    cursor: pointer; 
+		    border: 2px solid #993333;
+		    width: 90%;
+		    border-radius:2px;
 		}
         
         .inputBox{
@@ -222,12 +240,12 @@
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			<div id="listOfMacros"></div>
+			<div id="listOfMacros"><b>Click a Macro to run it.</b></div>
 		</div>
 		
 		<div class='mainBlock' id='sequence'>
 	        <h3>Macro Sequence</h3>
-	        <div id="sequenceContent"><b>Click to delete unwanted commands.</b><br></div>
+	        <div id="sequenceContent"><b>Click unwanted commands to delete them.</b><br></div>
 		</div>
 		
 		

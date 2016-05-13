@@ -9,7 +9,10 @@
 		//callRead
 	var DIVINDEX = 0;
 	var SEQINDEX = 0;
+	var MACROINDEX = 0;
 	var FEELEMENTS = [];
+	var macroString = [];
+	var stringOfAllMacros = [];
 	
 	function init() 
 	{			
@@ -24,6 +27,7 @@
 		block7El = document.getElementById('maker');
 		historybox = document.getElementById('historyContent');
 		sequencebox = document.getElementById('sequenceContent');
+		macrobox = document.getElementById('listOfMacros');
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 	}
@@ -84,6 +88,7 @@
 		
 		historybox.style.height =  h*0.9 + "px";
 		sequencebox.style.height =  h*0.9 + "px";
+		macrobox.style.height =  h*0.45 + "px";
 	}
 			 
 	function FElistHandlerFunction(req) 
@@ -434,6 +439,8 @@
 				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Write <b>"
 						+ dataStr + "</b> into <b>" 
 						+ addressStr + "</b></div>";
+				var writeMacroString = SEQINDEX+":w:"+addressStr+":"+dataStr;
+				macroString.push(writeMacroString);
 				break;
 				}
 		case 'read':
@@ -444,6 +451,8 @@
 				} else {
 				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Read from <b>"
 						+ addressStr + "</b></div>";
+				var readMacroString = SEQINDEX+":r:"+addressStr;
+				macroString.push(readMacroString);
 				break;
 				}
 		case 'delay':
@@ -454,12 +463,15 @@
 				} else {
 				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Delay: <b>"
 						+ delayStr + "</b> ms</div>";
+				var delayMacroString = SEQINDEX+":d:"+delayStr;
+				macroString.push(delayMacroString);
 				break;
 				}
 		}
 		contentEl.innerHTML += update;
 		SEQINDEX++;
-		updateScroll();
+		var element = document.getElementById("sequenceContent");
+		element.scrollTop = element.scrollHeight;
     }
    
     function removeCommand(seqIndex)
@@ -467,12 +479,19 @@
     	var child = document.getElementById("seq"+seqIndex);
 		var parent = document.getElementById('sequenceContent');
 		parent.removeChild(child);
+		for (var i = 0; i < macroString.length; i++)
+		  {
+		    if (seqIndex == macroString[i].split(":")[0])
+		      macroString.splice(i,1);
+		  }
+
     }
     
     function clearAll()
     {
     	var contentEl = document.getElementById('sequenceContent');
     	contentEl.innerHTML = "<b>Click to delete unwanted commands.</b><br>";
+    	macroString = [];
     }
     
     function saveMacro()
@@ -493,11 +512,35 @@
     {
     	var macroName = document.getElementById("macroName").value;
     	var macroNotes = document.getElementById("macroNotes").value;
-    	var x = "This will work tomorrow";
     	var macroLibEl = document.getElementById('listOfMacros');
-    	var newMacro = "<div title='Sequence: " + x + "\nNotes: "
-    			+ macroNotes + "\nCreated: " + Date().toString()
-				+ "'>" + macroName + "</br></div>"; 
+    	stringOfAllMacros.push(macroString);
+    	console.log(stringOfAllMacros);
+//    	var newMacro = "<div title='Sequence: " + macroString + "\nNotes: "
+//    			+ macroNotes + "\nCreated: " + Date().toString()
+//				+ "' onclick='runMacro(stringOfAllMacros[" + MACROINDEX + "])'>" + macroName + "</br></div>"; 
+    	var newMacro = "<div title='Sequence: " + macroString + "\nNotes: "
+    	 			+ macroNotes + "\nCreated: " + Date().toString()
+					+ "' class='macroDiv' onclick='runMacro(stringOfAllMacros[" + MACROINDEX + "])'><b>" + macroName + "</b></br></div>"; 
     	macroLibEl.innerHTML += newMacro;
+    	MACROINDEX++;
     	hidePopup();
+    	var element = document.getElementById("listOfMacros");
+    	element.scrollTop = element.scrollHeight;
+    }
+    
+    function runMacro(stringOfCommands)
+    {
+    	console.log(stringOfCommands);
+    	console.log(stringOfAllMacros);
+    	for (var i = 0; i < stringOfCommands.length; i++)
+    	{
+    		var Command = stringOfCommands[i].split(":")
+    		var commandType = Command[1];
+    		if(commandType=='w')
+    			callWrite(Command[2],Command[3]);
+    		else if(commandType=='r')
+				callRead(Command[2]);
+    		else 
+    			console.log("delay");
+    	}
     }
