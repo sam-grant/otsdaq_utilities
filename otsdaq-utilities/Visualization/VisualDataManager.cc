@@ -38,7 +38,7 @@ void VisualDataManager::start(std::string runNumber)
     //FIXME according to the configuration I will give the right filename prefix
     std::stringstream fileName;
     fileName <<  "Run" << runNumber << "_Histos.root";
-    mf::LogDebug(__FILE__) << __PRETTY_FUNCTION__ << "Starting visualizing run " << runNumber << std::endl;
+    mf::LogDebug(__FILE__) << __PRETTY_FUNCTION__ << "Starting visualizing run " << runNumber << "     ";
     //FIXME Maybe this has to go
     if(theLiveDQMHistos_ != 0)
         theLiveDQMHistos_->book(fileName.str(), theConfigurationManager_);

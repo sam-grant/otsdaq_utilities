@@ -1,6 +1,6 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-#include <messagefacility/MessageLogger/MessageLogger.h>
+#include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
@@ -29,7 +29,7 @@ xdaq::Application(s   ),
 SOAPMessenger  (this),
 theRemoteWebUsers_(this)
 {
-
+  INIT_MF("MacroMaker");
 	xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" );
 	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
@@ -37,25 +37,25 @@ theRemoteWebUsers_(this)
 	SupervisorDescriptors::const_iterator it;
 	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
 	mf::LogDebug(__FILE__)<< "PixelFESupervisor instance size " <<
-			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
+			theSupervisorsConfiguration_.getFEDescriptors().size() << "     ";
 	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
 	{
 		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it->first <<
-				"...and..." << it->second << std::endl;
-		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << std::endl;
+				"...and..." << it->second << "     ";
+		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 	}
 
 
 //	//getARTDAQFEDescriptors
 //	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
 //	{
-//		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it.first << std::endl;
-//		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << std::endl;
+//		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it.first << "     ";
+//		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 //	}
 //	for (const auto& it: theSupervisorsConfiguration_.getFEDataManagerDescriptors())
 //	{
-//		mf::LogDebug(__FILE__)<< "PixelFEDataManagerSupervisor instance " << it.first << std::endl;
-//		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << std::endl;
+//		mf::LogDebug(__FILE__)<< "PixelFEDataManagerSupervisor instance " << it.first << "     ";
+//		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 //	}
 
 }
@@ -70,13 +70,13 @@ void MacroMakerSupervisor::init(void)
 {
 	//called by constructor
 	theSupervisorsConfiguration_.init(getApplicationContext());
-	mf::LogDebug(__FILE__)<< "#######################################" << std::endl;
-	mf::LogDebug(__FILE__)<< "#######################################" << std::endl;
+	mf::LogDebug(__FILE__)<< "#######################################" << "     ";
+	mf::LogDebug(__FILE__)<< "#######################################" << "     ";
 
-	mf::LogDebug(__FILE__)<< "Running in MacroMaker Supervisor" << std::endl;
+	mf::LogDebug(__FILE__)<< "Running in MacroMaker Supervisor" << "     ";
 
-	mf::LogDebug(__FILE__)<< "#######################################" << std::endl;
-	mf::LogDebug(__FILE__)<< "#######################################" << std::endl;
+	mf::LogDebug(__FILE__)<< "#######################################" << "     ";
+	mf::LogDebug(__FILE__)<< "#######################################" << "     ";
 }
 
 //========================================================================================================================
@@ -94,11 +94,11 @@ void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (x
 //========================================================================================================================
 void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception)
 {
-	mf::LogDebug(__FILE__) << std::endl;
+	
 
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	mf::LogDebug(__FILE__) << "Command: " << Command << std::endl;
+	mf::LogDebug(__FILE__) << "Command: " << Command << "     ";
 
 	//FIXME -- need to lock out MacroMaker vs State machine
 
@@ -112,12 +112,12 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 			cookieCode, &userPermissions)) //only refresh cookie if not automatic refresh
 	{
 		*out << cookieCode;
-		mf::LogDebug(__FILE__) << "Invalid Cookie Code" << std::endl;
+		mf::LogDebug(__FILE__) << "Invalid Cookie Code" << "     ";
 		return;
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-	mf::LogDebug(__FILE__) << std::endl;
+	
 
 
 	HttpXmlDocument xmldoc(cookieCode);
@@ -129,7 +129,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 //
 //
 //#include "otsdaq-core/Supervisor/MacroMaker.h"
-//#include <messagefacility/MessageLogger/MessageLogger.h>
+//#include "otsdaq-core/MessageFacility/MessageFacility.h"
 //#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 //#include "otsdaq-core/Supervisor/SupervisorsInfo.h"
 //#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
@@ -174,7 +174,7 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 ////========================================================================================================================
 //void MacroMaker::printStatus()
 //{
-//////	mf::LogDebug(__FILE__) << "\n\nGetting Supervisor Status\n\n" << std::endl;
+//////	mf::LogDebug(__FILE__) << "\n\nGetting Supervisor Status\n\n" << "     ";
 ////	//super_->getSupervisorsStatus();
 ////	//super_->theSupervisorsConfiguration_;
 //////	SupervisorDescriptors::const_iterator it =
@@ -186,9 +186,9 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 //////
 //////		superInfo_->getFESupervisorInfo(it->first).setStatus(
 //////				state);
-//////		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it->first << " is in FSM state " << state << std::endl;
+//////		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it->first << " is in FSM state " << state << "     ";
 //////		//it->write(1,0);
-//////		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << std::endl;
+//////		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 //////
 //////	}
 //////	it = superConfiguration_->getARTDAQFEDescriptors().begin();
@@ -198,8 +198,8 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 //////		//		send(it->second,"StateMachineStateRequest");
 //////		superInfo_->getARTDAQFESupervisorInfo(it->first).setStatus(
 //////				state);
-//////		mf::LogDebug(__FILE__)<< "PixelARTDAQFESupervisor instance " << it->first << " is in FSM state " << state << std::endl;
-//////		mf::LogDebug(__FILE__)<< "Look! Here's a ARTDAQFE! @@@" << std::endl;
+//////		mf::LogDebug(__FILE__)<< "PixelARTDAQFESupervisor instance " << it->first << " is in FSM state " << state << "     ";
+//////		mf::LogDebug(__FILE__)<< "Look! Here's a ARTDAQFE! @@@" << "     ";
 //////	}
 ////
 //////	//example
@@ -219,19 +219,19 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 ////	std::string readValue = "";
 ////	for(unsigned int i=0;i<theFEInterfacesManager_->theFEInterfaces_.size();++i)
 ////	{
-////		mf::LogDebug(__FILE__)<< "Interface: " << i << std::endl;
+////		mf::LogDebug(__FILE__)<< "Interface: " << i << "     ";
 ////
 ////		std::string FEType = theFEInterfacesManager_->theFEInterfaces_[i]->getFEType();
 ////
 ////		if (FEType == "OtsUDPHardware"){
-////			mf::LogDebug(__FILE__)<< "Type: " << FEType << std::endl;
+////			mf::LogDebug(__FILE__)<< "Type: " << FEType << "     ";
 ////			((FEZEDRyanInterface *)(theFEInterfacesManager_->theFEInterfaces_[i]))->interfaceWrite(0x000000064, writeValue);
 ////			((FEZEDRyanInterface *)(theFEInterfacesManager_->theFEInterfaces_[i]))->interfaceRead(0x000000064, readValue);
 ////		}
 ////		else
-////			mf::LogDebug(__FILE__)<< "FE type not recognized" << std::endl;
+////			mf::LogDebug(__FILE__)<< "FE type not recognized" << "     ";
 ////
-////		mf::LogDebug(__FILE__)<< "Name: " << theFEInterfacesManager_->theFEInterfaces_[i]->getFEName() << std::endl;
+////		mf::LogDebug(__FILE__)<< "Name: " << theFEInterfacesManager_->theFEInterfaces_[i]->getFEName() << "     ";
 ////
 ////		mf::LogDebug(__FILE__) <<"\tReading message:-";
 ////
@@ -240,13 +240,13 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 ////			printf("%2.2X",(unsigned char)readValue[i]);
 ////			//mf::LogDebug(__FILE__) << std::hex << (int16_t)readValue[i] << "-";
 ////
-////		mf::LogDebug(__FILE__) << std::dec << std::endl;
+////		mf::LogDebug(__FILE__) << std::dec << "     ";
 ////		mywriteval = 0;
 ////		memcpy(&mywriteval,&readValue[2],4);
 ////
 ////		mf::LogDebug(__FILE__) <<"\tReading value:-";
 ////		printf("0x%16.16lX",mywriteval);
-////		mf::LogDebug(__FILE__) <<  std::endl;
+////		mf::LogDebug(__FILE__) <<  "     ";
 ////	}
 //}
 //
@@ -262,7 +262,7 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
-	mf::LogDebug(__FILE__) << "Getting FE list!!!!!!!!!" << std::endl;
+	mf::LogDebug(__FILE__) << "Getting FE list!!!!!!!!!" << "     ";
 
 	SOAPParameters parameters; //params for xoap to send
 	parameters.addParameter("Request", "GetInterfaces");
@@ -274,14 +274,14 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
 
 	mf::LogDebug(__FILE__)<< "PixelFESupervisor instance size " <<
-			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
+			theSupervisorsConfiguration_.getFEDescriptors().size() << "     ";
 
 	//loop through each front end, and send xoap request for front end list
 	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
 	{
 		mf::LogDebug(__FILE__)<< "PixelFESupervisor instance " << it->first <<
-				"...and..." << it->second << std::endl;
-		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << std::endl;
+				"...and..." << it->second << "     ";
+		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 
 		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
 				it->second,
@@ -292,14 +292,14 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		std::string retMsgFEList = retParameters.getValue("FEList");
 
 		mf::LogDebug(__FILE__)<< "FE List received : " <<
-				retMsgFEList << std::endl;
+				retMsgFEList << "     ";
 
 		std::istringstream f(retMsgFEList);
 		std::string oneInterface;
 		while (std::getline(f, oneInterface)){
 			std::stringstream buffer;
 			buffer << oneInterface.substr(0,oneInterface.rfind(":")+1)
-				   << std::to_string(it->first) << oneInterface.substr(oneInterface.rfind(":"),oneInterface.length())<< std::endl;
+				   << std::to_string(it->first) << oneInterface.substr(oneInterface.rfind(":"),oneInterface.length())<< "     ";
 			interfaceList.push_back(buffer.str());
 		    xmldoc.addTextElementToData("FE", buffer.str());
 		}
@@ -309,7 +309,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-	mf::LogDebug(__FILE__) << "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
+	mf::LogDebug(__FILE__) << "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << "     ";
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string Data = CgiDataUtilities::getData(cgi, "Data");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
@@ -320,10 +320,10 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 		parameters.addParameter("Address",Address);
 		parameters.addParameter("Data",Data);
 
-		mf::LogDebug(__FILE__) << "Address: " << Address << " Data: " << Data << std::endl;
+		mf::LogDebug(__FILE__) << "Address: " << Address << " Data: " << Data << "     ";
 
 	mf::LogDebug(__FILE__) <<"Here comes the array from multiselect box for WRITE, behold: "
-			<< supervisorIndexArray << interfaceIndexArray <<std::endl;
+			<< supervisorIndexArray << interfaceIndexArray <<"     ";
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
@@ -345,13 +345,13 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
     	parameters.addParameter("InterfaceIndex",interfaceIndex);
 
-	    mf::LogDebug(__FILE__) <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-	    mf::LogDebug(__FILE__) <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+	    mf::LogDebug(__FILE__) <<"The index of the supervisor instance is: " << FEIndex << "     ";
+	    mf::LogDebug(__FILE__) <<"...and the index of the interface is: " << interfaceIndex << "     ";
 
 	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
         if (it == FESupervisors.end())
 	    {
-			mf::LogDebug(__FILE__) << "ERROR!? FE Index doesn't exist" << std::endl;
+			mf::LogDebug(__FILE__) << "ERROR!? FE Index doesn't exist" << "     ";
 			return;
 	    }
 
@@ -367,7 +367,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//			//Selected FE Descriptor,
 	//			//Request Test Name,
 	//			//Parameters
-	//	mf::LogDebug(__FILE__) << std::endl;
+	//	
 
 	//
 	//
@@ -375,9 +375,9 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//	std::string addressFormat = CgiDataUtilities::getData(cgi, "addressFormat");
 	//	int addressFormatIndex = std::stoi(addressFormat);
 	//
-	//	mf::LogDebug(__FILE__) << "Raw address from server: " << Address << std::endl;
-	//	mf::LogDebug(__FILE__) << "Raw data from server: " << Data << std::endl;
-	//	mf::LogDebug(__FILE__) << "Format: " << addressFormatIndex << std::endl;
+	//	mf::LogDebug(__FILE__) << "Raw address from server: " << Address << "     ";
+	//	mf::LogDebug(__FILE__) << "Raw data from server: " << Data << "     ";
+	//	mf::LogDebug(__FILE__) << "Format: " << addressFormatIndex << "     ";
 	//
 	//	std::uint64_t addr;
 	//	if (addressFormatIndex == 1)
@@ -386,7 +386,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//		std::stringstream ss;
 	//		ss.str(Address);
 	//		ss >> std::hex >> addr;
-	//		mf::LogDebug(__FILE__) << "I am in if" << std::endl;
+	//		mf::LogDebug(__FILE__) << "I am in if" << "     ";
 	//
 	//	  }
 	//	else
@@ -398,10 +398,10 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//		std::string s(Address);
 	//		std::stringstream strm(s);
 	//		strm >> std::hex >> addr;
-	//		mf::LogDebug(__FILE__) << "I am in else" << std::endl;
+	//		mf::LogDebug(__FILE__) << "I am in else" << "     ";
 	//	}
 	//
-	//	mf::LogDebug(__FILE__) << "Address sending to ZEDRyan: " << addr << std::endl;
+	//	mf::LogDebug(__FILE__) << "Address sending to ZEDRyan: " << addr << "     ";
 	//
 	//	//Converting Data to uint64_t
 	//	    std::stringstream stream(Data);
@@ -415,12 +415,12 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	//
 	//	mf::LogDebug(__FILE__) <<"\tValue written by user:-";
 	//	printf("0x%16.16lX",mywriteval);
-	//	mf::LogDebug(__FILE__) << std::endl;
+	//	
 }
 
 void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-	mf::LogDebug(__FILE__) << "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
+	mf::LogDebug(__FILE__) << "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << "     ";
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
@@ -432,7 +432,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	SOAPParameters retParameters;
     retParameters.addParameter("dataResult");
 	mf::LogDebug(__FILE__) <<"Here comes the array from multiselect box for READ, behold: "
-			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
+			<< supervisorIndexArray << "," << interfaceIndexArray << "     ";
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
@@ -443,13 +443,13 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
 	parameters.addParameter("InterfaceIndex",interfaceIndex);
 
-	mf::LogDebug(__FILE__) <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-	mf::LogDebug(__FILE__) <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+	mf::LogDebug(__FILE__) <<"The index of the supervisor instance is: " << FEIndex << "     ";
+	mf::LogDebug(__FILE__) <<"...and the index of the interface is: " << interfaceIndex << "     ";
 
 	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
 	if (it == FESupervisors.end())
 	{
-		mf::LogDebug(__FILE__) << "ERROR!? FE Index doesn't exist" << std::endl;
+		mf::LogDebug(__FILE__) << "ERROR!? FE Index doesn't exist" << "     ";
 		return;
 	}
 
@@ -462,7 +462,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string dataReadReturnMsg = retParameters.getValue("dataResult");
 	//Why is the thing above not working??
 	//std::string dataReadReturnMsg = "123456";
-	mf::LogDebug(__FILE__) << "Data reading result received: " << dataReadReturnMsg << std::endl;
+	mf::LogDebug(__FILE__) << "Data reading result received: " << dataReadReturnMsg << "     ";
 	xmldoc.addTextElementToData("readData",dataReadReturnMsg);
 
 
@@ -482,7 +482,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 ////		strm >> std::hex >> addr;
 ////    }
 ////
-////	mf::LogDebug(__FILE__) << "Address sending to ZEDRyan: " << addr << std::endl;
+////	mf::LogDebug(__FILE__) << "Address sending to ZEDRyan: " << addr << "     ";
 ////
 ////	std::string readValue = "";
 ////	for(unsigned int i=0;i<theFEInterfacesManager_->theFEInterfaces_.size();++i)
@@ -494,7 +494,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 ////			for(uint32_t i=0; i<readValue.size(); i++)
 ////				printf("%2.2X",(unsigned char)readValue[i]);
 ////
-////			mf::LogDebug(__FILE__) << std::dec << std::endl;
+////			mf::LogDebug(__FILE__) << std::dec << "     ";
 ////	std::uint64_t myreadval = 0;
 ////	memcpy(&myreadval,&readValue[2],4);
 ////
@@ -506,7 +506,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 ////
 ////	mf::LogDebug(__FILE__) <<"\tReading value from readData:-";
 ////	printf(toJS,"0x%16.16lX",myreadval);
-////	mf::LogDebug(__FILE__) <<  std::endl;
+////	mf::LogDebug(__FILE__) <<  "     ";
 //
 }
 //
