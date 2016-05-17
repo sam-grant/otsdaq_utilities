@@ -67,37 +67,24 @@ void OtsConfigurationWizardSupervisor::generateURL()
     	securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
     }
 
+    std::thread([&](){printURL();}).detach();
 
-	//////////////////////////////////////////////////////////////////////
-	//display otsdaq main url for user convenience (e.g. for 10 seconds)
-	pid_t pid = fork();
-	if (pid == 0)
-	{
+    return;
+}
+
+void OtsConfigurationWizardSupervisor::printURL()
+{
+  INIT_MF("ConfigurationWizard");
 		// child process
 		int i = 0;
 		for (; i < 5; ++i)
 		{
 			std::this_thread::sleep_for (std::chrono::seconds(2));
-			mf::LogDebug(__FILE__) << __COUT_HDR_P__ << "******************************************************************** " << "     ";
-			mf::LogDebug(__FILE__) << __COUT_HDR_P__ << "******************************************************************** " << "     ";
-			mf::LogDebug(__FILE__) << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
+			mf::LogError(__FILE__) << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
 		  			  << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << "     ";
-			mf::LogDebug(__FILE__) << __COUT_HDR_P__ << "******************************************************************** " << "     ";
-			mf::LogDebug(__FILE__) << __COUT_HDR_P__ << "******************************************************************** " << "     ";
 		}
-		_Exit(0); //done, exit child
-	}
-	else if (pid < 0)
-	{
-		// fork failed
-		mf::LogDebug(__FILE__) << "fork() failed!" << "     ";
-		exit(0);
-	}
-	//parent process continues
-	//////////////////////////////////////////////////////////////////////
-
-    return;
 }
+
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::destroy(void)
 {
