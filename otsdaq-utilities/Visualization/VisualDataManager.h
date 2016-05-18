@@ -24,10 +24,7 @@ public:
     virtual ~VisualDataManager(void);
 
 
-    //void configure(void);
-    void halt     (void);
-    void start    (std::string runNumber);
-    void stop     (void);
+    void configure(void);
 
 
     void load(std::string fileName, std::string type);
