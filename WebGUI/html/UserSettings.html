@@ -649,6 +649,8 @@
 				
 				_settingsLayoutMailbox.innerHTML = "";
 				if(_selectedLayout > 0) { //if selected, then get current layout from mailbox
+
+					Debug.log("_selectedLayout " + _selectedLayout);
 					_mailbox.innerHTML = "LAYOUT";  
 					setTimeout(checkSettingsMailbox,500);
 					return;
@@ -828,13 +830,13 @@
 		</td></table>
 		<h3>Desktop Window Arrangement Presets:</h3>		
 		<div id='windLayoutDiv'>
-		<a href='Javascript:setLayout(1,event); return false;' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as Preset-1</li></a>		
+		<a href='Javascript:setLayout(1,event)' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as Preset-1</li></a>		
 		<div class='winLayoutText' id='winLayoutText1'></div>
 		<br>
-		<a href='Javascript:setLayout(2,event); return false;' class='winLayoutLink' id='winLayoutLink2'><li>Set Current Window Layout as Preset-2</li></a>		
+		<a href='Javascript:setLayout(2,event)' class='winLayoutLink' id='winLayoutLink2'><li>Set Current Window Layout as Preset-2</li></a>		
 		<div class='winLayoutText' id='winLayoutText2'></div>
 		<br>
-		<a href='Javascript:setLayout(3,event); return false;' class='winLayoutLink' id='winLayoutLink3'><li>Set Current Window Layout as Preset-3</li></a>		
+		<a href='Javascript:setLayout(3,event)' class='winLayoutLink' id='winLayoutLink3'><li>Set Current Window Layout as Preset-3</li></a>		
 		<div class='winLayoutText' id='winLayoutText3'></div>
 		</div>
 		
