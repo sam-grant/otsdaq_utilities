@@ -30,6 +30,7 @@
 		macrobox = document.getElementById('listOfMacros');
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
+		loadExistingMacros();
 	}
 	
 	//Handling window resizing
@@ -86,9 +87,9 @@
 		block7El.style.width =  b7[2] + "px";
 		block7El.style.height =  b7[3] + "px";
 		
-		historybox.style.height =  h*0.9 + "px";
-		sequencebox.style.height =  h*0.9 + "px";
-		macrobox.style.height =  h*0.45 + "px";
+		historybox.style.height =  h*0.88 + "px";
+		sequencebox.style.height =  h*0.88 + "px";
+		macrobox.style.height =  h*0.40 + "px";
 	}
 			 
 	function FElistHandlerFunction(req) 
@@ -218,7 +219,7 @@
 					+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
 			contentEl.innerHTML += update;
 			DIVINDEX++;
-			updateScroll();
+			contentEl.scrollTop = contentEl.scrollHeight;
 			reminderEl.innerHTML = "Data successfully written!";
 		}
     }
@@ -301,15 +302,9 @@
 				+ "</b> from register [" + addressFormatStr + "]<b>" + addressStr + LSBchecker() + "</b></div>";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
-		updateScroll();
+		contentEl.scrollTop = contentEl.scrollHeight;
 		reminderEl.innerHTML = "Data read: " + convertedOutput;
 	}
-    
-    function updateScroll()
-    {
-        var element = document.getElementById("historyContent");
-        element.scrollTop = element.scrollHeight;
-    }
     
     function isArrayAllZero(arr)
     {
@@ -470,8 +465,7 @@
 		}
 		contentEl.innerHTML += update;
 		SEQINDEX++;
-		var element = document.getElementById("sequenceContent");
-		element.scrollTop = element.scrollHeight;
+		contentEl.scrollTop = contentEl.scrollHeight;
     }
    
     function removeCommand(seqIndex)
@@ -513,20 +507,19 @@
     	var macroName = document.getElementById("macroName").value;
     	var macroNotes = document.getElementById("macroNotes").value;
     	var macroLibEl = document.getElementById('listOfMacros');
-    	stringOfAllMacros.push(macroString);
+    	stringOfAllMacros[MACROINDEX] = macroString;
     	console.log(stringOfAllMacros);
-//    	var newMacro = "<div title='Sequence: " + macroString + "\nNotes: "
-//    			+ macroNotes + "\nCreated: " + Date().toString()
-//				+ "' onclick='runMacro(stringOfAllMacros[" + MACROINDEX + "])'>" + macroName + "</br></div>"; 
-    	var newMacro = "<div title='Sequence: " + macroString + "\nNotes: "
-    	 			+ macroNotes + "\nCreated: " + Date().toString()
-					+ "' class='macroDiv' onclick='runMacro(stringOfAllMacros[" + MACROINDEX + "])'><b>" + macroName + "</b></br></div>"; 
-    	macroLibEl.innerHTML += newMacro;
-    	MACROINDEX++;
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&Name="+macroName+
+    				"&Sequence="+macroString+"&Time="+Date().toString()+"&Notes="+macroNotes,"",createMacroHandlerFunction);
+    	loadExistingMacros();
     	hidePopup();
-    	var element = document.getElementById("listOfMacros");
-    	element.scrollTop = element.scrollHeight;
+    	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight;
     }
+    
+    function createMacroHandlerFunction(req)
+	{
+		Debug.log("createMacroHandlerFunction() was called. Req: " + req.responseText);
+	}
     
     function runMacro(stringOfCommands)
     {
@@ -536,11 +529,49 @@
     	{
     		var Command = stringOfCommands[i].split(":")
     		var commandType = Command[1];
-    		if(commandType=='w')
+    		if(commandType=='w'){
     			callWrite(Command[2],Command[3]);
-    		else if(commandType=='r')
+    		    console.log("write "+Command[3]+" into "+Command[2]);
+    		}else if(commandType=='r'){
 				callRead(Command[2]);
-    		else 
-    			console.log("delay");
+    		    console.log("read from "+Command[2]);
+    		}else if(commandType=='d')
+    			console.log("delay "+Command[2]+"ms");
+    		else
+    			console.log("ERROR! Command type "+commandType+" not found");
     	}
     }
+    
+    function loadExistingMacros()
+    {
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadMacros","",loadingHandlerFunction);
+    }
+    
+    function loadingHandlerFunction(req)
+    {
+    	Debug.log("loadingHandlerFunction() was called. Req: " + req.responseText);
+    	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
+    	if (hugeStringOfMacros.length > 0)
+    	{
+			var macrosArray = hugeStringOfMacros.split("@");
+			var out = "";
+			for(var i = 0; i < macrosArray.length; i++) 
+			{
+				var arr = JSON.parse(macrosArray[i]);
+				console.log(arr);
+				var macroString = arr.sequence.split(",");
+				stringOfAllMacros[MACROINDEX] = macroString;
+				out += "<div title='Sequence: " + arr.sequence + "\nNotes: "
+						+ arr.notes + "\nCreated: " + arr.time
+						+ "\' class='macroDiv' onclick='runMacro(stringOfAllMacros[" 
+						+ MACROINDEX + "])'><b>" + arr.name + "</b></br></div>"; 
+		//			out += "<div id='" + arr.name + MACROINDEX + "' title='Sequence: " + arr.sequence + "\nNotes: "
+		//					+ arr.notes + "\nCreated: " + arr.time
+		//					+ "\' class='macroDiv' onclick='makeActive(" 
+		//					+ arr.name + MACROINDEX + ")'><b>" + arr.name + "</b></br></div>"; 
+				MACROINDEX++;
+			}
+			document.getElementById("listOfMacros").innerHTML = out;
+    	}
+    }
+    

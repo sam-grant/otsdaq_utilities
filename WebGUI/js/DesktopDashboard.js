@@ -71,12 +71,15 @@ else {
 		//------------------------------------------------------------------
         var _toggleWindowDashboard = function(event) {        	
             _displayWindowDashboard = !_displayWindowDashboard;
-            
-            //update browser url so refresh will give same desktop experience
-            var newURL = "/urn:xdaq-application:lid="+urnLid+"#"+
-            		(_displayWindowDashboard?"0":"1"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
-            window.parent.window.history.replaceState('ots', 'ots', newURL);            
-            
+            	
+			if(!Desktop.isWizardMode()) 
+			{	//only update url if not in --config
+				//update browser url so refresh will give same desktop experience
+				var newURL = "/urn:xdaq-application:lid="+urnLid+"#"+
+						(_displayWindowDashboard?"0":"1"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
+				window.parent.window.history.replaceState('ots', 'ots', newURL);            
+			}
+			
             _windowDashboard.style.display = _displayWindowDashboard?"inline":"none";
             Desktop.desktop.redrawDesktop();
         }

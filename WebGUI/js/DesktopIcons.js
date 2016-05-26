@@ -86,16 +86,13 @@ else {
             _permissions = permissions;
             ////////////
 
-	    	Debug.log("Desktop Security: " + Desktop.desktop.security);
-	    	
-		    if(!Desktop.desktop.security || 
-		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
-					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+
+			if(!Desktop.isWizardMode()) 
 		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
 		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
 		    	return;
 	      	}
-		    else //unknown security, assume it is the sequence for OtsWizardConfiguration
+		    else //it is the sequence for OtsWizardConfiguration
 			{
 		    	Debug.log("OtsWizardConfiguration");
 		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.security, iconRequestHandler);
@@ -110,15 +107,14 @@ else {
       	var iconRequestHandler = function(req) {
 
       		var iconArray;
-		    if(!Desktop.desktop.security || 
-		    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
-					Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) 
+
+			if(!Desktop.isWizardMode()) 
 		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
 		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
 				//Debug.log("icon Array unsplit: " + iconArray);
 				iconArray = iconArray.split(","); 
 			}
-      		else
+      		else //it is the wizard
       		{ 
       			iconArray = req.responseText.split(","); 
       		}

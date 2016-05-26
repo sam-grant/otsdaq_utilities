@@ -9,14 +9,16 @@
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
 
-
 #include <xdaq/NamespaceURI.h>
 #include <string>
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
+
+#define MACROS_DB_PATH 					"otsdaq_demo/NoGitData/ServiceData/LoginData/UsersData/MacroData/"
 
 using namespace ots;
 
@@ -44,8 +46,7 @@ theRemoteWebUsers_(this)
 				"...and..." << it->second << "     ";
 		mf::LogDebug(__FILE__)<< "Look! Here's a FE! @@@" << "     ";
 	}
-
-
+	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 //	//getARTDAQFEDescriptors
 //	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
 //	{
@@ -258,6 +259,10 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		writeData(xmldoc,cgi);
 	else if(Command == "readData")
 		readData(xmldoc,cgi);
+	else if(Command == "createMacro")
+		createMacro(xmldoc,cgi);
+	else if(Command == "loadMacros")
+		loadMacros(xmldoc);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -509,8 +514,68 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 ////	mf::LogDebug(__FILE__) <<  "     ";
 //
 }
-//
-//
-//
+void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	mf::LogDebug(__FILE__) << "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << "     ";
+	std::string Name = CgiDataUtilities::getData(cgi, "Name");
+	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
+	std::string Time = CgiDataUtilities::getData(cgi, "Time");
+	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
 
+	mf::LogDebug(__FILE__) << MACROS_DB_PATH << "     ";
 
+	std::string fileName = Name + ".dat";
+	std::string fullPath = (std::string)MACROS_DB_PATH + fileName;
+	std::cout << fullPath << std::endl;
+	std::ofstream macrofile (fullPath.c_str());
+	if (macrofile.is_open())
+	{
+		macrofile << "{\n";
+		macrofile << "\"name\":\"" << Name << "\",\n";
+		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
+		macrofile << "\"time\":\"" << Time << "\",\n";
+		macrofile << "\"notes\":\"" << Notes << "\"\n";
+		macrofile << "}@" << std::endl;
+		macrofile.close();
+	}
+	else
+		mf::LogDebug(__FILE__) << "Unable to open file" << "     ";
+}
+
+void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
+{
+	DIR *dir;
+	struct dirent *ent;
+	std::string returnStr = "";
+	if ((dir = opendir (MACROS_DB_PATH)) != NULL)
+	{
+	  /* print all the files and directories within directory */
+		while ((ent = readdir (dir)) != NULL)
+		{
+		/* File name validation check */
+			if ((unsigned)strlen(ent->d_name) > 4)
+			{
+				std::string line;
+				std::ifstream read (((MACROS_DB_PATH + (std::string)ent->d_name)).c_str());//reading a file
+				  if (read.is_open())
+				  {
+					  std::stringstream buffer;
+					  while (! read.eof() )
+					  {
+						  getline (read,line);
+						  buffer << line;
+					  }
+					  returnStr += buffer.str();
+					  read.close();
+				  }
+				  else
+					  mf::LogDebug(__FILE__) << "Unable to open file" << "     ";
+			}
+		}
+		mf::LogDebug(__FILE__) << "New macro created: " << returnStr.substr(0, returnStr.size()-1) << "     ";
+		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
+		closedir (dir);
+		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
+	}
+	else mf::LogDebug(__FILE__) << "Looping through MacroData folder failed! Wrong directory" << "     ";
+}

@@ -55,11 +55,13 @@
 		
 		#historyContent {
 			overflow:scroll;
+			overflow-x: hidden;
 			padding:5px;
 		}
 		
 		#macroLib {
 		    padding:5px;
+		    margin-bottom:5px;
 		}
 		
 		#instruction {
@@ -73,11 +75,13 @@
 		
 		#sequenceContent {
 			overflow:scroll;
+			overflow-x: hidden;
 			padding:5px;
 		}
 		
 		#listOfMacros {
 			overflow:scroll;
+			overflow-x: hidden;
 			padding:5px;
 			margin: 0 10px 20px 0;
 		}
@@ -226,8 +230,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
-		
-		
+	
 	</head>
 
 
@@ -240,7 +243,7 @@
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			<div id="listOfMacros"><b>Click a Macro to run it.</b></div>
+			<div id="listOfMacros"></div>
 		</div>
 		
 		<div class='mainBlock' id='sequence'>
