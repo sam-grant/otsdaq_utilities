@@ -117,12 +117,12 @@ void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output
     std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
     if(securityCode_.compare(submittedSequence) != 0)
     {
-    	mf::LogDebug(__FILE__) << "Unauthorized Request made, security sequence doesn't match!" << "     ";
+    	std::cout << __COUT_HDR_FL__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
     	return;
     }
     else
     {
-    	mf::LogDebug(__FILE__) << "***Successfully authenticated security sequence." << "     ";
+    	std::cout << __COUT_HDR_FL__ << "***Successfully authenticated security sequence." << std::endl;
     }
 
     //an icon is 6 fields.. give comma-separated
@@ -154,19 +154,19 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
     //Security Check ================
     if(securityCode_ != submittedSequence)
     {
-    	mf::LogDebug(__FILE__) << "Unauthorized Request made, security sequence doesn't match!" << "     ";
+    	std::cout << __COUT_HDR_FL__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
     	return;
     }
     //Security Check complete ================
 
-    mf::LogDebug(__FILE__) << "***Successfully authenticated security sequence." << "     ";
+    std::cout << __COUT_HDR_FL__ << "***Successfully authenticated security sequence." << std::endl;
 
 
 
     if(submittedIconList != "")
     {
-    	mf::LogDebug(__FILE__) << "Icon List exists!" << "     ";
-    	mf::LogDebug(__FILE__) << submittedIconList << "     ";
+    	std::cout << __COUT_HDR_FL__ << "Icon List exists!" << std::endl;
+    	std::cout << __COUT_HDR_FL__ << submittedIconList << std::endl;
 
     	std::ofstream writeIconFile;
 
@@ -174,7 +174,7 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
         if(writeIconFile.is_open())
         	writeIconFile << submittedIconList;
         else
-        	mf::LogDebug(__FILE__) << "Error writing file!" << "     ";
+        	std::cout << __COUT_HDR_FL__ << "Error writing file!" << std::endl;
 
 
         writeIconFile.close();
@@ -191,19 +191,19 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 
     if(!iconFile)
     {
-		mf::LogDebug(__FILE__)<<"Error opening file: "<< iconFileName << "     ";
+		std::cout << __COUT_HDR_FL__<<"Error opening file: "<< iconFileName << std::endl;
 		system("pause");
 		return;
     }
     if(iconFile.is_open())
     {
-    	mf::LogDebug(__FILE__) << "Opened File: " << iconFileName << "     ";
+    	std::cout << __COUT_HDR_FL__ << "Opened File: " << iconFileName << std::endl;
         while(std::getline(iconFile, line))
     	{
     		iconList += line;
     		lineNumber++;
     	}
-    	//mf::LogDebug(__FILE__) << std::to_string(lineNumber) << ":" << iconList << "     ";
+    	//std::cout << __COUT_HDR_FL__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
 
     	//Close file
         iconFile.close();
@@ -228,12 +228,12 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		mf::LogDebug(__FILE__) << "Unauthorized Request made, security sequence doesn't match!" << "     ";
+		std::cout << __COUT_HDR_FL__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 		return;
 	}
 	else
 	{
-		mf::LogDebug(__FILE__) << "***Successfully authenticated security sequence." << "     ";
+		std::cout << __COUT_HDR_FL__ << "***Successfully authenticated security sequence." << std::endl;
 	}
 	//SECURITY CHECK END ****
 
@@ -241,8 +241,8 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 
 	if(submittedSecurity != "")
 	{
-		mf::LogDebug(__FILE__) << "Selection exists!" << "     ";
-		mf::LogDebug(__FILE__) <<  submittedSecurity << "     ";
+		std::cout << __COUT_HDR_FL__ << "Selection exists!" << std::endl;
+		std::cout << __COUT_HDR_FL__ <<  submittedSecurity << std::endl;
 
 		if (strcmp(submittedSecurity.c_str(), "ResetSecurityUserData") == 0)
 		{
@@ -256,7 +256,7 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 			if(writeSecurityFile.is_open())
 				writeSecurityFile << submittedSecurity;
 			else
-				mf::LogDebug(__FILE__) << "Error writing file!" << "     ";
+				std::cout << __COUT_HDR_FL__ << "Error writing file!" << std::endl;
 
 			writeSecurityFile.close();
 		}
@@ -273,19 +273,19 @@ void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output
 
 	if(!securityFile)
 	{
-		mf::LogDebug(__FILE__)<<"Error opening file: "<< securityFileName << "     ";
+		std::cout << __COUT_HDR_FL__<<"Error opening file: "<< securityFileName << std::endl;
 		system("pause");
 		return;
 	}
 	if(securityFile.is_open())
 	{
-		mf::LogDebug(__FILE__) << "Opened File: " << securityFileName << "     ";
+		std::cout << __COUT_HDR_FL__ << "Opened File: " << securityFileName << std::endl;
 		while(std::getline(securityFile, line))
 		{
 			security += line;
 			lineNumber++;
 		}
-		//mf::LogDebug(__FILE__) << std::to_string(lineNumber) << ":" << iconList << "     ";
+		//std::cout << __COUT_HDR_FL__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
 
 		//Close file
 		securityFile.close();
