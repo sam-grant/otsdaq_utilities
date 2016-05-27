@@ -330,7 +330,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 		std::cout << __COUT_HDR_FL__ << "Address: " << Address << " Data: " << Data << std::endl;
 
 	std::cout << __COUT_HDR_FL__ <<"Here comes the array from multiselect box for WRITE, behold: "
-			<< supervisorIndexArray << interfaceIndexArray <<"     ";
+			<< supervisorIndexArray << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
@@ -439,19 +439,18 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	SOAPParameters retParameters;
     retParameters.addParameter("dataResult");
 	std::cout << __COUT_HDR_FL__ <<"Here comes the array from multiselect box for READ, behold: "
-			<< supervisorIndexArray << "," << interfaceIndexArray << "     ";
+			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
 
 	unsigned int FEIndex = stoi(supervisorIndexArray);
-	unsigned int interfaceIndex = stoi(interfaceIndexArray);
 
 
-	parameters.addParameter("InterfaceIndex",interfaceIndex);
+	parameters.addParameter("InterfaceID",interfaceIndexArray);
 
 	std::cout << __COUT_HDR_FL__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-	std::cout << __COUT_HDR_FL__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+	std::cout << __COUT_HDR_FL__ <<"...and the interface ID is: " << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
 	if (it == FESupervisors.end())
