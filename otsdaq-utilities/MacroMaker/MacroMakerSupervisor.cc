@@ -335,10 +335,10 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
 	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
-	std::vector<int> interfaceIndices;
+	std::vector<std::string> interfaceIndices;
 	std::istringstream f(interfaceIndexArray);
 	std::string s;
-	while (getline(f, s, ',')) interfaceIndices.push_back(std::stoi(s));
+	while (getline(f, s, ',')) interfaceIndices.push_back(s);
 	std::vector<int> supervisorIndices;
 	std::istringstream g(supervisorIndexArray);
 	std::string t;
@@ -348,12 +348,12 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
     for(unsigned int i=0; i < supervisorIndices.size(); i++)
     {
     	unsigned int FEIndex = supervisorIndices[i];
-    	unsigned int interfaceIndex = interfaceIndices[i];
+    	std::string interfaceIndex = interfaceIndices[i];
 
-    	parameters.addParameter("InterfaceIndex",interfaceIndex);
+    	parameters.addParameter("InterfaceID",interfaceIndex);
 
 	    std::cout << __COUT_HDR_FL__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-	    std::cout << __COUT_HDR_FL__ <<"...and the index of the interface is: " << interfaceIndex << std::endl;
+	    std::cout << __COUT_HDR_FL__ <<"...and the interface ID is: " << interfaceIndex << std::endl;
 
 	    SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
         if (it == FESupervisors.end())
@@ -443,33 +443,44 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
 	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
 
+	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
+	std::vector<std::string> interfaceIndices;
+	std::istringstream f(interfaceIndexArray);
+	std::string s;
+	while (getline(f, s, ',')) interfaceIndices.push_back(s);
+	std::vector<int> supervisorIndices;
+	std::istringstream g(supervisorIndexArray);
+	std::string t;
+	while (getline(g, t, ',')) supervisorIndices.push_back(std::stoi(t));
 
-	unsigned int FEIndex = stoi(supervisorIndexArray);
-
-
-	parameters.addParameter("InterfaceID",interfaceIndexArray);
-
-	std::cout << __COUT_HDR_FL__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
-	std::cout << __COUT_HDR_FL__ <<"...and the interface ID is: " << interfaceIndexArray << std::endl;
-
-	SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-	if (it == FESupervisors.end())
+	for(unsigned int i=0; i < supervisorIndices.size(); i++)
 	{
-		std::cout << __COUT_HDR_FL__ << "ERROR!? FE Index doesn't exist" << std::endl;
-		return;
+		unsigned int FEIndex = supervisorIndices[i];
+		std::string interfaceIndex = interfaceIndices[i];
+
+		parameters.addParameter("InterfaceID",interfaceIndex);
+
+
+		std::cout << __COUT_HDR_FL__ <<"The index of the supervisor instance is: " << FEIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ <<"...and the interface ID is: " << interfaceIndexArray << std::endl;
+
+		SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
+		if (it == FESupervisors.end())
+		{
+			std::cout << __COUT_HDR_FL__ << "ERROR!? FE Index doesn't exist" << std::endl;
+			return;
+		}
+
+		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+				it->second,
+				"MacroMakerSupervisorRequest",
+				parameters);
+
+		receive(retMsg,retParameters);
+		std::string dataReadReturnMsg = retParameters.getValue("dataResult");
+		std::cout << __COUT_HDR_FL__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
+		xmldoc.addTextElementToData("readData",dataReadReturnMsg);
 	}
-
-	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-			it->second,
-			"MacroMakerSupervisorRequest",
-			parameters);
-
-	receive(retMsg,retParameters);
-	std::string dataReadReturnMsg = retParameters.getValue("dataResult");
-	//Why is the thing above not working??
-	//std::string dataReadReturnMsg = "123456";
-	std::cout << __COUT_HDR_FL__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
-	xmldoc.addTextElementToData("readData",dataReadReturnMsg);
 
 
 ////	std::uint64_t addr;
@@ -517,13 +528,13 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 }
 void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
-	mf::LogDebug(__FILE__) << "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << "     ";
+	std::cout << __COUT_HDR_FL__ << "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
 	std::string Name = CgiDataUtilities::getData(cgi, "Name");
 	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
 	std::string Time = CgiDataUtilities::getData(cgi, "Time");
 	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
 
-	mf::LogDebug(__FILE__) << MACROS_DB_PATH << "     ";
+	std::cout << __COUT_HDR_FL__ <<  MACROS_DB_PATH << std::endl;
 
 	std::string fileName = Name + ".dat";
 	std::string fullPath = (std::string)MACROS_DB_PATH + fileName;
@@ -540,7 +551,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 		macrofile.close();
 	}
 	else
-		mf::LogDebug(__FILE__) << "Unable to open file" << "     ";
+		std::cout << __COUT_HDR_FL__ <<  "Unable to open file" << std::endl;
 }
 
 void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
@@ -570,13 +581,13 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					  read.close();
 				  }
 				  else
-					  mf::LogDebug(__FILE__) << "Unable to open file" << "     ";
+					  mf::LogDebug(__FILE__) << "Unable to open file" << std::endl;
 			}
 		}
-		mf::LogDebug(__FILE__) << "New macro created: " << returnStr.substr(0, returnStr.size()-1) << "     ";
+		std::cout << __COUT_HDR_FL__ <<  "New macro created: " << returnStr.substr(0, returnStr.size()-1) << std::endl;
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
 	}
-	else mf::LogDebug(__FILE__) << "Looping through MacroData folder failed! Wrong directory" << "     ";
+	else std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
 }

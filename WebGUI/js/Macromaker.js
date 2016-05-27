@@ -13,6 +13,7 @@
 	var FEELEMENTS = [];
 	var macroString = [];
 	var stringOfAllMacros = [];
+	var theAddressStrForRead = ""; // for callread and its handler
 	
 	function init() 
 	{			
@@ -113,7 +114,7 @@
 			var sp = fullnames[i].split(":");
 			if (sp[0].length < 11) vals[i] = fullnames[i];
 			else{
-				var display = sp[0].substr(0,11)+"...:"+sp[1]+":"+sp[2];
+				var display = sp[0].substr(0,4)+"...:"+sp[1]+":"+sp[2];
 				vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
 			}
 			types[i] = "number";
@@ -238,15 +239,15 @@
 		
 			if (typeof address === 'undefined') 
 			{
-				var addressStr = document.getElementById('addressInput').value.toString();
-				if(addressStr == "") 
+				theAddressStrForRead = document.getElementById('addressInput').value.toString();
+				if(theAddressStrForRead == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to read from";
 					return;
 				}
 			}
 			else
-				var addressStr = address.toString();
+				theAddressStrForRead = address.toString();
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
 			for (var i = 0; i < selected.length; i++) 
@@ -258,7 +259,7 @@
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
 			}
-			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
 			
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="+convertedAddress+
 				"&supervisorIndex="+supervisorIndexArray+"&interfaceIndex="+interfaceIndexArray,"",readHandlerFunction);
@@ -270,7 +271,7 @@
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
     }
     
-    function readHandlerFunction(req,address)
+    function readHandlerFunction(req)
 	{
     	var addressFormat = document.getElementById("addressFormat");
 		var addressFormatStr = addressFormat.value;
@@ -283,11 +284,7 @@
 		var convertedOutput;
 		if (Number(dataOutput)===0) convertedOutput = "<span class='red'>Time out Error</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
-		
-		if (typeof address === 'undefined') 
-		    var addressStr = document.getElementById('addressInput').value;
-		else
-		    var addressStr = address.toString();
+	
 		var selectionStrArray = [];
 		for (var i = 0; i < selected.length; i++) 
 		{
@@ -296,10 +293,17 @@
 		var innerClass = "class=\"innerClass1\"";
 		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
+		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
 		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
 				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
-				+ addressStr + "'" + ")\">Read [" + dataFormatStr + "]<b>" + convertedOutput + LSBchecker()
-				+ "</b> from register [" + addressFormatStr + "]<b>" + addressStr + LSBchecker() + "</b></div>";
+				+ theAddressStrForRead + "'" + ")\">Read [" + dataFormatStr + "]<b>" + convertedOutput + LSBchecker()
+				+ "</b> from register [" + addressFormatStr + "]<b>" + theAddressStrForRead + LSBchecker() + "</b></div>";
+		theAddressStrForRead = "";
 		contentEl.innerHTML += update;
 		DIVINDEX++; 
 		contentEl.scrollTop = contentEl.scrollHeight;
