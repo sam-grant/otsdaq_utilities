@@ -584,7 +584,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					  mf::LogDebug(__FILE__) << "Unable to open file" << std::endl;
 			}
 		}
-		std::cout << __COUT_HDR_FL__ <<  "New macro created: " << returnStr.substr(0, returnStr.size()-1) << std::endl;
+		std::cout << __COUT_HDR_FL__ <<  "Loading existing macros: " << returnStr.substr(0, returnStr.size()-1) << std::endl;
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);

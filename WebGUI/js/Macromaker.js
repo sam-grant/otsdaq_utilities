@@ -1,19 +1,20 @@
 // Created by swu at fnal dot gov
 //  February 2016
 //
-//3 global vars: DIVINDEX, FEELEMENTS and selected
+//3 global vars: CMDHISTDIVINDEX, FEELEMENTS and selected
 	//Function List:
 		//init
 	    //redrawWindow
 		//callWrite
 		//callRead
-	var DIVINDEX = 0;
+	var CMDHISTDIVINDEX = 0;
 	var SEQINDEX = 0;
 	var MACROINDEX = 0;
 	var FEELEMENTS = [];
 	var macroString = [];
 	var stringOfAllMacros = [];
 	var theAddressStrForRead = ""; // for callread and its handler
+	var isOnMacroMakerPage = false;
 	
 	function init() 
 	{			
@@ -189,6 +190,11 @@
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
+			
+			if (addressStr.substr(0,2)=="0x") addressStr = addressStr.substr(2);
+			if (dataStr.substr(0,2)=="0x") dataStr = dataStr.substr(2);
+
+			
 			var selectionStrArray = [];
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
@@ -204,11 +210,13 @@
 			}
 			var contentEl = document.getElementById('historyContent');
 			var innerClass = "class=\"innerClass1\"";
-			if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
+			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
 			
-			var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\"  title=\"" + "Entered: " 
-					+ Date().toString() + "\nSelected interface: " + selectionStrArray + "\" onclick=\"callWrite(" 
-					+ "'" + addressStr + "','" + dataStr + "')\">Write [" + dataFormatStr + "]<b>"
+			
+			var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
+					+ Date().toString() + "\nSelected interface: " + selectionStrArray 
+					+ "\" onclick=\"histCmdWriteDivOnclick(" + "'" + addressStr + "','" + dataStr + "','" 
+					+ addressFormatStr + "','" + dataFormatStr + "')\">Write [" + dataFormatStr + "]<b>"
 					+ dataStr + LSBchecker() + "</b> into register [" + addressFormatStr + "]<b> " 
 					+ addressStr + LSBchecker() + "</b></div>";
 			
@@ -219,7 +227,7 @@
 					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray,"",writeHandlerFunction);
 			contentEl.innerHTML += update;
-			DIVINDEX++;
+			CMDHISTDIVINDEX++;
 			contentEl.scrollTop = contentEl.scrollHeight;
 			reminderEl.innerHTML = "Data successfully written!";
 		}
@@ -248,6 +256,9 @@
 			}
 			else
 				theAddressStrForRead = address.toString();
+			
+			if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
+			
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
 			for (var i = 0; i < selected.length; i++) 
@@ -291,21 +302,18 @@
 			if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
 		}
 		var innerClass = "class=\"innerClass1\"";
-		if (DIVINDEX%2) innerClass = "class=\"innerClass2\"";
+		if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
 		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
-		var update = "<div " + innerClass + " id = \"" + DIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
-				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"callRead(" +"'" 
-				+ theAddressStrForRead + "'" + ")\">Read [" + dataFormatStr + "]<b>" + convertedOutput + LSBchecker()
+
+		var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdReadDivOnclick(" +"'" 
+				+ theAddressStrForRead + "','" + addressFormatStr + "'" + ")\">Read [" + dataFormatStr + "]<b>" 
+				+ convertedOutput + LSBchecker()
 				+ "</b> from register [" + addressFormatStr + "]<b>" + theAddressStrForRead + LSBchecker() + "</b></div>";
 		theAddressStrForRead = "";
 		contentEl.innerHTML += update;
-		DIVINDEX++; 
+		CMDHISTDIVINDEX++; 
 		contentEl.scrollTop = contentEl.scrollHeight;
 		reminderEl.innerHTML = "Data read: " + convertedOutput;
 	}
@@ -355,18 +363,23 @@
     {
         var addressFormat = document.getElementById("addressFormat");
         var addressFormatStr = addressFormat.value;
+        var macroAddressInputEl = document.getElementById('macroAddressInput');
+
         switch (addressFormatStr) {
           case "hex":
             document.getElementById("lsbFirst").checked = true;
             document.getElementById("lsbFirst").disabled = false;
+            macroAddressInputEl.setAttribute("placeholder", "0x64");
             break;
           case "dec":
             document.getElementById("lsbFirst").checked = false;
             document.getElementById("lsbFirst").disabled = true;
+            macroAddressInputEl.setAttribute("placeholder", "1234");
             break;
           case "ascii":
             document.getElementById("lsbFirst").checked = false;
             document.getElementById("lsbFirst").disabled = false;
+            macroAddressInputEl.setAttribute("placeholder", "Hi");
             break;
         }
     }
@@ -401,6 +414,7 @@
     	 var makerEl = document.getElementById("maker");
     	 
     	 if (onMacro) {
+    		 isOnMacroMakerPage = true;
     		 fecListEl.style.display = "none";
     		 macroLibEl.style.display = "none";
     		 sequenceEl.style.display = "block";
@@ -408,6 +422,7 @@
     		 mainEl.style.display = "none";
     		 makerEl.style.display = "block";
     	 } else {
+    		 isOnMacroMakerPage = false;
     		 fecListEl.style.display = "block";
     		 macroLibEl.style.display = "block";
     		 sequenceEl.style.display = "none";
@@ -417,55 +432,65 @@
     	 }
     }
     
-    function addCommand(command)
+    function addCommand(command,address,data)
     {
-    	var macroReminderEl = document.getElementById('macroReminder');
-		var addressStr = document.getElementById('macroAddressInput').value.toString();
-		var dataStr = document.getElementById('macroDataInput').value.toString();
 		var delayStr = document.getElementById('delayInput').value;
 		var contentEl = document.getElementById('sequenceContent');
+		var macroReminderEl = document.getElementById('macroReminder');
 		switch(command)
 		{
 		case 'write':
-			if(addressStr === "") 
+	    	if (typeof address === 'undefined') 
+			{ 
+				var addressStr = document.getElementById('macroAddressInput').value.toString();
+				var dataStr = document.getElementById('macroDataInput').value.toString();
+	    		if(addressStr === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to write to";
 					return;
 				} else if(dataStr === "") {
 					macroReminderEl.innerHTML = "Please enter your data";
 					return;
-				} else {
+				}
+			} else {
+				var addressStr = address.toString();
+				var dataStr = data.toString();
 				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Write <b>"
 						+ dataStr + "</b> into <b>" 
 						+ addressStr + "</b></div>";
-				var writeMacroString = SEQINDEX+":w:"+addressStr+":"+dataStr;
+				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":"+ dataStr;
 				macroString.push(writeMacroString);
-				break;
-				}
+			break;
+			}
 		case 'read':
-			if(addressStr === "") 
+			if (typeof address === 'undefined') 
+			{ 
+				var addressStr = document.getElementById('macroAddressInput').value.toString();
+				if(addressStr === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to read from";
 					return;
-				} else {
-				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Read from <b>"
-						+ addressStr + "</b></div>";
-				var readMacroString = SEQINDEX+":r:"+addressStr;
-				macroString.push(readMacroString);
-				break;
 				}
+			} else {
+			var addressStr = address.toString();
+			var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Read from <b>"
+					+ addressStr + "</b></div>";
+			var readMacroString = SEQINDEX+":r:"+addressStr;
+			macroString.push(readMacroString);
+			break;
+			}
 		case 'delay':
 			if(delayStr === "") 
-				{
-					macroReminderEl.innerHTML = "Please enter a delay";
-					return;
-				} else {
-				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Delay: <b>"
-						+ delayStr + "</b> ms</div>";
-				var delayMacroString = SEQINDEX+":d:"+delayStr;
-				macroString.push(delayMacroString);
-				break;
-				}
+			{
+				macroReminderEl.innerHTML = "Please enter a delay";
+				return;
+			} else {
+			var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Delay: <b>"
+					+ delayStr + "</b> ms</div>";
+			var delayMacroString = SEQINDEX+":d:"+delayStr;
+			macroString.push(delayMacroString);
+			break;
+			}
 		}
 		contentEl.innerHTML += update;
 		SEQINDEX++;
@@ -482,7 +507,6 @@
 		    if (seqIndex == macroString[i].split(":")[0])
 		      macroString.splice(i,1);
 		  }
-
     }
     
     function clearAll()
@@ -514,7 +538,8 @@
     	stringOfAllMacros[MACROINDEX] = macroString;
     	console.log(stringOfAllMacros);
     	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&Name="+macroName+
-    				"&Sequence="+macroString+"&Time="+Date().toString()+"&Notes="+macroNotes,"",createMacroHandlerFunction);
+    				"&Sequence="+macroString+"&Time="+Date().toString()+"&Notes="
+					+macroNotes,"",createMacroHandlerFunction);
     	loadExistingMacros();
     	hidePopup();
     	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight;
@@ -527,8 +552,11 @@
     
     function runMacro(stringOfCommands)
     {
-    	console.log(stringOfCommands);
-    	console.log(stringOfAllMacros);
+    	var contentEl = document.getElementById('historyContent');
+    	//console.log(stringOfCommands);
+    	//console.log(stringOfAllMacros);
+    	var start = "<p>--- Start of Macro ---</p>";
+    	contentEl.innerHTML += start;
     	for (var i = 0; i < stringOfCommands.length; i++)
     	{
     		var Command = stringOfCommands[i].split(":")
@@ -544,6 +572,8 @@
     		else
     			console.log("ERROR! Command type "+commandType+" not found");
     	}
+    	var end = "<p>--- End of Macro ---</p>";
+    	contentEl.innerHTML += end;
     }
     
     function loadExistingMacros()
@@ -579,3 +609,23 @@
     	}
     }
     
+    function histCmdWriteDivOnclick(addressStr, dataStr, addressFormatStr, dataFormatStr)
+    {
+		var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
+		var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr));
+    	if(isOnMacroMakerPage)
+    	{
+    		addCommand("write",convertedAddress,convertedData);
+    	}
+    	else callWrite(addressStr, dataStr);
+    }
+    
+    function histCmdReadDivOnclick(addressStr, addressFormatStr)
+	{
+    	var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
+		if(isOnMacroMakerPage)
+		{
+			addCommand("read",convertedAddress)
+		}
+		else callRead(addressStr);
+	}
