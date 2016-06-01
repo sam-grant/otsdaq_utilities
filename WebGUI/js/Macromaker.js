@@ -1,7 +1,7 @@
 // Created by swu at fnal dot gov
 //  February 2016
 //
-//3 global vars: CMDHISTDIVINDEX, FEELEMENTS and selected
+
 	//Function List:
 		//init
 	    //redrawWindow
@@ -15,6 +15,9 @@
 	var stringOfAllMacros = [];
 	var theAddressStrForRead = ""; // for callread and its handler
 	var isOnMacroMakerPage = false;
+	var EVENTCOUNTER = 0;
+	var timeIntervalID;
+	var isMacroRunning = false;
 	
 	function init() 
 	{			
@@ -160,8 +163,8 @@
     function callWrite(address,data)
     {
     	var reminderEl = document.getElementById('reminder');
-		if(isArrayAllZero(selected))
-			reminderEl.innerHTML = "Please select at least one interface from the list";
+    	if(isArrayAllZero(selected))
+    		reminderEl.innerHTML = "Please select at least one interface from the list";
 		else 
 		{ 
 			var addressFormat = document.getElementById("addressFormat");
@@ -280,6 +283,7 @@
     function writeHandlerFunction(req)
 	{
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
+		EVENTCOUNTER--;
     }
     
     function readHandlerFunction(req)
@@ -316,6 +320,7 @@
 		CMDHISTDIVINDEX++; 
 		contentEl.scrollTop = contentEl.scrollHeight;
 		reminderEl.innerHTML = "Data read: " + convertedOutput;
+		EVENTCOUNTER--;
 	}
     
     function isArrayAllZero(arr)
@@ -458,7 +463,7 @@
 				var update = "<div id = \"seq" + SEQINDEX + "\" class=\"seqDiv\" onclick=\"removeCommand(" + SEQINDEX + ")\">Write <b>"
 						+ dataStr + "</b> into <b>" 
 						+ addressStr + "</b></div>";
-				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":"+ dataStr;
+				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
 				macroString.push(writeMacroString);
 			break;
 			}
@@ -552,28 +557,53 @@
     
     function runMacro(stringOfCommands)
     {
-    	var contentEl = document.getElementById('historyContent');
-    	//console.log(stringOfCommands);
-    	//console.log(stringOfAllMacros);
-    	var start = "<p>--- Start of Macro ---</p>";
-    	contentEl.innerHTML += start;
-    	for (var i = 0; i < stringOfCommands.length; i++)
+    	var reminderEl = document.getElementById('reminder');
+    	if(isMacroRunning)
+    	    reminderEl.innerHTML = "Please wait till the current macro ends";
+    	else
     	{
-    		var Command = stringOfCommands[i].split(":")
-    		var commandType = Command[1];
-    		if(commandType=='w'){
-    			callWrite(Command[2],Command[3]);
-    		    console.log("write "+Command[3]+" into "+Command[2]);
-    		}else if(commandType=='r'){
-				callRead(Command[2]);
-    		    console.log("read from "+Command[2]);
-    		}else if(commandType=='d')
-    			console.log("delay "+Command[2]+"ms");
-    		else
-    			console.log("ERROR! Command type "+commandType+" not found");
+			isMacroRunning = true;
+			var contentEl = document.getElementById('historyContent');
+			//console.log(stringOfCommands);
+			//console.log(stringOfAllMacros);
+			EVENTCOUNTER = 0;
+			var start = "<p>--- Start of Macro ---</p>";
+			contentEl.innerHTML += start;
+			contentEl.scrollTop = contentEl.scrollHeight;
+			for (var i = 0; i < stringOfCommands.length; i++)
+			{
+				var Command = stringOfCommands[i].split(":")
+				var commandType = Command[1];
+				if(commandType=='w'){
+					callWrite(Command[2],Command[3]);
+					console.log("write "+Command[3]+" into "+Command[2]);
+					EVENTCOUNTER++;
+				}else if(commandType=='r'){
+					callRead(Command[2]);
+					console.log("read from "+Command[2]);
+					EVENTCOUNTER++;
+				}else if(commandType=='d')
+					console.log("delay "+Command[2]+"ms");
+				else
+					console.log("ERROR! Command type "+commandType+" not found");
+			}
+			timeIntervalID = setInterval(checkCounter,100);
     	}
-    	var end = "<p>--- End of Macro ---</p>";
-    	contentEl.innerHTML += end;
+    }
+    
+    function checkCounter()
+    {
+    	if (EVENTCOUNTER !== 0)
+    		return;
+    	else
+    	{
+    		var contentEl = document.getElementById('historyContent');
+    		var end = "<p>--- End of Macro ---</p>";
+    		contentEl.innerHTML += end;
+    		clearInterval(timeIntervalID);
+    		contentEl.scrollTop = contentEl.scrollHeight;
+    		isMacroRunning = false;
+    	}
     }
     
     function loadExistingMacros()
@@ -599,10 +629,6 @@
 						+ arr.notes + "\nCreated: " + arr.time
 						+ "\' class='macroDiv' onclick='runMacro(stringOfAllMacros[" 
 						+ MACROINDEX + "])'><b>" + arr.name + "</b></br></div>"; 
-		//			out += "<div id='" + arr.name + MACROINDEX + "' title='Sequence: " + arr.sequence + "\nNotes: "
-		//					+ arr.notes + "\nCreated: " + arr.time
-		//					+ "\' class='macroDiv' onclick='makeActive(" 
-		//					+ arr.name + MACROINDEX + ")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
 			document.getElementById("listOfMacros").innerHTML = out;

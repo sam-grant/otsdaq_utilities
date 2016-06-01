@@ -581,7 +581,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					  read.close();
 				  }
 				  else
-					  mf::LogDebug(__FILE__) << "Unable to open file" << std::endl;
+					  std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
 			}
 		}
 		std::cout << __COUT_HDR_FL__ <<  "Loading existing macros: " << returnStr.substr(0, returnStr.size()-1) << std::endl;
@@ -591,3 +591,4 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 	}
 	else std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
 }
+

@@ -298,7 +298,12 @@
 		        	<button onclick="addCommand('read')" class="select">Add Read</button>
 		        </div>
 		        
-		        <p>Milliseconds:  <input type="text" id="delayInput" class="inputBox"/></p>
+		        <p>Delay:  <input type="text" id="delayInput" class="inputBox"/>
+		           <select id="delayUnit" class="dropdown">
+				    <option class="select" value="s" selected="selected">s</option>
+				    <option class="select" value="ms">ms</option>
+				   </select>
+		        </p>
 		        <div class="buttonGroup">
 		        	<button onclick="addCommand('delay')" class="select">Add Delay</button>
 		        </div>
