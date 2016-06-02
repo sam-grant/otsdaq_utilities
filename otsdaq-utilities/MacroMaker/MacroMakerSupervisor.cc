@@ -20,6 +20,7 @@
 #include <sys/stat.h> //for mkdir
 
 #define MACROS_DB_PATH 					"otsdaq_demo/NoGitData/ServiceData/LoginData/UsersData/MacroData/"
+#define MACROS_HIST_PATH 				"otsdaq_demo/NoGitData/ServiceData/LoginData/UsersData/MacroHistory/"
 
 using namespace ots;
 
@@ -118,9 +119,6 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 		return;
 	}
 	//**** end LOGIN GATEWAY CODE ***//
-
-	
-
 
 	HttpXmlDocument xmldoc(cookieCode);
 	handleRequest(Command,xmldoc,cgi);
@@ -265,6 +263,8 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		createMacro(xmldoc,cgi);
 	else if(Command == "loadMacros")
 		loadMacros(xmldoc);
+	else if(Command == "loadHistory")
+		loadHistory(xmldoc);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -321,6 +321,14 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string Data = CgiDataUtilities::getData(cgi, "Data");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
+	std::string time = CgiDataUtilities::getData(cgi, "time");
+	std::string interfaces = CgiDataUtilities::getData(cgi, "interfaces");
+	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
+	std::string dataFormatStr = CgiDataUtilities::getData(cgi, "dataFormatStr");
+
+	std::string command = "w:" + Address + ":" + Data;
+	std::string format = addressFormatStr + ":" + dataFormatStr;
+	appendCommandToHistory(command,format,time,interfaces);
 
 	SOAPParameters parameters; //params for xoap to send
 		parameters.addParameter("Request", "UniversalWrite");
@@ -431,6 +439,10 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
 	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
+	std::string time = CgiDataUtilities::getData(cgi, "time");
+	std::string interfaces = CgiDataUtilities::getData(cgi, "interfaces");
+	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
+	std::string dataFormatStr = CgiDataUtilities::getData(cgi, "dataFormatStr");
 
 	SOAPParameters parameters; //params for xoap to send
 	parameters.addParameter("Request", "UniversalRead");
@@ -477,9 +489,12 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 				parameters);
 
 		receive(retMsg,retParameters);
-		std::string dataReadReturnMsg = retParameters.getValue("dataResult");
-		std::cout << __COUT_HDR_FL__ << "Data reading result received: " << dataReadReturnMsg << std::endl;
-		xmldoc.addTextElementToData("readData",dataReadReturnMsg);
+		std::string dataReadResult = retParameters.getValue("dataResult");
+		std::cout << __COUT_HDR_FL__ << "Data reading result received: " << dataReadResult << std::endl;
+		xmldoc.addTextElementToData("readData",dataReadResult);
+		std::string command = "r:" + Address + ":" + dataReadResult;
+		std::string format = addressFormatStr + ":" + dataFormatStr;
+		appendCommandToHistory(command,format,time,interfaces);
 	}
 
 
@@ -581,13 +596,61 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					  read.close();
 				  }
 				  else
-					  mf::LogDebug(__FILE__) << "Unable to open file" << std::endl;
+					  std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
 			}
 		}
-		std::cout << __COUT_HDR_FL__ <<  "New macro created: " << returnStr.substr(0, returnStr.size()-1) << std::endl;
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
+		std::cout << __COUT_HDR_FL__ <<  "Loading existing macros: " << returnMacroStr << std::endl;
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
 	}
-	else std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
+	else
+		std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
+}
+
+void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::string Format, std::string Time, std::string Interfaces)
+{
+	std::string fileName = "history.hist";
+	std::string fullPath = (std::string)MACROS_HIST_PATH + fileName;
+	std::cout << fullPath << std::endl;
+	std::ofstream histfile (fullPath.c_str(),std::ios::app);
+	if (histfile.is_open())
+	{
+		histfile << "{\n";
+		histfile << "\"Command\":\"" << Command << "\",\n";
+		histfile << "\"Format\":\"" << Format << "\",\n";
+		histfile << "\"Time\":\"" << Time << "\",\n";
+		histfile << "\"Interfaces\":\"" << Interfaces << "\"\n";
+		histfile << "}#" << std::endl;
+		histfile.close();
+	}
+	else
+		std::cout << "Unable to open file";
+}
+
+void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
+{
+	std::string line;
+	std::string returnStr = "";
+	std::string fileName = "history.hist";
+	std::ifstream read ((MACROS_HIST_PATH + fileName).c_str());//reading a file
+	if (read.is_open())
+	{
+		std::stringstream buffer;
+		while (! read.eof() )
+		{
+		  getline (read,line);
+		  buffer << line;
+		}
+		returnStr += buffer.str();
+		read.close();
+		if (returnStr.size() != 0)
+		{
+			std::string returnHistStr = returnStr.substr(0, returnStr.size()-1);
+			std::cout << __COUT_HDR_FL__ <<  "Loading user history: " << returnHistStr << std::endl;
+			xmldoc.addTextElementToData("returnHistStr",returnHistStr);
+		}
+	}
+	else
+		std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
 }

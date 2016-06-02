@@ -12,6 +12,8 @@
 				color: #c4e9f5 !important;
 				<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
 				overflow: auto;
+				font-family: Sans-serif;
+				font-size:15px;
 			}
 		
 		#fecList {
@@ -91,7 +93,7 @@
 		}
 		
         .innerClass1{
-			background: #002040;
+			background: #002a52;
 			padding: 0.2em 0.2em 0.2em 0.1em;
 			cursor: pointer; 
 		}
@@ -259,7 +261,7 @@
 		<div class='mainBlock' id='main'>
 	        <h3>Manual Commands</h3>
 	        <div class="center">
-		        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearAddress()" class="select">Clear</button></p>
+		        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/></p>
 		        <div id="output1" class="formatSelection">Address is in
 		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
 				    <option class="select" value="hex" selected="selected">hex</option>
@@ -267,7 +269,7 @@
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
 				format.</div>
-		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearData()" class="select">Clear</button></p>
+		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/></p>
 		        <div id="output2" class="formatSelection">Data is in
 		           <select id="dataFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
@@ -288,15 +290,20 @@
 		<div class='mainBlock' id='maker'>
 	        <h3>Macro Maker</h3>
 	        <div class="center">
-		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox" placeholder="0x000000064"/><button onclick="clearMacroAddress()" class="select">Clear</button></p>
-			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox" placeholder="0xABCDEF"/><button onclick="clearMacroData()" class="select">Clear</button></p>
+		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox" placeholder="0x000000064"/></p>
+			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox" placeholder="0xABCDEF"/></p>
 				
 				<div class="buttonGroup">
 		        	<button onclick="addCommand('write')" class="select">Add Write</button>
 		        	<button onclick="addCommand('read')" class="select">Add Read</button>
 		        </div>
 		        
-		        <p>Milliseconds:  <input type="text" id="delayInput" class="inputBox"/></p>
+		        <p>Delay:  <input type="text" id="delayInput" class="inputBox"/>
+		           <select id="delayUnit" class="dropdown">
+				    <option class="select" value="s" selected="selected">s</option>
+				    <option class="select" value="ms">ms</option>
+				   </select>
+		        </p>
 		        <div class="buttonGroup">
 		        	<button onclick="addCommand('delay')" class="select">Add Delay</button>
 		        </div>
@@ -312,7 +319,7 @@
 		  <h3>Instructions</h3>
           <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
           <br>2. Enter the address to read from/write to. Data is also required for a write.
-          <br>3. Select the format of your address and data (hex/dec/ascii). The data format selected will be expected for a read output. 
+          <br>3. Select the format of your address and data (hex/dec/ascii).
           <br>4. Select either "Write" or "Read" to finish your manual command.
 		</div>
 		
