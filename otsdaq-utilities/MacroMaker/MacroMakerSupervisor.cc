@@ -265,6 +265,8 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		loadMacros(xmldoc);
 	else if(Command == "loadHistory")
 		loadHistory(xmldoc);
+	else if(Command == "deleteMacro")
+		deleteMacro(xmldoc,cgi);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -653,4 +655,12 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 	}
 	else
 		std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
+}
+
+void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
+{
+	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
+	std::remove((MACROS_DB_PATH + MacroName + ".dat").c_str());
+	std::cout << "Successfully deleted " << MacroName;
+	xmldoc.addTextElementToData("deletedMacroName",MacroName);
 }
