@@ -18,6 +18,7 @@
 	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
+	 
 	
 	function init() 
 	{			
@@ -37,6 +38,7 @@
 		redrawWindow(); //redraw window for the first time
 		loadExistingMacros();
 		loadUserHistory();
+	
 	}
 	
 	//Handling window resizing
@@ -506,6 +508,8 @@
 			macroString.push(delayMacroString);
 			break;
 			}
+		default: 
+			Debug.log("So if it's not write, read, or delay, what is it??");
 		}
 		contentEl.innerHTML += update;
 		SEQINDEX++;
@@ -641,7 +645,7 @@
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + arr.sequence + "\nNotes: "
 						+ arr.notes + "\nCreated: " + arr.time
-						+ "\' class='macroDiv' onclick='runMacro(stringOfAllMacros[" 
+						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" onclick='runMacro(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
@@ -654,7 +658,8 @@
     	Debug.log("loadingHistHandlerFunction() was called. Req: " + req.responseText);
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
-		if (hugeStringOfHistory.length > 0)
+		if (typeof hugeStringOfHistory === undefined) return;
+		else if (hugeStringOfHistory.length > 0)
 		{
 			var commandHistArray = hugeStringOfHistory.split("#");
 			var out = "";
@@ -715,4 +720,26 @@
 			addCommand("read",convertedAddress)
 		}
 		else callRead(addressStr);
+	}
+    
+    function macroActionOnRightClick(macroName, macroAction)
+    {
+    	switch(macroAction)
+    	{
+    	case "Delete":
+    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&MacroName="
+					+macroName,"",deleteMacroHandlerFunction);
+    		break;
+    	case "Dec":
+    		break;
+    	case "Ascii":
+    		break;
+    	}
+    }
+    
+    function deleteMacroHandlerFunction(req)
+	{
+		Debug.log("deleteMacroHandlerFunction() was called. Req: " + req.responseText);
+		loadExistingMacros();
+		//reminder:xxx is deleted!
 	}

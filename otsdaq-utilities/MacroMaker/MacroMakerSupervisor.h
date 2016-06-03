@@ -59,6 +59,7 @@ private:
 	void loadMacros(HttpXmlDocument& xmldoc);
 	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces);
 	void loadHistory(HttpXmlDocument& xmldoc);
+	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
 	std::vector<std::string> interfaceList;
 //
 //

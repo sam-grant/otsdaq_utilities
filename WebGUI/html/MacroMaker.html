@@ -189,7 +189,7 @@
         	width:400px;
         	height:300px;
         	background-color: #129793;
-        	z-index:999;
+        	z-index:9;
         	position: fixed;
 			top: 40%;
 			left: 50%;
@@ -202,6 +202,44 @@
 			border: 2px solid #c4e9f5;
 			display:none;
         }
+        
+        .context-menu {
+		  display: none;
+		  position: absolute;
+		  z-index: 10;
+		  padding: 5px 0;
+		  width: 120px;
+		  background-color: #c4e9f5;
+		  border: solid 1px #dfdfdf;
+		  box-shadow: 1px 1px 2px #cfcfcf;
+		}
+		
+		.context-menu--active {
+		  display: block;
+		}
+		
+		.context-menu__items {
+		  list-style: none;
+		  margin: 0;
+		  padding: 0;
+		}
+		
+		.context-menu__item {
+		  display: block;
+		  margin-bottom: 2px;
+		}
+		
+		.context-menu__link {
+		  display: block;
+		  padding: 4px 12px;
+		  color: #001626;
+		  text-decoration: none;
+		}
+		
+		.context-menu__link:hover {
+		  color: #fff;
+		  background-color: #002a52;
+		}
         
         @media only screen and (max-height: 400px){
         	#instruction{
@@ -232,6 +270,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+		
 	
 	</head>
 
@@ -340,7 +379,20 @@
 				</div>
 			</div>
 		</div>
-		
+	  <nav id="context-menu" class="context-menu">
+	    <ul class="context-menu__items">
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Dec"> Run in dec</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Ascii"> Run in ascii</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Delete"> Delete Macro</a>
+	      </li>
+	    </ul>
+	  </nav>
+	  <script type="text/JavaScript" src="/WebPath/js/js_lib/ContextMenu.js"></script>
 	</body>
 	
 </html>
