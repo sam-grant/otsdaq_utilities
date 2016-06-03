@@ -537,7 +537,7 @@ ViewerRoot.resizeRootObjects = function(needToRedraw) {
 			//JSROOTPainter.drawObject(ViewerRoot.rootObjArr[i], ViewerRoot.rootObjIndexArr[i]);
 			JSROOT.redraw('histogram'+
 					ViewerRoot.rootObjIndexArr[i],
-					ViewerRoot.rootObjArr[i], ""); //last arg, root draw option
+					ViewerRoot.rootObjArr[i], "colz"); //last arg, root draw option
 			ViewerRoot.refreshTransparency(i);
 		}			
 	}
@@ -782,7 +782,7 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex) 
 	JSROOT.redraw('histogram'+
 			(refreshIndex<0?ViewerRoot.objIndex:
 			ViewerRoot.rootObjIndexArr[refreshIndex]),
-			object, ""); //last arg, root draw option
+			object, "colz"); //last arg, root draw option
 	
 	if(refreshIndex < 0)
 	{
