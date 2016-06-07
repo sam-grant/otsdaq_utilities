@@ -54,6 +54,10 @@ theRemoteWebUsers_  (this)
 	//how do we know which version numbers of a KOC exist already?
 
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
+
+	mf::LogDebug("cfgGUI") << "hi";
+
+
 	return;
 
 
@@ -64,6 +68,7 @@ theRemoteWebUsers_  (this)
 	ConfigurationManager *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::cout << __COUT_HDR_FL__ << "All config info loaded." << std::endl;
 	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 
