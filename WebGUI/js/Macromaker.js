@@ -13,12 +13,16 @@
 	var FEELEMENTS = [];
 	var macroString = [];
 	var stringOfAllMacros = [];
+	
 	var theAddressStrForRead = ""; // for callread and its handler
 	var isOnMacroMakerPage = false;
 	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
-	 
+	
+	var arrayOfCommandsForEdit = [];
+	var macroNameForEdit = "";
+	var macroNotesForEdit = "";
 	
 	function init() 
 	{			
@@ -448,12 +452,12 @@
     		 makerEl.style.display = "none";
     	 }
     }
-    
+   
+	
     function addCommand(command,address,data)
     {
 		var contentEl = document.getElementById('sequenceContent');
 		var macroReminderEl = document.getElementById('macroReminder');
-		console.log("I'm here with" + command);
 		switch(command)
 		{
 		case 'write':
@@ -514,8 +518,11 @@
 		contentEl.innerHTML += update;
 		SEQINDEX++;
 		contentEl.scrollTop = contentEl.scrollHeight;
+		//$('#sequenceContent').sortable('refresh');
     }
    
+   
+    
     function removeCommand(seqIndex)
     {
     	var child = document.getElementById("seq"+seqIndex);
@@ -537,18 +544,27 @@
     
     function saveMacro()
     {
-    	 var popup = document.getElementById("popup");
-    	 popup.style.display = "block";
+    	 var popupSaveMacro = document.getElementById("popupSaveMacro");
+    	 popupSaveMacro.style.display = "block";
     }
     
-    function hidePopup()
+    function hidePopupSaveMacro()
     {
-    	var popup = document.getElementById("popup");
-        popup.style.display = "none";
+    	var popupSaveMacro = document.getElementById("popupSaveMacro");
+    	popupSaveMacro.style.display = "none";
         document.getElementById("macroName").value="";
         document.getElementById("macroNotes").value="";
     }
 
+    function hidePopupEditMacro()
+    {
+    	var popupEditMacro = document.getElementById("popupEditMacro");
+    	popupEditMacro.style.display = "none";
+        document.getElementById("macroName").value="";
+        document.getElementById("macroNotes").value="";
+        arrayOfCommandsForEdit = [];        
+    }
+    
     function saveAsMacro()
     {
     	var macroName = document.getElementById("macroName").value;
@@ -560,7 +576,7 @@
     				"&Sequence="+macroString+"&Time="+Date().toString()+"&Notes="
 					+macroNotes,"",createMacroHandlerFunction);
     	loadExistingMacros();
-    	hidePopup();
+    	hidePopupSaveMacro();
     	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight;
     }
     
@@ -645,12 +661,15 @@
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + arr.sequence + "\nNotes: "
 						+ arr.notes + "\nCreated: " + arr.time
-						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" onclick='runMacro(stringOfAllMacros[" 
+						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
+						+ macroString + "\" data-notes=\"" 
+						+ arr.notes + "\" onclick='runMacro(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
 			document.getElementById("listOfMacros").innerHTML = out;
     	}
+    	else document.getElementById("listOfMacros").innerHTML = "";
     }
     
     function loadingHistHandlerFunction(req)
@@ -722,7 +741,7 @@
 		else callRead(addressStr);
 	}
     
-    function macroActionOnRightClick(macroName, macroAction)
+    function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes)
     {
     	switch(macroAction)
     	{
@@ -730,16 +749,68 @@
     		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&MacroName="
 					+macroName,"",deleteMacroHandlerFunction);
     		break;
-    	case "Dec":
-    		break;
-    	case "Ascii":
+    	case "Edit":
+    		var popupEditMacro = document.getElementById("popupEditMacro");
+    		popupEditMacro.style.display = "block";
+    		var macroNameEdit = document.getElementById("macroNameEdit");
+    		macroNameEdit.innerHTML = macroName;
+    		var seqID = 0;
+    		
+    		var macroSequenceEdit = document.getElementById("macroSequenceEdit");
+    		arrayOfCommandsForEdit = macroSequence.split(",");
+    		var output = "";
+    
+    	    		
+    		for (var i = 0; i < arrayOfCommandsForEdit.length; i++)
+			{
+				var Command = arrayOfCommandsForEdit[i].split(":")
+				var commandType = Command[1];
+				if(commandType=='w'){
+					var writeEdit = "<div>Write <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",3)>" + Command[3]
+						+ "</textarea> into <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2] + "</textarea></div>";
+					seqID++;
+					output += writeEdit;
+				}else if(commandType=='r'){
+					var readEdit = "<div>Read from <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
+						+ "</textarea></div>";
+					seqID++;
+					output += readEdit;
+				}else if(commandType=='d'){
+					var delayEdit = "<div>Delay <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
+						+ "</textarea> seconds</div>";
+					seqID++;
+				    output += delayEdit;
+				}else
+					console.log("ERROR! Command type "+commandType+" not found");
+			}
+    		macroSequenceEdit.innerHTML = output;
+    	
+    		var macroNotesEdit = document.getElementById("macroNotesEdit");
+    		macroNotesEdit.innerHTML = "[Modified on " + (new Date()).toLocaleDateString() + "] "
+    				+ macroNotes;
     		break;
     	}
+    }
+    
+    function editCommands(textarea, seqID, index)
+    {
+    	var x = arrayOfCommandsForEdit[seqID].split(":");
+    	x[index] = textarea.value;
+    	arrayOfCommandsForEdit[seqID] = x.join();
     }
     
     function deleteMacroHandlerFunction(req)
 	{
 		Debug.log("deleteMacroHandlerFunction() was called. Req: " + req.responseText);
-		loadExistingMacros();
-		//reminder:xxx is deleted!
+		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
+		var reminderEl = document.getElementById('reminder');
+		reminderEl.innerHTML = "Successfully deleted " + deletedMacroName;
+		loadExistingMacros();  
 	}
+    
+    function saveChangedMacro()
+    {
+    	
+    	arrayOfCommandsForEdit = [];        
+    }
+    
