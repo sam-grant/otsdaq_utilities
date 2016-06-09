@@ -841,7 +841,7 @@ throw (xgi::exception::Exception)
 			//	(so we can just check one of them to get the list of historical versions: Configurations)
 			//  (The 3 backbone pieces are Configurations -- ConfigurationAliases -- DefaultConfigurations
 
-			versions = allCfgInfo.find(Configurations::staticConfigurationName_)->second.versions_;
+			versions = allCfgInfo.find("Configurations")->second.versions_;
 
 			for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
 			{
