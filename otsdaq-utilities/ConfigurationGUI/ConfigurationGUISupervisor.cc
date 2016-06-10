@@ -32,7 +32,7 @@ xdaq::Application	(s   ),
 SOAPMessenger  		(this),
 theRemoteWebUsers_  (this)
 {
-  INIT_MF("ConfigurationGUI");
+	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
 	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
 	init();
@@ -43,6 +43,10 @@ theRemoteWebUsers_  (this)
 	//if user then edits one of the sub-configs, just before editing, active view is copied to edit view which is version -1
 	//if the user saves the configuration, then any sub-configurations with active view -1 get saved with a new version number
 
+
+	//how do we know which version numbers of a KOC exist already?
+		//getAllConfigurationInfo fills the version list for each KOC found in "Configurations"
+
 	//FIXME TODO
 	//LEFT OFF - Proof of Concept
 	//	Choose a sub-config
@@ -51,17 +55,44 @@ theRemoteWebUsers_  (this)
 	//	Save as new sub-config version
 
 
-	//how do we know which version numbers of a KOC exist already?
 
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
 	mf::LogDebug("cfgGUI") << "hi";
-
-
 	return;
 
+	//for (with Gennadiy) saving all configurations as a new version
+	{
+		ConfigurationInterface* theInterface_ = ConfigurationInterface::getInstance(true);
+		ConfigurationBase* base = 0;
 
-	//new user
+		theInterface_->get(base,"ConfigurationAliases");
+
+		std::cout << __COUT_HDR_FL__ << std::endl;
+
+		std::map<std::string, ConfigurationKey>	aliasMap = ((ConfigurationAliases *)base)->getAliasesMap();
+		std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
+
+		std::set<std::string> listOfKocs;
+		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+		while (it != aliasMap.end())
+		{
+			//for each configuration alias and key
+				//print
+			std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			++it;
+		}
+
+
+		std::cout << __COUT_HDR_FL__ << "end of debugging Configuration!" << std::endl;
+		return;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//behave like a new user
+
 	std::string userConfigurationManagerIndex = "1";
 	userConfigurationManagers_["1"] = new ConfigurationManager();
 	userConfigurationManagers_["2"] = new ConfigurationManager();
@@ -72,21 +103,24 @@ theRemoteWebUsers_  (this)
 	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
 
 
-	std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "aliasMap size: " << aliasMap.size() << std::endl;
-	std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
+	std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
+	std::cout << __COUT_HDR_FL__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
 
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//for each configuration alias and key
+		//get KOC version numbers (this is the version "conditioned" by the alias-key pair)
 
 	std::set<std::string> listOfKocs;
 	std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
 	while (it != aliasMap.end())
 	{
-		//for each configuration alias and key
-		//get KOC version numbers
 
-		std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-		std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+		std::cout << __COUT_HDR_FL__ << "\tKocs size: " << listOfKocs.size() << std::endl;
 
 		for (auto& koc : listOfKocs)
 		{
@@ -97,66 +131,73 @@ theRemoteWebUsers_  (this)
 		++it;
 
 	}
+	//return;
 
-
-	//Get KOC list
-	//for each configuration alias and key
-	//Get KOC keys for Alias key
-
-
-
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//For each existing KOC (comes from anything in "Configurations")
+		//get existing versions
 
 	auto mapIt = allCfgInfo.begin();
 	while(mapIt != allCfgInfo.end())
 	{
-		std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "KOC Alias: " << mapIt->first << std::endl;
-		std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
+		std::cout << __COUT_HDR_FL__ << "KOC Alias: " << mapIt->first << std::endl;
+		std::cout << __COUT_HDR_FL__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
 		for (std::set<int>::iterator vit=mapIt->second.versions_.begin(); vit!=mapIt->second.versions_.end(); ++vit)
 		{
-			std::cout << __COUT_HDR_FL__ << __COUT_HDR_L__ << "\t\t" << *vit << std::endl;
-
+			std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
 		}
 		++mapIt;
 	}
+	//return;
 
 
-	return;
-
-
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//Choose a sub config
+	mf::LogDebug("cfgGUI");
 	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a sub config" << std::endl;
-	std::string chosenSubConfig = "FSSRDACsConfiguration"; //must be less than allCfgInfo.size() //TODO Alfredo: ask why this std::string is hardcoded
+	std::string chosenSubConfig = "FSSRDACsConfiguration"; //must be less than allCfgInfo.size()
 
 	{
 		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
 
+		//check if is an existing version
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << "     ";
+				(isInDatabase?"YES":"NO") << std::endl;
 
+		//check if version is already loaded
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
 
-		if(!isInConfiguration) //load configuration view
+		//load configuration view and set as active view
+		if(!isInConfiguration)
 			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
+		//verify version is loaded now
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
 	}
 
+	return;
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//view this version
 	//general base class
 	{
 		//get 'columns' of sub config
 
 		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << "     ";
+				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
@@ -164,6 +205,8 @@ theRemoteWebUsers_  (this)
 		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
 		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
+
+	return;
 
 
 	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a different sub config" << std::endl;
