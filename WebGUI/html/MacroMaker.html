@@ -46,6 +46,7 @@
 		p {	
 			color: #c4e9f5;
 		}
+		
 		a {	
 			color: #c4e9f5;
 			cursor: pointer; 
@@ -110,6 +111,15 @@
 		    border: 1.5px solid #993333;
 		    width:85%;
 		    border-radius:2px;
+		}
+		
+		.chosenClassInSequence{
+			border: 1.5px solid #993333;
+			background-color: #001626;
+		}
+		
+		.ghostClassInSequence{
+			background-color: #002a52;
 		}
 		
 		.macroDiv{
@@ -211,11 +221,32 @@
 			border: 2px solid #c4e9f5;
         }
         
+        .smallPopup{
+        	width:200px;
+        	height:100px;
+        	background-color: #002540;
+        	z-index:9;
+        	position: fixed;
+			top: 40%;
+			left: 50%;
+			margin-left: -100px;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+        }
+
+        
         #popupSaveMacro{
         	display:none;
         }
         
         #popupEditMacro{
+        	display:none;
+        }
+        
+        #popupRenameMacro{
         	display:none;
         }
         
@@ -231,7 +262,7 @@
 		  position: absolute;
 		  z-index: 10;
 		  padding: 5px 0;
-		  width: 120px;
+		  width: 200px;
 		  background-color: #c4e9f5;
 		  border: solid 1px #dfdfdf;
 		  box-shadow: 1px 1px 2px #cfcfcf;
@@ -287,15 +318,14 @@
             }
         }
 		</style>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
 		
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
-		
+		<script src="http://rubaxa.github.io/Sortable/Sortable.js"></script>
+		  
 	</head>
 
 
@@ -316,9 +346,11 @@
 	        <div id="sequenceContent"><b>Click unwanted commands to delete them.</b><br></div>
 		</div>
 		
-		
 		<div id="nav" class="center">
-			<p><small><a onclick="toggleDisplay(0)">Manual Commands</a><a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a></small></p>
+			<p><small>
+			<a onclick="toggleDisplay(0)">Manual Commands</a>
+			<a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
+			</small></p>
 		</div>
 		
 		<div class='mainBlock' id='main'>
@@ -399,7 +431,8 @@
 				<p><b>Macro Notes</b></p>
 				<textarea id="macroNotes" cols="40" rows="6"></textarea>
 				<div class="buttongroup">
-					<button class="select" onclick="hidePopupSaveMacro()">Cancel</button><button class="select" onclick="saveAsMacro()">Save as Macro</button>
+					<button class="select" onclick="hidePopupSaveMacro()">Cancel</button>
+					<button class="select" onclick="saveAsMacro()">Save as Macro</button>
 				</div>
 			</div>
 		</div>
@@ -414,9 +447,20 @@
 				<textarea id="macroNotesEdit" cols="40" rows="3">Pre-fill here</textarea>
 				<div class="buttongroup">
 				  <center>
-					<button class="select" onclick="hidePopupEditMacro()">Cancel</button><button class="select" onclick="saveChangedMacro()">Save changes</button>
+					<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
+					<button class="select" onclick="saveChangedMacro()">Save changes</button>
 				  </center>
 				</div>
+			</div>
+		</div>
+		<div id="popupRenameMacro" class="smallPopup">
+			<h2>New Name:</h2>
+		    <textarea id="RenameMacro" cols="20" rows="1"></textarea>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="hidePopupRenameMacro()">Cancel</button>
+				<button class="select" onclick="renameMacro()">Save</button>
+			  </center>
 			</div>
 		</div>
 	  <nav id="context-menu" class="context-menu">
@@ -425,7 +469,16 @@
 	        <a href="#" class="context-menu__link" data-action="Edit"> Edit Macro</a>
 	      </li>
 	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Rename"> Rename Macro</a>
+	      </li>
+	      <li class="context-menu__item">
 	        <a href="#" class="context-menu__link" data-action="Delete"> Delete Macro</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Start"> Clone to start of sequence</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="End"> Clone to end of sequence</a>
 	      </li>
 	    </ul>
 	  </nav>

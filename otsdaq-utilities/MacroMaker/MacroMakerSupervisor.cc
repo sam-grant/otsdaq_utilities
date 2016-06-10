@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <stdio.h> //for file rename
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
 
@@ -267,6 +268,10 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		loadHistory(xmldoc);
 	else if(Command == "deleteMacro")
 		deleteMacro(xmldoc,cgi);
+	else if(Command == "renameMacro")
+		renameMacro(xmldoc,cgi);
+	else if(Command == "editMacro")
+		editMacro(xmldoc,cgi);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -664,3 +669,54 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 	std::cout << "Successfully deleted " << MacroName;
 	xmldoc.addTextElementToData("deletedMacroName",MacroName);
 }
+
+void MacroMakerSupervisor::renameMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
+{
+	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
+	std::string newMacroName = CgiDataUtilities::getData(cgi, "newMacroName");
+	int result;
+	result = rename((MACROS_DB_PATH + oldMacroName + ".dat").c_str(), (MACROS_DB_PATH + newMacroName + ".dat").c_str());
+	if (result == 0)
+		xmldoc.addTextElementToData("renamedMacro",newMacroName);
+	else
+		xmldoc.addTextElementToData("renamedMacro","ERROR");
+}
+
+void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
+	std::string newMacroName = CgiDataUtilities::getData(cgi, "newMacroName");
+	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
+	std::string Time = CgiDataUtilities::getData(cgi, "Time");
+	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
+
+	std::cout << __COUT_HDR_FL__ <<  MACROS_DB_PATH << std::endl;
+
+	std::string fileName = oldMacroName + ".dat";
+	std::string fullPath = (std::string)MACROS_DB_PATH + fileName;
+	std::cout << fullPath << std::endl;
+	std::ofstream macrofile (fullPath.c_str());
+	if (macrofile.is_open())
+	{
+		macrofile << "{\n";
+		macrofile << "\"name\":\"" << newMacroName << "\",\n";
+		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
+		macrofile << "\"time\":\"" << Time << "\",\n";
+		macrofile << "\"notes\":\"" << Notes << "\"\n";
+		macrofile << "}@" << std::endl;
+		macrofile.close();
+	}
+	else
+		std::cout << __COUT_HDR_FL__ <<  "Unable to open file" << std::endl;
+
+	if(oldMacroName != newMacroName) //renaming macro
+	{
+		int result;
+		result = rename((MACROS_DB_PATH + oldMacroName + ".dat").c_str(), (MACROS_DB_PATH + newMacroName + ".dat").c_str());
+		if (result == 0)
+			xmldoc.addTextElementToData("newMacroName",newMacroName);
+		else
+			xmldoc.addTextElementToData("newMacroName","ERROR");
+	}
+}
+

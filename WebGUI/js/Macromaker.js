@@ -21,8 +21,12 @@
 	var isMacroRunning = false;
 	
 	var arrayOfCommandsForEdit = [];
-	var macroNameForEdit = "";
+	var oldMacroNameForEdit = "";
+	var newMacroNameForEdit = "";
+	var macroDateForEdit = "";
 	var macroNotesForEdit = "";
+	
+	var macroNameForRename = "";
 	
 	function init() 
 	{			
@@ -42,7 +46,6 @@
 		redrawWindow(); //redraw window for the first time
 		loadExistingMacros();
 		loadUserHistory();
-	
 	}
 	
 	//Handling window resizing
@@ -174,16 +177,13 @@
     		reminderEl.innerHTML = "Please select at least one interface from the list";
 		else 
 		{ 
-			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatStr = addressFormat.value;
-			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatStr = dataFormat.value;
+			var addressFormatStr = document.getElementById("addressFormat").value;
+			var dataFormatStr = document.getElementById("dataFormat").value;
 			
 			if (typeof address === 'undefined') 
 			{ 
 				var addressStr = document.getElementById('addressInput').value.toString();
 				var dataStr = document.getElementById('dataInput').value.toString();
-				console.log(typeof(addressStr))
 				if(addressStr == "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to write to";
@@ -204,7 +204,6 @@
 			if (addressStr.substr(0,2)=="0x") addressStr = addressStr.substr(2);
 			if (dataStr.substr(0,2)=="0x") dataStr = dataStr.substr(2);
 
-			
 			var selectionStrArray = [];
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
@@ -221,7 +220,6 @@
 			var contentEl = document.getElementById('historyContent');
 			var innerClass = "class=\"innerClass1\"";
 			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
-			
 			
 			var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
 					+ Date().toString() + "\nSelected interface: " + selectionStrArray 
@@ -252,15 +250,13 @@
     		reminderEl.innerHTML = "Please select at least one interface from the list";
     	else 
     	{ 
-			var addressFormat = document.getElementById("addressFormat");
-			var addressFormatStr = addressFormat.value;
-			var dataFormat = document.getElementById("dataFormat");
-			var dataFormatStr = dataFormat.value;
+    		var addressFormatStr = document.getElementById("addressFormat").value;
+    		var dataFormatStr = document.getElementById("dataFormat").value;
 		
 			if (typeof address === 'undefined') 
 			{
 				theAddressStrForRead = document.getElementById('addressInput').value.toString();
-				if(theAddressStrForRead == "") 
+				if(theAddressStrForRead === "") 
 				{
 					reminderEl.innerHTML = "Please enter an address to read from";
 					return;
@@ -304,10 +300,8 @@
     
     function readHandlerFunction(req)
 	{
-    	var addressFormat = document.getElementById("addressFormat");
-		var addressFormatStr = addressFormat.value;
-		var dataFormat = document.getElementById("dataFormat");
-		var dataFormatStr = dataFormat.value;
+    	var addressFormatStr = document.getElementById("addressFormat").value;
+    	var dataFormatStr = document.getElementById("dataFormat").value;
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
@@ -382,8 +376,7 @@
     
     function toggleLSBF() //Only listens to addressFormat
     {
-        var addressFormat = document.getElementById("addressFormat");
-        var addressFormatStr = addressFormat.value;
+    	var addressFormatStr = document.getElementById("addressFormat").value;
         var macroAddressInputEl = document.getElementById('macroAddressInput');
 
         switch (addressFormatStr) {
@@ -518,7 +511,10 @@
 		contentEl.innerHTML += update;
 		SEQINDEX++;
 		contentEl.scrollTop = contentEl.scrollHeight;
-		//$('#sequenceContent').sortable('refresh');
+		Sortable.create(contentEl,{
+				chosenClass: 'chosenClassInSequence',
+				ghostClass:'ghostClassInSequence'
+		});//Works like magic!
     }
    
    
@@ -560,9 +556,14 @@
     {
     	var popupEditMacro = document.getElementById("popupEditMacro");
     	popupEditMacro.style.display = "none";
-        document.getElementById("macroName").value="";
-        document.getElementById("macroNotes").value="";
         arrayOfCommandsForEdit = [];        
+    }
+    
+    function hidePopupRenameMacro()
+    {
+    	var popupRenameMacro = document.getElementById("popupRenameMacro");
+    	popupRenameMacro.style.display = "none";
+    	document.getElementById("RenameMacro").value="";
     }
     
     function saveAsMacro()
@@ -597,8 +598,7 @@
     	{
 			isMacroRunning = true;
 			var contentEl = document.getElementById('historyContent');
-			//console.log(stringOfCommands);
-			//console.log(stringOfAllMacros);
+	
 			EVENTCOUNTER = 0;
 			var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
 			contentEl.innerHTML += start;
@@ -663,7 +663,8 @@
 						+ arr.notes + "\nCreated: " + arr.time
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
-						+ arr.notes + "\" onclick='runMacro(stringOfAllMacros[" 
+						+ arr.notes + "\" data-time=\"" 
+						+ arr.time + "\" onclick='runMacro(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
@@ -741,8 +742,9 @@
 		else callRead(addressStr);
 	}
     
-    function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes)
+    function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate)
     {
+    	console.log("macroName" + macroName+ "macroAction" +macroAction + "macroSequence" + macroSequence+ "macroNotes" + macroNotes+ "macroDate" +macroDate);
     	switch(macroAction)
     	{
     	case "Delete":
@@ -752,14 +754,15 @@
     	case "Edit":
     		var popupEditMacro = document.getElementById("popupEditMacro");
     		popupEditMacro.style.display = "block";
-    		var macroNameEdit = document.getElementById("macroNameEdit");
-    		macroNameEdit.innerHTML = macroName;
+    		
+    		oldMacroNameForEdit = macroName;
+    		macroNotesForEdit = macroNotes;
+    		macroDateForEdit = macroDate;
     		var seqID = 0;
     		
-    		var macroSequenceEdit = document.getElementById("macroSequenceEdit");
+    		var macroSequenceEditEl = document.getElementById("macroSequenceEdit");
     		arrayOfCommandsForEdit = macroSequence.split(",");
     		var output = "";
-    
     	    		
     		for (var i = 0; i < arrayOfCommandsForEdit.length; i++)
 			{
@@ -783,12 +786,19 @@
 				}else
 					console.log("ERROR! Command type "+commandType+" not found");
 			}
-    		macroSequenceEdit.innerHTML = output;
+    		macroSequenceEditEl.innerHTML = output;
     	
-    		var macroNotesEdit = document.getElementById("macroNotesEdit");
-    		macroNotesEdit.innerHTML = "[Modified on " + (new Date()).toLocaleDateString() + "] "
-    				+ macroNotes;
+    		var macroNameEl = document.getElementById("macroNameEdit");
+    		macroNameEl.value = macroName;
+    		var macroNotesEl = document.getElementById("macroNotesEdit");
+    		macroNotesForEdit = "[Modified on " + (new Date()).toLocaleDateString() + "] " + macroNotes;
+    		macroNotesEl.value = macroNotesForEdit;
     		break;
+    	case "Rename":
+    		var popupRenameMacro = document.getElementById("popupRenameMacro");
+    		popupRenameMacro.style.display = "block";
+    		macroNameForRename = macroName;
+			break;
     	}
     }
     
@@ -796,7 +806,7 @@
     {
     	var x = arrayOfCommandsForEdit[seqID].split(":");
     	x[index] = textarea.value;
-    	arrayOfCommandsForEdit[seqID] = x.join();
+    	arrayOfCommandsForEdit[seqID] = x.join(":");
     }
     
     function deleteMacroHandlerFunction(req)
@@ -810,7 +820,43 @@
     
     function saveChangedMacro()
     {
-    	
-    	arrayOfCommandsForEdit = [];        
+    	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
+    	macroNotesForEdit = document.getElementById('macroNotesEdit').value;
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&oldMacroName="
+    					+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
+						+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
+						+macroNotesForEdit,"",saveChangedMacroHandlerFunction);
+    	hidePopupEditMacro();
     }
     
+    function saveChangedMacroHandlerFunction()
+    {
+    	Debug.log("saveChangedMacroHandlerFunction() was called.");
+//		var newMacroName = DesktopContent.getXMLValue(req,"newMacroName");
+//		var reminderEl = document.getElementById('reminder');
+//		if (newMacroName != "ERROR")
+//			reminderEl.innerHTML = "Renamed " + macroNameForRename + " to " + newMacroName;
+//		else 	
+//			reminderEl.innerHTML = "Error renaming " + macroNameForRename + "!";
+		loadExistingMacros();  
+    }
+    
+    function renameMacro()
+    {
+		var newName = document.getElementById('RenameMacro').value;
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=renameMacro&oldMacroName="
+				+macroNameForRename+"&newMacroName="+newName,"",renameMacroHandlerFunction);
+    }
+    
+    function renameMacroHandlerFunction(req)
+  	{
+  		Debug.log("renameMacroHandlerFunction() was called. Req: " + req.responseText);
+  		var newMacroName = DesktopContent.getXMLValue(req,"renamedMacro");
+  		var reminderEl = document.getElementById('reminder');
+  		if (newMacroName != "ERROR")
+  			reminderEl.innerHTML = "Renamed " + macroNameForRename + " to " + newMacroName;
+  		else 	
+  			reminderEl.innerHTML = "Error renaming " + macroNameForRename + "!";
+  		hidePopupRenameMacro();
+  		loadExistingMacros();  
+  	}

@@ -220,7 +220,8 @@
     console.log( "Macro name - " + taskItemInContext.getAttribute("data-id") + ", Macro action - " + link.getAttribute("data-action"));
     toggleMenuOff();
     macroActionOnRightClick(taskItemInContext.getAttribute("data-id"), link.getAttribute("data-action"), 
-    		taskItemInContext.getAttribute("data-sequence"), taskItemInContext.getAttribute("data-notes"));
+    		taskItemInContext.getAttribute("data-sequence"), taskItemInContext.getAttribute("data-notes"),
+			taskItemInContext.getAttribute("data-time"));
   }
 
   /**
