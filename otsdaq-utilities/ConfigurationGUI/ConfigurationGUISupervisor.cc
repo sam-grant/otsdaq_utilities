@@ -62,7 +62,7 @@ theRemoteWebUsers_  (this)
 	return;
 
 	//for (with Gennadiy) saving all configurations as a new version
-	if(0)
+	if(1)
 	{
 		std::vector<std::string> configTables;
 		configTables.push_back("ConfigurationAliases");
