@@ -62,27 +62,75 @@ theRemoteWebUsers_  (this)
 	return;
 
 	//for (with Gennadiy) saving all configurations as a new version
+	if(0)
 	{
+		std::vector<std::string> configTables;
+		configTables.push_back("ConfigurationAliases");
+		configTables.push_back("Configurations");
+		configTables.push_back("DefaultConfigurations");
+		configTables.push_back("VersionAliases");
+
 		ConfigurationInterface* theInterface_ = ConfigurationInterface::getInstance(true);
-		ConfigurationBase* base = 0;
 
-		theInterface_->get(base,"ConfigurationAliases");
-
-		std::cout << __COUT_HDR_FL__ << std::endl;
-
-		std::map<std::string, ConfigurationKey>	aliasMap = ((ConfigurationAliases *)base)->getAliasesMap();
-		std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
-
-		std::set<std::string> listOfKocs;
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
-		while (it != aliasMap.end())
+		for(unsigned int i = 0; i < configTables.size(); ++i)
 		{
-			//for each configuration alias and key
-				//print
-			std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-			++it;
-		}
+			theInterface_ = ConfigurationInterface::getInstance(true);
+			ConfigurationBase* base = 0;
+			std::cout << __COUT_HDR_FL__ << std::endl;
+			std::cout << __COUT_HDR_FL__ << std::endl;
+			std::cout << __COUT_HDR_FL__ << (i+1) << " of " << configTables.size() << ": " << configTables[i] << std::endl;
 
+			theInterface_->get(base,configTables[i], 0, 0, false, 0); //load version 0 for all
+
+			std::cout << __COUT_HDR_FL__ << "loaded " << configTables[i]<< std::endl;
+
+			//do cool things for special tables
+			if( configTables[i] == "ConfigurationAliases")
+			{
+				//view alias-key map
+				std::map<std::string, ConfigurationKey>	aliasMap = ((ConfigurationAliases *)base)->getAliasesMap();
+				std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
+
+				std::set<std::string> listOfKocs;
+				std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+				while (it != aliasMap.end())
+				{
+					//for each configuration alias and key
+						//print
+					std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+					++it;
+				}
+			}
+
+			if( configTables[i] == "Configurations")
+			{
+				//get all other tables and add to vector of tables
+
+				std::set<std::string> listOfKocs = ((Configurations *)base)->getListOfKocs();
+				std::cout << __COUT_HDR_FL__ << "listOfKocs size: " << listOfKocs.size() << std::endl;
+
+				for(auto it=listOfKocs.begin();it != listOfKocs.end(); ++it)
+				{
+					std::cout << __COUT_HDR_FL__ << "Koc: " << *it << std::endl;
+					configTables.push_back(*it);
+				}
+			}
+
+
+			//save the active version
+			std::cout << __COUT_HDR_FL__ << "Current version: " << base->getViewVersion() << std::endl;
+
+			//
+			//		**** switch to db style interface?!!?!? ****   //
+			//
+			//theInterface_ = ConfigurationInterface::getInstance(false);
+			//
+			//
+
+			theInterface_->saveActiveVersion(base);
+			delete base; //cleanup config instance
+			break;
+		}
 
 		std::cout << __COUT_HDR_FL__ << "end of debugging Configuration!" << std::endl;
 		return;
