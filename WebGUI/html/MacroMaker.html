@@ -79,7 +79,7 @@
 		#sequenceContent {
 			overflow:scroll;
 			overflow-x: hidden;
-			padding:5px;
+			padding:2px;
 		}
 		
 		#listOfMacros {
@@ -104,13 +104,40 @@
 		    cursor: pointer; 
 		}
 		
+		.insideSEQ{
+			display: inline;
+		}
+		
+		.textSEQ{
+			float:left;
+		}
+		
 		.seqDiv{
 		    padding: 0.2em 0.2em 0.2em 0.2em;
 		    margin: 0.2em 0.2em 0.2em 0.2em;
-		    cursor: pointer; 
-		    border: 1.5px solid #993333;
-		    width:85%;
-		    border-radius:2px;
+			cursor: move; 
+		    width:90%;
+		    float:left;
+		}
+		
+		.seqDiv:hover .deletex{
+			display:block;
+		}
+		
+		.deletex{
+			width:16px;
+			height:16px;
+			color: #993333 !important;
+			float:right;
+			background-color: #993333;
+			cursor: pointer; 
+			border-radius:20%;
+			padding:2px;
+			text-align:center;
+			vertical-align:center;
+			z-index:5;
+			display:none;
+			margin: 0 0 2px 2px;
 		}
 		
 		.chosenClassInSequence{
@@ -125,7 +152,7 @@
 		.macroDiv{
 		    padding: 0.2em 0.2em 0.2em 0.2em;
 		    margin: 0.2em 0.2em 0.2em 0.2em;
-		    cursor: pointer; 
+		    cursor: context-menu; 
 		    border: 2px solid #993333;
 		    width: 90%;
 		    border-radius:2px;
@@ -343,7 +370,7 @@
 		
 		<div class='mainBlock' id='sequence'>
 	        <h3>Macro Sequence</h3>
-	        <div id="sequenceContent"><b>Click unwanted commands to delete them.</b><br></div>
+	        <div id="sequenceContent"></div>
 		</div>
 		
 		<div id="nav" class="center">
@@ -389,8 +416,8 @@
 			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox" placeholder="0xABCDEF"/></p>
 				
 				<div class="buttonGroup">
-		        	<button onclick="addCommand('write')" class="select">Add Write</button>
-		        	<button onclick="addCommand('read')" class="select">Add Read</button>
+		        	<button onclick="addCommand('w')" class="select">Add Write</button>
+		        	<button onclick="addCommand('r')" class="select">Add Read</button>
 		        </div>
 		        
 		        <p>Delay:  <input type="text" id="delayInput" class="inputBox"/>
@@ -400,7 +427,7 @@
 				   </select>
 		        </p>
 		        <div class="buttonGroup">
-		        	<button onclick="addCommand('delay')" class="select">Add Delay</button>
+		        	<button onclick="addCommand('d')" class="select">Add Delay</button>
 		        </div>
 		        <b><div id="macroReminder" class="red"></div></b>
 		        <div id="twoButtons" class="buttonGroup bottom">
