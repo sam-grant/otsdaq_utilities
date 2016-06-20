@@ -22,14 +22,13 @@ function finishInit(){
 }
 
 function chooseIcon(){
-
     iconDropdown_wrapper.innerHTML = "";
     var icon_list = document.createElement("select");
     iconDropdown_wrapper.appendChild(icon_list);
 
     checkForChanges();
     
-    //Dan, I added the first option to be "Select" so that the user must pcik something to call onchange -Ethan
+    //Dan, I added the first option to be "Select" so that the user must pick something to call onchange -Ethan
     var iconOption = document.createElement("option");
     icon_list.appendChild(iconOption);
     iconOption.value="select";
@@ -69,7 +68,6 @@ function checkForChanges(){
 
 function iconSelected(selectedValue){
 
-    //console.log(selectedValue);
 
     checkForChanges();
 
@@ -96,6 +94,8 @@ function iconSelected(selectedValue){
     //Reset all values
     iconTable_wrapper.innerHTML = "";
     
+
+	console.log("selectedIcon " + selectedValue);
     
     var altLabel              = document.createElement("td");
     var titleLabel            = document.createElement("td");
@@ -104,8 +104,8 @@ function iconSelected(selectedValue){
     var imageLabel            = document.createElement("td");
     var linkLabel             = document.createElement("td");
     
-    altLabel.innerHTML               = "Alt";
-    titleLabel.innerHTML             = "Title";
+    altLabel.innerHTML               = "Title"; //swapped.. because the meaning over time was swapped at DesktopIcons.js
+    titleLabel.innerHTML             = "Alt";	//swapped.. because the meaning over time was swapped at DesktopIcons.js
     uniqueLabel.innerHTML            = "Unique";
     permissionNeededLabel.innerHTML  = "Permission Needed";
     imageLabel.innerHTML             = "Image";
@@ -182,21 +182,26 @@ function iconSelected(selectedValue){
     iconTable.appendChild(image_tr);
     iconTable.appendChild(link_tr);
 
+    var index;
 
+    /*console.log("selected value?:" + selectedValue);
     for(var it = 0; it < megaLibrary_.length; it++)
     {
+        console.log("it " + megaLibrary_[it][0] + " " + selectedValue);
 
 		if(megaLibrary_[it][0] == selectedValue)
 		{
-		    var index = it;
-		    //console.log(index);
+		    index = it;
+		    console.log("selected:" + index);
 		    
 		}
 	
     }
-    
-    var deleteButton = document.createElement("button");
-    deleteButton.setAttribute("onClick", "deleteIcon(" + index  + ")");
+    console.log("selected?:" + index);
+    */
+
+    var deleteButton = document.createElement("button");    
+    deleteButton.setAttribute("onClick", "deleteIcon(" + selectedValue  + ")");
     deleteButton.innerHTML = "Delete";
     var submitRow = document.createElement("tr");
 
@@ -228,10 +233,15 @@ function iconSelected(selectedValue){
 
 function deleteIcon(index){
 
-    changesMade_ = true;
-    //console.log(index);
+    saveClicked_ = true; //overload usage so "Submit" button is enabled
+    
+    console.log(index);
+    console.log(megaLibrary_);
  
     megaLibrary_.splice(index, 1);
+    console.log(megaLibrary_);
+    currentSelectedValue_ = ""; // nothing currently selected now
+    
     chooseIcon();
     iconTable_wrapper.innerHTML = "";
 
