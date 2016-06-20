@@ -546,7 +546,11 @@
     function showDeletex(seqIndex)
     {
     	var deleteID = "deletex"+seqIndex;
-    	document.getElementById(deleteID).style.display = "block"; 
+    	var deleteEl = document.getElementById(deleteID);
+    	deleteEl.style.top = (deleteEl.parentNode.offsetTop + 1) + "px";
+    	deleteEl.style.left = (deleteEl.parentNode.offsetLeft + 
+    			deleteEl.parentNode.offsetWidth - 20) + "px";
+    	deleteEl.style.display = "block";    	
     }
     
     function getOrder()
@@ -961,12 +965,15 @@
     function reloadMacroSequence()
 	{
 		var sequenceContentEl = document.getElementById("sequenceContent");
-		sequenceContentEl.value = "";
+		sequenceContentEl.innerHTML = "";
+		macroString = [];
+		console.log("hahaha");
     	SEQFORMAT = document.getElementById("sequenceFormat").value;
-    	for (var i = 0; i < tempString.length; i++)
+    	var macroStringForReload = tempString.slice();
+    	for (var i = 0; i < macroStringForReload.length; i++)
     	{
-//			var Command = tempString[i].split(":");
-//			console.log(Command);
-			//addCommand(Command[1],Command[2],Command[3]);
+			var Command = macroStringForReload[i].split(":");
+			console.log(Command);
+			addCommand(Command[1],Command[2],Command[3]);
     	}
     }
