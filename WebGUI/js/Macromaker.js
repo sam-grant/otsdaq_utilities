@@ -21,6 +21,7 @@
 	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
+	var SEQFORMAT = "hex";
 	
 	var arrayOfCommandsForEdit = [];
 	var oldMacroNameForEdit = "";
@@ -29,6 +30,8 @@
 	var macroNotesForEdit = "";
 	
 	var macroNameForRename = "";
+	
+	var lastDeletedMacro = "";
 
 	function init() 
 	{			
@@ -41,9 +44,11 @@
 		block5El = document.getElementById('history');
 		block6El = document.getElementById('sequence');
 		block7El = document.getElementById('maker');
+		block8El = document.getElementById('popupEditMacro');
 		historybox = document.getElementById('historyContent');
 		sequencebox = document.getElementById('sequenceContent');
 		macrobox = document.getElementById('listOfMacros');
+		macroSequenceEdit = document.getElementById("macroSequenceEdit");
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 		loadExistingMacros();
@@ -68,6 +73,7 @@
 		var b5 = [w*2/3,_MARGIN+4*_MARGIN,w/3-_MARGIN, h-2*_MARGIN]; //right 
 		var b6 = [_MARGIN, _MARGIN+4*_MARGIN,w/3-2*_MARGIN, h-2*_MARGIN]; //left
 		var b7 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN];//middle
+		var b8 = [w/2-200,h/5,2*w/3,3*h/5];
 		
 		block1El.style.left = b1[0] + "px";
 		block1El.style.top =  b1[1] + "px";
@@ -104,9 +110,14 @@
 		block7El.style.width =  b7[2] + "px";
 		block7El.style.height =  b7[3] + "px";
 		
+		block8El.style.left = b8[0] + "px";
+		block8El.style.top =  b8[1] + "px";
+		block8El.style.height =  b8[3] + "px";
+		
 		historybox.style.height =  h*0.88 + "px";
 		sequencebox.style.height =  h*0.88 + "px";
 		macrobox.style.height =  h*0.40 + "px";
+		macroSequenceEdit.style.height = h*0.6-250 + "px";
 	}
 			 
 	function FElistHandlerFunction(req) 
@@ -385,17 +396,17 @@
           case "hex":
             document.getElementById("lsbFirst").checked = true;
             document.getElementById("lsbFirst").disabled = false;
-            macroAddressInputEl.setAttribute("placeholder", "0x64");
+        //    macroAddressInputEl.setAttribute("placeholder", "0x64");
             break;
           case "dec":
             document.getElementById("lsbFirst").checked = false;
             document.getElementById("lsbFirst").disabled = true;
-            macroAddressInputEl.setAttribute("placeholder", "1234");
+         //   macroAddressInputEl.setAttribute("placeholder", "1234");
             break;
           case "ascii":
             document.getElementById("lsbFirst").checked = false;
             document.getElementById("lsbFirst").disabled = false;
-            macroAddressInputEl.setAttribute("placeholder", "Hi");
+      //      macroAddressInputEl.setAttribute("placeholder", "Hi");
             break;
         }
     }
@@ -474,8 +485,8 @@
 				var dataStr = data.toString();
 			}
 				var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-						+ " ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + dataStr + "</b> into <b>" 
-						+ addressStr + "</b></p><div class=\"insideSEQ deletex\" ondragend=\"getOrder()\" onclick=\"removeCommand(" 
+						+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
+						+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
 						+ SEQINDEX + ")\"><b>X</b></div></div>";
 				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
 				macroString.push(writeMacroString);
@@ -492,8 +503,8 @@
 			} else 
 			var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + addressStr
-					+ "</b></p><div class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
+					+ "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
 					+ SEQINDEX + ")\"><b>X</b></div></div>";
 			var readMacroString = SEQINDEX+":r:"+addressStr;
 			macroString.push(readMacroString);
@@ -506,8 +517,8 @@
 				return;
 			} else {
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
-					+ "</b> s</p><div class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
+					+ "</b> s</p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
 					+ SEQINDEX + ")\"><b>X</b></div></div>";
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
@@ -523,6 +534,19 @@
 				chosenClass: 'chosenClassInSequence',
 				ghostClass:'ghostClassInSequence'
 		});//Works like magic!
+		getOrder();
+    }
+    
+    function hideDeletex(seqIndex)
+    {
+    	var deleteID = "deletex"+seqIndex;
+    	document.getElementById(deleteID).style.display = "none"; 
+    }
+    
+    function showDeletex(seqIndex)
+    {
+    	var deleteID = "deletex"+seqIndex;
+    	document.getElementById(deleteID).style.display = "block"; 
     }
     
     function getOrder()
@@ -538,15 +562,25 @@
     
     function removeCommand(seqIndex)
     {
+    	document.getElementById("undoDelete").disabled = false;
     	var child = document.getElementById("seq"+seqIndex);
 		var parent = document.getElementById('sequenceContent');
 		parent.removeChild(child);
 		for (var i = 0; i < macroString.length; i++)
-		  {
+		{
 		    if (seqIndex == macroString[i].split(":")[0])
+		    {
+		      lastDeletedMacro = macroString[i];
 		      macroString.splice(i,1);
-		  }
+		    }	  
+		}
 		getOrder();
+    }
+    
+    function undoDelete()
+    {
+    	addCommand(lastDeletedMacro.split(":")[1],lastDeletedMacro.split(":")[2],lastDeletedMacro.split(":")[3]);
+    	document.getElementById("undoDelete").disabled = true;
     }
     
     function clearAll()
@@ -593,6 +627,10 @@
     {
     	getOrder();
     	var macroName = document.getElementById("macroName").value;
+    	var Regex = /^[a-z0-9]+$/i;
+    	if (!Regex.test(macroName)) alert("Sorry, special characters and spaces are not allowed.");
+    	else
+    	{
     	var macroNotes = document.getElementById("macroNotes").value;
     	var macroLibEl = document.getElementById('listOfMacros');
     	stringOfAllMacros[MACROINDEX] = tempString;
@@ -602,6 +640,7 @@
     	loadExistingMacros();
     	hidePopupSaveMacro();
     	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    	}
     }
     
     function createMacroHandlerFunction(req)
@@ -675,13 +714,19 @@
     	{
 			var macrosArray = hugeStringOfMacros.split("@");
 			var out = "";
+			console.log(macrosArray);
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
+				console.log("here once, length should be" + macrosArray.length);
 				var arr = JSON.parse(macrosArray[i]);
 				console.log(arr);
 				var macroString = arr.sequence.split(",");
+				var forDisplay = []; //getting rid of the first element (macroIndex) for display
+				for (var j = 0; j < macroString.length; j++)
+				    forDisplay.push(macroString[j].split(":").slice(1).join(":"));
+				
 				stringOfAllMacros[MACROINDEX] = macroString;
-				out += "<div title='Sequence: " + arr.sequence + "\nNotes: "
+				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
 						+ arr.notes + "\nCreated: " + arr.time
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
@@ -791,18 +836,18 @@
 				var Command = arrayOfCommandsForEdit[i].split(":")
 				var commandType = Command[1];
 				if(commandType=='w'){
-					var writeEdit = "<div>Write <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",3)>" + Command[3]
-						+ "</textarea> into <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2] + "</textarea></div>";
+					var writeEdit = "<lable>Write 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",3)>" + Command[3]
+						+ "</textarea> into address 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2] + "</textarea><br/></lable>";
 					seqID++;
 					output += writeEdit;
 				}else if(commandType=='r'){
-					var readEdit = "<div>Read from <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
-						+ "</textarea></div>";
+					var readEdit = "<lable>Read from address 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
+						+ "</textarea><br/></lable>";
 					seqID++;
 					output += readEdit;
 				}else if(commandType=='d'){
-					var delayEdit = "<div>Delay <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
-						+ "</textarea> seconds</div>";
+					var delayEdit = "<lable>Delay <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
+						+ "</textarea> seconds<br/></lable>";
 					seqID++;
 				    output += delayEdit;
 				}else
@@ -813,7 +858,9 @@
     		var macroNameEl = document.getElementById("macroNameEdit");
     		macroNameEl.value = macroName;
     		var macroNotesEl = document.getElementById("macroNotesEdit");
-    		macroNotesForEdit = "[Modified on " + (new Date()).toLocaleDateString() + "] " + macroNotes;
+    		var date = new Date();    		
+    		var time = date.getHours() + ":" + date.getMinutes() + " " + date.toLocaleDateString();
+    		macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
     		macroNotesEl.value = macroNotesForEdit;
     		break;
     	case "Rename":
@@ -828,17 +875,18 @@
     		var arrayOfCommands = macroSequence.split(",");
 			for (var i = 0; i < arrayOfCommands.length; i++)
 			{
-				var Command = arrayOfCommands[i].split(":")
+				var Command = arrayOfCommands[i].split(":");
 				addCommand(Command[1],Command[2],Command[3]);
 			}
 			sequenceContentEl.innerHTML += temp;
+			getOrder();
 			toggleDisplay(1);
     		break;
     	case "End":
     		var arrayOfCommands = macroSequence.split(",");
 			for (var i = 0; i < arrayOfCommands.length; i++)
 			{
-				var Command = arrayOfCommands[i].split(":")
+				var Command = arrayOfCommands[i].split(":");
 				addCommand(Command[1],Command[2],Command[3]);
 			}
 			toggleDisplay(1);
@@ -865,12 +913,17 @@
     function saveChangedMacro()
     {
     	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
+    	var Regex = /^[a-z0-9]+$/i;
+		if (!Regex.test(newMacroNameForEdit)) alert("Sorry, special characters and spaces are not allowed.");
+		else
+		{
     	macroNotesForEdit = document.getElementById('macroNotesEdit').value;
     	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&oldMacroName="
     					+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
 						+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
 						+macroNotesForEdit,"",saveChangedMacroHandlerFunction);
     	hidePopupEditMacro();
+		}
     }
     
     function saveChangedMacroHandlerFunction()
@@ -904,3 +957,16 @@
   		hidePopupRenameMacro();
   		loadExistingMacros();  
   	}
+    
+    function reloadMacroSequence()
+	{
+		var sequenceContentEl = document.getElementById("sequenceContent");
+		sequenceContentEl.value = "";
+    	SEQFORMAT = document.getElementById("sequenceFormat").value;
+    	for (var i = 0; i < tempString.length; i++)
+    	{
+//			var Command = tempString[i].split(":");
+//			console.log(Command);
+			//addCommand(Command[1],Command[2],Command[3]);
+    	}
+    }

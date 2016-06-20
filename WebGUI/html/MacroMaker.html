@@ -47,6 +47,10 @@
 			color: #c4e9f5;
 		}
 		
+		lable {	
+			color: #c4e9f5;
+		}
+		
 		a {	
 			color: #c4e9f5;
 			cursor: pointer; 
@@ -120,10 +124,7 @@
 		    float:left;
 		}
 		
-		.seqDiv:hover .deletex{
-			display:block;
-		}
-		
+
 		.deletex{
 			width:16px;
 			height:16px;
@@ -248,6 +249,18 @@
 			border: 2px solid #c4e9f5;
         }
         
+        .popupEdit{
+        	background-color: #002540;
+        	z-index:9;
+        	position: fixed;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+			width:420px;
+        }
+        
         .smallPopup{
         	width:200px;
         	height:100px;
@@ -273,6 +286,15 @@
         	display:none;
         }
         
+        #macroEditContainer{
+        
+        }
+        
+        .stayAtBottomOfParent{
+			position: absolute;
+			bottom:10px;
+        }
+        
         #popupRenameMacro{
         	display:none;
         }
@@ -282,6 +304,10 @@
 			overflow-x: hidden;
 			padding:5px;
 			height: 75px;
+		}
+		
+		lable textarea{
+			vertical-align: middle;
 		}
 		
         .context-menu {
@@ -383,7 +409,7 @@
 		<div class='mainBlock' id='main'>
 	        <h3>Manual Commands</h3>
 	        <div class="center">
-		        <p>Address:  <input type="text" id="addressInput" class="inputBox" placeholder="0x000000064"/></p>
+		        <p>Address:  <input type="text" id="addressInput" class="inputBox"/></p>
 		        <div id="output1" class="formatSelection">Address is in
 		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
 				    <option class="select" value="hex" selected="selected">hex</option>
@@ -391,7 +417,7 @@
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
 				format.</div>
-		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox" placeholder="0xABCDEF"/></p>
+		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox"/></p>
 		        <div id="output2" class="formatSelection">Data is in
 		           <select id="dataFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
@@ -412,8 +438,8 @@
 		<div class='mainBlock' id='maker'>
 	        <h3>Macro Maker</h3>
 	        <div class="center">
-		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox" placeholder="0x000000064"/></p>
-			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox" placeholder="0xABCDEF"/></p>
+		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
+			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
 				
 				<div class="buttonGroup">
 		        	<button onclick="addCommand('w')" class="select">Add Write</button>
@@ -430,10 +456,20 @@
 		        	<button onclick="addCommand('d')" class="select">Add Delay</button>
 		        </div>
 		        <b><div id="macroReminder" class="red"></div></b>
-		        <div id="twoButtons" class="buttonGroup bottom">
+		        <div id="twoButtons">
 		            <button onclick="clearAll()" class="select">Clear All</button>
 		        	<button onclick="saveMacro()" class="select">Save as Macro</button>
 		        </div>
+		        <div class="buttonGroup">
+		        	<button id="undoDelete" onclick="undoDelete()" disabled class="select">Undo Delete</button>
+		        </div>
+		         <div class="formatSelection" onchange="reloadMacroSequence()">Display 
+		           <select id="sequenceFormat" class="dropdown">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format for all commands in the sequence</div>
 		    </div>
 		</div>
 		
@@ -463,20 +499,22 @@
 				</div>
 			</div>
 		</div>
-		<div id="popupEditMacro" class="popup">
+		<div id="popupEditMacro" class="popupEdit">
 			<h2><center>Macro Editor</center></h2>
-			<div>
+			<div id="macroEditContainer">
 				<p><b>Macro Name</b></p>
-				<textarea id="macroNameEdit" cols="40" rows="1"></textarea>
+				<textarea id="macroNameEdit" cols="45" rows="1"></textarea>
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
-				<p><b>Macro Notes</b></p>
-				<textarea id="macroNotesEdit" cols="40" rows="3">Pre-fill here</textarea>
-				<div class="buttongroup">
-				  <center>
-					<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
-					<button class="select" onclick="saveChangedMacro()">Save changes</button>
-				  </center>
+				<div class="stayAtBottomOfParent">
+					<p><b>Macro Notes</b></p>
+					<textarea id="macroNotesEdit" cols="45" rows="3">Pre-fill here</textarea>
+					<div class="buttongroup">
+					  <center>
+						<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
+						<button class="select" onclick="saveChangedMacro()">Save changes</button>
+					  </center>
+					</div>
 				</div>
 			</div>
 		</div>
