@@ -4,12 +4,16 @@
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
 		
 		<style type="text/css">			
 			body {
-				background-color: rgb(200,200,200);
-				background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);
+				background-color: #001626;
+				color: #c4e9f5 !important;
+				<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
 				overflow: auto;
+				font-family: Sans-serif;
+				font-size:15px;
 			}
 		
 		#fecList {
@@ -20,97 +24,536 @@
 		    padding:5px;
 		}
 		
+		#maker {
+		    padding:5px;
+		    display:none;
+		}
+		
+		h3 {	
+			color: #c4e9f5 !important;
+			background-color: #993333;
+			border-radius: 4px;
+			margin: 2px 13px 2px 10px;
+			text-align: center;
+		}
+		
+		div {	
+			color: #c4e9f5;
+		}
+		b {	
+			color: #c4e9f5;
+		}
+		p {	
+			color: #c4e9f5;
+		}
+		
+		lable {	
+			color: #c4e9f5;
+		}
+		
+		a {	
+			color: #c4e9f5;
+			cursor: pointer; 
+		}
+		
 		#history {
 		    padding:5px;
 		}
 		
+		#historyContent {
+			overflow:scroll;
+			overflow-x: hidden;
+			padding:5px;
+		}
+		
 		#macroLib {
 		    padding:5px;
+		    margin-bottom:5px;
 		}
 		
 		#instruction {
 		    padding:5px;
 		}
 		
+		#sequence {
+			display:none;
+			padding:5px;
+		}
+		
+		#sequenceContent {
+			overflow:scroll;
+			overflow-x: hidden;
+			padding:2px;
+		}
+		
+		#listOfMacros {
+			overflow:scroll;
+			overflow-x: hidden;
+			padding:5px;
+			margin: 0 10px 20px 0;
+		}
+		
 		.mainBlock {
 			position:absolute;
 		}
-	
+		
+        .innerClass1{
+			background: #002a52;
+			padding: 0.2em 0.2em 0.2em 0.1em;
+			cursor: pointer; 
+		}
+		
+		.innerClass2{
+		    padding: 0.2em 0.2em 0.2em 0.1em;
+		    cursor: pointer; 
+		}
+		
+		.insideSEQ{
+			display: inline;
+		}
+		
+		.textSEQ{
+			float:left;
+		}
+		
+		.seqDiv{
+		    padding: 0.2em 0.2em 0.2em 0.2em;
+		    margin: 0.2em 0.2em 0.2em 0.2em;
+			cursor: move; 
+		    width:90%;
+		    float:left;
+		}
+		
+
+		.deletex{
+			width:18px;
+			height:18px;
 			
+			color: #993333 !important;
+			float:right;
+			background-color: #993333;
+			cursor: pointer; 
+			border-radius:20%;
+			border : 2px solid #c4e9f5;
+			/*padding:2px;*/
+			text-align:center;
+			vertical-align: middle;
+			z-index:99;
+			display:none;
+			position:absolute;
+			
+			/*margin: -18px 30px -18px -18px;*/ /*0 0 2px 2px;*/
+		}
+		
+		.chosenClassInSequence{
+			border: 1.5px solid #993333;
+			background-color: #001626;
+		}
+		
+		.ghostClassInSequence{
+			background-color: #002a52;
+		}
+		
+		.macroDiv{
+		    padding: 0.2em 0.2em 0.2em 0.2em;
+		    margin: 0.2em 0.2em 0.2em 0.2em;
+		    cursor: context-menu; 
+		    border: 2px solid #993333;
+		    width: 90%;
+		    border-radius:2px;
+		}
+        
+        .inputBox{
+            background-color: #c4e9f5;
+            color:#001626;
+            margin-right:5px;
+            width:90px;
+            outline: none;
+        }
+        
+        .hide {
+      		color:#001626 !important;
+      	}
+      	
+      	.center {
+      		margin-top:5px;
+      		text-align:center;
+      	}
+      	p small {
+      		color: #c4e9f5;
+      	}
+      	
+        .select{
+        	color:#001626;  
+        	margin:0 5px 0 5px;
+        	padding:0.5px;
+        	display: inline;
+        	border-radius: 1px;
+        }
+        
+		.formatSelection{
+			margin:5px 0 0 0;
+		}
+        .buttonGroup{
+        	margin: 12px 0 10px 25px;
+        }
+        
+        .red{
+        	color: #993333 !important;
+        }
+
+        .dropdown{
+        	color:#001626;
+        	margin-bottom:10px;
+        	border-radius:1px;
+        }
+        
+        #address{
+        	margin: 5px 0 0 0;
+        }
+        #data{
+        	margin: 5px 0 0 22px;
+        }
+
+		#twoButtons{
+        	margin-top: 50px;
+        }
+        
+        ul{
+        	margin: 0 0 0 10;
+        	list-style: none;
+        }
+        li {
+         	color: #c4e9f5;
+        }
+        
+        textarea  
+		{  
+		   font-family:sans-serif;  
+		   font-size: 14px;   
+		   color: #002540;
+		   background-color: #c4e9f5;
+		   resize: none;
+		}
+		
+        .popup{
+        	width:400px;
+        	height:300px;
+        	background-color: #002540;
+        	z-index:9;
+        	position: fixed;
+			top: 40%;
+			left: 50%;
+			margin-top: -100px;
+			margin-left: -200px;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+        }
+        
+        .popupEdit{
+        	background-color: #002540;
+        	z-index:9;
+        	position: fixed;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+			width:420px;
+        }
+        
+        .smallPopup{
+        	width:200px;
+        	height:100px;
+        	background-color: #002540;
+        	z-index:9;
+        	position: fixed;
+			top: 40%;
+			left: 50%;
+			margin-left: -100px;
+			opacity:0.9;
+			border-radius:5px;
+			padding:6px;
+			color:#c4e9f5;
+			border: 2px solid #c4e9f5;
+        }
+
+        
+        #popupSaveMacro{
+        	display:none;
+        }
+        
+        #popupEditMacro{
+        	display:none;
+        }
+        
+        #macroEditContainer{
+        
+        }
+        
+        .stayAtBottomOfParent{
+			position: absolute;
+			bottom:10px;
+        }
+        
+        #popupRenameMacro{
+        	display:none;
+        }
+        
+        #macroSequenceEdit {
+			overflow:scroll;
+			overflow-x: hidden;
+			padding:5px;
+			height: 75px;
+		}
+		
+		lable textarea{
+			vertical-align: middle;
+		}
+		
+        .context-menu {
+		  display: none;
+		  position: absolute;
+		  z-index: 10;
+		  padding: 5px 0;
+		  width: 200px;
+		  background-color: #c4e9f5;
+		  border: solid 1px #dfdfdf;
+		  box-shadow: 1px 1px 2px #cfcfcf;
+		}
+		
+		.context-menu--active {
+		  display: block;
+		}
+		
+		.context-menu__items {
+		  list-style: none;
+		  margin: 0;
+		  padding: 0;
+		}
+		
+		.context-menu__item {
+		  display: block;
+		  margin-bottom: 2px;
+		}
+		
+		.context-menu__link {
+		  display: block;
+		  padding: 4px 12px;
+		  color: #001626;
+		  text-decoration: none;
+		}
+		
+		.context-menu__link:hover {
+		  color: #fff;
+		  background-color: #002a52;
+		}
+        
+        @media only screen and (max-height: 400px){
+        	#instruction{
+        	display:none;
+        	}
+        	#macroLib {
+		    display:none;
+			}
+        }
+        
+        @media only screen and (min-width: 1215px){
+        	.center{
+	            width:50%;
+	    		margin: 0 auto; 
+            }
+        }
+        
+        @media only screen and (min-width: 819px)and(max-width: 1215px) {
+        	.center{
+	            width:75%;
+	    		margin: 0 auto; 
+            }
+        }
 		</style>
-
-
+		
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
-
-
-
-		<script>		
-			
-		</script>
-
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+		<script src="http://rubaxa.github.io/Sortable/Sortable.js"></script>
+		  
 	</head>
 
 
 	<body onload='Macromaker:init();'>
 	
 	    <div class='mainBlock' id='fecList'>
-		    <h3>List of FECS</h3>
-			<form action="demo_form.asp" method="get">
-	        <p><div id='list'>Loading</div><input type="checkbox" id="FECcheck"></p>
-	        </form>
+	        <h3>List of Available FEs</h3>
+	        <div id='list'></div>
 		</div>
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			MAC1<br>
-			MAC2<br>
-			MAC3
+			<div id="listOfMacros"></div>
+		</div>
+		
+		<div class='mainBlock' id='sequence'>
+	        <h3>Macro Sequence</h3>
+	        <div id="sequenceContent"></div>
+		</div>
+		
+		<div id="nav" class="center">
+			<p><small>
+			<a onclick="toggleDisplay(0)">Manual Commands</a>
+			<a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
+			</small></p>
 		</div>
 		
 		<div class='mainBlock' id='main'>
-			<div id="nav">
-			<p><small>Manual Commands<a style="margin-left:15px" href=""><u>Macro Maker</u></a></small></p>
-		    </div>
 	        <h3>Manual Commands</h3>
-	        <p>Address:  <input type="text" id="addressInput" style="color:black;margin-right:5px;width:90px" /><button onclick="clearAddress()" style="color: black">Clear</button></p>
-	        <div id="output1">The address is in
-	           <select id="addressFormat" style="color:black;margin-bottom:10px">
-			    <option style="color:black" value="1" selected="selected">hex</option>
-			    <option style="color:black" value="2">dec</option>
-			   </select>
-			format.</div>
-	       
-	        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" style="color:black;margin-right:5px;width:90px"/><button onclick="clearData()" style="color: black">Clear</button></p>
-	        <div id="output2">The data is in
-	           <select id="dataFormat" style="color:black;margin-bottom:10px">
-			    <option style="color:black" value="1" selected="selected">hex</option>
-			    <option style="color:black" value="2">dec</option>
-			   </select>
-			format.</div>
-			
-	        <div id="reminder"></div>
-	        
-	        <p style="margin-top:10px;margin-left:50px"><button onclick="callRead()" style="color: black;margin-right:20px">Read</button><button onclick="callWrite()" style="color: black">Write</button></p>
+	        <div class="center">
+		        <p>Address:  <input type="text" id="addressInput" class="inputBox"/></p>
+		        <div id="output1" class="formatSelection">Address is in
+		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format.</div>
+		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox"/></p>
+		        <div id="output2" class="formatSelection">Data is in
+		           <select id="dataFormat" class="dropdown">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format.</div>
+				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
+		        <b><div id="reminder" class="red"></div></b>
+		        
+		        <div class="buttonGroup">
+		        	<button onclick="callRead()" class="select">Read</button>
+		        	<button onclick="callWrite()" class="select">Write</button>
+		        </div>
+		    </div>
+		</div>
+		
+		<div class='mainBlock' id='maker'>
+	        <h3>Macro Maker</h3>
+	        <div class="center">
+		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
+			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
+				
+				<div class="buttonGroup">
+		        	<button onclick="addCommand('w')" class="select">Add Write</button>
+		        	<button onclick="addCommand('r')" class="select">Add Read</button>
+		        </div>
+		        
+		        <p>Delay:  <input type="text" id="delayInput" class="inputBox"/>
+		           <select id="delayUnit" class="dropdown">
+				    <option class="select" value="s" selected="selected">s</option>
+				    <option class="select" value="ms">ms</option>
+				   </select>
+		        </p>
+		        <div class="buttonGroup">
+		        	<button onclick="addCommand('d')" class="select">Add Delay</button>
+		        </div>
+		        <b><div id="macroReminder" class="red"></div></b>
+		        <div id="twoButtons">
+		            <button onclick="clearAll()" class="select">Clear All</button>
+		        	<button onclick="saveMacro()" class="select">Save as Macro</button>
+		        </div>
+		        <div class="buttonGroup">
+		        	<button id="undoDelete" onclick="undoDelete()" disabled class="select">Undo Delete</button>
+		        </div>
+		         <div class="formatSelection" onchange="reloadMacroSequence()">Display 
+		           <select id="sequenceFormat" class="dropdown">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				format for all commands in the sequence</div>
+		    </div>
 		</div>
 		
 		<div class='mainBlock' id='instruction'>
 		  <h3>Instructions</h3>
-          <p style="text-align:justify">To read or write:<br>1. Select one or more FECs from the list of FECs;
-          <br>2. Enter the target address above. If you choose to write, you also need to enter the data;
-          <br>3. Select the format of your address and data (hex/dec). If you choose to read, the data format selected will be expected. 
+          <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
+          <br>2. Enter the address to read from/write to. Data is also required for a write.
+          <br>3. Select the format of your address and data (hex/dec/ascii).
           <br>4. Select either "Write" or "Read" to finish your manual command.
 		</div>
 		
 		<div class='mainBlock' id='history'>
 		   <h3>Command History</h3>
-           <div id="historyContent" style="overflow:scroll;padding:5px;">Scroll to see the history of commands. Click to rerun. <br></div>
+           <div id="historyContent"><b>Scroll to see the history of commands. Click to rerun. </b><br></div>
 		</div>
-
+		
+		<div id="popupSaveMacro" class="popup">
+			<h2><center>Save your Macro</center></h2>
+			<div>
+				<p><b>Macro Name</b></p>
+				<textarea id="macroName" cols="40" rows="1"></textarea>
+				<p><b>Macro Notes</b></p>
+				<textarea id="macroNotes" cols="40" rows="6"></textarea>
+				<div class="buttongroup">
+					<button class="select" onclick="hidePopupSaveMacro()">Cancel</button>
+					<button class="select" onclick="saveAsMacro()">Save as Macro</button>
+				</div>
+			</div>
+		</div>
+		<div id="popupEditMacro" class="popupEdit">
+			<h2><center>Macro Editor</center></h2>
+			<div id="macroEditContainer">
+				<p><b>Macro Name</b></p>
+				<textarea id="macroNameEdit" cols="45" rows="1"></textarea>
+				<p><b>Macro Sequence</b></p>
+				<div id="macroSequenceEdit">Loading</div>
+				<div class="stayAtBottomOfParent">
+					<p><b>Macro Notes</b></p>
+					<textarea id="macroNotesEdit" cols="45" rows="3">Pre-fill here</textarea>
+					<div class="buttongroup">
+					  <center>
+						<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
+						<button class="select" onclick="saveChangedMacro()">Save changes</button>
+					  </center>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="popupRenameMacro" class="smallPopup">
+			<h2>New Name:</h2>
+		    <textarea id="RenameMacro" cols="20" rows="1"></textarea>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="hidePopupRenameMacro()">Cancel</button>
+				<button class="select" onclick="renameMacro()">Save</button>
+			  </center>
+			</div>
+		</div>
+	  <nav id="context-menu" class="context-menu">
+	    <ul class="context-menu__items">
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Edit"> Edit Macro</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Rename"> Rename Macro</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Delete"> Delete Macro</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Start"> Clone to start of sequence</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="End"> Clone to end of sequence</a>
+	      </li>
+	    </ul>
+	  </nav>
+	  <script type="text/JavaScript" src="/WebPath/js/js_lib/ContextMenu.js"></script>
 	</body>
-
+	   
 </html>
 
  

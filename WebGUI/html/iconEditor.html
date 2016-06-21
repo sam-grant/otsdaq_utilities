@@ -8,6 +8,17 @@
 <script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script><script type="text/JavaScript" src="/WebPath/js/DesktopWizardWindowContentCode.js"></script>
 <script type="text/JavaScript" src="/WebPath/js/iconEditor.js"></script>
 <style>
+
+	* {
+
+		-webkit-user-select: 	none;
+		-moz-user-select: 		none;
+		user-select:			none;
+		font-family: 'Comfortaa', serif; /*'Donegal One', serif;*/		
+		/*font-size: 20px;*/
+		outline: none;  /* to stop firefox selection*/	
+	}
+
 	table
 	{
 		border-collapse: collapse;
@@ -37,11 +48,11 @@
 	.white_content
 	{
 		display: none;
-		position: absolute;
-		top: 25%;
-		left: 25%;
-		width: 50%;
-		height: 50%;
+		position: absolute;		
+		top: 12%;
+		left: 12%;
+		width: 70%;
+		height: 70%;		
 		padding: 16px;
 		border: 8px solid gray;
 		background-color: white;
@@ -54,6 +65,8 @@
 		width: 400px;
 	}
 </style>
+
+	<link href='http://fonts.googleapis.com/css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
 </head>
 
 <body onload="init()">
@@ -68,15 +81,29 @@
 	<form id="modifyIcon"></form>
 
 	<div id="light" class="white_content">
-	<h1></h1>
-	<h2></h2>
+	<h1>This Should Help</h1>
+
+	<h2>Making Changes</h2>
+	<p>
+		Add/Save/Delete are all local operations. Nothing is saved 
+		to the server until 'Submit Changes to Server' is clicked. So be
+		sure to click 'Submit Changes to Server' when you are done modifying the icon list.
+	</p>
+	
 	<h2>Permissions</h2>
 	<p>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User</p>
+
 	<h2>Images</h2>
-	<p>Place icon images in: <em>ots/otsdaq-utilities/WebGUI/images/iconImages</em></p>
+	<p>Place icon images in: <em>ots/otsdaq-utilities/WebGUI/images/iconImages/</em>
+	<br>...and only enter image filename in form.
+	<br><br>
+	If you enter 0 then the Alt field will be used as the icon. 
+	</p>
+	
 	<h2>Webpages</h2>
-	<p> Place webpages in: <em>ots/otsdaq-utilities/WebGUI/html/</em></p>
-	<p> 	& javascript in: <em>ots/otsdaq-utilities/WebGUI/js/</em></p>
+	<p> Place icon window webpages in sub-directories here: <em>ots/otsdaq-utilities/WebGUI/</em>
+	<br>...and enter path to page as <em>/WebPath/&#60;path to filename&#62;</em>
+	</p>
 	<hr>
 	<p>Click <a target="_blank" href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing " title="Click to open ots documentation">here</a> for more documentation.</p>
 	<a href = "javascript:void(0)" onclick = "document.getElementById('light').style.display='none';document.getElementById('fade').style.display='none'">Close</a></div>

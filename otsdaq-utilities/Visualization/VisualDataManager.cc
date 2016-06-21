@@ -1,4 +1,10 @@
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
+#include "otsdaq-core/DataManager/DataManager.h"
+#include "otsdaq-core/DataManager/DataProcessor.h"
+#include "otsdaq-core/DataProcessorPlugins/DQMHistosConsumer.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/DataBufferConfiguration.h"
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
 #include <iostream>
 #include <sstream>
@@ -8,12 +14,11 @@ using namespace ots;
 
 
 //========================================================================================================================
-VisualDataManager::VisualDataManager(ConfigurationManager* configurationManager) :
-        cProcessName_           ("VisualSupervisor"),
-        theConfigurationManager_(configurationManager),
-        theDataListener_        (0),
-        theLiveDQMHistos_       (0),
-        theFileDQMHistos_       ("FileDQMHistos")
+VisualDataManager::VisualDataManager(std::string supervisorType, unsigned int supervisorInstance, ConfigurationManager* configurationManager)
+: DataManager             (supervisorType, supervisorInstance, configurationManager)
+, theConfigurationManager_(configurationManager)
+, theLiveDQMHistos_       (0)
+, theFileDQMHistos_       (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos")
 {}
 
 //========================================================================================================================
@@ -21,49 +26,37 @@ VisualDataManager::~VisualDataManager(void)
 {}
 
 //========================================================================================================================
-void VisualDataManager::configure()
+void VisualDataManager::configure(void)
 {
-    DataManager::resetAllProcesses(); //Deletes all pointers created and given to the DataManager!
+	theLiveDQMHistos_ = 0;
 
-    //FIXME according to the configuration I will instantiate all the producers consumers I need
-    //FIXME the name should be a property of the supervisors
-    theDataListener_  = new DataListener (cProcessName_+"DataListener","192.168.133.1", 50002);
-    theLiveDQMHistos_ = new DQMHistos    (cProcessName_+"LiveDQMHistos");
+	DataManager::configure();
+	const DataManagerConfiguration*              dataManagerConfiguration           = theConfigurationManager_->getConfiguration<DataManagerConfiguration>();
+	const DataBufferConfiguration*               dataBufferConfiguration            = theConfigurationManager_->getConfiguration<DataBufferConfiguration>();
 
-
-    DataManager::configureProcess<std::string>(cProcessName_, theDataListener_);
-    DataManager::addConsumer                  (cProcessName_, theLiveDQMHistos_);
-
-}
-
-//========================================================================================================================
-void VisualDataManager::halt(void)
-{
-    stop();
-    DataManager::resetProcess(cProcessName_); //Deletes all pointers created and given to the DataManager!
-    theLiveDQMHistos_ = 0;
-}
-
-//========================================================================================================================
-void VisualDataManager::start(std::string runNumber)
-{
-    //FIXME according to the configuration I will give the right filename prefix
-    std::stringstream fileName;
-    fileName <<  "Run" << runNumber << "_Histos.root";
-    std::cout << __PRETTY_FUNCTION__ << "Starting visualizing run " << runNumber << std::endl;
-    //FIXME Maybe this has to go
-    if(theLiveDQMHistos_ != 0)
-        theLiveDQMHistos_->book(fileName.str(), theConfigurationManager_);
-
-    DataManager::startProcess(cProcessName_);
-}
-
-//========================================================================================================================
-void VisualDataManager::stop()
-{
-    DataManager::stopProcess(cProcessName_);
-    if(theLiveDQMHistos_ != 0)
-        theLiveDQMHistos_->save();
+	std::vector<std::string> bufferList = dataManagerConfiguration->getListOfDataBuffers(supervisorType_,supervisorInstance_);
+	for(const auto& itBuffers: bufferList)
+	{
+		std::vector<std::string> consumerList = dataBufferConfiguration->getConsumerIDList(itBuffers);
+		for(const auto& it: consumerList)
+		{
+			//std::cout << __PRETTY_FUNCTION__ << "CONSUMER: " << it << std::endl;
+			if(dataBufferConfiguration->getConsumerClass(itBuffers,it) == "DQMHistosConsumer")
+			{
+				//std::cout << __PRETTY_FUNCTION__ << "FOUND DQM: " << it << std::endl;
+				for(const auto& itConsumer: buffers_[itBuffers].consumers_)
+				{
+					//std::cout << __PRETTY_FUNCTION__ << "CONSUMER PROCESSOR: " << itConsumer->getProcessorID() << std::endl;
+					if(itConsumer->getProcessorID() == it)
+					{
+						//std::cout << __PRETTY_FUNCTION__ << "CONSUMER: " << it << std::endl;
+						theLiveDQMHistos_ = static_cast<DQMHistosConsumer*>(itConsumer.get());
+						theLiveDQMHistos_->setConfigurationManager(theConfigurationManager_);
+					}
+				}
+			}
+		}
+	}
 }
 
 //========================================================================================================================

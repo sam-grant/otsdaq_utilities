@@ -60,13 +60,15 @@ private:
 
     void				binaryBufferToHexString(char *buff, unsigned int len, std::string& dest);
 
-    SupervisorConfiguration    theSupervisorsConfiguration_;
-    RemoteWebUsers             theRemoteWebUsers_;
-    ConfigurationManager*      theConfigurationManager_;
-    VisualDataManager          theDataManager_;
-    const ConfigurationKey*    theConfigurationKey_;
+    const std::string                    supervisorType_;
+    const unsigned int                   supervisorInstance_;
+    SupervisorConfiguration              theSupervisorsConfiguration_;
+    RemoteWebUsers                       theRemoteWebUsers_;
+    ConfigurationManager*                theConfigurationManager_;
+    VisualDataManager*                   theDataManager_;
+    std::shared_ptr<ConfigurationKey>    theConfigurationKey_;
 
-    unsigned int 			     loadedRunNumber_;
+    unsigned int 			             loadedRunNumber_;
 
 };
 

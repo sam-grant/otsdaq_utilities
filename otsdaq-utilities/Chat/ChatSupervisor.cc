@@ -1,5 +1,6 @@
 #include "otsdaq-utilities/Chat/ChatSupervisor.h"
-#include "otsdaq-core/OTSMacros.h"
+#include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq-core/Macros/CoutHeaderMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
@@ -18,7 +19,7 @@ ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception
         SOAPMessenger  (this),
         theRemoteWebUsers_(this)
 {
-
+  INIT_MF("ChatSupervisor");
     xgi::bind (this, &ChatSupervisor::Default,              "Default" );
     xgi::bind (this, &ChatSupervisor::Chat,                	"Chat" );
 
@@ -49,7 +50,7 @@ void ChatSupervisor::destroy(void)
 //========================================================================================================================
 void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-    std::cout << __COUT_HDR__ << std::endl;
+    
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
 		getenv("CHAT_SUPERVISOR_ID") <<"'></frameset></html>";
 }
@@ -63,7 +64,7 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
     cgicc::Cgicc cgi(in);
 
     std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
-    std::cout << __COUT_HDR__ << "Command: " << Command << std::endl;
+    std::cout << __COUT_HDR_FL__ << "Command: " << Command << std::endl;
 
     //Commands
     	//RefreshChat
@@ -79,7 +80,7 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions, "0", Command != "RefreshChat")) //only refresh cookie if not automatic refresh
 	{
-	    std::cout << __COUT_HDR__ << "Failed login: " << cookieCode << std::endl;
+	    std::cout << __COUT_HDR_FL__ << "Failed login: " << cookieCode << std::endl;
 		*out << cookieCode;
 		return;
 	}
@@ -116,13 +117,13 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
         std::string topage = CgiDataUtilities::postData(cgi,"topage");
         std::string user = CgiDataUtilities::postData(cgi,"user");
 
-        std::cout << __COUT_HDR__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+        std::cout << __COUT_HDR_FL__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
 
         theRemoteWebUsers_.sendSystemMessage(theSupervisorsConfiguration_.getSupervisorDescriptor(),
         		topage, user + " is paging you to come chat.");
 	}
     else
-        std::cout << __COUT_HDR__ << "Command request not recognized." << std::endl;
+        std::cout << __COUT_HDR_FL__ << "Command request not recognized." << std::endl;
 
     //return xml doc holding server response
     xmldoc.outputXmlDocument((std::ostringstream*)out);
@@ -201,7 +202,7 @@ void ChatSupervisor::newUser(std::string user)
 			return; //do not add new if found
 		}
 
-    std::cout << __COUT_HDR__ << "New user: " << user << std::endl;
+    std::cout << __COUT_HDR_FL__ << "New user: " << user << std::endl;
 	//add and increment
 	ChatUsers_.push_back(user);
 	ChatUsersTime_.push_back(time(0));

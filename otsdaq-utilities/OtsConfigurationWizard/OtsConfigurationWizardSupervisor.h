@@ -42,6 +42,7 @@ public:
     void Default                      		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void Verification                 		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void generateURL                         (                                                                  );
+    void printURL();
     void RequestIcons                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void EditSecurity                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);

@@ -7,6 +7,7 @@ cet_make(LIBRARY_NAME Logbook
 		 SOAPUtilities
 		 CgiDataUtilities
 		 WebUsersUtilities
+		 MessageFacility
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 

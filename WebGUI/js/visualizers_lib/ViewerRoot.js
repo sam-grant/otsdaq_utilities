@@ -477,13 +477,15 @@ ViewerRoot.handleWindowResize = function() {
 	ViewerRoot.omni.style.height = h + "px";
 	
 	ViewerRoot.hud.handleWindowResize();	
-	ViewerRoot.resizeRootObjects();
+	ViewerRoot.resizeRootObjects(true);
 }
 
 // ViewerRoot.resizeRootObjects ~~
 //		Resize all root objects based on positions and tile arrangement
 //		if isForNewObject = true, then redraw all reports except last(new) report
-//		do not need to redraw for normal window resize, because obj's handler handles
+//		OLD: do not need to redraw for normal window resize, because obj's handler handles
+//		NEW: now on window resize the object is not redrawn.. the <svg class=root_canvas> size
+//			does not get updated.. So just redraw for normal window resize case.
 ViewerRoot.resizeRootObjects = function(needToRedraw) {
 	
 	ViewerRoot.rootContainer.style.width = ViewerRoot.w + "px";
@@ -535,7 +537,7 @@ ViewerRoot.resizeRootObjects = function(needToRedraw) {
 			//JSROOTPainter.drawObject(ViewerRoot.rootObjArr[i], ViewerRoot.rootObjIndexArr[i]);
 			JSROOT.redraw('histogram'+
 					ViewerRoot.rootObjIndexArr[i],
-					ViewerRoot.rootObjArr[i], ""); //last arg, root draw option
+					ViewerRoot.rootObjArr[i], "colz"); //last arg, root draw option
 			ViewerRoot.refreshTransparency(i);
 		}			
 	}
@@ -610,7 +612,7 @@ ViewerRoot.getDirectoryContents = function(path) {
 
 // ViewerRoot.getDirContentsHandler ~~
 ViewerRoot.getDirContentsHandler = function(req) {
-	//Debug.log("ViewerRoot getDirContentsHandler " + req.responseText );
+	Debug.log("ViewerRoot getDirContentsHandler " + req.responseText);
 	
 	var permissions = DesktopContent.getXMLValue(req,'permissions');
 	if(!permissions) 
@@ -780,7 +782,7 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex) 
 	JSROOT.redraw('histogram'+
 			(refreshIndex<0?ViewerRoot.objIndex:
 			ViewerRoot.rootObjIndexArr[refreshIndex]),
-			object, ""); //last arg, root draw option
+			object, "colz"); //last arg, root draw option
 	
 	if(refreshIndex < 0)
 	{

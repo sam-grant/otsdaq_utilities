@@ -1034,5 +1034,12 @@ Desktop.closeSystemMessage  = function(id) {
 	el.parentNode.removeChild(el); //remove from page!
 }
 
-
+Desktop.isWizardMode = function() {
+	//return true if in --config desktop mode
+	Debug.log("Desktop Security: " + Desktop.desktop.security);
+	
+	return !(!Desktop.desktop.security || 
+    		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
+			Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE); 
+}
 

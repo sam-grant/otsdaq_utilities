@@ -81,7 +81,7 @@ ViewerRoot.createHud = function() {
 	}
 	
 	this.handleDirContents = function(req) {
-		//Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
+		Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
 		
 		var path = DesktopContent.getXMLValue(req,'path');
 		if(!path) 
@@ -182,7 +182,7 @@ ViewerRoot.createHud = function() {
 
 			locPath = path.length>DIR_BRW_HDR_MAX_SIZE?("..." + path.substr(path.length-DIR_BRW_HDR_MAX_SIZE+3)):path;
 			str += "<div id='ViewerRoot-hudDirBrowser-header'>";
-			str += "<a title='Refresh " + path + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
+			str += "<a title='Refresh\n" + path + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				path + "\");'>" + locPath + "</a>";
 			str += "<a title='Change to Parent Directory' style='float:right' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				getPath(currDirPtr[TUPLE_PARENT]) + "\");'> cd .. </a>";
@@ -199,27 +199,27 @@ ViewerRoot.createHud = function() {
 			dirClr = currDir[TUPLE_CONTENT][i][TUPLE_NAME].indexOf(".root") >= 0?"#B9E6E6":"gray";
 			if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_DIR_EXPANDED)  //dir currently expanded, so action is to minimize it
 			{
-				str += "<a title='Collapse Directory' href='Javascript:ViewerRoot.hud.collapseDirectory(\"" + locPath + "\");'> + </a> ";
+				str += "<a title='Collapse Directory\n" + locPath + "' href='Javascript:ViewerRoot.hud.collapseDirectory(\"" + locPath + "\");'> + </a> ";
 				
-				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
+				str += "<a title='Change Directory\n" + locPath + "' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 			}
 			else if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_DIR)  //dir currently minimized, so action is to expand it
 			{
-				str += "<a title='Expand Directory' style='color:gray' href='Javascript:ViewerRoot.getDirectoryContents(\"" + locPath + "\");'> - </a> ";
+				str += "<a title='Expand Directory\n" + locPath + "' style='color:gray' href='Javascript:ViewerRoot.getDirectoryContents(\"" + locPath + "\");'> - </a> ";
 				
-				str += "<a title='Change Directory' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
+				str += "<a title='Change Directory\n" + locPath + "' style='color:" + dirClr + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + locPath + "\");'>" + currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 			}
 			else if(currDir[TUPLE_CONTENT][i][TUPLE_TYPE] & TUPLE_TYPE_FILE)	//file, so action is to launch it
 			{
 				if(locPath.indexOf(".root") > 0) //root file
 				{
-					str += "<a title='Open Root File' href='Javascript:ViewerRoot.rootReq(\"" + locPath + "\");'>" +
+					str += "<a title='Open Root File\n" + locPath + "' href='Javascript:ViewerRoot.rootReq(\"" + locPath + "\");'>" +
 							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/histo.png'>";
 					str += currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 				}
 				else if(locPath.indexOf(".rcfg") > 0) //root config file
 				{
-					str += "<a title='Open Root File' href='Javascript:ViewerRoot.rootConfigReq(\"" + locPath + "\");'>" +
+					str += "<a title='Open Root File\n" + locPath + "' href='Javascript:ViewerRoot.rootConfigReq(\"" + locPath + "\");'>" +
 							"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/histo3d.png'>";
 					str += currDir[TUPLE_CONTENT][i][TUPLE_NAME] + "</a>";
 				}

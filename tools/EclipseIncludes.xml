@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cdtprojectproperties>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.IncludePaths">
+<language name="C++ Source File">
+<includepath>${ROOT_INC}</includepath>
+<includepath>${XERCES_C_INC}</includepath>
+<includepath>${XDAQ_INC}</includepath>
+<includepath>/data/ups/tbb/v4_3_5/Linux64bit+2.6-2.12-e7-prof/include</includepath>
+<includepath>${BOOST_INC}</includepath>
+
+</language>
+<language name="C Source File">
+<includepath>/data/ups/tbb/v4_3_5/Linux64bit+2.6-2.12-e7-prof/include</includepath>
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+<includepath>/data/ups/tbb/v4_3_5/Linux64bit+2.6-2.12-e7-prof/include</includepath>
+
+</language>
+</section>
+<section name="org.eclipse.cdt.internal.ui.wizards.settingswizards.Macros">
+<language name="C++ Source File">
+
+</language>
+<language name="C Source File">
+
+</language>
+<language name="Object File">
+
+</language>
+<language name="Assembly Source File">
+
+</language>
+</section>
+</cdtprojectproperties>

@@ -34,7 +34,7 @@
 			}
 			
 			div {
-				font-family: 'Donegal One', serif;	
+				font-family: 'Comfortaa', serif; /*'Donegal One', serif;*/	
 				color: rgb(255,230,204);
 		    	font-size: 14px;
 			}
@@ -82,8 +82,9 @@
 				border: 0px solid red;
 			}
 			
-			#logbookArea .areaContentDiv {
-					margin-bottom: 50px; /*to provide margin after log display*/
+			
+			#logbookArea /*.areaContentDiv*/ {
+					margin-bottom: 50px; /*to provide margin at bottom of page for scrolling nicely*/
 			}
 			
 			#newPostSubject {
@@ -374,7 +375,8 @@
             
 		</style>
 		
-		
+
+		<link href='http://fonts.googleapis.com/css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
@@ -913,6 +915,8 @@
 				var el = document.getElementById("experimentTextBox");	
 				el.value = "";
 				el.focus();
+				applyExperimentsSearch(el.value);
+				displayExperiments();
 			}
 
 
