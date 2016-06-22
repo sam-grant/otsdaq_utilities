@@ -44,9 +44,23 @@ public:
     void destroy               (void);
     void Default               (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
-    void 						request                      (xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
+    void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
+
+    //modifying generic ConfigurationBase
+	int 						saveNewConfiguration					(ConfigurationManager *cfgMgr, std::string configurationName, int temporaryVersion = -1);
+
+	//modifiers of backbone configuration members
+    int							createTemporaryBackboneView				(ConfigurationManager *cfgMgr, int sourceViewVersion = -1); //-1, from MockUp, else from valid backbone view version
+
+    //modifiers of specific configuration based on alias, e.g. "Physics"
+    void						setKOCVersionForSpecificConfiguration	(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
+    void						deleteKOCForSpecificConfiguration		(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias);
+    void						addKOCForSpecificConfiguration			(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
+
+
+
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
@@ -58,7 +72,7 @@ private:
 
     ConfigurationManager*	refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
     std::map<std::string, ConfigurationManager *> 					userConfigurationManagers_;
-    std::map<std::string, time_t> 										userLastUseTime_;
+    std::map<std::string, time_t> 									userLastUseTime_;
 };
 
 }
