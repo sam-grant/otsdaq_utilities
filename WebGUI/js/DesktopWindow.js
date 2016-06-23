@@ -87,8 +87,9 @@ else {
 		
 		var _handleWindowContentLoading = function() {
 			//remove the "Loading" once iframe loades
-			if(_winfrmHolder.childNodes.length == 2) 
-				_winfrmHolder.removeChild(_winfrmHolder.childNodes[0]);
+			if(_winfrmHolder.childNodes.length > 1) 
+				_winfrmHolder.removeChild(
+						document.getElementById("DesktopWindowFrameLoadingDiv-"+_id));
 		}
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
@@ -294,7 +295,8 @@ else {
 		_winfrmHolder.setAttribute("id", "DesktopWindowFrameHolder-" + _id);
 		_winfrmHolder.style.marginLeft = _defaultFrameBorder+"px";	
 		_winfrmHolder.innerHTML = 
-				"<div class='DesktopWindowHeader' style='width:100px;height:50px;position:relative;top:50%;left:50%;margin-top:-25px;margin-left:-50px;text-align:center;margin-bottom:-50px;'>" + 
+				"<div class='DesktopWindowHeader' id='DesktopWindowFrameLoadingDiv-"+
+				_id + "' style='width:100px;height:50px;position:relative;top:50%;left:50%;margin-top:-25px;margin-left:-50px;text-align:center;margin-bottom:-50px;'>" + 
 				"Loading..." + "</div>";
 		
 	   		//create iframe
