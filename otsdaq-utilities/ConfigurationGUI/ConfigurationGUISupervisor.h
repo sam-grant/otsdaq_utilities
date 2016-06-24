@@ -5,7 +5,7 @@
 
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerWithWriteAccess.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -49,16 +49,15 @@ public:
 private:
 
     //modifying generic ConfigurationBase
-	int 						saveNewConfiguration					(ConfigurationManager *cfgMgr, std::string configurationName, int temporaryVersion = -1);
+	int 						saveNewConfiguration					(ConfigurationManagerWithWriteAccess *cfgMgr, std::string configurationName, int temporaryVersion = -1);
 
 	//modifiers of backbone configuration members
-    int							createTemporaryBackboneView				(ConfigurationManager *cfgMgr, int sourceViewVersion = -1); //-1, from MockUp, else from valid backbone view version
+    int							createTemporaryBackboneView				(ConfigurationManagerWithWriteAccess *cfgMgr, int sourceViewVersion = -1); //-1, from MockUp, else from valid backbone view version
 
     //modifiers of specific configuration based on alias, e.g. "Physics"
-    void						setKOCVersionForSpecificConfiguration	(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
-    void						deleteKOCForSpecificConfiguration		(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias);
-    void						addKOCForSpecificConfiguration			(ConfigurationManager *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
-
+    void						setKOCVersionForSpecificConfiguration	(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
+    void						deleteKOCForSpecificConfiguration		(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias);
+    void						addKOCForSpecificConfiguration			(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
 
 
 
@@ -66,12 +65,13 @@ private:
         USER_PERMISSIONS_THRESHOLD = 10,
         CONFIGURATION_MANAGER_EXPIRATION_TIME = 60*60*1, //1 hour, in seconds
     };
-    SupervisorConfiguration    			theSupervisorsConfiguration_;
-    RemoteWebUsers             			theRemoteWebUsers_;
+
+    SupervisorConfiguration    										theSupervisorsConfiguration_;
+    RemoteWebUsers             										theRemoteWebUsers_;
 
 
-    ConfigurationManager*	refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
-    std::map<std::string, ConfigurationManager *> 					userConfigurationManagers_;
+    ConfigurationManagerWithWriteAccess*							refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
+    std::map<std::string, ConfigurationManagerWithWriteAccess *> 	userConfigurationManagers_;
     std::map<std::string, time_t> 									userLastUseTime_;
 };
 
