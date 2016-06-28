@@ -51,13 +51,7 @@ private:
     //modifying generic ConfigurationBase
 	int 						saveNewConfiguration					(ConfigurationManagerWithWriteAccess *cfgMgr, std::string configurationName, int temporaryVersion = -1);
 
-	//modifiers of backbone configuration members
-    int							createTemporaryBackboneView				(ConfigurationManagerWithWriteAccess *cfgMgr, int sourceViewVersion = -1); //-1, from MockUp, else from valid backbone view version
 
-    //modifiers of specific configuration based on alias, e.g. "Physics"
-    void						setKOCVersionForSpecificConfiguration	(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
-    void						deleteKOCForSpecificConfiguration		(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias);
-    void						addKOCForSpecificConfiguration			(ConfigurationManagerWithWriteAccess *cfgMgr, int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias, int newKOCVersion);
 
 
 

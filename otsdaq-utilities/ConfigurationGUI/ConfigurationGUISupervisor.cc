@@ -69,84 +69,8 @@ theRemoteWebUsers_  (this)
 
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
-	__MOUT__ << "hi";
+	__MOUT__ << "To prove the concept...";
 	return;
-
-	//for (with Gennadiy) saving all configurations as a new version
-	if(0)
-	{
-		std::vector<std::string> configTables;
-		configTables.push_back("ConfigurationAliases");
-		configTables.push_back("Configurations");
-		configTables.push_back("DefaultConfigurations");
-		configTables.push_back("VersionAliases");
-
-		ConfigurationInterface* theInterface_ = ConfigurationInterface::getInstance(true);
-
-		for(unsigned int i = 0; i < configTables.size(); ++i)
-		{
-			theInterface_ = ConfigurationInterface::getInstance(true);
-			ConfigurationBase* base = 0;
-			std::cout << __COUT_HDR_FL__ << std::endl;
-			std::cout << __COUT_HDR_FL__ << std::endl;
-			std::cout << __COUT_HDR_FL__ << (i+1) << " of " << configTables.size() << ": " << configTables[i] << std::endl;
-
-			theInterface_->get(base,configTables[i], 0, 0, false, 0); //load version 0 for all
-
-			std::cout << __COUT_HDR_FL__ << "loaded " << configTables[i]<< std::endl;
-
-			//do cool things for special tables
-			if( configTables[i] == "ConfigurationAliases")
-			{
-				//view alias-key map
-				std::map<std::string, ConfigurationKey>	aliasMap = ((ConfigurationAliases *)base)->getAliasesMap();
-				std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
-
-				std::set<std::string> listOfKocs;
-				std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
-				while (it != aliasMap.end())
-				{
-					//for each configuration alias and key
-						//print
-					std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-					++it;
-				}
-			}
-
-			if( configTables[i] == "Configurations")
-			{
-				//get all other tables and add to vector of tables
-
-				std::set<std::string> listOfKocs = ((Configurations *)base)->getListOfKocs();
-				std::cout << __COUT_HDR_FL__ << "listOfKocs size: " << listOfKocs.size() << std::endl;
-
-				for(auto it=listOfKocs.begin();it != listOfKocs.end(); ++it)
-				{
-					std::cout << __COUT_HDR_FL__ << "Koc: " << *it << std::endl;
-					configTables.push_back(*it);
-				}
-			}
-
-
-			//save the active version
-			std::cout << __COUT_HDR_FL__ << "Current version: " << base->getViewVersion() << std::endl;
-
-			//
-			//		**** switch to db style interface?!!?!? ****   //
-			//
-			//theInterface_ = ConfigurationInterface::getInstance(false);
-			//
-			//
-
-			theInterface_->saveActiveVersion(base);
-			delete base; //cleanup config instance
-			break;
-		}
-
-		std::cout << __COUT_HDR_FL__ << "end of debugging Configuration!" << std::endl;
-		return;
-	}
-
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -526,7 +450,7 @@ theRemoteWebUsers_  (this)
 					(isInDatabase?"YES":"NO") << "     ";
 
 			//temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
-			temporaryVersion = createTemporaryBackboneView(cfgMgr,versionToCopy);
+			temporaryVersion = cfgMgr->createTemporaryBackboneView(versionToCopy);
 			std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion Backbone: " << temporaryVersion << std::endl;
 			std::cout << __COUT_HDR_FL__ << "\t\t(Note: it is not the) active version Backbone: " <<
 					cfgMgr->getConfiguration<ConfigurationAliases>()->getViewVersion()  << std::endl;
@@ -544,7 +468,7 @@ theRemoteWebUsers_  (this)
 			std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
 
 
-			setKOCVersionForSpecificConfiguration(cfgMgr,temporaryVersion,specSystemAlias,KOCAlias,newVersion);
+			cfgMgr->setKOCVersionForSpecificConfiguration(temporaryVersion,specSystemAlias,KOCAlias,newVersion);
 
 			std::cout << __COUT_HDR_FL__ << "\t\t******** After change" << std::endl;
 			ss.clear();
@@ -1365,112 +1289,5 @@ int ConfigurationGUISupervisor::saveNewConfiguration(ConfigurationManagerWithWri
 	return cfgMgr->getConfigurationInterface()->saveNewVersion(
 			cfgMgr->getConfigurationByName(configurationName), temporaryVersion);
 }
-
-
-//==============================================================================
-//createTemporaryBackboneView
-//	sourceViewVersion of -1 is from MockUp, else from valid view version
-// 	returns temporary version number (which is always negative)
-int	ConfigurationGUISupervisor::createTemporaryBackboneView(ConfigurationManagerWithWriteAccess *cfgMgr,
-		int sourceViewVersion)
-{
-	__MOUT_INFO__ << "Creating temporary backbone view from version " <<
-			sourceViewVersion << std::endl;
-
-	//find common available temporary version among backbone members
-	int tmpVersion = -2;
-	int retTmpVersion;
-	auto backboneMemberNames = cfgMgr->getBackboneMemberNames();
-	for (auto& name : backboneMemberNames)
-	{
-		retTmpVersion = cfgMgr->getConfigurationByName(name)->getNextAvailableTemporaryView();
-		if(retTmpVersion < tmpVersion)
-			tmpVersion = retTmpVersion;
-	}
-
-	__MOUT__ << "Common temporary backbone version found as " <<
-			tmpVersion << std::endl;
-
-	//create temporary views from source version to destination temporary version
-	for (auto& name : backboneMemberNames)
-	{
-		retTmpVersion = cfgMgr->getConfigurationByName(name)->createTemporaryView(sourceViewVersion, tmpVersion);
-		if(retTmpVersion != tmpVersion)
-		{
-			__MOUT_ERR__ << "Failure! Temporary view requested was " <<
-					tmpVersion << ". Mismatched temporary view created: " << retTmpVersion << std::endl;
-			throw std::runtime_error("Mismatched temporary view created!");
-		}
-	}
-
-	return tmpVersion;
-}
-
-//==============================================================================
-//setKOCVersionForSpecificConfiguration
-//	change KOC version for a keyAlias in a temporary version of the backbone
-void ConfigurationGUISupervisor::setKOCVersionForSpecificConfiguration(ConfigurationManagerWithWriteAccess *cfgMgr,
-		int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias,
-		int newKOCVersion)
-{
-	__MOUT_INFO__ <<
-			" temporaryBackboneVersion:" << temporaryBackboneVersion <<
-			" configAlias" << configAlias <<
-			" KOCAlias" << KOCAlias <<
-			" newKOCVersion" << newKOCVersion << std::endl;
-
-	//get pointers to temporary version of all backbone members
-	std::map<std::string, ConfigurationView*> backboneCfgViewMap;
-
-	auto backboneMemberNames = cfgMgr->getBackboneMemberNames();
-	for (auto& name : backboneMemberNames)
-		backboneCfgViewMap[name] =
-				cfgMgr->getConfigurationByName(name)->getTemporaryView(temporaryBackboneVersion);
-
-	std::stringstream ss;
-	backboneCfgViewMap["ConfigurationAliases"]->print(ss);
-	__MOUT__ << ss.str() << std::endl;
-
-
-	std::map<std::string, ConfigurationKey> aliasMap =
-			((ConfigurationAliases *)backboneCfgViewMap["ConfigurationAliases"])->getAliasesMap();
-
-	//check that configAlias exists in ConfigurationAliases
-	auto aliasMapIt = aliasMap.find(configAlias);
-	if(aliasMapIt == aliasMap.end())
-	{
-		mf::LogError(__MF_SUBJECT__) << __COUT_HDR_FL__ << "Failure! keyAlias not found " <<
-				configAlias << ". Mismatched temporary backbone view created: " << temporaryBackboneVersion << std::endl;
-		throw std::runtime_error("configAlias not found!");
-	}
-
-	__MOUT__ << "Exists - "
-			"Alias: " << aliasMapIt->first << " - Key: " << aliasMapIt->second.key() << std::endl;
-
-
-
-	//check that KOCAlias exists in Configurations for the configuration Key specified by configAlias
-	std::set<std::string> listOfKocs =
-			((Configurations *)backboneCfgViewMap["Configurations"])->getListOfKocs(aliasMapIt->second.key());
-
-	auto listOfKocsIt = listOfKocs.find(KOCAlias);
-	if(listOfKocsIt == listOfKocs.end())
-	{
-		mf::LogError(__MF_SUBJECT__) << __COUT_HDR_FL__ << "Failure! KOCAlias not found " <<
-				KOCAlias << ". Mismatched temporary backbone view created: " << temporaryBackboneVersion << std::endl;
-		throw std::runtime_error("KOCAlias not found!");
-	}
-
-	__MOUT__ << "Exists - "
-			"KOCAlias: " << *listOfKocsIt << std::endl;
-
-}
-
-
-
-
-
-
-
 
 
