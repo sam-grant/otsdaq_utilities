@@ -22,7 +22,18 @@
 #include <map>
 #include <utility>
 
+
+
 using namespace ots;
+
+#define __MF_SUBJECT__ "CfgGUI"
+#define __MF_HDR__		__COUT_HDR_FL__
+#define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
+#define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
+
+
 
 XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 
@@ -58,7 +69,7 @@ theRemoteWebUsers_  (this)
 
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
-	mf::LogDebug("cfgGUI") << "hi";
+	__MOUT__ << "hi";
 	return;
 
 	//for (with Gennadiy) saving all configurations as a new version
@@ -142,9 +153,9 @@ theRemoteWebUsers_  (this)
 	//behave like a new user
 
 	std::string userConfigurationManagerIndex = "1";
-	userConfigurationManagers_["1"] = new ConfigurationManager();
-	userConfigurationManagers_["2"] = new ConfigurationManager();
-	ConfigurationManager *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
+	userConfigurationManagers_["1"] = new ConfigurationManagerWithWriteAccess();
+	userConfigurationManagers_["2"] = new ConfigurationManagerWithWriteAccess();
+	ConfigurationManagerWithWriteAccess *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	std::cout << __COUT_HDR_FL__ << "All config info loaded." << std::endl;
@@ -244,7 +255,7 @@ theRemoteWebUsers_  (this)
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
+		std::cout << __COUT_HDR_FL__ << "\t\t******** view version " <<
 				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
@@ -254,38 +265,42 @@ theRemoteWebUsers_  (this)
 		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
-	return;
+	//return;
 
 
 	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a different sub config" << std::endl;
 
-
 	{
 		int versionToCopy = 2; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
 
+		//check if is an existing version
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << "     ";
+				(isInDatabase?"YES":"NO") << std::endl;
 
+		//check if version is already loaded
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
 
-		if(!isInConfiguration) //load configuration view
+		//load configuration view and set as active view
+		if(!isInConfiguration)
 			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
+		//verify version is loaded now
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
+
 	}
 
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << "     ";
+		std::cout << __COUT_HDR_FL__ << "\t\t******** view version " <<
+				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
@@ -294,35 +309,39 @@ theRemoteWebUsers_  (this)
 		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
+	//return;
 
 	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a different sub config" << std::endl;
 
 	{
 		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
-
+		//check if is an existing version
 		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << "     ";
+				(isInDatabase?"YES":"NO") << std::endl;
 
+		//check if version is already loaded
 		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
 
-		if(!isInConfiguration) //load configuration view
+		//load configuration view and set as active view
+		if(!isInConfiguration)
 			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
 		else
 			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
 
+		//verify version is loaded now
 		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
 		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+				(isInConfiguration?"YES":"NO") << std::endl;
 	}
 
 	{
 		//get 'columns' of sub config
 
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << "     ";
+		std::cout << __COUT_HDR_FL__ << "\t\t******** view version " <<
+				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
 		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
 
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
@@ -331,6 +350,7 @@ theRemoteWebUsers_  (this)
 		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
 	}
 
+	//return;
 
 	int versionToCopy = 0;
 	//	Make a copy of a view
@@ -437,9 +457,11 @@ theRemoteWebUsers_  (this)
 	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
 	int newAssignedVersion = 0;//cfgMgr->saveNewConfiguration(allCfgInfo[chosenSubConfig].configurationPtr_,temporaryVersion);
+	//int newAssignedVersion = cfgMgr->saveNewConfiguration(allCfgInfo[chosenSubConfig].configurationPtr_,temporaryVersion);
 
 	std::cout << __COUT_HDR_FL__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 
+	//return;
 
 
 
@@ -484,8 +506,8 @@ theRemoteWebUsers_  (this)
 				
 			}
 
-			//need to change
 
+			//Make copy for all backbone members to temporary versions!
 			std::cout << __COUT_HDR_FL__ << "\t\t**************************** Make temporary backbone" << std::endl;
 
 			chosenSubConfig = "ConfigurationAliases";
@@ -503,12 +525,33 @@ theRemoteWebUsers_  (this)
 			std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
 					(isInDatabase?"YES":"NO") << "     ";
 
-			temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
+			//temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
+			temporaryVersion = createTemporaryBackboneView(cfgMgr,versionToCopy);
+			std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion Backbone: " << temporaryVersion << std::endl;
+			std::cout << __COUT_HDR_FL__ << "\t\t(Note: it is not the) active version Backbone: " <<
+					cfgMgr->getConfiguration<ConfigurationAliases>()->getViewVersion()  << std::endl;
+
+
+			//edit the backbone however you want
+			std::cout << __COUT_HDR_FL__ << "\t\t**************************** Make changes to backbone" << std::endl;
+
+			ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getTemporaryView(temporaryVersion);
+
+
+			std::cout << __COUT_HDR_FL__ << "\t\t******** Before change" << std::endl;
+			std::stringstream ss;
+			cfgViewPtr->print(ss);
+			std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
+
+
+			setKOCVersionForSpecificConfiguration(cfgMgr,temporaryVersion,specSystemAlias,KOCAlias,newVersion);
+
+			std::cout << __COUT_HDR_FL__ << "\t\t******** After change" << std::endl;
+			ss.clear();
+			cfgViewPtr->print(ss);
+			std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
+
 			//FSSRDACsConfiguration
-			//allCfgInfo["ConfigurationAliases"].configurationPtr_->createTemporaryView(versionToCopy);
-			std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion ConfigurationAliases: " << temporaryVersion << std::endl;
-
-
 
 
 		}
@@ -634,7 +677,7 @@ theRemoteWebUsers_  (this)
 
 
 	//clear config managers
-	for (std::map<std::string, ConfigurationManager *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
+	for (std::map<std::string, ConfigurationManagerWithWriteAccess *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
 		std::cout << __COUT_HDR_FL__ << it->first << std::endl;
 		delete it->second;
@@ -660,7 +703,7 @@ void ConfigurationGUISupervisor::init(void)
 void ConfigurationGUISupervisor::destroy(void)
 {
 	//called by destructor
-	for (std::map<std::string, ConfigurationManager *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
+	for (std::map<std::string, ConfigurationManagerWithWriteAccess *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
 		delete it->second;
 		it->second = 0;
@@ -748,9 +791,9 @@ throw (xgi::exception::Exception)
 
 	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
 	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManager backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
-	ConfigurationManager* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManager backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
+	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerWithWriteAccess backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
+	ConfigurationManagerWithWriteAccess* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
+	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerWithWriteAccess backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
 
 	char tmpIntStr[100];
 	DOMElement* parentEl;
@@ -1242,7 +1285,7 @@ throw (xgi::exception::Exception)
 
 				std::cout << __COUT_HDR_FL__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
-				int newAssignedVersion = cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
+				int newAssignedVersion = saveNewConfiguration(cfgMgr,subAlias,temporaryVersion);//cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
 
 				xmldoc.addTextElementToData("savedAlias", subAlias);
 				sprintf(tmpIntStr,"%d",newAssignedVersion);
@@ -1276,7 +1319,7 @@ throw (xgi::exception::Exception)
 //		and will load the backbone configurations to specified backboneVersion
 //
 //		If backboneVersion is -1, then latest, and backboneVersion passed by reference will be updated
-ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion)
+ConfigurationManagerWithWriteAccess* ConfigurationGUISupervisor::refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion)
 {
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
@@ -1285,7 +1328,7 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
-		userConfigurationManagers_[mapKey] = new ConfigurationManager();
+		userConfigurationManagers_[mapKey] = new ConfigurationManagerWithWriteAccess();
 
 		//update configuration info for each new configuration manager
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
@@ -1315,3 +1358,119 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 
 	return userConfigurationManagers_[mapKey];
 }
+
+int ConfigurationGUISupervisor::saveNewConfiguration(ConfigurationManagerWithWriteAccess *cfgMgr,
+		std::string configurationName, int temporaryVersion)
+{
+	return cfgMgr->getConfigurationInterface()->saveNewVersion(
+			cfgMgr->getConfigurationByName(configurationName), temporaryVersion);
+}
+
+
+//==============================================================================
+//createTemporaryBackboneView
+//	sourceViewVersion of -1 is from MockUp, else from valid view version
+// 	returns temporary version number (which is always negative)
+int	ConfigurationGUISupervisor::createTemporaryBackboneView(ConfigurationManagerWithWriteAccess *cfgMgr,
+		int sourceViewVersion)
+{
+	__MOUT_INFO__ << "Creating temporary backbone view from version " <<
+			sourceViewVersion << std::endl;
+
+	//find common available temporary version among backbone members
+	int tmpVersion = -2;
+	int retTmpVersion;
+	auto backboneMemberNames = cfgMgr->getBackboneMemberNames();
+	for (auto& name : backboneMemberNames)
+	{
+		retTmpVersion = cfgMgr->getConfigurationByName(name)->getNextAvailableTemporaryView();
+		if(retTmpVersion < tmpVersion)
+			tmpVersion = retTmpVersion;
+	}
+
+	__MOUT__ << "Common temporary backbone version found as " <<
+			tmpVersion << std::endl;
+
+	//create temporary views from source version to destination temporary version
+	for (auto& name : backboneMemberNames)
+	{
+		retTmpVersion = cfgMgr->getConfigurationByName(name)->createTemporaryView(sourceViewVersion, tmpVersion);
+		if(retTmpVersion != tmpVersion)
+		{
+			__MOUT_ERR__ << "Failure! Temporary view requested was " <<
+					tmpVersion << ". Mismatched temporary view created: " << retTmpVersion << std::endl;
+			throw std::runtime_error("Mismatched temporary view created!");
+		}
+	}
+
+	return tmpVersion;
+}
+
+//==============================================================================
+//setKOCVersionForSpecificConfiguration
+//	change KOC version for a keyAlias in a temporary version of the backbone
+void ConfigurationGUISupervisor::setKOCVersionForSpecificConfiguration(ConfigurationManagerWithWriteAccess *cfgMgr,
+		int temporaryBackboneVersion, std::string configAlias, std::string KOCAlias,
+		int newKOCVersion)
+{
+	__MOUT_INFO__ <<
+			" temporaryBackboneVersion:" << temporaryBackboneVersion <<
+			" configAlias" << configAlias <<
+			" KOCAlias" << KOCAlias <<
+			" newKOCVersion" << newKOCVersion << std::endl;
+
+	//get pointers to temporary version of all backbone members
+	std::map<std::string, ConfigurationView*> backboneCfgViewMap;
+
+	auto backboneMemberNames = cfgMgr->getBackboneMemberNames();
+	for (auto& name : backboneMemberNames)
+		backboneCfgViewMap[name] =
+				cfgMgr->getConfigurationByName(name)->getTemporaryView(temporaryBackboneVersion);
+
+	std::stringstream ss;
+	backboneCfgViewMap["ConfigurationAliases"]->print(ss);
+	__MOUT__ << ss.str() << std::endl;
+
+
+	std::map<std::string, ConfigurationKey> aliasMap =
+			((ConfigurationAliases *)backboneCfgViewMap["ConfigurationAliases"])->getAliasesMap();
+
+	//check that configAlias exists in ConfigurationAliases
+	auto aliasMapIt = aliasMap.find(configAlias);
+	if(aliasMapIt == aliasMap.end())
+	{
+		mf::LogError(__MF_SUBJECT__) << __COUT_HDR_FL__ << "Failure! keyAlias not found " <<
+				configAlias << ". Mismatched temporary backbone view created: " << temporaryBackboneVersion << std::endl;
+		throw std::runtime_error("configAlias not found!");
+	}
+
+	__MOUT__ << "Exists - "
+			"Alias: " << aliasMapIt->first << " - Key: " << aliasMapIt->second.key() << std::endl;
+
+
+
+	//check that KOCAlias exists in Configurations for the configuration Key specified by configAlias
+	std::set<std::string> listOfKocs =
+			((Configurations *)backboneCfgViewMap["Configurations"])->getListOfKocs(aliasMapIt->second.key());
+
+	auto listOfKocsIt = listOfKocs.find(KOCAlias);
+	if(listOfKocsIt == listOfKocs.end())
+	{
+		mf::LogError(__MF_SUBJECT__) << __COUT_HDR_FL__ << "Failure! KOCAlias not found " <<
+				KOCAlias << ". Mismatched temporary backbone view created: " << temporaryBackboneVersion << std::endl;
+		throw std::runtime_error("KOCAlias not found!");
+	}
+
+	__MOUT__ << "Exists - "
+			"KOCAlias: " << *listOfKocsIt << std::endl;
+
+}
+
+
+
+
+
+
+
+
+

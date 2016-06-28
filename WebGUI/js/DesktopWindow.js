@@ -72,7 +72,8 @@ else {
 		//------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
-	
+		//_refreshHeader()
+		
 			//_refreshHeader() ~~~
 			//	private function to refresh header name based on window size
 			// 	clip text if too long
@@ -84,9 +85,21 @@ else {
 				_winhdr.innerHTML = _winhdr.innerHTML.substr(0,_winhdr.innerHTML.length-4)+"...";
 		}
 		
+		var _handleWindowContentLoading = function() {
+			//remove the "Loading" once iframe loades
+			if(_winfrmHolder.childNodes.length > 1) 
+				_winfrmHolder.removeChild(
+						document.getElementById("DesktopWindowFrameLoadingDiv-"+_id));
+		}
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
 		//------------------------------------------------------------------
+		//setWindowNameAndSubName
+		//setWindowSizeAndPosition
+		//moveWindowByOffset
+		//resizeAndPositionWindow(x,y,w,h)
+		//maximize
+		//minimize
 		
 			//member variable access functions ~~~
 		this.getWindowName = function() { return _name; }
@@ -200,7 +213,8 @@ else {
             if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
             this.setWindowSizeAndPosition(_x,_y,_w,_h);
         }
-                	//minimize() ~~~
+
+			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
             _isMinimized = !_isMinimized;
@@ -279,16 +293,21 @@ else {
 	   	_winfrmHolder = document.createElement("div"); 
 		_winfrmHolder.setAttribute("class", "DesktopWindowFrameHolder");
 		_winfrmHolder.setAttribute("id", "DesktopWindowFrameHolder-" + _id);
-	   	_winfrmHolder.style.marginLeft = _defaultFrameBorder+"px";		  
-	   	
+		_winfrmHolder.style.marginLeft = _defaultFrameBorder+"px";	
+		_winfrmHolder.innerHTML = 
+				"<div class='DesktopWindowHeader' id='DesktopWindowFrameLoadingDiv-"+
+				_id + "' style='width:100px;height:50px;position:relative;top:50%;left:50%;margin-top:-25px;margin-left:-50px;text-align:center;margin-bottom:-50px;'>" + 
+				"Loading..." + "</div>";
+		
 	   		//create iframe
 	   	_winfrm = document.createElement("iframe"); 
 		_winfrm.setAttribute("class", "DesktopWindowFrame");
 		_winfrm.setAttribute("id", "DesktopWindowFrame-" + _id);
-		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);	   	
-		_winfrm.setAttribute("src", _url);		   		   	   	
-	   	_winfrmHolder.appendChild(_winfrm); //add frame to holder	 
-	   	this.windiv.appendChild(_winfrmHolder); //add holder to window  
+		_winfrm.setAttribute("name", "DesktopWindowFrame-" + _id);	   			
+		_winfrm.onload = _handleWindowContentLoading; //event to delete "Loading"
+		_winfrm.setAttribute("src", _url);
+		_winfrmHolder.appendChild(_winfrm); //add frame to holder	 
+		this.windiv.appendChild(_winfrmHolder); //add holder to window  
 		
 		this.setWindowSizeAndPosition(x,y,w,h); //setup size and position
 			   	   	
