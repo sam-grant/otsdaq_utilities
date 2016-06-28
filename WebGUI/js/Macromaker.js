@@ -21,6 +21,7 @@
 	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
+	var isMacroReading = false;
 	var SEQFORMAT = "hex";
 	
 	var arrayOfCommandsForEdit = [];
@@ -258,51 +259,62 @@
   
     function callRead(address)
     {
-    	var reminderEl = document.getElementById('reminder');
-    	if(isArrayAllZero(selected))
-    		reminderEl.innerHTML = "Please select at least one interface from the list";
-    	else 
-    	{ 
-    		var addressFormatStr = document.getElementById("addressFormat").value;
-    		var dataFormatStr = document.getElementById("dataFormat").value;
-		
-			if (typeof address === 'undefined') 
-			{
-				theAddressStrForRead = document.getElementById('addressInput').value.toString();
-				if(theAddressStrForRead === "") 
-				{
-					reminderEl.innerHTML = "Please enter an address to read from";
-					return;
-				}
-			}
+    	var timeIntervalForRead = setInterval(function(){
+			if (isMacroReading == true)
+				return;
 			else
-				theAddressStrForRead = address.toString();
-			
-			if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
-			
-			var supervisorIndexArray = [];
-			var interfaceIndexArray = [];
-			for (var i = 0; i < selected.length; i++) 
 			{
-				if (selected[i]!==0) 
-				{
-					var oneInterface = FEELEMENTS[i].getAttribute("value")
-					supervisorIndexArray.push(oneInterface.split(":")[1]);
-					interfaceIndexArray.push(oneInterface.split(":")[2]);
+				isMacroReading = true;
+				var reminderEl = document.getElementById('reminder');
+				if(isArrayAllZero(selected))
+					reminderEl.innerHTML = "Please select at least one interface from the list";
+				else 
+				{ 
+					var addressFormatStr = document.getElementById("addressFormat").value;
+					var dataFormatStr = document.getElementById("dataFormat").value;
+				
+					if (typeof address === 'undefined') 
+					{
+						theAddressStrForRead = document.getElementById('addressInput').value.toString();
+						if(theAddressStrForRead === "") 
+						{
+							reminderEl.innerHTML = "Please enter an address to read from";
+							return;
+						}
+					}
+					else
+						theAddressStrForRead = address.toString();
+					
+					if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
+					
+					var supervisorIndexArray = [];
+					var interfaceIndexArray = [];
+					for (var i = 0; i < selected.length; i++) 
+					{
+						if (selected[i]!==0) 
+						{
+							var oneInterface = FEELEMENTS[i].getAttribute("value")
+							supervisorIndexArray.push(oneInterface.split(":")[1]);
+							interfaceIndexArray.push(oneInterface.split(":")[2]);
+						}
+					}
+					var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
+					var selectionStrArray = [];
+					for (var i = 0; i < selected.length; i++) 
+					{
+						if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+					}
+					
+					DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
+							+convertedAddress+"&supervisorIndex="+supervisorIndexArray
+							+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
+							+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
+							+"&dataFormatStr="+dataFormatStr,"",readHandlerFunction);
+					clearInterval(timeIntervalForRead);
 				}
 			}
-			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
-			var selectionStrArray = [];
-			for (var i = 0; i < selected.length; i++) 
-			{
-				if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
-			}
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
-					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
-					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
-					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",readHandlerFunction);
-    	}
+		},100);
+    	
     }
     
     function writeHandlerFunction(req)
@@ -318,7 +330,7 @@
     	var reminderEl = document.getElementById('reminder');
 		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
-		
+		isMacroReading = false;
 		var convertedOutput;
 		if (Number(dataOutput)===0) convertedOutput = "<span class='red'>Time out Error</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
@@ -863,7 +875,12 @@
     		macroNameEl.value = macroName;
     		var macroNotesEl = document.getElementById("macroNotesEdit");
     		var date = new Date();    		
-    		var time = date.getHours() + ":" + date.getMinutes() + " " + date.toLocaleDateString();
+			var minutes = "";
+    		if(date.getMinutes() < 10) 
+				 minutes = "0"+date.getMinutes.toString();
+    		else  minutes = date.getMinutes();
+    		console.log(minutes);
+    		var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
     		macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
     		macroNotesEl.value = macroNotesForEdit;
     		break;

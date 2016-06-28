@@ -63,6 +63,7 @@ private:
 	void renameMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
 	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	std::vector<std::string> interfaceList;
+	std::string username;
 //
 //
 //	SupervisorConfiguration* superConfiguration_;
