@@ -12,7 +12,6 @@
 #include "otsdaq-core/ConfigurationPluginDataFormats/DefaultConfigurations.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/VersionAliases.h"
 
-#include "otsdaq-demo/UserConfigurationDataFormats/FSSRDACsConfiguration.h"
 #include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
 
 

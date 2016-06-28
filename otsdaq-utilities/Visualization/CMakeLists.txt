@@ -13,6 +13,8 @@ cet_make(LIBRARY_NAME Visualization
 		 MonicelliInterface
 		 SupervisorConfigurations
 		 ConfigurationInterface
+		 otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
+		 otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
 		 XmlUtilities
 		 SOAPUtilities
 		 MessageFacility
