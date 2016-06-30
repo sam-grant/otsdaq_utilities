@@ -5,8 +5,6 @@
 
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerWithWriteAccess.h"
-
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -25,6 +23,7 @@
 
 #include <string>
 #include <map>
+#include "../../../otsdaq/otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
 
 
 namespace ots
@@ -48,10 +47,6 @@ public:
 
 private:
 
-    //modifying generic ConfigurationBase
-	int 						saveNewConfiguration					(ConfigurationManagerWithWriteAccess *cfgMgr, std::string configurationName, int temporaryVersion = -1);
-
-
 
 
 
@@ -64,8 +59,8 @@ private:
     RemoteWebUsers             										theRemoteWebUsers_;
 
 
-    ConfigurationManagerWithWriteAccess*							refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
-    std::map<std::string, ConfigurationManagerWithWriteAccess *> 	userConfigurationManagers_;
+    ConfigurationManagerRW*											refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
+    std::map<std::string, ConfigurationManagerRW *> 				userConfigurationManagers_;
     std::map<std::string, time_t> 									userLastUseTime_;
 };
 

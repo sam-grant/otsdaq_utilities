@@ -76,9 +76,9 @@ theRemoteWebUsers_  (this)
 	//behave like a new user
 
 	std::string userConfigurationManagerIndex = "1";
-	userConfigurationManagers_["1"] = new ConfigurationManagerWithWriteAccess();
-	userConfigurationManagers_["2"] = new ConfigurationManagerWithWriteAccess();
-	ConfigurationManagerWithWriteAccess *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
+	userConfigurationManagers_["1"] = new ConfigurationManagerRW();
+	userConfigurationManagers_["2"] = new ConfigurationManagerRW();
+	ConfigurationManagerRW *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	std::cout << __COUT_HDR_FL__ << "All config info loaded." << std::endl;
@@ -600,7 +600,7 @@ theRemoteWebUsers_  (this)
 
 
 	//clear config managers
-	for (std::map<std::string, ConfigurationManagerWithWriteAccess *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
+	for (std::map<std::string, ConfigurationManagerRW *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
 		std::cout << __COUT_HDR_FL__ << it->first << std::endl;
 		delete it->second;
@@ -626,7 +626,7 @@ void ConfigurationGUISupervisor::init(void)
 void ConfigurationGUISupervisor::destroy(void)
 {
 	//called by destructor
-	for (std::map<std::string, ConfigurationManagerWithWriteAccess *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
+	for (std::map<std::string, ConfigurationManagerRW *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
 		delete it->second;
 		it->second = 0;
@@ -714,9 +714,9 @@ throw (xgi::exception::Exception)
 
 	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
 	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerWithWriteAccess backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
-	ConfigurationManagerWithWriteAccess* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerWithWriteAccess backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
+	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
+	ConfigurationManagerRW* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
+	std::cout << __COUT_HDR_FL__ << "ConfigurationManagerRW backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
 
 	char tmpIntStr[100];
 	DOMElement* parentEl;
@@ -1208,7 +1208,7 @@ throw (xgi::exception::Exception)
 
 				std::cout << __COUT_HDR_FL__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
-				int newAssignedVersion = saveNewConfiguration(cfgMgr,subAlias,temporaryVersion);//cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
+				int newAssignedVersion = cfgMgr->saveNewConfiguration(subAlias,temporaryVersion);//cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
 
 				xmldoc.addTextElementToData("savedAlias", subAlias);
 				sprintf(tmpIntStr,"%d",newAssignedVersion);
@@ -1242,7 +1242,7 @@ throw (xgi::exception::Exception)
 //		and will load the backbone configurations to specified backboneVersion
 //
 //		If backboneVersion is -1, then latest, and backboneVersion passed by reference will be updated
-ConfigurationManagerWithWriteAccess* ConfigurationGUISupervisor::refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion)
+ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion)
 {
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
@@ -1251,7 +1251,7 @@ ConfigurationManagerWithWriteAccess* ConfigurationGUISupervisor::refreshUserSess
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
-		userConfigurationManagers_[mapKey] = new ConfigurationManagerWithWriteAccess();
+		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW();
 
 		//update configuration info for each new configuration manager
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
@@ -1281,12 +1281,4 @@ ConfigurationManagerWithWriteAccess* ConfigurationGUISupervisor::refreshUserSess
 
 	return userConfigurationManagers_[mapKey];
 }
-
-int ConfigurationGUISupervisor::saveNewConfiguration(ConfigurationManagerWithWriteAccess *cfgMgr,
-		std::string configurationName, int temporaryVersion)
-{
-	return cfgMgr->getConfigurationInterface()->saveNewVersion(
-			cfgMgr->getConfigurationByName(configurationName), temporaryVersion);
-}
-
 
