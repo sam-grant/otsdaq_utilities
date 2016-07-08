@@ -433,7 +433,7 @@ theRemoteWebUsers_  (this)
 			//Make copy for all backbone members to temporary versions!
 			std::cout << __COUT_HDR_FL__ << "\t\t**************************** Make temporary backbone" << std::endl;
 
-			chosenSubConfig = "ConfigurationAliases";
+			chosenSubConfig = "Configurations";
 			int temporaryVersion;
 			int versionToCopy = cfgMgr->getConfiguration<ConfigurationAliases>()->getViewVersion();
 			//cfgMgr->__GET_CONFIG__(DefaultConfigurations)->print();
@@ -464,19 +464,20 @@ theRemoteWebUsers_  (this)
 			std::cout << __COUT_HDR_FL__ << "\t\t******** Before change" << std::endl;
 			std::stringstream ss;
 			cfgViewPtr->print(ss);
-			std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
+			__MOUT__ << ss.str() << std::endl;
 
 
-			cfgMgr->setKOCVersionForSpecificConfiguration(temporaryVersion,specSystemAlias,KOCAlias,newVersion);
+			cfgMgr->setKOCVersionForSpecificConfiguration(allCfgInfo,temporaryVersion,specSystemAlias,KOCAlias,newVersion);
 
 			std::cout << __COUT_HDR_FL__ << "\t\t******** After change" << std::endl;
-			ss.clear();
+			ss.str(""); //clear stringstream (note: clear() just clears error state)
 			cfgViewPtr->print(ss);
-			std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
+			__MOUT__ << ss.str() << std::endl;
 
-			//FSSRDACsConfiguration
-
-
+			//Save temporary backbone view to new version
+			std::cout << __COUT_HDR_FL__ << "\t\t******** Saving new version" << std::endl;
+			unsigned int newBbVersion = cfgMgr->saveNewBackbone(temporaryVersion);
+			std::cout << __COUT_HDR_FL__ << "\t\tNew backbone: " << newBbVersion << std::endl;
 		}
 		else
 			std::cout << __COUT_HDR_FL__ << "Alias doesnt exist: " << specSystemAlias << std::endl;
