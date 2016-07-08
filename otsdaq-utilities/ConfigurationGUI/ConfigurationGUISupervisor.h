@@ -24,7 +24,7 @@
 #include <string>
 #include <map>
 #include "../../../otsdaq/otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-
+#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 namespace ots
 {
@@ -47,7 +47,8 @@ public:
 
 private:
 
-
+    void fillSpecificSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string alias, int backboneVersion);
+    void fillSpecificSubSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string subAlias, int version);
 
 
     enum {
