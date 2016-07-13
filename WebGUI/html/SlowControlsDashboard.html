@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>Epics CA Monitor</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(200,200,200);
+			}
+			
+			#clearDiv {
+				clear: both;
+			}
+			
+			a {
+				color: blue;
+			}
+			
+			
+			#block1 {
+				background-color: rgb(200,0,0);
+			}				
+
+			#block2 {
+				background-color: rgb(200,200,0);
+			}
+
+			#block3 {
+				background-color: rgb(0,0,200);
+			}
+			
+			#block4 {
+				background-color: rgb(0,200,0);
+			}
+			
+			.mainBlock {
+				position:absolute;
+			}
+									
+		</style>
+		
+		
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		
+		
+		<script>		
+			
+			
+		
+			//functions:			
+				//init()					
+				
+			//top-level scope (global) variables:
+			var block1El;
+			var block2El;
+			var block3El;
+			var block4El;
+				
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			//init called once body has loaded
+			function init() {			
+				Debug.log("init() was called");
+
+				fileBlockEl = document.getElementById('fileBlock');//red
+				mainBlockEl = document.getElementById('mainBlock');//yellow
+				editBlockEl = document.getElementById('editBlock');//green
+				
+				DesktopContent.XMLHttpRequest("Default?RequestType=request","",handlerFunction);
+				
+
+				window.onresize = redrawWindow;
+				redrawWindow(); //redraw window for first time
+			}	
+			
+			function handlerFunction(req) {
+				Debug.log("handlerFunction() was called. Req: " + req.responseText);
+
+				var child1data = DesktopContent.getXMLValue(req,"child");
+				var child2data = DesktopContent.getXMLValue(req,"child2");
+				
+				Debug.log("--child1data:",child1data," --child2data:",child2data);
+				block1El = document.getElementById('block1');
+				block1.innerHTML = child1data;
+				
+			}
+			
+			function redrawWindow() {
+				Debug.log("Chat redrawChat to " + window.innerWidth + " - " + window.innerHeight);
+							    
+				var w = window.innerWidth;
+				var h = window.innerHeight;
+				
+				
+				//square [x,y] [w,h]
+				var _MARGIN = 10;
+				
+				var b1 = [_MARGIN, _MARGIN, 100, h-2*_MARGIN]; //left column red
+				var b2 = [_MARGIN+100, _MARGIN, w-200-2*_MARGIN, h-_MARGIN]; //top middle yellow
+				var b3 = [_MARGIN+100, h/2, w-200-2*_MARGIN, h/2-_MARGIN]; //bottom middle blue
+				var b4 = [w-_MARGIN-100,_MARGIN,100, h-2*_MARGIN]; //right column green
+				
+				fileBlockEl.style.left = b1[0] + "px";
+				fileBlockEl.style.top =  b1[1] + "px";
+			        fileBlockEl.style.width =  b1[2] + "px";
+				fileBlockEl.style.height =  b1[3] + "px";
+				
+				
+				mainBlockEl.style.left = b2[0] + "px";
+				mainBlockEl.style.top =  b2[1] + "px";
+				mainBlockEl.style.width =  b2[2] + "px";
+				mainBlockEl.style.height =  b2[3] + "px";
+
+				
+				editBlockEl.style.left = b4[0] + "px";
+				editBlockEl.style.top =  b4[1] + "px";
+				editBlockEl.style.width =  b4[2] + "px";
+				editBlockEl.style.height =  b4[3] + "px";
+			}
+			
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:init();'>	
+			
+		<div class='fileBlock' id='fileBlock'></div>
+		<div class='mainBlock' id='mainBlock'></div>
+		<div class='editBlock' id='editBlock'></div>
+				
+		
+	</body>
+	
+</html>
