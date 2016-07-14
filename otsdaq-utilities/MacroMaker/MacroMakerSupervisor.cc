@@ -20,8 +20,9 @@
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
 
-#define MACROS_DB_PATH 					"otsdaq_demo/NoGitData/ServiceData/MacroData/"
-#define MACROS_HIST_PATH 				"otsdaq_demo/NoGitData/ServiceData/MacroHistory/"
+#define MACROS_DB_PATH 					std::string(getenv("SERVICE_DATA")) + "/MacroData/"
+#define MACROS_HIST_PATH 				std::string(getenv("SERVICE_DATA")) + "/MacroHistory/"
+#define MACROS_EXPORT_PATH 				std::string(getenv("SERVICE_DATA")) + "/MacroExport/"
 
 using namespace ots;
 
@@ -53,7 +54,7 @@ theRemoteWebUsers_(this)
 	//make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
-
+	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
 //	//getARTDAQFEDescriptors
 //	for (const auto& it: theSupervisorsConfiguration_.getFEDescriptors())
 //	{
@@ -133,10 +134,13 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 	if ((dir = opendir (macroPath.c_str())) == NULL)
 		mkdir(macroPath.c_str(), 0755);
 
-	DIR *dirc;
 	std::string histPath = (std::string)MACROS_HIST_PATH + username + "/";
 	if ((dir = opendir (histPath.c_str())) == NULL)
 		mkdir(histPath.c_str(), 0755);
+
+	std::string exportPath = (std::string)MACROS_EXPORT_PATH + username + "/";
+	if ((dir = opendir (exportPath.c_str())) == NULL)
+		mkdir(exportPath.c_str(), 0755);
 	//**** end LOGIN GATEWAY CODE ***//
 	HttpXmlDocument xmldoc(cookieCode);
 	handleRequest(Command,xmldoc,cgi);
@@ -161,10 +165,12 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		loadHistory(xmldoc);
 	else if(Command == "deleteMacro")
 		deleteMacro(xmldoc,cgi);
-	else if(Command == "renameMacro")
-		renameMacro(xmldoc,cgi);
 	else if(Command == "editMacro")
 		editMacro(xmldoc,cgi);
+	else if(Command == "clearHistory")
+		clearHistory();
+	else if(Command == "exportMacro")
+		exportMacro(xmldoc,cgi);
 }
 
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -350,7 +356,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 	std::string Time = CgiDataUtilities::getData(cgi, "Time");
 	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
 
-	std::cout << __COUT_HDR_FL__ <<  MACROS_DB_PATH << std::endl;
+	std::cout << __COUT_HDR_FL__ << MACROS_DB_PATH << std::endl;
 
 	std::string fileName = Name + ".dat";
 
@@ -409,8 +415,10 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
 	}
 	else
-
+	{
+		std::cout << fullPath << std::endl;
 		std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
+	}
 }
 
 void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::string Format, std::string Time, std::string Interfaces)
@@ -440,6 +448,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 	std::string fileName = "history.hist";
 
 	std::ifstream read ((MACROS_HIST_PATH + username + "/" + fileName).c_str());//reading a file
+	std::cout << MACROS_HIST_PATH + username + "/" + fileName << std::endl;
 	if (read.is_open())
 	{
 		std::stringstream buffer;
@@ -467,18 +476,6 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 	std::remove((MACROS_DB_PATH + username + "/" + MacroName + ".dat").c_str());
 	std::cout << "Successfully deleted " << MacroName;
 	xmldoc.addTextElementToData("deletedMacroName",MacroName);
-}
-
-void MacroMakerSupervisor::renameMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
-{
-	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
-	std::string newMacroName = CgiDataUtilities::getData(cgi, "newMacroName");
-	int result;
-	result = rename((MACROS_DB_PATH + username + "/" + oldMacroName + ".dat").c_str(), (MACROS_DB_PATH + username + "/" + newMacroName + ".dat").c_str());
-	if (result == 0)
-		xmldoc.addTextElementToData("renamedMacro",newMacroName);
-	else
-		xmldoc.addTextElementToData("renamedMacro","ERROR");
 }
 
 void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
@@ -519,3 +516,51 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	}
 }
 
+void MacroMakerSupervisor::clearHistory()
+{
+	std::string fileName = "history.hist";
+	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
+
+	std::remove(fullPath.c_str());
+	std::cout << "Successfully deleted " << fullPath;
+}
+
+void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");
+	std::string macroSequence = CgiDataUtilities::getData(cgi, "MacroSequence");
+	std::cout<< __COUT_HDR_FL__ << "Sequence: "<< macroSequence << std::endl;
+	std::stringstream ss(macroSequence);
+	std::string command;
+	std::vector<std::string> Commands;
+
+	while (getline(ss, command, ','))  Commands.push_back(command);
+
+	std::string fileName = macroName + ".cc";
+
+	std::string fullPath = (std::string)MACROS_EXPORT_PATH + username + "/" + fileName;
+	std::cout << fullPath << std::endl;
+	std::ofstream exportFile (fullPath.c_str(),std::ios::app);
+	if (exportFile.is_open())
+	{
+		for(unsigned int i = 0; i < Commands.size(); i++)
+		{
+			std::stringstream sst(Commands[i]);
+			std::string tokens;
+			std::vector<std::string> oneCommand;
+			while (getline(sst, tokens, ':'))  oneCommand.push_back(tokens);
+			std::cout << oneCommand[1] << oneCommand[2] << std::endl;
+            if (oneCommand[1] == "w")
+            	exportFile << "universalWrite(" << oneCommand[2] << "," << oneCommand[3] << ");\n";
+            else if (oneCommand[1] == "r")
+            	exportFile << "universalRead(" << oneCommand[2] << ",data);\n";
+            else if (oneCommand[1] == "d")
+            	exportFile << "delay(" << oneCommand[2] << ");\n";
+            else
+            	std::cout << "What??Why??" << std::endl;
+		}
+		exportFile.close();
+	}
+	else
+		std::cout << "Unable to open file";
+}

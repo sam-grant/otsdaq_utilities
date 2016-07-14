@@ -60,10 +60,21 @@ private:
 	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces);
 	void loadHistory(HttpXmlDocument& xmldoc);
 	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
-	void renameMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
 	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	void clearHistory();
+	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	std::vector<std::string> interfaceList;
 	std::string username;
+
+
+	//generateInterfaceCodeFromMacro
+	// 	input
+		// macro name
+		// user
+	//  from
+		// out c++ to the ..../MacroCodeGen/<user>/<macro>.cc
+				//  //comment generated from macro user/macro on this date
+				// universalread(0xff,0xfa);
 //
 //
 //	SupervisorConfiguration* superConfiguration_;

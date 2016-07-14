@@ -37,6 +37,11 @@
 			text-align: center;
 		}
 		
+		h4 {
+			color: #c4e9f5 !important;
+			margin: 5px 0px 15px 0px;
+		}
+		
 		div {	
 			color: #c4e9f5;
 		}
@@ -145,6 +150,32 @@
 			/*margin: -18px 30px -18px -18px;*/ /*0 0 2px 2px;*/
 		}
 		
+		.variableMark1{
+			width:16px;
+			height:16px;
+			background-color: #002a52;
+			cursor: pointer; 
+			padding:3px;
+			text-align:center;
+			vertical-align: middle;
+			z-index:99;
+			display:inline;
+			margin: -17px 0 0 -23px;
+		}
+		
+		.variableMark2{
+			width:16px;
+			height:16px;
+			background-color: #ff0101;
+			cursor: pointer; 
+			padding:3px;
+			text-align:center;
+			vertical-align: middle;
+			z-index:99;
+			display:inline;
+			margin: -17px 0 0 -23px;
+		}
+		
 		.chosenClassInSequence{
 			border: 1.5px solid #993333;
 			background-color: #001626;
@@ -201,6 +232,10 @@
         .red{
         	color: #993333 !important;
         }
+        
+        .fred{
+        	color: #ff0101 !important;
+        }
 
         .dropdown{
         	color:#001626;
@@ -254,6 +289,10 @@
         }
         
         .popupEdit{
+            top: 40%;
+			left: 50%;
+			margin-top: -30px;
+			margin-left: -30px;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
@@ -262,16 +301,16 @@
 			padding:6px;
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
-			width:420px;
+			width:460px;
         }
         
         .smallPopup{
-        	width:200px;
-        	height:100px;
+        	width:220px;
+        	height:112px;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
-			top: 40%;
+			top: 30%;
 			left: 50%;
 			margin-left: -100px;
 			opacity:0.9;
@@ -279,6 +318,7 @@
 			padding:6px;
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
+			display:none;
         }
 
         
@@ -297,10 +337,6 @@
         .stayAtBottomOfParent{
 			position: absolute;
 			bottom:10px;
-        }
-        
-        #popupRenameMacro{
-        	display:none;
         }
         
         #macroSequenceEdit {
@@ -436,6 +472,9 @@
 		        	<button onclick="callRead()" class="select">Read</button>
 		        	<button onclick="callWrite()" class="select">Write</button>
 		        </div>
+		        <div class="buttonGroup">
+		        	<button onclick="showPopupClearHistoryConfirm()" class="select">Clear History</button>
+		        </div>
 		    </div>
 		</div>
 		
@@ -461,7 +500,7 @@
 		        </div>
 		        <b><div id="macroReminder" class="red"></div></b>
 		        <div id="twoButtons">
-		            <button onclick="clearAll()" class="select">Clear All</button>
+		            <button onclick="showPopupClearAllConfirm()" class="select">Clear All</button>
 		        	<button onclick="saveMacro()" class="select">Save as Macro</button>
 		        </div>
 		        <div class="buttonGroup">
@@ -507,12 +546,12 @@
 			<h2><center>Macro Editor</center></h2>
 			<div id="macroEditContainer">
 				<p><b>Macro Name</b></p>
-				<textarea id="macroNameEdit" cols="45" rows="1"></textarea>
+				<textarea id="macroNameEdit" cols="49" rows="1"></textarea>
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
 				<div class="stayAtBottomOfParent">
 					<p><b>Macro Notes</b></p>
-					<textarea id="macroNotesEdit" cols="45" rows="3">Pre-fill here</textarea>
+					<textarea id="macroNotesEdit" cols="49" rows="3">Pre-fill here</textarea>
 					<div class="buttongroup">
 					  <center>
 						<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
@@ -522,13 +561,40 @@
 				</div>
 			</div>
 		</div>
-		<div id="popupRenameMacro" class="smallPopup">
-			<h2>New Name:</h2>
-		    <textarea id="RenameMacro" cols="20" rows="1"></textarea>
+		<div id="popupNameVariable" class="smallPopup">
+			<h4 id="nameVariablePrompt">How would you like to name this variable?</h4>
+		    <textarea id="nameVariable" cols="20" rows="1"></textarea>
 		    <div class="buttongroup">
 			  <center>
-				<button class="select" onclick="hidePopupRenameMacro()">Cancel</button>
-				<button class="select" onclick="renameMacro()">Save</button>
+				<button class="select" id="popupNameVariableCancelButton">Cancel</button>
+				<button class="select" id="popupNameVariableSaveButton"">Save</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupClearAllConfirm" class="smallPopup">
+			<h4>You will be clearing all macro sequence. Continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="clearAll(this)">Yes, please</button>
+				<button class="select" onclick="hideSmallPopup(this)">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupClearHistoryConfirm" class="smallPopup">
+		    <h4>You will be clearing all macro history. Continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="clearHistory(this)">Yes, please</button>
+				<button class="select" onclick="hideSmallPopup(this)">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupAskForVariableValue" class="smallPopup">
+		    <h4 id="assignValuePrompt">What value would you assign to variable <span id="variableNameAtRunTime" class="red"></span>?</h4>
+		    <textarea id="valueAtRunTime" cols="20" rows="1"></textarea>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" id="popupAskForVariableValueContinue">Continue</button>
 			  </center>
 			</div>
 		</div>
@@ -538,9 +604,6 @@
 	        <a href="#" class="context-menu__link" data-action="Edit"> Edit Macro</a>
 	      </li>
 	      <li class="context-menu__item">
-	        <a href="#" class="context-menu__link" data-action="Rename"> Rename Macro</a>
-	      </li>
-	      <li class="context-menu__item">
 	        <a href="#" class="context-menu__link" data-action="Delete"> Delete Macro</a>
 	      </li>
 	      <li class="context-menu__item">
@@ -548,6 +611,9 @@
 	      </li>
 	      <li class="context-menu__item">
 	        <a href="#" class="context-menu__link" data-action="End"> Clone to end of sequence</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Export"> Export Macro to C++ file</a>
 	      </li>
 	    </ul>
 	  </nav>

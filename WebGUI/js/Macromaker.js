@@ -260,16 +260,16 @@
     function callRead(address)
     {
     	var timeIntervalForRead = setInterval(function(){
-			if (isMacroReading == true)
-				return;
+			if (isMacroReading == true) return;
+				
 			else
 			{
-				isMacroReading = true;
 				var reminderEl = document.getElementById('reminder');
 				if(isArrayAllZero(selected))
 					reminderEl.innerHTML = "Please select at least one interface from the list";
 				else 
 				{ 
+					isMacroReading = true;
 					var addressFormatStr = document.getElementById("addressFormat").value;
 					var dataFormatStr = document.getElementById("dataFormat").value;
 				
@@ -304,7 +304,6 @@
 					{
 						if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
 					}
-					
 					DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
 							+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 							+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
@@ -343,7 +342,6 @@
 		var innerClass = "class=\"innerClass1\"";
 		if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
 		var contentEl = document.getElementById('historyContent');
-		console.log("Hello everyone. We are in read handler and theAddressStrForRead is "+theAddressStrForRead);
 
 		var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
 				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdReadDivOnclick(" +"'" 
@@ -488,11 +486,15 @@
 				{
 					macroReminderEl.innerHTML = "Please enter an address to write to";
 					return;
-				} else if(dataStr === "") {
+				} 
+	    		else if(dataStr === "") 
+	    		{
 					macroReminderEl.innerHTML = "Please enter your data";
 					return;
 				}
-			} else {
+			} 
+	    	else 
+			{
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
@@ -512,8 +514,8 @@
 					macroReminderEl.innerHTML = "Please enter an address to read from";
 					return;
 				}
-			} else 
-			var addressStr = address.toString();
+			} 
+			else var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
 					+ "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
@@ -522,12 +524,16 @@
 			macroString.push(readMacroString);
 			break;
 		case 'd':
-			var delayStr = document.getElementById('delayInput').value;
-			if(delayStr === "") 
-			{
-				macroReminderEl.innerHTML = "Please enter a delay";
-				return;
-			} else {
+			if (typeof address === 'undefined') 
+			{ 
+				var delayStr = document.getElementById('delayInput').value.toString();
+				if(addressStr === "") 
+				{
+					macroReminderEl.innerHTML = "Please enter a delay";
+					return;
+				}
+			}
+			else var delayStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
 					+ "</b> s</p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
@@ -535,7 +541,6 @@
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
 			break;
-			}
 		default: 
 			Debug.log("So if it's not write, read, or delay, what is it??");
 		}
@@ -599,11 +604,44 @@
     	document.getElementById("undoDelete").disabled = true;
     }
     
-    function clearAll()
+    function showPopupClearAllConfirm()
     {
-    	var contentEl = document.getElementById('sequenceContent');
-    	contentEl.innerHTML = "";
-    	macroString = [];
+		var popupClearAllConfirm = document.getElementById("popupClearAllConfirm");
+		popupClearAllConfirm.style.display = "block";
+    }
+    
+    function showPopupClearHistoryConfirm()
+    {
+		var popupClearAllConfirm = document.getElementById("popupClearHistoryConfirm");
+		popupClearAllConfirm.style.display = "block";
+    }
+	
+    function clearAll(el)
+    {
+		var contentEl = document.getElementById('sequenceContent');
+		contentEl.innerHTML = "";
+		macroString = [];
+		hideSmallPopup(el);
+    }
+    
+    function clearHistory(el)
+    {
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=clearHistory","",clearHistoryHandlerFunction);
+		var contentEl = document.getElementById('historyContent');
+		contentEl.innerHTML = "";
+		hideSmallPopup(el);
+    }
+    
+    function clearHistoryHandlerFunction(req)
+	{
+		Debug.log("clearHistoryHandlerFunction() was called. Req: " + req.responseText);
+		loadUserHistory();
+	}
+    
+    function hideSmallPopup(el)
+    {
+    	var wholeDiv = el.parentNode.parentNode.parentNode;
+    	wholeDiv.style.display = "none";
     }
     
     function saveMacro()
@@ -631,14 +669,7 @@
     	popupEditMacro.style.display = "none";
         arrayOfCommandsForEdit = [];        
     }
-    
-    function hidePopupRenameMacro()
-    {
-    	var popupRenameMacro = document.getElementById("popupRenameMacro");
-    	popupRenameMacro.style.display = "none";
-    	document.getElementById("RenameMacro").value="";
-    }
-    
+   
     function saveAsMacro()
     {
     	getOrder();
@@ -666,50 +697,44 @@
     
     function runMacro(stringOfCommands,macroName)
     {
-    	var reminderEl = document.getElementById('reminder');
-    	if(isMacroRunning)
-    	    reminderEl.innerHTML = "Please wait till the current macro ends";
-    	else if(isArrayAllZero(selected))
-    	    reminderEl.innerHTML = "Please select at least one interface from the list";
-    	else
-    	{
-			isMacroRunning = true;
-			var contentEl = document.getElementById('historyContent');
-	
-			EVENTCOUNTER = 0;
-			var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
-			contentEl.innerHTML += start;
-			contentEl.scrollTop = contentEl.scrollHeight;
-			for (var i = 0; i < stringOfCommands.length; i++)
+    	
+		isMacroRunning = true;
+		var contentEl = document.getElementById('historyContent');
+		
+		EVENTCOUNTER = 0;
+		var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
+		contentEl.innerHTML += start;
+		contentEl.scrollTop = contentEl.scrollHeight;
+		for (var i = 0; i < stringOfCommands.length; i++)
+		{
+			var Command = stringOfCommands[i].split(":")
+			var commandType = Command[1];
+			if(commandType=='w'){
+				callWrite(Command[2],Command[3]);
+				console.log("write "+Command[3]+" into "+Command[2]);
+				EVENTCOUNTER++;
+			}else if(commandType=='r'){
+				callRead(Command[2]);
+				console.log("read from "+Command[2]);
+				EVENTCOUNTER++;
+			}else if(commandType=='d')
+				console.log("delay "+Command[2]+"ms");
+			else
+				console.log("ERROR! Command type "+commandType+" not found");
+
+		}
+		timeIntervalID = setInterval(function(){
+			if (EVENTCOUNTER !== 0)
+				return;
+			else
 			{
-				var Command = stringOfCommands[i].split(":")
-				var commandType = Command[1];
-				if(commandType=='w'){
-					callWrite(Command[2],Command[3]);
-					console.log("write "+Command[3]+" into "+Command[2]);
-					EVENTCOUNTER++;
-				}else if(commandType=='r'){
-					callRead(Command[2]);
-					console.log("read from "+Command[2]);
-					EVENTCOUNTER++;
-				}else if(commandType=='d')
-					console.log("delay "+Command[2]+"ms");
-				else
-					console.log("ERROR! Command type "+commandType+" not found");
+				var end = "<p class=\"red\"><b><small>-- End of Macro: " + macroName + " --</small></b></p>";
+				contentEl.innerHTML += end;
+				clearInterval(timeIntervalID);
+				contentEl.scrollTop = contentEl.scrollHeight;
+				isMacroRunning = false;
 			}
-			timeIntervalID = setInterval(function(){
-				if (EVENTCOUNTER !== 0)
-					return;
-				else
-				{
-					var end = "<p class=\"red\"><b><small>-- End of Macro: " + macroName + " --</small></b></p>";
-					contentEl.innerHTML += end;
-					clearInterval(timeIntervalID);
-					contentEl.scrollTop = contentEl.scrollHeight;
-					isMacroRunning = false;
-				}
-			},100);
-    	}
+		},100);
     }
     
     function loadExistingMacros()
@@ -726,14 +751,14 @@
     {
     	Debug.log("loadingMacrosHandlerFunction() was called. Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
-    	if (hugeStringOfMacros.length > 0)
+    	
+    	if (hugeStringOfMacros && hugeStringOfMacros.length > 0)
     	{
 			var macrosArray = hugeStringOfMacros.split("@");
 			var out = "";
 			console.log(macrosArray);
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
-				console.log("here once, length should be" + macrosArray.length);
 				var arr = JSON.parse(macrosArray[i]);
 				console.log(arr);
 				var macroString = arr.sequence.split(",");
@@ -747,13 +772,14 @@
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
 						+ arr.notes + "\" data-time=\"" 
-						+ arr.time + "\" onclick='runMacro(stringOfAllMacros[" 
+						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
 			document.getElementById("listOfMacros").innerHTML = out;
     	}
-    	else document.getElementById("listOfMacros").innerHTML = "";
+    	else 
+    		document.getElementById("listOfMacros").innerHTML = "";
     }
     
     function loadingHistHandlerFunction(req)
@@ -761,44 +787,46 @@
     	Debug.log("loadingHistHandlerFunction() was called. Req: " + req.responseText);
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
-		if (typeof hugeStringOfHistory === undefined) return;
-		else if (hugeStringOfHistory.length > 0)
+		if ( !hugeStringOfHistory ) return; //this happens when history doesn't exist
+		
+		var commandHistArray = hugeStringOfHistory.split("#");
+		var out = "";
+		for(var i = 0; i < commandHistArray.length; i++) 
 		{
-			var commandHistArray = hugeStringOfHistory.split("#");
-			var out = "";
-			for(var i = 0; i < commandHistArray.length; i++) 
+			var innerClass = "class=\"innerClass1\"";
+			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
+			
+			var arr = JSON.parse(commandHistArray[i]);
+			var oneCommand = arr.Command.split(":");
+			var commandType = oneCommand[0];
+			var addressFormat = arr.Format.split(":")[0];
+			var dataFormat = arr.Format.split(":")[1];		
+			var convertedAddress = convertFromHex(addressFormat,oneCommand[1]);
+			var convertedData = convertFromHex(dataFormat,oneCommand[2]);
+			if(commandType=='w')
 			{
-				var innerClass = "class=\"innerClass1\"";
-				if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
-				
-				var arr = JSON.parse(commandHistArray[i]);
-				var oneCommand = arr.Command.split(":");
-				var commandType = oneCommand[0];
-				var addressFormat = arr.Format.split(":")[0];
-				var dataFormat = arr.Format.split(":")[1];		
-				var convertedAddress = convertFromHex(addressFormat,oneCommand[1]);
-				var convertedData = convertFromHex(dataFormat,oneCommand[2]);
-				if(commandType=='w'){
-					out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
-							+ arr.Time + "\nSelected interface: " + arr.Interfaces
-							+ "\" onclick=\"histCmdWriteDivOnclick(" + "'" + convertedAddress + "','" + convertedData + "','" 
-							+ addressFormat + "','" + dataFormat + "')\">Write [" + dataFormat + "]<b>"
-							+ convertedData + "</b> into register [" + addressFormat + "]<b> " 
-							+ convertedAddress + "</b></div>";
-					CMDHISTDIVINDEX++;
-				}else if(commandType=='r'){
-					if (Number(convertedData)===0) convertedData = "<span class='red'>Time out Error</span>";
-					out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " 
-							+ arr.Time + "\nSelected interface: " + arr.Interfaces + "\" onclick=\"histCmdReadDivOnclick(" 
-							+ "'" + convertedAddress + "','" + addressFormat + "'" + ")\">Read [" + dataFormat + "]<b>" 
-							+ convertedData + "</b> from register [" + addressFormat + "]<b>" + convertedAddress + "</b></div>";
-					CMDHISTDIVINDEX++;
-				}else if(commandType=='d')
-					console.log("delay "+oneCommand[1]+"ms");
-				else
-					console.log("ERROR! Command type "+commandType+" not found");
-
+				out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
+						+ arr.Time + "\nSelected interface: " + arr.Interfaces
+						+ "\" onclick=\"histCmdWriteDivOnclick(" + "'" + convertedAddress + "','" + convertedData + "','" 
+						+ addressFormat + "','" + dataFormat + "')\">Write [" + dataFormat + "]<b>"
+						+ convertedData + "</b> into register [" + addressFormat + "]<b> " 
+						+ convertedAddress + "</b></div>";
+				CMDHISTDIVINDEX++;
 			}
+			else if(commandType=='r')
+			{
+				if (Number(convertedData)===0) convertedData = "<span class='red'>Time out Error</span>";
+				out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " 
+						+ arr.Time + "\nSelected interface: " + arr.Interfaces + "\" onclick=\"histCmdReadDivOnclick(" 
+						+ "'" + convertedAddress + "','" + addressFormat + "'" + ")\">Read [" + dataFormat + "]<b>" 
+						+ convertedData + "</b> from register [" + addressFormat + "]<b>" + convertedAddress + "</b></div>";
+				CMDHISTDIVINDEX++;
+			}
+			else if(commandType=='d')
+				console.log("delay "+oneCommand[1]+"ms");
+			else
+				console.log("ERROR! Command type "+commandType+" not found");
+
 			contentEl.innerHTML = out;
 			contentEl.scrollTop = contentEl.scrollHeight;
 		}
@@ -851,19 +879,48 @@
 			{
 				var Command = arrayOfCommandsForEdit[i].split(":")
 				var commandType = Command[1];
+				var markColor = "1";
+				var disable = "";
+				var markColorData = "1";
+				var disableData = "";
 				if(commandType=='w'){
-					var writeEdit = "<lable>Write 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",3)>" + Command[3]
-						+ "</textarea> into address 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2] + "</textarea><br/></lable>";
+					if(isNaN(Command[2]))
+					{
+						markColor = "2";
+						disable = "disabled";
+					}
+					if(isNaN(Command[3]))
+					{
+						markColorData = "2";
+						disableData = "disabled";
+					}
+					var writeEdit = "<lable>Write 0x<textarea  " + disableData + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
+						+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+						+ ",2)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+						+ ",2)'>V</div><br/></lable>";
 					seqID++;
 					output += writeEdit;
 				}else if(commandType=='r'){
-					var readEdit = "<lable>Read from address 0x<textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
-						+ "</textarea><br/></lable>";
+					if(isNaN(Command[2]))
+					{
+						markColor = "2";
+						disable = "disabled";
+					}
+					var readEdit = "<lable>Read from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+						+ ",2)'>V</div><br/></lable>";
 					seqID++;
 					output += readEdit;
 				}else if(commandType=='d'){
-					var delayEdit = "<lable>Delay <textarea cols='10' rows='1' onchange=editCommands(this," + seqID + ",2)>" + Command[2]
-						+ "</textarea> seconds<br/></lable>";
+					if(isNaN(Command[2]))
+					{
+						markColor = "2";
+						disable = "disabled";
+					}
+					var delayEdit = "<lable>Delay <textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+						+ ",2)'>V</div> seconds<br/></lable>";
 					seqID++;
 				    output += delayEdit;
 				}else
@@ -877,18 +934,12 @@
     		var date = new Date();    		
 			var minutes = "";
     		if(date.getMinutes() < 10) 
-				 minutes = "0"+date.getMinutes.toString();
+				 minutes = "0"+date.getMinutes().toString();
     		else  minutes = date.getMinutes();
-    		console.log(minutes);
     		var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
     		macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
     		macroNotesEl.value = macroNotesForEdit;
     		break;
-    	case "Rename":
-    		var popupRenameMacro = document.getElementById("popupRenameMacro");
-    		popupRenameMacro.style.display = "block";
-    		macroNameForRename = macroName;
-			break;
     	case "Start":
     		var sequenceContentEl = document.getElementById("sequenceContent");
     		var temp = sequenceContentEl.innerHTML;
@@ -912,14 +963,24 @@
 			}
 			toggleDisplay(1);
     		break;
+    	case "Export":
+    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=exportMacro&MacroName="
+    							+macroName+"&MacroSequence="+macroSequence,"",exportMacroHandlerFunction);
+    		break;
     	}
     }
     
+    function exportMacroHandlerFunction(req)
+   	{
+   		Debug.log("exportMacroHandlerFunction() was called. Req: " + req.responseText);
+   	}
+       
     function editCommands(textarea, seqID, index)
     {
     	var x = arrayOfCommandsForEdit[seqID].split(":");
     	x[index] = textarea.value;
     	arrayOfCommandsForEdit[seqID] = x.join(":");
+    	console.log(seqID);
     }
     
     function deleteMacroHandlerFunction(req)
@@ -959,32 +1020,11 @@
 		loadExistingMacros();  
     }
     
-    function renameMacro()
-    {
-		var newName = document.getElementById('RenameMacro').value;
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=renameMacro&oldMacroName="
-				+macroNameForRename+"&newMacroName="+newName,"",renameMacroHandlerFunction);
-    }
-    
-    function renameMacroHandlerFunction(req)
-  	{
-  		Debug.log("renameMacroHandlerFunction() was called. Req: " + req.responseText);
-  		var newMacroName = DesktopContent.getXMLValue(req,"renamedMacro");
-  		var reminderEl = document.getElementById('reminder');
-  		if (newMacroName != "ERROR")
-  			reminderEl.innerHTML = "Renamed " + macroNameForRename + " to " + newMacroName;
-  		else 	
-  			reminderEl.innerHTML = "Error renaming " + macroNameForRename + "!";
-  		hidePopupRenameMacro();
-  		loadExistingMacros();  
-  	}
-    
     function reloadMacroSequence()
 	{
 		var sequenceContentEl = document.getElementById("sequenceContent");
 		sequenceContentEl.innerHTML = "";
 		macroString = [];
-		console.log("hahaha");
     	SEQFORMAT = document.getElementById("sequenceFormat").value;
     	var macroStringForReload = tempString.slice();
     	for (var i = 0; i < macroStringForReload.length; i++)
@@ -993,4 +1033,132 @@
 			console.log(Command);
 			addCommand(Command[1],Command[2],Command[3]);
     	}
+    }
+
+    function setFieldToVariable(div, seqID, index)
+    {
+    	var popupNameVariableEl = document.getElementById("popupNameVariable");
+    	popupNameVariableEl.style.display = "block";
+    	var nameVariablePromptEl = document.getElementById("nameVariablePrompt");
+    	var textareaEl = div.previousSibling;
+		document.getElementById('popupNameVariableCancelButton').onclick = function() {
+			popupNameVariableEl.style.display = "none";
+			document.getElementById("nameVariable").value = "";
+			return;
+		};
+    	if(isNaN(textareaEl.value))
+    	{
+    		nameVariablePromptEl.innerHTML = "Would you like a set value instead of a variable?";
+    		document.getElementById('popupNameVariableSaveButton').onclick = function() {
+				var variableName = document.getElementById("nameVariable").value.toString();
+				if(isNaN("0x"+variableName))
+				{
+					nameVariablePromptEl.innerHTML = "<span class='red'>The value has to be a hex number.</span>";
+					return;
+				}
+				div.style.backgroundColor = "#002a52";
+				textareaEl.value = variableName;
+				textareaEl.disabled = false;
+				var x = arrayOfCommandsForEdit[seqID].split(":");
+				x[index] = variableName;
+				arrayOfCommandsForEdit[seqID] = x.join(":");
+				console.log(arrayOfCommandsForEdit);
+				document.getElementById("nameVariable").value = "";
+				popupNameVariableEl.style.display = "none";
+			};
+    	}
+    	else
+    	{
+			nameVariablePromptEl.innerHTML = "Setting field to variable! How would you like to name it?";
+			document.getElementById('popupNameVariableSaveButton').onclick = function() {
+				var variableName = document.getElementById("nameVariable").value.toString();
+				if(!isNaN("0x"+variableName))
+				{
+					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be a number.</span>";
+					return;
+				}
+				div.style.backgroundColor = "#ff0101";
+				textareaEl.value = variableName;
+				textareaEl.disabled = true;
+				var x = arrayOfCommandsForEdit[seqID].split(":");
+				x[index] = variableName;
+				arrayOfCommandsForEdit[seqID] = x.join(":");
+				console.log(arrayOfCommandsForEdit);
+				document.getElementById("nameVariable").value = "";
+				popupNameVariableEl.style.display = "none";
+			};
+    	}
+    }
+    
+
+    function dealWithVariables(stringOfCommands,macroName)
+    {
+    	var reminderEl = document.getElementById('reminder');
+    	var waitForUserInput = 0;
+    	var copyOfStringOfCommands = stringOfCommands.slice();
+    	var i = 0;
+    	var toChange = 0;
+    	var newCommand = [];
+    	var dictionary = {};
+    	if(isMacroRunning)
+    		reminderEl.innerHTML = "Please wait till the current macro ends";
+    	else if(isArrayAllZero(selected))
+    		reminderEl.innerHTML = "Please select at least one interface from the list";
+    	else
+    	{
+    		var askEl = document.getElementById('popupAskForVariableValue');
+    		timeIntervalID = setInterval(function(){
+    			if(i < stringOfCommands.length && waitForUserInput === 0)
+    			{
+    				var Command = stringOfCommands[i].split(":");
+    				if (dictionary[Command[2].toString()] !== undefined)
+    				{
+        				newCommand = stringOfCommands[i].split(":");
+    					newCommand[2] = dictionary[Command[2].toString()];
+    					copyOfStringOfCommands[i] = newCommand.join(":");
+    				}
+    				else if (isNaN("0x"+Command[2]))
+    				{
+    					waitForUserInput = 1;
+        				newCommand = stringOfCommands[i].split(":");
+    					var variableNameAtRunTime = Command[2];
+    					toChange = i;
+    					if(waitForUserInput === 0)
+    						return;
+    					else
+    					{
+    						askEl.style.display = "block";
+    						document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
+    					}
+    				}
+    				i++;
+    			}
+    			else if(i == stringOfCommands.length && waitForUserInput === 0)
+    			{
+    				clearInterval(timeIntervalID);
+    				console.log("Final command to send to run: " + copyOfStringOfCommands);
+    				runMacro(copyOfStringOfCommands, macroName);
+    			}
+    		},200);
+    	}
+
+    	document.getElementById('popupAskForVariableValueContinue').onclick = function() {
+    		var variableValue = document.getElementById("valueAtRunTime").value.toString();
+    		if(isNaN("0x"+variableValue))
+    		{
+    			getElementById("assignValuePrompt").innerHTML = "<span class='red'>The value has to be a hex number.</span>";
+    			return;
+    		}
+    		else
+    		{
+     			dictionary[newCommand[2].toString()] = variableValue;
+    			newCommand[2] = variableValue;
+    			askEl.style.display = "none";
+    			copyOfStringOfCommands[toChange] = newCommand.join(":");
+    			waitForUserInput = 0;
+    			document.getElementById("valueAtRunTime").value = "";
+    			console.log(copyOfStringOfCommands);
+    			return;
+    		}
+    	};
     }
