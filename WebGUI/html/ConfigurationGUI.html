@@ -226,14 +226,25 @@
 				for(var i=0;i<kocAliases.length && i<kocVersions.length;++i)
 				{
 					str += "<b>" + niceName(kocAliases[i].getAttribute("value")) + "</b> (Current version: " + 
-						kocVersions[i].getAttribute("value") + 
-						") <a href='javascript:changeKocVersionForSpecificConfig()'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
+						kocVersions[i].getAttribute("value") +
+						")<br>Click below to change "  + niceName(kocAliases[i].getAttribute("value")) + " Version for " + alias + ":<br>";
+						//") <a href='javascript:changeKocVersionForSpecificConfig("+i+")'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
+					
 					
 					str += "Existing versions: " + kocVersions[i].getAttribute("value");
 
 					kocExistingVersions = kocVersions[i].getElementsByTagName("KOC_existingVersion");
 					for(var j=0;j<kocExistingVersions.length;++j)
-						str += " " + kocExistingVersions[j].getAttribute("value");
+					{
+						//str += " " + kocExistingVersions[j].getAttribute("value");
+						str += " ";
+						str += "<a href='javascript:changeKocVersionForSpecificConfig(\"" +
+								alias + "\",\"" + kocAliases[i].getAttribute("value") + "\"," + 
+								kocExistingVersions[j].getAttribute("value");
+						str += ")'>" + kocExistingVersions[j].getAttribute("value");
+						str += "</a>";
+					}				
+					
 					
 					str += "<br><br>";		
 				}
@@ -440,12 +451,20 @@
 				setupSpecificSubSystemConfig(subConfigAlias,version);
 			}
 			
-			function changeKocVersionForSpecificConfig() {
+			function changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion) {
 				//TODO
 				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
-				
+							
+				var req = "Request?RequestType=changeKocVersionForSpecificConfig" + 
+										"&cfgAlias=" + cfgAlias +
+										"&subAlias=" + kocAlias + 
+										"&version=" + newVersion;
+				var dataStr = "";
+				Debug.log(dataStr);
+				Debug.log(req);
+				DesktopContent.XMLHttpRequest(req, "data=" + dataStr, specificConfigRequestHandler);				
 			}
-
+			
 			function addNewKocForSpecificConfig(req) {
 				//TODO
 				Debug.log("CfgGUI addNewKocForSpecificConfig");
