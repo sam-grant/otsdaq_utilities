@@ -896,7 +896,7 @@
 					}
 					var writeEdit = "<lable>Write 0x<textarea  " + disableData + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
 						+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-						+ ",2)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+						+ ",3)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
 						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 						+ ",2)'>V</div><br/></lable>";
 					seqID++;
@@ -1089,7 +1089,6 @@
 			};
     	}
     }
-    
 
     function dealWithVariables(stringOfCommands,macroName)
     {
@@ -1100,6 +1099,8 @@
     	var toChange = 0;
     	var newCommand = [];
     	var dictionary = {};
+    	var globalIndex = 0;
+    	var isWriteAddress = true;
     	if(isMacroRunning)
     		reminderEl.innerHTML = "Please wait till the current macro ends";
     	else if(isArrayAllZero(selected))
@@ -1111,25 +1112,43 @@
     			if(i < stringOfCommands.length && waitForUserInput === 0)
     			{
     				var Command = stringOfCommands[i].split(":");
-    				if (dictionary[Command[2].toString()] !== undefined)
-    				{
-        				newCommand = stringOfCommands[i].split(":");
-    					newCommand[2] = dictionary[Command[2].toString()];
-    					copyOfStringOfCommands[i] = newCommand.join(":");
-    				}
-    				else if (isNaN("0x"+Command[2]))
-    				{
-    					waitForUserInput = 1;
-        				newCommand = stringOfCommands[i].split(":");
-    					var variableNameAtRunTime = Command[2];
-    					toChange = i;
-    					if(waitForUserInput === 0)
-    						return;
+    				if (Command[1] == "w")   //"write" will go through this loop twice
+					{
+    					if(isWriteAddress)
+    					{
+    						setValue(2);
+    						i--;
+    						isWriteAddress = false;
+    					}
     					else
     					{
-    						askEl.style.display = "block";
-    						document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
+    						setValue(3);
+    						isWriteAddress = true;
     					}
+    				}
+    				else setValue(2);
+    				function setValue(index){
+    					globalIndex = index;
+						if (dictionary[Command[index].toString()] !== undefined)
+						{
+							newCommand = copyOfStringOfCommands[i].split(":");
+							newCommand[index] = dictionary[Command[index].toString()];
+							copyOfStringOfCommands[i] = newCommand.join(":");
+						}
+						else if (isNaN("0x"+Command[index]))
+						{
+							waitForUserInput = 1;
+							newCommand = copyOfStringOfCommands[i].split(":");
+							var variableNameAtRunTime = Command[index];
+							toChange = i;
+							if(waitForUserInput === 0)
+								return;
+							else
+							{
+								askEl.style.display = "block";
+								document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
+							}
+						}
     				}
     				i++;
     			}
@@ -1146,13 +1165,13 @@
     		var variableValue = document.getElementById("valueAtRunTime").value.toString();
     		if(isNaN("0x"+variableValue))
     		{
-    			getElementById("assignValuePrompt").innerHTML = "<span class='red'>The value has to be a hex number.</span>";
+    			document.getElementById("assignValuePrompt").innerHTML = "<span class='red'>The value has to be a hex number.</span>";
     			return;
     		}
     		else
     		{
-     			dictionary[newCommand[2].toString()] = variableValue;
-    			newCommand[2] = variableValue;
+     			dictionary[newCommand[globalIndex].toString()] = variableValue;
+    			newCommand[globalIndex] = variableValue;
     			askEl.style.display = "none";
     			copyOfStringOfCommands[toChange] = newCommand.join(":");
     			waitForUserInput = 0;
