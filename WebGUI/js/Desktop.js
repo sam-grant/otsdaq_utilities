@@ -549,6 +549,7 @@ Desktop.createDesktop = function(security) {
 	_desktopElement.setAttribute("id", "Desktop");
 	document.body.appendChild(_desktopElement);
 	document.body.onmousemove = Desktop.handleBodyMouseMove;
+	window.onmouseup = Desktop.handleWindowMouseUp; //added to fix firefox mouseup glitch with window moving	
 	document.body.addEventListener('touchmove',Desktop.handleBodyTouchMove);
 	document.body.addEventListener('touchend',Desktop.handleBodyTouchEnd);
 	window.onresize = _handleDesktopResize;
@@ -751,7 +752,7 @@ Desktop.handleWindowMouseUp = function(mouseEvent) {
 		Desktop.winManipMode = -1;
 		if(Desktop.desktop.getForeWindow()) Desktop.desktop.getForeWindow().showFrame();		
 		
-		//Debug.log("Mouse was released! " + mouseEvent.which);
+		//Debug.log("Mouse was released! which=" + mouseEvent.which);
 	}
 	return false;
 }
