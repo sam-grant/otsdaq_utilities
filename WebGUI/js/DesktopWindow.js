@@ -181,6 +181,7 @@ else {
                 _winfrm.style.position = "static";
             }
 			
+            Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
 		}
 			//moveWindowByOffset() ~~~
 			//	move position of window and its elements by an offset
@@ -194,6 +195,9 @@ else {
 		   	
 			//Debug.log("Desktop Window position to " + _x + "," +
 			//	_y ,Debug.LOW_PRIORITY);
+		   	
+		   	//reset current layout update timer if a window moves
+		   	Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
 		}
 			//resizeAndPositionWindow(x,y,w,h) ~~~
 			//	resize and position of window and its elements

@@ -355,6 +355,12 @@ else {
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
         
+        //user with lock on far right.. because it is the highest priority for user to see
+        tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
+		_topBar.appendChild(tmpBtn);
+                
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
         tmpBtn.innerHTML = "<a target='_blank' href='" + 
@@ -379,12 +385,7 @@ else {
 		tmpBtn.setAttribute("class", "DesktopDashboard-user-account");
 		tmpBtn.setAttribute("id", "DesktopDashboard-user-displayName");
         tmpBtn.innerHTML = "";
-        _topBar.appendChild(tmpBtn);     
-        
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
-        _topBar.appendChild(tmpBtn);        
+        _topBar.appendChild(tmpBtn);
                 
         
         this.dashboardElement.appendChild(_topBar);
