@@ -856,7 +856,7 @@ Desktop.handleBodyMouseMove = function(mouseEvent) {
 	if(!Desktop.desktop.getForeWindow()) return false;
 	
 	if(Desktop.foreWinLastMouse[0] != -1)			//window selected and mouse moving now so do something
-	{
+	{		
 		if(mouseEvent.which == 0) //mouse button was released!!
 			return Desktop.handleWindowMouseUp(mouseEvent);	
 			
