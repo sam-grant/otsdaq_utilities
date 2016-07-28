@@ -26,7 +26,7 @@
 using namespace ots;
 
 #define __MF_SUBJECT__ "CfgGUI"
-#define __MF_HDR__		__COUT_HDR_FL__
+#define __MF_HDR__		__COUT_HDR_PL__//__COUT_HDR_FL__
 #define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
@@ -69,6 +69,8 @@ theRemoteWebUsers_  (this)
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
 	__MOUT__ << "To prove the concept...";
+	return;
+	testXDAQContext(); //test new config
 	return;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1402,4 +1404,40 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 
 	return userConfigurationManagers_[mapKey];
 }
+
+
+
+//testXDAQContext just a test bed for navigating the new config tree
+void ConfigurationGUISupervisor::testXDAQContext()
+{
+	//behave like a user
+	//start with top level xdaq context
+	//	then add and delete rows proof-of-concept
+	//export xml xdaq config file
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//behave like a new user
+
+	ConfigurationManagerRW cfgMgrInst;
+
+	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
+	for(auto& node : allCfgInfo)
+		__MOUT__ << node.first << std::endl;
+	//cfgMgr->testXDAQContext();
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+}
+
+
+
+
+
 

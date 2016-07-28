@@ -50,6 +50,7 @@ private:
     void fillSpecificSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string alias, int backboneVersion);
     void fillSpecificSubSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string subAlias, int version);
 
+    void testXDAQContext();
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
