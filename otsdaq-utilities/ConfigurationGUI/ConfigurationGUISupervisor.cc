@@ -1425,9 +1425,19 @@ void ConfigurationGUISupervisor::testXDAQContext()
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
-	for(auto& node : allCfgInfo)
-		__MOUT__ << node.first << std::endl;
+	for(auto& mapIt : allCfgInfo)
+	{
+		std::cout << __COUT_HDR_FL__ << "Config Alias: " << mapIt.first << std::endl;
+		std::cout << __COUT_HDR_FL__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
+
+		//get version key for the current system subconfiguration key
+		for (std::set<int>::iterator vit=mapIt.second.versions_.begin(); vit!=mapIt.second.versions_.end(); ++vit)
+		{
+			std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
+		}
+	}
 	//cfgMgr->testXDAQContext();
+
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
