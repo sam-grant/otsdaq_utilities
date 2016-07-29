@@ -16,20 +16,16 @@
 			}
 			
 			
-			#block1 {
-				background-color: rgb(200,0,0);
+			#fileBlock {
+				background-color: rgb(26,148,49);
 			}				
 
-			#block2 {
-				background-color: rgb(200,200,0);
+			#mainBlock {
+				background-color: rgb(240,234,214);
 			}
 
-			#block3 {
-				background-color: rgb(0,0,200);
-			}
-			
-			#block4 {
-				background-color: rgb(0,200,0);
+			#editBlock {
+				background-color: rgb(200,0,0);
 			}
 			
 			.mainBlock {
@@ -52,11 +48,11 @@
 				//init()					
 				
 			//top-level scope (global) variables:
-			var block1El;
-			var block2El;
-			var block3El;
-			var block4El;
-				
+			var pvListJSON;
+			var fileBlock_ = {name:"", isHidden:false, el:""};// = ["fileBlock", false ];
+			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
+			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
+					
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -64,16 +60,34 @@
 			function init() {			
 				Debug.log("init() was called");
 
-				fileBlockEl = document.getElementById('fileBlock');//red
-				mainBlockEl = document.getElementById('mainBlock');//yellow
-				editBlockEl = document.getElementById('editBlock');//green
+				fileBlock_.el = document.getElementById('fileBlock');//red
+				mainBlock_.el = document.getElementById('mainBlock');//yellow
+				editBlock_.el = document.getElementById('editBlock');//green
+
 				
-				DesktopContent.XMLHttpRequest("Default?RequestType=request","",handlerFunction);
+				fileBlock_.name = fileBlock_.el.id;
+				mainBlock_.name = mainBlock_.el.id;
+				editBlock_.name = editBlock_.el.id;
+				
+				
+				
+				console.log("editBlock_.hidden : " + editBlock_.hidden);
+				
+				//DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", handlerFunction);
+				//console.log("URN #: " + DesktopContent._localUrnLid);
+				//DesktopContent.XMLHttpRequest("Default?RequestType=Default","",handlerFunction);
+				//DesktopContent._localUrnLid = 340;
+				DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", pvListReqHandler, undefined, undefined, "sequence");	
 				
 
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
 			}	
+			
+			function pvListReqHandler(req){
+			
+				pvListJSON = req;
+			}
 			
 			function handlerFunction(req) {
 				Debug.log("handlerFunction() was called. Req: " + req.responseText);
@@ -82,42 +96,116 @@
 				var child2data = DesktopContent.getXMLValue(req,"child2");
 				
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
-				block1El = document.getElementById('block1');
-				block1.innerHTML = child1data;
+				//block1El = document.getElementById('block1');
+				//block1.innerHTML = child1data;
 				
 			}
 			
-			function redrawWindow() {
-				Debug.log("Chat redrawChat to " + window.innerWidth + " - " + window.innerHeight);
-							    
-				var w = window.innerWidth;
-				var h = window.innerHeight;
+			function toggleEditMode(editMode)
+			{
+				editBlock_.isHidden =! editMode;
+			
+				console.log(editMode);
+			
+				if(editMode == false)
+				{
+					console.log("Cleared");
+					editBlock_.el.innerHTML = "";
+					
+				}
+				else
+				{
+				/*	var hideButton = document.createElement("button");
+					hideButton.onclick = "toggleEditMode(false)";
+					hideButton.innerHTML = "Run";
+					hideButton.id = "editButton";
+					editBlock_.el.appendChild(hideButton);
+					document.getElementById(hideButton.id).addEventListener("click", toggleEditMode, false);*/
+				}
+			
+			
+				redrawWindow();
 				
-				
-				//square [x,y] [w,h]
+			}
+
+			function redrawWindow(clicked, hover) {
+				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+					
 				var _MARGIN = 10;
+				var maxWidth = window.innerWidth   - (2 * _MARGIN);
+				var maxHeight = window.innerHeight - (2 * _MARGIN);
 				
-				var b1 = [_MARGIN, _MARGIN, 100, h-2*_MARGIN]; //left column red
-				var b2 = [_MARGIN+100, _MARGIN, w-200-2*_MARGIN, h-_MARGIN]; //top middle yellow
-				var b3 = [_MARGIN+100, h/2, w-200-2*_MARGIN, h/2-_MARGIN]; //bottom middle blue
-				var b4 = [w-_MARGIN-100,_MARGIN,100, h-2*_MARGIN]; //right column green
+				var hiddenWidth = maxWidth * 0.05;
+				var unhiddenWidth = maxWidth * 0.2;
 				
-				fileBlockEl.style.left = b1[0] + "px";
-				fileBlockEl.style.top =  b1[1] + "px";
-			        fileBlockEl.style.width =  b1[2] + "px";
-				fileBlockEl.style.height =  b1[3] + "px";
+				console.log(clicked + "clicked!");
+				console.log(fileBlock_.name);
+				//DEFAULT VALUES //Sides Hidden
+				var fileLeft = _MARGIN, fileTop = _MARGIN, fileWidth = unhiddenWidth                     , fileHeight = maxHeight;
+				var editLeft          , editTop = _MARGIN, editWidth = hiddenWidth                       , editHeight = maxHeight;
+				var mainLeft          , mainTop = _MARGIN, mainWidth = maxWidth - (fileWidth + editWidth), mainHeight = maxHeight;
 				
+
+
+					
+				if(!editBlock_.isHidden)
+				{
 				
-				mainBlockEl.style.left = b2[0] + "px";
-				mainBlockEl.style.top =  b2[1] + "px";
-				mainBlockEl.style.width =  b2[2] + "px";
-				mainBlockEl.style.height =  b2[3] + "px";
+					editWidth += unhiddenWidth;
+					mainWidth -= unhiddenWidth;
+					var editFrame = document.createElement("iframe");
+					editFrame.id = "editFrame";
+					editFrame.src = "/WebPath/html/SlowControlsDashboardEdit.html";
+					editBlock_.el.appendChild(editFrame);
+					
+					
+					
+					window.frames[editFrame.id].document.getElementById("tilesDiv").appendChild();
+				}
+				
+				if(hover)
+				{
+					//fileBlock_.el.hidden = false;
+					fileBlock_.el.style["float"] = "left";
+					fileBlock_.el.style["background-color"] = "green";
+					
+					//mainWidth = mainWidth - unhiddenWidth + hiddenWidth;
+					console.log("Hovering!");
+				}
+				else
+				{
+					fileWidth = hiddenWidth;
+					fileBlock_.el.style["background-color"] = "transparent";
+					mainWidth += unhiddenWidth - hiddenWidth;
+
+				}
 
 				
-				editBlockEl.style.left = b4[0] + "px";
-				editBlockEl.style.top =  b4[1] + "px";
-				editBlockEl.style.width =  b4[2] + "px";
-				editBlockEl.style.height =  b4[3] + "px";
+				mainLeft = fileLeft + fileWidth;
+				editLeft = mainLeft + mainWidth;				
+
+
+				
+				mainBlock_.el.style.left = mainLeft + "px";
+				mainBlock_.el.style.top =  mainTop + "px";
+				mainBlock_.el.style.width =  mainWidth + "px";
+				mainBlock_.el.style.height =  mainHeight + "px";
+
+				fileBlock_.el.style.left = fileLeft + "px";
+				fileBlock_.el.style.top =  fileTop + "px";
+			    fileBlock_.el.style.width =  fileWidth + "px";
+				fileBlock_.el.style.height =  fileHeight + "px";
+				
+				
+				editBlock_.el.style.left = editLeft + "px";
+				editBlock_.el.style.top =  editTop + "px";
+				editBlock_.el.style.width =  editWidth + "px";
+				editBlock_.el.style.height =  editHeight + "px";
+				
+				
+				
+
+		
 			}
 			
 		</script>
@@ -127,9 +215,9 @@
 	
 	<body onload='Javascript:init();'>	
 			
-		<div class='fileBlock' id='fileBlock'></div>
-		<div class='mainBlock' id='mainBlock'></div>
-		<div class='editBlock' id='editBlock'></div>
+		<div class='mainBlock' id='fileBlock'  onmouseover="redrawWindow(null, true)"></div>
+		<div class='mainBlock 'id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"></div>
+		<div class='mainBlock' id='editBlock' onclick=toggleEditMode(true)></div>
 				
 		
 	</body>

@@ -11,6 +11,7 @@
 //g++ -std=c++11  EpicsCAMonitor.cpp EpicsCAMessage.cpp EpicsWebClient.cpp SocketUDP.cpp SocketTCP.cpp -L$EPICS_BASE/lib/linux-x86_64/ -Wl,-rpath,$EPICS_BASE/lib/linux-x86_64 -lca -lCom -I$EPICS_BASE//include -I$EPICS_BASE//include/os/Linux -I$EPICS_BASE/include/compiler/gcc -o EpicsWebClient
 
 #define DEBUG false
+#define PV_FILE_NAME 			std::string(getenv("SERVICE_DATA")) + "/SlowControlsDashboardData/pv_list.dat";
 
 using namespace ots;
 
@@ -306,11 +307,13 @@ void EpicsInterface::loadListOfPVs()
   
   //read file 
   //for each line in file
-  std::ifstream infile("./PV_list.txt");
+  std::string pv_list_file = PV_FILE_NAME;
+  std::cout << pv_list_file << std::endl;
+  std::ifstream infile(pv_list_file);
   std::cout << "Reading file" << std::endl;
   for(std::string line; getline(infile, line);)
     {
-      //std::cout << line << std::endl;
+      std::cout << line << std::endl;
       mapOfPVInfo_[line] = new PVInfo(DBR_STRING);
     }
   std::cout << "Finished reading file" << std::endl;

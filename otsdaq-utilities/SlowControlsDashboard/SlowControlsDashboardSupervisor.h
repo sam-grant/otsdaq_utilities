@@ -24,6 +24,8 @@
 #include <string>
 #include <map>
 
+#include "otsdaq-utilities/SlowControlsDashboard/EpicsInterface.h"
+
 
 
 namespace ots
@@ -50,7 +52,12 @@ void destroy                      		 			(void                                   
  
 
 private:
-	SlowControlsInterface * interface_;
+	//SlowControlsInterface 
+    SupervisorConfiguration              	theSupervisorsConfiguration_;
+	EpicsInterface                        * interface_;
+    RemoteWebUsers							theRemoteWebUsers_;
+	std::string                             username;
+
 
 };
 

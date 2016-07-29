@@ -1,0 +1,100 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>Epics CA Monitor</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(200,200,200);
+			}
+			
+			#clearDiv {
+				clear: both;
+			}
+			
+			a {
+				color: blue;
+			}
+			
+			
+			#fileBlock {
+				background-color: rgb(26,148,49);
+			}				
+
+			#mainBlock {
+				background-color: rgb(240,234,214);
+			}
+
+			#editBlock {
+				background-color: rgb(200,0,0);
+			}
+			
+			.mainBlock {
+				position:absolute;
+			}
+									
+		</style>
+		
+		
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		
+		
+		<script>		
+			
+			
+		
+			//functions:			
+				//init()					
+				
+
+					
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			//init called once body has loaded
+			function init() {			
+				Debug.log("init() was called");
+
+//				DesktopContent.XMLHttpRequest("Default?RequestType=getList","",handlerFunction);
+
+
+				window.onresize = redrawWindow;
+				redrawWindow(); //redraw window for first time
+			}	
+			
+			function handlerFunction(req) {
+				Debug.log("handlerFunction() was called. Req: " + req.responseText);
+
+				//var child1data = DesktopContent.getXMLValue(req,"child");
+				//var child2data = DesktopContent.getXMLValue(req,"child2");
+				
+				//Debug.log("--child1data:",child1data," --child2data:",child2data);
+				//block1El = document.getElementById('block1');
+				//block1.innerHTML = child1data;
+				
+			}
+			
+			
+
+			function redrawWindow(clicked, hover) {
+				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+
+	
+			}
+			
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:init();'>	
+			
+		<div class='mainBlock' id='buttonsDiv'>
+		</div>
+		<div class='mainBlock' id='tilesDiv'></div>
+				
+		
+	</body>
+	
+</html>

@@ -232,8 +232,6 @@ function restructure(){
 
 var editSecurityHandler = function(req){
 	
-	
-	
 	selectedSecurityChoice_ = req.responseText; 
 	console.log(selectedSecurityChoice_);
 	showVisualSelection();

@@ -245,7 +245,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
     var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
 
     requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
-    //Debug.log("Post " + requestURL + "\n\tData: " + data);
+    Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	
