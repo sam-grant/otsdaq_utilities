@@ -26,7 +26,7 @@
 using namespace ots;
 
 #define __MF_SUBJECT__ "CfgGUI"
-#define __MF_HDR__		__COUT_HDR_PL__//__COUT_HDR_FL__
+#define __MF_HDR__		__COUT_HDR_FL__
 #define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
@@ -69,7 +69,7 @@ theRemoteWebUsers_  (this)
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
 	__MOUT__ << "To prove the concept...";
-	return;
+	//return;
 	testXDAQContext(); //test new config
 	return;
 
@@ -448,7 +448,7 @@ theRemoteWebUsers_  (this)
 
 			bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
 			std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-					(isInDatabase?"YES":"NO") << "     ";
+					(isInDatabase?"YES":"NO") << std::endl;
 
 			//temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
 			temporaryVersion = cfgMgr->createTemporaryBackboneView(versionToCopy);
@@ -850,6 +850,9 @@ throw (xgi::exception::Exception)
 		//give the detail of specific Sub-System Configuration specified
 		//	by subAlias and version
 
+		//if no version selected, default to latest version
+		//if no versions exists, default to mock-up
+
 		//return existing versions
 		//return column headers
 		//return number of rows
@@ -878,12 +881,12 @@ throw (xgi::exception::Exception)
 
 		std::string 	subAlias = cgi("subAlias"); 			//from GET
 		std::string  versionStr = cgi("version");		  	//from GET
-		int		version = (versionStr == "")?0:atoi(versionStr.c_str());
+		int		version = (versionStr == "")?-2:atoi(versionStr.c_str());
 		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
 		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
 
 		std::cout << __COUT_HDR_FL__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
-				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << "     ";
+				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		fillSpecificSubSystemXML(xmldoc,cfgMgr,subAlias,version);
 	}
@@ -915,7 +918,7 @@ throw (xgi::exception::Exception)
 
 
 		std::cout << __COUT_HDR_FL__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
-				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << "     ";
+				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		std::cout << __COUT_HDR_FL__ << "data: " << data << std::endl;
 
@@ -941,7 +944,7 @@ throw (xgi::exception::Exception)
 			//load current version
 			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
 			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
+					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration) //load configuration view
 				cfgMgr->getVersionedConfigurationByName(subAlias, version);
@@ -950,7 +953,7 @@ throw (xgi::exception::Exception)
 
 			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
 			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
+					(isInConfiguration?"YES":"NO") << std::endl;
 
 			if(!isInConfiguration)
 			{
@@ -1101,7 +1104,7 @@ throw (xgi::exception::Exception)
 
 				bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
 				std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-						(isInDatabase?"YES":"NO") << "     ";
+						(isInDatabase?"YES":"NO") << std::endl;
 
 				//temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
 				temporaryVersion = cfgMgr->createTemporaryBackboneView(versionToCopy);
@@ -1149,7 +1152,7 @@ throw (xgi::exception::Exception)
 
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
+	xmldoc.outputXmlDocument((std::ostringstream*) out, true);
 }
 
 
@@ -1249,6 +1252,9 @@ void ConfigurationGUISupervisor::fillSpecificSystemXML(HttpXmlDocument &xmldoc,
 
 //========================================================================================================================
 //fillSpecificSubSystemXML
+//
+//	if -2, default to latest version
+//	if -1 or version does not exists, default to mock-up
 void ConfigurationGUISupervisor::fillSpecificSubSystemXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, std::string subAlias, int version)
 {
@@ -1261,97 +1267,114 @@ void ConfigurationGUISupervisor::fillSpecificSubSystemXML(HttpXmlDocument &xmldo
 
 	if(it == allCfgInfo.end())
 	{
-		std::cout << __COUT_HDR_FL__ << "SubSystemConfiguration not found" << std::endl;
+		__MOUT__ << "SubSystemConfiguration not found" << std::endl;
+		//should never happen
+		return;
+	}
+
+	if(version == -2 &&  //take latest version
+			it->second.versions_.size())
+	{
+		version = *(it->second.versions_.rbegin());
+		__MOUT__ << "Using latest version: " << version << std::endl;
 	}
 	else if(it->second.versions_.find(version) == it->second.versions_.end())
 	{
-		std::cout << __COUT_HDR_FL__ << "Version not found" << std::endl;
+		__MOUT__ << "Version not found, so using mockup." << std::endl;
+		version = -1;
 	}
-	else
+
+	//table name
+	xmldoc.addTextElementToData("SubSystemConfigurationAlias", it->first);
+	//table version
+	sprintf(tmpIntStr,"%d",version);
+	xmldoc.addTextElementToData("SubSystemConfigurationVersion", tmpIntStr);
+	//existing table versions
+	parentEl = xmldoc.addTextElementToData("SubSystemConfigurationVersions", "");
+	for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
 	{
-		//load current version
-		bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-		std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
+		sprintf(tmpIntStr,"%d",*vit);
+		xmldoc.addTextElementToParent("VersionKey", tmpIntStr, parentEl);
+	}
 
-		if(!isInConfiguration) //load configuration view
-			cfgMgr->getVersionedConfigurationByName(subAlias, version);
-		else
-			allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
-
-		isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-		std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
-
-		if(!isInConfiguration)
+	//table columns and then rows (from config view)
+	{
+		ConfigurationView* cfgViewPtr;
+		if(version != -1)
 		{
-			std::cout << __COUT_HDR_FL__ << "Version could not be loaded" << std::endl;
+			//load current version
+			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
+			__MOUT__ << "Version " << version << " is loaded: " <<
+					(isInConfiguration?"YES":"NO") << std::endl;
+
+			if(!isInConfiguration) //load configuration view
+				cfgMgr->getVersionedConfigurationByName(subAlias, version);
+			else
+				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
+
+			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
+			__MOUT__ << "Version " << version << " is loaded: " <<
+					(isInConfiguration?"YES":"NO") << std::endl;
+
+			if(!isInConfiguration)
+			{
+				__MOUT_ERR__ << "Version could not be loaded" << std::endl;
+				return;
+			}
+			__MOUT__ << "\t\t******** view " <<
+					allCfgInfo[subAlias].configurationPtr_->getViewVersion() << std::endl;
+
+			cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getViewP();
 		}
-		else
+		else //use mockup version
 		{
-
-			xmldoc.addTextElementToData("SubSystemConfigurationAlias", it->first);
-			sprintf(tmpIntStr,"%d",version);
-			xmldoc.addTextElementToData("SubSystemConfigurationVersion", tmpIntStr);
-			parentEl = xmldoc.addTextElementToData("SubSystemConfigurationVersions", "");
-			for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
-			{
-				sprintf(tmpIntStr,"%d",*vit);
-				xmldoc.addTextElementToParent("VersionKey", tmpIntStr, parentEl);
-			}
-
-			//view version
-			{
-				//get 'columns' of sub config
-
-				std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-						allCfgInfo[subAlias].configurationPtr_->getViewVersion() << "     ";
-				ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getViewP();
-
-				parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
-				std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-				for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
-				{
-					std::cout << __COUT_HDR_FL__ << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
-							<< colInfo[i].getViewName() << " " << colInfo[i].getViewType() << "     ";
-
-					xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
-					xmldoc.addTextElementToParent("ColumnType", colInfo[i].getViewType(), parentEl);
-				}
-
-				parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
-
-				for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
-				{
-					//std::cout << __COUT_HDR_FL__ << "\t\tRow " << r << ": "  << std::endl;
-
-					sprintf(tmpIntStr,"%d",r);
-					DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
-
-					for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-						if(colInfo[c].getViewType() == "NUMBER")
-						{
-							int num;
-							cfgViewPtr->getValue(num,r,c);
-							//std::cout << __COUT_HDR_FL__ << "\t " << num << std::endl;
-
-							sprintf(tmpIntStr,"%d",num);
-							xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
-						}
-						else
-						{
-							std::string val;
-							cfgViewPtr->getValue(val,r,c);
-							//std::cout << __COUT_HDR_FL__ << "\t " << val << std::endl;
-
-							xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
-						}
-					//
-				}
-			}
+			__MOUT__ << "\t\t******** view mockup" << std::endl;
+			cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getMockupViewP();
 		}
 
 
+		//get 'columns' of sub config view
+
+
+		parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
+		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+		for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
+		{
+			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
+					<< colInfo[i].getViewName() << " " << colInfo[i].getViewType() << std::endl;
+
+			xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
+			xmldoc.addTextElementToParent("ColumnType", colInfo[i].getViewType(), parentEl);
+		}
+
+		parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
+
+		for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
+		{
+			//std::cout << __COUT_HDR_FL__ << "\t\tRow " << r << ": "  << std::endl;
+
+			sprintf(tmpIntStr,"%d",r);
+			DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
+
+			for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
+				if(colInfo[c].getViewType() == "NUMBER")
+				{
+					int num;
+					cfgViewPtr->getValue(num,r,c);
+					//std::cout << __COUT_HDR_FL__ << "\t " << num << std::endl;
+
+					sprintf(tmpIntStr,"%d",num);
+					xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
+				}
+				else
+				{
+					std::string val;
+					cfgViewPtr->getValue(val,r,c);
+					//std::cout << __COUT_HDR_FL__ << "\t " << val << std::endl;
+
+					xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
+				}
+		}
 	}
 }
 
@@ -1427,13 +1450,13 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
 	for(auto& mapIt : allCfgInfo)
 	{
-		std::cout << __COUT_HDR_FL__ << "Config Alias: " << mapIt.first << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
+		__MOUT__ << "Config Alias: " << mapIt.first << std::endl;
+		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
 		for (std::set<int>::iterator vit=mapIt.second.versions_.begin(); vit!=mapIt.second.versions_.end(); ++vit)
 		{
-			std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
+			__MOUT__ << "\t\t" << *vit << std::endl;
 		}
 	}
 	//cfgMgr->testXDAQContext();
