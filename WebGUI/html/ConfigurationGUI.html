@@ -18,6 +18,12 @@
 			#display {
 				padding: 20px;
 			}
+			
+			#errorDiv {
+				color: rgb(155,50,0);
+				margin: 20px 0 -20px 0;
+				height: 20px;
+			}
 						
 		</style>
 		
@@ -475,7 +481,8 @@
 			    str += "</a>";
 			    str += "</td>"; 
 
-			    for(var c=0;c<rows[0].childNodes.length;++c)
+			    //add empty columns
+			    for(var c=1;c<rows[0].childNodes.length;++c)
 			    {
 			    	str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";			    	
 			    	str += "";
@@ -513,6 +520,42 @@
 				document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"
 			}
 
+
+			//deleteRow ~~
+			// delete row at destination
+			function deleteRow(r) {
+				Debug.log("CfgGUI deleteRow " + r);
+				
+				var el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");
+				
+				//make sure el references the container of rows ("TR")
+				while(el.childNodes[0].tagName != "TR")
+					el = el.childNodes[0];
+				el.removeChild(rows[r+1]);
+				
+				//update all row numbers after row added
+				for(var i=1;i<rows.length;++i)
+				{
+					if(i < r) continue;
+					
+					str = (_dataOffset + (i-1));	//insert row index column
+					
+					//add +/- row controls
+					str += " <a href='javascript:addRow(" + (i-1) + ");'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
+					str += "-";
+					str += "</a>";							
+					rows[i].childNodes[0].innerHTML = str;
+				}
+				
+				//update last add row link
+				document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"				
+			}
+			
+			
 			function saveSubSystemAsNewVersion() {	
 				Debug.log("CfgGUI saveSubSystemAsNewVersion");
 				
@@ -546,7 +589,12 @@
 				Debug.log("saveSubSystemAsNewVersionHandler requestHandler req " + req.responseText);
 
 				var err = DesktopContent.getXMLValue(req,"Error");
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
+				if(err && err != "")
+				{
+					document.getElementById("errorDiv").innerHTML = err;
+					Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
+					return;
+				}
 
 				var subConfigAlias = DesktopContent.getXMLValue(req,"savedAlias");
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
@@ -582,6 +630,7 @@
 			
 		<h1>Configuration GUI</h1>
 		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
+		<div id='errorDiv'></div>
 		<div id='display'></div>
 		
 	</body>
