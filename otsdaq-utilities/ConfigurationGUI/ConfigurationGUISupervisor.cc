@@ -69,8 +69,10 @@ theRemoteWebUsers_  (this)
 	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
 	__MOUT__ << "To prove the concept...";
-	//return;
+	return;
+
 	testXDAQContext(); //test new config
+
 	return;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
