@@ -23,7 +23,7 @@
 				position: absolute;
 			}
 			
-			#parameter-setup {	
+			#parameter-setup, #extras-box, #alarm-setup-box {	
 				position: absolute;
 				display: none;
 				border: 2px solid gray;
@@ -39,13 +39,13 @@
 				text-align: center;
 			}
 			
-			#parameter-setup a {
+			#parameter-setup a, #extras-box a, #alarm-setup-box a {
 				color: white;
 				text-decoration: none;
 				font-weight: 800;
 			}
 			
-			#parameter-setup a:hover {
+			#parameter-setup a:hover, #extras-box a:hover, #alarm-setup-box a:hover {
 				text-decoration: underline;
 			}
     
@@ -183,6 +183,12 @@
 			var _PARAMETER_SETUP_MIN_HEIGHT = 25; 
 			var _PARAMETER_SETUP_MAX_HEIGHT = 300; 
 			var _PARAMETER_SETUP_WIDTH = 260; 
+			
+			var _EXTRAS_WIDTH = 200; 
+			var _EXTRAS_HEIGHT = 50; 
+			
+			var _ALARM_WIDTH = 200; 
+			var _ALARM_HEIGHT = 150; 
     
             var _STATE_ANGLE_OFFSET = 0;
             
@@ -192,7 +198,9 @@
 				//init()
             	//initTransitionParameters()
             	//smRequestHandler(req)
+            	//getCurrentState() 
             	//currStateRequestHandler(req)
+            	//updateTimeInState(t)
             	//physicsLaunchHandler(req)
                 //handleMouseUp(mouseEvent)
             	//getTransitionParameterData(param)
@@ -210,6 +218,8 @@
                 //drawState(stateIndex, x, y)
             	//toggleParameterSetup()
             	//eatParameterMouseEvent(touchEvent) 
+        		//showAlarmSetup()
+            	//setAlarm(start)
             
 			            
 			var _states, _stateNames, _transitions, _transitionNames, 
@@ -219,7 +229,14 @@
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
 				_blackoutRevealText, _blackoutRevealContent, _progressBar,
-				_parameterSetup;
+				_parameterSetup, _extrasBox, _alarmBox;
+			
+			var _timeUpdateTimeout = 0;
+			var _timeInState = 0;
+			var _alarmRunning = false;
+			var _alarmTimeLeft = 0;
+			var _ALARM_SOUND_PATH = "/WebPath/sounds/fx-Alarm-Beep.wav"; // "http://www.soundjay.com/button/button-2.wav"; //must be .wav for firefox incompatibility	
+			var _AlarmSound = new Audio(_ALARM_SOUND_PATH);
 			
 			var _parameterSetupMinimized = true;	//default to minimized
 			var _parameterInitCount;
@@ -230,7 +247,8 @@
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
             
-			var _statusMonitor;
+			var _statusMonitor;			
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -265,6 +283,12 @@
 				_parameterSetup = document.getElementById("parameter-setup");
 				_parameterSetup.onmousemove = eatParameterMouseEvent;
 				_parameterSetup.onmouseup = eatParameterMouseEvent;
+				_extrasBox = document.getElementById("extras-box");
+				_extrasBox.onmousemove = eatParameterMouseEvent;
+				_extrasBox.onmouseup = eatParameterMouseEvent;
+				_alarmBox = document.getElementById("alarm-setup-box");
+				_alarmBox.onmousemove = eatParameterMouseEvent;
+				_alarmBox.onmouseup = eatParameterMouseEvent;				
 				initTransitionParameters();
 				
 				_canvas = document.getElementById("physicsCanvas");
@@ -412,9 +436,13 @@
 			    
 			   // _statusMonitor.subscribeTo("StateMachineStatus");			    
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", currStateRequestHandler);	
-			    
+                getCurrentState();	
 			}
+			
+			function getCurrentState() {
+				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", currStateRequestHandler);
+			}
+			
 
 			//currStateRequestHandler ~~
 			//	poll current state of state machine
@@ -425,9 +453,89 @@
 			    
 			    Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
 
+			    //find current state in stateNames array
                 for(var i=0;i<_stateNames.length;++i)
-                	if(_stateNames[i] == cs) {_currState = i; redrawPhysics(); return;}
+                	if(_stateNames[i] == cs) 
+                	{                	
+                		//handle time elapsed
+                		if(!_alarmRunning)
+                		{
+							window.clearInterval(_timeUpdateTimeout);
+							_timeUpdateTimeout = window.setInterval(updateTimeInState,1000);
+	        			    updateTimeInState(DesktopContent.getXMLValue(req,"time_in_state"));
+                		}
+        			    
+        			    //draw current state
+                		_currState = i; redrawPhysics();
+                		
+                		window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
+                		return;
+                	}
 			    _currState = -1; //no current state found
+			    
+			    alert("Illegal state received as current state: " + cs);
+			}
+			
+			//updateTimeInState ~~
+			//  updates time in state by 1 second if not given a time value
+			function updateTimeInState(t) {
+				
+				if(!t)
+					++_timeInState;
+				else
+					_timeInState = t|0; //take integer values only
+			    //Debug.log("Physics updateTimeInState: " + _timeInState);
+				
+				if(_alarmRunning)
+				{ 
+					if(_alarmTimeLeft > 0)
+						--_alarmTimeLeft;
+					else //alarmWentOff!! //make it blink
+					{
+						--_alarmTimeLeft;
+						
+						if(_alarmTimeLeft == -8) _alarmTimeLeft = 0;// = -(1+_alarmTimeLeft); //alternate between -1 and 0
+						
+						if(_alarmTimeLeft > -3)
+						{
+							//play sound alert
+							_AlarmSound.src = _ALARM_SOUND_PATH; // buffers automatically when created
+							_AlarmSound.play();
+						}
+						
+						if(_alarmTimeLeft%2 == 0)
+							document.getElementById("time-elapsed").style.color = "black";
+						else
+							document.getElementById("time-elapsed").style.color = "white";
+						
+						document.getElementById("time-elapsed").addEventListener("mouseup",stopAlarm);
+						document.getElementById("time-elapsed").style.cursor = "pointer";
+						return;
+					}	
+				}
+				else
+				{
+					document.getElementById("time-elapsed").style.color = "white";
+					document.getElementById("time-elapsed").removeEventListener("mouseup",stopAlarm);
+					document.getElementById("time-elapsed").style.cursor = "default";
+				}
+				
+				var showCountdown = _alarmRunning || _alarmBox.style.display == "block";	
+				
+				var str = showCountdown?"Countdown: ":"Elapsed: ";		
+				t = showCountdown?_alarmTimeLeft:_timeInState;
+				
+				var hours = (t/60.0/60.0)|0;
+				var mins = ((t%(60*60))/60.0)|0;
+				var secs = t%60;
+				
+				str += hours + ":";
+				if(mins < 10)	str += "0"; //keep to 2 digits
+				str += mins + ":";
+				if(secs < 10)	str += "0"; //keep to 2 digits
+				str += secs ;
+				
+				document.getElementById("time-elapsed").innerHTML = str;			
 			}
 
             //physicsLaunchHandler ~~
@@ -670,6 +778,19 @@
                 _parameterSetup.style.height = 
 			    	(_parameterSetupMinimized?_PARAMETER_SETUP_MIN_HEIGHT:_PARAMETER_SETUP_MAX_HEIGHT) + "px";
                 _parameterSetup.style.display = "block";
+                
+                
+				_extrasBox.style.left = (w - _MARGIN - _HUD_X - _EXTRAS_WIDTH - 10) + "px";  
+                _extrasBox.style.top =  (h - _MARGIN - _HUD_Y - 10 - //2 for border //-10 for padding
+                		_EXTRAS_HEIGHT) + "px";
+                _extrasBox.style.width = _EXTRAS_WIDTH + "px";
+                _extrasBox.style.height = _EXTRAS_HEIGHT + "px";
+                _extrasBox.style.display = "block";
+                
+                _alarmBox.style.left = (w/2 -_ALARM_WIDTH/2 - 5) + "px";  
+                _alarmBox.style.top =  (h/2 -_ALARM_HEIGHT/2 - 5) + "px";
+                _alarmBox.style.width = _ALARM_WIDTH + "px";
+                _alarmBox.style.height = _ALARM_HEIGHT + "px";
                 
 			    _canvas.style.left = _MARGIN + "px";
 			    _canvas.style.top = _MARGIN + "px";
@@ -1027,6 +1148,37 @@
 				mouseEvent.cancelBubble=true; //eat event away so state changes don't occur
 			}
 			
+			//showAlarmSetup() ~~
+			function showAlarmSetup(display)
+			{
+				_alarmBox.style.display = display?"block":"none";
+			}
+
+			//setAlarm() ~~
+			function setAlarm(start)
+			{
+				if(start && !_alarmTimeLeft) //if start and alarm time is at 0, then initialize alarm time
+				{
+					var val = document.getElementById("alarm-time").value;
+					val *= 100;
+					val |= 0; //gaurantee is an integer
+					val /= 100;
+					if(val < 0) val = 0;
+					_alarmTimeLeft = (val*60)|0;
+				}
+				Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft); 
+				
+                //set alarm running
+                _alarmRunning = start?true:false;
+			}
+			
+			//stopAlarm() ~~
+			function stopAlarm()
+			{
+				_alarmRunning = false;
+				_alarmTimeLeft = 0;
+			}
+			
 		</script>
 </head>
 
@@ -1037,9 +1189,24 @@
 
 <div id='parameter-setup'>
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
-	<br><br>
-	
+	<br><br>	
 </div>
+
+<div id='extras-box'>
+	<div id='time-elapsed'></div>
+	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>
+</div>
+		
+<div id='alarm-setup-box'>
+	<center><b><u>Alarm Setup</u></b></center><br>
+		
+	Minutes: <input style='width:50px' id='alarm-time'/>
+		<br><br>
+	<a href='Javascript:setAlarm(1);' title='Start the Alarm Countdown'>Start</a>
+	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown'>Pause</a>
+	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>
+</div>	
+	
 
 <div class='blackout' id='blackout'>	
 

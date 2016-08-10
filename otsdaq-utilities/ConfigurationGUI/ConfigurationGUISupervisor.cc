@@ -69,6 +69,8 @@ theRemoteWebUsers_  (this)
 	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
 	__MOUT__ << "To prove the concept...";
+
+
 	return;
 
 	testXDAQContext(); //test new config
