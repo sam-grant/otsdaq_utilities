@@ -34,6 +34,19 @@ else {
 	    }
         
         
+
+    	//------------------------------------------------------------------
+    	//list of members functions ----------------------
+    	//------------------------------------------------------------------
+    	//private:
+    	//public:
+        	//displayConnectionStatus(connected) //bool connected
+        
+        
+        
+        
+        
+        
         //------------------------------------------------------------------
 		//create private members variables ----------------------
 		//------------------------------------------------------------------
@@ -301,13 +314,39 @@ else {
         this.displayUserLock = function(usernameWithLock) {      	
        		var el = document.getElementById("DesktopDashboard-userWithLock");
        		
-       		if(!usernameWithLock || usernameWithLock == "") {	el.innerHTML = ""; _oldUserNameWithLock = ""; return; }  	
+       		if(!usernameWithLock || usernameWithLock == "") 
+       		{		//nobody has lock
+       			el.style.display = "none";
+       			el.innerHTML = ""; 
+       			_oldUserNameWithLock = "";       			
+       			return; 
+       		}  	
        		
        		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
+       		
        		el.innerHTML = "<img src='../images/dashboardImages/icon-Settings-Lock.png' title='User " + 
        			usernameWithLock + " has the ots Lock'>";
+   			el.style.display = "block";
        		_oldUserNameWithLock = usernameWithLock; 
         }        
+        
+
+        //displayConnectionStatus ~~
+        //	bool connected
+        this.displayConnectionStatus = function(connected) {    
+       		var el = document.getElementById("DesktopDashboard-serverConnectionStatus");
+       		
+       		if(connected) 
+       		{		
+       			el.style.display = "none";
+       			el.innerHTML = "";
+       		}  	
+       		else
+       		{
+       			el.innerHTML = "*** Disconnected ***";
+       			el.style.display = "block";       			
+       		}
+        }
         
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -355,10 +394,22 @@ else {
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
         
+        
+        //user with lock on far right.. because it is the highest priority for user to see
+		tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+		tmpBtn.setAttribute("id", "DesktopDashboard-serverConnectionStatus");
+		tmpBtn.setAttribute("title", "Try refreshing the page, or if the problem persists contact the ots admins.");
+		tmpBtn.style.display = "none";
+		tmpBtn.style.cursor = "pointer";
+		tmpBtn.style.color = "rgb(255,150,0)";
+		_topBar.appendChild(tmpBtn);
+        		
         //user with lock on far right.. because it is the highest priority for user to see
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
 		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
+		tmpBtn.style.display = "none";
 		_topBar.appendChild(tmpBtn);
                 
         tmpBtn = document.createElement("div");

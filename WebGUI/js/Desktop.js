@@ -46,6 +46,13 @@ Desktop.createDesktop = function(security) {
         return new Desktop.createDesktop(security);
     }
 	
+
+	//------------------------------------------------------------------
+	//list of members functions ----------------------
+	//------------------------------------------------------------------
+	//private:
+	//public:
+	
 	//------------------------------------------------------------------
 	//create private members variables ----------------------
 	//------------------------------------------------------------------
@@ -88,15 +95,11 @@ Desktop.createDesktop = function(security) {
 	this.login;    
 	this.icons;   
 	this.checkMailboxTimer;
+	this.serverConnected = true;
 	this.security = security;
     
 	this.defaultWindowFrameColor = "rgba(196,229,255,.9)";
 
-	//------------------------------------------------------------------
-	//list of members functions ----------------------
-	//------------------------------------------------------------------
-	//private:
-	//public:
 	
 	//------------------------------------------------------------------
 	//create PRIVATE members functions ----------------------
@@ -976,37 +979,69 @@ Desktop.handleWindowClose = function(mouseEvent) {
 	return false;
 }
 
-//Desktop.XMLHttpRequest
+//Desktop.XMLHttpRequest ~~
 // forms request properly for ots server, POSTs data
 // and when request is returned, returnHandler is called with 
 // req result on success, if failure do to bad url called with 0
-Desktop.XMLHttpRequest = function(requestURL, data, returnHandler) {             
+//
+// reqIndex is used to give the returnHandler an index to route responses to.
+//
+Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
+
+	var errStr = "";            
 	var req = new XMLHttpRequest();
+	
 	req.onreadystatechange = function() {
         if (req.readyState==4) {  //when readyState=4 return complete, status=200 for success, status=400 for fail
 	        if(req.status==200)
-			{			
-				//check if failed due to cookieCode and go to login prompt
-				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) {
-					alert("Request failed do to insufficient account permissions."); return;
+			{
+	        	//response received
+	        	
+				if(!Desktop.desktop.serverConnected)	//mark as connected
+				{
+					Desktop.desktop.serverConnected = true;
+		        	Desktop.desktop.dashboard.displayConnectionStatus(true);
 				}
-				if(req.responseText == Globals.REQ_NO_LOGIN_RESPONSE) {
-					window.clearInterval(Desktop.desktop.checkMailboxTimer);
+				
+				//check if failed due to cookieCode and go to login prompt
+				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE)
+				{
+					errStr = "Request failed do to insufficient account permissions.";
+					//return;
+				}
+				else if(req.responseText == Globals.REQ_NO_LOGIN_RESPONSE) 
+				{
+					errStr = "Login has expired.";
+					window.clearInterval(Desktop.desktop.checkMailboxTimer); //stop checking mailbox
 					Desktop.logout(); 
-					alert("Login has expired.");
-					return;
+					//return;
 				}
 					
 		        //Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
 			}
-			else {
-				Debug.log("Request Failed - Bad Address",Debug.HIGH_PRIORITY);
-				req = 0;
-				window.clearInterval(Desktop.desktop.checkMailboxTimer);
+			else 
+			{
+				//response failure
+				
+				if(Desktop.desktop.serverConnected) //mark as disconnected
+				{
+					Desktop.desktop.serverConnected = false;
+		        	Desktop.desktop.dashboard.displayConnectionStatus(false);
+				}
+
+				errStr = "Request Failed - Bad Address: " + requestURL;
+				window.clearInterval(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
 				Desktop.logout();
-				alert('Server Failure, alert ots admins!\r\n\r\nRequest: ' + requestURL);
+			}	        
+
+			if(errStr != "")
+			{
+				errStr += " (Try refreshing the page, or alert ots admins if problem persists.)";
+				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
+				alert(errStr);
+				req = 0; //force to 0 to indicate error
 			}
-			if(returnHandler) returnHandler(req);
+			if(returnHandler) returnHandler(req,reqIndex,errStr);
 		}
     }
     
