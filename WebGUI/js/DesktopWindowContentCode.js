@@ -214,16 +214,6 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 	if(progressHandler) req.upload.addEventListener("progress", progressHandler, false); //add progress listener if defined
 
 	req.onreadystatechange = function() {
-<<<<<<< HEAD
-        if (req.readyState==4) 
-        {  //when readyState=4 return complete, status=200 for success, status=400 for fail
-	        if(req.status==200)
-			{
-	        	//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
-	        	
-                DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
-               
-=======
 		if (req.readyState==4) 
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			if(req.status==200)
@@ -232,7 +222,6 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 
 				DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
 
->>>>>>> fefe232c7e40553f689f55cab54244ba1216dd5e
 				//check if failed due to cookieCode and go to login prompt
 				if(req.responseText == Globals.REQ_NO_PERMISSION_RESPONSE) 
 				{
@@ -280,7 +269,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 			}
 			else //bad address response
 			{
-				errStr = "Request Failed - Bad Address: " + requestURL;
+				errStr = "Request Failed - Bad Address:\n" + requestURL;
 
 				if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
@@ -310,7 +299,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 
 			if(errStr != "")
 			{
-				errStr += " (Try refreshing the page, or alert ots admins if problem persists.)";
+				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 				alert(errStr);
 				req = 0; //force to 0 to indicate error
@@ -322,18 +311,6 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 	if(!sequence)
 	{        
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-<<<<<<< HEAD
-	    data = "CookieCode="+cc+"&"+data;
-    }
-    else
-    {   	
-	    data = "sequence="+sequence+"&"+data;
-    }
-    var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
-
-    requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
-    //Debug.log("Post " + requestURL + "\n\tData: " + data);
-=======
 		data = "CookieCode="+cc+"&"+data;
 	}
 	else
@@ -344,7 +321,6 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 
 	requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
 	Debug.log("Post " + requestURL + "\n\tData: " + data);
->>>>>>> fefe232c7e40553f689f55cab54244ba1216dd5e
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	

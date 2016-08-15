@@ -1029,14 +1029,14 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 		        	Desktop.desktop.dashboard.displayConnectionStatus(false);
 				}
 
-				errStr = "Request Failed - Bad Address: " + requestURL;
+				errStr = "Request Failed - Bad Address:\n" + requestURL;
 				window.clearInterval(Desktop.desktop.checkMailboxTimer);  //stop checking mailbox
 				Desktop.logout();
 			}	        
 
 			if(errStr != "")
 			{
-				errStr += " (Try refreshing the page, or alert ots admins if problem persists.)";
+				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 				alert(errStr);
 				req = 0; //force to 0 to indicate error
