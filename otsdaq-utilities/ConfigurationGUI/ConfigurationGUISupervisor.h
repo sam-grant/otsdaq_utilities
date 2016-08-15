@@ -47,8 +47,10 @@ public:
 
 private:
 
-    void fillSpecificSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string alias, int backboneVersion);
-    void fillSpecificSubSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string subAlias, int version);
+    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, int backboneVersion);
+    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version);
+    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version,
+    		const std::string &data, const int &dataOffset, const int &chunkSize);
 
     void testXDAQContext();
 
