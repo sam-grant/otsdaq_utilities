@@ -4,6 +4,7 @@
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -23,6 +24,8 @@
 
 #include <string>
 #include <map>
+#include <vector>
+#include <set>
 
 #include "otsdaq-utilities/SlowControlsDashboard/EpicsInterface.h"
 
@@ -42,14 +45,23 @@ public:
 
     SlowControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
     virtual ~SlowControlsDashboardSupervisor     (void                                                              );
-    void init                  		  	 			(void                                                              );
-void destroy                      		 			(void                                                              );
-	void requestHandler	            		 		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);	
-	void Default                      		 		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void GetList                                 	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception); 
-    void Subscribe                               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void Unsubscribe                             	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void init                  		  	 		 (void                                                              );
+    void destroy                   		 		 (void                                                              );
+	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);	
+	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					throw (xgi::exception::Exception);
+    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception); 
+    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception); 
+    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 
+    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 
+    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	throw (xgi::exception::Exception); 
+    void Subscribe                               (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
+    void Unsubscribe                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
  
+    
+    //Utilities, eventually to be moved
+    bool isDir									 (std::string dir                    );
+    void listFiles								 (std::string baseDir, bool recursive, std::vector<std::string> * pages );
+    
 
 private:
 	//SlowControlsInterface 
@@ -57,6 +69,8 @@ private:
 	EpicsInterface                        * interface_;
     RemoteWebUsers							theRemoteWebUsers_;
 	std::string                             username;
+	std::map<int, std::set<std::string>> 	pvDependencyLookupMap_;
+	int										UID_;
 
 
 };

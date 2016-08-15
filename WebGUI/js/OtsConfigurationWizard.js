@@ -1,6 +1,6 @@
 //=====================================================================================
 //
-//	Created Dec, 2012
+//	Created Jun, 2014
 //	by Daniel Parilla ((parilla at fnal.gov))
 //
 //	OtsConfigurationWizard.js

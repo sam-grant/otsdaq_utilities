@@ -177,7 +177,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
         {  //when readyState=4 return complete, status=200 for success, status=400 for fail
 	        if(req.status==200)
 			{
-	        	Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+	        	//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
 	        	
                 DesktopContent.lastCookieTime = parseInt((new Date()).getTime()); //in ms
                
@@ -245,7 +245,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
     var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
 
     requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
-    Debug.log("Post " + requestURL + "\n\tData: " + data);
+    //Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	

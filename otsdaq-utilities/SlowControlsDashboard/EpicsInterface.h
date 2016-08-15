@@ -65,6 +65,11 @@ struct PVInfo
 
     channelType = tmpChannelType;
     dataCache.resize(circularBufferSize);
+    for(int i = 0; i < circularBufferSize; i++)
+    {
+    	std::pair<time_t, std::string> filler (0, "");
+    	dataCache[i] = filler;
+    }
     //mostRecentBufferIndex = 0;
   }
   
@@ -74,8 +79,9 @@ struct PVInfo
   chtype channelType;
   std::string pvValue;
   int circularBufferSize = 10; //Default Guess
-  unsigned int mostRecentBufferIndex = 0;
-  std::vector<std::pair<time_t, std::string>> dataCache;
+  unsigned int mostRecentBufferIndex = -1;
+  std::vector<std::pair<time_t, std::string>> dataCache;// (10, std::pair<time_t, std::string> (0, ""));
+  bool valueChange = false;
   std::queue <PVAlerts> alerts;
   
 };
@@ -95,23 +101,24 @@ class EpicsInterface//: public SlowControlsInterface
   void subscribe     (std::string pvName                         );
   void subscribeJSON (std::string pvList                         );
   void unsubscribe   (std::string pvName                         );
+  std::array<std::string, 4> getCurrentPVValue(std::string pvName	 );
 
  private:
-  bool checkIfPVExists            (std::string pvName                         );
-  void loadListOfPVs              (                                           );
-  void createChannel              (std::string pvName                         );
-  void destroyChannel             (std::string pvName                         );
-  void subscribeToChannel         (std::string pvName, chtype subscriptionType);
-  void cancelSubscriptionToChannel(std::string pvName                         );
-  void readValueFromPV            (std::string pvName                         );
-  void writePVValueToRecord       (std::string pvName, std::string  pdata        );
-  void writePVAlertToQueue         (std::string pvName, const char * status, const char * severity);
-  void readPVRecord               (std::string pvName                         );
-  void debugConsole                (std::string pvName                        );
-  static void eventCallback       (struct event_handler_args eha              );
-  static void staticChannelCallbackHandler(struct connection_handler_args cha);
-  void channelCallbackHandler(struct connection_handler_args &cha);
-  void popQueue                       (std::string pvName                        );
+  bool checkIfPVExists            				   (std::string pvName                         );
+  void loadListOfPVs              				   (                                           );
+  void createChannel              				   (std::string pvName                         );
+  void destroyChannel             				   (std::string pvName                         );
+  void subscribeToChannel         				   (std::string pvName, chtype subscriptionType);
+  void cancelSubscriptionToChannel				   (std::string pvName                         );
+  void readValueFromPV            				   (std::string pvName                         );
+  void writePVValueToRecord       				   (std::string pvName, std::string  pdata     );
+  void writePVAlertToQueue         				   (std::string pvName, const char * status, const char * severity);
+  void readPVRecord               				   (std::string pvName                        );
+  void debugConsole                				   (std::string pvName                        );
+  static void eventCallback       				   (struct event_handler_args eha             );
+  static void staticChannelCallbackHandler		   (struct connection_handler_args cha		  );
+  void channelCallbackHandler					   (struct connection_handler_args &cha		  );
+  void popQueue                     			   (std::string pvName                        );
   
  private:
   //  std::map<chid, std::string> mapOfPVs_;

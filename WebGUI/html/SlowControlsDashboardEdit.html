@@ -53,8 +53,8 @@
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
 			//init called once body has loaded
-			function init() {			
-				Debug.log("init() was called");
+			function initEdit() {			
+				Debug.log("*****************************************init() was called");
 
 //				DesktopContent.XMLHttpRequest("Default?RequestType=getList","",handlerFunction);
 
@@ -75,11 +75,54 @@
 				
 			}
 			
+			function addPV(pv)
+			{
+				//console.log("edit");
+			}
+			
 			
 
 			function redrawWindow(clicked, hover) {
-				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+				//Debug.log("FileTree redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+				
+				//console.log(window.parent.pvList_);
+				var ul = document.createElement("list");
+				var maxWidth = 0;
+				
+				window.parent.pvList_.forEach(function(pv){
+					
+					//console.log(pv);
+					
+					var li = document.createElement("li");
+					
+					var button = document.createElement("button");
+					button.style.width = "auto";
+					button.style.overflow =  "hidden";
+					button.id = pv; 
+					button.onclick = function(){parent.addPV(pv)};//"addPV()";// + pv + ')';
+					button.innerHTML = pv;
+					if(button.style.width > maxWidth)
+					{
+						maxWidth = button.style.width;
+					}
+					li.appendChild(button);
+					ul.appendChild(li);
+						
+					
+				});
+				
+				document.getElementById("tilesDiv").innerHTML = "";
+				document.getElementById("tilesDiv").appendChild(ul);
 
+				if(maxWidth <= (document.getElementById("tilesDiv").style.width / 3))
+				{
+					document.getElementById("tilesDiv").style.width = maxWidth
+				}
+				else
+				{
+					document.getElementById("tilesDiv").style.width = document.getElementById("tilesDiv").style.width / 4;
+				}
+				
 	
 			}
 			
@@ -88,7 +131,7 @@
 	</head>
 	
 	
-	<body onload='Javascript:init();'>	
+	<body onload='Javascript:initEdit();'>	
 			
 		<div class='mainBlock' id='buttonsDiv'>
 		</div>

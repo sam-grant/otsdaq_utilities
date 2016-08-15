@@ -5,6 +5,20 @@
 		<style type="text/css">			
 			body {
 				background-color: rgb(200,200,200);
+		    	overflow-x: hidden;
+	    		overflow-y: hidden;
+				transition: background-color .5s;
+			
+			}
+			
+			iframe{
+				padding: 0
+				border: 0px 0px 0px 0px;
+				frameBorder=0;
+				hspace=0;
+				vspace=0;
+				marginheight=0;
+				marginwidth=0;
 			}
 			
 			#clearDiv {
@@ -17,19 +31,37 @@
 			
 			
 			#fileBlock {
-				background-color: rgb(26,148,49);
+				  border: none;
+				  marginheight = 0;
+				  transition: margin-left .5s;
+		    	//transition: width 0.5s;
+				  background: red; /* For browsers that do not support gradients */
+				  background: -webkit-linear-gradient(left, red , yellow); /* For Safari 5.1 to 6.0 */
+				  background: -o-linear-gradient(right, red, yellow); /* For Opera 11.1 to 12.0 */
+				  background: -moz-linear-gradient(right, red, yellow); /* For Firefox 3.6 to 15 */
+				  background: linear-gradient(to right, red , yellow); /* Standard syntax */
+			}
 			}				
 
 			#mainBlock {
+			    transition: margin-left 10s;
+			  	transition: left .5s;
 				background-color: rgb(240,234,214);
 			}
 
 			#editBlock {
+				  transition: left .5s;
+
 				background-color: rgb(200,0,0);
 			}
 			
 			.mainBlock {
+			    transition: background-color .5s;
 				position:absolute;
+			}
+			
+			.cover {
+			    transition: background-color .5s;
 			}
 									
 		</style>
@@ -38,7 +70,8 @@
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
+		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+
 		
 		<script>		
 			
@@ -48,49 +81,212 @@
 				//init()					
 				
 			//top-level scope (global) variables:
-			var pvListJSON;
+			var pvList_ = [];
+			var pagesList_ = [];
 			var fileBlock_ = {name:"", isHidden:false, el:""};// = ["fileBlock", false ];
 			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
 			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
-					
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
+			var page_ = page_ || {}; //define the namespace
+			var refreshRate_ = -1;
+			var timerVariable_;
+			var UID_ = 0;
+			var timeToPoll_ = false;
 			
+			page_.createPage = function(){
+				
+				this.widgets = {};
+				this.addPV = function(pv){
+					//console.log("Reached " + pv);
+					
+				}
+				
+			}
+								
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
 			//init called once body has loaded
 			function init() {			
+				
 				Debug.log("init() was called");
 
 				fileBlock_.el = document.getElementById('fileBlock');//red
 				mainBlock_.el = document.getElementById('mainBlock');//yellow
 				editBlock_.el = document.getElementById('editBlock');//green
 
-				
+				page_.createPage;
+				widgetLibrary.init;
+
 				fileBlock_.name = fileBlock_.el.id;
 				mainBlock_.name = mainBlock_.el.id;
 				editBlock_.name = editBlock_.el.id;
 				
 				
 				
-				console.log("editBlock_.hidden : " + editBlock_.hidden);
-				
-				//DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", handlerFunction);
-				//console.log("URN #: " + DesktopContent._localUrnLid);
-				//DesktopContent.XMLHttpRequest("Default?RequestType=Default","",handlerFunction);
-				//DesktopContent._localUrnLid = 340;
-				DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", pvListReqHandler, undefined, undefined, "sequence");	
-				
+				//console.log("editBlock_.hidden : " + editBlock_.hidden);
+				DesktopContent.XMLHttpRequest("Default?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
+				pagesList_ = "Loading";
+				//get frame and set some text to loading
 
+				DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", pvListReqHandler);
+
+				var fileFrame = document.createElement("iframe");
+				fileFrame.id = "fileFrame";
+				fileFrame.src = "/WebPath/html/SlowControlsDashboardFileTree.html";
+				fileFrame.style.height = "inherit";
+				fileFrame.style.width = "inherit";
+				fileBlock_.el.innerHTML = "";
+				fileBlock_.el.style.border = "0";
+				fileBlock_.el.appendChild(fileFrame);
+				
+				
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
 			}	
+			function pagesReqHandler(req){
+				
+				pagesList_ = []; //overwrite the loading text
+
+				//console.log(req.responseText);
+				//console.log(DesktopContent.getXMLValue(req, "JSON"));
+				var pagesJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				for(var x in pagesJSON)
+				{
+					//console.log(pagesJSON[x]);
+					pagesList_.push(pagesJSON[x]);
+				}
 			
+			}
+
 			function pvListReqHandler(req){
+				//console.log(req.responseText);
+				var pvListJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log(pvListJSON);
+				for (var x in pvListJSON)
+				{
+					//console.log(pvListJSON[x]);
+					pvList_.push(pvListJSON[x]);
+				}
+				
+				//console.log(pvList_);
+			}
+		
 			
-				pvListJSON = req;
+			function loadPageReqHandler(req) {
+				//Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+				//console.log(req.responseText);
+				var page = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log(page);
+				
+				page_.createPage;
+				page_.widgets = {};
+				mainBlock_.el.innerHTML = "";
+				
+				
+				for (var widget in page)
+				{
+					//console.log(page[widget]);
+					page_.widgets[widget] = page[widget];
+					
+					//BEGIN Determine how quickly we have to poll the server
+					for(var pv in page[widget].PVList)
+					{
+						if(page[widget].PVList[pv] > 0)
+						{
+							if(page[widget].PVList[pv] < refreshRate_)
+							{
+								refreshRate_ = page[widget].PVList[pv];
+							}
+							else if(refreshRate_ <= 0)
+							{
+								refreshRate_ = page[widget].PVList[pv];
+							}
+						} 
+					}
+					//END Determine how quickly we have to poll the server
+					var widgetFrame = document.createElement("iframe");
+					widgetFrame.id = widget;//page[widget].Display_Name;
+					
+					//console.log("type: ", page[widget].type , " : ", widgetLibrary.typeToSrc[page[widget].type]);
+					
+					widgetFrame.src = widgetLibrary.typeToSrc[page[widget].type];
+					widgetFrame.style.border = "0";
+					widgetFrame.style.position = "absolute";
+					widgetFrame.innerHTML = page[widget].Display_Name;
+					widgetFrame.width = page[widget].size_x;
+					widgetFrame.height = page[widget].size_y;
+					//BEGIN Mechanics for selecting what to display
+					widgetFrame.style.left = page[widget].x + "px";
+					widgetFrame.style.top = page[widget].y + "px";
+					
+					//END Mechanics for selecting what to display
+					
+					//select x and y
+					mainBlock_.el.appendChild(widgetFrame);
+					
+					//document.getElementById(widgetFrame.id).contentWindow.newWidget(page[widget].PVList);
+					document.getElementById(widget).contentWindow.newWidget;
+				}
+				pollServer();
+				updateRefreshInterval();	//automate 'Play' for testing purposes
+
+				
+			}
+		
+			function pollServerHandlerFunction(req) {
+				//Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
+				var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+
+				if(serverResponse.message == "NULL")
+				{
+					//console.log("Have to generate new UID!");
+					generateUID();
+					timeToPoll_ = true;
+				}
+				else
+				{
+					//console.log("pollServerHandlerFunction: " , serverResponse);
+					//console.log("pollServerHandlerFunction: " , serverResponse.pv);
+					//console.log("pollServerHandlerFunction: " , serverResponse[pv]);
+
+					for(var pv in serverResponse)//have to use each pv and then loop through
+					{	
+						//console.log("pollServerHandlerFunction: pv" + pv);						
+						for (var widget in page_.widgets)
+						{
+							//console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
+							for(var dependendentPV in page_.widgets[widget].PVList)
+							{
+								//console.log(dependendentPV);
+								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
+								{
+									//console.log("Widget*************", widget, pv);
+									document.getElementById(widget).contentWindow.newValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			function generateUIDHandlerFunction(req) {
+				//Debug.log("generateUIDHandlerFunction() was called. Req: " + req.responseText);
+				var uid = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log("New UID: " + uid.message);
+				//console.log("New UID: " + DesktopContent.getXMLValue(req, "JSON"));
+
+				UID_ = uid.message;
+				
+				if(timeToPoll_)
+				{
+					timeToPoll_ = false;
+					pollServer();
+				}
+
 			}
 			
 			function handlerFunction(req) {
-				Debug.log("handlerFunction() was called. Req: " + req.responseText);
+				//Debug.log("handlerFunction() was called. Req: " + req.responseText);
 
 				var child1data = DesktopContent.getXMLValue(req,"child");
 				var child2data = DesktopContent.getXMLValue(req,"child2");
@@ -98,6 +294,50 @@
 				Debug.log("--child1data:",child1data," --child2data:",child2data);
 				//block1El = document.getElementById('block1');
 				//block1.innerHTML = child1data;
+				
+			}
+			
+			function pollServer()
+			{
+				timeToPoll_ = false;
+				//Debug.log("pollServer");
+				//console.log("UID is ", UID_);
+				DesktopContent.XMLHttpRequest("Default?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
+
+			}
+			
+			function generateUID()
+			{
+				//Debug.log("GenerateUID");
+				//BEGIN Put all pvs in a JSON and send to server
+				var pvList = "";
+				//console.log("page: ", page_);
+				for (var widget in page_.widgets)
+				{
+					//console.log("generateUID: " +  page_.widgets[widget]);
+
+					for(var pv in page_.widgets[widget].PVList)
+					{
+						//console.log(pv);
+						pvList += pv + ",";
+					}
+				}
+				
+				//END Put all pvs in a JSON and send to server
+				DesktopContent.XMLHttpRequest("Default?RequestType=generateUID&PVList=" + pvList, "", generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
+
+				
+			}
+			
+			function updateRefreshInterval()
+			{
+				window.clearInterval(timerVariable_);
+				timerVariable_ = setInterval(pollServer, refreshRate_);
+			}
+			
+			function loadPage(page)
+			{
+				DesktopContent.XMLHttpRequest("Default?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");	
 				
 			}
 			
@@ -113,38 +353,51 @@
 					editBlock_.el.innerHTML = "";
 					
 				}
-				else
-				{
-				/*	var hideButton = document.createElement("button");
-					hideButton.onclick = "toggleEditMode(false)";
-					hideButton.innerHTML = "Run";
-					hideButton.id = "editButton";
-					editBlock_.el.appendChild(hideButton);
-					document.getElementById(hideButton.id).addEventListener("click", toggleEditMode, false);*/
-				}
+
 			
 			
 				redrawWindow();
 				
 			}
+			
+			function setupWidget(id)
+			{
+				//console.log(id);
+				//console.log(page_);
+				//console.log(page_.widgets[id]);
+				page_.widgets[id].loaded = "true";
+				document.getElementById(id).contentWindow.newWidget(page_.widgets[id]);
+
+			}
+			
+			
+			function sleep(miliseconds) 
+			{
+				   var currentTime = new Date().getTime();
+				   while (currentTime + miliseconds >= new Date().getTime()) {
+				   }
+			}
+			
 
 			function redrawWindow(clicked, hover) {
-				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+				//Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
 					
 				var _MARGIN = 10;
 				var maxWidth = window.innerWidth   - (2 * _MARGIN);
 				var maxHeight = window.innerHeight - (2 * _MARGIN);
+				var marginLeft = 0;
+				var cover = document.getElementById("coverDiv")
 				
 				var hiddenWidth = maxWidth * 0.05;
-				var unhiddenWidth = maxWidth * 0.2;
+				var unhiddenWidth = maxWidth * 0.35;
 				
-				console.log(clicked + "clicked!");
-				console.log(fileBlock_.name);
+
 				//DEFAULT VALUES //Sides Hidden
-				var fileLeft = _MARGIN, fileTop = _MARGIN, fileWidth = unhiddenWidth                     , fileHeight = maxHeight;
-				var editLeft          , editTop = _MARGIN, editWidth = hiddenWidth                       , editHeight = maxHeight;
-				var mainLeft          , mainTop = _MARGIN, mainWidth = maxWidth - (fileWidth + editWidth), mainHeight = maxHeight;
+				var fileLeft = 0 - _MARGIN, fileTop = _MARGIN, fileWidth = unhiddenWidth       , fileHeight = window.innerHeight;
+				var editLeft              , editTop = _MARGIN, editWidth = hiddenWidth         , editHeight = maxHeight;
+				var mainLeft = _MARGIN    , mainTop = _MARGIN, mainWidth = maxWidth - editWidth, mainHeight = maxHeight;
 				
+				editLeft = mainLeft + mainWidth;				
 
 
 					
@@ -156,33 +409,46 @@
 					var editFrame = document.createElement("iframe");
 					editFrame.id = "editFrame";
 					editFrame.src = "/WebPath/html/SlowControlsDashboardEdit.html";
+					editFrame.style.height = "inherit";
+					editFrame.style.width = "inherit";
+					editBlock_.el.innerHTML = "";
 					editBlock_.el.appendChild(editFrame);
 					
-					
-					
-					window.frames[editFrame.id].document.getElementById("tilesDiv").appendChild();
+
 				}
+
 				
-				if(hover)
+				if(hover && fileBlock_.isHidden)
 				{
-					//fileBlock_.el.hidden = false;
-					fileBlock_.el.style["float"] = "left";
-					fileBlock_.el.style["background-color"] = "green";
-					
+					fileBlock_.isHidden = false;
+					fileBlock_.el.onmouseover = "";
 					//mainWidth = mainWidth - unhiddenWidth + hiddenWidth;
 					console.log("Hovering!");
+					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
+					mainBlock_.el.style.display = "none";
+					editBlock_.el.style.display = "none";
+					marginLeft = fileLeft + fileWidth;
+					mainWidth -= (fileWidth - _MARGIN);
+
 				}
 				else
 				{
-					fileWidth = hiddenWidth;
-					fileBlock_.el.style["background-color"] = "transparent";
-					mainWidth += unhiddenWidth - hiddenWidth;
+					fileBlock_.isHidden = true;
+					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
+					cover.style.backgroundColor = "rgba(0,0,0,0)";
+					mainBlock_.el.style.display = "block";
+					editBlock_.el.style.display = "block";
+					//fileWidth = hiddenWidth;
+					//fileBlock_.el.innerHTML = "";
+					//fileBlock_.el.style["background-color"] = "transparent";
+					//mainWidth += unhiddenWidth - hiddenWidth;
+					//mainLeft = fileLeft + ;
+					fileLeft = 0 - fileWidth;
 
 				}
 
-				
-				mainLeft = fileLeft + fileWidth;
-				editLeft = mainLeft + mainWidth;				
+				console.log(marginLeft);
+
 
 
 				
@@ -190,24 +456,30 @@
 				mainBlock_.el.style.top =  mainTop + "px";
 				mainBlock_.el.style.width =  mainWidth + "px";
 				mainBlock_.el.style.height =  mainHeight + "px";
-
-				fileBlock_.el.style.left = fileLeft + "px";
-				fileBlock_.el.style.top =  fileTop + "px";
+				mainBlock_.el.style.marginLeft = marginLeft + "px";
+				
+				
+				fileBlock_.el.style.marginLeft = fileLeft + "px";
+				//fileBlock_.el.style.left = fileLeft + "px";
+				fileBlock_.el.style.top =  0 + "px";
 			    fileBlock_.el.style.width =  fileWidth + "px";
 				fileBlock_.el.style.height =  fileHeight + "px";
+
 				
-				
-				editBlock_.el.style.left = editLeft + "px";
+				editBlock_.el.style.left = (editLeft + marginLeft) + "px";
 				editBlock_.el.style.top =  editTop + "px";
 				editBlock_.el.style.width =  editWidth + "px";
 				editBlock_.el.style.height =  editHeight + "px";
-				
-				
+
+				cover.style.top        = "-10px";
+				cover.style.width      = (window.innerWidth-mainLeft) + "px";
+				cover.style.height     =  window.innerHeight + "px";
+				cover.style.marginLeft = mainLeft + "px";
 				
 
 		
 			}
-			
+
 		</script>
 		
 	</head>
@@ -216,9 +488,10 @@
 	<body onload='Javascript:init();'>	
 			
 		<div class='mainBlock' id='fileBlock'  onmouseover="redrawWindow(null, true)"></div>
+		<div class="cover"     id="coverDiv" height="auto" width="auto">
 		<div class='mainBlock 'id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)"></div>
 		<div class='mainBlock' id='editBlock' onclick=toggleEditMode(true)></div>
-				
+		</div>		
 		
 	</body>
 	
