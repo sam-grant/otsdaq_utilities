@@ -24,6 +24,23 @@
 				position: absolute;
 			}
 			
+			#error-box {
+				position: absolute;
+				display: none;
+				border: 2px solid gray;
+				background-color: rgba(153,0,51,0.8);
+				overflow-y: scroll;
+				overflow-x: hidden;
+				padding: 5px;
+				-moz-border-radius: 2px;
+				-webkit-border-radius: 2px;
+				border-radius: 2px;
+				color: rgb(255,200,100);
+				font-size: 18px;
+				font-family: 'Donegal One', arial;
+				text-align: center;
+			}			
+			
 			#parameter-setup, #extras-box, #alarm-setup-box {	
 				position: absolute;
 				display: none;
@@ -40,13 +57,17 @@
 				text-align: center;
 			}
 			
-			#parameter-setup a, #extras-box a, #alarm-setup-box a {
+			#parameter-setup a, #extras-box a, #alarm-setup-box a,
+			#error-box a
+			{
 				color: white;
 				text-decoration: none;
 				font-weight: 800;
 			}
 			
-			#parameter-setup a:hover, #extras-box a:hover, #alarm-setup-box a:hover {
+			#parameter-setup a:hover, #extras-box a:hover, #alarm-setup-box a:hover,
+			#error-box a:hover
+			{
 				text-decoration: underline;
 			}
     
@@ -54,10 +75,12 @@
 				font-size: 12px;
             }
             
-			#run-number {
-            	margin-top: 10px;
+			#run-number, #extras-box {
 				font-size: 14px;
             }
+			#run-number {
+				margin-bottom: 10px;
+			}
 			
 			.blackout {
 				position: absolute;
@@ -189,11 +212,11 @@
 			var _PARAMETER_SETUP_MAX_HEIGHT = 300; 
 			var _PARAMETER_SETUP_WIDTH = 260; 
 			
-			var _EXTRAS_WIDTH = 260; 
-			var _EXTRAS_HEIGHT = 80; 
+			var _EXTRAS_WIDTH = 200; 
+			var _EXTRAS_HEIGHT = 65; 
 			
 			var _ALARM_WIDTH = 200; 
-			var _ALARM_HEIGHT = 150; 
+			var _ALARM_HEIGHT = 120; 
     
             var _STATE_ANGLE_OFFSET = 0;
             
@@ -225,6 +248,8 @@
             	//eatParameterMouseEvent(touchEvent) 
         		//showAlarmSetup()
             	//setAlarm(start)
+				//displayError(err)
+				//closeErrorBox()
             
 			            
 			var _states, _stateNames, _transitions, _transitionNames, 
@@ -234,7 +259,7 @@
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
 				_blackoutRevealText, _blackoutRevealContent, _progressBar,
-				_parameterSetup, _extrasBox, _alarmBox;
+				_parameterSetup, _extrasBox, _alarmBox, _errorBox;
 			
 			var _timeUpdateTimeout = 0;
 			var _verifyStateTimeout = 0;
@@ -294,7 +319,8 @@
 				_extrasBox.onmouseup = eatParameterMouseEvent;
 				_alarmBox = document.getElementById("alarm-setup-box");
 				_alarmBox.onmousemove = eatParameterMouseEvent;
-				_alarmBox.onmouseup = eatParameterMouseEvent;				
+				_alarmBox.onmouseup = eatParameterMouseEvent;	
+				_errorBox = document.getElementById("error-box");
 				initTransitionParameters();
 				
 				_canvas = document.getElementById("physicsCanvas");
@@ -459,7 +485,8 @@
             	{            		
             		window.clearTimeout(_verifyStateTimeout);
             		window.clearInterval(_timeUpdateTimeout);
-            		Debug.log("Physics currStateRequestHandler Error: " + err);            		
+            		Debug.log("Physics currStateRequestHandler Error: " + err);    
+            		displayError(err);
             		return;
             	}
             	
@@ -722,7 +749,8 @@
             	
             	if(!req) //error! stop checking progress..
             	{            		
-            		Debug.log("Physics handleCheckTransitionProgress Error: " + err);            		
+            		Debug.log("Physics handleCheckTransitionProgress Error: " + err);  
+            		displayError(err);
             		return;
             	}
 
@@ -1227,6 +1255,32 @@
 				_alarmTimeLeft = 0;
 			}
 			
+			//displayError(err) ~~
+			//put new error at top of current error strings
+			function displayError(err)
+			{
+				var el = document.getElementById("error-box-err");
+				var str = el.innerHTML;				
+				var d = new Date();
+				
+				if(str.length)
+					err += "<br>...<br>";
+				str = d.toLocaleDateString() + " " + d.toLocaleTimeString() + ": " +
+						err.replace(/\n/g , "<br>") + str;
+				
+        		Debug.log("Physics displayError Error: " + str + "\n\n" + err);   
+				
+        		el.innerHTML = str;
+				_errorBox.style.display = "block";				
+			}
+			
+			//closeErrorBox() ~~
+			function closeErrorBox()
+			{
+				_errorBox.style.display = "none";
+				document.getElementById("error-box-err").innerHTML = ""; //clear string
+			}
+			
 		</script>
 </head>
 
@@ -1241,9 +1295,9 @@
 </div>
 
 <div id='extras-box'>
+	<div id='run-number'></div>
 	<div id='time-elapsed'></div>
 	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>
-	<div id='run-number'></div>
 </div>
 		
 <div id='alarm-setup-box'>
@@ -1255,7 +1309,7 @@
 	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown'>Pause</a>
 	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>
 </div>	
-	
+
 
 <div class='blackout' id='blackout'>	
 
@@ -1275,6 +1329,12 @@
 	<div class='blackout' id='blackout-reveal'>
 	</div>
 
+</div>
+		
+
+<div id='error-box'>
+<a href="javascript:closeErrorBox()">Close</a><br><br>
+<div id='error-box-err'></div>
 </div>
 
 </body>
