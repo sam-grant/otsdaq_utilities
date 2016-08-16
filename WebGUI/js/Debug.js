@@ -136,6 +136,7 @@ Debug.errorPop = function(err) {
 					"left: 8px, top: 8px; margin-right: 8px;" +
 					"}\n\n";
 
+			//add style element to HEAD tag
 			var style = document.createElement('style');
 
 			if (style.styleSheet) {

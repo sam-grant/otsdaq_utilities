@@ -749,7 +749,21 @@ throw (xgi::exception::Exception)
 
 		std::set<std::string> listOfKocs;
 
-		while (it != aliasMap.end())
+//		if(0)
+//		{	//debugging hierarchical view
+//
+//			//<configuration alias=xxx key=xxx>
+//				<configuration alias=xxx key=xxx>
+//
+//			//</configuration>
+//
+//
+//			parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
+//			return;
+//		}
+
+		while (1 &&
+				it != aliasMap.end())
 		{
 			//for each configuration alias and key
 			//get KOC version numbers
@@ -1174,8 +1188,23 @@ throw (xgi::exception::Exception)
 }
 
 
+
+
 //========================================================================================================================
 //fillSpecificSystemXML
+//return this information
+	//<configuration alias=xxx key=xxx>
+	//	<historical key=xxx>
+	//	<historical key=xxx>
+	//	....
+	//	<koc alias=xxx key=xxx>
+	//		<version key=xxx>
+	//		<version key=xxx>
+	//		...
+	//	</koc>
+	//	<koc alias=xxx key=xxx>
+	//	...
+	//</configuration>
 void ConfigurationGUISupervisor::fillSpecificSystemXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &alias, int backboneVersion)
 {

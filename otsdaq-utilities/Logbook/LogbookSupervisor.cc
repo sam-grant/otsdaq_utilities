@@ -54,6 +54,31 @@ const std::string LOGBOOK_PATH = getenv("LOGBOOK_DATA_PATH") + std::string("/");
 
 XDAQ_INSTANTIATOR_IMPL(LogbookSupervisor)
 
+
+//========================================================================================================================
+//sendmail ~~
+//	Helper function to send emails to the subscriber list of the active experiment
+int sendmail(const char *to, const char *from, const char *subject, const char *message)
+{
+    int retval = -1;
+    FILE *mailpipe = popen("/usr/lib/sendmail -t", "w");
+    if (mailpipe != NULL) {
+        fprintf(mailpipe, "To: %s\n", to);
+        fprintf(mailpipe, "From: %s\n", from);
+        fprintf(mailpipe, "Subject: %s\n\n", subject);
+        fwrite(message, 1, strlen(message), mailpipe);
+        fwrite(".\n", 1, 2, mailpipe);
+        pclose(mailpipe);
+        retval = 0;
+     }
+     else {
+         perror("Failed to invoke sendmail");
+     }
+     return retval;
+}
+
+
+
 //========================================================================================================================
 LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
 xdaq::Application(s   ),
@@ -79,7 +104,8 @@ theRemoteWebUsers_(this)
 
 	init();
 
-
+	//TODO allow admins to subscribe email addresses to the active experiment
+	//sendmail("rrivera@fnal.gov","ots-instance@otsdaq.fnal.gov","My Subject","Message\nHello!\n\nwhats up.");
 }
 
 //========================================================================================================================
