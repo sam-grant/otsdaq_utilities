@@ -214,14 +214,14 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 			for(var rh in DesktopContent._arrayOfFailedHandlers)
 				if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 				{
-					errStr = "Blocking multiple error responses to same handle. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+					errStr = "Blocking multiple error responses to same handler. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
 					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 					found = true; break;
 				}
 		}
 		else 
 		{
-			errStr = "Quiet Mode. Blocking multiple error responses to ALL handles. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+			errStr = "Quiet Mode. Blocking multiple error responses to ALL handlers. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
 			Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 			found = true;
 		}

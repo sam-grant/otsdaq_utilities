@@ -523,7 +523,7 @@ else {
 		//logout ~
 		//	Public logout function. Logs out at server and locally.
 		this.logout = function() {
-       		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.HIGH_PRIORITY);  
+       		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.MED_PRIORITY);  
        		
        		if(_cookieCode && !_killLogoutInfiniteLoop)
        			Desktop.XMLHttpRequest("LoginRequest?RequestType=logout"); //server logout

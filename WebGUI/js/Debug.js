@@ -123,9 +123,9 @@ Debug.errorPop = function(err) {
 					"background-color: rgba(153,0,51,0.8); overflow-y: scroll;" +
 					"overflow-x: hidden;	padding: 5px; -moz-border-radius: 2px;" +
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
-					"font-size: 18px;" +
+					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
 					"font-family: 'Comfortaa', arial; text-align: center;" +
-					"left: 8px, top: 8px; margin-right: 8px;" +
+					"left: 8px; top: 8px; margin-right: 8px;" +
 					"}\n\n";			
 
 			//error box err text style

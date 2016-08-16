@@ -1038,7 +1038,7 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
-				alert(errStr);
+				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
 			if(returnHandler) returnHandler(req,reqIndex,errStr);
