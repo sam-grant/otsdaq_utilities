@@ -296,9 +296,9 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         //return directory structure for requested ROOT path, types are "dir" and "file"
 
         std::string path = CgiDataUtilities::postData(cgi,"RootPath");
-        //path = cgi("RootPath");
         std::string fullPath  = std::string(getenv("ROOT_BROWSER_PATH")) + path;
-        //std::cout << __COUT_HDR_FL__ << "Full path:-" << fullPath << "-" << std::endl;
+
+        std::cout << __COUT_HDR_FL__ << "Full path:-" << fullPath << "-" << std::endl;
 
         std::string rootFileName      = fullPath.substr(0,fullPath.find(".root")+5);
         std::string rootDirectoryName = rootFileName + ":" + fullPath.substr(fullPath.find(".root")+5,fullPath.size()-fullPath.find(".root")+5+1);
@@ -308,18 +308,18 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
 
         if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
         {
-            //std::cout << __COUT_HDR_FL__ << "Attempting to get LIVE file." << std::endl;
+            std::cout << __COUT_HDR_FL__ << "Attempting to get LIVE file." << std::endl;
             rootFile = theDataManager_->getLiveDQMHistos()->getFile();
             rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
         }
         else
             rootFile = TFile::Open(rootFileName.c_str());
 
-        //std::cout << __COUT_HDR_FL__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
+        std::cout << __COUT_HDR_FL__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
 
         if(!rootFile || !rootFile->IsOpen())
         {
-            //std::cout << __COUT_HDR_FL__ << "Failed to access root file: " << rootFileName << std::endl;
+            std::cout << __COUT_HDR_FL__ << "Failed to access root file: " << rootFileName << std::endl;
         }
         else
         {
@@ -328,7 +328,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
             TDirectory* directory;
             if((directory = rootFile->GetDirectory(rootDirectoryName.c_str())) == 0)
             {
-                //std::cout << __COUT_HDR_FL__ << "This is not a directory!" << std::endl;
+                std::cout << __COUT_HDR_FL__ << "This is not a directory!" << std::endl;
                 directory = rootFile;
 
                 //failed directory so assume it's file

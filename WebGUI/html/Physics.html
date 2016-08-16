@@ -171,11 +171,6 @@
 <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 <script type="text/JavaScript"
 	src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	
-<!--<script type="text/JavaScript"
-	src="/WebPath/js/DesktopStatusMonitor.js"></script>-->
-
-
 
 <script>		
 
@@ -277,8 +272,7 @@
             var _selectedTransition;
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
-            
-			var _statusMonitor;			
+            	
 			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -299,8 +293,7 @@
             //			display fades in (goto start of gui strategy)			
 			
 			//init called once body has loaded
-			function init() {			
-				//_statusMonitor = new DesktopContent.statusMonitor();				
+			function init() {						
 								
 				_currState = -1;
 				_prevState = -1;
@@ -338,6 +331,7 @@
 				
 				window.setTimeout(redrawPhysics,1000); //for firefox drawing glitch
 				window.setTimeout(redrawPhysics,5000); //for firefox drawing glitch
+				
 			}
 
             
@@ -465,9 +459,7 @@
                 }
 
                 Debug.log("Physics _transitions \n\t" + _transitions + "\n\t" + _transitionNames + "\n\t" + _transitionActions);
-			    
-			   // _statusMonitor.subscribeTo("StateMachineStatus");			    
-
+	
                 getCurrentState();	
 			}
 			
@@ -485,8 +477,7 @@
             	{            		
             		window.clearTimeout(_verifyStateTimeout);
             		window.clearInterval(_timeUpdateTimeout);
-            		Debug.log("Physics currStateRequestHandler Error: " + err);    
-            		displayError(err);
+            		Debug.log("Error: " + err, Debug.HIGH_PRIORITY); 
             		return;
             	}
             	
@@ -526,7 +517,7 @@
 								
 							_currState = i;
 							redrawPhysics();
-							
+
 							//update run number
 							document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
 						}
@@ -749,8 +740,7 @@
             	
             	if(!req) //error! stop checking progress..
             	{            		
-            		Debug.log("Physics handleCheckTransitionProgress Error: " + err);  
-            		displayError(err);
+            		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
             		return;
             	}
 
@@ -760,7 +750,12 @@
 			    _transitionResultingState = DesktopContent.getXMLValue(req,"current_state");
 			    
 			    if(!inTransition)
+			    {
 			    	_transitionProgress = 100;
+			    	
+					//update run number
+					document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
+			    }
 			    else
 			    {
 			    	if(progress > 99) progress = 99; //if not completed with transition, make sure progress is a legal value
@@ -781,8 +776,11 @@
 
 		    	_progressBar.style.width = _transitionProgress + "%";
             	
-            	if(_transitionProgress < 100)			    	
-			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
+            	if(_transitionProgress < 100)	
+            		window.setTimeout(function(){
+            			DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
+            		},10); //attempt to get current state again in 10ms
+			    	
             }
             
             //handleMouseMove ~~
@@ -1333,7 +1331,7 @@
 		
 
 <div id='error-box'>
-<a href="javascript:closeErrorBox()">Close</a><br><br>
+<a href="javascript:closeErrorBox()">Close Errors</a><br><br>
 <div id='error-box-err'></div>
 </div>
 

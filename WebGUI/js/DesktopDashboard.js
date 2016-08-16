@@ -168,18 +168,21 @@ else {
 				var wh = dh;
 				
 				while(ww*2 < wh) {				
-					Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
+					//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
 					ww = Math.floor(dw/Math.ceil(Desktop.desktop.getNumberOfWindows()/++rows)); wh = Math.floor(dh/rows);				
 				}  //have too much height, so add row
 				xx = dx; yy = dy;
-				Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
-								
+				//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
+				var cols = Math.ceil(Desktop.desktop.getNumberOfWindows()/rows);
+				Debug.log("Desktop Dashboard Organize r" + rows + " , c" + cols,Debug.LOW_PRIORITY);
+						
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {					
 					win = Desktop.desktop.getWindowByIndex(document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
 					if(win.isMinimized() || win.isMaximized()) win.minimize();
 					xx += ww;
-					if(xx > dw){xx = dx; yy += wh;}					
+					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
+					//Debug.log("Desktop Dashboard Organize i:" + (i+1)%cols + " -  " + xx + " , " + yy,Debug.LOW_PRIORITY);	
 				}
 				break;
 			case 1: //offset arrange

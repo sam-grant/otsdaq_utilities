@@ -13,6 +13,6 @@
 var Globals = Globals || {}; //define Globals namespace
 
 	
-Globals.REQ_NO_PERMISSION_RESPONSE 	= "NoPermission";
+Globals.REQ_NO_PERMISSION_RESPONSE 		= "NoPermission";
 Globals.REQ_NO_LOGIN_RESPONSE			= "NoLogin";  
 Globals.REQ_USER_LOCKOUT_RESPONSE		= "UserLockout";  

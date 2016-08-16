@@ -40,6 +40,7 @@
 //		for(var i=0;i<els.length;++i)
 //			Debug.log(els[i].getAttribute("value"));
 //
+//
 //=====================================================================================
 
 var DesktopContent = DesktopContent || {}; //define Desktop namespace
@@ -48,6 +49,24 @@ if (typeof Debug == 'undefined')
 	alert('ERROR: Debug is undefined! Must include Debug.js before DesktopWindowContentCode.js');
 if (typeof Globals == 'undefined') 
 	alert('ERROR: Globals is undefined! Must include Globals.js before DesktopWindowContentCode.js');
+
+
+//"public" function list: 
+	//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
+	//	DesktopContent.getXMLValue(req, name)
+	//	DesktopContent.getXMLAttributeValue(req, name, attribute)
+	//	DesktopContent.errorPop(err)
+
+//"private" function list:
+	//	DesktopContent.init()
+	//	DesktopContent.getParameter(index)
+	//	DesktopContent.handleFocus(e)
+	//	DesktopContent.handleBlur(e)
+	//	DesktopContent.handleScroll(e)
+	//	DesktopContent.mouseMove(mouseEvent)
+	//	DesktopContent.checkCookieCodeRace()
+	//	DesktopContent.closeErrorPop()
+
 
 DesktopContent._isFocused = false;
 DesktopContent._theWindow = 0;
@@ -65,6 +84,8 @@ DesktopContent._needToLoginMailbox = 0;
 
 DesktopContent.lastCookieCode = 0;
 DesktopContent.lastCookieTime = 0;
+
+
 //=====================================================================================
 //initialize content's place in the world
 // caution when using "window" anywhere outside this function because
@@ -153,6 +174,8 @@ DesktopContent.init(); //initialize handlers
 //(this is a result of bad error handling in the desktop window page.. so this is meant to inform the developer to fix the issue)
 DesktopContent._arrayOfFailedHandlers = new Array();
 
+
+//=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data
 // and when request is returned, returnHandler is called with 
@@ -172,7 +195,8 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 // reqIndex is used to give the returnHandler an index to route responses to.
 // Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 //
-DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler, sequence) {
+DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
+{
 
 	var errStr = "";
 	var req;
@@ -301,7 +325,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
-				alert(errStr);
+				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
 			if(returnHandler) returnHandler(req, reqIndex, errStr);
@@ -338,6 +362,7 @@ DesktopContent.checkCookieCodeRace = function() {
 	}
 }
 
+//=====================================================================================
 //returns xml entry value for an attribute
 DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 	var els;
@@ -347,6 +372,7 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 		return undefined;
 }
 
+//=====================================================================================
 //returns xml entry value for attribue 'value'
 DesktopContent.getXMLValue = function(req, name) {
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
