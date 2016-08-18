@@ -33,8 +33,17 @@ struct ConsoleMessageStruct
 {
 	ConsoleMessageStruct()
 	{
-		buffer.resize(5000);
+		buffer.resize(BUFFER_SZ);
 	}
+
+	void set(std::string msg)
+	{
+		buffer = msg.substr(0,BUFFER_SZ);
+	}
+
+	const int BUFFER_SZ = 5000;
+//	const int MF_MARKER_MSG = 11;
+//	const int MF_MARKER_MSG = 11;
 	std::string buffer;
 };
 

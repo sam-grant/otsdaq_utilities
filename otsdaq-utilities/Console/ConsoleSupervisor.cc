@@ -89,7 +89,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop()
 				//by jumping to the correct '|' marker
 			for(p=0,i=0;i<MF_POS_OF_MSG;++i)
 				p = buffer.find('|',p)+1;
-			std::cout << "+" << &buffer[p] << std::endl;
+			std::cout << "+" << buffer << std::endl;///&buffer[p] << std::endl;
+			//messages[0].set(buffer);
 		}
 	}
 

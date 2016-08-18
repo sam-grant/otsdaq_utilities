@@ -187,13 +187,13 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
 
 	std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance size " <<
-			theSupervisorsConfiguration_.getFEDescriptors().size() << "     ";
+			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
 
 	//loop through each front end, and send xoap request for front end list
 	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
 	{
 		std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance " << it->first <<
-				"...and..." << it->second << "     ";
+				"...and..." << it->second << std::endl;
 		std::cout << __COUT_HDR_FL__<< "Look! Here's a FE! @@@" << std::endl;
 
 		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
@@ -205,14 +205,14 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		std::string retMsgFEList = retParameters.getValue("FEList");
 
 		std::cout << __COUT_HDR_FL__<< "FE List received : " <<
-				retMsgFEList << "     ";
+				retMsgFEList << std::endl;
 
 		std::istringstream f(retMsgFEList);
 		std::string oneInterface;
 		while (std::getline(f, oneInterface)){
 			std::stringstream buffer;
 			buffer << oneInterface.substr(0,oneInterface.rfind(":")+1)
-				   << std::to_string(it->first) << oneInterface.substr(oneInterface.rfind(":"),oneInterface.length())<< "     ";
+				   << std::to_string(it->first) << oneInterface.substr(oneInterface.rfind(":"),oneInterface.length())<< std::endl;
 			interfaceList.push_back(buffer.str());
 		    xmldoc.addTextElementToData("FE", buffer.str());
 		}

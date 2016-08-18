@@ -353,7 +353,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                     std::string dest;
                     binaryBufferToHexString(tbuff.Buffer(), tbuff.Length(), dest);
 
-                    //*out << json.Data() << "     ";
+                    //*out << json.Data() << std::endl;
                     //return;
                     xmldoc.addTextElementToData("rootType", rootType);
                     xmldoc.addTextElementToData("rootData", dest);

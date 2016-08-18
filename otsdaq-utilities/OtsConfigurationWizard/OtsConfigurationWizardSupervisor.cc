@@ -81,7 +81,7 @@ void OtsConfigurationWizardSupervisor::printURL()
 	{
 		std::this_thread::sleep_for (std::chrono::seconds(2));
 		mf::LogError(__FILE__) << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
-		<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << "     ";
+		<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
 	}
 }
 
