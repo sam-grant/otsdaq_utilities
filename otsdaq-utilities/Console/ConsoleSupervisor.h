@@ -29,23 +29,7 @@ namespace ots
 
 class HttpXmlDocument;
 
-struct ConsoleMessageStruct
-{
-	ConsoleMessageStruct()
-	{
-		buffer.resize(BUFFER_SZ);
-	}
 
-	void set(std::string msg)
-	{
-		buffer = msg.substr(0,BUFFER_SZ);
-	}
-
-	const int BUFFER_SZ = 5000;
-//	const int MF_MARKER_MSG = 11;
-//	const int MF_MARKER_MSG = 11;
-	std::string buffer;
-};
 
 
 class ConsoleSupervisor: public xdaq::Application, public SOAPMessenger
@@ -69,15 +53,86 @@ private:
     	ADMIN_PERMISSIONS_THRESHOLD = 255,
     };
 
-    static void						MFReceiverWorkLoop			();
+    static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);
     
     SupervisorConfiguration         theSupervisorsConfiguration_;
     RemoteWebUsers					theRemoteWebUsers_;
 
+
+
+    struct ConsoleMessageStruct
+    {
+    	ConsoleMessageStruct()
+    	{
+    		buffer.resize(BUFFER_SZ);
+
+    		//init fields to position -1 (for unknown)
+    		//NOTE: must be in order of appearance in buffer
+    		fields[LEVEL].set("Level",4,-1);
+    		fields[LABEL].set("Label",5,-1);
+    		fields[SOURCE].set("Source",6,-1);
+    		fields[MSG].set("Msg",11,-1);
+    	}
+
+    	void set(std::string msg)
+    	{
+    		buffer = msg.substr(0,BUFFER_SZ); //clip to BUFFER_SZ
+
+    		//find fields
+    		int i=0, m=0;
+    		size_t p;
+    		//loop until no more markers
+    		while( (p = buffer.find('|',p))
+    				!= std::string::npos)
+    		{
+    			++m; //found next marker
+    			if(i < (int)fields.size() &&
+    					m == fields[i].markerCount) //found marker for field
+    				fields[i++].posInString = p+1; //set position in string and move on to next field
+
+    			//change all | to \0 so strings are terminated
+    			buffer[p] = '\0';
+    		}
+
+    		//debug
+			//    		for(auto &f: fields)
+			//    		{
+			//    			std::cout << f.fieldName << ": " ;
+			//    			std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//    		}
+    	}
+
+    	const char * getMsg() {return  (char *)&buffer[fields[MSG].posInString];}
+    	const char * getLabel() {return  (char *)&buffer[fields[LABEL].posInString];}
+    	const char * getLevel() {return  (char *)&buffer[fields[LEVEL].posInString];}
+    	const char * getSource() {return  (char *)&buffer[fields[SOURCE].posInString];}
+
+    	const int BUFFER_SZ = 5000;
+
+
+    	//define field structure
+    	struct FieldStruct {
+    		void set(std::string fn, int mc, int ps)
+    		{ fieldName=fn; markerCount=mc; posInString=ps; }
+    		std::string fieldName;
+    		int markerCount;
+    		int posInString;
+    	};
+
+    	//define field index enum alias
+    	enum {		//must be in order of appearance in buffer
+    		LEVEL,	//aka SEVERITY
+    		LABEL,
+    		SOURCE,
+    		MSG
+    	};
+    	std::array<FieldStruct,4> fields;
+    	std::string buffer;
+    };
     
     ConsoleMessageStruct			messages[100];
-
 };
+
 
 }
 

@@ -58,7 +58,7 @@ void ConsoleSupervisor::init(void)
 	theSupervisorsConfiguration_.init(getApplicationContext());
 
 	//start mf msg listener
-	std::thread([](){ ConsoleSupervisor::MFReceiverWorkLoop(); }).detach();
+	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
 }
 
 //========================================================================================================================
@@ -71,10 +71,10 @@ void ConsoleSupervisor::destroy(void)
 //========================================================================================================================
 //MFReceiverWorkLoop ~~
 //	Thread for printing Message Facility messages without decorations
-void ConsoleSupervisor::MFReceiverWorkLoop()
+void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 {
 	std::cout << __COUT_HDR_FL__ << std::endl;
-	ReceiverSocket rsock("127.0.0.1",30001);
+	ReceiverSocket rsock("127.0.0.1",30001); //FIXME == Take IP/Port from Configuration
 	rsock.initialize();
 
 	//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
@@ -89,8 +89,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop()
 				//by jumping to the correct '|' marker
 			for(p=0,i=0;i<MF_POS_OF_MSG;++i)
 				p = buffer.find('|',p)+1;
-			std::cout << "+" << buffer << std::endl;///&buffer[p] << std::endl;
-			//messages[0].set(buffer);
+			//std::cout << "+" << buffer << std::endl;///&buffer[p] << std::endl;
+			cs->messages[0].set(buffer);
 		}
 	}
 

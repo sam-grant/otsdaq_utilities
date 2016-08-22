@@ -1628,6 +1628,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //testXDAQContext just a test bed for navigating the new config tree
 void ConfigurationGUISupervisor::testXDAQContext()
 {
+
 	//behave like a user
 	//start with top level xdaq context
 	//	then add and delete rows proof-of-concept
@@ -1646,6 +1647,15 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	for(auto& mapIt : allCfgInfo)
 	{
 		__MOUT__ << "Config Alias: " << mapIt.first << std::endl;
+		//NOTE: MessageFacility has strange bug.. where it clips of the message and adds a P
+		//		__MOUT__ << "Config Aliasve: " <<
+		//					mapIt.first << std::endl;
+		//		std::stringstream ss;
+		//		ss << "Config Aliassss: " << mapIt.first << std::endl;
+		//		__MOUT__ << ss.str();
+		//		__MOUT__ << ss.str();
+		//		__MOUT__ << ss.str();
+		//		__MOUT__ << "Config Aliassss: " << mapIt.first << std::endl;
 		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
@@ -1654,7 +1664,8 @@ void ConfigurationGUISupervisor::testXDAQContext()
 			__MOUT__ << "\t\t" << *vit << std::endl;
 		}
 	}
-	//cfgMgr->testXDAQContext();
+	cfgMgr->testXDAQContext();
+
 
 
 

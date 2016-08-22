@@ -86,9 +86,15 @@ int makeSocket(const char * ip, int port, struct addrinfo*& p)
 
 int main(int argc, char** argv)
 {
-	std::string myPort_("30000");
-	if(argc == 2)
+	std::string myPort_("3000");
+	std::string myFwdPort_("3001");
+	if(argc >= 2)
 		myPort_ = argv[1];
+	if(argc >= 3)
+		myFwdPort_ = argv[2];
+
+	int myFwdPort;
+	sscanf(myFwdPort_.c_str(),"%d",&myFwdPort);
 
 	int sockfd;
     int sendSockfd=0;
@@ -170,7 +176,7 @@ int main(int argc, char** argv)
 	const int MF_POS_OF_MSG = 11;
 
     //this should ip/port of Console xdaq app Receiver port
-	sendSockfd = makeSocket("127.0.0.1", 30001, p);
+	sendSockfd = makeSocket("127.0.0.1", myFwdPort, p);
 
     while(1)
     {
@@ -204,14 +210,31 @@ int main(int argc, char** argv)
 			//			printf("\n");
 
 
+
+
+
+
 			//print message without decoration
 			//find position of message and save to p
 							//by jumping to the correct '|' marker
 			buff[numbytes] = '\0'; //make sure it is null terminated
+
+			//DEBUG -- for indentifying strange MessageFacility bug with clipped messages
+			//std::cout << "+" << ((int)strlen(buff)==numbytes?1:0) << " " << buff << std::endl;
+			//			if((int)strlen(buff)!=numbytes)
+			//			{
+			//				for(int iii=strlen(buff)-3;iii<numbytes;++iii)
+			//					std::cout << (int)buff[iii] << "-" << (char)buff[iii] << " ";
+			//				std::cout << numbytes << " " << strlen(buff) << std::endl;
+			//				std::cout << std::endl;
+			//			}
+
+			//count markers to find message
 			for(mf_p=0,mf_i=0;mf_i<numbytes && mf_p<MF_POS_OF_MSG;++mf_i)
 				if(buff[mf_i] == '|') ++mf_p; //count markers
-			//if(mf_i<numbytes)
-			std::cout << &buff[mf_i-1] << std::endl; // show leading '|'
+
+			if(mf_i<numbytes) //if valid find, show message
+				std::cout << &buff[mf_i-1] << std::endl; // show leading '|'
 
 
 
