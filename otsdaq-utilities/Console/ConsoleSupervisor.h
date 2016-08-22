@@ -46,7 +46,7 @@ public:
     void destroy              		(void);
 
     void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void Request               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void Console               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
     enum {
@@ -54,7 +54,8 @@ private:
     };
 
     static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);
-    
+    void							insertMessageRefresh		(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
+
     SupervisorConfiguration         theSupervisorsConfiguration_;
     RemoteWebUsers					theRemoteWebUsers_;
 
@@ -65,18 +66,23 @@ private:
     	ConsoleMessageStruct()
     	{
     		buffer.resize(BUFFER_SZ);
+    		timeStamp = 0;
+    		clockStamp = 0;
 
     		//init fields to position -1 (for unknown)
     		//NOTE: must be in order of appearance in buffer
     		fields[LEVEL].set("Level",4,-1);
     		fields[LABEL].set("Label",5,-1);
-    		fields[SOURCE].set("Source",6,-1);
+    		fields[SOURCE].set("Source",10,-1);
     		fields[MSG].set("Msg",11,-1);
     	}
 
-    	void set(std::string msg)
+    	void set(const std::string &msg)
     	{
-    		buffer = msg.substr(0,BUFFER_SZ); //clip to BUFFER_SZ
+    		buffer = (std::string)(msg.substr(0,BUFFER_SZ)); //clip to BUFFER_SZ
+
+    		timeStamp = time(0); //get time of msg
+    		clockStamp = clock(); //get clock of msg
 
     		//find fields
     		int i=0, m=0;
@@ -102,18 +108,21 @@ private:
 			//    		}
     	}
 
-    	const char * getMsg() {return  (char *)&buffer[fields[MSG].posInString];}
-    	const char * getLabel() {return  (char *)&buffer[fields[LABEL].posInString];}
-    	const char * getLevel() {return  (char *)&buffer[fields[LEVEL].posInString];}
-    	const char * getSource() {return  (char *)&buffer[fields[SOURCE].posInString];}
+    	const char *  getMsg() 	 	 {return  (char *)&buffer[fields[MSG].posInString];}
+    	const char *  getLabel() 	 {return  (char *)&buffer[fields[LABEL].posInString];}
+    	const char *  getLevel() 	 {return  (char *)&buffer[fields[LEVEL].posInString];}
+    	const char *  getSource()	 {return  (char *)&buffer[fields[SOURCE].posInString];}
+    	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
+    	const time_t  getTime()	 	 {return  timeStamp;}
+    	const clock_t getClock() 	 {return  clockStamp;}
 
-    	const int BUFFER_SZ = 5000;
 
 
     	//define field structure
     	struct FieldStruct {
-    		void set(std::string fn, int mc, int ps)
-    		{ fieldName=fn; markerCount=mc; posInString=ps; }
+    		void set(const std::string &fn, const int mc, const int ps)
+    		{ fieldName=fn; markerCount=mc; posInString=ps;}
+
     		std::string fieldName;
     		int markerCount;
     		int posInString;
@@ -126,11 +135,23 @@ private:
     		SOURCE,
     		MSG
     	};
-    	std::array<FieldStruct,4> fields;
-    	std::string buffer;
+
+    	const int BUFFER_SZ = 5000;
+    	std::string					buffer;
+    	std::array<FieldStruct,4> 	fields;
+    	time_t 						timeStamp;
+    	clock_t						clockStamp;
     };
-    
-    ConsoleMessageStruct			messages[100];
+
+    std::array<ConsoleMessageStruct,100>	messages_;
+    std::mutex								messagesMutex_;
+    volatile unsigned int					writePointer_;	//use volatile to avoid compiler optimizations
+
+    //members for the refresh handler, ConsoleSupervisor::insertMessageRefresh
+    unsigned int 			refreshReadPointer_;
+	char 					refreshTempStr_[50];
+	unsigned int 			refreshIndex_;
+	xercesc::DOMElement* 	refreshParent_;
 };
 
 

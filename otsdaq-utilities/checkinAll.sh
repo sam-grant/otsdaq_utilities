@@ -17,12 +17,16 @@ echo "You are using $0"
 echo
 echo
 
+
 if [ "x$1" == "x" ]; then
-    echo "Usage Error: parameter 1 is the comment for git commit"    
+    echo "Usage Error: parameter 1 is the comment for git commit"
+	echo "Note: to use ! at the end of your message put a space between the ! and the closing \""
     echo "Note: git status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
     echo "WARNING: without comment, script will only do git pull and git status"
 fi
 
+echo
+echo
 echo "Finding paths..."
 
 SCRIPT_DIR="$( 

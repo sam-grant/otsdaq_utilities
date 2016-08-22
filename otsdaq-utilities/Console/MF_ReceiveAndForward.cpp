@@ -234,8 +234,8 @@ int main(int argc, char** argv)
 				if(buff[mf_i] == '|') ++mf_p; //count markers
 
 			if(mf_i<numbytes) //if valid find, show message
-				std::cout << &buff[mf_i-1] << std::endl; // show leading '|'
-
+				std::cout << &buff[mf_i-1] << std::endl; // show leading '|' then msg
+			//std::cout << buff << std::endl; // show all
 
 
 

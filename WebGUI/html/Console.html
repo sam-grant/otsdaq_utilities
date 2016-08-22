@@ -277,7 +277,14 @@
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
 			//init called once body has loaded
-			function init() {			
+			function init() {		
+				
+				
+			
+				DesktopContent.XMLHttpRequest("Console?RequestType=GetConsoleMsgs", 
+						"lclock="+1+"&lindex="+0);
+				
+				return;
 				_inputEl = document.getElementById('inputArea');
 				_historyEl = document.getElementById('chatHistory');
 				_historyContainerEl = document.getElementById('chatHistoryContainer');
