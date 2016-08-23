@@ -125,7 +125,7 @@ Debug.errorPop = function(err) {
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
 					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
 					"font-family: 'Comfortaa', arial; text-align: center;" +
-					"left: 8px; top: 8px; margin-right: 8px;" +
+					"left: 8px; top: 8px; margin-right: 8px; height:300px; " +
 					"}\n\n";			
 
 			//error box err text style
