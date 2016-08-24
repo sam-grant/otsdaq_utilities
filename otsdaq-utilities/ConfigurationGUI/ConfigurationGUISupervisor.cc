@@ -314,7 +314,7 @@ theRemoteWebUsers_  (this)
 		//set all numbers to 10
 		r = cfgViewPtr->addRow();
 		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-			if(colInfo[c].getViewType() == "NUMBER")
+			if(colInfo[c].getDataType() == "NUMBER")
 				cfgViewPtr->setValue(c,r,c);
 			else
 				cfgViewPtr->setValue(std::string("Hi"),r,c);
@@ -1387,11 +1387,11 @@ void ConfigurationGUISupervisor::fillSpecificSubSystemXML(HttpXmlDocument &xmldo
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 		for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 		{
-			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
-					<< colInfo[i].getViewName() << " " << colInfo[i].getViewType() << std::endl;
+			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << colInfo[i].getName() << " "
+					<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
 
 			xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
-			xmldoc.addTextElementToParent("ColumnType", colInfo[i].getViewType(), parentEl);
+			xmldoc.addTextElementToParent("ColumnType", colInfo[i].getDataType(), parentEl);
 		}
 
 		parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
@@ -1404,7 +1404,7 @@ void ConfigurationGUISupervisor::fillSpecificSubSystemXML(HttpXmlDocument &xmldo
 			DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
 
 			for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-				if(colInfo[c].getViewType() == "NUMBER")
+				if(colInfo[c].getDataType() == "NUMBER")
 				{
 					int num;
 					cfgViewPtr->getValue(num,r,c);
@@ -1525,7 +1525,7 @@ void ConfigurationGUISupervisor::saveSpecificSubSystemVersion(HttpXmlDocument &x
 			{
 				//__MOUT__ << r << "|" << c << "][" << i << "|" << k << "][" << std::endl;
 				//__MOUT__ << data.substr(i,j-i) << "|" << std::endl;
-				if(colInfo[c].getViewType() == "NUMBER")
+				if(colInfo[c].getDataType() == "NUMBER")
 				{
 					//__MOUT__ << atoi(data.substr(i,j-i).c_str()) << "|" << std::endl;
 					cfgViewPtr->setValue(atoi(data.substr(i,j-i).c_str()),r,c);
