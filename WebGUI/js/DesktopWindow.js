@@ -162,23 +162,47 @@ else {
 			
             //Debug.log("Desktop Window position to " + _x + "," +
             //           _y + " size to " + _w + "," + _h,Debug.LOW_PRIORITY);
-            
+					
             if(_isMaximized){ //keep proper dimensions
                 _winfrm.style.position = "absolute";
                 _winfrm.style.zIndex = _z + 1;
                 _winfrm.style.width = _w + "px";
                 _winfrm.style.height = _h + "px";
-                _winfrm.style.left ="0px";
+                _winfrm.style.left ="-1px";
                 _winfrm.style.top = "-1px";
+//                _winfrmHolder.style.position = "absolute";
+//                _winfrmHolder.style.width = (_w)+"px";  //extra 2 for border pixels 
+                _winfrmHolder.style.height = (_h)+"px"; 	//extra 2 for border pixels
+//                _winfrmHolder.style.left ="-1px";
+//                _winfrmHolder.style.top = "-1px";	
+                			
 
                 _w = w < _defaultWindowMinWidth?_defaultWindowMinWidth:w;
                 _h = h < _defaultWindowMinHeight?_defaultWindowMinHeight:h;
                 _x = x;
                 _y = y;
+                
+                //hide window header
+                var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+                	hdrs[h].style.display = "none";
+                hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+					hdrs[h].style.display = "none";
+                _winfrmHolder.style.border = "0px";
             }
             else {
                 _winfrm.style.zIndex = _z;
                 _winfrm.style.position = "static";
+
+                //show window header
+                var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+                	hdrs[h].style.display = "block";
+                hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+					hdrs[h].style.display = "block";
+                _winfrmHolder.style.border = "1px";
             }
 			
             Desktop.desktop.login.resetCurrentLayoutUpdateTimer();

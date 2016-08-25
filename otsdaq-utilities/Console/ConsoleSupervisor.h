@@ -66,23 +66,23 @@ private:
     	ConsoleMessageStruct()
     	{
     		buffer.resize(BUFFER_SZ);
-    		timeStamp = 0;
-    		clockStamp = 0;
+    		timeStamp = 0;	//use this being 0 to indicate uninitialized
+    		countStamp = (time_t)-1; //this is still a valid countStamp, just unlikely to be reached
 
     		//init fields to position -1 (for unknown)
     		//NOTE: must be in order of appearance in buffer
-    		fields[LEVEL].set("Level",4,-1);
-    		fields[LABEL].set("Label",5,-1);
-    		fields[SOURCE].set("Source",10,-1);
-    		fields[MSG].set("Msg",11,-1);
+    		fields[LEVEL].set	("Level",4,-1);
+    		fields[LABEL].set	("Label",5,-1);
+    		fields[SOURCE].set	("Source",10,-1);
+    		fields[MSG].set		("Msg",11,-1);
     	}
 
-    	void set(const std::string &msg)
+    	void set(const std::string &msg, const time_t count)
     	{
     		buffer = (std::string)(msg.substr(0,BUFFER_SZ)); //clip to BUFFER_SZ
 
     		timeStamp = time(0); //get time of msg
-    		clockStamp = clock(); //get clock of msg
+    		countStamp = count; //get "unique" incrementing id for message
 
     		//find fields
     		int i=0, m=0;
@@ -114,7 +114,7 @@ private:
     	const char *  getSource()	 {return  (char *)&buffer[fields[SOURCE].posInString];}
     	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
     	const time_t  getTime()	 	 {return  timeStamp;}
-    	const clock_t getClock() 	 {return  clockStamp;}
+    	const time_t  getCount() 	 {return  countStamp;}
 
 
 
@@ -137,21 +137,24 @@ private:
     	};
 
     	const int BUFFER_SZ = 5000;
-    	std::string					buffer;
     	std::array<FieldStruct,4> 	fields;
+    private:
+    	std::string					buffer;
     	time_t 						timeStamp;
-    	clock_t						clockStamp;
+    	time_t						countStamp;
     };
 
     std::array<ConsoleMessageStruct,100>	messages_;
-    std::mutex								messagesMutex_;
+    std::mutex								messageMutex_;
     volatile unsigned int					writePointer_;	//use volatile to avoid compiler optimizations
+    time_t									messageCount_; //"unique" incrementing ID for messages
 
     //members for the refresh handler, ConsoleSupervisor::insertMessageRefresh
     unsigned int 			refreshReadPointer_;
 	char 					refreshTempStr_[50];
 	unsigned int 			refreshIndex_;
 	xercesc::DOMElement* 	refreshParent_;
+	time_t 					refreshCurrentLastCount_;
 };
 
 

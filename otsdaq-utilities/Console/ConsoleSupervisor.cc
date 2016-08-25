@@ -26,9 +26,9 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 #define __MF_HDR__		__COUT_HDR_FL__
 #define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
+#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
-
+#define __SS__			std::stringstream ss; ss << __COUT_HDR_FL__
 
 
 //========================================================================================================================
@@ -36,7 +36,8 @@ ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exc
 xdaq::Application(s   ),
 SOAPMessenger  (this),
 theRemoteWebUsers_(this),
-writePointer_(0)
+writePointer_(0),
+messageCount_(0)
 {
 	INIT_MF("ConsoleSupervisor");
 	xgi::bind (this, &ConsoleSupervisor::Default,                	"Default" );
@@ -93,9 +94,9 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
-			std::lock_guard<std::mutex> lock(cs->messagesMutex_);
+			std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
-			cs->messages_[cs->writePointer_++].set(buffer);
+			cs->messages_[cs->writePointer_++].set(buffer,cs->messageCount_++);
 			if(cs->writePointer_ == cs->messages_.size()) //handle wrap-around
 				cs->writePointer_ = 0;
 		}
@@ -124,7 +125,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	//__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands:
 	//GetConsoleMsgs
@@ -136,7 +137,7 @@ throw (xgi::exception::Exception)
 	std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
 			CgiDataUtilities::postData(cgi,"CookieCode");
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", Command != "RefreshLogbook")) //only refresh cookie if not automatic refresh
+			cookieCode, &userPermissions, "0", false)) //dont refresh cookie
 	{
 		*out << cookieCode;
 		__MOUT_ERR__ << "Invalid Cookie Code" << std::endl;
@@ -156,20 +157,29 @@ throw (xgi::exception::Exception)
 
 	if(Command == "GetConsoleMsgs")
 	{
-        std::string lastUpdateClockStr = CgiDataUtilities::postData(cgi,"lclock");
+		//lindex of -1 means first time and user just gets update lcount and lindex
+        std::string lastUpdateCountStr = CgiDataUtilities::postData(cgi,"lcount");
         std::string lastUpdateIndexStr = CgiDataUtilities::postData(cgi,"lindex");
 
-        clock_t lastUpdateClock;
-        sscanf(lastUpdateClockStr.c_str(),"%ld",&lastUpdateClock);
+        if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
+        {
+    		__MOUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
+    				", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
+    		xmldoc.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
+    		goto CLEANUP;
+        }
+
+        clock_t lastUpdateCount;
+        sscanf(lastUpdateCountStr.c_str(),"%ld",&lastUpdateCount);
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
 
 
-		__MOUT__ << "lastUpdateClock=" << lastUpdateClock <<
-				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
+//		__MOUT__ << "lastUpdateCount=" << lastUpdateCount <<
+//				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 
-		insertMessageRefresh(&xmldoc,lastUpdateClock,lastUpdateIndex);
+		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
 	}
 
 
@@ -177,7 +187,7 @@ throw (xgi::exception::Exception)
 	CLEANUP:
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*)out,true);
+	xmldoc.outputXmlDocument((std::ostringstream*)out, true, true); //allow whitespace
 }
 
 
@@ -185,50 +195,59 @@ throw (xgi::exception::Exception)
 //ConsoleSupervisor::insertMessageRefresh()
 //	if lastUpdateClock is current, return nothing
 //	else return new messages
-//	(note: lastUpdateClock==0 first time and returns nothing but lastUpdateClock)
+//	(note: lastUpdateIndex==(unsigned int)-1 first time and returns nothing but lastUpdateClock)
+//
+//	format of xml:
+//
+//	<last_update_count/>
+//	<last_update_index/>
+//	<messages>
+//		<message_FIELDNAME*/>
+			//"Level"
+			//"Label"
+			//"Source"
+			//"Msg"
+			//"Time"
+			//"Count"
+//	</messages>
 //
 //	NOTE: Uses std::mutex to avoid conflict with writing thread. (this is the reading thread)
 void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
-		const clock_t lastUpdateClock, const unsigned int lastUpdateIndex)
+		const time_t lastUpdateCount, const unsigned int lastUpdateIndex)
 {
-	__MOUT__ << std::endl;
+	//__MOUT__ << std::endl;
 
 	//validate lastUpdateIndex
-	if(lastUpdateIndex > messages_.size())
+	if(lastUpdateIndex > messages_.size() &&
+			lastUpdateIndex != (unsigned int)-1)
 	{
-		std::stringstream ss;
-		ss << "Invalid lastUpdateIndex: " << lastUpdateIndex <<
+		__SS__ << "Invalid lastUpdateIndex: " << lastUpdateIndex <<
 				" messagesArray size = " << messages_.size() << std::endl;
-		__MOUT__ << ss << std::endl;
 		throw std::runtime_error(ss.str());
 	}
 
 	//lockout the messages array for the remainder of the scope
 	//this guarantees the reading thread can safely access the messages
-	std::lock_guard<std::mutex> lock(messagesMutex_);
+	std::lock_guard<std::mutex> lock(messageMutex_);
 
+	//newest available read pointer is defined as always one behind writePointer_
 	refreshReadPointer_ = (writePointer_ + messages_.size() - 1) % messages_.size();
 
-	clock_t currentLastClock = messages_[refreshReadPointer_].clockStamp;
-	if(!currentLastClock) currentLastClock = 1; //then there are no messages yet
-
-	__MOUT__ << "Current Last Clock: " << currentLastClock << std::endl;
-
-	sprintf(refreshTempStr_,"%lu",currentLastClock);
-	xmldoc->addTextElementToData("last_update_clock",refreshTempStr_);
+	sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getCount());
+	xmldoc->addTextElementToData("last_update_count",refreshTempStr_);
 	sprintf(refreshTempStr_,"%u",refreshReadPointer_);
 	xmldoc->addTextElementToData("last_update_index",refreshTempStr_);
 
-	if(currentLastClock == 1 || //if no data, then no data
-			!lastUpdateClock) 	//if first time for user, then only send updates
+	if(!messages_[refreshReadPointer_].getTime() || //if no data, then no data
+			lastUpdateIndex == (unsigned int)-1) 	//if first time for user, then only send updates
 		return;
 
-	//else, send all messages since last_update_clock from refreshReadPointer_ on
-	if(messages_[lastUpdateIndex].clockStamp == lastUpdateClock)
+	//else, send all messages since last_update_count, from last_update_index(refreshReadPointer_) on
+	if(messages_[lastUpdateIndex].getCount() == lastUpdateCount)
 		refreshReadPointer_ = (lastUpdateIndex+1) % messages_.size();
-	else if(messages_[writePointer_].clockStamp) //check that writePointer_ has wrapped around at least once already
+	else if(messages_[writePointer_].getTime()) //check that writePointer_ message has been initialized, therefore has wrapped around at least once already
 	{
-		//so many messages that some were missed since last update (give as many messages as we can!)
+		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
 		xmldoc->addTextElementToData("message_overflow","1");
 		__MOUT__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = writePointer_+1;
@@ -236,9 +255,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;
 
-	__MOUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-	__MOUT__ << "lastUpdateClock: " << lastUpdateClock << std::endl;
-	__MOUT__ << "writePointer_: " << writePointer_ << std::endl;
+//	__MOUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
+//	__MOUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
+//	__MOUT__ << "writePointer_: " << writePointer_ << std::endl;
 
 	//return anything from refreshReadPointer_ to writePointer_
 	//all should have a clock greater than lastUpdateClock
@@ -250,14 +269,12 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 			refreshReadPointer_ != writePointer_;
 			refreshReadPointer_ = (refreshReadPointer_+1) % messages_.size())
 	{
-		if(messages_[refreshReadPointer_].getClock() < lastUpdateClock)
+		if(messages_[refreshReadPointer_].getCount() < lastUpdateCount)
 		{
-			std::stringstream ss;
-			ss << "Impossible? Message clock should be more recent than update clock! " <<
-					messages_[refreshReadPointer_].getClock() << " < " <<
-					lastUpdateClock << std::endl;
-			__MOUT__ << ss;
-			throw std::runtime_error(ss.str());
+			__MOUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
+					messages_[refreshReadPointer_].getCount() << " < " <<
+					lastUpdateCount << std::endl;
+			continue;
 		}
 
 		//for all fields, give value
@@ -268,7 +285,11 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 
 		//give timestamp also
 		sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getTime());
-		xmldoc->addTextElementToParent("message_TimeStamp",
+		xmldoc->addTextElementToParent("message_Time",
+				refreshTempStr_, refreshParent_);
+		//give clock also
+		sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getCount());
+		xmldoc->addTextElementToParent("message_Count",
 				refreshTempStr_, refreshParent_);
 	}
 }

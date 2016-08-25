@@ -35,7 +35,7 @@
 //		-DesktopContent.getXMLValue(req, name)
 //			... to get string value from XML server response. field name is needed.
 //
-//  ... or to get element by tag name 
+//  ... or to get array of elements by tag name 
 //		var els = req.responseXML.getElementsByTagName(name);
 //		for(var i=0;i<els.length;++i)
 //			Debug.log(els[i].getAttribute("value"));
@@ -67,7 +67,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
-		
+
 //"private" function list:
 //	DesktopContent.init()
 //	DesktopContent.getParameter(index)
@@ -175,7 +175,7 @@ DesktopContent.mouseMove = function(mouseEvent) {
 
 	DesktopContent._windowMouseX = parseInt(mouseEvent.clientX);
 	DesktopContent._windowMouseY = parseInt(mouseEvent.clientY);
-	
+
 	//add window frame position(absolute) + iframe position within window + mouse position within iframe
 	DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
 			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
@@ -215,8 +215,8 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 // reqIndex is used to give the returnHandler an index to route responses to.
 // Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 //
-DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
-		{
+DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
+		reqIndex, progressHandler, sequence) {
 
 	var errStr = "";
 	var req;
@@ -287,26 +287,35 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 				}
 				else if(!sequence)
 				{    
-					//handle cookie code mailbox
-					DesktopContent._lastCookieCode = DesktopContent.getXMLValue(req,'CookieCode');
-					if (typeof DesktopContent._lastCookieCode == 'undefined') 
-					{ //clear req, server failed
-						errStr = "Request Failed - Missing Cookie in Response.";
 
-						if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
-							DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
-
+					if(!req.responseXML) //invalid XML received 
+					{
+						errStr = "Request response is invalid XML!";
+						//return;
 					}
-					else 
-					{ //check if should update cc mailbox
+					else
+					{
+						//handle cookie code mailbox
+						DesktopContent._lastCookieCode = DesktopContent.getXMLValue(req,'CookieCode');
+						if (typeof DesktopContent._lastCookieCode == 'undefined') 
+						{ //clear req, server failed
+							errStr = "Request Failed - Missing Cookie in Response.";
 
-						//check twice to handle race conditions with other content code
-						if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
-						{
-							DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
-							DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
+							if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
+								DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 
-							setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+						}
+						else 
+						{ //check if should update cc mailbox
+
+							//check twice to handle race conditions with other content code
+							if(parseInt(DesktopContent._updateTimeMailbox.innerHTML) < DesktopContent._lastCookieTime) //then current code is newer
+							{
+								DesktopContent._updateTimeMailbox.innerHTML = DesktopContent._lastCookieTime;
+								DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
+
+								setTimeout(DesktopContent.checkCookieCodeRace, Math.random()*1000|0+500); //random wait (500-1500ms) before checking if race conditions occured
+							}
 						}
 					}
 				}
@@ -368,7 +377,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, reqInd
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	
-		}
+}
 
 //check cookie code race conditions
 DesktopContent.checkCookieCodeRace = function() {
@@ -406,15 +415,14 @@ DesktopContent.getXMLValue = function(req, name) {
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor) 
-{		
-	
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor) {		
+
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
 	//			" W: " + DesktopContent.getWindowWidth() + 
 	//			" H: " + DesktopContent.getWindowHeight());					
-	
-	
+
+
 	//remove pop up if already exist
 	if(DesktopContent._verifyPopUp) 
 		DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
@@ -423,10 +431,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	if(val != undefined)
 		prompt = prompt.replace(/REPLACE/g, val); 
 
-	
+
 	//create popup and add to body
-		
-	
+
+
 	//setup style first
 	if(!bgColor) bgColor = "rgb(255,241,189)";	//set default
 	if(!textColor) textColor = "black";	//set default
@@ -444,10 +452,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"}\n\n";
 	//..and anything in the text div
 	css += "#" + DesktopContent._verifyPopUpId + "-text *" +
-		"{" +
-		"color: " + textColor + ";" +
-		"}\n\n";
-	
+			"{" +
+			"color: " + textColor + ";" +
+			"}\n\n";
+
 	//add style element to HEAD tag
 	var style = document.createElement('style');
 
@@ -458,10 +466,10 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	}
 
 	document.getElementsByTagName('head')[0].appendChild(style);
-		
-	
+
+
 	var body = document.getElementsByTagName("BODY")[0];
-	
+
 	var el = document.createElement("div");
 	el.setAttribute("id", DesktopContent._verifyPopUpId);				
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
@@ -471,7 +479,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"<input type='submit' onmouseup='DesktopContent.clearPopUpVerification();' value='Cancel'>";
 	el.innerHTML = str;
 
-	 //onmouseup for "Yes" button
+	//onmouseup for "Yes" button
 	el.getElementsByTagName('input')[0].onmouseup = 
 			function(){DesktopContent.clearPopUpVerification(func);};
 
@@ -479,7 +487,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	DesktopContent._verifyPopUp = el;
 	el.style.left = "-1000px"; //set off page so actual dimensions can be determined, and then div relocated
 	body.appendChild(el);
-	
+
 
 	//determine position
 	var w = el.offsetWidth; 
@@ -488,21 +496,21 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var y = DesktopContent.getMouseY(); 
 
 	Debug.log("X: " + x + 
-				" Y: " + y + 
-				" W: " + w + 
-				" H: " + h);		
+			" Y: " + y + 
+			" W: " + w + 
+			" H: " + h);		
 	while(x+w > DesktopContent.getWindowWidth())
 		x -= w;		
 	while(y+h > DesktopContent.getWindowHeight())
 		y -= h;
-	
+
 	if(x <= 0) x = 10;
 	if(y <= 0) y = 10;
-	
+
 	Debug.log("X: " + x + 
-				" Y: " + y + 
-				" W: " + w + 
-				" H: " + h);		
+			" Y: " + y + 
+			" W: " + w + 
+			" H: " + h);		
 	//var 
 	el.style.left = x + "px";
 	el.style.top = y + "px";

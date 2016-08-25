@@ -74,6 +74,7 @@ Desktop.createDesktop = function(security) {
 	var _desktopElement;
     var _dashboard, _icons, _windowZmailbox, _mouseOverXmailbox, _mouseOverYmailbox;
     var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox;
+    var _windowColorPostbox;
     var _MAILBOX_TIMER_PERIOD = 500; //timer period for checking mailbox and system messages: 500 ms
     var _sysMsgId = 0; //running counter to identify system message pop-ups
 	var _SYS_MSG_SOUND_PATH = "/WebPath/sounds/fx-System-Message.wav"; // "http://www.soundjay.com/button/button-2.wav"; //must be .wav for firefox incompatibility	
