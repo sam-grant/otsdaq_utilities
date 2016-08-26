@@ -134,8 +134,7 @@ throw (xgi::exception::Exception)
 	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
 	//Else, error message is returned in cookieCode
 	uint8_t userPermissions;
-	std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
-			CgiDataUtilities::postData(cgi,"CookieCode");
+	std::string cookieCode = CgiDataUtilities::postData(cgi,"CookieCode");
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
 			cookieCode, &userPermissions, "0", false)) //dont refresh cookie
 	{

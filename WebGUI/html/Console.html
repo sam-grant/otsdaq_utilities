@@ -46,10 +46,6 @@
 				font-weight: 400;	
 			}
 			
-			.chatEmoticon {
-				height: 25px;
-				margin: -5px 0 -7px 0;
-			}
 			
 			#compactViewText {
 				float: left;
@@ -209,13 +205,11 @@
 			//functions:		
 				//redrawChatWindow()
 				//handleKeyInput(e)
-				//getActiveUsers()
-				//toggleUsersPane()
-				//updateChatUsers()
+				//toggleSidePane()
+				//updateSidePanel()
 				//getColorForIndex(i)
 				//handleUserScroll(e)
 				//handleUserInputScroll(e)
-				//handleActiveUsers(req)
 				//pageUser(u)
 		
 		
@@ -228,6 +222,7 @@
 				//convertForClient(str)
 				//toggleCompactView()
 				//toggleColorScheme()
+				//toggleFilterControls()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl;
@@ -250,12 +245,9 @@
 			
 			var _chatUsersTitle = "<div class='userTitle'>Chatting:</div>";
 			var _activeUsersTitle = "<div class='userTitle'>Logged In:</div>";
-			var _getActiveUsersStr = "<a class='consoleLink' href='Javascript:getActiveUsers();' " +
-				"title='Refresh list of currently active ots users'>" + 
-				"&#187;Click to Refresh List&#171;</a><br>";
 			var _activeUsersStr = "";
 
-			var _displayUsers = true;
+			var _displaySidePane = true;
 			var _scrollWithNewChats = true; //true if following new chats, false if user has scrolled up into history
 			var _userMouseInput = false; //use flag to determine if scrolling is due to user mouse input
 			
@@ -268,13 +260,13 @@
 			var _consoleMessageFields = [
 									"Level",
 									"Label",
-									"Source",
+									//"Source", //not useful (innacurate)
 									"Msg",
 									"Time",
 									//"Count" //not needed
 								  ];
-			var _MESSAGE_FIELD_LEVEL = 0, _MESSAGE_FIELD_LABEL = 1, _MESSAGE_FIELD_SOURCE = 2,
-					_MESSAGE_FIELD_MSG = 3, _MESSAGE_FIELD_TIME = 4;
+			var _MESSAGE_FIELD_LEVEL = 0, _MESSAGE_FIELD_LABEL = 1, //_MESSAGE_FIELD_SOURCE = 2,
+					_MESSAGE_FIELD_MSG = 2, _MESSAGE_FIELD_TIME = 3;
 
 			var _consoleMessageArray; 			
 			var _compactViewCheckbox;
@@ -286,6 +278,10 @@
 								 ["#cccccc","#333333"],								 
 								 ["transparent","#4D2600"]
 								];
+			var _observedLabels = {}; //accumulate labels and their counts
+			var _observedLevels = {}; //accumulate levels and their counts
+					
+			var _showFilterControls = false;
 				
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -322,8 +318,8 @@
 				_historyEl.onmousemove = handleMouseMoveScroll;
 				
 				redrawChatWindow(); //setup window divs
-
-			    getActiveUsers();
+				updateSidePanel();
+				
 			    getConsoleUpdates(); //get initial update			    
 			    	
 			    _compactViewCheckbox.disabled = false; //enable compact view checkbox selection
@@ -380,7 +376,7 @@
 			    var w = window.innerWidth;
 			    var h = window.innerHeight;
 			    			     
-			    if(_displayUsers) 
+			    if(_displaySidePane) 
 			    {
 			    	_usersContainerEl.style.display = "block";
 			    	_usersContainerEl.style.left = w - _MARGIN - _USERS_WIDTH  + "px";
@@ -448,11 +444,11 @@
 			    
 			 }
 			
-			//toggleUsersPane ~
+			//toggleSidePane ~
 			// 	send chat to server
-			function toggleUsersPane() {							
-				_displayUsers = !_displayUsers;
-			    Debug.log("Chat toggleUsersPane now is " + _displayUsers);	
+			function toggleSidePane() {							
+				_displaySidePane = !_displaySidePane;
+			    Debug.log("Chat toggleSidePane now is " + _displaySidePane);	
 			    redrawChatWindow();
 			}
 			
@@ -464,30 +460,7 @@
 				DesktopContent.XMLHttpRequest("Console?RequestType=GetConsoleMsgs", 
 										"lcount="+_lastUpdateCount+"&lindex="+_lastUpdateIndex,
 										handleRefreshConsole);
-			}
-
-			//getActiveUsers ~
-			// 	get active users from server
-			function getActiveUsers() {	
-				//DesktopContent.XMLHttpRequest("Chat?RequestType=RefreshUsers","",handleActiveUsers);
-			}
-			
-			//handleActiveUsers ~
-			// 	handle server response
-			function handleActiveUsers(req) {
-				if(!req) return;
-				Debug.log("Chat handleActiveUsers");
-				
-				var tmp = DesktopContent.getXMLValue(req,"active_users");
-			    if(!tmp) return; //did not find return string			    
-			    var uarr = tmp.split(",");
-				
-				_activeUsersStr = "";
-				for(var i=0;i<uarr.length;++i)	
-					_activeUsersStr += "<a class='activeUser' href='Javascript:pageUser(\"" + uarr[i] + "\");' title='Click here to page " + 
-						uarr[i] + " to chat'>" + uarr[i] + "</a><br>";
-				updateChatUsers(); //display			    
-			}
+			}			
 			
 			//handleRefreshConsole ~
 			// 	handle server response
@@ -535,6 +508,7 @@
 					}
 					
 					updateConsoleHistory();	
+					updateSidePanel(); //must be called after console history update
 			    }
 			    
 			    if(_consoleUpdateTimer)
@@ -543,23 +517,37 @@
 			}
 
 
-			//updateChatUsers ~
+			//updateSidePanel ~
 			// 	update chat users from _chatUsersArray
-			function updateChatUsers() {
+			function updateSidePanel() {
 				Debug.log("FIX ME -- should not be called",Debug.MED_PRIORITY);
-//				if(!_chatUsersArray || !_chatUsersArray[0]) return;
-//				
-//				var str = ""; //chat users string
-//				for(var i=0;i<_chatUsersArray[0].length;++i) //assume all fields' arrays are same length
-//				{
-//					str += "<div class='consoleEntry' style='color:" + getColorForIndex(i) + "'>" +
-//						"<b>" + _chatUsersArray[0][i].getAttribute('value') + "</b></div>";					
-//				}
-//								
-//				_usersEl.innerHTML = _chatUsersTitle + str + "<br><hr width='80%'>" + _activeUsersTitle + _getActiveUsersStr + _activeUsersStr;
-//				
-//				//update input text color
-//				_inputEl.style.color = getColorForUser(_displayName);
+
+				//				for(var i in _observedLabels)					
+				//					Debug.log(i + ": " + _observedLabels[i]);	
+				
+				//TODO -- take this over to show counts and filter choices
+				
+				
+				var str = "";
+				
+				str += "<a id='filterControlsLink' class='consoleLink' " +
+						"href='Javascript:toggleFilterControls();' " + 
+						"title='Toggle Filter Controls' >Filter</a>";
+				str += "<br>";
+				str += "<div id='LevelsFilterSelect' style='display:none'></div>";
+				str += "<div id='LablesFilterSelect' style='display:none'></div>";
+				str += "<br>";
+				
+				str += "<u>Severity: counts</u><br>";
+				for(var i in _observedLevels)					
+					str += i + ": " + _observedLevels[i] + "<br>";
+
+				str += "<br>";
+				str += "<u>Labels: counts</u><br>";
+				for(var i in _observedLabels)					
+					str += i + ": " + _observedLabels[i] + "<br>";
+				
+				_usersEl.innerHTML = str;				
 			}
 			
 			//updateConsoleHistory ~
@@ -571,26 +559,31 @@
 			    
 				var newChatFound = false;
 				var str = "";
-				for(var i=0;i<_consoleMessageArray[0].length;++i)  //assume all fields' arrays are same length
-				{				
-//					if(_compactViewCheckbox.checked)
-//						str += "<div class='consoleEntry' style='color:" +
-//							getColorForUser() + "'>" +
-//							convertForClient(_consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value')) + 
-//							"</div>"; //important to only have one /div> per entry for truncate					
-//					else
-						str += "<div class='consoleEntry' style='color:" + 
-							getColorForUser() + "'>" +
-							"<span class='elaboratedEntry'>" +
-							_consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value') + ":" +
-							"<b>(" + formatTime(_consoleMessageArray[_MESSAGE_FIELD_TIME][i].getAttribute('value')) + ")" +
-							//_consoleMessageArray[_MESSAGE_FIELD_SOURCE][i].getAttribute('value') + 
-							_consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value') + ":</b> " +
-							"</span>" +
-							convertForClient(_consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value')) + 
-							"</div>"; //important to only have one /div> per entry for truncate
+				var tmpLabel, tmpLevel;
+				for(var i=0;i<_consoleMessageArray[0].length;++i)  //assume all fields' arrays are same length (checked by req handler)
+				{		
+					tmpLabel = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
+					tmpLevel = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
+					//important to only have one /div> per entry for truncate
+					str += "<div class='consoleEntry' style='color:" + 
+						getColorForUser() + "'>" +
+						"<span class='elaboratedEntry'><b>" +
+						tmpLevel + " " +
+						"(" + formatTime(_consoleMessageArray[_MESSAGE_FIELD_TIME][i].getAttribute('value')) + ") ";					 
+					str +=tmpLabel + ":</b> " +
+						"</span>" +
+						convertForClient(_consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value')) + 
+						"</div>"; //important to only have one /div> per entry for truncate
 						
+					//aggragate stats
+					_observedLabels[tmpLabel] = 
+						(_observedLabels[tmpLabel] | 0) + 1; //this works when undefined also
+					_observedLevels[tmpLevel] =
+						(_observedLevels[tmpLevel] | 0) + 1; //this works when undefined also
 				}
+
+				//				for(var i in _observedLabels)					
+				//					Debug.log(i + ": " + _observedLabels[i]);	
 				
 				str = _consoleEl.innerHTML + str;	
 				var lendiff = str.length - _CONSOLE_HISTORY_MAX_LENGTH;	
@@ -616,12 +609,26 @@
 			function getColorForUser() {
 				return "auto";		
 			}
-			
+
+			//toggleColorScheme ~
+			//	cycle through an array of [background,foreground] schemes
 			function toggleColorScheme() {
 				_chosenColorScheme = (_chosenColorScheme + 1) % _colorSchemes.length;
 
 			    _historyContainerEl.style.backgroundColor = _colorSchemes[_chosenColorScheme][0];
 			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];	
+			}
+			
+			//toggleFilterControls ~
+			//	show/hide filter selection
+			function toggleFilterControls() {
+				//TODO 
+				_showFilterControls = !_showFilterControls; //toggle
+				
+				var el = document.getElementById("filterControlsLink");
+				el.innerHTML = _showFilterControls?"Hide Filter":"Filter";
+				
+				//use multi select box TODO
 			}
 
 			//getColorForIndex ~
@@ -678,7 +685,7 @@
 		</div>
 		
 		<div id='userLink'>
-			<a href='Javascript:toggleUsersPane();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
+			<a href='Javascript:toggleSidePane();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
 		</div>
 						
 		<div id='consoleHistoryContainer'>
