@@ -73,7 +73,7 @@ private:
     		//NOTE: must be in order of appearance in buffer
     		fields[LEVEL].set	("Level",4,-1);
     		fields[LABEL].set	("Label",5,-1);
-    		fields[SOURCE].set	("Source",10,-1);
+    		fields[SOURCE].set	("Source",10,-1); //6 or 10?
     		fields[MSG].set		("Msg",11,-1);
     	}
 

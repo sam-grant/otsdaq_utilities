@@ -47,6 +47,7 @@
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getMouseX()
 //		DesktopContent.getMouseY()
+//		DesktopContent.getDefaultWindowColor()
 //
 //=====================================================================================
 
@@ -67,6 +68,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
+//	DesktopContent.getDefaultWindowColor()
 
 //"private" function list:
 //	DesktopContent.init()
@@ -77,6 +79,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.mouseMove(mouseEvent)
 //	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
+//	DesktopContent.parseColor(colorStr)
 
 
 DesktopContent._isFocused = false;
@@ -102,6 +105,9 @@ DesktopContent._lastCookieTime = 0;
 DesktopContent._verifyPopUp = 0;
 DesktopContent._verifyPopUpId = "DesktopContent-verifyPopUp";
 
+DesktopContent._windowColorPostbox = 0;
+DesktopContent._dashboardColorPostbox = 0;
+
 
 //=====================================================================================
 //initialize content's place in the world
@@ -126,6 +132,10 @@ DesktopContent.init = function() {
 	DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
 	DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
 
+	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
+	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
+	
+	
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
 	window.onscroll = DesktopContent.handleScroll;
@@ -525,7 +535,25 @@ DesktopContent.clearPopUpVerification = function(func) {
 	if(func) func();
 }
 
+//=====================================================================================
+//http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
+// except the solution is broken.. unless you add element to page
+DesktopContent.parseColor = function(colorStr) { 
+    //used to ignore the alpha in the color when returning to user
+	var div = document.createElement('div'), m;
+    div.style.color = colorStr;
+    div.style.display = "none";
+    document.body.appendChild(div);
+    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
+    document.body.removeChild(div);
+    if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
+    else throw new Error("Color "+colorStr+" could not be parsed.");
+}
+
+
 DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
-DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0;} //force to int
-DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0;} //force to int
+DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
+DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
+DesktopContent.getDefaultWindowColor = function() { return DesktopContent.parseColor(DesktopContent._windowColorPostbox.innerHTML); }
+DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._windowColorPostbox.innerHTML); }

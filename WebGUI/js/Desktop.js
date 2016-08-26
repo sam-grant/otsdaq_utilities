@@ -475,6 +475,7 @@ Desktop.createDesktop = function(security) {
 		//	set background color for all windows
 	this.setDefaultWindowColor = function(color) {
 		this.defaultWindowFrameColor = color;
+	    _windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //set to color string
 		
 		for(var i=0;i<_windows.length;++i)
 			_windows[i].windiv.style.backgroundColor = this.defaultWindowFrameColor;
@@ -604,6 +605,14 @@ Desktop.createDesktop = function(security) {
     _settingsLayoutMailbox.style.display = "none";
     _settingsLayoutMailbox.innerHTML = ""; //init to empty
     _desktopElement.appendChild(_settingsLayoutMailbox);
+    
+    //create postbox for chosen color settings
+    _windowColorPostbox = document.createElement("div");
+    _windowColorPostbox.setAttribute("id", "DesktopContent-windowColorPostbox");
+    _windowColorPostbox.style.display = "none";
+    _windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //init to color string
+    _desktopElement.appendChild(_windowColorPostbox);
+    
     
     //add dashboard
 	this.dashboard = _dashboard = Desktop.createDashboard(_defaultDashboardZindex);

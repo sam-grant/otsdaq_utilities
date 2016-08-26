@@ -170,11 +170,11 @@ else {
                 _winfrm.style.height = _h + "px";
                 _winfrm.style.left ="-1px";
                 _winfrm.style.top = "-1px";
-//                _winfrmHolder.style.position = "absolute";
-//                _winfrmHolder.style.width = (_w)+"px";  //extra 2 for border pixels 
+                _winfrmHolder.style.position = "absolute";
+                _winfrmHolder.style.width = (_w)+"px";  //extra 2 for border pixels 
                 _winfrmHolder.style.height = (_h)+"px"; 	//extra 2 for border pixels
-//                _winfrmHolder.style.left ="-1px";
-//                _winfrmHolder.style.top = "-1px";	
+                _winfrmHolder.style.left =(-_defaultFrameBorder-2) + "px";
+                _winfrmHolder.style.top = "-1px";	
                 			
 
                 _w = w < _defaultWindowMinWidth?_defaultWindowMinWidth:w;
@@ -182,27 +182,26 @@ else {
                 _x = x;
                 _y = y;
                 
-                //hide window header
+                //hide window header (in case user page is transparent)
                 var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
                 for(var h=0;hdrs && h<hdrs.length;++h)
                 	hdrs[h].style.display = "none";
                 hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
                 for(var h=0;hdrs && h<hdrs.length;++h)
 					hdrs[h].style.display = "none";
-                _winfrmHolder.style.border = "0px";
             }
             else {
                 _winfrm.style.zIndex = _z;
                 _winfrm.style.position = "static";
+                _winfrmHolder.style.position = "static";
 
-                //show window header
+                //show window header (for case user page is transparent)
                 var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
                 for(var h=0;hdrs && h<hdrs.length;++h)
                 	hdrs[h].style.display = "block";
                 hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
                 for(var h=0;hdrs && h<hdrs.length;++h)
 					hdrs[h].style.display = "block";
-                _winfrmHolder.style.border = "1px";
             }
 			
             Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
