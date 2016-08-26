@@ -24,3 +24,9 @@
        url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.ttf') format('truetype'),
        url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.svg#DonegalOne') format('svg');
 }
+@font-face {
+  font-family: 'Inconsolata';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/WebPath/fonts/inconsolata/Inconsolata-Regular.ttf') format('truetype');
+}

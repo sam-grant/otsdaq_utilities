@@ -251,6 +251,8 @@ int main(int argc, char** argv)
 			//printf("hw: sent %d bytes on\n", numbytes);
 
 	    }
+	    else
+	    	sleep(1); //one second
     }
 
     close(sockfd);

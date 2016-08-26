@@ -71,7 +71,7 @@ else {
         var _layoutDropDownDisplayed = false;
 		var _layoutMenuItems = ["System Preset-1","System Preset-2","---","User Preset-1","User Preset-2","User Preset-3"];
         
-        var _dashboardElement;
+        var _dashboardElement, _dashboardColorPostbox;
 		//------------------------------------------------------------------
 		//create public members variables ----------------------
 		//------------------------------------------------------------------
@@ -309,6 +309,8 @@ else {
         
         this.setDefaultDashboardColor = function(color) {
         	_defaultDashboardColor = color;
+            _dashboardColorPostbox.innerHTML = _defaultDashboardColor; //set to color string
+            
         	_topBar.style.backgroundColor = _defaultDashboardColor;
         	_windowDashboard.style.backgroundColor = _defaultDashboardColor;
         }
@@ -454,6 +456,14 @@ else {
         _toggleWindowDashboard();
         this.updateWindows();
         this.dashboardElement.appendChild(_windowDashboard);
+        
+
+        _dashboardColorPostbox = document.createElement("div");
+        _dashboardColorPostbox.setAttribute("id", "DesktopContent-dashboardColorPostbox");
+        _dashboardColorPostbox.style.display = "none";
+        _dashboardColorPostbox.innerHTML = _defaultDashboardColor; //init to color string
+        this.dashboardElement.appendChild(_dashboardColorPostbox);
+        
         
 	   		//add mouse handlers
 	   	_windowDashboard.onmousemove = Desktop.handleWindowMouseMove;
