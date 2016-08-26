@@ -38,10 +38,10 @@
 			{
 				console.log("init()");
 				console.log(window.frameElement.id)
-				window.parent.setupWidget(window.frameElement.id);
+				window.parent.setupWidget(window.frameElement.id, getParameters());
 			}
 			
-			function newWidget(widget) 
+			function newWidget(widget, parameters) 
 			{			
 				var table = document.createElement('table');
 				table.id = "display-table";
@@ -97,7 +97,20 @@
 //					console.log(rows);
 
 				}
-			}	
+			}
+			
+			function getParameters()
+			{
+				paramters = {
+							"param1": "",
+							"param2": "",
+							"param3": "",
+							"param4": "",
+							"param5": "",
+							"param6": "",
+							"param7": ""};
+				return paramters;
+			}
 
 			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 			{

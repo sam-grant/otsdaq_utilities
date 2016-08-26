@@ -139,7 +139,7 @@
 			
 			//init called once body has loaded
 			function initFileTree() {			
-				Debug.log("*****************************************init() was called");
+				Debug.log("initFileTree() was called");
 
 //				DesktopContent.XMLHttpRequest("Default?RequestType=getList","",handlerFunction);
 
@@ -166,10 +166,10 @@
 			}
 			
 			function isFile(path)
-			{
-				if(path.includes("/"))
+			{			
+				if(path.indexOf("/") != -1)
 					return false;
-				else if(path.includes("."))
+				else if(path.indexOf(".") != -1)
 					return true;
 				else
 					return false;

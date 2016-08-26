@@ -4,7 +4,8 @@
 		<title>Epics CA Monitor</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(200,200,200);
+				background-color: rgba(0,0,0,0.7);
+				overflow:hidden;
 			}
 			
 			#clearDiv {
@@ -13,6 +14,10 @@
 			
 			a {
 				color: blue;
+			}
+			
+			h2 {
+				margin: 0px;
 			}
 			
 			
@@ -25,11 +30,77 @@
 			}
 
 			#editBlock {
-				background-color: rgb(200,0,0);
+				background-color: rgb(0,50,0);
 			}
+			
+			
+			
+			# searchButton {
+				!position:absolute;
+			}
+			
+			
 			
 			.mainBlock {
 				position:absolute;
+				overflow: hidden;
+			}
+			
+		
+			
+			.tile{
+				position: absolute;
+				background-color = red;
+				border: thin dotted black;
+			}
+			
+			.rotate270 {
+			    -webkit-transform: rotate(270deg);
+			    -moz-transform: rotate(90deg);
+			    -o-transform: rotate(90deg);
+			    -ms-transform: rotate(90deg);
+			    transform: rotate(90deg);
+			}
+			
+			#widgetFilter {
+				color: #d3d3d3;
+				padding: 0px;
+				font-family: sans-serif;
+				background-color: transparent;
+				!position:absolute;
+				appearance: none;
+				-webkit-appearance: none;
+				-moz-appearance: none;
+
+			}
+			
+			input[type="text"] {
+				display: block;
+				margin: 0;
+				width: 100%;
+				font-family: sans-serif;
+				appearance: none;
+				-webkit-appearance: none;
+				-moz-appearance: none;
+				box-shadow: none;
+				border-radius: 0px;
+				background-color: transparent;
+				color: #d3d3d3;
+			}
+			
+			input[type="text"]:focus {
+			  outline: none;
+			}
+			
+			#widgetSearch {
+				padding: 0px;
+				border: none;
+				border-bottom: solid 2px #c9c9c9;
+				transition: border 0.3s;
+			}
+			#widgetSearch:focus,
+			#widgetSearch.focus {
+				border-bottom: solid 2px #969696;
 			}
 									
 		</style>
@@ -38,7 +109,8 @@
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
+		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+
 		
 		<script>		
 			
@@ -57,7 +129,123 @@
 				Debug.log("*****************************************init() was called");
 
 //				DesktopContent.XMLHttpRequest("Default?RequestType=getList","",handlerFunction);
+				var tilesDiv = document.getElementById("tilesDiv");
+				tilesDiv.style.top = (window.innerHeight * 0.1) + "px";
+				tilesDiv.style.left = "0px";
+				tilesDiv.style.height = (window.innerHeight * 0.90) + "px";
+				tilesDiv.style.width = window.innerWidth + "px";
+			
+				var counter = Object.keys(widgetLibrary.typeToSrc).length;
+				var columns = Math.round(Math.sqrt(counter/2));
+				
+				if(columns < 4)
+				{
+					columns = 4;
+				}
+				else if(columns > 6)
+				{
+					columns = 6;
+				}
+				
+				var dimensions = ((parseFloat(tilesDiv.style.width) - (parseFloat(tilesDiv.style.width) * 0.1) - ((columns - 1) * 5)) / columns);	
+				var rows = Math.ceil(counter / columns);
+				
+				if((dimensions * rows) > (tilesDiv.style.height - (tilesDiv.style.height * 0.1) - (5 * (rows - 1))))
+				{
+					while((dimensions * rows) > (tilesDiv.style.height - (tilesDiv.style.height * 0.1) - (5 * (rows - 1))))
+					{
+						--rows;
+					}
+				}
 
+				if((dimensions * columns) > (tilesDiv.style.width - (tilesDiv.style.width * 0.1) - (5 * (columns - 1))))
+				{
+					while((dimensions * columns) > (tilesDiv.style.width - (tilesDiv.style.width * 0.1) - (5 * (columns - 1))))
+					{
+						--columns;
+					}
+				}
+				
+		
+				var buttonsDiv = document.getElementById("buttonsDiv");
+				buttonsDiv.style.width = window.innerWidth + "px";
+				buttonsDiv.style.height = (window.innerHeight * 0.1) + "px";
+				buttonsDiv.top  = "0px";
+				buttonsDiv.left = "0px";
+				
+				var searchFields = document.getElementById("searchFields");
+				searchFields.style.width  = ((dimensions + 5) * (columns - 1)) + "px";
+				searchFields.style.height =  dimensions + "px";
+				searchFields.style.top  = "0px";
+				searchFields.style.left = "0px";
+				
+				var searchButtonDiv = document.getElementById("searchButtonDiv");
+				searchButtonDiv.style.width  =  dimensions + "px";
+				searchButtonDiv.style.height =  dimensions + "px";
+				searchButtonDiv.style.top  = "0px";
+				searchButtonDiv.style.left = (window.innerWidth * 0.05 + ((dimensions + 5) * (columns - 1)) - 10) + "px";
+				searchButtonDiv.style.position = "absolute";
+				
+				var searchButton = document.getElementById("searchButton");
+				searchButton.style.width  = "100%";
+				searchButton.style.height = "100%";
+				
+				var img = document.createElement("img");
+				img.src = "/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-magnifyingGlass.png";
+				img.style.height = "50%";
+				img.style.width = "auto";
+				img.style.top = "0px";
+				img.style.left = "0px";
+				searchButton.appendChild(img);
+				
+				document.getElementById("widgetFilter").style.width = (window.innerWidth * 0.7) + "px";
+				
+				document.getElementById("widgetSearch").style.width = "90%";
+				document.getElementById("widgetFilter").style.width = "90%";
+
+				var tileNumber = -1;		
+				var positionX = window.innerWidth * 0.05;
+				var positionY = window.innerWidth * 0.05;
+				
+				console.log("Dimensions: " + dimensions);
+				
+				for(var col = 0; col < columns; col++)
+				{
+					for(var cell = 0; cell < rows; cell++)
+					{
+						if((tileNumber +1) < counter)
+						{
+							var tile = document.createElement('div');
+							tile.id = "tiles-" + (++tileNumber);
+							tile.className = "tile";
+							//tile.innerHTML = "tiles-" + (tileNumber);
+	//						tile.style["background-color"] = "red";
+							tile.style.width = dimensions + "px";
+							tile.style.height = dimensions + "px";
+							tile.style.left = positionX + "px";
+							tile.style.top = positionY + "px";
+							tile.setAttribute("widgetID", tileNumber);
+							
+							var tileIMG = document.createElement("img");
+							
+							if(typeof parent.widgetLibrary.typeToImgSrc[tileNumber] !== 'undefined')
+								tileIMG.src = "widgets/" + parent.widgetLibrary.typeToImgSrc[tileNumber];
+							else
+								tileIMG.src = "widgets/default-icon.png";
+	
+							tileIMG.style.width = tile.style.width;
+							tileIMG.style.height = "100%";
+							tileIMG.onclick = setupForDrawSelectionRectangle(tileNumber); 
+							
+							tile.appendChild(tileIMG);
+							tilesDiv.appendChild(tile);				
+							positionX = positionX + dimensions + 5;
+						}
+					}
+					positionY = positionY + dimensions + 5;
+					positionX = window.innerWidth * 0.05;
+				}
+				
 
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
@@ -75,6 +263,11 @@
 				
 			}
 			
+			function setupForDrawSelectionRectangle(tileNumber)
+			{
+				return function(){parent.setupForDrawSelectionRectangle(tileNumber)};
+			}
+			
 			function addPV(pv)
 			{
 				//console.log("edit");
@@ -85,11 +278,17 @@
 			function redrawWindow(clicked, hover) {
 				//Debug.log("FileTree redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
 				
+				/*var buttonsDiv = document.getElementById("buttonsDiv");
+				buttonsDiv.style.width = parent.hiddenWidth_;
+				console.log(parent.hiddenWidth_);
+				buttonsDiv.style.height = window.innerHeight;
+				buttonsDiv.style.left = "0px";
+				buttonsDiv.style.top = "0px";
 				//console.log(window.parent.pvList_);
 				var ul = document.createElement("list");
 				var maxWidth = 0;
-				
-				window.parent.pvList_.forEach(function(pv){
+				*/
+				/*window.parent.pvList_.forEach(function(pv){
 					
 					//console.log(pv);
 					
@@ -122,7 +321,7 @@
 				{
 					document.getElementById("tilesDiv").style.width = document.getElementById("tilesDiv").style.width / 4;
 				}
-				
+				*/
 	
 			}
 			
@@ -134,6 +333,18 @@
 	<body onload='Javascript:initEdit();'>	
 			
 		<div class='mainBlock' id='buttonsDiv'>
+		<div id="searchFields" class="absolute">
+		<center><input id="widgetSearch" type="text" placeholder="Search" class="focus"></input></center>
+		<center><select id="widgetFilter" class="absolute">		
+			<option value="" selected></option>
+			<option value="">Label</option>
+			<option value="">Time</option>
+			<option value="">Temperature</option>	
+		</select></center></div>
+		<div id="searchButtonDiv" class="absolute">
+			<a href="" id="searchButton"></a>
+		</div>
+
 		</div>
 		<div class='mainBlock' id='tilesDiv'></div>
 				

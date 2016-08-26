@@ -320,9 +320,8 @@ void EpicsInterface::loadListOfPVs()
 
   for(auto pv : mapOfPVInfo_)
     {
-      subscribe(pv.first);
+      //subscribe(pv.first);
     }
-  std::cout << "*******************************************************************************************" << std::endl;
   std::cout << "Finished reading file and subscribing to pvs!" << std::endl;
   return; 
 }
