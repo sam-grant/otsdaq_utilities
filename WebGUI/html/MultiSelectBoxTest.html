@@ -1,9 +1,10 @@
 <html>
 <head>
 
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
-
 	<script src="../js/js_lib/MultiSelectBox.js"></script>
+
     <script>
 
 		//THIS IS AN EXAMPLE 
@@ -52,14 +53,23 @@
         {
             var splits = el.id.split('_');
             var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 1 Chosen element index:",i);
+            MultiSelectBox.dbg("box 1 Chosen element index:",i,
+            		" key:",el.getAttribute("key-value"),
+            		" type:",el.getAttribute("type-value"));
+            for(var s in MultiSelectBox.mySelects_[el.parentElement.id])
+                MultiSelectBox.dbg("box 1 selected: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
+            	
         }
         
         function box2SelectionHandler(el)
         {
             var splits = el.id.split('_');
             var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 2 Chosen element index:",i);
+            MultiSelectBox.dbg("box 2 Chosen element index:",i,
+            		" key:",el.getAttribute("key-value"),
+            		" type:",el.getAttribute("type-value"));
+            for(var s in MultiSelectBox.mySelects_[el.parentElement.id])
+                MultiSelectBox.dbg("box 1 selected: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
         }
     </script>
     

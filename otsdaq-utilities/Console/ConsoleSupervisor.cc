@@ -19,8 +19,8 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
-#define MF_POS_OF_MSG	11
-
+#define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA")) + "/ConsolePreferences/"
+#define USERS_PREFERENCES_FILETYPE 		"pref"
 
 #define __MF_SUBJECT__ "Console"
 #define __MF_HDR__		__COUT_HDR_FL__
@@ -40,6 +40,10 @@ writePointer_(0),
 messageCount_(0)
 {
 	INIT_MF("ConsoleSupervisor");
+
+	//attempt to make directory structure (just in case)
+	mkdir(((std::string)USER_CONSOLE_COLOR_PREF_PATH).c_str(), 0755);
+
 	xgi::bind (this, &ConsoleSupervisor::Default,                	"Default" );
 	xgi::bind (this, &ConsoleSupervisor::Console,              		"Console" );
 	init();
@@ -85,13 +89,6 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//if receive succeeds display message
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
-			//find position of message and save to p
-			//by jumping to the correct '|' marker
-			for(p=0,i=0;i<MF_POS_OF_MSG;++i)
-				p = buffer.find('|',p)+1;
-			//std::cout << "+" << buffer << std::endl;///&buffer[p] << std::endl;
-
-
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
@@ -100,6 +97,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			if(cs->writePointer_ == cs->messages_.size()) //handle wrap-around
 				cs->writePointer_ = 0;
 		}
+		else
+			sleep(1); //sleep one second, if timeout
 	}
 
 }
@@ -136,7 +135,7 @@ throw (xgi::exception::Exception)
 	uint8_t userPermissions;
 	std::string cookieCode = CgiDataUtilities::postData(cgi,"CookieCode");
 	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", false)) //dont refresh cookie
+			cookieCode, &userPermissions, "0", Command != "GetConsoleMsgs")) //dont refresh cookie
 	{
 		*out << cookieCode;
 		__MOUT_ERR__ << "Invalid Cookie Code" << std::endl;
@@ -180,6 +179,62 @@ throw (xgi::exception::Exception)
 
 		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
 	}
+	else if(Command == "SaveColorChoice")
+	{
+        std::string colorIndex = CgiDataUtilities::postData(cgi,"cindex");
+		__MOUT__ << "Command " << Command << std::endl;
+		__MOUT__ << "colorIndex: " << colorIndex << std::endl;
+
+
+		std::string user;
+		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
+				cookieCode,&user);
+		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		if(user == "") //should never happen?
+		{
+			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
+			goto CLEANUP;
+		}
+
+		__MOUT__ << "Save preferences: " << fn << std::endl;
+		FILE *fp = fopen(fn.c_str(),"w");
+		if(!fp)
+			throw std::runtime_error("Could not open file: " + fn);
+		fprintf(fp,"color_index %s",colorIndex.c_str());
+		fclose(fp);
+	}
+	else if(Command == "LoadColorChoice")
+	{
+		__MOUT__ << "Command " << Command << std::endl;
+
+		std::string user;
+		unsigned int colorIndex;
+		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
+				cookieCode,&user);
+		if(user == "") //should never happen?
+		{
+			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
+			goto CLEANUP;
+		}
+
+		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+
+		__MOUT__ << "Load preferences: " << fn << std::endl;
+
+		FILE *fp = fopen(fn.c_str(),"r");
+		if(!fp)
+			throw std::runtime_error("Could not open file: " + fn);
+		fscanf(fp,"%*s %u",&colorIndex);
+		fclose(fp);
+		__MOUT__ << "colorIndex: " << colorIndex << std::endl;
+
+		char tmpStr[20];
+		sprintf(tmpStr,"%d",colorIndex);
+		xmldoc.addTextElementToData("color_index",tmpStr);
+	}
+
 
 
 
@@ -194,7 +249,7 @@ throw (xgi::exception::Exception)
 //ConsoleSupervisor::insertMessageRefresh()
 //	if lastUpdateClock is current, return nothing
 //	else return new messages
-//	(note: lastUpdateIndex==(unsigned int)-1 first time and returns nothing but lastUpdateClock)
+//	(note: lastUpdateIndex==(unsigned int)-1 first time and returns as much as possible// nothing but lastUpdateClock)
 //
 //	format of xml:
 //
@@ -237,19 +292,19 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	sprintf(refreshTempStr_,"%u",refreshReadPointer_);
 	xmldoc->addTextElementToData("last_update_index",refreshTempStr_);
 
-	if(!messages_[refreshReadPointer_].getTime() || //if no data, then no data
-			lastUpdateIndex == (unsigned int)-1) 	//if first time for user, then only send updates
+	if(!messages_[refreshReadPointer_].getTime()) //if no data, then no data
 		return;
 
 	//else, send all messages since last_update_count, from last_update_index(refreshReadPointer_) on
-	if(messages_[lastUpdateIndex].getCount() == lastUpdateCount)
+	if(lastUpdateIndex != (unsigned int)-1 &&  //if not first time, and index-count are valid then start at next message
+			messages_[lastUpdateIndex].getCount() == lastUpdateCount)
 		refreshReadPointer_ = (lastUpdateIndex+1) % messages_.size();
 	else if(messages_[writePointer_].getTime()) //check that writePointer_ message has been initialized, therefore has wrapped around at least once already
 	{
 		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
 		xmldoc->addTextElementToData("message_overflow","1");
 		__MOUT__ << "Overflow was detected!" << std::endl;
-		refreshReadPointer_ = writePointer_+1;
+		refreshReadPointer_ = (writePointer_+1) % messages_.size();
 	}
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;

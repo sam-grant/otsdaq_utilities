@@ -47,16 +47,29 @@
 			}
 			
 			
-			#compactViewText {
-				float: left;
-				margin-top: 5px;
+			.controlsCheckbox {
+				float : left;
+				margin-left: 0px;
+				margin-top: -4px;
+				margin-bottom: -10px;
 			}
 			
-			#compactView {
+			.controlsCheckbox div { 
 				float: left;
-				margin-left: 40px;
-				margin-top: 8px;
+				margin: -4px 6px 0 2px;
+				
 			}
+			
+			.controlsCheckbox input {
+				float: left;
+				margin: 0 0 0 0;
+			}
+			
+			#noWrapCheckboxText { /*make sure this checkbox doesnt wrap (haha) to new line*/
+				margin-right: -10px;
+				margin-bottom: 18px; /*push down 2nd row*/
+			}
+			
 
 			/* ***************** CHAT HISTORY ******************************************/
 			
@@ -199,30 +212,39 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		
 		
+
+		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+		<script src="../js/js_lib/MultiSelectBox.js"></script>
+
 		<script>		
 			
 			
 			//functions:		
-				//redrawChatWindow()
-				//handleKeyInput(e)
-				//toggleSidePane()
-				//updateSidePanel()
-				//getColorForIndex(i)
-				//handleUserScroll(e)
-				//handleUserInputScroll(e)
-				//pageUser(u)
-		
-		
 				//init()	
+				//redrawConsoleWindow()
 				//getConsoleUpdates()
 				//handleRefreshConsole(req)
 				//updateConsoleHistory()
-				//getColorForUser()
+				//getColorForLevel()
 				//formatTime(time_t)
 				//convertForClient(str)
-				//toggleCompactView()
+				//toggleHideLineNumber(e)
+				//toggleNoWrap(e)
+				//toggleCompactView(e)
 				//toggleColorScheme()
+				//setupColorScheme(i)
+				//handleLoadColorChoice(req)
 				//toggleFilterControls()
+				//filterSelectionHandler(el)
+				//initSideBar()
+				//updateFilterBoxes()
+				//updateSideBarCounts()
+				//toggleSideBar()
+				//handleUserScroll(e)
+				//handleUserInputScroll(e)
+				//handleMouseMoveScroll(mouseEvent) 
+				//clearFilterControls(field)
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl;
@@ -237,7 +259,7 @@
 			var _displayName;
 			
 			var _consoleHistoryFields = ["chat_entry","chat_author","chat_time"];
-			var _CONSOLE_HISTORY_MAX_LENGTH = 10000;
+			var _CONSOLE_HISTORY_MAX_LENGTH = 100000;
 			//var _lastTypedChat = "", _lastSentChat = ""; //keep last chats to prevent repeats
 			
 			var _chatUsersArray; 
@@ -265,12 +287,16 @@
 									"Time",
 									//"Count" //not needed
 								  ];
-			var _MESSAGE_FIELD_LEVEL = 0, _MESSAGE_FIELD_LABEL = 1, //_MESSAGE_FIELD_SOURCE = 2,
-					_MESSAGE_FIELD_MSG = 2, _MESSAGE_FIELD_TIME = 3;
+			var _MESSAGE_FIELD_LEVEL = _consoleMessageFields.indexOf("Level"),
+					_MESSAGE_FIELD_LABEL = _consoleMessageFields.indexOf("Label"), 
+					//_MESSAGE_FIELD_SOURCE = 2,
+					_MESSAGE_FIELD_MSG = _consoleMessageFields.indexOf("Msg"), 
+					_MESSAGE_FIELD_TIME = _consoleMessageFields.indexOf("Time");
 
 			var _consoleMessageArray; 			
-			var _compactViewCheckbox;
-			var _compactStyleEl = 0;
+			var _compactViewCheckbox, _noWrapCheckbox, _hideLineNumbersCheckbox;
+			var _compactStyleEl = 0, _noWrapStyleEl = 0, _hideLineStyleEl = 0,
+					_filterStyleEl = {};
 			
 			var _chosenColorScheme = -1; //(start decremented by 1 from choice)
 			var _colorSchemes = [ //background, foreground	
@@ -278,8 +304,14 @@
 								 ["#cccccc","#333333"],								 
 								 ["transparent","#4D2600"]
 								];
-			var _observedLabels = {}; //accumulate labels and their counts
-			var _observedLevels = {}; //accumulate levels and their counts
+			
+			var _FIELDS_TO_OBSERVE = ["Level", "Label"];
+			var _observed = {}; 
+			for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
+			{
+				_observed[_FIELDS_TO_OBSERVE[f]] = {};
+				_filterStyleEl[_FIELDS_TO_OBSERVE[f]] = 0;
+			}
 					
 			var _showFilterControls = false;
 				
@@ -288,6 +320,9 @@
 			
 			//init called once body has loaded
 			function init() {
+				
+				
+				document.body.style.backgroundColor = DesktopContent.getDefaultWindowColor();
 				
 				_historyEl = document.getElementById('consoleHistory');
 				_historyContainerEl = document.getElementById('consoleHistoryContainer');
@@ -299,11 +334,11 @@
 				_controlsEl = document.getElementById('controlsArea');
 		    	_compactViewCheckbox = document.getElementById('compactView');
 		    	_compactViewCheckbox.onmouseup = toggleCompactView;
-				
-				
-				_displayName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML;
-				_displayName = _displayName.substr(_displayName.indexOf(",")+2);
-			    Debug.log("Chat Display Name: " + _displayName);
+		    	_noWrapCheckbox = document.getElementById('noWrapCheckbox');
+		    	_noWrapCheckbox.onmouseup = toggleNoWrap;
+		    	_hideLineNumbersCheckbox = document.getElementById('hideLineNumbersCheckbox');
+		    	_hideLineNumbersCheckbox.onmouseup = toggleHideLineNumber;
+							
 				
 			    //init chat history
 			    _consoleMessageArray = new Array();
@@ -311,22 +346,117 @@
 					_consoleMessageArray.push(new Array());
 				_consoleEl.innerHTML = "--- Console messages will be displayed here. Old messages will scroll up as new messages are received. ---";
 				
-				window.onresize = redrawChatWindow;
+				window.onresize = redrawConsoleWindow;
 				_historyEl.onmousewheel = handleUserInputScroll;
 				_historyEl.onmousedown = handleUserInputScroll;
 				_historyEl.onscroll = handleUserScroll;
 				_historyEl.onmousemove = handleMouseMoveScroll;
 				
-				redrawChatWindow(); //setup window divs
-				updateSidePanel();
+				redrawConsoleWindow(); //setup window divs
+				initSideBar();
 				
 			    getConsoleUpdates(); //get initial update			    
 			    	
-			    _compactViewCheckbox.disabled = false; //enable compact view checkbox selection
-			    _compactViewCheckbox.checked = false;
+			    _compactViewCheckbox.disabled = false; 	//enable compact view checkbox selection
+			    _compactViewCheckbox.checked = false; 	//inverse if default value
+			    _noWrapCheckbox.disabled = false; 		//enable checkbox selection
+			    _noWrapCheckbox.checked = false;		//inverse if default value
+			    _hideLineNumbersCheckbox.disabled = false; 		//enable checkbox selection
+			    _hideLineNumbersCheckbox.checked = true;		//inverse if default value
 			    
-			    toggleColorScheme(); //call to setup colorScheme first time	
-			    toggleCompactView(); //call to setup compact view first time
+			    toggleCompactView(); 		//call to setup compact view first time
+			    toggleNoWrap(); 			//call to setup no wrap first time
+			    toggleHideLineNumber(); 	//call to setup hide line numbers first time
+			    toggleFilterControls();		//call to initially setup
+			    
+			    //call to setup colorScheme first time
+				DesktopContent.XMLHttpRequest("Console?RequestType=LoadColorChoice", "",
+						handleLoadColorChoice);
+			}
+
+			//toggleNoWrap ~
+			// 	toggle no wrap on/off. Use e to determine if function call came from checkbox or link	
+			//	Note: when from checkbox, event gives stale value.
+			function toggleNoWrap(e) {	
+				
+				if(_noWrapCheckbox.disabled) return; //do nothing if disabled
+
+				if(!e) _noWrapCheckbox.checked = !_noWrapCheckbox.checked; //do action if from link
+			
+				//	Note: when from checkbox, event gives stale value.
+				var chk = e?!_noWrapCheckbox.checked:_noWrapCheckbox.checked;						
+				Debug.log("Console _noWrapCheckbox.checked: " + chk);
+
+			
+
+				
+				//remove _noWrapStyleEl
+				if(_noWrapStyleEl && _noWrapStyleEl.parentNode)
+				{
+					_noWrapStyleEl.parentNode.removeChild(_noWrapStyleEl);
+					_noWrapStyleEl = 0;
+				}
+				
+				//hide elaborated text if compact, else delete the extra style
+				if(chk) 
+				{
+					//if compact, add hide style for class 'elaboratedEntry'
+					var css = ".consoleEntry " +
+							"{" +					
+							"white-space: nowrap;" +
+							"}\n\n";
+					//add style element to HEAD tag
+					_noWrapStyleEl = document.createElement('style');
+
+					if (_noWrapStyleEl.styleSheet) {
+						_noWrapStyleEl.styleSheet.cssText = css;
+					} else {
+						_noWrapStyleEl.appendChild(document.createTextNode(css));
+					}
+
+					document.getElementsByTagName('head')[0].appendChild(_noWrapStyleEl);
+				}
+			}
+			
+			//toggleHideLineNumber ~
+			// 	toggle hide line numbers on/off. Use e to determine if function call came from checkbox or link	
+			//	Note: when from checkbox, event gives stale value.
+			function toggleHideLineNumber(e) {	
+				
+				if(_hideLineNumbersCheckbox.disabled) return; //do nothing if disabled
+
+				if(!e) _hideLineNumbersCheckbox.checked = !_hideLineNumbersCheckbox.checked; //do action if from link
+
+				//	Note: when from checkbox, event gives stale value.
+				var chk = e?!_hideLineNumbersCheckbox.checked:_hideLineNumbersCheckbox.checked;						
+				Debug.log("Console _hideLineNumbersCheckbox.checked: " + chk);
+
+				//remove _hideLineStyleEl
+				if(_hideLineStyleEl && _hideLineStyleEl.parentNode)
+				{
+					_hideLineStyleEl.parentNode.removeChild(_hideLineStyleEl);
+					_hideLineStyleEl = 0;
+				}
+
+				//hide elaborated text if compact, else delete the extra style
+				if(chk) 
+				{
+					//if compact, add hide style for class 'elaboratedEntry'
+					var css = ".lineNumberEntry " +
+							"{" +					
+							"display: none;" +
+							"}\n\n";
+					//add style element to HEAD tag
+					_hideLineStyleEl = document.createElement('style');
+
+					if (_hideLineStyleEl.styleSheet) {
+						_hideLineStyleEl.styleSheet.cssText = css;
+					} else {
+						_hideLineStyleEl.appendChild(document.createTextNode(css));
+					}
+
+					document.getElementsByTagName('head')[0].appendChild(_hideLineStyleEl);
+				}
 			}
 			
 			//toggleCompactView ~
@@ -336,11 +466,22 @@
 				if(_compactViewCheckbox.disabled) return; //do nothing if disabled
 								
 				if(!e) _compactViewCheckbox.checked = !_compactViewCheckbox.checked; //do action if from link
-				Debug.log("Console _compactViewCheckbox.checked: " + _compactViewCheckbox.checked);
 				
+
+				//	Note: when from checkbox, event gives stale value.
+				var chk = e?!_compactViewCheckbox.checked:_compactViewCheckbox.checked;						
+				Debug.log("Console _compactViewCheckbox.checked: " + chk);				
 					
+
+				//remove _compactStyleEl
+				if(_compactStyleEl && _compactStyleEl.parentNode)
+				{
+					_compactStyleEl.parentNode.removeChild(_compactStyleEl);
+					_compactStyleEl = 0;
+				}
+				
 				//hide elaborated text if compact, else delete the extra style
-				if(_compactViewCheckbox.checked) 
+				if(chk) 
 				{
 					//if compact, add hide style for class 'elaboratedEntry'
 					var css = ".elaboratedEntry " +
@@ -358,18 +499,12 @@
 
 					document.getElementsByTagName('head')[0].appendChild(_compactStyleEl);
 				}
-				else //not compact
-				{
-					//remove _compactStyleEl
-					if(_compactStyleEl)
-						_compactStyleEl.parentNode.removeChild(_compactStyleEl);
-				}
 
 			}
 			
-			//redrawChatWindow ~
+			//redrawConsoleWindow ~
 			// 	refreshes chat window, called when window is resized
-			function redrawChatWindow() {			
+			function redrawConsoleWindow() {			
 
 			    Debug.log("Chat redrawChat to " + window.innerWidth + " - " + window.innerHeight);
 			    
@@ -444,12 +579,12 @@
 			    
 			 }
 			
-			//toggleSidePane ~
+			//toggleSideBar ~
 			// 	send chat to server
-			function toggleSidePane() {							
+			function toggleSideBar() {							
 				_displaySidePane = !_displaySidePane;
-			    Debug.log("Chat toggleSidePane now is " + _displaySidePane);	
-			    redrawChatWindow();
+			    Debug.log("Chat toggleSideBar now is " + _displaySidePane);	
+			    redrawConsoleWindow();
 			}
 			
 			//getConsoleUpdates ~
@@ -478,7 +613,7 @@
 					Debug.log(err,Debug.HIGH_PRIORITY);
 					return; //this stops refershing, because no future refresh is schedule
 				}
-				
+
 			    var tmp = DesktopContent.getXMLValue(req,"last_update_index");
 			    if(tmp) _lastUpdateIndex = tmp;
 			    tmp = DesktopContent.getXMLValue(req,"last_update_count");
@@ -508,7 +643,7 @@
 					}
 					
 					updateConsoleHistory();	
-					updateSidePanel(); //must be called after console history update
+					updateSideBarCounts(); //must be called after console history update
 			    }
 			    
 			    if(_consoleUpdateTimer)
@@ -517,37 +652,164 @@
 			}
 
 
-			//updateSidePanel ~
+			//initSideBar ~
 			// 	update chat users from _chatUsersArray
-			function updateSidePanel() {
-				Debug.log("FIX ME -- should not be called",Debug.MED_PRIORITY);
-
-				//				for(var i in _observedLabels)					
-				//					Debug.log(i + ": " + _observedLabels[i]);	
-				
-				//TODO -- take this over to show counts and filter choices
-				
-				
+			function initSideBar() {
+								
 				var str = "";
 				
 				str += "<a id='filterControlsLink' class='consoleLink' " +
 						"href='Javascript:toggleFilterControls();' " + 
-						"title='Toggle Filter Controls' >Filter</a>";
-				str += "<br>";
-				str += "<div id='LevelsFilterSelect' style='display:none'></div>";
-				str += "<div id='LablesFilterSelect' style='display:none'></div>";
-				str += "<br>";
+						"title='Toggle Filter Controls' >Hide Filters</a>";
 				
-				str += "<u>Severity: counts</u><br>";
-				for(var i in _observedLevels)					
-					str += i + ": " + _observedLevels[i] + "<br>";
 
-				str += "<br>";
-				str += "<u>Labels: counts</u><br>";
-				for(var i in _observedLabels)					
-					str += i + ": " + _observedLabels[i] + "<br>";
+				str += "<div id='filterContainer'>";
+				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
+				{
+					str += "<div id='" + _FIELDS_TO_OBSERVE[f] + 
+							"sFilterSelect' style='display:none'></div>";
+
+					str += "<a id='filterControlsLink' class='consoleLink' " +
+							" style='float:right; margin: -10px 50px 0 0;' " +
+							"href='Javascript:clearFilterControls(\"" + _FIELDS_TO_OBSERVE[f] +	"\");' " + 
+							"title='Clear " + _FIELDS_TO_OBSERVE[f] + " Filter' >Clear</a>";
+				}						
 				
-				_usersEl.innerHTML = str;				
+				str += "</div>"; //close filterContainer
+				
+				str += "<div id='consoleCounts' style='display:block'>";
+				
+				str += "</div>"; //close consoleCounts
+				
+				_usersEl.innerHTML = str;
+				
+				updateSideBarCounts();
+				updateFilterBoxes();
+			}
+			
+			//updateSideBarCounts ~
+			function updateSideBarCounts() //must be called after console history update
+			{
+				var el = document.getElementById('consoleCounts');
+
+				var str = "";
+				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
+				{
+					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
+							"s: counts</u><br>";
+					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])					
+						str += i + ": " + _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";					
+				}			
+				el.innerHTML = str;
+			}
+			
+			//updateFilterBoxes ~
+			function updateFilterBoxes()
+			{
+				Debug.log("Draw filter controls");
+				
+				//do nothing if not currently shown
+				if(!_displaySidePane || !_showFilterControls) return;
+			
+				Debug.log("Draw filter controls true");
+
+				//setup filter box for each field observed
+				var el;
+				var filterH = 165; //((_usersEl.offsetHeight - 2 - _MARGIN*7)/2)|0; //force as int								
+				var keys;
+				for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
+				{
+					//setup field filter
+					el = document.getElementById(_FIELDS_TO_OBSERVE[f] + 'sFilterSelect');
+					keys = [];
+					for(var label in _observed[_FIELDS_TO_OBSERVE[f]])
+						keys.push(label);
+
+					el.style.display = "block";
+					el.style.width = (_usersEl.offsetWidth - 2 - 17) + "px"; //-17 for scrollbar
+					el.style.height = filterH + "px";
+					MultiSelectBox.createSelectBox(el,
+							_FIELDS_TO_OBSERVE[f] + "sFilter",
+							_FIELDS_TO_OBSERVE[f] + " Filter:",
+							keys,0,0,"filterSelectionHandler",false);
+				}
+
+				MultiSelectBox.initMySelectBoxes();	            
+			}
+
+			//filterSelectionHandler ~
+			//	parameter is selected element
+			function filterSelectionHandler(el) {
+	            var splits = el.id.split('_');
+	            var i = splits[splits.length-1] | 0;
+	            var selects = MultiSelectBox.mySelects_[el.parentElement.id];
+	            Debug.log(el.parentElement.id + " Chosen element index:" + i + 
+	            		" key:",el.getAttribute("key-value"));
+	            for(var s in selects)
+	            	Debug.log(el.parentElement.id + " selected: " + selects[s]);
+
+	            
+				var field = el.parentNode.id.slice(7,el.parentNode.id.indexOf("sFilter"));
+	            
+	            
+	            //remove _filterStyleEl
+	            if(_filterStyleEl[field] && _filterStyleEl[field].parentNode)
+	            {
+	            	_filterStyleEl[field].parentNode.removeChild(_filterStyleEl[field]);
+	            	_filterStyleEl[field] = 0;
+	            }
+
+	            //hide filtered messages	            
+				var css = "";
+				
+				//for current observed field, hide all that aren't selected
+					//if none are selected hide none
+
+				for(i=0;i<selects.length;++i)
+					if(selects[i])
+						break;
+				if(i == selects.length) return; //none selected, so hide none
+				
+				//else some selected, so hide those not selected
+				var tmpKeys = Object.keys(_observed[field]);
+				for(i=0;i<selects.length;++i)
+					if(!selects[i])
+					{
+						Debug.log("Hiding " + tmpKeys[i]);
+						css += "." + tmpKeys[i] + "_" + 
+								field + "Entry " +
+								"{" +					
+								"display: none;" +
+								"}\n\n";
+					}				
+				
+				//add style element to HEAD tag
+				_filterStyleEl[field] = document.createElement('style');
+
+				if (_filterStyleEl[field].styleSheet) {
+					_filterStyleEl[field].styleSheet.cssText = css;
+				} else {
+					_filterStyleEl[field].appendChild(document.createTextNode(css));
+				}
+
+				document.getElementsByTagName('head')[0].appendChild(_filterStyleEl[field]);
+	        }
+			
+			//clearFilterControls ~
+			function clearFilterControls(field)
+			{
+	            var selects = MultiSelectBox.mySelects_["selbox-" + field + "sFilter"];
+				for(var s in selects)
+					selects[s] = 0;
+
+				MultiSelectBox.initMySelectBoxes();	  //repaint
+				
+				//remove hiding style css _filterStyleEl
+				if(_filterStyleEl[field] && _filterStyleEl[field].parentNode)
+				{
+					_filterStyleEl[field].parentNode.removeChild(_filterStyleEl[field]);
+					_filterStyleEl[field] = 0;
+				}
 			}
 			
 			//updateConsoleHistory ~
@@ -559,29 +821,62 @@
 			    
 				var newChatFound = false;
 				var str = "";
-				var tmpLabel, tmpLevel;
+				var tmp = {};  //tmp holder of values we care to observer
+				for(var f in _FIELDS_TO_OBSERVE) 
+					tmp[_FIELDS_TO_OBSERVE[f]] = {}; 			
+				
+				var firstMsg, secondMsg, secondMsgIndex;
+				
+				var observedSz = {};
+				for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
+					observedSz[_FIELDS_TO_OBSERVE[f]] = Object.keys(_observed[_FIELDS_TO_OBSERVE[f]]).length; 
+				
 				for(var i=0;i<_consoleMessageArray[0].length;++i)  //assume all fields' arrays are same length (checked by req handler)
-				{		
-					tmpLabel = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
-					tmpLevel = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
+				{		 			
+					tmp.Label = _consoleMessageArray[_MESSAGE_FIELD_LABEL][i].getAttribute('value');
+					tmp.Level = _consoleMessageArray[_MESSAGE_FIELD_LEVEL][i].getAttribute('value');
+					
+					firstMsg = "";
+					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
+					secondMsgIndex = secondMsg.indexOf('\t'); //find end of line number display
+					if(secondMsgIndex != -1)
+					{
+						firstMsg = secondMsg.slice(0,secondMsgIndex+1);
+						secondMsg = secondMsg.slice(secondMsgIndex+1);
+					}
+					firstMsg = convertForClient(firstMsg);
+					secondMsg = convertForClient(secondMsg);
+					
 					//important to only have one /div> per entry for truncate
 					str += "<div class='consoleEntry' style='color:" + 
-						getColorForUser() + "'>" +
-						"<span class='elaboratedEntry'><b>" +
-						tmpLevel + " " +
+						getColorForLevel(tmp.Level) + "'>" +
+						"<span class='" + tmp.Label + "_LabelEntry'>" + 
+						"<span class='" + tmp.Level + "_LevelEntry'>" + //open label level span (for filtering)
+						"<span class='lineNumberEntry'><span class='elaboratedEntry'><b>" +
+						tmp.Level + " " +
 						"(" + formatTime(_consoleMessageArray[_MESSAGE_FIELD_TIME][i].getAttribute('value')) + ") ";					 
-					str +=tmpLabel + ":</b> " +
-						"</span>" +
-						convertForClient(_consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value')) + 
+					str += tmp.Label + ":</b> " +
+							"</span>" +
+						firstMsg + "</span>" + secondMsg + 
+						"</span></span>" + //close label level span (for filtering)
 						"</div>"; //important to only have one /div> per entry for truncate
 						
-					//aggragate stats
-					_observedLabels[tmpLabel] = 
-						(_observedLabels[tmpLabel] | 0) + 1; //this works when undefined also
-					_observedLevels[tmpLevel] =
-						(_observedLevels[tmpLevel] | 0) + 1; //this works when undefined also
+					//aggragate stats for each observed field
+					for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
+						_observed[_FIELDS_TO_OBSERVE[f]][tmp[_FIELDS_TO_OBSERVE[f]]] = 
+								(_observed[_FIELDS_TO_OBSERVE[f]][tmp[_FIELDS_TO_OBSERVE[f]]] | 0) + 1; //this works when undefined also
 				}
+				
+				//check to see if filter boxes need to be updated due to new fields
+				for(var f in _FIELDS_TO_OBSERVE) //accumulate field values and their counts
+					if(observedSz[_FIELDS_TO_OBSERVE[f]] != Object.keys(_observed[_FIELDS_TO_OBSERVE[f]]).length)
+					{
+						Debug.log("Filter update needed for " + _FIELDS_TO_OBSERVE[f]);
+						updateFilterBoxes();
+						break;
+					}
 
+				//for debugging:
 				//				for(var i in _observedLabels)					
 				//					Debug.log(i + ": " + _observedLabels[i]);	
 				
@@ -595,7 +890,7 @@
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
 			}
-
+		
 			//formatTime ~
 			function formatTime(t) {
 				var date = new Date(t * 1000);
@@ -604,42 +899,52 @@
 				return date.getHours() + ":" + mm + ":" + ss;
 			}
 			
-			//getColorForUser ~
+			//getColorForLevel ~
 			//	generate color based on user index in user list
-			function getColorForUser() {
-				return "auto";		
+			function getColorForLevel(lvl) {
+				return lvl=="Error"?"rgb(255,150,50)":"auto";		
 			}
 
 			//toggleColorScheme ~
 			//	cycle through an array of [background,foreground] schemes
 			function toggleColorScheme() {
-				_chosenColorScheme = (_chosenColorScheme + 1) % _colorSchemes.length;
+				setupColorScheme(_chosenColorScheme + 1);
+			    DesktopContent.XMLHttpRequest("Console?RequestType=SaveColorChoice", 
+			    										"cindex="+_chosenColorScheme);
+			}
+			
+			//handleLoadColorChoice(req) ~
+			function handleLoadColorChoice(req) {
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err)
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return; //this stops refershing, because no future refresh is schedule
+				}
+				setupColorScheme(DesktopContent.getXMLValue(req,"color_index"));			    
+			}
+			
+			//setupColorScheme(i) ~
+			function setupColorScheme(i) {
+				_chosenColorScheme = (i|0) % _colorSchemes.length;
 
 			    _historyContainerEl.style.backgroundColor = _colorSchemes[_chosenColorScheme][0];
-			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];	
+			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];				
 			}
+			
 			
 			//toggleFilterControls ~
 			//	show/hide filter selection
 			function toggleFilterControls() {
-				//TODO 
+				 
 				_showFilterControls = !_showFilterControls; //toggle
 				
 				var el = document.getElementById("filterControlsLink");
-				el.innerHTML = _showFilterControls?"Hide Filter":"Filter";
-				
-				//use multi select box TODO
-			}
-
-			//getColorForIndex ~
-			//	generate color based on user index in user list
-			function getColorForIndex(i) {
-				var r = ((i+1)%2 * 200) % 256;
-				var g = (i%4 * 200) % 256;
-				var b = (i%8 * 200) % 256; 
-				if((r+b+g)/3 > 128) { r /= 2; g /= 2; b /= 2; } //dim colors if too bright
-					
-				return "RGB(" +	r + "," + g + "," + b + ")";
+				el.innerHTML = _showFilterControls?"Hide Filters":"Show Filters";
+											
+				el = document.getElementById('filterContainer');
+	            el.style.display = _showFilterControls?"block":"none";
+	            updateFilterBoxes(); //update multi select box
 			}
 
 
@@ -667,11 +972,6 @@
 					_userMouseInput = false;
 			}
 			
-			//pageUser ~
-			function pageUser(u) {
-			    Debug.log("Chat pageUser now is " + u);	
-				//DesktopContent.XMLHttpRequest("Chat?RequestType=PageUser","topage="+u+"&user="+_displayName,handleRefreshConsole);
-			}
 			
 		</script>
 		
@@ -685,7 +985,7 @@
 		</div>
 		
 		<div id='userLink'>
-			<a href='Javascript:toggleSidePane();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
+			<a href='Javascript:toggleSideBar();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
 		</div>
 						
 		<div id='consoleHistoryContainer'>
@@ -703,11 +1003,32 @@
 			
 		<div id='controlsContainer'>
 			<div id='controlsArea'>
-				<input type="checkbox" id="compactView"><div id='compactViewText'>
-					<a class="consoleLink"
-						href='Javascript:toggleCompactView();' 
-						title='Toggle Compact View' >Compact View</a>
-					</div>
+				<div class='controlsCheckbox'>
+					<input type="checkbox" id="compactView" />
+						<div id='compactViewText'>
+							<a class="consoleLink"
+								href='Javascript:toggleCompactView();' 
+								title='Toggle Compact View' >Compact View</a>
+						</div>
+				</div>
+		
+				<div class='controlsCheckbox'>
+					<input type="checkbox" id="noWrapCheckbox" />
+						<div id='noWrapCheckboxText'>
+							<a class="consoleLink"
+								href='Javascript:toggleNoWrap();' 
+								title='Toggle No Wrap' >No Wrap</a>
+						</div>
+				</div>
+
+				<div class='controlsCheckbox'>
+					<input type="checkbox" id="hideLineNumbersCheckbox" />
+						<div id='hideLineNumbersCheckboxText'>
+							<a class="consoleLink"
+								href='Javascript:toggleHideLineNumber();' 
+								title='Toggle Hide Line Numbers' >Hide Line Numbers</a>
+						</div>	
+				</div>	
 			</div>
 		</div>
 			

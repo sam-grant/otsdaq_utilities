@@ -22,11 +22,13 @@ Debug.simple = 0; 		//0 - use priority (more detail in printout), 1 - simple, no
 Debug.level = 100;		//priority level, (100 should be all, 0 only high priority)
 							//all logs with lower priority level are printed
 
+Debug.lastLog = "";
+Debug.lastLogger = "";
+
 //setup default priorities
 Debug.HIGH_PRIORITY = 0;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
-
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
 {
@@ -45,14 +47,20 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
+					num = num < 1?"High":(num<99?"Med":"Low");
 					
-					console.log("Priority-" + num + 
-							 ":\t " + (new Error).stack.split("\n")[2] + ":\n\t" +
-							str); 
-					//console.log("" + str, "\n\n===   Debug Priority " + num + "   ===\n\t" + 
-					//		(new Error).stack.split("\n")[2]); //gets calling source from call stack
+					Debug.lastLogger = (new Error).stack.split("\n")[2];
+					Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('(')-1);
+					Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+							Debug.lastLogger.length-1);
+					console.log("%c" + num + "-Priority" +  
+							 ":\t " + Debug.lastLog + ":\n" +
+							 Debug.lastLogger + "::\t" + str,
+							 num == "High"?"color:#F30;":
+									 (num == "Med"?"color:#092":"")); //chrome/firefox allow css styling
+					Debug.lastLog = str;
 					
-					if(num == Debug.HIGH_PRIORITY) //show all high priorities as popup!
+					if(num == "High")//Debug.HIGH_PRIORITY) //show all high priorities as popup!
 						Debug.errorPop(str);
 				}
 			}

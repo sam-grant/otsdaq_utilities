@@ -293,8 +293,7 @@
 				_inputEl.onkeydown = handleKeyInput;
 				_inputEl.focus();
 				
-				_displayName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML;
-				_displayName = _displayName.substr(_displayName.indexOf(",")+2);
+				_displayName = DesktopContent.getUsername();
 			    Debug.log("Chat Display Name: " + _displayName);
 				
 			    //init chat history

@@ -47,7 +47,10 @@
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getMouseX()
 //		DesktopContent.getMouseY()
-//		DesktopContent.getDefaultWindowColor()
+//		DesktopContent.getDefaultWindowColor() 	 // returns "rgb(#,#,#)"
+//  	DesktopContent.getDefaultDashboardColor()// returns "rgb(#,#,#)"
+//		DesktopContent.getDefaultDesktopColor()  // returns "rgb(#,#,#)"
+//		DesktopContent.getUsername()
 //
 //=====================================================================================
 
@@ -69,6 +72,9 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
+//  DesktopContent.getDefaultDashboardColor()
+//	DesktopContent.getDefaultDesktopColor()
+//	DesktopContent.getUsername()
 
 //"private" function list:
 //	DesktopContent.init()
@@ -107,6 +113,7 @@ DesktopContent._verifyPopUpId = "DesktopContent-verifyPopUp";
 
 DesktopContent._windowColorPostbox = 0;
 DesktopContent._dashboardColorPostbox = 0;
+DesktopContent._desktopColor = 0;
 
 
 //=====================================================================================
@@ -134,7 +141,7 @@ DesktopContent.init = function() {
 
 	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
 	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
-	
+	DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
 	
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
@@ -332,7 +339,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			}
 			else //bad address response
 			{
-				errStr = "Request Failed - Bad Address:\n" + requestURL;
+				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
 
 				if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
@@ -540,12 +547,15 @@ DesktopContent.clearPopUpVerification = function(func) {
 // except the solution is broken.. unless you add element to page
 DesktopContent.parseColor = function(colorStr) { 
     //used to ignore the alpha in the color when returning to user
-	var div = document.createElement('div'), m;
-    div.style.color = colorStr;
-    div.style.display = "none";
-    document.body.appendChild(div);
-    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
-    document.body.removeChild(div);
+	
+	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
+//	var div = document.createElement('div'), m;
+//    div.style.color = colorStr;
+//    div.style.display = "none";
+//    document.body.appendChild(div);
+//    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
+//	  document.body.removeChild(div);
+	var m = colorStr.split("(")[1].split(")")[0].split(",");
     if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
     else throw new Error("Color "+colorStr+" could not be parsed.");
 }
@@ -555,5 +565,17 @@ DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
 DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
-DesktopContent.getDefaultWindowColor = function() { return DesktopContent.parseColor(DesktopContent._windowColorPostbox.innerHTML); }
-DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._windowColorPostbox.innerHTML); }
+DesktopContent.getDefaultWindowColor = function() {
+	//return the alpha mix of window color and desktop color
+    wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
+    drgb = DesktopContent._desktopColor.split("(")[1].split(")")[0].split(",");
+    for(var i in drgb)
+    	drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
+    return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
+}
+DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
+DesktopContent.getDefaultDesktopColor = function() { return DesktopContent._desktopColor;} 
+DesktopContent.getUsername = function() { 
+	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
+	return dispName.substr(dispName.indexOf(",")+2);	
+}
