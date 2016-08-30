@@ -245,6 +245,7 @@
 				//handleUserInputScroll(e)
 				//handleMouseMoveScroll(mouseEvent) 
 				//clearFilterControls(field)
+				//togglePauseControls()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl;
@@ -661,7 +662,9 @@
 				str += "<a id='filterControlsLink' class='consoleLink' " +
 						"href='Javascript:toggleFilterControls();' " + 
 						"title='Toggle Filter Controls' >Hide Filters</a>";
-				
+				str += "<a id='PauseControlsLink' class='consoleLink' " +
+						"href='Javascript:togglePauseControls();' " + 
+						"title='Toggle Pause and Resume Updates' >Pause</a>";
 
 				str += "<div id='filterContainer'>";
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
@@ -938,13 +941,30 @@
 			function toggleFilterControls() {
 				 
 				_showFilterControls = !_showFilterControls; //toggle
-				
+
 				var el = document.getElementById("filterControlsLink");
 				el.innerHTML = _showFilterControls?"Hide Filters":"Show Filters";
 											
 				el = document.getElementById('filterContainer');
 	            el.style.display = _showFilterControls?"block":"none";
 	            updateFilterBoxes(); //update multi select box
+			}
+			
+			//togglePauseControls ~
+			function togglePauseControls() {
+
+				var pause = _consoleUpdateTimer?true:false;
+				Debug.log("Need to pause: " + pause);
+				if(pause)				
+				{
+					clearTimeout(_consoleUpdateTimer);
+					_consoleUpdateTimer = 0;
+				}
+				else
+					_consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_REFRESH_INTERVAL); //schedule next update		
+
+				var el = document.getElementById("PauseControlsLink");
+				el.innerHTML = pause?"Resume":"Pause";				
 			}
 
 

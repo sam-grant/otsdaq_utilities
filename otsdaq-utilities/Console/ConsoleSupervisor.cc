@@ -241,7 +241,7 @@ throw (xgi::exception::Exception)
 	CLEANUP:
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*)out, true, true); //allow whitespace
+	xmldoc.outputXmlDocument((std::ostringstream*)out, false, true); //allow whitespace
 }
 
 
