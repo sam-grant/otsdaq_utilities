@@ -23,11 +23,22 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
+
+
+#define __MF_SUBJECT__ "Wizard"
+#define __MF_HDR__		__COUT_HDR_FL__
+#define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
+#define __SS__			std::stringstream ss; ss << __COUT_HDR_FL__
+
+
 //========================================================================================================================
 OtsConfigurationWizardSupervisor::OtsConfigurationWizardSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-	xdaq::Application(s   ),
-	SOAPMessenger  (this)
-	{
+xdaq::Application(s   ),
+SOAPMessenger  (this)
+{
 	INIT_MF("OtsConfigurationWizard");
 	generateURL();
 
@@ -37,8 +48,7 @@ OtsConfigurationWizardSupervisor::OtsConfigurationWizardSupervisor(xdaq::Applica
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           "iconEditor");
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       "editSecurity");
 	init();
-
-	}
+}
 
 //========================================================================================================================
 OtsConfigurationWizardSupervisor::~OtsConfigurationWizardSupervisor(void)
@@ -57,11 +67,11 @@ void OtsConfigurationWizardSupervisor::generateURL()
 	securityCode_ = "";
 
 	static const char alphanum[] =
-		"0123456789"
-		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		"abcdefghijklmnopqrstuvwxyz";
+			"0123456789"
+			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(time(0));
+	srand(0);//time(0)); FIXME for testing!
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
@@ -81,7 +91,7 @@ void OtsConfigurationWizardSupervisor::printURL()
 	{
 		std::this_thread::sleep_for (std::chrono::seconds(2));
 		mf::LogError(__FILE__) << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
-		<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
+				<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
 	}
 }
 
@@ -93,23 +103,26 @@ void OtsConfigurationWizardSupervisor::destroy(void)
 }
 
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void OtsConfigurationWizardSupervisor::Default(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
 
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Unauthorized.html?urn=" <<
-	getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
+			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
 }
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
-	getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
+			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
 
 }
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
 
 
@@ -126,22 +139,24 @@ void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output
 	}
 
 	//an icon is 6 fields.. give comma-separated
-	//0 - alt = text for mouse over
-	//1 - subtext = text below icon
+	//0 - alt = text below icon
+	//1 - subtext = text for icon if no image
 	//2 - uniqueWin = if true, only one window is allowed, else multiple instances of window
 	//3 - permissions = security level needed to see icon
-	//4 - picfn = icon image filename
+	//4 - picfn = icon image filename, 0 for no image
 	//5 - linkurl = url of the window to open
 
 	*out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/iconEditor.html" <<
-	",Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/editSecurity.html";
+			",Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/editSecurity.html" <<
+			",Configure,CFG,1,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
+			",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=261/" <<
+			",DB Utilities,DB,1,1,0,http://127.0.0.1:8080/db/client.html";
 	return;
 }
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-
-
 
 	//if sequence doesn't match up -> return
 	cgicc::Cgicc cgi(in);
@@ -215,7 +230,8 @@ void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output *
 }
 
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
 
 	//if sequence doesn't match up -> return

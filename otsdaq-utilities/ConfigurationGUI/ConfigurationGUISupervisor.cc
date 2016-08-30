@@ -45,6 +45,8 @@ theRemoteWebUsers_  (this)
 	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
 	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
+
+	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
 	init();
 
 

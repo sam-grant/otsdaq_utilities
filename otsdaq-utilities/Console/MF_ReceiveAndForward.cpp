@@ -86,6 +86,8 @@ int makeSocket(const char * ip, int port, struct addrinfo*& p)
 
 int main(int argc, char** argv)
 {
+	std::cout << "\n\n" << __FILE__ << "\tStarting...\n\n" << std::endl;
+
 	std::string myPort_("3000");
 	std::string myFwdPort_("3001");
 	if(argc >= 2)

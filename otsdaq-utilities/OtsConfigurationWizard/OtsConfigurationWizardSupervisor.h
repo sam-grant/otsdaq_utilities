@@ -3,7 +3,7 @@
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+//#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
