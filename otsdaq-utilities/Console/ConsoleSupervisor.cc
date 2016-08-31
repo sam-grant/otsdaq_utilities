@@ -11,7 +11,7 @@
 #include <string>
 #include <dirent.h> 	//for DIR
 #include <sys/stat.h> 	//for mkdir
-#include <thread>       // std::thread
+#include <thread>       //for std::thread
 
 using namespace ots;
 
@@ -81,12 +81,13 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	ReceiverSocket rsock("127.0.0.1",30001); //FIXME == Take IP/Port from Configuration
 	rsock.initialize();
 
-	//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 	std::string buffer;
 	int i,p;
 	while(1)
 	{
 		//if receive succeeds display message
+
+		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
 			//lockout the messages array for the remainder of the scope
@@ -127,29 +128,40 @@ throw (xgi::exception::Exception)
 	//__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands:
-	//GetConsoleMsgs
+		//GetConsoleMsgs
+		//SaveColorChoice
+		//LoadColorChoice
+
+	HttpXmlDocument xmldoc;
+	uint64_t activeSessionIndex;
+	std::string user;
 
 	//**** start LOGIN GATEWAY CODE ***//
-	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
-	//Else, error message is returned in cookieCode
-	uint8_t userPermissions;
-	std::string cookieCode = CgiDataUtilities::postData(cgi,"CookieCode");
-	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", Command != "GetConsoleMsgs")) //dont refresh cookie
 	{
-		*out << cookieCode;
-		__MOUT_ERR__ << "Invalid Cookie Code" << std::endl;
-		return;
+		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool checkLock = true;
+		bool getUser = (Command == "SaveColorChoice") || (Command == "LoadColorChoice");
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
+				"0",						//report user's ip address, if known
+				!automaticCommand,			//true/false refresh cookie code
+				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+				getUser?&user:0				//acquire username of this user (optionally null pointer)
+				,0//,&displayName			//acquire user's Display Name
+				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
+				))
+		{	//failure
+			__MOUT__ << "Failed Login Gateway: " <<
+					out->str() << std::endl; //print out return string on failure
+			return;
+		}
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-
-	HttpXmlDocument xmldoc(cookieCode);
-	if(userPermissions < ADMIN_PERMISSIONS_THRESHOLD)
-	{
-		xmldoc.addTextElementToData("Error","Error - Insufficient permissions.");
-		goto CLEANUP;
-	}
 
 	//to report to logbook admin status use xmldoc.addTextElementToData(XML_ADMIN_STATUS,refreshTempStr_);
 
@@ -185,17 +197,14 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "Command " << Command << std::endl;
 		__MOUT__ << "colorIndex: " << colorIndex << std::endl;
 
-
-		std::string user;
-		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&user);
-		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 		if(user == "") //should never happen?
 		{
 			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
 			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
 			goto CLEANUP;
 		}
+
+		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
 		__MOUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
@@ -208,10 +217,8 @@ throw (xgi::exception::Exception)
 	{
 		__MOUT__ << "Command " << Command << std::endl;
 
-		std::string user;
 		unsigned int colorIndex;
-		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&user);
+
 		if(user == "") //should never happen?
 		{
 			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;

@@ -23,6 +23,7 @@
 
 #include <string>
 #include <map>
+#include <mutex>        //for std::mutex
 
 namespace ots
 {

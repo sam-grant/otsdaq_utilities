@@ -42,7 +42,7 @@ function init(){
 	state_= document.getElementById("state");
 	state_.innerHTML = "Loading...";
 
-	var setSelection=setTimeout(makeServerRequest, 4000);
+	var setSelection=setTimeout(makeServerRequest, 1000);
 }
 
 
@@ -109,7 +109,7 @@ function decreaseColor(){
 		--nonSelectedGreen;
 	if(nonSelectedBlue > 0)
 		--nonSelectedBlue;
-	console.log("Called");
+	//console.log("Called");
 	setDivGlow();
 	
 	if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) > 0)
@@ -212,7 +212,7 @@ function setSecurity(id){
 
 function makeServerRequest(data){
 	
-	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined, DesktopWizardContent.getSequence());
+	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined);
 }
 
 function restructure(){

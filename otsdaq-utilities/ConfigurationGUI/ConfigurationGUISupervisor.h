@@ -5,6 +5,8 @@
 
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -23,8 +25,6 @@
 
 #include <string>
 #include <map>
-#include "../../../otsdaq/otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 namespace ots
 {

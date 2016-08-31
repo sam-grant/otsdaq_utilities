@@ -424,25 +424,30 @@ else {
         	" 'title='Click to open ots documentation' ><img src='../images/dashboardImages/icon-Help.png'></a>";
         _topBar.appendChild(tmpBtn);
         
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right DesktopDashboard-user-account DesktopDashboard-user-logout");
-        tmpBtn.innerHTML = "<a href='#' title='Click to sign out of your account'>Sign out</a>";
-        tmpBtn.onmouseup = Desktop.logout;
-        _topBar.appendChild(tmpBtn);
-        
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-        tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
-        tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
-        	"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='../images/dashboardImages/icon-Settings.png'></a>";
-        _topBar.appendChild(tmpBtn);
-                
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-user-account");
-		tmpBtn.setAttribute("id", "DesktopDashboard-user-displayName");
-        tmpBtn.innerHTML = "";
-        _topBar.appendChild(tmpBtn);
-                
+        if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
+        		Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) //dont show features if in wizard mode
+        {   
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-button-right DesktopDashboard-user-account DesktopDashboard-user-logout");
+			tmpBtn.innerHTML = "<a href='#' title='Click to sign out of your account'>Sign out</a>";
+			tmpBtn.onmouseup = Desktop.logout;
+			_topBar.appendChild(tmpBtn);
+			
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+			tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
+			tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
+				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='../images/dashboardImages/icon-Settings.png'></a>";
+			_topBar.appendChild(tmpBtn);
+					
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-user-account");
+			tmpBtn.setAttribute("id", "DesktopDashboard-user-displayName");
+			tmpBtn.innerHTML = "";
+			_topBar.appendChild(tmpBtn);
+        }    
+        else
+        	Debug.log("Desktop Dashboard is in Wizard mode",Debug.LOW_PRIORITY);
         
         this.dashboardElement.appendChild(_topBar);
         Debug.log("Desktop Dashboard Top Bar created",Debug.LOW_PRIORITY);

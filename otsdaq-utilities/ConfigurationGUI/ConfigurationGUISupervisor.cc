@@ -30,7 +30,7 @@ using namespace ots;
 #define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
 #define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
-#define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
+#define __MOUT__  		std::cout << __MF_HDR__//mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
 
 
 
@@ -73,7 +73,7 @@ theRemoteWebUsers_  (this)
 	__MOUT__ << "To prove the concept...";
 
 
-	return;
+	//return;
 
 	testXDAQContext(); //test new config
 
@@ -660,8 +660,6 @@ throw (xgi::exception::Exception)
 void ConfigurationGUISupervisor::request(xgi::Input * in, xgi::Output * out)
 throw (xgi::exception::Exception)
 {
-
-
 	cgicc::Cgicc cgi(in);
 	std::string Command;
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
@@ -677,54 +675,46 @@ throw (xgi::exception::Exception)
 	//saveSpecificSubSystemConfiguration
 	//changeKocVersionForSpecificConfig
 
-	//**** start LOGIN GATEWAY CODE ***//
-	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for uint8_t userPermissions
-	//Else, error message is returned in cookieCode
+	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
-	std::string cookieCode;
-	if((cookieCode = CgiDataUtilities::postData(cgi,"CookieCode")) == "")
-		cookieCode = cgi("CookieCode"); //from GET or POST
-
-	//comment to remove security
-	bool AutomaticRefresh = 0;
 	std::string userWithLock;
-	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", !AutomaticRefresh, &userWithLock)) //only refresh cookie if not automatic refresh
+	std::string userName;
+	uint64_t activeSessionIndex;
+
+	//**** start LOGIN GATEWAY CODE ***//
 	{
-		*out << cookieCode;
-		__MOUT__ << "Invalid Cookie Code" << std::endl;
-		return;
+		bool automaticCommands = 0; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool checkLock = true;
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				&userPermissions,  			//acquire user's access level (optionally null pointer)
+				"0",						//report user's ip address, if known
+				!automaticCommands,			//true/false refresh cookie code
+				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				&userWithLock,				//acquire username with lock (optionally null pointer)
+				&userName					//acquire username of this user (optionally null pointer)
+				,0//,&displayName			//acquire user's Display Name
+				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
+				))
+		{	//failure
+			__MOUT__ << "Failed Login Gateway: " <<
+					out->str() << std::endl; //print out return string on failure
+			return;
+		}
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-	//**** start LOCK GATEWAY CODE ***//
-	std::string username = "";
-	uint64_t activeSessionIndex;
-	theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &username, 0, &activeSessionIndex);
-	if(userWithLock != "" && userWithLock != username)
-	{
-		*out << RemoteWebUsers::REQ_USER_LOCKOUT_RESPONSE;
-		__MOUT__ << "User " << username << " is locked out. " << userWithLock << " has lock." << std::endl;
-		return;
-	}
-	//**** end LOCK GATEWAY CODE ***//
 
-	if(userPermissions < USER_PERMISSIONS_THRESHOLD)
-	{
-		*out << RemoteWebUsers::REQ_NO_PERMISSION_RESPONSE;
-		__MOUT__ << "User " << username << " has insufficient permissions: " << userPermissions << "." << std::endl;
-		return;
-	}
-
-	HttpXmlDocument xmldoc(cookieCode);
+	//HttpXmlDocument xmldoc(cookieCode);
 
 	//acquire user's configuration manager based on username & activeSessionIndex
 
 	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
 	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
 	__MOUT__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
-	ConfigurationManagerRW* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
+	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex, backboneVersion);
 	__MOUT__ << "ConfigurationManagerRW backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
 
 	char tmpIntStr[100];

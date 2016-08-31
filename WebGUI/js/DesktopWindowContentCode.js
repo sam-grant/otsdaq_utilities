@@ -115,6 +115,8 @@ DesktopContent._windowColorPostbox = 0;
 DesktopContent._dashboardColorPostbox = 0;
 DesktopContent._desktopColor = 0;
 
+DesktopContent._sequence = 0;
+
 
 //=====================================================================================
 //initialize content's place in the world
@@ -157,6 +159,13 @@ DesktopContent.init = function() {
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
+	
+	//get Wizard sequence (if in Wizard mode)
+	DesktopContent._sequence = DesktopContent._theWindow.parent.parent.window.location.pathname.split("/")[2];
+	if(!DesktopContent._sequence || DesktopContent._sequence == "")
+		DesktopContent._sequence = 0; //normal desktop mode
+	else
+		Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
 }
 
 //DesktopContent.getParameter ~
@@ -169,6 +178,7 @@ DesktopContent.getParameter = function(index) {
 	if(vs.length < 2) return; //return undefined	
 	return vs[1]; //return value
 }
+
 
 DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
 
@@ -230,11 +240,12 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 // Where CookieCode and DisplayName can change upon every server response
 //
 // reqIndex is used to give the returnHandler an index to route responses to.
-// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqIndex, progressHandler, sequence) {
+		reqIndex, progressHandler) {
 
+	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
+	var sequence = DesktopContent._sequence;
 	var errStr = "";
 	var req;
 
@@ -574,6 +585,13 @@ DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0;
 DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
 DesktopContent.getDefaultWindowColor = function() {
 	//return the alpha mix of window color and desktop color
+	if(!DesktopContent._windowColorPostbox || !DesktopContent._desktopColor)
+	{
+		//likely in wizard mode
+		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
+		return "rgb(0,0,255)";
+	}
+	
     wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
     drgb = DesktopContent._desktopColor.split("(")[1].split(")")[0].split(",");
     for(var i in drgb)

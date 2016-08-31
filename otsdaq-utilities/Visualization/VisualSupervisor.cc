@@ -170,43 +170,35 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
     //getRoot
     //getDirectoryContents
 
-    //**** start LOGIN GATEWAY CODE ***//
-    //If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
-    //Else, error message is returned in cookieCode
-    uint8_t userPermissions;
-    std::string cookieCode;
-    if((cookieCode = CgiDataUtilities::postData(cgi,"CookieCode")) == "")
-        cookieCode = cgi("CookieCode"); //from GET or POST
+    HttpXmlDocument xmldoc;
+	uint8_t userPermissions;
 
-    //comment to remove security
-    bool AutomaticRefresh = Command == "getRoot" || Command == "getEvents";
-    std::string userWithLock;
-    if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-            cookieCode, &userPermissions, "0", !AutomaticRefresh, &userWithLock)) //only refresh cookie if not automatic refresh
+    //**** start LOGIN GATEWAY CODE ***//
+    //check cookieCode, sequence, userWithLock, and permissions access all in one shot!
     {
-        *out << cookieCode;
-        std::cout << __COUT_HDR_FL__ << "Invalid Cookie Code" << std::endl;
-        return;
+    	bool automaticCommand = Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+    	bool checkLock = true;
+
+    	if(!theRemoteWebUsers_.xmlLoginGateway(
+    			cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				&userPermissions,  			//acquire user's access level (optionally null pointer)
+				"0",						//report user's ip address, if known
+				!automaticCommand,			//true/false refresh cookie code
+				1, //set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				0,//&userWithLock,				//acquire username with lock (optionally null pointer)
+				0,//&userName					//acquire username of this user (optionally null pointer)
+				0,//&displayName			//acquire user's Display Name
+				0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+    	))
+    	{	//failure
+    		//std::cout << out->str() << std::endl; //could print out return string on failure
+    		return;
+    	}
     }
+    //done checking cookieCode, sequence, userWithLock, and permissions access all in one shot!
     //**** end LOGIN GATEWAY CODE ***//
 
-
-    //std::cout << __COUT_HDR_FL__ << "userPermissions " << (int)userPermissions << std::endl;
-    //std::cout << __COUT_HDR_FL__ << "userWithLock " << userWithLock << std::endl;
-
-    //**** start LOCK GATEWAY CODE ***//
-    std::string username = "";
-    theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-                                            cookieCode, &username);
-    if(userWithLock != "" && userWithLock != username)
-    {
-        *out << RemoteWebUsers::REQ_USER_LOCKOUT_RESPONSE;
-        std::cout << __COUT_HDR_FL__ << "User " << username << " is locked out. " << userWithLock << " has lock." << std::endl;
-        return;
-    }
-    //**** end LOCK GATEWAY CODE ***//
-
-    HttpXmlDocument xmldoc(cookieCode);
 
 
     //    if (Command == "getHisto" && theDataManager_->getLiveDQMHistos() != 0)

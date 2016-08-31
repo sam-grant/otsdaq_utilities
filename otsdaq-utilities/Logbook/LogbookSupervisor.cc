@@ -1091,23 +1091,38 @@ throw (xgi::exception::Exception)
 	//ApproveEntry
 	//AdminRemoveRestoreEntry
 
-	//**** start LOGIN GATEWAY CODE ***//
-	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for UInt8 userPermissions
-	//Else, error message is returned in cookieCode
+	HttpXmlDocument xmldoc;
+	uint64_t activeSessionIndex;
+	std::string user;
 	uint8_t userPermissions;
-	std::string cookieCode = Command == "PreviewEntry"? cgi("CookieCode"):
-			CgiDataUtilities::postData(cgi,"CookieCode");
-	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", Command != "RefreshLogbook")) //only refresh cookie if not automatic refresh
+
+	//**** start LOGIN GATEWAY CODE ***//
 	{
-		*out << cookieCode;
-		__MOUT__ << "Invalid Cookie Code" << std::endl;
-		return;
+		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool checkLock = true;
+		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
+				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				&userPermissions,  		//acquire user's access level (optionally null pointer)
+				"0",						//report user's ip address, if known
+				!automaticCommand,			//true/false refresh cookie code
+				1, //set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+				(getUser?&user:0)				//acquire username of this user (optionally null pointer)
+				,0//,&displayName			//acquire user's Display Name
+				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
+				))
+		{	//failure
+			__MOUT__ << "Failed Login Gateway: " <<
+					out->str() << std::endl; //print out return string on failure
+			return;
+		}
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-
-	HttpXmlDocument xmldoc(cookieCode);
 
 	//to report to logbook admin status use xmldoc.addTextElementToData(XML_ADMIN_STATUS,tempStr);
 
@@ -1130,9 +1145,7 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "Admin" << std::endl;
 
 		//get creator name
-		std::string creator;
-		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&creator);
+		std::string creator = user;
 
 		createExperiment(CgiDataUtilities::postData(cgi,"Experiment"), creator, &xmldoc);
 
@@ -1150,9 +1163,7 @@ throw (xgi::exception::Exception)
 		}
 
 		//get remover name
-		std::string remover;
-		theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&remover);
+		std::string remover = user;
 		removeExperiment(CgiDataUtilities::postData(cgi,"Experiment"), remover, &xmldoc);
 	}
 	else if(Command == "GetExperimentList")
@@ -1215,12 +1226,10 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "EntrySubject " << EntrySubject <<  std::endl << std::endl;
 
 		//get creator name
-		std::string creator;
-		if(theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&creator))
-			savePostPreview(EntrySubject,EntryText,cgi.getFiles(),creator,&xmldoc);
-		else
-			xmldoc.addTextElementToData(XML_STATUS,"Failed - could not get username info.");
+		std::string creator = user;
+
+		savePostPreview(EntrySubject,EntryText,cgi.getFiles(),creator,&xmldoc);
+		//else xmldoc.addTextElementToData(XML_STATUS,"Failed - could not get username info.");
 	}
 	else if(Command == "ApproveEntry")
 	{
@@ -1245,14 +1254,7 @@ throw (xgi::exception::Exception)
 		bool Hide = CgiDataUtilities::postData(cgi,"Hide")=="1"?true:false;
 
 		//get creator name
-		std::string hider;
-		if(!theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode,&hider))
-
-		{
-			xmldoc.addTextElementToData(XML_STATUS,"Failed - could not get username info.");
-			goto CLEANUP;
-		}
+		std::string hider = user;
 
 		hideLogbookEntry(EntryId,Hide,hider);
 

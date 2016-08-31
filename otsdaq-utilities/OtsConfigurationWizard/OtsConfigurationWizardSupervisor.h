@@ -39,6 +39,7 @@ public:
     virtual ~OtsConfigurationWizardSupervisor(void                                                              );
     void init                  		  		 (void                                                              );
     void destroy                      		 (void                                                              );
+
     void Default                      		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void Verification                 		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void generateURL                         (                                                                  );
@@ -46,6 +47,10 @@ public:
     void RequestIcons                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void EditSecurity                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+
+    //External Supervisor XOAP handlers
+    xoap::MessageReference 		supervisorSequenceCheck 		 (xoap::MessageReference msg) 			throw (xoap::exception::Exception);
+
 
 private:
     std::string				securityCode_;
