@@ -7,14 +7,15 @@
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
 		
 		<style type="text/css">			
-			body {
-				background-color: #001626;
-				color: #c4e9f5 !important;
-				<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
-				overflow: auto;
-				font-family: Sans-serif;
-				font-size:15px;
-			}
+		
+		body {
+			background-color: #001626;
+			color: #c4e9f5 !important;
+			<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
+			overflow: auto;
+			font-family: Sans-serif;
+			font-size:15px;
+		}
 		
 		#fecList {
 		    padding:5px;	
@@ -32,7 +33,6 @@
 		h3 {	
 			color: #c4e9f5 !important;
 			background-color: #993333;
-			border-radius: 4px;
 			margin: 2px 13px 2px 10px;
 			text-align: center;
 		}
@@ -76,8 +76,12 @@
 		    margin-bottom:5px;
 		}
 		
-		#instruction {
+		#progressBarOuter {
 		    padding:5px;
+		}
+		
+	    #progressBarInner {
+		    display:none;
 		}
 		
 		#sequence {
@@ -91,7 +95,7 @@
 			padding:2px;
 		}
 		
-		#listOfMacros {
+		.listOfMacros {
 			overflow:scroll;
 			overflow-x: hidden;
 			padding:5px;
@@ -247,7 +251,7 @@
         	margin: 5px 0 0 0;
         }
         #data{
-        	margin: 5px 0 0 22px;
+        	margin: 5px 0 0 23px;
         }
 
 		#twoButtons{
@@ -305,14 +309,14 @@
         }
         
         .smallPopup{
-        	width:220px;
+        	width:225px;
         	height:112px;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
 			top: 30%;
 			left: 50%;
-			margin-left: -100px;
+			margin-left: -110px;
 			opacity:0.9;
 			border-radius:5px;
 			padding:6px;
@@ -346,8 +350,15 @@
 			height: 75px;
 		}
 		
-		lable textarea{
+		lable textarea {
 			vertical-align: middle;
+		}
+		
+		#makeMacroPublic {
+			padding: 10px;
+			text-align: center;
+			width: 100%;
+			display: none;
 		}
 		
         .context-menu {
@@ -375,7 +386,7 @@
 		  display: block;
 		  margin-bottom: 2px;
 		}
-		
+	
 		.context-menu__link {
 		  display: block;
 		  padding: 4px 12px;
@@ -387,9 +398,55 @@
 		  color: #fff;
 		  background-color: #002a52;
 		}
+		
+		#macroRunningProgress {
+		  position: relative;
+		  width: 80%;
+		  margin: 0 auto; 
+		  height: 30px;
+		  background-color: #c4e9f5;
+		  border-radius:5px;
+		  border: 2px solid #c4e9f5;
+		}
+		
+		#macroRunningBar {
+		  position: absolute;
+		  width: 0%;
+		  height: 100%;
+		  background: repeating-linear-gradient(
+			  45deg,
+			  #002540,
+			  #002540 10px,
+			  #993333 10px,
+			  #993333 20px
+			);
+	      border-radius:5px;
+		}
+        
+        #macroRunningPercentage {
+          margin: 0 auto; 
+          font-weight: bold;
+          padding-top: 5px;
+        }
+        
+        #infoButton {
+  		    top: 4px; 
+  		    right: 7px;
+  		    position: absolute;
+  		    cursor:pointer;
+        }
+        
+        #refreshButton {
+  		    top: 7px; 
+  		    right: 37px;
+  		    position: absolute;
+  		    cursor:pointer;
+        }
+        
+
         
         @media only screen and (max-height: 400px){
-        	#instruction{
+        	#progressBar{
         	display:none;
         	}
         	#macroLib {
@@ -431,7 +488,14 @@
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			<div id="listOfMacros"></div>
+		    <p><small>
+		    <center>
+			<a id="privateTag" onclick="toggleMacroPublicity(0)">Private Macros</a>
+			<a id="publicTag" style="margin-left:8px" onclick="toggleMacroPublicity(1)">Public Macros</a>
+			</small></p>
+			</center>
+			<div id="listOfPrivateMacros" class="listOfMacros"></div>
+			<div id="listOfPublicMacros" class="listOfMacros"></div>
 		</div>
 		
 		<div class='mainBlock' id='sequence'>
@@ -439,32 +503,40 @@
 	        <div id="sequenceContent"></div>
 		</div>
 		
-		<div id="nav" class="center">
-			<p><small>
-			<a onclick="toggleDisplay(0)">Manual Commands</a>
-			<a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
+		<div id="nav">
+			<p class="center"><small>
+			<a id="page1tag" onclick="toggleDisplay(0)">Manual Commands</a>
+			<a id="page2tag" style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
 			</small></p>
+			<div class="right">
+				<a href="https://docs.google.com/a/iit.edu/document/d/1tTeaO9wKnVJshU9OrY7FFOGC39TTIieD1uZ9cTtY-hs/edit?usp=sharing" target="_blank">
+					<img src="../images/windowContentImages/macromaker-information.png" alt="Info" id="infoButton"
+				     width='26' height='26' title="Info"/>
+				</a>
+				<img src="../images/windowContentImages/macromaker-refresh.png" alt="Refresh" id="refreshButton" 
+					width='20' height='20' onclick="init()" title="Refresh"/>
+			</div>
 		</div>
 		
 		<div class='mainBlock' id='main'>
 	        <h3>Manual Commands</h3>
 	        <div class="center">
 		        <p>Address:  <input type="text" id="addressInput" class="inputBox"/></p>
-		        <div id="output1" class="formatSelection">Address is in
+		        <div id="output1" class="formatSelection">Address format:
 		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
-				format.</div>
-		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox"/></p>
-		        <div id="output2" class="formatSelection">Data is in
-		           <select id="dataFormat" class="dropdown">
+				</div>
+		        <p>Data:  <input style="margin-left:23px" type="text" id="dataInput" class="inputBox"/></p>
+		        <div id="output2" class="formatSelection">Data format:
+		           <select style="margin-left:23px" id="dataFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
-				format.</div>
+				</div>
 				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
 		        <b><div id="reminder" class="red"></div></b>
 		        
@@ -516,12 +588,17 @@
 		    </div>
 		</div>
 		
-		<div class='mainBlock' id='instruction'>
-		  <h3>Instructions</h3>
-          <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
-          <br>2. Enter the address to read from/write to. Data is also required for a write.
-          <br>3. Select the format of your address and data (hex/dec/ascii).
-          <br>4. Select either "Write" or "Read" to finish your manual command.
+		<div class='mainBlock' id='progressBarOuter'>
+		  <div id='progressBarInner'>
+		    <center><h4>Macro Running...</h4></center>
+			<div id="macroRunningProgress">
+ 			   <div id="macroRunningBar">
+ 			     <center>
+ 			      <p id="macroRunningPercentage">5%</p>
+ 			     </center>
+ 			   </div>
+			</div>
+		  </div>
 		</div>
 		
 		<div class='mainBlock' id='history'>
@@ -539,6 +616,9 @@
 				<div class="buttongroup">
 					<button class="select" onclick="hidePopupSaveMacro()">Cancel</button>
 					<button class="select" onclick="saveAsMacro()">Save as Macro</button>
+				</div>
+				<div id="makeMacroPublic">
+				    <input type="checkbox" id="isMacroPublic"> Make accessible to public</input>
 				</div>
 			</div>
 		</div>
@@ -572,7 +652,7 @@
 			</div>
 		</div>
 		<div id="popupClearAllConfirm" class="smallPopup">
-			<h4>You will be clearing all macro sequence. Continue?</h4>
+			<h4>You will be clearing macro sequence. Do you wish to continue?</h4>
 		    <div class="buttongroup">
 			  <center>
 				<button class="select" onclick="clearAll(this)">Yes, please</button>
@@ -581,7 +661,7 @@
 			</div>
 		</div>
 		<div id="popupClearHistoryConfirm" class="smallPopup">
-		    <h4>You will be clearing all macro history. Continue?</h4>
+		    <h4>You will be clearing macro history. Do you wish to continue?</h4>
 		    <div class="buttongroup">
 			  <center>
 				<button class="select" onclick="clearHistory(this)">Yes, please</button>
@@ -595,6 +675,40 @@
 		    <div class="buttongroup">
 			  <center>
 				<button class="select" id="popupAskForVariableValueContinue">Continue</button>
+				<button class="select" onclick="hideSmallPopup(this)">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupDeleteMacroConfirm" class="smallPopup">
+			<h4>You are deleting <span id="macroNameForDelete" class="red"></span>. Do you wish to continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" id="popupDeleteMacroConfirmYes">Yes, please</button>
+				<button class="select" id="popupDeleteMacroConfirmCancel">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupNoEditPermission" class="smallPopup">
+			<h4>You have no permission to edit public macros</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupNoDeletePermission" class="smallPopup">
+			<h4>You have no permission to delete public macros</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupIllegalNaming" class="smallPopup">
+			<h4>Macro name cannot contain special characters.</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button class="select" onclick="hideSmallPopup(this)">Okay</button>
 			  </center>
 			</div>
 		</div>

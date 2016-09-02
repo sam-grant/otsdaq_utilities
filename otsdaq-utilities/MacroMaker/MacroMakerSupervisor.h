@@ -47,12 +47,18 @@ public:
     void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void MacroMakerRequest          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
+    //xoap GetMacroList (username) //give macro list for user's and public
+    //xoap RunMacro(macropath)		//get back unique id?
+    //xoap getProgressOfRunningMacro(uid) //100%
+
 private:
     SupervisorConfiguration              	theSupervisorsConfiguration_;
     RemoteWebUsers							theRemoteWebUsers_;
     FESupervisor*			 				theFESupervisor_;
 //	void printStatus();
 	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	void getFElist(HttpXmlDocument& xmldoc);
+
 	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
@@ -65,6 +71,7 @@ private:
 	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	std::vector<std::string> interfaceList;
 	std::string username;
+	uint8_t userPermissions;
 
 
 	//generateInterfaceCodeFromMacro
@@ -84,7 +91,7 @@ private:
 
 //
 //
-    void getFElist(HttpXmlDocument& xmldoc);
+
 
 };
 

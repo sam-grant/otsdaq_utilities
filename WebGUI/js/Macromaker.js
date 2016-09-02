@@ -7,6 +7,7 @@
 	    //redrawWindow
 		//callWrite
 		//callRead
+    var userPermission = 10;
 	var CMDHISTDIVINDEX = 0;
 	var SEQINDEX = 0;
 	var MACROINDEX = 0;
@@ -18,6 +19,7 @@
 	
 	var theAddressStrForRead = ""; // for callread and its handler
 	var isOnMacroMakerPage = false;
+	var isOnPrivateMacros = false;
 	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
@@ -30,30 +32,36 @@
 	var macroDateForEdit = "";
 	var macroNotesForEdit = "";
 	
-	var macroNameForRename = "";
-	
 	var lastDeletedMacro = "";
+
+	var barWidth = 0;
+	var barIncrement = 0;
+	
 
 	function init() 
 	{			
 		Debug.log("init() was called");
 		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getPermission","",getPermissionHandlerFunction);
 		block1El = document.getElementById('fecList');
 		block2El = document.getElementById('macroLib');
 		block3El = document.getElementById('main');
-		block4El = document.getElementById('instruction');
+		block4El = document.getElementById('progressBarOuter');
 		block5El = document.getElementById('history');
 		block6El = document.getElementById('sequence');
 		block7El = document.getElementById('maker');
 		block8El = document.getElementById('popupEditMacro');
 		historybox = document.getElementById('historyContent');
 		sequencebox = document.getElementById('sequenceContent');
-		macrobox = document.getElementById('listOfMacros');
+		privateMacroBox = document.getElementById('listOfPrivateMacros');
+		publicMacroBox = document.getElementById('listOfPublicMacros');
 		macroSequenceEdit = document.getElementById("macroSequenceEdit");
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 		loadExistingMacros();
 		loadUserHistory();
+		toggleDisplay(0);
+		toggleMacroPublicity(0);
 	}
 	
 	//Handling window resizing
@@ -117,45 +125,70 @@
 		
 		historybox.style.height =  h*0.88 + "px";
 		sequencebox.style.height =  h*0.88 + "px";
-		macrobox.style.height =  h*0.40 + "px";
+		privateMacroBox.style.height =  h*0.38 + "px";
+		publicMacroBox.style.height =  h*0.38 + "px";
 		macroSequenceEdit.style.height = h*0.6-250 + "px";
+		
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandlerFunction);
 	}
 			 
 	function FElistHandlerFunction(req) 
 	{
 		Debug.log("FElistHandlerFunction() was called. Req: " + req.responseText);
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
-		console.log(FEELEMENTS);
-		
-		//Make search box for the list
-		var noMultiSelect = false; 									
-				
-	    var keys = [];
-	    var vals = [];
-	    var types = [];
-	    var fullnames = [];
-	    //Only displays the first 11 letters, mouse over display full name
-	    for(var i=0;i<FEELEMENTS.length;++i)
-		{
-			keys[i] = "one";
-			fullnames[i] = FEELEMENTS[i].getAttribute("value");
-			var sp = fullnames[i].split(":");
-			if (sp[0].length < 11) vals[i] = fullnames[i];
-			else{
-				var display = sp[0].substr(0,4)+"...:"+sp[1]+":"+sp[2];
-				vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
-			}
-			types[i] = "number";
-			Debug.log(vals[i]);
-		}
 	    var listoffecs = document.getElementById('list');  
-		MultiSelectBox.createSelectBox(listoffecs,
-				"box1",
-				"Please select from below:",
-				vals,keys,types,"listSelectionHandler",noMultiSelect);            
-	    //End of making box
+	    if(FEELEMENTS.length === 0)
+	    	listoffecs.innerHTML = "<p class='red'>Please refresh after configuring in Physics</p>";
+	    else
+	    {
+			var w = window.innerWidth;
+			//Make search box for the list
+			var noMultiSelect = false; 									
+					
+			var keys = [];
+			var vals = [];
+			var types = [];
+			var fullnames = [];
+			//Only displays the first 11 letters, mouse over display full name
+			for(var i=0;i<FEELEMENTS.length;++i)
+			{
+				keys[i] = "one";
+				fullnames[i] = FEELEMENTS[i].getAttribute("value");
+				var sp = fullnames[i].split(":");
+				if (sp[0].length < 11) 
+					vals[i] = fullnames[i];
+				else
+				{
+					var display;
+					if (w < 680)
+						display = sp[0].substr(0,4)+"...:"+sp[1]+":"+sp[2];
+					else if (w < 810)
+						display = sp[0].substr(0,8)+"...:"+sp[1]+":"+sp[2];
+					else if (w < 1016)
+						display = sp[0].substr(0,12)+"...:"+sp[1]+":"+sp[2];
+					else
+						display = sp[0]+":"+sp[1]+":"+sp[2];
+					vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
+				}
+				types[i] = "number";
+				Debug.log(vals[i]);
+			}
+			listoffecs.innerHTML = "";
+			MultiSelectBox.createSelectBox(listoffecs,
+					"box1",
+					"Please select from below:",
+					vals,keys,types,"listSelectionHandler",noMultiSelect);            
+			//End of making box
+	    }
 	}
 
+	function getPermissionHandlerFunction(req)
+	{
+		Debug.log("getPermissionHandlerFunction() was called. Req: " + req.responseText);
+		userPermission = DesktopContent.getXMLValue(req, "Permission");
+		console.log("User Permission: " + userPermission);
+	}
+	
 	function listSelectionHandler(listoffecs)
 	{
 	 	 var splits = listoffecs.id.split('_');
@@ -261,7 +294,6 @@
     {
     	var timeIntervalForRead = setInterval(function(){
 			if (isMacroReading == true) return;
-				
 			else
 			{
 				var reminderEl = document.getElementById('reminder');
@@ -320,14 +352,20 @@
 	{
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
 		EVENTCOUNTER--;
+		var runningPercentageEl = document.getElementById('macroRunningPercentage');
+		var barEl = document.getElementById('macroRunningBar');
+		barWidth += barIncrement;
+		barEl.style.width = barWidth + '%'; 
+		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
     }
     
     function readHandlerFunction(req)
 	{
+		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
     	var reminderEl = document.getElementById('reminder');
-		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
+
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		isMacroReading = false;
 		var convertedOutput;
@@ -354,6 +392,11 @@
 		contentEl.scrollTop = contentEl.scrollHeight;
 		reminderEl.innerHTML = "Data read: " + convertedOutput;
 		EVENTCOUNTER--;
+		var runningPercentageEl = document.getElementById('macroRunningPercentage');
+		var barEl = document.getElementById('macroRunningBar');
+		barWidth += barIncrement;
+		barEl.style.width = barWidth + '%'; 
+		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
 	}
     
     function isArrayAllZero(arr)
@@ -446,7 +489,7 @@
     	 var fecListEl = document.getElementById("fecList");
     	 var macroLibEl = document.getElementById("macroLib");
     	 var sequenceEl = document.getElementById("sequence");
-    	 var instructionEl = document.getElementById("instruction");
+    	 var progressBarOuterEl = document.getElementById("progressBarOuter");
     	 var mainEl = document.getElementById("main");
     	 var makerEl = document.getElementById("maker");
     	 
@@ -455,20 +498,46 @@
     		 fecListEl.style.display = "none";
     		 macroLibEl.style.display = "none";
     		 sequenceEl.style.display = "block";
-    		 instructionEl.style.display = "none";
+    		 progressBarOuterEl.style.display = "none";
     		 mainEl.style.display = "none";
     		 makerEl.style.display = "block";
-    	 } else {
+    		 document.getElementById("page1tag").style.fontWeight = "400";
+    		 document.getElementById("page2tag").style.fontWeight = "900";
+    	 } 
+    	 else 
+    	 {
     		 isOnMacroMakerPage = false;
     		 fecListEl.style.display = "block";
     		 macroLibEl.style.display = "block";
     		 sequenceEl.style.display = "none";
-    		 instructionEl.style.display = "block";
+    		 progressBarOuterEl.style.display = "block";
     		 mainEl.style.display = "block";
     		 makerEl.style.display = "none";
+    		 document.getElementById("page2tag").style.fontWeight = "400";
+    		 document.getElementById("page1tag").style.fontWeight = "900";
     	 }
     }
    
+    function toggleMacroPublicity(onPublic)
+    {
+    	var privateEl = document.getElementById("listOfPrivateMacros");
+    	var publicEl = document.getElementById("listOfPublicMacros");
+    	if(onPublic) {
+    		privateEl.style.display = "none";
+    		publicEl.style.display = "block";
+    		document.getElementById("publicTag").style.fontWeight = "900";
+    		document.getElementById("privateTag").style.fontWeight = "400";
+    		isOnPrivateMacros = false;
+    	}
+    	else
+    	{
+    		privateEl.style.display = "block";
+    		publicEl.style.display = "none";
+    		document.getElementById("privateTag").style.fontWeight = "900";
+     		document.getElementById("publicTag").style.fontWeight = "400";
+    		isOnPrivateMacros = true;
+    	}
+    }
 	
     function addCommand(command,address,data)
     {
@@ -650,8 +719,9 @@
     		document.getElementById('macroReminder').innerHTML = "Macro sequence cannot be empty";
     	else
     	{
-			var popupSaveMacro = document.getElementById("popupSaveMacro");
-			popupSaveMacro.style.display = "block";
+			document.getElementById("popupSaveMacro").style.display = "block";
+			if (userPermission == 255)
+				document.getElementById("makeMacroPublic").style.display = "block";
     	}
     }
     
@@ -674,16 +744,18 @@
     {
     	getOrder();
     	var macroName = document.getElementById("macroName").value;
-    	var Regex = /^[a-z0-9]+$/i;
-    	if (!Regex.test(macroName)) alert("Sorry, special characters and spaces are not allowed.");
+    	var Regex = /^[\w\s]+$/;
+    	if (!Regex.test(macroName)) 
+			document.getElementById("popupIllegalNaming").style.display = "block";
     	else
     	{
     	var macroNotes = document.getElementById("macroNotes").value;
-    	var macroLibEl = document.getElementById('listOfMacros');
+    	var macroLibEl = document.getElementById('listOfPrivateMacros');
     	stringOfAllMacros[MACROINDEX] = tempString;
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&Name="+macroName+
-    				"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-					+macroNotes,"",createMacroHandlerFunction);
+    	var isMacroPublic = document.getElementById("isMacroPublic").checked;
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
+    			+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
+			    +macroNotes,"",createMacroHandlerFunction);
     	loadExistingMacros();
     	hidePopupSaveMacro();
     	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
@@ -697,14 +769,17 @@
     
     function runMacro(stringOfCommands,macroName)
     {
-    	
-		isMacroRunning = true;
 		var contentEl = document.getElementById('historyContent');
-		
+		var progressBarInnerEl = document.getElementById('progressBarInner');
 		EVENTCOUNTER = 0;
 		var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
 		contentEl.innerHTML += start;
 		contentEl.scrollTop = contentEl.scrollHeight;
+		
+		progressBarInnerEl.style.display = "block";
+		var barEl = document.getElementById('macroRunningBar');
+		barEl.style.width = '0%';
+		barIncrement = 100/stringOfCommands.length;
 		for (var i = 0; i < stringOfCommands.length; i++)
 		{
 			var Command = stringOfCommands[i].split(":")
@@ -717,11 +792,15 @@
 				callRead(Command[2]);
 				console.log("read from "+Command[2]);
 				EVENTCOUNTER++;
-			}else if(commandType=='d')
+			}else if(commandType=='d'){
+				var runningPercentageEl = document.getElementById('macroRunningPercentage');
+				var barEl = document.getElementById('macroRunningBar');
+				barWidth += barIncrement;
+				barEl.style.width = barWidth + '%'; 
+				runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
 				console.log("delay "+Command[2]+"ms");
-			else
+			}else
 				console.log("ERROR! Command type "+commandType+" not found");
-
 		}
 		timeIntervalID = setInterval(function(){
 			if (EVENTCOUNTER !== 0)
@@ -730,9 +809,14 @@
 			{
 				var end = "<p class=\"red\"><b><small>-- End of Macro: " + macroName + " --</small></b></p>";
 				contentEl.innerHTML += end;
-				clearInterval(timeIntervalID);
 				contentEl.scrollTop = contentEl.scrollHeight;
 				isMacroRunning = false;
+				setTimeout(function(){ 
+					progressBarInnerEl.style.display = "none";
+                }, 300);
+				barWidth = 0;
+			    barIncrement = 0;
+				clearInterval(timeIntervalID);
 			}
 		},100);
     }
@@ -751,6 +835,7 @@
     {
     	Debug.log("loadingMacrosHandlerFunction() was called. Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
+    	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
     	
     	if (hugeStringOfMacros && hugeStringOfMacros.length > 0)
     	{
@@ -763,7 +848,7 @@
 				console.log(arr);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
-				for (var j = 0; j < macroString.length; j++)
+				for (var j = 0; j < macroString.length; j++) //because users don't need to see that
 				    forDisplay.push(macroString[j].split(":").slice(1).join(":"));
 				
 				stringOfAllMacros[MACROINDEX] = macroString;
@@ -776,10 +861,39 @@
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
-			document.getElementById("listOfMacros").innerHTML = out;
+			document.getElementById("listOfPrivateMacros").innerHTML = out;
     	}
     	else 
-    		document.getElementById("listOfMacros").innerHTML = "";
+    		document.getElementById("listOfPrivateMacros").innerHTML = "";
+    	if (hugeStringOfPublicMacros && hugeStringOfPublicMacros.length > 0)
+		{
+			var publicMacrosArray = hugeStringOfPublicMacros.split("@");
+			var out = "";
+			console.log(publicMacrosArray);
+			for(var i = 0; i < publicMacrosArray.length; i++) 
+			{
+				var arr = JSON.parse(publicMacrosArray[i]);
+				console.log(arr);
+				var macroString = arr.sequence.split(",");
+				var forDisplay = []; //getting rid of the first element (macroIndex) for display
+				for (var j = 0; j < macroString.length; j++)
+					forDisplay.push(macroString[j].split(":").slice(1).join(":"));
+				
+				stringOfAllMacros[MACROINDEX] = macroString;
+				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
+						+ arr.notes + "\nCreated: " + arr.time
+						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
+						+ macroString + "\" data-notes=\"" 
+						+ arr.notes + "\" data-time=\"" 
+						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
+						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
+				MACROINDEX++;
+			}
+			document.getElementById("listOfPublicMacros").innerHTML = out;
+		}
+		else 
+			document.getElementById("listOfPublicMacros").innerHTML = "";
+
     }
     
     function loadingHistHandlerFunction(req)
@@ -856,89 +970,106 @@
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate)
     {
     	console.log("macroName" + macroName+ "macroAction" +macroAction + "macroSequence" + macroSequence+ "macroNotes" + macroNotes+ "macroDate" +macroDate);
+    	var isMacroPublic = !isOnPrivateMacros;
     	switch(macroAction)
     	{
     	case "Delete":
-    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&MacroName="
-					+macroName,"",deleteMacroHandlerFunction);
+    		if (userPermission != 255 && isMacroPublic)
+    			document.getElementById("popupNoDeletePermission").style.display = "block";
+    		else
+    		{
+    			document.getElementById('popupDeleteMacroConfirm').style.display = "block";
+    			document.getElementById('macroNameForDelete').innerHTML = macroName;
+    			document.getElementById('popupDeleteMacroConfirmYes').onclick = function(){
+    				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&isPublic="+isMacroPublic+"&MacroName="
+    						+macroName,"",deleteMacroHandlerFunction);
+    				hideSmallPopup(this);
+    			}; 
+    			document.getElementById('popupDeleteMacroConfirmCancel').onclick = function(){hideSmallPopup(this)};
+    		}
     		break;
     	case "Edit":
-    		var popupEditMacro = document.getElementById("popupEditMacro");
-    		popupEditMacro.style.display = "block";
-    		
-    		oldMacroNameForEdit = macroName;
-    		macroNotesForEdit = macroNotes;
-    		macroDateForEdit = macroDate;
-    		var seqID = 0;
-    		
-    		var macroSequenceEditEl = document.getElementById("macroSequenceEdit");
-    		arrayOfCommandsForEdit = macroSequence.split(",");
-    		var output = "";
-    	    		
-    		for (var i = 0; i < arrayOfCommandsForEdit.length; i++)
+    		if (userPermission != 255 && isMacroPublic)
+				document.getElementById("popupNoEditPermission").style.display = "block";
+			else
 			{
-				var Command = arrayOfCommandsForEdit[i].split(":")
-				var commandType = Command[1];
-				var markColor = "1";
-				var disable = "";
-				var markColorData = "1";
-				var disableData = "";
-				if(commandType=='w'){
-					if(isNaN(Command[2]))
-					{
-						markColor = "2";
-						disable = "disabled";
-					}
-					if(isNaN(Command[3]))
-					{
-						markColorData = "2";
-						disableData = "disabled";
-					}
-					var writeEdit = "<lable>Write 0x<textarea  " + disableData + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
-						+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-						+ ",3)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
-						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-						+ ",2)'>V</div><br/></lable>";
-					seqID++;
-					output += writeEdit;
-				}else if(commandType=='r'){
-					if(isNaN(Command[2]))
-					{
-						markColor = "2";
-						disable = "disabled";
-					}
-					var readEdit = "<lable>Read from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
-						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-						+ ",2)'>V</div><br/></lable>";
-					seqID++;
-					output += readEdit;
-				}else if(commandType=='d'){
-					if(isNaN(Command[2]))
-					{
-						markColor = "2";
-						disable = "disabled";
-					}
-					var delayEdit = "<lable>Delay <textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
-						+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-						+ ",2)'>V</div> seconds<br/></lable>";
-					seqID++;
-				    output += delayEdit;
-				}else
-					console.log("ERROR! Command type "+commandType+" not found");
+				var popupEditMacro = document.getElementById("popupEditMacro");
+				popupEditMacro.style.display = "block";
+				
+				oldMacroNameForEdit = macroName;
+				macroNotesForEdit = macroNotes;
+				macroDateForEdit = macroDate;
+				var seqID = 0;
+				
+				var macroSequenceEditEl = document.getElementById("macroSequenceEdit");
+				arrayOfCommandsForEdit = macroSequence.split(",");
+				var output = "";
+						
+				for (var i = 0; i < arrayOfCommandsForEdit.length; i++)
+				{
+					var Command = arrayOfCommandsForEdit[i].split(":")
+					var commandType = Command[1];
+					var markColor = "1";
+					var disable = "";
+					var markColorData = "1";
+					var disableData = "";
+					if(commandType=='w'){
+						if(isNaN('0x'+Command[2]))
+						{
+							markColor = "2";
+							disable = "disabled";
+						}
+						if(isNaN('0x'+Command[3]))
+						{
+							markColorData = "2";
+							disableData = "disabled";
+						}
+						var writeEdit = "<lable>Write 0x<textarea  " + disableData + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
+							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",3)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",2)'>V</div><br/></lable>";
+						seqID++;
+						output += writeEdit;
+					}else if(commandType=='r'){
+						if(isNaN('0x'+Command[2]))
+						{
+							markColor = "2";
+							disable = "disabled";
+						}
+						var readEdit = "<lable>Read from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",2)'>V</div><br/></lable>";
+						seqID++;
+						output += readEdit;
+					}else if(commandType=='d'){
+						if(isNaN(Command[2]))
+						{
+							markColor = "2";
+							disable = "disabled";
+						}
+						var delayEdit = "<lable>Delay <textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",2)'>V</div> seconds<br/></lable>";
+						seqID++;
+						output += delayEdit;
+					}else
+						console.log("ERROR! Command type "+commandType+" not found");
+				}
+				macroSequenceEditEl.innerHTML = output;
+			
+				var macroNameEl = document.getElementById("macroNameEdit");
+				macroNameEl.value = macroName;
+				var macroNotesEl = document.getElementById("macroNotesEdit");
+				var date = new Date();    		
+				var minutes = "";
+				if(date.getMinutes() < 10) 
+					 minutes = "0"+date.getMinutes().toString();
+				else  minutes = date.getMinutes();
+				var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
+				macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
+				macroNotesEl.value = macroNotesForEdit;
 			}
-    		macroSequenceEditEl.innerHTML = output;
-    	
-    		var macroNameEl = document.getElementById("macroNameEdit");
-    		macroNameEl.value = macroName;
-    		var macroNotesEl = document.getElementById("macroNotesEdit");
-    		var date = new Date();    		
-			var minutes = "";
-    		if(date.getMinutes() < 10) 
-				 minutes = "0"+date.getMinutes().toString();
-    		else  minutes = date.getMinutes();
-    		var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
-    		macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
-    		macroNotesEl.value = macroNotesForEdit;
     		break;
     	case "Start":
     		var sequenceContentEl = document.getElementById("sequenceContent");
@@ -995,12 +1126,15 @@
     function saveChangedMacro()
     {
     	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
-    	var Regex = /^[a-z0-9]+$/i;
-		if (!Regex.test(newMacroNameForEdit)) alert("Sorry, special characters and spaces are not allowed.");
+    	var Regex = /^[\w\s]+$/;
+		if (!Regex.test(newMacroNameForEdit)) 
+			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
 		{
+		var isMacroPublic = !isOnPrivateMacros;
     	macroNotesForEdit = document.getElementById('macroNotesEdit').value;
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&oldMacroName="
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
+    			        +isMacroPublic+"&oldMacroName="
     					+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
 						+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
 						+macroNotesForEdit,"",saveChangedMacroHandlerFunction);
@@ -1011,12 +1145,6 @@
     function saveChangedMacroHandlerFunction()
     {
     	Debug.log("saveChangedMacroHandlerFunction() was called.");
-//		var newMacroName = DesktopContent.getXMLValue(req,"newMacroName");
-//		var reminderEl = document.getElementById('reminder');
-//		if (newMacroName != "ERROR")
-//			reminderEl.innerHTML = "Renamed " + macroNameForRename + " to " + newMacroName;
-//		else 	
-//			reminderEl.innerHTML = "Error renaming " + macroNameForRename + "!";
 		loadExistingMacros();  
     }
     
@@ -1090,93 +1218,98 @@
     	}
     }
 
+    
     function dealWithVariables(stringOfCommands,macroName)
     {
     	var reminderEl = document.getElementById('reminder');
-    	var waitForUserInput = 0;
-    	var copyOfStringOfCommands = stringOfCommands.slice();
+    	var waitForUserInputFlag = 0;
+    	var copyOfStringOfCommands = stringOfCommands.slice();           //Needed because the variable assignments are temporary
     	var i = 0;
-    	var toChange = 0;
+    	var commandToChange = 0;
     	var newCommand = [];
     	var dictionary = {};
     	var globalIndex = 0;
-    	var isWriteAddress = true;
+    	var isAddressOfWrite = true;
     	if(isMacroRunning)
     		reminderEl.innerHTML = "Please wait till the current macro ends";
     	else if(isArrayAllZero(selected))
     		reminderEl.innerHTML = "Please select at least one interface from the list";
     	else
     	{
-    		var askEl = document.getElementById('popupAskForVariableValue');
-    		timeIntervalID = setInterval(function(){
-    			if(i < stringOfCommands.length && waitForUserInput === 0)
+    		isMacroRunning = true;
+    		var promptEl = document.getElementById('popupAskForVariableValue');
+    		timeIntervalID = setInterval(function()
+    		{
+    			if(i < stringOfCommands.length && waitForUserInputFlag === 0)
     			{
     				var Command = stringOfCommands[i].split(":");
-    				if (Command[1] == "w")   //"write" will go through this loop twice
+    				if (Command[1] == "w")                               //A "write" command will go through this loop twice
 					{
-    					if(isWriteAddress)
+    					if(isAddressOfWrite)					         //Address goes first, and then data
     					{
     						setValue(2);
-    						i--;
-    						isWriteAddress = false;
+    						i--;						                 //Decrementing the count after checking address of write
+    						isAddressOfWrite = false;
     					}
     					else
     					{
     						setValue(3);
-    						isWriteAddress = true;
+    						isAddressOfWrite = true;
     					}
     				}
     				else setValue(2);
-    				function setValue(index){
+    				function setValue(index)        //This function is called when encountering a variable name in the address(index=2)/data(index=3) field
+    				{							    //instead of a hex value, and prompt the user to set the temporary value of variable 
     					globalIndex = index;
-						if (dictionary[Command[index].toString()] !== undefined)
-						{
+						if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
+						{					                                       
 							newCommand = copyOfStringOfCommands[i].split(":");
 							newCommand[index] = dictionary[Command[index].toString()];
 							copyOfStringOfCommands[i] = newCommand.join(":");
 						}
-						else if (isNaN("0x"+Command[index]))
+						else if (isNaN("0x"+Command[index]))					   //If not found in the dictionary, prompt user for the value
 						{
-							waitForUserInput = 1;
+							waitForUserInputFlag = 1;
 							newCommand = copyOfStringOfCommands[i].split(":");
 							var variableNameAtRunTime = Command[index];
-							toChange = i;
-							if(waitForUserInput === 0)
+							commandToChange = i;
+							if(waitForUserInputFlag === 0)						   //Keep looping after user enters value and clicks continue
 								return;
 							else
 							{
-								askEl.style.display = "block";
+								promptEl.style.display = "block";				   //Pop-up window prompting user for value the variable
 								document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
 							}
 						}
     				}
     				i++;
     			}
-    			else if(i == stringOfCommands.length && waitForUserInput === 0)
+    			else if(i == stringOfCommands.length && waitForUserInputFlag === 0)
     			{
     				clearInterval(timeIntervalID);
     				console.log("Final command to send to run: " + copyOfStringOfCommands);
-    				runMacro(copyOfStringOfCommands, macroName);
+    				runMacro(copyOfStringOfCommands, macroName);					//End of function: send new macro to run
     			}
     		},200);
     	}
 
-    	document.getElementById('popupAskForVariableValueContinue').onclick = function() {
+    	document.getElementById('popupAskForVariableValueContinue').onclick = function() 
+    	{
     		var variableValue = document.getElementById("valueAtRunTime").value.toString();
     		if(isNaN("0x"+variableValue))
     		{
-    			document.getElementById("assignValuePrompt").innerHTML = "<span class='red'>The value has to be a hex number.</span>";
+    			document.getElementById("assignValuePrompt").innerHTML = 
+    					"<span class='red'>The value has to be a hex number.</span>";
     			return;
     		}
     		else
     		{
-     			dictionary[newCommand[globalIndex].toString()] = variableValue;
+     			dictionary[newCommand[globalIndex].toString()] = variableValue;     //Add new name-value pair to dictionary
     			newCommand[globalIndex] = variableValue;
-    			askEl.style.display = "none";
-    			copyOfStringOfCommands[toChange] = newCommand.join(":");
-    			waitForUserInput = 0;
+    			promptEl.style.display = "none";
+    			copyOfStringOfCommands[commandToChange] = newCommand.join(":");
     			document.getElementById("valueAtRunTime").value = "";
-    			console.log(copyOfStringOfCommands);
+    			waitForUserInputFlag = 0;                                           
     			return;
     		}
     	};

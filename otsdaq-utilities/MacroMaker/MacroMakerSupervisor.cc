@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cstdio>
 #include <stdio.h> //for file rename
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
@@ -103,7 +104,6 @@ void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (x
 //========================================================================================================================
 void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception)
 {
-	
 
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
@@ -129,6 +129,12 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 	SOAPParameters retParameters;
 	retParameters.addParameter("Username", username);
 
+	theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
+				cookieCode, &userPermissions);
+	retParameters.addParameter("UserPermissions", userPermissions);
+	std::cout << __COUT_HDR_FL__ << "User Permission is " << unsigned(userPermissions) << "!!!";
+
+
 	DIR *dir;
 	std::string macroPath = (std::string)MACROS_DB_PATH + username + "/";
 	if ((dir = opendir (macroPath.c_str())) == NULL)
@@ -138,12 +144,18 @@ void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out) t
 	if ((dir = opendir (histPath.c_str())) == NULL)
 		mkdir(histPath.c_str(), 0755);
 
+	std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
+		if ((dir = opendir (publicPath.c_str())) == NULL)
+			mkdir(publicPath.c_str(), 0755);
+
 	std::string exportPath = (std::string)MACROS_EXPORT_PATH + username + "/";
 	if ((dir = opendir (exportPath.c_str())) == NULL)
 		mkdir(exportPath.c_str(), 0755);
 	//**** end LOGIN GATEWAY CODE ***//
 	HttpXmlDocument xmldoc(cookieCode);
 	handleRequest(Command,xmldoc,cgi);
+	if(Command == "getPermission")
+		xmldoc.addTextElementToData("Permission", std::to_string(unsigned(userPermissions)));
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
@@ -348,6 +360,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 		appendCommandToHistory(command,format,time,interfaces);
 	}
 }
+
 void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	std::cout << __COUT_HDR_FL__ << "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
@@ -355,12 +368,14 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
 	std::string Time = CgiDataUtilities::getData(cgi, "Time");
 	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
+	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 
 	std::cout << __COUT_HDR_FL__ << MACROS_DB_PATH << std::endl;
 
 	std::string fileName = Name + ".dat";
-
-	std::string fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
+	std::string fullPath;
+    if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
+    else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
 	std::cout << fullPath << std::endl;
 
 	std::ofstream macrofile (fullPath.c_str());
@@ -410,14 +425,51 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 			}
 		}
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
-		std::cout << __COUT_HDR_FL__ <<  "Loading existing macros: " << returnMacroStr << std::endl;
+		std::cout << __COUT_HDR_FL__ <<  "Loading existing private macros: " << returnMacroStr << std::endl;
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
 	}
 	else
 	{
 		std::cout << fullPath << std::endl;
-		std::cout << __COUT_HDR_FL__ <<  "Looping through MacroData folder failed! Wrong directory" << std::endl;
+		std::cout << __COUT_HDR_FL__ <<  "Looping through privateMacros folder failed! Wrong directory" << std::endl;
+	}
+	fullPath = (std::string)MACROS_DB_PATH + "publicMacros/";
+	returnStr = "";
+	if ((dir = opendir (fullPath.c_str())) != NULL)
+	{
+	  /* print all the files and directories within directory */
+		while ((ent = readdir (dir)) != NULL)
+		{
+		/* File name validation check */
+			if ((unsigned)strlen(ent->d_name) > 4)
+			{
+				std::string line;
+				std::ifstream read (((fullPath + (std::string)ent->d_name)).c_str());//reading a file
+				  if (read.is_open())
+				  {
+					  std::stringstream buffer;
+					  while (! read.eof() )
+					  {
+						  getline (read,line);
+						  buffer << line;
+					  }
+					  returnStr += buffer.str();
+					  read.close();
+				  }
+				  else
+					  std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
+			}
+		}
+		std::string returnPublicStr = returnStr.substr(0, returnStr.size()-1);
+		std::cout << __COUT_HDR_FL__ <<  "Loading existing public macros: " << returnPublicStr << std::endl;
+		closedir (dir);
+		xmldoc.addTextElementToData("returnPublicStr",returnPublicStr);
+	}
+	else
+	{
+		std::cout << fullPath << std::endl;
+		std::cout << __COUT_HDR_FL__ <<  "Looping through publicMacros folder failed! Wrong directory" << std::endl;
 	}
 }
 
@@ -438,7 +490,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 		histfile.close();
 	}
 	else
-		std::cout << "Unable to open file";
+		std::cout << "Unable to open history.hist";
 }
 
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
@@ -467,13 +519,23 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 		}
 	}
 	else
-		std::cout << __COUT_HDR_FL__ << "Unable to open file" << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Unable to open history.hist" << std::endl;
 }
 
 void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
 {
 	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
-	std::remove((MACROS_DB_PATH + username + "/" + MacroName + ".dat").c_str());
+	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
+
+	std::cout << __COUT_HDR_FL__ << MACROS_DB_PATH << std::endl;
+
+	std::string fileName = MacroName + ".dat";
+	std::string fullPath;
+	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
+	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
+	std::cout << fullPath << std::endl;
+
+	std::remove(fullPath.c_str());
 	std::cout << "Successfully deleted " << MacroName;
 	xmldoc.addTextElementToData("deletedMacroName",MacroName);
 }
@@ -485,12 +547,16 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
 	std::string Time = CgiDataUtilities::getData(cgi, "Time");
 	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
+	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 
-	std::cout << __COUT_HDR_FL__ <<  MACROS_DB_PATH << std::endl;
+	std::cout << __COUT_HDR_FL__ << MACROS_DB_PATH << std::endl;
 
 	std::string fileName = oldMacroName + ".dat";
-	std::string fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
+	std::string fullPath;
+	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
+	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
 	std::cout << fullPath << std::endl;
+
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())
 	{
@@ -522,7 +588,7 @@ void MacroMakerSupervisor::clearHistory()
 	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
 
 	std::remove(fullPath.c_str());
-	std::cout << "Successfully deleted " << fullPath;
+	std::cout << __COUT_HDR_FL__ << "Successfully deleted " << fullPath;
 }
 
 void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
@@ -557,7 +623,7 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
             else if (oneCommand[1] == "d")
             	exportFile << "delay(" << oneCommand[2] << ");\n";
             else
-            	std::cout << "What??Why??" << std::endl;
+            	std::cout << __COUT_HDR_FL__ << "FATAL ERROR: command is not w, r or d" << std::endl;
 		}
 		exportFile.close();
 	}
