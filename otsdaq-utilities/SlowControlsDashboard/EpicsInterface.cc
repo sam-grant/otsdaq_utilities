@@ -11,6 +11,7 @@
 //g++ -std=c++11  EpicsCAMonitor.cpp EpicsCAMessage.cpp EpicsWebClient.cpp SocketUDP.cpp SocketTCP.cpp -L$EPICS_BASE/lib/linux-x86_64/ -Wl,-rpath,$EPICS_BASE/lib/linux-x86_64 -lca -lCom -I$EPICS_BASE//include -I$EPICS_BASE//include/os/Linux -I$EPICS_BASE/include/compiler/gcc -o EpicsWebClient
 
 #define DEBUG false
+#define PV_FILE_NAME 			std::string(getenv("SERVICE_DATA")) + "/SlowControlsDashboardData/pv_list.dat";
 
 using namespace ots;
 
@@ -54,12 +55,13 @@ std::string EpicsInterface::getList (std::string format)
 
   if(format == "JSON")
     {
-      pvList = "{\"PVList\" : [";
-      for(auto it = mapOfPVInfo_.begin(); it != mapOfPVInfo_.end(); it++)
-	pvList += "\"" +  it->first + "\", ";
+      //pvList = "{\"PVList\" : [";
+      pvList = "[";
+	  for(auto it = mapOfPVInfo_.begin(); it != mapOfPVInfo_.end(); it++)
+    	  pvList += "\"" +  it->first + "\", ";
       
       pvList.resize(pvList.size()-2);
-      pvList += "]}";     
+      pvList += "]"; //}";     
       return pvList;
     }
   return pvList;
@@ -306,14 +308,21 @@ void EpicsInterface::loadListOfPVs()
   
   //read file 
   //for each line in file
-  std::ifstream infile("./PV_list.txt");
+  std::string pv_list_file = PV_FILE_NAME;
+  std::cout << pv_list_file << std::endl;
+  std::ifstream infile(pv_list_file);
   std::cout << "Reading file" << std::endl;
   for(std::string line; getline(infile, line);)
     {
-      //std::cout << line << std::endl;
+      std::cout << line << std::endl;
       mapOfPVInfo_[line] = new PVInfo(DBR_STRING);
     }
-  std::cout << "Finished reading file" << std::endl;
+
+  for(auto pv : mapOfPVInfo_)
+    {
+      //subscribe(pv.first);
+    }
+  std::cout << "Finished reading file and subscribing to pvs!" << std::endl;
   return; 
 }
 
@@ -442,18 +451,28 @@ void EpicsInterface::writePVValueToRecord(std::string pvName, std::string  pdata
       }
    std::cout << pdata << std::endl;
 
-   if(mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex != mapOfPVInfo_.find(pvName)->second->dataCache.size())
+   PVInfo * pvInfo = mapOfPVInfo_.find(pvName)->second;
+
+   if(pvInfo->mostRecentBufferIndex != pvInfo->dataCache.size()-1 && pvInfo->mostRecentBufferIndex != (unsigned int)(-1))
     {
-      mapOfPVInfo_.find(pvName)->second->dataCache[mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex] = currentRecord;
-      ++mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex;
+	   if(pvInfo->dataCache[pvInfo->mostRecentBufferIndex].first == currentRecord.first || pvInfo->dataCache[pvInfo->mostRecentBufferIndex].second == currentRecord.second)
+	   {
+		   pvInfo->valueChange = false;
+	   }
+	   else
+	   {
+		   pvInfo->valueChange = true;
+	   }
+	   
+       ++pvInfo->mostRecentBufferIndex;
+       pvInfo->dataCache[pvInfo->mostRecentBufferIndex] = currentRecord;
     }
-   else
+   	else 
     {
-      mapOfPVInfo_.find(pvName)->second->dataCache[0] = currentRecord;
-      mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex = 1;
+   		pvInfo->dataCache[0] = currentRecord;
+   		pvInfo->mostRecentBufferIndex = 0;
     }
-   
-   debugConsole(pvName);
+   //debugConsole(pvName);
    
   return;
 }
@@ -467,7 +486,7 @@ void EpicsInterface::writePVAlertToQueue (std::string pvName, const char * statu
   PVAlerts alert(time(0), status, severity);
   mapOfPVInfo_.find(pvName)->second->alerts.push(alert);
   
-  debugConsole(pvName);  
+  //debugConsole(pvName);  
   
   return;
 }
@@ -482,11 +501,11 @@ void EpicsInterface::debugConsole (std::string pvName)
 {
   
   std::cout << "==============================================================================" << std::endl;
-  for(unsigned int it = 0; it < mapOfPVInfo_.find(pvName)->second->dataCache.size(); it++)
+  for(unsigned int it = 0; it < mapOfPVInfo_.find(pvName)->second->dataCache.size()-1; it++)
     {
-      if(it == mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex-1){   std::cout << "---------------------------------------------------------------------" << std::endl;}
-      std::cout << "Iteration: " << it << " | " << mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex -1<< " | " <<  mapOfPVInfo_.find(pvName)->second->dataCache[it].second << std::endl;
-      if(it == mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex -1){   std::cout << "---------------------------------------------------------------------" << std::endl;}  
+      if(it == mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex){   std::cout << "---------------------------------------------------------------------" << std::endl;}
+      std::cout << "Iteration: " << it << " | " << mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex << " | " <<  mapOfPVInfo_.find(pvName)->second->dataCache[it].second << std::endl;
+      if(it == mapOfPVInfo_.find(pvName)->second->mostRecentBufferIndex){   std::cout << "---------------------------------------------------------------------" << std::endl;}  
     }
   std::cout << "==============================================================================" << std::endl;
   std::cout << "Status:     " << " | " <<  mapOfPVInfo_.find(pvName)->second->alerts.size()  << " | " << mapOfPVInfo_.find(pvName)->second->alerts.front().status << std::endl;
@@ -508,3 +527,66 @@ void EpicsInterface::popQueue (std::string pvName)
     }
   return;
 }
+
+
+std::array<std::string, 4>  EpicsInterface::getCurrentPVValue(std::string pvName)
+{
+	std::cout << "void EpicsInterface::getCurrentPVValue() reached" << std::endl;
+    
+	if( mapOfPVInfo_.find(pvName) != mapOfPVInfo_.end())
+	{
+			PVInfo * pv = mapOfPVInfo_.find(pvName)->second;
+			std::string time, value, status, severity;
+			
+			if(pv->valueChange)
+			{
+			
+				int index = pv->mostRecentBufferIndex;
+		    	
+				std::cout << index << std::endl;
+		
+				if(0 <= index && index < pv->circularBufferSize)
+				{
+					time   = std::to_string(pv->dataCache[index].first);
+					value  = pv->dataCache[index].second;
+					status = pv->alerts.front().status;
+					severity = pv->alerts.front().severity;
+				}
+				else
+				{
+					time  = "N/a";
+					value = "N/a";
+					status = "UDF";
+					severity = "INVALID";
+				}
+		    	//Time, Value, Status, Severity
+				
+		    	std::cout << "Index:    " << index << std::endl;
+		    	std::cout << "Time:     " << time << std::endl;
+		    	std::cout << "Value:    " << value << std::endl;
+		    	std::cout << "Status:   " << status << std::endl;
+		    	std::cout << "Severity: " << severity << std::endl;
+			}
+			else
+			{
+				time  = "NO_CHANGE";
+				value = "";
+				status = "";
+				severity = "";
+			}
+	    
+		std::array<std::string, 4> currentValues={time, value, status, severity};
+			
+		return currentValues;
+	}
+	else
+	{
+		std::cout << pvName << " was not found!" << std::endl;
+		std::cout << "Trying to resubscribe to " << pvName << std::endl;
+		//subscribe(pvName);
+	}
+	std::array<std::string, 4> currentValues= {"PV Not Found", "NF", "N/a", "N/a"};
+	//std::string currentValues [4] = {"N/a", "N/a", "N/a", "N/a"};
+    return currentValues;
+}
+

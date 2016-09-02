@@ -1,0 +1,385 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>Epics CA Monitor</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(200,200,200);
+			}
+			
+			#header {
+				position: relative;
+
+			}
+			.fileTreeTitle{
+				background-color: transparent;
+				text-decoration: none;
+				color: black;
+			}
+			
+			.fileTreeTitle: active {
+				background-color: red;
+			}
+			
+			h2 { 
+				margin: 0px;
+				padding: 0px;
+			}
+		
+			a {
+				color: blue;
+			}
+			
+			div {
+				position: relative;
+			}
+			
+			
+			#fileBlock {
+				background-color: rgb(26,148,49);
+			}				
+
+			#mainBlock {
+				background-color: rgb(240,234,214);
+			}
+
+			#fileTreeDiv {
+				height: auto;
+			}
+			
+			.mainBlock {
+				position:absolute;
+			}
+			
+			/* CSS Tree menu styles */
+			ol.tree
+			{
+				padding: 0 0 0 30px;
+				width: inherit;//300px;
+
+			}
+			li 
+			{ 
+				position: relative; 
+				margin-left: -15px;
+				list-style: none;
+			}
+			li.file
+			{
+				margin-left: -1px !important;
+			}
+				li.file a
+				{
+					background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat;
+					color: #fff;
+					padding-left: 21px;
+					text-decoration: none;
+					display: block;
+				}
+				li.file a[href *= '.page']	{ background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; }
+				
+			li input
+			{
+				position: absolute;
+				left: 0;
+				margin-left: 0;
+				opacity: 0;
+				z-index: 2;
+				cursor: pointer;
+				height: 1em;
+				width: 1em;
+				top: 0;
+			}
+			li input + ol
+			{
+				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small-expand.png) 40px 0 no-repeat;
+				margin: -0.938em 0 0 -44px; /* 15px */
+				height: 1em;
+			}
+			li input + ol > li { display: none; margin-left: -14px !important; padding-left: 1px; }
+			li label
+			{
+				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-folder-horizontal.png) 15px 1px no-repeat;
+				cursor: pointer;
+				display: block;
+				padding-left: 37px;
+			}
+
+			li input:checked + ol
+			{
+				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small.png) 40px 5px no-repeat;
+				margin: -1.25em 0 0 -44px; /* 20px */
+				padding: 1.563em 0 0 80px;
+				height: auto;
+			}
+				li input:checked + ol > li { display: block; margin: 0 0 0.125em;  /* 2px */}
+				li input:checked + ol > li:last-child { margin: 0 0 0.063em; /* 1px */ }
+		
+									
+		</style>
+		
+		
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+
+		
+		<script>		
+			
+			
+		
+			//functions:			
+				//init()					
+				
+
+					
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			//init called once body has loaded
+			function initFileTree() {			
+				Debug.log("initFileTree() was called");
+
+//				DesktopContent.XMLHttpRequest("Default?RequestType=getList","",handlerFunction);
+
+
+				window.onresize = redrawWindow;
+				redrawWindow(); //redraw window for first time
+			}	
+			
+			function handlerFunction(req) {
+				Debug.log("handlerFunction() was called. Req: " + req.responseText);
+
+				//var child1data = DesktopContent.getXMLValue(req,"child");
+				//var child2data = DesktopContent.getXMLValue(req,"child2");
+				
+				//Debug.log("--child1data:",child1data," --child2data:",child2data);
+				//block1El = document.getElementById('block1');
+				//block1.innerHTML = child1data;
+				
+			}
+			
+			function addPV(pv)
+			{
+				console.log("edit");
+			}
+			
+			function isFile(path)
+			{			
+				if(path.indexOf("/") != -1)
+					return false;
+				else if(path.indexOf(".") != -1)
+					return true;
+				else
+					return false;
+
+			}
+			
+			
+			function dir(parentElement, path, fullPathToPage)
+			{
+				//var parentElement = document.getElementById(baseDir);
+				var ol;
+				var pathToPath;
+			    if(fullPathToPage != path)
+			    	parentID = (fullPathToPage.substring(0, fullPathToPage.search(path)));
+			    else
+			    	parentID = path.substring(0, path.search("/"));
+			    
+				if(isFile(path))
+				{
+					var li = document.createElement("li");
+					li.id = fullPathToPage;
+					li.className = "file";
+					var a = document.createElement("a");
+					a.innerHTML = path.substring(0, path.search(".page"));
+					a.href = "";
+					a.onclick = function(){parent.loadPage(fullPathToPage)};//"addPV()";// + pv + ')';
+					li.appendChild(a);
+
+				    parentElement.appendChild(li);
+					
+				}
+				else
+				{
+			
+					var exists = false;
+					
+					
+					
+					if(document.getElementById(parentID) != null)
+					{
+						ol = document.getElementById(parentID+ "-ol");
+						exists = true;
+						//console.log('Found ' + ol);
+						
+					}
+
+					
+					if(!exists)
+					{
+						var li = document.createElement("li");
+						li.id = path.substring(0, path.search("/")) + "-li";
+					    var input = document.createElement("input");
+					    input.type = "checkbox";
+					    input.id = path.substring(0, path.search("/"));
+					    var label = document.createElement("label");
+					    label.htmlFor = input.id;
+					    label.innerHTML = input.id
+					    
+					    ol = document.createElement("ol");
+ 					    ol.id = parentID + "-ol";
+					    
+					    li.appendChild(label);
+					    li.appendChild(input);
+					    li.appendChild(ol);
+					    parentElement.appendChild(li);
+
+					    
+					    //console.log(path.substring(path.search("/") + 1));
+						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
+
+					}
+					else
+					{
+						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
+					}
+				}
+				
+			}
+			
+			
+
+			function redrawWindow(clicked, hover) {
+				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+				
+				var ul = document.createElement("list");
+				var maxWidth = 0;
+				var size;
+
+				if(window.parent.pagesList_ == "Loading")
+				{
+					var title = document.createElement("h2");
+					title.id = "title";
+					title.innerHTML = window.parent.pagesList_;
+					document.getElementById("header").appendChild(title);
+					while(title = document.getElementById("title").width < document.getElementById("header").width)
+					{
+						size = parseInt(title.css("font-size"), 10);
+						loading.css("font-size", size + 1);
+					}
+				}
+				else
+				{
+					var title = document.createElement("h2");
+					/*var a = document.createElement("a");
+					a.href = "#";
+					a.onclick = "";
+					a.className = "fileTreeTitle";*/
+
+					title.id = "title";
+					title.innerHTML = "Files";
+					document.getElementById("header").innerHTML = "";
+					//title.appendChild(a);
+					document.getElementById("header").appendChild(title);
+					while(title = document.getElementById("title").width < document.getElementById("header").width)
+					{
+						size = parseInt(title.css("font-size"), 10);
+						title.css("font-size", size + 1);
+					}
+					//console.log(window.parent.pagesList_);
+					
+					window.parent.pagesList_.forEach(function(page){
+						dir(document.getElementById("pagesFolder-ol"), page, page)
+					});
+						
+					var saveButton = document.createElement("button");
+					var saveAsButton = document.createElement("button");
+						
+					saveButton.type = "text";
+					saveAsButton.type = "text";
+					
+					saveButton.innerHTML = "Save";
+					saveAsButton. innerHTML = "Save As";
+					
+					document.getElementById("saveli").appendChild(saveButton);
+					document.getElementById("saveli").appendChild(saveAsButton);
+					
+					
+					
+					var fileTreeDiv = document.getElementById("fileTreeDiv");
+					var header = document.getElementById("header");
+					
+					header.style.height      = window.innerHeight * 0.05 + "px";
+					fileTreeDiv.style.height = window.innerHeight * 0.75 + "px";
+					controlsDiv.style.height = window.innerHeight * 0.10 + "px";
+					controlsDiv.style.top = fileTreeDiv.style.top + fileTreeDiv.style.height;
+					
+						/*
+						console.log(page);
+						
+						var li = document.createElement("li");
+						li.id = page;
+						li.className = "file";
+						var a = document.createElement("a");
+						a.innerHTML = page.substring(0, page.search(".page"));
+						a.href = "";
+						a.onclick = function(){parent.loadPage(page)};//"addPV()";// + pv + ')';
+						li.appendChild(a);
+
+						document.getElementById("pagesFolderol").appendChild(li);
+						
+						
+						var button = document.createElement("button");
+						button.style.width = "inherit";
+						button.style.overflow =  "hidden";
+						button.id = page; 
+						button.onclick = 
+						button.innerHTML = page;
+						if(button.style.width > maxWidth)
+						{
+							maxWidth = button.style.width;
+						}
+						li.appendChild(button);
+						ul.appendChild(li);*/
+							
+						
+					//});
+				
+//					document.getElementById("fileTree").innerHTML = "";
+//					document.getElementById("fileTree").appendChild(ul);
+
+				}
+				
+	
+			}
+			
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:initFileTree();'>	
+			
+		<div class='mainBlock' id='header' ></div>
+		<div class='mainBlock' id='fileTreeDiv' width="100%">
+	    <ol class="tree">
+	      <li>
+	      	<label for="pagesFolder">Pages</label> <input type="checkbox" checked disabled id="pagesFolder" /> 
+	      	<ol id="pagesFolder-ol" >
+				
+	      	</ol>
+	      </li>
+	    </ol>
+		</div>
+		<div id="controlsDiv" >
+			<ul>
+			<li id="saveli"></li>
+			</ul>
+		</div>
+				
+		
+	</body>
+	
+</html>

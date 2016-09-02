@@ -5,6 +5,8 @@
 
 #include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -23,8 +25,6 @@
 
 #include <string>
 #include <map>
-#include "../../../otsdaq/otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 namespace ots
 {
@@ -47,9 +47,12 @@ public:
 
 private:
 
-    void fillSpecificSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string alias, int backboneVersion);
-    void fillSpecificSubSystemXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string subAlias, int version);
+    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, int backboneVersion);
+    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version);
+    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version,
+    		const std::string &data, const int &dataOffset, const int &chunkSize);
 
+    void testXDAQContext();
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,

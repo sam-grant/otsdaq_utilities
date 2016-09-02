@@ -340,7 +340,7 @@ function activateSave(){
 
 function makeServerRequest(data){
 
-	DesktopContent.XMLHttpRequest("iconEditor", data, iconEditorHandler, undefined, undefined, DesktopWizardContent.getSequence());
+	DesktopContent.XMLHttpRequest("iconEditor", data, iconEditorHandler, undefined, undefined);
 }
 
 var iconEditorHandler = function(req){

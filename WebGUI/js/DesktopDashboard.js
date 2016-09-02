@@ -34,6 +34,19 @@ else {
 	    }
         
         
+
+    	//------------------------------------------------------------------
+    	//list of members functions ----------------------
+    	//------------------------------------------------------------------
+    	//private:
+    	//public:
+        	//displayConnectionStatus(connected) //bool connected
+        
+        
+        
+        
+        
+        
         //------------------------------------------------------------------
 		//create private members variables ----------------------
 		//------------------------------------------------------------------
@@ -58,7 +71,7 @@ else {
         var _layoutDropDownDisplayed = false;
 		var _layoutMenuItems = ["System Preset-1","System Preset-2","---","User Preset-1","User Preset-2","User Preset-3"];
         
-        var _dashboardElement;
+        var _dashboardElement, _dashboardColorPostbox;
 		//------------------------------------------------------------------
 		//create public members variables ----------------------
 		//------------------------------------------------------------------
@@ -155,18 +168,21 @@ else {
 				var wh = dh;
 				
 				while(ww*2 < wh) {				
-					Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
+					//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
 					ww = Math.floor(dw/Math.ceil(Desktop.desktop.getNumberOfWindows()/++rows)); wh = Math.floor(dh/rows);				
 				}  //have too much height, so add row
 				xx = dx; yy = dy;
-				Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
-								
+				//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
+				var cols = Math.ceil(Desktop.desktop.getNumberOfWindows()/rows);
+				Debug.log("Desktop Dashboard Organize r" + rows + " , c" + cols,Debug.LOW_PRIORITY);
+						
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {					
 					win = Desktop.desktop.getWindowByIndex(document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
 					if(win.isMinimized() || win.isMaximized()) win.minimize();
 					xx += ww;
-					if(xx > dw){xx = dx; yy += wh;}					
+					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
+					//Debug.log("Desktop Dashboard Organize i:" + (i+1)%cols + " -  " + xx + " , " + yy,Debug.LOW_PRIORITY);	
 				}
 				break;
 			case 1: //offset arrange
@@ -293,6 +309,8 @@ else {
         
         this.setDefaultDashboardColor = function(color) {
         	_defaultDashboardColor = color;
+            _dashboardColorPostbox.innerHTML = _defaultDashboardColor; //set to color string
+            
         	_topBar.style.backgroundColor = _defaultDashboardColor;
         	_windowDashboard.style.backgroundColor = _defaultDashboardColor;
         }
@@ -301,13 +319,39 @@ else {
         this.displayUserLock = function(usernameWithLock) {      	
        		var el = document.getElementById("DesktopDashboard-userWithLock");
        		
-       		if(!usernameWithLock || usernameWithLock == "") {	el.innerHTML = ""; _oldUserNameWithLock = ""; return; }  	
+       		if(!usernameWithLock || usernameWithLock == "") 
+       		{		//nobody has lock
+       			el.style.display = "none";
+       			el.innerHTML = ""; 
+       			_oldUserNameWithLock = "";       			
+       			return; 
+       		}  	
        		
        		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
+       		
        		el.innerHTML = "<img src='../images/dashboardImages/icon-Settings-Lock.png' title='User " + 
        			usernameWithLock + " has the ots Lock'>";
+   			el.style.display = "block";
        		_oldUserNameWithLock = usernameWithLock; 
         }        
+        
+
+        //displayConnectionStatus ~~
+        //	bool connected
+        this.displayConnectionStatus = function(connected) {    
+       		var el = document.getElementById("DesktopDashboard-serverConnectionStatus");
+       		
+       		if(connected) 
+       		{		
+       			el.style.display = "none";
+       			el.innerHTML = "";
+       		}  	
+       		else
+       		{
+       			el.innerHTML = "*** Disconnected ***";
+       			el.style.display = "block";       			
+       		}
+        }
         
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -355,6 +399,24 @@ else {
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
         
+        
+        //user with lock on far right.. because it is the highest priority for user to see
+		tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+		tmpBtn.setAttribute("id", "DesktopDashboard-serverConnectionStatus");
+		tmpBtn.setAttribute("title", "Try refreshing the page, or if the problem persists contact the ots admins.");
+		tmpBtn.style.display = "none";
+		tmpBtn.style.cursor = "pointer";
+		tmpBtn.style.color = "rgb(255,150,0)";
+		_topBar.appendChild(tmpBtn);
+        		
+        //user with lock on far right.. because it is the highest priority for user to see
+        tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
+		tmpBtn.style.display = "none";
+		_topBar.appendChild(tmpBtn);
+                
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
         tmpBtn.innerHTML = "<a target='_blank' href='" + 
@@ -362,30 +424,30 @@ else {
         	" 'title='Click to open ots documentation' ><img src='../images/dashboardImages/icon-Help.png'></a>";
         _topBar.appendChild(tmpBtn);
         
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right DesktopDashboard-user-account DesktopDashboard-user-logout");
-        tmpBtn.innerHTML = "<a href='#' title='Click to sign out of your account'>Sign out</a>";
-        tmpBtn.onmouseup = Desktop.logout;
-        _topBar.appendChild(tmpBtn);
-        
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-        tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
-        tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
-        	"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='../images/dashboardImages/icon-Settings.png'></a>";
-        _topBar.appendChild(tmpBtn);
-                
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-user-account");
-		tmpBtn.setAttribute("id", "DesktopDashboard-user-displayName");
-        tmpBtn.innerHTML = "";
-        _topBar.appendChild(tmpBtn);     
-        
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
-		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
-        _topBar.appendChild(tmpBtn);        
-                
+        if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
+        		Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) //dont show features if in wizard mode
+        {   
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-button-right DesktopDashboard-user-account DesktopDashboard-user-logout");
+			tmpBtn.innerHTML = "<a href='#' title='Click to sign out of your account'>Sign out</a>";
+			tmpBtn.onmouseup = Desktop.logout;
+			_topBar.appendChild(tmpBtn);
+			
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
+			tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
+			tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
+				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='../images/dashboardImages/icon-Settings.png'></a>";
+			_topBar.appendChild(tmpBtn);
+					
+			tmpBtn = document.createElement("div");
+			tmpBtn.setAttribute("class", "DesktopDashboard-user-account");
+			tmpBtn.setAttribute("id", "DesktopDashboard-user-displayName");
+			tmpBtn.innerHTML = "";
+			_topBar.appendChild(tmpBtn);
+        }    
+        else
+        	Debug.log("Desktop Dashboard is in Wizard mode",Debug.LOW_PRIORITY);
         
         this.dashboardElement.appendChild(_topBar);
         Debug.log("Desktop Dashboard Top Bar created",Debug.LOW_PRIORITY);
@@ -399,6 +461,14 @@ else {
         _toggleWindowDashboard();
         this.updateWindows();
         this.dashboardElement.appendChild(_windowDashboard);
+        
+
+        _dashboardColorPostbox = document.createElement("div");
+        _dashboardColorPostbox.setAttribute("id", "DesktopContent-dashboardColorPostbox");
+        _dashboardColorPostbox.style.display = "none";
+        _dashboardColorPostbox.innerHTML = _defaultDashboardColor; //init to color string
+        this.dashboardElement.appendChild(_dashboardColorPostbox);
+        
         
 	   		//add mouse handlers
 	   	_windowDashboard.onmousemove = Desktop.handleWindowMouseMove;

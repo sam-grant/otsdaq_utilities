@@ -66,9 +66,10 @@ private:
 	std::string     validateUploadFileType      (const std::string fileType);
     void            movePreviewEntry            (std::string previewNumber, bool approve, HttpXmlDocument *xmldoc = 0);
     void 			hideLogbookEntry	        (const std::string &entryId, bool hide, const std::string &hider);
+    static void		MFReceiverWorkLoop			();
     
     SupervisorConfiguration              	theSupervisorsConfiguration_;
-    RemoteWebUsers						theRemoteWebUsers_;
+    RemoteWebUsers							theRemoteWebUsers_;
 
     enum {
     	ADMIN_PERMISSIONS_THRESHOLD = 255,

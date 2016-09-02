@@ -119,7 +119,7 @@ else {
       			iconArray = req.responseText.split(","); 
       		}
 		    
-			//Debug.log("icon Array split: " + iconArray);
+			Debug.log("icon Array split: " + iconArray);
       		//Debug.log(_permissions);
 
      	    //an icon is 6 fields.. give comma-separated

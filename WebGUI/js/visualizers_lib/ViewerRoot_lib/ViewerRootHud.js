@@ -86,7 +86,7 @@ ViewerRoot.createHud = function() {
 		var path = DesktopContent.getXMLValue(req,'path');
 		if(!path) 
 		{
-			Debug.log("ViewerRoot Hud handleDirContents no path returned");
+			Debug.log("ViewerRoot Hud handleDirContents no path returned",Debug.HIGH_PRIORITY);
 			return;
 		}
 		
