@@ -2,25 +2,31 @@
   font-family: 'Comfortaa';
   font-weight: 400;
   font-style: normal;
-  src: url('../fonts/Comfortaa-regular/Comfortaa-regular.eot');
-  src: url('../fonts/Comfortaa-regular/Comfortaa-regular.eot?#iefix') format('embedded-opentype'),
+  src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.eot');
+  src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.eot?#iefix') format('embedded-opentype'),
        local('Comfortaa'),
        local('Comfortaa-regular'),
-       url('../fonts/Comfortaa-regular/Comfortaa-regular.woff2') format('woff2'),
-       url('../fonts/Comfortaa-regular/Comfortaa-regular.woff') format('woff'),
-       url('../fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype'),
-       url('../fonts/Comfortaa-regular/Comfortaa-regular.svg#Comfortaa') format('svg');
+       url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.woff2') format('woff2'),
+       url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.woff') format('woff'),
+       url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype'),
+       url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.svg#Comfortaa') format('svg');
 }
 @font-face {
   font-family: 'Donegal One';
   font-weight: 400;
   font-style: normal;
-  src: url('/fonts/Donegal-One-regular/Donegal-One-regular.eot');
-  src: url('/fonts/Donegal-One-regular/Donegal-One-regular.eot?#iefix') format('embedded-opentype'),
+  src: url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.eot');
+  src: url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.eot?#iefix') format('embedded-opentype'),
        local('Donegal One'),
        local('Donegal-One-regular'),
-       url('/fonts/Donegal-One-regular/Donegal-One-regular.woff2') format('woff2'),
-       url('/fonts/Donegal-One-regular/Donegal-One-regular.woff') format('woff'),
-       url('/fonts/Donegal-One-regular/Donegal-One-regular.ttf') format('truetype'),
-       url('/fonts/Donegal-One-regular/Donegal-One-regular.svg#DonegalOne') format('svg');
+       url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.woff2') format('woff2'),
+       url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.woff') format('woff'),
+       url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.ttf') format('truetype'),
+       url('/WebPath/fonts/Donegal-One-regular/Donegal-One-regular.svg#DonegalOne') format('svg');
+}
+@font-face {
+  font-family: 'Inconsolata';
+  font-weight: 400;
+  font-style: normal;
+  src: url('/WebPath/fonts/inconsolata/Inconsolata-Regular.ttf') format('truetype');
 }
