@@ -75,7 +75,7 @@ theRemoteWebUsers_  (this)
 
 	//return;
 
-	//testXDAQContext(); //test new config
+	testXDAQContext(); //test new config
 
 	return;
 
@@ -1381,7 +1381,8 @@ void ConfigurationGUISupervisor::fillSpecificSubSystemXML(HttpXmlDocument &xmldo
 		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 		for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 		{
-			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << colInfo[i].getName() << " "
+			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
+					colInfo[i].getName() << " "
 					<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
 
 			xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
