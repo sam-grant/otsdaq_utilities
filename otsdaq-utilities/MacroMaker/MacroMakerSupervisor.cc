@@ -133,7 +133,7 @@ throw (xgi::exception::Exception)
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
-				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
+				&userPermissions,  		//acquire user's access level (optionally null pointer)
 				"0",						//report user's ip address, if known
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
@@ -155,9 +155,7 @@ throw (xgi::exception::Exception)
 	username = user;
 
 
-	theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-				cookieCode, &userPermissions);
-	retParameters.addParameter("UserPermissions", userPermissions);
+      
 	std::cout << __COUT_HDR_FL__ << "User Permission is " << unsigned(userPermissions) << "!!!";
 
 

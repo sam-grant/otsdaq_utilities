@@ -75,7 +75,7 @@ theRemoteWebUsers_  (this)
 
 	//return;
 
-	testXDAQContext(); //test new config
+	//testXDAQContext(); //test new config
 
 	return;
 
@@ -710,7 +710,7 @@ throw (xgi::exception::Exception)
 	//HttpXmlDocument xmldoc(cookieCode);
 
 	//acquire user's configuration manager based on username & activeSessionIndex
-
+	__MOUT__ << std::endl;
 	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
 	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
 	__MOUT__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
@@ -799,16 +799,18 @@ throw (xgi::exception::Exception)
 		//</subconfiguration>
 		//<subconfiguration alias=xxx>...</subconfiguration>
 		//...
-
+		__MOUT__ << std::endl;
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		__MOUT__ << std::endl;
 		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
+		__MOUT__ << std::endl;
 
 		while(it != allCfgInfo.end())
 		{
 			//for each subconfiguration alias
 			//get existing version keys
 
-			//__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			__MOUT__ << "Alias: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
 
 			//add system subconfiguration alias
 			xmldoc.addTextElementToData("SystemSubConfigurationAlias", it->first);
@@ -889,11 +891,11 @@ throw (xgi::exception::Exception)
 		//	....
 		//</subconfiguration>
 
-		std::string 	subAlias = cgi("subAlias"); 			//from GET
-		std::string  versionStr = cgi("version");		  	//from GET
-		int		version = (versionStr == "")?-2:atoi(versionStr.c_str());
-		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
-		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
+		std::string		subAlias = cgi("subAlias"); 			//from GET
+		std::string  	versionStr = cgi("version");		  	//from GET
+		int				version = (versionStr == "")?-2:atoi(versionStr.c_str());
+		int				dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
+		int				chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
 
 		__MOUT__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
