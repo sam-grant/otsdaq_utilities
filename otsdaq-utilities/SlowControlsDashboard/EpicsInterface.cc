@@ -142,10 +142,13 @@ void EpicsInterface::eventCallback(struct event_handler_args eha)
     printf("channel %s: ", ca_name(eha.chid));
     
     switch (eha.type){
+    case DBR_CTRL_STRING:
+        if(DEBUG){std::cout << "Response Type: DBR_CTRL_STRING" << std::endl;}
+        ((EpicsInterface*) eha.usr)->writePVVControlalueToRecord(ca_name(eha.chid),std::to_string(*((double*) eha.dbr))); //write the PV's control values to records 	 	
+    	break;
     case DBF_DOUBLE:
       if(DEBUG){std::cout << "Response Type: DBR_DOUBLE" << std::endl;}
-       ((EpicsInterface*) eha.usr)->writePVValueToRecord(ca_name(eha.chid),std::to_string(*((double*) eha.dbr))
-); //write the PV's value to records 	 	
+       ((EpicsInterface*) eha.usr)->writePVValueToRecord(ca_name(eha.chid),std::to_string(*((double*) eha.dbr))); //write the PV's value to records 	 	
       break;
     case DBR_STS_STRING:
       if(DEBUG){std::cout << "Response Type: DBR_STS_STRING" << std::endl;}
@@ -326,6 +329,12 @@ void EpicsInterface::loadListOfPVs()
   return; 
 }
 
+void EpicsInterface::getControlValues(std::string pvName)
+{
+	 SEVCHK(ca_array_get_callback(DBR_CTRL_STRING, 0, mapOfPVInfo_.find(pvName)->second->channelID, eventCallback, mapOfPVInfo_.find(pvName)->second), "ca_array_get_callback");
+	  return;
+}
+
 void EpicsInterface::createChannel(std::string pvName)
 {
   if(!checkIfPVExists(pvName))
@@ -401,6 +410,7 @@ void EpicsInterface::subscribeToChannel (std::string pvName, chtype subscription
 	  //Just cancel the subscription if it already exists?
 	}    
     }
+  getControlValues(pvName);
   SEVCHK(ca_create_subscription(dbf_type_to_DBR(mapOfPVInfo_.find(pvName)->second->channelType),1,mapOfPVInfo_.find(pvName)->second->channelID, DBE_VALUE | DBE_ALARM | DBE_PROPERTY, eventCallback, this, &(mapOfPVInfo_.find(pvName)->second->eventID)),"EpicsInterface::subscribeToChannel() : ca_create_subscription"); 
   if(DEBUG){std::cout << "EpicsInterface::subscribeToChannel: Created Subscription to "<< mapOfPVInfo_.find(pvName)->first << "!\n" << std::endl;}
   SEVCHK(ca_poll(), "EpicsInterface::subscribeToChannel() : ca_poll");
@@ -438,7 +448,16 @@ void EpicsInterface::readValueFromPV (std::string pvName)
 
   return;
 }
-
+void EpicsInterface::writePVVControlalueToRecord(std::string pvName, std::string  pdata)
+{
+   if(!checkIfPVExists(pvName))
+    {
+      std::cout << pvName << " doesn't exist!" << std::endl;
+      return;
+      }
+   std::cout << pdata << std::endl;
+   return;
+}
 //Enforces the circular buffer
 void EpicsInterface::writePVValueToRecord(std::string pvName, std::string  pdata)
 {

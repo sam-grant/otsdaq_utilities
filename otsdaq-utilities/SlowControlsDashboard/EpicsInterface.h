@@ -83,6 +83,7 @@ struct PVInfo
   std::vector<std::pair<time_t, std::string>> dataCache;// (10, std::pair<time_t, std::string> (0, ""));
   bool valueChange = false;
   std::queue <PVAlerts> alerts;
+  std::string HIHI, HI, LOLO, LOW;
   
 };
 
@@ -106,12 +107,14 @@ class EpicsInterface//: public SlowControlsInterface
  private:
   bool checkIfPVExists            				   (std::string pvName                         );
   void loadListOfPVs              				   (                                           );
+  void getControlValues							   (std::string pvName                         );
   void createChannel              				   (std::string pvName                         );
   void destroyChannel             				   (std::string pvName                         );
   void subscribeToChannel         				   (std::string pvName, chtype subscriptionType);
   void cancelSubscriptionToChannel				   (std::string pvName                         );
   void readValueFromPV            				   (std::string pvName                         );
   void writePVValueToRecord       				   (std::string pvName, std::string  pdata     );
+  void writePVVControlalueToRecord 				   (std::string pvName, std::string  pdata     );
   void writePVAlertToQueue         				   (std::string pvName, const char * status, const char * severity);
   void readPVRecord               				   (std::string pvName                        );
   void debugConsole                				   (std::string pvName                        );

@@ -32,6 +32,14 @@ widgetLibrary.typeToImgSrc =  {
 							   "4" :"digital-clock-icon.png",						   
 							   "5" :"thermometer-icon.png"				   
 							  }
+widgetLibrary.typeToPurpose = {
+								"0" : "Plain Text",
+								"1" : "Basic Display",
+								"2" : "Hakeem's Widet",
+								"3" : "Clock",
+								"4" : "Clock",
+								"5" : "Temperature"
+								}
 widgetLibrary.init = function()
 {
 	

@@ -1,10 +1,75 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
 	<head>
-		<title>Epics CA Monitor</title>
+		<title>File Tree</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(200,200,200);
+				background-color: rgba(250,250,250,0.8);
+			}
+			button {
+				background-color: #52a8e8;
+				background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #52a8e8), color-stop(100%, #377ad0));
+				background-image: -webkit-linear-gradient(top, #52a8e8, #377ad0);
+				background-image: -moz-linear-gradient(top, #52a8e8, #377ad0);
+				background-image: -ms-linear-gradient(top, #52a8e8, #377ad0);
+				background-image: -o-linear-gradient(top, #52a8e8, #377ad0);
+				background-image: linear-gradient(top, #52a8e8, #377ad0);
+				border-top: 1px solid #4081af;
+				border-right: 1px solid #2e69a3;
+				border-bottom: 1px solid #20559a;
+				border-left: 1px solid #2e69a3;
+				border-radius: 16px;
+				-webkit-box-shadow: inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
+				box-shadow: inset 0 1px 0 0 #72b9eb, 0 1px 2px 0 #b3b3b3;
+				color: #fff;
+				font: normal 11px/1 "lucida grande", sans-serif;
+				padding: 3px 5px;
+				text-align: center;
+				text-shadow: 0 -1px 1px #3275bc;
+				width: 100%;
+				-webkit-background-clip: padding-box;
+			}
+
+			}
+			
+			button:hover {
+			  background: #2a81d7;
+			  background: -moz-linear-gradient(0% 100% 90deg, #206bcb, #3e9ee5);
+			  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#3e9ee5), to(#206bcb));
+			  border-top: 1px solid #2a73a6;
+			  border-right: 1px solid #165899;
+			  border-bottom: 1px solid #07428f;
+			  border-left: 1px solid #165899;
+			  -moz-box-shadow: inset 0 1px 0 0 #62b1e9;
+			  -webkit-box-shadow: inset 0 1px 0 0 #62b1e9;
+			  cursor: pointer;
+			  text-shadow: 0 -1px 1px #1d62ab;
+			}
+			
+			button:active {
+			  background: #3282d3;
+			  border: 1px solid #154c8c;
+			  border-bottom: 1px solid #0e408e;
+			  -moz-box-shadow: inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
+			  -webkit-box-shadow: inset 0 0 6px 3px #1657b5, 0 1px 0 0 #fff;
+			  text-shadow: 0 -1px 1px #2361a4;
+			}
+			
+			button[disabled],
+			button[disabled]:hover,
+			button[disabled]:active {
+			  background: #999;
+			  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#dadada), to(#f3f3f3));
+			  border-top: 1px solid #c5c5c5;
+			  border-right: 1px solid #cecece;
+			  border-bottom: 1px solid #d9d9d9;
+			  border-left: 1px solid #cecece;
+			  color: #8f8f8f;
+			  box-shadow: none;
+			  -moz-box-shadow: none;
+			  -webkit-box-shadow: none;
+			  cursor: not-allowed;
+			  text-shadow: 0 -1px 1px #ebebeb;
 			}
 			
 			#header {
@@ -50,6 +115,14 @@
 			.mainBlock {
 				position:absolute;
 			}
+			#saveul {
+				margin: 0px;
+				padding: 0px;
+			}
+			
+			#saveli {
+				margin: 10%;
+			}
 			
 			/* CSS Tree menu styles */
 			ol.tree
@@ -68,13 +141,17 @@
 			{
 				margin-left: -1px !important;
 			}
-				li.file a
-				{
+				li.file a {
 					background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat;
-					color: #fff;
+					color: #000000;
 					padding-left: 21px;
+					//color: brgb(255, 204, 0);
 					text-decoration: none;
+					font: none "Helvetica Neue"
 					display: block;
+				}
+				li.file a:hover {
+					color: rgba(0,0,0,0.7);
 				}
 				li.file a[href *= '.page']	{ background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-document.png) 0 0 no-repeat; }
 				
@@ -92,7 +169,9 @@
 			}
 			li input + ol
 			{
-				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small-expand.png) 40px 0 no-repeat;
+				//background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small-expand.png) 40px 0 no-repeat;
+//				border-bottom: 2px solid black;
+//				border-top: 2px solid black;
 				margin: -0.938em 0 0 -44px; /* 15px */
 				height: 1em;
 			}
@@ -107,7 +186,7 @@
 
 			li input:checked + ol
 			{
-				background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small.png) 40px 5px no-repeat;
+				//background: url(/WebPath/images/windowContentImages/SlowControlsDashboardFileTree-toggle-small.png) 40px 5px no-repeat;
 				margin: -1.25em 0 0 -44px; /* 20px */
 				padding: 1.563em 0 0 80px;
 				height: auto;
@@ -249,7 +328,11 @@
 				
 			}
 			
-			
+			function close()
+			{
+				console.log("closing");
+				window.parent.toggleFileMenu();
+			}
 
 			function redrawWindow(clicked, hover) {
 				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
@@ -296,16 +379,22 @@
 						
 					var saveButton = document.createElement("button");
 					var saveAsButton = document.createElement("button");
+					var closeButton = document.createElement("button");
 						
 					saveButton.type = "text";
 					saveAsButton.type = "text";
+					closeButton.type = "text";
 					
 					saveButton.innerHTML = "Save";
-					saveAsButton. innerHTML = "Save As";
+					saveAsButton.innerHTML = "Save As";
+					closeButton.innerHTML = "Close";
+					
+					closeButton.onclick = function(){close();};
 					
 					document.getElementById("saveli").appendChild(saveButton);
 					document.getElementById("saveli").appendChild(saveAsButton);
-					
+					document.getElementById("saveli").appendChild(closeButton);
+
 					
 					
 					var fileTreeDiv = document.getElementById("fileTreeDiv");
@@ -366,7 +455,7 @@
 		<div class='mainBlock' id='fileTreeDiv' width="100%">
 	    <ol class="tree">
 	      <li>
-	      	<label for="pagesFolder">Pages</label> <input type="checkbox" checked disabled id="pagesFolder" /> 
+	      	<label for="pagesFolder">Pages</label> 
 	      	<ol id="pagesFolder-ol" >
 				
 	      	</ol>
@@ -374,7 +463,7 @@
 	    </ol>
 		</div>
 		<div id="controlsDiv" >
-			<ul>
+			<ul id="saveul">
 			<li id="saveli"></li>
 			</ul>
 		</div>

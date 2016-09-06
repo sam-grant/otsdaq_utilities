@@ -4,7 +4,7 @@
 		<title>Slow Controls Dashboard</title>
 		<style type="text/css">			
 			body {
-				background-color: rgb(200,200,200);
+				background-color: rgb(255,204,0);
 		    	overflow-x: hidden;
 	    		overflow-y: hidden;
 				transition: background-color .25s;
@@ -42,12 +42,19 @@
 			#mainBlock {
 			    //transition: margin-left 10s;
 			  	transition: left .25s;
-				background-color: rgb(240,234,214);
+				background-color: rgb(250,250,250);
 
 			}
+			.editMode {
+				background-color: rgba(255, 59, 48, 0.4);
 
+			}
+			
 			#editBlock {
-				transition: left .25s;
+				transition-timing-function: ease-out;
+				transition: margin-bottom .5s;
+				-webkit-transition-timing-function: ease-out;
+				-webkit-transition: margin-bottom .5s;
 				overflow: hidden;
 				//background-color: rgb(200,0,0);
 			}
@@ -61,40 +68,71 @@
 			.mainBlock {
 			    transition: background-color .25s;
 				position:absolute;
+
 			}
+			
 			.ghost-active {
-				  display: block !important;
-				}
+				display: block !important;
+			}
 
 			.ghost-select > span {
-			  background-color: rgba(239, 28, 190, 0.6);
-			  border: 1px solid #b20e8c;
-			  width: 100%;
-			  height: 100%;
-			  float: left;
+				background-color: rgba(255, 45, 85, 0.6);
+			  	border: 1px solid #b20e8c;
+			  	width: 100%;
+			  	height: 100%;
+			  	float: left;
 			}
 
 
 			.ghost-select {
-			  display: none;
-			  z-index: 10;
-			  position: absolute !important;
-			  cursor: default !important;
+				display: none;
+			  	z-index: 10;
+				position: absolute !important;
+			  	cursor: default !important;
 			}
 			
+
 			.cover {
 			    transition: background-color .25s;
 		        z-index: 4;
+				position:absolute;
 			}
 			
 			.action-required {
 				border: 10px solid rgb(255, 204, 0);
 			  	box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
 		  		-webkit-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
-				-moz-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
+				-moz-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);				
+			}
+			
+			
+			#addPVMenuDiv {
+				margin: auto;
+				position: absolute;
+				display: none;
+				height: auto;
+				width: 28%;
+				top: 30%;
+				left: 36%;
+				z-index: 32;
 
+				box-shadow: 1px 1px 2px #cfcfcf;
+				
+
+			}
+			
+			#addPVMenu {
+				position: relative;
+				top: 0px;
+				left: -1px;
+				height: 100%;
+				width: 100%;
+				background-color: rgba(178,178,178,0.9);
+				border: solid 2px rgba(0,0,0,0.5);
+				border-radius: 1px;
 				
 			}
+			
 			
 			#contextMenuDiv {
 				position: absolute;
@@ -102,7 +140,7 @@
 			}
 			
 			#hotkeyMenuDiv {
-				z-index: 11;	
+				z-index: 10;	
 				margin: auto;
 				height: auto;
 				width: auto;
@@ -159,7 +197,8 @@
 			.menu__setting {
 				position:absolute;
 				right: 5px;
-				color: #ff0000;
+				color: rgb(255, 59, 48);
+				//color: #ff0000;
 				width: 60%;
 				text-align: right;
 			}
@@ -182,26 +221,143 @@
 				background-color: #d3d3d3 !important;
 			}
 			
+			.menu__button {
+				width: 100%;
+				background-color: rgba(0,0,0,0.6);
+				color: #fff;
+				font: bold "lucida grande", sans-serif;
+				padding: 3px 5px;
+				padding-top: 2.5%;
+				padding-bottom: 2.5%;
+				text-align: center;
+				border:none;
+			}
+			
+			.addPVMenuInput {
+				border-bottom: 1px solid rgba(0,0,0,0.5) !important;
+				color: rgba(0,0,0,0.8) !important;
+			}
+			
 			.hud {
 				z-index: 20;
-				background-color: rgba(0, 0, 0, 0.8);
-				color: #d3d3d3;
+				//background-color: rgba(250, 250, 250, 0.8);
+				color: rgba(0, 0, 0, 0.8);
 				position: absolute;
-				left: 42.5%;
-				top: 2px;
+				left: 2%;
+				top: 2%;
 				height: 4%;
-				width: 15%;
-				border-style: solid double;
-				border-color: #d3d3d3;
-				text-align: center;
+				width: 20%;
+//				border-style: solid double;
+//				border-color: #d3d3d3;
+				text-align: left;
 				vertical-align: middle;
 
+			}
+			
+			#navigationBarDiv {
+				top: 0%;
+				left: 0%;
+			}
+			
+			#navigationMenu {
+				padding: 0px !important;
+			    margin: 0px;
+				list-style:none;
+			    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
+			    text-shadow: 0 -1px 3px #202020;
+				top: 0%;
+				left: 0%;
+			    width:100%;
+				z-index: 15;			    
+			    -moz-border-radius:4px;
+			    -webkit-border-radius:4px;
+			    border-radius:4px;			    
+
+			}
+			 
+			#navigationMenu li {
+			    display:block; 
+				float:left; 
+				border-right:1px solid #5d5d5d; 
+				border-left:1px solid #929292; 
+				width:18%;
+				height:5%; 
+				border-bottom:1px solid #575757; 
+				border-top:1px solid #797979;
+				padding: 0px !important;
+			    margin: 0px;			 
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
+			    background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
+			    background-color:#5f5f5f; 
+			}
+			 
+			#navigationMenu li:hover {
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+			    background-color:#383838; 
+			    
+			    -moz-box-shadow: inset 0 0 5px 5px #535353;
+			    -webkit-box-shadow: inset 0 0 5px 5px #535353;
+			    box-shadow: inset 0 0 5px 5px #535353;
+			}
+			 
+			#navigationMenu li:active {
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+			    background-color:#383838; 
+			    
+			    -moz-box-shadow: inset 0 1px 2px 2px #000;
+			    -webkit-box-shadow: inset 0 1px 2px 2px #000;
+			    box-shadow: inset 0 1px 2px 2px #000;
+			}
+			 
+			#navigationMenu li a {
+			    color:white; 
+				text-decoration:none;
+				text-align:center; 
+				display:block; 
+				line-height:34px;
+				outline:none; 
+			}
+			 
+			
+			 
+			#navigationMenu li:first-child {
+			    -moz-border-radius:4px 0 0 4px;
+			    -webkit-border-radius:4px 0 0 4px;
+			    border-radius:4px 0 0 4px;
+			    
+			    border-left:none;
+			}
+			 
+			 
+			#navigationMenu li:last-child {
+			    -moz-border-radius:0 4px 4px 0;
+			    -webkit-border-radius:0 4px 4px 0;
+			    border-radius:0 4px 4px 0;
+			    border-right:none;   
+			    //width:124px;
+			}
+			 
+			#navigationMenu {
+				position:absolute;
+				left: 4.5%;
+				top: 1%;
+				display: none:
+			}
+			
+			.navigationMenu--active {
+				display: block;
+				z-index: 15;
+			    -webkit-animation: showMenu 1s;
+		     	-moz-animation: showMenu 1s;
+		     	animation: showMenu 1s;
 			}
 			
 			.editWidgetAttributesPopup-container {
 				position: absolute;
 				display: none;
-				z-index: 15;
+				z-index: 100;
 				top: 0%;
 				left: 10%;
 				background-color: rgba(0, 0, 0, 0.8);
@@ -322,16 +478,30 @@
 			/* Animations */
 			@-webkit-keyframes animatetop {
 			    from {top: -300px; opacity: 0} 
-			    to {top: 0; opacity: 1}
+			    to {top: 1%; opacity: 1}
 			}
 			@-moz-keyframes animatetop {
 			    from {top: -300px; opacity: 0}
-			    to {top: 0; opacity: 1}
+			    to {top: 1%; opacity: 1}
 			}
 			@keyframes animatetop {
 			    from {top: -300px; opacity: 0}
-			    to {top: 0; opacity: 1}
+			    to {top: 1%; opacity: 1}
 			}
+			/* Fade in animation (Webkit only) */
+			@-webkit-keyframes showMenu {
+			    from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			@-moz-keyframes animatetop {
+				from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			@keyframes animatetop {
+				from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			
 			
 		</style>
 		
@@ -373,6 +543,10 @@
 			var menuDiv_;
 			var activeMenu_ = "menu--active";
 			//END Context Menu
+			var nav_;
+			var gridColor_;
+			var addPVMenuDiv_;
+			var addPVMenu_;
 			
 			page_.createPage = function(){
 				
@@ -414,10 +588,13 @@
 				mainBlock_.el.addEventListener("mousedown", startDrag, true);
 
 				
-				var datalist = document.createElement("datalist");
-				datalist.id = "pvDatalist";
-				document.body.appendChild(datalist);
+				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
+//				datalist.id = "pvDatalist";
+//				document.body.appendChild(datalist);
 				
+				//elPointer_[""] = document.getElementById("");
+				elPointer_["addPVMenu"] = document.getElementById("addPVMenu");
+				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
 				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
 				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
 				elPointer_["editWidgetAttributesPopup-body-macromaker"] = document.getElementById("editWidgetAttributesPopup-body-macromaker");
@@ -426,8 +603,12 @@
 					
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
-				menu_.addEventListener("mouseleave", toggleContextMenuOff);
+				menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
 				hud_ = document.getElementById("coordinatesHUD");
+				
+//				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
+//				addPVMenu_ = document.getElementById("addPVMenu");
+
 				
 				//console.log("editBlock_.hidden : " + editBlock_.hidden);
 				DesktopContent.XMLHttpRequest("Default?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
@@ -457,12 +638,17 @@
 				
 				
 				//BEGIN JS Style
-				mainBlock_.el.style["background-image"] = "linear-gradient(to right, rgb(128, 128, 128) 1px, transparent 1px), linear-gradient(rgb(128, 128, 128) 1px, transparent 1px)";
-				mainBlock_.el.style["background-size"] =  "10px";
+				mainBlock_.el.style["background-color"] = "rgb(250, 250, 250)";
+				gridColor_ = "rgba(128, 128, 128, 0.3)"
+				toggleGrid(true);
 				console.log("*************************888888888888888888888888888888");
 				console.log(("-" + fileBlock_.el.style.width));
-				fileBlock_.el.style.left = "-200px"; //hack because the file tree page probably didnt load by now
-				editBlock_.el.style.right = "4000px";//hack because the edit page probably didnt load by now
+				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
+				editBlock_.el.style.bottom = "-4000px";//hack because the edit page probably didnt load by now
+				backgroundCover_ = "rgba(87,87,87, 0.6)";
+				nav_ = document.getElementById("navigationMenu");
+				nav_.classList.add("navigationMenu--active");
+
 				//END JS Style 
 				
 				
@@ -506,6 +692,7 @@
 			function loadPageReqHandler(req) {
 				//Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 				//console.log(req.responseText);
+				toggleFileMenu();
 				var page = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
 				//console.log(page);
 				
@@ -704,6 +891,7 @@
 			function setupForDrawSelectionRectangle(id)
 			{
 				document.body.style.cursor = "crosshair";
+				mainBlock_.el.removeEventListener("mousedown", startDrag, true);
 				mainBlock_.el.addEventListener("mousedown", drawSelectionRectangle(id), false);
 			}
 			
@@ -740,11 +928,12 @@
 					mainBlock_.el.removeEventListener("mouseup"  , arguments.callee, false);
 					document.body.style.cursor = "pointer";
 					document.getElementById("selectionRectangle").style.display = "none";
-					drawWidget(id, true, xPos_, yPos_, (event.clientX - xPos_), (event.clientY - yPos_));
+					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, (event.clientX - xPos_), (event.clientY - yPos_));
 					turnOnWidgets();
+					mainBlock_.el.addEventListener("mousedown", startDrag, true);
 				};
 			};
-			
+		
 			function drawWidget(widget, newWidget, x, y, width, height)
 			{
 				
@@ -793,10 +982,10 @@
 				coverDiv.style.left = "0px";
 				coverDiv.style.top = "0px";
 				coverDiv.id = widgetFrame.id + "-cover";
-				coverDiv.addEventListener("contextmenu", function(e){
-					e.preventDefault();
-					toggleContextMenu(e, widgetFrame.id);
-				});
+				if(!editBlock_.isHidden) 
+					coverDiv.addEventListener("contextmenu", toggleContextMenuCaller(widgetFrame.id), true);//function(e){
+//					toggleContextMenu(e, widgetFrame.id);
+//				});
 				
 				coverDiv.addEventListener("mousedown", startDrag, true);
 
@@ -836,67 +1025,107 @@
 				
 			}
 			
+			function mouseoverEditBlock(e){
+				editBlock_.el.style.marginBottom = editBlock_.el.style.height;
+			}
+			
+			function mouseoutEditBlock(e){
+				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
+				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
+				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
+
+			}
+			
+
 			function toggleEditMode()
 			{
 				console.log(window.innerWidth);
 				console.log()
-				editBlock_.el.style.right = "-" + parseInt(editBlock_.el.style.width) + "px"; 
+				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
 				if(editBlock_.isHidden)
 				{
 				
-
+					mainBlock_.el.classList.add("editMode");
 //					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
-					editBlock_.el.style.zIndex = "150";
-					editBlock_.el.style.marginRight = editBlock_.el.style.width;
+					editBlock_.el.style.zIndex = "50";
+					editBlock_.el.style.marginBottom = hiddenWidth_ + "px";//editBlock_.el.style.width;
+					editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
+					editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
 				//	mainBlock_.el.style.display = "none";
 					editBlock_.isHidden = false;
-
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("contextmenu", toggleContextMenu, true);
+					}
 				}
 				else
 				{
-					editBlock_.el.style.marginRight = "0px";
+					mainBlock_.el.classList.remove("editMode");
+					editBlock_.el.style.marginBottom = "0px";
 					editBlock_.el.style.zIndex = "30";
 					editBlock_.isHidden = true;
-
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("contextmenu", toggleContextMenu, true);
+					}
+					//disable all right clicks
+					
 //					editCover.style["z-index"] = "4";
 				}
 			}
 			
-
+			function toggleContextMenuCaller(id) {
+				 return function(event) {
+					event.preventDefault();
+					toggleContextMenu(event, id);
+				};
+			};
 			
 			function toggleContextMenu(e, id)
 			{	
-				var cover = document.getElementById("coverDiv");
-				editBlock_.el.style.right = window.innerWidth + parseInt(editBlock_.el.style.width) + "px";
+				e.preventDefault();
+
 				
-				if(fileBlock_.isHidden)
+				if(menuState_ !== 1)
 				{
-					editBlock_.isHidden = false;
-					editBlock_.el.style.zIndex = "150";
-					cover.style.backgroundColor = "rgba(0,0,0,0.1)";
-					//cover.onmouseover=function(){openFileMenu()};
-					//mainBlock_.el.style.left = fileBlock.el.style.width;
-//					mainBlock_.el.style.display = "none";
-					editBlock_.el.style.marginRight = editBlock.el.style.width;
-
+					menu_.style.left = e.clientX + "px";
+					menu_.style.top = e.clientY + "px";
+					menu_.setAttribute("widgetID", id);
+					menuState_ = 1;
+					menu_.classList.add(activeMenu_);
 				}
-				else
-				{
-					editBlock_.isHidden = true;
-					editBlock_.el.style.zIndex = "30";
-					editBlock_.el.style.marginRight = "0px";
-//					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
-					cover.style.backgroundColor = "rgba(0,0,0,0)";
-
-					//fileWidth = hiddenWidth;
-					//fileBlock_.el.innerHTML = "";
-					//fileBlock_.el.style["background-color"] = "transparent";
-					//mainWidth += unhiddenWidth - hiddenWidth;
-					//mainLeft = fileLeft + ;
-
-				}
-				
 			}
+//				var cover = document.getElementById("coverDiv");
+//				editBlock_.el.style.right = window.innerWidth + parseInt(editBlock_.el.style.width) + "px";
+//				
+//				if(fileBlock_.isHidden)
+//				{
+//					editBlock_.isHidden = false;
+//					editBlock_.el.style.zIndex = "150";
+//					cover.style.backgroundColor = "rgba(0,0,0,0.1)";
+//					//cover.onmouseover=function(){openFileMenu()};
+//					//mainBlock_.el.style.left = fileBlock.el.style.width;
+////					mainBlock_.el.style.display = "none";
+//					editBlock_.el.style.marginRight = editBlock.el.style.width;
+//
+//				}
+//				else
+//				{
+//					editBlock_.isHidden = true;
+//					editBlock_.el.style.zIndex = "30";
+//					editBlock_.el.style.marginRight = "0px";
+////					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
+//					cover.style.backgroundColor = "rgba(0,0,0,0)";
+//
+//					//fileWidth = hiddenWidth;
+//					//fileBlock_.el.innerHTML = "";
+//					//fileBlock_.el.style["background-color"] = "transparent";
+//					//mainWidth += unhiddenWidth - hiddenWidth;
+//					//mainLeft = fileLeft + ;
+//
+//				}
+//				
+//			}
 			
 			function toggleContextMenuOff(e)
 			{
@@ -910,7 +1139,8 @@
 			
 			function toggleHotkeyMenu()
 			{
-				console.log(elPointer_["hotkeyMenuDiv"].style.display);
+
+				var rectangle = document.getElementById("menuli2").getBoundingClientRect();
 				if((elPointer_["hotkeyMenuDiv"].style.display).indexOf("block") != -1)
 				{
 					elPointer_["hotkeyMenuDiv"].style.display = "none";
@@ -918,6 +1148,8 @@
 				else
 				{
 					elPointer_["hotkeyMenuDiv"].style.display = "block";
+					elPointer_["hotkeyMenuDiv"].style.left = rectangle.left + "px";
+					elPointer_["hotkeyMenuDiv"].style.top = rectangle.top + "px";
 				}
 			}
 			
@@ -925,23 +1157,36 @@
 			{
 				console.log(menu_.getAttribute("widgetID"));
 				toggleContextMenuOff();
+				elPointer_["addPVMenuDiv"].style.display = "block";
+				elPointer_["addPVMenu"].style.display = "block";
+
 			}
 			
 			function toggleFileMenu()
 			{
-				var cover = document.getElementById("coverDiv");
+
+				var coverDiv = document.getElementById("coverDiv")
+				var cover = document.getElementById("mainBlockCoverDiv");
+				cover.style.width = coverDiv.style.width;
+				cover.style.height = coverDiv.style.height;
+				cover.style.x = coverDiv.style.x;
+				cover.style.y = coverDiv.style.y;
 				fileBlock_.el.style.left = ("-" + fileBlock_.el.style.width)
 				
 				if(fileBlock_.isHidden)
 				{
+					nav_.classList.remove("navigationMenu--active");
+					nav_.style.display = "none";
 					editBlock_.isHidden = true;
 					fileBlock_.isHidden = false;
 					fileBlock_.el.style.zIndex = "150";
 					console.log("Hovering!");
-					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
+					cover.style.backgroundColor = backgroundCover_;//"rgba(0,0,0,0.4)";
+					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
 					//cover.onmouseover=function(){openFileMenu()};
 					//mainBlock_.el.style.left = fileBlock.el.style.width;
-					mainBlock_.el.style.display = "none";
+					//mainBlock_.el.style.display = "none";
+					//mainBlock_.el.zIndex = "-100";
 					editBlock_.el.style.display = "none";
 					fileBlock_.el.style.marginLeft = fileBlock_.el.style.width;
 
@@ -956,6 +1201,10 @@
 					cover.style.backgroundColor = "rgba(0,0,0,0)";
 					mainBlock_.el.style.display = "block";
 					editBlock_.el.style.display = "block";
+					fileBlock_.el.style.zIndex = "-1";
+					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
+					nav_.classList.add("navigationMenu--active");
+					nav_.style.display = "block";
 					//fileWidth = hiddenWidth;
 					//fileBlock_.el.innerHTML = "";
 					//fileBlock_.el.style["background-color"] = "transparent";
@@ -1240,6 +1489,31 @@
 				}	
 			}
 			
+			function toggleGrid(on)
+			{
+				if(on)
+				{
+					mainBlock_.el.style["background-image"] = "linear-gradient(to right, " + gridColor_ + " 1px, transparent 1px), linear-gradient(" + gridColor_ + " 1px, transparent 1px)";//, linear-gradient(to right, rgba(128, 128, 128, 0.5) 10px, transparent 10px)";//, linear-gradient(rgba(128, 128, 128, 0.5) 10px, transparent 10px)";
+					mainBlock_.el.style["background-size"]  =  "10px";
+				}
+				else
+				{
+					mainBlock_.el.style["background-image"] = "";
+					mainBlock_.el.style["background-size"]  =  "";
+				}
+			}
+			
+			function setBackgroundColor(color)
+			{
+				mainBlock_.el.style["background-color"] = color;
+			}
+			
+			function setGridColor(color, on)
+			{
+				gridColor_ = color;
+				toggleGrid(on);
+			}
+			
 			function setHotkey(key)
 			{
 				hotkey_[key] = [pageOffSetX_, pageOffSetY_];
@@ -1262,9 +1536,7 @@
 				
 			    if (event.shiftKey && keyMap_[82])//Shift + r(eset)
 			    { 
-			    	pageOffSetX_ = 0;
-					pageOffSetY_ = 0;
-					redrawWindow();
+			    	resetToOrigin();
 				}
 			    else if(event.shiftKey && (keyMap_[48] || keyMap_[49] || keyMap_[50] || keyMap_[51] || keyMap_[52] || keyMap_[53] || keyMap_[54] || keyMap_[55] || keyMap_[56] || keyMap_[57]))
 			    {
@@ -1321,6 +1593,33 @@
 			    }	
 			    
 			};
+			
+			var resetToOriginInterval_;
+			
+			function resetToOrigin()
+			{
+				resetToOriginInterval_ = setInterval(moveToOrigin, 1);
+			}
+			
+			function moveToOrigin()
+			{
+				if(pageOffSetX_ == 0 && pageOffSetY_ == 0)
+				{
+					clearInterval(resetToOriginInterval_)
+				} else {
+					if(pageOffSetX_ > 0)
+						pageOffSetX_--;
+					else if(pageOffSetX_ < 0)
+						pageOffSetX_++;
+					
+					if(pageOffSetY_ > 0)
+						pageOffSetY_--;
+					else if(pageOffSetY_ < 0)
+						pageOffSetY_++;
+					
+					redrawWindow();
+				} 	
+			}
 			
 			var cutWidget_;
 			var cutWidgetName_;
@@ -1486,34 +1785,45 @@
 				//Figure out the viewport we are now looking at
 				var startPosX = pageOffSetX_;
 				var startPosY = pageOffSetY_;
-				var endPosX = startPosX + parseInt(mainBlock_.el.style.width);
-				var endPosY = startPosY + parseInt(mainBlock_.el.style.height);
+				var endPosX = startPosX - parseInt(mainBlock_.el.style.width);
+				var endPosY = startPosY - parseInt(mainBlock_.el.style.height);
 	
 				//See which widgets fall into the viewport					
 				for(widget in page_.widgets)
 				{
-					 leftSide   = parseInt(page_.widgets[widget].x) + startPosX;
-					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x) + startPosX;
-					 topSide    = parseInt(page_.widgets[widget].y) + startPosY;
-					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y) + startPosY; 
+					 leftSide   = parseInt(page_.widgets[widget].x);// + startPosX;
+					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x);// + startPosX;
+					 topSide    = parseInt(page_.widgets[widget].y);// + startPosY;
+					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y);// + startPosY; 
 					 
-					 if(((leftSide > startPosX  || leftSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
+					 if(((leftSide > startPosX  && leftSide <endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
 					 {
 //						 	console.log("true for " + page_.widgets[widget].Display_Name + leftSide);
 							page_.widgets[widget].el.style.display = "block";
-							page_.widgets[widget].el.onmousedown = "startDrag()";
+//							page_.widgets[widget].el.onmousedown = "startDrag()";
 							page_.widgets[widget].el.addEventListener("mousedown", startDrag, true);
-	
+					 }
+					 else
+					 {
+							page_.widgets[widget].el.style.display = "none";
+							page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
 					 }
 				}
+			}
+			
+			function drawGrid()
+			{
+				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
+				hud_.innerHTML = pageOffSetX_ + " x " + pageOffSetY_;
 			}
 			
 
 			function redrawWindow(clicked, hover) {
 				//Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
 				var _MARGIN = 10;
-				var maxWidth = window.innerWidth   - (2 * _MARGIN);
-				var maxHeight = window.innerHeight - (2 * _MARGIN);
+				var _TOPMARGIN = 40;
+				var maxWidth = window.innerWidth;//   - (2 * _MARGIN);
+				var maxHeight = window.innerHeight - (1 * _MARGIN);
 				var marginLeft = 0;
 				var cover = document.getElementById("coverDiv");
 				var editCover = document.getElementById("editCoverDiv");
@@ -1524,24 +1834,16 @@
 
 				//DEFAULT VALUES //Sides Hidden
 				var fileTop = _MARGIN, fileWidth = unhiddenWidth_       , fileHeight = window.innerHeight;
-				var editTop = _MARGIN, editWidth = unhiddenWidth_         , editHeight = maxHeight;
-				var mainLeft = _MARGIN    , mainTop = _MARGIN, mainWidth = maxWidth, mainHeight = maxHeight;
+				var editWidth = maxWidth         , editHeight = unhiddenWidth_;
+				var mainLeft = 0    , mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;
 				
 //				editLeft = mainLeft + mainWidth;				
 
-
-					
-
-
-				
-
-
-				
 				mainBlock_.el.style.left = mainLeft + "px";
-				mainBlock_.el.style.top =  mainTop + "px";
+				mainBlock_.el.style.top = "0px";
 				mainBlock_.el.style.width =  mainWidth + "px";
 				mainBlock_.el.style.height =  mainHeight + "px";
-				mainBlock_.el.style.marginLeft = marginLeft + "px";
+				mainBlock_.el.style.marginLeft = "0px";
 				
 				
 				//fileBlock_.el.style.marginLeft = fileLeft + "px";
@@ -1557,14 +1859,13 @@
 //				editCover.style.height =  editHeight + "px";
 //				
 				//editBlock_.el.style.left = (mainLeft + mainWidth) + "px";
-				editBlock_.el.style.top =  editTop + "px";
 				editBlock_.el.style.width =  editWidth + "px";
 				editBlock_.el.style.height =  editHeight + "px";
 
-				cover.style.top        = "-10px";
+				cover.style.top        = mainTop + "px";
 				cover.style.width      = (window.innerWidth-mainLeft) + "px";
 				cover.style.height     =  window.innerHeight + "px";
-				cover.style.marginLeft = mainLeft + "px";
+				cover.style.left = mainLeft + "px";
 				
 				if(!editBlock_.isHidden)
 				{
@@ -1583,8 +1884,7 @@
 				}
 
 				
-				hud_.innerHTML = pageOffSetX_ + " x " + pageOffSetY_;
-
+				drawGrid();
 				
 
 		
@@ -1596,11 +1896,21 @@
 	
 	
 	<body onload='Javascript:init();'>	
-			
-		<div class='mainBlock' id='fileBlock'  ></div>
-		<div class="hud" id="coordinatesHUD">0 x 0</div>
-		<div class="cover"     id="coverDiv" height="auto" width="auto">
-		<div class='mainBlock 'id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)">
+		<div id="navigationBarDiv">	
+	    	<nav>
+		        <ul id="navigationMenu">
+		            <li><a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()"> 0 x 0</a></li>
+		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">Open File</a></li>
+		            <li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>
+		            <li><a href="#" title="" id="menuli3" onclick="toggleEditMode()">EditMode</a></li>
+		            <li><a href="#" title="" id="menuli4" onclick="toggleHelp()">Help</a></li>
+		        </ul>
+	        </nav>
+	    </div>
+		<div class='mainBlock' 	id='fileBlock'  ></div>
+		<div class="cover" 		id="mainBlockCoverDiv"></div>
+		<div class="cover"     	id="coverDiv" height="auto" width="auto">
+		<div class='mainBlock '	id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)">
 		<div id="contextMenuDiv">
 		<nav id="contextMenu" class="menu ">
 		  <ul class="menu__items ">
@@ -1622,6 +1932,28 @@
 		  </ul>
 		</nav>
 		</div>
+		<div id="addPVMenuDiv">
+			<nav id="addPVMenu" class="menu ">
+			  <ul class="menu__items ">
+			    <li class="menu__item ">
+			    	<span class="menu__link">
+			      		<i class=""></i><input type="text" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+			      	</span> 		
+			    </li>
+			    <li class="menu__item">
+			    	<span class="menu__link">
+			    		<i class=""></i><input type="text" class="editableInput addPVMenuInput" placeholder="Refresh Rate"></input>
+			    	</span>
+			    </li>
+			    <li class="menu__item" style="height: auto">
+			    	<span style="width: 100%; height: auto;">
+			    		<button type="button" class="menu__button">Add PV </input>
+			    		<button type="button" class="menu__button">Close</input>
+		    		</span>
+		    </li>
+			  </ul>
+			</nav>
+		</div>
 		<div class="ghost-select" id="selectionRectangle"><span></span></div>
 		</div>
 		<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
@@ -1632,7 +1964,7 @@
 			  <ul class="menu__items ">
 			    <li class="menu__item ">
 			      <span class="menu__label " >
-			        <i class=""></i> Hotkeys
+			        <i class=""></i> &nbsp
 			      </span>
 			    </li>
 			    <li class="menu__item ">
@@ -1716,6 +2048,7 @@
 			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>
 			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
 		</div>
+		<datalist id="pvDatalist"></datalist>
 		
 	</body>
 	
