@@ -31,8 +31,8 @@ void VisualDataManager::configure(void)
 	theLiveDQMHistos_ = 0;
 
 	DataManager::configure();
-	const DataManagerConfiguration*              dataManagerConfiguration           = theConfigurationManager_->getConfiguration<DataManagerConfiguration>();
-	const DataBufferConfiguration*               dataBufferConfiguration            = theConfigurationManager_->getConfiguration<DataBufferConfiguration>();
+	const DataManagerConfiguration*              dataManagerConfiguration           = theConfigurationManager_->__GET_CONFIG__(DataManagerConfiguration);
+	const DataBufferConfiguration*               dataBufferConfiguration            = theConfigurationManager_->__GET_CONFIG__(DataBufferConfiguration);
 
 	std::vector<std::string> bufferList = dataManagerConfiguration->getListOfDataBuffers(supervisorType_,supervisorInstance_);
 	for(const auto& itBuffers: bufferList)
