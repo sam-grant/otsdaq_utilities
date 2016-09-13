@@ -609,7 +609,7 @@ void VisualSupervisor::stateRunning(toolbox::fsm::FiniteStateMachine& fsm) throw
 void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
 {
     
-    theConfigurationKey_ = theConfigurationManager_->makeConfigurationKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationKey").c_str()));
+    theConfigurationKey_ = theConfigurationManager_->makeTheConfigurationKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationKey").c_str()));
     theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationKey_,0);
     theDataManager_->configure();
 }

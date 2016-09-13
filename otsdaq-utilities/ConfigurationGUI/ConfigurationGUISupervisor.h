@@ -47,9 +47,9 @@ public:
 
 private:
 
-    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, int backboneVersion);
-    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version);
-    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version,
+    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
+    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
+    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version,
     		const std::string &data, const int &dataOffset, const int &chunkSize);
 
     void testXDAQContext();
@@ -63,7 +63,7 @@ private:
     RemoteWebUsers             										theRemoteWebUsers_;
 
 
-    ConfigurationManagerRW*											refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
+    ConfigurationManagerRW*											refreshUserSession(std::string username, uint64_t activeSessionIndex, ConfigurationVersion &backboneVersion);
     std::map<std::string, ConfigurationManagerRW *> 				userConfigurationManagers_;
     std::map<std::string, time_t> 									userLastUseTime_;
 };
