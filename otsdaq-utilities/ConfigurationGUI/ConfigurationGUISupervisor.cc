@@ -73,7 +73,7 @@ theRemoteWebUsers_  (this)
 	__MOUT__ << "To prove the concept...";
 
 
-	//return;
+	return;
 
 	testXDAQContext(); //test new config
 
