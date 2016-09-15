@@ -82,6 +82,9 @@
 				//subConfigRequestHandler(req)
 				//specificConfigRequestHandler(req)
 				//specificSubConfigRequestHandler(req)
+				//treeViewHandler(req,parentId,errStr)
+				//recursiveDrawTree(parent,depth,path)
+				//toggleTreeChildren(uid,nodeName,path)
 			
 				//selectThisCell(r,c,el)
 				//editCellCancel()
@@ -103,7 +106,11 @@
 			//init called once body has loaded
 			function init() {			
 				Debug.log("CfgGUI init");
-						
+
+				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=GConfig3&depth=0", 
+						"startPath=/",treeViewHandler);//XDAQContextConfiguration",treeViewHandler);
+				return;
 				setupSystemConfigMode();
 			}	
 			
@@ -135,6 +142,7 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
 					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
 			}
+			
 			
 			function configRequestHandler(req) {				
 				Debug.log("CfgGUI requestHandler req " + req.responseText);
@@ -382,7 +390,115 @@
 				el.innerHTML = str;
 			}
 			
-			function selectThisCell(r,c,el) {	
+			//treeViewHandler ~		
+			var treeViewHandlerStr_; //used by recursive function to build html string
+			var treeNodeUID_;		//incrementing unique id for nodes
+			function treeViewHandler(req,parentId,errStr) 
+			{
+				if(errStr != "") return;
+				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				//draw tree				
+				
+				var el;
+				if(parentId) //then data is being added to an existing node
+				{
+					//so create children area
+					var parentEl = document.getElementById(parentId);					
+
+					el = document.createElement("div");
+					el.setAttribute("id", "children-" + parentId);
+					parentEl.appendChild(el);					
+				}
+				else //this is the initial top level request
+				{
+					treeNodeUID_ = 0; //reset node id
+					el = document.getElementById("display");
+				}
+
+				treeViewHandlerStr_ = "";		
+				var tree = DesktopContent.getXMLNode(req,"tree");
+				recursiveDrawTree(tree,0,tree.getAttribute("value")); //give root parent node
+				
+				el.innerHTML = treeViewHandlerStr_;
+			}
+
+			//recursiveDrawTree ~		
+			function recursiveDrawTree(parent,depth,path) 
+			{				
+				var uid;
+				var nodes = parent.children;
+				var nodeName;
+				var value;
+				var i;
+				for(i=0;i<nodes.length;++i)
+				{
+					uid = treeNodeUID_++;
+					nodeName = nodes[i].getAttribute("value");
+					treeViewHandlerStr_ += "<div id='node-" + uid + "-" + nodeName + 
+							"' style='float:left; margin-left:" + 30*depth + "px'>";
+										
+					if(nodes[i].children.length && (value = nodes[i].children[0]).nodeName == "value")
+					{	//this is a value node!
+						treeViewHandlerStr_ += nodeName;
+						treeViewHandlerStr_ += " : " + value.getAttribute("value");
+						treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";
+						continue; //so no need to recurse
+					}
+					
+					//not a value node so try to recurse
+					treeViewHandlerStr_ += "<a href='javascript:toggleTreeChildren(" + 
+							uid + ",\"" +							
+							nodeName + "\",\"" + path +
+							"\");'>";					
+					treeViewHandlerStr_ += nodes[i].children.length?"-":"+";
+					treeViewHandlerStr_ += "</a> ";
+
+					treeViewHandlerStr_ += nodeName;
+					treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";	
+					
+					if(nodes[i].children.length)
+					{
+						treeViewHandlerStr_ += "<div id='children-" + uid + "-" + nodeName + "'>";
+						recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");
+						treeViewHandlerStr_ += "</div>";
+					}
+				}
+			}
+			
+			//toggleTreeChildren ~ 
+			//	if expanding
+			//		if no children div, request new depth
+			//		else display children
+			//	if minimizing
+			//		hide children
+			function toggleTreeChildren(uid,nodeName,path) 
+			{
+				Debug.log("uid: " + uid);
+				Debug.log("nodeName: " + nodeName);
+				Debug.log("path: " + path);
+				
+				var idString = uid + "-" + nodeName;
+				Debug.log("idString: " + idString);
+				
+				var el = document.getElementById("children-" + idString);				
+				
+				if(el) //if children already exist, then toggle display
+					el.style.display = (el.style.display == "block")? "none" : "block";
+				else	//if no children div, then request it
+					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=GConfig3&depth=1", 
+								"startPath="+path+nodeName+"/",treeViewHandler,idString);
+				
+			}
+			
+			function selectThisCell(r,c,el) 
+			{	
 				
 				if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
 					return;
@@ -403,23 +519,27 @@
 				el.innerHTML = str;
 			}
 			
-			function keyHandler(e) {
+			function keyHandler(e) 
+			{
 				var TABKEY = 9;
 				var ENTERKEY = 13;
 				var UPKEY = 38;
 				var DNKEY = 40;
 				var ESCKEY = 27;
 				//Debug.log("key " + e.keyCode);
-				if(e.keyCode == TABKEY) {
+				if(e.keyCode == TABKEY) 
+				{
 					//this.value += "    ";
-					if(e.preventDefault) {
+					if(e.preventDefault) 
+					{
 						e.preventDefault();
 					}
 					return false;
 				}
 			}
 			
-			function editCellOK(r,c) {	
+			function editCellOK(r,c) 
+			{	
 				
 				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
 				
@@ -444,7 +564,8 @@
 				}
 			}
 			
-			function editCellCancel() {	
+			function editCellCancel() 
+			{	
 				var str = _editingCellEl.innerHTML;
 				var i = str.indexOf("value=")+7;
 				str = str.substr(i,str.indexOf(">")-1-i);
@@ -457,7 +578,8 @@
 			//addRow ~~
 			// adds row to position r (relative to view on page)
 			// absolute row is _dataOffset + r
-			function addRow(r) {
+			function addRow(r) 
+			{
 				Debug.log("CfgGUI addRow " + r);
 				
 				var el = document.getElementById("SubSystemTable");
@@ -522,7 +644,8 @@
 
 			//deleteRow ~~
 			// delete row at destination
-			function deleteRow(r) {
+			function deleteRow(r) 
+			{
 				Debug.log("CfgGUI deleteRow " + r);
 				
 				var el = document.getElementById("SubSystemTable");
@@ -555,7 +678,8 @@
 			}
 			
 			
-			function saveSubSystemAsNewVersion() {	
+			function saveSubSystemAsNewVersion() 
+			{	
 				Debug.log("CfgGUI saveSubSystemAsNewVersion");
 				
 				//create data string from html table
@@ -584,7 +708,8 @@
 				
 			}
 			
-			function saveSubSystemAsNewVersionHandler(req) {	
+			function saveSubSystemAsNewVersionHandler(req) 
+			{	
 				Debug.log("saveSubSystemAsNewVersionHandler requestHandler req " + req.responseText);
 
 				var err = DesktopContent.getXMLValue(req,"Error");
@@ -602,7 +727,8 @@
 				setupSpecificSubSystemConfig(subConfigAlias,version);
 			}
 			
-			function changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion) {
+			function changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion) 
+			{
 				//TODO
 				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
 							
@@ -616,7 +742,8 @@
 				DesktopContent.XMLHttpRequest(req, "data=" + dataStr, specificConfigRequestHandler);				
 			}
 			
-			function addNewKocForSpecificConfig(req) {
+			function addNewKocForSpecificConfig(req) 
+			{
 				//TODO
 				Debug.log("CfgGUI addNewKocForSpecificConfig");
 			}

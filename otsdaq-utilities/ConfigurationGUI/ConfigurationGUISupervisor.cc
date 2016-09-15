@@ -670,6 +670,7 @@ throw (xgi::exception::Exception)
 	//getSpecificSubSystemConfiguration
 	//saveSpecificSubSystemConfiguration
 	//changeKocVersionForSpecificConfig
+	//getTreeView
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -707,7 +708,7 @@ throw (xgi::exception::Exception)
 
 	//acquire user's configuration manager based on username & activeSessionIndex
 	__MOUT__ << std::endl;
-	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
+	std::string  backboneVersionStr = CgiDataUtilities::getData(cgi,"backboneVersion");		  	//from GET
 	ConfigurationVersion backboneVersion(
 			(backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str())); //default to latest
 	__MOUT__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
@@ -857,7 +858,7 @@ throw (xgi::exception::Exception)
 		//	...
 		//</configuration>
 
-		std::string alias = cgi("alias"); //from GET
+		std::string alias = CgiDataUtilities::getData(cgi,"alias"); //from GET
 
 		__MOUT__ << "getSpecificSystemConfiguration: " << alias << std::endl;
 
@@ -897,11 +898,11 @@ throw (xgi::exception::Exception)
 		//	....
 		//</subconfiguration>
 
-		std::string		subAlias = cgi("subAlias"); 			//from GET
-		std::string  	versionStr = cgi("version");		  	//from GET
+		std::string		subAlias = CgiDataUtilities::getData(cgi,"subAlias"); 			//from GET
+		std::string  	versionStr = CgiDataUtilities::getData(cgi,"version");		  	//from GET
 		int				version = (versionStr == "")?-2:atoi(versionStr.c_str());
-		int				dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
-		int				chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
+		int				dataOffset = atoi(CgiDataUtilities::getData(cgi,"dataOffset").c_str());	//from GET
+		int				chunkSize = atoi(CgiDataUtilities::getData(cgi,"chunkSize").c_str());	//from GET
 
 		__MOUT__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
@@ -919,10 +920,10 @@ throw (xgi::exception::Exception)
 
 		//starting from dataOffset
 		//save first CHUNK_SIZE rows
-		std::string 	subAlias = cgi("subAlias"); 			//from GET
-		int		version = atoi(cgi("version").c_str());	//from GET
-		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
-		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
+		std::string 	subAlias = CgiDataUtilities::getData(cgi,"subAlias"); 			//from GET
+		int		version = atoi(CgiDataUtilities::getData(cgi,"version").c_str());	//from GET
+		int		dataOffset = atoi(CgiDataUtilities::getData(cgi,"dataOffset").c_str());	//from GET
+		int		chunkSize = atoi(CgiDataUtilities::getData(cgi,"chunkSize").c_str());	//from GET
 
 		std::string	data = CgiDataUtilities::postData(cgi,"data"); //from POST
 		//data format: commas and semi-colons indicate new row
@@ -1083,9 +1084,9 @@ throw (xgi::exception::Exception)
 		//std::string KOCAlias = "FSSRDACsConfiguration";
 		//int newVersion = 3;
 
-		std::string 	specSystemAlias = cgi("cfgAlias"); 			//from GET
-		std::string 	KOCAlias = cgi("subAlias"); 			//from GET
-		int				newVersion = atoi(cgi("version").c_str());	//from GET
+		std::string 	specSystemAlias = CgiDataUtilities::getData(cgi,"cfgAlias"); 	//from GET
+		std::string 	KOCAlias = CgiDataUtilities::getData(cgi,"subAlias"); 			//from GET
+		int				newVersion = CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
 
 		//TODO
 		std::string chosenSubConfig;
@@ -1179,6 +1180,40 @@ throw (xgi::exception::Exception)
 		}
 
 	}
+	else if(Command == "getTreeView")
+	{
+		//parameters
+		//	globalConfigName (possibly version?)
+		//	starting node path
+		//	depth from starting node path
+
+		//return xml
+		//	<tree>
+		//	<node="...">
+		//		<node="...">
+		//			<node="...">
+		//				<value="...">
+		//			</node>
+		//			<node="...">
+		//				<value="...">
+		//			</node>
+		//		</node>
+		//		<node="...">
+		//			<value="..">
+		//		</node>
+		//		...
+		//	</node>
+		//	</tree>
+
+		std::string 	globalConfig 	= CgiDataUtilities::getData(cgi,"globalConfig");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+
+		__MOUT__ << "globalConfig: " << globalConfig << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "depth: " << depth << std::endl;
+		fillTreeView(xmldoc,cfgMgr,globalConfig,startPath,depth);
+	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
@@ -1188,8 +1223,87 @@ throw (xgi::exception::Exception)
 	xmldoc.outputXmlDocument((std::ostringstream*) out, true);
 }
 
+//========================================================================================================================
+//fillTreeView
+void ConfigurationGUISupervisor::fillTreeView(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &globalConfig,
+		const std::string &startPath, int depth)
+{
+	//return xml
+	//	<tree>
+	//	<node="...">
+	//		<node="...">
+	//			<node="...">
+	//				<value="...">
+	//			</node>
+	//			<node="...">
+	//				<value="...">
+	//			</node>
+	//		</node>
+	//		<node="...">
+	//			<value="..">
+	//		</node>
+	//		...
+	//	</node>
+	//	</tree>
 
 
+	DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
+
+	try {
+		cfgMgr->loadGlobalConfiguration(globalConfig);
+		if(startPath == "/") //then consider the configurationManager the root node
+		{
+			auto rootMap = cfgMgr->getChildren();
+
+			for(auto &treePair:rootMap)
+				recursiveTreeToXML(treePair.second,depth,xmldoc,parentEl);
+		}
+		else
+		{
+			ConfigurationTree tree = cfgMgr->getNode(startPath);
+			recursiveTreeToXML(tree,depth,xmldoc,parentEl);
+		}
+	}
+	catch(std::runtime_error& e)
+	{
+		__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+	}
+	catch(...)
+	{
+		__MOUT__ << "Error detected!" << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+	}
+}
+
+//==============================================================================
+//recursiveToXml
+//	output tree to XML from this node for desired depth
+//	depth of 0 means output only this node's value
+//	depth of 1 means include this node's children's values, etc..
+//	depth of -1(unsigned int) effectively means output full tree
+void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc,
+		DOMElement* parentEl)
+{
+	if(t.isValueNode())
+	{
+		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+	}
+	else
+	{
+		parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
+
+		//if depth>=1 toXml all children
+		//child.toXml(depth-1)
+		if(depth >= 1)
+		{
+			auto C = t.getChildren();
+			for(auto &c:C)
+				recursiveTreeToXML(c.second,depth-1,xmldoc,parentEl);
+		}
+	}
+}
 
 //========================================================================================================================
 //fillSpecificSystemXML

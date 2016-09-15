@@ -30,7 +30,30 @@
 //
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>)
-//			... to make server request, returnHandler is called with response in req and integer reqIndex if user defined
+//			... to make server request, returnHandler is called with response in req and reqIndex if user defined
+//			... here is a returnHandler declaration example:
+//		
+//					function returnHandler(req,reqIndex,errStr)
+//					{
+//						if(errStr != "") return; //error occured!
+//
+//						var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+//						if(err) 
+//						{
+//							Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+//							return;
+//						}
+//
+//						if(reqIndex = 0)
+//						{ //... do something }
+//						else if(reqIndex = 1)
+//						{ //... do something else}
+//						else
+//						{ //... do something else}
+//						
+//						//..do more things
+//		
+//					}
 //
 //		-DesktopContent.getXMLValue(req, name)
 //			... to get string value from XML server response. field name is needed.
@@ -65,6 +88,8 @@ if (typeof Globals == 'undefined')
 //"public" function list: 
 //	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
 //	DesktopContent.getXMLValue(req, name)
+//	DesktopContent.getXMLNode(req, name)
+//	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor)
 //	DesktopContent.getWindowWidth()
@@ -429,9 +454,9 @@ DesktopContent.checkCookieCodeRace = function() {
 //=====================================================================================
 //returns xml entry value for an attribute
 DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
-	var els;
-	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
-		return els[0].getAttribute(attribute);
+	var el;
+	if(el = DesktopContent.getXMLNode(req,name))
+		return el.getAttribute(attribute);
 	else
 		return undefined;
 }
@@ -440,6 +465,22 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 //returns xml entry value for attribue 'value'
 DesktopContent.getXMLValue = function(req, name) {
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
+}
+
+//=====================================================================================
+//returns xml entry node (first node with name)
+DesktopContent.getXMLNode = function(req, name) {
+	var els;
+	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
+		return els[0];
+	else
+		return undefined;	
+}
+
+//=====================================================================================
+//returns xml entry node (first node with name DATA)
+DesktopContent.getXMLDataNode = function(req, name) {
+	return DesktopContent.getXMLNode("DATA");	
 }
 
 //=====================================================================================

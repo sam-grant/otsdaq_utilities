@@ -47,10 +47,13 @@ public:
 
 private:
 
-    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
-    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
-    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version,
+    void 			fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
+    void 			fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
+    void 			saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version,
     		const std::string &data, const int &dataOffset, const int &chunkSize);
+    void 			fillTreeView					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &globalConfig,
+    		const std::string &startPath, int depth);
+    static void		recursiveTreeToXML				(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
 
     void testXDAQContext();
 
