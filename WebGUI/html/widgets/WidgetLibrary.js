@@ -37,6 +37,11 @@ function newWidget(widget)
 
 }
 
+function setupPVs(settings)
+{
+	console.log("setupPVs() : " + settings);
+}
+
 function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
 {
 	var pvi = 0;

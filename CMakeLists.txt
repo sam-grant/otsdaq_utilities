@@ -38,7 +38,7 @@ cet_set_compiler_flags(DIAGS VIGILANT
 cet_report_compiler_flags()
 
 # these are minimum required versions, not the actual product versions
-#find_ups_product( epics v3_15_4)
+find_ups_product( epics v3_15_4)
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( otsdaq v1_00_00 )
 find_ups_product( artdaq v0_04_02 )
@@ -54,8 +54,8 @@ find_ups_boost( v1_50_0 filesystem
                         unit_test_framework
  )
 
-#find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
-#find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
+find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
+find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
 
 # Include at the top level to make sure include directory is visible
 # everywhere.
