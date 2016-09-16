@@ -1214,6 +1214,16 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "depth: " << depth << std::endl;
 		fillTreeView(xmldoc,cfgMgr,globalConfig,startPath,depth);
 	}
+	else if(Command == "activateGlobalConfig")
+	{
+		std::string 	globalConfig 	= CgiDataUtilities::getData(cgi,"globalConfig");
+		__MOUT__ << "globalConfig: " << globalConfig << std::endl;
+		if(globalConfig == "")
+			globalConfig = cfgMgr->getActiveGlobalConfiguration();
+		else
+			globalConfig = cfgMgr->setActiveGlobalConfiguration(globalConfig);
+		xmldoc.addTextElementToData("globalConfig", globalConfig);
+	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
@@ -1225,49 +1235,53 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 //fillTreeView
+//	returns xml tree from path for given depth
 void ConfigurationGUISupervisor::fillTreeView(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &globalConfig,
 		const std::string &startPath, int depth)
 {
 	//return xml
-	//	<tree>
-	//	<node="...">
+	//	<globalConfig="globalConfig"/>
+	//	<tree="path">
 	//		<node="...">
 	//			<node="...">
-	//				<value="...">
+	//				<node="...">
+	//					<value="...">
+	//				</node>
+	//				<node="...">
+	//					<value="...">
+	//				</node>
 	//			</node>
 	//			<node="...">
-	//				<value="...">
+	//				<value="..">
 	//			</node>
-	//		</node>
-	//		<node="...">
-	//			<value="..">
-	//		</node>
 	//		...
-	//	</node>
+	//		</node>
 	//	</tree>
 
-
-	DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
+	//return the startPath as root "tree" element
+	//	and then display all children if depth > 0
+	xmldoc.addTextElementToData("globalConfig", globalConfig);
 
 	try {
 		cfgMgr->loadGlobalConfiguration(globalConfig);
-		if(startPath == "/") //then consider the configurationManager the root node
-		{
-			auto rootMap = cfgMgr->getChildren();
 
-			for(auto &treePair:rootMap)
-				recursiveTreeToXML(treePair.second,depth,xmldoc,parentEl);
-		}
+		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
+
+		if(depth == 0) return; //already returned root node in itself
+
+		std::map<std::string,ConfigurationTree> rootMap;
+		if(startPath == "/") //then consider the configurationManager the root node
+			rootMap = cfgMgr->getChildren();
 		else
-		{
-			ConfigurationTree tree = cfgMgr->getNode(startPath);
-			recursiveTreeToXML(tree,depth,xmldoc,parentEl);
-		}
+			rootMap = cfgMgr->getNode(startPath).getChildren();
+
+		for(auto &treePair:rootMap)
+			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl);
 	}
 	catch(std::runtime_error& e)
 	{
 		__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+		xmldoc.addTextElementToData("Error", "Error generating XML tree! " + std::string(e.what()));
 	}
 	catch(...)
 	{

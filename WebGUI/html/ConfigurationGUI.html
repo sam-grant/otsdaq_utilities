@@ -84,7 +84,9 @@
 				//specificSubConfigRequestHandler(req)
 				//treeViewHandler(req,parentId,errStr)
 				//recursiveDrawTree(parent,depth,path)
-				//toggleTreeChildren(uid,nodeName,path)
+				//toggleTreeChildren(depth,uid,nodeName,path)
+				//setupSystemConfigTreeView(configAlias)
+				//TODO activateSystemConfig(configAlias)
 			
 				//selectThisCell(r,c,el)
 				//editCellCancel()
@@ -107,11 +109,8 @@
 			function init() {			
 				Debug.log("CfgGUI init");
 
-				
-				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=GConfig3&depth=0", 
-						"startPath=/",treeViewHandler);//XDAQContextConfiguration",treeViewHandler);
-				return;
 				setupSystemConfigMode();
+				activateSystemConfig(""); //get active global config
 			}	
 			
 			//return name without "Configuration" unless it is start of the name 
@@ -159,9 +158,22 @@
 				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
 				for(var i=0;i<aliases.length;++i)
 				{		
+					//add header
 					str += "<a href='javascript:setupSpecificSystemConfig(\"" + aliases[i].getAttribute("value") +
 						"\");'>";
 					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
+					
+					//add tree view link
+					str += " <a href='javascript:setupSystemConfigTreeView(\"" + aliases[i].getAttribute("value") +
+						"\");'>";
+					str += "Tree-view</a>";										
+					
+					//add Activate link
+					str += " <a href='javascript:activateSystemConfig(\"" + aliases[i].getAttribute("value") +
+						"\");'>";
+					str += "Activate</a>";
+					
+					
 					str += "<br><table><tr>";
 
 					kocAliases = kocsHdr[i].getElementsByTagName("KOC_alias");
@@ -405,12 +417,20 @@
 				}
 				
 				//draw tree				
-				
+
+				var systemConfig = DesktopContent.getXMLValue(req,"globalConfig");
 				var el;
-				if(parentId) //then data is being added to an existing node
+				var depth;
+				var parentEl;
+				treeViewHandlerStr_ = "";
+				
+				if(parentId) parentEl = document.getElementById("node-" + parentId);	
+				if(parentEl) //then data is being added to an existing node
 				{
 					//so create children area
-					var parentEl = document.getElementById(parentId);					
+					depth = (parentId.split("-")[0] | 0)+1; //parent depth + 1
+					Debug.log("Expanding tree for " + parentId + " at depth=" + depth);					
+									
 
 					el = document.createElement("div");
 					el.setAttribute("id", "children-" + parentId);
@@ -418,13 +438,19 @@
 				}
 				else //this is the initial top level request
 				{
+					depth = 0;
 					treeNodeUID_ = 0; //reset node id
 					el = document.getElementById("display");
-				}
 
-				treeViewHandlerStr_ = "";		
+					//add system config header
+					treeViewHandlerStr_ += "<a href='javascript:setupSpecificSystemConfig(\"" + systemConfig +
+						"\");'>";
+					treeViewHandlerStr_ += systemConfig + "</a><br>";
+				}			
+				
+				//add tree
 				var tree = DesktopContent.getXMLNode(req,"tree");
-				recursiveDrawTree(tree,0,tree.getAttribute("value")); //give root parent node
+				recursiveDrawTree(tree,depth,tree.getAttribute("value"));
 				
 				el.innerHTML = treeViewHandlerStr_;
 			}
@@ -441,7 +467,7 @@
 				{
 					uid = treeNodeUID_++;
 					nodeName = nodes[i].getAttribute("value");
-					treeViewHandlerStr_ += "<div id='node-" + uid + "-" + nodeName + 
+					treeViewHandlerStr_ += "<div id='node-" + depth + "-" + uid + "-" + nodeName + 
 							"' style='float:left; margin-left:" + 30*depth + "px'>";
 										
 					if(nodes[i].children.length && (value = nodes[i].children[0]).nodeName == "value")
@@ -454,7 +480,7 @@
 					
 					//not a value node so try to recurse
 					treeViewHandlerStr_ += "<a href='javascript:toggleTreeChildren(" + 
-							uid + ",\"" +							
+							depth + "," +	uid + ",\"" +							
 							nodeName + "\",\"" + path +
 							"\");'>";					
 					treeViewHandlerStr_ += nodes[i].children.length?"-":"+";
@@ -465,7 +491,7 @@
 					
 					if(nodes[i].children.length)
 					{
-						treeViewHandlerStr_ += "<div id='children-" + uid + "-" + nodeName + "'>";
+						treeViewHandlerStr_ += "<div id='children-" + depth + "-" + uid + "-" + nodeName + "'>";
 						recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");
 						treeViewHandlerStr_ += "</div>";
 					}
@@ -478,23 +504,65 @@
 			//		else display children
 			//	if minimizing
 			//		hide children
-			function toggleTreeChildren(uid,nodeName,path) 
+			function toggleTreeChildren(depth,uid,nodeName,path) 
 			{
+				Debug.log("depth: " + depth);
 				Debug.log("uid: " + uid);
 				Debug.log("nodeName: " + nodeName);
 				Debug.log("path: " + path);
 				
-				var idString = uid + "-" + nodeName;
+				var idString = depth + "-" + uid + "-" + nodeName;
 				Debug.log("idString: " + idString);
 				
 				var el = document.getElementById("children-" + idString);				
 				
 				if(el) //if children already exist, then toggle display
-					el.style.display = (el.style.display == "block")? "none" : "block";
+					el.style.display = (el.style.display == "none")? "block" : "none";
 				else	//if no children div, then request it
 					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=GConfig3&depth=1", 
 								"startPath="+path+nodeName+"/",treeViewHandler,idString);
 				
+			}
+			
+			//setupSystemConfigTreeView ~
+			function setupSystemConfigTreeView(configAlias)
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=" + 
+						configAlias + "&depth=1", 
+						"startPath=/",treeViewHandler);
+			}
+			
+			//activateSystemConfig ~
+			function activateSystemConfig(configAlias)
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=activateGlobalConfig&globalConfig=" + 
+						configAlias,"",activateSystemConfigHandler);
+			}
+			
+			//activateSystemConfigHandler ~
+			function activateSystemConfigHandler(req,param,errStr)
+			{
+				//show xml Error if present as popup Debug high priority
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err && err != "") 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;					
+				}
+				
+				var activeConfig = DesktopContent.getXMLValue(req,"activeConfig");
+				
+				var str = "";
+				str += "Active: ";
+				if(!activeConfig || activeConfig == "")
+					str += "None";
+				else
+				{
+					str += "<a href='javascript:setupSpecificSystemConfig(\"" + activeConfig +
+					"\");'>";
+					str += activeConfig + "</a>";
+				}
+				document.getElementById("activeConfig").innerHTML = str;				
 			}
 			
 			function selectThisCell(r,c,el) 
@@ -755,6 +823,7 @@
 	<body onload='Javascript:init();'>	
 			
 		<h1>Configuration GUI</h1>
+		<div id='activeConfig'></div>
 		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
 		<div id='errorDiv'></div>
 		<div id='display'></div>

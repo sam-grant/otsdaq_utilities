@@ -29,7 +29,7 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>)
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>, progressHandler <optional>, callHandlerOnErr <optional>)
 //			... to make server request, returnHandler is called with response in req and reqIndex if user defined
 //			... here is a returnHandler declaration example:
 //		
@@ -265,9 +265,12 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 // Where CookieCode and DisplayName can change upon every server response
 //
 // reqIndex is used to give the returnHandler an index to route responses to.
+// progressHandler can be given to receive progress updates (e.g. for file uploads)
+// callHandlerOnErr can be set to true to have handler called with errStr parameter
+//	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqIndex, progressHandler) {
+		reqIndex, progressHandler, callHandlerOnErr) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -302,7 +305,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found) returnHandler(req, reqIndex, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqIndex, errStr); 
 		return;
 	}
 
@@ -417,7 +420,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
-			if(returnHandler) returnHandler(req, reqIndex, errStr);
+			
+			//call return handler
+			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
+				returnHandler(req, reqIndex, errStr);
 		}
 	}
 
