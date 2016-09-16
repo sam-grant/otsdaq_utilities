@@ -1,5 +1,6 @@
 include_directories(${MPI_INCLUDE_PATH})
 include_directories($ENV{XERCES_C_INC})
+
 cet_make(LIBRARY_NAME Visualization
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}

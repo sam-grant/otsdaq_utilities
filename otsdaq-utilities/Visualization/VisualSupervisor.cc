@@ -45,7 +45,7 @@
 #define ROOT_BROWSER_PATH			getenv("ROOT_BROWSER_PATH")
 #define ROOT_DISPLAY_CONFIG_PATH	getenv("ROOT_DISPLAY_CONFIG_PATH")
 
-#define LIVEDQM_DIR 				std::string("LIVE DQM")
+#define LIVEDQM_DIR 				std::string("LIVE_DQM")
 #define PRE_MADE_ROOT_CFG_DIR 		std::string("Pre-made Views")
 
 #define PRE_MADE_ROOT_CFG_FILE_EXT	std::string(".rcfg")
@@ -302,6 +302,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
         {
             std::cout << __COUT_HDR_FL__ << "Attempting to get LIVE file." << std::endl;
             rootFile = theDataManager_->getLiveDQMHistos()->getFile();
+            std::cout << __COUT_HDR_FL__ << "LIVE file name: " << rootFile->GetName() << std::endl;
             rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
         }
         else
@@ -324,19 +325,21 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                 directory = rootFile;
 
                 //failed directory so assume it's file
+                std::cout << __COUT_HDR_FL__ << "Getting object name: " << rootDirectoryName << std::endl;
                 TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
                 if(!histo)
                     std::cout << __COUT_HDR_FL__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
                 else //turns out was a root object path
                 {
+                    std::cout << __COUT_HDR_FL__ << "Converting histo to json: " << histo->GetName() << std::endl;
                 	TString json = TBufferJSON::ConvertToJSON(histo);
                 	//std::cout << __COUT_HDR_FL__ << "json " << json << std::endl;
 
                     TBufferFile tbuff(TBuffer::kWrite);
 
                     std::string rootType = histo->ClassName();
-                    //std::cout << __COUT_HDR_FL__ << "rootType " << rootType << std::endl;
+                    std::cout << __COUT_HDR_FL__ << "rootType " << rootType << std::endl;
 
                     histo->Streamer(tbuff);
 
@@ -350,6 +353,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                     xmldoc.addTextElementToData("rootType", rootType);
                     xmldoc.addTextElementToData("rootData", dest);
                     xmldoc.addTextElementToData("rootJSON", json.Data());
+                    std::cout << __COUT_HDR_FL__ << "Done" << std::endl;
                 }
             }
             else
