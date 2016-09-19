@@ -1217,12 +1217,12 @@ throw (xgi::exception::Exception)
 	else if(Command == "activateGlobalConfig")
 	{
 		std::string 	globalConfig 	= CgiDataUtilities::getData(cgi,"globalConfig");
-		__MOUT__ << "globalConfig: " << globalConfig << std::endl;
+		__MOUT__ << "Activating config: " << globalConfig << std::endl;
 		if(globalConfig == "")
 			globalConfig = cfgMgr->getActiveGlobalConfiguration();
 		else
 			globalConfig = cfgMgr->setActiveGlobalConfiguration(globalConfig);
-		xmldoc.addTextElementToData("globalConfig", globalConfig);
+		xmldoc.addTextElementToData("activeConfig", globalConfig);
 	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;

@@ -144,17 +144,16 @@ throw (xoap::exception::Exception)
 void OtsConfigurationWizardSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
-
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Unauthorized.html?urn=" <<
+	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
+			"<frameset col='100%' row='100%'><frame src='/WebPath/html/Unauthorized.html?urn=" <<
 			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
 }
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
+	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
+			"<frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
 			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
 
 }

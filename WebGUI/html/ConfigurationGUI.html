@@ -86,7 +86,10 @@
 				//recursiveDrawTree(parent,depth,path)
 				//toggleTreeChildren(depth,uid,nodeName,path)
 				//setupSystemConfigTreeView(configAlias)
-				//TODO activateSystemConfig(configAlias)
+				//activateSystemConfig(configAlias)
+				//setupConfigCreator()
+				//setupConfigCreatorHandler(req)
+				//createConfigSelect(i)
 			
 				//selectThisCell(r,c,el)
 				//editCellCancel()
@@ -155,6 +158,9 @@
 				var str = "";
 				var kocAliases, kocVersions;
 
+				str += "<a href='javascript:setupConfigCreator()'>Create a New System Configuration</a>";
+				str += "<br><br>";
+						
 				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
 				for(var i=0;i<aliases.length;++i)
 				{		
@@ -405,10 +411,8 @@
 			//treeViewHandler ~		
 			var treeViewHandlerStr_; //used by recursive function to build html string
 			var treeNodeUID_;		//incrementing unique id for nodes
-			function treeViewHandler(req,parentId,errStr) 
-			{
-				if(errStr != "") return;
-				
+			function treeViewHandler(req,parentId) 
+			{				
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
 				{
@@ -551,6 +555,7 @@
 				}
 				
 				var activeConfig = DesktopContent.getXMLValue(req,"activeConfig");
+				Debug.log("activeConfig: " + activeConfig);
 				
 				var str = "";
 				str += "Active: ";
@@ -563,6 +568,93 @@
 					str += activeConfig + "</a>";
 				}
 				document.getElementById("activeConfig").innerHTML = str;				
+			}
+			
+			//setupConfigCreator ~
+			function setupConfigCreator()
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", setupConfigCreatorHandler);
+				
+			}
+			//setupConfigCreatorHandler ~
+			function setupConfigCreatorHandler(req)
+			{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				var el = document.getElementById("display");
+				var str = "";
+				
+				str += "<button type='button' onmouseup='javascript:createConfig()'>" +
+						"Create System Config</button>";
+				str += "System Config Name: <input id='newConfigName'/>";
+				str += "<br><br>";
+				
+				var aliases = req.responseXML.getElementsByTagName("SystemSubConfigurationAlias");
+				var keyHdr = req.responseXML.getElementsByTagName("SystemSubConfigurationVersions");
+				var alias;
+				var version;
+			
+				Debug.log("aliases.length " + aliases.length);
+				
+				str += "<a href='javascript:createConfigSelect(1)'>All</a> | " + 
+						"<a href='javascript:createConfigSelect(2)'>Context</a> | " +
+						"<a href='javascript:createConfigSelect(3)'>Detector</a> | " +
+						"<a href='javascript:createConfigSelect(0)'>None</a><br>";
+				str += "<table>";
+				for(var i=0;i<aliases.length;++i)
+				{		
+					str += "<tr><td>";
+					alias = aliases[i].getAttribute("value");
+					str += "<input type='checkbox' class='subConfigCheckbox' value='" + 
+							alias + "'>";
+					str += niceName(alias) + "</input>";
+
+					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
+					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
+
+					str += "</td><td>";
+					
+					str += "<select id='select-" + alias + "'>";
+					for(var j=0;j<keyVersions.length;++j)
+					{
+						version = keyVersions[j].getAttribute("value");
+						str += "<option value='" + version + "'>";
+						str += version;
+						str += "</option>";
+					}
+					str += "</select>";
+					
+					str += "</td>";
+					str += "</tr>";
+				}	
+				str += "</table>";
+
+				str += "<button type='button' onmouseup='javascript:createConfig()'>" +
+						"Create System Config</button>";
+				el.innerHTML = str;				
+			}
+			
+			//createConfigSelect ~
+			//0 is none, 1 is all, 2 is context, 3 is detector			
+			function createConfigSelect(i)
+			{
+				var els = document.getElementsByClassName("subConfigCheckbox");
+				switch(i)
+				{
+				case 1: //check all
+					for(var el in els)
+						els[el].checked = true;
+					break;				
+				default:
+					//select none
+					for(var el in els)
+						els[el].checked = false;
+				}
 			}
 			
 			function selectThisCell(r,c,el) 
