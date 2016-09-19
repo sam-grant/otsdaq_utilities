@@ -90,6 +90,7 @@
 				//setupConfigCreator()
 				//setupConfigCreatorHandler(req)
 				//createConfigSelect(i)
+				//createConfig()
 			
 				//selectThisCell(r,c,el)
 				//editCellCancel()
@@ -591,6 +592,7 @@
 				
 				str += "<button type='button' onmouseup='javascript:createConfig()'>" +
 						"Create System Config</button>";
+				str += "<br><br>";
 				str += "System Config Name: <input id='newConfigName'/>";
 				str += "<br><br>";
 				
@@ -656,6 +658,14 @@
 						els[el].checked = false;
 				}
 			}
+			
+			//createConfig ~
+			function createConfig()
+			{
+				var config = newConfigName
+				Debug.log("aliases.length " + aliases.length);
+			}
+			
 			
 			function selectThisCell(r,c,el) 
 			{	
