@@ -1102,6 +1102,7 @@ throw (xgi::exception::Exception)
 		bool checkLock = true;
 		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
 				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
+		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
@@ -1110,6 +1111,7 @@ throw (xgi::exception::Exception)
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
 				(getUser?&user:0)				//acquire username of this user (optionally null pointer)
 				,0//,&displayName			//acquire user's Display Name

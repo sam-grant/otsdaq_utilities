@@ -54,6 +54,7 @@ private:
     void 			fillTreeView					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &globalConfig,
     		const std::string &startPath, int depth);
     static void		recursiveTreeToXML				(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
+    void			handleCreateConfigurationGroup	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList);
 
     void testXDAQContext();
 

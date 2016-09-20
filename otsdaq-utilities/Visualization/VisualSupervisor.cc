@@ -9,7 +9,7 @@
 //#include "otsdaq-core/DataManager/NetworkDataManager.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 #include "otsdaq-core/RootUtilities/DQMHistos.h"
-#include "otsdaq-core/ConfigurationDataFormats/ConfigurationKey.h"
+#include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
 
 
@@ -615,8 +615,8 @@ void VisualSupervisor::stateRunning(toolbox::fsm::FiniteStateMachine& fsm) throw
 void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception)
 {
     
-    theConfigurationKey_ = theConfigurationManager_->makeTheConfigurationKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationKey").c_str()));
-    theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationKey_,0);
+    theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
+    theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationGroupKey_,0);
     theDataManager_->configure();
 }
 

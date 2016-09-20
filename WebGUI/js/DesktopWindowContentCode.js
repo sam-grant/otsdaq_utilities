@@ -341,6 +341,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 						DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 					//return;
 				}
+				else if(req.responseText == Globals.REQ_LOCK_REQUIRED_RESPONSE) 
+				{
+					errStr = "Request failed because the request requires the user to lockout the system. Please take over the lock in the Settings area to proceed.";
+				}
 				else if(!sequence)
 				{    
 

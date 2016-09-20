@@ -89,8 +89,10 @@
 				//activateSystemConfig(configAlias)
 				//setupConfigCreator()
 				//setupConfigCreatorHandler(req)
-				//createConfigSelect(i)
-				//createConfig()
+				//selectForCreateConfig(i)
+				//versionsForCreateConfig(i)
+				//createConfigGroup()
+				//createConfigGroupHandler(req)
 			
 				//selectThisCell(r,c,el)
 				//editCellCancel()
@@ -113,6 +115,10 @@
 			function init() {			
 				Debug.log("CfgGUI init");
 
+				//setupSpecificSystemConfig("GConfig1");
+				setupConfigCreator();
+				return;
+				
 				setupSystemConfigMode();
 				activateSystemConfig(""); //get active global config
 			}	
@@ -124,21 +130,25 @@
 				return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
 			}
 			
+			//setupSystemConfigMode ~
 			function setupSystemConfigMode() {
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
 			}
 			
+			//setupSubSystemConfigMode ~
 			function setupSubSystemConfigMode() {
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
 			}
 
+			//setupSpecificSystemConfig ~ 
 			function setupSpecificSystemConfig(configAlias) {
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
 			}
 			
+			//setupSpecificSubSystemConfig ~
 			function setupSpecificSubSystemConfig(subConfigAlias,version) {
 				var v = "";
 				if(version) v = "&version="+version;
@@ -146,12 +156,17 @@
 					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
 			}
 			
-			
+			//configRequestHandler ~
 			function configRequestHandler(req) {				
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
 				
 				var aliases = req.responseXML.getElementsByTagName("SystemConfigurationAlias");
-				var keys = req.responseXML.getElementsByTagName("SystemConfigurationKey");
+				var keys = req.responseXML.getElementsByTagName("SystemConfigurationGroupKey");
 				var kocsHdr = req.responseXML.getElementsByTagName("SystemConfigurationKOCs");
 								
 				var el = document.getElementById("display");
@@ -202,7 +217,12 @@
 			}
 
 			function subConfigRequestHandler(req) {					
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
 				
 				var aliases = req.responseXML.getElementsByTagName("SystemSubConfigurationAlias");
 				var keyHdr = req.responseXML.getElementsByTagName("SystemSubConfigurationVersions");
@@ -237,11 +257,16 @@
 
 
 			function specificConfigRequestHandler(req) {	
-				Debug.log("CfgGUI specificConfigRequestHandler req " + req.responseText);
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
 				
 				var alias = DesktopContent.getXMLValue(req,"SystemConfigurationAlias");
-				var key = DesktopContent.getXMLValue(req,"SystemConfigurationKey");
-				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationKey");
+				var key = DesktopContent.getXMLValue(req,"SystemConfigurationGroupKey");
+				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationGroupKey");
 
 				var kocAliases = req.responseXML.getElementsByTagName("KOC_alias");
 				var kocVersions = req.responseXML.getElementsByTagName("KOC_currentVersion");
@@ -590,7 +615,8 @@
 				var el = document.getElementById("display");
 				var str = "";
 				
-				str += "<button type='button' onmouseup='javascript:createConfig()'>" +
+				str += "<div id='createGroupInfo'></div><br>";
+				str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
 						"Create System Config</button>";
 				str += "<br><br>";
 				str += "System Config Name: <input id='newConfigName'/>";
@@ -603,18 +629,37 @@
 			
 				Debug.log("aliases.length " + aliases.length);
 				
-				str += "<a href='javascript:createConfigSelect(1)'>All</a> | " + 
-						"<a href='javascript:createConfigSelect(2)'>Context</a> | " +
-						"<a href='javascript:createConfigSelect(3)'>Detector</a> | " +
-						"<a href='javascript:createConfigSelect(0)'>None</a><br>";
 				str += "<table>";
+				
+
+				str += "<tr><td>";
+				str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " + 
+						"<a href='javascript:selectForCreateConfig(2)'>Context</a> | " +
+						"<a href='javascript:selectForCreateConfig(3)'>Detector</a> | " +
+						"<a href='javascript:selectForCreateConfig(0)'>None</a><br>";
+				str += "</td><td>";
+
+				str += "<a href='javascript:versionsForCreateConfig(0)'>Defaults</a> | " + 
+						"<a href='javascript:versionsForCreateConfig(1)'>Latest</a><br>";
+				str += "</td>";
+				str += "</tr>";
+				
 				for(var i=0;i<aliases.length;++i)
 				{		
 					str += "<tr><td>";
 					alias = aliases[i].getAttribute("value");
+					
+					//add link so text toggles checkbox
+					str += "<a style='text-decoration:none;color:black;' href='javascript:{" +
+							"var el = document.getElementsByClassName(\"subConfigCheckbox\");" +
+							"el[" + i + "].checked = !el[" + i + "].checked;" +
+							"}'>";
+					//add checkbox
 					str += "<input type='checkbox' class='subConfigCheckbox' value='" + 
 							alias + "'>";
-					str += niceName(alias) + "</input>";
+					str += niceName(alias); //can display however
+					str += "</input>";
+					str += "</a>";
 
 					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
 					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
@@ -626,7 +671,7 @@
 					{
 						version = keyVersions[j].getAttribute("value");
 						str += "<option value='" + version + "'>";
-						str += version;
+						str += version;	//can display however
 						str += "</option>";
 					}
 					str += "</select>";
@@ -636,34 +681,132 @@
 				}	
 				str += "</table>";
 
-				str += "<button type='button' onmouseup='javascript:createConfig()'>" +
+				str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
 						"Create System Config</button>";
 				el.innerHTML = str;				
 			}
 			
 			//createConfigSelect ~
 			//0 is none, 1 is all, 2 is context, 3 is detector			
-			function createConfigSelect(i)
+			function selectForCreateConfig(i)
 			{
 				var els = document.getElementsByClassName("subConfigCheckbox");
+				
+				//FIXME .. .get list of context configuration from server
+				var context = ["XDAQContextConfiguration", "XDAQApplicationConfiguration"];
 				switch(i)
 				{
 				case 1: //check all
-					for(var el in els)
+					for(var el=0;el<els.length;++el)
 						els[el].checked = true;
-					break;				
+					break;			
+				case 2: //context	
+					for(var el=0;el<els.length;++el)
+					{
+						Debug.log(els[el].value);
+						els[el].checked = false;
+						for(var c=0;c<context.length;++c)
+							if(els[el].value == context[c])
+							{	
+								els[el].checked = true;
+								break;
+							}
+					}
+					break;		
+				case 3: //detector	
+					for(var el=0;el<els.length;++el)
+					{
+						els[el].checked = true;
+						for(var c in context)
+							if(els[el].value == context[c])
+							{	
+								els[el].checked = false;
+								break;
+							}
+					}
+					break;		
 				default:
 					//select none
-					for(var el in els)
+					for(var el=0;el<els.length;++el)
 						els[el].checked = false;
 				}
 			}
 			
-			//createConfig ~
-			function createConfig()
+			//versionsForCreateConfig ~
+			//0 is default, 1 is latest
+			function versionsForCreateConfig(i)
 			{
-				var config = newConfigName
-				Debug.log("aliases.length " + aliases.length);
+				var els = document.getElementsByClassName("subConfigCheckbox");
+				var sel,options;
+				switch(i)
+				{
+				case 1: //latest
+					for(var el=0;el<els.length;++el)
+					{
+						Debug.log(els[el].value);
+						sel = document.getElementById("select-" + els[el].value);
+						options = sel.options;
+						if(options.length)
+							options[options.length-1].selected = true;
+					}
+					break;
+				default: //FIXME -- get defaults from server
+					//select defaults
+					for(var el=0;el<els.length;++el)
+					{
+						sel = document.getElementById("select-" + els[el].value);
+						options = sel.options;
+						if(options.length)
+							options[0].selected = true;
+					}
+				}
+			}
+			
+			//createConfigGroup ~
+			function createConfigGroup()
+			{
+				var config = document.getElementById("newConfigName").value;
+				Debug.log("config " + config);
+				
+				var configMap = "configList=";
+				var els = document.getElementsByClassName("subConfigCheckbox");
+				var sel;
+				for(var el=0;el<els.length;++el)
+					if(els[el].checked)
+					{
+						sel = document.getElementById("select-" + els[el].value);
+						if(sel.options.length)
+						{
+							Debug.log("subconfig=" + els[el].value + " version=" + 
+								sel.options[sel.selectedIndex].value);
+							configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
+						}
+					}
+				
+				
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&alias=" +
+						config, configMap,createConfigGroupHandler);
+			}
+
+			//createConfigGroupHandler ~
+			function createConfigGroupHandler(req)
+			{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				var el = document.getElementById('createGroupInfo');
+				var name = DesktopContent.getXMLValue(req,"NewGroupName");
+				var key = DesktopContent.getXMLValue(req,"NewGroupKey");
+				var str = "";
+				
+				str += "New Configuration Group Created: " + name + "_v" + key;
+				str += "<a href=''>Group-View</a> <a href=''>Tree-View</a>";
+				
+				el.innerHTML = str;
 			}
 			
 			
