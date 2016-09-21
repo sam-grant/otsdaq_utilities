@@ -790,9 +790,18 @@ throw (xgi::exception::Exception)
 				xmldoc.addTextElementToData("SystemConfigurationGroupKey", "0");
 				parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
+				std::map<std::string /*name*/, ConfigurationVersion /*version*/> gcMap;
+				try
+				{
+					gcMap = theInterface->getConfigurationGroupMembers(g);
+				}
+				catch(...)
+				{
+					xmldoc.addTextElementToData("Error","Configuration group \"" + g +
+							"\" has been corrupted!");
+					continue;
+				}
 
-				cfgMgr->loadGlobalConfiguration(g);//theInterface->loadGlobalConfiguration(g);
-				auto gcMap = cfgMgr->getActiveVersions();
 				for(auto &cv:gcMap)
 				{
 					__MOUT__ << "\tMember config " << cv.first << ":" << cv.second << std::endl;
@@ -867,13 +876,6 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveNewConfigurationGroup")
 	{
-		//save a new ConfigurationGroup
-		//	search for existing ConfigurationGroupKeys for this ConfigurationGroup
-		//	append a "bumped" system key to alias
-		//	save based on list of configuration name/ConfigurationVersion
-		//
-		//configList parameter is comma separated configuration name and version
-
 		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
 		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
@@ -1761,6 +1763,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	std::string mapKey = ssMapKey.str();
 	__MOUT__ << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
 
+	time_t now = time(0);
+
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
@@ -1769,14 +1773,24 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		//update configuration info for each new configuration manager
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
 		//	so we are not dealing with changing pointers later on
-		userConfigurationManagers_[mapKey]->getAllConfigurationInfo();	//load empty instance of everything important
+		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);	//load empty instance of everything important
+	}
+	else if(userLastUseTime_.find(mapKey) == userLastUseTime_.end())
+	{
+		__MOUT_ERR__ << "Fatal error managing userLastUseTime_!" << std::endl;
+		throw std::runtime_error("Fatal error managing userLastUseTime_!");
+	}
+	else if(now - userLastUseTime_[mapKey] >
+		CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
+	{
+		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
+		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);
 	}
 
 	//load backbone configurations always based on backboneVersion
 	//if backboneVersion is -1, then latest
 	backboneVersion = 0;// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
 
-	time_t now = time(0);
 	//update active sessionIndex last use time
 	userLastUseTime_[mapKey] = now;
 
@@ -1786,7 +1800,11 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		{
 			__MOUT__ << now << ":" << it->second << " = " << now - it->second << std::endl;
 			delete userConfigurationManagers_[it->first]; //call destructor
-			assert(userConfigurationManagers_.erase(it->first));	//erase by key
+			if(!(userConfigurationManagers_.erase(it->first)))	//erase by key
+			{
+				__MOUT_ERR__ << "Fatal error erasing configuration manager by key!" << std::endl;
+				throw std::runtime_error("Fatal error erasing configuration manager by key!");
+			}
 			userLastUseTime_.erase(it);								//erase by iterator
 
 			it=userLastUseTime_.begin(); //fail safe.. reset it, to avoid trying to understand what happens with the next iterator
@@ -1797,6 +1815,14 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 
 //========================================================================================================================
 //	handleCreateConfigurationGroup
+//
+//		Save a new ConfigurationGroup:
+//			Search for existing ConfigurationGroupKeys for this ConfigurationGroup
+//			Append a "bumped" system key to alias
+//			Save based on list of configuration name/ConfigurationVersion
+//
+//		configList parameter is comma separated configuration name and version
+//
 void ConfigurationGUISupervisor::handleCreateConfigurationGroup	(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
 		const std::string &configList)
@@ -1827,15 +1853,26 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroup	(HttpXmlDocument
 		groupMembers[name] = ConfigurationVersion(version.c_str());
 	}
 
+	ConfigurationGroupKey newKey;
 	try
 	{
-		cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+	}
+	catch(std::runtime_error &e)
+	{
+		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
+		__MOUT_ERR__ << "\n\n" << e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName +
+				". (Error: " + e.what() + ")");
 	}
 	catch(...)
 	{
 		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
 		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName);
 	}
+
+	xmldoc.addTextElementToData("NewGroupName",groupName);
+	xmldoc.addTextElementToData("NewGroupKey",newKey.toString());
 }
 
 //testXDAQContext just a test bed for navigating the new config tree
