@@ -355,7 +355,7 @@ void VisualSupervisor::request(xgi::Input * in, xgi::Output * out) throw (xgi::e
                     xmldoc.addTextElementToData("rootJSON", json.Data());
                     std::cout << __COUT_HDR_FL__ << "Done" << std::endl;
 
-                    std::cout << "\n\n" << json.Data() << "\n\n";
+                    //std::cout << "\n\n" << json.Data() << "\n\n";
                 }
             }
             else
