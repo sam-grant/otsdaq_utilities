@@ -141,6 +141,7 @@ throw (xgi::exception::Exception)
 		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
 		bool getUser = (Command == "SaveColorChoice") || (Command == "LoadColorChoice");
+		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
@@ -149,6 +150,7 @@ throw (xgi::exception::Exception)
 				!automaticCommand,			//true/false refresh cookie code
 				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
 				getUser?&user:0				//acquire username of this user (optionally null pointer)
 				,0//,&displayName			//acquire user's Display Name

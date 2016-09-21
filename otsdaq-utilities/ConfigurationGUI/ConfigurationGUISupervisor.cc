@@ -90,7 +90,7 @@ theRemoteWebUsers_  (this)
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	__MOUT__ << "All config info loaded." << std::endl;
-	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+	std::map<std::string, ConfigurationGroupKey>	aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
 
 
 	__MOUT__ << "aliasMap size: " << aliasMap.size() << std::endl;
@@ -103,7 +103,7 @@ theRemoteWebUsers_  (this)
 	//get KOC version numbers (this is the version "conditioned" by the alias-key pair)
 
 	std::set<std::string> listOfKocs;
-	std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.begin();
 	while (it != aliasMap.end())
 	{
 
@@ -409,9 +409,9 @@ theRemoteWebUsers_  (this)
 		std::string KOCAlias = "FSSRDACsConfiguration";
 		ConfigurationVersion newVersion(3);
 
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+		std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
 
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(specSystemAlias);
+		std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(specSystemAlias);
 		if(it != aliasMap.end())
 		{
 			__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
@@ -667,6 +667,7 @@ throw (xgi::exception::Exception)
 	//getSystemConfigurations
 	//getSubSystemConfigurations
 	//getSpecificSystemConfiguration
+	//saveNewConfigurationGroup
 	//getSpecificSubSystemConfiguration
 	//saveSpecificSubSystemConfiguration
 	//changeKocVersionForSpecificConfig
@@ -682,6 +683,7 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommands = 0; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
+		bool lockRequired = true;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
@@ -690,6 +692,7 @@ throw (xgi::exception::Exception)
 				!automaticCommands,			//true/false refresh cookie code
 				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				lockRequired,				//true/false requires this user has the lock to proceed
 				&userWithLock,				//acquire username with lock (optionally null pointer)
 				&userName					//acquire username of this user (optionally null pointer)
 				,0//,&displayName			//acquire user's Display Name
@@ -703,8 +706,6 @@ throw (xgi::exception::Exception)
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-
-	//HttpXmlDocument xmldoc(cookieCode);
 
 	//acquire user's configuration manager based on username & activeSessionIndex
 	__MOUT__ << std::endl;
@@ -735,8 +736,8 @@ throw (xgi::exception::Exception)
 
 		if(0) //old way, not with artdaq_db handling global configurations
 		{
-			std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
-			std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+			std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+			std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.begin();
 
 			std::set<std::string> listOfKocs;
 
@@ -751,7 +752,7 @@ throw (xgi::exception::Exception)
 				//add system configuration alias and key
 				xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
 				sprintf(tmpIntStr,"%u",it->second.key());
-				xmldoc.addTextElementToData("SystemConfigurationKey", tmpIntStr);
+				xmldoc.addTextElementToData("SystemConfigurationGroupKey", tmpIntStr);
 				parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 				//get KOCs alias and version for the current system configuration key
@@ -778,7 +779,7 @@ throw (xgi::exception::Exception)
 
 		{
 			ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-			auto gcfgs = theInterface->findAllGlobalConfigurations();
+			auto gcfgs = theInterface->getAllConfigurationGroupNames();
 			__MOUT__ << "Global config size: " << gcfgs.size() << std::endl;
 
 			for(auto &g:gcfgs)
@@ -786,7 +787,7 @@ throw (xgi::exception::Exception)
 				__MOUT__ << "Global config " << g << std::endl;
 
 				xmldoc.addTextElementToData("SystemConfigurationAlias", g);
-				xmldoc.addTextElementToData("SystemConfigurationKey", "0");
+				xmldoc.addTextElementToData("SystemConfigurationGroupKey", "0");
 				parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 
@@ -863,6 +864,22 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "getSpecificSystemConfiguration: " << alias << std::endl;
 
 		fillSpecificSystemXML(xmldoc,cfgMgr,alias,ConfigurationVersion(ConfigurationVersion::DEFAULT)); //FIXME: to allow for non-default version
+	}
+	else if(Command == "saveNewConfigurationGroup")
+	{
+		//save a new ConfigurationGroup
+		//	search for existing ConfigurationGroupKeys for this ConfigurationGroup
+		//	append a "bumped" system key to alias
+		//	save based on list of configuration name/ConfigurationVersion
+		//
+		//configList parameter is comma separated configuration name and version
+
+		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
+		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
+		__MOUT__ << "configList: " << configList << std::endl;
+
+		handleCreateConfigurationGroup(xmldoc,cfgMgr,groupName,configList);
 	}
 	else if(Command == "getSpecificSubSystemConfiguration")
 	{
@@ -1094,9 +1111,9 @@ throw (xgi::exception::Exception)
 
 		{
 
-			std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+			std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
 
-			std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(specSystemAlias);
+			std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(specSystemAlias);
 			if(it != aliasMap.end())
 			{
 				__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
@@ -1228,7 +1245,6 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "Command request not recognized." << std::endl;
 
 
-
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, true);
 }
@@ -1341,9 +1357,39 @@ void ConfigurationGUISupervisor::fillSpecificSystemXML(HttpXmlDocument &xmldoc,
 	char tmpIntStr[100];
 	DOMElement* parentEl;
 
-	std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
 
-	std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(alias);
+	//steps:
+	//	extract configuration name and version from alias
+
+
+	//	extract configuration name and version from alias
+	//		version is delimited by _v
+	int i;
+	for(i=alias.length()-1;i>=0;--i)
+		if(alias[i] == 'v' && i>1 && alias[i-1] == '_')
+			break; //found version indicator
+
+	if(i < 0)
+	{
+		xmldoc.addTextElementToData("Error", "Invalid configuration alias requested, " + alias);
+		return;
+	}
+
+	std::string configName = alias.substr(0,i-1);
+	std::string version = alias.substr(i+1);
+
+
+	__MOUT__ << "configName=" << configName << std::endl;
+	__MOUT__ << "version=" << version << std::endl;
+
+
+
+
+	return;
+
+	std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+
+	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(alias);
 	if(it != aliasMap.end())
 	{
 		xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
@@ -1362,7 +1408,7 @@ void ConfigurationGUISupervisor::fillSpecificSystemXML(HttpXmlDocument &xmldoc,
 		//add system configuration alias and key
 		xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
 		sprintf(tmpIntStr,"%u",it->second.key());
-		xmldoc.addTextElementToData("SystemConfigurationKey", tmpIntStr);
+		xmldoc.addTextElementToData("SystemConfigurationGroupKey", tmpIntStr);
 		parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 		//get KOCs alias and version for the current system configuration key
@@ -1410,14 +1456,14 @@ void ConfigurationGUISupervisor::fillSpecificSystemXML(HttpXmlDocument &xmldoc,
 
 				cfgMgr->loadConfigurationBackbone(version);
 
-				std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+				std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
 
 				it = aliasMap.find(alias);
 				if(it != aliasMap.end())
 				{
 					//found a historical version of alias
 					sprintf(tmpIntStr,"%u",it->second.key());
-					xmldoc.addTextElementToData("HistoricalSystemConfigurationKey", tmpIntStr);
+					xmldoc.addTextElementToData("HistoricalSystemConfigurationGroupKey", tmpIntStr);
 
 				}
 			}
@@ -1714,6 +1760,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
 	__MOUT__ << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
+
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
@@ -1727,7 +1774,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 
 	//load backbone configurations always based on backboneVersion
 	//if backboneVersion is -1, then latest
-	backboneVersion = userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
+	backboneVersion = 0;// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
 
 	time_t now = time(0);
 	//update active sessionIndex last use time
@@ -1748,7 +1795,48 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	return userConfigurationManagers_[mapKey];
 }
 
+//========================================================================================================================
+//	handleCreateConfigurationGroup
+void ConfigurationGUISupervisor::handleCreateConfigurationGroup	(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
+		const std::string &configList)
+{
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
+	std::string name, version;
+	auto c = configList.find(',',0);
+	auto i = c; i = 0; //auto used to get proper index/length type
+	while(c < configList.length())
+	{
+		//add the configuration and version pair to the map
+		name = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+		if(c == std::string::npos) //missing version list entry?!
+		{
+			xmldoc.addTextElementToData("Error", "Incomplete Configuration-Version pair!");
+			return;
+		}
 
+		version = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+
+		__MOUT__ << "name: " << name << std::endl;
+		__MOUT__ << "version: " << version << std::endl;
+
+		groupMembers[name] = ConfigurationVersion(version.c_str());
+	}
+
+	try
+	{
+		cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+	}
+	catch(...)
+	{
+		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
+		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName);
+	}
+}
 
 //testXDAQContext just a test bed for navigating the new config tree
 void ConfigurationGUISupervisor::testXDAQContext()
