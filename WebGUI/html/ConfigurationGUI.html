@@ -67,6 +67,10 @@
 			var _version;
 			var _dataOffset = 0;
 			
+			//for tree view
+			var treeViewHandlerStr_; //used by recursive function to build html string
+			var treeNodeUID_;		//incrementing unique id for nodes
+			
 		
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -74,9 +78,9 @@
 			//functions:			
 				//init()
 				//niceName(str)									//removes "Configuration" from name
-				//setupSystemConfigMode()						//gets global configurations
+				//setupSystemViewMode()						//gets global configurations
 				//setupSubSystemConfigMode()					//gets configuration tables
-				//setupSpecificSystemConfig(configAlias)		//setup editor for specific global configuration
+				//setupConfigGroup(configGroupName)		//setup editor for specific global configuration
 				//setupSpecificSubSystemConfig(subConfigAlias) 	//setup editor for specific configuration table
 				//configRequestHandler(req)
 				//subConfigRequestHandler(req)
@@ -85,8 +89,8 @@
 				//treeViewHandler(req,parentId,errStr)
 				//recursiveDrawTree(parent,depth,path)
 				//toggleTreeChildren(depth,uid,nodeName,path)
-				//setupSystemConfigTreeView(configAlias)
-				//activateSystemConfig(configAlias)
+				//setupConfigGroupTreeView(configGroupName)
+				//activateSystemConfig(configGroupName)
 				//setupConfigCreator()
 				//setupConfigCreatorHandler(req)
 				//selectForCreateConfig(i)
@@ -115,11 +119,11 @@
 			function init() {			
 				Debug.log("CfgGUI init");
 
-				//setupSpecificSystemConfig("GConfig1");
+				//setupConfigGroup("GConfig1");
 				setupConfigCreator();
 				return;
 				
-				setupSystemConfigMode();
+				setupSystemViewMode();
 				activateSystemConfig(""); //get active global config
 			}	
 			
@@ -130,8 +134,8 @@
 				return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
 			}
 			
-			//setupSystemConfigMode ~
-			function setupSystemConfigMode() {
+			//setupSystemViewMode ~
+			function setupSystemViewMode() {
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
 			}
@@ -142,17 +146,17 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
 			}
 
-			//setupSpecificSystemConfig ~ 
-			function setupSpecificSystemConfig(configAlias) {
+			//setupConfigGroup ~ 
+			function setupConfigGroup(configGroupName) {
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configGroupName, "", specificConfigRequestHandler);		
 			}
 			
 			//setupSpecificSubSystemConfig ~
 			function setupSpecificSubSystemConfig(subConfigAlias,version) {
 				var v = "";
 				if(version) v = "&version="+version;
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
 					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
 			}
 			
@@ -178,15 +182,17 @@
 				str += "<br><br>";
 						
 				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
+				if(!aliases.length)
+					str += "No Configuration Groups found.";
 				for(var i=0;i<aliases.length;++i)
 				{		
 					//add header
-					str += "<a href='javascript:setupSpecificSystemConfig(\"" + aliases[i].getAttribute("value") +
+					str += "<a href='javascript:setupConfigGroup(\"" + aliases[i].getAttribute("value") +
 						"\");'>";
 					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
 					
 					//add tree view link
-					str += " <a href='javascript:setupSystemConfigTreeView(\"" + aliases[i].getAttribute("value") +
+					str += " <a href='javascript:setupConfigGroupTreeView(\"" + aliases[i].getAttribute("value") +
 						"\");'>";
 					str += "Tree-view</a>";										
 					
@@ -435,8 +441,6 @@
 			}
 			
 			//treeViewHandler ~		
-			var treeViewHandlerStr_; //used by recursive function to build html string
-			var treeNodeUID_;		//incrementing unique id for nodes
 			function treeViewHandler(req,parentId) 
 			{				
 				var err = DesktopContent.getXMLValue(req,"Error");
@@ -448,7 +452,7 @@
 				
 				//draw tree				
 
-				var systemConfig = DesktopContent.getXMLValue(req,"globalConfig");
+				var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 				var el;
 				var depth;
 				var parentEl;
@@ -473,9 +477,9 @@
 					el = document.getElementById("display");
 
 					//add system config header
-					treeViewHandlerStr_ += "<a href='javascript:setupSpecificSystemConfig(\"" + systemConfig +
+					treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' href='javascript:setupConfigGroup(\"" + configGroupName +
 						"\");'>";
-					treeViewHandlerStr_ += systemConfig + "</a><br>";
+					treeViewHandlerStr_ += configGroupName + "</a><br>";
 				}			
 				
 				//add tree
@@ -502,7 +506,7 @@
 										
 					if(nodes[i].children.length && (value = nodes[i].children[0]).nodeName == "value")
 					{	//this is a value node!
-						treeViewHandlerStr_ += nodeName;
+						treeViewHandlerStr_ += "<b>" + nodeName + "</b>";
 						treeViewHandlerStr_ += " : " + value.getAttribute("value");
 						treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";
 						continue; //so no need to recurse
@@ -544,29 +548,30 @@
 				var idString = depth + "-" + uid + "-" + nodeName;
 				Debug.log("idString: " + idString);
 				
-				var el = document.getElementById("children-" + idString);				
+				var el = document.getElementById("children-" + idString);	
+				var configGroupName = document.getElementById("treeView-ConfigGroupLink").innerHTML;
 				
 				if(el) //if children already exist, then toggle display
 					el.style.display = (el.style.display == "none")? "block" : "none";
 				else	//if no children div, then request it
-					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=GConfig3&depth=1", 
-								"startPath="+path+nodeName+"/",treeViewHandler,idString);
-				
+					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
+							configGroupName + "&depth=1", 
+							"startPath="+path+nodeName+"/",treeViewHandler,idString);				
 			}
 			
-			//setupSystemConfigTreeView ~
-			function setupSystemConfigTreeView(configAlias)
+			//setupConfigGroupTreeView ~
+			function setupConfigGroupTreeView(configGroupName)
 			{
-				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&globalConfig=" + 
-						configAlias + "&depth=1", 
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
+						configGroupName + "&depth=1", 
 						"startPath=/",treeViewHandler);
 			}
 			
 			//activateSystemConfig ~
-			function activateSystemConfig(configAlias)
+			function activateSystemConfig(configGroupName)
 			{
-				DesktopContent.XMLHttpRequest("Request?RequestType=activateGlobalConfig&globalConfig=" + 
-						configAlias,"",activateSystemConfigHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=activateGlobalConfig&configGroup=" + 
+						configGroupName,"",activateSystemConfigHandler);
 			}
 			
 			//activateSystemConfigHandler ~
@@ -589,7 +594,7 @@
 					str += "None";
 				else
 				{
-					str += "<a href='javascript:setupSpecificSystemConfig(\"" + activeConfig +
+					str += "<a href='javascript:setupConfigGroup(\"" + activeConfig +
 					"\");'>";
 					str += activeConfig + "</a>";
 				}
@@ -804,7 +809,7 @@
 				var str = "";
 				
 				str += "New Configuration Group Created: " + name + "_v" + key;
-				str += "<a href=''>Group-View</a> <a href=''>Tree-View</a>";
+				str += "<br>Goto its <a href=''>Member-View</a> or <a href=''>Tree-View</a>";
 				
 				el.innerHTML = str;
 			}
@@ -1069,7 +1074,7 @@
 			
 		<h1>Configuration GUI</h1>
 		<div id='activeConfig'></div>
-		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
+		<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
 		<div id='errorDiv'></div>
 		<div id='display'></div>
 		
