@@ -46,21 +46,24 @@ public:
     void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
+    void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
+    void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList);
 
-    void 			fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
-    void 			fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
-    void 			saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version,
-    		const std::string &data, const int &dataOffset, const int &chunkSize);
-    void 			fillTreeView					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &globalConfig,
-    		const std::string &startPath, int depth);
-    static void		recursiveTreeToXML				(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
-    void			handleCreateConfigurationGroup	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList);
+    void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
+    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version, const std::string &data, const int &dataOffset, const int &chunkSize);
+
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configGroup, const std::string &startPath, int depth);
+    static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
+
 
     void testXDAQContext();
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
         CONFIGURATION_MANAGER_EXPIRATION_TIME = 60*60*1, //1 hour, in seconds
+        CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
 
     SupervisorConfiguration    										theSupervisorsConfiguration_;
