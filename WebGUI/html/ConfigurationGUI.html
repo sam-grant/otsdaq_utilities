@@ -169,51 +169,56 @@
 					return;
 				}
 				
-				var aliases = req.responseXML.getElementsByTagName("SystemConfigurationAlias");
-				var keys = req.responseXML.getElementsByTagName("SystemConfigurationGroupKey");
+				var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+				var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
 				var kocsHdr = req.responseXML.getElementsByTagName("SystemConfigurationKOCs");
-								
+						
+				var groupName, key;
+				
 				var el = document.getElementById("display");
 
 				var str = "";
-				var kocAliases, kocVersions;
+				var configNames, kocVersions;
 
 				str += "<a href='javascript:setupConfigCreator()'>Create a New System Configuration</a>";
 				str += "<br><br>";
 						
-				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
-				if(!aliases.length)
+				Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
+				if(!groupNames.length)
 					str += "No Configuration Groups found.";
-				for(var i=0;i<aliases.length;++i)
+				for(var i=0;i<groupNames.length;++i)
 				{		
+					groupName = groupNames[i].getAttribute("value");
+					key = keys[i].getAttribute("value");
+					
 					//add header
-					str += "<a href='javascript:setupConfigGroup(\"" + aliases[i].getAttribute("value") +
+					str += "<a href='javascript:setupConfigGroup(\"" + groupName +
 						"\");'>";
-					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
+					str += groupName + "</a> (" + key +")";
 					
 					//add tree view link
-					str += " <a href='javascript:setupConfigGroupTreeView(\"" + aliases[i].getAttribute("value") +
-						"\");'>";
+					str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+						"\",\"" + key + "\");'>";
 					str += "Tree-view</a>";										
 					
 					//add Activate link
-					str += " <a href='javascript:activateSystemConfig(\"" + aliases[i].getAttribute("value") +
-						"\");'>";
+					str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+							"\",\"" + key + "\");'>";
 					str += "Activate</a>";
 					
 					
 					str += "<br><table><tr>";
 
-					kocAliases = kocsHdr[i].getElementsByTagName("KOC_alias");
-					kocVersions = kocsHdr[i].getElementsByTagName("KOC_version");
-					Debug.log("CfgGUI requestHandler kocAliases.length " + kocAliases.length);
+					configNames = kocsHdr[i].getElementsByTagName("MemberName");
+					kocVersions = kocsHdr[i].getElementsByTagName("MemberVersion");
+					Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 					
-					for(var j=0;j<kocAliases.length;++j)
+					for(var j=0;j<configNames.length;++j)
 					{
 						str += "<td align='center'>";
-						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + kocAliases[j].getAttribute("value") +
+						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + configNames[j].getAttribute("value") +
 							"\");'>";
-						str += niceName(kocAliases[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
+						str += niceName(configNames[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
 						str += "</td>";
 					}
 					str += "</tr></table><br>";
@@ -236,7 +241,7 @@
 				var el = document.getElementById("display");
 
 				var str = "";
-				var keyVersions;
+				var configVersions;
 
 				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
 				for(var i=0;i<aliases.length;++i)
@@ -246,13 +251,13 @@
 					str += niceName(aliases[i].getAttribute("value"));
 					str += "</a><br><table><tr>";
 
-					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
-					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
+					configVersions = keyHdr[i].getElementsByTagName("VersionKey");
+					//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
 					
-					for(var j=0;j<keyVersions.length;++j)
+					for(var j=0;j<configVersions.length;++j)
 					{
 						str += "<td align='center'>";
-						str += "version" + "<br>" + keyVersions[j].getAttribute("value");
+						str += "version" + "<br>" + configVersions[j].getAttribute("value");
 						str += "</td>";
 					}
 					str += "</tr></table><br>";
@@ -270,11 +275,11 @@
 					return;
 				}
 				
-				var alias = DesktopContent.getXMLValue(req,"SystemConfigurationAlias");
-				var key = DesktopContent.getXMLValue(req,"SystemConfigurationGroupKey");
-				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationGroupKey");
+				var alias = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
-				var kocAliases = req.responseXML.getElementsByTagName("KOC_alias");
+				var configNames = req.responseXML.getElementsByTagName("MemberName");
 				var kocVersions = req.responseXML.getElementsByTagName("KOC_currentVersion");
 				
 				var el = document.getElementById("display");
@@ -298,13 +303,13 @@
 				
 				
 				str += "<br><a href='javascript:addNewKocForSpecificConfig()'>Add new KOC</a> to "  + alias + "<br><br>";
-				//Debug.log("CfgGUI specificConfigRequestHandler KOC length " + kocAliases.length + " - " + kocVersions.length);
-				for(var i=0;i<kocAliases.length && i<kocVersions.length;++i)
+				//Debug.log("CfgGUI specificConfigRequestHandler KOC length " + configNames.length + " - " + kocVersions.length);
+				for(var i=0;i<configNames.length && i<kocVersions.length;++i)
 				{
-					str += "<b>" + niceName(kocAliases[i].getAttribute("value")) + "</b> (Current version: " + 
+					str += "<b>" + niceName(configNames[i].getAttribute("value")) + "</b> (Current version: " + 
 						kocVersions[i].getAttribute("value") +
-						")<br>Click below to change "  + niceName(kocAliases[i].getAttribute("value")) + " Version for " + alias + ":<br>";
-						//") <a href='javascript:changeKocVersionForSpecificConfig("+i+")'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
+						")<br>Click below to change "  + niceName(configNames[i].getAttribute("value")) + " Version for " + alias + ":<br>";
+						//") <a href='javascript:changeKocVersionForSpecificConfig("+i+")'>Change "  + niceName(configNames[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
 					
 					
 					str += "Existing versions: " + kocVersions[i].getAttribute("value");
@@ -315,7 +320,7 @@
 						//str += " " + kocExistingVersions[j].getAttribute("value");
 						str += " ";
 						str += "<a href='javascript:changeKocVersionForSpecificConfig(\"" +
-								alias + "\",\"" + kocAliases[i].getAttribute("value") + "\"," + 
+								alias + "\",\"" + configNames[i].getAttribute("value") + "\"," + 
 								kocExistingVersions[j].getAttribute("value");
 						str += ")'>" + kocExistingVersions[j].getAttribute("value");
 						str += "</a>";
@@ -331,7 +336,7 @@
 			function specificSubConfigRequestHandler(req) {	
 				//Debug.log("specificSubConfigRequestHandler requestHandler req " + req.responseText);
 				
-				var subAlias = DesktopContent.getXMLValue(req,"SubSystemConfigurationAlias");
+				var subAlias = DesktopContent.getXMLValue(req,"SubConfigurationGroupName");
 				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
 				
 				
@@ -560,10 +565,10 @@
 			}
 			
 			//setupConfigGroupTreeView ~
-			function setupConfigGroupTreeView(configGroupName)
+			function setupConfigGroupTreeView(configGroupName, configGroupKey)
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
-						configGroupName + "&depth=1", 
+						configGroupName + "&configGroupKey=" + configGroupKey + "&depth=1", 
 						"startPath=/",treeViewHandler);
 			}
 			
@@ -666,15 +671,15 @@
 					str += "</input>";
 					str += "</a>";
 
-					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
-					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
+					configVersions = keyHdr[i].getElementsByTagName("VersionKey");
+					//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
 
 					str += "</td><td>";
 					
 					str += "<select id='select-" + alias + "'>";
-					for(var j=0;j<keyVersions.length;++j)
+					for(var j=0;j<configVersions.length;++j)
 					{
-						version = keyVersions[j].getAttribute("value");
+						version = configVersions[j].getAttribute("value");
 						str += "<option value='" + version + "'>";
 						str += version;	//can display however
 						str += "</option>";

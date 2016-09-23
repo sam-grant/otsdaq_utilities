@@ -27,13 +27,8 @@ XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
 
 
+#undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "Wizard"
-#define __MF_HDR__		__COUT_HDR_FL__
-#define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
-#define __SS__			std::stringstream ss; ss << __COUT_HDR_FL__
 
 
 //========================================================================================================================

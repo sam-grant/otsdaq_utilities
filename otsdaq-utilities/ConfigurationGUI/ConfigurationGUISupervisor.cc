@@ -25,13 +25,8 @@
 
 using namespace ots;
 
+#undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "CfgGUI"
-#define __MF_HDR__		__COUT_HDR_FL__
-#define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __COUT_HDR__
-#define __MOUT__  		std::cout << __MF_HDR__//mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
-
 
 
 XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
@@ -640,6 +635,7 @@ void ConfigurationGUISupervisor::destroy(void)
 	}
 	userConfigurationManagers_.clear();
 
+	//NOTE: Moved to ConfigurationGUISupervisor [FIXME is this correct?? should we use shared_ptr??]
 	if( ConfigurationInterface::getInstance(true) != 0 )
 		delete ConfigurationInterface::getInstance(true);
 }
@@ -688,7 +684,6 @@ throw (xgi::exception::Exception)
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
-				"0",						//report user's ip address, if known
 				!automaticCommands,			//true/false refresh cookie code
 				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
@@ -884,24 +879,26 @@ throw (xgi::exception::Exception)
 	else if(Command == "getTreeView")
 	{
 		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
 		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
 		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
 
 		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
 		__MOUT__ << "startPath: " << startPath << std::endl;
 		__MOUT__ << "depth: " << depth << std::endl;
-		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,startPath,depth);
+		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),startPath,depth);
 	}
 	else if(Command == "activateGlobalConfig")
 	{
 		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
 
 		__MOUT__ << "Activating config: " << configGroup << std::endl;
-		if(configGroup == "")
-			configGroup = cfgMgr->getActiveGlobalConfiguration();
-		else
-			configGroup = cfgMgr->setActiveGlobalConfiguration(configGroup);
-		xmldoc.addTextElementToData("activeConfig", configGroup);
+//		if(configGroup == "")
+//			configGroup = cfgMgr->getActiveGlobalConfiguration();
+//		else
+//			configGroup = cfgMgr->setActiveGlobalConfiguration(configGroup);
+//		xmldoc.addTextElementToData("activeConfig", configGroup);
 	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
@@ -920,7 +917,8 @@ throw (xgi::exception::Exception)
 //	starting node path
 //	depth from starting node path
 //
-void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configGroup,
+void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+		const std::string &configGroup, const ConfigurationGroupKey &configGroupKey,
 		const std::string &startPath, int depth)
 {
 	//return xml
@@ -945,9 +943,10 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	//return the startPath as root "tree" element
 	//	and then display all children if depth > 0
 	xmldoc.addTextElementToData("configGroup", configGroup);
+	xmldoc.addTextElementToData("configGroupKey", configGroupKey.toString());
 
 	try {
-		cfgMgr->loadGlobalConfiguration(configGroup);
+		cfgMgr->loadConfigurationGroup(configGroup,configGroupKey);
 
 		__MOUT__ << "!" << std::endl;
 
@@ -1070,7 +1069,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(alias);
 	if(it != aliasMap.end())
 	{
-		xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
+		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
 
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 		std::set<ConfigurationVersion> versions;
@@ -1084,9 +1083,9 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 		//__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		//add system configuration alias and key
-		xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
+		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
 		sprintf(tmpIntStr,"%u",it->second.key());
-		xmldoc.addTextElementToData("SystemConfigurationGroupKey", tmpIntStr);
+		xmldoc.addTextElementToData("ConfigurationGroupKey", tmpIntStr);
 		parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 		//get KOCs alias and version for the current system configuration key
@@ -1105,7 +1104,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 
 				//__MOUT__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
 
-				xmldoc.addTextElementToParent("KOC_alias", *sit, parentEl);
+				xmldoc.addTextElementToParent("MemberName", *sit, parentEl);
 				parentElKoc = xmldoc.addTextElementToParent("KOC_currentVersion", cv.toString(), parentEl);
 				for (auto &version:versions)
 				{
@@ -1141,7 +1140,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 				{
 					//found a historical version of alias
 					sprintf(tmpIntStr,"%u",it->second.key());
-					xmldoc.addTextElementToData("HistoricalSystemConfigurationGroupKey", tmpIntStr);
+					xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", tmpIntStr);
 
 				}
 			}
@@ -1215,7 +1214,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 	}
 
 	//table name
-	xmldoc.addTextElementToData("SubSystemConfigurationAlias", it->first);
+	xmldoc.addTextElementToData("SubConfigurationGroupName", it->first);
 	//table version
 	xmldoc.addTextElementToData("SubSystemConfigurationVersion", version.toString());
 	//existing table versions
@@ -1609,25 +1608,31 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 	DOMElement* parentEl;
 
 	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-	auto gcfgs = theInterface->getAllConfigurationGroupNames();
-	__MOUT__ << "Global config size: " << gcfgs.size() << std::endl;
+	auto configGroups = theInterface->getAllConfigurationGroupNames();
+	__MOUT__ << "Global config size: " << configGroups.size() << std::endl;
 
-	for(auto &g:gcfgs)
+	ConfigurationGroupKey groupKey;
+	std::string groupName;
+
+	for(auto &groupString:configGroups)
 	{
-		__MOUT__ << "Global config " << g << std::endl;
+		ConfigurationGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
 
-		xmldoc.addTextElementToData("SystemConfigurationAlias", g);
-		xmldoc.addTextElementToData("SystemConfigurationGroupKey", "0");
+		__MOUT__ << "Config group " << groupString << " := " << groupName <<
+				"(" << groupKey << ")" << std::endl;
+
+		xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
 		parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
 
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> gcMap;
 		try
 		{
-			gcMap = theInterface->getConfigurationGroupMembers(g);
+			gcMap = theInterface->getConfigurationGroupMembers(groupString);
 		}
 		catch(...)
 		{
-			xmldoc.addTextElementToData("Error","Configuration group \"" + g +
+			xmldoc.addTextElementToData("Error","Configuration group \"" + groupString +
 					"\" has been corrupted!");
 			continue;
 		}
@@ -1635,8 +1640,8 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		for(auto &cv:gcMap)
 		{
 			__MOUT__ << "\tMember config " << cv.first << ":" << cv.second << std::endl;
-			xmldoc.addTextElementToParent("KOC_alias", cv.first, parentEl);
-			xmldoc.addTextElementToParent("KOC_version", cv.second.toString(), parentEl);
+			xmldoc.addTextElementToParent("MemberName", cv.first, parentEl);
+			xmldoc.addTextElementToParent("MemberVersion", cv.second.toString(), parentEl);
 		}
 	}
 

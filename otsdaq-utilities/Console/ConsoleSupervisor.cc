@@ -22,13 +22,8 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 #define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
 
+#undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
-#define __MF_HDR__		__COUT_HDR_FL__
-#define __MOUT_ERR__  	mf::LogError	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_WARN__  	mf::LogWarning	(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT_INFO__  	mf::LogInfo		(__MF_SUBJECT__) << __MF_HDR__
-#define __MOUT__  		mf::LogDebug	(__MF_SUBJECT__) << __MF_HDR__
-#define __SS__			std::stringstream ss; ss << __COUT_HDR_FL__
 
 
 //========================================================================================================================
@@ -59,6 +54,8 @@ void ConsoleSupervisor::init(void)
 {
 	//called by constructor
 	theSupervisorsConfiguration_.init(getApplicationContext());
+
+	__MOUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
@@ -108,9 +105,9 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 void ConsoleSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	__MOUT__ << std::endl;
+	__MOUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
-			getenv("LOGBOOK_SUPERVISOR_ID") << "'></frameset></html>";
+			getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -125,7 +122,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-	//__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	//__MOUT__ << "Command " << Command << std::endl;
 
 	//Commands:
 		//GetConsoleMsgs
@@ -146,7 +143,6 @@ throw (xgi::exception::Exception)
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
-				"0",						//report user's ip address, if known
 				!automaticCommand,			//true/false refresh cookie code
 				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
@@ -186,8 +182,6 @@ throw (xgi::exception::Exception)
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
-
-
 //		__MOUT__ << "lastUpdateCount=" << lastUpdateCount <<
 //				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 

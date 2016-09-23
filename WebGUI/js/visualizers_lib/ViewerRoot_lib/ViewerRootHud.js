@@ -41,16 +41,26 @@ ViewerRoot.createHud = function() {
 		else
 			document.getElementById("ViewerRoot-hudAdminControlsIcon").style.display = "none";
 	}
-	
+
+	//should match response by handleUserPreferences()
 	this.checkboxUpdate = function(i) {
 		var chk = document.getElementById("hudCheckbox" + i);
 		Debug.log("ViewerRoot Hud checkboxUpdate " + i + "=" + chk.checked);
 		
-		if(i==0) ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
+		if(i==0) 
+		{
+			ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
+			
+			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefresh="+
+					(chk.checked?1:0));	
+		}
 		else if(i==1) 
 		{
 			ViewerRoot.hudAutoHide = chk.checked; 				//auto hide
 			ViewerRoot.handleWindowResize();
+
+			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoHide="+
+					(chk.checked?1:0));	
 		}
 		else if(i==2) 
 		{
@@ -78,6 +88,8 @@ ViewerRoot.createHud = function() {
 	this.radioSelect = function(i) {
 		Debug.log("ViewerRoot Hud radioSelect " + i);
 		ViewerRoot.nextObjectMode = i;
+		
+		DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&radioSelect="+i);
 	}
 	
 	this.handleDirContents = function(req) {
@@ -121,6 +133,38 @@ ViewerRoot.createHud = function() {
 		redrawDirectoryDisplay();
 	}
 	
+	//set user preferences based on server response
+	//	should match response by this.checkboxUpdate() and this.radioSelect()
+	var handleUserPreferences = function(req) {
+		Debug.log("handleUserPreferences");
+		var radioSelect = DesktopContent.getXMLValue(req,'radioSelect');
+		if(radioSelect && radioSelect != "")
+		{
+			Debug.log("setting radioSelect=" + (radioSelect|0));
+			ViewerRoot.nextObjectMode = radioSelect|0;
+			document.getElementById("newRootObjectModeRadio" + (radioSelect|0)).checked = true;
+		}
+		var autoRefresh = DesktopContent.getXMLValue(req,'autoRefresh');
+		if(autoRefresh && autoRefresh != "")
+		{
+			Debug.log("setting autoRefresh=" + (autoRefresh|0));
+			var chk = document.getElementById("hudCheckbox" + 0);
+			chk.checked = (autoRefresh|0)?true:false;
+			Debug.log("setting autoRefresh=" + chk.checked);
+			ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
+		}
+		var autoHide = DesktopContent.getXMLValue(req,'autoHide');
+		if(autoHide && autoHide != "")
+		{
+			Debug.log("setting autoHide=" + (autoHide|0));
+			var chk = document.getElementById("hudCheckbox" + 1);
+			chk.checked = (autoHide|0)?true:false;
+			Debug.log("setting autoHide=" + chk.checked);
+			ViewerRoot.hudAutoHide = chk.checked; 	//auto hide
+			ViewerRoot.handleWindowResize();
+		}
+	}
+			
 	//return tuple to path, if not found return 0
 	//	recursive function
 	// 	calling syntax is
@@ -582,4 +626,22 @@ ViewerRoot.createHud = function() {
     }
     else
     	this.handleWindowResize();
+    
+    //get user preferences from server
+    DesktopContent.XMLHttpRequest("request?RequestType=getUserPreferences","",handleUserPreferences);	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

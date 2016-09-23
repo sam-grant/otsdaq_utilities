@@ -54,7 +54,7 @@ private:
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version);
     void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version, const std::string &data, const int &dataOffset, const int &chunkSize);
 
-    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configGroup, const std::string &startPath, int depth);
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configGroup, const ConfigurationGroupKey &configKey, const std::string &startPath, int depth);
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
 
 

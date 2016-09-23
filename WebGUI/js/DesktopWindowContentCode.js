@@ -434,11 +434,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	if(!sequence)
 	{        
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-		data = "CookieCode="+cc+"&"+data;
+		data = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}
 	else
 	{   	
-		data = "sequence="+sequence+"&"+data;
+		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
 	}
 	var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
 
@@ -640,7 +640,7 @@ DesktopContent.getDefaultWindowColor = function() {
 	{
 		//likely in wizard mode
 		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
-		return "rgb(0,0,255)";
+		return "rgb(178,210,240)";
 	}
 	
     wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
@@ -650,7 +650,15 @@ DesktopContent.getDefaultWindowColor = function() {
     return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
 }
 DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
-DesktopContent.getDefaultDesktopColor = function() { return DesktopContent._desktopColor;} 
+DesktopContent.getDefaultDesktopColor = function() { 
+	if(!DesktopContent._desktopColor)
+	{
+		//likely in wizard mode
+		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
+		return "rgb(15,34,105)";
+	}
+	return DesktopContent._desktopColor;
+} 
 DesktopContent.getUsername = function() { 
 	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
 	return dispName.substr(dispName.indexOf(",")+2);	
