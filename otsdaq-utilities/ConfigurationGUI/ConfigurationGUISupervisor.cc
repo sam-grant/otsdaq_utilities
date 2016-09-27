@@ -79,8 +79,8 @@ theRemoteWebUsers_  (this)
 	//behave like a new user
 
 	std::string userConfigurationManagerIndex = "1";
-	userConfigurationManagers_["1"] = new ConfigurationManagerRW();
-	userConfigurationManagers_["2"] = new ConfigurationManagerRW();
+	userConfigurationManagers_["1"] = new ConfigurationManagerRW("ExampleUser1");
+	userConfigurationManagers_["2"] = new ConfigurationManagerRW("ExampleUser2");
 	ConfigurationManagerRW *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
@@ -986,6 +986,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc,
 		DOMElement* parentEl)
 {
+	__MOUT__ << t.getValueAsString() << std::endl;
 	if(t.isValueNode())
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
@@ -1482,7 +1483,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
-		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW();
+		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW(username);
 
 		//update configuration info for each new configuration manager
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
@@ -1699,7 +1700,7 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
 
-	ConfigurationManagerRW cfgMgrInst;
+	ConfigurationManagerRW cfgMgrInst("ExampleUser");
 
 	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
 
