@@ -424,8 +424,8 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
-			
-			//call return handler
+						
+			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
 				returnHandler(req, reqIndex, errStr);
 		}

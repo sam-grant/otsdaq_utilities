@@ -78,9 +78,9 @@
 			//functions:			
 				//init()
 				//niceName(str)									//removes "Configuration" from name
-				//setupSystemViewMode()						//gets global configurations
+				//setupSystemViewMode()							//gets global configurations
 				//setupSubSystemConfigMode()					//gets configuration tables
-				//setupConfigGroup(configGroupName)		//setup editor for specific global configuration
+				//setupConfigGroup(configGroupName)				//setup editor for specific global configuration
 				//setupSpecificSubSystemConfig(subConfigAlias) 	//setup editor for specific configuration table
 				//configRequestHandler(req)
 				//subConfigRequestHandler(req)
@@ -458,6 +458,7 @@
 				//draw tree				
 
 				var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
+				var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 				var el;
 				var depth;
 				var parentEl;
@@ -482,14 +483,21 @@
 					el = document.getElementById("display");
 
 					//add system config header
-					treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' href='javascript:setupConfigGroup(\"" + configGroupName +
+					treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
+						"href='javascript:setupConfigGroup(\"" + configGroupName +
 						"\");'>";
-					treeViewHandlerStr_ += configGroupName + "</a><br>";
+					treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
+					treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
+					treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
+					treeViewHandlerStr_ += "</a><br>";
 				}			
 				
 				//add tree
 				var tree = DesktopContent.getXMLNode(req,"tree");
+				var preLength = treeViewHandlerStr_.length;
 				recursiveDrawTree(tree,depth,tree.getAttribute("value"));
+				if(preLength == treeViewHandlerStr_.length)
+					treeViewHandlerStr_ += "Empty Tree Found.";
 				
 				el.innerHTML = treeViewHandlerStr_;
 			}
@@ -553,14 +561,16 @@
 				var idString = depth + "-" + uid + "-" + nodeName;
 				Debug.log("idString: " + idString);
 				
-				var el = document.getElementById("children-" + idString);	
-				var configGroupName = document.getElementById("treeView-ConfigGroupLink").innerHTML;
+				var el = document.getElementById("children-" + idString);
+				var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
 				
 				if(el) //if children already exist, then toggle display
 					el.style.display = (el.style.display == "none")? "block" : "none";
 				else	//if no children div, then request it
-					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
-							configGroupName + "&depth=1", 
+					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+							"&configGroup=" + configGroupEls[0].innerHTML + 
+							"&configGroupKey=" + configGroupEls[1].innerHTML +
+							"&depth=1", 
 							"startPath="+path+nodeName+"/",treeViewHandler,idString);				
 			}
 			
