@@ -665,7 +665,7 @@ throw (xgi::exception::Exception)
 	//getSpecificSystemConfiguration
 	//saveNewConfigurationGroup
 	//getSpecificConfiguration
-	//saveSpecificSubSystemConfiguration
+	//saveSpecificConfiguration
 	//changeKocVersionForSpecificConfig
 	//getTreeView
 
@@ -746,32 +746,33 @@ throw (xgi::exception::Exception)
 		std::string		subAlias = CgiDataUtilities::getData(cgi,"subAlias"); 			//from GET
 		std::string  	versionStr = CgiDataUtilities::getData(cgi,"version");		  	//from GET
 		int				version = (versionStr == "")?-2:atoi(versionStr.c_str());
-		int				dataOffset = atoi(CgiDataUtilities::getData(cgi,"dataOffset").c_str());	//from GET
-		int				chunkSize = atoi(CgiDataUtilities::getData(cgi,"chunkSize").c_str());	//from GET
+		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
+		int				chunkSize = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
 
 		__MOUT__ << "getSpecificConfiguration: " << subAlias << " version: " << version
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		handleGetConfigurationXML(xmldoc,cfgMgr,subAlias,ConfigurationVersion(version));
 	}
-	else if(Command == "saveSpecificSubSystemConfiguration")
+	else if(Command == "saveSpecificConfiguration")
 	{
-		std::string 	subAlias = CgiDataUtilities::getData(cgi,"subAlias"); 			//from GET
-		int		version = atoi(CgiDataUtilities::getData(cgi,"version").c_str());	//from GET
-		int		dataOffset = atoi(CgiDataUtilities::getData(cgi,"dataOffset").c_str());	//from GET
-		int		chunkSize = atoi(CgiDataUtilities::getData(cgi,"chunkSize").c_str());	//from GET
+		std::string 	subAlias 	= CgiDataUtilities::getData	    (cgi,"subAlias"); 	//from GET
+		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");	//from GET
+		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
+		//int				chunkSize 	= CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");	//from GET
 
 		std::string	data = CgiDataUtilities::postData(cgi,"data"); //from POST
 		//data format: commas and semi-colons indicate new row
 		//r0c0,r0c1,...,r0cN,;r1c0,...
 
 		__MOUT__ << "getSpecificConfiguration: " << subAlias << " version: " << version
-				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
+				<< " temporary: " << temporary << " dataOffset: " << dataOffset << std::endl;
 
 		__MOUT__ << "data: " << data << std::endl;
 
 		handleCreateConfigurationXML(xmldoc,cfgMgr,subAlias,ConfigurationVersion(version),
-				data,dataOffset,chunkSize);
+				temporary,data,dataOffset);
 	}
 	else if(Command == "changeKocVersionForSpecificConfig")
 	{
@@ -1315,149 +1316,48 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 //	by subAlias and version
 
 //starting from dataOffset
-//save first CHUNK_SIZE rows
 //
 //	if starting version is -1 start from mock-up
 void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument &xmldoc,
-		ConfigurationManagerRW *cfgMgr, const std::string &subAlias, ConfigurationVersion version,
-		const std::string &data, const int &dataOffset, const int &chunkSize)
+		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version,
+		bool makeTemporary, const std::string &data, const int &dataOffset)
+try
 {
-	char tmpIntStr[100];
-
-	//verify alias and version exists
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.find(subAlias);
-
-
-	__MOUT__ << "handleCreateConfigurationXML: " << subAlias << " version: " << version
-			<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
+	__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
+			<< " dataOffset: " << dataOffset << std::endl;
 
 	__MOUT__ << "data: " << data << std::endl;
 
-	if(it == allCfgInfo.end())
-	{
-		__MOUT_ERR__ << "SubSystemConfiguration not found" << std::endl;
+	//create temporary version from starting version
+	cfgMgr->getVersionedConfigurationByName(configName,version); //make sure starting version is loaded
+	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->createTemporaryView(version);
 
-		xmldoc.addTextElementToData("Error", "SubSystemConfiguration not found");
-		return;
-	}
-	else if(!version.isInvalid() && //-1 mock-up view "always" exists
-			it->second.versions_.find(version) == it->second.versions_.end())
-	{
-		__MOUT_ERR__ << "Version not found" << std::endl;
+	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
-		xmldoc.addTextElementToData("Error", "Version not found");
-		return;
-	}
+	cfgMgr->getConfigurationByName(configName)->getTemporaryView(temporaryVersion)->fillFromCSV(data,dataOffset);
 
-
-	{
-		//if starting version is not mockup, make sure it is loaded
-		if(!version.isInvalid())
-		{
-			//load current version
-			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			__MOUT__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << std::endl;
-
-			if(!isInConfiguration) //load configuration view
-				cfgMgr->getVersionedConfigurationByName(subAlias, version);
-
-			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			__MOUT__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << std::endl;
-
-			if(!isInConfiguration)
-			{
-				__MOUT_ERR__ << "Version could not be loaded" << std::endl;
-				xmldoc.addTextElementToData("Error", "Version could not be loaded");
-				return;
-			}
-			__MOUT__ << "\t\t******** view " <<
-					allCfgInfo[subAlias].configurationPtr_->getViewVersion() << std::endl;
-
-		}
-
-
-		//create temporary version from starting version
-		ConfigurationVersion temporaryVersion = allCfgInfo[subAlias].configurationPtr_->createTemporaryView(version);
-
-		__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
-
-		ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getTemporaryView(temporaryVersion);
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-		//while there are row entries in the data.. replace
-		// data range from [dataOffset, dataOffset+chunkSize-1]
-		// ... note if less rows, this means rows were deleted
-		// ... if more, then rows were added.
-		int r = dataOffset;
-		int c = 0;
-
-		//int cellNum;
-		//string cellStr;
-
-		int i = 0; //use to parse data std::string
-		int j = data.find(',',i); //find next cell delimiter
-		int k = data.find(';',i); //find next row delimiter
-
-		while(k != (int)(std::string::npos))
-		{
-			if(r >= (int)cfgViewPtr->getNumberOfRows())
-			{
-				cfgViewPtr->addRow();
-				__MOUT__ << "Row added" << std::endl;
-			}
-
-			while(j < k && j != (int)(std::string::npos))
-			{
-				//__MOUT__ << r << "|" << c << "][" << i << "|" << k << "][" << std::endl;
-				//__MOUT__ << data.substr(i,j-i) << "|" << std::endl;
-				if(colInfo[c].getDataType() == "NUMBER")
-				{
-					//__MOUT__ << atoi(data.substr(i,j-i).c_str()) << "|" << std::endl;
-					cfgViewPtr->setValue(atoi(data.substr(i,j-i).c_str()),r,c);
-					//cfgViewPtr->getValue(cellNum,r,c);
-					//__MOUT__ << cellNum << " " << std::endl;
-				}
-				else
-				{
-					//__MOUT__ << data.substr(i,j-i) << "|" << std::endl;
-					cfgViewPtr->setValue(data.substr(i,j-i),r,c);
-					//cfgViewPtr->getValue(cellStr,r,c);
-					//__MOUT__ << cellStr << " " << std::endl;
-				}
-				i=j+1;
-				j = data.find(',',i); //find next cell delimiter
-				++c;
-			}
-			++r;
-			c = 0;
-
-
-			i = k+1;
-			j = data.find(',',i); //find next cell delimiter
-			k = data.find(';',i); //find new row delimiter
-		}
-
-		//delete excess rows
-		while(r < (int)cfgViewPtr->getNumberOfRows())
-		{
-			cfgViewPtr->deleteRow(r);
-			__MOUT__ << "Row deleted" << std::endl;
-		}
-
-
+	if(makeTemporary)
+		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
+	else
 		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
-		ConfigurationVersion newAssignedVersion = cfgMgr->saveNewConfiguration(subAlias,temporaryVersion);//cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
+	ConfigurationVersion newAssignedVersion =
+			cfgMgr->saveNewConfiguration(configName,temporaryVersion,makeTemporary);
 
-		xmldoc.addTextElementToData("savedAlias", subAlias);
-		xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 
-		__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
-
-	}
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new view! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new view! ");
 }
 
 
@@ -1476,7 +1376,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	__MOUT__ << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
+	__MOUT__ << "Config Session: " << mapKey << " ... out of size: " << userConfigurationManagers_.size() << std::endl;
 
 	time_t now = time(0);
 

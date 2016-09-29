@@ -174,6 +174,10 @@ Debug.errorPop = function(err) {
 			err.replace(/\n/g , "<br>") + str;
 		
 	el.innerHTML = str;
+
+	//show the error box whereever the current scroll is
+	Debug._errBox.style.top = (document.body.scrollTop + 8) + "px";
+	Debug._errBox.style.left = (document.body.scrollLeft + 8) + "px";
 	Debug._errBox.style.display = "block";
 }
 
