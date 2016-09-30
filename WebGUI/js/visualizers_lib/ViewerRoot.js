@@ -43,7 +43,7 @@ ViewerRoot.launch = function() {
 	Debug.log("ViewerRoot.launch");
 
 	document.getElementById("omni").innerHTML = "<div id='omniHistogramViewer'></div>";
-	ViewerRoot.omni = document.getElementById("omniHistogramViewer");
+	ViewerRoot.omni = document.getElementById("omniHistogramViewer");	
 	
 	//initialize with loading message in center
     var w = ViewerRoot.w = window.innerWidth;
@@ -57,7 +57,6 @@ ViewerRoot.launch = function() {
     ViewerRoot.omni.style.backgroundColor = "rgb(30,30,30)";
 	
 	ViewerRoot.omni.innerHTML = "<center><div id='loaderStatus' style='margin-top:" + (h/2-8) + "px'>Loading Root Viewer...</div></center>";
-
 	
 	//load directories of histograms
 	//and display selected histogram
@@ -165,7 +164,7 @@ ViewerRoot.iterSaveAutoRefreshDefault;
 //"private" function list
 //ViewerRoot.init 
 //ViewerRoot.autoRefreshTick
-//DesktopContent.prepareNextLocation
+//ViewerRoot.prepareNextLocation
 //ViewerRoot.removeAllAtPosition
 //ViewerRoot.manageRootHeaders
 //ViewerRoot.toggleAllAtPositionAutoRefresh
@@ -259,12 +258,12 @@ ViewerRoot.autoRefreshTick = function() {
 		}	
 }
 
-// DesktopContent.prepareNextLocation() ~~
+// ViewerRoot.() ~~
 //		Prepares next div location for root js library drawing
 //		based on RADIO: Tile, Replace, Superimpose. The div id
 //		will be "histogram"+ViewerRoot.objIndex.. this is the div
 //		the root js library will draw to.
-DesktopContent.prepareNextLocation = function(objName) {
+ViewerRoot.prepareNextLocation = function(objName) {
 	Debug.log("ViewerRoot prepareNextLocation for ViewerRoot.objIndex " + "mode " + ViewerRoot.nextObjectMode +
 			": " + ViewerRoot.objIndex + ": " + objName);
 	
@@ -401,11 +400,20 @@ ViewerRoot.manageRootHeaders = function() {
 		
 		//add auto refresh icon
 		//if at least one root object is refreshing show icon as on
+		
+		//Below is original
 		str += "<a title='Close' href='Javascript:ViewerRoot.toggleAllAtPositionAutoRefresh(" + i + 
 			");' onmouseup='event.cancelBubble=true;' " +
 			"class='rootContainerHeader-refreshBtn'><img id='rootContainerHeaderRefreshImg" + i +
 			"'src='/WebPath/images/iconImages/icon-rootAutoRefresh" + (isAtLeastOneRefreshing?"On":"Off") + ".png'></a>";
-		
+			
+			
+		//Making the refresh button do the same thing as respective histograph name
+//		str += "<a title='Refresh' href='Javascript:ViewerRoot.rootReq(\"" + fullPath + 
+//			"\");' onmouseup='event.cancelBubble=true;' " +
+//			"class='rootContainerHeader-refreshBtn'><img id='rootContainerHeaderRefreshImg" + i +
+//			"'src='/WebPath/images/iconImages/icon-rootAutoRefresh" + (isAtLeastOneRefreshing?"On":"Off") + ".png'></a>";
+//		
 		ViewerRoot.rootHeaderElArr[i].innerHTML = str;
 	}
 }
@@ -427,7 +435,7 @@ ViewerRoot.toggleAllAtPositionAutoRefresh = function(i)
 			if(ViewerRoot.rootPosArr[j] == i) 
 			{
 				if(!doover && ViewerRoot.rootIsAutoRefreshArr[j]) v = false;
-				ViewerRoot.rootIsAutoRefreshArr[j] = v;
+				ViewerRoot.rootIsAutoRefreshArr[j] = v;                       //---------------------------------------->This is all this function does!
 
 				Debug.log("ViewerRoot toggleAllAtPositionAutoRefresh rootObj " + j + " to " + v);
 				
@@ -438,6 +446,7 @@ ViewerRoot.toggleAllAtPositionAutoRefresh = function(i)
 		if(!doover && found>1) doover = true;
 		else doover = false;
 	} while(doover) //may need to do it over again, because values of superimposed root objects could be wrong
+		
 }
 
 // ViewerRoot.handleRootPositionSelect ~~
@@ -736,7 +745,11 @@ ViewerRoot.getRootDataHandler = function(req) {
 	var ojbect = JSROOT.parse(rootJSON);
 		
 	if(!ojbect || !rootType || !rootName)
-	{ alert("Error reading Root object from server - Name: " + rootName); return; }
+	{ 
+	  	Debug.log("Error reading Root object from server - Name: " + rootName, Debug.HIGH_PRIORITY);
+	    ViewerRoot.autoRefreshMatchArr = [];	//clearing the array so that future refreshes work
+	    return;
+	}
 	
 
 	var refreshIndex = -1; //default to -1 if no auto refresh needed
@@ -766,7 +779,26 @@ ViewerRoot.getRootDataHandler = function(req) {
 		//if not found, assume it is a new object
 	}
 	
-	if(refreshIndex < 0) DesktopContent.prepareNextLocation(rootName);
+
+	if(refreshIndex < 0) ViewerRoot.prepareNextLocation(rootName);
+	else
+	{
+		//refreshIndex is the location to target
+		//prepare a new location as though it is replace with auto-refresh on
+		//
+		// e.g.
+		//	 globalset = replace/on
+		//	ViewerRoot.prepareNextLocation(rootName);
+		//   globalset = gui settings
+		var tmp1 = ViewerRoot.nextObjectMode;
+		var tmp2 = ViewerRoot.autoRefreshDefault;
+		ViewerRoot.nextObjectMode = 1;
+		ViewerRoot.autoRefreshDefault = true;
+		ViewerRoot.prepareNextLocation(rootName);
+		ViewerRoot.nextObjectMode = tmp1;
+		ViewerRoot.autoRefreshDefault = tmp2;
+	}
+	
 	ViewerRoot.interpretObjectJSON(ojbect,rootType,rootName,refreshIndex);
 	if(ViewerRoot.iterLoading) ViewerRoot.iterativeConfigLoader();
 }
@@ -779,7 +811,7 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex) 
 	if(refreshIndex == undefined) refreshIndex = -1;
 	
 	//draw based on refresh index
-	JSROOT.redraw('histogram'+
+	JSROOT.draw('histogram'+
 			(refreshIndex<0?ViewerRoot.objIndex:
 			ViewerRoot.rootObjIndexArr[refreshIndex]),
 			object, "colz"); //last arg, root draw option
