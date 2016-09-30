@@ -19,12 +19,6 @@
 				padding: 20px;
 			}
 			
-			#errorDiv {
-				color: rgb(155,50,0);
-				margin: 20px 0 -20px 0;
-				height: 20px;
-			}
-						
 		</style>
 		
 		
@@ -78,9 +72,9 @@
 			//functions:			
 				//init()
 				//niceName(str)									//removes "Configuration" from name
-				//setupSystemViewMode()						//gets global configurations
+				//setupSystemViewMode()							//gets global configurations
 				//setupSubSystemConfigMode()					//gets configuration tables
-				//setupConfigGroup(configGroupName)		//setup editor for specific global configuration
+				//setupConfigGroup(configGroupName)				//setup editor for specific global configuration
 				//setupSpecificSubSystemConfig(subConfigAlias) 	//setup editor for specific configuration table
 				//configRequestHandler(req)
 				//subConfigRequestHandler(req)
@@ -334,16 +328,20 @@
 			}
 			
 			function specificSubConfigRequestHandler(req) {	
-				//Debug.log("specificSubConfigRequestHandler requestHandler req " + req.responseText);
-				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
 				var subAlias = DesktopContent.getXMLValue(req,"SubConfigurationGroupName");
 				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
 				
 				
 				var kocVersionHdr = req.responseXML.getElementsByTagName("SubSystemConfigurationVersions");
 				if(!kocVersionHdr.length)
-				{
-					alert("Error?! No versions returned for subAlias: " + subAlias);
+				{	//should never happen (tag can be empty, but must be there)
+					Debug.log("Error?! No tag for versions returned for subAlias: " + subAlias, Debug.HIGH_PRIORITY);
 					return;
 				}
 				var kocVersions = kocVersionHdr[0].getElementsByTagName("VersionKey");
@@ -368,7 +366,7 @@
 				
 
 				str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
-				str += "<b>" + subAlias + "</b> (version: " + (version==-1?"Mockup-View":-1) + ")<br>";
+				str += "<b>" + subAlias + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 
 				str += "<br>All versions:";
 				
@@ -458,6 +456,7 @@
 				//draw tree				
 
 				var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
+				var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 				var el;
 				var depth;
 				var parentEl;
@@ -482,14 +481,21 @@
 					el = document.getElementById("display");
 
 					//add system config header
-					treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' href='javascript:setupConfigGroup(\"" + configGroupName +
+					treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
+						"href='javascript:setupConfigGroup(\"" + configGroupName +
 						"\");'>";
-					treeViewHandlerStr_ += configGroupName + "</a><br>";
+					treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
+					treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
+					treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
+					treeViewHandlerStr_ += "</a><br>";
 				}			
 				
 				//add tree
 				var tree = DesktopContent.getXMLNode(req,"tree");
+				var preLength = treeViewHandlerStr_.length;
 				recursiveDrawTree(tree,depth,tree.getAttribute("value"));
+				if(preLength == treeViewHandlerStr_.length)
+					treeViewHandlerStr_ += "Empty Tree Found.";
 				
 				el.innerHTML = treeViewHandlerStr_;
 			}
@@ -553,14 +559,16 @@
 				var idString = depth + "-" + uid + "-" + nodeName;
 				Debug.log("idString: " + idString);
 				
-				var el = document.getElementById("children-" + idString);	
-				var configGroupName = document.getElementById("treeView-ConfigGroupLink").innerHTML;
+				var el = document.getElementById("children-" + idString);
+				var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
 				
 				if(el) //if children already exist, then toggle display
 					el.style.display = (el.style.display == "none")? "block" : "none";
 				else	//if no children div, then request it
-					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
-							configGroupName + "&depth=1", 
+					DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+							"&configGroup=" + configGroupEls[0].innerHTML + 
+							"&configGroupKey=" + configGroupEls[1].innerHTML +
+							"&depth=1", 
 							"startPath="+path+nodeName+"/",treeViewHandler,idString);				
 			}
 			
@@ -882,7 +890,11 @@
 					var el = document.getElementById("display");
 					var dispStr = el.innerHTML;
 					str = "";
-					str += "<br><div><input type='button' onmouseup='saveSubSystemAsNewVersion()' value='Save Changes as New Version'/></div>";
+					str += "<br><div>";
+					str += "<input type='button' onmouseup='saveSubSystemAsNewVersion(0)' value='Save Changes as New Version'/>";
+					str += " ";
+					str += "<input type='button' onmouseup='saveSubSystemAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
+					str += "</div>";
 					el.innerHTML = str + dispStr + str;
 				}
 			}
@@ -1001,9 +1013,9 @@
 			}
 			
 			
-			function saveSubSystemAsNewVersion() 
+			function saveSubSystemAsNewVersion(temporary) 
 			{	
-				Debug.log("CfgGUI saveSubSystemAsNewVersion");
+				Debug.log("CfgGUI saveSubSystemAsNewVersion temporary=" + temporary);
 				
 				//create data string from html table
 				var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
@@ -1016,19 +1028,19 @@
 					cells = rows[r].getElementsByTagName("td");
 
 					for(var c=1;c<cells.length;++c) //skip row index column
-						dataStr += encodeURIComponent(cells[c].innerHTML) + ","; //replaces all special characters					
+						dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
 					dataStr += ";";
 				}
 				
-				var req = "Request?RequestType=saveSpecificSubSystemConfiguration" + 
+				var req = "Request?RequestType=saveSpecificConfiguration" + 
 						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
 						"&subAlias=" + _currentAlias + "&version="+_version;
 				Debug.log(dataStr);
 				Debug.log(req);
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificSubSystemConfiguration" + 
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-					"&subAlias=" + _currentAlias + "&version="+_version, "data=" + dataStr, saveSubSystemAsNewVersionHandler);	
-				
+					"&subAlias=" + _currentAlias + "&version="+_version +
+					"&temporary="+(temporary?1:0), "data=" + dataStr, saveSubSystemAsNewVersionHandler);
 			}
 			
 			function saveSubSystemAsNewVersionHandler(req) 
@@ -1038,8 +1050,7 @@
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err && err != "")
 				{
-					document.getElementById("errorDiv").innerHTML = err;
-					Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
+					Debug.log(err,Debug.HIGH_PRIORITY);
 					return;
 				}
 
@@ -1079,8 +1090,7 @@
 			
 		<h1>Configuration GUI</h1>
 		<div id='activeConfig'></div>
-		<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
-		<div id='errorDiv'></div>
+		<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>		
 		<div id='display'></div>
 		
 	</body>
