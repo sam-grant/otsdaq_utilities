@@ -75,11 +75,11 @@
 				//setupSystemViewMode()							//gets global configurations
 				//setupSubSystemConfigMode()					//gets configuration tables
 				//setupConfigGroup(configGroupName)				//setup editor for specific global configuration
-				//setupSpecificSubSystemConfig(subConfigAlias) 	//setup editor for specific configuration table
+				//setupSpecificConfig(subConfigAlias) 	//setup editor for specific configuration table
 				//configRequestHandler(req)
 				//subConfigRequestHandler(req)
 				//specificConfigRequestHandler(req)
-				//specificSubConfigRequestHandler(req)
+				//specificConfigRequestHandler(req)
 				//treeViewHandler(req,parentId,errStr)
 				//recursiveDrawTree(parent,depth,path)
 				//toggleTreeChildren(depth,uid,nodeName,path)
@@ -103,7 +103,7 @@
 				//saveSubSystemAsNewVersion()
 				//saveSubSystemAsNewVersionHandler(req)
 		
-				//changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion)
+				//changeKocVersionForSpecificConfig(groupName, configName, newVersion)
 		
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -131,27 +131,27 @@
 			//setupSystemViewMode ~
 			function setupSystemViewMode() {
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", configRequestHandler);		
 			}
 			
 			//setupSubSystemConfigMode ~
 			function setupSubSystemConfigMode() {
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", subConfigRequestHandler);		
 			}
 
 			//setupConfigGroup ~ 
 			function setupConfigGroup(configGroupName) {
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configGroupName, "", specificConfigRequestHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup&alias=" + configGroupName, "", specificConfigRequestHandler);		
 			}
 			
-			//setupSpecificSubSystemConfig ~
-			function setupSpecificSubSystemConfig(subConfigAlias,version) {
+			//setupSpecificConfig ~
+			function setupSpecificConfig(subConfigAlias,version) {
 				var v = "";
 				if(version) v = "&version="+version;
 				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
-					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
+					"&configName=" + subConfigAlias + v, "", specificConfigRequestHandler);		
 			}
 			
 			//configRequestHandler ~
@@ -210,7 +210,7 @@
 					for(var j=0;j<configNames.length;++j)
 					{
 						str += "<td align='center'>";
-						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + configNames[j].getAttribute("value") +
+						str += "<a href='javascript:setupSpecificConfig(\"" + configNames[j].getAttribute("value") +
 							"\");'>";
 						str += niceName(configNames[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
 						str += "</td>";
@@ -240,7 +240,7 @@
 				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
 				for(var i=0;i<aliases.length;++i)
 				{					
-					str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + aliases[i].getAttribute("value") +
+					str += "<a href='javascript:setupSpecificConfig(\"" + aliases[i].getAttribute("value") +
 						"\");'>";
 					str += niceName(aliases[i].getAttribute("value"));
 					str += "</a><br><table><tr>";
@@ -327,21 +327,21 @@
 				el.innerHTML = str;
 			}
 			
-			function specificSubConfigRequestHandler(req) {	
+			function specificConfigRequestHandler(req) {	
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
 				{
 					Debug.log(err,Debug.HIGH_PRIORITY);
 					return;
 				}
-				var subAlias = DesktopContent.getXMLValue(req,"SubConfigurationGroupName");
-				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
+				var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+				var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
 				
 				
-				var kocVersionHdr = req.responseXML.getElementsByTagName("SubSystemConfigurationVersions");
+				var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 				if(!kocVersionHdr.length)
 				{	//should never happen (tag can be empty, but must be there)
-					Debug.log("Error?! No tag for versions returned for subAlias: " + subAlias, Debug.HIGH_PRIORITY);
+					Debug.log("Error?! No tag for versions returned for configName: " + configName, Debug.HIGH_PRIORITY);
 					return;
 				}
 				var kocVersions = kocVersionHdr[0].getElementsByTagName("VersionKey");
@@ -355,7 +355,7 @@
 				
 
 				//reset globals
-				_currentAlias = subAlias;
+				_currentAlias = configName;
 				_version = version;
 				_editingCell = false;
 				_editingCellEl = 0;
@@ -366,14 +366,14 @@
 				
 
 				str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
-				str += "<b>" + subAlias + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
+				str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 
 				str += "<br>All versions:";
 				
 				//display mockup link (mockup always present)
 				str += " ";
 				if(-1 != version)				
-					str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
+					str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
 						"\",\"" + "-1" + "\");'>";
 				str += "Mockup-View";
 				if(-1 != version)				
@@ -384,7 +384,7 @@
 				{
 					str += " ";
 					if(kocVersions[j].getAttribute("value") != version)
-						str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
+						str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
 							"\",\"" + kocVersions[j].getAttribute("value") + "\");'>";
 					str += kocVersions[j].getAttribute("value");
 					if(kocVersions[j].getAttribute("value") != version)
@@ -617,7 +617,7 @@
 			//setupConfigCreator ~
 			function setupConfigCreator()
 			{
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", setupConfigCreatorHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", setupConfigCreatorHandler);
 				
 			}
 			//setupConfigCreatorHandler ~
@@ -1034,12 +1034,12 @@
 				
 				var req = "Request?RequestType=saveSpecificConfiguration" + 
 						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-						"&subAlias=" + _currentAlias + "&version="+_version;
+						"&configName=" + _currentAlias + "&version="+_version;
 				Debug.log(dataStr);
 				Debug.log(req);
 				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-					"&subAlias=" + _currentAlias + "&version="+_version +
+					"&configName=" + _currentAlias + "&version="+_version +
 					"&temporary="+(temporary?1:0), "data=" + dataStr, saveSubSystemAsNewVersionHandler);
 			}
 			
@@ -1058,17 +1058,17 @@
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
 
 				Debug.log("saveSubSystemAsNewVersionHandler requestHandler subConfigAlias " + subConfigAlias + " version " + version);
-				setupSpecificSubSystemConfig(subConfigAlias,version);
+				setupSpecificConfig(subConfigAlias,version);
 			}
 			
-			function changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion) 
+			function changeKocVersionForSpecificConfig(groupName, configName, newVersion) 
 			{
 				//TODO
 				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
 							
 				var req = "Request?RequestType=changeKocVersionForSpecificConfig" + 
-										"&cfgAlias=" + cfgAlias +
-										"&subAlias=" + kocAlias + 
+										"&groupName=" + groupName +
+										"&configName=" + configName + 
 										"&version=" + newVersion;
 				var dataStr = "";
 				Debug.log(dataStr);
