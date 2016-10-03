@@ -181,14 +181,15 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
+		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
-				"0",						//report user's ip address, if known
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false require lock
 				0,//&userWithLock,				//acquire username with lock (optionally null pointer)
 				0,//&userName					//acquire username of this user (optionally null pointer)
 				0,//&displayName			//acquire user's Display Name
