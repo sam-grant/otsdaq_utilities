@@ -65,8 +65,7 @@ theRemoteWebUsers_  (this)
 
 	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 
-	__MOUT__ << "To prove the concept...";
-
+	__MOUT__ << "To prove the concept..." << std::endl;
 
 	return;
 
@@ -749,7 +748,7 @@ throw (xgi::exception::Exception)
 		int				chunkSize = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
 
 		__MOUT__ << "getSpecificConfiguration: " << configName << " versionStr: " << versionStr
-						<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
+				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		ConfigurationVersion version;
 		std::map<std::string, ConfigurationInfo> allCfgInfo =	cfgMgr->getAllConfigurationInfo();
@@ -904,11 +903,11 @@ throw (xgi::exception::Exception)
 		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
 
 		__MOUT__ << "Activating config: " << configGroup << std::endl;
-//		if(configGroup == "")
-//			configGroup = cfgMgr->getActiveGlobalConfiguration();
-//		else
-//			configGroup = cfgMgr->setActiveGlobalConfiguration(configGroup);
-//		xmldoc.addTextElementToData("activeConfig", configGroup);
+		//		if(configGroup == "")
+		//			configGroup = cfgMgr->getActiveGlobalConfiguration();
+		//		else
+		//			configGroup = cfgMgr->setActiveGlobalConfiguration(configGroup);
+		//		xmldoc.addTextElementToData("activeConfig", configGroup);
 	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
@@ -1199,17 +1198,6 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 {
 	char tmpIntStr[100];
 	DOMElement* parentEl;
-//
-//	//verify alias and version exists
-//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-//	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.find(configName);
-//
-//	if(it == allCfgInfo.end())
-//	{
-//		__MOUT__ << "Configuration not found: " << configName << std::endl;
-//		//should never happen
-//		return;
-//	}
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	if(allCfgInfo[configName.c_str()].versions_.find(version) ==
@@ -1227,86 +1215,60 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 	for (auto &v:allCfgInfo[configName.c_str()].versions_)
 		xmldoc.addTextElementToParent("VersionKey", v.toString(), parentEl);
 
+
 	//table columns and then rows (from config view)
+
+	//get view pointer
+	ConfigurationView* cfgViewPtr;
+	if(version.isInvalid()) //use mockup
+		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+	else					//use view version
+		cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+
+
+
+	//get 'columns' of view
+	parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
+	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 	{
-		ConfigurationView* cfgViewPtr;
-		if(version != ConfigurationVersion::INVALID)
-		{
-			//load current version
-			bool isInConfiguration = (allCfgInfo[configName].configurationPtr_->isStored(version));
-			__MOUT__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << std::endl;
+		__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
+				colInfo[i].getName() << " "
+				<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
 
-			if(!isInConfiguration) //load configuration view
-				cfgMgr->getVersionedConfigurationByName(configName, version);
-			else
-				allCfgInfo[configName].configurationPtr_->setActiveView(version);
+		xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
+		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
+		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
+	}
 
-			isInConfiguration = (allCfgInfo[configName].configurationPtr_->isStored(version));
-			__MOUT__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << std::endl;
+	parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
 
-			if(!isInConfiguration)
+	for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
+	{
+		//__MOUT__ << "\t\tRow " << r << ": "  << std::endl;
+
+		sprintf(tmpIntStr,"%d",r);
+		DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
+
+		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
+			if(colInfo[c].getDataType() == "NUMBER")
 			{
-				__MOUT_ERR__ << "Version could not be loaded" << std::endl;
-				return;
+				int num;
+				cfgViewPtr->getValue(num,r,c);
+				__MOUT__ << "\t " << num << std::endl;
+
+				sprintf(tmpIntStr,"%d",num);
+				xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
 			}
-			__MOUT__ << "\t\t******** view " <<
-					allCfgInfo[configName].configurationPtr_->getViewVersion() << std::endl;
+			else
+			{
+				std::string val;
+				cfgViewPtr->getValue(val,r,c);
+				__MOUT__ << "\t " << val << std::endl;
 
-			cfgViewPtr = allCfgInfo[configName].configurationPtr_->getViewP();
-		}
-		else //use mockup version
-		{
-			__MOUT__ << "\t\t******** view mockup" << std::endl;
-			cfgViewPtr = allCfgInfo[configName].configurationPtr_->getMockupViewP();
-		}
-
-
-		//get 'columns' of sub config view
-
-
-		parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-		for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
-		{
-			__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
-					colInfo[i].getName() << " "
-					<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
-
-			xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
-			xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
-			xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
-		}
-
-		parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
-
-		for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
-		{
-			//__MOUT__ << "\t\tRow " << r << ": "  << std::endl;
-
-			sprintf(tmpIntStr,"%d",r);
-			DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
-
-			for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-				if(colInfo[c].getDataType() == "NUMBER")
-				{
-					int num;
-					cfgViewPtr->getValue(num,r,c);
-					//__MOUT__ << "\t " << num << std::endl;
-
-					sprintf(tmpIntStr,"%d",num);
-					xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
-				}
-				else
-				{
-					std::string val;
-					cfgViewPtr->getValue(val,r,c);
-					//__MOUT__ << "\t " << val << std::endl;
-
-					xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
-				}
-		}
+				xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
+				xmldoc.addTextElementToData("ty", val);
+			}
 	}
 }
 
@@ -1332,7 +1294,8 @@ try
 	__MOUT__ << "data: " << data << std::endl;
 
 	//create temporary version from starting version
-	cfgMgr->getVersionedConfigurationByName(configName,version); //make sure starting version is loaded
+	if(!version.isInvalid()) //if not using mock-up, make sure starting version is loaded
+		cfgMgr->getVersionedConfigurationByName(configName,version);
 	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;

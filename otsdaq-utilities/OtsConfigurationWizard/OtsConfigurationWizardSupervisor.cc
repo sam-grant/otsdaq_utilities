@@ -90,7 +90,7 @@ void OtsConfigurationWizardSupervisor::printURL()
 	for (; i < 5; ++i)
 	{
 		std::this_thread::sleep_for (std::chrono::seconds(2));
-		mf::LogError(__FILE__) << __COUT_HDR_P__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
+		__MOUT_ERR__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
 				<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
 	}
 }
@@ -180,7 +180,7 @@ throw (xgi::exception::Exception)
 
 	*out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/IconEditor.html" <<
 			",Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html" <<
-			",Configure,CFG,1,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
+			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
 			",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=261/" <<
 			",DB Utilities,DB,1,1,0,http://127.0.0.1:8080/db/client.html";
 	return;
