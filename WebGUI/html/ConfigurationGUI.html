@@ -508,14 +508,20 @@
 				var nodeName;
 				var value;
 				var i;
+				var childrenLength;
 				for(i=0;i<nodes.length;++i)
 				{
 					uid = treeNodeUID_++;
 					nodeName = nodes[i].getAttribute("value");
+					
+					Debug.log("nodeName=" + nodeName + " depth=" + depth);
+					
 					treeViewHandlerStr_ += "<div id='node-" + depth + "-" + uid + "-" + nodeName + 
-							"' style='float:left; margin-left:" + 30*depth + "px'>";
+							"' style='float:left; margin-left:" + 30 + "px'>";
+					
+					childrenLength = nodes[i].children.length
 										
-					if(nodes[i].children.length && (value = nodes[i].children[0]).nodeName == "value")
+					if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
 					{	//this is a value node!
 						treeViewHandlerStr_ += "<b>" + nodeName + "</b>";
 						treeViewHandlerStr_ += " : " + value.getAttribute("value");
@@ -528,13 +534,25 @@
 							depth + "," +	uid + ",\"" +							
 							nodeName + "\",\"" + path +
 							"\");'>";					
-					treeViewHandlerStr_ += nodes[i].children.length?"-":"+";
-					treeViewHandlerStr_ += "</a> ";
 
-					treeViewHandlerStr_ += nodeName;
+					if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
+					{	
+						//this is a link node!
+						--childrenLength; //subtract the link ID node from children length
+						value = nodeName + " (" + 
+								value.nodeName + " = " + value.getAttribute("value") + ")";
+					}
+					else
+						value = nodeName;
+
+					treeViewHandlerStr_ += childrenLength?"-":"+";
+					treeViewHandlerStr_ += "</a> ";
+					
+					treeViewHandlerStr_ += value;
+					
 					treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";	
 					
-					if(nodes[i].children.length)
+					if(childrenLength)
 					{
 						treeViewHandlerStr_ += "<div id='children-" + depth + "-" + uid + "-" + nodeName + "'>";
 						recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");
