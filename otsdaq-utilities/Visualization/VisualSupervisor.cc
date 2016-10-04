@@ -237,9 +237,15 @@ throw (xgi::exception::Exception)
 		std::string radioSelect = CgiDataUtilities::getData(cgi,"radioSelect");
 		std::string autoRefresh = CgiDataUtilities::getData(cgi,"autoRefresh");
 		std::string autoHide = CgiDataUtilities::getData(cgi,"autoHide");
+		std::string hardRefresh = CgiDataUtilities::getData(cgi,"hardRefresh");
+		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgi,"autoRefreshPeriod");
+
 		__MOUT__ << "radioSelect: " << radioSelect 	<< std::endl;
 		__MOUT__ << "autoRefresh: " << autoRefresh 	<< std::endl;
 		__MOUT__ << "autoHide: " 	<< autoHide 	<< std::endl;
+		__MOUT__ << "hardRefresh: " << hardRefresh  << std::endl;
+		__MOUT__ << "autoRefreshPeriod: " << autoRefreshPeriod  << std::endl;
+
 
 		//read existing
 		FILE *fp = fopen(fullPath.c_str(),"r");
@@ -263,6 +269,16 @@ throw (xgi::exception::Exception)
 			if(autoHide == "")
 				autoHide = val;
 
+			fgets(line,100,fp);
+			sscanf(line,"%*s %s",val);
+			if(hardRefresh == "")
+				hardRefresh = val;
+
+			fgets(line,100,fp);
+			sscanf(line,"%*s %s",val);
+			if(autoRefreshPeriod == "")
+				autoRefreshPeriod = val;
+
 			fclose(fp);
 		}
 
@@ -273,6 +289,8 @@ throw (xgi::exception::Exception)
 			fprintf(fp,"radioSelect %s\n",radioSelect.c_str());
 			fprintf(fp,"autoRefresh %s\n",autoRefresh.c_str());
 			fprintf(fp,"autoHide %s\n",autoHide.c_str());
+			fprintf(fp,"hardRefresh %s\n",hardRefresh.c_str());
+			fprintf(fp,"autoRefreshPeriod %s\n",autoRefreshPeriod.c_str());
 			fclose(fp);
 		}
 		else
@@ -299,6 +317,12 @@ throw (xgi::exception::Exception)
 			fgets(line,100,fp);
 			sscanf(line,"%*s %s",val);
 			xmldoc.addTextElementToData("autoHide", val);
+			fgets(line,100,fp);
+			sscanf(line,"%*s %s",val);
+			xmldoc.addTextElementToData("hardRefresh", val);
+			fgets(line,100,fp);
+			sscanf(line,"%*s %s",val);
+			xmldoc.addTextElementToData("autoRefreshPeriod", val);
 			fclose(fp);
 		}
 		else
@@ -307,6 +331,8 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("radioSelect", "");
 			xmldoc.addTextElementToData("autoRefresh", "");
 			xmldoc.addTextElementToData("autoHide", "");
+			xmldoc.addTextElementToData("hardRefresh", "");
+			xmldoc.addTextElementToData("autoRefreshPeriod", "");
 		}
 	}
 	else if (Command == "getDirectoryContents")

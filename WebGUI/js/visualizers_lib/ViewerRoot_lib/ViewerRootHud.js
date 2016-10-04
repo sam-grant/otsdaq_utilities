@@ -44,33 +44,45 @@ ViewerRoot.createHud = function() {
 
 	//should match response by handleUserPreferences()
 	this.checkboxUpdate = function(i) {
-		var chk = document.getElementById("hudCheckbox" + i);
-		Debug.log("ViewerRoot Hud checkboxUpdate " + i + "=" + chk.checked);
+		var chk;
+		if (i == 3) {
+			chk = document.getElementById("hardRefreshCheckbox");
+			ViewerRoot.hardRefresh = chk.checked; 	//hard refresh
+			console.log("checkboxUpdate: " + chk.checked);
+			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&hardRefresh="+
+					(chk.checked?1:0));	
+		}	
+		else
+		{
+			chk = document.getElementById("hudCheckbox" + i);
+		    Debug.log("ViewerRoot Hud checkboxUpdate " + i + "=" + chk.checked);
 		
-		if(i==0) 
-		{
-			ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
-			
-			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefresh="+
-					(chk.checked?1:0));	
-		}
-		else if(i==1) 
-		{
-			ViewerRoot.hudAutoHide = chk.checked; 				//auto hide
-			ViewerRoot.handleWindowResize();
-
-			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoHide="+
-					(chk.checked?1:0));	
-		}
-		else if(i==2) 
-		{
-			ViewerRoot.pauseRefresh = chk.checked; 	//pause auto refresh
-			
-			//reset auto refresh array with re-activation of auto refresh
-			//	just in case...
-			if(!ViewerRoot.pauseRefresh) ViewerRoot.autoRefreshMatchArr = []; 
-		}
+			if(i==0) 
+			{
+				ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
 				
+				DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefresh="+
+						(chk.checked?1:0));	
+			}
+			else if(i==1) 
+			{
+				ViewerRoot.hudAutoHide = chk.checked; 				//auto hide
+				ViewerRoot.handleWindowResize();
+	
+				DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoHide="+
+						(chk.checked?1:0));	
+			}
+			else if(i==2) 
+			{
+				ViewerRoot.pauseRefresh = chk.checked; 	//pause auto refresh
+				
+				//reset auto refresh array with re-activation of auto refresh
+				//	just in case...
+				if(!ViewerRoot.pauseRefresh) ViewerRoot.autoRefreshMatchArr = []; 
+			}
+
+		}
+		
 	}
 	
 	this.handlerRefreshPeriodChange = function(v) {
@@ -80,6 +92,8 @@ ViewerRoot.createHud = function() {
 		Debug.log("ViewerRoot Hud handlerRefreshPeriodChange " + v);
 		document.getElementById("hudAutoRefreshPeriod").value = v;
 		ViewerRoot.autoRefreshPeriod = v;
+		DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefreshPeriod="+
+				ViewerRoot.autoRefreshPeriod);
 		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
 		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
 			ViewerRoot.autoRefreshPeriod);
@@ -162,6 +176,19 @@ ViewerRoot.createHud = function() {
 			Debug.log("setting autoHide=" + chk.checked);
 			ViewerRoot.hudAutoHide = chk.checked; 	//auto hide
 			ViewerRoot.handleWindowResize();
+		}
+		var hardRefresh = DesktopContent.getXMLValue(req,'hardRefresh');
+		hardRefresh = hardRefresh|0; //force to integer
+		if(!hardRefresh && hardRefresh !== "")
+		{
+			Debug.log("setting hardRefresh=" + chk.checked);
+			ViewerRoot.hardRefresh = hardRefresh; 	//hard refresh
+		}
+		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod');
+		if(autoRefreshPeriod && autoRefreshPeriod !== "")
+		{
+			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);
+			ViewerRoot.autoRefreshPeriod = autoRefreshPeriod; 	//autoRefreshPeriod 
 		}
 	}
 			
@@ -394,8 +421,7 @@ ViewerRoot.createHud = function() {
 				str += "<input type='checkbox' id='hardRefreshCheckbox' checked ";
 			else 
 				str += "<input type='checkbox' id='hardRefreshCheckbox' ";
-			//str += "onchange='if(document.getElementById(\"hardRefreshCheckBox\").checked) ViewerRoot.hardRefresh = true; console.log('hardRefresh??? ' + ViewerRoot.hardRefresh);'>Hard Refresh";
-			str += "onchange='if(this.checked) ViewerRoot.hardRefresh = 1; else ViewerRoot.hardRefresh = 0; console.log(ViewerRoot.hardRefresh);'>Hard Refresh";
+			str += "onchange='if(this.checked) ViewerRoot.hardRefresh = 1; else ViewerRoot.hardRefresh = 0; ViewerRoot.hud.checkboxUpdate(3););'>Hard Refresh";
 		
 			str += "<br><div id='hudAdminControlStatus'></div>";
 			str += "<br>";
@@ -606,6 +632,7 @@ ViewerRoot.createHud = function() {
 		"title='Admin Controls'><img width='18px' src='/WebPath/images/dashboardImages/icon-Settings.png'></div>";
 	
 	str += "<div style='float:right; margin:-3px 0 -20px 0;'>";
+	
 	str += "Refresh Period: <input type='text' id='hudAutoRefreshPeriod' onchange='ViewerRoot.hud.handlerRefreshPeriodChange(this.value);' size='6' value='" + 
 		ViewerRoot.autoRefreshPeriod + "'> ms</div>";
 		
