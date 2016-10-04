@@ -1003,7 +1003,21 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 	}
 	else
 	{
-		parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
+		if(t.isLinkNode())
+		{
+			if(t.isDisconnected())
+			{
+				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				return;
+			}
+			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+			xmldoc.addTextElementToParent(
+					(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+					t.getValueAsString(), parentEl);
+		}
+		else
+			parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
 
 		//if depth>=1 toXml all children
 		//child.toXml(depth-1)
