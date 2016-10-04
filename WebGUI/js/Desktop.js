@@ -164,6 +164,7 @@ Desktop.createDesktop = function(security) {
     //  check div mailboxes that are shared by window content code and take action if necessary
     //	check for settings change
 	var _checkMailboxes = function(win) {
+		return;
 		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
 	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
 	    

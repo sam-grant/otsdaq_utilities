@@ -10,7 +10,7 @@ ViewerRoot.createHud = function() {
 	var hudAdminSettingsDiv;
 	var hudPopUpDiv = 0;
 		
-	var displayingAdminControls = false;
+	var displayingControls = false;
 	var PRE_MADE_ROOT_CFG_DIR = "Pre-made Views";
 	var adminControlsPath;
 	
@@ -37,9 +37,9 @@ ViewerRoot.createHud = function() {
 		hudDirBrowserDiv.style.height = window.innerHeight - 190 + "px";
 				
 		if(ViewerRoot.userPermissions >= ViewerRoot.ADMIN_PERMISSIONS_THRESHOLD)
-			document.getElementById("ViewerRoot-hudAdminControlsIcon").style.display = "block";
+			document.getElementById("ViewerRoot-hudControlsIcon").style.display = "block";
 		else
-			document.getElementById("ViewerRoot-hudAdminControlsIcon").style.display = "none";
+			document.getElementById("ViewerRoot-hudControlsIcon").style.display = "none";
 	}
 
 	//should match response by handleUserPreferences()
@@ -287,9 +287,9 @@ ViewerRoot.createHud = function() {
 		{
 			Debug.log("ViewerRoot Hud redrawDirectoryDisplay path " + path);
 
-			var iconArr = ["folderopen","page","remove"];
-			var captionArr = ["Make New Directory","Save New View","Delete Pre-made File/Folder!"];
-			for(var i=0;i<3;++i)
+			var iconArr = ["folderopen","page","remove","refresh"];
+			var captionArr = ["Make New Directory","Save New View","Delete Pre-made File/Folder!","Toggle Hard/Soft Refresh"];
+			for(var i=0;i<captionArr.length;++i)
 			{
 				str += "<div class='ViewerRoot-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container	
 				str += "<a style='color:gray' title='Admin action: " + captionArr[i] + "' href='Javascript:ViewerRoot.hud.toggleAdminControls(" + i + ",\"" + path + "\");'>" + 
@@ -382,14 +382,40 @@ ViewerRoot.createHud = function() {
 	}
 	
 	//types
+	this.toggleControls = function() {
+		displayingControls = !displayingControls;
+		Debug.log("ViewerRoot Hud toggleControls  " + displayingControls);
+		
+		if(displayingControls) //show admin controls in browser window
+		{
+			hudDirBrowserDiv.innerHTML = ""; //clear all
+			var str = "";
+			if(ViewerRoot.hardRefresh)
+				str += "<input type='checkbox' id='hardRefreshCheckbox' checked ";
+			else 
+				str += "<input type='checkbox' id='hardRefreshCheckbox' ";
+			//str += "onchange='if(document.getElementById(\"hardRefreshCheckBox\").checked) ViewerRoot.hardRefresh = true; console.log('hardRefresh??? ' + ViewerRoot.hardRefresh);'>Hard Refresh";
+			str += "onchange='if(this.checked) ViewerRoot.hardRefresh = 1; else ViewerRoot.hardRefresh = 0; console.log(ViewerRoot.hardRefresh);'>Hard Refresh";
+		
+			str += "<br><div id='hudAdminControlStatus'></div>";
+			str += "<br>";
+			str += "<a href='javascript:ViewerRoot.hud.toggleControls();' title='Return to ROOT Browser' " +
+					"<u>Return to Browser</u></a>";
+			hudDirBrowserDiv.innerHTML = str;
+		}
+		else //return to showing current directory
+			ViewerRoot.hud.changeDirectory(getPath(currDirPtr));	//return and refresh directory contents from server
+	}
+	
+	//types
 	//	0 - make directory
 	//  1 - save file
 	//  2 - delete
 	this.toggleAdminControls = function(type, path) {
-		displayingAdminControls = !displayingAdminControls;
-		Debug.log("ViewerRoot Hud toggleAdminControls  " + displayingAdminControls);
+		displayingControls = !displayingControls;
+		Debug.log("ViewerRoot Hud toggleAdminControls  " + displayingControls);
 		
-		if(displayingAdminControls) //show admin controls in browser window
+		if(displayingControls) //show admin controls in browser window
 		{
 			Debug.log("ViewerRoot Hud toggleAdminControls  " + type + ": " + path);
 			
@@ -421,13 +447,14 @@ ViewerRoot.createHud = function() {
 				str += "Delete a ROOT Viewer<br>Configuration Directory or File<br>at path:<br><br>" + path + "<br>";
 				str += "<input type='text' id='hudAdminControlField' onkeyup='document.getElementById(\"hudAdminControlStatus\").innerHTML=\"\";' size='20' value=''><br>";
 				str += "<input type='button' onmouseup=\"ViewerRoot.hud.popUpVerification(" +
-					"'Are you sure you want to delete file or directory with name &quot;REPLACE&quot;?','ViewerRoot.hud.removeConfigPath');\" value='Delete Path'>";
+					"'Are you sure you want to delete file or directory with name &quot;REPLACE&quot;?','ViewerRoot.hud.removeConfigPath');\" value='Delete Path'><br>";
 			
 			}
-			
+
 			str += "<br><div id='hudAdminControlStatus'></div>";
 			str += "<br>";
-			str += "<a href='javascript:ViewerRoot.hud.toggleAdminControls();' title='Return to ROOT Browser'><u>Return to Browser</u></a>";
+			str += "<a href='javascript:ViewerRoot.hud.toggleAdminControls();' title='Return to ROOT Browser' " +
+					"<u>Return to Browser</u></a>";
 			hudDirBrowserDiv.innerHTML = str;
 			
 		}
@@ -574,8 +601,8 @@ ViewerRoot.createHud = function() {
 	//	str += "<a href='javascript:ViewerRoot.rootReq(\""+histos[i]+"\");'>"+histos[i]+"</a><br>";
 	str += "<hr>";
 	
-	str += "<div id='ViewerRoot-hudAdminControlsIcon' " + 
-		"style='float:left;margin: -2px 0 -20px 20px; cursor: pointer;' onmouseup='ViewerRoot.hud.toggleAdminControls();' " +
+	str += "<div id='ViewerRoot-hudControlsIcon' " + 
+		"style='float:left;margin: -2px 0 -20px 20px; cursor: pointer;' onmouseup='ViewerRoot.hud.toggleControls();' " +
 		"title='Admin Controls'><img width='18px' src='/WebPath/images/dashboardImages/icon-Settings.png'></div>";
 	
 	str += "<div style='float:right; margin:-3px 0 -20px 0;'>";
