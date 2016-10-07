@@ -47,14 +47,14 @@ public:
 
 private:
     void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
-    void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion);
+    void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
     void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList);
 
     void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version);
     void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset);
 
-    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configGroup, const ConfigurationGroupKey &configKey, const std::string &startPath, int depth);
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth);
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
 
     void testXDAQContext();
@@ -65,13 +65,13 @@ private:
         CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
 
-    SupervisorConfiguration    										theSupervisorsConfiguration_;
-    RemoteWebUsers             										theRemoteWebUsers_;
+    SupervisorConfiguration    							theSupervisorsConfiguration_;
+    RemoteWebUsers             							theRemoteWebUsers_;
 
 
-    ConfigurationManagerRW*											refreshUserSession(std::string username, uint64_t activeSessionIndex, ConfigurationVersion &backboneVersion);
-    std::map<std::string, ConfigurationManagerRW *> 				userConfigurationManagers_;
-    std::map<std::string, time_t> 									userLastUseTime_;
+    ConfigurationManagerRW*							refreshUserSession(std::string username, uint64_t activeSessionIndex);
+    std::map<std::string, ConfigurationManagerRW *> 	userConfigurationManagers_;
+    std::map<std::string, time_t> 						userLastUseTime_;
 };
 
 }

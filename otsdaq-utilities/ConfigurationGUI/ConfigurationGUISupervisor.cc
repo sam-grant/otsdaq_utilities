@@ -93,15 +93,15 @@ theRemoteWebUsers_  (this)
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//for each configuration alias and key
-	//get KOC version numbers (this is the version "conditioned" by the alias-key pair)
+	//for each configuration name and key
+	//get KOC version numbers (this is the version "conditioned" by the name-key pair)
 
 	std::set<std::string> listOfKocs;
 	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.begin();
 	while (it != aliasMap.end())
 	{
 
-		__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+		__MOUT__ << "Name: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second);
 		__MOUT__ << "\tKocs size: " << listOfKocs.size() << std::endl;
@@ -125,7 +125,7 @@ theRemoteWebUsers_  (this)
 	auto mapIt = allCfgInfo.begin();
 	while(mapIt != allCfgInfo.end())
 	{
-		__MOUT__ << "KOC Alias: " << mapIt->first << std::endl;
+		__MOUT__ << "KOC Name: " << mapIt->first << std::endl;
 		__MOUT__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
@@ -389,7 +389,7 @@ theRemoteWebUsers_  (this)
 
 
 	//proof of concept.. change a KOC version (this makes a new backbone version?!)
-	__MOUT__ << "\t\t**************************** Edit a KOC for a System Alias" << std::endl;
+	__MOUT__ << "\t\t**************************** Edit a KOC for a System Name" << std::endl;
 
 	std::stringstream ss;
 	cfgMgr->__GET_CONFIG__(ConfigurationAliases)->print(ss);
@@ -408,10 +408,10 @@ theRemoteWebUsers_  (this)
 		std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(groupName);
 		if(it != aliasMap.end())
 		{
-			__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+			__MOUT__ << "Name: " << it->first << " - Key: " << it->second.key() << std::endl;
 
-			__MOUT__ << "Alias exists: " << groupName << std::endl;
-			__MOUT__ << "Sub system alias: " << KOCAlias << std::endl;
+			__MOUT__ << "Name exists: " << groupName << std::endl;
+			__MOUT__ << "Sub system name: " << KOCAlias << std::endl;
 			__MOUT__ << "Changing to new version: " << newVersion << std::endl;
 
 			std::set<std::string> listOfKocs;
@@ -480,7 +480,7 @@ theRemoteWebUsers_  (this)
 			__MOUT__ << "\t\tNew backbone: " << newBbVersion << std::endl;
 		}
 		else
-			__MOUT__ << "Alias doesnt exist: " << groupName << std::endl;
+			__MOUT__ << "Name doesnt exist: " << groupName << std::endl;
 
 
 
@@ -493,8 +493,8 @@ theRemoteWebUsers_  (this)
 
 
    	//Get KOC list
-	//for each configuration alias and key
-		//Get KOC keys for Alias key
+	//for each configuration name and key
+		//Get KOC keys for Name key
 
 
    	it = aliasMap.begin();
@@ -504,10 +504,10 @@ theRemoteWebUsers_  (this)
    	while (it != aliasMap.end())
    	{
 
-   		//for each configuration alias and key
+   		//for each configuration name and key
    			//get KOC version numbers
 
-		__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
+		__MOUT__ << "Name: " << it->first << " - Key: " << it->second.key() << std::endl;
 
 		//cfgMgr->loadConfiguration(cfgMgr->theConfigurations_,&(it->second));
 		//cfgMgr->loadConfiguration(cfgMgr->theDefaultConfigurations_,&(it->second));
@@ -544,7 +544,7 @@ theRemoteWebUsers_  (this)
 			while (dit != FssrNameMap.end())
 			{
 
-				//for each configuration alias and key
+				//for each configuration name and key
 					//get KOC version numbers
 
 			   __MOUT__ << "\tFssr Name: " << dit->first << " - Row: " << dit->second << std::endl;
@@ -703,16 +703,16 @@ throw (xgi::exception::Exception)
 
 	//acquire user's configuration manager based on username & activeSessionIndex
 	__MOUT__ << std::endl;
-	std::string  backboneVersionStr = CgiDataUtilities::getData(cgi,"backboneVersion");		  	//from GET
-	ConfigurationVersion backboneVersion(
-			(backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str())); //default to latest
-	__MOUT__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
-	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex, backboneVersion);
-	__MOUT__ << "ConfigurationManagerRW backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
-
-	//return this information always
-	//<backboneVersion=xxx />
-	xmldoc.addTextElementToData("backboneVersion", backboneVersion.toString()); //add to response
+//	std::string  backboneVersionStr = CgiDataUtilities::getData(cgi,"backboneVersion");		  	//from GET
+//	ConfigurationVersion backboneVersion(
+//			(backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str())); //default to latest
+//	__MOUT__ << "ConfigurationManagerRW backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
+	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex);//, backboneVersion);
+//	__MOUT__ << "ConfigurationManagerRW backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
+//
+//	//return this information always
+//	//<backboneVersion=xxx />
+//	xmldoc.addTextElementToData("backboneVersion", backboneVersion.toString()); //add to response
 
 	if(Command == "getConfigurationGroups")
 	{
@@ -724,12 +724,13 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getSpecificConfigurationGroup")
 	{
-		std::string alias = CgiDataUtilities::getData(cgi,"alias"); //from GET
+		std::string 	groupName = CgiDataUtilities::getData(cgi,"groupName"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 	//from GET
 
-		__MOUT__ << "getSpecificConfigurationGroup: " << alias << std::endl;
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
 
-		handleGetConfigurationGroupXML(xmldoc,cfgMgr,alias,
-				ConfigurationVersion(ConfigurationVersion::DEFAULT)); //FIXME: to allow for non-default version
+		handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey));
 	}
 	else if(Command == "saveNewConfigurationGroup")
 	{
@@ -782,109 +783,6 @@ throw (xgi::exception::Exception)
 		handleCreateConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
 				temporary,data,dataOffset);
 	}
-	else if(Command == "changeKocVersionForSpecificConfig")
-	{
-		__MOUT__ << "changeKocVersionForSpecificConfig" << std::endl;
-
-		//need 	std::string groupName = "Physics";
-		//std::string KOCAlias = "FSSRDACsConfiguration";
-		//int newVersion = 3;
-
-		std::string 	groupName = CgiDataUtilities::getData(cgi,"groupName"); 	//from GET
-		std::string 	KOCAlias = CgiDataUtilities::getData(cgi,"configName"); 			//from GET
-		int				newVersion = CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
-
-		//TODO
-		std::string chosenSubConfig;
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-
-		{
-
-			std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
-
-			std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(groupName);
-			if(it != aliasMap.end())
-			{
-				__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-				__MOUT__ << "Alias exists: " << groupName << std::endl;
-				__MOUT__ << "Sub system alias: " << KOCAlias << std::endl;
-				__MOUT__ << "Changing to new version: " << newVersion << std::endl;
-
-				std::set<std::string> listOfKocs;
-				listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second);
-				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-				{
-					ConfigurationVersion cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second,*sit);
-
-					__MOUT__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-					std::set<ConfigurationVersion> versions = allCfgInfo.find(*sit)->second.versions_;
-					__MOUT__ << "\t\tAll versions: " << std::endl;
-					for (auto &version:versions)
-						__MOUT__ << " " << version << std::endl;
-
-				}
-
-
-				//Make copy for all backbone members to temporary versions!
-				__MOUT__ << "\t\t**************************** Make temporary backbone" << std::endl;
-
-				chosenSubConfig = "Configurations";
-				ConfigurationVersion temporaryVersion;
-				ConfigurationVersion versionToCopy = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getViewVersion();
-				//cfgMgr->__GET_CONFIG__(DefaultConfigurations)->print();
-				///////////////////////cfgMgr->__GET_CONFIG__(Configurations)->print();
-				//cfgMgr->__GET_CONFIG__(VersionAliases)
-
-				__MOUT__ << "\t\ttemporaryVersion versionToCopy: " << versionToCopy << std::endl;
-
-				assert(allCfgInfo.find(chosenSubConfig) != allCfgInfo.end());
-
-				bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-				__MOUT__ << "Version " << versionToCopy << " is in database: " <<
-						(isInDatabase?"YES":"NO") << std::endl;
-
-				//temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
-				temporaryVersion = cfgMgr->createTemporaryBackboneView(versionToCopy);
-				__MOUT__ << "\t\ttemporaryVersion Backbone: " << temporaryVersion << std::endl;
-				__MOUT__ << "\t\t(Note: it is not the) active version Backbone: " <<
-						cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getViewVersion()  << std::endl;
-
-
-				//edit the backbone however you want
-				__MOUT__ << "\t\t**************************** Make changes to backbone" << std::endl;
-
-				ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getTemporaryView(temporaryVersion);
-
-
-				__MOUT__ << "\t\t******** Before change" << std::endl;
-				std::stringstream ss;
-				cfgViewPtr->print(ss);
-				__MOUT__ << ss.str() << std::endl;
-
-
-				cfgMgr->setKOCVersionForSpecificConfiguration(allCfgInfo,
-						temporaryVersion,groupName,KOCAlias,ConfigurationVersion(newVersion));
-
-				__MOUT__ << "\t\t******** After change" << std::endl;
-				ss.str(""); //clear stringstream (note: clear() just clears error state)
-				cfgViewPtr->print(ss);
-				__MOUT__ << ss.str() << std::endl;
-
-				//Save temporary backbone view to new version
-				__MOUT__ << "\t\t******** Saving new version" << std::endl;
-				ConfigurationVersion newBbVersion = cfgMgr->saveNewBackbone(temporaryVersion);
-				__MOUT__ << "\t\tNew backbone: " << newBbVersion << std::endl;
-			}
-			else
-				__MOUT__ << "Alias doesnt exist: " << groupName << std::endl;
-
-			//reply with resulting sub system config
-			handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,ConfigurationVersion(ConfigurationVersion::DEFAULT)); //FIXME.. should not always be DEFAULT!! should come from request
-
-		}
-	}
 	else if(Command == "getTreeView")
 	{
 		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
@@ -898,20 +796,45 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "depth: " << depth << std::endl;
 		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),startPath,depth);
 	}
-	else if(Command == "activateGlobalConfig")
+	else if(Command == "activateConfigGroup")
 	{
-		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	groupName 	= CgiDataUtilities::getData(cgi,"groupName");
+		std::string 	groupKey 	= CgiDataUtilities::getData(cgi,"groupKey");
 
-		__MOUT__ << "Activating config: " << configGroup << std::endl;
-		//		if(configGroup == "")
-		//			configGroup = cfgMgr->getActiveGlobalConfiguration();
-		//		else
-		//			configGroup = cfgMgr->setActiveGlobalConfiguration(configGroup);
-		//		xmldoc.addTextElementToData("activeConfig", configGroup);
+		__MOUT__ << "Activating config: " << groupName <<
+				"(" << groupKey << ")" << std::endl;
+
+		try
+		{
+			cfgMgr->activateConfigurationGroup(groupName, ConfigurationGroupKey(groupKey));
+		}
+		catch(std::runtime_error& e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error activating config group! " + std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!" << std::endl;
+			xmldoc.addTextElementToData("Error", "Error activating config group!");
+		}
 	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
+	//always add active config groups
+	std::map<std::string /*type*/,
+	std::pair<std::string /*groupName*/,
+	ConfigurationGroupKey>> activeGroupMap =
+			cfgMgr->getActiveGlobalConfiguration();
+
+	for(auto &type:activeGroupMap)
+	{
+		xmldoc.addTextElementToData(type.first + "-ActiveGroupName",
+				type.second.first);
+		xmldoc.addTextElementToData(type.first + "-ActiveGroupKey",
+				type.second.second.toString());
+	}
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, true);
@@ -927,11 +850,11 @@ throw (xgi::exception::Exception)
 //	depth from starting node path
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
-		const std::string &configGroup, const ConfigurationGroupKey &configGroupKey,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
 		const std::string &startPath, int depth)
 {
 	//return xml
-	//	<configGroup="configGroup"/>
+	//	<groupName="groupName"/>
 	//	<tree="path">
 	//		<node="...">
 	//			<node="...">
@@ -951,11 +874,11 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 
 	//return the startPath as root "tree" element
 	//	and then display all children if depth > 0
-	xmldoc.addTextElementToData("configGroup", configGroup);
-	xmldoc.addTextElementToData("configGroupKey", configGroupKey.toString());
+	xmldoc.addTextElementToData("configGroup", groupName);
+	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
 	try {
-		cfgMgr->loadConfigurationGroup(configGroup,configGroupKey);
+		cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
 		__MOUT__ << "!" << std::endl;
 
@@ -1033,143 +956,181 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 //========================================================================================================================
 //handleGetConfigurationGroupXML
 //
-//give the detail of specific System Configuration specified
-//Find historical alias keys by
-//loading all historical configurations
-//figure out all configurations versions
-//open file, and check for alias name and associated extract key
+//	give the detail of specific System Configuration specified
+//		groupKey=-1 returns latest
 //
-//return this information
-//<configuration alias=xxx key=xxx>
-//	<historical key=xxx>
-//	<historical key=xxx>
-//	....
-//	<koc alias=xxx key=xxx>
-//		<version key=xxx>
-//		<version key=xxx>
+//	Find historical group keys
+//		and figure out all member configurations versions
+
+//
+//	return this information
+//	<group name=xxx key=xxx>
+//		<historical key=xxx>
+//		<historical key=xxx>
+//		....
+//		<config name=xxx version=xxx />
+//			<historical version=xxx>
+//			<historical version=xxx>
+//			...
+//		</config>
+//		<config name=xxx version=xxx>
 //		...
-//	</koc>
-//	<koc alias=xxx key=xxx>
-//	...
-//</configuration>
+//	</configuration>
 void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument &xmldoc,
-		ConfigurationManagerRW *cfgMgr, const std::string &alias, ConfigurationVersion backboneVersion)
+		ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey)
 {
 	char tmpIntStr[100];
-	DOMElement* parentEl;
-
+	DOMElement *parentEl, *configEl;
 
 	//steps:
-	//	extract configuration name and version from alias
+	//	get specific group with key
+	//		give member names and versions
+	//		get all configuration groups to locate historical keys
+	//	get all groups to find historical keys
 
 
-	//	extract configuration name and version from alias
-	//		version is delimited by _v
-	int i;
-	for(i=alias.length()-1;i>=0;--i)
-		if(alias[i] == 'v' && i>1 && alias[i-1] == '_')
-			break; //found version indicator
+	xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+	xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+	parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
-	if(i < 0)
+	//	get specific group with key
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+	try
 	{
-		xmldoc.addTextElementToData("Error", "Invalid configuration alias requested, " + alias);
+		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+	}
+	catch(...)
+	{
+		xmldoc.addTextElementToData("Error","Configuration group \"" +
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey) +
+				"\" can not be retrieved!");
 		return;
 	}
 
-	std::string configName = alias.substr(0,i-1);
-	std::string version = alias.substr(i+1);
 
+	__MOUT__ << "groupName=" << groupName << std::endl;
+	__MOUT__ << "groupKey=" << groupKey << std::endl;
 
-	__MOUT__ << "configName=" << configName << std::endl;
-	__MOUT__ << "version=" << version << std::endl;
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::map<std::string, ConfigurationInfo>::const_iterator it;
 
+	for(auto &memberPair:memberMap)
+	{
+		__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 
+		it = allCfgInfo.find(memberPair.first);
+		if(it == allCfgInfo.end())
+		{
+			xmldoc.addTextElementToData("Error","Configuration \"" +
+					memberPair.first +
+					"\" can not be retrieved!");
+			return;
+		}
 
+		for (auto &version:it->second.versions_)
+			if(version == memberPair.second) continue;
+			else xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
+	}
+
+	std::set<std::string /*name+version*/> allGroups =
+			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
+	std::string name;
+	ConfigurationGroupKey key;
+	for(auto &group: allGroups)
+	{
+		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
+		//add all other keys for this groupName
+		if(name == groupName && key != groupKey)
+			xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", key.toString());
+	}
 
 	return;
 
-	std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
-
-	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(alias);
-	if(it != aliasMap.end())
-	{
-		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
-
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-		std::set<ConfigurationVersion> versions;
-
-		std::set<std::string> listOfKocs;
-
-		DOMElement* parentElKoc;
-
-		//get all KOC alias and version numbers
-
-		//__MOUT__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-		//add system configuration alias and key
-		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
-		sprintf(tmpIntStr,"%u",it->second.key());
-		xmldoc.addTextElementToData("ConfigurationGroupKey", tmpIntStr);
-		parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
-
-		//get KOCs alias and version for the current system configuration key
-		assert(cfgMgr->__GET_CONFIG__(Configurations));
-		{
-			listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second);
-			//__MOUT__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-			{
-				//current version
-				ConfigurationVersion cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second,*sit);
-
-				//all existing versions
-				versions = allCfgInfo.find(*sit)->second.versions_;
-
-				//__MOUT__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-				xmldoc.addTextElementToParent("MemberName", *sit, parentEl);
-				parentElKoc = xmldoc.addTextElementToParent("KOC_currentVersion", cv.toString(), parentEl);
-				for (auto &version:versions)
-				{
-					//__MOUT__ << "\t\t" << *vit << std::endl;
-					if(version == cv) continue;
-					xmldoc.addTextElementToParent("KOC_existingVersion", version.toString(), parentElKoc);
-				}
-			}
-		}
-
-
-		//check for other existing backbone versions - they all (3 backbone pieces) better match!!
-		//	(so we can just check one of them to get the list of historical versions: Configurations)
-		//  (The 3 backbone pieces are Configurations -- ConfigurationAliases -- DefaultConfigurations
-
-		versions = allCfgInfo.find("Configurations")->second.versions_;
-
-		for (auto &version:versions)
-		{
-			__MOUT__ << "Configurations Version \t\t" << version << std::endl;
-			if(version != backboneVersion)
-			{
-				//found a different configurations version then current version:
-				//load it
-				//check for alias
-
-				cfgMgr->loadConfigurationBackbone(version);
-
-				std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
-
-				it = aliasMap.find(alias);
-				if(it != aliasMap.end())
-				{
-					//found a historical version of alias
-					sprintf(tmpIntStr,"%u",it->second.key());
-					xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", tmpIntStr);
-
-				}
-			}
-		}
-	}
+//	std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+//
+//	std::map<std::string, ConfigurationGroupKey>::const_iterator it = aliasMap.find(name);
+//	if(it != aliasMap.end())
+//	{
+//		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
+//
+//		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+//		std::set<ConfigurationVersion> versions;
+//
+//		std::set<std::string> listOfKocs;
+//
+//		DOMElement* parentElKoc;
+//
+//		//get all KOC name and version numbers
+//
+//		//__MOUT__ << "Name: " << it->first << " - Key: " << it->second.key() << std::endl;
+//
+//		//add system configuration name and key
+//		xmldoc.addTextElementToData("ConfigurationGroupName", it->first);
+//		sprintf(tmpIntStr,"%u",it->second.key());
+//		xmldoc.addTextElementToData("ConfigurationGroupKey", tmpIntStr);
+//		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+//
+//		//get KOCs name and version for the current system configuration key
+//		assert(cfgMgr->__GET_CONFIG__(Configurations));
+//		{
+//			listOfKocs = cfgMgr->__GET_CONFIG__(Configurations)->getListOfKocs(it->second);
+//			//__MOUT__ << "\tKocs size: " << listOfKocs.size() << std::endl;
+//
+//			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
+//			{
+//				//current version
+//				ConfigurationVersion cv = cfgMgr->__GET_CONFIG__(Configurations)->getConditionVersion(it->second,*sit);
+//
+//				//all existing versions
+//				versions = allCfgInfo.find(*sit)->second.versions_;
+//
+//				//__MOUT__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
+//
+//				xmldoc.addTextElementToParent("MemberName", *sit, parentEl);
+//				parentElKoc = xmldoc.addTextElementToParent("KOC_currentVersion", cv.toString(), parentEl);
+//				for (auto &version:versions)
+//				{
+//					//__MOUT__ << "\t\t" << *vit << std::endl;
+//					if(version == cv) continue;
+//					xmldoc.addTextElementToParent("KOC_existingVersion", version.toString(), parentElKoc);
+//				}
+//			}
+//		}
+//
+//
+//		//check for other existing backbone versions - they all (3 backbone pieces) better match!!
+//		//	(so we can just check one of them to get the list of historical versions: Configurations)
+//		//  (The 3 backbone pieces are Configurations -- ConfigurationAliases -- DefaultConfigurations
+//
+//		versions = allCfgInfo.find("Configurations")->second.versions_;
+//
+//		for (auto &version:versions)
+//		{
+//			__MOUT__ << "Configurations Version \t\t" << version << std::endl;
+//			if(version != backboneVersion)
+//			{
+//				//found a different configurations version then current version:
+//				//load it
+//				//check for name
+//
+//				cfgMgr->loadConfigurationBackbone(version);
+//
+//				std::map<std::string, ConfigurationGroupKey> aliasMap = cfgMgr->__GET_CONFIG__(ConfigurationAliases)->getAliasesMap();
+//
+//				it = aliasMap.find(name);
+//				if(it != aliasMap.end())
+//				{
+//					//found a historical version of name
+//					sprintf(tmpIntStr,"%u",it->second.key());
+//					xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", tmpIntStr);
+//
+//				}
+//			}
+//		}
+//	}
 }
 
 //========================================================================================================================
@@ -1190,12 +1151,12 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 //first CHUNK_SIZE rows
 //
 //return this information
-//<subconfiguration alias=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
+//<subconfiguration name=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
 //	<existing version=xxx>
 //	<existing version=xxx>
 //	....
-//	<colhdr alias=xxx>
-//	<colhdr alias=xxx>
+//	<colhdr name=xxx>
+//	<colhdr name=xxx>
 //	....
 //	<rowdata>
 //		<cell value=xxx>
@@ -1227,7 +1188,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 	//existing table versions
 	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
 	for (auto &v:allCfgInfo[configName.c_str()].versions_)
-		xmldoc.addTextElementToParent("VersionKey", v.toString(), parentEl);
+		xmldoc.addTextElementToParent("ConfigurationVersion", v.toString(), parentEl);
 
 
 	//table columns and then rows (from config view)
@@ -1351,7 +1312,8 @@ catch(...)
 //
 //		If backboneVersion is -1, then latest, and backboneVersion passed by reference will be updated
 ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::string username,
-		uint64_t activeSessionIndex, ConfigurationVersion &backboneVersion)
+		uint64_t activeSessionIndex)
+//, ConfigurationVersion &backboneVersion)
 {
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
@@ -1384,7 +1346,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 
 	//load backbone configurations always based on backboneVersion
 	//if backboneVersion is -1, then latest
-	backboneVersion = 0;// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
+	//backboneVersion = 0;// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
 
 	//update active sessionIndex last use time
 	userLastUseTime_[mapKey] = now;
@@ -1413,7 +1375,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //
 //		Save a new ConfigurationGroup:
 //			Search for existing ConfigurationGroupKeys for this ConfigurationGroup
-//			Append a "bumped" system key to alias
+//			Append a "bumped" system key to name
 //			Save based on list of configuration name/ConfigurationVersion
 //
 //		configList parameter is comma separated configuration name and version
@@ -1466,8 +1428,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName);
 	}
 
-	xmldoc.addTextElementToData("NewGroupName",groupName);
-	xmldoc.addTextElementToData("NewGroupKey",newKey.toString());
+	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
 }
 
 
@@ -1475,12 +1436,12 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 //	handleConfigurationGroupsXML
 //
 //		return this information
-//		<configuration alias=xxx key=xxx>
-//			<koc alias=xxx key=xxx />
-//			<koc alias=xxx key=xxx />
+//		<group name=xxx key=xxx>
+//			<config name=xxx version=xxx />
+//			<config name=xxx version=xxx />
 //			...
-//		</configuration>
-//		<configuration alias=xxx key=xxx>...</configuration>
+//		</group>
+//		<group name=xxx key=xxx>...</group>
 //		...
 //
 //Note: this is the new way with artdaq_db
@@ -1489,7 +1450,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 	DOMElement* parentEl;
 
 	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
-	auto configGroups = theInterface->getAllConfigurationGroupNames();
+	std::set<std::string /*name*/>  configGroups = theInterface->getAllConfigurationGroupNames();
 	__MOUT__ << "Global config size: " << configGroups.size() << std::endl;
 
 	ConfigurationGroupKey groupKey;
@@ -1504,12 +1465,12 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 
 		xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
 		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
-		parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
+		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> gcMap;
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 		try
 		{
-			gcMap = theInterface->getConfigurationGroupMembers(groupString);
+			memberMap = theInterface->getConfigurationGroupMembers(groupString);
 		}
 		catch(...)
 		{
@@ -1518,11 +1479,11 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			continue;
 		}
 
-		for(auto &cv:gcMap)
+		for(auto &memberPair:memberMap)
 		{
-			__MOUT__ << "\tMember config " << cv.first << ":" << cv.second << std::endl;
-			xmldoc.addTextElementToParent("MemberName", cv.first, parentEl);
-			xmldoc.addTextElementToParent("MemberVersion", cv.second.toString(), parentEl);
+			__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+			xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+			xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 		}
 	}
 
@@ -1532,12 +1493,12 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 //	handleConfigurationsXML
 //
 //		return this information
-//		<subconfiguration alias=xxx>
+//		<subconfiguration name=xxx>
 //			<version key=xxx />
 //			<version key=xxx />
 //			...
 //		</subconfiguration>
-//		<subconfiguration alias=xxx>...</subconfiguration>
+//		<subconfiguration name=xxx>...</subconfiguration>
 //		...
 //
 void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr)
@@ -1548,18 +1509,18 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 
 	while(it != allCfgInfo.end())
 	{
-		//for each subconfiguration alias
+		//for each subconfiguration name
 		//get existing version keys
 
-		__MOUT__ << "Alias: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
+		__MOUT__ << "Name: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
 
-		//add system subconfiguration alias
-		xmldoc.addTextElementToData("SystemSubConfigurationAlias", it->first);
-		parentEl = xmldoc.addTextElementToData("SystemSubConfigurationVersions", "");
+		//add system subconfiguration name
+		xmldoc.addTextElementToData("ConfigurationName", it->first);
+		parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
 
 		//get version key for the current system subconfiguration key
 		for (auto &version:it->second.versions_)
-			xmldoc.addTextElementToParent("VersionKey", version.toString(), parentEl);
+			xmldoc.addTextElementToParent("ConfigurationVersion", version.toString(), parentEl);
 
 		++it;
 	}
@@ -1581,14 +1542,14 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//behave like a new user
 
 	ConfigurationManagerRW cfgMgrInst("ExampleUser");
-
+//
 	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
-
+//
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
 	for(auto& mapIt : allCfgInfo)
 	{
-		__MOUT__ << "Config Alias: " << mapIt.first << std::endl;
+		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
 		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
 
 		//get version key for the current system subconfiguration key
