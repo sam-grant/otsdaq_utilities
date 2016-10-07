@@ -17,6 +17,10 @@
 			table{
 				height:100%;
 			}
+			tr {
+				margin: auto;
+				padding: auto;
+			}
 									
 		</style>
 		
@@ -39,6 +43,11 @@
 				console.log("init()");
 				console.log(window.frameElement.id)
 				window.parent.setupWidget(window.frameElement.id, getParameters());
+			}
+			
+			function setupPVs(settings)
+			{
+				console.log("setupPVs() : " , settings);
 			}
 			
 			function newWidget(widget, parameters) 
@@ -72,11 +81,13 @@
 					}
 					table.appendChild(tr);
 				}
+				document.getElementById("display").innerHTML = "";
 				document.getElementById("display").appendChild(table);
 
 
 				//console.log("newWidget() called *************************************");
-				counter = 2;
+				if(counter > 1){counter = 2;}
+				console.log("counter" + counter);
 				for(var pv in widget.PVList)
 				{
 					
@@ -90,7 +101,11 @@
 //					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
 					var center = document.createElement("center");
 					center.appendChild(a);
-					document.getElementById("td" + Math.floor(counter/columns) + "-" + (counter%rows +1)).appendChild(center);
+					console.log(document.body);
+					var first = Math.floor(counter/columns);
+					if(first < 1) {first = 1;}				
+					console.log("td" + first + "-" + (counter%rows +1));
+					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
 					counter++;
 //					console.log(counter);
 //					console.log(columns);
@@ -143,6 +158,10 @@
 				{
 					document.getElementById(pvName).parentElement.style.color = "DimGray";
 				}
+				else if(pvSeverity == "DC")
+				{
+					document.getElementById(pvName).parentElement.style.color = "Light Grey";
+				}
 				
 				if(pvStatus == "NO_ALARM")
 				{
@@ -160,9 +179,12 @@
 				}else if(pvStatus == "LOW")
 				{
 					document.getElementById(pvName).parentElement.style.border = "thing dotted blue";
-				}else if(pvStatus == "UDF")
+				}else if(pvStatus == "DC")
 				{
 					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
+				}else if(pvStatus == "UDF")
+				{
+					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
 				}
 				
 			}
