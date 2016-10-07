@@ -48,7 +48,7 @@ ViewerRoot.createHud = function() {
 		if (i == 3) {
 			chk = document.getElementById("hardRefreshCheckbox");
 			ViewerRoot.hardRefresh = chk.checked; 	//hard refresh
-			console.log("checkboxUpdate: " + chk.checked);
+			console.log("checkboxUpdate: hardRefresh: " + chk.checked);
 			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&hardRefresh="+
 					(chk.checked?1:0));	
 		}	
@@ -189,6 +189,7 @@ ViewerRoot.createHud = function() {
 		{
 			Debug.log("setting autoRefreshPeriod=" + autoRefreshPeriod);
 			ViewerRoot.autoRefreshPeriod = autoRefreshPeriod; 	//autoRefreshPeriod 
+			document.getElementById("hudAutoRefreshPeriod").value = ViewerRoot.autoRefreshPeriod;			
 		}
 	}
 			
@@ -421,7 +422,7 @@ ViewerRoot.createHud = function() {
 				str += "<input type='checkbox' id='hardRefreshCheckbox' checked ";
 			else 
 				str += "<input type='checkbox' id='hardRefreshCheckbox' ";
-			str += "onchange='if(this.checked) ViewerRoot.hardRefresh = 1; else ViewerRoot.hardRefresh = 0; ViewerRoot.hud.checkboxUpdate(3););'>Hard Refresh";
+			str += "onchange='if(this.checked) ViewerRoot.hardRefresh = 1; else ViewerRoot.hardRefresh = 0; ViewerRoot.hud.checkboxUpdate(3);'>Hard Refresh";
 		
 			str += "<br><div id='hudAdminControlStatus'></div>";
 			str += "<br>";
@@ -632,7 +633,6 @@ ViewerRoot.createHud = function() {
 		"title='Admin Controls'><img width='18px' src='/WebPath/images/dashboardImages/icon-Settings.png'></div>";
 	
 	str += "<div style='float:right; margin:-3px 0 -20px 0;'>";
-	
 	str += "Refresh Period: <input type='text' id='hudAutoRefreshPeriod' onchange='ViewerRoot.hud.handlerRefreshPeriodChange(this.value);' size='6' value='" + 
 		ViewerRoot.autoRefreshPeriod + "'> ms</div>";
 		
