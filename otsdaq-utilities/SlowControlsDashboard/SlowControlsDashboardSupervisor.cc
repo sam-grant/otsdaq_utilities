@@ -141,7 +141,7 @@ void SlowControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Outpu
 
 }
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::init(void)
+void SlowControlsDashboardSupervisor::init(ConfigurationManager *configManager)
 //called by constructor
 {
 	UID_= 0;
