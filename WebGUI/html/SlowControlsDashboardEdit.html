@@ -600,6 +600,12 @@
 				document.getElementById("gridCheckbox").checked = true;
 				parent.setGridColor(defaultGridColor_, true);
 				parent.setBackgroundColor(defaultBackgroundColor_);
+				
+				var backgroundColorPicker = document.getElementById("backgroundColorPicker");
+				backgroundColorPicker.value = rgbToHex(defaultBackgroundColor_);
+				
+				var gridColorPicker = document.getElementById("gridColorPicker");
+				gridColorPicker.value = rgbToHex(defaultGridColor_);
 			}
 			
 			

@@ -46,26 +46,32 @@ public:
     void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
+    void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
+    void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList);
 
-    void fillSpecificSystemXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &alias, int backboneVersion);
-    void fillSpecificSubSystemXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version);
-    void saveSpecificSubSystemVersion	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &subAlias, int version,
-    		const std::string &data, const int &dataOffset, const int &chunkSize);
+    void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version);
+    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset);
+
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth);
+    static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
 
     void testXDAQContext();
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
         CONFIGURATION_MANAGER_EXPIRATION_TIME = 60*60*1, //1 hour, in seconds
+        CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
 
-    SupervisorConfiguration    										theSupervisorsConfiguration_;
-    RemoteWebUsers             										theRemoteWebUsers_;
+    SupervisorConfiguration    							theSupervisorsConfiguration_;
+    RemoteWebUsers             							theRemoteWebUsers_;
 
 
-    ConfigurationManagerRW*											refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
-    std::map<std::string, ConfigurationManagerRW *> 				userConfigurationManagers_;
-    std::map<std::string, time_t> 									userLastUseTime_;
+    ConfigurationManagerRW*							refreshUserSession(std::string username, uint64_t activeSessionIndex);
+    std::map<std::string, ConfigurationManagerRW *> 	userConfigurationManagers_;
+    std::map<std::string, time_t> 						userLastUseTime_;
 };
 
 }

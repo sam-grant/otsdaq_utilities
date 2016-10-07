@@ -7315,7 +7315,6 @@
          this.FinishTextDrawing();
       }
 
-      painter.Redraw();
       return painter.DrawingReady();
    }
 

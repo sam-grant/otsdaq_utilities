@@ -714,10 +714,12 @@
 							if(page[widget].PVList[pv] < refreshRate_)
 							{
 								refreshRate_ = page[widget].PVList[pv];
+								updateRefreshInterval();
 							}
 							else if(refreshRate_ <= 0)
 							{
 								refreshRate_ = page[widget].PVList[pv];
+								updateRefreshInterval();
 							}
 						} 
 					}
@@ -735,7 +737,7 @@
 				//Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
 				var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
 
-				if(serverResponse.message == "NULL")
+				if(serverResponse.message == "NOT_FOUND")
 				{
 					//console.log("Have to generate new UID!");
 					generateUID();
@@ -770,13 +772,27 @@
 				//console.log("New UID: " + uid.message);
 				//console.log("New UID: " + DesktopContent.getXMLValue(req, "JSON"));
 
-				UID_ = uid.message;
+				if(uid.message != "-1")
+					UID_ = uid.message;
+				else
+				{
+					UID_ = "";
+					debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
+				}
 				
 				if(timeToPoll_)
 				{
 					timeToPoll_ = false;
 					pollServer();
 				}
+
+			}
+			
+			function settingsReqHandler(req) {
+				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				var id = DesktopContent.getXMLValue(req,"id");
+				
+				page_.widgets[id].el.contentWindow.setupPVs(settings);
 
 			}
 			
@@ -819,15 +835,17 @@
 				}
 				
 				//END Put all pvs in a JSON and send to server
-				DesktopContent.XMLHttpRequest("Default?RequestType=generateUID&PVList=" + pvList, "", generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
+
+				DesktopContent.XMLHttpRequest("Default?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
 
 				
 			}
 			
 			function updateRefreshInterval()
 			{
+				console.log(refreshRate_);
 				window.clearInterval(timerVariable_);
-				timerVariable_ = setInterval(pollServer, refreshRate_);
+				timerVariable_ = setInterval(pollServer, 500);//refreshRate_);
 			}
 			
 			function loadPage(page)
@@ -839,6 +857,7 @@
 			
 			function setupWidget(id, parameters)
 			{
+				console.log("setting up widget!");
 				page_.widgets[id].loaded = "true";
 				page_.widgets[id].el = document.getElementById(id);
 				if(typeof page_.widgets[id].attributes == 'undefined')
@@ -849,7 +868,33 @@
 				{
 					compareAttributes(id, parameters);
 				}
+				var pvList = "";
+
+				for(var pv in page_.widgets[id].PVList)
+				{
+					pvList += pv + ",";
+				}
+				
+				console.log("******************************^^^^^^^^^^^^^^^^^^^^^" + pvList);
+				
+				DesktopContent.XMLHttpRequest("Default?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
 				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+
+
+			}
+			
+			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
+			{
+				if(fromAddPV){toggleAddPV();}
+				page_.widgets[widgetID].PVList[pv] = refreshRate;
+//				if(refreshRate > 0)
+//				{
+//					if(refreshRate < refreshRate_ || refreshRate_ <= 0)
+//					{
+//						refreshRate_ = refreshRate
+//					}
+//				} 
+				document.getElementById(widgetID).contentWindow.init();
 
 			}
 			
@@ -947,6 +992,15 @@
 					}
 					
 					widgetFrame.id = "widget" + Object.keys(page_.widgets).length;//page[widget].Display_Name;
+					if(typeof page_.widgets[widgetFrame.id] != 'undefined')
+					{
+						var pos = 0;
+						while(typeof page_.widgets[widgetFrame.id] != 'undefined')
+						{
+							widgetFrame.id = "widget" + (pos++);
+						}
+					}
+					
 					var widgetObject = [];
 					widgetObject.type = widget;
 
@@ -954,6 +1008,10 @@
 					widgetObject.size_y = height;
 					widgetObject.x = x;
 					widgetObject.y = y;
+					widgetObject.PVList = {};
+					widgetObject.attributes = {};
+					widgetObject.Display_Name = widgetFrame.id;
+					widgetObject.loaded = "false";
 					widget = widgetFrame.id
 					page_.widgets[widget] = widgetObject;
 					
@@ -982,6 +1040,8 @@
 				coverDiv.style.left = "0px";
 				coverDiv.style.top = "0px";
 				coverDiv.id = widgetFrame.id + "-cover";
+				coverDiv.style.zIndex = "-5";
+
 				if(!editBlock_.isHidden) 
 					coverDiv.addEventListener("contextmenu", toggleContextMenuCaller(widgetFrame.id), true);//function(e){
 //					toggleContextMenu(e, widgetFrame.id);
@@ -1042,9 +1102,12 @@
 				console.log(window.innerWidth);
 				console.log()
 				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				var covers = document.getElementsByClassName("widgetCover");
+
+				
 				if(editBlock_.isHidden)
 				{
-				
+					//window.clearInterval(timerVariable_);
 					mainBlock_.el.classList.add("editMode");
 //					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
 					editBlock_.el.style.zIndex = "50";
@@ -1055,11 +1118,22 @@
 					editBlock_.isHidden = false;
 					for(widget in page_.widgets)
 					{
-						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("contextmenu", toggleContextMenu, true);
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("contextmenu", toggleContextMenuCaller(widget), true);
+						document.getElementById(widget).contentWindow.init();
+					}
+					if(covers.length > 0)
+					{
+						for(widgetCover in covers)
+						{
+							console.log(widgetCover);
+							console.log(covers);
+							covers[widgetCover].style["z-index"] = "9";
+						}
 					}
 				}
 				else
 				{
+					timerVariable_ = setInterval(pollServer, refreshRate_);
 					mainBlock_.el.classList.remove("editMode");
 					editBlock_.el.style.marginBottom = "0px";
 					editBlock_.el.style.zIndex = "30";
@@ -1068,16 +1142,28 @@
 					{
 						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("contextmenu", toggleContextMenu, true);
 					}
-					//disable all right clicks
-					
+					if(covers.length > 0)
+					{
+						for(widgetCover in covers)
+						{
+							covers[widgetCover].style["z-index"] = "-9";
+						}
+					}
+					//dissable all right clicks
+					//updateRefreshInterval();
+					turnOnWidgets();
+					toggleWidgetSelection();
 //					editCover.style["z-index"] = "4";
 				}
 			}
 			
 			function toggleContextMenuCaller(id) {
 				 return function(event) {
-					event.preventDefault();
-					toggleContextMenu(event, id);
+					 if(!editBlock_.isHidden)
+					 {
+						 event.preventDefault();
+					 	toggleContextMenu(event, id);
+					 }
 				};
 			};
 			
@@ -1153,13 +1239,23 @@
 				}
 			}
 			
-			function addPV()
+			function toggleAddPV()
 			{
 				console.log(menu_.getAttribute("widgetID"));
-				toggleContextMenuOff();
-				elPointer_["addPVMenuDiv"].style.display = "block";
-				elPointer_["addPVMenu"].style.display = "block";
+				
+				if(elPointer_["addPVMenuDiv"].style.display == "none")
+				{
+					toggleContextMenuOff();
+					elPointer_["addPVMenuDiv"].setAttribute("widgetID", menu_.getAttribute("widgetID"));
+					elPointer_["addPVMenuDiv"].style.display = "block";
+					elPointer_["addPVMenu"].style.display = "block";
+				}
+				else
+				{
+					elPointer_["addPVMenuDiv"].style.display = "none"
+					elPointer_["addPVMenu"].style.display = "none";
 
+				}
 			}
 			
 			function toggleFileMenu()
@@ -1365,6 +1461,8 @@
 									refreshRate = -1;
 								
 								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate; 
+								console.log(pv);
+								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
 							}
 							//console.log(table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value);
 						}
@@ -1570,25 +1668,25 @@
 			    if(keyMap_[38])//up arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, -1);}
-			    	else {pageOffSetY_+=3; redrawWindow();}	
+			    	else {pageOffSetY_+=3; redrawWindow(); turnOnWidgets();}	
 					
 			    }
 			    if(keyMap_[40])//down arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, 1);}
-			    	else {pageOffSetY_-=3; redrawWindow(); } 
+			    	else {pageOffSetY_-=3; redrawWindow(); turnOnWidgets(); } 
 						
 			    }
 			    if(keyMap_[37])//left arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, -1, 0);}
-			    	else { pageOffSetX_+=3; redrawWindow(); }
+			    	else { pageOffSetX_+=3; redrawWindow(); turnOnWidgets(); }
 						
 			    }
 			    if(keyMap_[39])// right arrow
 			    {
 			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 1, 0)}
-			    	else { pageOffSetX_-=3; redrawWindow();	}
+			    	else { pageOffSetX_-=3; redrawWindow(); turnOnWidgets();	}
 					
 			    }	
 			    
@@ -1598,15 +1696,18 @@
 			
 			function resetToOrigin()
 			{
-				resetToOriginInterval_ = setInterval(moveToOrigin, 1);
+				resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
 			}
 			
 			function moveToOrigin()
 			{
+				console.log(pageOffSetX_, pageOffSetY_);
 				if(pageOffSetX_ == 0 && pageOffSetY_ == 0)
 				{
-					clearInterval(resetToOriginInterval_)
-				} else {
+					return;
+					//clearInterval(resetToOriginInterval_)
+				} else 
+				{
 					if(pageOffSetX_ > 0)
 						pageOffSetX_--;
 					else if(pageOffSetX_ < 0)
@@ -1618,7 +1719,20 @@
 						pageOffSetY_++;
 					
 					redrawWindow();
+					turnOnWidgets();
+					resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
+
+
 				} 	
+			}
+			
+			function deleteWidget()
+			{
+				var widgetCover = document.getElementById(menu_.getAttribute("widgetID") + "-cover")
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				mainBlock_.el.removeChild(widgetCover.parentNode);
+				toggleContextMenuOff();
 			}
 			
 			var cutWidget_;
@@ -1641,6 +1755,8 @@
 				if(typeof page_.widgets[cutWidgetName_] == 'undefined')
 				{
 					console.log("it was undefined");
+					cutWidget_.x = parseInt(cutWidget_.x) - pageOffSetX_;
+					cutWidget_.y = parseInt(cutWidget_.y) - pageOffSetY_;
 					page_.widgets[cutWidgetName_] = cutWidget_;
 					drawWidget(cutWidgetName_, false);
 				}
@@ -1661,7 +1777,7 @@
 					
 					drawWidget((name + widgetNumber), false);
 				}
-				
+				redrawWindow();
 				turnOnWidgets();
 			}
 			
@@ -1700,7 +1816,7 @@
 					x_Pos_forDrag_ = e.clientX;
 					y_Pos_forDrag_ = e.clientY;
 					
-					if((dragTargetElement_.id).indexOf("mainBlock") != -1)
+					if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
 					{
 						toggleWidgetSelection();
 
@@ -1709,8 +1825,9 @@
 							page_.widgets[widget].el.style.display = "none";
 						}	
 					}
-					else if(dragTargetElement_.className.indexOf("widgetCover") != -1)
+					else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
 					{
+						console.log("editBlock is hidden ", editBlock_.isHidden);
 						toggleWidgetSelection(e.target);
 						dragTargetElement_.parentNode.style.zIndex ="105";
 						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
@@ -1742,14 +1859,14 @@
 			
 			function redrawPage(e)
 			{
-				if(dragTargetElement_.id.indexOf("mainBlock") != -1)
+				if(dragTargetElement_.id.indexOf("mainBlock") != -1 || editBlock_.isHidden)
 				{			
 					pageOffSetX_ += (e.clientX - x_Pos_forDrag_);
 					pageOffSetY_ += (e.clientY - y_Pos_forDrag_);
 					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
 					redrawWindow();
 				}
-				else if(dragTargetElement_.className.indexOf("widgetCover") != -1)
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && !editBlock_.isHidden)
 				{
 					translateWidget(dragTargetElement_, (e.clientX - x_Pos_forDrag_), (e.clientY - y_Pos_forDrag_));
 				}
@@ -1783,10 +1900,10 @@
 			function turnOnWidgets()
 			{
 				//Figure out the viewport we are now looking at
-				var startPosX = pageOffSetX_;
-				var startPosY = pageOffSetY_;
-				var endPosX = startPosX - parseInt(mainBlock_.el.style.width);
-				var endPosY = startPosY - parseInt(mainBlock_.el.style.height);
+				var startPosX = -1 * pageOffSetX_;
+				var startPosY = -1 * pageOffSetY_;
+				var endPosX   = (startPosX + parseInt(mainBlock_.el.style.width));
+				var endPosY   = (startPosY + parseInt(mainBlock_.el.style.height));
 	
 				//See which widgets fall into the viewport					
 				for(widget in page_.widgets)
@@ -1795,8 +1912,10 @@
 					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x);// + startPosX;
 					 topSide    = parseInt(page_.widgets[widget].y);// + startPosY;
 					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y);// + startPosY; 
-					 
-					 if(((leftSide > startPosX  && leftSide <endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
+					 console.log(leftSide + "," + rightSide + "," + topSide + "," + bottomSide);
+					 console.log(startPosX+ "," +endPosX  + "," + startPosY + "," + endPosY);
+					 if(((leftSide > startPosX  && leftSide < endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
+					 if(true)
 					 {
 //						 	console.log("true for " + page_.widgets[widget].Display_Name + leftSide);
 							page_.widgets[widget].el.style.display = "block";
@@ -1903,7 +2022,7 @@
 		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">Open File</a></li>
 		            <li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>
 		            <li><a href="#" title="" id="menuli3" onclick="toggleEditMode()">EditMode</a></li>
-		            <li><a href="#" title="" id="menuli4" onclick="toggleHelp()">Help</a></li>
+		            <li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>
 		        </ul>
 	        </nav>
 	    </div>
@@ -1915,7 +2034,7 @@
 		<nav id="contextMenu" class="menu ">
 		  <ul class="menu__items ">
 		    <li class="menu__item ">
-		      <a href="#" class="menu__link " onclick="addPV()">
+		      <a href="#" class="menu__link " onclick="toggleAddPV()">
 		        <i class=""></i> Add PV
 		      </a>
 		    </li>
@@ -1925,8 +2044,13 @@
 		      </a>
 		    </li>
 		    <li class="menu__item">
-		      <a href="#" class="menu__link">
+		      <a href="#" class="menu__link" onclick="deleteWidget()">
 		        <i class=""></i> Delete Widget
+		      </a>
+		    </li>
+		    <li class="menu__item">
+		      <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
+		        <i class=""></i> Close
 		      </a>
 		    </li>
 		  </ul>
@@ -1937,18 +2061,18 @@
 			  <ul class="menu__items ">
 			    <li class="menu__item ">
 			    	<span class="menu__link">
-			      		<i class=""></i><input type="text" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+			      		<i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
 			      	</span> 		
 			    </li>
 			    <li class="menu__item">
 			    	<span class="menu__link">
-			    		<i class=""></i><input type="text" class="editableInput addPVMenuInput" placeholder="Refresh Rate"></input>
+			    		<i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
 			    	</span>
 			    </li>
 			    <li class="menu__item" style="height: auto">
 			    	<span style="width: 100%; height: auto;">
-			    		<button type="button" class="menu__button">Add PV </input>
-			    		<button type="button" class="menu__button">Close</input>
+			    	<a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
+			    	<a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
 		    		</span>
 		    </li>
 			  </ul>

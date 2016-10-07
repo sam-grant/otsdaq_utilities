@@ -29,8 +29,31 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>)
-//			... to make server request, returnHandler is called with response in req and integer reqIndex if user defined
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>, progressHandler <optional>, callHandlerOnErr <optional>)
+//			... to make server request, returnHandler is called with response in req and reqIndex if user defined
+//			... here is a returnHandler declaration example:
+//		
+//					function returnHandler(req,reqIndex,errStr)
+//					{
+//						if(errStr != "") return; //error occured!
+//
+//						var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+//						if(err) 
+//						{
+//							Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+//							return;
+//						}
+//
+//						if(reqIndex = 0)
+//						{ //... do something }
+//						else if(reqIndex = 1)
+//						{ //... do something else}
+//						else
+//						{ //... do something else}
+//						
+//						//..do more things
+//		
+//					}
 //
 //		-DesktopContent.getXMLValue(req, name)
 //			... to get string value from XML server response. field name is needed.
@@ -65,6 +88,8 @@ if (typeof Globals == 'undefined')
 //"public" function list: 
 //	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
 //	DesktopContent.getXMLValue(req, name)
+//	DesktopContent.getXMLNode(req, name)
+//	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor)
 //	DesktopContent.getWindowWidth()
@@ -240,9 +265,12 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 // Where CookieCode and DisplayName can change upon every server response
 //
 // reqIndex is used to give the returnHandler an index to route responses to.
+// progressHandler can be given to receive progress updates (e.g. for file uploads)
+// callHandlerOnErr can be set to true to have handler called with errStr parameter
+//	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqIndex, progressHandler) {
+		reqIndex, progressHandler, callHandlerOnErr) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -277,7 +305,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found) returnHandler(req, reqIndex, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqIndex, errStr); 
 		return;
 	}
 
@@ -290,7 +318,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			if(req.status==200)
 			{				
-				Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
+				//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
 
 				DesktopContent._lastCookieTime = parseInt((new Date()).getTime()); //in ms
 
@@ -312,6 +340,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 					if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 						DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 					//return;
+				}
+				else if(req.responseText == Globals.REQ_LOCK_REQUIRED_RESPONSE) 
+				{
+					errStr = "Request failed because the request requires the user to lockout the system. Please take over the lock in the Settings area to proceed.";
 				}
 				else if(!sequence)
 				{    
@@ -392,18 +424,21 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
-			if(returnHandler) returnHandler(req, reqIndex, errStr);
+						
+			//success, call return handler
+			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
+				returnHandler(req, reqIndex, errStr);
 		}
 	}
 
 	if(!sequence)
 	{        
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
-		data = "CookieCode="+cc+"&"+data;
+		data = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}
 	else
 	{   	
-		data = "sequence="+sequence+"&"+data;
+		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
 	}
 	var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
 
@@ -429,9 +464,9 @@ DesktopContent.checkCookieCodeRace = function() {
 //=====================================================================================
 //returns xml entry value for an attribute
 DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
-	var els;
-	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
-		return els[0].getAttribute(attribute);
+	var el;
+	if(el = DesktopContent.getXMLNode(req,name))
+		return el.getAttribute(attribute);
 	else
 		return undefined;
 }
@@ -440,6 +475,22 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 //returns xml entry value for attribue 'value'
 DesktopContent.getXMLValue = function(req, name) {
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
+}
+
+//=====================================================================================
+//returns xml entry node (first node with name)
+DesktopContent.getXMLNode = function(req, name) {
+	var els;
+	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
+		return els[0];
+	else
+		return undefined;	
+}
+
+//=====================================================================================
+//returns xml entry node (first node with name DATA)
+DesktopContent.getXMLDataNode = function(req, name) {
+	return DesktopContent.getXMLNode("DATA");	
 }
 
 //=====================================================================================
@@ -589,7 +640,7 @@ DesktopContent.getDefaultWindowColor = function() {
 	{
 		//likely in wizard mode
 		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
-		return "rgb(0,0,255)";
+		return "rgb(178,210,240)";
 	}
 	
     wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
@@ -599,7 +650,15 @@ DesktopContent.getDefaultWindowColor = function() {
     return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
 }
 DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
-DesktopContent.getDefaultDesktopColor = function() { return DesktopContent._desktopColor;} 
+DesktopContent.getDefaultDesktopColor = function() { 
+	if(!DesktopContent._desktopColor)
+	{
+		//likely in wizard mode
+		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
+		return "rgb(15,34,105)";
+	}
+	return DesktopContent._desktopColor;
+} 
 DesktopContent.getUsername = function() { 
 	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
 	return dispName.substr(dispName.indexOf(",")+2);	

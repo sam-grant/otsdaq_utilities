@@ -1,637 +1,1288 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
-	<head>
-		<title>ConfigurationGUI</title>
-		<style type="text/css">			
-			body {
-				background-color: rgb(200,200,200);
-			}
-			
-			#clearDiv {
-				clear: both;
-			}
-			
-			a {
-				color: blue;
-			}
-			
-			#display {
-				padding: 20px;
-			}
-			
-			#errorDiv {
-				color: rgb(155,50,0);
-				margin: 20px 0 -20px 0;
-				height: 20px;
-			}
+<head>
+	<title>ConfigurationGUI</title>
+	<style type="text/css">			
+		body {
+			background-color: rgb(200,200,200);
+		}
+		
+		#clearDiv {
+			clear: both;
+		}
+		
+		a {
+			color: blue;
+		}
+		
+		#display {
+			padding: 20px;
+		}
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	
+	<script>		
+		
+		//Start by offering two views (System Configurations) (Sub-Configurations)
+		//	and default to System Configurations
+		//
+		//High Level Goals:
+		//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
+		//		- Be able to edit the versions associated with the System Config while 
+		//		viewing other System Configs for inspiration
+		//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
+		//		- Be able to edit a sub-config, and view others to copy chunks from them
+		//
+	
+	
+		//In System Configuration mode:
+		//	List the existing configuration aliases
+		//		with possibly ability to scroll through associated sub-configs
+		//
+	
+		//In Sub-Configuration mode:
+		//	List the existing versions
+		//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
+		//	Some Sub-Configurations will need special views:
+		//		ability to add chips (of certain types) to system config...
+		//
+	
+		var _MAX_CHUNK_SIZE = 100; //100 rows per page
+	
+		var _currentConfigName;
+		var _editingCell = false;
+		var _editingCellEl;
+		var _versionIsChanged = false;
+		var _version;
+		var _dataOffset = 0;
+		
+		//for tree view
+		var treeViewHandlerStr_; //used by recursive function to build html string
+		var treeNodeUID_;		//incrementing unique id for nodes
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			//niceName(str)									//removes "Configuration" from name
+			//setupSystemViewMode()							//gets global configurations
+			//setupSubSystemConfigMode()					//gets configuration tables
+			//setupSpecificConfigGroup(groupName, groupKey)			//setup editor for specific configuration group
+			//setupSpecificConfig(configName) 				//setup editor for specific configuration table
+			//configGroupsRequestHandler(req)
+			//configsRequestHandler(req)
+			//specificGroupRequestHandler(req)
+			//specificConfigRequestHandler(req)
+			//treeViewHandler(req,parentId,errStr)
+			//recursiveDrawTree(parent,depth,path)
+			//toggleTreeChildren(depth,uid,nodeName,path)
+			//setupConfigGroupTreeView(configGroupName)
+			//activateSystemConfig(groupName, groupKey)
+			//setupConfigCreator(preSelectStr)
+			//setupConfigCreatorHandler(req,preSelectStr)
+			//selectForCreateConfig(i)
+			//versionsForCreateConfig(i)
+			//createConfigGroup()
+			//createConfigGroupHandler(req)
+		
+			//selectThisCell(r,c,el)
+			//editCellCancel()
+			//keyHandler(e)
+			//editCellOK(r,c)
+			//addRow(r)										//add row at destination with default values populated
+			//deleteRow(r)									//delete row at destination
+			//TODO copyRow(rs,rd)							//copy row from source to destination row
+			//TODO moveRow(rs,rd)							//move row from source to destination row
+			//saveConfigAsNewVersion(temporary)
+			//saveConfigAsNewVersionHandler(req)
+			//saveConfigGroupAsNewKey()	
+			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
+			//addMemberToConfigGroup(groupName) 
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
 						
-		</style>
 		
-		
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
-		<script>		
-			
-			//Start by offering two views (System Configurations) (Sub-Configurations)
-			//	and default to System Configurations
-			//
-			//High Level Goals:
-			//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
-			//		- Be able to edit the versions associated with the System Config while 
-			//		viewing other System Configs for inspiration
-			//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
-			//		- Be able to edit a sub-config, and view others to copy chunks from them
-			//
-		
-		
-			//In System Configuration mode:
-			//	List the existing configuration aliases
-			//		with possibly ability to scroll through associated sub-configs
-			//
-		
-			//In Sub-Configuration mode:
-			//	List the existing versions
-			//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
-			//	Some Sub-Configurations will need special views:
-			//		ability to add chips (of certain types) to system config...
-			//
-		
-			var _MAX_CHUNK_SIZE = 100; //100 rows per page
-		
-			var _currentAlias;
-			var _editingCell = false;
-			var _editingCellEl;
-			var _versionIsChanged = false;
-			var _version;
-			var _dataOffset = 0;
-			
-		
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-		
-			//functions:			
-				//init()
-				//niceName(str)									//removes "Configuration" from name
-				//setupSystemConfigMode()						//gets global configurations
-				//setupSubSystemConfigMode()					//gets configuration tables
-				//setupSpecificSystemConfig(configAlias)		//setup editor for specific global configuration
-				//setupSpecificSubSystemConfig(subConfigAlias) 	//setup editor for specific configuration table
-				//configRequestHandler(req)
-				//subConfigRequestHandler(req)
-				//specificConfigRequestHandler(req)
-				//specificSubConfigRequestHandler(req)
-			
-				//selectThisCell(r,c,el)
-				//editCellCancel()
-				//keyHandler(e)
-				//editCellOK(r,c)
-				//addRow(r)										//add row at destination with default values populated
-				//deleteRow(r)									//delete row at destination
-				//TODO copyRow(rs,rd)							//copy row from source to destination row
-				//TODO moveRow(rs,rd)							//move row from source to destination row
-				//saveSubSystemAsNewVersion()
-				//saveSubSystemAsNewVersionHandler(req)
-		
-				//changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion)
-		
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-							
-			
-			//init called once body has loaded
-			function init() {			
-				Debug.log("CfgGUI init");
-						
-				setupSystemConfigMode();
-			}	
-			
-			//return name without "Configuration" unless it is start of the name 
-				//or part of the word "Configurations"
-			function niceName(str) {	
-				var i = str.lastIndexOf("Configuration");
-				return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
-			}
-			
-			function setupSystemConfigMode() {
+		//init called once body has loaded
+		function init() {			
+			Debug.log("CfgGUI init");
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
+			//setupSpecificConfigGroup("myContext","0");
+			//setupConfigCreator();
+			
+			setupSystemViewMode();
+			activateSystemConfig(""); //get active global config
+		}	
+		
+		//return name without "Configuration" unless it is start of the name 
+			//or part of the word "Configurations"
+		function niceName(str) {	
+			var i = str.lastIndexOf("Configuration");
+			return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
+		}
+		
+		//setupSystemViewMode ~
+		function setupSystemViewMode() {
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", configGroupsRequestHandler);		
+		}
+		
+		//setupSubSystemConfigMode ~
+		function setupSubSystemConfigMode() {
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", configsRequestHandler);		
+		}
+
+		//setupSpecificConfigGroup ~ 
+		function setupSpecificConfigGroup(groupName, groupKey) {
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey
+					, "", specificGroupRequestHandler);		
+		}
+		
+		//setupSpecificConfig ~
+		function setupSpecificConfig(configName,version) {
+			var v = "";
+			if(version) v = "&version="+version;
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
+				"&configName=" + configName + v, "", specificConfigRequestHandler);		
+		}
+		
+		//configGroupsRequestHandler ~
+		function configGroupsRequestHandler(req) {				
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
 			}
 			
-			function setupSubSystemConfigMode() {
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
-			}
-
-			function setupSpecificSystemConfig(configAlias) {
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
-			}
+			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+			var kocsHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
+					
+			var groupName, key;
 			
-			function setupSpecificSubSystemConfig(subConfigAlias,version) {
-				var v = "";
-				if(version) v = "&version="+version;
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
-					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
-			}
-			
-			function configRequestHandler(req) {				
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
+			var el = document.getElementById("display");
+
+			var str = "";
+			var configNames, configVersions;
+
+			str += "<a href='javascript:setupConfigCreator()'>Create a New System Configuration</a>";
+			str += "<br><br>";
+					
+			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
+			if(!groupNames.length)
+				str += "No Configuration Groups found.";
+			for(var i=0;i<groupNames.length;++i)
+			{		
+				groupName = groupNames[i].getAttribute("value");
+				key = keys[i].getAttribute("value");
 				
-				var aliases = req.responseXML.getElementsByTagName("SystemConfigurationAlias");
-				var keys = req.responseXML.getElementsByTagName("SystemConfigurationKey");
-				var kocsHdr = req.responseXML.getElementsByTagName("SystemConfigurationKOCs");
-								
-				var el = document.getElementById("display");
+				//add header
+				str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + key + "\");'>";
+				str += groupName + "</a> (" + key +")";
+				
+				//add tree view link
+				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + key + "\");'>";
+				str += "Tree-view</a>";										
+				
+				//add Activate link
+				str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+						"\",\"" + key + "\");'>";
+				str += "Activate</a>";
+				
+				
+				str += "<br><table><tr>";
 
-				var str = "";
-				var kocAliases, kocVersions;
-
-				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
-				for(var i=0;i<aliases.length;++i)
-				{		
-					str += "<a href='javascript:setupSpecificSystemConfig(\"" + aliases[i].getAttribute("value") +
+				configNames = kocsHdr[i].getElementsByTagName("MemberName");
+				configVersions = kocsHdr[i].getElementsByTagName("MemberVersion");
+				Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
+				
+				for(var j=0;j<configNames.length;++j)
+				{
+					str += "<td align='center'>";
+					str += "<a href='javascript:setupSpecificConfig(\"" + configNames[j].getAttribute("value") +
 						"\");'>";
-					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
-					str += "<br><table><tr>";
-
-					kocAliases = kocsHdr[i].getElementsByTagName("KOC_alias");
-					kocVersions = kocsHdr[i].getElementsByTagName("KOC_version");
-					Debug.log("CfgGUI requestHandler kocAliases.length " + kocAliases.length);
-					
-					for(var j=0;j<kocAliases.length;++j)
-					{
-						str += "<td align='center'>";
-						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + kocAliases[j].getAttribute("value") +
-							"\");'>";
-						str += niceName(kocAliases[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
-						str += "</td>";
-					}
-					str += "</tr></table><br>";
-				}				
-				//Debug.log("CfgGUI requestHandler str " + str);
-				el.innerHTML = str;
-			}
-
-			function subConfigRequestHandler(req) {					
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
-				
-				var aliases = req.responseXML.getElementsByTagName("SystemSubConfigurationAlias");
-				var keyHdr = req.responseXML.getElementsByTagName("SystemSubConfigurationVersions");
-				
-				var el = document.getElementById("display");
-
-				var str = "";
-				var keyVersions;
-
-				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
-				for(var i=0;i<aliases.length;++i)
-				{					
-					str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + aliases[i].getAttribute("value") +
-						"\");'>";
-					str += niceName(aliases[i].getAttribute("value"));
-					str += "</a><br><table><tr>";
-
-					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
-					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
-					
-					for(var j=0;j<keyVersions.length;++j)
-					{
-						str += "<td align='center'>";
-						str += "version" + "<br>" + keyVersions[j].getAttribute("value");
-						str += "</td>";
-					}
-					str += "</tr></table><br>";
-				}				
-				//Debug.log("CfgGUI requestHandler str " + str);
-				el.innerHTML = str;
-			}
-
-
-			function specificConfigRequestHandler(req) {	
-				Debug.log("CfgGUI specificConfigRequestHandler req " + req.responseText);
-				
-				var alias = DesktopContent.getXMLValue(req,"SystemConfigurationAlias");
-				var key = DesktopContent.getXMLValue(req,"SystemConfigurationKey");
-				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationKey");
-
-				var kocAliases = req.responseXML.getElementsByTagName("KOC_alias");
-				var kocVersions = req.responseXML.getElementsByTagName("KOC_currentVersion");
-				
-				var el = document.getElementById("display");
-
-				var str = "";
-				
-				var kocExistingVersions;
-
-				str += "<h3><u>Specific System Configuration View</u></h3>";
-				str += "<b>" + alias + "</b> (key: " + key + ")<br>";
-				
-				if(historicalKeys.length)
-				{
-					str += "View Historical " + alias + " key: ";
-
-					for(var i=0;i<historicalKeys.length;++i)
-						str += " " + historicalKeys[i].getAttribute("value");
+					str += niceName(configNames[j].getAttribute("value")) + "</a><br>" + configVersions[j].getAttribute("value");
+					str += "</td>";
 				}
-				else 
-					str += "No Historical keys exist for " + alias + ".<br>";
-				
-				
-				str += "<br><a href='javascript:addNewKocForSpecificConfig()'>Add new KOC</a> to "  + alias + "<br><br>";
-				//Debug.log("CfgGUI specificConfigRequestHandler KOC length " + kocAliases.length + " - " + kocVersions.length);
-				for(var i=0;i<kocAliases.length && i<kocVersions.length;++i)
-				{
-					str += "<b>" + niceName(kocAliases[i].getAttribute("value")) + "</b> (Current version: " + 
-						kocVersions[i].getAttribute("value") +
-						")<br>Click below to change "  + niceName(kocAliases[i].getAttribute("value")) + " Version for " + alias + ":<br>";
-						//") <a href='javascript:changeKocVersionForSpecificConfig("+i+")'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
-					
-					
-					str += "Existing versions: " + kocVersions[i].getAttribute("value");
+				str += "</tr></table><br>";
+			}				
+			//Debug.log("CfgGUI requestHandler str " + str);
+			el.innerHTML = str;
+		}
 
-					kocExistingVersions = kocVersions[i].getElementsByTagName("KOC_existingVersion");
-					for(var j=0;j<kocExistingVersions.length;++j)
-					{
-						//str += " " + kocExistingVersions[j].getAttribute("value");
-						str += " ";
-						str += "<a href='javascript:changeKocVersionForSpecificConfig(\"" +
-								alias + "\",\"" + kocAliases[i].getAttribute("value") + "\"," + 
-								kocExistingVersions[j].getAttribute("value");
-						str += ")'>" + kocExistingVersions[j].getAttribute("value");
-						str += "</a>";
-					}				
-					
-					
-					str += "<br><br>";		
-				}
-
-				el.innerHTML = str;
+		function configsRequestHandler(req) {					
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
 			}
 			
-			function specificSubConfigRequestHandler(req) {	
-				//Debug.log("specificSubConfigRequestHandler requestHandler req " + req.responseText);
+			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			
+			var el = document.getElementById("display");
+
+			var str = "";
+			var configVersions;
+			var configName;
+
+			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
+			for(var i=0;i<configNames.length;++i)
+			{			
+				configName = configNames[i].getAttribute("value");
+				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+					"\");'>";
+				str += niceName(configName);
+				str += "</a><br><table><tr>";
+
+				configVersions = configVersionHdr[i].getElementsByTagName("ConfigurationVersion");
 				
-				var subAlias = DesktopContent.getXMLValue(req,"SubSystemConfigurationAlias");
-				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
+				Debug.log("CfgGUI requestHandler config= " + configName +
+								+ " configNames.length " + configVersions.length);
 				
-				
-				var kocVersionHdr = req.responseXML.getElementsByTagName("SubSystemConfigurationVersions");
-				if(!kocVersionHdr.length)
+				for(var j=0;j<configVersions.length;++j)
 				{
-					alert("Error?! No versions returned for subAlias: " + subAlias);
-					return;
+					str += "<td align='center'>";
+					str += "version" + "<br>" + configVersions[j].getAttribute("value");
+					str += "</td>";
 				}
-				var kocVersions = kocVersionHdr[0].getElementsByTagName("VersionKey");
-				
-				var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
-				
-				var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
-				var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
-				
-				var el = document.getElementById("display");
-				
+				str += "</tr></table><br>";
+			}				
+			//Debug.log("CfgGUI requestHandler str " + str);
+			el.innerHTML = str;
+		}
 
-				//reset globals
-				_currentAlias = subAlias;
-				_version = version;
-				_editingCell = false;
-				_editingCellEl = 0;
-				_versionIsChanged = false;
-				_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
 
-				var str = "";
-				
+		//specificGroupRequestHandler
+		function specificGroupRequestHandler(req) {	
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
-				str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
-				str += "<b>" + subAlias + "</b> (version: " + (version==-1?"Mockup-View":-1) + ")<br>";
+			var configNames = req.responseXML.getElementsByTagName("MemberName");
+			var configVersions = req.responseXML.getElementsByTagName("MemberVersion");
+			var key,version,configName;
+			var el = document.getElementById("display");
 
-				str += "<br>All versions:";
+			var str = "";
+			
+			var configExistingVersions;
+
+			str += "<h3><u>Specific Configuration Group View</u></h3>";
+			str += "<label id='configGroupModified'></label><b>" + 
+					groupName + "</b> (group key: " + groupKey + ")<br>";
+			
+			if(historicalKeys.length)
+			{
+				str += "Existing &quot;" + groupName + "&quot; group keys: ";
+				str += " " + groupKey;
 				
-				//display mockup link (mockup always present)
-				str += " ";
-				if(-1 != version)				
-					str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
-						"\",\"" + "-1" + "\");'>";
-				str += "Mockup-View";
-				if(-1 != version)				
-					str +=  "</a>";				
-				
-				//display all other version links
-				for(var j=0;j<kocVersions.length;++j)
+				for(var i=0;i<historicalKeys.length;++i)
 				{
+					key = historicalKeys[i].getAttribute("value");
+					str += " <a href='javascript:setupSpecificConfigGroup(\"" +
+								groupName + "\",\"" + key + "\");'>";
+					str += key;
+					str += "</a>";
+				}
+			}
+			else 
+				str += "No Historical keys exist for " + groupName + ".<br>";
+			
+			
+			str += "<br><a href='javascript:addMemberToConfigGroup(\"" + 
+					groupName + "\")'>";
+			str += "Add new Configuration Member</a> to "  + groupName + "(" + groupKey + ")";
+			str += "<br><br>";
+			
+			var cfgVersionStr;
+			var cfgNameStr = "";
+			
+			//Debug.log("CfgGUI specificConfigRequestHandler Member length " + configNames.length + " - " + configVersions.length);
+			for(var i=0;i<configNames.length && i<configVersions.length;++i)
+			{
+				configName = configNames[i].getAttribute("value");
+				version = configVersions[i].getAttribute("value");
+				
+				str += "<b>" + niceName(configName) + "</b> (Current version: ";
+
+				str += "<label id='" + configName + "-currentVersion'>";					
+				str +=	version;
+				str += "</label>";
+					
+				str += ")<br>Click below to change "  + niceName(configName) + 
+					" Version for " + groupName + ":<br>";		
+				
+				
+				str += "Existing versions: ";
+				str += "<label id='" + configName + "-existingVersions'>";
+				str += version;
+				cfgVersionStr = version + ",";
+				configExistingVersions = configVersions[i].getElementsByTagName("ConfigurationExistingVersion");
+				for(var j=0;j<configExistingVersions.length;++j)
+				{
+					version = configExistingVersions[j].getAttribute("value");
 					str += " ";
-					if(kocVersions[j].getAttribute("value") != version)
-						str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
-							"\",\"" + kocVersions[j].getAttribute("value") + "\");'>";
-					str += kocVersions[j].getAttribute("value");
-					if(kocVersions[j].getAttribute("value") != version)
-						str += "</a>";
-				}
+					str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
+							groupName + "\",\"" + configName + "\"," + 
+							version;
+					str += ")'>" + version;
+					str += "</a>";
+					cfgVersionStr += version + ",";
+				}			
+				str += "</label>";	
 				
-				//display table
-				str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+				
+				str += "<br><br>";
+				
+				//add div holding existing versions for modifications
+				str += "<div id='" + configName + "-versions' style='display:none'>";
+				str += cfgVersionStr;
+				str += "</div>";
+				cfgNameStr += configName + ",";							
+			}
+			str += "<div id='GroupMember-names' style='display:none'>";
+			str += cfgNameStr;
+			str += "</div>";
+			
+
+			el.innerHTML = str;
+		}
+		
+		//specificConfigRequestHandler
+		function specificConfigRequestHandler(req) {	
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
+			
+			
+			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			if(!kocVersionHdr.length)
+			{	//should never happen (tag can be empty, but must be there)
+				Debug.log("Error?! No tag for versions returned for configName: " + configName, Debug.HIGH_PRIORITY);
+				return;
+			}
+			var configVersions = kocVersionHdr[0].getElementsByTagName("ConfigurationVersion");
+			
+			var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
+			
+			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+			
+			var el = document.getElementById("display");
+			
+
+			//reset globals
+			_currentConfigName = configName;
+			_version = version;
+			_editingCell = false;
+			_editingCellEl = 0;
+			_versionIsChanged = false;
+			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
+
+			var str = "";
+			
+
+			str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
+			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
+
+			str += "<br>All versions:";
+			
+			//display mockup link (mockup always present)
+			str += " ";
+			if(-1 != version)				
+				str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
+					"\",\"" + "-1" + "\");'>";
+			str += "Mockup-View";
+			if(-1 != version)				
+				str +=  "</a>";				
+			
+			//display all other version links
+			for(var j=0;j<configVersions.length;++j)
+			{
+				str += " ";
+				if(configVersions[j].getAttribute("value") != version)
+					str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersions[j].getAttribute("value") + "\");'>";
+				str += configVersions[j].getAttribute("value");
+				if(configVersions[j].getAttribute("value") != version)
+					str += "</a>";
+			}
+			
+			//display table
+			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+			str += "<tr>";
+			str += "<th>Row</th>"; //insert row index column
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<th>";
+				str += colHdrs[c].getAttribute("value");
+				str += "</th>";					
+				
+			}
+			str += "</tr>";
+			
+			for(var r=0;r<rows.length;++r)
+			{
+				var rowEntries = rows[r].getElementsByTagName("Entry");
 				str += "<tr>";
-				str += "<th>Row</th>"; //insert row index column
+				str += "<td>" + (_dataOffset + r);	//insert row index column
+				
+				//add +/- row controls
+				str += " <a href='javascript:addRow(" + r + ");'>";
+				str += "+";
+				str += "</a>";
+				str += "/<a href='javascript:deleteRow(" + r + ");'>";
+				str += "-";
+				str += "</a>";
+				
+				str += "</td>"; 
+				
 				for(var c=0;c<colHdrs.length;++c)
 				{
-					str += "<th>";
-					str += colHdrs[c].getAttribute("value");
-					str += "</th>";					
+					str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";
+					//str += "<input type='text' value='";
+					str += rowEntries[c].getAttribute("value");
+					//str += "'>";
+					str += "</td>";					
 					
 				}
 				str += "</tr>";
+			}
 				
-				for(var r=0;r<rows.length;++r)
+			str += "</table>";
+			
+			//add + row controls for new last row
+			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
+			str += "+";
+			str += "</a>"
+			
+			
+			el.innerHTML = str;
+		}
+		
+		//treeViewHandler ~		
+		function treeViewHandler(req,parentId) 
+		{				
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			//draw tree				
+
+			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
+			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
+			var el;
+			var depth;
+			var parentEl;
+			treeViewHandlerStr_ = "";
+			
+			if(parentId) parentEl = document.getElementById("node-" + parentId);	
+			if(parentEl) //then data is being added to an existing node
+			{
+				//so create children area
+				depth = (parentId.split("-")[0] | 0)+1; //parent depth + 1
+				Debug.log("Expanding tree for " + parentId + " at depth=" + depth);					
+								
+
+				el = document.createElement("div");
+				el.setAttribute("id", "children-" + parentId);
+				parentEl.appendChild(el);					
+			}
+			else //this is the initial top level request
+			{
+				depth = 0;
+				treeNodeUID_ = 0; //reset node id
+				el = document.getElementById("display");
+
+				//add system config header
+				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
+					"href='javascript:setupSpecificConfigGroup(\"" + configGroupName +
+					"\",\"" + configGroupKey + "\");'>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
+				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
+				treeViewHandlerStr_ += "</a><br>";
+			}			
+			
+			//add tree
+			var tree = DesktopContent.getXMLNode(req,"tree");
+			var preLength = treeViewHandlerStr_.length;
+			recursiveDrawTree(tree,depth,tree.getAttribute("value"));
+			if(preLength == treeViewHandlerStr_.length)
+				treeViewHandlerStr_ += "Empty Tree Found.";
+			
+			el.innerHTML = treeViewHandlerStr_;
+		}
+
+		//recursiveDrawTree ~		
+		function recursiveDrawTree(parent,depth,path) 
+		{				
+			var uid;
+			var nodes = parent.children;
+			var nodeName;
+			var value;
+			var i;
+			var childrenLength;
+			for(i=0;i<nodes.length;++i)
+			{
+				uid = treeNodeUID_++;
+				nodeName = nodes[i].getAttribute("value");
+				
+				Debug.log("nodeName=" + nodeName + " depth=" + depth);
+				
+				treeViewHandlerStr_ += "<div id='node-" + depth + "-" + uid + "-" + nodeName + 
+						"' style='float:left; margin-left:" + 30 + "px'>";
+				
+				childrenLength = nodes[i].children.length
+									
+				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
+				{	//this is a value node!
+					treeViewHandlerStr_ += "<b>" + nodeName + "</b>";
+					treeViewHandlerStr_ += " : " + value.getAttribute("value");
+					treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";
+					continue; //so no need to recurse
+				}
+				
+				//not a value node so try to recurse
+				treeViewHandlerStr_ += "<a href='javascript:toggleTreeChildren(" + 
+						depth + "," +	uid + ",\"" +							
+						nodeName + "\",\"" + path +
+						"\");'>";					
+
+				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
+				{	
+					//this is a link node!
+					--childrenLength; //subtract the link ID node from children length
+					value = nodeName + " (" + 
+							value.nodeName + " = " + value.getAttribute("value") + ")";
+				}
+				else
+					value = nodeName;
+
+				treeViewHandlerStr_ += childrenLength?"-":"+";
+				treeViewHandlerStr_ += "</a> ";
+				
+				treeViewHandlerStr_ += value;
+				
+				treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";	
+				
+				if(childrenLength)
 				{
-					var rowEntries = rows[r].getElementsByTagName("Entry");
-					str += "<tr>";
-					str += "<td>" + (_dataOffset + r);	//insert row index column
-					
-					//add +/- row controls
-					str += " <a href='javascript:addRow(" + r + ");'>";
-					str += "+";
-					str += "</a>";
-					str += "/<a href='javascript:deleteRow(" + r + ");'>";
-					str += "-";
-					str += "</a>";
-					
-					str += "</td>"; 
-					
-					for(var c=0;c<colHdrs.length;++c)
+					treeViewHandlerStr_ += "<div id='children-" + depth + "-" + uid + "-" + nodeName + "'>";
+					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");
+					treeViewHandlerStr_ += "</div>";
+				}
+			}
+		}
+		
+		//toggleTreeChildren ~ 
+		//	if expanding
+		//		if no children div, request new depth
+		//		else display children
+		//	if minimizing
+		//		hide children
+		function toggleTreeChildren(depth,uid,nodeName,path) 
+		{
+			Debug.log("depth: " + depth);
+			Debug.log("uid: " + uid);
+			Debug.log("nodeName: " + nodeName);
+			Debug.log("path: " + path);
+			
+			var idString = depth + "-" + uid + "-" + nodeName;
+			Debug.log("idString: " + idString);
+			
+			var el = document.getElementById("children-" + idString);
+			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			
+			if(el) //if children already exist, then toggle display
+				el.style.display = (el.style.display == "none")? "block" : "none";
+			else	//if no children div, then request it
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+						"&configGroup=" + configGroupEls[0].innerHTML + 
+						"&configGroupKey=" + configGroupEls[1].innerHTML +
+						"&depth=1", 
+						"startPath="+path+nodeName+"/",treeViewHandler,idString);				
+		}
+		
+		//setupConfigGroupTreeView ~
+		function setupConfigGroupTreeView(configGroupName, configGroupKey)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
+					configGroupName + "&configGroupKey=" + configGroupKey + "&depth=1", 
+					"startPath=/",treeViewHandler);
+		}
+		
+		//activateSystemConfig ~
+		function activateSystemConfig(groupName, groupKey)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
+					groupName + "&groupKey=" + groupKey,
+					"",activateSystemConfigHandler);
+		}
+		
+		//activateSystemConfigHandler ~
+		function activateSystemConfigHandler(req,param,errStr)
+		{
+			//FIXME -- where is the key
+			//show xml Error if present as popup Debug high priority
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err && err != "") 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;					
+			}
+			
+			var activeConfig = DesktopContent.getXMLValue(req,"activeConfig");
+			Debug.log("activeConfig: " + activeConfig);
+			
+			var str = "";
+			str += "Active: ";
+			if(!activeConfig || activeConfig == "")
+				str += "None";
+			else
+			{
+				str += "<a href='javascript:setupSpecificConfigGroup(\"" + activeConfig +
+				"\");'>";
+				str += activeConfig + "</a>";
+			}
+			document.getElementById("activeConfig").innerHTML = str;				
+		}
+		
+		//setupConfigCreator ~
+		function setupConfigCreator(preSelectStr)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
+					"", setupConfigCreatorHandler, preSelectStr);
+			
+		}
+		//setupConfigCreatorHandler ~
+		function setupConfigCreatorHandler(req,preSelectStr)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			Debug.log("preSelectStr=" + preSelectStr);
+
+			var el = document.getElementById("display");
+			var str = "";
+			
+			if(preSelectStr)
+				str += "Choose the versions of configurations you would like to add.<br>";
+			
+			str += "<div id='createGroupInfo'></div><br>";
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
+					"Create System Config</button>";
+			str += "<br><br>";
+			str += "System Config Name: <input id='newConfigName'/>";
+			str += "<br><br>";
+			
+			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			var name;
+			var configVersions, version;
+		
+			Debug.log("configNames.length " + configNames.length);
+			
+			str += "<table>";
+			
+
+			str += "<tr><td>";
+			str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " + 
+					"<a href='javascript:selectForCreateConfig(2)'>Context</a> | " +
+					"<a href='javascript:selectForCreateConfig(3)'>Detector</a> | " +
+					"<a href='javascript:selectForCreateConfig(0)'>None</a><br>";
+			str += "</td><td>";
+
+			str += "<a href='javascript:versionsForCreateConfig(0)'>Defaults</a> | " + 
+					"<a href='javascript:versionsForCreateConfig(1)'>Latest</a><br>";
+			str += "</td>";
+			str += "</tr>";
+			
+			for(var i=0;i<configNames.length;++i)
+			{		
+				str += "<tr><td>";
+				name = configNames[i].getAttribute("value");
+				
+				//add link so text toggles checkbox
+				str += "<a style='text-decoration:none;color:black;' href='javascript:{" +
+						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
+						"el[" + i + "].checked = !el[" + i + "].checked;" +
+						"}'>";
+				//add checkbox
+				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
+						name + "'>";
+				str += niceName(name); //can display however
+				str += "</input>";
+				str += "</a>";
+
+				configVersions = configVersionHdr[i].getElementsByTagName("ConfigurationVersion");
+				//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
+
+				str += "</td><td>";
+				
+				str += "<select id='select-" + name + "'>";
+				for(var j=0;j<configVersions.length;++j)
+				{
+					version = configVersions[j].getAttribute("value");
+					str += "<option value='" + version + "'>";
+					str += version;	//can display however
+					str += "</option>";
+				}
+				str += "</select>";
+				
+				str += "</td>";
+				str += "</tr>";
+			}	
+			str += "</table>";
+
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
+					"Create System Config</button>";
+			el.innerHTML = str;		
+			
+
+			if(preSelectStr)
+			{
+				//preSelectStr is CSV with groupName followed by member name/version pairs
+				//use preset string to fill in preselected config group components
+				var preSelectArr = preSelectStr.split(",");
+				el = document.getElementById("newConfigName");
+				el.value = preSelectArr[0]; //set group name
+				var els = document.getElementsByClassName("memberConfigCheckbox");
+				var options;
+				//set member configs and versions
+				for(el=0;el<els.length;++el)
+				{
+					els[el].checked = false;
+					for(var c=1;c<preSelectArr.length-1;c+=2)
+						if(els[el].value == preSelectArr[c])
+						{	
+							//found so check to include
+							els[el].checked = true;
+							//and set version
+							sel = document.getElementById("select-" + els[el].value);
+							options = sel.options;
+							for(var i=0;i<options.length;++i)
+								if(options[i].value == preSelectArr[c+1])
+								{
+									options[i].selected = true;
+									break;
+								}
+							break;
+						}
+				}
+			}
+		}
+		
+		//createConfigSelect ~
+		//0 is none, 1 is all, 2 is context, 3 is detector			
+		function selectForCreateConfig(i)
+		{
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			
+			//FIXME .. .get list of context configuration from server
+			var context = ["XDAQContextConfiguration", "XDAQApplicationConfiguration"];
+			switch(i)
+			{
+			case 1: //check all
+				for(var el=0;el<els.length;++el)
+					els[el].checked = true;
+				break;			
+			case 2: //context	
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					els[el].checked = false;
+					for(var c=0;c<context.length;++c)
+						if(els[el].value == context[c])
+						{	
+							els[el].checked = true;
+							break;
+						}
+				}
+				break;		
+			case 3: //detector	
+				for(var el=0;el<els.length;++el)
+				{
+					els[el].checked = true;
+					for(var c in context)
+						if(els[el].value == context[c])
+						{	
+							els[el].checked = false;
+							break;
+						}
+				}
+				break;		
+			default:
+				//select none
+				for(var el=0;el<els.length;++el)
+					els[el].checked = false;
+			}
+		}
+		
+		//versionsForCreateConfig ~
+		//0 is default, 1 is latest
+		function versionsForCreateConfig(i)
+		{
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			var sel,options;
+			switch(i)
+			{
+			case 1: //latest
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+					if(options.length)
+						options[options.length-1].selected = true;
+				}
+				break;
+			default: //FIXME -- get defaults from server
+				//select defaults
+				for(var el=0;el<els.length;++el)
+				{
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+					if(options.length)
+						options[0].selected = true;
+				}
+			}
+		}
+		
+		//createConfigGroup ~
+		function createConfigGroup()
+		{
+			var config = document.getElementById("newConfigName").value;
+			Debug.log("config " + config);
+			
+			var configMap = "configList=";
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			var sel;
+			for(var el=0;el<els.length;++el)
+				if(els[el].checked)
+				{
+					sel = document.getElementById("select-" + els[el].value);
+					if(sel.options.length)
 					{
-						str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";
-						//str += "<input type='text' value='";
-						str += rowEntries[c].getAttribute("value");
-						//str += "'>";
-						str += "</td>";					
-						
+						Debug.log("subconfig=" + els[el].value + " version=" + 
+							sel.options[sel.selectedIndex].value);
+						configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
 					}
-					str += "</tr>";
-				}
-					
-				str += "</table>";
-				
-				//add + row controls for new last row
-				str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
-				str += "+";
-				str += "</a>"
-				
-				
-				el.innerHTML = str;
+				}			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+					config, configMap, createConfigGroupHandler);
+		}
+
+		//createConfigGroupHandler ~
+		function createConfigGroupHandler(req)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
 			}
 			
-			function selectThisCell(r,c,el) {	
+			var el = document.getElementById('createGroupInfo');
+			var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var str = "";
+			
+			str += "New Configuration Group Created: " + name + "_v" + key;
+			str += "<br>Goto its ";
+			str += "<a href='javascript:setupConfigGroupTreeView(\"" + name + 
+					"\",\"" + key + "\");'>Member-View</a> or ";
+			str += "<a href='javascript:setupConfigGroupTreeView(\"" + name + 
+					"\",\"" + key + "\");'>Tree-View</a>";
+			
+			el.innerHTML = str;
+		}
+		
+		
+		function selectThisCell(r,c,el) 
+		{	
+			
+			if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
+				return;
+			
+			_editingCell = true;
+			_editingCellEl = el;
+			
+			var v = el.innerHTML;				
+			var str = "";
+			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+			str += v;
+			str += "'>";
+			str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
+					"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
+			str += "</div>";
+			
+			el.innerHTML = str;
+		}
+		
+		function keyHandler(e) 
+		{
+			var TABKEY = 9;
+			var ENTERKEY = 13;
+			var UPKEY = 38;
+			var DNKEY = 40;
+			var ESCKEY = 27;
+			//Debug.log("key " + e.keyCode);
+			if(e.keyCode == TABKEY) 
+			{
+				//this.value += "    ";
+				if(e.preventDefault) 
+				{
+					e.preventDefault();
+				}
+				return false;
+			}
+		}
+		
+		function editCellOK(r,c) 
+		{	
+			
+			Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
+			
+			var str = "";
+			str += _editingCellEl.getElementsByTagName("input")[0].value;
+			_editingCellEl.innerHTML = str;
+
+			_editingCell = false;
+			_editingCellEl = 0;		
+			
+			if(!_versionIsChanged)
+			{
+				_versionIsChanged = true;
 				
-				if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
-					return;
-				
-				_editingCell = true;
-				_editingCellEl = el;
-				
-				var v = el.innerHTML;				
-				var str = "";
-				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-				str += v;
-				str += "'>";
-				str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
-						"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
-				str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
+				//give button for saving changes
+
+				var el = document.getElementById("display");
+				var dispStr = el.innerHTML;
+				str = "";
+				str += "<br><div>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
+				str += " ";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
 				str += "</div>";
-				
-				el.innerHTML = str;
+				el.innerHTML = str + dispStr + str;
 			}
+		}
+		
+		function editCellCancel() 
+		{	
+			var str = _editingCellEl.innerHTML;
+			var i = str.indexOf("value=")+7;
+			str = str.substr(i,str.indexOf(">")-1-i);
 			
-			function keyHandler(e) {
-				var TABKEY = 9;
-				var ENTERKEY = 13;
-				var UPKEY = 38;
-				var DNKEY = 40;
-				var ESCKEY = 27;
-				//Debug.log("key " + e.keyCode);
-				if(e.keyCode == TABKEY) {
-					//this.value += "    ";
-					if(e.preventDefault) {
-						e.preventDefault();
-					}
-					return false;
-				}
-			}
+			_editingCellEl.innerHTML = str;
+			_editingCell = false;
+			_editingCellEl = 0;
+		}
+		
+		//addRow ~~
+		// adds row to position r (relative to view on page)
+		// absolute row is _dataOffset + r
+		function addRow(r) 
+		{
+			Debug.log("CfgGUI addRow " + r);
 			
-			function editCellOK(r,c) {	
-				
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
-				
-				var str = "";
-				str += _editingCellEl.getElementsByTagName("input")[0].value;
-				_editingCellEl.innerHTML = str;
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
 
-				_editingCell = false;
-				_editingCellEl = 0;		
-				
-				if(!_versionIsChanged)
-				{
-					_versionIsChanged = true;
+			var newRow = document.createElement("tr");
+			
+			//create row
+			var str = "";
+			
+			str += "<tr>";
+			str += "<td>" + (_dataOffset + r);	//insert row index column
+
+			//add +/- row controls
+			str += " <a href='javascript:addRow(" + r + ");'>";
+			str += "+";
+			str += "</a>";
+			str += "/<a href='javascript:deleteRow(" + r + ");'>";
+			str += "-";
+			str += "</a>";
+			str += "</td>"; 
+
+			//add empty columns
+			for(var c=1;c<rows[0].childNodes.length;++c)
+			{
+				str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";			    	
+				str += "";
+				str += "</td>";					
+
+			}
+			str += "</tr>";
 					
-					//give button for saving changes
-	
-					var el = document.getElementById("display");
-					var dispStr = el.innerHTML;
-					str = "";
-					str += "<br><div><input type='button' onmouseup='saveSubSystemAsNewVersion()' value='Save Changes as New Version'/></div>";
-					el.innerHTML = str + dispStr + str;
-				}
+			newRow.innerHTML = str; 
+			
+			var refNode = (r+1 < rows.length)?rows[r+1]:undefined;
+			//make sure el references the container of rows ("TR")
+			while(el.childNodes[0].tagName != "TR")
+				el = el.childNodes[0];
+			el.insertBefore(newRow, refNode); //row is added!
+			
+			//update all row numbers after row added
+			for(var i=1;i<rows.length;++i)
+			{
+				if(i < r) continue;
+				
+				str = (_dataOffset + (i-1));	//insert row index column
+				
+				//add +/- row controls
+				str += " <a href='javascript:addRow(" + (i-1) + ");'>";
+				str += "+";
+				str += "</a>";
+				str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
+				str += "-";
+				str += "</a>";							
+				rows[i].childNodes[0].innerHTML = str;
 			}
 			
-			function editCellCancel() {	
-				var str = _editingCellEl.innerHTML;
-				var i = str.indexOf("value=")+7;
-				str = str.substr(i,str.indexOf(">")-1-i);
+			//update last add row link
+			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"
+		}
+
+
+		//deleteRow ~~
+		// delete row at destination
+		function deleteRow(r) 
+		{
+			Debug.log("CfgGUI deleteRow " + r);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");
+			
+			//make sure el references the container of rows ("TR")
+			while(el.childNodes[0].tagName != "TR")
+				el = el.childNodes[0];
+			el.removeChild(rows[r+1]);
+			
+			//update all row numbers after row added
+			for(var i=1;i<rows.length;++i)
+			{
+				if(i < r) continue;
 				
-				_editingCellEl.innerHTML = str;
-				_editingCell = false;
-				_editingCellEl = 0;
+				str = (_dataOffset + (i-1));	//insert row index column
+				
+				//add +/- row controls
+				str += " <a href='javascript:addRow(" + (i-1) + ");'>";
+				str += "+";
+				str += "</a>";
+				str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
+				str += "-";
+				str += "</a>";							
+				rows[i].childNodes[0].innerHTML = str;
 			}
 			
-			//addRow ~~
-			// adds row to position r (relative to view on page)
-			// absolute row is _dataOffset + r
-			function addRow(r) {
-				Debug.log("CfgGUI addRow " + r);
-				
-				var el = document.getElementById("SubSystemTable");
-				var rows = el.getElementsByTagName("tr");				
+			//update last add row link
+			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"				
+		}
+		
+		//saveConfigAsNewVersion
+		function saveConfigAsNewVersion(temporary) 
+		{	
+			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
+			
+			//create data string from html table
+			var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			
+			var cells;
+			for(var r=1;r<rows.length;++r) //skip header row
+			{
+				cells = rows[r].getElementsByTagName("td");
 
-			    var newRow = document.createElement("tr");
-			    
-			    //create row
-			    var str = "";
-			    
-			    str += "<tr>";
-			    str += "<td>" + (_dataOffset + r);	//insert row index column
-
-			    //add +/- row controls
-			    str += " <a href='javascript:addRow(" + r + ");'>";
-			    str += "+";
-			    str += "</a>";
-			    str += "/<a href='javascript:deleteRow(" + r + ");'>";
-			    str += "-";
-			    str += "</a>";
-			    str += "</td>"; 
-
-			    //add empty columns
-			    for(var c=1;c<rows[0].childNodes.length;++c)
-			    {
-			    	str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";			    	
-			    	str += "";
-			    	str += "</td>";					
-
-			    }
-			    str += "</tr>";
-			    		
-			    newRow.innerHTML = str; 
-			    
-			    var refNode = (r+1 < rows.length)?rows[r+1]:undefined;
-			    //make sure el references the container of rows ("TR")
-			    while(el.childNodes[0].tagName != "TR")
-			    	el = el.childNodes[0];
-				el.insertBefore(newRow, refNode); //row is added!
-				
-				//update all row numbers after row added
-				for(var i=1;i<rows.length;++i)
-				{
-					if(i < r) continue;
-					
-					str = (_dataOffset + (i-1));	//insert row index column
-					
-					//add +/- row controls
-					str += " <a href='javascript:addRow(" + (i-1) + ");'>";
-					str += "+";
-					str += "</a>";
-					str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
-					str += "-";
-					str += "</a>";							
-					rows[i].childNodes[0].innerHTML = str;
-				}
-				
-				//update last add row link
-				document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"
-			}
-
-
-			//deleteRow ~~
-			// delete row at destination
-			function deleteRow(r) {
-				Debug.log("CfgGUI deleteRow " + r);
-				
-				var el = document.getElementById("SubSystemTable");
-				var rows = el.getElementsByTagName("tr");
-				
-				//make sure el references the container of rows ("TR")
-				while(el.childNodes[0].tagName != "TR")
-					el = el.childNodes[0];
-				el.removeChild(rows[r+1]);
-				
-				//update all row numbers after row added
-				for(var i=1;i<rows.length;++i)
-				{
-					if(i < r) continue;
-					
-					str = (_dataOffset + (i-1));	//insert row index column
-					
-					//add +/- row controls
-					str += " <a href='javascript:addRow(" + (i-1) + ");'>";
-					str += "+";
-					str += "</a>";
-					str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
-					str += "-";
-					str += "</a>";							
-					rows[i].childNodes[0].innerHTML = str;
-				}
-				
-				//update last add row link
-				document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"				
+				for(var c=1;c<cells.length;++c) //skip row index column
+					dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
+				dataStr += ";";
 			}
 			
-			
-			function saveSubSystemAsNewVersion() {	
-				Debug.log("CfgGUI saveSubSystemAsNewVersion");
-				
-				//create data string from html table
-				var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
-				var el = document.getElementById("SubSystemTable");
-				var rows = el.getElementsByTagName("tr");				
-				
-				var cells;
-				for(var r=1;r<rows.length;++r) //skip header row
-				{
-					cells = rows[r].getElementsByTagName("td");
-
-					for(var c=1;c<cells.length;++c) //skip row index column
-						dataStr += encodeURIComponent(cells[c].innerHTML) + ","; //replaces all special characters					
-					dataStr += ";";
-				}
-				
-				var req = "Request?RequestType=saveSpecificSubSystemConfiguration" + 
-						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-						"&subAlias=" + _currentAlias + "&version="+_version;
-				Debug.log(dataStr);
-				Debug.log(req);
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificSubSystemConfiguration" + 
+			var req = "Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-					"&subAlias=" + _currentAlias + "&version="+_version, "data=" + dataStr, saveSubSystemAsNewVersionHandler);	
-				
-			}
-			
-			function saveSubSystemAsNewVersionHandler(req) {	
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler req " + req.responseText);
-
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err && err != "")
-				{
-					document.getElementById("errorDiv").innerHTML = err;
-					Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
-					return;
-				}
-
-				var subConfigAlias = DesktopContent.getXMLValue(req,"savedAlias");
-				var version = DesktopContent.getXMLValue(req,"savedVersion");
-
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler subConfigAlias " + subConfigAlias + " version " + version);
-				setupSpecificSubSystemConfig(subConfigAlias,version);
-			}
-			
-			function changeKocVersionForSpecificConfig(cfgAlias, kocAlias, newVersion) {
-				//TODO
-				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
-							
-				var req = "Request?RequestType=changeKocVersionForSpecificConfig" + 
-										"&cfgAlias=" + cfgAlias +
-										"&subAlias=" + kocAlias + 
-										"&version=" + newVersion;
-				var dataStr = "";
-				Debug.log(dataStr);
-				Debug.log(req);
-				DesktopContent.XMLHttpRequest(req, "data=" + dataStr, specificConfigRequestHandler);				
-			}
-			
-			function addNewKocForSpecificConfig(req) {
-				//TODO
-				Debug.log("CfgGUI addNewKocForSpecificConfig");
-			}
-		</script>
+					"&configName=" + _currentConfigName + "&version="+_version;
+			Debug.log(dataStr);
+			Debug.log(req);
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificConfiguration" + 
+				"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
+				"&configName=" + _currentConfigName + "&version="+_version +
+				"&temporary="+(temporary?1:0), "data=" + dataStr, saveConfigAsNewVersionHandler);
+		}
 		
-	</head>
-	
-	
-	<body onload='Javascript:init();'>	
-			
-		<h1>Configuration GUI</h1>
-		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
-		<div id='errorDiv'></div>
-		<div id='display'></div>
+		//saveConfigAsNewVersionHandler
+		function saveConfigAsNewVersionHandler(req) 
+		{	
+			Debug.log("saveConfigAsNewVersionHandler requestHandler req " + req.responseText);
+
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err && err != "")
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			var configName = DesktopContent.getXMLValue(req,"savedAlias");
+			var version = DesktopContent.getXMLValue(req,"savedVersion");
+
+			Debug.log("saveConfigAsNewVersionHandler requestHandler configName " + configName + " version " + version);
+			setupSpecificConfig(configName,version);
+		}
 		
-	</body>
+		//changeMemberVersionForConfigGroup
+		function changeMemberVersionForConfigGroup(groupName, configName, newVersion) 
+		{
+			Debug.log("CfgGUI changeMemberVersionForConfigGroup configName=" + configName +
+					" newVersion=" + newVersion);
+
+			//steps:
+			//	change current version
+			//	update existing versions
+			//	add button to save new group
+
+			//change current version
+			var el = document.getElementById(configName + "-currentVersion");
+			el.innerHTML = newVersion;
+			
+			//update existing
+			el = document.getElementById(configName + "-versions");
+			var str = el.innerHTML;
+			var configNameArr = str.split(',');
+			str = "";
+			str += newVersion;
+			//for each member configuration					
+			for(var i=0;i<configNameArr.length-1;++i) //skip last ',' empty element
+			{
+				Debug.log(configNameArr[i]);
+				if(configNameArr[i] == newVersion) continue;
+				str += " ";
+				str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
+						groupName + "\",\"" + configName + "\"," + 
+						configNameArr[i];
+				str += ")'>" + configNameArr[i];
+				str += "</a>";
+			}
+			
+			el = document.getElementById(configName + "-existingVersions");
+			el.innerHTML = str;
+			
+			
+			//add button
+			var el = document.getElementById("display");
+			if(el.getElementsByTagName("div")[0].childNodes[0].tagName == "INPUT")
+				return; //only add button once
+			
+			var dispStr = el.innerHTML;
+			str = "";
+			str += "<br><div>";
+			str += "<input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+					groupName + "\")' value='Save Changes as New Group'/>";				
+			str += "</div>";
+			el.innerHTML = str + dispStr + str;
+			
+			el = document.getElementById("configGroupModified");
+			el.innerHTML = "*Modified* "; //mark modified
+			
+		}
+		
+		//saveConfigGroupAsNewKey
+		function saveConfigGroupAsNewKey(groupName) 
+		{
+			Debug.log("CfgGUI saveConfigGroupAsNewKey");	
+			
+			var memberArr = document.getElementById("GroupMember-names").innerHTML.split(",");
+			Debug.log("memberArr " + memberArr);
+			
+			var configMap = "configList=";
+			var version;
+			for(var i=0;i<memberArr.length-1;++i)
+			{
+				version = document.getElementById(memberArr[i] + 
+						"-currentVersion").innerHTML;
+				Debug.log("subconfig=" + memberArr[i] + 
+						" version=" + version);
+				configMap += memberArr[i] + "," + version + ",";
+			}			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+					groupName, configMap, specificGroupRequestHandler);
+			
+		}
+		
+		//addMemberToConfigGroup
+		function addMemberToConfigGroup(groupName) 
+		{
+			Debug.log("CfgGUI addMemberToConfigGroup " + groupName);
+			
+			var memberArr = document.getElementById("GroupMember-names").innerHTML.split(",");
+			Debug.log("memberArr " + memberArr);
+			
+			//make special preselectStr CSV string with groupName and then current members
+			var preSelectStr = groupName + ",";
+			var version;
+			for(var i=0;i<memberArr.length-1;++i)
+			{
+				version = document.getElementById(memberArr[i] + 
+						"-currentVersion").innerHTML;
+				Debug.log("subconfig=" + memberArr[i] + 
+						" version=" + version);
+				preSelectStr += memberArr[i] + "," + version + ",";
+			}
+			setupConfigCreator(preSelectStr);
+		}
+	</script>
+		
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<h1>Configuration GUI</h1>
+	<div id='activeConfig'></div>
+	<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>		
+	<div id='display'></div>
+	
+</body>
 	
 </html>

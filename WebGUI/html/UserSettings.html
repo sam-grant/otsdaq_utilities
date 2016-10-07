@@ -307,7 +307,7 @@
 				
 				//extract alert from server
 				var serverAlert = DesktopContent.getXMLValue(req,"server_alert");
-				if(serverAlert) alert("Message from Server: " + serverAlert);
+				if(serverAlert) Debug.log("Message from Server: " + serverAlert, Debug.HIGH_PRIORITY);
 
 				//get username with lock, "" means no one has lock
 				_usernameWithLock = DesktopContent.getXMLValue(req,"username_with_lock");				

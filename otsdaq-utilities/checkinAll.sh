@@ -83,8 +83,14 @@ echo
 echo "=================="
 
 echo "Git comment '$1'"
-echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-
+echo "Status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo
+echo "log dump in 2 seconds... #######################################################"
+sleep 2s
+echo
+cat $CURRENT_AWESOME_BASE/checkinAll.log
+echo "end log dump... #######################################################"
+echo "Status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
 
 echo
 echo "=================="

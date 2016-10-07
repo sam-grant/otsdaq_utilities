@@ -50,6 +50,7 @@ public:
 	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);	
 	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					throw (xgi::exception::Exception);
     void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception); 
+    void GetPVSettings                           (xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) throw (xgi::exception::Exception);
     void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception); 
     void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 
     void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 

@@ -2,6 +2,15 @@
 <html lang="en">
 	<head>
 		<title>Supervisor</title>
+
+		<link href='../css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+				
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		
+
 		<style type="text/css">		
 			body {
 				background-color: transparent;
@@ -79,7 +88,7 @@
 			
 				padding: 15px 2px 15px 15px;
 				text-align: left;
-				color: #663300;
+				color: #4D2600;
 			
 				box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
 						            inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
@@ -133,7 +142,7 @@
 			
 				padding: 15px 2px 15px 15px;
 				text-align: left;
-				color: #663300;
+				color: #4D2600;
 			
 				box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
 						            inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
@@ -185,7 +194,7 @@
 			
 				padding: 15px 2px 15px 15px;
 				text-align: left;
-				color: #663300;
+				color: #4D2600;
 			
 				box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
 						            inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
@@ -202,16 +211,9 @@
 		
 			
 		</style>
-		
-
-		<link href='../css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
-		<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 				
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
-		
+
+
 
 		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
@@ -303,7 +305,7 @@
 			var _colorSchemes = [ //background, foreground	
 								 ["#333333","#66ff33"],
 								 ["#cccccc","#333333"],								 
-								 ["transparent","#4D2600"]
+								 ["transparent",DesktopContent.getDefaultDesktopColor()]
 								];
 			
 			var _FIELDS_TO_OBSERVE = ["Level", "Label"];
@@ -322,6 +324,11 @@
 			//init called once body has loaded
 			function init() {
 				
+				var styleEl = document.getElementsByTagName('style')[0];
+				var str = styleEl.innerHTML;
+				Debug.log("Changing primary foreground color to " + DesktopContent.getDefaultDesktopColor());
+				str = str.replace(/#4D2600/g,DesktopContent.getDefaultDesktopColor());
+				styleEl.innerHTML = str;		
 				
 				document.body.style.backgroundColor = DesktopContent.getDefaultWindowColor();
 				

@@ -31,7 +31,7 @@ namespace ots
 {
 
 class ConfigurationManager;
-class ConfigurationKey;
+class ConfigurationGroupKey;
 
 class VisualSupervisor: public xdaq::Application, public SOAPMessenger, public RunControlStateMachine
 {
@@ -66,7 +66,7 @@ private:
     RemoteWebUsers                       theRemoteWebUsers_;
     ConfigurationManager*                theConfigurationManager_;
     VisualDataManager*                   theDataManager_;
-    std::shared_ptr<ConfigurationKey>    theConfigurationKey_;
+    std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
     unsigned int 			             loadedRunNumber_;
 
