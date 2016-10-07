@@ -79,7 +79,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	rsock.initialize();
 
 	std::string buffer;
-	int i,p;
+	int i = 0;
 	while(1)
 	{
 		//if receive succeeds display message
@@ -87,6 +87,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
+			i = 10; //so things are good for all time.
+
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
@@ -96,7 +98,13 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 				cs->writePointer_ = 0;
 		}
 		else
+		{
+			if(i < 5)
+				++i;
 			sleep(1); //sleep one second, if timeout
+		}
+
+		if(i==5) break; //assume something wrong, and break loop
 	}
 
 }

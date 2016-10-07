@@ -117,7 +117,6 @@ throw (xgi::exception::Exception)
 
 	HttpXmlDocument xmldoc;
 	uint64_t activeSessionIndex;
-	std::string user;
 	uint8_t userPermissions;
 
 	//**** start LOGIN GATEWAY CODE ***//
@@ -136,8 +135,9 @@ throw (xgi::exception::Exception)
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				(getUser?&user:0),				//acquire username of this user (optionally null pointer)
-				0,//,&displayName			//acquire user's Display Name
+				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
+				&username,
+				0,						//acquire user's Display Name
 				&activeSessionIndex		//acquire user's session index associated with the cookieCode
 		))
 		{	//failure
@@ -149,11 +149,8 @@ throw (xgi::exception::Exception)
 	//**** end LOGIN GATEWAY CODE ***//
 
 
-	username = user;
-
-
-      
-	std::cout << __COUT_HDR_FL__ << "User Permission is " << unsigned(userPermissions) << "!!!";
+	std::cout << __COUT_HDR_FL__ << "User name is " << username << "!!!" << std::endl;
+	std::cout << __COUT_HDR_FL__ << "User Permission is " << unsigned(userPermissions) << "!!!" << std::endl;
 
 
 	DIR *dir;
@@ -513,7 +510,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 		histfile.close();
 	}
 	else
-		std::cout << "Unable to open history.hist";
+		__MOUT__ << "Unable to open history.hist";
 }
 
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
@@ -523,7 +520,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 	std::string fileName = "history.hist";
 
 	std::ifstream read ((MACROS_HIST_PATH + username + "/" + fileName).c_str());//reading a file
-	std::cout << MACROS_HIST_PATH + username + "/" + fileName << std::endl;
+	__MOUT__ << MACROS_HIST_PATH + username + "/" + fileName << std::endl;
 	if (read.is_open())
 	{
 		std::stringstream buffer;
