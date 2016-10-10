@@ -53,13 +53,16 @@
 		//
 	
 		var _MAX_CHUNK_SIZE = 100; //100 rows per page
+		var _CONFIG_DATA_ROW_OFFSET = 2;
+		var _CONFIG_DATA_COL_OFFSET = 1;
 	
 		var _currentConfigName;
 		var _editingCell = false;
-		var _editingCellEl;
+		var _editingCellEl, _editingCellElOldValue;
 		var _versionIsChanged = false;
 		var _version;
 		var _dataOffset = 0;
+		var _lastFindRow, _lastFindCol; 
 		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
@@ -105,6 +108,12 @@
 			//saveConfigGroupAsNewKey()	
 			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
 			//addMemberToConfigGroup(groupName) 
+			//isTemporary(version)
+		
+			//setupFindAndReplace()
+			//TODO configFind()
+			//configReplace() 
+			//versionHasChanged()
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -114,6 +123,9 @@
 		//init called once body has loaded
 		function init() {			
 			Debug.log("CfgGUI init");
+			
+			setupSpecificConfig("XDAQContextConfiguration","2");
+			return;
 
 			//setupSpecificConfigGroup("myContext","0");
 			//setupConfigCreator();
@@ -292,7 +304,13 @@
 
 			str += "<h3><u>Specific Configuration Group View</u></h3>";
 			str += "<label id='configGroupModified'></label><b>" + 
-					groupName + "</b> (group key: " + groupKey + ")<br>";
+					groupName + "</b> (group key: " + groupKey + ") ";
+
+			//add Activate link
+			str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + groupKey + "\");'>";
+			str += "Activate</a><br>";
+			
 			
 			if(historicalKeys.length)
 			{
@@ -316,6 +334,9 @@
 					groupName + "\")'>";
 			str += "Add new Configuration Member</a> to "  + groupName + "(" + groupKey + ")";
 			str += "<br><br>";
+			
+
+			str += "<div style='margin-left:30px'>";
 			
 			var cfgVersionStr;
 			var cfgNameStr = "";
@@ -363,6 +384,8 @@
 				str += "</div>";
 				cfgNameStr += configName + ",";							
 			}
+			str += "</div>";
+			
 			str += "<div id='GroupMember-names' style='display:none'>";
 			str += cfgNameStr;
 			str += "</div>";
@@ -395,6 +418,7 @@
 			
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			
 			var el = document.getElementById("display");
 			
@@ -412,7 +436,9 @@
 
 			str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
-
+			
+			str += "<a href='javascript:setupFindAndReplace()'>Find and Replace</a><div id='findAndReplace'></div>";
+			
 			str += "<br>All versions:";
 			
 			//display mockup link (mockup always present)
@@ -438,6 +464,21 @@
 			
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+			str += "<tr>";
+			str += "<td>"; //row
+			str += "</td>";			
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<td><div style='font-size:8px' title='";		
+				str += colTypes[c].getAttribute("value");
+				str += " &#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "'>";
+				str += colTypes[c].getAttribute("value");
+				str += "<br>&#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "</div></td>";					
+				
+			}
+			str += "</tr>";
 			str += "<tr>";
 			str += "<th>Row</th>"; //insert row index column
 			for(var c=0;c<colHdrs.length;++c)
@@ -486,6 +527,23 @@
 			
 			
 			el.innerHTML = str;
+			
+			if(isTemporary(version)) //if temporary
+			{
+				//show save button
+				var dispStr = el.innerHTML;
+				str = "";
+				str += "<br><div id='config-firstSaveButton'>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
+				str += "</div>";
+				el.innerHTML = str + dispStr + str;
+			}
+		}
+		
+		//isTemporary
+		function isTemporary(version)
+		{
+			return version < -1;
 		}
 		
 		//treeViewHandler ~		
@@ -934,6 +992,141 @@
 			el.innerHTML = str;
 		}
 		
+		//setupFindAndReplace
+		function setupFindAndReplace()
+		{
+			var el = document.getElementById('findAndReplace'); 
+			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			
+			_lastFindRow = _lastFindCol = -1; //initialize find location
+			var str = "";
+			str += "Search in column ('*' for all)... ";
+			str += "<input type='text' id='findAndReplaceTarget' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='*'>";
+			str += "<br>";
+			str += "For text... ";
+			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='test'>";
+			str += "<br>";
+			str += "Replace with... ";
+			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='replace'>";
+			
+			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
+			
+			str += "<br><br>";
+			str += "<input type='button' onmouseup='configFind()' value='Find'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configReplace()' value='Replace'/>";
+			el.innerHTML = str;						
+		}
+		
+		//configFind
+		//	use _lastFindRow, _lastFindCol as starting point
+		function configFind()
+		{
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var needle = document.getElementById("findAndReplaceNeedle").value;
+			var convertEl = document.getElementById("findAndReplaceHTML");
+			
+			//convert needle to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(needle));
+			needle = convertEl.innerHTML; //converted text
+			Debug.log("configFind '" + needle + "' @ " + target);
+						
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cellStr;
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				cells = rows[r].getElementsByTagName("td");
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					cellStr = cells[c].innerHTML;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					if(cellStr.indexOf(needle) >= 0)
+					{
+						Debug.log("FOUND=" + cellStr);						
+					}
+				}
+			}
+		}
+		
+		//configReplace
+		function configReplace()
+		{			
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var needle = document.getElementById("findAndReplaceNeedle").value;
+			var convertEl = document.getElementById("findAndReplaceHTML");
+			
+			//convert needle to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(needle));
+			needle = convertEl.innerHTML; //converted text
+			
+			var replaceStr = document.getElementById("findAndReplaceWith").value;
+			
+			//convert replaceStr to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(replaceStr));
+			replaceStr = convertEl.innerHTML; //converted text
+			
+			Debug.log("configReplace '" + needle + "' with '" + replaceStr + "' @ " + target);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cellStr, tmpStr;
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				cells = rows[r].getElementsByTagName("td");
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					cellStr = cells[c].innerHTML;
+					tmpStr = cellStr;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					while(cellStr.indexOf(needle) >= 0)
+					{
+						cellStr = cellStr.replace(needle,replaceStr);
+						if(cellStr == tmpStr) break; //in case replace is same as needle
+						Debug.log("REPLACED=" + cellStr);						
+					}
+					cells[c].innerHTML = cellStr;
+				}
+			}
+			
+			versionHasChanged();
+		}
+		
+		function versionHasChanged()
+		{		
+			if(!_versionIsChanged)
+			{
+				_versionIsChanged = true;
+				
+				//give button for saving changes
+
+				//get rid of all first save buttons (for temporary views)
+				var el = document.getElementById("config-firstSaveButton");
+				while(el)
+				{				
+					el.parentNode.removeChild(el);
+					el = document.getElementById("config-firstSaveButton");
+				}
+				
+				
+				el = document.getElementById("display");
+				var dispStr = el.innerHTML;
+				str = "";
+				str += "<br><div>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
+				str += " ";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
+				str += "</div>";
+				el.innerHTML = str + dispStr + str;
+			}			
+		}
 		
 		function selectThisCell(r,c,el) 
 		{	
@@ -944,10 +1137,10 @@
 			_editingCell = true;
 			_editingCellEl = el;
 			
-			var v = el.innerHTML;				
+			_editingCellElOldValue = el.innerHTML;
 			var str = "";
 			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-			str += v;
+			str += _editingCellElOldValue;
 			str += "'>";
 			str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
 					"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
@@ -976,43 +1169,30 @@
 			}
 		}
 		
+		//editCellOK
 		function editCellOK(r,c) 
 		{	
 			
 			Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
 			
-			var str = "";
-			str += _editingCellEl.getElementsByTagName("input")[0].value;
-			_editingCellEl.innerHTML = str;
+			var str = _editingCellEl.getElementsByTagName("input")[0].value;
+			_editingCellEl.innerHTML = "";
+			_editingCellEl.appendChild(document.createTextNode(str));
 
 			_editingCell = false;
 			_editingCellEl = 0;		
 			
-			if(!_versionIsChanged)
-			{
-				_versionIsChanged = true;
-				
-				//give button for saving changes
-
-				var el = document.getElementById("display");
-				var dispStr = el.innerHTML;
-				str = "";
-				str += "<br><div>";
-				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
-				str += " ";
-				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
-				str += "</div>";
-				el.innerHTML = str + dispStr + str;
-			}
+			versionHasChanged();
 		}
 		
+		//editCellCancel
 		function editCellCancel() 
 		{	
-			var str = _editingCellEl.innerHTML;
-			var i = str.indexOf("value=")+7;
-			str = str.substr(i,str.indexOf(">")-1-i);
+//			var str = _editingCellEl.innerHTML;
+//			var i = str.indexOf("value=")+7;
+//			str = str.substr(i,str.indexOf(">")-1-i);
+			_editingCellEl.innerHTML = _editingCellElOldValue;
 			
-			_editingCellEl.innerHTML = str;
 			_editingCell = false;
 			_editingCellEl = 0;
 		}
@@ -1056,31 +1236,33 @@
 					
 			newRow.innerHTML = str; 
 			
-			var refNode = (r+1 < rows.length)?rows[r+1]:undefined;
+			var refNode = (r+_CONFIG_DATA_ROW_OFFSET < rows.length)?rows[r+_CONFIG_DATA_ROW_OFFSET]:undefined;
 			//make sure el references the container of rows ("TR")
 			while(el.childNodes[0].tagName != "TR")
 				el = el.childNodes[0];
 			el.insertBefore(newRow, refNode); //row is added!
 			
 			//update all row numbers after row added
-			for(var i=1;i<rows.length;++i)
+			for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
 			{
 				if(i < r) continue;
 				
-				str = (_dataOffset + (i-1));	//insert row index column
+				str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 				
 				//add +/- row controls
-				str += " <a href='javascript:addRow(" + (i-1) + ");'>";
+				str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 				str += "+";
 				str += "</a>";
-				str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
+				str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 				str += "-";
 				str += "</a>";							
 				rows[i].childNodes[0].innerHTML = str;
 			}
 			
 			//update last add row link
-			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"
+			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+
+			versionHasChanged();					
 		}
 
 
@@ -1096,27 +1278,29 @@
 			//make sure el references the container of rows ("TR")
 			while(el.childNodes[0].tagName != "TR")
 				el = el.childNodes[0];
-			el.removeChild(rows[r+1]);
+			el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
 			
 			//update all row numbers after row added
-			for(var i=1;i<rows.length;++i)
+			for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
 			{
 				if(i < r) continue;
 				
-				str = (_dataOffset + (i-1));	//insert row index column
+				str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 				
 				//add +/- row controls
-				str += " <a href='javascript:addRow(" + (i-1) + ");'>";
+				str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 				str += "+";
 				str += "</a>";
-				str += "/<a href='javascript:deleteRow(" + (i-1) + ");'>";
+				str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 				str += "-";
 				str += "</a>";							
 				rows[i].childNodes[0].innerHTML = str;
 			}
 			
 			//update last add row link
-			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-1) + ");"				
+			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");"	
+
+			versionHasChanged();
 		}
 		
 		//saveConfigAsNewVersion
@@ -1130,22 +1314,22 @@
 			var rows = el.getElementsByTagName("tr");				
 			
 			var cells;
-			for(var r=1;r<rows.length;++r) //skip header row
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 			{
 				cells = rows[r].getElementsByTagName("td");
 
-				for(var c=1;c<cells.length;++c) //skip row index column
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 					dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
 				dataStr += ";";
 			}
 			
 			var req = "Request?RequestType=saveSpecificConfiguration" + 
-					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
+					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
 					"&configName=" + _currentConfigName + "&version="+_version;
 			Debug.log(dataStr);
 			Debug.log(req);
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificConfiguration" + 
-				"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
+				"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
 				"&configName=" + _currentConfigName + "&version="+_version +
 				"&temporary="+(temporary?1:0), "data=" + dataStr, saveConfigAsNewVersionHandler);
 		}
