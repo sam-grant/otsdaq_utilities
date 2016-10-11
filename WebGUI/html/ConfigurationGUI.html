@@ -59,6 +59,7 @@
 		var _currentConfigName;
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
+		var _editingCellPos = [-1,-1];
 		var _versionIsChanged = false;
 		var _version;
 		var _dataOffset = 0;
@@ -96,13 +97,12 @@
 			//createConfigGroupHandler(req)
 		
 			//selectThisCell(r,c,el)
+			//setCaretPosition(el,start,stop)
 			//editCellCancel()
 			//keyHandler(e)
 			//editCellOK(r,c)
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
-			//TODO copyRow(rs,rd)							//copy row from source to destination row
-			//TODO moveRow(rs,rd)							//move row from source to destination row
 			//saveConfigAsNewVersion(temporary)
 			//saveConfigAsNewVersionHandler(req)
 			//saveConfigGroupAsNewKey()	
@@ -111,9 +111,12 @@
 			//isTemporary(version)
 		
 			//setupFindAndReplace()
-			//TODO configFind()
+			//configFind()
 			//configReplace() 
 			//versionHasChanged()
+		
+			//setupCopyAndMoveRows()
+			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +127,7 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 			
-			setupSpecificConfig("XDAQContextConfiguration","2");
+			setupSpecificConfig("XDAQApplicationConfiguration","2");
 			return;
 
 			//setupSpecificConfigGroup("myContext","0");
@@ -438,7 +441,8 @@
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 			
 			str += "<a href='javascript:setupFindAndReplace()'>Find and Replace</a><div id='findAndReplace'></div>";
-			
+			str += "<a href='javascript:setupCopyAndMoveRows()'>Copy and Move Rows</a><div id='copyAndMoveRows'></div>";
+						
 			str += "<br>All versions:";
 			
 			//display mockup link (mockup always present)
@@ -536,7 +540,7 @@
 				str += "<br><div id='config-firstSaveButton'>";
 				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
 				str += "</div>";
-				el.innerHTML = str + dispStr + str;
+				el.innerHTML = str + dispStr + "<br>" + str;
 			}
 		}
 		
@@ -992,6 +996,88 @@
 			el.innerHTML = str;
 		}
 		
+		//setupCopyAndMoveRows
+		function setupCopyAndMoveRows()
+		{
+			var el = document.getElementById('copyAndMoveRows'); 
+			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			
+			var str = "";
+			str += "Source row... ";
+			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='0'>";
+			str += "<br>";
+			str += "Destination row (-1 for new last row)... ";
+			str += "<input type='text' id='copyAndMoveRowsDest' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='-1'>";
+
+			//make div for translating innerHTML and value
+			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
+			
+			str += "<br><br>";
+			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move'/>";
+			el.innerHTML = str;	
+		}	
+		
+		//configCopyRow
+		function configCopyRow(deleteSrc)
+		{
+			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
+			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
+			
+			Debug.log("configCopyRow src=" + src + " dest=" + dest);
+
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");
+			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+			{
+				Debug.log("Error: Illegal source row of '" + src + 
+						"' given. Row must be less than " + 
+						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+				return;
+			}
+			if(dest < -1 || dest >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+			{
+				Debug.log("Error: Illegal destination row of '" + dest + 
+						"' given. Use '-1' for a new row, otherwise row must be less than " + 
+						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			//steps:
+			//	- add destination row
+			//	- for each src col 
+			//		- dest[col] = src[col]
+
+			//if(deleteSrc) --dest;	//when move, add before target row	
+			
+			if(dest == -1) //new row, so point to last row for addRow use
+				dest = rows.length - _CONFIG_DATA_ROW_OFFSET;		
+
+			//get source row before adding row
+			var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
+			
+			addRow(dest); 	
+			Debug.log("src=" + src + " dest=" + dest);
+			
+			//get destinat row after add
+			el = document.getElementById("SubSystemTable");
+			rows = el.getElementsByTagName("tr");
+			
+			var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
+			for(var c=1;c<srcCols.length;++c)
+			{
+				Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
+				destCols[c].innerHTML = srcCols[c].innerHTML;
+			}
+			
+			if(deleteSrc)
+			{
+				if(dest < src) ++src; //to account for added row
+				deleteRow(src);
+			}
+		}	
+		
 		//setupFindAndReplace
 		function setupFindAndReplace()
 		{
@@ -1004,11 +1090,12 @@
 			str += "<input type='text' id='findAndReplaceTarget' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='*'>";
 			str += "<br>";
 			str += "For text... ";
-			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='test'>";
+			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
 			str += "<br>";
 			str += "Replace with... ";
-			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='replace'>";
+			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
 			
+			//make div for translating innerHTML and value
 			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
 			
 			str += "<br><br>";
@@ -1017,7 +1104,7 @@
 			str += "<input type='button' onmouseup='configReplace()' value='Replace'/>";
 			el.innerHTML = str;						
 		}
-		
+				
 		//configFind
 		//	use _lastFindRow, _lastFindCol as starting point
 		function configFind()
@@ -1032,24 +1119,56 @@
 			needle = convertEl.innerHTML; //converted text
 			Debug.log("configFind '" + needle + "' @ " + target);
 						
+
+			Debug.log("_lastFindRow=" + _lastFindRow + " _lastFindCol=" + _lastFindCol);
+			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");	
 			var cells;
-			var cellStr;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
+			var cellStr;			
+			var svLast = [_lastFindRow-_CONFIG_DATA_ROW_OFFSET,
+						  _lastFindCol-_CONFIG_DATA_COL_OFFSET];
 			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 			{
+				if(r < _lastFindRow) continue; //skip rows already looked at 
+				
 				cells = rows[r].getElementsByTagName("td");
+				
+				if(r != _lastFindRow)
+				{
+					_lastFindCol = -1; //reset last col for row
+					_lastFindRow = r;
+				}
 
 				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 				{
+					if(target != "*" && cols[c].innerHTML != target) continue; //skip if not target column 
+
+					if(c <= _lastFindCol) continue; //skip cols already looked at in this row
+
+					_lastFindCol = c; 
+					
 					cellStr = cells[c].innerHTML;
 					Debug.log("[" + r + "," + c + "]=" + cellStr);
 					if(cellStr.indexOf(needle) >= 0)
 					{
-						Debug.log("FOUND=" + cellStr);						
+						Debug.log("FOUND=" + cellStr);
+						
+						//cancel any other cells and target the found cell
+						editCellCancel();
+						selectThisCell(r,c,cells[c]);
+						return;
 					}
+					
 				}
 			}
+			Debug.log("Info: Reached end of table and was not able to find '" +
+					needle + "' in columns '" + 
+					target + "' after row,col = [" + svLast[0] + "," + svLast[1] + 
+					"]. Try Find again to wrap around.", 
+					Debug.HIGH_PRIORITY);
+			_lastFindRow = -1; //reset for next find
 		}
 		
 		//configReplace
@@ -1076,6 +1195,7 @@
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");	
 			var cells;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
 			var cellStr, tmpStr;
 			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 			{
@@ -1083,6 +1203,8 @@
 
 				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 				{
+					if(target != "*" && cols[c].innerHTML != target) continue; //skip if not target column 
+					
 					cellStr = cells[c].innerHTML;
 					tmpStr = cellStr;
 					Debug.log("[" + r + "," + c + "]=" + cellStr);
@@ -1124,32 +1246,46 @@
 				str += " ";
 				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
 				str += "</div>";
-				el.innerHTML = str + dispStr + str;
+				el.innerHTML = str + dispStr + "<br>" + str;
 			}			
 		}
 		
+		//selectThisCell
 		function selectThisCell(r,c,el) 
-		{	
-			
-			if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
-				return;
+		{				
+			if(_editingCell) //already have the edit box open, cancel it
+			{
+				if(_editingCellEl == el) //if same cell do nothing
+					return;
+				editCellCancel(); //if new cell cancel
+			}
 			
 			_editingCell = true;
 			_editingCellEl = el;
+			_editingCellPos = [r,c];
 			
 			_editingCellElOldValue = el.innerHTML;
 			var str = "";
 			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
 			str += _editingCellElOldValue;
 			str += "'>";
-			str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
-					"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
+			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
+					"width:85px;height:20px;margin:0 -122px -32px 10px;'>";
 			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
 			str += "</div>";
 			
 			el.innerHTML = str;
+			
+			setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 		}
 		
+		//setCaretPosition
+		function setCaretPosition(elem, caretPos, endPos) {
+            elem.focus();
+            elem.setSelectionRange(caretPos, endPos);
+		}
+		
+		//keyHandler
 		function keyHandler(e) 
 		{
 			var TABKEY = 9;
@@ -1158,13 +1294,72 @@
 			var DNKEY = 40;
 			var ESCKEY = 27;
 			//Debug.log("key " + e.keyCode);
-			if(e.keyCode == TABKEY) 
+			
+			var shiftIsDown;
+			if (window.event) 
+			{
+				key = window.event.keyCode;
+				shiftIsDown = !!window.event.shiftKey; // typecast to boolean
+			} 
+			else
+			{
+				key = e.which;
+				shiftIsDown = !!e.shiftKey;	// typecast to boolean
+			}
+			//Debug.log("shift=" + shiftIsDown);
+			
+			//tab key jumps to next cell with a CANCEL
+			//	(enter key does same except saves/OKs value)
+			//	shift is reverse jump
+			if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
+					e.keyCode == UPKEY || e.keyCode == DNKEY) 				
 			{
 				//this.value += "    ";
 				if(e.preventDefault) 
-				{
 					e.preventDefault();
-				}
+
+				if(e.keyCode == ENTERKEY) 
+					editCellOK(_editingCellPos[0],_editingCellPos[1]);
+				
+				//jump forward (tab/enter) or backward (tab/enter+shift)
+				//	or up or down.
+				//get number of rows and cols
+				//	to determine next row and col to jump to
+				
+				
+				var newRow = _editingCellPos[0];
+				var newCol = _editingCellPos[1];
+				
+				if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+					newCol += (shiftIsDown?-1:1);
+				else if(e.keyCode == UPKEY)
+					--newRow;
+				else if(e.keyCode == DNKEY)
+					++newRow;
+				
+				//new position is chosen! now make it happen (in a clean way)
+				
+				var el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");
+				var numOfRows = rows.length - _CONFIG_DATA_ROW_OFFSET;
+				var numOfCols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th").length - 
+						_CONFIG_DATA_COL_OFFSET;
+								
+				if(newCol == numOfCols)	{ ++newRow; newCol = 0;	}
+				if(newRow == numOfRows) newRow = 0;
+				if(newCol < 0) {--newRow; newCol = numOfCols-1; }
+				if(newRow < 0) newRow = numOfRows-1;
+
+				Debug.log("newRow=" + newRow + " newCol=" + newCol);
+				el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];				
+				selectThisCell(newRow,newCol,el);
+				return false;
+			}
+			else if(e.keyCode == ESCKEY) 
+			{				
+				if(e.preventDefault) 
+					e.preventDefault();
+				editCellCancel();
 				return false;
 			}
 		}
@@ -1306,6 +1501,7 @@
 		//saveConfigAsNewVersion
 		function saveConfigAsNewVersion(temporary) 
 		{	
+			editCellCancel();
 			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
 			
 			//create data string from html table
@@ -1402,7 +1598,7 @@
 			str += "<input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
 					groupName + "\")' value='Save Changes as New Group'/>";				
 			str += "</div>";
-			el.innerHTML = str + dispStr + str;
+			el.innerHTML = str + dispStr + "<br>" + str;
 			
 			el = document.getElementById("configGroupModified");
 			el.innerHTML = "*Modified* "; //mark modified

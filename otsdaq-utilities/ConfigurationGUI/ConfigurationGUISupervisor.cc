@@ -813,8 +813,14 @@ throw (xgi::exception::Exception)
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group! " + std::string(e.what()));
 		}
+		catch(cet::exception& e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error activating config group! " + std::string(e.what()));
+		}
 		catch(...)
 		{
+			throw;
 			__MOUT__ << "Error detected!" << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group!");
 		}
@@ -1315,6 +1321,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		uint64_t activeSessionIndex)
 //, ConfigurationVersion &backboneVersion)
 {
+	activeSessionIndex = 0; //make session by username for now! (may never want to change back?)
+
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();

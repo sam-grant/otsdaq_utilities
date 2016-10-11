@@ -69,7 +69,7 @@ private:
     RemoteWebUsers             							theRemoteWebUsers_;
 
 
-    ConfigurationManagerRW*							refreshUserSession(std::string username, uint64_t activeSessionIndex);
+    ConfigurationManagerRW*								refreshUserSession(std::string username, uint64_t activeSessionIndex);
     std::map<std::string, ConfigurationManagerRW *> 	userConfigurationManagers_;
     std::map<std::string, time_t> 						userLastUseTime_;
 };
