@@ -2,9 +2,13 @@
 <html lang="en"> 
 <head>
 	<title>ConfigurationGUI</title>
+
+	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
 	<style type="text/css">			
 		body {
 			background-color: rgb(200,200,200);
+			font-family: 'Inconsolata', monospace;	
 		}
 		
 		#clearDiv {
@@ -19,6 +23,10 @@
 			padding: 20px;
 		}
 		
+		#activeConfig {
+			font-size: 14px;
+			margin: 10px 0 -10px 0;
+		}
 	</style>
 	
 	
@@ -89,6 +97,7 @@
 			//toggleTreeChildren(depth,uid,nodeName,path)
 			//setupConfigGroupTreeView(configGroupName)
 			//activateSystemConfig(groupName, groupKey)
+			//activateSystemConfigHandler(req)
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
 			//selectForCreateConfig(i)
@@ -146,13 +155,15 @@
 		//setupSystemViewMode ~
 		function setupSystemViewMode() {
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", configGroupsRequestHandler);		
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
+					configGroupsRequestHandler);		
 		}
 		
 		//setupSubSystemConfigMode ~
 		function setupSubSystemConfigMode() {
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", configsRequestHandler);		
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
+					configsRequestHandler);		
 		}
 
 		//setupSpecificConfigGroup ~ 
@@ -405,6 +416,9 @@
 				Debug.log(err,Debug.HIGH_PRIORITY);
 				return;
 			}
+			
+			activateSystemConfigHandler(req); //display active config groups
+			
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
 			
@@ -473,7 +487,7 @@
 			str += "</td>";			
 			for(var c=0;c<colHdrs.length;++c)
 			{
-				str += "<td><div style='font-size:8px' title='";		
+				str += "<td><div style='font-size:12px' title='";		
 				str += colTypes[c].getAttribute("value");
 				str += " &#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
 				str += "'>";
@@ -714,9 +728,8 @@
 		}
 		
 		//activateSystemConfigHandler ~
-		function activateSystemConfigHandler(req,param,errStr)
+		function activateSystemConfigHandler(req)
 		{
-			//FIXME -- where is the key
 			//show xml Error if present as popup Debug high priority
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err && err != "") 
@@ -725,19 +738,32 @@
 				return;					
 			}
 			
-			var activeConfig = DesktopContent.getXMLValue(req,"activeConfig");
+			var activeConfigGroups = [
+									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
+									  
+			var activeConfigHeaders = ["Context","Backbone","Configuration"];
 			Debug.log("activeConfig: " + activeConfig);
 			
 			var str = "";
-			str += "Active: ";
-			if(!activeConfig || activeConfig == "")
-				str += "None";
-			else
+			for(var i=0;i<activeConfigHeaders.length;++i)
 			{
-				str += "<a href='javascript:setupSpecificConfigGroup(\"" + activeConfig +
-				"\");'>";
-				str += activeConfig + "</a>";
+				str += "Active " + activeConfigHeaders[i] + ": ";
+				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
+					str += "None";
+				else
+				{
+					str += "<a href='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
+					"\",\"" + activeConfigGroups[i*2+1] + "\");'>";
+					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
+				}
+				str += "<br>";
 			}
+		
 			document.getElementById("activeConfig").innerHTML = str;				
 		}
 		
@@ -784,14 +810,15 @@
 			
 
 			str += "<tr><td>";
-			str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " + 
+			str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " +
+					"<a href='javascript:selectForCreateConfig(0)'>None</a> | " + 
 					"<a href='javascript:selectForCreateConfig(2)'>Context</a> | " +
-					"<a href='javascript:selectForCreateConfig(3)'>Detector</a> | " +
-					"<a href='javascript:selectForCreateConfig(0)'>None</a><br>";
+					"<a href='javascript:selectForCreateConfig(3)'>Backbone</a> | " +
+					"<a href='javascript:selectForCreateConfig(4)'>Configuration</a>";
+			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td>";
-
 			str += "<a href='javascript:versionsForCreateConfig(0)'>Defaults</a> | " + 
-					"<a href='javascript:versionsForCreateConfig(1)'>Latest</a><br>";
+					"<a href='javascript:versionsForCreateConfig(1)'>Latest</a>";
 			str += "</td>";
 			str += "</tr>";
 			
@@ -871,13 +898,14 @@
 		}
 		
 		//createConfigSelect ~
-		//0 is none, 1 is all, 2 is context, 3 is detector			
+		//0 is none, 1 is all, 2 is context, 3 is backbone, 4 is others (configuration)			
 		function selectForCreateConfig(i)
 		{
 			var els = document.getElementsByClassName("memberConfigCheckbox");
 			
-			//FIXME .. .get list of context configuration from server
+			//FIXME .. .get list of context/backbone configuration from server
 			var context = ["XDAQContextConfiguration", "XDAQApplicationConfiguration"];
+			var backbone = ["ConfigurationAliases", "VersionAliases"];
 			switch(i)
 			{
 			case 1: //check all
@@ -897,12 +925,31 @@
 						}
 				}
 				break;		
-			case 3: //detector	
+			case 3: //backbone	
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					els[el].checked = false;
+					for(var c=0;c<backbone.length;++c)
+						if(els[el].value == backbone[c])
+						{	
+							els[el].checked = true;
+							break;
+						}
+				}
+				break;	
+			case 4: //configuration	
 				for(var el=0;el<els.length;++el)
 				{
 					els[el].checked = true;
 					for(var c in context)
 						if(els[el].value == context[c])
+						{	
+							els[el].checked = false;
+							break;
+						}
+					for(var c in backbone)
+						if(els[el].value == backbone[c])
 						{	
 							els[el].checked = false;
 							break;
@@ -1270,7 +1317,7 @@
 			str += _editingCellElOldValue;
 			str += "'>";
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:85px;height:20px;margin:0 -122px -32px 10px;'>";
+					"width:90px;height:20px;margin:0 -122px -32px 10px;'>";
 			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
 			str += "</div>";
 			
@@ -1658,8 +1705,8 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
+	<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
 	<div id='activeConfig'></div>
-	<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>		
 	<div id='display'></div>
 	
 </body>
