@@ -844,7 +844,7 @@ throw (xgi::exception::Exception)
 	}
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, true); //true for debug printout
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false); //true for debug printout
 }
 
 //========================================================================================================================
@@ -1154,7 +1154,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 			{
 				int num;
 				cfgViewPtr->getValue(num,r,c);
-				__MOUT__ << "\t " << num << std::endl;
+				//__MOUT__ << "\t " << num << std::endl;
 
 				sprintf(tmpIntStr,"%d",num);
 				xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
@@ -1163,7 +1163,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 			{
 				std::string val;
 				cfgViewPtr->getValue(val,r,c);
-				__MOUT__ << "\t " << val << std::endl;
+				//__MOUT__ << "\t " << val << std::endl;
 
 				xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
 				xmldoc.addTextElementToData("ty", val);
