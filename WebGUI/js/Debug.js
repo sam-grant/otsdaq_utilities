@@ -11,7 +11,8 @@
 //
 //	Debug.log() will print to console if Debug.mode = 1 and if num < Debug.level
 //
-//	Note: A pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
+//	Note: An error pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
+//	Note: An info pop up box will occur so that users see Debug.INFO_PRIORITY log messages.
 //
 //=====================================================================================
 
@@ -27,6 +28,7 @@ Debug.lastLogger = "";
 
 //setup default priorities
 Debug.HIGH_PRIORITY = 0;
+Debug.INFO_PRIORITY = 1;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
 
@@ -47,7 +49,7 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
-					num = num < 1?"High":(num<99?"Med":"Low");
+					num = num < 2?(num==1?"Info":"High"):(num<99?"Med":"Low");
 					
 					Debug.lastLogger = (new Error).stack.split("\n")[2];
 					Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('(')-1);
@@ -62,6 +64,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 					
 					if(num == "High")//Debug.HIGH_PRIORITY) //show all high priorities as popup!
 						Debug.errorPop(str);
+					else if(num == "Info")
+						Debug.errorPop(str,true);
 				}
 			}
 	}
@@ -89,7 +93,7 @@ Debug._errBoxId = "Debug-error-box";
 //=====================================================================================
 //Show the error string err in the error popup on the window
 // create error div if not yet created
-Debug.errorPop = function(err) {
+Debug.errorPop = function(err,isInfo) {
 	
 	//check if Debug._errBox has been set
 	if(!Debug._errBox)
@@ -104,7 +108,9 @@ Debug.errorPop = function(err) {
 			el = document.createElement("div");			
 			el.setAttribute("id", Debug._errBoxId);
 			el.style.display = "none";
-			var str = "<a href='javascript:Debug.closeErrorPop();'>Close Errors</a><br><br>" + 
+			var str = "<a id='" + 
+				Debug._errBoxId + 
+				"-header' href='javascript:Debug.closeErrorPop();'>Close Errors</a><br><br>" + 
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err'></div>";
@@ -179,6 +185,20 @@ Debug.errorPop = function(err) {
 	Debug._errBox.style.top = (document.body.scrollTop + 8) + "px";
 	Debug._errBox.style.left = (document.body.scrollLeft + 8) + "px";
 	Debug._errBox.style.display = "block";
+	
+	//change color based on info
+	if(isInfo)
+	{
+		el = document.getElementById(Debug._errBoxId + "-header");
+		el.innerHTML = "Close Info";
+		Debug._errBox.style.backgroundColor = "rgba(0,153,51,0.8)";
+	}
+	else
+	{
+		el = document.getElementById(Debug._errBoxId + "-header");
+		el.innerHTML = "Close Errors";
+		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.8)";
+	}
 }
 
 

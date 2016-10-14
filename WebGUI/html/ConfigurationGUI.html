@@ -755,6 +755,7 @@
 			var activeConfigHeaders = ["Context","Backbone","Configuration"];
 			Debug.log("activeConfig: " + activeConfig);
 			
+			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
 			for(var i=0;i<activeConfigHeaders.length;++i)
 			{
@@ -769,8 +770,12 @@
 				}
 				str += "<br>";
 			}
-		
-			document.getElementById("activeConfig").innerHTML = str;				
+			
+			if(str != oldStr)
+			{
+				Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!", Debug.INFO_PRIORITY);
+				document.getElementById("activeConfig").innerHTML = str;
+			}				
 		}
 		
 		//setupConfigCreator ~
