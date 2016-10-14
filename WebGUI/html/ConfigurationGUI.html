@@ -84,10 +84,11 @@
 		//functions:			
 			//init()
 			//niceName(str)									//removes "Configuration" from name
-			//setupSystemViewMode()							//gets global configurations
-			//setupSubSystemConfigMode()					//gets configuration tables
-			//setupSpecificConfigGroup(groupName, groupKey)			//setup editor for specific configuration group
-			//setupSpecificConfig(configName) 				//setup editor for specific configuration table
+			//setupSystemViewMode()							//gets configurations aliases
+			//setupGroupViewMode()							//gets all configuration groups
+			//setupTableViewMode()							//gets configuration tables
+			//setupSpecificConfigGroup(groupName, groupKey)	//setup editor for specific configuration group
+			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
 			//configGroupsRequestHandler(req)
 			//configsRequestHandler(req)
 			//specificGroupRequestHandler(req)
@@ -159,8 +160,8 @@
 					configGroupsRequestHandler);		
 		}
 		
-		//setupSubSystemConfigMode ~
-		function setupSubSystemConfigMode() {
+		//setupTableViewMode ~
+		function setupTableViewMode() {
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
 					configsRequestHandler);		
@@ -782,9 +783,9 @@
 		function setupConfigCreator(preSelectStr)
 		{
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
-					"", setupConfigCreatorHandler, preSelectStr);
-			
+					"", setupConfigCreatorHandler, preSelectStr);			
 		}
+		
 		//setupConfigCreatorHandler ~
 		function setupConfigCreatorHandler(req,preSelectStr)
 		{
@@ -817,8 +818,7 @@
 		
 			Debug.log("configNames.length " + configNames.length);
 			
-			str += "<table>";
-			
+			str += "<table>";			
 
 			str += "<tr><td>";
 			str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " +
@@ -830,7 +830,7 @@
 			str += "</td><td>";
 			str += "<a href='javascript:versionsForCreateConfig(0)'>Defaults</a> | " + 
 					"<a href='javascript:versionsForCreateConfig(1)'>Latest</a>";
-			str += "</td>";
+			str += "</td><td></td>";
 			str += "</tr>";
 			
 			for(var i=0;i<configNames.length;++i)
@@ -864,7 +864,16 @@
 					str += "</option>";
 				}
 				str += "</select>";
+				str += "</td>";
 				
+				str += "<td>";
+				str += "<a href='#' onmouseup='" +
+						"var sel = document.getElementById(\"select-" + name + "\");" +
+						"setupSpecificConfig(\"" + name + "\"," +
+						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1);" + 
+						"'>";
+				str += "goto</a>";
+						//"(configName, version)"
 				str += "</td>";
 				str += "</tr>";
 			}	
@@ -1495,7 +1504,8 @@
 			//add empty columns
 			for(var c=1;c<rows[0].childNodes.length;++c)
 			{
-				str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";			    	
+				str += "<td onmouseup='selectThisCell("+r+","+
+						(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";			    	
 				str += "";
 				str += "</td>";					
 
@@ -1731,7 +1741,9 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
-	<a href='javascript:setupSystemViewMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
+	<a href='javascript:setupSystemViewMode()'>System View</a> 
+	<a href='javascript:setupGroupViewMode()'>Configuration Group View</a>
+	<a href='javascript:setupTableViewMode()'>Individual Table View</a>
 	<div id='activeConfig'></div>
 	<div id='display'></div>
 	
