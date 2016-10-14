@@ -66,7 +66,7 @@ private:
     RemoteWebUsers                       theRemoteWebUsers_;
     ConfigurationManager*                theConfigurationManager_;
     VisualDataManager*                   theDataManager_;
-    std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
+    //std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
     unsigned int 			             loadedRunNumber_;
 

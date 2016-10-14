@@ -740,8 +740,22 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
-	theConfigurationManager_->setupAllSupervisorConfigurations(theConfigurationGroupKey_,0);
+//	theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
+//	theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
+//
+	std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
+			SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+									getParameters().getValue("ConfigurationGroupName"),
+						ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+						getParameters().getValue("ConfigurationGroupKey")));
+
+	__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
+			theGroup.second << std::endl;
+
+	theConfigurationManager_->loadConfigurationGroup(
+			theGroup.first,
+			theGroup.second, true);
+
 	theDataManager_->configure();
 }
 

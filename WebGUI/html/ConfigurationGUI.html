@@ -136,8 +136,8 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 			
-			setupSpecificConfig("XDAQApplicationConfiguration","2");
-			return;
+			//setupSpecificConfig("XDAQApplicationConfiguration","2");
+			//return;
 
 			//setupSpecificConfigGroup("myContext","0");
 			//setupConfigCreator();
@@ -360,14 +360,20 @@
 			{
 				configName = configNames[i].getAttribute("value");
 				version = configVersions[i].getAttribute("value");
+			
+			
+				str += "<b>" + niceName(configName) + "</b> ";
 				
-				str += "<b>" + niceName(configName) + "</b> (Current version: ";
-
+				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+									"\",\"" + version + "\");'>";
+				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
 				str += "</label>";
 					
-				str += ")<br>Click below to change "  + niceName(configName) + 
+				str += ")";
+				str += "</a>";
+				str += "<br>Click below to change "  + niceName(configName) + 
 					" Version for " + groupName + ":<br>";		
 				
 				
@@ -905,7 +911,7 @@
 			
 			//FIXME .. .get list of context/backbone configuration from server
 			var context = ["XDAQContextConfiguration", "XDAQApplicationConfiguration"];
-			var backbone = ["ConfigurationAliases", "VersionAliases"];
+			var backbone = ["VersionAliases", "ConfigurationGroupAliases"];
 			switch(i)
 			{
 			case 1: //check all
@@ -1303,9 +1309,19 @@
 			if(_editingCell) //already have the edit box open, cancel it
 			{
 				if(_editingCellEl == el) //if same cell do nothing
-					return;
+					return false;
 				editCellCancel(); //if new cell cancel
 			}
+			
+			//if column is Author or Timestamp, don't allow select
+			var tableEl = document.getElementById("SubSystemTable");
+			var rows = tableEl.getElementsByTagName("tr");
+			var cols = rows[0].getElementsByTagName("td");
+			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+			if(colType == "Author" || 
+					colType == "Timestamp")
+				return false;
+			
 			
 			_editingCell = true;
 			_editingCellEl = el;
@@ -1324,6 +1340,8 @@
 			el.innerHTML = str;
 			
 			setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			
+			return true;
 		}
 		
 		//setCaretPosition
@@ -1376,30 +1394,33 @@
 				
 				var newRow = _editingCellPos[0];
 				var newCol = _editingCellPos[1];
-				
-				if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
-					newCol += (shiftIsDown?-1:1);
-				else if(e.keyCode == UPKEY)
-					--newRow;
-				else if(e.keyCode == DNKEY)
-					++newRow;
-				
-				//new position is chosen! now make it happen (in a clean way)
-				
 				var el = document.getElementById("SubSystemTable");
 				var rows = el.getElementsByTagName("tr");
 				var numOfRows = rows.length - _CONFIG_DATA_ROW_OFFSET;
 				var numOfCols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th").length - 
 						_CONFIG_DATA_COL_OFFSET;
-								
-				if(newCol == numOfCols)	{ ++newRow; newCol = 0;	}
-				if(newRow == numOfRows) newRow = 0;
-				if(newCol < 0) {--newRow; newCol = numOfCols-1; }
-				if(newRow < 0) newRow = numOfRows-1;
+				do
+				{					
+					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+						newCol += (shiftIsDown?-1:1);
+					else if(e.keyCode == UPKEY)
+						--newRow;
+					else if(e.keyCode == DNKEY)
+						++newRow;
+					
+					//new position is chosen! now make it happen (in a clean way)	
+									
+					if(newCol == numOfCols)	{ ++newRow; newCol = 0;	}
+					if(newRow == numOfRows) newRow = 0;
+					if(newCol < 0) {--newRow; newCol = numOfCols-1; }
+					if(newRow < 0) newRow = numOfRows-1;					
 
-				Debug.log("newRow=" + newRow + " newCol=" + newCol);
-				el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];				
-				selectThisCell(newRow,newCol,el);
+					el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];			
+				
+				} while(!selectThisCell(newRow,newCol,el));
+
+				//Debug.log("newRow=" + newRow + " newCol=" + newCol);
+				
 				return false;
 			}
 			else if(e.keyCode == ESCKEY) 
