@@ -672,6 +672,8 @@ throw (xgi::exception::Exception)
 	//Commands
 	//getConfigurationGroups
 	//getConfigurations
+	//getContextMemberNames
+	//getBackboneMemberNames
 	//getSpecificConfigurationGroup
 	//saveNewConfigurationGroup
 	//getSpecificConfiguration
@@ -722,6 +724,20 @@ throw (xgi::exception::Exception)
 	else if(Command == "getConfigurations")
 	{
 		handleConfigurationsXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "getContextMemberNames")
+	{
+		std::set<std::string> members = cfgMgr->getContextMemberNames();
+
+		for(auto& member:members)
+			xmldoc.addTextElementToData("ContextMember", member);
+	}
+	else if(Command == "getBackboneMemberNames")
+	{
+		std::set<std::string> members = cfgMgr->getBackboneMemberNames();
+
+		for(auto& member:members)
+			xmldoc.addTextElementToData("BackboneMember", member);
 	}
 	else if(Command == "getSpecificConfigurationGroup")
 	{
@@ -1202,8 +1218,19 @@ try
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
-	cfgMgr->getConfigurationByName(configName)->
-			getTemporaryView(temporaryVersion)->fillFromCSV(data,dataOffset,author);
+	//returns -1 on error that data was unchanged
+	int retVal = cfgMgr->getConfigurationByName(configName)->
+				getTemporaryView(temporaryVersion)->fillFromCSV(data,dataOffset,author);
+
+	//only consider it an error if source version was persistent version
+	//	allow it if it is temporary and we are making a persistent version now
+	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
+	{
+		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+	else
+		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
 
 	if(makeTemporary)
 		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;

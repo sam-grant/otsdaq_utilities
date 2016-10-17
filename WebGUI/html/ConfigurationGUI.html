@@ -71,11 +71,15 @@
 		var _versionIsChanged = false;
 		var _version;
 		var _dataOffset = 0;
-		var _lastFindRow, _lastFindCol; 
+		var _lastFindRow, _lastFindCol;
+
+		var _contextMemberNames = [];
+		var _backboneMemberNames = [];
 		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var treeNodeUID_;		//incrementing unique id for nodes
+	
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -144,6 +148,42 @@
 			//setupConfigCreator();
 			
 			setupSystemViewMode();
+
+			//get context and backbone member list 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
+					function (req) {				
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}
+						var memberNames = req.responseXML.getElementsByTagName("ContextMember");
+						_contextMemberNames = []; //reset
+						for(var i=0;i<memberNames.length;++i)
+							_contextMemberNames[i] = memberNames[i].getAttribute("value");
+						Debug.log(_contextMemberNames);
+						if(_contextMemberNames.length == 0) 
+							Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
+					}
+				);
+			DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "", 
+					function (req) {				
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}
+						var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
+						_backboneMemberNames = []; //reset
+						for(var i=0;i<memberNames.length;++i)
+							_backboneMemberNames[i] = memberNames[i].getAttribute("value");
+						Debug.log(_backboneMemberNames);
+						if(_backboneMemberNames.length == 0) 
+							Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
+					}
+				);
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -923,9 +963,9 @@
 		{
 			var els = document.getElementsByClassName("memberConfigCheckbox");
 			
-			//FIXME .. .get list of context/backbone configuration from server
-			var context = ["XDAQContextConfiguration", "XDAQApplicationConfiguration"];
-			var backbone = ["VersionAliases", "ConfigurationGroupAliases"];
+			//use list of context/backbone configuration from server
+			var context = _contextMemberNames;
+			var backbone = _backboneMemberNames
 			switch(i)
 			{
 			case 1: //check all
@@ -1741,9 +1781,10 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
-	<a href='javascript:setupSystemViewMode()'>System View</a> 
-	<a href='javascript:setupGroupViewMode()'>Configuration Group View</a>
-	<a href='javascript:setupTableViewMode()'>Individual Table View</a>
+	<a href='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
+	<a href='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
+	<a href='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
+	<hr>
 	<div id='activeConfig'></div>
 	<div id='display'></div>
 	
