@@ -670,6 +670,7 @@ throw (xgi::exception::Exception)
 	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
+	//getGroupAliases
 	//getConfigurationGroups
 	//getConfigurations
 	//getContextMemberNames
@@ -717,7 +718,11 @@ throw (xgi::exception::Exception)
 	//acquire user's configuration manager based on username & activeSessionIndex
 	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex);//, backboneVersion);
 
-	if(Command == "getConfigurationGroups")
+	if(Command == "getGroupAliases")
+	{
+		handleGroupAliasesXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "getConfigurationGroups")
 	{
 		handleConfigurationGroupsXML(xmldoc,cfgMgr);
 	}
@@ -1386,6 +1391,21 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	}
 
 	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
+}
+
+
+//========================================================================================================================
+//	handleGroupAliasesXML
+//
+//		return this information
+//		<group alias=xxx name=xxx key=xxx>
+//		<group alias=xxx name=xxx key=xxx>
+//		...
+//
+//Note: this is the new way with artdaq_db
+void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr)
+{
+	cfgMgr->loadConfigurationBackbone();
 }
 
 

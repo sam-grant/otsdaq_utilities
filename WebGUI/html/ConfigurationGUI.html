@@ -88,7 +88,8 @@
 		//functions:			
 			//init()
 			//niceName(str)									//removes "Configuration" from name
-			//setupSystemViewMode()							//gets configurations aliases
+			//setupSystemViewMode()							//gets configuration groups aliases
+			//groupAliasesRequestHandler()					 
 			//setupGroupViewMode()							//gets all configuration groups
 			//setupTableViewMode()							//gets configuration tables
 			//setupSpecificConfigGroup(groupName, groupKey)	//setup editor for specific configuration group
@@ -192,9 +193,16 @@
 			var i = str.lastIndexOf("Configuration");
 			return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
 		}
-		
+
 		//setupSystemViewMode ~
 		function setupSystemViewMode() {
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
+					groupAliasesRequestHandler);		
+		}
+		
+		//setupGroupViewMode ~
+		function setupGroupViewMode() {
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
 					configGroupsRequestHandler);		
@@ -224,13 +232,28 @@
 				"&configName=" + configName + v, "", specificConfigRequestHandler);		
 		}
 		
+		//groupAliasesRequestHandler ~
+		functin groupAliasesRequestHandler(req) {
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				
+				//attempt to go on, in case error was just associtate with one group
+				//return;
+			}
+			
+		}
+		
 		//configGroupsRequestHandler ~
 		function configGroupsRequestHandler(req) {				
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
+				
+				//attempt to go on, in case error was just associtate with one group
+				//return;
 			}
 			
 			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");

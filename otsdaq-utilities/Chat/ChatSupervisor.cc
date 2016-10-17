@@ -87,10 +87,10 @@ throw (xgi::exception::Exception)
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,out,&xmldoc,theSupervisorsConfiguration_
 				,0//&userPermissions,  		//acquire user's access level (optionally null pointer)
-				,"0"						//report user's ip address, if known
 				,!automaticCommand			//true/false refresh cookie code
 				,1 //set access level requirement to pass gateway
 				,checkLock					//true/false enable check that system is unlocked or this user has the lock
+				,0//requireLock
 				,0//&userWithLock,			//acquire username with lock (optionally null pointer)
 				,0//(getUser?&user:0)		//acquire username of this user (optionally null pointer)
 				,0//,&displayName			//acquire user's Display Name
