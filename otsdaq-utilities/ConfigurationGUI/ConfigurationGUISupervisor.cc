@@ -1120,7 +1120,10 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 	//get view pointer
 	ConfigurationView* cfgViewPtr;
 	if(version.isInvalid()) //use mockup
+	{
 		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+		cfgViewPtr->init();
+	}
 	else					//use view version
 		cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
 
