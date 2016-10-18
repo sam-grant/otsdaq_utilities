@@ -215,7 +215,7 @@
 					configsRequestHandler);		
 		}
 
-		//setupSpecificConfigGroup ~ 
+		//setupSpecificConfigGroup ~		
 		function setupSpecificConfigGroup(groupName, groupKey) {
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
@@ -225,6 +225,7 @@
 		}
 		
 		//setupSpecificConfig ~
+		//	undefined version gives latest
 		function setupSpecificConfig(configName,version) {
 			var v = "";
 			if(version) v = "&version="+version;
@@ -233,7 +234,7 @@
 		}
 		
 		//groupAliasesRequestHandler ~
-		functin groupAliasesRequestHandler(req) {
+		function groupAliasesRequestHandler(req) {
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -243,6 +244,58 @@
 				//return;
 			}
 			
+			activateSystemConfigHandler(req); //display active config groups
+			
+			var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
+			var groupNames = req.responseXML.getElementsByTagName("GroupName");
+			var groupKeys = req.responseXML.getElementsByTagName("GroupKey");
+			var groupComments = req.responseXML.getElementsByTagName("GroupComment");
+
+			var groupAliasesVersion = 
+					DesktopContent.getXMLValue(req,"ConfigurationGroupAliasesVersion");		
+
+			var str = ""; //string for html content			
+			
+			var groupAlias, groupName, groupKey, groupComment;
+
+			str += "<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
+					groupAliasesVersion + "\")'>";
+			str += "Create a New System Alias</a>";
+			str += "<br><br>";
+
+			Debug.log("CfgGUI groupAliasesRequestHandler groupAliases.length " + groupAliases.length);
+			
+			if(!groupAliases.length)
+				str += "No Configuration Group Aliases found.";
+			for(var i=0;i<groupNames.length;++i)
+			{		
+				groupAlias 	= groupAliases[i].getAttribute("value");
+				groupName 	= groupNames[i].getAttribute("value");
+				groupKey 	= groupKeys[i].getAttribute("value");
+				groupComment= groupComments[i].getAttribute("value");								
+
+				str += "<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
+						groupAliasesVersion + "\")'>";
+				str += groupAlias + "</a> <" + groupName + "(" + groupKey +")>";	
+				
+				//add tree view link
+				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + groupKey + "\");'>";
+				str += "Tree-view</a>";										
+				
+				//add Activate link
+				str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+						"\",\"" + groupKey + "\");'>";
+				str += "Activate</a>";
+				
+				//add comment
+				str += "<br><pre style='margin: 2px 0 0 30px;>" + groupComment + "</pre>"; 
+				
+				str += "<br><br>";
+			}
+
+			var el = document.getElementById("display");
+			el.innerHTML = str;
 		}
 		
 		//configGroupsRequestHandler ~
@@ -255,7 +308,7 @@
 				//attempt to go on, in case error was just associtate with one group
 				//return;
 			}
-			
+
 			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
 			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
 			var kocsHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
@@ -282,7 +335,7 @@
 				str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
 					"\",\"" + key + "\");'>";
 				str += groupName + "</a> (" + key +")";
-				
+
 				//add tree view link
 				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + key + "\");'>";
@@ -459,7 +512,7 @@
 				}			
 				str += "</label>";	
 				
-				
+
 				str += "<br><br>";
 				
 				//add div holding existing versions for modifications

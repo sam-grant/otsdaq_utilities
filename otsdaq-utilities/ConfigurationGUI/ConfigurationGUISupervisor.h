@@ -46,6 +46,7 @@ public:
     void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
+    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, const std::string& columnCSV);
     void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
