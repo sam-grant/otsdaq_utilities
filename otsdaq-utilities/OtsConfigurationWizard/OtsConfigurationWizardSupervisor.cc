@@ -178,9 +178,10 @@ throw (xgi::exception::Exception)
 	//4 - picfn = icon image filename, 0 for no image
 	//5 - linkurl = url of the window to open
 
-	*out << "Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/IconEditor.html" <<
-			",Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html" <<
+	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html" <<
+			//",Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/IconEditor.html" <<
 			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
+			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?tableEditor=1" <<
 			",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=261/" <<
 			",DB Utilities,DB,1,1,0,http://127.0.0.1:8080/db/client.html";
 	return;

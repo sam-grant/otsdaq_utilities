@@ -657,10 +657,14 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
-			getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
-
+	cgicc::Cgicc cgi(in);
+	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
+	if(configName != "")
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
+		getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
+	else
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
+		getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -673,17 +677,18 @@ throw (xgi::exception::Exception)
 	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
-	//getGroupAliases
-	//getConfigurationGroups
-	//getConfigurations
-	//getContextMemberNames
-	//getBackboneMemberNames
-	//getSpecificConfigurationGroup
-	//saveNewConfigurationGroup
-	//getSpecificConfiguration
-	//saveSpecificConfiguration
-	//changeKocVersionForSpecificConfig
-	//getTreeView
+	//	saveConfigurationInfo
+	//	getGroupAliases
+	//	getConfigurationGroups
+	//	getConfigurations
+	//	getContextMemberNames
+	//	getBackboneMemberNames
+	//	getSpecificConfigurationGroup
+	//	saveNewConfigurationGroup
+	//	getSpecificConfiguration
+	//	saveSpecificConfiguration
+	//	changeKocVersionForSpecificConfig
+	//	getTreeView
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -882,6 +887,8 @@ throw (xgi::exception::Exception)
 		xmldoc.addTextElementToData(type.first + "-ActiveGroupKey",
 				type.second.second.toString());
 	}
+
+	__MOUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false); //true for debug printout
@@ -1487,7 +1494,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 
 		//data type
 		outss << "\" \t	DataType=\"";
-		outss << data.substr(i,j-i);
+		outss << data.substr(i,k-i);
 		outss << "\"/>\n";
 
 		i = k+1;

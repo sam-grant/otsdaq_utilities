@@ -274,9 +274,9 @@
 				groupKey 	= groupKeys[i].getAttribute("value");
 				groupComment= groupComments[i].getAttribute("value");								
 
-				str += "<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
+				str += "&quot;<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
 						groupAliasesVersion + "\")'>";
-				str += groupAlias + "</a> <" + groupName + "(" + groupKey +")>";	
+				str += groupAlias + "</a>&quot; &lt; " + groupName + "(" + groupKey +") &gt;";	
 				
 				//add tree view link
 				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
@@ -289,7 +289,7 @@
 				str += "Activate</a>";
 				
 				//add comment
-				str += "<br><pre style='margin: 2px 0 0 30px;>" + groupComment + "</pre>"; 
+				str += "<br><pre style='margin: 2px 0 0 30px;'>" + groupComment + "</pre>"; 
 				
 				str += "<br><br>";
 			}
@@ -660,7 +660,7 @@
 			}
 				
 			str += "</table>";
-			
+
 			//add + row controls for new last row
 			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
 			str += "+";

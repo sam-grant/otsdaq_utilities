@@ -1,0 +1,551 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<style type="text/css">			
+		body {
+			background-color: rgb(200,200,200);
+			font-family: 'Inconsolata', monospace;	
+		}
+		
+		#clearDiv {
+			clear: both;
+		}
+		
+		a {
+			color: blue;
+		}
+		
+		#display {
+			padding: 20px;
+		}
+		
+		#activeConfig {
+			font-size: 14px;
+			margin: 10px 0 -10px 0;
+		}
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	
+	<script>		
+		
+	
+		var _CONFIG_TYPE_ROW_OFFSET = 1;
+		var _CONFIG_DATA_COL_OFFSET = 1;
+		var _CONFIG_FIXED_CELLS = 3;
+	
+		var _editingCell = false;
+		var _editingCellEl, _editingCellElOldValue;
+		var _editingCellPos = [-1,-1];	
+		var _srcName;
+		var _colHdrArr, _colTypeArr, _colDataTypeArr;
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()			
+			//setupTableEditor(req)
+			//saveTable()
+			//loadTable()
+			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
+			//specificConfigRequestHandler(req)
+			//setupEmptyTable();
+			//setupTable(srcName,colHdrs,colTypes,colDataTypes)
+			//selectThisCell(r,c,el)
+			//setCaretPosition(el,start,stop)
+			//editCellCancel()
+			//keyHandler(e)
+			//editCellOK(r,c)
+			//addColumn(c)
+			//deleteColumn(c)
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+						
+		
+		//init ~
+		//	init called once body has loaded
+		function init() {			
+			Debug.log("CfgTableEditor init");
+			
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "",
+					setupTableEditor);
+			
+			setupEmptyTable();
+		}
+		
+		//setupTableEditor(req) ~
+		function setupTableEditor(req)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+
+			//Save Column Info as...
+			//	Configuration Name:
+			//	
+			//Load Column Info from...
+			//	Configuration Name: ____^
+
+			var str = "";
+
+			str += "Save Column Info as... <br>&nbsp;&nbsp;Configuration Name:";
+			str += "<input type='text' id='SaveAsConfigName' style='margin:-4px -2px -4px -1px;' value=''>";
+			str += " <input type='button' onmouseup='saveTable()' value='Save'/>";
+			str += "<br><br>";
+			str += "Load Column Info from... <br>&nbsp;&nbsp;Configuration Name:";
+
+			str += "<select id='loadFromConfigName'>";
+			
+			var configName;
+
+			Debug.log("CfgTableEditor requestHandler configNames.length " + configNames.length);
+			for(var i=0;i<configNames.length;++i)
+			{			
+				configName = configNames[i].getAttribute("value");
+
+				str += "<option value='" + configName + "'>";
+				str += configName;	//can display however
+				str += "</option>";
+			}				
+			str += "</select>";
+			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
+			
+			var el = document.getElementById("controls");
+			el.innerHTML = str;
+			
+		}
+
+		//loadTable ~
+		function loadTable()
+		{
+			var sel = document.getElementById("loadFromConfigName");
+
+			Debug.log("CfgTableEditor loadTable from " + sel.options[sel.selectedIndex].value);
+
+			//load mockup for chosen table
+			setupSpecificConfig(sel.options[sel.selectedIndex].value, -1);
+		}
+		
+		//saveTable ~
+		function saveTable()
+		{
+			var configName = document.getElementById("SaveAsConfigName").value;
+			
+			Debug.log("CfgTableEditor saveTable=" + configName);
+			_colHdrArr, _colTypeArr, _colDataTypeArr;
+
+			//	write new info file for configName based CSV column info
+			//			data="type,name,dataType;type,name,dataType;..."
+			
+			var data = "";
+			for(var i=0;i<_colHdrArr.length;++i)
+				data += _colTypeArr[i] + "," + _colHdrArr[i] + "," + _colDataTypeArr[i] + ";";
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
+				"&configName=" + configName, 
+				"columnCSV=" + data, specificConfigRequestHandler);	
+		}
+		
+
+		//setupSpecificConfig ~
+		//	undefined version gives latest
+		function setupSpecificConfig(configName,version) {
+			var v = "";
+			if(version) v = "&version="+version;
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=0" +  
+				"&configName=" + configName + v, "", specificConfigRequestHandler);		
+		}		
+		
+		//setupEmptyTable
+		function setupEmptyTable() {
+			
+			var colTypes = ["UID","Comment","Author","Timestamp"];
+			var colDataTypes = ["VARCHAR2","VARCHAR2","VARCHAR2","TIMESTAMP WITH TIMEZONE"];
+			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
+			
+			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes);
+		}
+
+		//specificConfigRequestHandler
+		function specificConfigRequestHandler(req) {	
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			
+			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
+
+			var colHdrsArr = [];
+			for(var i=0;i<colHdrs.length;++i)
+				colHdrsArr.push(colHdrs[i].getAttribute("value"));
+			var colTypesArr = [];
+			for(var i=0;i<colTypes.length;++i)
+				colTypesArr.push(colTypes[i].getAttribute("value"));
+			var colDataTypesArr = [];
+			for(var i=0;i<colDataTypes.length;++i)
+				colDataTypesArr.push(colDataTypes[i].getAttribute("value"));
+			setupTable(configName,colHdrsArr,colTypesArr,colDataTypesArr);
+		}
+		
+		//setupTable ~
+		function setupTable(srcName,colHdrs,colTypes,colDataTypes)
+		{
+			//handle use of cached _srcName
+			if(!srcName)
+				srcName = _srcName;
+			else
+				_srcName = srcName;
+			
+			//cache data for add/delete ease
+			_colHdrArr = colHdrs;
+			_colTypeArr = colTypes;
+			_colDataTypeArr = colDataTypes;
+			
+			var str = "";
+
+			str += "Starting point was...<br><b>" + srcName + "</b> (version: Mockup-View)<br>";
+							
+			//display table
+			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+
+			//+/- column row
+			str += "<tr>";
+			str += "<td>"; //row col
+			str += "</td>";			
+			for(var c=0;c<colTypes.length;++c)
+			{
+				str += "<td>"
+						
+				//show +/- columns where possible to add/delete
+				if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
+				{
+					str += " <a href='javascript:addColumn(" + c + ");'>";
+					str += "+";
+					str += "</a>";
+
+					if(c < colTypes.length - _CONFIG_FIXED_CELLS)
+					{
+						str += "/<a href='javascript:deleteColumn(" + c + ");'>";
+						str += "-";
+						str += "</a>";
+					}
+				}
+
+				str += "</td>";					
+
+			}
+			str += "</tr>";
+			
+			//type and data type row
+			str += "<tr>";
+			str += "<td>"; //row col
+			str += "</td>";			
+			for(var c=0;c<colTypes.length;++c)
+			{
+				str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
+						c + ",this);'>";
+				str += "<div style='font-size:12px' title='";		
+				str += colTypes[c];
+				str += " &#60;" + colDataTypes[c] + "&#62;";
+				str += "'>";
+				str += colTypes[c];
+				str += "<br>&#60;" + colDataTypes[c] + "&#62;";
+				str += "</div>";
+				str += "</td>";			
+
+			}
+			str += "</tr>";
+			str += "<tr>";
+			str += "<th>Row</th>"; //insert row index column
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
+						c + ",this);'>";
+				str += colHdrs[c];
+				str += "</th>";					
+
+			}
+			str += "</tr>";
+
+			str += "</table>";		
+
+			var el = document.getElementById("display");
+			el.innerHTML = str;		
+		}
+		
+
+
+		//selectThisCell
+		function selectThisCell(r,c,el) 
+		{				
+			if(_editingCell) //already have the edit box open, cancel it
+			{
+				if(_editingCellEl == el) //if same cell do nothing
+					return false;
+				editCellCancel(); //if new cell cancel
+			}
+			
+			//if column is Author or Timestamp, don't allow select
+			var tableEl = document.getElementById("SubSystemTable");
+			var rows = tableEl.getElementsByTagName("tr");
+			var cols = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td");
+			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+			if(colType == "Author" || 
+					colType == "Timestamp"|| 
+					colType == "Comment")
+				return false;
+			
+			
+			_editingCell = true;
+			_editingCellEl = el;
+			_editingCellPos = [r,c];
+
+			var colDataType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
+			
+			_editingCellElOldValue = el.innerHTML;
+			
+			
+			var str = "";
+			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+
+			if(r == _CONFIG_TYPE_ROW_OFFSET)
+				str += colType + " " + colDataType;
+			else
+				str += _editingCellElOldValue;
+
+			str += "'>";
+//			
+//			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
+//			{
+//				var typeArray = ["UID","Data","OnOff","TrueFalse","YesNo","LinkGroupID","ChildLink"]
+//				str += colType + " " + colDataType;
+//			}
+//			else // column header names
+//			{
+//				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+//				str += _editingCellElOldValue;
+//				str += "'>";
+//			}
+			
+			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
+					"width:90px;height:20px;margin:0 -122px -32px 10px;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
+			str += "</div>";
+			
+			el.innerHTML = str;
+			
+			setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			
+			return true;
+		}
+		
+		//setCaretPosition
+		function setCaretPosition(elem, caretPos, endPos) {
+            elem.focus();
+            elem.setSelectionRange(caretPos, endPos);
+		}
+		
+		//keyHandler
+		function keyHandler(e) 
+		{
+			var TABKEY = 9;
+			var ENTERKEY = 13;
+			var UPKEY = 38;
+			var DNKEY = 40;
+			var ESCKEY = 27;
+			//Debug.log("key " + e.keyCode);
+			
+			var shiftIsDown;
+			if (window.event) 
+			{
+				key = window.event.keyCode;
+				shiftIsDown = !!window.event.shiftKey; // typecast to boolean
+			} 
+			else
+			{
+				key = e.which;
+				shiftIsDown = !!e.shiftKey;	// typecast to boolean
+			}
+			//Debug.log("shift=" + shiftIsDown);
+			
+			//tab key jumps to next cell with a CANCEL
+			//	(enter key does same except saves/OKs value)
+			//	shift is reverse jump
+			if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
+					e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+			{
+				//this.value += "    ";
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				if(e.keyCode == ENTERKEY) 
+					editCellOK(_editingCellPos[0],_editingCellPos[1]);
+				
+				//jump forward (tab/enter) or backward (tab/enter+shift)
+				//	or up or down.
+				//get number of rows and cols
+				//	to determine next row and col to jump to
+				
+				
+				var newRow = _editingCellPos[0];
+				var newCol = _editingCellPos[1];
+				var el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");
+				var numOfRows = _CONFIG_TYPE_ROW_OFFSET + 2;
+				var numOfCols = rows[_CONFIG_TYPE_ROW_OFFSET+1].getElementsByTagName("th").length - 
+						_CONFIG_DATA_COL_OFFSET;
+				do
+				{					
+					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+						newCol += (shiftIsDown?-1:1);
+					else if(e.keyCode == UPKEY)
+						--newRow;
+					else if(e.keyCode == DNKEY)
+						++newRow;
+					
+					//new position is chosen! now make it happen (in a clean way)	
+									
+					if(newCol == numOfCols)	{ ++newRow; newCol = 0;	}
+					if(newRow == numOfRows) newRow = _CONFIG_TYPE_ROW_OFFSET;
+					if(newCol < 0) {--newRow; newCol = numOfCols-1; }
+					if(newRow < _CONFIG_TYPE_ROW_OFFSET) newRow = numOfRows-1;					
+
+					if(newRow == _CONFIG_TYPE_ROW_OFFSET)
+						el = rows[newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];
+					else
+						el = rows[newRow].getElementsByTagName("th")[_CONFIG_DATA_COL_OFFSET+newCol];
+				
+				} while(!selectThisCell(newRow,newCol,el));
+
+				//Debug.log("newRow=" + newRow + " newCol=" + newCol);
+				
+				return false;
+			}
+			else if(e.keyCode == ESCKEY) 
+			{				
+				if(e.preventDefault) 
+					e.preventDefault();
+				editCellCancel();
+				return false;
+			}
+		}
+		
+		//editCellOK
+		function editCellOK(r,c) 
+		{				
+			Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
+					" = " + _editingCellEl.getElementsByTagName("input")[0].value);
+			
+			var str = _editingCellEl.getElementsByTagName("input")[0].value;
+			
+			if(r == _CONFIG_TYPE_ROW_OFFSET) //type and dataType
+			{
+				var colType = str.split(' ')[0];
+				var colDataType = str.split(' ')[1];
+				colDataType = colDataType.substr(1,colDataType.length-2);
+				
+				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
+						colType + "," + colDataType);
+				
+				str = "";
+				str += "<div style='font-size:12px' title='";		
+				str += colType;
+				str += " &#60;" + colDataType + "&#62;";
+				str += "'>";
+				str += colType;
+				str += "<br>&#60;" + colDataType + "&#62;";
+				str += "</div>";
+				str += "</td>";
+				_editingCellEl.innerHTML = str;
+			}			
+			else //colHdr row
+			{
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
+			}
+
+			_editingCell = false;
+			_editingCellEl = 0;
+		}
+		
+		//editCellCancel
+		function editCellCancel() 
+		{	
+			_editingCellEl.innerHTML = _editingCellElOldValue;
+			
+			_editingCell = false;
+			_editingCellEl = 0;
+		}
+		
+
+		//addColumn ~~
+		// adds col to position c (relative to view on page)
+		// absolute col is _dataOffset + c
+		function addColumn(c) 
+		{
+			Debug.log("CfgTBL addColumn " + c);
+			
+			_colHdrArr.splice(c,0,"DefaultColumnName");
+			_colTypeArr.splice(c,0,"Data");
+			_colDataTypeArr.splice(c,0,"VARCHAR2");
+			
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr);
+		}
+		
+		//deleteColumn ~~
+		// deletes col to position c (relative to view on page)
+		// absolute col is _dataOffset + c
+		function deleteColumn(c) 
+		{
+			Debug.log("CfgTBL deleteColumn " + c);
+			
+			_colHdrArr.splice(c,1);
+			_colTypeArr.splice(c,1);
+			_colDataTypeArr.splice(c,1);
+			
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr);
+		}
+
+		
+	</script>
+		
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<h1>Configuration Table Editor</h1>
+
+	<a href='javascript:init()'>Refresh</a> 	&nbsp;&nbsp;
+	<a href='javascript:setupEmptyTable()'>Clear Table</a> 	&nbsp;&nbsp;
+	
+	<hr>
+	
+	<div id='controls'></div>
+	<div id='display'></div>
+	
+</body>
+	
+</html>
