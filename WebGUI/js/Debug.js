@@ -94,7 +94,7 @@ Debug._errBoxId = "Debug-error-box";
 //Show the error string err in the error popup on the window
 // create error div if not yet created
 Debug.errorPop = function(err,isInfo) {
-	
+				
 	//check if Debug._errBox has been set
 	if(!Debug._errBox)
 	{	

@@ -891,7 +891,7 @@ throw (xgi::exception::Exception)
 	__MOUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false); //true for debug printout
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true); //true for debug printout
 }
 
 //========================================================================================================================
@@ -1521,31 +1521,58 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	fprintf(fp,outss.str().c_str());
 	fclose(fp);
 
-	//if error detected reading back then move the configuration to .unused
-	bool errorDetected = false;
+	//reload all config info with refresh to pick up possibly new config
+	cfgMgr->getAllConfigurationInfo(true);
 
-	__MOUT__ << std::endl;
+	//if error detected reading back then move the saved configuration info to .unused
 	try
 	{
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
 	}
 	catch(std::runtime_error& e)
 	{
-		__MOUT__ << std::endl;
-		__SS__ << "Error detected reading back the configuration: " <<
-				e.what() << std::endl;
-		xmldoc.addTextElementToData("Error", ss.str());
-		errorDetected = true;
-	}
-	__MOUT__ << std::endl;
+		//configuration info is illegal so report error, and disable file
 
-	if(errorDetected) //move file to ".unused"
+		__SS__ << "Error detected reading back the configuration '" << configName <<
+				"' created by the new attempt to save column info: " <<
+				e.what() << std::endl;
+		__MOUT_ERR__ << ss.str() << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+
+		//if error detected //move file to ".unused"
+		{
+			if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
+					(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
+				__MOUT_INFO__ << ( "File successfully renamed: " +
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+			else
+				__MOUT_ERR__ << ( "Error renaming file to " +
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+
+			//reload all with refresh to remove new configuration
+			cfgMgr->getAllConfigurationInfo(true);
+		}
+	}
+
+	//debug all table column info
+	//FIXME -- possibly remove this debug feature in future
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
+	//give a print out of currently illegal configuration column info
+	__MOUT_INFO__ << "Looking for errors in all configuration column info..." << std::endl;
+	for(auto& cfgInfo: allCfgInfo)
 	{
-		if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
-				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
-			__MOUT_INFO__ << ( "File successfully renamed" ) << std::endl;
-		else
-			__MOUT_ERR__ << ( "Error renaming file" ) << std::endl;
+		try
+		{
+			cfgMgr->getConfigurationByName(cfgInfo.first)->getMockupViewP()->init();
+		}
+		catch(std::runtime_error& e)
+		{
+			__MOUT_WARN__ << "\n\n##############################################\n" <<
+					"Error identified in column info of configuration '" <<
+					cfgInfo.first << "':\n\n" <<
+					e.what() << "\n\n" << std::endl;
+		}
 	}
 }
 

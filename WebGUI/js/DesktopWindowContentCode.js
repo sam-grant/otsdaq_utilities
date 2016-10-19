@@ -383,7 +383,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			else if(req.status == 0)  //request was interrupted (probably window was closed)
 			{
 				Debug.log("Status=0. Likely this means a window was closed, or the server crashed, in the middle of a request. " +
-						"\n(It also could mean 'potential security risk' like a cross-domain request) ",Debug.MED_PRIORITY);
+						"\n(It also could mean 'potential security risk' like a cross-domain request) ",Debug.HIGH_PRIORITY);
 				return;
 			}
 			else //bad address response
