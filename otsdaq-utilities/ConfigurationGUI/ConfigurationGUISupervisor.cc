@@ -1427,7 +1427,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 //		return resulting handleGetConfigurationXML mock-up view
 //
 void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
-		const std::string& configName, const std::string& data)
+		std::string& configName, const std::string& data)
 {
 	//create all caps name and validate
 	//	only allow alpha names with Configuration at end
@@ -1443,6 +1443,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	}
 
 	__MOUT__ << "capsName=" << capsName << std::endl;
+	__MOUT__ << "configName=" << configName << std::endl;
 
 	//create preview string to validate column info before write to file
 	std::stringstream outss;
@@ -1519,6 +1520,33 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	}
 	fprintf(fp,outss.str().c_str());
 	fclose(fp);
+
+	//if error detected reading back then move the configuration to .unused
+	bool errorDetected = false;
+
+	__MOUT__ << std::endl;
+	try
+	{
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
+	}
+	catch(std::runtime_error& e)
+	{
+		__MOUT__ << std::endl;
+		__SS__ << "Error detected reading back the configuration: " <<
+				e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		errorDetected = true;
+	}
+	__MOUT__ << std::endl;
+
+	if(errorDetected) //move file to ".unused"
+	{
+		if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
+			__MOUT_INFO__ << ( "File successfully renamed" ) << std::endl;
+		else
+			__MOUT_ERR__ << ( "Error renaming file" ) << std::endl;
+	}
 }
 
 //========================================================================================================================
