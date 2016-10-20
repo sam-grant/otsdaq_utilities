@@ -241,6 +241,9 @@
 			else
 				_srcName = srcName;
 			
+			//force proper comment name
+			colTypes[colTypes.length-2] = "CommentDescription";
+					 
 			//cache data for add/delete ease
 			_colHdrArr = colHdrs;
 			_colTypeArr = colTypes;
