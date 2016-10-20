@@ -584,6 +584,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 //</subconfiguration>
 void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version)
+try
 {
 	char tmpIntStr[100];
 	DOMElement* parentEl;
@@ -662,6 +663,16 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmld
 				xmldoc.addTextElementToData("ty", val);
 			}
 	}
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting view! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting view! ");
 }
 
 
