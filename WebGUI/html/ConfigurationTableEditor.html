@@ -41,6 +41,10 @@
 		var _CONFIG_DATA_COL_OFFSET = 1;
 		var _CONFIG_FIXED_CELLS = 3;
 	
+
+		var _typeArray = ["Data","OnOff","TrueFalse","YesNo","LinkGroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
+				
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
 		var _editingCellPos = [-1,-1];	
@@ -131,6 +135,25 @@
 			
 		}
 
+		//handleTypeSelect ~
+		function handleTypeSelect()
+		{
+			var sel = document.getElementById("selectCellTypeSelect");
+			var selVal = sel.options[sel.selectedIndex].value;
+			Debug.log("CfgTableEditor handleTypeSelect = " + selVal);
+
+			var specTypeArray = ["LinkGroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+					
+			var found = false;
+			for(var i=0;i<specTypeArray.length;++i)
+				if(selVal == specTypeArray[i]) { found = true; break; }
+
+			var el = document.getElementById("selectCellSpecTypeID");
+			
+			el.style.display = found?"block":"none";	
+			
+		}
+		
 		//loadTable ~
 		function loadTable()
 		{
@@ -245,7 +268,7 @@
 					str += "+";
 					str += "</a>";
 
-					if(c < colTypes.length - _CONFIG_FIXED_CELLS)
+					if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
 					{
 						str += "/<a href='javascript:deleteColumn(" + c + ");'>";
 						str += "-";
@@ -314,7 +337,8 @@
 			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
-					colType == "Comment")
+					colType == "Comment" || 
+					colType == "UID")
 				return false;
 			
 			
@@ -328,26 +352,43 @@
 			
 			
 			var str = "";
-			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-
-			if(r == _CONFIG_TYPE_ROW_OFFSET)
-				str += colType + " " + colDataType;
-			else
-				str += _editingCellElOldValue;
-
-			str += "'>";
-//			
-//			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
-//			{
-//				var typeArray = ["UID","Data","OnOff","TrueFalse","YesNo","LinkGroupID","ChildLink"]
+//			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+//			if(r == _CONFIG_TYPE_ROW_OFFSET)
 //				str += colType + " " + colDataType;
-//			}
-//			else // column header names
-//			{
-//				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+//			else
 //				str += _editingCellElOldValue;
-//				str += "'>";
-//			}
+//
+//			str += "'>";
+			
+			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
+			{
+				str += "<select  onkeydown='keyHandler(event)' onchange='handleTypeSelect()' id='selectCellTypeSelect' style='float:left'>";
+				for(var i=0;i<_typeArray.length;++i)
+				{			
+					str += "<option value='" + _typeArray[i] + "'>";
+					str += _typeArray[i];	//can display however
+					str += "</option>";
+				}				
+				str += "</select>";
+				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
+						"style='display:none; width:40px; float:left; height: 13px' value='0'>";				
+				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
+				for(var i=0;i<_dataTypeArray.length;++i)
+				{			
+					str += "<option value='" + _dataTypeArray[i] + "'>";
+					str += "&lt;" + _dataTypeArray[i] + "&gt;";	//can display however
+					str += "</option>";
+				}				
+				str += "</select>";
+			}
+			else // column header names
+			{
+				str += "<input type='text' onkeydown='keyHandler(event)' " + 
+						"style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + 
+						"px; height:" + (el.offsetHeight-8) + "px' value='";
+				str += _editingCellElOldValue;
+				str += "'>";
+			}
 			
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
 					"width:90px;height:20px;margin:0 -122px -32px 10px;'>";
@@ -356,7 +397,10 @@
 			
 			el.innerHTML = str;
 			
-			setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			if(r == _CONFIG_TYPE_ROW_OFFSET) //select dropdown menu
+				el.getElementsByTagName("select")[0].focus();
+			else //select text box
+				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			
 			return true;
 		}
@@ -458,16 +502,23 @@
 			Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
 					" = " + _editingCellEl.getElementsByTagName("input")[0].value);
 			
-			var str = _editingCellEl.getElementsByTagName("input")[0].value;
+			var str;
 			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //type and dataType
 			{
-				var colType = str.split(' ')[0];
-				var colDataType = str.split(' ')[1];
-				colDataType = colDataType.substr(1,colDataType.length-2);
+				//get type and data type from select boxes (and input field for link ID)
+				var sel = document.getElementById("selectCellTypeSelect");				
+				var colType = sel.options[sel.selectedIndex].value;
+				if(colType.indexOf("Link") >= 0) //if link, append special type ID
+					colType += document.getElementById("selectCellSpecTypeID").value;
+				sel = document.getElementById("selectCellDataTypeSelect");
+				var colDataType = sel.options[sel.selectedIndex].value;
 				
 				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
 						colType + "," + colDataType);
+				
+				_colTypeArr[c] = colType;
+				_colDataTypeArr[c] = colDataType;
 				
 				str = "";
 				str += "<div style='font-size:12px' title='";		
@@ -482,6 +533,7 @@
 			}			
 			else //colHdr row
 			{
+				str = _editingCellEl.getElementsByTagName("input")[0].value;
 				_editingCellEl.innerHTML = "";
 				_editingCellEl.appendChild(document.createTextNode(str));
 			}
@@ -540,7 +592,11 @@
 
 	<a href='javascript:init()'>Refresh</a> 	&nbsp;&nbsp;
 	<a href='javascript:setupEmptyTable()'>Clear Table</a> 	&nbsp;&nbsp;
-	
+
+	<a style='margin-left:300px' target="_blank" 
+			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=table+editor&all_words=1&issues=1&documents=1" 
+					title="Click to open ots documentation">
+	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
 	<hr>
 	
 	<div id='controls'></div>

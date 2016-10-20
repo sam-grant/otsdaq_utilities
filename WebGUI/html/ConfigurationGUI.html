@@ -1101,8 +1101,37 @@
 		
 		//versionsForCreateConfig ~
 		//0 is default, 1 is latest
-		function versionsForCreateConfig(i)
+		function versionsForCreateConfig(i,reqIndex)
 		{
+			if(i == 0) //handle defaults request
+				return DesktopContent.XMLHttpRequest("Request?RequestType=getVersionAliases", "", 
+						versionsForCreateConfig, 2);	
+			var req;
+						
+			var aliases;
+			var names;
+			var versions;
+			var comments;
+			if(reqIndex) //handle defaults response
+			{
+				req = i;
+				i = reqIndex;
+				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				activateSystemConfigHandler(req); //display active config groups
+				
+				aliases = req.responseXML.getElementsByTagName("VersionAlias");
+				names = req.responseXML.getElementsByTagName("ConfigurationName");
+				versions = req.responseXML.getElementsByTagName("Version");
+				comments = req.responseXML.getElementsByTagName("Comment");
+			}
+								
 			var els = document.getElementsByClassName("memberConfigCheckbox");
 			var sel,options;
 			switch(i)
@@ -1117,15 +1146,46 @@
 						options[options.length-1].selected = true;
 				}
 				break;
-			default: //FIXME -- get defaults from server
+			case 2: //defaults response
 				//select defaults
+				var name, found, i;
+				var defaultVersion;
 				for(var el=0;el<els.length;++el)
 				{
+					name = els[el].value;
+					
+					//find default for name
+					found = false;
+					for(i=0;i<names.length;++i)
+						if(name == names[i].getAttribute("value") &&
+								"Default" == aliases[i].getAttribute("value"))
+						{ 
+							Debug.log("Found default for " + els[el].value);
+							found = true;
+							break;
+						}
+
 					sel = document.getElementById("select-" + els[el].value);
 					options = sel.options;
-					if(options.length)
-						options[0].selected = true;
+					
+					if(!found)
+					{
+						//no default found
+						Debug.log("Default to oldest for " + els[el].value);
+						if(options.length)
+							options[0].selected = true;
+						continue;
+					}
+					
+					//found so select default
+					defaultVersion = versions[i].getAttribute("value");
+					Debug.log("Found default as " + defaultVersion);
+					if(defaultVersion < options.length)
+						options[defaultVersion].selected = true;
 				}
+				break;
+			default: 
+				Debug.log("Impossible! Should never happen!! Alert system admins.",Debug.HIGH_PRIORITY);				
 			}
 		}
 		
@@ -1860,6 +1920,11 @@
 	<a href='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
 	<a href='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
 	<a href='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
+
+	<a style='margin-left:50px' target="_blank" 
+			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
+					title="Click to open ots documentation">
+	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
 	<hr>
 	<div id='activeConfig'></div>
 	<div id='display'></div>
