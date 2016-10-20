@@ -633,7 +633,7 @@ try
 		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
 	}
 
-	//verify mockup columns after columns are posted to xmldo
+	//verify mockup columns after columns are posted to xmldoc
 	if(version.isInvalid())
 		cfgViewPtr->init();
 
