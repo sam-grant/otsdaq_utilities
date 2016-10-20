@@ -93,8 +93,8 @@
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
+				Debug.log(err,Debug.HIGH_PRIORITY);		
+				//try to power through
 			}
 
 			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
