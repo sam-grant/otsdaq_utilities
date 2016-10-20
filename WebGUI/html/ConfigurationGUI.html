@@ -148,7 +148,6 @@
 			//setupSpecificConfigGroup("myContext","0");
 			//setupConfigCreator();
 			
-			setupSystemViewMode();
 
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
@@ -185,6 +184,9 @@
 							Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
 					}
 				);
+			
+
+			setupSystemViewMode();
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -235,6 +237,7 @@
 		
 		//groupAliasesRequestHandler ~
 		function groupAliasesRequestHandler(req) {
+			
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -244,7 +247,7 @@
 				//return;
 			}
 			
-			activateSystemConfigHandler(req); //display active config groups
+			activateSystemConfigHandler(req); //display active config groups			
 			
 			var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
 			var groupNames = req.responseXML.getElementsByTagName("GroupName");
@@ -852,15 +855,7 @@
 		
 		//activateSystemConfigHandler ~
 		function activateSystemConfigHandler(req)
-		{
-			//show xml Error if present as popup Debug high priority
-			var err = DesktopContent.getXMLValue(req,"Error");
-			if(err && err != "") 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;					
-			}
-			
+		{	
 			var activeConfigGroups = [
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
