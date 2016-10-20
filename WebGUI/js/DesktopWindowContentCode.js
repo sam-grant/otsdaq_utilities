@@ -481,8 +481,19 @@ DesktopContent.getXMLValue = function(req, name) {
 //returns xml entry node (first node with name)
 DesktopContent.getXMLNode = function(req, name) {
 	var els;
-	if(req && req.responseXML && (els = req.responseXML.getElementsByTagName(name)).length > 0)
-		return els[0];
+	if(req && req.responseXML &&
+			(els = req.responseXML.childNodes[0].childNodes[1].childNodes).length > 0)
+	{
+			//(els = req.responseXML.getElementsByTagName(name)).length > 0)
+		Debug.log("size== " + els.length);
+		for(var i=0;i<els.length;++i)
+			if(els[i].nodeName == name)			
+				return els[i];
+			else
+				Debug.log(i + ": " + els[i].nodeName + " -- " + name);
+					
+		return undefined;
+	}
 	else
 		return undefined;	
 }

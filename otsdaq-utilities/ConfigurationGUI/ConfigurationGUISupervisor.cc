@@ -42,6 +42,8 @@ theRemoteWebUsers_  (this)
 {
 	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
+
+	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Tomorrow" );
 	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
 
 	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
@@ -95,14 +97,17 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	cgicc::Cgicc cgi(in);
-	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
-	if(configName != "")
-		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
-		getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
-	else
-		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
-		getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
+	*out << "hi";
+//	exit(0);
+//	__MOUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+//	cgicc::Cgicc cgi(in);
+//	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
+//	if(configName != "")
+//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
+//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+//	else
+//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI3.html?urn=" <<
+//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -112,7 +117,7 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getOrPostData(cgi,"RequestType");//from GET or POST
 
-	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	__MOUT__ << "----Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//	saveConfigurationInfo
@@ -676,7 +681,6 @@ try
 				//__MOUT__ << "\t " << val << std::endl;
 
 				xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
-				xmldoc.addTextElementToData("ty", val);
 			}
 	}
 }
@@ -910,7 +914,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		std::string& configName, const std::string& data)
 {
 	//create all caps name and validate
-	//	only allow alpha names with Configuration at end
+	//	only allow alpha-numeric names with Configuration at end
 	std::string capsName;
 	try
 	{
@@ -1073,19 +1077,19 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	if(activeVersions.find("ConfigurationGroupAliases") == activeVersions.end())
+	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
 	{
 		__SS__ << "Active version of ConfigurationGroupAliases missing!" << std::endl;
 		xmldoc.addTextElementToData("Error", ss.str());
 		return;
 	}
-	__MOUT__ << "activeVersions[\"ConfigurationGroupAliases\"]=" <<
-			activeVersions["ConfigurationGroupAliases"] << std::endl;
+	__MOUT__ << "activeVersions[\"GroupAliasesConfiguration\"]=" <<
+			activeVersions["GroupAliasesConfiguration"] << std::endl;
 	xmldoc.addTextElementToData("ConfigurationGroupAliasesVersion",
-			activeVersions["ConfigurationGroupAliases"].toString());
+			activeVersions["GroupAliasesConfiguration"].toString());
 
 	std::map<std::string,ConfigurationTree> aliasNodePairs =
-			cfgMgr->getNode("ConfigurationGroupAliases").getChildren();
+			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
 
 	for(auto& aliasNodePair:aliasNodePairs)
 	{

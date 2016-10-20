@@ -182,7 +182,7 @@
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
 				"&configName=" + configName, 
-				"columnCSV=" + data, specificConfigRequestHandler);	
+				"columnCSV=" + data, specificConfigRequestHandler, 1);	
 		}
 		
 
@@ -206,15 +206,18 @@
 		}
 
 		//specificConfigRequestHandler
-		function specificConfigRequestHandler(req) {	
+		function specificConfigRequestHandler(req, isFromSaveReq) {	
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
 				//try to power through
 			}
-			
+						
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			
+			if(isFromSaveReq && !err)
+				Debug.log("Successful response to save request of Info for '" + configName + "'",Debug.INFO_PRIORITY);
 			
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
@@ -341,7 +344,7 @@
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
 					colType == "Comment" || 
-					colType == "UID")
+					(r == _CONFIG_TYPE_ROW_OFFSET && colType == "UID"))
 				return false;
 			
 			

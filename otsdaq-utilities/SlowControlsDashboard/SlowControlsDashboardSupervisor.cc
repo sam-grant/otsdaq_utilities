@@ -37,7 +37,7 @@ SOAPMessenger  (this),
 theRemoteWebUsers_(this)
 {
 	INIT_MF("SlowControlsDashboardSupervisor");
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 
 	xgi::bind (this, &SlowControlsDashboardSupervisor::requestHandler, "Default");
 	init();
@@ -57,7 +57,7 @@ void SlowControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Outpu
 	std::cout << __COUT_HDR_FL__ << std::endl;
 	std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
 	std::cout << __COUT_HDR_FL__ << Command << std::endl;
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " " << Command << " : end"<< std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " " << Command << " : end"<< std::endl;
 
 
 	if(Command == "")
@@ -130,7 +130,7 @@ void SlowControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Outpu
 	else if(Command == "loadPage")
 	{
 		std::string page = CgiDataUtilities::getData(cgi,"Page");
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " " << page << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " " << page << std::endl;
 
 		loadPage(in, out, &xmldoc, page);
 	}
@@ -163,16 +163,16 @@ void SlowControlsDashboardSupervisor::destroy(void)
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/SlowControlsDashboard.html?urn=" <<
-	getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") <<"' /></frameset></html>";
+	this->getApplicationDescriptor()->getLocalId() <<"' /></frameset></html>";
 }
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string UID ) throw (xgi::exception::Exception)
 {
 
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " "	<< "Polling on UID:" << UID << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Polling on UID:" << UID << std::endl;
 
 	std::map<int, std::set<std::string>>::iterator mapReference;
 
@@ -233,7 +233,7 @@ void SlowControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, H
 
 		/*for (std::set<unsigned long>::iterator it = mapReference->second->begin(); it != mapReference->second.end(); ++it)
 		{
-			//std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << it << std::endl;
+			//std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << it << std::endl;
 
 
 		}*/
@@ -260,7 +260,7 @@ void SlowControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, H
 //========================================================================================================================
 void SlowControlsDashboardSupervisor::GetPVSettings(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " "	<< "Getting settings for " << pvList << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Getting settings for " << pvList << std::endl;
 
 	std::string JSONMessage = "{ ";
 
@@ -316,7 +316,7 @@ void SlowControlsDashboardSupervisor::GetPVSettings(xgi::Input * in, xgi::Output
 void SlowControlsDashboardSupervisor::GenerateUID(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvlist ) throw (xgi::exception::Exception)
 {
 
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " "	<< "Generating UID" << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Generating UID" << std::endl;
 
 	std::set<std::string> pvDependencies;
 	std::string uid;
@@ -343,12 +343,12 @@ void SlowControlsDashboardSupervisor::GenerateUID(xgi::Input * in, xgi::Output *
 		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) +"\"}");
 	}else
 	{
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " PVList invalid: "	<< pvlist << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " PVList invalid: "	<< pvlist << std::endl;
 		uid = "{ \"message\": \"-1\"}";
 	}
 
 
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " NEW UID: "	<< UID_ << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: "	<< UID_ << std::endl;
 
 	xmldoc->addTextElementToData("JSON", uid); //add to response
 
@@ -358,7 +358,7 @@ void SlowControlsDashboardSupervisor::GenerateUID(xgi::Input * in, xgi::Output *
 void SlowControlsDashboardSupervisor::GetList(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc ) throw (xgi::exception::Exception)
 {
 
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " "	<< interface_->getList("JSON") << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< interface_->getList("JSON") << std::endl;
 
 	xmldoc->addTextElementToData("JSON", interface_->getList("JSON")); //add to response
 
@@ -372,19 +372,19 @@ void SlowControlsDashboardSupervisor::GetPages(xgi::Input * in, xgi::Output * ou
 
 	std::vector<std::string> pages;
 
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Path to pages: " << pathToPages << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages: " << pathToPages << std::endl;
 	if((dir = opendir (pathToPages.c_str())) != NULL)
 	{
 		while((ent = readdir(dir)) != NULL)
 		{
 			pages.push_back(ent->d_name);
-			std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << " GetPages"	<< ent->d_name << std::endl;
+			std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " GetPages"	<< ent->d_name << std::endl;
 		}
 		closedir(dir);
 	}
 	else
 	{
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Could not open directory: " << pathToPages << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Could not open directory: " << pathToPages << std::endl;
 		return;
 	}*/
 	std::vector<std::string> pages;
@@ -413,21 +413,21 @@ void SlowControlsDashboardSupervisor::loadPage(xgi::Input * in, xgi::Output * ou
 	struct stat buffer;
 	if(page.find("..") != std::string::npos)
 	{
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Error! Request using '..': " << page << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '..': " << page << std::endl;
 	}
 	else if (page.find("~") != std::string::npos)
 	{
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Error! Request using '~': " << page << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '~': " << page << std::endl;
 	}
 	else if(!(stat(page.c_str(), &buffer) == 0))
 	{
-		std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Error! File not found: " << page << std::endl;
+		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! File not found: " << page << std::endl;
 	}
 
 	std::string file = PAGES_DIRECTORY
 	file += "/" + page;
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Trying to load page: "	<< page << std::endl;
-	std::cout << __COUT_HDR_FL__ << getenv("SLOW_CONTROLS_DASHBOARD_SUPERVISOR_ID") << "Trying to load page: "	<< file << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< page << std::endl;
+	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< file << std::endl;
 	//read file 
 	//for each line in file
 

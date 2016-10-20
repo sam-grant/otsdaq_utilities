@@ -147,7 +147,7 @@ throw (xgi::exception::Exception)
 {
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Visualization.html?urn=" <<
-			getenv("VISUAL_SUPERVISOR_ID") <<"'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 
 }
 
@@ -157,7 +157,7 @@ throw (xgi::exception::Exception)
 {
 
 	*out << "<!DOCTYPE HTML><html lang='en'><iframe style='width:100%;height:100%;position:absolute;left:0;top:0;border:0;padding:0;margin:0;' src='/WebPath/html/Visualization.html?urn=" <<
-			getenv("VISUAL_SUPERVISOR_ID") <<"'></iframe></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></iframe></html>";
 
 }
 

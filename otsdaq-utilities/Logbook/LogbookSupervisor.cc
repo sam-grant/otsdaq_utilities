@@ -218,7 +218,7 @@ throw (xgi::exception::Exception)
 
 	__MOUT__ << " active experiment " << activeExperiment_ << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Logbook.html?urn=" <<
-			getenv("LOGBOOK_SUPERVISOR_ID") << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() << "&active_experiment=" << activeExperiment_ << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -315,7 +315,7 @@ throw (xgi::exception::Exception)
 	std::string src = CgiDataUtilities::getData(cgi,"src");
 	__MOUT__ << " Get Log Image " << src << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookImage.html?urn=" <<
-			getenv("LOGBOOK_SUPERVISOR_ID") << "&src=" << src << "'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() << "&src=" << src << "'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -331,7 +331,7 @@ throw (xgi::exception::Exception)
 	std::string activeExperiment = CgiDataUtilities::getData(cgi,"activeExperiment");
 	__MOUT__ << " Start Log Report for " << activeExperiment << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><header><title>ots Logbook Reports</title></header><frameset col='100%' row='100%'><frame src='/WebPath/html/LogbookReport.html?urn=" <<
-			getenv("LOGBOOK_SUPERVISOR_ID") << "&activeExperiment=" << activeExperiment << "'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() << "&activeExperiment=" << activeExperiment << "'></frameset></html>";
 }
 
 //========================================================================================================================

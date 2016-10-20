@@ -55,7 +55,7 @@ throw (xgi::exception::Exception)
 {
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
-			getenv("CHAT_SUPERVISOR_ID") <<"'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================

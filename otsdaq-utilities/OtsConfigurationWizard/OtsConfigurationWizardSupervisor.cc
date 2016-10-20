@@ -37,8 +37,8 @@ xdaq::Application(s   ),
 SOAPMessenger  (this)
 {
 	INIT_MF("OtsConfigurationWizard");
-	generateURL();
 
+	generateURL();
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,                "Default" );
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::Verification,        securityCode_);
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::RequestIcons,       "requestIcons");
@@ -48,6 +48,7 @@ SOAPMessenger  (this)
 	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,        "SupervisorSequenceCheck",        XDAQ_NS_URI);
 
 	init();
+
 }
 
 //========================================================================================================================
@@ -55,11 +56,13 @@ OtsConfigurationWizardSupervisor::~OtsConfigurationWizardSupervisor(void)
 {
 	destroy();
 }
+
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::init(void)
 {
-	//called by constructor
+	getApplicationContext();
 }
+
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::generateURL()
 {
@@ -77,12 +80,19 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
 	}
 
-	std::thread([&](){printURL();}).detach();
+
+	__MOUT_ERR__ <<
+			this->getApplicationDescriptor()->getURN() << // getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
+			"/urn:xdaq-application:lid="
+			<< this->getApplicationDescriptor()->getLocalId() << "/" << securityCode_ << std::endl;
+	std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
+			{printURL(ptr,securityCode);},this,securityCode_).detach();
 
 	return;
 }
 
-void OtsConfigurationWizardSupervisor::printURL()
+void OtsConfigurationWizardSupervisor::printURL(OtsConfigurationWizardSupervisor *ptr,
+		std::string securityCode)
 {
 	INIT_MF("ConfigurationWizard");
 	// child process
@@ -90,8 +100,10 @@ void OtsConfigurationWizardSupervisor::printURL()
 	for (; i < 5; ++i)
 	{
 		std::this_thread::sleep_for (std::chrono::seconds(2));
-		__MOUT_ERR__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") << "/urn:xdaq-application:lid="
-				<< getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") << "/" << securityCode_ << std::endl;
+		__MOUT_ERR__ <<
+				getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
+				"/urn:xdaq-application:lid="
+				<< ptr->getApplicationDescriptor()->getLocalId() << "/" << securityCode << std::endl;
 	}
 }
 
@@ -141,7 +153,7 @@ throw (xgi::exception::Exception)
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
 			"<frameset col='100%' row='100%'><frame src='/WebPath/html/Unauthorized.html?urn=" <<
-			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )
@@ -149,7 +161,7 @@ throw (xgi::exception::Exception)
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
 			"<frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
-			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_ID") <<"'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 
 }
 //========================================================================================================================
