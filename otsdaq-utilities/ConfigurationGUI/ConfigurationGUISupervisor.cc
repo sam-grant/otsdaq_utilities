@@ -598,7 +598,6 @@ try
 	}
 
 	xmldoc.addTextElementToData("ConfigurationName", configName);	//table name
-	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
 
 	//existing table versions
 	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
@@ -615,7 +614,21 @@ try
 		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
 	}
 	else					//use view version
-		cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+	{
+		try
+		{
+			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+		}
+		catch(...) //default to mockup for failsafes in GUI editor
+		{
+			__MOUT_WARN__ << "Failer to get version: " << version <<
+					"... defaulting to mockup!" << std::endl;
+			version = ConfigurationVersion();
+			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+		}
+	}
+	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
+
 
 
 
@@ -701,7 +714,17 @@ try
 
 	//create temporary version from starting version
 	if(!version.isInvalid()) //if not using mock-up, make sure starting version is loaded
-		cfgMgr->getVersionedConfigurationByName(configName,version);
+	{
+		try //FIXME eventually.. on 10/20/2016 desktop icons was failing to load temp versions (something going wrong with cache?)
+		{
+			cfgMgr->getVersionedConfigurationByName(configName,version);
+		}
+		catch(...)
+		{
+			//force to mockup
+			version = ConfigurationVersion();
+		}
+	}
 	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
