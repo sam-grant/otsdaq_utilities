@@ -613,7 +613,6 @@ try
 	if(version.isInvalid()) //use mockup
 	{
 		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
-		cfgViewPtr->init();
 	}
 	else					//use view version
 		cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
@@ -633,6 +632,10 @@ try
 		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
 		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
 	}
+
+	//verify mockup columns after columns are posted to xmldo
+	if(version.isInvalid())
+		cfgViewPtr->init();
 
 	parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
 
