@@ -94,7 +94,7 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);		
-				//try to power through
+				return;
 			}
 
 			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
@@ -211,7 +211,7 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
+				//try to power through
 			}
 			
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
