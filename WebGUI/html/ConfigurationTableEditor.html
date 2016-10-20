@@ -537,8 +537,9 @@
 			else //colHdr row
 			{
 				str = _editingCellEl.getElementsByTagName("input")[0].value;
+				_colHdrArr[c] = str;
 				_editingCellEl.innerHTML = "";
-				_editingCellEl.appendChild(document.createTextNode(str));
+				_editingCellEl.appendChild(document.createTextNode(str));				
 			}
 
 			_editingCell = false;
