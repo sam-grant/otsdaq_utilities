@@ -487,17 +487,21 @@ DesktopContent.getXMLNode = function(req, name) {
 	{
 		//find DATA
 		var i;
-		els = req.responseXML.childNodes[0].childNodes;
-		for(var i=0;i<els.length;++i)
-			if(els[i].nodeName == "DATA")
-			{
-				els = req.responseXML.childNodes[0].childNodes[i].childNodes;
-				
-				for(i=0;i<els.length;++i)
-					if(els[i].nodeName == name)			
-						return els[i];
-				break;
-			}			
+		els = req.responseXML.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		if(els.length)
+			return els[0];
+		//reverted to former way
+		
+//		for(var i=0;i<els.length;++i)
+//			if(els[i].nodeName == "DATA")
+//			{
+//				els = req.responseXML.childNodes[0].childNodes[i].childNodes;
+//				
+//				for(i=0;i<els.length;++i)
+//					if(els[i].nodeName == name)			
+//						return els[i];
+//				break;
+//			}			
 	}
 	
 	return undefined;	

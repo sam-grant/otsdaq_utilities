@@ -396,7 +396,7 @@
 				str += niceName(configName);
 				str += "</a><br><table><tr>";
 
-				configVersions = configVersionHdr[i].getElementsByTagName("ConfigurationVersion");
+				configVersions = configVersionHdr[i].getElementsByTagName("Version");
 				
 				Debug.log("CfgGUI requestHandler config= " + configName +
 								+ " configNames.length " + configVersions.length);
@@ -555,7 +555,7 @@
 				Debug.log("Error?! No tag for versions returned for configName: " + configName, Debug.HIGH_PRIORITY);
 				return;
 			}
-			var configVersions = kocVersionHdr[0].getElementsByTagName("ConfigurationVersion");
+			var configVersions = kocVersionHdr[0].getElementsByTagName("Version");
 			
 			var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
 			
@@ -961,7 +961,7 @@
 				str += "</input>";
 				str += "</a>";
 
-				configVersions = configVersionHdr[i].getElementsByTagName("ConfigurationVersion");
+				configVersions = configVersionHdr[i].getElementsByTagName("Version");
 				//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
 
 				str += "</td><td>";

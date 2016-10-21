@@ -607,7 +607,7 @@ try
 	//existing table versions
 	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
 	for (auto &v:allCfgInfo[configName.c_str()].versions_)
-		xmldoc.addTextElementToParent("ConfigurationVersion", v.toString(), parentEl);
+		xmldoc.addTextElementToParent("Version", v.toString(), parentEl);
 
 
 	//table columns and then rows (from config view)
@@ -1235,7 +1235,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 
 		//get version key for the current system subconfiguration key
 		for (auto &version:it->second.versions_)
-			xmldoc.addTextElementToParent("ConfigurationVersion", version.toString(), parentEl);
+			xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
 
 		++it;
 	}
