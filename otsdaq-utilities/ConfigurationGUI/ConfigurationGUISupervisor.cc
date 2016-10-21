@@ -1075,7 +1075,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 
 	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
 	{
-		__SS__ << "Active version of ConfigurationGroupAliases missing!" << std::endl;
+		__SS__ << "Active version of GroupAliasesConfiguration missing!" << std::endl;
 		xmldoc.addTextElementToData("Error", ss.str());
 		return;
 	}
