@@ -479,23 +479,28 @@ DesktopContent.getXMLValue = function(req, name) {
 
 //=====================================================================================
 //returns xml entry node (first node with name)
+//	go only to depth 1 in DATA
+//	...former way was els = req.responseXML.getElementsByTagName(name)
 DesktopContent.getXMLNode = function(req, name) {
 	var els;
-	if(req && req.responseXML &&
-			(els = req.responseXML.childNodes[0].childNodes[1].childNodes).length > 0)
+	if(req && req.responseXML)
 	{
-			//(els = req.responseXML.getElementsByTagName(name)).length > 0)
-		Debug.log("size== " + els.length);
+		//find DATA
+		var i;
+		els = req.responseXML.childNodes[0].childNodes;
 		for(var i=0;i<els.length;++i)
-			if(els[i].nodeName == name)			
-				return els[i];
-			else
-				Debug.log(i + ": " + els[i].nodeName + " -- " + name);
-					
-		return undefined;
+			if(els[i].nodeName == "DATA")
+			{
+				els = req.responseXML.childNodes[0].childNodes[i].childNodes;
+				
+				for(i=0;i<els.length;++i)
+					if(els[i].nodeName == name)			
+						return els[i];
+				break;
+			}			
 	}
-	else
-		return undefined;	
+	
+	return undefined;	
 }
 
 //=====================================================================================
