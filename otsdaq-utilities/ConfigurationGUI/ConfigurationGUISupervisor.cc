@@ -95,7 +95,6 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
 	cgicc::Cgicc cgi(in);
 	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
 	if(configName != "")
