@@ -42,8 +42,6 @@ theRemoteWebUsers_  (this)
 {
 	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
-
-	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Tomorrow" );
 	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
 
 	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
@@ -97,17 +95,15 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	*out << "hi";
-//	exit(0);
-//	__MOUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-//	cgicc::Cgicc cgi(in);
-//	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
-//	if(configName != "")
-//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
-//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
-//	else
-//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI3.html?urn=" <<
-//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+
+	cgicc::Cgicc cgi(in);
+	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
+	if(configName != "")
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	else
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================
@@ -117,7 +113,7 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getOrPostData(cgi,"RequestType");//from GET or POST
 
-	__MOUT__ << "----Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//	saveConfigurationInfo
