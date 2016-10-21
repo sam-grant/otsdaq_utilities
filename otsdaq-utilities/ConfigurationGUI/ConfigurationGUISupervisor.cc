@@ -97,17 +97,14 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	*out << "hi";
-//	exit(0);
-//	__MOUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-//	cgicc::Cgicc cgi(in);
-//	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
-//	if(configName != "")
-//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
-//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
-//	else
-//		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI3.html?urn=" <<
-//		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	cgicc::Cgicc cgi(in);
+	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
+	if(configName != "")
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	else
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI3.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================
