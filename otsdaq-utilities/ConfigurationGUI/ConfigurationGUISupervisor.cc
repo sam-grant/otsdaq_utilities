@@ -393,16 +393,24 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
 	try {
-		cfgMgr->loadConfigurationGroup(groupName,groupKey);
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
+				cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
+		//add member pairs to xmldoc
+		for(auto &memberPair: memberMap)
+		{
+			xmldoc.addTextElementToData("MemberName", memberPair.first);
+			xmldoc.addTextElementToData("MemberVersion", memberPair.second.toString());
+		}
 
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
 		if(depth == 0) return; //already returned root node in itself
 
 		std::map<std::string,ConfigurationTree> rootMap;
+
 		if(startPath == "/") //then consider the configurationManager the root node
-			rootMap = cfgMgr->getChildren();
+			rootMap = cfgMgr->getChildren(memberMap);
 		else
 			rootMap = cfgMgr->getNode(startPath).getChildren();
 
@@ -450,6 +458,9 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			xmldoc.addTextElementToParent(
 					(t.isGroupLink()?"Group":"U") +	std::string("ID"),
 					t.getValueAsString(), parentEl);
+
+			xmldoc.addTextElementToParent("LinkConfigurationName", t.getConfigurationName(),
+					parentEl);
 		}
 		else
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);

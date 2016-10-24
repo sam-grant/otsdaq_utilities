@@ -79,6 +79,7 @@
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var treeNodeUID_;		//incrementing unique id for nodes
+		var treeMemberNames_, treeMemberVersions_;
 	
 		
 	
@@ -733,6 +734,17 @@
 
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
+
+			var memberNames = req.responseXML.getElementsByTagName("MemberName");
+			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
+			treeMemberNames_ = [];
+			treeMemberVersions_ = [];
+			for(var i=0;i<memberNames.length;++i)
+			{
+				treeMemberNames_.push(memberNames[i].getAttribute("value"));
+				treeMemberVersions_.push(memberVersions[i].getAttribute("value"));			 
+			}
+			
 			var el;
 			var depth;
 			var parentEl;
@@ -792,8 +804,10 @@
 			var nodes = parent.children;
 			var nodeName;
 			var value;
-			var i;
+			var tableLinkName;
+			var i,j;
 			var childrenLength;
+			
 			for(i=0;i<nodes.length;++i)
 			{
 				uid = treeNodeUID_++;
@@ -826,14 +840,32 @@
 					--childrenLength; //subtract the link ID node from children length
 					value = nodeName + " (" + 
 							value.nodeName + " = " + value.getAttribute("value") + ")";
+					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
+					--childrenLength; //subtract the config name node from children length
 				}
 				else
+				{
 					value = nodeName;
+					tableLinkName = nodeName;
+				}
 
 				treeViewHandlerStr_ += childrenLength?"-":"+";
 				treeViewHandlerStr_ += "</a> ";
 				
 				treeViewHandlerStr_ += value;
+				
+				//search for table link
+				for(j=0;j<treeMemberNames_.length;++j)
+					if(tableLinkName == treeMemberNames_[j])
+						break;
+				if(j != treeMemberNames_.length) //found table link
+				{
+					treeViewHandlerStr_ += " <a href='javascript:setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")'>";
+					treeViewHandlerStr_ += "=&gt;</a>";
+				}
+				
 				
 				treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";	
 				
