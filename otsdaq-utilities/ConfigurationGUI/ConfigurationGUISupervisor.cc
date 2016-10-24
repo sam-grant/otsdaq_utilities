@@ -117,6 +117,7 @@ throw (xgi::exception::Exception)
 	//Commands
 	//	saveConfigurationInfo
 	//	getGroupAliases
+	//	setGroupAliasInActiveBackbone
 	//	getVersionAliases
 	//	getConfigurationGroups
 	//	getConfigurations
@@ -184,6 +185,19 @@ throw (xgi::exception::Exception)
 	else if(Command == "getGroupAliases")
 	{
 		handleGroupAliasesXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "setGroupAliasInActiveBackbone")
+	{
+		std::string groupAlias = CgiDataUtilities::getData(cgi,"groupAlias"); //from GET
+		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string groupKey = CgiDataUtilities::getData(cgi,"groupKey"); //from GET
+
+		__MOUT__ << "groupAlias: " << groupAlias << std::endl;
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
+
+		handleSetGroupAliasInBackboneXML(xmldoc,cfgMgr,groupAlias,groupName,
+				ConfigurationGroupKey(groupKey),userName);
 	}
 	else if(Command == "getVersionAliases")
 	{
@@ -283,7 +297,8 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
 		__MOUT__ << "startPath: " << startPath << std::endl;
 		__MOUT__ << "depth: " << depth << std::endl;
-		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),startPath,depth);
+		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,depth);
 	}
 	else if(Command == "activateConfigGroup")
 	{
@@ -300,18 +315,21 @@ throw (xgi::exception::Exception)
 		catch(std::runtime_error& e)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group! " + std::string(e.what()));
+			xmldoc.addTextElementToData("Error", "Error activating config group '" +
+					groupName +	"(" + groupKey + ")" + "! " +
+					std::string(e.what()));
 		}
 		catch(cet::exception& e)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group! " + std::string(e.what()));
+			xmldoc.addTextElementToData("Error", "Error activating config group '" +
+					groupName +	"(" + groupKey + ")" + "! " +
+					std::string(e.what()));
 		}
 		catch(...)
 		{
-			throw;
 			__MOUT__ << "Error detected!" << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group!");
+			throw; //unexpected exception!
 		}
 	}
 	else
@@ -724,7 +742,8 @@ try
 			version = ConfigurationVersion();
 		}
 	}
-	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->createTemporaryView(version);
+	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
+			createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
@@ -849,7 +868,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
-		const std::string &configList)
+		const std::string &configList, bool allowDuplicates)
 {
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
 	std::string name, version;
@@ -877,6 +896,23 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		groupMembers[name] = ConfigurationVersion(version.c_str());
 	}
 
+
+	if(!allowDuplicates)
+	{
+		ConfigurationGroupKey foundKey =
+				cfgMgr->findConfigurationGroup(groupName,groupMembers);
+		if(!foundKey.isInvalid())
+		{
+			//return old keys
+			xmldoc.addTextElementToData("ConfigurationGroupName",groupName);
+			xmldoc.addTextElementToData("ConfigurationGroupKey",foundKey.toString());
+			xmldoc.addTextElementToData("Error",
+					"Failed to create configuration group: " + groupName +
+					". It is a duplicate of a previous group key (" + foundKey.toString() + ")");
+			return;
+		}
+	}
+
 	ConfigurationGroupKey newKey;
 	try
 	{
@@ -888,11 +924,13 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		__MOUT_ERR__ << "\n\n" << e.what() << std::endl;
 		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName +
 				". (Error: " + e.what() + ")");
+		return;
 	}
 	catch(...)
 	{
 		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
 		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName);
+		return;
 	}
 
 	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
@@ -1053,6 +1091,113 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 					e.what() << "\n\n" << std::endl;
 		}
 	}
+}
+
+//========================================================================================================================
+//	handleSetGroupAliasInBackboneXML
+//		open current backbone
+//		modify GroupAliases
+//		save as new version of groupAliases
+//		return new version of groupAliases
+void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &groupAlias,
+		const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author)
+try
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
+	{
+		__SS__ << "Active version of GroupAliasesConfiguration missing!" << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//put all old backbone versions in xmldoc
+
+	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
+	for(auto &memberName: backboneMembers)
+	{
+		__MOUT__ << "activeVersions[\"" << memberName << "\"]=" <<
+				activeVersions[memberName] << std::endl;
+
+		xmldoc.addTextElementToData("oldBackboneName",
+				memberName);
+		xmldoc.addTextElementToData("oldBackboneVersion",
+				activeVersions[memberName].toString());
+	}
+
+	//make a temporary version from active view
+	//modify the chosen groupAlias row
+	//save as new version
+
+	std::string configName = "GroupAliasesConfiguration";
+	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
+			createTemporaryView(activeVersions["GroupAliasesConfiguration"]);
+
+	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
+
+	ConfigurationView* configView = cfgMgr->getConfigurationByName(configName)->
+				getTemporaryView(temporaryVersion);
+	unsigned int row = configView->findRow(configView->findCol("GroupKeyAlias"),groupAlias);
+
+	__MOUT__ << "\t\t row: " << row << std::endl;
+
+	//only make a new version if we are changing compared to active backbone
+	bool isDifferent = false;
+
+	unsigned int col = configView->findCol("GroupName");
+
+	__MOUT__ << "\t\t groupName: " << groupName << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(groupName != configView->getDataView()[row][col])
+	{
+		configView->setValue(groupName, row, col);
+		isDifferent = true;
+	}
+
+	col = configView->findCol("GroupKey");
+	__MOUT__ << "\t\t groupKey: " << groupKey << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(groupKey.toString() != configView->getDataView()[row][col])
+	{
+		configView->setValue(groupKey.toString(), row, col);
+		isDifferent = true;
+	}
+
+	ConfigurationVersion newAssignedVersion;
+	if(isDifferent)	//make new version if different
+	{
+		configView->setValue(author, row, configView->findCol("Author"));
+		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+		newAssignedVersion =
+			cfgMgr->saveNewConfiguration(configName,temporaryVersion);
+	}
+	else	//use existing version
+	{
+		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+
+		 newAssignedVersion = activeVersions["GroupAliasesConfiguration"];
+	}
+
+	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view! " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view! ");
 }
 
 //========================================================================================================================

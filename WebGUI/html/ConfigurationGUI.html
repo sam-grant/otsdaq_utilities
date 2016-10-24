@@ -110,6 +110,7 @@
 			//versionsForCreateConfig(i)
 			//createConfigGroup()
 			//createConfigGroupHandler(req)
+			//wizToLatestConfigGroup(groupAlias)
 		
 			//selectThisCell(r,c,el)
 			//setCaretPosition(el,start,stop)
@@ -199,6 +200,8 @@
 		//setupSystemViewMode ~
 		function setupSystemViewMode() {
 
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
 					groupAliasesRequestHandler);		
 		}
@@ -206,6 +209,8 @@
 		//setupGroupViewMode ~
 		function setupGroupViewMode() {
 
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
 					configGroupsRequestHandler);		
 		}
@@ -213,13 +218,17 @@
 		//setupTableViewMode ~
 		function setupTableViewMode() {
 
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
 					configsRequestHandler);		
 		}
 
 		//setupSpecificConfigGroup ~		
 		function setupSpecificConfigGroup(groupName, groupKey) {
-			
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey
@@ -229,6 +238,9 @@
 		//setupSpecificConfig ~
 		//	undefined version gives latest
 		function setupSpecificConfig(configName,version) {
+			
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			var v = "";
 			if(version) v = "&version="+version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
@@ -279,17 +291,28 @@
 
 				str += "&quot;<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
 						groupAliasesVersion + "\")'>";
-				str += groupAlias + "</a>&quot; &lt; " + groupName + "(" + groupKey +") &gt;";	
+				str += groupAlias + "</a>&quot; &lt; "; 
+
+				//add group view link
+				str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + groupKey + "\");'>";
+				str += groupName + "</a>";	
 				
+				str += "(" + groupKey +") &gt;";	
+
 				//add tree view link
 				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + groupKey + "\");'>";
-				str += "Tree-view</a>";										
+				str += "Tree-view</a>";		
 				
 				//add Activate link
 				str += " <a href='javascript:activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\");'>";
 				str += "Activate</a>";
+				
+				//Wiz to latest of all tables
+				str += " <a href='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");'>";
+				str += "Wiz-to-Latest</a>";
 				
 				//add comment
 				str += "<br><pre style='margin: 2px 0 0 30px;'>" + groupComment + "</pre>"; 
@@ -440,6 +463,11 @@
 			str += "<label id='configGroupModified'></label><b>" + 
 					groupName + "</b> (group key: " + groupKey + ") ";
 
+			//add tree view link
+			str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+				"\",\"" + groupKey + "\");'>";
+			str += "Tree-view</a>";	
+			
 			//add Activate link
 			str += " <a href='javascript:activateSystemConfig(\"" + groupName +
 					"\",\"" + groupKey + "\");'>";
@@ -888,6 +916,166 @@
 				Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!", Debug.INFO_PRIORITY);
 				document.getElementById("activeConfig").innerHTML = str;
 			}				
+		}
+		
+		//wizToLatestConfigGroup ~
+		function wizToLatestConfigGroup(groupAlias)
+		{	
+			//get latest version of all tables for configuration group
+			//make a new group with those versions
+			//set group alias to the resulting group
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
+					"", function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+				var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+				
+				var name;
+				var configVersions;
+
+				Debug.log("configNames.length " + configNames.length);
+
+				var context = _contextMemberNames;
+				var backbone = _backboneMemberNames;
+				var configMap = "configList=";
+				var found;
+				for(var i=0;i<configNames.length;++i)
+				{		
+					name = configNames[i].getAttribute("value");
+					configVersions = configVersionHdr[i].getElementsByTagName("Version");
+
+					found = false;
+					for(var c in context)
+						if(name == context[c])
+						{	
+							found = true;
+							break;
+						}
+					for(var c in backbone)
+						if(name == backbone[c])
+						{	
+							found = true;
+							break;
+						}
+					if(found) continue; //only include configuration members
+
+					if(configVersions.length)
+						configMap += name + "," + 
+						configVersions[configVersions.length-1].getAttribute("value") + ",";
+				}
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+						(groupAlias + "WizToLatest"), configMap, 
+						function(req)
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+					var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+					if(err) 
+					{
+						if(!name || !key)
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}
+						Debug.log("Going on with existing name=" + name + " & key=" + key);
+					}
+
+					DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+							"&groupAlias=" + groupAlias + 
+							"&groupName=" + name +
+							"&groupKey=" + key, "", function(req)
+							{
+
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}											
+						
+						Debug.log("Old Group Alias version=" + 
+								DesktopContent.getXMLValue(req,"oldConfigurationGroupAliasesVersion"));
+						
+						var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
+						var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+						
+						Debug.log("groupAliasName=" + groupAliasName);
+						Debug.log("groupAliasVersion=" + groupAliasVersion);
+						
+						var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+						var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+						//make a new backbone with old versions of everything except Group Alias 
+						var configMap = "configList=";
+						var name;
+						for(var i=0;i<configNames.length;++i)
+						{		
+							name = configNames[i].getAttribute("value");
+							
+							if(name == groupAliasName)
+							{
+								configMap += name + "," + 
+										groupAliasVersion + ",";
+								continue;
+							}
+							//else use old member
+							configMap += name + "," + 
+									configVersions[i].getAttribute("value") + ",";							
+						}
+
+						DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+								(groupAlias + "WizToLatestBackbone"), configMap, 
+								function(req)
+								{
+							var err = DesktopContent.getXMLValue(req,"Error");
+							if(err) 
+							{
+								Debug.log(err,Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+							var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+
+							//now activate the new backbone group
+
+
+							DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+									"&groupName=" + name +
+									"&groupKey=" + key, "", 
+									function(req)
+									{
+								var err = DesktopContent.getXMLValue(req,"Error");
+								if(err) 
+								{
+									Debug.log(err,Debug.HIGH_PRIORITY);
+									return;
+								}
+
+								setupSystemViewMode(); //done so refresh view
+
+									});	//end of activate new backbone handler
+
+
+								}); //end of backbone saveNewConfigurationGroup handler
+
+
+							}); //end of setGroupAliasInActiveBackbone handler
+
+
+						}); //end of saveNewConfigurationGroup handler
+
+
+					});	//end of getConfigurations handler
 		}
 		
 		//setupConfigCreator ~
