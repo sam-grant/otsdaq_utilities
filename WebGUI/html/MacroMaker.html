@@ -273,6 +273,7 @@
 		   color: #002540;
 		   background-color: #c4e9f5;
 		   resize: none;
+		   height:1.2em;
 		}
 		
         .popup{
@@ -443,7 +444,9 @@
   		    cursor:pointer;
         }
         
-
+		#popupNameVariableYesButton {
+			display:none;
+		}
         
         @media only screen and (max-height: 400px){
         	#progressBar{
@@ -646,6 +649,7 @@
 		    <textarea id="nameVariable" cols="20" rows="1"></textarea>
 		    <div class="buttongroup">
 			  <center>
+			  	<button class="select" id="popupNameVariableYesButton">Yes</button>
 				<button class="select" id="popupNameVariableCancelButton">Cancel</button>
 				<button class="select" id="popupNameVariableSaveButton"">Save</button>
 			  </center>

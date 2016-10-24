@@ -589,7 +589,7 @@
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
 					+ "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
 					+ SEQINDEX + ")\"><b>X</b></div></div>";
-			var readMacroString = SEQINDEX+":r:"+addressStr;
+			var readMacroString = SEQINDEX+":r:"+addressStr+":";
 			macroString.push(readMacroString);
 			break;
 		case 'd':
@@ -1013,6 +1013,7 @@
 					var disable = "";
 					var markColorData = "1";
 					var disableData = "";
+					var readResult = "readResult";
 					if(commandType=='w'){
 						if(isNaN('0x'+Command[2]))
 						{
@@ -1037,7 +1038,14 @@
 							markColor = "2";
 							disable = "disabled";
 						}
-						var readEdit = "<lable>Read from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+						if(Command[3] !== "")
+						{
+							markColorData = "2";
+							readResult = Command[3];
+						}
+						var readEdit = "<lable>Read <textarea disabled cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
+							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",3,1)'>V</div> from address 0x<textarea" + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1163,7 +1171,7 @@
     	}
     }
 
-    function setFieldToVariable(div, seqID, index)
+    function setFieldToVariable(div, seqID, index,isReadResultField)
     {
     	var popupNameVariableEl = document.getElementById("popupNameVariable");
     	popupNameVariableEl.style.display = "block";
@@ -1174,12 +1182,62 @@
 			document.getElementById("nameVariable").value = "";
 			return;
 		};
-    	if(isNaN(textareaEl.value))
+		if(textareaEl.value != "readResult" && isReadResultField) //read result field! handle with caution
+		{
+			document.getElementById('popupNameVariableSaveButton').style.display = "none";
+			document.getElementById('popupNameVariableYesButton').style.display = "inline-block";
+			document.getElementById('nameVariable').style.display = "none";
+			nameVariablePromptEl.innerHTML = "Would you like to remove this field as a variable?";
+			document.getElementById('popupNameVariableYesButton').onclick = function() {
+				div.style.backgroundColor = "#002a52";
+				textareaEl.value = "readResult";
+				var x = arrayOfCommandsForEdit[seqID].split(":");
+				x[index] = "";
+				arrayOfCommandsForEdit[seqID] = x.join(":");
+				console.log(arrayOfCommandsForEdit);
+				document.getElementById('popupNameVariableSaveButton').style.display = "inline-block";
+				document.getElementById('popupNameVariableYesButton').style.display = "none";
+				document.getElementById('nameVariable').style.display = "inline-block";
+				popupNameVariableEl.style.display = "none";
+			};
+		}
+		else if(!isNaN("0x"+textareaEl.value) || isReadResultField)
+		{
+			nameVariablePromptEl.innerHTML = "Setting field to variable! How would you like to name it?";
+			document.getElementById('popupNameVariableSaveButton').onclick = function() {
+				var variableName = document.getElementById("nameVariable").value.toString();
+				if(variableName === "")
+				{
+					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be empty.</span>";
+					return;
+				}
+				else if(!isNaN("0x"+variableName))
+				{
+					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be a number.</span>";
+					return;
+				}
+				div.style.backgroundColor = "#ff0101";
+				textareaEl.value = variableName;
+				textareaEl.disabled = true;
+				var x = arrayOfCommandsForEdit[seqID].split(":");
+				x[index] = variableName;
+				arrayOfCommandsForEdit[seqID] = x.join(":");
+				console.log(arrayOfCommandsForEdit);
+				document.getElementById("nameVariable").value = "";
+				popupNameVariableEl.style.display = "none";
+			};
+		}
+		else 
     	{
     		nameVariablePromptEl.innerHTML = "Would you like a set value instead of a variable?";
     		document.getElementById('popupNameVariableSaveButton').onclick = function() {
 				var variableName = document.getElementById("nameVariable").value.toString();
-				if(isNaN("0x"+variableName))
+				if(variableName === "")
+				{
+					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be empty.</span>";
+					return;
+				}
+				else if(isNaN("0x"+variableName)) 
 				{
 					nameVariablePromptEl.innerHTML = "<span class='red'>The value has to be a hex number.</span>";
 					return;
@@ -1195,27 +1253,7 @@
 				popupNameVariableEl.style.display = "none";
 			};
     	}
-    	else
-    	{
-			nameVariablePromptEl.innerHTML = "Setting field to variable! How would you like to name it?";
-			document.getElementById('popupNameVariableSaveButton').onclick = function() {
-				var variableName = document.getElementById("nameVariable").value.toString();
-				if(!isNaN("0x"+variableName))
-				{
-					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be a number.</span>";
-					return;
-				}
-				div.style.backgroundColor = "#ff0101";
-				textareaEl.value = variableName;
-				textareaEl.disabled = true;
-				var x = arrayOfCommandsForEdit[seqID].split(":");
-				x[index] = variableName;
-				arrayOfCommandsForEdit[seqID] = x.join(":");
-				console.log(arrayOfCommandsForEdit);
-				document.getElementById("nameVariable").value = "";
-				popupNameVariableEl.style.display = "none";
-			};
-    	}
+    	
     }
 
     
@@ -1243,24 +1281,9 @@
     			if(i < stringOfCommands.length && waitForUserInputFlag === 0)
     			{
     				var Command = stringOfCommands[i].split(":");
-    				if (Command[1] == "w")                               //A "write" command will go through this loop twice
-					{
-    					if(isAddressOfWrite)					         //Address goes first, and then data
-    					{
-    						setValue(2);
-    						i--;						                 //Decrementing the count after checking address of write
-    						isAddressOfWrite = false;
-    					}
-    					else
-    					{
-    						setValue(3);
-    						isAddressOfWrite = true;
-    					}
-    				}
-    				else setValue(2);
-    				function setValue(index)        //This function is called when encountering a variable name in the address(index=2)/data(index=3) field
-    				{							    //instead of a hex value, and prompt the user to set the temporary value of variable 
-    					globalIndex = index;
+       				function setValue(index)        //This function is called when encountering a variable name in the address(index=2)/data(index=3) field
+					{							    //instead of a hex value, and prompt the user to set the temporary value of variable 
+						globalIndex = index;
 						if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
 						{					                                       
 							newCommand = copyOfStringOfCommands[i].split(":");
@@ -1281,7 +1304,22 @@
 								document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
 							}
 						}
+					}
+    				if (Command[1] == "w")                               //A "write" command will go through this loop twice
+					{
+    					if(isAddressOfWrite)					         //Address goes first, and then data
+    					{
+    						setValue(2);
+    						i--;						                 //Decrementing the count after checking address of write
+    						isAddressOfWrite = false;
+    					}
+    					else
+    					{
+    						setValue(3);
+    						isAddressOfWrite = true;
+    					}
     				}
+    				else setValue(2);
     				i++;
     			}
     			else if(i == stringOfCommands.length && waitForUserInputFlag === 0)
