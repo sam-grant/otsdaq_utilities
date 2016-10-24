@@ -395,20 +395,17 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	try {
 		cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
-		__MOUT__ << "!" << std::endl;
 
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
 		if(depth == 0) return; //already returned root node in itself
 
-		__MOUT__ << "!" << std::endl;
 		std::map<std::string,ConfigurationTree> rootMap;
 		if(startPath == "/") //then consider the configurationManager the root node
 			rootMap = cfgMgr->getChildren();
 		else
 			rootMap = cfgMgr->getNode(startPath).getChildren();
 
-		__MOUT__ << "!" << std::endl;
 		for(auto &treePair:rootMap)
 			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl);
 	}
@@ -637,18 +634,20 @@ try
 		{
 			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
 		}
-		catch(...) //default to mockup for failsafes in GUI editor
+		catch(...) //default to mockup for fail-safe in GUI editor
 		{
-			__MOUT_WARN__ << "Failer to get version: " << version <<
-					"... defaulting to mockup!" << std::endl;
+			__SS__ << "Failed to get version: " << version <<
+					"... defaulting to mockup! " <<
+					"(You may want to try again to see what was partially loaded into cache before failure)" <<
+					std::endl;
+			std::cout << ss.str();
 			version = ConfigurationVersion();
 			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+
+			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
 	}
 	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
-
-
-
 
 	//get 'columns' of view
 	parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");

@@ -346,7 +346,7 @@
 			var str = "";
 			var configNames, configVersions;
 
-			str += "<a href='javascript:setupConfigCreator()'>Create a New System Configuration</a>";
+			str += "<a href='javascript:setupConfigCreator()'>Create a New Configuration Group</a>";
 			str += "<br><br>";
 					
 			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
@@ -494,7 +494,7 @@
 			
 			str += "<br><a href='javascript:addMemberToConfigGroup(\"" + 
 					groupName + "\")'>";
-			str += "Add new Configuration Member</a> to "  + groupName + "(" + groupKey + ")";
+			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			str += "<br><br>";
 			
 
@@ -568,7 +568,8 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
+				//return;
+				//try to power through
 			}
 			
 			activateSystemConfigHandler(req); //display active config groups
@@ -590,9 +591,7 @@
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
-			
-			var el = document.getElementById("display");
-			
+					
 
 			//reset globals
 			_currentConfigName = configName;
@@ -696,7 +695,9 @@
 			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
 			str += "+";
 			str += "</a>"
-			
+
+					
+			var el = document.getElementById("display");
 			
 			el.innerHTML = str;
 			
@@ -762,7 +763,16 @@
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
 				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
-				treeViewHandlerStr_ += "</a><br>";
+				treeViewHandlerStr_ += "</a>";
+
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
+				
+				//add Activate link
+				treeViewHandlerStr_ += " <a href='javascript:activateSystemConfig(\"" + configGroupName +
+						"\",\"" + configGroupKey + "\");'>";
+				treeViewHandlerStr_ += "Activate</a>";
+				
+				treeViewHandlerStr_ += "<br>";
 			}			
 			
 			//add tree
@@ -924,6 +934,9 @@
 			//get latest version of all tables for configuration group
 			//make a new group with those versions
 			//set group alias to the resulting group
+			
+			var el = document.getElementById("display");			
+			el.innerHTML = "Loading...";
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
 					"", function(req) 
