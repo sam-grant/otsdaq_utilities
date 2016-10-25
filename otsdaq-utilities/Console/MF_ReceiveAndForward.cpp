@@ -1,18 +1,29 @@
-// ots_udp_hw_emulator.cpp
+//MF_ReceiveAndForward.cpp
 //    by rrivera at fnal dot gov
 //	  created Feb 2016
 //
-// This is a simple emulator of a "data gen" front-end (hardware) interface
-// using the otsdaq UDP protocol.
+// 	This is a simple UDP receive and forward program
+//		for MessageFacility packets.
+//
+//	It echos packets received and only appends '|' as decoration.
+//
+//
+//
 //
 //compile with:
-//g++ ots_udp_hw_emulator.cpp -o hw.o
+//g++ MF_ReceiveAndForward.cpp -o MF_ReceiveAndForward.o
 //
 //if developing, consider appending -D_GLIBCXX_DEBUG to get more 
 //descriptive error messages
 //
 //run with:
-//./hw.o
+//./MF_ReceiveAndForward.o <optional port file name>
+//
+//
+//	Port Config File Format:
+//		RECEIVING_PORT 	<port number>
+//		FORWARDING_PORT <port number>
+//
 //
 
 #include <iostream>
@@ -36,11 +47,11 @@ using namespace std;
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
-    if (sa->sa_family == AF_INET) {
-        return &(((struct sockaddr_in*)sa)->sin_addr);
-    }
+	if (sa->sa_family == AF_INET) {
+		return &(((struct sockaddr_in*)sa)->sin_addr);
+	}
 
-    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
 int makeSocket(const char * ip, int port, struct addrinfo*& p)
@@ -88,84 +99,104 @@ int main(int argc, char** argv)
 {
 	std::cout << "\n\n" << __FILE__ << "\tStarting...\n\n" << std::endl;
 
-	std::string myPort_("3000");
-	std::string myFwdPort_("3001");
+	std::string myPort_("3000"); 	//set default
+	std::string myFwdPort_("3001");	//set default
 	if(argc >= 2)
-		myPort_ = argv[1];
-	if(argc >= 3)
-		myFwdPort_ = argv[2];
+	{
+		std::cout << "\n\n" << __FILE__ << "\t port parameter file:" <<
+				argv[1] << "\n\n" << std::endl;
+		FILE *fp = fopen(argv[1],"r");
+		if(fp)
+		{
+			char tmp[100];
+			char tmpPortStr[100];
+			fgets(tmp,100,fp);
+			sscanf(tmp,"%*s %s",tmpPortStr);
+			myPort_ = tmpPortStr;
+			fgets(tmp,100,fp);
+			sscanf(tmp,"%*s %s",tmpPortStr);
+			myFwdPort_ = tmpPortStr;
+			fclose(fp);
+		}
+		else //else use defaults
+			std::cout << "\n\n" << __FILE__ << "\t port parameter file failed to open: " <<
+				argv[1] << "\n\n" << std::endl;
+
+	}
+	std::cout << "\n\n" << __FILE__ << "\t Forwarding from: " << myPort_ <<
+			" to: " << myFwdPort_ << "\n\n" << std::endl;
 
 	int myFwdPort;
 	sscanf(myFwdPort_.c_str(),"%d",&myFwdPort);
 
 	int sockfd;
-    int sendSockfd=0;
+	int sendSockfd=0;
 
-    struct addrinfo hints, *servinfo, *p;
-    int rv;
-    int numbytes;
-    struct sockaddr_storage their_addr;
-    char buff[MAXBUFLEN];
-    socklen_t addr_len;
-    char s[INET6_ADDRSTRLEN];
+	struct addrinfo hints, *servinfo, *p;
+	int rv;
+	int numbytes;
+	struct sockaddr_storage their_addr;
+	char buff[MAXBUFLEN];
+	socklen_t addr_len;
+	char s[INET6_ADDRSTRLEN];
 
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_PASSIVE; // use my IP
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL,
-    		myPort_.c_str(),
+	if ((rv = getaddrinfo(NULL,
+			myPort_.c_str(),
 			&hints,
 			&servinfo)) != 0)
-    {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-        return 1;
-    }
+	{
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		return 1;
+	}
 
-    // loop through all the results and bind to the first we can
-    for(p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-            perror("listener: socket");
-            continue;
-        }
+	// loop through all the results and bind to the first we can
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+			perror("listener: socket");
+			continue;
+		}
 
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-            close(sockfd);
-            perror("listener: bind");
-            continue;
-        }
+		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("listener: bind");
+			continue;
+		}
 
-        break;
-    }
+		break;
+	}
 
-    if (p == NULL) {
-        fprintf(stderr, "listener: failed to bind socket\n");
-        return 2;
-    }
+	if (p == NULL) {
+		fprintf(stderr, "listener: failed to bind socket\n");
+		return 2;
+	}
 
-    freeaddrinfo(servinfo);
+	freeaddrinfo(servinfo);
 
-    //////////////////////////////////////////////////////////////////////
-    ////////////// ready to go //////////////
-    //////////////////////////////////////////////////////////////////////
-
-
+	//////////////////////////////////////////////////////////////////////
+	////////////// ready to go //////////////
+	//////////////////////////////////////////////////////////////////////
 
 
-    //hardware "registers"
+
+
+	//hardware "registers"
 	uint64_t 	data_gen_cnt = 0;
 	uint64_t 	data_gen_rate = 1<<16;
 	uint8_t		dataEnabled = 0;
 
-    const unsigned int RX_ADDR_OFFSET = 2;
-    const unsigned int RX_DATA_OFFSET = 10;
-    const unsigned int TX_DATA_OFFSET = 2;
+	const unsigned int RX_ADDR_OFFSET = 2;
+	const unsigned int RX_DATA_OFFSET = 10;
+	const unsigned int TX_DATA_OFFSET = 2;
 
-    unsigned int packetSz;
+	unsigned int packetSz;
 
-    //for timeout/select
-    struct timeval tv;
+	//for timeout/select
+	struct timeval tv;
 	fd_set readfds, masterfds;
 	tv.tv_sec = 0;
 	tv.tv_usec = 500000;
@@ -177,22 +208,22 @@ int main(int argc, char** argv)
 	int mf_p,mf_i; //for extracting message
 	const int MF_POS_OF_MSG = 11;
 
-    //this should ip/port of Console xdaq app Receiver port
+	//this should ip/port of Console xdaq app Receiver port
 	sendSockfd = makeSocket("127.0.0.1", myFwdPort, p);
 
-    while(1)
-    {
-    	readfds = masterfds; //copy to reset timeout select
+	while(1)
+	{
+		readfds = masterfds; //copy to reset timeout select
 		select(sockfd+1, &readfds, NULL, NULL, &tv);
 
-	    if (FD_ISSET(sockfd, &readfds))
-	    {
-	    	//packet received
-	    	//cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
+		if (FD_ISSET(sockfd, &readfds))
+		{
+			//packet received
+			//cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
 
 			addr_len = sizeof their_addr;
 			if ((numbytes = recvfrom(sockfd, buff, MAXBUFLEN-1 , 0,
-				(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+					(struct sockaddr *)&their_addr, &addr_len)) == -1) {
 				perror("recvfrom");
 				exit(1);
 			}
@@ -218,7 +249,7 @@ int main(int argc, char** argv)
 
 			//print message without decoration
 			//find position of message and save to p
-							//by jumping to the correct '|' marker
+			//by jumping to the correct '|' marker
 			buff[numbytes] = '\0'; //make sure it is null terminated
 
 			//DEBUG -- for indentifying strange MessageFacility bug with clipped messages
@@ -252,14 +283,14 @@ int main(int argc, char** argv)
 			}
 			//printf("hw: sent %d bytes on\n", numbytes);
 
-	    }
-	    else
-	    	sleep(1); //one second
-    }
+		}
+		else
+			sleep(1); //one second
+	}
 
-    close(sockfd);
-    close(sendSockfd);
+	close(sockfd);
+	close(sendSockfd);
 
-    return 0;
+	return 0;
 }
 
