@@ -1266,8 +1266,9 @@
     	var commandToChange = 0;
     	var newCommand = [];
     	var dictionary = {};
+    	var readoutDictionary = [];
     	var globalIndex = 0;
-    	var isAddressOfWrite = true;
+    	var isAddressField = true;
     	if(isMacroRunning)
     		reminderEl.innerHTML = "Please wait till the current macro ends";
     	else if(isArrayAllZero(selected))
@@ -1281,43 +1282,73 @@
     			if(i < stringOfCommands.length && waitForUserInputFlag === 0)
     			{
     				var Command = stringOfCommands[i].split(":");
-       				function setValue(index)        //This function is called when encountering a variable name in the address(index=2)/data(index=3) field
-					{							    //instead of a hex value, and prompt the user to set the temporary value of variable 
+       				function setValue(index,isReadAddress)   //This function is called when encountering a variable name in the address(index=2)/data(index=3) field
+					{							    		 //instead of a hex value, and prompt the user to set the temporary value of variable 
 						globalIndex = index;
-						if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
-						{					                                       
+						if(isReadAddress && Command[index] !== "")
+						{
+							readoutDictionary.push(Command[index].toString());
+							console.log("in here with var " + Command[index]);
+							console.log(readoutDictionary);
+						}
+						else if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
+						{					                      						
+							console.log("in here with var " + Command[index]);
 							newCommand = copyOfStringOfCommands[i].split(":");
 							newCommand[index] = dictionary[Command[index].toString()];
 							copyOfStringOfCommands[i] = newCommand.join(":");
 						}
-						else if (isNaN("0x"+Command[index]))					   //If not found in the dictionary, prompt user for the value
+						else if (isNaN("0x"+Command[index]) && Command[index] !== "")		//If not found in the dictionary, prompt user for the value OR
 						{
-							waitForUserInputFlag = 1;
-							newCommand = copyOfStringOfCommands[i].split(":");
-							var variableNameAtRunTime = Command[index];
-							commandToChange = i;
-							if(waitForUserInputFlag === 0)						   //Keep looping after user enters value and clicks continue
+							if(readoutDictionary.indexOf(Command[index].toString()) !== -1) //is one of those variables we want to temporarily preserve
+							{
+								console.log("in here with var " + Command[index]);
 								return;
+							}
 							else
 							{
-								promptEl.style.display = "block";				   //Pop-up window prompting user for value the variable
-								document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
+								console.log("in here with var " + Command[index]);
+								waitForUserInputFlag = 1;
+								newCommand = copyOfStringOfCommands[i].split(":");
+								var variableNameAtRunTime = Command[index];
+								commandToChange = i;
+								if(waitForUserInputFlag === 0)						   //Keep looping after user enters value and clicks continue
+									return;
+								else
+								{
+									promptEl.style.display = "block";				   //Pop-up window prompting user for value of variable
+									document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
+								}
 							}
 						}
 					}
     				if (Command[1] == "w")                               //A "write" command will go through this loop twice
 					{
-    					if(isAddressOfWrite)					         //Address goes first, and then data
+    					if(isAddressField)					             //Address goes first, and then data
     					{
     						setValue(2);
-    						i--;						                 //Decrementing the count after checking address of write
-    						isAddressOfWrite = false;
+    						i--;						                 //Decrementing the count after checking address field
+    						isAddressField = false;
     					}
     					else
     					{
     						setValue(3);
-    						isAddressOfWrite = true;
+    						isAddressField = true;
     					}
+    				}
+    				else if (Command[1] == "r")
+    				{
+    					if(isAddressField)					             //Address goes first, and then data
+						{
+							setValue(2);
+							i--;						                 //Decrementing the count after checking address field
+							isAddressField = false;
+						}
+						else
+						{
+							setValue(3,1);
+							isAddressField = true;
+						}
     				}
     				else setValue(2);
     				i++;
