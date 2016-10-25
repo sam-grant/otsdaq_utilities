@@ -920,12 +920,19 @@
 		{
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
 					groupName + "&groupKey=" + groupKey,
-					"",activateSystemConfigHandler);
+					"",activateSystemConfigHandler,true);
 		}
 		
 		//activateSystemConfigHandler ~
-		function activateSystemConfigHandler(req)
+		function activateSystemConfigHandler(req,displayErrors)
 		{	
+			if(displayErrors)
+			{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+					Debug.log(err,Debug.HIGH_PRIORITY);
+			}
+			
 			var activeConfigGroups = [
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
@@ -1146,7 +1153,7 @@
 			var str = "";
 			
 			if(preSelectStr)
-				str += "Choose the versions of configurations you would like to add.<br>";
+				str += "Choose the versions of configurations you would like to add...<br>";
 			
 			str += "<div id='createGroupInfo'></div><br>";
 			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
@@ -1457,6 +1464,7 @@
 			var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var str = "";
 			
+			str += "<br>";
 			str += "New Configuration Group Created: " + name + "_v" + key;
 			str += "<br>Goto its ";
 			str += "<a href='javascript:setupSpecificConfigGroup(\"" + name + 

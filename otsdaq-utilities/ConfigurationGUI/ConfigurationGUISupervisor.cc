@@ -255,7 +255,7 @@ throw (xgi::exception::Exception)
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
 		ConfigurationVersion version;
-		std::map<std::string, ConfigurationInfo> allCfgInfo =	cfgMgr->getAllConfigurationInfo();
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 		if(versionStr == "" && //take latest version if no version specified
 				allCfgInfo[configName].versions_.size())
 			version = *(allCfgInfo[configName].versions_.rbegin());
@@ -393,15 +393,18 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
 	try {
+		//add all active configuration pairs to xmldoc
+		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+		for(auto &activePair: allActivePairs)
+		{
+			xmldoc.addTextElementToData("MemberName", activePair.first);
+			xmldoc.addTextElementToData("MemberVersion", activePair.second.toString());
+		}
+
+
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
 				cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
-		//add member pairs to xmldoc
-		for(auto &memberPair: memberMap)
-		{
-			xmldoc.addTextElementToData("MemberName", memberPair.first);
-			xmldoc.addTextElementToData("MemberVersion", memberPair.second.toString());
-		}
 
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
