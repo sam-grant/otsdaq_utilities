@@ -21,9 +21,9 @@
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
 
-#define MACROS_DB_PATH 					std::string(getenv("SERVICE_DATA")) + "/MacroData/"
-#define MACROS_HIST_PATH 				std::string(getenv("SERVICE_DATA")) + "/MacroHistory/"
-#define MACROS_EXPORT_PATH 				std::string(getenv("SERVICE_DATA")) + "/MacroExport/"
+#define MACROS_DB_PATH 					std::string(getenv("SERVICE_DATA_PATH")) + "/MacroData/"
+#define MACROS_HIST_PATH 				std::string(getenv("SERVICE_DATA_PATH")) + "/MacroHistory/"
+#define MACROS_EXPORT_PATH 				std::string(getenv("SERVICE_DATA_PATH")) + "/MacroExport/"
 
 using namespace ots;
 
