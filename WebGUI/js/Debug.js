@@ -169,10 +169,14 @@ Debug.errorPop = function(err,isInfo) {
 	var el = document.getElementById(Debug._errBoxId + "-err");
 	var str = el.innerHTML; //keep currently displayed errors				
 	var d = new Date();
+	var wasAlreadyContent = false;
 	
 	//add new err to top of errors
 	if(str.length)
+	{
 		err += "<br>...<br>";
+		wasAlreadyContent = true;
+	}
 	var tstr = d.toLocaleTimeString();
 	tstr = tstr.substring(0,tstr.lastIndexOf(' ')) + //convert AM/PM to am/pm with no space
 			(tstr[tstr.length-2]=='A'?"am":"pm");
@@ -189,8 +193,11 @@ Debug.errorPop = function(err,isInfo) {
 	//change color based on info
 	if(isInfo)
 	{
-		el = document.getElementById(Debug._errBoxId + "-header");
-		el.innerHTML = "Close Info";
+		el = document.getElementById(Debug._errBoxId + "-header");		
+		//don't change color or header for info, if there are still errors displayed
+		if(el.innerHTML == "Close Errors" && wasAlreadyContent)
+			return;
+		el.innerHTML = "Close Info";		
 		Debug._errBox.style.backgroundColor = "rgba(0,153,51,0.8)";
 	}
 	else

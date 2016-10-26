@@ -21,7 +21,7 @@
 
 #include "otsdaq-utilities/SlowControlsDashboard/EpicsInterface.h"
 #include "otsdaq-utilities/SlowControlsDashboard/SlowControlsInterface.h"
-#define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA")) + "/SlowControlsDashboardData/pages/";
+#define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/SlowControlsDashboardData/pages/";
 
 using namespace ots;
 

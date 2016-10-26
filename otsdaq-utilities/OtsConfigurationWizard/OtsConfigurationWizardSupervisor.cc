@@ -20,8 +20,8 @@
 using namespace ots;
 
 
-#define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA")) + "/OtsWizardData/security.dat"
-#define ICON_FILE_NAME 			std::string(getenv("SERVICE_DATA")) + "/OtsWizardData/iconList.dat";
+#define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/security.dat"
+#define ICON_FILE_NAME 			std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/iconList.dat";
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 

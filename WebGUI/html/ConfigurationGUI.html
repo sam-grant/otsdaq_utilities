@@ -72,6 +72,10 @@
 		var _version;
 		var _dataOffset = 0;
 		var _lastFindRow, _lastFindCol;
+		
+		var _firstTimeSilentActive = true;
+		
+		var _displayTargetEl = 0;
 
 		var _contextMemberNames = [];
 		var _backboneMemberNames = [];
@@ -80,6 +84,8 @@
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var treeNodeUID_;		//incrementing unique id for nodes
 		var treeMemberNames_, treeMemberVersions_;
+		var treeViewBackLinkStr_;
+		var treeGroupName_, treeGroupKey_;
 	
 		
 	
@@ -89,24 +95,34 @@
 		//functions:			
 			//init()
 			//niceName(str)									//removes "Configuration" from name
-			//setupSystemViewMode()							//gets configuration groups aliases
-			//groupAliasesRequestHandler()					 
-			//setupGroupViewMode()							//gets all configuration groups
-			//setupTableViewMode()							//gets configuration tables
-			//setupSpecificConfigGroup(groupName, groupKey)	//setup editor for specific configuration group
-			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
-			//configGroupsRequestHandler(req)
-			//configsRequestHandler(req)
-			//specificGroupRequestHandler(req)
-			//specificConfigRequestHandler(req)
+		
+			//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
+			//groupAliasesRequestHandler(req,anchorTarget)		 
+			
+			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
+			//configGroupsRequestHandler(req,anchorTarget)
+			
+			//setupTableViewMode(anchorTarget)							//gets configuration tables
+			//configsRequestHandler(req,anchorTarget)
+			
+			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
+			//specificGroupRequestHandler(req,param)
+			
+			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
+			//setupSpecificConfigInRight(configName,version)
+			//specificConfigRequestHandler(req,backLinkStr)
+
+			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path)
 			//toggleTreeChildren(depth,uid,nodeName,path)
-			//setupConfigGroupTreeView(configGroupName)
-			//activateSystemConfig(groupName, groupKey)
-			//activateSystemConfigHandler(req)
+
+			//addMemberToConfigGroup(groupName,backLinkStr) 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
+		
+			//activateSystemConfig(groupName, groupKey)
+			//activateSystemConfigHandler(req)
 			//selectForCreateConfig(i)
 			//versionsForCreateConfig(i)
 			//createConfigGroup()
@@ -124,7 +140,6 @@
 			//saveConfigAsNewVersionHandler(req)
 			//saveConfigGroupAsNewKey()	
 			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
-			//addMemberToConfigGroup(groupName) 
 			//isTemporary(version)
 		
 			//setupFindAndReplace()
@@ -134,7 +149,8 @@
 		
 			//setupCopyAndMoveRows()
 			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
-		
+			//evaluateJS(str)
+			//jump(anchor)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -144,12 +160,20 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 			
-			//setupSpecificConfig("XDAQApplicationConfiguration","2");
-			//return;
-
-			//setupSpecificConfigGroup("myContext","0");
-			//setupConfigCreator();
 			
+			//			setupSpecificConfig("XDAQApplicationConfiguration","10",
+			//					"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
+			//			return;
+
+			//			setupSpecificConfigGroup("PhysicsWizToLatest","3",
+			//					"","anchorTag-RawDataSaverConsumerConfiguration");
+			//			return;
+			
+			//setupConfigCreator();
+			//return
+			
+			//setupConfigGroupTreeView("PhysicsWizToLatest","3");
+			//return;
 
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
@@ -187,8 +211,19 @@
 					}
 				);
 			
-
-			setupSystemViewMode();
+			//get command string if opening a new window
+			var cmdStr = DesktopContent.getParameter(1); //from  location.href
+			if(cmdStr && cmdStr != "")
+			{
+				//do incoming commands!
+				Debug.log("cmdStr=" + cmdStr);
+				//replace %22 with "
+				cmdStr = cmdStr.replace(/%22/g, "\"");
+				
+				evaluateJS(cmdStr);	
+			}
+			else
+				setupSystemViewMode();
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -199,57 +234,78 @@
 		}
 
 		//setupSystemViewMode ~
-		function setupSystemViewMode() {
+		function setupSystemViewMode(anchorTarget) {
 
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
-					groupAliasesRequestHandler);		
+					groupAliasesRequestHandler,anchorTarget);		
 		}
 		
 		//setupGroupViewMode ~
-		function setupGroupViewMode() {
+		function setupGroupViewMode(anchorTarget) {
 
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
-					configGroupsRequestHandler);		
+					configGroupsRequestHandler, anchorTarget);		
 		}
 		
 		//setupTableViewMode ~
-		function setupTableViewMode() {
+		function setupTableViewMode(anchorTarget) {
 
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
-					configsRequestHandler);		
+					configsRequestHandler,anchorTarget);		
 		}
 
 		//setupSpecificConfigGroup ~		
-		function setupSpecificConfigGroup(groupName, groupKey) {
+		function setupSpecificConfigGroup(groupName, groupKey, backLinkStr, anchorTarget) {
 
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
+			var param = "";
+			if(backLinkStr && backLinkStr != "")
+				param += "&backLinkStr=" + backLinkStr;
+			if(anchorTarget && anchorTarget != "")
+				param += "&anchorTarget=" + anchorTarget;
+			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
 					"&groupName=" + groupName +
-					"&groupKey=" + groupKey
-					, "", specificGroupRequestHandler);		
+					"&groupKey=" + groupKey,
+					"", specificGroupRequestHandler, param);		
 		}
 		
 		//setupSpecificConfig ~
 		//	undefined version gives latest
-		function setupSpecificConfig(configName,version) {
+		function setupSpecificConfig(configName, version, backLinkStr) {
 			
-			var el = document.getElementById("display");
+			var el;
+			if(_displayTargetEl && backLinkStr == "special display target")
+				el = _displayTargetEl;
+			else
+			{
+				el = document.getElementById("display");
+				_displayTargetEl = 0;
+			}
+			
 			el.innerHTML = "Loading...";
 			var v = "";
-			if(version) v = "&version="+version;
+			if(version !== undefined && version != "") v = "&version="+version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
-				"&configName=" + configName + v, "", specificConfigRequestHandler);		
+				"&configName=" + configName + v, 
+				"", specificConfigRequestHandler, backLinkStr);		
+		}
+		//setupSpecificConfigInRight ~
+		//	undefined version gives latest
+		function setupSpecificConfigInRight(configName, version) {
+			_displayTargetEl = document.getElementById("display-right");
+			setupSpecificConfig(configName,version,"special display target");
 		}
 		
 		//groupAliasesRequestHandler ~
-		function groupAliasesRequestHandler(req) {
+		function groupAliasesRequestHandler(req, anchorTarget) {
 			
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
@@ -268,14 +324,19 @@
 			var groupComments = req.responseXML.getElementsByTagName("GroupComment");
 
 			var groupAliasesVersion = 
-					DesktopContent.getXMLValue(req,"ConfigurationGroupAliasesVersion");		
+					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationVersion");		
+			var groupAliasesName = 
+					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationName");		
 
 			var str = ""; //string for html content			
 			
 			var groupAlias, groupName, groupKey, groupComment;
+			var backLinkStr;
 
-			str += "<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
-					groupAliasesVersion + "\")'>";
+			backLinkStr = "setupSystemViewMode();"; 
+			str += "<a href='javascript:setupSpecificConfig(\"" + 
+					groupAliasesName + "\",\"" +
+					groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
 			str += "Create a New System Alias</a>";
 			str += "<br><br>";
 
@@ -290,20 +351,27 @@
 				groupKey 	= groupKeys[i].getAttribute("value");
 				groupComment= groupComments[i].getAttribute("value");								
 
-				str += "&quot;<a href='javascript:setupSpecificConfig(\"ConfigurationGroupAliases\",\"" +
-						groupAliasesVersion + "\")'>";
+				backLinkStr = "setupSystemViewMode(\\\"anchorTag-" + 
+						groupAlias + "\\\");"; 				
+
+				str += "<a name='anchorTag-" + 
+						groupAlias + "'></a>";
+				str += "&quot;";
+				str += "<a href='javascript:setupSpecificConfig(\"" + 
+						groupAliasesName + "\",\"" +
+						groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
 				str += groupAlias + "</a>&quot; &lt; "; 
 
 				//add group view link
 				str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
-					"\",\"" + groupKey + "\");'>";
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
 				str += groupName + "</a>";	
 				
 				str += "(" + groupKey +") &gt;";	
 
 				//add tree view link
 				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
-					"\",\"" + groupKey + "\");'>";
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
 				str += "Tree-view</a>";		
 				
 				//add Activate link
@@ -326,7 +394,7 @@
 		}
 		
 		//configGroupsRequestHandler ~
-		function configGroupsRequestHandler(req) {				
+		function configGroupsRequestHandler(req, anchorTarget) {				
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -346,8 +414,12 @@
 
 			var str = "";
 			var configNames, configVersions;
+			var backLinkStr;
+			var configName, configVersion;
 
-			str += "<a href='javascript:setupConfigCreator()'>Create a New Configuration Group</a>";
+			backLinkStr = "setupGroupViewMode();"; 
+			str += "<a href='javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
+					"\");'>Create a New Configuration Group</a>";
 			str += "<br><br>";
 					
 			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
@@ -357,15 +429,20 @@
 			{		
 				groupName = groupNames[i].getAttribute("value");
 				key = keys[i].getAttribute("value");
+
+				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+						groupName + "-" + key + "\\\");"; 
 				
 				//add header
+				str += "<a name='anchorTag-" + 
+						groupName + "-" + key + "'></a>";
 				str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
-					"\",\"" + key + "\");'>";
+					"\",\"" + key + "\",\"" + backLinkStr + "\");'>";
 				str += groupName + "</a> (" + key +")";
 
 				//add tree view link
 				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
-					"\",\"" + key + "\");'>";
+					"\",\"" + key + "\",\"" + backLinkStr + "\");'>";
 				str += "Tree-view</a>";										
 				
 				//add Activate link
@@ -382,19 +459,34 @@
 				
 				for(var j=0;j<configNames.length;++j)
 				{
+					configName = configNames[j].getAttribute("value");
+					configVersion = configVersions[j].getAttribute("value");
+					backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+							groupName + "-" + configName + "\\\");"; 
+							
 					str += "<td align='center'>";
-					str += "<a href='javascript:setupSpecificConfig(\"" + configNames[j].getAttribute("value") +
-						"\");'>";
-					str += niceName(configNames[j].getAttribute("value")) + "</a><br>" + configVersions[j].getAttribute("value");
+
+					str += "<a name='anchorTag-" + 
+							groupName + "-" + configName + "'></a>";
+					str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersion + "\",\"" + backLinkStr + "\");'>";
+					str += niceName(configName) + "</a><br>" + configVersion;
 					str += "</td>";
 				}
 				str += "</tr></table><br>";
 			}				
 			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
+
+			//if there is a target to jump to, do it
+			if(anchorTarget)
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
 		}
 
-		function configsRequestHandler(req) {					
+		function configsRequestHandler(req, anchorTarget) {					
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -410,20 +502,25 @@
 			var str = "";
 			var configVersions;
 			var configName;
+			var backLinkStr;
 
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 			for(var i=0;i<configNames.length;++i)
 			{			
 				configName = configNames[i].getAttribute("value");
+				
+				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + configName + "\\\");"; 
+
+				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
-					"\");'>";
+					"\",\"\",\"" + backLinkStr + "\");'>";
 				str += niceName(configName);
 				str += "</a><br><table><tr>";
 
 				configVersions = configVersionHdr[i].getElementsByTagName("Version");
 				
-				Debug.log("CfgGUI requestHandler config= " + configName +
-								+ " configNames.length " + configVersions.length);
+				//Debug.log("CfgGUI requestHandler config= " + configName +
+				//				+ " configNames.length " + configVersions.length);
 				
 				for(var j=0;j<configVersions.length;++j)
 				{
@@ -435,17 +532,43 @@
 			}				
 			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
+			
+			//if there is a target to jump to, do it
+			if(anchorTarget)
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
 		}
 
 
 		//specificGroupRequestHandler
-		function specificGroupRequestHandler(req) {	
+		//	backLinkStr is defined to call functions one after the other
+		function specificGroupRequestHandler(req, param) {	
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
+
+				var el = document.getElementById("display");
+				el.innerHTML = "Failed.<br><br>" + err; 
 				return;
 			}
+
+			Debug.log("param= " + param);
+			
+			var backLinkStr = "";
+			var anchorTarget = "";
+			var param = param.split("&");
+			for(var i=1;i<param.length;i+=2)
+			{
+				var pi;
+				if((pi=param[i].indexOf("backLinkStr=")) >= 0)			
+					backLinkStr = param[i].substr(param[i].indexOf("=")+1);
+				if((pi=param[i].indexOf("anchorTarget=")) >= 0)			
+					anchorTarget = param[i].substr(param[i].indexOf("=")+1);
+			}			
+			
 			
 			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
@@ -458,15 +581,31 @@
 
 			var str = "";
 			
-			var configExistingVersions;
+			var configExistingVersions;			
+			
+
+			if(backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<br>";
+			}			
 
 			str += "<h3><u>Specific Configuration Group View</u></h3>";
 			str += "<label id='configGroupModified'></label><b>" + 
 					groupName + "</b> (group key: " + groupKey + ") ";
 
 			//add tree view link
+			var returnToHereLink = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
+					groupKey + "\\\");"; 	
 			str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
-				"\",\"" + groupKey + "\");'>";
+				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\");'>";
 			str += "Tree-view</a>";	
 			
 			//add Activate link
@@ -484,7 +623,7 @@
 				{
 					key = historicalKeys[i].getAttribute("value");
 					str += " <a href='javascript:setupSpecificConfigGroup(\"" +
-								groupName + "\",\"" + key + "\");'>";
+								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\");'>";
 					str += key;
 					str += "</a>";
 				}
@@ -494,7 +633,7 @@
 			
 			
 			str += "<br><a href='javascript:addMemberToConfigGroup(\"" + 
-					groupName + "\")'>";
+					groupName + "\",\"" + returnToHereLink + "\");'>";
 			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			str += "<br><br>";
 			
@@ -509,12 +648,16 @@
 			{
 				configName = configNames[i].getAttribute("value");
 				version = configVersions[i].getAttribute("value");
-			
-			
+				
+				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
+						groupKey + "\\\",undefined,\\\"anchorTag-" + 
+						configName + "\\\");"; 			
+
+				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
 				
 				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
-									"\",\"" + version + "\");'>";
+									"\",\"" + version + "\",\"" + backLinkStr + "\");'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
@@ -561,10 +704,17 @@
 			
 
 			el.innerHTML = str;
+			
+			//if there is a target to jump to, do it
+			if(anchorTarget && anchorTarget != "")
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
 		}
 		
 		//specificConfigRequestHandler
-		function specificConfigRequestHandler(req) {	
+		function specificConfigRequestHandler(req, backLinkStr) {	
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -572,7 +722,7 @@
 				//return;
 				//try to power through
 			}
-			
+						
 			activateSystemConfigHandler(req); //display active config groups
 			
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
@@ -605,6 +755,19 @@
 			var str = "";
 			
 
+			if(backLinkStr && backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<br>";
+			}
+			
 			str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 			
@@ -695,10 +858,13 @@
 			//add + row controls for new last row
 			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
 			str += "+";
-			str += "</a>"
+			str += "</a>";
 
-					
-			var el = document.getElementById("display");
+			var el;
+			if(_displayTargetEl)
+				el = _displayTargetEl;
+			else
+				el = document.getElementById("display");
 			
 			el.innerHTML = str;
 			
@@ -735,6 +901,9 @@
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 
+			treeGroupName_ = configGroupName;
+			treeGroupKey_ = configGroupKey;
+			
 			var memberNames = req.responseXML.getElementsByTagName("MemberName");
 			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
 			treeMemberNames_ = [];
@@ -767,8 +936,32 @@
 				depth = 0;
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
+				
+				var str = ""; //make table for left and right display
+				str += "<table border='0'><tr>";
+				str += "<td valign='top'><div id='display-left' " +
+						"style='width:600px;overflow-x:auto;margin-right:20px;'></div></td>";
+				str += "<td valign='top'><div id='display-right'></div></td>";
+				str += "</tr></table>";						
+				el.innerHTML = str;
+				
+				el = document.getElementById("display-left");				
 
-				//add system config header
+				//add back link
+				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
+				{
+					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
+					if(treeViewBackLinkStr_.indexOf("'") >= 0)
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
+								else
+									treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
+								Debug.log("Back-link = " + treeViewBackLinkStr_);
+
+								treeViewHandlerStr_ += "<a href='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + "\")'>Back</a>";
+								treeViewHandlerStr_ += "<br><br>";
+				}
+				
+				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
 					"href='javascript:setupSpecificConfigGroup(\"" + configGroupName +
 					"\",\"" + configGroupKey + "\");'>";
@@ -807,6 +1000,8 @@
 			var tableLinkName;
 			var i,j;
 			var childrenLength;
+			var newWindowStr;
+			var backLinkStr;
 			
 			for(i=0;i<nodes.length;++i)
 			{
@@ -860,10 +1055,35 @@
 						break;
 				if(j != treeMemberNames_.length) //found table link
 				{
+
+					backLinkStr = "setupConfigGroupTreeView(\\\"" + 
+							treeGroupName_ + "\\\",\\\"" +
+							treeGroupKey_ + "\\\");"; 	
+					
+					//make replace screen link
 					treeViewHandlerStr_ += " <a href='javascript:setupSpecificConfig(\"" + 
 							treeMemberNames_[j] + "\",\"" +
-							treeMemberVersions_[j] + "\")'>";
+							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");'>";
 					treeViewHandlerStr_ += "=&gt;</a>";
+					
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+							"href='javascript:DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false)'>";
+					treeViewHandlerStr_ += "^</a>";
+					
+					//make right side link
+					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+							"href='javascript:setupSpecificConfigInRight(\""  + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\");'>";
+					treeViewHandlerStr_ += "&gt</a>";
 				}
 				
 				
@@ -908,8 +1128,12 @@
 		}
 		
 		//setupConfigGroupTreeView ~
-		function setupConfigGroupTreeView(configGroupName, configGroupKey)
+		function setupConfigGroupTreeView(configGroupName, configGroupKey, backLinkStr)
 		{
+			if(backLinkStr && backLinkStr != "")
+				treeViewBackLinkStr_ = backLinkStr;
+			else 
+				treeViewBackLinkStr_ = "";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
 					configGroupName + "&configGroupKey=" + configGroupKey + "&depth=1", 
 					"startPath=/",treeViewHandler);
@@ -948,7 +1172,11 @@
 			var str = "";
 			for(var i=0;i<activeConfigHeaders.length;++i)
 			{
-				str += "Active " + activeConfigHeaders[i] + ": ";
+				if(i==2)
+					str += "Last Initialized " + activeConfigHeaders[i] + "... ";
+				else
+					str += "Active " + activeConfigHeaders[i] + ": ";
+				
 				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
 					str += "None";
 				else
@@ -962,7 +1190,11 @@
 			
 			if(str != oldStr)
 			{
-				Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!", Debug.INFO_PRIORITY);
+				if(!_firstTimeSilentActive) //only popup after the first time
+					Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!",
+						Debug.INFO_PRIORITY);
+				else
+					_firstTimeSilentActive = false;
 				document.getElementById("activeConfig").innerHTML = str;
 			}				
 		}
@@ -1054,9 +1286,6 @@
 							return;
 						}											
 						
-						Debug.log("Old Group Alias version=" + 
-								DesktopContent.getXMLValue(req,"oldConfigurationGroupAliasesVersion"));
-						
 						var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
 						var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
 						
@@ -1133,11 +1362,14 @@
 		//setupConfigCreator ~
 		function setupConfigCreator(preSelectStr)
 		{
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
 					"", setupConfigCreatorHandler, preSelectStr);			
 		}
 		
 		//setupConfigCreatorHandler ~
+		// preSelectStr may contain "&backLinkStr=..." in it
 		function setupConfigCreatorHandler(req,preSelectStr)
 		{
 			var err = DesktopContent.getXMLValue(req,"Error");
@@ -1146,11 +1378,33 @@
 				Debug.log(err,Debug.HIGH_PRIORITY);
 				return;
 			}
-			
+		
+			var backLinkStr = "";		
+			//if backLinkStr is present parse it out
+			if(preSelectStr && preSelectStr.indexOf("&") >= 0)
+			{
+				preSelectStr = preSelectStr.split("&");
+				backLinkStr = preSelectStr[1].substr(preSelectStr[1].indexOf("=")+1);
+				preSelectStr = preSelectStr[0];
+			}
 			Debug.log("preSelectStr=" + preSelectStr);
+			Debug.log("backLinkStr=" + backLinkStr);
 
 			var el = document.getElementById("display");
 			var str = "";
+
+			if(backLinkStr && backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<br>";
+			}
 			
 			if(preSelectStr)
 				str += "Choose the versions of configurations you would like to add...<br>";
@@ -1993,7 +2247,7 @@
 			versionHasChanged();
 		}
 		
-		//saveConfigAsNewVersion
+		//saveConfigAsNewVersion ~~
 		function saveConfigAsNewVersion(temporary) 
 		{	
 			editCellCancel();
@@ -2025,7 +2279,7 @@
 				"&temporary="+(temporary?1:0), "data=" + dataStr, saveConfigAsNewVersionHandler);
 		}
 		
-		//saveConfigAsNewVersionHandler
+		//saveConfigAsNewVersionHandler ~~
 		function saveConfigAsNewVersionHandler(req) 
 		{	
 			Debug.log("saveConfigAsNewVersionHandler requestHandler req " + req.responseText);
@@ -2044,7 +2298,7 @@
 			setupSpecificConfig(configName,version);
 		}
 		
-		//changeMemberVersionForConfigGroup
+		//changeMemberVersionForConfigGroup ~~
 		function changeMemberVersionForConfigGroup(groupName, configName, newVersion) 
 		{
 			Debug.log("CfgGUI changeMemberVersionForConfigGroup configName=" + configName +
@@ -2100,7 +2354,7 @@
 			
 		}
 		
-		//saveConfigGroupAsNewKey
+		//saveConfigGroupAsNewKey ~~
 		function saveConfigGroupAsNewKey(groupName) 
 		{
 			Debug.log("CfgGUI saveConfigGroupAsNewKey");	
@@ -2124,8 +2378,8 @@
 			
 		}
 		
-		//addMemberToConfigGroup
-		function addMemberToConfigGroup(groupName) 
+		//addMemberToConfigGroup ~~
+		function addMemberToConfigGroup(groupName,backLinkStr) 
 		{
 			Debug.log("CfgGUI addMemberToConfigGroup " + groupName);
 			
@@ -2143,10 +2397,29 @@
 						" version=" + version);
 				preSelectStr += memberArr[i] + "," + version + ",";
 			}
+			
+			if(backLinkStr && backLinkStr != "")
+				preSelectStr += "&backLinkStr=" + backLinkStr;
 			setupConfigCreator(preSelectStr);
 		}
-	</script>
 		
+		//jump ~~
+		function jump(anchor)
+		{
+			Debug.log("jump = " + anchor);
+			var url = location.href;
+			location.href = "#" + anchor;
+			history.replaceState(null,null,url);
+		}
+		
+		//evaluateJS ~~
+		function evaluateJS(str)
+		{
+			Debug.log("evaluateJS = " + str);
+			eval(str);
+		}		
+		
+		</script>
 </head>
 	
 

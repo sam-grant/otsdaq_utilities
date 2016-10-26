@@ -13,7 +13,7 @@
 //g++ -std=c++11  EpicsCAMonitor.cpp EpicsCAMessage.cpp EpicsWebClient.cpp SocketUDP.cpp SocketTCP.cpp -L$EPICS_BASE/lib/linux-x86_64/ -Wl,-rpath,$EPICS_BASE/lib/linux-x86_64 -lca -lCom -I$EPICS_BASE//include -I$EPICS_BASE//include/os/Linux -I$EPICS_BASE/include/compiler/gcc -o EpicsWebClient
 
 #define DEBUG false
-#define PV_FILE_NAME 			std::string(getenv("SERVICE_DATA")) + "/SlowControlsDashboardData/pv_list.dat";
+#define PV_FILE_NAME 			std::string(getenv("SERVICE_DATA_PATH")) + "/SlowControlsDashboardData/pv_list.dat";
 
 using namespace ots;
 

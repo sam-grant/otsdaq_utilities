@@ -19,8 +19,9 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
-#define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA")) + "/ConsolePreferences/"
+#define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
+#define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarderGen.cfg"
 
 #undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
@@ -75,7 +76,24 @@ void ConsoleSupervisor::destroy(void)
 void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 {
 	std::cout << __COUT_HDR_FL__ << std::endl;
-	ReceiverSocket rsock("127.0.0.1",30001); //FIXME == Take IP/Port from Configuration
+
+	std::string configFile = QUIET_CFG_FILE;
+	FILE *fp = fopen(configFile.c_str(),"r");
+	if(!fp)
+	{
+		std::stringstream ss;
+		ss << __COUT_HDR_FL__ << "File with port info could not be loaded: " <<
+				QUIET_CFG_FILE << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+	char tmp[100];
+	fgets(tmp,100,fp);
+	fgets(tmp,100,fp);
+	int myport;
+	sscanf(tmp,"%*s %d",&myport);
+	fclose(fp);
+
+	ReceiverSocket rsock("127.0.0.1",myport); //Take Port from Configuration
 	rsock.initialize();
 
 	std::string buffer;
@@ -236,7 +254,10 @@ throw (xgi::exception::Exception)
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
-			throw std::runtime_error("Could not open file: " + fn);
+		{
+			xmldoc.addTextElementToData("color_index","0");
+			goto CLEANUP;
+		}
 		fscanf(fp,"%*s %u",&colorIndex);
 		fclose(fp);
 		__MOUT__ << "colorIndex: " << colorIndex << std::endl;

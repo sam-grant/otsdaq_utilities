@@ -393,6 +393,9 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
 	try {
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
+				cfgMgr->loadConfigurationGroup(groupName,groupKey);
+
 		//add all active configuration pairs to xmldoc
 		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
 		for(auto &activePair: allActivePairs)
@@ -400,11 +403,6 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			xmldoc.addTextElementToData("MemberName", activePair.first);
 			xmldoc.addTextElementToData("MemberVersion", activePair.second.toString());
 		}
-
-
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-				cfgMgr->loadConfigurationGroup(groupName,groupKey);
-
 
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
@@ -1238,7 +1236,9 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	}
 	__MOUT__ << "activeVersions[\"GroupAliasesConfiguration\"]=" <<
 			activeVersions["GroupAliasesConfiguration"] << std::endl;
-	xmldoc.addTextElementToData("ConfigurationGroupAliasesVersion",
+	xmldoc.addTextElementToData("GroupAliasesConfigurationName",
+			"GroupAliasesConfiguration");
+	xmldoc.addTextElementToData("GroupAliasesConfigurationVersion",
 			activeVersions["GroupAliasesConfiguration"].toString());
 
 	std::map<std::string,ConfigurationTree> aliasNodePairs =

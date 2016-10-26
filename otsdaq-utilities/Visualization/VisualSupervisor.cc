@@ -50,7 +50,7 @@
 
 #define PRE_MADE_ROOT_CFG_FILE_EXT	std::string(".rcfg")
 
-#define PREFERENCES_PATH 			std::string(getenv("SERVICE_DATA")) + "/VisualizerData/"
+#define PREFERENCES_PATH 			std::string(getenv("SERVICE_DATA_PATH")) + "/VisualizerData/"
 #define PREFERENCES_FILE_EXT		".pref"
 
 #define ROOT_VIEWER_PERMISSIONS_THRESHOLD 	100
