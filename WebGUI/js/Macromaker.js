@@ -16,14 +16,15 @@
 	var sortable;
 	var stringOfAllMacros = [];
 	var tempString = [];
+	var readoutDictionary = [];
 	
 	var theAddressStrForRead = ""; // for callread and its handler
 	var isOnMacroMakerPage = false;
 	var isOnPrivateMacros = false;
-	var EVENTCOUNTER = 0;
 	var timeIntervalID;
 	var isMacroRunning = false;
-	var isMacroReading = false;
+	var waitForCurrentCommandToComeBack = false;
+	var putReadResultInBoxFlag = false;
 	var SEQFORMAT = "hex";
 	
 	var arrayOfCommandsForEdit = [];
@@ -33,7 +34,7 @@
 	var macroNotesForEdit = "";
 	
 	var lastDeletedMacro = "";
-
+	var boxOfFreshVar = "";
 	var barWidth = 0;
 	var barIncrement = 0;
 	
@@ -292,71 +293,63 @@
   
     function callRead(address)
     {
-    	var timeIntervalForRead = setInterval(function(){
-			if (isMacroReading == true) return;
-			else
+		var reminderEl = document.getElementById('reminder');
+		if(isArrayAllZero(selected))
+			reminderEl.innerHTML = "Please select at least one interface from the list";
+		else 
+		{ 
+			var addressFormatStr = document.getElementById("addressFormat").value;
+			var dataFormatStr = document.getElementById("dataFormat").value;
+		
+			if (typeof address === 'undefined') 
 			{
-				var reminderEl = document.getElementById('reminder');
-				if(isArrayAllZero(selected))
-					reminderEl.innerHTML = "Please select at least one interface from the list";
-				else 
-				{ 
-					isMacroReading = true;
-					var addressFormatStr = document.getElementById("addressFormat").value;
-					var dataFormatStr = document.getElementById("dataFormat").value;
-				
-					if (typeof address === 'undefined') 
-					{
-						theAddressStrForRead = document.getElementById('addressInput').value.toString();
-						if(theAddressStrForRead === "") 
-						{
-							reminderEl.innerHTML = "Please enter an address to read from";
-							return;
-						}
-					}
-					else
-						theAddressStrForRead = address.toString();
-					
-					if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
-					
-					var supervisorIndexArray = [];
-					var interfaceIndexArray = [];
-					for (var i = 0; i < selected.length; i++) 
-					{
-						if (selected[i]!==0) 
-						{
-							var oneInterface = FEELEMENTS[i].getAttribute("value")
-							supervisorIndexArray.push(oneInterface.split(":")[1]);
-							interfaceIndexArray.push(oneInterface.split(":")[2]);
-						}
-					}
-					var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
-					var selectionStrArray = [];
-					for (var i = 0; i < selected.length; i++) 
-					{
-						if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
-					}
-					DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
-							+convertedAddress+"&supervisorIndex="+supervisorIndexArray
-							+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
-							+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-							+"&dataFormatStr="+dataFormatStr,"",readHandlerFunction);
-					clearInterval(timeIntervalForRead);
+				theAddressStrForRead = document.getElementById('addressInput').value.toString();
+				if(theAddressStrForRead === "") 
+				{
+					reminderEl.innerHTML = "Please enter an address to read from";
+					return;
 				}
 			}
-		},100);
-    	
+			else
+				theAddressStrForRead = address.toString();
+			
+			if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
+			
+			var supervisorIndexArray = [];
+			var interfaceIndexArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) 
+				{
+					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					supervisorIndexArray.push(oneInterface.split(":")[1]);
+					interfaceIndexArray.push(oneInterface.split(":")[2]);
+				}
+			}
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
+			var selectionStrArray = [];
+			for (var i = 0; i < selected.length; i++) 
+			{
+				if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+			}
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
+					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
+					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
+					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
+					+"&dataFormatStr="+dataFormatStr,"",readHandlerFunction);
+		}
     }
     
     function writeHandlerFunction(req)
 	{
 		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
-		EVENTCOUNTER--;
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
 		barEl.style.width = barWidth + '%'; 
 		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
+		waitForCurrentCommandToComeBack = false;
+
     }
     
     function readHandlerFunction(req)
@@ -367,7 +360,7 @@
     	var reminderEl = document.getElementById('reminder');
 
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
-		isMacroReading = false;
+		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
 		var convertedOutput;
 		if (Number(dataOutput)===0) convertedOutput = "<span class='red'>Time out Error</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
@@ -391,12 +384,12 @@
 		CMDHISTDIVINDEX++; 
 		contentEl.scrollTop = contentEl.scrollHeight;
 		reminderEl.innerHTML = "Data read: " + convertedOutput;
-		EVENTCOUNTER--;
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
 		barEl.style.width = barWidth + '%'; 
 		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
+		waitForCurrentCommandToComeBack = false;
 	}
     
     function isArrayAllZero(arr)
@@ -771,7 +764,6 @@
     {
 		var contentEl = document.getElementById('historyContent');
 		var progressBarInnerEl = document.getElementById('progressBarInner');
-		EVENTCOUNTER = 0;
 		var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
 		contentEl.innerHTML += start;
 		contentEl.scrollTop = contentEl.scrollHeight;
@@ -780,45 +772,86 @@
 		var barEl = document.getElementById('macroRunningBar');
 		barEl.style.width = '0%';
 		barIncrement = 100/stringOfCommands.length;
-		for (var i = 0; i < stringOfCommands.length; i++)
-		{
-			var Command = stringOfCommands[i].split(":")
-			var commandType = Command[1];
-			if(commandType=='w'){
-				callWrite(Command[2],Command[3]);
-				console.log("write "+Command[3]+" into "+Command[2]);
-				EVENTCOUNTER++;
-			}else if(commandType=='r'){
-				callRead(Command[2]);
-				console.log("read from "+Command[2]);
-				EVENTCOUNTER++;
-			}else if(commandType=='d'){
-				var runningPercentageEl = document.getElementById('macroRunningPercentage');
-				var barEl = document.getElementById('macroRunningBar');
-				barWidth += barIncrement;
-				barEl.style.width = barWidth + '%'; 
-				runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
-				console.log("delay "+Command[2]+"ms");
-			}else
-				console.log("ERROR! Command type "+commandType+" not found");
-		}
+		var i = 0;
+    	var copyOfStringOfCommands = stringOfCommands.slice();           //Needed because the variable assignments are temporary
 		timeIntervalID = setInterval(function(){
-			if (EVENTCOUNTER !== 0)
-				return;
-			else
+			if(!waitForCurrentCommandToComeBack)
 			{
-				var end = "<p class=\"red\"><b><small>-- End of Macro: " + macroName + " --</small></b></p>";
-				contentEl.innerHTML += end;
-				contentEl.scrollTop = contentEl.scrollHeight;
-				isMacroRunning = false;
-				setTimeout(function(){ 
-					progressBarInnerEl.style.display = "none";
-                }, 300);
-				barWidth = 0;
-			    barIncrement = 0;
-				clearInterval(timeIntervalID);
+				if(i == stringOfCommands.length)
+				{
+					var end = "<p class=\"red\"><b><small>-- End of Macro: " + macroName + " --</small></b></p>";
+					contentEl.innerHTML += end;
+					contentEl.scrollTop = contentEl.scrollHeight;
+					isMacroRunning = false;
+					setTimeout(function(){ 
+						progressBarInnerEl.style.display = "none";
+	                }, 150);
+					barWidth = 0;
+				    barIncrement = 0;
+					clearInterval(timeIntervalID);
+				}
+				else
+				{
+					var Command = copyOfStringOfCommands[i].split(":")
+					var commandType = Command[1];
+					if(commandType=='w'){
+						callWrite(Command[2],Command[3]);
+						console.log("write "+Command[3]+" into "+Command[2]);
+						waitForCurrentCommandToComeBack = true;
+					}else if(commandType=='r'){
+						if(readoutDictionary.indexOf(Command[3].toString()) !== -1)  //check if Command[3] is a var!
+						{
+							console.log(Command[3]);
+							if(boxOfFreshVar === "")								//box is empty ????? not enough
+							{
+								putReadResultInBoxFlag = true;
+								callRead(Command[2])								//flag for readResult 
+								waitForCurrentCommandToComeBack = true;
+								i--;
+							}
+							else														//only to come in here to replace. 
+							{
+								for(var j = i+1; j < copyOfStringOfCommands.length; j++)  //take whatever is in the box
+								{
+									if(copyOfStringOfCommands[j].split(":")[2] == Command[3]) //replace everything in copyOfStringOfCommands	
+									{
+										var newCommand = copyOfStringOfCommands[j].split(":");
+										newCommand[2] = boxOfFreshVar;
+										copyOfStringOfCommands[j] = newCommand.join(":");
+									}
+										
+									if(copyOfStringOfCommands[j].split(":")[3] == Command[3])
+									{
+										var newCommand = copyOfStringOfCommands[j].split(":");
+										newCommand[3] = boxOfFreshVar;
+										copyOfStringOfCommands[j] = newCommand.join(":");
+									}
+								}
+								boxOfFreshVar = "";									//dump the box empty
+								putReadResultInBoxFlag = false;
+								console.log("final command after 2nd replacement" + copyOfStringOfCommands);
+							}	
+						}
+						else 
+						{
+							callRead(Command[2]);
+							waitForCurrentCommandToComeBack = true;
+						}
+						console.log("read from "+Command[2]);
+					}
+					else if(commandType=='d'){
+						var runningPercentageEl = document.getElementById('macroRunningPercentage');
+						var barEl = document.getElementById('macroRunningBar');
+						barWidth += barIncrement;
+						barEl.style.width = barWidth + '%'; 
+						runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
+						console.log("delay "+Command[2]+"ms");
+					}else
+						console.log("ERROR! Command type "+commandType+" not found");
+					i++;
+				}
 			}
-		},100);
+		},200);
     }
     
     function loadExistingMacros()
@@ -1266,7 +1299,6 @@
     	var commandToChange = 0;
     	var newCommand = [];
     	var dictionary = {};
-    	var readoutDictionary = [];
     	var globalIndex = 0;
     	var isAddressField = true;
     	if(isMacroRunning)
@@ -1288,12 +1320,10 @@
 						if(isReadAddress && Command[index] !== "")
 						{
 							readoutDictionary.push(Command[index].toString());
-							console.log("in here with var " + Command[index]);
 							console.log(readoutDictionary);
 						}
 						else if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
 						{					                      						
-							console.log("in here with var " + Command[index]);
 							newCommand = copyOfStringOfCommands[i].split(":");
 							newCommand[index] = dictionary[Command[index].toString()];
 							copyOfStringOfCommands[i] = newCommand.join(":");
@@ -1302,12 +1332,10 @@
 						{
 							if(readoutDictionary.indexOf(Command[index].toString()) !== -1) //is one of those variables we want to temporarily preserve
 							{
-								console.log("in here with var " + Command[index]);
 								return;
 							}
 							else
 							{
-								console.log("in here with var " + Command[index]);
 								waitForUserInputFlag = 1;
 								newCommand = copyOfStringOfCommands[i].split(":");
 								var variableNameAtRunTime = Command[index];
