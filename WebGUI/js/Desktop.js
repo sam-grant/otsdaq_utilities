@@ -73,7 +73,7 @@ Desktop.createDesktop = function(security) {
 	var _windows = new Array(); //windows are initialized to empty, array represents z-depth also
 	var _desktopElement;
     var _dashboard, _icons, _windowZmailbox, _mouseOverXmailbox, _mouseOverYmailbox;
-    var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox;
+    var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox, _openWindowMailbox;
     var _windowColorPostbox;
     var _MAILBOX_TIMER_PERIOD = 500; //timer period for checking mailbox and system messages: 500 ms
     var _sysMsgId = 0; //running counter to identify system message pop-ups
@@ -159,23 +159,101 @@ Desktop.createDesktop = function(security) {
         _dashboard.updateWindows();
     }
     
+    //===========================================================
 	//_checkMailboxes ~~~
 	//	called periodically (e.g. every _MAILBOX_TIMER_PERIODms)
     //  check div mailboxes that are shared by window content code and take action if necessary
     //	check for settings change
-	var _checkMailboxes = function(win) {
-		
+	var _checkMailboxes = function(win) 
+	{		
 		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
+		
+		
+
+	    //check _openWindowMailbox to see if a window opening is being requested by a Desktop Window
+	    //	From requesting window (check that done=1):
+	    // 		innerHTML = requestingWindowId=<window uid>&windowPath=<window path to open>
+	    //	Response when done:
+	    //		innerHTML = requestingWindowId=<window uid>&done=1
+	    if(_openWindowMailbox.innerHTML != "")
+	    {
+	    	Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+	    	
+	    	//get parameters
+	    	var paramsStr = _openWindowMailbox.innerHTML;
+	    	var params = [];
+	    	var paramCnt = 5;
+	    	var spliti, splitiOld = 0; 
+	    	for(var i=0;i<paramCnt;++i)
+	    	{
+	    		if(i == paramCnt-1) //last one take the whole thing (this is path, and could have &'s in it)
+	    		{
+	    			params.push(paramsStr.substr(splitiOld));
+	    			break;
+	    		}
+	    		//for others, handle like normal get param
+	    		spliti = paramsStr.indexOf('&amp;', splitiOld);	    		
+	    		params.push(paramsStr.substr(splitiOld,spliti-splitiOld))
+				splitiOld = spliti+5;
+	    	}
+	    	
+	    	var varPair;
+	    	var requestingWindowId = "", windowPath = "";
+	    	var windowName, windowSubname, windowUnique;
+	    	for(var i=0;i<params.length;++i)
+	    	{
+	    		spliti = params[i].indexOf('=');
+	    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
+				if(varPair[0] 		== "requestingWindowId")
+					requestingWindowId 	= varPair[1];
+				else if(varPair[0] 	== "windowPath")
+					windowPath 			= varPair[1];	
+				else if(varPair[0] 	== "windowName")
+					windowName 			= varPair[1];	
+				else if(varPair[0] 	== "windowSubname")
+					windowSubname		= varPair[1];	
+				else if(varPair[0] 	== "windowUnique")
+					windowUnique 		= varPair[1];	 
+	    	}
+	    	if(requestingWindowId != "" && windowPath != "")
+	    	{
+	    		//have work to do!
+	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+		    	Debug.log("requestingWindowId=" + requestingWindowId);
+		    	Debug.log("windowPath=" + windowPath);
+		    	Debug.log("windowName=" + windowName);
+		    	Debug.log("windowSubname=" + windowSubname);
+		    	Debug.log("windowUnique=" + windowUnique);
+
+		    	var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    			windowName, 
+						windowSubname,
+						windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+						eval(windowUnique));			
+		    			
+
+		    	//delate the fore window
+				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
+		    	
+				var str = "requestingWindowId=" + requestingWindowId;
+				str += "&done=1";	
+				_openWindowMailbox.innerHTML = str; //indicate done
+	    	}
+	    }
+		
+		//other things besides opening windows
 	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
-	    
+
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
-		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) {
+		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
+		{
 			Desktop.desktop.setForeWindow(0); //use function just to standardize, do not change current foreground			
 			//Debug.log("Desktop Foreground Window Refreshed by Timeout",Debug.LOW_PRIORITY);
 		}
 	    
 	    //check need for login mailbox
-	    if(_needToLoginMailbox.innerHTML == "1") {
+	    if(_needToLoginMailbox.innerHTML == "1") 
+	    {
 	        _needToLoginMailbox.innerHTML = ""; //reset
 			Debug.log("DesktopContent signaled new login needed!",Debug.HIGH_PRIORITY);
 	        Desktop.logout();
@@ -185,7 +263,9 @@ Desktop.createDesktop = function(security) {
 	    if(parseInt(_updateTimeMailbox.innerHTML) > parseInt(Desktop.desktop.login.getCookieTime()))
 	        Desktop.desktop.login.updateCookieFromContent(parseInt(_updateTimeMailbox.innerHTML)); //update based on content value
 	        
-	    if(_updateSettingsMailbox.innerHTML != "") { //check if update settings is necessary
+	    //check if update settings is necessary
+	    if(_updateSettingsMailbox.innerHTML != "") 
+	    { 
 	    	//this mailbox defines read/write actions between settings dialog and desktop
 	    	
 			//Debug.log("Desktop Settings update " + _updateSettingsMailbox.innerHTML ,Debug.LOW_PRIORITY);
@@ -217,6 +297,7 @@ Desktop.createDesktop = function(security) {
 		}
 	}
 	
+	//===========================================================
 	var _lastSystemMessage = ""; //prevent repeats
 	//_handleSystemMessages ~~~
 	//	handles request returns periodically (ever _SYS_MSG_MAX_COUNT times through _checkMailboxes)
@@ -317,9 +398,13 @@ Desktop.createDesktop = function(security) {
 		//	in dashboard. Window will display page at url.
 		//	If unique, the window is not made if there already exists a window
 		//	with the same "name - subname".
+		// 	
+		//	If subname = "" it is ignored. 	
+		//
+		//  returns new window
 	this.addWindow = function(name,subname,url,unique) {
 		
-		Debug.log(name + " - " + subname + " - " + url,Debug.LOW_PRIORITY);
+		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
 		
 		if(unique) {
 			Debug.log("Adding window uniquely",Debug.LOW_PRIORITY);
@@ -361,6 +446,8 @@ Desktop.createDesktop = function(security) {
 		Debug.log("Desktop Window Added with id " + _windows[_windows.length-1].getWindowId(),Debug.LOW_PRIORITY);
         
         _dashboard.updateWindows();
+        
+        return newWin;
 	}
 	
 		//getWindowById ~~~
@@ -593,7 +680,13 @@ Desktop.createDesktop = function(security) {
     _needToLoginMailbox = document.createElement("div");
     _needToLoginMailbox.setAttribute("id", "DesktopContent-needToLoginMailbox");
     _needToLoginMailbox.style.display = "none";
-    _desktopElement.appendChild(_needToLoginMailbox);    
+    _desktopElement.appendChild(_needToLoginMailbox);   
+    
+    //create mailbox for opening windows from Desktop Windows    
+    _openWindowMailbox = document.createElement("div");
+    _openWindowMailbox.setAttribute("id", "DesktopContent-openWindowMailbox");
+    _openWindowMailbox.style.display = "none";
+    _desktopElement.appendChild(_openWindowMailbox);   
     
     //create mailbox for settings update
     _updateSettingsMailbox = document.createElement("div");

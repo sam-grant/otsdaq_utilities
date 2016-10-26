@@ -100,6 +100,7 @@ if (typeof Globals == 'undefined')
 //  DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
+//	DesktopContent.openNewWindow(path)
 
 //"private" function list:
 //	DesktopContent.init()
@@ -128,6 +129,7 @@ DesktopContent._localUrnLid = 0;
 DesktopContent._cookieCodeMailbox = 0;
 DesktopContent._updateTimeMailbox = 0;
 DesktopContent._needToLoginMailbox = 0;
+DesktopContent._openWindowMailbox = 0;
 
 DesktopContent._lastCookieCode = 0;
 DesktopContent._lastCookieTime = 0;
@@ -165,11 +167,12 @@ DesktopContent.init = function() {
 	DesktopContent._cookieCodeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-cookieCodeMailbox");
 	DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
 	DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
+	DesktopContent._openWindowMailbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-openWindowMailbox");
 
 	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
 	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
 	DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
-	
+
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
 	window.onscroll = DesktopContent.handleScroll;
@@ -184,7 +187,7 @@ DesktopContent.init = function() {
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
-	
+
 	//get Wizard sequence (if in Wizard mode)
 	DesktopContent._sequence = DesktopContent._theWindow.parent.parent.window.location.pathname.split("/")[2];
 	if(!DesktopContent._sequence || DesktopContent._sequence == "")
@@ -388,7 +391,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			}
 			else //bad address response
 			{
-				
+
 				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
 
 				if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
@@ -424,7 +427,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
 			}
-						
+
 			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
 				returnHandler(req, reqIndex, errStr);
@@ -491,19 +494,19 @@ DesktopContent.getXMLNode = function(req, name) {
 		if(els.length)
 			return els[0];
 		//reverted to former way
-		
-//		for(var i=0;i<els.length;++i)
-//			if(els[i].nodeName == "DATA")
-//			{
-//				els = req.responseXML.childNodes[0].childNodes[i].childNodes;
-//				
-//				for(i=0;i<els.length;++i)
-//					if(els[i].nodeName == name)			
-//						return els[i];
-//				break;
-//			}			
+
+		//		for(var i=0;i<els.length;++i)
+		//			if(els[i].nodeName == "DATA")
+		//			{
+		//				els = req.responseXML.childNodes[0].childNodes[i].childNodes;
+		//				
+		//				for(i=0;i<els.length;++i)
+		//					if(els[i].nodeName == name)			
+		//						return els[i];
+		//				break;
+		//			}			
 	}
-	
+
 	return undefined;	
 }
 
@@ -635,21 +638,23 @@ DesktopContent.clearPopUpVerification = function(func) {
 //http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
 // except the solution is broken.. unless you add element to page
 DesktopContent.parseColor = function(colorStr) { 
-    //used to ignore the alpha in the color when returning to user
-	
+	//used to ignore the alpha in the color when returning to user
+
 	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
-//	var div = document.createElement('div'), m;
-//    div.style.color = colorStr;
-//    div.style.display = "none";
-//    document.body.appendChild(div);
-//    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
-//	  document.body.removeChild(div);
+	//	var div = document.createElement('div'), m;
+	//    div.style.color = colorStr;
+	//    div.style.display = "none";
+	//    document.body.appendChild(div);
+	//    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
+	//	  document.body.removeChild(div);
 	var m = colorStr.split("(")[1].split(")")[0].split(",");
-    if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
-    else throw new Error("Color "+colorStr+" could not be parsed.");
+	if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
+	else throw new Error("Color "+colorStr+" could not be parsed.");
 }
 
 
+//=====================================================================================
+//get window and mouse info ~~
 DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
@@ -662,13 +667,16 @@ DesktopContent.getDefaultWindowColor = function() {
 		Debug.log("Color post boxes not setup! So giving default.",Debug.MED_PRIORITY);
 		return "rgb(178,210,240)";
 	}
-	
-    wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
-    drgb = DesktopContent._desktopColor.split("(")[1].split(")")[0].split(",");
-    for(var i in drgb)
-    	drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
-    return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
+
+	wrgba = DesktopContent._windowColorPostbox.innerHTML.split("(")[1].split(")")[0].split(",");
+	drgb = DesktopContent._desktopColor.split("(")[1].split(")")[0].split(",");
+	for(var i in drgb)
+		drgb[i] = (drgb[i]*(1-wrgba[3]) + wrgba[i]*wrgba[3])|0; //floor of blend
+	return "rgb("+drgb[0]+","+drgb[1]+","+drgb[2]+")"; 
 }
+
+//=====================================================================================
+//get color scheme ~~
 DesktopContent.getDefaultDashboardColor = function() { return DesktopContent.parseColor(DesktopContent._dashboardColorPostbox.innerHTML); }
 DesktopContent.getDefaultDesktopColor = function() { 
 	if(!DesktopContent._desktopColor)
@@ -679,7 +687,101 @@ DesktopContent.getDefaultDesktopColor = function() {
 	}
 	return DesktopContent._desktopColor;
 } 
+
+//=====================================================================================
+//getUsername ~~
 DesktopContent.getUsername = function() { 
 	var dispName = DesktopContent._theWindow.parent.document.getElementById("DesktopDashboard-user-displayName").innerHTML
-	return dispName.substr(dispName.indexOf(",")+2);	
+			return dispName.substr(dispName.indexOf(",")+2);	
 }
+
+
+//=====================================================================================
+//openNewWindow ~~
+//	first wait for mailbox to be clear
+//	then take mailbox
+DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler) {	
+	
+	var path = url;
+	Debug.log("openNewWindow= " + path);
+	Debug.log("name= " + name);
+	Debug.log("subname= " + subname);
+	Debug.log("unique= " + unique);
+	
+	//extract params from DesktopContent._openWindowMailbox
+	//get parameters
+	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
+	
+	if(paramsStr != "") //then wait
+	{
+		Debug.log("Window creation is busy, trying again soon!");
+		setTimeout(function(){ DesktopContent.openNewWindow(path); }, 100);
+		return;
+	}
+
+	//free to attempt to open window!
+	var str = "requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
+	str += "&windowName=" + name;
+	str += "&windowSubname=" + subname;
+	str += "&windowUnique=" + unique;
+	str += "&windowPath=" + path;
+	DesktopContent._openWindowMailbox.innerHTML = str;
+
+	Debug.log("Waiting for complete...");
+	
+	var timeoutHandler = function() 
+							{ 
+		Debug.log("Checking for complete...");
+		//extract params from DesktopContent._openWindowMailbox
+		//get parameters
+		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
+		var spliti = paramsStr.indexOf('&amp;');
+		params = [paramsStr.substr(0,spliti),paramsStr.substr(spliti+5)];
+		var varPair;
+		var requestingWindowId = "", done = "";
+		for(var i=0;i<params.length;++i)
+		{
+			spliti = params[i].indexOf('=');
+			varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
+			if(varPair[0] 		== "requestingWindowId")
+				requestingWindowId 	= varPair[1];
+			else if(varPair[0] 	== "done")
+				done 				= varPair[1];	 
+		}
+
+		if(paramsStr = "" || (requestingWindowId != "" && done != ""))
+		{
+			//assume done!
+			Debug.log("requestingWindowId=" + requestingWindowId);
+			Debug.log("done=" + done);
+			if(requestingWindowId != DesktopContent._myDesktopFrame.id.split('-')[1])
+				Debug.log("There was a mismatch in wid!",Debug.MED_PRIORITY);
+			
+			//clear mailbox 
+			DesktopContent._openWindowMailbox.innerHTML = "";
+						
+			if(completeHandler)
+				completeHandler(); //call parameter handler
+			return;
+		}
+		else //try again
+			setTimeout(timeoutHandler, 100); //try again
+			
+							};	//end setTimeout handler
+	
+	setTimeout(timeoutHandler,
+			100); //end setTimeout
+
+}
+
+
+
+
+
+
+
+
+
+
+
+

@@ -72,6 +72,10 @@
 		var _version;
 		var _dataOffset = 0;
 		var _lastFindRow, _lastFindCol;
+		
+		var _firstTimeSilentActive = true;
+		
+		var _displayTargetEl = 0;
 
 		var _contextMemberNames = [];
 		var _backboneMemberNames = [];
@@ -81,6 +85,7 @@
 		var treeNodeUID_;		//incrementing unique id for nodes
 		var treeMemberNames_, treeMemberVersions_;
 		var treeViewBackLinkStr_;
+		var treeGroupName_, treeGroupKey_;
 	
 		
 	
@@ -104,9 +109,10 @@
 			//specificGroupRequestHandler(req,param)
 			
 			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
+			//setupSpecificConfigInRight(configName,version)
 			//specificConfigRequestHandler(req,backLinkStr)
 
-			//setupConfigGroupTreeView(configGroupName,backLinkStr)
+			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path)
 			//toggleTreeChildren(depth,uid,nodeName,path)
@@ -154,6 +160,7 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 			
+			
 			//			setupSpecificConfig("XDAQApplicationConfiguration","10",
 			//					"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
 			//			return;
@@ -164,6 +171,9 @@
 			
 			//setupConfigCreator();
 			//return
+			
+			//setupConfigGroupTreeView("PhysicsWizToLatest","3");
+			//return;
 
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
@@ -201,8 +211,19 @@
 					}
 				);
 			
-
-			setupSystemViewMode();
+			//get command string if opening a new window
+			var cmdStr = DesktopContent.getParameter(1); //from  location.href
+			if(cmdStr && cmdStr != "")
+			{
+				//do incoming commands!
+				Debug.log("cmdStr=" + cmdStr);
+				//replace %22 with "
+				cmdStr = cmdStr.replace(/%22/g, "\"");
+				
+				evaluateJS(cmdStr);	
+			}
+			else
+				setupSystemViewMode();
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -260,13 +281,27 @@
 		//	undefined version gives latest
 		function setupSpecificConfig(configName, version, backLinkStr) {
 			
-			var el = document.getElementById("display");
+			var el;
+			if(_displayTargetEl && backLinkStr == "special display target")
+				el = _displayTargetEl;
+			else
+			{
+				el = document.getElementById("display");
+				_displayTargetEl = 0;
+			}
+			
 			el.innerHTML = "Loading...";
 			var v = "";
 			if(version !== undefined && version != "") v = "&version="+version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
 				"&configName=" + configName + v, 
 				"", specificConfigRequestHandler, backLinkStr);		
+		}
+		//setupSpecificConfigInRight ~
+		//	undefined version gives latest
+		function setupSpecificConfigInRight(configName, version) {
+			_displayTargetEl = document.getElementById("display-right");
+			setupSpecificConfig(configName,version,"special display target");
 		}
 		
 		//groupAliasesRequestHandler ~
@@ -823,10 +858,13 @@
 			//add + row controls for new last row
 			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
 			str += "+";
-			str += "</a>"
+			str += "</a>";
 
-					
-			var el = document.getElementById("display");
+			var el;
+			if(_displayTargetEl)
+				el = _displayTargetEl;
+			else
+				el = document.getElementById("display");
 			
 			el.innerHTML = str;
 			
@@ -863,6 +901,9 @@
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 
+			treeGroupName_ = configGroupName;
+			treeGroupKey_ = configGroupKey;
+			
 			var memberNames = req.responseXML.getElementsByTagName("MemberName");
 			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
 			treeMemberNames_ = [];
@@ -895,6 +936,16 @@
 				depth = 0;
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
+				
+				var str = ""; //make table for left and right display
+				str += "<table border='0'><tr>";
+				str += "<td valign='top'><div id='display-left' " +
+						"style='width:600px;overflow-x:auto;margin-right:20px;'></div></td>";
+				str += "<td valign='top'><div id='display-right'></div></td>";
+				str += "</tr></table>";						
+				el.innerHTML = str;
+				
+				el = document.getElementById("display-left");				
 
 				//add back link
 				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
@@ -949,6 +1000,8 @@
 			var tableLinkName;
 			var i,j;
 			var childrenLength;
+			var newWindowStr;
+			var backLinkStr;
 			
 			for(i=0;i<nodes.length;++i)
 			{
@@ -1002,10 +1055,35 @@
 						break;
 				if(j != treeMemberNames_.length) //found table link
 				{
+
+					backLinkStr = "setupConfigGroupTreeView(\\\"" + 
+							treeGroupName_ + "\\\",\\\"" +
+							treeGroupKey_ + "\\\");"; 	
+					
+					//make replace screen link
 					treeViewHandlerStr_ += " <a href='javascript:setupSpecificConfig(\"" + 
 							treeMemberNames_[j] + "\",\"" +
-							treeMemberVersions_[j] + "\")'>";
+							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");'>";
 					treeViewHandlerStr_ += "=&gt;</a>";
+					
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+							"href='javascript:DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false)'>";
+					treeViewHandlerStr_ += "^</a>";
+					
+					//make right side link
+					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+							"href='javascript:setupSpecificConfigInRight(\""  + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\");'>";
+					treeViewHandlerStr_ += "&gt</a>";
 				}
 				
 				
@@ -1094,7 +1172,11 @@
 			var str = "";
 			for(var i=0;i<activeConfigHeaders.length;++i)
 			{
-				str += "Active " + activeConfigHeaders[i] + ": ";
+				if(i==2)
+					str += "Last Initialized " + activeConfigHeaders[i] + "... ";
+				else
+					str += "Active " + activeConfigHeaders[i] + ": ";
+				
 				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
 					str += "None";
 				else
@@ -1108,7 +1190,11 @@
 			
 			if(str != oldStr)
 			{
-				Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!", Debug.INFO_PRIORITY);
+				if(!_firstTimeSilentActive) //only popup after the first time
+					Debug.log("Note: There was a successful activation of a configuration group (check the top of the page)!",
+						Debug.INFO_PRIORITY);
+				else
+					_firstTimeSilentActive = false;
 				document.getElementById("activeConfig").innerHTML = str;
 			}				
 		}
@@ -2331,8 +2417,7 @@
 		{
 			Debug.log("evaluateJS = " + str);
 			eval(str);
-		}
-		
+		}		
 		
 		</script>
 </head>
