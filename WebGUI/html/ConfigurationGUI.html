@@ -161,6 +161,7 @@
 			//setupFindAndReplace()
 			//configFind()
 			//configReplace() 
+			//configIncrementByReplace()
 			//versionHasChanged()
 		
 			//setupCopyAndMoveRows()
@@ -177,9 +178,9 @@
 			Debug.log("CfgGUI init");
 			
 			
-			//			setupSpecificConfig("XDAQApplicationConfiguration","10",
-			//					"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
-			//			return;
+			//setupSpecificConfig("XDAQApplicationConfiguration","10",
+			//		"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
+			//return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3",
 				//	"");//"","anchorTag-RawDataSaverConsumerConfiguration");
@@ -564,7 +565,7 @@
 						if(msValues[j] == groupName)
 						{							
 							//only represent single latest group/key
-							if(key > msKeys[j])
+							if(key|0 > msKeys[j]|0)
 								msKeys[j] = key; //found new latest key
 							
 							//add to all keys
@@ -2079,13 +2080,13 @@
 			
 			_lastFindRow = _lastFindCol = -1; //initialize find location
 			var str = "";
-			str += "Search in column ('*' for all)... ";
+			str += "Search in column ('*' for all)... <br>";
 			str += "<input type='text' id='findAndReplaceTarget' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='*'>";
 			str += "<br>";
-			str += "For text... ";
+			str += "For text... <br>";
 			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
 			str += "<br>";
-			str += "Replace with... ";
+			str += "Replace with... <br>";
 			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
 			
 			//make div for translating innerHTML and value
@@ -2095,6 +2096,10 @@
 			str += "<input type='button' onmouseup='configFind()' value='Find'/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configReplace()' value='Replace'/>";
+			str += "&nbsp;&nbsp; or..."
+			for(var i=0;i<3;++i)
+				str += "&nbsp;";
+			str += "<input type='button' onmouseup='configIncrementByReplace()' value='Increment by &quot;Replace with...&quot; Field'/>";
 			el.innerHTML = str;						
 		}
 				
@@ -2164,7 +2169,53 @@
 			_lastFindRow = -1; //reset for next find
 		}
 		
-		//configReplace
+		//configIncrementByReplace ~~
+		function configIncrementByReplace()
+		{
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var incrementNum = document.getElementById("findAndReplaceWith").value | 0;			
+
+			Debug.log("configIncrementByReplace +=" + incrementNum + " @ " + target);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
+			var cellStr,cellNumIndex,cellNum;
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				cells = rows[r].getElementsByTagName("td");
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					//skip if not target column
+					if(target != "*" && cols[c].innerHTML != target) continue;  
+
+					cellStr = cells[c].innerHTML;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					
+					//find any trailing number					
+					for(cellNumIndex = cellStr.length-1; 
+							cellNumIndex >= 0; --cellNumIndex)
+						if(cellStr[cellNumIndex] < '0' ||
+								cellStr[cellNumIndex] > '9')
+							break;
+					++cellNumIndex;
+					Debug.log("cellNumIndex=" + cellNumIndex + " - " + cellStr.substr(cellNumIndex));
+					cellNum = cellStr.substr(cellNumIndex) | 0;
+					Debug.log("cellNum=" + cellNum);
+
+					cellNum += incrementNum;
+					Debug.log("newNum=" + cellNum);
+					
+					cells[c].innerHTML = cellStr.substr(0,cellNumIndex) + cellNum;
+				}
+			}
+
+			versionHasChanged();
+		}
+		
+		//configReplace ~~
 		function configReplace()
 		{			
 			var target = document.getElementById("findAndReplaceTarget").value;
@@ -2196,7 +2247,8 @@
 
 				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 				{
-					if(target != "*" && cols[c].innerHTML != target) continue; //skip if not target column 
+					//skip if not target column
+					if(target != "*" && cols[c].innerHTML != target) continue;  
 					
 					cellStr = cells[c].innerHTML;
 					tmpStr = cellStr;

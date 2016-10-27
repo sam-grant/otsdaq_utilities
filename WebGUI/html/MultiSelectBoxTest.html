@@ -50,12 +50,12 @@
 	            MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
 	            
 	            //print out current state of selection array
+	            //if anything is selected from before.. handle as selected
 	            var selArr = MultiSelectBox.getSelectionArray(el1);
 	            for(var s in selArr)
 	            {
 	                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",
 	                		selArr[s]);
-	                selArr[s] = 1;
 	                if(selArr[s])
 	                	box1SelectionHandler(
 	                			MultiSelectBox.getSelectionElementByIndex(el1,s));
