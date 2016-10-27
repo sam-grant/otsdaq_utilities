@@ -127,8 +127,9 @@ throw (xgi::exception::Exception)
 	//	saveNewConfigurationGroup
 	//	getSpecificConfiguration
 	//	saveSpecificConfiguration
-	//	changeKocVersionForSpecificConfig
 	//	getTreeView
+	//	activateConfigGroup
+	//	getActiveConfigGroups
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -332,6 +333,7 @@ throw (xgi::exception::Exception)
 			throw; //unexpected exception!
 		}
 	}
+	else if(Command == "getActiveConfigGroups"); //do nothing, since they are always returned
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
@@ -1375,6 +1377,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
 
+	__MOUT__ << "# of configuration tables found: " << allCfgInfo.size() << std::endl;
 	while(it != allCfgInfo.end())
 	{
 		//for each subconfiguration name
