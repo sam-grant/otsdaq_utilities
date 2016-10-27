@@ -30,7 +30,7 @@
 //            	
 //        }
 //
-// Example usage: WebGUI/html/MultiSelectBox.html
+// Example usage: /WebPath/html/MultiSelectBoxTest.html
 //
 //////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -179,9 +179,12 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 			"id='" + name + "-option_" + i + "' " +
 			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
 			noMultiSelect + "); ";
-		if(handler)
+		if(handler && (typeof handler) == "string") //if handler supplied as string
 			str += handler + "(this);"; //user selection handler
+		else if(handler) //assume it is a function
+			str += handler.name + "(this);"; //user selection handler
 		str += "' ";
+		str += "value-value='" + vals[i] + "' ";
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
 		str += vals[i];

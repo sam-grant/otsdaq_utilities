@@ -5,10 +5,14 @@
 
 	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
-	<style type="text/css">			
-		body {
-			background-color: rgb(200,200,200);
+	<style type="text/css">		
+		* {
+			font-size: 16px;
 			font-family: 'Inconsolata', monospace;	
+		}
+
+		body {
+			background-color: rgb(200,200,200);	
 		}
 		
 		#clearDiv {
@@ -112,7 +116,9 @@
 			str += "<input type='text' id='SaveAsConfigName' style='margin:-4px -2px -4px -1px;' value=''>";
 			str += " <input type='button' onmouseup='saveTable()' value='Save'/>";
 			str += "<br><br>";
-			str += "Load Column Info from... <br>&nbsp;&nbsp;Configuration Name:";
+			str += "Load Column Info from... &nbsp;&nbsp;&nbsp;"; 
+			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
+			str += "<br>&nbsp;&nbsp;Configuration Name:";
 
 			str += "<select id='loadFromConfigName'>";
 			
@@ -128,7 +134,6 @@
 				str += "</option>";
 			}				
 			str += "</select>";
-			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
 			
 			var el = document.getElementById("controls");
 			el.innerHTML = str;

@@ -5,10 +5,19 @@
 
 	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
 	<style type="text/css">			
+		* {
+			font-size: 16px;
+			font-family: 'Inconsolata', monospace;	
+		}
+
 		body {
 			background-color: rgb(200,200,200);
-			font-family: 'Inconsolata', monospace;	
 		}
 		
 		#clearDiv {
@@ -80,6 +89,9 @@
 		var _contextMemberNames = [];
 		var _backboneMemberNames = [];
 		
+		var _msChosenGroupName;
+		var _msChosenGroupKey;
+		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var treeNodeUID_;		//incrementing unique id for nodes
@@ -101,6 +113,8 @@
 			
 			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
 			//configGroupsRequestHandler(req,anchorTarget)
+			//groupSearchSelectionHandler(el)
+			//gotoSelectedMSGroup()
 			
 			//setupTableViewMode(anchorTarget)							//gets configuration tables
 			//configsRequestHandler(req,anchorTarget)
@@ -167,15 +181,15 @@
 			//					"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
 			//			return;
 
-			//			setupSpecificConfigGroup("PhysicsWizToLatest","3",
-			//					"","anchorTag-RawDataSaverConsumerConfiguration");
-			//			return;
-			
-			//setupConfigCreator();
-			//return
-			
-			//setupConfigGroupTreeView("PhysicsWizToLatest","3");
+			//setupSpecificConfigGroup("PhysicsWizToLatest","3",
+				//	"");//"","anchorTag-RawDataSaverConsumerConfiguration");
 			//return;
+			
+			//setupConfigCreator(); return
+			
+			//setupConfigGroupTreeView("PhysicsWizToLatest","3"); return;
+			
+			setupGroupViewMode(); return;
 
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
@@ -412,6 +426,8 @@
 				//attempt to go on, in case error was just associtate with one group
 				//return;
 			}
+			
+			activateSystemConfigHandler(req);
 
 			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
 			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
@@ -424,16 +440,47 @@
 			var str = "";
 			var configNames, configVersions;
 			var backLinkStr;
-			var configName, configVersion;
-
+			var configName, configVersion;									
+			
 			backLinkStr = "setupGroupViewMode();"; 
-			str += "<a href='javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
-					"\");'>Create a New Configuration Group</a>";
+//			str += "<a href='javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
+//					"\");'>Create a New Configuration Group</a>";
+			
+			str += "Don't see what you need: ";
+			str += "<button type='button' onmouseup='" +
+					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
+										"\");'>" + 
+					"Create a new Group</button>";
 			str += "<br><br>";
+
 					
 			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
 			if(!groupNames.length)
 				str += "No Configuration Groups found.";
+			else
+			{
+				_msChosenGroupName = "";
+				_msChosenGroupKey = "";
+				//////////////////////////////////////
+				//add search box div
+
+				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
+						"View Selected Group</button>";
+				str += "<div id='groupSearchDiv' ";
+				str += "style='margin-top:-20px; height:280px; width:450px;";
+				str += ">";				
+				str += "</div>";
+				
+				str += "<div id='clearDiv'></div>";
+				str += "<br><div style='margin-top:0px'><b>";
+				str += "Exhaustive Configuration Group List:";
+				str += "</b></div><br>";						
+				
+				//end search box add div
+				//////////////////////////////////////				
+			}
+			
+			
 			for(var i=0;i<groupNames.length;++i)
 			{		
 				groupName = groupNames[i].getAttribute("value");
@@ -486,6 +533,48 @@
 			}				
 			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
+			
+			//////////// make search box
+			{	
+				var noMultiSelect = true; // true or false (false for multiselect functionality) 
+
+				var msValues = []; 	//group names for multi-select
+				var msKeys = []; 	//group keys for multi-select
+				var msTypes = [];	//back link strings for multi-select
+				var skipRepeat;
+				
+				backLinkStr = "setupGroupViewMode();";
+				
+				for(var i=0;i<groupNames.length;++i)
+				{	
+					groupName = groupNames[i].getAttribute("value");
+					key = keys[i].getAttribute("value");
+
+					skipRepeat = false;
+					for(var j=0;j<msValues.length;++j)
+						if(msValues[j] == groupName)
+						{
+							//only represent single latest group/key
+							if(key > keys[j])
+								keys[j] = key; //found new latest key
+							skipRepeat = true;
+							break;							
+						}
+					if(skipRepeat) continue; //do not add repeats to multi-select array
+				
+					msValues.push(groupName);
+					msKeys.push(key);
+					msTypes.push(backLinkStr);
+				}
+				
+				//write to a particular div
+				var el = document.getElementById('groupSearchDiv');  
+				MultiSelectBox.createSelectBox(el,
+						"groupSearch",
+						"Search and Select a Group:",
+						msValues,msKeys,msTypes,groupSearchSelectionHandler,noMultiSelect);
+			}
+			//////////// end make search box
 
 			//if there is a target to jump to, do it
 			if(anchorTarget)
@@ -494,8 +583,47 @@
 				jump(anchorTarget);
 			}
 		}
+		
+		//groupSearchSelectionHandler ~~
+		//	make group search selection handler
+		//	el points to the div of selected element
+		function groupSearchSelectionHandler(el)
+		{
+			var splits = el.id.split('_');
+			var i = splits[splits.length-1] | 0;
+			if(MultiSelectBox.mySelects_[el.parentElement.id][i])
+			{
+				Debug.log("Chosen element index:" + i +
+						" value:" + el.getAttribute("value-value") +
+						" key:" + el.getAttribute("key-value") +
+						" type:" + el.getAttribute("type-value"));
+				_msChosenGroupName = el.getAttribute("value-value");
+				_msChosenGroupKey = el.getAttribute("value-value");
+			}
+			else
+			{
+				_msChosenGroupName = "";
+				_msChosenGroupKey = "";
+			}
+		}
+		
+		//gotoSelectedMSGroup ~~
+		function gotoSelectedMSGroup()
+		{
+			if(_msChosenGroupName == "" || _msChosenGroupKey == "")
+			{
+				Debug.log("Must first select a Group name from the select box.", 
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			setupSpecificConfigGroup(_msChosenGroupName,_msChosenGroupKey,
+					"setupGroupViewMode()");
+		}
+		
 
-		function configsRequestHandler(req, anchorTarget) {					
+		//configsRequestHandler ~~
+		function configsRequestHandler(req, anchorTarget)
+		{					
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -551,7 +679,7 @@
 		}
 
 
-		//specificGroupRequestHandler
+		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
 		function specificGroupRequestHandler(req, param) {	
 			var err = DesktopContent.getXMLValue(req,"Error");
@@ -1420,85 +1548,6 @@
 					}
 					
 					setGroupAliasInActiveBackbone(groupAlias,name,key);
-//
-//					DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
-//							"&groupAlias=" + groupAlias + 
-//							"&groupName=" + name +
-//							"&groupKey=" + key, "", function(req)
-//							{
-//
-//						var err = DesktopContent.getXMLValue(req,"Error");
-//						if(err) 
-//						{
-//							Debug.log(err,Debug.HIGH_PRIORITY);
-//							return;
-//						}											
-//						
-//						var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
-//						var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
-//						
-//						Debug.log("groupAliasName=" + groupAliasName);
-//						Debug.log("groupAliasVersion=" + groupAliasVersion);
-//						
-//						var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-//						var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-//
-//						//make a new backbone with old versions of everything except Group Alias 
-//						var configMap = "configList=";
-//						var name;
-//						for(var i=0;i<configNames.length;++i)
-//						{		
-//							name = configNames[i].getAttribute("value");
-//							
-//							if(name == groupAliasName)
-//							{
-//								configMap += name + "," + 
-//										groupAliasVersion + ",";
-//								continue;
-//							}
-//							//else use old member
-//							configMap += name + "," + 
-//									configVersions[i].getAttribute("value") + ",";							
-//						}
-//
-//						DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-//								(groupAlias + "WizToLatestBackbone"), configMap, 
-//								function(req)
-//								{
-//							var err = DesktopContent.getXMLValue(req,"Error");
-//							if(err) 
-//							{
-//								Debug.log(err,Debug.HIGH_PRIORITY);
-//								return;
-//							}
-//
-//							var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-//							var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-//
-//							//now activate the new backbone group
-//
-//
-//							DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
-//									"&groupName=" + name +
-//									"&groupKey=" + key, "", 
-//									function(req)
-//									{
-//								var err = DesktopContent.getXMLValue(req,"Error");
-//								if(err) 
-//								{
-//									Debug.log(err,Debug.HIGH_PRIORITY);
-//									return;
-//								}
-//
-//								setupSystemViewMode(); //done so refresh view
-//
-//									});	//end of activate new backbone handler
-//
-//
-//								}); //end of backbone saveNewConfigurationGroup handler
-//
-//
-//							}); //end of setGroupAliasInActiveBackbone handler
 
 
 						}); //end of saveNewConfigurationGroup handler
@@ -1524,6 +1573,8 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
+				var el = document.getElementById("display");
+				el.innerHTML = "Failed.";
 				return;
 			}
 		
@@ -1559,9 +1610,9 @@
 			
 			str += "<div id='createGroupInfo'></div><br>";
 			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
-					"Create System Config</button>";
+					"Create the new Group</button>";
 			str += "<br><br>";
-			str += "System Config Name: <input id='newConfigName'/>";
+			str += "Group Name: <input id='newConfigName'/>";
 			str += "<br><br>";
 			
 			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
@@ -2578,7 +2629,7 @@
 	<a href='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
 	<a href='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
 
-	<a style='margin-left:50px' target="_blank" 
+	<a style='margin-left:50px;' target="_blank" 
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
 					title="Click to open ots documentation">
 	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>

@@ -3,7 +3,7 @@
 
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
-	<script src="../js/js_lib/MultiSelectBox.js"></script>
+	<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
     <script>
 
@@ -22,9 +22,9 @@
             //////////// make search box
             {	
 				var noMultiSelect = false; // true or false (false for multiselect functionality) 
-				
-				var keys = ["one","two","three"];
+
 				var vals = ["One little piggy","two little piggies","three little piggies"];
+				var keys = ["one","two","three"];
 				var types = ["number","numbers","numbers"];
 									
 				//write to a particular div
@@ -32,7 +32,7 @@
 	            MultiSelectBox.createSelectBox(el,
 	            		"box1",
 	            		"Multi-Select Box Example",
-						vals,keys,types,"box1SelectionHandler",noMultiSelect);
+						vals,keys,types,box1SelectionHandler,noMultiSelect);
 	            
 	            noMultiSelect = true;
 	            
@@ -42,7 +42,7 @@
 	            MultiSelectBox.createSelectBox(el,
 	            		"box2",
 	            		"Multi-Select Box Example 2",
-						vals,keys,types,"box2SelectionHandler",noMultiSelect);
+						vals,keys,types,box2SelectionHandler,noMultiSelect);
             }
             //////////// end make search box
 
@@ -53,11 +53,13 @@
         {
             var splits = el.id.split('_');
             var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 1 Chosen element index:",i,
+            if(MultiSelectBox.mySelects_[el.parentElement.id][i])
+            	MultiSelectBox.dbg("box 1 Chosen element index:",i,            		
+            		" value:",el.getAttribute("value-value"),
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in MultiSelectBox.mySelects_[el.parentElement.id])
-                MultiSelectBox.dbg("box 1 selected: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
+                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
             	
         }
         
@@ -65,11 +67,13 @@
         {
             var splits = el.id.split('_');
             var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 2 Chosen element index:",i,
+            if(MultiSelectBox.mySelects_[el.parentElement.id][i])
+            	MultiSelectBox.dbg("box 2 Chosen element index:",i,            		
+            		" value:",el.getAttribute("value-value"),
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in MultiSelectBox.mySelects_[el.parentElement.id])
-                MultiSelectBox.dbg("box 1 selected: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
+                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
         }
     </script>
     
