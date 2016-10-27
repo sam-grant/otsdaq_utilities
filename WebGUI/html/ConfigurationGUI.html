@@ -465,16 +465,23 @@
 				//add search box div
 
 				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
-						"View Selected Group</button>";
+						"View Latest Key for Selected Group</button>";
 				str += "<div id='groupSearchDiv' ";
-				str += "style='margin-top:-20px; height:280px; width:450px;";
+				str += "style='margin-top:-20px; height:200px; width:450px;";
 				str += ">";				
 				str += "</div>";
-				
+
 				str += "<div id='clearDiv'></div>";
+
+				str += "<button style='margin-top:-25px' " + 
+						"type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
+						"View Latest Key for Selected Group</button>";
+				
+				str += "<div id='msSelectedGroupDiv'></div>";
+				
 				str += "<br><div style='margin-top:0px'><b>";
 				str += "Exhaustive Configuration Group List:";
-				str += "</b></div><br>";						
+				str += "</b></div><br>";
 				
 				//end search box add div
 				//////////////////////////////////////				
@@ -490,6 +497,7 @@
 						groupName + "-" + key + "\\\");"; 
 				
 				//add header
+				str += "<div id='groupViewGroupDiv-" + groupName + "-" + key + "'>";
 				str += "<a name='anchorTag-" + 
 						groupName + "-" + key + "'></a>";
 				str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
@@ -530,8 +538,8 @@
 					str += "</td>";
 				}
 				str += "</tr></table><br>";
+				str += "</div>"; //close groupViewGroupDiv-*
 			}				
-			//Debug.log("CfgGUI requestHandler str " + str);
 			el.innerHTML = str;
 			
 			//////////// make search box
@@ -542,7 +550,8 @@
 				var msKeys = []; 	//group keys for multi-select
 				var msTypes = [];	//back link strings for multi-select
 				var skipRepeat;
-				
+				var msAllKeys = []; //all keys separated by '-'
+
 				backLinkStr = "setupGroupViewMode();";
 				
 				for(var i=0;i<groupNames.length;++i)
@@ -553,11 +562,15 @@
 					skipRepeat = false;
 					for(var j=0;j<msValues.length;++j)
 						if(msValues[j] == groupName)
-						{
+						{							
 							//only represent single latest group/key
-							if(key > keys[j])
-								keys[j] = key; //found new latest key
-							skipRepeat = true;
+							if(key > msKeys[j])
+								msKeys[j] = key; //found new latest key
+							
+							//add to all keys
+							msAllKeys[j] += "-" + key;
+							
+							skipRepeat = true;							
 							break;							
 						}
 					if(skipRepeat) continue; //do not add repeats to multi-select array
@@ -565,15 +578,32 @@
 					msValues.push(groupName);
 					msKeys.push(key);
 					msTypes.push(backLinkStr);
+					msAllKeys.push(key);
 				}
+				
+				//prepare key string (last key in key string is latest)
+				for(var j=0;j<msValues.length;++j)
+					msAllKeys[j] += "-" + msKeys[j];
 				
 				//write to a particular div
 				var el = document.getElementById('groupSearchDiv');  
 				MultiSelectBox.createSelectBox(el,
 						"groupSearch",
 						"Search and Select a Group:",
-						msValues,msKeys,msTypes,groupSearchSelectionHandler,noMultiSelect);
-			}
+						msValues,msAllKeys,msTypes,groupSearchSelectionHandler,noMultiSelect);
+
+				MultiSelectBox.initMySelectBoxes();
+
+	            //if anything is selected from before.. handle as selected
+	            var selArr = MultiSelectBox.getSelectionArray(el);
+	            for(var s in selArr)
+	            {
+	            	if(selArr[s])
+	            		groupSearchSelectionHandler(
+	                			MultiSelectBox.getSelectionElementByIndex(el,s));
+	            }
+				
+			}			
 			//////////// end make search box
 
 			//if there is a target to jump to, do it
@@ -589,16 +619,47 @@
 		//	el points to the div of selected element
 		function groupSearchSelectionHandler(el)
 		{
-			var splits = el.id.split('_');
-			var i = splits[splits.length-1] | 0;
-			if(MultiSelectBox.mySelects_[el.parentElement.id][i])
+            var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);
+            if(selArr[i])
 			{
 				Debug.log("Chosen element index:" + i +
 						" value:" + el.getAttribute("value-value") +
 						" key:" + el.getAttribute("key-value") +
 						" type:" + el.getAttribute("type-value"));
 				_msChosenGroupName = el.getAttribute("value-value");
-				_msChosenGroupKey = el.getAttribute("value-value");
+				var keyArr = el.getAttribute("key-value").split('-');
+				
+				_msChosenGroupKey = keyArr[keyArr.length-1];
+				
+				//copy selected div and show as selected
+				var srcEl = document.getElementById("groupViewGroupDiv-" + 
+						_msChosenGroupName + "-" + _msChosenGroupKey);
+				var str = "";
+				
+				str += "<hr>";
+				str += "<b>";
+				str += "Selected Group: " + _msChosenGroupName;
+				str += "</b>";
+				str += "<br>";
+				str += "Existing Keys: ";
+				for(var j=0;j<keyArr.length-1;++j)
+				{
+					str += "<a href='javascript:setupSpecificConfigGroup(\"" + 
+							_msChosenGroupName + "\",\"" + 
+							keyArr[j] + "\",\"" + 
+							el.getAttribute("type-value") + "\");'>";
+					str += keyArr[j] + "</a> ";
+					
+				}
+				str += "<br>";
+				str += "Latest Key: " + _msChosenGroupKey + " (shown below)";
+				str += "<br>";				
+				str += srcEl.innerHTML;
+				str += "<hr>";
+
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = str;				
 			}
 			else
 			{

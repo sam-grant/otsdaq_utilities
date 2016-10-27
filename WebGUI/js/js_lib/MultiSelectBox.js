@@ -90,6 +90,26 @@ MultiSelectBox.toggleClass = function(ele,cls)
 	}
 }
 
+MultiSelectBox.getSelectedIndex = function(el)
+{
+    var splits = el.id.split('_');
+    return splits[splits.length-1] | 0;    
+}
+
+MultiSelectBox.getSelectionArray = function(el)
+{    
+	console.log(el.id);
+	if(el.parentElement.id.indexOf("selbox-") == 0)
+		return MultiSelectBox.mySelects_[el.parentElement.id];
+	else
+		return MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];		
+}
+
+MultiSelectBox.getSelectionElementByIndex = function(el,i)
+{    
+	return document.getElementById(el.getElementsByClassName("mySelect")[0].id + 
+			"-option_" + i);
+}
 
 //for multiple selects to behave like checkboxes
 MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
@@ -200,7 +220,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 }
 
 //for initializing the highlights if selects are made "manually" (without clicking)
-MultiSelectBox.initMySelectBoxes = function()
+MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 {
 	var divs=document.getElementsByClassName('mySelect');
 	for (var el=0; el<divs.length; el++){
@@ -232,6 +252,9 @@ MultiSelectBox.initMySelectBoxes = function()
 			//highlight properly according to mySelects_ array
 			for (var opt=0; opt < options.length; opt++)
 			{
+				if (clearPreviousSelections)
+					MultiSelectBox.mySelects_[id][opt] = 0; //clear
+				
 				if (MultiSelectBox.mySelects_[id][opt])
 				{
 					//MultiSelectBox.dbg(opt);
