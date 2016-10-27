@@ -85,6 +85,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			this->getApplicationDescriptor()->getURN() << // getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
 			"/urn:xdaq-application:lid="
 			<< this->getApplicationDescriptor()->getLocalId() << "/" << securityCode_ << std::endl;
+
 	std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
 			{printURL(ptr,securityCode);},this,securityCode_).detach();
 
@@ -100,7 +101,7 @@ void OtsConfigurationWizardSupervisor::printURL(OtsConfigurationWizardSupervisor
 	for (; i < 5; ++i)
 	{
 		std::this_thread::sleep_for (std::chrono::seconds(2));
-		__MOUT_ERR__ <<
+		std::cout << __COUT_HDR_FL__ <<
 				getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
 				"/urn:xdaq-application:lid="
 				<< ptr->getApplicationDescriptor()->getLocalId() << "/" << securityCode << std::endl;
