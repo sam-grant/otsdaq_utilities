@@ -28,7 +28,7 @@ using namespace ots;
 #undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "CfgGUI"
 
-#define CONFIG_INFO_PATH	std::string(getenv("USER_DATA")) + "/ConfigurationDataExamples/ConfigurationInfo/"
+#define CONFIG_INFO_PATH	std::string(getenv("CONFIGURATION_INFO_PATH")) + "/"
 #define CONFIG_INFO_EXT		std::string("Info.xml")
 
 

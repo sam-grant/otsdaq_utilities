@@ -46,7 +46,7 @@
 		var _CONFIG_FIXED_CELLS = 3;
 	
 
-		var _typeArray = ["Data","OnOff","TrueFalse","YesNo","LinkGroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+		var _typeArray = ["Data","OnOff","TrueFalse","YesNo","GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
 		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
 				
 		var _editingCell = false;
@@ -147,7 +147,7 @@
 			var selVal = sel.options[sel.selectedIndex].value;
 			Debug.log("CfgTableEditor handleTypeSelect = " + selVal);
 
-			var specTypeArray = ["LinkGroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+			var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
 					
 			var found = false;
 			for(var i=0;i<specTypeArray.length;++i)
