@@ -127,7 +127,7 @@
 			//versionsForCreateConfig(i)
 			//createConfigGroup()
 			//createConfigGroupHandler(req)
-			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey)
+			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
 			//wizToLatestConfigGroup(groupAlias)
 			//wizToInitializedConfigGroup(groupAlias)		
 		
@@ -1219,11 +1219,23 @@
 		}
 		
 		//setGroupAliasInActiveBackbone ~~
-		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey)
+		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
 		{
 			Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
 			Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
 			Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
+			
+			if(!groupName || groupName == "" || !groupKey || groupKey == "")
+			{
+				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
+				setupSystemViewMode(); //error so return to system view
+				return;
+			}
+			
+			if(!newBackboneNameAdd || newBackboneNameAdd == "")
+				newBackboneNameAdd = "Wiz";
+			newBackboneNameAdd += "Backbone";
+			Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 					"&groupAlias=" + groupAlias + 
@@ -1245,7 +1257,7 @@
 
 				Debug.log("groupAliasName=" + groupAliasName);
 				Debug.log("groupAliasVersion=" + groupAliasVersion);
-
+				
 				var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
 				var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
@@ -1268,7 +1280,7 @@
 				}
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-						(groupAlias + "WizToLatestBackbone"), configMap, 
+						(groupAlias + newBackboneNameAdd), configMap, 
 						function(req)
 						{
 					var err = DesktopContent.getXMLValue(req,"Error");
