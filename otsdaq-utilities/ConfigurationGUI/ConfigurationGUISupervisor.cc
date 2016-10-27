@@ -1337,10 +1337,19 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
 		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
+
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 		try
 		{
 			memberMap = theInterface->getConfigurationGroupMembers(groupString);
+
+			//determine the type configuration group
+			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
+			std::string groupTypeString =
+							groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
+									(groupType==ConfigurationManager::BACKBONE_TYPE?
+											"Backbone":"Configuration");
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
 		catch(...)
 		{

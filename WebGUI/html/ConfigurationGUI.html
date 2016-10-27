@@ -138,7 +138,7 @@
 			//activateSystemConfig(groupName, groupKey)
 			//activateSystemConfigHandler(req)
 			//selectForCreateConfig(i)
-			//versionsForCreateConfig(i)
+			//versionsForCreateConfig(i)		
 			//createConfigGroup()
 			//createConfigGroupHandler(req)
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
@@ -565,7 +565,7 @@
 						if(msValues[j] == groupName)
 						{							
 							//only represent single latest group/key
-							if(key|0 > msKeys[j]|0)
+							if((key|0) > (msKeys[j]|0))
 								msKeys[j] = key; //found new latest key
 							
 							//add to all keys
@@ -1732,12 +1732,14 @@
 				str += "</select>";
 				str += "</td>";
 				
+				backLinkStr = "setupConfigCreator(\\\"" + preSelectStr + "\\\");";
+				
 				str += "<td>";
 				str += "<a href='#' onmouseup='" +
 						"var sel = document.getElementById(\"select-" + name + "\");" +
 						"setupSpecificConfig(\"" + name + "\"," +
-						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1);" + 
-						"'>";
+						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
+						",\"" + backLinkStr + "\");'>";
 				str += "goto</a>";
 						//"(configName, version)"
 				str += "</td>";
