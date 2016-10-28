@@ -456,7 +456,7 @@
 			var typeName = ["All","Contexts","Backbones","Configurations"];
 			var typeFilterIndex = [-1,0,1,2];
 			
-			str += "Show:";
+			str += "Showing:";
 			for(var i=0;i<typeName.length;++i)
 			{
 				if(_groupViewFilterIndex == typeFilterIndex[i])
@@ -471,6 +471,8 @@
 			}
 			
 			str += "<br>";
+			str += "<label id='filteredGroupCount'></label> of " +
+					groupNames.length + " groups. ";
 			str += "Don't see what you need: ";
 			str += "<button type='button' onmouseup='" +
 					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
@@ -527,7 +529,7 @@
 				var skipRepeat;
 				var msAllKeys = []; //all keys separated by '-'
 				var indexToLatest = []; //index to latest, used for exhaustive list
-
+				var filteredGroupCount = 0;
 				backLinkStr = "setupGroupViewMode();";
 				
 				for(var i=0;i<groupNames.length;++i)
@@ -554,6 +556,7 @@
 						continue;
 					}
 
+					++filteredGroupCount;
 					skipRepeat = false;
 					for(var j=0;j<msValues.length;++j)
 						if(msValues[j] == groupName)
@@ -598,6 +601,9 @@
 				}
 				var el = document.getElementById('exhaustiveGroupList');
 				el.innerHTML = str;
+				el = document.getElementById('filteredGroupCount');
+				el.innerHTML = filteredGroupCount;
+				
 				
 				//write to a particular div
 				el = document.getElementById('groupSearchDiv');  
