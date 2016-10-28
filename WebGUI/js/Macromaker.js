@@ -1078,7 +1078,7 @@
 						}
 						var readEdit = "<lable>Read <textarea disabled cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3,1)'>V</div> from address 0x<textarea" + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ ",3,1)'>V</div> from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
