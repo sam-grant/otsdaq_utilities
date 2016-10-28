@@ -470,6 +470,10 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 	var el;
 	if(el = DesktopContent.getXMLNode(req,name))
 		return el.getAttribute(attribute);
+	else if(name == "Error" && //make sure Error gives an error if the response is bad
+			(!req || !req.responseXML)) 
+		return "Unknown error occured " +
+				"(XML response may have been illegal)!";
 	else
 		return undefined;
 }

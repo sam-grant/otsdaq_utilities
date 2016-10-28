@@ -112,9 +112,12 @@
 
 			var str = "";
 
-			str += "Save Column Info as... <br>&nbsp;&nbsp;Configuration Name:";
-			str += "<input type='text' id='SaveAsConfigName' style='margin:-4px -2px -4px -1px;' value=''>";
-			str += " <input type='button' onmouseup='saveTable()' value='Save'/>";
+			str += "Save Column Info as...";
+			str += " <input id='overwriteButton' style='display:none' type='button' onmouseup='saveTable(1)' value='Overwrite'/>";
+			str += "<br>&nbsp;&nbsp;Configuration Name:";							
+			str += "<input type='text' id='SaveAsConfigName' " + 
+					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";
+			str += " <input type='button' onmouseup='saveTable(0)' value='Save'/>";
 			str += "<br><br>";
 			str += "Load Column Info from... &nbsp;&nbsp;&nbsp;"; 
 			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
@@ -171,7 +174,7 @@
 		}
 		
 		//saveTable ~
-		function saveTable()
+		function saveTable(allowOverwrite)
 		{
 			var configName = document.getElementById("SaveAsConfigName").value;
 			
@@ -186,7 +189,8 @@
 				data += _colTypeArr[i] + "," + _colHdrArr[i] + "," + _colDataTypeArr[i] + ";";
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
-				"&configName=" + configName, 
+				"&configName=" + configName + 
+				"&allowOverwrite="+allowOverwrite, 
 				"columnCSV=" + data, specificConfigRequestHandler, 1);	
 		}
 		
@@ -196,6 +200,7 @@
 		function setupSpecificConfig(configName,version) {
 			var v = "";
 			if(version) v = "&version="+version;
+			document.getElementById("SaveAsConfigName").value = configName;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=0" +  
 				"&configName=" + configName + v, "", specificConfigRequestHandler);		
 		}		
@@ -217,7 +222,20 @@
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
 				//try to power through
+				
+				err = DesktopContent.getXMLValue(req,"OverwriteError");
+				if(err) //overwrite rejection
+				{
+					var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+					Debug.log("Are you sure you want to overwrite the " +
+							"configuration '" +  configName + 
+							"'? If so, click the 'Overwrite' button.",
+							Debug.HIGH_PRIORITY);
+					document.getElementById("overwriteButton").style.display = "inline";
+					return;
+				}
 			}
+			document.getElementById("overwriteButton").style.display = "none";
 						
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			

@@ -171,9 +171,11 @@ throw (xgi::exception::Exception)
 	{
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
+		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
 
 		__MOUT__ << "configName: " << configName << std::endl;
 		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
+		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
 		if(!theRemoteWebUsers_.isWizardMode(theSupervisorsConfiguration_))
 		{
@@ -181,7 +183,7 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", ss.str());
 		}
 		else
-			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV);
+			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,allowOverwrite=="1");
 	}
 	else if(Command == "getGroupAliases")
 	{
@@ -957,8 +959,27 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 //		return resulting handleGetConfigurationXML mock-up view
 //
 void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
-		std::string& configName, const std::string& data)
+		std::string& configName, const std::string& data,
+		bool allowOverwrite)
 {
+	if(!allowOverwrite)
+	{
+		FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "r");
+		if(fp)
+		{
+			fclose(fp);
+			xmldoc.addTextElementToData("ConfigurationName",
+					configName);
+			xmldoc.addTextElementToData("OverwriteError",
+					"1");
+			xmldoc.addTextElementToData("Error",
+					"File already exists! ('" +
+					(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT) +
+					"')");
+			return;
+		}
+	}
+
 	//create all caps name and validate
 	//	only allow alpha-numeric names with Configuration at end
 	std::string capsName;

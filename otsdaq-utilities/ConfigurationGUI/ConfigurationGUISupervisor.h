@@ -46,7 +46,7 @@ public:
     void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
-    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string& columnCSV);
+    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string& columnCSV, bool allowOverwrite=false);
     void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
     void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
