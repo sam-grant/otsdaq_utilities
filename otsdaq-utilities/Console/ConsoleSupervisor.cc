@@ -107,6 +107,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		{
 			i = 10; //so things are good for all time.
 
+			//std::cout << buffer << std::endl;
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);

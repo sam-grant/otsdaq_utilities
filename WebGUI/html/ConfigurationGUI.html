@@ -36,6 +36,11 @@
 			font-size: 14px;
 			margin: 10px 0 -10px 0;
 		}
+		
+		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
+		.multiselectbox input, textarea {
+			margin: 14px 5px 5px 12px;
+		}
 	</style>
 	
 	
@@ -91,6 +96,7 @@
 		
 		var _msChosenGroupName;
 		var _msChosenGroupKey;
+		var _groupViewFilterIndex = 2; //-1=all, 0=context, 1=backbone, 2=configuration
 		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
@@ -114,6 +120,7 @@
 			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
 			//configGroupsRequestHandler(req,anchorTarget)
 			//groupSearchSelectionHandler(el)
+			//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
 			//gotoSelectedMSGroup()
 			
 			//setupTableViewMode(anchorTarget)							//gets configuration tables
@@ -432,7 +439,8 @@
 
 			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
 			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-			var kocsHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
+			var membersHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
+			var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
 					
 			var groupName, key;
 			
@@ -444,15 +452,31 @@
 			var configName, configVersion;									
 			
 			backLinkStr = "setupGroupViewMode();"; 
-//			str += "<a href='javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
-//					"\");'>Create a New Configuration Group</a>";
 			
+			var typeName = ["All","Contexts","Backbones","Configurations"];
+			var typeFilterIndex = [-1,0,1,2];
+			
+			str += "Show:";
+			for(var i=0;i<typeName.length;++i)
+			{
+				if(_groupViewFilterIndex == typeFilterIndex[i])
+					str += " <b>" + typeName[i] + "</b>";
+				else
+				{
+					str += " <a href='javascript:_groupViewFilterIndex=" + 
+							typeFilterIndex[i] + ";setupGroupViewMode();'>";
+					str += typeName[i];
+					str += "</a>";
+				}
+			}
+			
+			str += "<br>";
 			str += "Don't see what you need: ";
 			str += "<button type='button' onmouseup='" +
 					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 										"\");'>" + 
 					"Create a new Group</button>";
-			str += "<br><br>";
+			str += "<br>";
 
 					
 			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
@@ -478,9 +502,10 @@
 						"type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
 						"View Latest Key for Selected Group</button>";
 				
-				str += "<div id='msSelectedGroupDiv'></div>";
-				
-				str += "<br><div style='margin-top:0px'><b>";
+				str += "<div style='margin-top:10px' id='msSelectedGroupDiv'></div>";
+								
+				str += "<div style='margin-top:0px'>";
+				str += "<hr><b>";
 				str += "Exhaustive Configuration Group List:";
 				str += "</b></div><br>";
 				
@@ -488,59 +513,8 @@
 				//////////////////////////////////////				
 			}
 			
+			str += "<div id='exhaustiveGroupList'></div>";
 			
-			for(var i=0;i<groupNames.length;++i)
-			{		
-				groupName = groupNames[i].getAttribute("value");
-				key = keys[i].getAttribute("value");
-
-				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
-						groupName + "-" + key + "\\\");"; 
-				
-				//add header
-				str += "<div id='groupViewGroupDiv-" + groupName + "-" + key + "'>";
-				str += "<a name='anchorTag-" + 
-						groupName + "-" + key + "'></a>";
-				str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
-					"\",\"" + key + "\",\"" + backLinkStr + "\");'>";
-				str += groupName + "</a> (" + key +")";
-
-				//add tree view link
-				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
-					"\",\"" + key + "\",\"" + backLinkStr + "\");'>";
-				str += "Tree-view</a>";										
-				
-				//add Activate link
-				str += " <a href='javascript:activateSystemConfig(\"" + groupName +
-						"\",\"" + key + "\");'>";
-				str += "Activate</a>";
-				
-				
-				str += "<br><table><tr>";
-
-				configNames = kocsHdr[i].getElementsByTagName("MemberName");
-				configVersions = kocsHdr[i].getElementsByTagName("MemberVersion");
-				Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
-				
-				for(var j=0;j<configNames.length;++j)
-				{
-					configName = configNames[j].getAttribute("value");
-					configVersion = configVersions[j].getAttribute("value");
-					backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
-							groupName + "-" + configName + "\\\");"; 
-							
-					str += "<td align='center'>";
-
-					str += "<a name='anchorTag-" + 
-							groupName + "-" + configName + "'></a>";
-					str += "<a href='javascript:setupSpecificConfig(\"" + configName +
-						"\",\"" + configVersion + "\",\"" + backLinkStr + "\");'>";
-					str += niceName(configName) + "</a><br>" + configVersion;
-					str += "</td>";
-				}
-				str += "</tr></table><br>";
-				str += "</div>"; //close groupViewGroupDiv-*
-			}				
 			el.innerHTML = str;
 			
 			//////////// make search box
@@ -552,6 +526,7 @@
 				var msTypes = [];	//back link strings for multi-select
 				var skipRepeat;
 				var msAllKeys = []; //all keys separated by '-'
+				var indexToLatest = []; //index to latest, used for exhaustive list
 
 				backLinkStr = "setupGroupViewMode();";
 				
@@ -560,13 +535,35 @@
 					groupName = groupNames[i].getAttribute("value");
 					key = keys[i].getAttribute("value");
 
+					if(_groupViewFilterIndex == 0 && //context only
+							types[i].getAttribute("value") != "Context")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+					else if(_groupViewFilterIndex == 1 && //context only
+							types[i].getAttribute("value") != "Backbone")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+					else if(_groupViewFilterIndex == 2 && //context only
+							types[i].getAttribute("value") != "Configuration")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+
 					skipRepeat = false;
 					for(var j=0;j<msValues.length;++j)
 						if(msValues[j] == groupName)
 						{							
 							//only represent single latest group/key
 							if((key|0) > (msKeys[j]|0))
+							{
 								msKeys[j] = key; //found new latest key
+								indexToLatest[j] = i; //update latest index
+							}
 							
 							//add to all keys
 							msAllKeys[j] += "-" + key;
@@ -580,14 +577,30 @@
 					msKeys.push(key);
 					msTypes.push(backLinkStr);
 					msAllKeys.push(key);
+					indexToLatest.push(i);
 				}
 				
+				
 				//prepare key string (last key in key string is latest)
-				for(var j=0;j<msValues.length;++j)
-					msAllKeys[j] += "-" + msKeys[j];
+				// and display exhastive list
+				str = "";
+				for(var i=0;i<msValues.length;++i)
+				{
+					msAllKeys[i] += "-" + msKeys[i];
+					
+					str += makeGroupInfoDisplayString(
+							msValues[i],
+							msAllKeys[i].split('-'),
+							msKeys[i],
+							membersHdr[indexToLatest[i]],
+							true  //back link to the exhaustive list
+							);					
+				}
+				var el = document.getElementById('exhaustiveGroupList');
+				el.innerHTML = str;
 				
 				//write to a particular div
-				var el = document.getElementById('groupSearchDiv');  
+				el = document.getElementById('groupSearchDiv');  
 				MultiSelectBox.createSelectBox(el,
 						"groupSearch",
 						"Search and Select a Group:",
@@ -621,7 +634,7 @@
 		function groupSearchSelectionHandler(el)
 		{
             var i = MultiSelectBox.getSelectedIndex(el); 
-            var selArr = MultiSelectBox.getSelectionArray(el);
+            var selArr = MultiSelectBox.getSelectionArray(el);            
             if(selArr[i])
 			{
 				Debug.log("Chosen element index:" + i +
@@ -638,26 +651,11 @@
 						_msChosenGroupName + "-" + _msChosenGroupKey);
 				var str = "";
 				
-				str += "<hr>";
 				str += "<b>";
 				str += "Selected Group: " + _msChosenGroupName;
-				str += "</b>";
-				str += "<br>";
-				str += "Existing Keys: ";
-				for(var j=0;j<keyArr.length-1;++j)
-				{
-					str += "<a href='javascript:setupSpecificConfigGroup(\"" + 
-							_msChosenGroupName + "\",\"" + 
-							keyArr[j] + "\",\"" + 
-							el.getAttribute("type-value") + "\");'>";
-					str += keyArr[j] + "</a> ";
-					
-				}
-				str += "<br>";
-				str += "Latest Key: " + _msChosenGroupKey + " (shown below)";
-				str += "<br>";				
+				str += "</b><br>";			
 				str += srcEl.innerHTML;
-				str += "<hr>";
+				str += "<br>";				
 
 				el = document.getElementById('msSelectedGroupDiv');
 				el.innerHTML = str;				
@@ -666,7 +664,90 @@
 			{
 				_msChosenGroupName = "";
 				_msChosenGroupKey = "";
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = "";				
 			}
+		}
+		
+
+		//getGroupInfoDisplayString ~~
+		function makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,
+				backLinkToList)
+		{			
+			var str = "";
+
+			str += "<b>";
+			str += groupName;
+			str += "</b>";
+			str += "<br>";
+			
+			str += "<div id='groupViewGroupDiv-" + groupName + "-" + latestKey + "'>";
+			str += "Existing Valid Keys: ";			
+
+			var backLinkStr;
+			if(backLinkToList)
+				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+					groupName + "-" + latestKey + "\\\");"; 
+			else
+				backLinkStr = "setupGroupViewMode()";
+			for(var j=0;j<allKeys.length-1;++j)
+			{
+				str += "<a href='javascript:setupSpecificConfigGroup(\"" + 
+						groupName + "\",\"" + 
+						allKeys[j] + "\",\"" + 
+						backLinkStr + "\");'>";
+				str += allKeys[j] + "</a> ";
+
+			}
+			str += "<br>";
+			str += "Latest Key: " + latestKey + " (shown below)";
+			str += "<br>";			
+
+			str += "<a name='anchorTag-" + 
+					groupName + "-" + latestKey + "'></a>";
+			str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
+			str += groupName + "</a> (" + latestKey +")";
+
+			//add tree view link
+			str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
+			str += "Tree-view</a>";										
+
+			//add Activate link
+			str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + latestKey + "\");'>";
+			str += "Activate</a>";
+
+			//show  members for latest version
+			str += "<br><table><tr>";
+
+			configNames = latestMembersHdr.getElementsByTagName("MemberName");
+			configVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
+			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
+
+			for(var j=0;j<configNames.length;++j)
+			{
+				configName = configNames[j].getAttribute("value");
+				configVersion = configVersions[j].getAttribute("value");
+				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+						groupName + "-" + configName + "\\\");"; 
+
+				str += "<td align='center'>";
+
+				str += "<a name='anchorTag-" + 
+						groupName + "-" + configName + "'></a>";
+				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersion + "\",\"" + backLinkStr + "\");'>";
+				str += niceName(configName) + "</a><br>" + configVersion;
+				str += "</td>";
+			}
+			str += "</tr></table>";	
+			str += "</div>"; //close groupViewGroupDiv-*
+			
+			str += "<hr>";
+
+			return str;
 		}
 		
 		//gotoSelectedMSGroup ~~
@@ -1748,7 +1829,7 @@
 			str += "</table>";
 
 			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
-					"Create System Config</button>";
+					"Create the new Group</button>";
 			el.innerHTML = str;		
 			
 

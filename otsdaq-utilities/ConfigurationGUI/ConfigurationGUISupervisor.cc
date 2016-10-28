@@ -1339,10 +1339,34 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 
 
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+
+		//try to get members
 		try
 		{
 			memberMap = theInterface->getConfigurationGroupMembers(groupString);
+		}
+		catch(std::runtime_error &e)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has been corrupted! " + e.what() << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("Error",ss.str());
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			continue;
+		}
+		catch(...)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has been corrupted! " << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("Error",ss.str());
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			continue;
+		}
 
+		//try to determine type, dont report errors, just mark "Invalid"
+		try
+		{
 			//determine the type configuration group
 			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
 			std::string groupTypeString =
@@ -1351,10 +1375,20 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 											"Backbone":"Configuration");
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
+		catch(std::runtime_error &e)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has invalid type! " + e.what() << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			continue;
+		}
 		catch(...)
 		{
-			xmldoc.addTextElementToData("Error","Configuration group \"" + groupString +
-					"\" has been corrupted!");
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has invalid type! " << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
 			continue;
 		}
 
