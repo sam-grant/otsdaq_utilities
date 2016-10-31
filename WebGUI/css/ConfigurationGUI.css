@@ -1,0 +1,40 @@
+
+
+
+
+		* {
+			font-size: 16px;
+			font-family: 'Inconsolata', monospace;	
+		}
+
+		body {
+			background-color: rgb(226, 216, 216);
+		}
+		
+		#clearDiv {
+			clear: both;
+		}
+		
+		a {
+			color: rgb(44, 44, 187);
+		}
+		
+		#display {
+			padding: 20px;
+		}
+		
+		#activeConfig {
+			font-size: 14px;
+			margin: 10px 0 -10px 0;
+		}
+		
+		b, h3, h1 {
+			color: rgb(65, 86, 146);
+			font-size: 20px;
+		}
+		
+		.bold-header {
+			color: rgb(81, 152, 204);
+			font-size: 16px;
+		}
+		
