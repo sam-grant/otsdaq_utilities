@@ -362,7 +362,7 @@
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
 		var convertedOutput;
-		if (Number(dataOutput)===0) convertedOutput = "<span class='red'>Time out Error</span>";
+		if (isNaN(dataOutput)) convertedOutput = "<span class='red'>" + dataOutput + "</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
 	
 		var selectionStrArray = [];
@@ -878,7 +878,6 @@
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
-				console.log(arr);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
 				for (var j = 0; j < macroString.length; j++) //because users don't need to see that
@@ -942,7 +941,7 @@
 		{
 			var innerClass = "class=\"innerClass1\"";
 			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
-			
+
 			var arr = JSON.parse(commandHistArray[i]);
 			var oneCommand = arr.Command.split(":");
 			var commandType = oneCommand[0];
@@ -950,6 +949,8 @@
 			var dataFormat = arr.Format.split(":")[1];		
 			var convertedAddress = convertFromHex(addressFormat,oneCommand[1]);
 			var convertedData = convertFromHex(dataFormat,oneCommand[2]);
+			if (isNaN(oneCommand[2])) convertedData = "<span class='red'>" + oneCommand[2] + "</span>";
+
 			if(commandType=='w')
 			{
 				out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
@@ -1046,7 +1047,7 @@
 					var disable = "";
 					var markColorData = "1";
 					var disableData = "";
-					var readResult = "readResult";
+					var readResult = "...";
 					if(commandType=='w'){
 						if(isNaN('0x'+Command[2]))
 						{
@@ -1215,7 +1216,7 @@
 			document.getElementById("nameVariable").value = "";
 			return;
 		};
-		if(textareaEl.value != "readResult" && isReadResultField) //read result field! handle with caution
+		if(textareaEl.value != "..." && isReadResultField) //read result field! handle with caution
 		{
 			document.getElementById('popupNameVariableSaveButton').style.display = "none";
 			document.getElementById('popupNameVariableYesButton').style.display = "inline-block";
