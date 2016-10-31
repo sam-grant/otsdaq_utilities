@@ -196,9 +196,9 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 						
-			setupSpecificConfig("XDAQContextConfiguration","8",
-					"setupTableViewMode('anchorTag-XDAQContextConfiguration');");
-			return;
+			//setupSpecificConfig("XDAQContextConfiguration","8",
+			//"setupTableViewMode('anchorTag-XDAQContextConfiguration');");
+			//return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3",
 				//	"");//"","anchorTag-RawDataSaverConsumerConfiguration");
@@ -1318,7 +1318,7 @@
 									
 				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
 				{	//this is a value node!
-					treeViewHandlerStr_ += "<b>" + nodeName + "</b>";
+					treeViewHandlerStr_ += "<b class='bold-header'>" + nodeName + "</b>";
 					treeViewHandlerStr_ += " : " + value.getAttribute("value");
 					treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";
 					continue; //so no need to recurse
