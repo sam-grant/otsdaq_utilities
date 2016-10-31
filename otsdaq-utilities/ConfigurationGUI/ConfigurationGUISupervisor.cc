@@ -165,7 +165,11 @@ throw (xgi::exception::Exception)
 
 
 	//acquire user's configuration manager based on username & activeSessionIndex
-	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex);//, backboneVersion);
+	std::string 	refresh = CgiDataUtilities::getData(cgi,"refresh"); 	//from GET
+	__MOUT__ << "refresh: " << refresh << std::endl;
+	//refresh to reload from info files and db (maintains temporary views!)
+	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex,
+			(refresh == "1") );
 
 	if(Command == "saveConfigurationInfo")
 	{
@@ -822,7 +826,7 @@ catch(...)
 //
 //		If backboneVersion is -1, then latest, and backboneVersion passed by reference will be updated
 ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::string username,
-		uint64_t activeSessionIndex)
+		uint64_t activeSessionIndex, bool refresh)
 //, ConfigurationVersion &backboneVersion)
 {
 	activeSessionIndex = 0; //make session by username for now! (may never want to change back)
@@ -849,7 +853,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		__MOUT_ERR__ << "Fatal error managing userLastUseTime_!" << std::endl;
 		throw std::runtime_error("Fatal error managing userLastUseTime_!");
 	}
-	else if(now - userLastUseTime_[mapKey] >
+	else if(refresh || now - userLastUseTime_[mapKey] >
 		CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
 	{
 		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
@@ -1083,7 +1087,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	fprintf(fp,outss.str().c_str());
 	fclose(fp);
 
-	//reload all config info with refresh to pick up possibly new config
+	//reload all config info with refresh AND reset to pick up possibly new config
 	cfgMgr->getAllConfigurationInfo(true);
 
 	//if error detected reading back then move the saved configuration info to .unused
@@ -1108,6 +1112,8 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 				__MOUT_INFO__ << ( "File successfully renamed: " +
 						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
 			else
+
+
 				__MOUT_ERR__ << ( "Error renaming file to " +
 						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
 

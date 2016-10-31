@@ -1204,15 +1204,16 @@
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
 				
-				var str = ""; //make table for left and right display
-				str += "<table border='0'><tr>";
-				str += "<td valign='top'><div id='display-left' " +
-						"style='width:600px;overflow-x:auto;margin-right:20px;'></div></td>";
-				str += "<td valign='top'><div id='display-right'></div></td>";
-				str += "</tr></table>";						
-				el.innerHTML = str;
-				
-				el = document.getElementById("display-left");				
+				//Took out the left and right.. made viewing tree awkward
+				//				var str = ""; //make table for left and right display
+				//				str += "<table border='0'><tr>";
+				//				str += "<td valign='top'><div id='display-left' " +
+				//						"style='width:600px;overflow-x:auto;margin-right:20px;'></div></td>";
+				//				str += "<td valign='top'><div id='display-right'></div></td>";
+				//				str += "</tr></table>";						
+				//				el.innerHTML = str;
+				//				
+				//				el = document.getElementById("display-left");				
 
 				//add back link
 				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
@@ -1346,11 +1347,11 @@
 					treeViewHandlerStr_ += "^</a>";
 					
 					//make right side link
-					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
-							"href='javascript:setupSpecificConfigInRight(\""  + 
-							treeMemberNames_[j] + "\",\"" +
-							treeMemberVersions_[j] + "\");'>";
-					treeViewHandlerStr_ += "&gt</a>";
+					//					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+					//							"href='javascript:setupSpecificConfigInRight(\""  + 
+					//							treeMemberNames_[j] + "\",\"" +
+					//							treeMemberVersions_[j] + "\");'>";
+					//					treeViewHandlerStr_ += "&gt</a>";
 				}
 				
 				

@@ -61,8 +61,7 @@
 		function init() {			
 			Debug.log("CfgTableEditor init");
 			
-
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "",
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1", "",
 					setupTableEditor);
 			
 			setupEmptyTable();
@@ -373,19 +372,21 @@
 					str += _typeArray[i];	//can display however
 					str += "</option>";
 					
-					if(el.getElementsByTagName("div")[0].innerHTML.indexOf(_typeArray[i]) == 0) 
+					if(typeOptionIndex == -1 && //only take first match
+							el.getElementsByTagName("div")[0].innerHTML.indexOf(_typeArray[i]) == 0) 
 						typeOptionIndex = i; //get starting sel index for type
 				}				
 				str += "</select>";
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
-						"style='display:none; width:40px; float:left; height: 13px' value='0'>";				
+						"style='display:none; width:40px; float:left; height: 13px' value='-0'>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
 				for(var i=0;i<_dataTypeArray.length;++i)
 				{			
 					str += "<option value='" + _dataTypeArray[i] + "'>";
 					str += "&lt;" + _dataTypeArray[i] + "&gt;";	//can display however
 					str += "</option>";
-					if(_editingCellElOldValue.indexOf("&lt;" + _dataTypeArray[i] + "&gt;") >= 0)
+					if(dataTypeOptionIndex == -1 && //only take first match
+							_editingCellElOldValue.indexOf("&lt;" + _dataTypeArray[i] + "&gt;") >= 0)
 						dataTypeOptionIndex = i; //get starting sel index for data type
 				}				
 				str += "</select>";

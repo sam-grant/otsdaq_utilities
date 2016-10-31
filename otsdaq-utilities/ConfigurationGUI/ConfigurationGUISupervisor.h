@@ -66,14 +66,14 @@ private:
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
         CONFIGURATION_MANAGER_EXPIRATION_TIME = 60*60*1, //1 hour, in seconds
-        CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*20, //20 minute, in seconds
+        CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
 
     SupervisorConfiguration    							theSupervisorsConfiguration_;
     RemoteWebUsers             							theRemoteWebUsers_;
 
 
-    ConfigurationManagerRW*								refreshUserSession(std::string username, uint64_t activeSessionIndex);
+    ConfigurationManagerRW*								refreshUserSession(std::string username, uint64_t activeSessionIndex, bool refresh);
     std::map<std::string, ConfigurationManagerRW *> 	userConfigurationManagers_;
     std::map<std::string, time_t> 						userLastUseTime_;
 };
