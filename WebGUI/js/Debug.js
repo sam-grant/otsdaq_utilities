@@ -135,7 +135,7 @@ Debug.errorPop = function(err,isInfo) {
 					"{" +
 					"position: absolute; display: none; border: 2px solid gray;" +
 					"background-color: rgba(153,0,51,0.8); overflow-y: scroll;" +
-					"overflow-x: hidden;	padding: 5px; -moz-border-radius: 2px;" +
+					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
 					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
 					"font-family: 'Comfortaa', arial; text-align: center;" +
@@ -188,6 +188,13 @@ Debug.errorPop = function(err,isInfo) {
 	//show the error box whereever the current scroll is
 	Debug._errBox.style.top = (document.body.scrollTop + 8) + "px";
 	Debug._errBox.style.left = (document.body.scrollLeft + 8) + "px";
+	
+	//and, set width properly so error box is scrollable for long winded errors
+	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+		Debug._errBox.style.width = (DesktopContent.getWindowWidth()-16-14) + "px"; //scroll width is 14px		
+	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+		Debug._errBox.style.width = (Desktop.desktop.getDesktopWidth()-16-14) + "px"; //scroll width is 14px
+	
 	Debug._errBox.style.display = "block";
 	
 	//change color based on info

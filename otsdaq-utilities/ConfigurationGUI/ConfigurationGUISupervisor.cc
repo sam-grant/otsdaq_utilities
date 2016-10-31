@@ -339,6 +339,8 @@ throw (xgi::exception::Exception)
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
+	__MOUT__ << "Wrapping up..." << std::endl;
+
 	//always add active config groups to xml response
 	std::map<std::string /*type*/,
 	std::pair<std::string /*groupName*/,

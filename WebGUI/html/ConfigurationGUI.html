@@ -5,48 +5,14 @@
 
 	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
 
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 	<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 	<style type="text/css">			
-		* {
-			font-size: 16px;
-			font-family: 'Inconsolata', monospace;	
-		}
 
-		body {
-			background-color: rgb(226, 216, 216);
-		}
-		
-		#clearDiv {
-			clear: both;
-		}
-		
-		a {
-			color: rgb(44, 44, 187);
-		}
-		
-		#display {
-			padding: 20px;
-		}
-		
-		#activeConfig {
-			font-size: 14px;
-			margin: 10px 0 -10px 0;
-		}
-		
-		b, h3, h1 {
-			color: rgb(65, 86, 146);
-			font-size: 20px;
-		}
-		
-		.bold-header {
-			color: rgb(81, 152, 204);
-			font-size: 16px;
-		}
-		
 		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
 		.multiselectbox input, textarea {
 			margin: 14px 5px 5px 12px;
@@ -2471,8 +2437,8 @@
 					colType.indexOf("ChildLinkGroupID") < 0 &&
 					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
 			{
-				el.getElementsByTagName("select")[0].focus();
 				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+				el.getElementsByTagName("select")[0].focus();
 			}
 			else //select text box
 				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);

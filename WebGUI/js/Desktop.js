@@ -402,8 +402,7 @@ Desktop.createDesktop = function(security) {
 		//	If subname = "" it is ignored. 	
 		//
 		//  returns new window
-	this.addWindow = function(name,subname,url,unique) {
-		
+	this.addWindow = function(name,subname,url,unique) {		
 		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
 		
 		if(unique) {

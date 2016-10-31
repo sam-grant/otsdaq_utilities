@@ -4,43 +4,10 @@
 	<title>ConfigurationGUI</title>
 
 	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
-		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	
 	<style type="text/css">		
-		* {
-			font-size: 16px;
-			font-family: 'Inconsolata', monospace;	
-		}
-
-		body {
-			background-color: rgb(255, 243, 243);
-		}
-		
-		#clearDiv {
-			clear: both;
-		}
-		
-		a {
-			color: rgb(44, 44, 187);
-		}
-		
-		#display {
-			padding: 20px;
-		}
-		
-		#activeConfig {
-			font-size: 14px;
-			margin: 10px 0 -10px 0;
-		}
-		
-		b, h3, h1 {
-			color: rgb(65, 86, 146);
-			font-size: 20px;
-		}
-
-		.bold-header {
-			color: rgb(81, 152, 204);
-			font-size: 16px;
-		}
+	
 	</style>
 	
 	
@@ -56,7 +23,7 @@
 		var _CONFIG_FIXED_CELLS = 3;
 	
 
-		var _typeArray = ["Data","OnOff","TrueFalse","YesNo","GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+		var _typeArray = ["Data","OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
 		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
 				
 		var _editingCell = false;
@@ -394,6 +361,9 @@
 			
 			
 			var str = "";			
+			var typeOptionIndex = -1;
+			var dataTypeOptionIndex = -1;
+			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
 			{
 				str += "<select  onkeydown='keyHandler(event)' onchange='handleTypeSelect()' id='selectCellTypeSelect' style='float:left'>";
@@ -402,6 +372,9 @@
 					str += "<option value='" + _typeArray[i] + "'>";
 					str += _typeArray[i];	//can display however
 					str += "</option>";
+					
+					if(el.getElementsByTagName("div")[0].innerHTML.indexOf(_typeArray[i]) == 0) 
+						typeOptionIndex = i; //get starting sel index for type
 				}				
 				str += "</select>";
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
@@ -412,6 +385,8 @@
 					str += "<option value='" + _dataTypeArray[i] + "'>";
 					str += "&lt;" + _dataTypeArray[i] + "&gt;";	//can display however
 					str += "</option>";
+					if(_editingCellElOldValue.indexOf("&lt;" + _dataTypeArray[i] + "&gt;") >= 0)
+						dataTypeOptionIndex = i; //get starting sel index for data type
 				}				
 				str += "</select>";
 			}
@@ -435,7 +410,14 @@
 			el.innerHTML = str;
 			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //select dropdown menu
+			{
+				Debug.log("typeOptionIndex=" + typeOptionIndex +
+						" dataTypeOptionIndex=" + dataTypeOptionIndex);
+				el.getElementsByTagName("select")[0].selectedIndex = typeOptionIndex;
+				el.getElementsByTagName("select")[1].selectedIndex = dataTypeOptionIndex;
 				el.getElementsByTagName("select")[0].focus();
+				handleTypeSelect();
+			}
 			else //select text box
 				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			
@@ -545,10 +527,15 @@
 				//get type and data type from select boxes (and input field for link ID)
 				var sel = document.getElementById("selectCellTypeSelect");				
 				var colType = sel.options[sel.selectedIndex].value;
-				if(colType.indexOf("Link") >= 0) //if link, append special type ID
-					colType += document.getElementById("selectCellSpecTypeID").value;
 				sel = document.getElementById("selectCellDataTypeSelect");
 				var colDataType = sel.options[sel.selectedIndex].value;
+				
+				var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+						
+				//if child link special type, append special type ID
+				for(var i=0;i<specTypeArray.length;++i)
+					if(colType == specTypeArray[i])
+						colType += document.getElementById("selectCellSpecTypeID").value;
 				
 				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
 						colType + "," + colDataType);
