@@ -17,7 +17,7 @@
 		}
 
 		body {
-			background-color: rgb(200,200,200);
+			background-color: rgb(226, 216, 216);
 		}
 		
 		#clearDiv {
@@ -25,7 +25,7 @@
 		}
 		
 		a {
-			color: blue;
+			color: rgb(44, 44, 187);
 		}
 		
 		#display {
@@ -35,6 +35,16 @@
 		#activeConfig {
 			font-size: 14px;
 			margin: 10px 0 -10px 0;
+		}
+		
+		b, h3, h1 {
+			color: rgb(65, 86, 146);
+			font-size: 20px;
+		}
+		
+		.bold-header {
+			color: rgb(81, 152, 204);
+			font-size: 16px;
 		}
 		
 		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
@@ -88,6 +98,8 @@
 		var _lastFindRow, _lastFindCol;
 		
 		var _firstTimeSilentActive = true;
+		var _useTableLinkDropdown = true;
+		var _tableLinkDropdownChoices = []; 
 		
 		var _displayTargetEl = 0;
 
@@ -183,11 +195,10 @@
 		//init called once body has loaded
 		function init() {			
 			Debug.log("CfgGUI init");
-			
-			
-			//setupSpecificConfig("XDAQApplicationConfiguration","10",
-			//		"setupTableViewMode('anchorTag-XDAQApplicationConfiguration');");
-			//return;
+						
+			setupSpecificConfig("XDAQContextConfiguration","8",
+					"setupTableViewMode('anchorTag-XDAQContextConfiguration');");
+			return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3",
 				//	"");//"","anchorTag-RawDataSaverConsumerConfiguration");
@@ -507,7 +518,7 @@
 				str += "<div style='margin-top:10px' id='msSelectedGroupDiv'></div>";
 								
 				str += "<div style='margin-top:0px'>";
-				str += "<hr><b>";
+				str += "<hr><b >";
 				str += "Exhaustive Configuration Group List:";
 				str += "</b></div><br>";
 				
@@ -589,7 +600,7 @@
 				str = "";
 				for(var i=0;i<msValues.length;++i)
 				{
-					msAllKeys[i] += "-" + msKeys[i];
+					msAllKeys[i] += "-" + msKeys[i] + "-" + msValues[i];
 					
 					str += makeGroupInfoDisplayString(
 							msValues[i],
@@ -644,20 +655,20 @@
             if(selArr[i])
 			{
 				Debug.log("Chosen element index:" + i +
-						" value:" + el.getAttribute("value-value") +
+						" value:" + el.innerHTML +
 						" key:" + el.getAttribute("key-value") +
 						" type:" + el.getAttribute("type-value"));
-				_msChosenGroupName = el.getAttribute("value-value");
 				var keyArr = el.getAttribute("key-value").split('-');
-				
-				_msChosenGroupKey = keyArr[keyArr.length-1];
+
+				_msChosenGroupName = keyArr[keyArr.length-1];
+				_msChosenGroupKey = keyArr[keyArr.length-2];
 				
 				//copy selected div and show as selected
 				var srcEl = document.getElementById("groupViewGroupDiv-" + 
 						_msChosenGroupName + "-" + _msChosenGroupKey);
 				var str = "";
 				
-				str += "<b>";
+				str += "<b class='bold-header'>";
 				str += "Selected Group: " + _msChosenGroupName;
 				str += "</b><br>";			
 				str += srcEl.innerHTML;
@@ -682,7 +693,7 @@
 		{			
 			var str = "";
 
-			str += "<b>";
+			str += "<b class='bold-header'>";
 			str += groupName;
 			str += "</b>";
 			str += "<br>";
@@ -696,7 +707,7 @@
 					groupName + "-" + latestKey + "\\\");"; 
 			else
 				backLinkStr = "setupGroupViewMode()";
-			for(var j=0;j<allKeys.length-1;++j)
+			for(var j=0;j<allKeys.length-2;++j)
 			{
 				str += "<a href='javascript:setupSpecificConfigGroup(\"" + 
 						groupName + "\",\"" + 
@@ -840,21 +851,23 @@
 				el.innerHTML = "Failed.<br><br>" + err; 
 				return;
 			}
-
-			Debug.log("param= " + param);
 			
 			var backLinkStr = "";
 			var anchorTarget = "";
-			var param = param.split("&");
-			for(var i=1;i<param.length;i+=2)
-			{
-				var pi;
-				if((pi=param[i].indexOf("backLinkStr=")) >= 0)			
-					backLinkStr = param[i].substr(param[i].indexOf("=")+1);
-				if((pi=param[i].indexOf("anchorTarget=")) >= 0)			
-					anchorTarget = param[i].substr(param[i].indexOf("=")+1);
-			}			
 			
+			if(param)
+			{
+				Debug.log("param= " + param);
+				param = param.split("&");			
+				for(var i=1;i<param.length;i+=2)
+				{
+					var pi;
+					if((pi=param[i].indexOf("backLinkStr=")) >= 0)			
+						backLinkStr = param[i].substr(param[i].indexOf("=")+1);
+					if((pi=param[i].indexOf("anchorTarget=")) >= 0)			
+						anchorTarget = param[i].substr(param[i].indexOf("=")+1);
+				}			
+			}
 			
 			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
@@ -1013,7 +1026,8 @@
 			
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
-			
+						
+			_tableLinkDropdownChoices = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
 			
 			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 			if(!kocVersionHdr.length)
@@ -1053,13 +1067,14 @@
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
 				str += "<br>";
 			}
-			
-			str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
+	
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 			
 			str += "<a href='javascript:setupFindAndReplace()'>Find and Replace</a><div id='findAndReplace'></div>";
 			str += "<a href='javascript:setupCopyAndMoveRows()'>Copy and Move Rows</a><div id='copyAndMoveRows'></div>";
-						
+			str += "<input type='checkbox' id='useTableLinkDropdownCheckbox' " +
+					(_useTableLinkDropdown?"checked":"") + 
+					" onchange='_useTableLinkDropdown = this.checked;'> Use Table Link Dropdown Assistance<br>";
 			str += "<br>All versions:";
 			
 			//display mockup link (mockup always present)
@@ -2409,24 +2424,65 @@
 			_editingCellPos = [r,c];
 			
 			_editingCellElOldValue = el.innerHTML;
-			var str = "";
-			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-			str += _editingCellElOldValue;
-			str += "'>";
+			var str = "";		
+			var optionIndex = -1;
+					
+			Debug.log("colType=" + colType);
+			Debug.log("colType.indexOf('ChildLink')" + colType.indexOf("ChildLink"));
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+			if(_useTableLinkDropdown && 
+					colType.indexOf("ChildLink") == 0 &&
+					colType.indexOf("ChildLinkGroupID") < 0 &&
+					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+			{
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"id='selectCellLinkSelect' style='margin:-4px -2px -4px 1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+				{			
+					str += "<option value='" + _tableLinkDropdownChoices[i].getAttribute("value") + "'>";
+					str += _tableLinkDropdownChoices[i].getAttribute("value");	//can display however
+					str += "</option>";
+					if(_tableLinkDropdownChoices[i].getAttribute("value") == _editingCellElOldValue)
+						optionIndex = i; //get starting sel index
+				}				
+				str += "</select>";				
+			}
+			else // normal cells, with text input
+			{
+				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+				str += _editingCellElOldValue;
+				str += "'>";
+			}
+						
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:90px;height:20px;margin:0 -122px -32px 10px;'>";
-			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
-			str += "</div>";
+					"width:105px;height:20px;margin:0 -122px -32px 10px;text-size: 16px;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
+					"<b style='color:green'>OK</b></a> | " +
+					"<a href='javascript:editCellCancel();' style='color:red'>" + 
+					"<b style='color:red'>Cancel</b></a>";
+			str += "</div>";		
 			
 			el.innerHTML = str;
-			
-			setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+
+			if(_useTableLinkDropdown && 
+					colType.indexOf("ChildLink") == 0 &&
+					colType.indexOf("ChildLinkGroupID") < 0 &&
+					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+			{
+				el.getElementsByTagName("select")[0].focus();
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+			}
+			else //select text box
+				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			
 			return true;
 		}
-		
-		//setCaretPosition
-		function setCaretPosition(elem, caretPos, endPos) {
+				
+		//setCaretPosition ~~
+		function setCaretPosition(elem, caretPos, endPos) 
+		{
             elem.focus();
             elem.setSelectionRange(caretPos, endPos);
 		}
@@ -2516,13 +2572,30 @@
 		//editCellOK
 		function editCellOK(r,c) 
 		{	
-			
-			Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
-			
-			var str = _editingCellEl.getElementsByTagName("input")[0].value;
-			_editingCellEl.innerHTML = "";
-			_editingCellEl.appendChild(document.createTextNode(str));
+			//if child link cell
+			if(_editingCellEl.getElementsByTagName("select").length)
+			{
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);
+				var sel = document.getElementById("selectCellLinkSelect");	
+				var selVal = sel.options[sel.selectedIndex].value;
 
+				Debug.log("CfgGUI editCellOK = " + 
+						selVal);
+
+				str = "";
+				str += selVal;
+				_editingCellEl.innerHTML = str;			
+			}
+			else //normal cell
+			{
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+						_editingCellEl.getElementsByTagName("input")[0].value);
+				
+				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
+			}
+			
 			_editingCell = false;
 			_editingCellEl = 0;		
 			
