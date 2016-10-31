@@ -186,7 +186,7 @@
 			
 			var data = "";
 			for(var i=0;i<_colHdrArr.length;++i)
-				data += _colTypeArr[i] + "," + _colHdrArr[i] + "," + _colDataTypeArr[i] + ";";
+				data += _colTypeArr[i] + "," + _colHdrArr[i].trim() + "," + _colDataTypeArr[i] + ";";
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
 				"&configName=" + configName + 
@@ -255,6 +255,9 @@
 			var colDataTypesArr = [];
 			for(var i=0;i<colDataTypes.length;++i)
 				colDataTypesArr.push(colDataTypes[i].getAttribute("value"));
+			
+			if(!isFromSaveReq)
+				document.getElementById('SaveAsConfigName').value = configName;
 			setupTable(configName,colHdrsArr,colTypesArr,colDataTypesArr);
 		}
 		
