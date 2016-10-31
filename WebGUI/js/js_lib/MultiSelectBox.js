@@ -204,7 +204,6 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 		else if(handler) //assume it is a function
 			str += handler.name + "(this);"; //user selection handler
 		str += "' ";
-		str += "value-value='" + vals[i] + "' ";
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
 		str += vals[i];

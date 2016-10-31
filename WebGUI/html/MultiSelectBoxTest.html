@@ -43,7 +43,7 @@
 	            MultiSelectBox.createSelectBox(el2,
 	            		"box2",
 	            		"Multi-Select Box Example 2",
-						vals,keys,types,box2SelectionHandler,noMultiSelect);
+						vals,keys,types,"box2SelectionHandler",noMultiSelect);
 	            
 	            
 	            //use init to setup/clear previous selections
@@ -83,7 +83,7 @@
             var selArr = MultiSelectBox.getSelectionArray(el);
             if(selArr[i])
             	MultiSelectBox.dbg("box 1 Chosen element index:",i,            		
-            		" value:",el.getAttribute("value-value"),
+            		" value:",el.innerHTML,
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in selArr)
@@ -98,7 +98,7 @@
             var selArr = MultiSelectBox.getSelectionArray(el);
             if(selArr[i])
             	MultiSelectBox.dbg("box 2 Chosen element index:",i,            		
-            		" value:",el.getAttribute("value-value"),
+            		" value:",el.innerHTML,
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in selArr)

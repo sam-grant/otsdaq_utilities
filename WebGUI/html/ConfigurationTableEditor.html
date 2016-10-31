@@ -12,7 +12,7 @@
 		}
 
 		body {
-			background-color: rgb(200,200,200);	
+			background-color: rgb(255, 243, 243);
 		}
 		
 		#clearDiv {
@@ -20,7 +20,7 @@
 		}
 		
 		a {
-			color: blue;
+			color: rgb(44, 44, 187);
 		}
 		
 		#display {
@@ -30,6 +30,16 @@
 		#activeConfig {
 			font-size: 14px;
 			margin: 10px 0 -10px 0;
+		}
+		
+		b, h3, h1 {
+			color: rgb(65, 86, 146);
+			font-size: 20px;
+		}
+
+		.bold-header {
+			color: rgb(81, 152, 204);
+			font-size: 16px;
 		}
 	</style>
 	
@@ -383,15 +393,7 @@
 			_editingCellElOldValue = el.innerHTML;
 			
 			
-			var str = "";
-//			str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-//			if(r == _CONFIG_TYPE_ROW_OFFSET)
-//				str += colType + " " + colDataType;
-//			else
-//				str += _editingCellElOldValue;
-//
-//			str += "'>";
-			
+			var str = "";			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
 			{
 				str += "<select  onkeydown='keyHandler(event)' onchange='handleTypeSelect()' id='selectCellTypeSelect' style='float:left'>";
@@ -421,10 +423,13 @@
 				str += _editingCellElOldValue;
 				str += "'>";
 			}
-			
+
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:90px;height:20px;margin:0 -122px -32px 10px;'>";
-			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
+					"width:105px;height:20px;margin:0 -122px -32px 10px;text-size: 16px;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
+					"<b style='color:green'>OK</b></a> | " +
+					"<a href='javascript:editCellCancel();' style='color:red'>" + 
+					"<b style='color:red'>Cancel</b></a>";
 			str += "</div>";
 			
 			el.innerHTML = str;
@@ -531,13 +536,12 @@
 		//editCellOK
 		function editCellOK(r,c) 
 		{				
-			Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
-					" = " + _editingCellEl.getElementsByTagName("input")[0].value);
 			
 			var str;
 			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //type and dataType
 			{
+				Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c);
 				//get type and data type from select boxes (and input field for link ID)
 				var sel = document.getElementById("selectCellTypeSelect");				
 				var colType = sel.options[sel.selectedIndex].value;
@@ -560,11 +564,12 @@
 				str += colType;
 				str += "<br>&#60;" + colDataType + "&#62;";
 				str += "</div>";
-				str += "</td>";
 				_editingCellEl.innerHTML = str;
 			}			
 			else //colHdr row
 			{
+				Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
+						" = " + _editingCellEl.getElementsByTagName("input")[0].value);
 				str = _editingCellEl.getElementsByTagName("input")[0].value;
 				_colHdrArr[c] = str;
 				_editingCellEl.innerHTML = "";

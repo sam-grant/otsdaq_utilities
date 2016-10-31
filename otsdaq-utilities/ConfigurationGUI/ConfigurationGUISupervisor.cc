@@ -621,11 +621,20 @@ try
 	DOMElement* parentEl;
 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-	if(allCfgInfo[configName.c_str()].versions_.find(version) ==
-			allCfgInfo[configName.c_str()].versions_.end())
+
+	//send all config names along with
+	//	and check for specific version
+	for(auto &configPair:allCfgInfo)
 	{
-		__MOUT__ << "Version not found, so using mockup." << std::endl;
-		version = ConfigurationVersion(); //use INVALID
+		xmldoc.addTextElementToData("ExistingConfigurationNames",
+				configPair.first);
+		if(configPair.first == configName && //check that version exists
+				configPair.second.versions_.find(version) ==
+						configPair.second.versions_.end())
+		{
+			__MOUT__ << "Version not found, so using mockup." << std::endl;
+			version = ConfigurationVersion(); //use INVALID
+		}
 	}
 
 	xmldoc.addTextElementToData("ConfigurationName", configName);	//table name
@@ -739,10 +748,10 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument &x
 		bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author)
 try
 {
-	__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
-			<< " dataOffset: " << dataOffset << std::endl;
+	//__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
+	//		<< " dataOffset: " << dataOffset << std::endl;
 
-	__MOUT__ << "data: " << data << std::endl;
+	//__MOUT__ << "data: " << data << std::endl;
 
 	//create temporary version from starting version
 	if(!version.isInvalid()) //if not using mock-up, make sure starting version is loaded
@@ -814,7 +823,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		uint64_t activeSessionIndex)
 //, ConfigurationVersion &backboneVersion)
 {
-	activeSessionIndex = 0; //make session by username for now! (may never want to change back?)
+	activeSessionIndex = 0; //make session by username for now! (may never want to change back)
 
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
@@ -839,7 +848,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		throw std::runtime_error("Fatal error managing userLastUseTime_!");
 	}
 	else if(now - userLastUseTime_[mapKey] >
-	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
+		CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
 	{
 		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
 		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);
