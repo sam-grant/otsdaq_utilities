@@ -56,7 +56,7 @@ void ConsoleSupervisor::init(void)
 	//called by constructor
 	theSupervisorsConfiguration_.init(getApplicationContext());
 
-	__MOUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
@@ -132,7 +132,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 void ConsoleSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	__MOUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
 			getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
@@ -149,7 +149,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-	//__MOUT__ << "Command " << Command << std::endl;
+	//std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 
 	//Commands:
 		//GetConsoleMsgs
@@ -180,7 +180,7 @@ throw (xgi::exception::Exception)
 				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
 				))
 		{	//failure
-			__MOUT__ << "Failed Login Gateway: " <<
+			std::cout << __COUT_HDR_FL__ << "Failed Login Gateway: " <<
 					out->str() << std::endl; //print out return string on failure
 			return;
 		}
@@ -209,7 +209,7 @@ throw (xgi::exception::Exception)
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
-//		__MOUT__ << "lastUpdateCount=" << lastUpdateCount <<
+//		std::cout << __COUT_HDR_FL__ << "lastUpdateCount=" << lastUpdateCount <<
 //				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 
 		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
@@ -217,8 +217,8 @@ throw (xgi::exception::Exception)
 	else if(Command == "SaveColorChoice")
 	{
         std::string colorIndex = CgiDataUtilities::postData(cgi,"cindex");
-		__MOUT__ << "Command " << Command << std::endl;
-		__MOUT__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
+		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
 
 		if(user == "") //should never happen?
 		{
@@ -229,7 +229,7 @@ throw (xgi::exception::Exception)
 
 		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__MOUT__ << "Save preferences: " << fn << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			throw std::runtime_error("Could not open file: " + fn);
@@ -238,7 +238,7 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "LoadColorChoice")
 	{
-		__MOUT__ << "Command " << Command << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 
 		unsigned int colorIndex;
 
@@ -251,7 +251,7 @@ throw (xgi::exception::Exception)
 
 		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__MOUT__ << "Load preferences: " << fn << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
@@ -261,7 +261,7 @@ throw (xgi::exception::Exception)
 		}
 		fscanf(fp,"%*s %u",&colorIndex);
 		fclose(fp);
-		__MOUT__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
 
 		char tmpStr[20];
 		sprintf(tmpStr,"%d",colorIndex);
@@ -302,7 +302,7 @@ throw (xgi::exception::Exception)
 void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 		const time_t lastUpdateCount, const unsigned int lastUpdateIndex)
 {
-	//__MOUT__ << std::endl;
+	//std::cout << __COUT_HDR_FL__ << std::endl;
 
 	//validate lastUpdateIndex
 	if(lastUpdateIndex > messages_.size() &&
@@ -336,15 +336,15 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	{
 		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
 		xmldoc->addTextElementToData("message_overflow","1");
-		__MOUT__ << "Overflow was detected!" << std::endl;
+		std::cout << __COUT_HDR_FL__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = (writePointer_+1) % messages_.size();
 	}
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;
 
-//	__MOUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-//	__MOUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
-//	__MOUT__ << "writePointer_: " << writePointer_ << std::endl;
+//	std::cout << __COUT_HDR_FL__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
+//	std::cout << __COUT_HDR_FL__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
+//	std::cout << __COUT_HDR_FL__ << "writePointer_: " << writePointer_ << std::endl;
 
 	//return anything from refreshReadPointer_ to writePointer_
 	//all should have a clock greater than lastUpdateClock
