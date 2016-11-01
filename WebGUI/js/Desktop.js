@@ -232,7 +232,7 @@ Desktop.createDesktop = function(security) {
 						eval(windowUnique));			
 		    			
 
-		    	//delate the fore window
+		    	//delay the setting of the fore window
 				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
 		    	
 				var str = "requestingWindowId=" + requestingWindowId;
@@ -445,6 +445,11 @@ Desktop.createDesktop = function(security) {
 		Debug.log("Desktop Window Added with id " + _windows[_windows.length-1].getWindowId(),Debug.LOW_PRIORITY);
         
         _dashboard.updateWindows();
+        
+    	//usually the foreground happens automatically.. but sometimes
+        //	it doesn't (?)
+        //... so delay an extra setting of the fore window
+		setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
         
         return newWin;
 	}

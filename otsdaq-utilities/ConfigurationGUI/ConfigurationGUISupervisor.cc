@@ -130,6 +130,7 @@ throw (xgi::exception::Exception)
 	//	getTreeView
 	//	activateConfigGroup
 	//	getActiveConfigGroups
+	//  copyViewToCurrentColumns
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -275,7 +276,7 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveSpecificConfiguration")
 	{
-		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); //from GET
 		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");	//from GET
 		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
 		//int				chunkSize 	= CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
@@ -323,14 +324,14 @@ throw (xgi::exception::Exception)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "! " +
+					groupName +	"(" + groupKey + ")" + "'! " +
 					std::string(e.what()));
 		}
 		catch(cet::exception& e)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "! " +
+					groupName +	"(" + groupKey + ")" + "'! " +
 					std::string(e.what()));
 		}
 		catch(...)
@@ -340,6 +341,41 @@ throw (xgi::exception::Exception)
 		}
 	}
 	else if(Command == "getActiveConfigGroups"); //do nothing, since they are always returned
+	else if(Command == "copyViewToCurrentColumns")
+	{
+		std::string 	configName 		= CgiDataUtilities::getData(cgi,"configName"); //from GET
+		std::string 	sourceVersion 	= CgiDataUtilities::getData(cgi,"sourceVersion");
+
+		__MOUT__ << "configName: " << configName << std::endl;
+		__MOUT__ << "sourceVersion: " << sourceVersion << std::endl;
+		__MOUT__ << "userName: " << userName << std::endl;
+
+		//copy source version to new temporary version
+		ConfigurationVersion newTemporaryVersion;
+		ConfigurationBase* config = 0;
+		try
+		{
+			//need to load with loose column rules!
+			config = cfgMgr->getVersionedConfigurationByName(configName,
+					ConfigurationVersion(sourceVersion)); //make sure source version is loaded
+			config->copyView(config->getView(),ConfigurationVersion(),userName);
+		}
+		catch(std::runtime_error &e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error copying view from '" +
+					configName +	"_v" + sourceVersion + "'! " +
+					std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!\n\n " << std::endl;
+			xmldoc.addTextElementToData("Error", "Error copying view from '" +
+					configName +	"_v" + sourceVersion + "'! ");
+		}
+
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,newTemporaryVersion);
+	}
 	else
 		__MOUT__ << "Command request not recognized." << std::endl;
 
@@ -665,11 +701,33 @@ try
 		{
 			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
 		}
+		catch(std::runtime_error &e) //default to mockup for fail-safe in GUI editor
+		{
+			__SS__ << "Failed to get configuration name: " << configName <<
+					" and version: " << version <<
+					"... defaulting to mockup! " <<
+					"(You may want to try again to see what was partially loaded into cache before failure. " <<
+					"If you think, the failure is due to a column name change, " <<
+					"you can also try to Copy the failing view to the new column names using " <<
+					"'Copy and Move' functionality.)" <<
+					std::endl;
+			ss << "\n\n...Here is why it failed:\n\n" << e.what() << std::endl;
+
+			std::cout << ss.str();
+			version = ConfigurationVersion();
+			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+
+			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
+		}
 		catch(...) //default to mockup for fail-safe in GUI editor
 		{
-			__SS__ << "Failed to get version: " << version <<
+			__SS__ << "Failed to get configuration name: " << configName <<
+					" and version: " << version <<
 					"... defaulting to mockup! " <<
-					"(You may want to try again to see what was partially loaded into cache before failure)" <<
+					"(You may want to try again to see what was partially loaded into cache before failure. " <<
+					"If you think, the failure is due to a column name change, " <<
+					"you can also try to Copy the failing view to the new column names using " <<
+					"'Copy and Move' functionality.)" <<
 					std::endl;
 			std::cout << ss.str();
 			version = ConfigurationVersion();
@@ -762,7 +820,7 @@ try
 	//create temporary version from starting version
 	if(!version.isInvalid()) //if not using mock-up, make sure starting version is loaded
 	{
-		try //FIXME eventually.. on 10/20/2016 desktop icons was failing to load temp versions (something going wrong with cache?)
+		try
 		{
 			cfgMgr->getVersionedConfigurationByName(configName,version);
 		}
