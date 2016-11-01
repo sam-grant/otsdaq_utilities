@@ -7,6 +7,63 @@
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
 		
 		<style type="text/css">			
+		* {
+			margin: 0;
+			spacing: 0;
+			padding: 0;
+			border: 0;
+			color: white;
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			font-family: serif; /*'Donegal One', serif;*/		
+			outline: none;  /* to stop firefox selection*/	
+		}
+		
+		@-moz-document url-prefix() { /* css targeted for firefox */	
+		  *{
+		  	font-size:13px;
+		  }
+		  a {
+		  	font-size:12px;
+		  }
+		  h3 {
+		    font-size:15px;
+		  }
+		  textarea {
+		  	height: 20px;
+		  	width: 110px;
+		  }
+		  #macroNameEdit {
+		    width: 400px;
+		  }
+		  #macroNotesEdit {
+		    width: 400px;
+		    height:52px;
+		  }
+		  #macroName {
+		    width: 345px;
+		  }
+		  #macroNotes {
+		    width: 345px;
+		    height:106px;
+		  }
+		  #valueAtRunTime {
+		  	width: 200px;
+		  }
+		  #privateTag {
+		  	font-size:11px;
+		  }
+		  #publicTag {
+		  	font-size:11px;
+		  }
+		  #page1tag {
+		   font-size:11px;
+		  }
+		  #page2tag {
+		   font-size:11px;
+		  }
+		}
 		
 		body {
 			background-color: #001626;
@@ -245,13 +302,15 @@
         	color:#001626;
         	margin-bottom:10px;
         	border-radius:1px;
+        	width: 45px;
+        	height: 17px;
         }
         
         #address{
         	margin: 5px 0 0 0;
         }
         #data{
-        	margin: 5px 0 0 23px;
+        	margin: 5px 0 0 22px;
         }
 
 		#twoButtons{
@@ -556,7 +615,7 @@
 	        <h3>Macro Maker</h3>
 	        <div class="center">
 		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
-			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
+			    <p id = "data">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
 				
 				<div class="buttonGroup">
 		        	<button onclick="addCommand('w')" class="select">Add Write</button>
@@ -678,7 +737,7 @@
 		    <div class="buttongroup">
 			  <center>
 				<button class="select" id="popupAskForVariableValueContinue">Continue</button>
-				<button class="select" onclick="hideSmallPopup(this)">Cancel</button>
+				<button class="select" onclick="hideSmallPopup(this);isMacroRunning=false">Cancel</button>
 			  </center>
 			</div>
 		</div>
