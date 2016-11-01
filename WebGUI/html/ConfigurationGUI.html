@@ -150,6 +150,7 @@
 			//versionHasChanged()
 		
 			//setupCopyAndMoveRows()
+			//configCopyView()
 			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
 			//evaluateJS(str)
 			//jump(anchor)
@@ -814,7 +815,20 @@
 				Debug.log(err,Debug.HIGH_PRIORITY);
 
 				var el = document.getElementById("display");
-				el.innerHTML = "Failed.<br><br>" + err; 
+				var str = "";
+				str += "Failed.<br><br>" + err; 
+				
+
+				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				if(groupName && groupKey)
+				{
+					str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+						"\",\"" + groupKey + "\");'>";
+					str += "Goto " + groupName + "</a>";	
+				}
+					
+				el.innerHTML = str;
 				return;
 			}
 			
@@ -984,7 +998,14 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				//return;
+				
+				Debug.log("There were errors loading this version.\n\n(You may want to try loading this version again " +
+						"to see what was partially loaded into the cache before failure. " +
+						"If you think, the failure is due to a column name change, " +
+						"you can also try to Copy the failing view to the new column names using the " +
+						"'Copy and Move' functionality.) " +
+						"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
 				//try to power through
 			}
 						
@@ -1031,13 +1052,13 @@
 				Debug.log("Back-link = " + backLinkStr);
 
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
-				str += "<br>";
+				str += "<br><br>";
 			}
 	
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
 			
 			str += "<a href='javascript:setupFindAndReplace()'>Find and Replace</a><div id='findAndReplace'></div>";
-			str += "<a href='javascript:setupCopyAndMoveRows()'>Copy and Move Rows</a><div id='copyAndMoveRows'></div>";
+			str += "<a href='javascript:setupCopyAndMoveRows()'>Copy and Move</a><div id='copyAndMoveRows'></div>";
 			str += "<input type='checkbox' id='useTableLinkDropdownCheckbox' " +
 					(_useTableLinkDropdown?"checked":"") + 
 					" onchange='_useTableLinkDropdown = this.checked;'> Use Table Link Dropdown Assistance<br>";
@@ -2068,7 +2089,7 @@
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 			
 			var str = "";
-			str += "Source row... ";
+			str += "Source... ";
 			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='0'>";
 			str += "<br>";
 			str += "Destination row (-1 for new last row)... ";
@@ -2078,11 +2099,28 @@
 			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
 			
 			str += "<br><br>";
-			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy'/>";
+			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row'/>";
 			str += " ";
-			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move'/>";
+			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configCopyView()' value='" +
+					"Copy Source Version to new Temporary Version'/>";			
+			str += "<br><br>";
 			el.innerHTML = str;	
 		}	
+		
+		//configCopyView ~~
+		function configCopyView()
+		{
+			var src = document.getElementById("copyAndMoveRowsSrc").value;	
+			Debug.log("configCopyView src=" + src);	
+			Debug.log("configCopyView _currentConfigName=" + _currentConfigName);			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=copyViewToCurrentColumns" +
+					"&configName=" + _currentConfigName +
+					"&sourceVersion=" + src,
+					"", specificConfigRequestHandler);
+		}
 		
 		//configCopyRow
 		function configCopyRow(deleteSrc)
