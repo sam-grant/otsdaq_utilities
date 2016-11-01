@@ -359,17 +359,24 @@ throw (xgi::exception::Exception)
 
 		//copy source version to new temporary version
 		ConfigurationVersion newTemporaryVersion;
-		ConfigurationBase* config = 0;
 		try
 		{
-			//make sure source version is loaded
-			//need to load with loose column rules!
-			config = cfgMgr->getVersionedConfigurationByName(configName,
-					ConfigurationVersion(sourceVersion), true);
+			//force emptying of cache for this configuration
+			newTemporaryVersion = cfgMgr->copyViewToCurrentColumns(configName,
+							ConfigurationVersion(sourceVersion));
+//
+//			getConfigurationByName(configName)->reset();
+//
+//			//make sure source version is loaded
+//			//need to load with loose column rules!
+//			config = cfgMgr->getVersionedConfigurationByName(configName,
+//					ConfigurationVersion(sourceVersion), true);
+//
+//			//copy from source version to a new temporary version
+//			newTemporaryVersion = config->copyView(config->getView(),
+//							ConfigurationVersion(),userName);
 
-			//copy from source version to a new temporary version
-			newTemporaryVersion = config->copyView(config->getView(),
-							ConfigurationVersion(),userName);
+			__MOUT__ << "New temporary version = " << newTemporaryVersion << std::endl;
 		}
 		catch(std::runtime_error &e)
 		{
@@ -721,10 +728,6 @@ try
 			__SS__ << "Failed to get configuration name: " << configName <<
 					" and version: " << version <<
 					"... defaulting to mockup! " <<
-					"(You may want to try again to see what was partially loaded into cache before failure. " <<
-					"If you think, the failure is due to a column name change, " <<
-					"you can also try to Copy the failing view to the new column names using " <<
-					"'Copy and Move' functionality.)" <<
 					std::endl;
 			ss << "\n\n...Here is why it failed:\n\n" << e.what() << std::endl;
 

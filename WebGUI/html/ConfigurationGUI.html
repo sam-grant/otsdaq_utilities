@@ -163,9 +163,9 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 						
-			setupSpecificConfig("XDAQContextConfiguration","8",
-			"setupTableViewMode('anchorTag-XDAQContextConfiguration');");
-			return;
+			//setupSpecificConfig("XDAQContextConfiguration","8",
+			//"setupTableViewMode('anchorTag-XDAQContextConfiguration');");
+			//return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3",
 				//	"");//"","anchorTag-RawDataSaverConsumerConfiguration");
@@ -998,7 +998,14 @@
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				//return;
+				
+				Debug.log("There were errors loading this version.\n\n(You may want to try loading this version again " +
+						"to see what was partially loaded into the cache before failure. " +
+						"If you think, the failure is due to a column name change, " +
+						"you can also try to Copy the failing view to the new column names using the " +
+						"'Copy and Move' functionality.) " +
+						"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
 				//try to power through
 			}
 						
@@ -2112,7 +2119,7 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=copyViewToCurrentColumns" +
 					"&configName=" + _currentConfigName +
 					"&sourceVersion=" + src,
-					"", specificGroupRequestHandler);
+					"", specificConfigRequestHandler);
 		}
 		
 		//configCopyRow
