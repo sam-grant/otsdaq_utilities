@@ -815,7 +815,20 @@
 				Debug.log(err,Debug.HIGH_PRIORITY);
 
 				var el = document.getElementById("display");
-				el.innerHTML = "Failed.<br><br>" + err; 
+				var str = "";
+				str += "Failed.<br><br>" + err; 
+				
+
+				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				if(groupName && groupKey)
+				{
+					str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+						"\",\"" + groupKey + "\");'>";
+					str += "Goto " + groupName + "</a>";	
+				}
+					
+				el.innerHTML = str;
 				return;
 			}
 			
@@ -2094,8 +2107,7 @@
 		{
 			var src = document.getElementById("copyAndMoveRowsSrc").value;	
 			Debug.log("configCopyView src=" + src);	
-			Debug.log("configCopyView _currentConfigName=" + _currentConfigName);
-			
+			Debug.log("configCopyView _currentConfigName=" + _currentConfigName);			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=copyViewToCurrentColumns" +
 					"&configName=" + _currentConfigName +
