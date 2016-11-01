@@ -217,7 +217,11 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getConfigurations")
 	{
-		handleConfigurationsXML(xmldoc,cfgMgr);
+		std::string allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
+
+		__MOUT__ << "allowIllegalColumns: " << allowIllegalColumns << std::endl;
+
+		handleConfigurationsXML(xmldoc,cfgMgr, allowIllegalColumns == "1");
 	}
 	else if(Command == "getContextMemberNames")
 	{
@@ -259,6 +263,9 @@ throw (xgi::exception::Exception)
 		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
 		int				chunkSize = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
 
+		std::string 	allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
+		__MOUT__ << "allowIllegalColumns: " << allowIllegalColumns << std::endl;
+
 		__MOUT__ << "getSpecificConfiguration: " << configName << " versionStr: " << versionStr
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
 
@@ -272,7 +279,7 @@ throw (xgi::exception::Exception)
 
 		__MOUT__ << " version: " << version << std::endl;
 
-		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version));
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),allowIllegalColumns=="1");
 	}
 	else if(Command == "saveSpecificConfiguration")
 	{
@@ -355,10 +362,14 @@ throw (xgi::exception::Exception)
 		ConfigurationBase* config = 0;
 		try
 		{
+			//make sure source version is loaded
 			//need to load with loose column rules!
 			config = cfgMgr->getVersionedConfigurationByName(configName,
-					ConfigurationVersion(sourceVersion)); //make sure source version is loaded
-			config->copyView(config->getView(),ConfigurationVersion(),userName);
+					ConfigurationVersion(sourceVersion), true);
+
+			//copy from source version to a new temporary version
+			newTemporaryVersion = config->copyView(config->getView(),
+							ConfigurationVersion(),userName);
 		}
 		catch(std::runtime_error &e)
 		{
@@ -656,13 +667,17 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 //	....
 //</subconfiguration>
 void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmldoc,
-		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version)
+		ConfigurationManagerRW *cfgMgr, const std::string &configName,
+		ConfigurationVersion version, bool allowIllegalColumns)
 try
 {
 	char tmpIntStr[100];
 	DOMElement* parentEl;
 
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::string accumulatedErrors = "";
+	std::map<std::string, ConfigurationInfo> allCfgInfo = //if allowIllegalColumns, then also refresh
+			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
+					allowIllegalColumns?&accumulatedErrors:0);
 
 	//send all config names along with
 	//	and check for specific version
@@ -784,6 +799,10 @@ try
 				xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
 			}
 	}
+
+	if(accumulatedErrors != "") //add accumulated errors to xmldoc
+		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
+				"but please note the following errors:\n\n" + accumulatedErrors);
 }
 catch(std::runtime_error &e)
 {
@@ -912,7 +931,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		throw std::runtime_error("Fatal error managing userLastUseTime_!");
 	}
 	else if(refresh || now - userLastUseTime_[mapKey] >
-		CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
+	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
 	{
 		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
 		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);
@@ -1248,7 +1267,7 @@ try
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
 	ConfigurationView* configView = cfgMgr->getConfigurationByName(configName)->
-				getTemporaryView(temporaryVersion);
+			getTemporaryView(temporaryVersion);
 	unsigned int row = configView->findRow(configView->findCol("GroupKeyAlias"),groupAlias);
 
 	__MOUT__ << "\t\t row: " << row << std::endl;
@@ -1284,13 +1303,13 @@ try
 		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
 		newAssignedVersion =
-			cfgMgr->saveNewConfiguration(configName,temporaryVersion);
+				cfgMgr->saveNewConfiguration(configName,temporaryVersion);
 	}
 	else	//use existing version
 	{
 		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
 
-		 newAssignedVersion = activeVersions["GroupAliasesConfiguration"];
+		newAssignedVersion = activeVersions["GroupAliasesConfiguration"];
 	}
 
 	xmldoc.addTextElementToData("savedAlias", configName);
@@ -1466,9 +1485,9 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			//determine the type configuration group
 			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
 			std::string groupTypeString =
-							groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
-									(groupType==ConfigurationManager::BACKBONE_TYPE?
-											"Backbone":"Configuration");
+					groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
+							(groupType==ConfigurationManager::BACKBONE_TYPE?
+									"Backbone":"Configuration");
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
 		catch(std::runtime_error &e)
@@ -1510,10 +1529,15 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 //		<subconfiguration name=xxx>...</subconfiguration>
 //		...
 //
-void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr)
+void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		bool allowIllegalColumns)
 {
 	DOMElement* parentEl;
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
+	std::string accumulatedErrors = "";
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(
+			allowIllegalColumns,allowIllegalColumns?&accumulatedErrors:0); //if allowIllegalColumns, then also refresh
 	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
 
 	__MOUT__ << "# of configuration tables found: " << allCfgInfo.size() << std::endl;
@@ -1534,6 +1558,10 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 
 		++it;
 	}
+
+	if(accumulatedErrors != "")
+		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
+				"but please note the following errors:\n\n" + accumulatedErrors);
 }
 
 //========================================================================================================================

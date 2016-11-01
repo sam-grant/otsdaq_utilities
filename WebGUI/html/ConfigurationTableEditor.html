@@ -61,7 +61,7 @@
 		function init() {			
 			Debug.log("CfgTableEditor init");
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1", "",
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
 					setupTableEditor);
 			
 			setupEmptyTable();
@@ -177,7 +177,7 @@
 			var v = "";
 			if(version) v = "&version="+version;
 			document.getElementById("SaveAsConfigName").value = configName;
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=0" +  
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration&allowIllegalColumns=1" + "&dataOffset=0&chunkSize=0" +  
 				"&configName=" + configName + v, "", specificConfigRequestHandler);		
 		}		
 		
