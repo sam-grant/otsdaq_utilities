@@ -74,6 +74,7 @@
 //  	DesktopContent.getDefaultDashboardColor()// returns "rgb(#,#,#)"
 //		DesktopContent.getDefaultDesktopColor()  // returns "rgb(#,#,#)"
 //		DesktopContent.getUsername()
+//		DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
 //
 //=====================================================================================
 
@@ -100,7 +101,7 @@ if (typeof Globals == 'undefined')
 //  DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
-//	DesktopContent.openNewWindow(path)
+//	DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
 
 //"private" function list:
 //	DesktopContent.init()

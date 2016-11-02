@@ -167,7 +167,7 @@ else {
 			
 			//define icon content
 			if(picfn != "0"){ //if icon image			
-				div.style.backgroundImage = "url(../images/iconImages/" + picfn+")";
+				div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
 				
 				var div2 = document.createElement("div");
 				div2.setAttribute("class", "DesktopIcons-iconDiv");

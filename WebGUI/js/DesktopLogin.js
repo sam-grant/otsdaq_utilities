@@ -158,7 +158,7 @@ else {
 			str += "<div id='newAccountCodeDiv' style='display:none' >New Account Code: <input id='loginInput3' type='text' /><br /></div>";
 			str += "<a target='_blank' href='" + 
 				"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" + 
-				"' title='Click to open Help documentation' ><img src='../images/dashboardImages/icon-Help.png'></a>";
+				"' title='Click to open Help documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
 			str += "<a href='#' onmouseup='Desktop.desktop.login.promptNewUser(this); return false;' style='margin:0 100px 0 50px'>New User?</a>";
 			str += "<input type='submit' class='DesktopDashboard-button' value='    Login    ' onmouseup='Desktop.desktop.login.attemptLogin();' /><br />"
 			

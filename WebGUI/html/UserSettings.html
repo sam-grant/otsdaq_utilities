@@ -132,7 +132,7 @@
 		</style>
 		
 
-		<link href='../css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
@@ -161,7 +161,7 @@
 			
 			//preload loader spinner gif
 			var _loaderImage = new Image();			
-			var _loaderImagePath = '../images/windowContentImages/loader-Settings.gif';
+			var _loaderImagePath = '/WebPath/images/windowContentImages/loader-Settings.gif';
 			_loaderImage.src = _loaderImagePath;
 			
 			//for new account feedback
@@ -604,7 +604,7 @@
 						htmlStr += "<a href='Javascript:lockToUsername("+ _AccountsOrderArray[i] + "," + 
 							lockModeTmp + ")';return false;' " +
 							"onmouseup='event.cancelBubble=true;' title='Lock ots to single user'>" +
-							"<img src='../images/dashboardImages/icon-Settings-" + 
+							"<img src='/WebPath/images/dashboardImages/icon-Settings-" + 
 							(lockModeTmp?"Unl":"L") + "ock.png'></a>";
 					
 					htmlStr += "</td>";					

@@ -329,7 +329,7 @@ else {
        		
        		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
        		
-       		el.innerHTML = "<img src='../images/dashboardImages/icon-Settings-Lock.png' title='User " + 
+       		el.innerHTML = "<img src='/WebPath/images/dashboardImages/icon-Settings-Lock.png' title='User " + 
        			usernameWithLock + " has the ots Lock'>";
    			el.style.display = "block";
        		_oldUserNameWithLock = usernameWithLock; 
@@ -371,7 +371,7 @@ else {
         var tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
         tmpBtn.innerHTML = "<a href='#' title='Click to show/hide Window Bar'>" + 
-        	"<img id='dashboard_bi_arrow' src='../images/dashboardImages/icon-Bi-arrow.png'></a>";
+        	"<img id='dashboard_bi_arrow' src='/WebPath/images/dashboardImages/icon-Bi-arrow.png'></a>";
         tmpBtn.onmouseup = _toggleWindowDashboard;
         _topBar.appendChild(tmpBtn);
         
@@ -421,7 +421,7 @@ else {
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
         tmpBtn.innerHTML = "<a target='_blank' href='" + 
         	"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" +
-        	" 'title='Click to open ots documentation' ><img src='../images/dashboardImages/icon-Help.png'></a>";
+        	" 'title='Click to open ots documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
         _topBar.appendChild(tmpBtn);
         
         if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
@@ -437,7 +437,7 @@ else {
 			tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
 			tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
 			tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
-				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='../images/dashboardImages/icon-Settings.png'></a>";
+				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='/WebPath/images/dashboardImages/icon-Settings.png'></a>";
 			_topBar.appendChild(tmpBtn);
 					
 			tmpBtn = document.createElement("div");

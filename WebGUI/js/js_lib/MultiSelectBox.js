@@ -417,7 +417,7 @@ MultiSelectBox.makeSearchBar = function(id)
 	
 	interval = setInterval( addSearchBox, 50);
 	
-	imgstr = "<img src='../images/windowContentImages/multiselectbox-magnifying-glass.jpg' " +
+	imgstr = "<img src='/WebPath/images/windowContentImages/multiselectbox-magnifying-glass.jpg' " +
 				" style='float:left' height='28' width='28' alt='&#128269;' ";
 	imgstr += "onclick = 'MultiSelectBox.showSearch(\"" + id + "\");' title='Search' class='searchimg'>";
 	return imgstr;  

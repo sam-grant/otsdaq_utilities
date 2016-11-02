@@ -3,7 +3,7 @@
 <head>
 	<title>ConfigurationGUI</title>
 
-	<link href='../css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
 
@@ -15,8 +15,61 @@
 
 		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
 		.multiselectbox input, textarea {
-			margin: 14px 5px 5px 12px;
+			margin: 			14px 5px 5px 12px;
 		}
+
+		.treeNode {
+			margin-left: 		30px;
+			float:				left;
+			position:			relative;
+		}
+		
+		.treeNode-Connection {
+			border-left: 		1px solid rgb(44, 44, 187);
+			border-bottom: 		1px solid rgb(44, 44, 187);
+			width: 				24px;
+			height:				16px;
+			margin-top:  		-7px;
+			position:			absolute;
+		}
+		
+		.treeNode-Expander {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png);
+			width: 				11px;
+			height: 			9px;
+			position:			absolute;
+			margin: 			5px 0 0 25px;
+			z-index:			1000; /* make sure it is on top of connect lines */
+		} .treeNode-Expander:hover {
+		    cursor:				pointer;			
+		}
+
+		.treeNode-Value {
+			margin-left: 		40px;
+			float:				left;
+		}
+		
+		.treeNode-Link {
+			float:				left;
+		    margin: 			3px 0 -3px 10px;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		} .treeNode-Link:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			2px 0 -2px 10px;
+		    cursor:				pointer;
+		}
+		
+		.treeNode-Link-image {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-gotoNav.png);
+			width: 				8px;
+			height: 			7px;
+		} 
+
+		.treeNode-Children {
+			border-left: 		1px solid rgb(181, 170, 210);
+		}
+		
 	</style>
 	
 	
@@ -78,6 +131,7 @@
 		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
+		var fancyTreeViewHandlerStr_;
 		var treeNodeUID_;		//incrementing unique id for nodes
 		var treeMemberNames_, treeMemberVersions_;
 		var treeViewBackLinkStr_;
@@ -169,7 +223,7 @@
 			
 			//setupConfigCreator(); return
 			
-			setupConfigGroupTreeView("PhysicsWizToLatest","3"); return;
+			setupConfigGroupTreeView("aaContext","11"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -1201,6 +1255,19 @@
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 
+			if(!parentId && 
+					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
+					treeGroupName_ == configGroupName &&
+							treeGroupKey_ == configGroupKey)
+			{
+				Debug.log("Re-using tree handler string that we already have!");
+				var el = document.getElementById("display");
+				el.innerHTML = treeViewHandlerStr_;
+				return;
+			}
+			else
+				treeViewHandlerStr_ = "";
+						
 			treeGroupName_ = configGroupName;
 			treeGroupKey_ = configGroupKey;
 			
@@ -1216,20 +1283,19 @@
 			
 			var el;
 			var depth;
-			var parentEl;
-			treeViewHandlerStr_ = "";
 			
-			if(parentId) parentEl = document.getElementById("node-" + parentId);	
-			if(parentEl) //then data is being added to an existing node
+			if(parentId) //this is an expansion
 			{
-				//so create children area
 				depth = (parentId.split("-")[0] | 0)+1; //parent depth + 1
-				Debug.log("Expanding tree for " + parentId + " at depth=" + depth);					
-								
+				
+				//target is children area				
+				el = document.getElementById("treeNode-ChildrenOf-" + parentId);
+				el.style.display = "block"; //make sure it is shown
 
-				el = document.createElement("div");
-				el.setAttribute("id", "children-" + parentId);
-				parentEl.appendChild(el);					
+				//change toggle to "-"
+				var toggleEl = document.getElementById("treeNode-toggle-" + parentId);
+				toggleEl.style.backgroundImage = 
+						"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
 			}
 			else //this is the initial top level request
 			{
@@ -1237,17 +1303,6 @@
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
 				
-				//Took out the left and right.. made viewing tree awkward
-				//				var str = ""; //make table for left and right display
-				//				str += "<table border='0'><tr>";
-				//				str += "<td valign='top'><div id='display-left' " +
-				//						"style='width:600px;overflow-x:auto;margin-right:20px;'></div></td>";
-				//				str += "<td valign='top'><div id='display-right'></div></td>";
-				//				str += "</tr></table>";						
-				//				el.innerHTML = str;
-				//				
-				//				el = document.getElementById("display-left");				
-
 				//add back link
 				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
 				{
@@ -1278,7 +1333,11 @@
 						"\",\"" + configGroupKey + "\");'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
-				treeViewHandlerStr_ += "<br>";
+				treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
+				
+				//preload hide image
+				treeViewHandlerStr_ += "<img style='display:none' src='" + 
+						"/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png" +"'>";
 			}			
 			
 			//add tree
@@ -1289,11 +1348,17 @@
 				treeViewHandlerStr_ += "Empty Tree Found.";
 			
 			el.innerHTML = treeViewHandlerStr_;
+			
+			//save the full string for posterity (and for back links)
+			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
 		}
 
 		//recursiveDrawTree ~		
 		function recursiveDrawTree(parent,depth,path) 
 		{				
+			document.getElementById("display").style.width = (30*depth + 740) + "px";
+			document.getElementById("tempTree").style.width = (30*depth + 740) + "px";
+
 			var uid;
 			var nodes = parent.children;
 			var nodeName;
@@ -1309,27 +1374,32 @@
 				uid = treeNodeUID_++;
 				nodeName = nodes[i].getAttribute("value");
 				
-				Debug.log("nodeName=" + nodeName + " depth=" + depth);
-				
-				treeViewHandlerStr_ += "<div id='node-" + depth + "-" + uid + "-" + nodeName + 
-						"' style='float:left; margin-left:" + 30 + "px'>";
-				
-				childrenLength = nodes[i].children.length
+				Debug.log("nodeName=" + nodeName + " depth=" + depth + " uid=" + uid);
+								
+				childrenLength = nodes[i].children.length;
+				Debug.log("child's childrenLength=" + childrenLength);
 									
 				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
-				{	//this is a value node!
-					treeViewHandlerStr_ += "<b class='bold-header'>" + nodeName + "</b>";
-					treeViewHandlerStr_ += " : " + value.getAttribute("value");
-					treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";
+				{	
+					//this is a value node!	
+					//////////=======================
+					treeViewHandlerStr_ += 
+							"<div class='treeNode'> " +
+							"<div class='treeNode-Connection'></div>" +
+							"<div class='treeNode-Value'>" + 
+							"<b class='bold-header'>" + nodeName + "</b>" + 
+							" : " + value.getAttribute("value") +
+							"</div>" + //end treeNode Value div		
+							"</div>" + //end treeNode div							
+							"<div id='clearDiv'></div>";  
+					//////////=======================
+					
 					continue; //so no need to recurse
 				}
 				
-				//not a value node so try to recurse
-				treeViewHandlerStr_ += "<a href='javascript:toggleTreeChildren(" + 
-						depth + "," +	uid + ",\"" +							
-						nodeName + "\",\"" + path +
-						"\");'>";					
+				//not a value node so try to recurse				
 
+				//get value and table link name for this parent
 				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
 				{	
 					//this is a link node!
@@ -1344,58 +1414,78 @@
 					value = nodeName;
 					tableLinkName = nodeName;
 				}
-
-				treeViewHandlerStr_ += childrenLength?"-":"+";
-				treeViewHandlerStr_ += "</a> ";
 				
-				treeViewHandlerStr_ += value;
-				
+				var onmouseupJS = "";
 				//search for table link
 				for(j=0;j<treeMemberNames_.length;++j)
 					if(tableLinkName == treeMemberNames_[j])
 						break;
 				if(j != treeMemberNames_.length) //found table link
 				{
-
 					backLinkStr = "setupConfigGroupTreeView(\\\"" + 
 							treeGroupName_ + "\\\",\\\"" +
 							treeGroupKey_ + "\\\");"; 	
 					
-					//make replace screen link
-					treeViewHandlerStr_ += " <a href='javascript:setupSpecificConfig(\"" + 
+					//make replace screen js
+					onmouseupJS += "setupSpecificConfig(\"" + 
 							treeMemberNames_[j] + "\",\"" +
-							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");'>";
-					treeViewHandlerStr_ += "=&gt;</a>";
+							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
 					
-					//make new window link
-					newWindowStr = "setupSpecificConfig(\"" + 
-							treeMemberNames_[j] + "\",\"" +
-							treeMemberVersions_[j] + "\")";
-					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
-					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
-							"href='javascript:DesktopContent.openNewWindow(" +
-							"\"Configure\",\"\",\"" + 
-							newWindowStr + "\",false)'>";
-					treeViewHandlerStr_ += "^</a>";
-					
-					//make right side link
-					//					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
-					//							"href='javascript:setupSpecificConfigInRight(\""  + 
+					//					//make new window link
+					//					newWindowStr = "setupSpecificConfig(\"" + 
 					//							treeMemberNames_[j] + "\",\"" +
-					//							treeMemberVersions_[j] + "\");'>";
-					//					treeViewHandlerStr_ += "&gt</a>";
+					//							treeMemberVersions_[j] + "\")";
+					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					//					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					//					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
+					//							"href='javascript:DesktopContent.openNewWindow(" +
+					//							"\"Configure\",\"\",\"" + 
+					//							newWindowStr + "\",false)'>";
+					//					treeViewHandlerStr_ += "^</a>";
+					
 				}
+
+				//////////=======================
+				treeViewHandlerStr_ += 
+						"<div class='treeNode'> " +
+						"<div class='treeNode-Connection'></div>" +
+						"<div class='treeNode-Expander' id='treeNode-toggle-" +
+						( + depth + "-" + uid + "-" + nodeName) + "' " + // end expander id
+						"onmouseup='toggleTreeChildren(" + 
+						depth + "," +	uid + ",\"" +							
+						nodeName + "\",\"" + path +
+						"\");' " + // end expander onmouseup
+						"></div>" +
+						"<div class='treeNode-Value'>" + value + "</div>";
 				
-				
-				treeViewHandlerStr_ += "</div><div id='clearDiv'></div>";	
-				
-				if(childrenLength)
+				if(onmouseupJS != "") //if there is a link, add it
 				{
-					treeViewHandlerStr_ += "<div id='children-" + depth + "-" + uid + "-" + nodeName + "'>";
-					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");
-					treeViewHandlerStr_ += "</div>";
+					treeViewHandlerStr_ += 
+						"<div class='treeNode-Link' " +
+						"onmouseup='" + onmouseupJS + "' " +
+						">" +	
+						"<div class='treeNode-Link-image'></div>" +			
+						"</div>"; //end treeNode Link div
 				}
+				
+				treeViewHandlerStr_ += 
+						"<div id='clearDiv'></div>" +
+						"<div class='treeNode-Children' id='treeNode-ChildrenOf-" +
+						( + depth + "-" + uid + "-" + nodeName) + "'>";
+						
+				if(childrenLength)
+				{					
+					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");					
+				}
+				
+				treeViewHandlerStr_ += 
+						"</div>" +						
+						"</div>" + //end treeNode div
+						"<div id='clearDiv'></div>";  
+				//////////=======================
+				
+				
+				
 			}
 		}
 		
@@ -1415,11 +1505,26 @@
 			var idString = depth + "-" + uid + "-" + nodeName;
 			Debug.log("idString: " + idString);
 			
-			var el = document.getElementById("children-" + idString);
+			var el = document.getElementById("treeNode-ChildrenOf-" + idString);
 			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			var str = el.innerHTML;
 			
-			if(el) //if children already exist, then toggle display
-				el.style.display = (el.style.display == "none")? "block" : "none";
+			if(str != "") //if children already exist, then toggle display
+			{
+				var toggleEl = document.getElementById("treeNode-toggle-" + idString);
+				if(el.style.display == "none") //if not shown, show and "-"
+				{
+					el.style.display = "block";
+					toggleEl.style.backgroundImage = 
+							"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+				}
+				else //else shown, so hide and "+"
+				{
+					el.style.display = "none";
+					toggleEl.style.backgroundImage = 
+							"url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png)";
+				}
+			}
 			else	//if no children div, then request it
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 						"&configGroup=" + configGroupEls[0].innerHTML + 
@@ -2925,6 +3030,7 @@
 	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
 	<hr>
 	<div id='activeConfig'></div>
+	<div id='tempTree'></div>
 	<div id='display'></div>
 	
 </body>
