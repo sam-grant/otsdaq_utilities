@@ -150,7 +150,7 @@ else {
 			var link;
 			var div;
 			
-			var jsCmd = "Javascript:Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
+			var jsCmd = "Javascript:var newWin = Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
 				 + "\",\"" + linkurl + "\","+uniqueWin+");";
 				
 			//create icon square
