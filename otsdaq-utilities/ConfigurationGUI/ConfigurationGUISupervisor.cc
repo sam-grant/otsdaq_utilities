@@ -784,23 +784,7 @@ try
 		DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
 
 		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-			if(colInfo[c].getDataType() == "NUMBER")
-			{
-				int num;
-				cfgViewPtr->getValue(num,r,c);
-				//__MOUT__ << "\t " << num << std::endl;
-
-				sprintf(tmpIntStr,"%d",num);
-				xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
-			}
-			else
-			{
-				std::string val;
-				cfgViewPtr->getValue(val,r,c);
-				//__MOUT__ << "\t " << val << std::endl;
-
-				xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
-			}
+				xmldoc.addTextElementToParent("Entry", cfgViewPtr->getValueAsString(r,c), tmpParentEl);
 	}
 
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
