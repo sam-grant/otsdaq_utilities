@@ -1,10 +1,10 @@
-#ifndef _ots_MacroMakerSupervisor_h
-#define _ots_MacroMakerSupervisor_h
+#ifndef _ots_MacroMakerSupervisor_h_
+#define _ots_MacroMakerSupervisor_h_
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/CoreSupervisors/FESupervisor.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -52,7 +52,7 @@ public:
     //xoap getProgressOfRunningMacro(uid) //100%
 
 private:
-    SupervisorConfiguration              	theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
     FESupervisor*			 				theFESupervisor_;
 //	void printStatus();

@@ -3,10 +3,10 @@
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+
 
 namespace ots
 {
@@ -71,7 +72,7 @@ private:
         CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
 
-    SupervisorConfiguration    							theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo    						theSupervisorDescriptorInfo_;
     RemoteWebUsers             							theRemoteWebUsers_;
 
 

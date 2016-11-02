@@ -2,7 +2,6 @@
 #define _ots_SlowControlsDashboardSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
@@ -27,6 +26,7 @@
 #include <vector>
 #include <set>
 
+#include "../../../otsdaq/otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 #include "otsdaq-utilities/SlowControlsDashboard/EpicsInterface.h"
 
 

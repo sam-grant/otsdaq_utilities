@@ -2,10 +2,10 @@
 #define _ots_VisualSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+
 
 
 namespace ots
@@ -62,7 +63,7 @@ private:
 
     const std::string                    supervisorType_;
     const unsigned int                   supervisorInstance_;
-    SupervisorConfiguration              theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo             theSupervisorDescriptorInfo_;
     RemoteWebUsers                       theRemoteWebUsers_;
     ConfigurationManager*                theConfigurationManager_;
     VisualDataManager*                   theDataManager_;

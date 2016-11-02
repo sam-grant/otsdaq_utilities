@@ -33,10 +33,11 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 
 //========================================================================================================================
-MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-xdaq::Application(s   ),
-SOAPMessenger  (this),
-theRemoteWebUsers_(this)
+MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
+throw (xdaq::exception::Exception)
+: xdaq::Application (stub)
+, SOAPMessenger     (this)
+, theRemoteWebUsers_(this)
 {
 	INIT_MF("MacroMaker");
 	xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" );
@@ -44,10 +45,10 @@ theRemoteWebUsers_(this)
 
 	init();
 	SupervisorDescriptors::const_iterator it;
-	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
+	it = theSupervisorDescriptorInfo_.getFEDescriptors().begin();
 	std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance size " <<
-			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
-	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
+			theSupervisorDescriptorInfo_.getFEDescriptors().size() << std::endl;
+	for (; it != theSupervisorDescriptorInfo_.getFEDescriptors().end(); it++)
 	{
 		std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance " << it->first <<
 				"...and..." << it->second << std::endl;
@@ -81,7 +82,7 @@ MacroMakerSupervisor::~MacroMakerSupervisor(void)
 void MacroMakerSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 	std::cout << __COUT_HDR_FL__<< "#######################################" << std::endl;
 	std::cout << __COUT_HDR_FL__<< "#######################################" << std::endl;
 
@@ -128,7 +129,10 @@ throw (xgi::exception::Exception)
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
@@ -178,7 +182,7 @@ throw (xgi::exception::Exception)
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
 
-
+//========================================================================================================================
 void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	if(Command == "FElist")
@@ -203,6 +207,7 @@ void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocum
 		exportMacro(xmldoc,cgi);
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
 	__MOUT__<< "Getting FE list!!!!!!!!!" << std::endl;
@@ -214,13 +219,13 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	retParameters.addParameter("FEList");
 
 	SupervisorDescriptors::const_iterator it;
-	it = theSupervisorsConfiguration_.getFEDescriptors().begin();
+	it = theSupervisorDescriptorInfo_.getFEDescriptors().begin();
 
 	std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance size " <<
-			theSupervisorsConfiguration_.getFEDescriptors().size() << std::endl;
+			theSupervisorDescriptorInfo_.getFEDescriptors().size() << std::endl;
 
 	//loop through each front end, and send xoap request for front end list
-	for (; it != theSupervisorsConfiguration_.getFEDescriptors().end(); it++)
+	for (; it != theSupervisorDescriptorInfo_.getFEDescriptors().end(); it++)
 	{
 		std::cout << __COUT_HDR_FL__<< "PixelFESupervisor instance " << it->first <<
 				"...and..." << it->second << std::endl;
@@ -250,6 +255,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	return;
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	__MOUT__<< "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
@@ -276,7 +282,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	__MOUT__<<"Here comes the array from multiselect box for WRITE, behold: "
 			<< supervisorIndexArray << interfaceIndexArray << std::endl;
 
-	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
+	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
 
 	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
 	std::vector<std::string> interfaceIndices;
@@ -314,6 +320,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	}
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	__MOUT__<< "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
@@ -334,7 +341,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	__MOUT__<<"Here comes the array from multiselect box for READ, behold: "
 			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
-	SupervisorDescriptors FESupervisors = theSupervisorsConfiguration_.getFEDescriptors();
+	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
 
 	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
 	std::vector<std::string> interfaceIndices;
@@ -379,6 +386,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	}
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	__MOUT__<< "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
@@ -411,6 +419,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 		__MOUT__<<  "Unable to open file" << std::endl;
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 {
 	DIR *dir;
@@ -493,6 +502,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 	}
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::string Format, std::string Time, std::string Interfaces)
 {
 	std::string fileName = "history.hist";
@@ -513,6 +523,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 		__MOUT__<< "Unable to open history.hist";
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 {
 	std::string line;
@@ -544,6 +555,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
 {
 	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
@@ -562,6 +574,7 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 	xmldoc.addTextElementToData("deletedMacroName",MacroName);
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
@@ -605,6 +618,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	}
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::clearHistory()
 {
 	std::string fileName = "history.hist";
@@ -614,6 +628,7 @@ void MacroMakerSupervisor::clearHistory()
 	__MOUT__<< "Successfully deleted " << fullPath;
 }
 
+//========================================================================================================================
 void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 {
 	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");

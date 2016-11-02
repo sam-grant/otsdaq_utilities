@@ -131,7 +131,7 @@ VisualSupervisor::~VisualSupervisor(void)
 void VisualSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -196,7 +196,10 @@ throw (xgi::exception::Exception)
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, 							//set access level requirement to pass gateway

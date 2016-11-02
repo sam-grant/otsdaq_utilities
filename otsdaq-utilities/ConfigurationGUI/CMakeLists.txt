@@ -6,7 +6,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ConfigurationDataFormats
 		 #otsdaq-core_ConfigurationPluginDataFormats_ConfigurationAliases_configuration
 		 #otsdaq-core_ConfigurationPluginDataFormats_Configurations_configuration
-		 SupervisorConfigurations
+		 SupervisorDescriptorInfo
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities

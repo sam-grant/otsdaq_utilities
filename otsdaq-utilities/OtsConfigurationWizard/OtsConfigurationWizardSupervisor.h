@@ -2,9 +2,6 @@
 #define _ots_OtsConfiguraionWizardSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
-//#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -23,6 +20,8 @@
 
 #include <string>
 #include <map>
+
+#include "../../../otsdaq/otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 namespace ots
 {

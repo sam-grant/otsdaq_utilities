@@ -36,10 +36,11 @@ XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 
 
 //========================================================================================================================
-ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-xdaq::Application	(s   ),
-SOAPMessenger  		(this),
-theRemoteWebUsers_  (this)
+ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* stub)
+throw (xdaq::exception::Exception)
+: xdaq::Application	 (stub)
+, SOAPMessenger  	 (this)
+, theRemoteWebUsers_ (this)
 {
 	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
@@ -73,7 +74,7 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 void ConfigurationGUISupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -147,7 +148,10 @@ throw (xgi::exception::Exception)
 		bool lockRequired = true;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommands,			//true/false refresh cookie code
 				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
@@ -184,7 +188,7 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
 		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
-		if(!theRemoteWebUsers_.isWizardMode(theSupervisorsConfiguration_))
+		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
 		{
 			__SS__ << "Improper permissions for saving configuration info." << std::endl;
 			xmldoc.addTextElementToData("Error", ss.str());

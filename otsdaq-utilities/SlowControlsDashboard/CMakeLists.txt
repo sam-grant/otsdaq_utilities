@@ -11,7 +11,7 @@ cet_make(LIBRARY_NAME SlowControlsDashboard
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 SupervisorConfigurations
+		 SupervisorDescriptorInfo
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities

@@ -2,8 +2,8 @@
 #define _ots_LogbookSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -23,6 +23,7 @@
 
 #include <string>
 #include <map>
+
 
 namespace ots
 {
@@ -68,7 +69,7 @@ private:
     void 			hideLogbookEntry	        (const std::string &entryId, bool hide, const std::string &hider);
     static void		MFReceiverWorkLoop			();
     
-    SupervisorConfiguration              	theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
 
     enum {

@@ -28,20 +28,21 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
 //========================================================================================================================
-ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-xdaq::Application(s   ),
-SOAPMessenger  (this),
-theRemoteWebUsers_(this),
-writePointer_(0),
-messageCount_(0)
+ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
+throw (xdaq::exception::Exception)
+: xdaq::Application (stub)
+, SOAPMessenger     (this)
+, theRemoteWebUsers_(this)
+, writePointer_     (0)
+, messageCount_     (0)
 {
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_COLOR_PREF_PATH).c_str(), 0755);
 
-	xgi::bind (this, &ConsoleSupervisor::Default,                	"Default" );
-	xgi::bind (this, &ConsoleSupervisor::Console,              		"Console" );
+	xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
+	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
 	init();
 }
 
@@ -54,7 +55,7 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 void ConsoleSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 
 	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 
@@ -168,7 +169,10 @@ throw (xgi::exception::Exception)
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway

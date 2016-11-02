@@ -120,7 +120,7 @@ LogbookSupervisor::~LogbookSupervisor(void)
 void LogbookSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 
 
 	if(1) //check if LOGBOOK_PATH and subpaths event exist?! (if not, attempt to create)
@@ -375,7 +375,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 	fclose(fp);
 
 	if(activeExperiment_ != "" && activeExperiment_ != experiment) //old active experiment is on its way out
-		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorsConfiguration_.getSupervisorDescriptor(),"Experiment was made inactive."); //make system logbook entry
+		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),"Experiment was made inactive."); //make system logbook entry
 
 	bool entryNeeded = false;
 	if(experiment != "" && activeExperiment_ != experiment) //old active experiment is on its way out
@@ -385,7 +385,7 @@ void LogbookSupervisor::setActiveExperiment(std::string experiment)
 	__MOUT__ << "Active Experiment set to " << activeExperiment_ << std::endl;
 
 	if(entryNeeded)
-		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorsConfiguration_.getSupervisorDescriptor(),"Experiment was made active."); //make system logbook entry
+		theRemoteWebUsers_.makeSystemLogbookEntry(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),"Experiment was made active."); //make system logbook entry
 
 }
 
@@ -1099,7 +1099,10 @@ throw (xgi::exception::Exception)
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway

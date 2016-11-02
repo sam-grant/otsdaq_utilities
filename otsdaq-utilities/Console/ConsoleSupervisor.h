@@ -1,9 +1,9 @@
-#ifndef _ots_ConsoleSupervisor_h
-#define _ots_ConsoleSupervisor_h
+#ifndef _ots_ConsoleSupervisor_h_
+#define _ots_ConsoleSupervisor_h_
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -24,6 +24,7 @@
 #include <string>
 #include <map>
 #include <mutex>        //for std::mutex
+
 
 namespace ots
 {
@@ -57,7 +58,7 @@ private:
     static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);
     void							insertMessageRefresh		(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
 
-    SupervisorConfiguration         theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo        theSupervisorDescriptorInfo_;
     RemoteWebUsers					theRemoteWebUsers_;
 
 

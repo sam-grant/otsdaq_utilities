@@ -3,7 +3,7 @@ include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Logbook
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
-		 SupervisorConfigurations
+		 SupervisorDescriptorInfo
 		 XmlUtilities
 		 SOAPUtilities
 		 CgiDataUtilities
