@@ -1058,7 +1058,7 @@ void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocumen
 
 		xmldoc.addTextElementToData("Error",
 				( "Error renaming Table Info File to " +
-								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused"));
+								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
 		return;
 	}
 

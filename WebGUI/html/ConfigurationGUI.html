@@ -817,11 +817,26 @@
 
 				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				
 				if(groupName && groupKey)
 				{
-					str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+					str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
 						"\",\"" + groupKey + "\");'>";
-					str += "Goto " + groupName + "</a>";	
+					str += "Go-to group &quot;" + groupName + "&quot;</a>";	
+				}
+				
+				var errSplit = err.split('"');
+				if(errSplit.length > 1)
+				{
+					str += "<br><br>It seems like there was trouble with a specific table, " +
+							 "&quot;" + errSplit[1] + "&quot;. Try using the Table Editor " +
+							 "in ots wiz to verify the column info is valid; or you can try " +
+							 "goint to to the table view:";
+					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+					str += "<a href='javascript:setupSpecificConfig(\"" + errSplit[1] +
+						"\");'>";
+					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
 					
 				el.innerHTML = str;
@@ -1064,7 +1079,7 @@
 			str += " ";
 			if(-1 != version)				
 				str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
-					"\",\"" + "-1" + "\");'>";
+					"\",\"" + "-1" + "\", \"" + backLinkStr + "\");'>";
 			str += "Mockup-View";
 			if(-1 != version)				
 				str +=  "</a>";				
@@ -1075,7 +1090,8 @@
 				str += " ";
 				if(configVersions[j].getAttribute("value") != version)
 					str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
-						"\",\"" + configVersions[j].getAttribute("value") + "\");'>";
+						"\",\"" + configVersions[j].getAttribute("value") + 
+						"\", \"" + backLinkStr + "\");'>";
 				str += configVersions[j].getAttribute("value");
 				if(configVersions[j].getAttribute("value") != version)
 					str += "</a>";
@@ -2743,15 +2759,13 @@
 				dataStr += ";";
 			}
 			
-			var req = "Request?RequestType=saveSpecificConfiguration" + 
+			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
-					"&configName=" + _currentConfigName + "&version="+_version;
+					"&configName=" + _currentConfigName + "&version="+_version +
+					"&temporary="+(temporary?1:0);
 			Debug.log(dataStr);
-			Debug.log(req);
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificConfiguration" + 
-				"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
-				"&configName=" + _currentConfigName + "&version="+_version +
-				"&temporary="+(temporary?1:0), "data=" + dataStr, saveConfigAsNewVersionHandler);
+			Debug.log(reqStr);
+			DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, saveConfigAsNewVersionHandler);
 		}
 		
 		//saveConfigAsNewVersionHandler ~~
