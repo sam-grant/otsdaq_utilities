@@ -192,7 +192,9 @@
 		}
 
 		//specificConfigRequestHandler
-		function specificConfigRequestHandler(req, isFromSaveReq) {	
+		function specificConfigRequestHandler(req, isFromSaveReq) {
+
+			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -202,7 +204,6 @@
 				err = DesktopContent.getXMLValue(req,"OverwriteError");
 				if(err) //overwrite rejection
 				{
-					var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 					Debug.log("Are you sure you want to overwrite the " +
 							"configuration '" +  configName + 
 							"'? If so, click the 'Overwrite' button.",
@@ -211,9 +212,11 @@
 					return;
 				}
 			}
-			document.getElementById("overwriteButton").style.display = "none";
-						
-			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			else if(configName != "")
+				Debug.log("Column info for table '" + configName + "' was successfully loaded!",
+						Debug.INFO_PRIORITY);
+				
+			document.getElementById("overwriteButton").style.display = "none";						
 			
 			if(isFromSaveReq && !err)
 				Debug.log("Successful response to save request of Info for '" + configName + "'",Debug.INFO_PRIORITY);
@@ -378,7 +381,7 @@
 				}				
 				str += "</select>";
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
-						"style='display:none; width:40px; float:left; height: 13px' value='-0'>";				
+						"style='display:none; width:40px; float:left; height: 13px' value='0'>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
 				for(var i=0;i<_dataTypeArray.length;++i)
 				{			
@@ -536,7 +539,7 @@
 				//if child link special type, append special type ID
 				for(var i=0;i<specTypeArray.length;++i)
 					if(colType == specTypeArray[i])
-						colType += document.getElementById("selectCellSpecTypeID").value;
+						colType += "-" + document.getElementById("selectCellSpecTypeID").value;
 				
 				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
 						colType + "," + colDataType);

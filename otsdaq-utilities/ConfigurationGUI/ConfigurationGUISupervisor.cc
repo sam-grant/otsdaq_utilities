@@ -684,7 +684,7 @@ try
 	std::string accumulatedErrors = "";
 	std::map<std::string, ConfigurationInfo> allCfgInfo = //if allowIllegalColumns, then also refresh
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
-					allowIllegalColumns?&accumulatedErrors:0);
+					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
 
 	//send all config names along with
 	//	and check for specific version
@@ -805,7 +805,7 @@ try
 
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
-				"but please note the following errors:\n\n" + accumulatedErrors);
+				"but please note the following errors:\n" + accumulatedErrors);
 }
 catch(std::runtime_error &e)
 {
@@ -1564,7 +1564,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 
 	if(accumulatedErrors != "")
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
-				"but please note the following errors:\n\n" + accumulatedErrors);
+				"but please note the following errors:\n" + accumulatedErrors);
 }
 
 //========================================================================================================================
