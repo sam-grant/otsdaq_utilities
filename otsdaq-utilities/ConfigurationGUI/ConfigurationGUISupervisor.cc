@@ -34,6 +34,7 @@ using namespace ots;
 
 XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 
+
 //========================================================================================================================
 ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
 xdaq::Application	(s   ),
