@@ -12,6 +12,7 @@
 //	Debug.log() will print to console if Debug.mode = 1 and if num < Debug.level
 //
 //	Note: An error pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
+//	Note: A warning pop up box will occur so that users see Debug.WARN_PRIORITY log messages.
 //	Note: An info pop up box will occur so that users see Debug.INFO_PRIORITY log messages.
 //
 //=====================================================================================
@@ -28,7 +29,8 @@ Debug.lastLogger = "";
 
 //setup default priorities
 Debug.HIGH_PRIORITY = 0;
-Debug.INFO_PRIORITY = 1;
+Debug.WARN_PRIORITY = 1;
+Debug.INFO_PRIORITY = 2;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
 
@@ -49,23 +51,23 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
-					num = num < 2?(num==1?"Info":"High"):(num<99?"Med":"Low");
+					var type = num < 3?
+							(num==0?"High":(num==1?"Warn":"Info"))
+							:(num<99?"Med":"Low");
 					
 					Debug.lastLogger = (new Error).stack.split("\n")[2];
 					Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('(')-1);
 					Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
 							Debug.lastLogger.length-1);
-					console.log("%c" + num + "-Priority" +  
+					console.log("%c" + type + "-Priority" +  
 							 ":\t " + Debug.lastLog + ":\n" +
-							 Debug.lastLogger + "::\t" + str,
-							 num == "High"?"color:#F30;":
-									 (num == "Med"?"color:#092":"")); //chrome/firefox allow css styling
+							 Debug.lastLogger + "::\t" + str,							 
+							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
+									 :(num < 99?"color:#092":"")); 
 					Debug.lastLog = str;
 					
-					if(num == "High")//Debug.HIGH_PRIORITY) //show all high priorities as popup!
-						Debug.errorPop(str);
-					else if(num == "Info")
-						Debug.errorPop(str,true);
+					if(num < 3) //show all high priorities as popup!
+						Debug.errorPop(str,num);
 				}
 			}
 	}
@@ -93,7 +95,7 @@ Debug._errBoxId = "Debug-error-box";
 //=====================================================================================
 //Show the error string err in the error popup on the window
 // create error div if not yet created
-Debug.errorPop = function(err,isInfo) {
+Debug.errorPop = function(err,severity) {
 				
 	//check if Debug._errBox has been set
 	if(!Debug._errBox)
@@ -198,18 +200,28 @@ Debug.errorPop = function(err,isInfo) {
 	Debug._errBox.style.display = "block";
 	
 	//change color based on info
-	if(isInfo)
+	
+	el = document.getElementById(Debug._errBoxId + "-header");
+	switch(severity)
 	{
-		el = document.getElementById(Debug._errBoxId + "-header");		
+	case Debug.INFO_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
-		if(el.innerHTML == "Close Errors" && wasAlreadyContent)
+		if(wasAlreadyContent && 
+				(el.innerHTML == "Close Errors" ||
+						el.innerHTML == "Close Warnings"))
 			return;
 		el.innerHTML = "Close Info";		
 		Debug._errBox.style.backgroundColor = "rgba(0,153,51,0.8)";
-	}
-	else
-	{
-		el = document.getElementById(Debug._errBoxId + "-header");
+		break;
+	case Debug.WARN_PRIORITY:
+		//don't change color or header for info, if there are still errors displayed
+		if(wasAlreadyContent && 
+				el.innerHTML == "Close Errors")
+			return;
+		el.innerHTML = "Close Warnings";		
+		Debug._errBox.style.backgroundColor = "rgba(160, 79, 0, 0.8)";	
+		break;
+	default: //Debug.HIGH_PRIORITY
 		el.innerHTML = "Close Errors";
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.8)";
 	}

@@ -47,6 +47,8 @@ public:
 
 private:
     void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string& columnCSV, bool allowOverwrite=false);
+    void 			handleDeleteConfigurationInfoXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName);
+
     void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
     void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);

@@ -40,6 +40,8 @@
 			//setupTableEditor(req)
 			//saveTable()
 			//loadTable()
+			//verifyDeleteTable()
+			//deleteTable()
 			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
 			//specificConfigRequestHandler(req)
 			//setupEmptyTable();
@@ -92,14 +94,19 @@
 			str += " <input id='overwriteButton' style='display:none' type='button' onmouseup='saveTable(1)' value='Overwrite'/>";
 			str += "<br>&nbsp;&nbsp;Configuration Name:";							
 			str += "<input type='text' id='SaveAsConfigName' " + 
+					"onchange='document.getElementById(\"overwriteButton\").style.display = \"none\";' " +
 					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";
 			str += " <input type='button' onmouseup='saveTable(0)' value='Save'/>";
 			str += "<br><br>";
 			str += "Load Column Info from... &nbsp;&nbsp;&nbsp;"; 
 			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
+			str += " <input type='button' onmouseup='verifyDeleteTable()' value='Delete'/>";
+			str += " <input id='reallyDeleteButton' type='button' style='display:none' onmouseup='deleteTable()' value='Really Delete!'/>";
 			str += "<br>&nbsp;&nbsp;Configuration Name:";
 
-			str += "<select id='loadFromConfigName'>";
+			str += "<select id='loadFromConfigName' " +
+					"onchange='document.getElementById(\"reallyDeleteButton\").style.display = \"none\";' " +
+					">";
 			
 			var configName;
 
@@ -142,11 +149,12 @@
 		function loadTable()
 		{
 			var sel = document.getElementById("loadFromConfigName");
-
-			Debug.log("CfgTableEditor loadTable from " + sel.options[sel.selectedIndex].value);
+			var configName = sel.options[sel.selectedIndex].value;
+			
+			Debug.log("CfgTableEditor loadTable from " + configName);
 
 			//load mockup for chosen table
-			setupSpecificConfig(sel.options[sel.selectedIndex].value, -1);
+			setupSpecificConfig(configName, -1);
 		}
 		
 		//saveTable ~
@@ -170,6 +178,48 @@
 				"columnCSV=" + data, specificConfigRequestHandler, 1);	
 		}
 		
+
+		//verifyDeleteTable ~
+		function verifyDeleteTable()
+		{
+			var sel = document.getElementById("loadFromConfigName");
+			var configName = sel.options[sel.selectedIndex].value;
+			
+			Debug.log("CfgTableEditor verifyDeleteTable from " + configName);
+			
+			Debug.log("Are you sure you want to delete the " +
+					"configuration '" +  configName + 
+					"'? If so, click the 'Really Delete!' button.",
+					Debug.WARN_PRIORITY);
+			document.getElementById("reallyDeleteButton").style.display = "inline";			
+		}
+		
+		//deleteTable ~
+		function deleteTable()
+		{
+			var sel = document.getElementById("loadFromConfigName");
+			var configName = sel.options[sel.selectedIndex].value;			
+			Debug.log("CfgTableEditor deleteTable from " + configName);
+
+			document.getElementById("reallyDeleteButton").style.display = "none";
+			DesktopContent.XMLHttpRequest("Request?RequestType=deleteConfigurationInfo" +
+				"&configName=" + configName, "",
+				function(req)
+				{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{	
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						return;
+					}
+
+					//on success reload all configurations
+					DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations" +
+							"&refresh=1&allowIllegalColumns=1", "",
+							setupTableEditor);					
+				} //end of delete handler		
+			);
+		}
 
 		//setupSpecificConfig ~
 		//	undefined version gives latest
@@ -197,19 +247,22 @@
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				//try to power through
-				
-				err = DesktopContent.getXMLValue(req,"OverwriteError");
-				if(err) //overwrite rejection
+			{				
+				var writeErr = DesktopContent.getXMLValue(req,"OverwriteError");
+				if(writeErr) //overwrite rejection
 				{
+					Debug.log(err,Debug.WARN_PRIORITY);
 					Debug.log("Are you sure you want to overwrite the " +
 							"configuration '" +  configName + 
 							"'? If so, click the 'Overwrite' button.",
-							Debug.HIGH_PRIORITY);
+							Debug.WARN_PRIORITY);
 					document.getElementById("overwriteButton").style.display = "inline";
 					return;
+				}
+				else
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					//try to power through
 				}
 			}
 			else if(configName != "")

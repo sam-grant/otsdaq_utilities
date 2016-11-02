@@ -116,6 +116,7 @@ throw (xgi::exception::Exception)
 
 	//Commands
 	//	saveConfigurationInfo
+	//	deleteConfigurationInfo
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
 	//	getVersionAliases
@@ -189,6 +190,12 @@ throw (xgi::exception::Exception)
 		}
 		else
 			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,allowOverwrite=="1");
+	}
+	else if(Command == "deleteConfigurationInfo")
+	{
+		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
+		__MOUT__ << "configName: " << configName << std::endl;
+		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
 	}
 	else if(Command == "getGroupAliases")
 	{
@@ -1031,13 +1038,43 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 }
 
 //========================================================================================================================
+//	handleDeleteConfigurationInfoXML
+//
+//		return nothing except Error in xmldoc
+//
+void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		std::string& configName)
+{
+
+	if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
+			(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
+		__MOUT_INFO__ << ( "Table Info File successfully renamed: " +
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+	else
+	{
+		__MOUT_ERR__ << ( "Error renaming file to " +
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+
+		xmldoc.addTextElementToData("Error",
+				( "Error renaming Table Info File to " +
+								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused"));
+		return;
+	}
+
+	//reload all with refresh to remove new configuration
+	cfgMgr->getAllConfigurationInfo(true);
+}
+
+//========================================================================================================================
 //	handleSaveConfigurationInfoXML
 //
 //		write new info file for configName based CSV column info
 //			data="type,name,dataType;type,name,dataType;..."
 //		return resulting handleGetConfigurationXML mock-up view
 //
-void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
 		std::string& configName, const std::string& data,
 		bool allowOverwrite)
 {
