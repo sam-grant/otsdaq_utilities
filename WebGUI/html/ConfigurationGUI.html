@@ -125,6 +125,9 @@
 		var _contextMemberNames = [];
 		var _backboneMemberNames = [];
 		
+
+		var _contextMenuEl = 0;
+		
 		var _msChosenGroupName;
 		var _msChosenGroupKey;
 		var _groupViewFilterIndex = 2; //-1=all, 0=context, 1=backbone, 2=configuration
@@ -136,6 +139,7 @@
 		var treeMemberNames_, treeMemberVersions_;
 		var treeViewBackLinkStr_;
 		var treeGroupName_, treeGroupKey_;
+		
 	
 		
 	
@@ -223,7 +227,7 @@
 			
 			//setupConfigCreator(); return
 			
-//			setupConfigGroupTreeView("aaContext","11"); return;
+			//setupConfigGroupTreeView("aaContext","11"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -1416,6 +1420,9 @@
 				}
 				
 				var onmouseupJS = "";
+				var newwindowJS = "";
+				var newtabJS = ""; //FIXME TODO allow new tab creation
+				
 				//search for table link
 				for(j=0;j<treeMemberNames_.length;++j)
 					if(tableLinkName == treeMemberNames_[j])
@@ -1431,18 +1438,17 @@
 							treeMemberNames_[j] + "\",\"" +
 							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
 					
-					//					//make new window link
-					//					newWindowStr = "setupSpecificConfig(\"" + 
-					//							treeMemberNames_[j] + "\",\"" +
-					//							treeMemberVersions_[j] + "\")";
-					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-					//					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
-					//					treeViewHandlerStr_ += " <a style='text-decoration:none' " +
-					//							"href='javascript:DesktopContent.openNewWindow(" +
-					//							"\"Configure\",\"\",\"" + 
-					//							newWindowStr + "\",false)'>";
-					//					treeViewHandlerStr_ += "^</a>";
+										
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
 					
+					newwindowJS += "DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
 				}
 
 				//////////=======================
@@ -1462,6 +1468,9 @@
 				{
 					treeViewHandlerStr_ += 
 						"<div class='treeNode-Link' " +
+						"onmousedown='" +
+						"Debug.log(\"mousedown\");" +
+						"' " + // end link onmousedown
 						"onmouseup='" + onmouseupJS + "' " +
 						">" +	
 						"<div class='treeNode-Link-image'></div>" +			
