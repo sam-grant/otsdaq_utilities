@@ -1470,15 +1470,27 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 	ConfigurationGroupKey groupKey;
 	std::string groupName;
 
+	std::map<std::string /*groupName*/,std::set<ConfigurationGroupKey> > allGroupKeys;
 	for(auto &groupString:configGroups)
 	{
 		ConfigurationGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
+		allGroupKeys[groupName].emplace(groupKey);
 
-		__MOUT__ << "Config group " << groupString << " := " << groupName <<
+		//__MOUT__ << "Config group " << groupString << " := " << groupName <<
+		//"(" << groupKey << ")" << std::endl;
+	}
+	std::string groupString;
+	for(auto &group:allGroupKeys)
+	{
+		groupName = group.first;
+		groupKey = *(group.second.rbegin());
+		groupString = ConfigurationGroupKey::getFullGroupString(groupName,groupKey);
+		__MOUT__ << "Latest Config group " << groupString << " := " << groupName <<
 				"(" << groupKey << ")" << std::endl;
 
 		xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
 		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+
 		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
 
@@ -1538,7 +1550,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 
 		for(auto &memberPair:memberMap)
 		{
-			__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+			//__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
 			xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
 			xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 		}

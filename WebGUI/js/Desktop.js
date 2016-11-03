@@ -637,6 +637,66 @@ Desktop.createDesktop = function(security) {
 		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
 	}
 		
+	//actOnParameterAction() ~~~
+	//	called during create desktop to handle any shortcuts to windows being maximized
+	this.actOnParameterAction = function() {
+		var params = window.parent.window.location.search.substr(1).split("&");
+		var pair,spliti;
+		
+		var requestingWindowId = "", windowPath = "";
+		var windowName, windowSubname, windowUnique, newWindowOps;
+    	var varPair;
+			    	
+		for(var i=0;i<params.length;++i)
+		{
+    		spliti = params[i].indexOf('=');
+    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	
+			Debug.log(i + ": " + varPair[0] + "=" + varPair[1]);
+			if(varPair[0] 		== "requestingWindowId")
+				requestingWindowId 	= varPair[1];
+			else if(varPair[0] 	== "windowPath")
+				windowPath 			= varPair[1];	
+			else if(varPair[0] 	== "windowName")
+				windowName 			= varPair[1];	
+			else if(varPair[0] 	== "windowSubname")
+				windowSubname		= varPair[1];	
+			else if(varPair[0] 	== "windowUnique")
+				windowUnique 		= varPair[1];	
+			else if(varPair[0] 	== "newWindowOps")
+				newWindowOps 		= varPair[1];	
+		}
+		
+		if(requestingWindowId != "" && windowPath != "")
+		{
+			//have work to do!
+			Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+			Debug.log("requestingWindowId=" + requestingWindowId);
+			Debug.log("windowPath=" + windowPath);
+			newWindowOps = newWindowOps.replace(/%22/g, "\"");
+			Debug.log("newWindowOps=" + newWindowOps);
+			Debug.log("windowName=" + windowName);
+			Debug.log("windowSubname=" + windowSubname);
+			Debug.log("windowUnique=" + windowUnique);
+
+			var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+					windowName, 
+					windowSubname,
+					windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
+					"&amp;newWindowOps=" + newWindowOps, //add get parameter to path for further operations
+					eval(windowUnique));			
+
+			//set to fore window and full screen
+			 
+			Desktop.desktop.setForeWindow(newWin); 
+			Desktop.desktop.toggleFullScreen();
+			Desktop.desktop.dashboard.toggleWindowDashboard(0);
+
+			var str = "requestingWindowId=" + requestingWindowId;
+			str += "&done=1";	
+			_openWindowMailbox.innerHTML = str; //indicate done
+		}
+	}
+	
 	//------------------------------------------------------------------
 	//handle class construction ----------------------
 	//------------------------------------------------------------------
@@ -730,7 +790,9 @@ Desktop.createDesktop = function(security) {
 		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
 	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
-    
+	
+	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+	this.actOnParameterAction();    
 
 }
 

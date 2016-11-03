@@ -75,6 +75,7 @@
 //		DesktopContent.getDefaultDesktopColor()  // returns "rgb(#,#,#)"
 //		DesktopContent.getUsername()
 //		DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
+//		DesktopContent.openNewBrowserTab(name,subname,url,unique,completeHandler)
 //
 //=====================================================================================
 
@@ -102,10 +103,13 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
 //	DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
+//	DesktopContent.mouseMoveSubscriber(newHandler) 
+//	DesktopContent.openNewBrowserTab(name,subname,url,unique,completeHandler)
 
 //"private" function list:
 //	DesktopContent.init()
 //	DesktopContent.getParameter(index)
+//	DesktopContent.getDesktopParameter(index)
 //	DesktopContent.handleFocus(e)
 //	DesktopContent.handleBlur(e)
 //	DesktopContent.handleScroll(e)
@@ -145,6 +149,8 @@ DesktopContent._desktopColor = 0;
 
 DesktopContent._sequence = 0;
 
+DesktopContent._mouseMoveSubscribers = [];
+
 
 //=====================================================================================
 //initialize content's place in the world
@@ -172,7 +178,9 @@ DesktopContent.init = function() {
 
 	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
 	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
-	DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
+	
+	if(DesktopContent._theWindow.parent.document.body)
+		DesktopContent._desktopColor 		  = DesktopContent._theWindow.parent.document.body.style.backgroundColor;
 
 	window.onfocus = DesktopContent.handleFocus;
 	window.onmousedown = DesktopContent.handleFocus;
@@ -190,7 +198,7 @@ DesktopContent.init = function() {
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
 
 	//get Wizard sequence (if in Wizard mode)
-	DesktopContent._sequence = DesktopContent._theWindow.parent.parent.window.location.pathname.split("/")[2];
+	DesktopContent._sequence = DesktopContent.getDesktopParameter(0);
 	if(!DesktopContent._sequence || DesktopContent._sequence == "")
 		DesktopContent._sequence = 0; //normal desktop mode
 	else
@@ -201,14 +209,27 @@ DesktopContent.init = function() {
 //	returns the value of the url GET parameter specified by index
 DesktopContent.getParameter = function(index) {	
 	// Debug.log(window.location)
-	var ps = (window.location.search.substr(1)).split('&');
-	if(index >= ps.length) return; //return undefined
-	var vs = ps[index].split('=');
-	if(vs.length < 2) return; //return undefined	
+	var params = (window.location.search.substr(1)).split('&');
+	if(index >= params.length) return; //return undefined
+	var spliti = params[index].indexOf('=');
+	if(spliti < 0) return; //return undefined	
+	var vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return vs[1]; //return value
 }
 
+//DesktopContent.getDesktopParameter ~
+//	returns the value of the url GET parameter specified by index of the Desktop url
+DesktopContent.getDesktopParameter = function(index) {	
+	// Debug.log(window.location)
+	var params = (DesktopContent._theWindow.parent.parent.window.location.search.substr(1)).split('&');
+	if(index >= params.length) return; //return undefined
+	var spliti = params[index].indexOf('=');
+	if(spliti < 0) return; //return undefined	
+	var vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+	return vs[1]; //return value
+}
 
+//DesktopContent.handleFocus ~
 DesktopContent.handleFocus = function(e) {	//access z-index mailbox on desktop, increment by 1 and set parent's z-index	
 
 	if(!DesktopContent._myDesktopFrame) return; //only happen if not part of desktop
@@ -226,7 +247,11 @@ DesktopContent.handleBlur = function(e) {
 DesktopContent.handleScroll = function(e) {			
 	window.focus();
 }
-DesktopContent.mouseMove = function(mouseEvent) {			
+DesktopContent.mouseMove = function(mouseEvent) {	
+	//call each subscriber
+	for(var i=0; i<DesktopContent._mouseMoveSubscribers.length; ++i)
+		DesktopContent._mouseMoveSubscribers[i](mouseEvent); 
+	
 	if(!DesktopContent._myDesktopFrame) return; //only happens if not part of desktop
 
 	DesktopContent._windowMouseX = parseInt(mouseEvent.clientX);
@@ -236,8 +261,13 @@ DesktopContent.mouseMove = function(mouseEvent) {
 	DesktopContent._mouseOverXmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetLeft) +
 			parseInt(DesktopContent._myDesktopFrame.offsetLeft) + DesktopContent._windowMouseX;
 	DesktopContent._mouseOverYmailbox.innerHTML = parseInt(DesktopContent._myDesktopFrame.parentNode.parentNode.offsetTop) + 
-			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;
+			parseInt(DesktopContent._myDesktopFrame.offsetTop) + DesktopContent._windowMouseY;	
 }
+
+DesktopContent.mouseMoveSubscriber = function(newHandler) {
+	DesktopContent._mouseMoveSubscribers.push(newHandler);
+}
+	
 
 DesktopContent.init(); //initialize handlers
 
@@ -708,7 +738,7 @@ DesktopContent.getUsername = function() {
 DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler) {	
 	
 	var path = url;
-	Debug.log("openNewWindow= " + path);
+	Debug.log("DesktopContent.openNewWindow= " + path);
 	Debug.log("name= " + name);
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);
@@ -733,9 +763,8 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 	DesktopContent._openWindowMailbox.innerHTML = str;
 
 	Debug.log("Waiting for complete...");
-	
-	var timeoutHandler = function() 
-							{ 
+
+	var timeoutHandler = function() { 
 		Debug.log("Checking for complete...");
 		//extract params from DesktopContent._openWindowMailbox
 		//get parameters
@@ -761,25 +790,47 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 			Debug.log("done=" + done);
 			if(requestingWindowId != DesktopContent._myDesktopFrame.id.split('-')[1])
 				Debug.log("There was a mismatch in wid!",Debug.MED_PRIORITY);
-			
+
 			//clear mailbox 
 			DesktopContent._openWindowMailbox.innerHTML = "";
-						
+
 			if(completeHandler)
 				completeHandler(); //call parameter handler
 			return;
 		}
 		else //try again
 			setTimeout(timeoutHandler, 100); //try again
-			
-							};	//end setTimeout handler
+
+	};	//end setTimeout handler
 	
 	setTimeout(timeoutHandler,
 			100); //end setTimeout
 
 }
 
+//=====================================================================================
+//openNewBrowserTab ~~
+//	first wait for mailbox to be clear
+//	then take mailbox
+DesktopContent.openNewBrowserTab = function(name,subname,url,unique,completeHandler) {	
+		
+	var path = url;
+	Debug.log("DesktopWindow= " + path);
+	Debug.log("name= " + name);
+	Debug.log("subname= " + subname);
+	Debug.log("unique= " + unique);
+		
+	url = DesktopContent._theWindow.parent.parent.window.location.href;
+	Debug.log("DesktopContent.openNewBrowserTab= " + url);
+	
+	var str = "&requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
+	str += "&windowName=" + name;
+	str += "&windowSubname=" + subname;
+	str += "&windowUnique=" + unique;
+	str += "&windowPath=" + path;
 
+	window.open(url + str,'_blank');
+}
 
 
 

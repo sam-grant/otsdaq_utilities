@@ -39,11 +39,13 @@ SOAPMessenger  (this)
 	INIT_MF("OtsConfigurationWizard");
 
 	generateURL();
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,                "Default" );
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::Verification,        securityCode_);
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::RequestIcons,       "requestIcons");
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           "iconEditor");
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       "editSecurity");
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,            	"Default" 			);
+
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::Verification,        	"Verify" 	  		);	//securityCode_);
+
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::RequestIcons,       	"requestIcons"		);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           	"iconEditor"		);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       	"editSecurity"		);
 
 	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,        "SupervisorSequenceCheck",        XDAQ_NS_URI);
 
@@ -66,7 +68,7 @@ void OtsConfigurationWizardSupervisor::init(void)
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::generateURL()
 {
-	int length = 32;
+	int length = 4;
 	securityCode_ = "";
 
 	static const char alphanum[] =
@@ -74,17 +76,16 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(0);//time(0)); FIXME for testing!
+	srand(time(0));
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
 	}
 
-
 	std::cout << __COUT_HDR_FL__ <<
-			this->getApplicationDescriptor()->getURN() << // getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
+			getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
 			"/urn:xdaq-application:lid="
-			<< this->getApplicationDescriptor()->getLocalId() << "/" << securityCode_ << std::endl;
+			<< this->getApplicationDescriptor()->getLocalId() << "/Verify?code=" << securityCode_ << std::endl;
 
 	std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
 			{printURL(ptr,securityCode);},this,securityCode_).detach();
@@ -104,7 +105,7 @@ void OtsConfigurationWizardSupervisor::printURL(OtsConfigurationWizardSupervisor
 		std::cout << __COUT_HDR_FL__ <<
 				getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") <<
 				"/urn:xdaq-application:lid="
-				<< ptr->getApplicationDescriptor()->getLocalId() << "/" << securityCode << std::endl;
+				<< ptr->getApplicationDescriptor()->getLocalId() << "/Verify?code=" << securityCode << std::endl;
 	}
 }
 
@@ -160,6 +161,20 @@ throw (xgi::exception::Exception)
 void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
+	cgicc::Cgicc cgi(in);
+	std::string submittedSequence = CgiDataUtilities::getData(cgi, "code");
+	__MOUT__ << "submittedSequence=" << submittedSequence << std::endl;
+
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		return;
+	}
+	else
+	{
+		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
+	}
+
 	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
 			"<frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
@@ -169,8 +184,6 @@ throw (xgi::exception::Exception)
 void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
-
 	cgicc::Cgicc cgi(in);
 	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
 	if(securityCode_.compare(submittedSequence) != 0)
