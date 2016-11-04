@@ -1089,6 +1089,19 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		std::string& configName, const std::string& data,
 		bool allowOverwrite)
 {
+	//create all caps name and validate
+	//	only allow alpha-numeric names with Configuration at end
+	std::string capsName;
+	try
+	{
+		capsName = ConfigurationBase::convertToCaps(configName, true);
+	}
+	catch(std::runtime_error &e)
+	{	//error! non-alpha
+		xmldoc.addTextElementToData("Error",e.what());
+		return;
+	}
+
 	if(!allowOverwrite)
 	{
 		FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "r");
@@ -1105,19 +1118,6 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 					"')");
 			return;
 		}
-	}
-
-	//create all caps name and validate
-	//	only allow alpha-numeric names with Configuration at end
-	std::string capsName;
-	try
-	{
-		capsName = ConfigurationBase::convertToCaps(configName, true);
-	}
-	catch(std::runtime_error &e)
-	{	//error! non-alpha
-		xmldoc.addTextElementToData("Error",e.what());
-		return;
 	}
 
 	__MOUT__ << "capsName=" << capsName << std::endl;
@@ -1200,25 +1200,27 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	fclose(fp);
 
 	//reload all config info with refresh AND reset to pick up possibly new config
-	cfgMgr->getAllConfigurationInfo(true);
+	// check for errors related to this configName
+	std::string accumulatedErrors = "";
+	cfgMgr->getAllConfigurationInfo(true,&accumulatedErrors,configName);
 
-	//if error detected reading back then move the saved configuration info to .unused
-	try
+	//if errors associated with this config name stop and report
+	if(accumulatedErrors != "")
 	{
-		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
-	}
-	catch(std::runtime_error& e)
-	{
-		//configuration info is illegal so report error, and disable file
+		__MOUT_ERR__ << accumulatedErrors << std::endl;
+		xmldoc.addTextElementToData("Error", "Error detected reading back the configuration '" +
+				configName +
+				"' after the attempt to save new column info:\n\n" + accumulatedErrors);
 
-		__SS__ << "Error detected reading back the configuration '" << configName <<
-				"' created by the new attempt to save column info: " <<
-				e.what() << std::endl;
-		__MOUT_ERR__ << ss.str() << std::endl;
-		xmldoc.addTextElementToData("Error", ss.str());
-
-		//if error detected //move file to ".unused"
+		//if error detected reading back then move the saved configuration info to .unused
+		// // This was disabled by RAR on 11/4/2016.. (just keep broken info files)
+		// // ... especially since now there is a Delete button
+		if(0)
 		{
+			//configuration info is illegal so report error, and disable file
+
+
+			//if error detected //move file to ".unused"
 			if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
 					(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
 				__MOUT_INFO__ << ( "File successfully renamed: " +
@@ -1232,7 +1234,11 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 			//reload all with refresh to remove new configuration
 			cfgMgr->getAllConfigurationInfo(true);
 		}
+		return;
 	}
+
+	//return the new configuration info
+	handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
 
 	//debug all table column info
 	//FIXME -- possibly remove this debug feature in future

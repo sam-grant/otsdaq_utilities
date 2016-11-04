@@ -19,7 +19,7 @@
 		
 	
 		var _CONFIG_TYPE_ROW_OFFSET = 1;
-		var _CONFIG_DATA_COL_OFFSET = 1;
+		var _CONFIG_DATA_COL_OFFSET = 0;
 		var _CONFIG_FIXED_CELLS = 3;
 	
 
@@ -31,6 +31,7 @@
 		var _editingCellPos = [-1,-1];	
 		var _srcName;
 		var _colHdrArr, _colTypeArr, _colDataTypeArr;
+		var _tableIsTransposed = false;
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -53,6 +54,7 @@
 			//editCellOK(r,c)
 			//addColumn(c)
 			//deleteColumn(c)
+			//transposeTable()
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -306,80 +308,143 @@
 				srcName = _srcName;
 			else
 				_srcName = srcName;
-			
-			//force proper comment name
-			colHdrs[colHdrs.length-3] = "CommentDescription";
 					 
 			//cache data for add/delete ease
-			_colHdrArr = colHdrs;
-			_colTypeArr = colTypes;
-			_colDataTypeArr = colDataTypes;
+			if(!colHdrs)
+				colHdrs = _colHdrArr;
+			else
+				_colHdrArr = colHdrs;
+			if(!colTypes)
+				colTypes = _colTypeArr;
+			else
+				_colTypeArr = colTypes;
+			if(!colDataTypes)
+				colDataTypes = _colDataTypeArr;
+			else
+				_colDataTypeArr = colDataTypes;			
+
+			//force proper comment name
+			colHdrs[colHdrs.length-3] = "CommentDescription";
+			_colHdrArr[colHdrs.length-3] = "CommentDescription";
 			
+						
 			var str = "";
 
+			str += "<a href='javascript:transposeTable()'>Transpose Table View</a><br><br>";
+			
 			str += "Starting point was...<br><b>" + srcName + "</b> (version: Mockup-View)<br>";
 							
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
-
-			//+/- column row
-			str += "<tr>";
-			str += "<td>"; //row col
-			str += "</td>";			
-			for(var c=0;c<colTypes.length;++c)
-			{
-				str += "<td>"
-						
-				//show +/- columns where possible to add/delete
-				if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
-				{
-					str += " <a href='javascript:addColumn(" + c + ");'>";
-					str += "+";
-					str += "</a>";
-
-					if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
-					{
-						str += "/<a href='javascript:deleteColumn(" + c + ");'>";
-						str += "-";
-						str += "</a>";
-					}
-				}
-
-				str += "</td>";					
-
-			}
-			str += "</tr>";
 			
-			//type and data type row
-			str += "<tr>";
-			str += "<td>"; //row col
-			str += "</td>";			
-			for(var c=0;c<colTypes.length;++c)
+			if(_tableIsTransposed)
 			{
-				str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
-						c + ",this);'>";
-				str += "<div style='font-size:12px' title='";		
-				str += colTypes[c];
-				str += " &#60;" + colDataTypes[c] + "&#62;";
-				str += "'>";
-				str += colTypes[c];
-				str += "<br>&#60;" + colDataTypes[c] + "&#62;";
-				str += "</div>";
-				str += "</td>";			
+				//for each column, make a row		
+				for(var c=0;c<colTypes.length;++c)
+				{
+					///// open row
+					str += "<tr>";
+					
+					/////////////////////////////////
+					//+/- column row
+					str += "<td>";					
+					//show +/- columns where possible to add/delete
+					if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
+					{
+						str += " <a href='javascript:addColumn(" + c + ");'>";
+						str += "+";
+						str += "</a>";
 
+						if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
+						{
+							str += "/<a href='javascript:deleteColumn(" + c + ");'>";
+							str += "-";
+							str += "</a>";
+						}
+					}
+					str += "</td>";	
+					
+					/////////////////////////////////
+					//type and data type row
+					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
+							c + ",this);' style='width:100px'>";
+					str += "<div style='font-size:12px' title='";		
+					str += colTypes[c];
+					str += " &#60;" + colDataTypes[c] + "&#62;";
+					str += "'>";
+					str += colTypes[c];
+					str += "<br>&#60;" + colDataTypes[c] + "&#62;";
+					str += "</div>";
+					str += "</td>";	
+
+					/////////////////////////////////
+					//col name type row
+					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
+							c + ",this);'>";
+					str += colHdrs[c];
+					str += "</th>";
+					
+					
+					///// close row
+					str += "</tr>";
+				}
 			}
-			str += "</tr>";
-			str += "<tr>";
-			str += "<th>Row</th>"; //insert row index column
-			for(var c=0;c<colHdrs.length;++c)
+			else
 			{
-				str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
-						c + ",this);'>";
-				str += colHdrs[c];
-				str += "</th>";					
-
+				//+/- column row
+				str += "<tr>";					
+				for(var c=0;c<colTypes.length;++c)
+				{
+					str += "<td>"
+							
+					//show +/- columns where possible to add/delete
+					if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
+					{
+						str += " <a href='javascript:addColumn(" + c + ");'>";
+						str += "+";
+						str += "</a>";
+	
+						if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
+						{
+							str += "/<a href='javascript:deleteColumn(" + c + ");'>";
+							str += "-";
+							str += "</a>";
+						}
+					}
+	
+					str += "</td>";					
+	
+				}
+				str += "</tr>";
+				
+				//type and data type row
+				str += "<tr>";	
+				for(var c=0;c<colTypes.length;++c)
+				{
+					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
+							c + ",this);'>";
+					str += "<div style='font-size:12px' title='";		
+					str += colTypes[c];
+					str += " &#60;" + colDataTypes[c] + "&#62;";
+					str += "'>";
+					str += colTypes[c];
+					str += "<br>&#60;" + colDataTypes[c] + "&#62;";
+					str += "</div>";
+					str += "</td>";			
+	
+				}
+				str += "</tr>";
+				str += "<tr>";
+				for(var c=0;c<colHdrs.length;++c)
+				{
+					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
+							c + ",this);'>";
+					str += colHdrs[c];
+					str += "</th>";					
+	
+				}
+				str += "</tr>";
 			}
-			str += "</tr>";
 
 			str += "</table>";		
 
@@ -389,7 +454,7 @@
 		
 
 
-		//selectThisCell
+		//selectThisCell ~~
 		function selectThisCell(r,c,el) 
 		{				
 			if(_editingCell) //already have the edit box open, cancel it
@@ -397,12 +462,28 @@
 				if(_editingCellEl == el) //if same cell do nothing
 					return false;
 				editCellCancel(); //if new cell cancel
-			}
+			}			
 			
 			//if column is Author or Timestamp, don't allow select
 			var tableEl = document.getElementById("SubSystemTable");
 			var rows = tableEl.getElementsByTagName("tr");
-			var cols = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td");
+			var cols = [];
+			//get col type cols (transposed or not)
+			if(_tableIsTransposed)
+			{
+				//transpose all
+				var tcols;
+				for(var i=0;i<rows.length;++i)
+				{
+					tcols = rows[i].getElementsByTagName("td");					
+					cols[i] = tcols[_CONFIG_TYPE_ROW_OFFSET];
+				}
+			}
+			else
+			{
+				cols = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td");
+			}
+			
 			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
@@ -413,7 +494,7 @@
 			
 			_editingCell = true;
 			_editingCellEl = el;
-			_editingCellPos = [r,c];
+			_editingCellPos = [r,c];			
 
 			var colDataType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
 			
@@ -539,8 +620,9 @@
 				var el = document.getElementById("SubSystemTable");
 				var rows = el.getElementsByTagName("tr");
 				var numOfRows = _CONFIG_TYPE_ROW_OFFSET + 2;
-				var numOfCols = rows[_CONFIG_TYPE_ROW_OFFSET+1].getElementsByTagName("th").length - 
-						_CONFIG_DATA_COL_OFFSET;
+				var numOfCols = _colHdrArr.length; //rows[_CONFIG_TYPE_ROW_OFFSET+1].getElementsByTagName("th").length - 
+						//_CONFIG_DATA_COL_OFFSET;
+				var cols;
 				do
 				{					
 					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
@@ -557,11 +639,35 @@
 					if(newCol < 0) {--newRow; newCol = numOfCols-1; }
 					if(newRow < _CONFIG_TYPE_ROW_OFFSET) newRow = numOfRows-1;					
 
-					if(newRow == _CONFIG_TYPE_ROW_OFFSET)
-						el = rows[newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];
+					cols = [];
+					if(_tableIsTransposed)
+					{
+						//transpose all
+						var tcols;
+						for(var i=0;i<rows.length;++i)
+						{	
+							if(newRow == _CONFIG_TYPE_ROW_OFFSET)
+							{
+								tcols = rows[i].getElementsByTagName("td");	
+								cols[i] = tcols[newRow];
+							}
+							else	//th is always the last newRow, so above works
+							{
+								tcols = rows[i].getElementsByTagName("th");
+								cols[i] = tcols[0];
+							}
+						}
+					}
 					else
-						el = rows[newRow].getElementsByTagName("th")[_CONFIG_DATA_COL_OFFSET+newCol];
-				
+					{
+						if(newRow == _CONFIG_TYPE_ROW_OFFSET)
+							cols = rows[newRow].getElementsByTagName("td");
+						else
+							cols = rows[newRow].getElementsByTagName("th")
+					}
+
+					el = cols[_CONFIG_DATA_COL_OFFSET+newCol];
+					
 				} while(!selectThisCell(newRow,newCol,el));
 
 				//Debug.log("newRow=" + newRow + " newCol=" + newCol);
@@ -667,6 +773,14 @@
 			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr);
 		}
 
+		//transposeTable ~~
+		function transposeTable()
+		{
+			_tableIsTransposed = !_tableIsTransposed;
+			Debug.log("CfgTBL transposeTable " + _tableIsTransposed);
+			
+			setupTable();
+		}
 		
 	</script>
 		
