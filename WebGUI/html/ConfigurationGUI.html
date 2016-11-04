@@ -762,8 +762,10 @@
 			//show  members for latest version
 			str += "<br><table><tr>";
 
+			//members are only returned for the latest
 			configNames = latestMembersHdr.getElementsByTagName("MemberName");
 			configVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
+				
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 
 			for(var j=0;j<configNames.length;++j)

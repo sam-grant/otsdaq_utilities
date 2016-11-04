@@ -168,6 +168,7 @@ throw (xgi::exception::Exception)
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		*out << "Invalid code.";
 		return;
 	}
 	else
