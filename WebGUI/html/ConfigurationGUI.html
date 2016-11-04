@@ -18,6 +18,11 @@
 			margin: 			14px 5px 5px 12px;
 		}
 
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: pointer;
+		}
+
 		.treeNode {
 			margin-left: 		30px;
 			float:				left;
@@ -510,7 +515,9 @@
 			str += "Don't see what you need: ";
 			str += "<button type='button' onmouseup='" +
 					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
-										"\");'>" + 
+					"\");' title='" +
+					"Goto the group creator interface." +
+					"'>" + 
 					"Create a new Group</button>";
 			str += "<br>";
 
@@ -525,7 +532,9 @@
 				//////////////////////////////////////
 				//add search box div
 
-				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
+				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+						"View the Latest Key for the Selected Group." +
+						"'>" +
 						"View Latest Key for Selected Group</button>";
 				str += "<div id='groupSearchDiv' ";
 				str += "style='margin-top:-20px; height:200px; width:450px;";
@@ -535,7 +544,9 @@
 				str += "<div id='clearDiv'></div>";
 
 				str += "<button style='margin-top:-25px' " + 
-						"type='button' onmouseup='javascript:gotoSelectedMSGroup()'>" +
+						"type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+						"View the Latest Key for the Selected Group." +
+						"'>" +
 						"View Latest Key for Selected Group</button>";
 				
 				str += "<div style='margin-top:10px' id='msSelectedGroupDiv'></div>";
@@ -1236,7 +1247,9 @@
 				var dispStr = el.innerHTML;
 				str = "";
 				str += "<br><div id='config-firstSaveButton'>";
-				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version' title='" +
+					"Save the current table view as a new persistent version." +
+					"'/>";
 				str += "</div>";
 				el.innerHTML = str + dispStr + "<br>" + str;
 			}
@@ -1935,7 +1948,9 @@
 				str += "Choose the versions of configurations you would like to add...<br>";
 			
 			str += "<div id='createGroupInfo'></div><br>";
-			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
+					"Create the new persistent group and group key pair." +
+					"'>" +
 					"Create the new Group</button>";
 			str += "<br><br>";
 			str += "Group Name: <input id='newConfigName'/>";
@@ -2011,7 +2026,9 @@
 			}	
 			str += "</table>";
 
-			str += "<button type='button' onmouseup='javascript:createConfigGroup()'>" +
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
+					"Create the new persistent group and group key pair." +
+					"'>" +
 					"Create the new Group</button>";
 			el.innerHTML = str;		
 			
@@ -2273,12 +2290,18 @@
 			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
 			
 			str += "<br><br>";
-			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row'/>";
+			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row' title='" +
+					"Copy Source Row and paste at Destination Row, pushing previously existing rows down.'" +
+					"/>";
 			str += " ";
-			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row'/>";
+			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row' title='" +
+					"Cut Source Row and paste at Destination Row, pushing previously existing rows down.'" +
+					"/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configCopyView()' value='" +
-					"Copy Source Version to new Temporary Version'/>";			
+					"Copy Source Version to new Temporary Version' title='" +
+					"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names.'" +
+					"/>";			
 			str += "<br><br>";
 			el.innerHTML = str;	
 		}	
@@ -2376,13 +2399,21 @@
 			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
 			
 			str += "<br><br>";
-			str += "<input type='button' onmouseup='configFind()' value='Find'/>";
+			str += "<input type='button' onmouseup='configFind()' value='Find' title='" +
+					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
+					"/>";
 			str += " ";
-			str += "<input type='button' onmouseup='configReplace()' value='Replace'/>";
+			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
+					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\''" +
+					"/>";
 			str += "&nbsp;&nbsp; or..."
 			for(var i=0;i<3;++i)
 				str += "&nbsp;";
-			str += "<input type='button' onmouseup='configIncrementByReplace()' value='Increment by &quot;Replace with...&quot; Field'/>";
+			str += "<input type='button' onmouseup='configIncrementByReplace()' " +
+					"value='Increment by &quot;Replace with...&quot; Field' title='" +
+					"Increment the trailing number in all fields in the Column(s) specified by \'Search in column\' by the signed integer number specified in \'Replace with...\' If there is no trailing number, a zero is inferred.'" +
+					"/>";
+			str += "<br><br>";
 			el.innerHTML = str;						
 		}
 				
@@ -2570,9 +2601,13 @@
 				var dispStr = el.innerHTML;
 				str = "";
 				str += "<br><div>";
-				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version'/>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version' title='" +
+						"Save the current table view as new persitent version." +
+						"/>";
 				str += " ";
-				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version'/>";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version' title='" +
+						"Save the current table view as new temporary version." +
+						"/>";
 				str += "</div>";
 				el.innerHTML = str + dispStr + "<br>" + str;
 			}			
@@ -2996,7 +3031,9 @@
 			str = "";
 			str += "<br><div>";
 			str += "<input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
-					groupName + "\")' value='Save Changes as New Group'/>";				
+					groupName + "\")' value='Save Changes as New Group' title='" +
+					"Save the modified group as a new persistent key for this group name." +
+					"'/>";				
 			str += "</div>";
 			el.innerHTML = str + dispStr + "<br>" + str;
 			
