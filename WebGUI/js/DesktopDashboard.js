@@ -82,8 +82,12 @@ else {
 		//------------------------------------------------------------------
 		//create PRIVATE members functions ----------------------
 		//------------------------------------------------------------------
-        var _toggleWindowDashboard = function(event) {        	
-            _displayWindowDashboard = !_displayWindowDashboard;
+        var _toggleWindowDashboard = function(event,setValue) {        	
+        	
+        	if(setValue)
+        		_displayWindowDashboard = setValue;
+        	else //toggle
+        		_displayWindowDashboard = !_displayWindowDashboard;
             	
 			if(!Desktop.isWizardMode()) 
 			{	//only update url if not in --config
@@ -246,7 +250,7 @@ else {
         this.getDashboardWidth = function() { return _displayWindowDashboard?_windowDashboardWidth:0;}
         this.setDashboardWidth = function(w) { if(w > _defaultWindowDashboardMinWidth) _windowDashboardWidth = w; Desktop.desktop.redrawDesktop();}
     
-        
+        this.toggleWindowDashboard = _toggleWindowDashboard; 
         this.redrawDashboard = _redrawDashboard;        
         this.windowDashboardLayoutsDropDown = _windowDashboardLayoutsDropDown;
                 

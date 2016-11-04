@@ -9,7 +9,7 @@
 
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
-	<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 	<style type="text/css">			
 
@@ -76,6 +76,7 @@
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 	
 	<script>		
 		
@@ -127,6 +128,7 @@
 		
 
 		var _contextMenuEl = 0;
+		var _treeNavContextMenuItems = ["Go-to Table View","Open in new Desktop Window","Open in new Browser Tab"];
 		
 		var _msChosenGroupName;
 		var _msChosenGroupKey;
@@ -760,8 +762,10 @@
 			//show  members for latest version
 			str += "<br><table><tr>";
 
+			//members are only returned for the latest
 			configNames = latestMembersHdr.getElementsByTagName("MemberName");
 			configVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
+				
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 
 			for(var j=0;j<configNames.length;++j)
@@ -1372,7 +1376,7 @@
 			var childrenLength;
 			var newWindowStr;
 			var backLinkStr;
-			
+					
 			for(i=0;i<nodes.length;++i)
 			{
 				uid = treeNodeUID_++;
@@ -1422,6 +1426,7 @@
 				var onmouseupJS = "";
 				var newwindowJS = "";
 				var newtabJS = ""; //FIXME TODO allow new tab creation
+				var treeNavContextMenuItemHandlers = [];
 				
 				//search for table link
 				for(j=0;j<treeMemberNames_.length;++j)
@@ -1438,6 +1443,7 @@
 							treeMemberNames_[j] + "\",\"" +
 							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
 					
+					treeNavContextMenuItemHandlers.push(onmouseupJS);
 										
 					//make new window link
 					newWindowStr = "setupSpecificConfig(\"" + 
@@ -1449,6 +1455,28 @@
 					newwindowJS += "DesktopContent.openNewWindow(" +
 							"\"Configure\",\"\",\"" + 
 							newWindowStr + "\",false);";
+
+					treeNavContextMenuItemHandlers.push(newwindowJS);
+
+					
+					newtabJS += "DesktopContent.openNewBrowserTab(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+
+					//escape another level for json string
+					//					newWindowStr = newWindowStr.replace(/\\\"/g, "AAAAA");
+					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					//					newWindowStr = newWindowStr.replace(/AAAAA/g, "\\\\\\\"");
+					//					newtabJS += "DesktopContent.openNewBrowserTab(" +
+					//							"\"" +
+					//							//"http://rulinux03.dhcp.fnal.gov:1983/urn:xdaq-application:lid=290/fa37JncCHryDsbzayy4cBWDxS22JjzhM" +
+					//							//"\"," +
+					//							//"\"" +
+					//							//"hello" +
+					//							newWindowStr +
+					//							"\"" +
+					//							");";
+					treeNavContextMenuItemHandlers.push(newtabJS);
 				}
 
 				//////////=======================
@@ -1467,11 +1495,31 @@
 				if(onmouseupJS != "") //if there is a link, add it
 				{
 					treeViewHandlerStr_ += 
-						"<div class='treeNode-Link' " +
-						"onmousedown='" +
-						"Debug.log(\"mousedown\");" +
+						"<div class='treeNode-Link' " + //start treeNode Link div
+						"onmousedown='" + // start link onmousedown	
+						"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+						"[";
+					
+					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+					{
+						Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//need to escape all quotes by one more level
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+						Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+						if(j != treeNavContextMenuItemHandlers.length-1)
+							treeViewHandlerStr_ += ",";
+					}
+					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
+							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+					treeViewHandlerStr_ += 
 						"' " + // end link onmousedown
-						"onmouseup='" + onmouseupJS + "' " +
+						//"onmouseup='" + onmouseupJS + "' " +
 						">" +	
 						"<div class='treeNode-Link-image'></div>" +			
 						"</div>"; //end treeNode Link div

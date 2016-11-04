@@ -105,6 +105,12 @@ Debug.errorPop = function(err,severity) {
 		if(!el) //element doesn't already exist, so we need to create the element
 		{
 			var body = document.getElementsByTagName("BODY")[0];
+			if(!body) //maybe page not loaded yet.. so wait to report
+			{
+				//try again in 1 second
+				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+				return;
+			}
 			
 			//create the element
 			el = document.createElement("div");			

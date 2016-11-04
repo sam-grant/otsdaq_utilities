@@ -638,14 +638,20 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::set<std::string /*name+version*/> allGroups =
 			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
 	std::string name;
+
 	ConfigurationGroupKey key;
+	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
+	std::set<ConfigurationGroupKey> sortedKeys;
 	for(auto &group: allGroups)
 	{
 		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
-		//add all other keys for this groupName
 		if(name == groupName && key != groupKey)
-			xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", key.toString());
+			sortedKeys.emplace(key);
 	}
+
+	//add all other sorted keys for this groupName
+	for(auto &keyInOrder:sortedKeys)
+		xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", keyInOrder.toString());
 
 	return;
 }
@@ -1376,7 +1382,10 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 
 	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
 	{
-		__SS__ << "Active version of GroupAliasesConfiguration missing!" << std::endl;
+		__SS__ << "\nActive version of GroupAliasesConfiguration missing! " <<
+				"GroupAliasesConfiguration is a required member of the Backbone configuration group." <<
+				"\n\nLikely you need to activate a valid Backbone group." <<
+				std::endl;
 		xmldoc.addTextElementToData("Error", ss.str());
 		return;
 	}
@@ -1470,15 +1479,30 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 	ConfigurationGroupKey groupKey;
 	std::string groupName;
 
+	std::map<std::string /*groupName*/,std::set<ConfigurationGroupKey> > allGroupsWithKeys;
 	for(auto &groupString:configGroups)
 	{
 		ConfigurationGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
+		allGroupsWithKeys[groupName].emplace(groupKey);
 
-		__MOUT__ << "Config group " << groupString << " := " << groupName <<
+		//__MOUT__ << "Config group " << groupString << " := " << groupName <<
+		//"(" << groupKey << ")" << std::endl;
+	}
+	std::string groupString;
+	for(auto &groupWithKeys:allGroupsWithKeys)
+	{
+		groupName = groupWithKeys.first;
+		groupKey = *(groupWithKeys.second.rbegin());
+
+
+
+		groupString = ConfigurationGroupKey::getFullGroupString(groupName,groupKey);
+		__MOUT__ << "Latest Config group " << groupString << " := " << groupName <<
 				"(" << groupKey << ")" << std::endl;
 
 		xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
 		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+
 		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
 
@@ -1507,13 +1531,13 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
 			continue;
 		}
-
+		std::string groupTypeString = "";
 		//try to determine type, dont report errors, just mark "Invalid"
 		try
 		{
 			//determine the type configuration group
 			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
-			std::string groupTypeString =
+			groupTypeString =
 					groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
 							(groupType==ConfigurationManager::BACKBONE_TYPE?
 									"Backbone":"Configuration");
@@ -1524,7 +1548,8 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has invalid type! " + e.what() << std::endl;
 			__MOUT__ << ss.str();
-			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			groupTypeString = "Invalid";
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 			continue;
 		}
 		catch(...)
@@ -1532,15 +1557,28 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has invalid type! " << std::endl;
 			__MOUT__ << ss.str();
-			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			groupTypeString = "Invalid";
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 			continue;
 		}
 
 		for(auto &memberPair:memberMap)
 		{
-			__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+			//__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
 			xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
 			xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+		}
+
+
+		//add other group keys to xml for this group name
+		//	but just empty members (not displayed anyway)
+		for(auto &keyInSet: groupWithKeys.second)
+		{
+			if(keyInSet == groupKey) continue; //skip the lastest
+			xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+			xmldoc.addTextElementToData("ConfigurationGroupKey", keyInSet.toString());
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 		}
 	}
 

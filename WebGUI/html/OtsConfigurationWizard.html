@@ -24,8 +24,8 @@
 			var urnLid = ((window.location.search.substr(1)).split('='))[1];
 			Debug.log("Application URN-LID #" + urnLid);
 
-			function init() {
-				Desktop.init(window.parent.window.location.pathname.split("/")[2]);
+			function init() {				
+				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 				Desktop.desktop.icons.resetWithPermissions(255);
 			}			            
         </script>
