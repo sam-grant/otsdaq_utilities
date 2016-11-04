@@ -8,6 +8,7 @@
 #include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
 //#include "otsdaq-core/DataManager/NetworkDataManager.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
+#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
 #include "otsdaq-core/RootUtilities/DQMHistos.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
@@ -66,15 +67,19 @@ XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //========================================================================================================================
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception)
-: xdaq::Application        (s)
-, SOAPMessenger            (this)
-, RunControlStateMachine   ("VisualSupervisor")
-, supervisorType_          ("Visual")
-, supervisorInstance_      (this->getApplicationDescriptor()->getInstance())
-, theRemoteWebUsers_       (this)
-, theConfigurationManager_ (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-, theDataManager_          (0)
-, loadedRunNumber_	       (-1)
+: xdaq::Application           (s)
+, SOAPMessenger               (this)
+, RunControlStateMachine      ("VisualSupervisor")
+, theConfigurationManager_    (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
+, theSupervisorContextUID_    (theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
+, theSupervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
+		(
+				getApplicationContext()->getContextDescriptor()->getURL(),
+				getApplicationDescriptor()->getLocalId()
+		))
+, theRemoteWebUsers_          (this)
+, theDataManager_             (0)
+, loadedRunNumber_	          (-1)
 {
 	INIT_MF("VisualSupervisor");
 	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
@@ -87,10 +92,12 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
 	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
-			supervisorType_,
-			supervisorInstance_,
-			theConfigurationManager_);
+	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>
+	(
+			theConfigurationManager_,
+			theSupervisorContextUID_,
+			theSupervisorApplicationUID_
+	);
 
 
 	__MOUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;

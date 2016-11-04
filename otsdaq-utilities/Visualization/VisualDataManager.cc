@@ -14,8 +14,8 @@ using namespace ots;
 
 
 //========================================================================================================================
-VisualDataManager::VisualDataManager(std::string supervisorType, unsigned int supervisorInstance, ConfigurationManager* configurationManager)
-: DataManager             (supervisorType, supervisorInstance, configurationManager)
+VisualDataManager::VisualDataManager(ConfigurationManager* configurationManager, std::string supervisorContextUID, std::string supervisorApplicationUID)
+: DataManager             (configurationManager, supervisorContextUID, supervisorApplicationUID)
 , theConfigurationManager_(configurationManager)
 , theLiveDQMHistos_       (0)
 //, theFileDQMHistos_       (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos")
@@ -36,6 +36,16 @@ void VisualDataManager::configure(void)
 	const DataManagerConfiguration* dataManagerConfiguration = theConfigurationManager_->__GET_CONFIG__(DataManagerConfiguration);
 	const DataBufferConfiguration*  dataBufferConfiguration  = theConfigurationManager_->__GET_CONFIG__(DataBufferConfiguration);
 
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+	__MOUT__ << "NEED TO FIX ALL THIS ROUTINE USING THE TREE!!!!!!" << std::endl;
+/*
 	std::vector<std::string> bufferList = dataManagerConfiguration->getListOfDataBuffers(supervisorType_,supervisorInstance_);
 	for(const auto& itBuffers: bufferList)
 	{
@@ -59,6 +69,7 @@ void VisualDataManager::configure(void)
 			}
 		}
 	}
+*/
 }
 
 //========================================================================================================================

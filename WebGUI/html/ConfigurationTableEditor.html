@@ -90,24 +90,18 @@
 
 			var str = "";
 
-			str += "Save Column Info as...";
-			str += " <input id='overwriteButton' style='display:none' type='button' onmouseup='saveTable(1)' value='Overwrite'/>";
-			str += "<br>&nbsp;&nbsp;Configuration Name:";							
-			str += "<input type='text' id='SaveAsConfigName' " + 
-					"onchange='document.getElementById(\"overwriteButton\").style.display = \"none\";' " +
-					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";
-			str += " <input type='button' onmouseup='saveTable(0)' value='Save'/>";
-			str += "<br><br>";
-			str += "Load Column Info from... &nbsp;&nbsp;&nbsp;"; 
+			str += "Load Column Info from... "; 
 			str += " <input type='button' onmouseup='loadTable()' value='Load'/>";
+			str += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Delete Table... "; 			
 			str += " <input type='button' onmouseup='verifyDeleteTable()' value='Delete'/>";
 			str += " <input id='reallyDeleteButton' type='button' style='display:none' onmouseup='deleteTable()' value='Really Delete!'/>";
+			
 			str += "<br>&nbsp;&nbsp;Configuration Name:";
 
 			str += "<select id='loadFromConfigName' " +
 					"onchange='document.getElementById(\"reallyDeleteButton\").style.display = \"none\";' " +
 					">";
-			
+
 			var configName;
 
 			Debug.log("CfgTableEditor requestHandler configNames.length " + configNames.length);
@@ -120,6 +114,17 @@
 				str += "</option>";
 			}				
 			str += "</select>";
+
+			str += "<br><br>";
+			str += "Save Column Info as...";
+			str += " <input id='overwriteButton' style='display:none' type='button' onmouseup='saveTable(1)' value='Overwrite'/>";
+			str += "<br>&nbsp;&nbsp;Configuration Name:";							
+			str += "<input type='text' id='SaveAsConfigName' " + 
+					"onchange='document.getElementById(\"overwriteButton\").style.display = \"none\";' " +
+					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";
+			str += " <input type='button' onmouseup='saveTable(0)' value='Save'/>";
+			
+			
 			
 			var el = document.getElementById("controls");
 			el.innerHTML = str;
