@@ -1088,7 +1088,7 @@
 						"If you think, the failure is due to a column name change, " +
 						"you can also try to Copy the failing view to the new column names using the " +
 						"'Copy and Move' functionality.) " +
-						"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+						"\n\nPlease see the detailed Errors below:",Debug.HIGH_PRIORITY);
 
 				//try to power through
 			}
@@ -1108,6 +1108,21 @@
 			}
 			var configVersions = kocVersionHdr[0].getElementsByTagName("Version");
 			
+			var xmlRows = req.responseXML.getElementsByTagName("CurrentVersionRows");
+			if(!xmlRows.length)
+			{
+				var el;
+				if(_displayTargetEl)
+					el = _displayTargetEl;
+				else
+					el = document.getElementById("display");
+				var str = el.innerHTML;
+				str += "<br><br>";
+				str += "The column names failed to load!<br>" +
+						"Go to the 'Table Editor' to check on the validity of the table '" + configName + "'...";
+				el.innerHTML = str;
+				return;
+			}
 			var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
 			
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");

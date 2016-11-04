@@ -20,7 +20,7 @@ class ConfigurationManager;
 class VisualDataManager : public DataManager
 {
 public:
-    VisualDataManager(std::string supervisorType, unsigned int supervisorInstance, ConfigurationManager* configurationManager);
+    VisualDataManager(ConfigurationManager* configurationManager, std::string supervisorContextUID, std::string supervisorApplicationUID);
     virtual ~VisualDataManager(void);
 
 
