@@ -23,13 +23,6 @@ var selectedtargetBlue;
 
 
 
-
-
-
-
-
-
-
 function init(){
 	console.log("init()");
 

@@ -802,7 +802,17 @@ try
 		DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
 
 		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
+		{
+
+			if(colInfo[c].getDataType() == ViewColumnInfo::DATATYPE_TIME)
+			{
+				std::string timeAsString;
+				cfgViewPtr->getValue(timeAsString,r,c);
+				xmldoc.addTextElementToParent("Entry", timeAsString, tmpParentEl);
+			}
+			else
 				xmldoc.addTextElementToParent("Entry", cfgViewPtr->getValueAsString(r,c), tmpParentEl);
+		}
 	}
 
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc

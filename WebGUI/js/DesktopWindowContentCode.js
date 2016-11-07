@@ -192,7 +192,7 @@ DesktopContent.init = function() {
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
-	DesktopContent._localUrnLid = DesktopContent.getParameter(0);
+	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
@@ -207,13 +207,29 @@ DesktopContent.init = function() {
 
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
-DesktopContent.getParameter = function(index) {	
+//if using name, then (mostly) ignore index
+DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
 	if(index >= params.length) return; //return undefined
-	var spliti = params[index].indexOf('=');
+	var spliti, vs;
+	//if name given, make it the priority
+	if(name)
+	{
+		for(var i=0;i<params.length;++i)
+		{
+			spliti = params[index].indexOf('=');
+			if(spliti < 0) continue; //poorly formed parameter?	
+			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+			if(vs[0] == name)
+				return vs[1];
+		}
+		return; //return undefined .. name not found
+	}
+	
+	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
-	var vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return vs[1]; //return value
 }
 
@@ -812,7 +828,7 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 //openNewBrowserTab ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
-DesktopContent.openNewBrowserTab = function(name,subname,url,unique,completeHandler) {	
+DesktopContent.openNewBrowserTab = function(name,subname,url,unique) {	
 		
 	var path = url;
 	Debug.log("DesktopWindow= " + path);

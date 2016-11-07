@@ -236,16 +236,16 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
-            _isMaximized = !_isMaximized;
             if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
+            _isMaximized = !_isMaximized;
             this.setWindowSizeAndPosition(_x,_y,_w,_h);
         }
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-            _isMinimized = !_isMinimized;
             if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+            _isMinimized = !_isMinimized;
             this.windiv.style.display = _isMinimized?"none":"inline";
             Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
         }

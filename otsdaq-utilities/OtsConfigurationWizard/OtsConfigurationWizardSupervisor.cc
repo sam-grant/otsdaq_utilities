@@ -153,9 +153,8 @@ throw (xoap::exception::Exception)
 void OtsConfigurationWizardSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title></head>" <<
-			"<frameset col='100%' row='100%'><frame src='/WebPath/html/Unauthorized.html?urn=" <<
-			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+	*out << "Unauthorized Request.";
 }
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )

@@ -401,8 +401,10 @@ Desktop.createDesktop = function(security) {
 		// 	
 		//	If subname = "" it is ignored. 	
 		//
+		//	If extraStep == 1, tile windows, if == 2, maximize
+		//
 		//  returns new window
-	this.addWindow = function(name,subname,url,unique) {		
+	this.addWindow = function(name,subname,url,unique,extraStep) {		
 		Debug.log(name + " - " + subname + " - " + url + " - " + unique,Debug.LOW_PRIORITY);
 		
 		if(unique) {
@@ -449,8 +451,22 @@ Desktop.createDesktop = function(security) {
     	//usually the foreground happens automatically.. but sometimes
         //	it doesn't (?)
         //... so delay an extra setting of the fore window
-		setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
-        
+        setTimeout(function(){ 
+        	Desktop.desktop.setForeWindow(newWin); 
+        	Debug.log("extraStep=" + extraStep);
+        	switch(extraStep)
+        	{
+        	case 1: //tile
+        		Desktop.desktop.dashboard.windowDashboardOrganize();
+        		break;
+        	case 2: //maximize
+        		Desktop.desktop.toggleFullScreen();
+        		break;
+        	default:; //do nothing for default
+        	}
+        		
+        }, 200);
+
         return newWin;
 	}
 	
@@ -672,9 +688,11 @@ Desktop.createDesktop = function(security) {
 			Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 			Debug.log("requestingWindowId=" + requestingWindowId);
 			Debug.log("windowPath=" + windowPath);
-			newWindowOps = newWindowOps.replace(/%22/g, "\"");
+			if(newWindowOps) newWindowOps = newWindowOps.replace(/%22/g, "\"");			
 			Debug.log("newWindowOps=" + newWindowOps);
+			windowName = windowName.replace(/%20/g, " ");
 			Debug.log("windowName=" + windowName);
+			windowSubname = windowSubname.replace(/%20/g, " ");
 			Debug.log("windowSubname=" + windowSubname);
 			Debug.log("windowUnique=" + windowUnique);
 
@@ -682,14 +700,15 @@ Desktop.createDesktop = function(security) {
 					windowName, 
 					windowSubname,
 					windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
-					"&amp;newWindowOps=" + newWindowOps, //add get parameter to path for further operations
+					((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
+					((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
 					eval(windowUnique));			
 
 			//set to fore window and full screen
 			 
 			Desktop.desktop.setForeWindow(newWin); 
 			Desktop.desktop.toggleFullScreen();
-			Desktop.desktop.dashboard.toggleWindowDashboard(0);
+			Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
 
 			var str = "requestingWindowId=" + requestingWindowId;
 			str += "&done=1";	
@@ -997,9 +1016,20 @@ Desktop.handleWindowMouseMove = function(mouseEvent) {
 	return false; //to disable drag and drops
 }
 
-//handle resizing and moving events for desktop
+Desktop._mouseMoveSubscribers = [];
+//Desktop.mouseMoveSubscriber ~~
+Desktop.mouseMoveSubscriber = function(newHandler) {
+	Desktop._mouseMoveSubscribers.push(newHandler);	
+}
+
+//Desktop.handleBodyMouseMove ~~
+//	handle resizing and moving events for desktop
 Desktop.handleBodyMouseMove = function(mouseEvent) {
 
+	//call each subscriber
+	for(var i=0; i<Desktop._mouseMoveSubscribers.length; ++i)
+		Desktop._mouseMoveSubscribers[i](mouseEvent); 
+	
     Desktop.desktop.resetFrameMouse(); //reset last iFrame mouse move
     
 	//handle special case for dashboard resize
@@ -1233,18 +1263,20 @@ Desktop.getXMLAttributeValue = function(req, name, attribute) {
 		return undefined;
 }
 
-//returns xml entry value for attribue 'value'
+//getXMLValue ~~
+//	returns xml entry value for attribue 'value'
 Desktop.getXMLValue = function(req, name) {
 	return Desktop.getXMLAttributeValue(req,name,"value");
 }
 
-//logout and login prompt
+//logout ~~
+//	logout and login prompt
 Desktop.logout = function () {     
 	if(Desktop.desktop && Desktop.desktop.login)
      	Desktop.desktop.login.logout();  
 }
 
-//formatTime ~
+//formatTime ~~
 Desktop.formatTime = function(t) {
 	var date = new Date(t * 1000);
 	var mm = date.getMinutes() < 10?"0"+date.getMinutes():date.getMinutes();
@@ -1252,12 +1284,13 @@ Desktop.formatTime = function(t) {
 	return date.getHours() + ":" + mm + ":" + ss;
 }
 
-//closeSystemMessage
+//closeSystemMessage ~~
 Desktop.closeSystemMessage  = function(id) {
 	var el = document.getElementById("Desktop-systemMessageBox-" + id);	
 	el.parentNode.removeChild(el); //remove from page!
 }
 
+//isWizardMode ~~
 Desktop.isWizardMode = function() {
 	//return true if in --config desktop mode
 	Debug.log("Desktop Security: " + Desktop.desktop.security);
@@ -1266,4 +1299,44 @@ Desktop.isWizardMode = function() {
     		Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS ||
 			Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE); 
 }
+
+//openNewBrowserTab ~~
+Desktop.openNewBrowserTab = function(name,subname,url,unique) { 
+	var path = url;
+	Debug.log("DesktopWindow= " + path);
+	Debug.log("name= " + name);
+	Debug.log("subname= " + subname);
+	Debug.log("unique= " + unique);
+		
+	url = window.parent.window.location.pathname +
+			window.parent.window.location.search;
+	Debug.log("DesktopContent.openNewBrowserTab= " + url);
+	
+	var str = "&requestingWindowId=Desktop";
+	str += "&windowName=" + name;
+	str += "&windowSubname=" + subname;
+	str += "&windowUnique=" + unique;
+	str += "&windowPath=" + path;
+
+	window.open(url + str,'_blank');	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

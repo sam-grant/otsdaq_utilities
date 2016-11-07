@@ -65,7 +65,7 @@
 		    cursor:				pointer;
 		}
 		
-		.treeNode-Link-image {
+		.gotoNavDiv {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-gotoNav.png);
 			width: 				8px;
 			height: 			7px;
@@ -73,6 +73,20 @@
 
 		.treeNode-Children {
 			border-left: 		1px solid rgb(181, 170, 210);
+		}
+		
+		.tableView-Menu {
+			float:				left;
+		    margin: 			4px 10px 3px 0;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		    background-color: 	rgb(177, 195, 195);
+		    color: 				rgb(44, 44, 187);
+		    font-size:			14px;
+		} .tableView-Menu:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			3px 10px 4px 0;
+		    cursor:				pointer;
 		}
 		
 	</style>
@@ -123,7 +137,8 @@
 		var _lastFindRow, _lastFindCol;
 		
 		var _firstTimeSilentActive = true;
-		var _useTableLinkDropdown = true;
+		var _useTableLinkDropdown = true;		
+		var _tableViewIsTransposed = false;
 		var _tableLinkDropdownChoices = []; 
 		
 		var _displayTargetEl = 0;
@@ -217,8 +232,10 @@
 			//setupCopyAndMoveRows()
 			//configCopyView()
 			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
-			//evaluateJS(str)
 			//jump(anchor)
+			//evaluateJS(str)			
+			//createEditTableMenu()
+			//transposeTableView()
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +245,7 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 						
-			//setupSpecificConfig("XDAQContextConfiguration","8","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+			setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3","","anchorTag-RawDataSaverConsumerConfiguration"); return;
 			
@@ -1153,15 +1170,22 @@
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
 				str += "<br><br>";
 			}
-	
-			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")<br>";
+
+			//display edit menu
+			str +=
+					"<div class='tableView-Menu' onmousedown='createEditTableMenu(event);' title='Edit Menu'>" +
+					"<div class='gotoNavDiv'></div>" +
+					"</div>"; //end context menu link div
 			
-			str += "<a href='javascript:setupFindAndReplace()'>Find and Replace</a><div id='findAndReplace'></div>";
-			str += "<a href='javascript:setupCopyAndMoveRows()'>Copy and Move</a><div id='copyAndMoveRows'></div>";
-			str += "<input type='checkbox' id='useTableLinkDropdownCheckbox' " +
-					(_useTableLinkDropdown?"checked":"") + 
-					" onchange='_useTableLinkDropdown = this.checked;'> Use Table Link Dropdown Assistance<br>";
-			str += "<br>All versions:";
+			//display config name and version
+			str += "<div style='float:left'>";
+			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
+			str += "</div>";
+
+			
+			str += "<div id='clearDiv'></div>";
+			
+			str += "All versions:";
 			
 			//display mockup link (mockup always present)
 			str += " ";
@@ -1185,6 +1209,13 @@
 					str += "</a>";
 			}
 			
+			str += "<div id='clearDiv'></div>";						
+			str += "<div id='findAndReplace'></div>";
+			str += "<div id='copyAndMoveRows'></div>";
+			str += "<div id='clearDiv'></div>";
+			
+			//four corners for last +/- (w & w/o transpose)
+			str += "<table><tr><td>";
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
 			str += "<tr>";
@@ -1242,11 +1273,24 @@
 			}
 				
 			str += "</table>";
+			
+			str += "</td><td valign='top'>"; //four corners continued
 
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink' href='javascript:addRow(" + r + ");'>";
+			str += " <a id='lastAddRowLink1' style='display:none' href='javascript:addRow(" + r + ");'>";
 			str += "+";
 			str += "</a>";
+			
+			str += "</td></tr>"; //four corners continued
+			str += "<tr><td valign='top'>"; //four corners continued
+			
+			//add + row controls for new last row
+			str += " <a id='lastAddRowLink0' href='javascript:addRow(" + r + ");'>";
+			str += "+";
+			str += "</a>";
+			
+			str += "</td><td></td></tr></table>"; //four corners ended
+			
 
 			var el;
 			if(_displayTargetEl)
@@ -1267,6 +1311,13 @@
 					"'/>";
 				str += "</div>";
 				el.innerHTML = str + dispStr + "<br>" + str;
+			}
+			
+			if(_tableViewIsTransposed) //check if need to transpose view
+			{
+				//invert so it can be inverted again in transposeTableView()
+				_tableViewIsTransposed = !_tableViewIsTransposed; 
+				transposeTableView();
 			}
 		}
 		
@@ -1549,7 +1600,7 @@
 						"' " + // end link onmousedown
 						//"onmouseup='" + onmouseupJS + "' " +
 						">" +	
-						"<div class='treeNode-Link-image'></div>" +			
+						"<div class='gotoNavDiv'></div>" +			
 						"</div>"; //end treeNode Link div
 				}
 				
@@ -2291,7 +2342,9 @@
 		//setupCopyAndMoveRows
 		function setupCopyAndMoveRows()
 		{
-			var el = document.getElementById('copyAndMoveRows'); 
+			var el = document.getElementById('findAndReplace');
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('copyAndMoveRows');  
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 			
 			var str = "";
@@ -2306,17 +2359,17 @@
 			
 			str += "<br><br>";
 			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row' title='" +
-					"Copy Source Row and paste at Destination Row, pushing previously existing rows down.'" +
-					"/>";
+					"Copy Source Row and paste at Destination Row, pushing previously existing rows down." +
+					"'/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row' title='" +
-					"Cut Source Row and paste at Destination Row, pushing previously existing rows down.'" +
-					"/>";
+					"Cut Source Row and paste at Destination Row, pushing previously existing rows down." +
+					"'/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configCopyView()' value='" +
 					"Copy Source Version to new Temporary Version' title='" +
-					"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names.'" +
-					"/>";			
+					"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names." +
+					"'/>";			
 			str += "<br><br>";
 			el.innerHTML = str;	
 		}	
@@ -2395,8 +2448,10 @@
 		
 		//setupFindAndReplace
 		function setupFindAndReplace()
-		{
-			var el = document.getElementById('findAndReplace'); 
+		{			 
+			var el = document.getElementById('copyAndMoveRows'); 
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('findAndReplace'); 
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 			
 			_lastFindRow = _lastFindCol = -1; //initialize find location
@@ -2416,18 +2471,18 @@
 			str += "<br><br>";
 			str += "<input type='button' onmouseup='configFind()' value='Find' title='" +
 					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
-					"/>";
+					"'/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
-					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\''" +
-					"/>";
+					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\'" +
+					"'/>";
 			str += "&nbsp;&nbsp; or..."
 			for(var i=0;i<3;++i)
 				str += "&nbsp;";
 			str += "<input type='button' onmouseup='configIncrementByReplace()' " +
 					"value='Increment by &quot;Replace with...&quot; Field' title='" +
-					"Increment the trailing number in all fields in the Column(s) specified by \'Search in column\' by the signed integer number specified in \'Replace with...\' If there is no trailing number, a zero is inferred.'" +
-					"/>";
+					"Increment the trailing number in all fields in the Column(s) specified by \'Search in column\' by the signed integer number specified in \'Replace with...\' If there is no trailing number, a zero is inferred." +
+					"'/>";
 			str += "<br><br>";
 			el.innerHTML = str;						
 		}
@@ -2618,11 +2673,11 @@
 				str += "<br><div>";
 				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' value='Save Changes as New Version' title='" +
 						"Save the current table view as new persitent version." +
-						"/>";
+						"'/>";
 				str += " ";
 				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' value='Save Changes as Temporary Version' title='" +
 						"Save the current table view as new temporary version." +
-						"/>";
+						"'/>";
 				str += "</div>";
 				el.innerHTML = str + dispStr + "<br>" + str;
 			}			
@@ -2638,11 +2693,16 @@
 				editCellCancel(); //if new cell cancel
 			}
 			
-			//if column is Author or Timestamp, don't allow select
 			var tableEl = document.getElementById("SubSystemTable");
 			var rows = tableEl.getElementsByTagName("tr");
-			var cols = rows[0].getElementsByTagName("td");
-			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+
+			//if column type is Author or Timestamp, don't allow select
+			var colType;
+			if(_tableViewIsTransposed) 	//type is at col 0
+				colType = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+			else						//type is at row 0
+				colType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+			
 			if(colType == "Author" || 
 					colType == "Timestamp")
 				return false;
@@ -2762,9 +2822,23 @@
 				var newCol = _editingCellPos[1];
 				var el = document.getElementById("SubSystemTable");
 				var rows = el.getElementsByTagName("tr");
-				var numOfRows = rows.length - _CONFIG_DATA_ROW_OFFSET;
-				var numOfCols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th").length - 
-						_CONFIG_DATA_COL_OFFSET;
+
+				var numOfRows;
+				var numOfCols;
+				
+				if(_tableViewIsTransposed)
+				{
+					numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+					numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+							_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
+				}
+				else
+				{
+					numOfRows = rows.length - _CONFIG_DATA_ROW_OFFSET;
+					numOfCols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th").length - 
+							_CONFIG_DATA_COL_OFFSET;					
+				}
+				
 				do
 				{					
 					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
@@ -2781,11 +2855,14 @@
 					if(newCol < 0) {--newRow; newCol = numOfCols-1; }
 					if(newRow < 0) newRow = numOfRows-1;					
 
-					el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];			
+					if(_tableViewIsTransposed)
+						el = rows[_CONFIG_DATA_COL_OFFSET+newCol].getElementsByTagName("td")[_CONFIG_DATA_ROW_OFFSET-1+newRow];
+					else
+						el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];
 				
 				} while(!selectThisCell(newRow,newCol,el));
 
-				//Debug.log("newRow=" + newRow + " newCol=" + newCol);
+				Debug.log("newRow=" + newRow + " newCol=" + newCol);
 				
 				return false;
 			}
@@ -2834,10 +2911,8 @@
 		//editCellCancel
 		function editCellCancel() 
 		{	
-//			var str = _editingCellEl.innerHTML;
-//			var i = str.indexOf("value=")+7;
-//			str = str.substr(i,str.indexOf(">")-1-i);
-			_editingCellEl.innerHTML = _editingCellElOldValue;
+			if(_editingCellEl)
+				_editingCellEl.innerHTML = _editingCellElOldValue;
 			
 			_editingCell = false;
 			_editingCellEl = 0;
@@ -2846,10 +2921,179 @@
 		//addRow ~~
 		// adds row to position r (relative to view on page)
 		// absolute row is _dataOffset + r
-		function addRow(r) 
+		function addRow(rowToAdd) 
 		{
-			Debug.log("CfgGUI addRow " + r);
+			Debug.log("CfgGUI addRow " + rowToAdd);
 			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+
+			if(!_tableViewIsTransposed) //reading from normal view
+			{				
+				//get all cols
+				for(var r=0,newr=0;r<rows.length+1;++r) 
+				{
+					if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd)
+					{				
+						//create row of empty column cells
+						var newRowArr = [];		
+						for(var c=0;c<rows[0].childNodes.length;++c)
+							newRowArr.push(document.createElement("td"));	
+						cols[newr] = newRowArr; //add new row
+						++newr;
+					}
+					
+					if(r >= rows.length) continue; //gone through all data already
+					
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[newr] = rows[r].getElementsByTagName("th");
+					else
+						cols[newr] = rows[r].getElementsByTagName("td");
+					++newr;
+				}
+
+				//create output string based on cols
+				str = "";
+				for(var r=0;r<cols.length;++r) 
+				{				
+					str += "<tr>";	
+
+					for(var c=0;c<cols[0].length;++c) 
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "<th>"; 
+						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+								c >= _CONFIG_DATA_COL_OFFSET) 
+							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+									(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+						else						
+							str += "<td>";
+
+						//first column is row numbers
+						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
+						{							
+							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+
+							//add +/- row controls
+							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "+";
+							str += "</a>";
+							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "-";
+							str += "</a>";	
+						}
+						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
+							str += "Row";
+						else
+							str += cols[r][c].innerHTML;
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "</th>"; 
+						else
+							str += "</td>";
+					}
+					str += "</tr>";	
+				}
+			}
+			else						//reading from transposed view
+			{
+				//get all cols (transposed)
+				var tmpCols;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");					
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+2;++r) //+1 for th, and +1 for new row
+					{			
+						if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd) 
+						{				
+							//create empty col cell to new row
+							cols[cols.length-1][newr] = document.createElement("td");
+							++newr;
+						}
+						
+						if(r >= tmpCols.length+1) continue; //gone through all data already
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[cols.length-1][newr] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{	
+							cols[cols.length-1][newr] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}				
+						++newr;		
+					}
+				}		
+				//create output string based on cols
+				str = "";
+				for(var c=0;c<cols.length;++c) 
+				{				
+					str += "<tr>";	
+					for(var r=0;r<cols[0].length;++r) 
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "<th>"; 
+						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+								c >= _CONFIG_DATA_COL_OFFSET) 
+							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+							(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+						else
+							str += "<td>"; 
+
+
+						//first column is row numbers
+						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
+						{							
+							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+
+							//add +/- row controls
+							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "+";
+							str += "</a>";
+							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "-";
+							str += "</a>";	
+						}
+						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
+							str += "Row";
+						else
+							str += cols[c][r].innerHTML
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "</th>"; 
+						else
+							str += "</td>";
+					}
+					str += "</tr>";	
+				}
+			}
+			
+
+			
+
+			el.innerHTML = str;		
+			
+
+			//update last add row link
+			if(_tableViewIsTransposed)
+			{
+				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
+				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			}
+			else
+			{
+				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (cols.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (cols.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			}
+				
+			versionHasChanged();	
+			
+			return;
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");				
 
@@ -2858,7 +3102,7 @@
 			//create row
 			var str = "";
 			
-			str += "<tr>";
+			//str += "<tr>";
 			str += "<td>" + (_dataOffset + r);	//insert row index column
 
 			//add +/- row controls
@@ -2879,7 +3123,7 @@
 				str += "</td>";					
 
 			}
-			str += "</tr>";
+			//str += "</tr>";
 					
 			newRow.innerHTML = str; 
 			
@@ -2907,7 +3151,8 @@
 			}
 			
 			//update last add row link
-			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
 
 			versionHasChanged();					
 		}
@@ -2962,13 +3207,36 @@
 			var rows = el.getElementsByTagName("tr");				
 			
 			var cells;
-			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
-			{
-				cells = rows[r].getElementsByTagName("td");
 
-				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
-					dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
-				dataStr += ";";
+			if(_tableViewIsTransposed)
+			{
+				var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+				var numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+						_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
+				
+				//have to locate each cell individually
+				for(var r=0;r<numOfRows;++r)
+				{
+					for(var c=0;c<numOfCols;++c) //skip row index column
+					{
+						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
+						//assume one th column so minus 1
+						dataStr += encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].innerHTML.trim()) + ","; //replaces all special characters				
+					}
+					dataStr += ";";
+				}
+			}
+			else
+			{
+				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+				{
+					cells = rows[r].getElementsByTagName("td");
+	
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+						dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
+					dataStr += ";";
+				}
 			}
 			
 			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
@@ -3122,6 +3390,137 @@
 			eval(str);
 		}		
 		
+		//createEditTableMenu ~~
+		function createEditTableMenu(event)
+		{
+			var menuItems = [
+							 "Find and Replace",
+							 "Copy and Move",
+							 "Transpose Table View",
+							 _useTableLinkDropdown?
+									 "Disable Table Link Drop-down Assistance":
+									 "Enable Table Link Drop-down Assistance"
+									 ];
+			var menuItemHandlers = [
+							 "setupFindAndReplace()",
+							 "setupCopyAndMoveRows()",
+							 "transposeTableView()",
+							 "_useTableLinkDropdown = !_useTableLinkDropdown;"							 
+									 ];
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+			);
+		}
+		
+		//transposeTableView ~~
+		function transposeTableView()
+		{
+			editCellCancel();
+			_tableViewIsTransposed = !_tableViewIsTransposed;
+			Debug.log("transposeTableView() " + _tableViewIsTransposed);
+
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+			
+			if(_tableViewIsTransposed) //reading from normal view and transposing
+			{
+				//get all cols
+				for(var r=0;r<rows.length;++r) 
+				{
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[r] = rows[r].getElementsByTagName("th");
+					else
+						cols[r] = rows[r].getElementsByTagName("td");
+				}
+
+				//create output string based on cols
+				for(var c=0;c<cols[0].length;++c) 
+				{				
+					str += "<tr>";	
+					for(var r=0;r<rows.length;++r) 
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "<th>"; 
+						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+								c >= _CONFIG_DATA_COL_OFFSET) 
+							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+									(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+						else						
+							str += "<td>";
+						
+						str += cols[r][c].innerHTML;
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "</th>"; 
+						else
+							str += "</td>";
+					}
+					str += "</tr>";	
+				}
+				document.getElementById("lastAddRowLink0").style.display = "none";
+				document.getElementById("lastAddRowLink1").style.display = "block";
+			}
+			else
+			{
+				//get all cols (transposed)
+				var tmpCols, tmpColsIndex;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+					
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");
+					tmpColsIndex = 0;
+					for(var r=0;r<tmpCols.length+1;++r)
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[cols.length-1][r] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{
+							cols[cols.length-1][r] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}						
+					}
+				}
+
+				//create output string based on cols
+				for(var r=0;r<cols[0].length;++r) 
+				{				
+					str += "<tr>";	
+					for(var c=0;c<cols.length;++c) 
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "<th>"; 
+						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+								c >= _CONFIG_DATA_COL_OFFSET) 
+							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+									(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+						else						
+							str += "<td>";
+						
+						str += cols[c][r].innerHTML;
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "</th>"; 
+						else
+							str += "</td>";
+					}
+					str += "</tr>";	
+				}
+				document.getElementById("lastAddRowLink0").style.display = "block";
+				document.getElementById("lastAddRowLink1").style.display = "none";
+			}
+				
+			el.innerHTML = str;
+		}
+		
 		</script>
 </head>
 	
@@ -3129,6 +3528,7 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
+		<div style='width:550px'>		
 	<a href='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
 	<a href='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
 	<a href='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
@@ -3137,6 +3537,8 @@
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
 					title="Click to open ots documentation">
 	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
+		</div>
+	
 	<hr>
 	<div id='activeConfig'></div>
 	<div id='tempTree'></div>
