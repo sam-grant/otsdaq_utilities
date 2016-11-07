@@ -10,6 +10,7 @@
 //				
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+//				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 //				<script type="text/JavaScript" src="/WebPath/js/SimpleContextMenu.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page
@@ -38,7 +39,8 @@ if (typeof Debug == 'undefined')
 	alert('ERROR: Debug is undefined! Must include Debug.js before SimpleContextMenu.js');
 if (typeof Globals == 'undefined') 
 	alert('ERROR: Globals is undefined! Must include Globals.js before SimpleContextMenu.js');
-if (typeof DesktopContent == 'undefined') 
+if (typeof DesktopContent == 'undefined' && 
+		typeof Desktop == 'undefined') 
 	alert('ERROR: DesktopContent is undefined! Must include DesktopContent.js before SimpleContextMenu.js');
 
 
@@ -105,6 +107,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 			"position:absolute;" +
 			"left:" + topLeftX + "px;" + 
 			"top:" + topLeftY + "px;" +
+			"z-index: 1000000;" + //one million!
 			"background-color: " + primaryColor + ";" +
 			"border: 1px solid " + secondaryColor + ";" +
 			"padding: 5px;" +
@@ -165,6 +168,7 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 //=====================================================================================
 //SimpleContextMenu.mouseMoveHandler
 //	subscribe the mouse move handler to DesktopContent.mouseMoveSubscriber
+//	OR if (typeof DesktopContent == 'undefined' then subscribe to Desktop
 SimpleContextMenu.mouseMoveHandler = function(e) {
 
 	//Debug.log("moving " + e.pageX + "-" + e.pageY);
@@ -175,8 +179,11 @@ SimpleContextMenu.mouseMoveHandler = function(e) {
 		SimpleContextMenu._popUpEl = 0;
 	}
 }
-//subscribe the mouse move handler
-DesktopContent.mouseMoveSubscriber(SimpleContextMenu.mouseMoveHandler);
+//subscribe the mouse move handler (if desktop content or part of actual desktop)
+if(typeof DesktopContent == 'undefined')
+	Desktop.mouseMoveSubscriber(SimpleContextMenu.mouseMoveHandler);
+else
+	DesktopContent.mouseMoveSubscriber(SimpleContextMenu.mouseMoveHandler);
 
 
 //=====================================================================================
@@ -186,15 +193,22 @@ SimpleContextMenu.callMenuItemHandler = function(event,index) {
 	Debug.log("Removing SimpleContextMenu");
 	SimpleContextMenu._popUpEl.parentNode.removeChild(SimpleContextMenu._popUpEl);
 	SimpleContextMenu._popUpEl = 0;
+
+	event.cancelBubble = true;
+	event.preventDefault();
 	
 	Debug.log("SimpleContextMenu.callMenuItemHandler " + handler);
 	if(handler && (typeof handler) == "string") //if handler supplied as string
 	{
 		Debug.log("evaluateJS = " + handler);
-		return eval(handler);
+		eval(handler);
+		return false;
 	}
 	else //assume it is a function
-		return handler(event, index);
+	{
+		handler(event, index);
+		return false;		
+	}
 }
 
 //=====================================================================================

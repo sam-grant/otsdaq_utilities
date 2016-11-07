@@ -62,6 +62,8 @@ else {
         
         var _windowDashboardWidth = _defaultWindowDashboardWidth;
         
+        Debug.log("window.parent.window.location.hash=" + window.parent.window.location.hash,
+        		Debug.MED_PRIORITY);
         var _displayWindowDashboard = //default window dashboard view
         		window.parent.window.location.hash[1] | 0; //will be opposite of initial choice 
         var _windowDashboard,_topBar,_fullScreenBtn;
@@ -72,6 +74,8 @@ else {
 		var _layoutMenuItems = ["System Preset-1","System Preset-2","---","User Preset-1","User Preset-2","User Preset-3"];
         
         var _dashboardElement, _dashboardColorPostbox;
+        
+        var _deepClickTimer = 0;
 		//------------------------------------------------------------------
 		//create public members variables ----------------------
 		//------------------------------------------------------------------
@@ -84,7 +88,7 @@ else {
 		//------------------------------------------------------------------
         var _toggleWindowDashboard = function(event,setValue) {        	
         	
-        	if(setValue)
+        	if(setValue !== undefined)
         		_displayWindowDashboard = setValue;
         	else //toggle
         		_displayWindowDashboard = !_displayWindowDashboard;
@@ -93,8 +97,18 @@ else {
 			{	//only update url if not in --config
 				//update browser url so refresh will give same desktop experience
 				var newURL = "/urn:xdaq-application:lid="+urnLid+"#"+
-						(_displayWindowDashboard?"0":"1"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
+						(_displayWindowDashboard?"1":"0"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
 				window.parent.window.history.replaceState('ots', 'ots', newURL);            
+			}
+			else
+			{		
+				//if is --config
+				//update browser url so refresh will give same desktop experience				
+				var newURL = window.parent.window.location.pathname +
+						window.parent.window.location.search +
+						"#"+
+						(_displayWindowDashboard?"1":"0"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
+				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL);   	
 			}
 			
             _windowDashboard.style.display = _displayWindowDashboard?"inline":"none";
@@ -144,9 +158,11 @@ else {
 	        var i,j;
 	        for(i=0;i<document.styleSheets.length;++i) {
 	        	Debug.log(document.styleSheets[i].href);
-	        	if(document.styleSheets[i].href && document.styleSheets[i].href.split('/').pop() == "Desktop.css") {
+	        	if(document.styleSheets[i].href && document.styleSheets[i].href.split('/').pop() == 
+	        			"Desktop.css") {
 	        		for(j=0;j<document.styleSheets[i].cssRules.length;++j) {
-	        			if(document.styleSheets[i].cssRules[j].selectorText == "#Desktop .DesktopDashboard-windowDashboard-win")
+	        			if(document.styleSheets[i].cssRules[j].selectorText ==
+	        					"#Desktop .DesktopDashboard-windowDashboard-win")
 	        				return document.styleSheets[i].cssRules[j]; //success!!
 	        		}
 	        		break; //failed
@@ -181,7 +197,8 @@ else {
 				Debug.log("Desktop Dashboard Organize r" + rows + " , c" + cols,Debug.LOW_PRIORITY);
 						
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {					
-					win = Desktop.desktop.getWindowByIndex(document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+					win = Desktop.desktop.getWindowByIndex(
+							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
 					if(win.isMinimized() || win.isMaximized()) win.minimize();
 					xx += ww;
@@ -253,6 +270,7 @@ else {
         this.toggleWindowDashboard = _toggleWindowDashboard; 
         this.redrawDashboard = _redrawDashboard;        
         this.windowDashboardLayoutsDropDown = _windowDashboardLayoutsDropDown;
+        this.windowDashboardOrganize = _windowDashboardOrganize;
                 
         this.updateWindows = function() {
             
@@ -288,21 +306,29 @@ else {
             for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
                 
                 tmpClassStr = defClassStr +  //if foreground window, append class
-                	((mySortArrIndex[i] == Desktop.desktop.getNumberOfWindows()-1)?" DesktopDashboard-windowDashboard-foreWin":"");
-                _windowDashboard.innerHTML += "<div onmouseup='Desktop.desktop.clickedWindowDashboard(" +
-                    mySortArrId[i] + ");' " + 
-                    "onmousedown='Desktop.handleWindowButtonDown(event);' " +   //eat window button down event
-                    "class='" + tmpClassStr + "' " +
-                    "id='DesktopDashboard-windowDashboard-win"+i+"'>" +
-                    Desktop.desktop.getWindowNameByIndex(mySortArrIndex[i]) + " - " +
-                    Desktop.desktop.getWindowSubNameByIndex(mySortArrIndex[i]) +
-                    "<div class='hiddenDiv' " +
-                    "id='DesktopDashboard-windowDashboard-winIndex"+i+"'>"+ mySortArrIndex[i] + "</div>" +
-                    "</div>\n";
+                	((mySortArrIndex[i] == Desktop.desktop.getNumberOfWindows()-1)?
+                			" DesktopDashboard-windowDashboard-foreWin":"");
+                _windowDashboard.innerHTML += 
+                		"<div " +
+						"onmouseup='Desktop.desktop.dashboard.handleDashboardWinMouseUp(event," +
+						//"onmouseup='Desktop.desktop.clickedWindowDashboard(" +
+						mySortArrId[i] + ");' " + 
+						"onmousedown='Desktop.desktop.dashboard.handleDashboardWinMouseDown(event," +
+						//"onmouseup='Desktop.desktop.clickedWindowDashboard(" +
+						mySortArrId[i] + ");' " + 
+						//"onmousedown='Desktop.handleWindowButtonDown(event);' " +   //eat window button down event
+						"class='" + tmpClassStr + "' " +
+						"id='DesktopDashboard-windowDashboard-win"+i+"'>" +
+						Desktop.desktop.getWindowNameByIndex(mySortArrIndex[i]) + " - " +
+						Desktop.desktop.getWindowSubNameByIndex(mySortArrIndex[i]) +
+						"<div class='hiddenDiv' " +
+						"id='DesktopDashboard-windowDashboard-winIndex"+i+"'>"+ mySortArrIndex[i] + 
+						"</div>" +
+						"</div>\n";
             }      
             
 		   	_refreshTitle(); 
-        }
+        }        
         
         this.redrawFullScreenButton = function() {
             _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
@@ -310,6 +336,8 @@ else {
                                         Desktop.desktop.getForeWindow().isMaximized())?"Exit Full Screen":"Full Screen") + "</a>"; 
                                         		
         }
+        
+        this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
         
         this.setDefaultDashboardColor = function(color) {
         	_defaultDashboardColor = color;
@@ -356,6 +384,51 @@ else {
        			el.style.display = "block";       			
        		}
         }
+        
+        //handleDashboardWinMouseUp ~~
+        this.handleDashboardWinMouseUp = function(event, winId) {  
+			if(_deepClickTimer)
+			{
+				window.clearTimeout(_deepClickTimer);
+				_deepClickTimer = 0;
+			}
+        	Desktop.desktop.clickedWindowDashboard(winId);
+        }
+        
+        //handleDashboardWinMouseDown ~~
+        this.handleDashboardWinMouseDown = function(event, winId) {
+			event.cancelBubble = true; //prevent default behavior 
+			event.preventDefault();
+			_deepClickTimer = window.setTimeout(function() {
+
+				var targetWin = Desktop.desktop.getWindowById(winId);
+				Debug.log("Create Dashboard Window Menu " +
+						targetWin.isMaximized() + "-" + targetWin.isMinimized());				
+				
+				var menuItems = [
+								 targetWin.isMaximized()?
+										"Restore Window":"Maximize Window",
+								targetWin.isMinimized()?
+										"Restore Window":"Minimize Window",
+								 "Close Window"
+								 ];
+				var menuItemHandlers = [
+										"Desktop.desktop.maximizeWindowById("+ winId + ")",
+										"Desktop.desktop.minimizeWindowById("+ winId + ")",
+										"Desktop.desktop.closeWindowById("+ winId + ")",					 
+										];
+				Debug.log("createEditTableMenu()");
+				SimpleContextMenu.createMenu(
+						menuItems,
+						menuItemHandlers,
+						"DesktopIconContextMenu",		//element ID
+						event.pageX-1,event.pageY-1, 	//top left position
+						Desktop.desktop.dashboard.getDefaultDashboardColor(), 	//primary color
+						"white"				//secondary color
+				);
+
+			},500); //end timeout handler
+        }        
         
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -462,7 +535,7 @@ else {
         _windowDashboard.style.position = "absolute";
         _windowDashboard.style.zIndex = z;        
         _windowDashboard.style.backgroundColor = _defaultDashboardColor;
-        _toggleWindowDashboard();
+        _toggleWindowDashboard(0,_displayWindowDashboard); //set initial value
         this.updateWindows();
         this.dashboardElement.appendChild(_windowDashboard);
         
