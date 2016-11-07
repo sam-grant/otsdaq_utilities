@@ -5,8 +5,55 @@
 	//Function List:
 		//init
 	    //redrawWindow
+		//FElistHandler
+		//getPermissionHandler
+		//listSelectionHandler
 		//callWrite
 		//callRead
+		//writeHandler
+		//readHandler
+		//isArrayAllZero
+		//convertToHex
+		//convertFromHex
+		//toggleLSBF
+		//reverseLSB
+		//LSBchecker
+		//toggleDisplay
+		//toggleMacroPublicity
+		//addCommand
+		//hideDeletex
+		//showDeletex
+		//getOrder
+		//removeCommand
+		//undoDelete
+		//showPopupClearAllConfirm
+		//showPopupClearHistoryConfirm
+		//clearAll
+		//clearHistory
+		//clearHistoryHandler
+		//hideSmallPopup
+		//saveMacro
+		//hidePopupSaveMacro
+		//hidePopupEditMacro
+		//saveAsMacro
+		//createMacroHandler
+		//runMacro
+		//loadExistingMacros
+		//loadUserHistory
+		//loadingMacrosHandler
+		//loadingHistHandler
+		//histCmdWriteDivOnclick
+		//histCmdReadDivOnclick
+		//macroActionOnRightClick
+		//exportMacroHandler
+		//editCommands
+		//deleteMacroHandler
+		//saveChangedMacro
+		//saveChangedMacroHandler
+		//reloadMacroSequence
+		//setFieldToVariable
+		//dealWithVariables
+
     var userPermission = 10;
 	var CMDHISTDIVINDEX = 0;
 	var SEQINDEX = 0;
@@ -42,8 +89,8 @@
 	function init() 
 	{			
 		Debug.log("init() was called");
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandlerFunction);
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getPermission","",getPermissionHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getPermission","",getPermissionHandler);
 		block1El = document.getElementById('fecList');
 		block2El = document.getElementById('macroLib');
 		block3El = document.getElementById('main');
@@ -130,12 +177,12 @@
 		publicMacroBox.style.height =  h*0.38 + "px";
 		macroSequenceEdit.style.height = h*0.6-250 + "px";
 		
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
 	}
 			 
-	function FElistHandlerFunction(req) 
+	function FElistHandler(req) 
 	{
-		Debug.log("FElistHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("FElistHandler() was called. Req: " + req.responseText);
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
@@ -183,9 +230,9 @@
 	    }
 	}
 
-	function getPermissionHandlerFunction(req)
+	function getPermissionHandler(req)
 	{
-		Debug.log("getPermissionHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("getPermissionHandler() was called. Req: " + req.responseText);
 		userPermission = DesktopContent.getXMLValue(req, "Permission");
 		console.log("User Permission: " + userPermission);
 	}
@@ -193,31 +240,10 @@
 	function listSelectionHandler(listoffecs)
 	{
 	 	 var splits = listoffecs.id.split('_');
-	 	 console.log(splits);
 		 elementIndex = splits[splits.length-1] | 0;
 		 MultiSelectBox.dbg("Chosen element index:",elementIndex);
 	}
-            
-    function clearData()
-    {
-         document.getElementById('dataInput').value = "";
-    }
     
-    function clearMacroData()
-    {
-		document.getElementById('macroDataInput').value = "";
-    }
-
-    function clearAddress()
-    {
-         document.getElementById('addressInput').value = "";
-    }
-    
-    function clearMacroAddress()
-	{
-		 document.getElementById('macroAddressInput').value = "";
-	}
-
     function callWrite(address,data)
     {
     	var reminderEl = document.getElementById('reminder');
@@ -283,7 +309,7 @@
 					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
 					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",writeHandlerFunction);
+					+"&dataFormatStr="+dataFormatStr,"",writeHandler);
 			contentEl.innerHTML += update;
 			CMDHISTDIVINDEX++;
 			contentEl.scrollTop = contentEl.scrollHeight;
@@ -336,13 +362,13 @@
 					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
 					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",readHandlerFunction);
+					+"&dataFormatStr="+dataFormatStr,"",readHandler);
 		}
     }
     
-    function writeHandlerFunction(req)
+    function writeHandler(req)
 	{
-		Debug.log("writeHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("writeHandler() was called. Req: " + req.responseText);
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
@@ -352,9 +378,9 @@
 
     }
     
-    function readHandlerFunction(req)
+    function readHandler(req)
 	{
-		Debug.log("readHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("readHandler() was called. Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
     	var reminderEl = document.getElementById('reminder');
@@ -640,7 +666,6 @@
 		sorting.sort();
 		for(var i = 0; i < macroString.length; i++)
 			tempString.push(macroString[sorting.indexOf(order[i])]);
-		console.log("new sequence: "+tempString);
     }
     
     function removeCommand(seqIndex)
@@ -688,15 +713,15 @@
     
     function clearHistory(el)
     {
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=clearHistory","",clearHistoryHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=clearHistory","",clearHistoryHandler);
 		var contentEl = document.getElementById('historyContent');
 		contentEl.innerHTML = "";
 		hideSmallPopup(el);
     }
     
-    function clearHistoryHandlerFunction(req)
+    function clearHistoryHandler(req)
 	{
-		Debug.log("clearHistoryHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("clearHistoryHandler() was called. Req: " + req.responseText);
 		loadUserHistory();
 	}
     
@@ -742,22 +767,22 @@
 			document.getElementById("popupIllegalNaming").style.display = "block";
     	else
     	{
-    	var macroNotes = document.getElementById("macroNotes").value;
-    	var macroLibEl = document.getElementById('listOfPrivateMacros');
-    	stringOfAllMacros[MACROINDEX] = tempString;
-    	var isMacroPublic = document.getElementById("isMacroPublic").checked;
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
-    			+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-			    +macroNotes,"",createMacroHandlerFunction);
-    	loadExistingMacros();
-    	hidePopupSaveMacro();
-    	macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    		var macroNotes = document.getElementById("macroNotes").value;
+    		var macroLibEl = document.getElementById('listOfPrivateMacros');
+    		stringOfAllMacros[MACROINDEX] = tempString;
+    		var isMacroPublic = document.getElementById("isMacroPublic").checked;
+    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
+    				+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
+					+macroNotes,"",createMacroHandler);
+    		loadExistingMacros();
+    		hidePopupSaveMacro();
+    		macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
     	}
     }
     
-    function createMacroHandlerFunction(req)
+    function createMacroHandler(req)
 	{
-		Debug.log("createMacroHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("createMacroHandler() was called. Req: " + req.responseText);
 	}
     
     function runMacro(stringOfCommands,macroName)
@@ -796,12 +821,10 @@
 					var commandType = Command[1];
 					if(commandType=='w'){
 						callWrite(Command[2],Command[3]);
-						console.log("write "+Command[3]+" into "+Command[2]);
 						waitForCurrentCommandToComeBack = true;
 					}else if(commandType=='r'){
 						if(readoutDictionary.indexOf(Command[3].toString()) !== -1)  //check if Command[3] is a var!
 						{
-							console.log(Command[3]);
 							if(boxOfFreshVar === "")								//box is empty ????? not enough
 							{
 								putReadResultInBoxFlag = true;
@@ -837,7 +860,6 @@
 							callRead(Command[2]);
 							waitForCurrentCommandToComeBack = true;
 						}
-						console.log("read from "+Command[2]);
 					}
 					else if(commandType=='d'){
 						var runningPercentageEl = document.getElementById('macroRunningPercentage');
@@ -856,17 +878,17 @@
     
     function loadExistingMacros()
     {
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadMacros","",loadingMacrosHandlerFunction);
+    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadMacros","",loadingMacrosHandler);
     }
     
     function loadUserHistory()
 	{
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadHistory","",loadingHistHandlerFunction);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadHistory","",loadingHistHandler);
 	}
     
-    function loadingMacrosHandlerFunction(req)
+    function loadingMacrosHandler(req)
     {
-    	Debug.log("loadingMacrosHandlerFunction() was called. Req: " + req.responseText);
+    	Debug.log("loadingMacrosHandler() was called. Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
     	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
     	
@@ -874,14 +896,14 @@
     	{
 			var macrosArray = hugeStringOfMacros.split("@");
 			var out = "";
-			console.log(macrosArray);
+			var finalOutput = "";
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
 				var macroString = arr.sequence.split(",");
-				var forDisplay = []; //getting rid of the first element (macroIndex) for display
+				var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
 				for (var j = 0; j < macroString.length; j++) //because users don't need to see that
-				    forDisplay.push(macroString[j].split(":").slice(1).join(":"));
+				    forDisplay.push(macroString[j].split(":").slice(1).filter(Boolean).join(":")); 
 				
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
@@ -893,7 +915,9 @@
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
-			document.getElementById("listOfPrivateMacros").innerHTML = out;
+			finalOutput = decodeURI(out);
+			document.getElementById("listOfPrivateMacros").innerHTML = finalOutput;
+			console.log(finalOutput);
     	}
     	else 
     		document.getElementById("listOfPrivateMacros").innerHTML = "";
@@ -901,15 +925,14 @@
 		{
 			var publicMacrosArray = hugeStringOfPublicMacros.split("@");
 			var out = "";
-			console.log(publicMacrosArray);
+			var finalOutput = "";
 			for(var i = 0; i < publicMacrosArray.length; i++) 
 			{
 				var arr = JSON.parse(publicMacrosArray[i]);
-				console.log(arr);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
 				for (var j = 0; j < macroString.length; j++)
-					forDisplay.push(macroString[j].split(":").slice(1).join(":"));
+					forDisplay.push(macroString[j].split(":").slice(1).filter(Boolean).join(":"));
 				
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
@@ -919,24 +942,26 @@
 						+ arr.notes + "\" data-time=\"" 
 						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
+				finalOutput = decodeURI(out);
 				MACROINDEX++;
 			}
-			document.getElementById("listOfPublicMacros").innerHTML = out;
+			document.getElementById("listOfPublicMacros").innerHTML = finalOutput;
 		}
 		else 
 			document.getElementById("listOfPublicMacros").innerHTML = "";
 
     }
     
-    function loadingHistHandlerFunction(req)
+    function loadingHistHandler(req)
     {
-    	Debug.log("loadingHistHandlerFunction() was called. Req: " + req.responseText);
+    	Debug.log("loadingHistHandler() was called. Req: " + req.responseText);
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
 		if ( !hugeStringOfHistory ) return; //this happens when history doesn't exist
 		
 		var commandHistArray = hugeStringOfHistory.split("#");
 		var out = "";
+		var finalOutPut = "";
 		for(var i = 0; i < commandHistArray.length; i++) 
 		{
 			var innerClass = "class=\"innerClass1\"";
@@ -953,21 +978,23 @@
 
 			if(commandType=='w')
 			{
-				out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
+				out = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
 						+ arr.Time + "\nSelected interface: " + arr.Interfaces
 						+ "\" onclick=\"histCmdWriteDivOnclick(" + "'" + convertedAddress + "','" + convertedData + "','" 
 						+ addressFormat + "','" + dataFormat + "')\">Write [" + dataFormat + "]<b>"
 						+ convertedData + "</b> into register [" + addressFormat + "]<b> " 
 						+ convertedAddress + "</b></div>";
+				finalOutPut += decodeURI(out);
 				CMDHISTDIVINDEX++;
 			}
 			else if(commandType=='r')
 			{
 				if (Number(convertedData)===0) convertedData = "<span class='red'>Time out Error</span>";
-				out += "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " 
+				out = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " 
 						+ arr.Time + "\nSelected interface: " + arr.Interfaces + "\" onclick=\"histCmdReadDivOnclick(" 
 						+ "'" + convertedAddress + "','" + addressFormat + "'" + ")\">Read [" + dataFormat + "]<b>" 
 						+ convertedData + "</b> from register [" + addressFormat + "]<b>" + convertedAddress + "</b></div>";
+				finalOutPut += decodeURI(out);
 				CMDHISTDIVINDEX++;
 			}
 			else if(commandType=='d')
@@ -975,7 +1002,7 @@
 			else
 				console.log("ERROR! Command type "+commandType+" not found");
 
-			contentEl.innerHTML = out;
+			contentEl.innerHTML = finalOutPut;
 			contentEl.scrollTop = contentEl.scrollHeight;
 		}
     }
@@ -1016,7 +1043,7 @@
     			document.getElementById('macroNameForDelete').innerHTML = macroName;
     			document.getElementById('popupDeleteMacroConfirmYes').onclick = function(){
     				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&isPublic="+isMacroPublic+"&MacroName="
-    						+macroName,"",deleteMacroHandlerFunction);
+    						+macroName,"",deleteMacroHandler);
     				hideSmallPopup(this);
     			}; 
     			document.getElementById('popupDeleteMacroConfirmCancel').onclick = function(){hideSmallPopup(this)};
@@ -1138,14 +1165,14 @@
     		break;
     	case "Export":
     		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=exportMacro&MacroName="
-    							+macroName+"&MacroSequence="+macroSequence,"",exportMacroHandlerFunction);
+    							+macroName+"&MacroSequence="+macroSequence,"",exportMacroHandler);
     		break;
     	}
     }
     
-    function exportMacroHandlerFunction(req)
+    function exportMacroHandler(req)
    	{
-   		Debug.log("exportMacroHandlerFunction() was called. Req: " + req.responseText);
+   		Debug.log("exportMacroHandler() was called. Req: " + req.responseText);
    	}
        
     function editCommands(textarea, seqID, index)
@@ -1153,12 +1180,11 @@
     	var x = arrayOfCommandsForEdit[seqID].split(":");
     	x[index] = textarea.value;
     	arrayOfCommandsForEdit[seqID] = x.join(":");
-    	console.log(seqID);
     }
     
-    function deleteMacroHandlerFunction(req)
+    function deleteMacroHandler(req)
 	{
-		Debug.log("deleteMacroHandlerFunction() was called. Req: " + req.responseText);
+		Debug.log("deleteMacroHandler() was called. Req: " + req.responseText);
 		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
 		var reminderEl = document.getElementById('reminder');
 		reminderEl.innerHTML = "Successfully deleted " + deletedMacroName;
@@ -1173,20 +1199,35 @@
 			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
 		{
-		var isMacroPublic = !isOnPrivateMacros;
-    	macroNotesForEdit = document.getElementById('macroNotesEdit').value;
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
-    			        +isMacroPublic+"&oldMacroName="
-    					+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
-						+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
-						+macroNotesForEdit,"",saveChangedMacroHandlerFunction);
-    	hidePopupEditMacro();
+			for(var i = 0; i < arrayOfCommandsForEdit.length; i++)
+			{
+				var eachCommand = arrayOfCommandsForEdit[i].split(":");
+				for (var j = 0; j < eachCommand.length; j++)
+				{
+					if(!Regex.test(eachCommand[j]) && eachCommand[j] !== '')
+					{
+						document.getElementById("popupIllegalInput").style.display = "block";
+						document.getElementById("illegalInputValue").innerHTML = eachCommand[j];
+					    return;
+					}
+				}
+			}
+			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
+			console.log(macroNotesForEdit);
+			
+			var isMacroPublic = !isOnPrivateMacros;
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
+							+isMacroPublic+"&oldMacroName="
+							+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
+							+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
+							+macroNotesForEdit,"",saveChangedMacroHandler);
+			hidePopupEditMacro();
 		}
     }
     
-    function saveChangedMacroHandlerFunction()
+    function saveChangedMacroHandler()
     {
-    	Debug.log("saveChangedMacroHandlerFunction() was called.");
+    	Debug.log("saveChangedMacroHandler() was called.");
 		loadExistingMacros();  
     }
     
@@ -1200,7 +1241,6 @@
     	for (var i = 0; i < macroStringForReload.length; i++)
     	{
 			var Command = macroStringForReload[i].split(":");
-			console.log(Command);
 			addCommand(Command[1],Command[2],Command[3]);
     	}
     }
@@ -1224,11 +1264,10 @@
 			nameVariablePromptEl.innerHTML = "Would you like to remove this field as a variable?";
 			document.getElementById('popupNameVariableYesButton').onclick = function() {
 				div.style.backgroundColor = "#002a52";
-				textareaEl.value = "readResult";
+				textareaEl.value = "...";
 				var x = arrayOfCommandsForEdit[seqID].split(":");
 				x[index] = "";
 				arrayOfCommandsForEdit[seqID] = x.join(":");
-				console.log(arrayOfCommandsForEdit);
 				document.getElementById('popupNameVariableSaveButton').style.display = "inline-block";
 				document.getElementById('popupNameVariableYesButton').style.display = "none";
 				document.getElementById('nameVariable').style.display = "inline-block";
@@ -1256,7 +1295,6 @@
 				var x = arrayOfCommandsForEdit[seqID].split(":");
 				x[index] = variableName;
 				arrayOfCommandsForEdit[seqID] = x.join(":");
-				console.log(arrayOfCommandsForEdit);
 				document.getElementById("nameVariable").value = "";
 				popupNameVariableEl.style.display = "none";
 			};
@@ -1282,12 +1320,10 @@
 				var x = arrayOfCommandsForEdit[seqID].split(":");
 				x[index] = variableName;
 				arrayOfCommandsForEdit[seqID] = x.join(":");
-				console.log(arrayOfCommandsForEdit);
 				document.getElementById("nameVariable").value = "";
 				popupNameVariableEl.style.display = "none";
 			};
     	}
-    	
     }
 
     
@@ -1321,7 +1357,6 @@
 						if(isReadAddress && Command[index] !== "")
 						{
 							readoutDictionary.push(Command[index].toString());
-							console.log(readoutDictionary);
 						}
 						else if (dictionary[Command[index].toString()] !== undefined)   //Look up name-value pair of the variable in the dictionary
 						{					                      						

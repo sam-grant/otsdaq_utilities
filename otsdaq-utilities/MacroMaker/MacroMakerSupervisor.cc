@@ -453,7 +453,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 		}
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
 
-		__MOUT__<<  "Loading existing macros: " << returnMacroStr << std::endl;
+		__MOUT__<<  "Loading existing macros! " << std::endl;
 
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
@@ -507,7 +507,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 {
 	std::string fileName = "history.hist";
 	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
-	std::cout << fullPath << std::endl;
+	__MOUT__ << fullPath << std::endl;
 	std::ofstream histfile (fullPath.c_str(),std::ios::app);
 	if (histfile.is_open())
 	{
@@ -520,7 +520,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 		histfile.close();
 	}
 	else
-		__MOUT__<< "Unable to open history.hist";
+		__MOUT__<< "Unable to open history.hist" << std::endl;
 }
 
 //========================================================================================================================
@@ -545,7 +545,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 		if (returnStr.size() != 0)
 		{
 			std::string returnHistStr = returnStr.substr(0, returnStr.size()-1);
-			__MOUT__<<  "Loading user history: " << returnHistStr << std::endl;
+			__MOUT__<<  "Loading user history! " << std::endl;
 			xmldoc.addTextElementToData("returnHistStr",returnHistStr);
 		}
 	}
@@ -561,13 +561,13 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 
-	__MOUT__<< MACROS_DB_PATH << std::endl;
 
 	std::string fileName = MacroName + ".dat";
 	std::string fullPath;
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
-	std::cout << fullPath << std::endl;
+
+	__MOUT__<< fullPath << std::endl;
 
 	std::remove(fullPath.c_str());
 	std::cout << "Successfully deleted " << MacroName;
@@ -584,14 +584,12 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string Notes = CgiDataUtilities::getData(cgi, "Notes");
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 
-	__MOUT__<<  MACROS_DB_PATH << std::endl;
-
-
 	std::string fileName = oldMacroName + ".dat";
 	std::string fullPath;
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
-	std::cout << fullPath << std::endl;
+
+	__MOUT__<<  fullPath << std::endl;
 
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())
@@ -633,7 +631,6 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 {
 	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string macroSequence = CgiDataUtilities::getData(cgi, "MacroSequence");
-	std::cout<< __COUT_HDR_FL__ << "Sequence: "<< macroSequence << std::endl;
 	std::stringstream ss(macroSequence);
 	std::string command;
 	std::vector<std::string> Commands;
@@ -666,5 +663,5 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 		exportFile.close();
 	}
 	else
-		std::cout << "Unable to open file";
+		__MOUT__ << "Unable to open file" << std::endl;
 }
