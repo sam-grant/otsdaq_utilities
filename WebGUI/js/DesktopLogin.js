@@ -96,13 +96,16 @@ else {
 				ldiv.parentNode.removeChild(ldiv);
 			}
 			
-			if(isLoginSuccess) {
+			if(isLoginSuccess) 
+			{
 				
 				//update display name
 				ldiv = document.getElementById("DesktopDashboard-user-displayName");
 				var tmpStr = "Welcome to ots, " + _displayName;
 				
-				if(ldiv.innerHTML != tmpStr) {
+				if(ldiv.innerHTML != "" && //if not first time
+						ldiv.innerHTML != tmpStr) //and name is different
+				{
 					//if _display name is different then close all windows!
 					Debug.log("Desktop.desktop.closeAllWindows() for new user",Debug.LOW_PRIORITY);
 					Desktop.desktop.closeAllWindows();

@@ -1301,24 +1301,68 @@ Desktop.isWizardMode = function() {
 }
 
 //openNewBrowserTab ~~
-Desktop.openNewBrowserTab = function(name,subname,url,unique) { 
-	var path = url;
-	Debug.log("DesktopWindow= " + path);
+Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) { 
+	
+
+	//for windowPath, need to check lid=## is terminated with /
+	// check from = that there is nothing but numbers
+	{
+		var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+		var isAllNumbers = true;
+		for(i;i<windowPath.length;++i)
+		{
+			Debug.log(windowPath[i]);
+
+			if(windowPath[i] < "0" || windowPath[i] > "9")
+			{
+				isAllNumbers = false;
+				break;
+			}				
+		}
+		if(isAllNumbers)
+			windowPath += "/";		
+	}
+	Debug.log("DesktopWindow= " + windowPath);
+	
 	Debug.log("name= " + name);
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);
+	var search = window.parent.window.location.search;
+	url = window.parent.window.location.pathname;
+
+	var str = "requestingWindowId=Desktop";
+		str += "&windowName=" + name;
+		str += "&windowSubname=" + subname;
+		str += "&windowUnique=" + unique;
+		str += "&windowPath=" + windowPath;
 		
-	url = window.parent.window.location.pathname +
-			window.parent.window.location.search;
+	//if there is no search, need to check lid=## is terminated with /
+	// check from = that there is nothing but numbers
+	
+	if(search == "") 
+	{
+		var i = url.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+		var isAllNumbers = true;
+		for(i;i<url.length;++i)
+		{
+			Debug.log(url[i]);
+			
+			if(url[i] < "0" || url[i] > "9")
+			{
+				isAllNumbers = false;
+				break;
+			}				
+		}
+		if(isAllNumbers)
+			url += "/";
+		url += "?" + str;
+	}
+	else
+		url += search + "&" + str;
+	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	
-	var str = "&requestingWindowId=Desktop";
-	str += "&windowName=" + name;
-	str += "&windowSubname=" + subname;
-	str += "&windowUnique=" + unique;
-	str += "&windowPath=" + path;
-
-	window.open(url + str,'_blank');	
+	window.open(url,'_blank');	
 }
 
 

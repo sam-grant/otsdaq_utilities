@@ -74,8 +74,8 @@
 //  	DesktopContent.getDefaultDashboardColor()// returns "rgb(#,#,#)"
 //		DesktopContent.getDefaultDesktopColor()  // returns "rgb(#,#,#)"
 //		DesktopContent.getUsername()
-//		DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
-//		DesktopContent.openNewBrowserTab(name,subname,url,unique,completeHandler)
+//		DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
+//		DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
 //
 //=====================================================================================
 
@@ -102,9 +102,9 @@ if (typeof Globals == 'undefined')
 //  DesktopContent.getDefaultDashboardColor()
 //	DesktopContent.getDefaultDesktopColor()
 //	DesktopContent.getUsername()
-//	DesktopContent.openNewWindow(name,subname,url,unique,completeHandler)
+//	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //	DesktopContent.mouseMoveSubscriber(newHandler) 
-//	DesktopContent.openNewBrowserTab(name,subname,url,unique,completeHandler)
+//	DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
 
 //"private" function list:
 //	DesktopContent.init()
@@ -198,7 +198,7 @@ DesktopContent.init = function() {
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
 
 	//get Wizard sequence (if in Wizard mode)
-	DesktopContent._sequence = DesktopContent.getDesktopParameter(0);
+	DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
 	if(!DesktopContent._sequence || DesktopContent._sequence == "")
 		DesktopContent._sequence = 0; //normal desktop mode
 	else
@@ -207,7 +207,7 @@ DesktopContent.init = function() {
 
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
-//if using name, then (mostly) ignore index
+//	if using name, then (mostly) ignore index
 DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
@@ -235,13 +235,29 @@ DesktopContent.getParameter = function(index,name) {
 
 //DesktopContent.getDesktopParameter ~
 //	returns the value of the url GET parameter specified by index of the Desktop url
-DesktopContent.getDesktopParameter = function(index) {	
+//	if using name, then (mostly) ignore index
+DesktopContent.getDesktopParameter = function(index, name) {	
 	// Debug.log(window.location)
 	var params = (DesktopContent._theWindow.parent.parent.window.location.search.substr(1)).split('&');
 	if(index >= params.length) return; //return undefined
-	var spliti = params[index].indexOf('=');
+	var spliti, vs;
+	//if name given, make it the priority
+	if(name)
+	{
+		for(var i=0;i<params.length;++i)
+		{
+			spliti = params[index].indexOf('=');
+			if(spliti < 0) continue; //poorly formed parameter?	
+			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+			if(vs[0] == name)
+				return vs[1];
+		}
+		return; //return undefined .. name not found
+	}
+
+	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
-	var vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 	return vs[1]; //return value
 }
 
@@ -751,10 +767,9 @@ DesktopContent.getUsername = function() {
 //openNewWindow ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
-DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler) {	
+DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeHandler) {	
 	
-	var path = url;
-	Debug.log("DesktopContent.openNewWindow= " + path);
+	Debug.log("DesktopContent.openNewWindow= " + windowPath);
 	Debug.log("name= " + name);
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);
@@ -766,7 +781,7 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 	if(paramsStr != "") //then wait
 	{
 		Debug.log("Window creation is busy, trying again soon!");
-		setTimeout(function(){ DesktopContent.openNewWindow(path); }, 100);
+		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
 		return;
 	}
 
@@ -775,7 +790,7 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 	str += "&windowName=" + name;
 	str += "&windowSubname=" + subname;
 	str += "&windowUnique=" + unique;
-	str += "&windowPath=" + path;
+	str += "&windowPath=" + windowPath;
 	DesktopContent._openWindowMailbox.innerHTML = str;
 
 	Debug.log("Waiting for complete...");
@@ -828,10 +843,28 @@ DesktopContent.openNewWindow = function(name,subname,url,unique,completeHandler)
 //openNewBrowserTab ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
-DesktopContent.openNewBrowserTab = function(name,subname,url,unique) {	
-		
-	var path = url;
-	Debug.log("DesktopWindow= " + path);
+DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {	
+	
+	//for windowPath, need to check lid=## is terminated with /
+	// check from = that there is nothing but numbers
+	{
+		var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+		var isAllNumbers = true;
+		for(i;i<windowPath.length;++i)
+		{
+			Debug.log(windowPath[i]);
+
+			if(windowPath[i] < "0" || windowPath[i] > "9")
+			{
+				isAllNumbers = false;
+				break;
+			}				
+		}
+		if(isAllNumbers)
+			windowPath += "/";		
+	}
+	Debug.log("DesktopWindow= " + windowPath);
+
 	Debug.log("name= " + name);
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);

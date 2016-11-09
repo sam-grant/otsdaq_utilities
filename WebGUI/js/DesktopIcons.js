@@ -17,6 +17,8 @@ if (typeof Debug == 'undefined')
 	Debug.log('ERROR: Debug is undefined! Must include Debug.js before DesktopIcons.js');
 if (typeof SimpleContextMenu == 'undefined') 
 	Debug.log('ERROR: SimpleContextMenu is undefined! Must include SimpleContextMenu.js before DesktopIcons.js');
+
+
 	
 if (typeof Desktop == 'undefined') 
 	Debug.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
@@ -226,6 +228,7 @@ else {
 									 "Open in New Browser Tab",
 									 "Open and Tile All Windows"
 									 ];
+					console.log(linkurl);
 					var menuItemHandlers = [
 											"Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
 											+ "\",\"" + linkurl + "\","+uniqueWin+",2);", // 2 for maximize

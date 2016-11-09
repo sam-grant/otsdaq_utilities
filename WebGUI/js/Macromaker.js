@@ -832,7 +832,7 @@
 								waitForCurrentCommandToComeBack = true;
 								i--;
 							}
-							else														//only to come in here to replace. 
+							else														//only come in here to replace. 
 							{
 								for(var j = i+1; j < copyOfStringOfCommands.length; j++)  //take whatever is in the box
 								{
@@ -1213,7 +1213,11 @@
 				}
 			}
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
-			console.log(macroNotesForEdit);
+			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
+			{
+				document.getElementById("popupIllegalNotes").style.display = "block";
+				return;
+			}
 			
 			var isMacroPublic = !isOnPrivateMacros;
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="

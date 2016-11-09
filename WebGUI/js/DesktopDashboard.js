@@ -92,24 +92,17 @@ else {
         		_displayWindowDashboard = setValue;
         	else //toggle
         		_displayWindowDashboard = !_displayWindowDashboard;
-            	
+
+			var newURL = window.parent.window.location.pathname +
+									window.parent.window.location.search +
+									"#"+
+									(_displayWindowDashboard?"1":"0"); 
+			
+			//update browser url so refresh will give same desktop experience
 			if(!Desktop.isWizardMode()) 
-			{	//only update url if not in --config
-				//update browser url so refresh will give same desktop experience
-				var newURL = "/urn:xdaq-application:lid="+urnLid+"#"+
-						(_displayWindowDashboard?"1":"0"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
-				window.parent.window.history.replaceState('ots', 'ots', newURL);            
-			}
+				window.parent.window.history.replaceState('ots', 'ots', newURL);    
 			else
-			{		
-				//if is --config
-				//update browser url so refresh will give same desktop experience				
-				var newURL = window.parent.window.location.pathname +
-						window.parent.window.location.search +
-						"#"+
-						(_displayWindowDashboard?"1":"0"); //note: initially window dashboard is toggled, so put the reverse value of what is desired
-				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL);   	
-			}
+				window.parent.window.history.replaceState('ots wiz', 'ots wiz', newURL); 
 			
             _windowDashboard.style.display = _displayWindowDashboard?"inline":"none";
             Desktop.desktop.redrawDesktop();
