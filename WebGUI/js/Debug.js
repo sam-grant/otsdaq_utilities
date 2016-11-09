@@ -147,7 +147,7 @@ Debug.errorPop = function(err,severity) {
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
 					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
 					"font-family: 'Comfortaa', arial; text-align: center;" +
-					"left: 8px; top: 8px; margin-right: 8px; height:300px; " +
+					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
 					"}\n\n";			
 
 			//error box err text style
@@ -156,6 +156,7 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
 					"left: 8px, top: 8px; margin-right: 8px;" +
+					"text-align: left;" +
 					"}\n\n";
 
 			//add style element to HEAD tag

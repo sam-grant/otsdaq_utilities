@@ -343,14 +343,14 @@ throw (xgi::exception::Exception)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "'! " +
+					groupName +	"(" + groupKey + ")" + "'!\n\n" +
 					std::string(e.what()));
 		}
 		catch(cet::exception& e)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "'! " +
+					groupName +	"(" + groupKey + ")" + "'!\n\n" +
 					std::string(e.what()));
 		}
 		catch(...)
@@ -469,6 +469,10 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
 	try {
+		//if add root node, reload all tables so that partially loaded tables are not allowed
+		if(startPath == "/")
+			cfgMgr->getAllConfigurationInfo(true); //do refresh
+
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
 				cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
@@ -487,7 +491,14 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 		std::map<std::string,ConfigurationTree> rootMap;
 
 		if(startPath == "/") //then consider the configurationManager the root node
-			rootMap = cfgMgr->getChildren(memberMap);
+		{
+			std::string accumulateTreeErrs;
+			rootMap = cfgMgr->getChildren(memberMap,&accumulateTreeErrs);
+			__MOUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
+			if(accumulateTreeErrs != "")
+				xmldoc.addTextElementToData("TreeErrors",
+						accumulateTreeErrs);
+		}
 		else
 			rootMap = cfgMgr->getNode(startPath).getChildren();
 
@@ -497,7 +508,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	catch(std::runtime_error& e)
 	{
 		__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-		xmldoc.addTextElementToData("Error", "Error generating XML tree! " + std::string(e.what()));
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!\n\n" + std::string(e.what()));
 	}
 	catch(...)
 	{

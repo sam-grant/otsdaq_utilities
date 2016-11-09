@@ -245,7 +245,7 @@
 		function init() {			
 			Debug.log("CfgGUI init");
 						
-			setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3","","anchorTag-RawDataSaverConsumerConfiguration"); return;
 			
@@ -1354,6 +1354,15 @@
 			}
 			else
 				treeViewHandlerStr_ = "";
+			
+			
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{
+				Debug.log("There were errors detected when attempting to verify the group '" +
+						configGroupName + " (" + configGroupKey + ")'. " + 
+						"Please see the detailed report below:\n\n" + treeErr,Debug.WARN_PRIORITY);
+			}
 						
 			treeGroupName_ = configGroupName;
 			treeGroupKey_ = configGroupKey;
@@ -1402,6 +1411,22 @@
 
 								treeViewHandlerStr_ += "<a href='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + "\")'>Back</a>";
 								treeViewHandlerStr_ += "<br><br>";
+				}
+
+				if(treeErr) 
+				{
+					treeViewHandlerStr_ += "<div style='color:red; cursor:pointer' title='" + 
+							//treeErr.replace(/'/g , "&apos;") + "' ";
+							"Click to view errors' ";
+					treeViewHandlerStr_ += "onmouseup='" +
+							"var el = document.getElementById(\"treeViewErrors\"); el.style.display = " +
+							"el.style.display == \"none\"?\"block\":\"none\"" +
+							"'>";
+					treeViewHandlerStr_ += "<u>Warning: Errors were detected in this tree!</u>";
+					treeViewHandlerStr_ += "</div>";
+					treeViewHandlerStr_ += "<div id='treeViewErrors' style='display:none'>" + 
+							treeErr.replace(/\n/g , "<br>") + "</div>";
+					treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
 				}
 				
 				//add config group header
@@ -1581,12 +1606,12 @@
 					
 					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
 					{
-						Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//need to escape all quotes by one more level
 						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
 						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
 						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-						Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
 						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
 						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
