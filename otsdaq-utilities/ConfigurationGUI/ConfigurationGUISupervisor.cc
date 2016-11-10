@@ -329,15 +329,19 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "activateConfigGroup")
 	{
-		std::string 	groupName 	= CgiDataUtilities::getData(cgi,"groupName");
-		std::string 	groupKey 	= CgiDataUtilities::getData(cgi,"groupKey");
+		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
+		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
+		std::string 	ignoreWarnings 	= CgiDataUtilities::getData(cgi,"ignoreWarnings");
 
 		__MOUT__ << "Activating config: " << groupName <<
 				"(" << groupKey << ")" << std::endl;
+		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
 
+		std::string accumulatedTreeErrors;
 		try
 		{
-			cfgMgr->activateConfigurationGroup(groupName, ConfigurationGroupKey(groupKey));
+			cfgMgr->activateConfigurationGroup(groupName, ConfigurationGroupKey(groupKey),
+					(ignoreWarnings=="1")?0:&accumulatedTreeErrors); //if ignore warning then pass null
 		}
 		catch(std::runtime_error& e)
 		{
@@ -345,6 +349,11 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
 					groupName +	"(" + groupKey + ")" + "'!\n\n" +
 					std::string(e.what()));
+			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
+					groupName << " (" << groupKey << ")" << std::endl;
+			try //just in case any lingering pieces, lets deactivate
+			{ cfgMgr->destroyConfigurationGroup(groupName,true); }
+			catch(...){}
 		}
 		catch(cet::exception& e)
 		{
@@ -352,12 +361,22 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
 					groupName +	"(" + groupKey + ")" + "'!\n\n" +
 					std::string(e.what()));
+			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
+					groupName << " (" << groupKey << ")" << std::endl;
+			try	//just in case any lingering pieces, lets deactivate
+			{ cfgMgr->destroyConfigurationGroup(groupName,true); }
+			catch(...){}
 		}
 		catch(...)
 		{
 			__MOUT__ << "Error detected!" << std::endl;
 			throw; //unexpected exception!
 		}
+
+		if(accumulatedTreeErrors != "")
+			xmldoc.addTextElementToData("Error", "Warnings were found when activating group '" +
+					groupName +	"(" + groupKey + ")" + "'! Please see details below:\n\n" +
+					accumulatedTreeErrors);
 	}
 	else if(Command == "getActiveConfigGroups"); //do nothing, since they are always returned
 	else if(Command == "copyViewToCurrentColumns")
@@ -526,7 +545,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc,
 		DOMElement* parentEl)
 {
-	__MOUT__ << t.getValueAsString() << std::endl;
+	//__MOUT__ << t.getValueAsString() << std::endl;
 	if(t.isValueNode())
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
