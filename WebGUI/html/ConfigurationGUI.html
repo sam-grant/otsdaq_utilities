@@ -88,6 +88,11 @@
 		    margin: 			3px 10px 4px 0;
 		    cursor:				pointer;
 		}
+
+		#activateConfigWithWarnings {
+			margin-top: 10px;
+		    font-size: 14px;
+		}
 		
 	</style>
 	
@@ -1781,23 +1786,23 @@
 				str += "<br>";
 			}
 			
+			document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;			
 			if(withWarningsStr != "")
-				str += withWarningsStr;
-			
-			if(str != oldStr)
+			{
+				Debug.log("Group " + name + "(" + key + ") was not activated.\n\n" +
+						"Please see detailed Warnings and Errors below. " +
+						"You can try to activate " + 
+						"with warnings ignored " + 
+						"<label style='font-weight:bold;text-decoration:underline;font-size:inherit;'>" +
+						"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
+						name + "(" + key + ") w/warnings ignored</u>' " +
+						"at the top of the page.",Debug.HIGH_PRIORITY);
+			}
+			else if(str != oldStr)
 			{
 				if(!_firstTimeSilentActive) //only popup after the first time
-				{
-					if(withWarningsStr != "")
-						Debug.log("Group " + name + "(" + key + ") was not activated.\n\n" +
-								"Please see detailed Warnings and Errors below. " +
-								"You can try to activate " + 
-								"with warnings ignored " + 
-								"<label style='font-weight:bold;text-decoration:underline;font-size:inherit;'>" +
-								"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
-								name + "(" + key + ") w/warnings ignored</u>' " +
-								"at the top of the page.",Debug.HIGH_PRIORITY);
-					else if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
+				{						
+					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
 						Debug.log("Note: There was a change in the active groups (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 					else //must have been an activation
@@ -3600,6 +3605,7 @@
 	
 	<hr>
 	<div id='activeConfig'></div>
+	<div id='activateConfigWithWarnings'></div>
 	<div id='tempTree'></div>
 	<div id='display'></div>
 	

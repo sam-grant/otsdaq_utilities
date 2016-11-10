@@ -868,17 +868,43 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	Debug.log("name= " + name);
 	Debug.log("subname= " + subname);
 	Debug.log("unique= " + unique);
+
+	var search = DesktopContent._theWindow.parent.parent.window.location.search;
+	url = DesktopContent._theWindow.parent.parent.window.location.pathname;
 		
-	url = DesktopContent._theWindow.parent.parent.window.location.href;
-	Debug.log("DesktopContent.openNewBrowserTab= " + url);
-	
-	var str = "&requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
+	var str = "requestingWindowId=" + DesktopContent._myDesktopFrame.id.split('-')[1];
 	str += "&windowName=" + name;
 	str += "&windowSubname=" + subname;
 	str += "&windowUnique=" + unique;
-	str += "&windowPath=" + path;
-
-	window.open(url + str,'_blank');
+	str += "&windowPath=" + windowPath;
+		
+	//if there is no search, need to check lid=## is terminated with /
+	// check from = that there is nothing but numbers
+	
+	if(search == "") 
+	{
+		var i = url.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+		var isAllNumbers = true;
+		for(i;i<url.length;++i)
+		{
+			Debug.log(url[i]);
+			
+			if(url[i] < "0" || url[i] > "9")
+			{
+				isAllNumbers = false;
+				break;
+			}				
+		}
+		if(isAllNumbers)
+			url += "/";
+		url += "?" + str;
+	}
+	else
+		url += search + "&" + str;
+	
+	Debug.log("DesktopContent.openNewBrowserTab= " + url);
+	
+	window.open(url,'_blank');	
 }
 
 

@@ -346,8 +346,8 @@ throw (xgi::exception::Exception)
 		catch(std::runtime_error& e)
 		{
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "'!\n\n" +
+			xmldoc.addTextElementToData("Error", "Error activating config group " +
+					groupName +	"(" + groupKey + ")" + ". Please see details below:\n\n" +
 					std::string(e.what()));
 			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
 					groupName << " (" << groupKey << ")" << std::endl;
