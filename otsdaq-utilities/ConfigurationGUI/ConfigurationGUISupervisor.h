@@ -55,7 +55,7 @@ private:
     void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
-    void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList, bool allowDuplicates=false);
+    void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList, bool allowDuplicates=false, bool ignoreWarnings=false);
 
     void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool allowIllegalColumns=false);

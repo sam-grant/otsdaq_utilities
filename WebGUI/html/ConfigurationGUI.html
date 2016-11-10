@@ -899,10 +899,26 @@
 
 		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
-		function specificGroupRequestHandler(req, param) {	
+		function specificGroupRequestHandler(req, param) {
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{	
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+				Debug.log("There were problems identified in the tree view of the new group." +
+						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"'<u>Save Group with Warnings Ignored</u>'",
+						Debug.WARN_PRIORITY);
+				treeErr = "";
+				treeErr += " <input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+									groupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+									"Save the modified group as a new persistent key for this group name." +
+									"'/>";	
+			}
+			
+			
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
-			{
+			{	
 				Debug.log(err,Debug.HIGH_PRIORITY);
 
 				var el = document.getElementById("display");
@@ -968,6 +984,7 @@
 			
 			var configExistingVersions;			
 			
+			if(treeErr) str += treeErr + "<br>"; //add save with warnings ignored button
 
 			if(backLinkStr != "")
 			{
@@ -3390,7 +3407,7 @@
 		}
 		
 		//saveConfigGroupAsNewKey ~~
-		function saveConfigGroupAsNewKey(groupName) 
+		function saveConfigGroupAsNewKey(groupName, ignoreWarnings) 
 		{
 			Debug.log("CfgGUI saveConfigGroupAsNewKey");	
 			
@@ -3408,8 +3425,10 @@
 				configMap += memberArr[i] + "," + version + ",";
 			}			
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-					groupName, configMap, specificGroupRequestHandler);
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" + groupName +
+					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
+					configMap, specificGroupRequestHandler);
 			
 		}
 		

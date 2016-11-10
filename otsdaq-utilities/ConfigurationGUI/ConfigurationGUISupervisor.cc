@@ -262,11 +262,13 @@ throw (xgi::exception::Exception)
 	else if(Command == "saveNewConfigurationGroup")
 	{
 		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string ignoreWarnings = CgiDataUtilities::getData(cgi,"ignoreWarnings"); //from GET
 		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__MOUT__ << "configList: " << configList << std::endl;
 
-		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList);
+		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList, false,
+				(ignoreWarnings == "1"));
 	}
 	else if(Command == "getSpecificConfiguration")
 	{
@@ -1020,7 +1022,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
-		const std::string &configList, bool allowDuplicates)
+		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
 {
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
 	std::string name, version;
@@ -1065,6 +1067,42 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		}
 	}
 
+	//check the group for errors before creating group
+	try
+	{
+		cfgMgr->loadMemberMap(groupMembers);
+	}
+	catch(std::runtime_error &e)
+	{
+		__SS__ << "Failed to create config group: " << groupName <<
+				".\nThere were problems loading the chosen members:\n\n" <<
+				e.what() << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+	catch(...)
+	{
+		__SS__ << "Failed to create config group: " << groupName << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//check the tree for warnings before creating group
+
+	std::string accumulateTreeErrs;
+	cfgMgr->getChildren(groupMembers,&accumulateTreeErrs);
+	if(accumulateTreeErrs != "")
+	{
+		xmldoc.addTextElementToData("TreeErrors",
+				accumulateTreeErrs);
+
+		if(!ignoreWarnings)
+			return;
+	}
+
+
 	ConfigurationGroupKey newKey;
 	try
 	{
@@ -1075,7 +1113,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
 		__MOUT_ERR__ << "\n\n" << e.what() << std::endl;
 		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName +
-				". (Error: " + e.what() + ")");
+				".\n\n" + e.what());
 		return;
 	}
 	catch(...)
