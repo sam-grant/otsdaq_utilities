@@ -757,6 +757,7 @@ try
 
 	//send all config names along with
 	//	and check for specific version
+	xmldoc.addTextElementToData("ExistingConfigurationNames", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
 	for(auto &configPair:allCfgInfo)
 	{
 		xmldoc.addTextElementToData("ExistingConfigurationNames",
