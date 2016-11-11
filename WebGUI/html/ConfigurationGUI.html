@@ -145,6 +145,7 @@
 		var _useTableLinkDropdown = true;		
 		var _tableViewIsTransposed = false;
 		var _tableLinkDropdownChoices = []; 
+		var _tableDefaultRowValues = []; 
 		
 		var _displayTargetEl = 0;
 
@@ -248,7 +249,8 @@
 		
 		//init called once body has loaded
 		function init() {			
-			Debug.log("CfgGUI init");
+						
+			Debug.log("CfgGUI init ");
 						
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
@@ -1174,7 +1176,11 @@
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 					
-
+			_tableDefaultRowValues = [];
+			var defaultRowValues = req.responseXML.getElementsByTagName("DefaultRowValue");
+			for(var i=0;i<defaultRowValues.length;++i)
+				_tableDefaultRowValues.push(defaultRowValues[i].getAttribute("value"));
+			
 			//reset globals
 			_currentConfigName = configName;
 			_version = version;
@@ -3024,10 +3030,44 @@
 				{
 					if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd)
 					{				
-						//create row of empty column cells
+						//create row of default column cells
 						var newRowArr = [];		
 						for(var c=0;c<rows[0].childNodes.length;++c)
-							newRowArr.push(document.createElement("td"));	
+						{
+							newRowArr.push(document.createElement("td"));
+							if(c >= _CONFIG_DATA_COL_OFFSET) //skip row # column
+							{
+								if(c - _CONFIG_DATA_COL_OFFSET == 
+										_tableDefaultRowValues.length) //add date
+								{
+									var now = new Date();
+									var dateStr = "";
+									var dayArr = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+									var monthArr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+									dateStr += dayArr[now.getDay()];
+									dateStr += " ";
+									dateStr += monthArr[now.getMonth()];
+									dateStr += " ";
+									dateStr += now.getDate();
+									dateStr += " ";
+									dateStr += now.getHours();
+									dateStr += ":";
+									dateStr += ((now.getMinutes()<10)?"0":"") + now.getMinutes();
+									dateStr += ":";
+									dateStr += ((now.getSeconds()<10)?"0":"") + now.getSeconds();
+									dateStr += " ";
+									dateStr += now.getFullYear();
+									dateStr += " ";
+									dateStr += now.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+
+									newRowArr[c].innerHTML = dateStr;
+								}
+								else
+									newRowArr[c].innerHTML = 
+										_tableDefaultRowValues[c - _CONFIG_DATA_COL_OFFSET];
+							}
+						}
 						cols[newr] = newRowArr; //add new row
 						++newr;
 					}
@@ -3099,18 +3139,51 @@
 					{			
 						if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd) 
 						{				
-							//create empty col cell to new row
-							cols[cols.length-1][newr] = document.createElement("td");
+							//create default col cell to new row
+							cols[c][newr] = document.createElement("td");
+							if(c >= _CONFIG_DATA_COL_OFFSET) //skip row # column
+							{
+								if(c - _CONFIG_DATA_COL_OFFSET == 
+										_tableDefaultRowValues.length) //add date
+								{
+									var now = new Date();
+									var dateStr = "";
+									var dayArr = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+									var monthArr = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+												
+									dateStr += dayArr[now.getDay()];
+									dateStr += " ";
+									dateStr += monthArr[now.getMonth()];
+									dateStr += " ";
+									dateStr += now.getDate();
+									dateStr += " ";
+									dateStr += now.getHours();
+									dateStr += ":";
+									dateStr += ((now.getMinutes()<10)?"0":"") + now.getMinutes();
+									dateStr += ":";
+									dateStr += ((now.getSeconds()<10)?"0":"") + now.getSeconds();
+									dateStr += " ";
+									dateStr += now.getFullYear();
+									dateStr += " ";
+									dateStr += now.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+									
+									cols[c][newr].innerHTML = dateStr;
+								}
+								else
+									cols[c][newr].innerHTML = 
+										_tableDefaultRowValues[c - _CONFIG_DATA_COL_OFFSET];
+							}
+							
 							++newr;
 						}
 						
 						if(r >= tmpCols.length+1) continue; //gone through all data already
 
 						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-							cols[cols.length-1][newr] = rows[c].getElementsByTagName("th")[0];
+							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
 						else //take from the td cels
 						{	
-							cols[cols.length-1][newr] = tmpCols[tmpColsIndex];
+							cols[c][newr] = tmpCols[tmpColsIndex];
 							++tmpColsIndex;
 						}				
 						++newr;		
@@ -3178,70 +3251,7 @@
 				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (cols.length-_CONFIG_DATA_ROW_OFFSET) + ");";
 			}
 				
-			versionHasChanged();	
-			
-			return;
-			var el = document.getElementById("SubSystemTable");
-			var rows = el.getElementsByTagName("tr");				
-
-			var newRow = document.createElement("tr");
-			
-			//create row
-			var str = "";
-			
-			//str += "<tr>";
-			str += "<td>" + (_dataOffset + r);	//insert row index column
-
-			//add +/- row controls
-			str += " <a href='javascript:addRow(" + r + ");'>";
-			str += "+";
-			str += "</a>";
-			str += "/<a href='javascript:deleteRow(" + r + ");'>";
-			str += "-";
-			str += "</a>";
-			str += "</td>"; 
-
-			//add empty columns
-			for(var c=1;c<rows[0].childNodes.length;++c)
-			{
-				str += "<td onmouseup='selectThisCell("+r+","+
-						(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";			    	
-				str += "";
-				str += "</td>";					
-
-			}
-			//str += "</tr>";
-					
-			newRow.innerHTML = str; 
-			
-			var refNode = (r+_CONFIG_DATA_ROW_OFFSET < rows.length)?rows[r+_CONFIG_DATA_ROW_OFFSET]:undefined;
-			//make sure el references the container of rows ("TR")
-			while(el.childNodes[0].tagName != "TR")
-				el = el.childNodes[0];
-			el.insertBefore(newRow, refNode); //row is added!
-			
-			//update all row numbers after row added
-			for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
-			{
-				if(i < r) continue;
-				
-				str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-				
-				//add +/- row controls
-				str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
-				str += "+";
-				str += "</a>";
-				str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
-				str += "-";
-				str += "</a>";							
-				rows[i].childNodes[0].innerHTML = str;
-			}
-			
-			//update last add row link
-			document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
-			document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
-
-			versionHasChanged();					
+			versionHasChanged();
 		}
 
 

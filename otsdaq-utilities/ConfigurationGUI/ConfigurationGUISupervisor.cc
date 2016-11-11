@@ -295,6 +295,8 @@ throw (xgi::exception::Exception)
 
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
 				(allowIllegalColumns=="1"));
+		//append author column default value
+		xmldoc.addTextElementToData("DefaultRowValue", userName);
 	}
 	else if(Command == "saveSpecificConfiguration")
 	{
@@ -853,6 +855,13 @@ try
 		}
 	}
 
+	//add to xml the default row values
+	std::vector<std::string> defaultRowValues =
+			cfgViewPtr->getDefaultRowValues();
+	//don't give author and time.. force default author, let JS fill time
+	for(unsigned int c = 0; c<defaultRowValues.size()-2; ++c)
+		xmldoc.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
+
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
 				"but please note the following errors:\n" + accumulatedErrors);
@@ -1115,7 +1124,6 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	}
 
 	//check the tree for warnings before creating group
-
 	std::string accumulateTreeErrs;
 	cfgMgr->getChildren(groupMembers,&accumulateTreeErrs);
 	if(accumulateTreeErrs != "")
@@ -1126,7 +1134,6 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		if(!ignoreWarnings)
 			return;
 	}
-
 
 	ConfigurationGroupKey newKey;
 	try
