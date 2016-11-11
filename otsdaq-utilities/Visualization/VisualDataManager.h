@@ -20,7 +20,7 @@ class ConfigurationManager;
 class VisualDataManager : public DataManager
 {
 public:
-    VisualDataManager(ConfigurationManager* configurationManager, std::string supervisorContextUID, std::string supervisorApplicationUID);
+    VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree, const std::string& supervisorConfigurationPath);
     virtual ~VisualDataManager(void);
 
 
@@ -35,7 +35,6 @@ public:
     const Visual3DGeometry& getVisual3DGeometry (void);
 
 private:
-    ConfigurationManager*      theConfigurationManager_;
     DQMHistosBase*             theLiveDQMHistos_;
     DQMHistosBase              theFileDQMHistos_;
     MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;

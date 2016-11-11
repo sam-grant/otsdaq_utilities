@@ -71,12 +71,13 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 , SOAPMessenger               (this)
 , RunControlStateMachine      ("VisualSupervisor")
 , theConfigurationManager_    (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-, theSupervisorContextUID_    (theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
-, theSupervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
+, supervisorContextUID_    (theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
+, supervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
 		(
 				getApplicationContext()->getContextDescriptor()->getURL(),
 				getApplicationDescriptor()->getLocalId()
 		))
+, supervisorConfigurationPath_  ("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
 , theRemoteWebUsers_          (this)
 , theDataManager_             (0)
 , loadedRunNumber_	          (-1)
@@ -94,9 +95,9 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>
 	(
-			theConfigurationManager_,
-			theSupervisorContextUID_,
-			theSupervisorApplicationUID_
+			theConfigurationManager_->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName()),
+			supervisorConfigurationPath_,
+			supervisorApplicationUID_
 	);
 
 
@@ -138,7 +139,7 @@ VisualSupervisor::~VisualSupervisor(void)
 void VisualSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
+	supervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -206,7 +207,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_,
+				supervisorDescriptorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, 							//set access level requirement to pass gateway
