@@ -911,10 +911,24 @@
 						"'<u>Save Group with Warnings Ignored</u>'",
 						Debug.WARN_PRIORITY);
 				treeErr = "";
-				treeErr += " <input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+				treeErr += " <input id='saveGroupWithWarningsIgnored' type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
 									groupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
 									"Save the modified group as a new persistent key for this group name." +
 									"'/>";	
+
+				//remove all previous buttons
+				var el;
+				do
+				{
+					el = document.getElementById("saveGroupWithWarningsIgnored");
+					if(el) el.parentNode.removeChild(el);
+				} while(el);	
+					
+				el = document.getElementById("display");
+				var str = el.innerHTML;
+				str = treeErr + "<br>" + str; //add save with warnings ignored button
+				el.innerHTML = str;
+				return;
 			}
 			
 			
@@ -986,8 +1000,6 @@
 			
 			var configExistingVersions;			
 			
-			if(treeErr) str += treeErr + "<br>"; //add save with warnings ignored button
-
 			if(backLinkStr != "")
 			{
 				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
@@ -3415,7 +3427,7 @@
 					"Save the modified group as a new persistent key for this group name." +
 					"'/>";				
 			str += "</div>";
-			el.innerHTML = str + dispStr + "<br>" + str;
+			el.innerHTML = str + "<br>" + dispStr + "<br>" + str;
 			
 			el = document.getElementById("configGroupModified");
 			el.innerHTML = "*Modified* "; //mark modified
@@ -3471,6 +3483,10 @@
 			if(backLinkStr && backLinkStr != "")
 				preSelectStr += "&backLinkStr=" + backLinkStr;
 			setupConfigCreator(preSelectStr);
+			
+			var el = document.getElementById("saveGroupWithWarningsIgnored");
+			if(el)
+				el.style.display = "none";
 		}
 		
 		//jump ~~

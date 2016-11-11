@@ -612,16 +612,41 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 //		...
 //	</configuration>
 void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument &xmldoc,
-		ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey)
+		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
+		ConfigurationGroupKey groupKey)
 {
 	char tmpIntStr[100];
 	DOMElement *parentEl, *configEl;
 
 	//steps:
+	//	if invalid key, get latest key
 	//	get specific group with key
 	//		give member names and versions
 	//		get all configuration groups to locate historical keys
 	//	get all groups to find historical keys
+
+
+	std::set<std::string /*name+version*/> allGroups =
+			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
+	std::string name;
+	ConfigurationGroupKey key;
+	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
+	std::set<ConfigurationGroupKey> sortedKeys;
+	for(auto &group: allGroups)
+	{
+		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
+		if(name == groupName && key != groupKey)
+			sortedKeys.emplace(key);
+	}
+	if(groupKey.isInvalid() || //if invalid or not found, get latest
+			sortedKeys.find(groupKey) == sortedKeys.end())
+	{
+		if(sortedKeys.size())
+			groupKey = *sortedKeys.rbegin();
+		__MOUT__ << "Group key requested was invalid or not found, going with latest " <<
+				groupKey << std::endl;
+	}
+
 
 
 	xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
@@ -668,20 +693,6 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 		for (auto &version:it->second.versions_)
 			if(version == memberPair.second) continue;
 			else xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
-	}
-
-	std::set<std::string /*name+version*/> allGroups =
-			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
-	std::string name;
-
-	ConfigurationGroupKey key;
-	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
-	std::set<ConfigurationGroupKey> sortedKeys;
-	for(auto &group: allGroups)
-	{
-		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
-		if(name == groupName && key != groupKey)
-			sortedKeys.emplace(key);
 	}
 
 	//add all other sorted keys for this groupName
@@ -865,7 +876,8 @@ try
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
 				"but please note the following errors:\n" + accumulatedErrors);
-	else if(cfgViewPtr->getSourceColumnSize() !=
+	else if(!version.isTemporaryVersion() && //not temporary (these are not filled from interface source)
+			cfgViewPtr->getSourceColumnSize() !=
 			cfgViewPtr->getNumberOfColumns()) //check for column size mismatch
 	{
 		__SS__ << "\n\nThere were warnings found when loading the table " <<
@@ -1126,13 +1138,15 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	//check the tree for warnings before creating group
 	std::string accumulateTreeErrs;
 	cfgMgr->getChildren(groupMembers,&accumulateTreeErrs);
-	if(accumulateTreeErrs != "")
+	if(accumulateTreeErrs != "" )
 	{
-		xmldoc.addTextElementToData("TreeErrors",
-				accumulateTreeErrs);
-
+		__MOUT_WARN__ << "\n" << accumulateTreeErrs << std::endl;
 		if(!ignoreWarnings)
+		{
+			xmldoc.addTextElementToData("TreeErrors",
+					accumulateTreeErrs);
 			return;
+		}
 	}
 
 	ConfigurationGroupKey newKey;
