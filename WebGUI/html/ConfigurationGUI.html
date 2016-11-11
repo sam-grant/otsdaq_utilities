@@ -1131,6 +1131,12 @@
 
 				//try to power through
 			}
+			
+			var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+			if(warns)
+				Debug.log("There were warnings found when loading this table " +
+						"(you can treat them as informational):\n\n" +
+						warns,Debug.WARN_PRIORITY);
 						
 			activateSystemConfigHandler(req); //display active config groups
 			

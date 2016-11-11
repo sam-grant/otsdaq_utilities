@@ -272,13 +272,13 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getSpecificConfiguration")
 	{
-		std::string		configName = CgiDataUtilities::getData(cgi,"configName"); 			//from GET
-		std::string  	versionStr = CgiDataUtilities::getData(cgi,"version");		  	//from GET
+		std::string		configName = CgiDataUtilities::getData(cgi,		"configName"); 	//from GET
+		std::string  	versionStr = CgiDataUtilities::getData(cgi,		"version");		//from GET
 		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
-		int				chunkSize = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		int				chunkSize  = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
 
 		std::string 	allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
-		__MOUT__ << "allowIllegalColumns: " << allowIllegalColumns << std::endl;
+		__MOUT__ << "allowIllegalColumns: " << (allowIllegalColumns=="1") << std::endl;
 
 		__MOUT__ << "getSpecificConfiguration: " << configName << " versionStr: " << versionStr
 				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
@@ -293,7 +293,8 @@ throw (xgi::exception::Exception)
 
 		__MOUT__ << " version: " << version << std::endl;
 
-		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),allowIllegalColumns=="1");
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
+				(allowIllegalColumns=="1"));
 	}
 	else if(Command == "saveSpecificConfiguration")
 	{
@@ -509,7 +510,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 
 		if(depth == 0) return; //already returned root node in itself
 
-		std::map<std::string,ConfigurationTree> rootMap;
+		std::vector<std::pair<std::string,ConfigurationTree> > rootMap;
 
 		if(startPath == "/") //then consider the configurationManager the root node
 		{
@@ -723,6 +724,11 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 //	</rowdata>
 //	....
 //</subconfiguration>
+//
+//
+// Note: options.. if allowIllegalColumns then attempts to load data to current mockup column names
+//	if not allowIllegalColumns, then it is still ok if the source has more or less columns:
+//	the client is notified through "TableWarnings" field in this case.
 void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &configName,
 		ConfigurationVersion version, bool allowIllegalColumns)
@@ -850,6 +856,25 @@ try
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
 				"but please note the following errors:\n" + accumulatedErrors);
+	else if(cfgViewPtr->getSourceColumnSize() !=
+			cfgViewPtr->getNumberOfColumns()) //check for column size mismatch
+	{
+		__SS__ << "\n\nThere were warnings found when loading the table " <<
+				configName << ":v" << version << ". Please see the details below:\n\n" <<
+				"The source column size was found to be " << cfgViewPtr->getSourceColumnSize() <<
+				", and the current number of columns for this table is " <<
+				cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
+				cfgViewPtr->getSourceColumnMismatch() << " source column mismatches, and a count of " <<
+				cfgViewPtr->getSourceColumnMissing() << " table entries missing." << std::endl;
+
+		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+		ss << "\n\nSource column names were as follows:\n";
+		for(auto &srcColName:srcColNames)
+			ss << "\n\t" << srcColName;
+
+		__MOUT__ << "\n" << ss.str();
+ 		xmldoc.addTextElementToData("TableWarnings",ss.str());
+	}
 }
 catch(std::runtime_error &e)
 {
@@ -1480,7 +1505,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	xmldoc.addTextElementToData("GroupAliasesConfigurationVersion",
 			activeVersions["GroupAliasesConfiguration"].toString());
 
-	std::map<std::string,ConfigurationTree> aliasNodePairs =
+	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
 			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
 
 	for(auto& aliasNodePair:aliasNodePairs)
@@ -1523,7 +1548,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument &xmldoc
 	xmldoc.addTextElementToData("VersionAliasesVersion",
 			activeVersions["VersionAliases"].toString());
 
-	std::map<std::string,ConfigurationTree> aliasNodePairs =
+	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
 			cfgMgr->getNode("VersionAliases").getChildren();
 
 	for(auto& aliasNodePair:aliasNodePairs)
