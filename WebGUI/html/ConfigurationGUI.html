@@ -132,7 +132,7 @@
 		var _CONFIG_DATA_ROW_OFFSET = 2;
 		var _CONFIG_DATA_COL_OFFSET = 1;
 	
-		var _currentConfigName;
+		var _currentConfigName, _currentGroupName;
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
 		var _editingCellPos = [-1,-1];
@@ -146,6 +146,7 @@
 		var _tableViewIsTransposed = false;
 		var _tableLinkDropdownChoices = []; 
 		var _tableDefaultRowValues = []; 
+		var _tableViewBackLinkStr;
 		
 		var _displayTargetEl = 0;
 
@@ -196,6 +197,7 @@
 			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
 			//setupSpecificConfigInRight(configName,version)
 			//specificConfigRequestHandler(req,backLinkStr)
+			//wizToDefaultVersion(configName,version)
 
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
@@ -223,8 +225,8 @@
 			//editCellOK(r,c)
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
-			//saveConfigAsNewVersion(temporary)
-			//saveConfigAsNewVersionHandler(req)
+			//saveConfigAsNewVersion(temporary, backLinkStr)
+			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
 			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
 			//isTemporary(version)
@@ -858,7 +860,7 @@
 
 			var str = "";
 			var configVersions;
-			var configName;
+			var configName, version;
 			var backLinkStr;
 
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
@@ -881,8 +883,12 @@
 				
 				for(var j=0;j<configVersions.length;++j)
 				{
+					version = configVersions[j].getAttribute("value");
 					str += "<td align='center'>";
-					str += "version" + "<br>" + configVersions[j].getAttribute("value");
+					str += "version" + "<br>";
+					str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+							"\",\"" + version + "\",\"" + backLinkStr + "\");'>";
+					str += version;
 					str += "</td>";
 				}
 				str += "</tr></table><br>";
@@ -911,10 +917,12 @@
 						"'<u>Save Group with Warnings Ignored</u>'",
 						Debug.WARN_PRIORITY);
 				treeErr = "";
-				treeErr += " <input id='saveGroupWithWarningsIgnored' type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
-									groupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
-									"Save the modified group as a new persistent key for this group name." +
-									"'/>";	
+				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
+						"style='margin-bottom:15px;' " +
+						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						"Save the modified group as a new persistent key for this group name." +
+						"'/>";	
 
 				//remove all previous buttons
 				var el;
@@ -926,7 +934,7 @@
 					
 				el = document.getElementById("display");
 				var str = el.innerHTML;
-				str = treeErr + "<br>" + str; //add save with warnings ignored button
+				str = treeErr + str; //add save with warnings ignored button
 				el.innerHTML = str;
 				return;
 			}
@@ -988,6 +996,7 @@
 			}
 			
 			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			_currentGroupName = groupName;
 			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
@@ -1058,6 +1067,8 @@
 			
 			var cfgVersionStr;
 			var cfgNameStr = "";
+			var replaceScreenJS,newWindowStr,newwindowJS,newtabJS;
+			var groupMemberNavContextMenuItemHandlers = [];
 			
 			//Debug.log("CfgGUI specificConfigRequestHandler Member length " + configNames.length + " - " + configVersions.length);
 			for(var i=0;i<configNames.length && i<configVersions.length;++i)
@@ -1067,13 +1078,14 @@
 				
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 						groupKey + "\\\",undefined,\\\"anchorTag-" + 
-						configName + "\\\");"; 			
-
+						configName + "\\\");"; 
+								
+				str += "<div style='float:left;'>";
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
 				
-				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
-									"\",\"" + version + "\",\"" + backLinkStr + "\");'>";
+				str += "<a id='" + configName + "-currentVersionLink' " +
+						"href='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
@@ -1081,7 +1093,69 @@
 					
 				str += ")";
 				str += "</a>";
-				str += "<br>Click below to change "  + niceName(configName) + 
+				str += "</div>"; //close member header
+				
+				//add member nav goto link
+				{
+					//make context menu
+					groupMemberNavContextMenuItemHandlers = []
+															 //make replace screen js
+															 replaceScreenJS = "setupSpecificConfig(\"" + 
+															 configName + "\",\"" +
+															 version + "\",\"" + backLinkStr + "\");";
+					groupMemberNavContextMenuItemHandlers.push(replaceScreenJS);
+
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							configName + "\",\"" +
+							version + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					newwindowJS = "DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+					groupMemberNavContextMenuItemHandlers.push(newwindowJS);
+
+					//make new tab link
+					newtabJS = "DesktopContent.openNewBrowserTab(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+					groupMemberNavContextMenuItemHandlers.push(newtabJS);
+					
+					str += //start member Link div
+							"<div class='treeNode-Link' style='float:left;margin-top: 5px;'  " + 
+							"onmousedown='" + // start link onmousedown	
+							"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+							"[";
+
+					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
+					{
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//need to escape all quotes by one more level
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
+						if(j != groupMemberNavContextMenuItemHandlers.length-1)
+							str += ",";
+					}
+					str += "]" + //end treeNavContextMenuItemHandlers array
+							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
+							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+					str += 
+							"' " + // end link onmousedown
+							//"onmouseup='" + onmouseupJS + "' " +
+							">" +	
+							"<div class='gotoNavDiv'></div>" +			
+							"</div>"; //end nav Link
+					str += "<div id='clearDiv'></div>";
+				}
+				
+				
+				str += "Click below to change "  + niceName(configName) + 
 					" Version for " + groupName + ":<br>";		
 				
 				
@@ -1131,6 +1205,9 @@
 		
 		//specificConfigRequestHandler
 		function specificConfigRequestHandler(req, backLinkStr) {	
+
+			_tableViewBackLinkStr = backLinkStr;
+			
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -1201,8 +1278,7 @@
 			_versionIsChanged = false;
 			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
 
-			var str = "";
-			
+			var str = "";			
 
 			if(backLinkStr && backLinkStr != "")
 			{
@@ -2079,6 +2155,37 @@
 		// preSelectStr may contain "&backLinkStr=..." in it
 		function setupConfigCreatorHandler(req,preSelectStr)
 		{
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{	
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+				Debug.log("There were problems identified in the tree view of the new group." +
+						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"'<u>Save Group with Warnings Ignored</u>'",
+						Debug.WARN_PRIORITY);
+				treeErr = "";
+				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
+						"style='margin-bottom:15px;' " +
+						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						"Save the modified group as a new persistent key for this group name." +
+						"'/>";	
+
+				//remove all previous buttons
+				var el;
+				do
+				{
+					el = document.getElementById("saveGroupWithWarningsIgnored");
+					if(el) el.parentNode.removeChild(el);
+				} while(el);	
+
+				el = document.getElementById("display");
+				var str = el.innerHTML;
+				str = treeErr + str; //add save with warnings ignored button
+				el.innerHTML = str;
+				return;
+			}
+
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -2116,7 +2223,7 @@
 			}
 			
 			if(preSelectStr)
-				str += "Choose the versions of configurations you would like to add...<br>";
+				str += "<br>Choose the versions of configurations you would like to add...<br>";
 			
 			str += "<div id='createGroupInfo'></div><br>";
 			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
@@ -2422,13 +2529,14 @@
 		function createConfigGroupHandler(req)
 		{
 			var err = DesktopContent.getXMLValue(req,"Error");
+			var el = document.getElementById('createGroupInfo');
 			if(err) 
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
+				el.innerHTML = ""; //clear any previous success stories
 				return;
 			}
 			
-			var el = document.getElementById('createGroupInfo');
 			var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 			var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var str = "";
@@ -3305,7 +3413,7 @@
 		}
 		
 		//saveConfigAsNewVersion ~~
-		function saveConfigAsNewVersion(temporary) 
+		function saveConfigAsNewVersion(temporary, backLinkStr) 
 		{	
 			editCellCancel();
 			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
@@ -3354,12 +3462,14 @@
 					"&temporary="+(temporary?1:0);
 			Debug.log(dataStr);
 			Debug.log(reqStr);
-			DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, saveConfigAsNewVersionHandler);
+			DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, 
+					saveConfigAsNewVersionHandler, backLinkStr);
 		}
 		
 		//saveConfigAsNewVersionHandler ~~
-		function saveConfigAsNewVersionHandler(req) 
+		function saveConfigAsNewVersionHandler(req, backLinkStr) 
 		{	
+			if(!backLinkStr) backLinkStr = _tableViewBackLinkStr;
 			Debug.log("saveConfigAsNewVersionHandler requestHandler req " + req.responseText);
 
 			var err = DesktopContent.getXMLValue(req,"Error");
@@ -3373,7 +3483,7 @@
 			var version = DesktopContent.getXMLValue(req,"savedVersion");
 
 			Debug.log("saveConfigAsNewVersionHandler requestHandler configName " + configName + " version " + version);
-			setupSpecificConfig(configName,version);
+			setupSpecificConfig(configName,version, backLinkStr);
 		}
 		
 		//changeMemberVersionForConfigGroup ~~
@@ -3391,9 +3501,24 @@
 			var el = document.getElementById(configName + "-currentVersion");
 			el.innerHTML = newVersion;
 			
+			//change link
+			el = document.getElementById(configName + "-currentVersionLink");
+			var str = el.href;
+			var linkSplitArr = str.split(',');
+			str = ""; //build link href str back up with new version
+			for(var i=0;i<linkSplitArr.length;++i)
+			{
+				if(i) str += ","; 
+				if(i == 1)
+					str += "\"" + newVersion + "\"";
+				else
+					str += linkSplitArr[i];				
+			}
+			el.href = str;
+			
 			//update existing
 			el = document.getElementById(configName + "-versions");
-			var str = el.innerHTML;
+			str = el.innerHTML;
 			var configNameArr = str.split(',');
 			str = "";
 			str += newVersion;
@@ -3431,7 +3556,10 @@
 			
 			el = document.getElementById("configGroupModified");
 			el.innerHTML = "*Modified* "; //mark modified
-			
+
+			el = document.getElementById("saveGroupWithWarningsIgnored");
+			if(el)
+				el.style.display = "none";			
 		}
 		
 		//saveConfigGroupAsNewKey ~~
@@ -3482,11 +3610,7 @@
 			
 			if(backLinkStr && backLinkStr != "")
 				preSelectStr += "&backLinkStr=" + backLinkStr;
-			setupConfigCreator(preSelectStr);
-			
-			var el = document.getElementById("saveGroupWithWarningsIgnored");
-			if(el)
-				el.style.display = "none";
+			setupConfigCreator(preSelectStr);			
 		}
 		
 		//jump ~~

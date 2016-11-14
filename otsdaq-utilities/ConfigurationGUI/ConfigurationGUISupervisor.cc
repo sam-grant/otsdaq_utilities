@@ -266,6 +266,7 @@ throw (xgi::exception::Exception)
 		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__MOUT__ << "configList: " << configList << std::endl;
+		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
 
 		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList, false,
 				(ignoreWarnings == "1"));
@@ -285,13 +286,33 @@ throw (xgi::exception::Exception)
 
 		ConfigurationVersion version;
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
 		if(versionStr == "" && //take latest version if no version specified
 				allCfgInfo[configName].versions_.size())
 			version = *(allCfgInfo[configName].versions_.rbegin());
+		else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
+		{
+			//convert alias to version
+			std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+					cfgMgr->getActiveVersionAliases();
+			if(versionAliases.find(configName) != versionAliases.end() &&
+					versionAliases[configName].find(versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
+									versionAliases[configName].end())
+			{
+				version = versionAliases[configName][versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
+				__MOUT__ << "version alias translated to: " << version << std::endl;
+			}
+			else
+				__MOUT_WARN__ << "version alias '" << versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
+				"'was not found in active version aliases!" << std::endl;
+		}
 		else					//else take specified version
 			version = atoi(versionStr.c_str());
 
-		__MOUT__ << " version: " << version << std::endl;
+		__MOUT__ << "version: " << version << std::endl;
 
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
 				(allowIllegalColumns=="1"));
@@ -517,7 +538,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 		if(startPath == "/") //then consider the configurationManager the root node
 		{
 			std::string accumulateTreeErrs;
-			rootMap = cfgMgr->getChildren(memberMap,&accumulateTreeErrs);
+			rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
 			__MOUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
 			if(accumulateTreeErrs != "")
 				xmldoc.addTextElementToData("TreeErrors",
@@ -635,7 +656,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	for(auto &group: allGroups)
 	{
 		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
-		if(name == groupName && key != groupKey)
+		if(name == groupName)
 			sortedKeys.emplace(key);
 	}
 	if(groupKey.isInvalid() || //if invalid or not found, get latest
@@ -675,6 +696,12 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	std::map<std::string, ConfigurationInfo>::const_iterator it;
 
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
+	__MOUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
+
 	for(auto &memberPair:memberMap)
 	{
 		__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
@@ -690,9 +717,18 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 			return;
 		}
 
+		//include aliases for this table
+		if(versionAliases.find(it->first) != versionAliases.end())
+			for (auto &aliasVersion:versionAliases[it->first])
+				xmldoc.addTextElementToParent("ConfigurationExistingVersion",
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
+						configEl);
+
 		for (auto &version:it->second.versions_)
-			if(version == memberPair.second) continue;
-			else xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
+			//if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016 (might as well show all versions in list to avoid user confusion)
+			//else
+			xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
+
 	}
 
 	//add all other sorted keys for this groupName
@@ -887,13 +923,14 @@ try
 				", and the current number of columns for this table is " <<
 				cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
 				cfgViewPtr->getSourceColumnMismatch() << " source column mismatches, and a count of " <<
-				cfgViewPtr->getSourceColumnMissing() << " table entries missing." << std::endl;
+				cfgViewPtr->getSourceColumnMissing() << " table entries missing in " <<
+				cfgViewPtr->getNumberOfRows() << " row(s) of data." << std::endl;
 
 		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names were as follows:\n";
 		for(auto &srcColName:srcColNames)
 			ss << "\n\t" << srcColName;
-
+		ss << std::endl;
 		__MOUT__ << "\n" << ss.str();
  		xmldoc.addTextElementToData("TableWarnings",ss.str());
 	}
@@ -1071,8 +1108,13 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
 		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
 {
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
-	std::string name, version;
+	std::string name, versionStr;
+	ConfigurationVersion version;
 	auto c = configList.find(',',0);
 	auto i = c; i = 0; //auto used to get proper index/length type
 	while(c < configList.length())
@@ -1087,14 +1129,42 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			return;
 		}
 
-		version = configList.substr(i,c-i);
+		versionStr = configList.substr(i,c-i);
 		i = c+1;
 		c = configList.find(',',i);
 
 		__MOUT__ << "name: " << name << std::endl;
-		__MOUT__ << "version: " << version << std::endl;
+		__MOUT__ << "versionStr: " << versionStr << std::endl;
 
-		groupMembers[name] = ConfigurationVersion(version.c_str());
+		//check if version is an alias and convert
+		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
+		{
+			//convert alias to version
+			if(versionAliases.find(name) != versionAliases.end() &&
+					versionAliases[name].find(versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
+									versionAliases[name].end())
+			{
+				version = versionAliases[name][versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
+				__MOUT__ << "version alias translated to: " << version << std::endl;
+			}
+			else
+			{
+				__SS__ << "version alias '" << versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
+						"'was not found in active version aliases!" << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error",
+						ss.str());
+				return;
+			}
+		}
+		else
+			version = ConfigurationVersion(versionStr);
+
+		__MOUT__ << "version: " << version << std::endl;
+		groupMembers[name] = version;
 	}
 
 
@@ -1118,6 +1188,46 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	try
 	{
 		cfgMgr->loadMemberMap(groupMembers);
+
+		std::string accumulateErrors = "";
+		for(auto &groupMemberPair:groupMembers)
+		{
+			ConfigurationView* cfgViewPtr =
+					cfgMgr->getConfigurationByName(groupMemberPair.first)->getViewP();
+			if(cfgViewPtr->getSourceColumnSize() !=
+					cfgViewPtr->getNumberOfColumns()) //check for column size mismatch
+			{
+				__SS__ << "\n\nThere were errors found in loading a member table " <<
+						groupMemberPair.first << ":v" << cfgViewPtr->getVersion() <<
+						". Please see the details below:\n\n" <<
+						"The source column size was found to be " <<
+						cfgViewPtr->getSourceColumnSize() <<
+						", and the current number of columns for this table is " <<
+						cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
+						cfgViewPtr->getSourceColumnMismatch() << " source column mismatches, and a count of " <<
+						cfgViewPtr->getSourceColumnMissing() << " table entries missing in " <<
+						cfgViewPtr->getNumberOfRows() << " row(s) of data." <<
+						std::endl;
+
+				const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+				ss << "\n\nSource column names were as follows:\n";
+				char index = 'a';
+				for(auto &srcColName:srcColNames)
+					ss << "\n\t" <<index++ << ". " <<  srcColName;
+				ss << std::endl;
+
+				std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
+				ss << "\n\nCurrent table column names are as follows:\n";
+				index = 'a';
+				for(auto &destColName:destColNames)
+					ss << "\n\t" << index++ << ". " << destColName;
+				ss << std::endl;
+
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error", ss.str());
+				return;
+			}
+		}
 	}
 	catch(std::runtime_error &e)
 	{
@@ -1138,7 +1248,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 
 	//check the tree for warnings before creating group
 	std::string accumulateTreeErrs;
-	cfgMgr->getChildren(groupMembers,&accumulateTreeErrs);
+	cfgMgr->getChildren(&groupMembers,&accumulateTreeErrs);
 	if(accumulateTreeErrs != "" )
 	{
 		__MOUT_WARN__ << "\n" << accumulateTreeErrs << std::endl;
@@ -1559,22 +1669,26 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument &xmldoc
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	if(activeVersions.find("VersionAliases") == activeVersions.end())
+	std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
 	{
-		__SS__ << "Active version of VersionAliases  missing!" << std::endl;
+		__SS__ << "Active version of VersionAliases  missing!" <<
+				"Make sure you have a valid active Backbone Group." << std::endl;
 		xmldoc.addTextElementToData("Error", ss.str());
 		return;
 	}
-	__MOUT__ << "activeVersions[\"VersionAliases\"]=" <<
-			activeVersions["VersionAliases"] << std::endl;
+	__MOUT__ << "activeVersions[\"VersionAliasesConfiguration\"]=" <<
+			activeVersions[versionAliasesTableName] << std::endl;
 	xmldoc.addTextElementToData("VersionAliasesVersion",
-			activeVersions["VersionAliases"].toString());
+			activeVersions[versionAliasesTableName].toString());
 
 	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
-			cfgMgr->getNode("VersionAliases").getChildren();
+			cfgMgr->getNode(versionAliasesTableName).getChildren();
 
 	for(auto& aliasNodePair:aliasNodePairs)
 	{
+		//note : these are column names in the versionAliasesTableName table
+		//VersionAlias, ConfigurationName, Version, CommentDescription
 		xmldoc.addTextElementToData("VersionAlias",
 				aliasNodePair.second.getNode("VersionAlias").getValueAsString());
 		xmldoc.addTextElementToData("ConfigurationName",
@@ -1739,6 +1853,13 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
 
 	__MOUT__ << "# of configuration tables found: " << allCfgInfo.size() << std::endl;
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
+	__MOUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
+
+
 	while(it != allCfgInfo.end())
 	{
 		//for each subconfiguration name
@@ -1749,6 +1870,13 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 		//add system subconfiguration name
 		xmldoc.addTextElementToData("ConfigurationName", it->first);
 		parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
+
+		//include aliases for this table
+		if(versionAliases.find(it->first) != versionAliases.end())
+			for (auto &aliasVersion:versionAliases[it->first])
+				xmldoc.addTextElementToParent("Version",
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
+						parentEl);
 
 		//get version key for the current system subconfiguration key
 		for (auto &version:it->second.versions_)
