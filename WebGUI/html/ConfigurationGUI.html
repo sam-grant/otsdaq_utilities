@@ -197,7 +197,7 @@
 			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
 			//setupSpecificConfigInRight(configName,version)
 			//specificConfigRequestHandler(req,backLinkStr)
-			//wizToDefaultVersion(configName,version)
+			//setVersionAliasInActiveBackbone(configName,version,newBackboneNameAdd)
 
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
@@ -217,6 +217,7 @@
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
 			//wizToLatestConfigGroup(groupAlias)
 			//wizToInitializedConfigGroup(groupAlias)		
+			//newWizBackboneMemberHandler(req,params)
 		
 			//selectThisCell(r,c,el)
 			//setCaretPosition(el,start,stop)
@@ -1300,9 +1301,25 @@
 					"</div>"; //end context menu link div
 			
 			//display config name and version
-			str += "<div style='float:left'>";
+			str += "<div style='float:left;'>";
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
 			str += "</div>";
+			
+			//add link for wiz to default
+			if(version != -1)
+			{
+				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
+				str +=  "<a href='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
+						configName + "\",\"" + 
+						version + "\");' title='Make version " + version + 
+					" the &apos;Default&apos; version for " + configName + 
+					" by automatically setting up the &apos;Default&apos; alias " + 
+					"in the active Backbone group.'" +
+					">";	
+				str += "Wiz-to-Default";
+				str += "</a>";
+				str += "</div>";
+			}
 
 			
 			str += "<div id='clearDiv'></div>";
@@ -1441,6 +1458,32 @@
 				_tableViewIsTransposed = !_tableViewIsTransposed; 
 				transposeTableView();
 			}
+		}
+		
+		//setVersionAliasInActiveBackbone ~~
+		function setVersionAliasInActiveBackbone(versionAlias, configName,version,newBackboneNameAdd)
+		{			
+			Debug.log("setVersionAliasInActiveBackbone versionAlias " + versionAlias);
+			Debug.log("setVersionAliasInActiveBackbone configName " + configName);
+			Debug.log("setVersionAliasInActiveBackbone version " + version);
+
+			if(!configName || configName == "" || !version || version == "")
+			{
+				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);				
+				return;
+			}
+			
+			if(!newBackboneNameAdd || newBackboneNameAdd == "")
+				newBackboneNameAdd = "Wiz";
+			newBackboneNameAdd += "Backbone";
+			Debug.log("setVersionAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=setVersionAliasInActiveBackbone" +
+					"&versionAlias=" + versionAlias +
+					"&configName=" + configName + 
+					"&version=" + version, "", 
+					newWizBackboneMemberHandler,
+					[("VersionAlias" + newBackboneNameAdd),function(){Debug.log("hi");}]);
 		}
 		
 		//isTemporary
@@ -1954,87 +1997,9 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 					"&groupAlias=" + groupAlias + 
 					"&groupName=" + groupName +
-					"&groupKey=" + groupKey, "", function(req)
-					{
-
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
-					setupSystemViewMode(); //error so return to system view
-					return;
-				}											
-
-				var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
-				var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
-
-				Debug.log("groupAliasName=" + groupAliasName);
-				Debug.log("groupAliasVersion=" + groupAliasVersion);
-				
-				var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-				var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-
-				//make a new backbone with old versions of everything except Group Alias 
-				var configMap = "configList=";
-				var name;
-				for(var i=0;i<configNames.length;++i)
-				{		
-					name = configNames[i].getAttribute("value");
-
-					if(name == groupAliasName)
-					{
-						configMap += name + "," + 
-								groupAliasVersion + ",";
-						continue;
-					}
-					//else use old member
-					configMap += name + "," + 
-							configVersions[i].getAttribute("value") + ",";							
-				}
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-						(groupAlias + newBackboneNameAdd), configMap, 
-						function(req)
-						{
-					var err = DesktopContent.getXMLValue(req,"Error");
-					if(err) 
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);
-						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-								" (Likely the currently active Backbone already represents what is being requested)",
-								Debug.HIGH_PRIORITY);
-						setupSystemViewMode(); //error so return to system view
-						return;
-					}
-
-					var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-					var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-
-					//now activate the new backbone group
-
-
-					DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
-							"&groupName=" + name +
-							"&groupKey=" + key, "", 
-							function(req)
-							{
-						var err = DesktopContent.getXMLValue(req,"Error");
-						if(err) 
-						{
-							Debug.log(err,Debug.HIGH_PRIORITY);
-							return;
-						}
-
-						setupSystemViewMode(); //done so refresh view
-
-							});	//end of activate new backbone handler
-
-
-						}); //end of backbone saveNewConfigurationGroup handler
-
-
-					}); //end of setGroupAliasInActiveBackbone handler
+					"&groupKey=" + groupKey, "", 
+					newWizBackboneMemberHandler,
+					[("GroupAlias" + newBackboneNameAdd),setupSystemViewMode]);					
 		}
 		
 		//wizToInitializedConfigGroup ~~
@@ -2110,14 +2075,21 @@
 							break;
 						}
 					if(found) continue; //only include configuration members
-
-					if(configVersions.length)
-						configMap += name + "," + 
-						configVersions[configVersions.length-1].getAttribute("value") + ",";
+					
+					
+					//find the latest that is not temporary
+					for(var v=configVersions.length-1;v>=0;--v)
+						if(configVersions[v].getAttribute("value")[0] != 
+								'-') //assume leading '-' means temporary
+						{
+							configMap += name + "," + 
+									configVersions[v].getAttribute("value") + ",";
+							break;							
+						}
 				}
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-						(groupAlias + "WizToLatest"), configMap, 
+						("ConfigGroup" + "WizToLatest"), configMap, 
 						function(req)
 						{
 					var err = DesktopContent.getXMLValue(req,"Error");
@@ -2128,9 +2100,18 @@
 						if(!name || !key)
 						{
 							Debug.log(err,Debug.HIGH_PRIORITY);
+							Debug.log("Process interrupted. Failed to create a new Configuration group!" +
+								" Please see details below.",
+								Debug.HIGH_PRIORITY);
+							setupSystemViewMode();
 							return;
 						}
-						Debug.log("Going on with existing name=" + name + " & key=" + key);
+						Debug.log(err,Debug.WARN_PRIORITY);
+						Debug.log("Going on with existing name=" + name + " & key=" + key,
+								Debug.WARN_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Configuration group!" +
+							" (Likely the Group Alias points tp an equivalent Configuration group already)",
+							Debug.WARN_PRIORITY);
 					}
 					
 					setGroupAliasInActiveBackbone(groupAlias,name,key);
@@ -2140,6 +2121,104 @@
 
 
 					});	//end of getConfigurations handler
+		}
+
+		//newWizBackboneMemberHandler
+		//	params = [newBackboneGroupName, doneHandler]
+		function newWizBackboneMemberHandler(req,params)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+				if(params[1])
+					params[1](); //error so call done handler
+				return;
+			}		
+
+			var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
+			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+
+			Debug.log("groupAliasName=" + groupAliasName);
+			Debug.log("groupAliasVersion=" + groupAliasVersion);
+
+			var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+			var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+			//make a new backbone with old versions of everything except Group Alias 
+			var configMap = "configList=";
+			var name;
+			for(var i=0;i<configNames.length;++i)
+			{		
+				name = configNames[i].getAttribute("value");
+
+				if(name == groupAliasName)
+				{
+					configMap += name + "," + 
+							groupAliasVersion + ",";
+					continue;
+				}
+				//else use old member
+				configMap += name + "," + 
+						configVersions[i].getAttribute("value") + ",";							
+			}
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+					params[0], configMap, 
+					function(req)
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				if(err) 
+				{
+					if(!name || !key)
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+							" Please see details below.",
+							Debug.HIGH_PRIORITY);
+
+						if(params[1])
+							params[1](); //error so call done handler
+						return;
+					}
+					else
+					{
+						Debug.log(err,Debug.WARN_PRIORITY);						
+						Debug.log("Going on with existing name=" + name + " & key=" + key,
+								Debug.WARN_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+							" (Likely the currently active Backbone already represents what is being requested)",
+							Debug.WARN_PRIORITY);
+					}					
+				}
+
+				//now activate the new backbone group
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+						"&groupName=" + name +
+						"&groupKey=" + key, "", 
+						function(req)
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						return;
+					}
+
+					activateSystemConfigHandler(req);
+
+					if(params[1])
+						params[1](); //done so call done handler
+
+						});	//end of activate new backbone handler
+
+
+					}); //end of backbone saveNewConfigurationGroup handler
 		}
 		
 		//setupConfigCreator ~
@@ -2453,8 +2532,14 @@
 					Debug.log(els[el].value);
 					sel = document.getElementById("select-" + els[el].value);
 					options = sel.options;
-					if(options.length)
-						options[options.length-1].selected = true;
+					
+					//find the latest that is not temporary
+					for(var i=options.length-1;i>=0;--i)
+						if(options[i].value[0] != '-') //assume leading '-' means temporary
+						{
+							options[i].selected = true;
+							break;							
+						}
 				}
 				break;
 			case 2: //defaults response

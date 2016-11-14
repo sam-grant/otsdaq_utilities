@@ -52,6 +52,7 @@ private:
 
     void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
+    void 			handleSetVersionAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string& configName, ConfigurationVersion version, const std::string &author);
     void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);

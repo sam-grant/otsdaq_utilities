@@ -121,6 +121,7 @@ throw (xgi::exception::Exception)
 	//	deleteConfigurationInfo
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
+	//	setVersionAliasInActiveBackbone
 	//	getVersionAliases
 	//	getConfigurationGroups
 	//	getConfigurations
@@ -218,6 +219,20 @@ throw (xgi::exception::Exception)
 
 		handleSetGroupAliasInBackboneXML(xmldoc,cfgMgr,groupAlias,groupName,
 				ConfigurationGroupKey(groupKey),userName);
+	}
+	else if(Command == "setVersionAliasInActiveBackbone")
+	{
+		std::string versionAlias = CgiDataUtilities::getData(cgi,"versionAlias"); //from GET
+		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
+		std::string version = CgiDataUtilities::getData(cgi,"version"); //from GET
+
+		__MOUT__ << "versionAlias: " << versionAlias << std::endl;
+		__MOUT__ << "configName: " << configName << std::endl;
+		__MOUT__ << "version: " << version << std::endl;
+
+		handleSetVersionAliasInBackboneXML(xmldoc,cfgMgr,versionAlias,
+				configName,
+				ConfigurationVersion(version),userName);
 	}
 	else if(Command == "getVersionAliases")
 	{
@@ -1108,6 +1123,10 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
 		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
 {
+	//make sure not using partial tables or anything weird when creating the group
+	//	so start from scratch and load backbone
+	cfgMgr->getAllConfigurationInfo(true);
+	cfgMgr->loadConfigurationBackbone();
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 			cfgMgr->getActiveVersionAliases();
@@ -1179,7 +1198,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			xmldoc.addTextElementToData("ConfigurationGroupKey",foundKey.toString());
 			xmldoc.addTextElementToData("Error",
 					"Failed to create configuration group: " + groupName +
-					". It is a duplicate of a previous group key (" + foundKey.toString() + ")");
+					". It is a duplicate of an existing group key (" + foundKey.toString() + ")");
 			return;
 		}
 	}
@@ -1511,15 +1530,15 @@ try
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
+	const std::string groupAliasesTableName = "GroupAliasesConfiguration";
+	if(activeVersions.find(groupAliasesTableName) == activeVersions.end())
 	{
-		__SS__ << "Active version of GroupAliasesConfiguration missing!" << std::endl;
+		__SS__ << "Active version of " << groupAliasesTableName << " missing!" << std::endl;
 		xmldoc.addTextElementToData("Error", ss.str());
 		return;
 	}
 
 	//put all old backbone versions in xmldoc
-
 	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
 	for(auto &memberName: backboneMembers)
 	{
@@ -1536,22 +1555,41 @@ try
 	//modify the chosen groupAlias row
 	//save as new version
 
-	std::string configName = "GroupAliasesConfiguration";
+	std::string configName = groupAliasesTableName;
 	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
-			createTemporaryView(activeVersions["GroupAliasesConfiguration"]);
+			createTemporaryView(activeVersions[configName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
 	ConfigurationView* configView = cfgMgr->getConfigurationByName(configName)->
 			getTemporaryView(temporaryVersion);
-	unsigned int row = configView->findRow(configView->findCol("GroupKeyAlias"),groupAlias);
 
-	__MOUT__ << "\t\t row: " << row << std::endl;
+	unsigned int col = configView->findCol("GroupKeyAlias");
 
 	//only make a new version if we are changing compared to active backbone
 	bool isDifferent = false;
 
-	unsigned int col = configView->findCol("GroupName");
+	unsigned int row = -1;
+	//find groupAlias row
+	try	{ row = configView->findRow(col,groupAlias); }
+	catch (...) {}
+	if(row == (unsigned int)-1) //if row not found then add a row
+	{
+		isDifferent = true;
+		row = configView->addRow();
+
+		//set all columns in new row
+		col = configView->findCol("CommentDescription");
+		configView->setValue(std::string("Entry was added by server in ") +
+				"ConfigurationGUISupervisor::setGroupAliasInActiveBackbone()." ,
+				row, col);
+		col = configView->findCol("GroupKeyAlias");
+		configView->setValue(groupAlias, row, col);
+	}
+
+	__MOUT__ << "\t\t row: " << row << std::endl;
+
+	col = configView->findCol("GroupName");
 
 	__MOUT__ << "\t\t groupName: " << groupName << " vs " <<
 			configView->getDataView()[row][col] << std::endl;
@@ -1585,7 +1623,7 @@ try
 	{
 		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
 
-		newAssignedVersion = activeVersions["GroupAliasesConfiguration"];
+		newAssignedVersion = activeVersions[configName];
 	}
 
 	xmldoc.addTextElementToData("savedAlias", configName);
@@ -1602,6 +1640,138 @@ catch(...)
 {
 	__MOUT__ << "Error detected!\n\n "<< std::endl;
 	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view! ");
+}
+
+//========================================================================================================================
+//	handleSetVersionAliasInBackboneXML
+//		open current backbone
+//		modify VersionAliases
+//		save as new version of VersionAliases
+//		return new version of VersionAliases
+void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string& versionAlias,
+		const std::string& configName, ConfigurationVersion version, const std::string &author)
+try
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	const std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
+	{
+		__SS__ << "Active version of " << versionAliasesTableName << " missing!" << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//put all old backbone versions in xmldoc
+	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
+	for(auto &memberName: backboneMembers)
+	{
+		__MOUT__ << "activeVersions[\"" << memberName << "\"]=" <<
+				activeVersions[memberName] << std::endl;
+
+		xmldoc.addTextElementToData("oldBackboneName",
+				memberName);
+		xmldoc.addTextElementToData("oldBackboneVersion",
+				activeVersions[memberName].toString());
+	}
+
+	//make a temporary version from active view
+	//modify the chosen versionAlias row
+	//save as new version
+
+	std::string configName = versionAliasesTableName;
+	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
+			createTemporaryView(activeVersions[configName]);
+
+	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
+
+	ConfigurationView* configView = cfgMgr->getConfigurationByName(configName)->
+			getTemporaryView(temporaryVersion);
+
+	unsigned int col = configView->findCol("ConfigurationName");
+	unsigned int col2 = configView->findCol("VersionAlias");
+
+	//only make a new version if we are changing compared to active backbone
+	bool isDifferent = false;
+
+	unsigned int row = -1;
+	//find configName, versionAlias pair
+	try	{
+		unsigned int tmpRow = -1;
+		do
+		{
+			tmpRow = configView->findRow(col,configName,tmpRow+1); //start looking from beyond last find
+		} while (configView->getDataView()[tmpRow][col2] != versionAlias);
+		//at this point the first pair was found! (else exception was thrown)
+		row = tmpRow;
+	}
+	catch (...) {}
+	if(row == (unsigned int)-1) //if row not found then add a row
+	{
+		isDifferent = true;
+		row = configView->addRow();
+
+		//set all columns in new row
+		col = configView->findCol("CommentDescription");
+		configView->setValue(std::string("Entry was added by server in ") +
+				"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
+				row, col);
+		col = configView->findCol("VersionAliasId");
+		configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
+				versionAlias, row, col);
+		col = configView->findCol("VersionAlias");
+		configView->setValue(versionAlias, row, col);
+		col = configView->findCol("ConfigurationName");
+		configView->setValue(configName, row, col);
+	}
+
+	__MOUT__ << "\t\t row: " << row << std::endl;
+
+
+	col = configView->findCol("Version");
+	__MOUT__ << "\t\t version: " << version << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(version.toString() != configView->getDataView()[row][col])
+	{
+		configView->setValue(version.toString(), row, col);
+		isDifferent = true;
+	}
+
+	ConfigurationVersion newAssignedVersion;
+	if(isDifferent)	//make new version if different
+	{
+		configView->setValue(author, row, configView->findCol("Author"));
+		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+		newAssignedVersion =
+				cfgMgr->saveNewConfiguration(configName,temporaryVersion);
+	}
+	else	//use existing version
+	{
+		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+
+		newAssignedVersion = activeVersions[configName];
+	}
+
+	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view! " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view! ");
 }
 
 //========================================================================================================================
