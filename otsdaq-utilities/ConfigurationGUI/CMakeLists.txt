@@ -12,6 +12,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 SOAPUtilities
 		 XmlUtilities
 		 MessageFacility
+		 cetlib
          $ENV{XERCES_C_LIB}/libxerces-c.so
 	 ${MF_MESSAGELOGGER}
 )
