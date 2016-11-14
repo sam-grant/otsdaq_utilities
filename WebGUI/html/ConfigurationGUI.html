@@ -1079,7 +1079,11 @@
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 						groupKey + "\\\",undefined,\\\"anchorTag-" + 
 						configName + "\\\");"; 
-								
+				//make replace screen js
+				replaceScreenJS = "setupSpecificConfig(\"" + 
+						configName + "\",\"" +
+						version + "\",\"" + backLinkStr + "\");";
+				
 				str += "<div style='float:left;'>";
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
@@ -1098,11 +1102,7 @@
 				//add member nav goto link
 				{
 					//make context menu
-					groupMemberNavContextMenuItemHandlers = []
-															 //make replace screen js
-															 replaceScreenJS = "setupSpecificConfig(\"" + 
-															 configName + "\",\"" +
-															 version + "\",\"" + backLinkStr + "\");";
+					groupMemberNavContextMenuItemHandlers = [];															 
 					groupMemberNavContextMenuItemHandlers.push(replaceScreenJS);
 
 					//make new window link
