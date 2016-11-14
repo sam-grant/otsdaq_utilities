@@ -193,11 +193,12 @@
 			
 			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
 			//specificGroupRequestHandler(req,param)
-			
+			//setMemberVersionsAsDefault(groupName,groupKey)
+		
 			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
 			//setupSpecificConfigInRight(configName,version)
 			//specificConfigRequestHandler(req,backLinkStr)
-			//setVersionAliasInActiveBackbone(configName,version,newBackboneNameAdd)
+			//setVersionAliasInActiveBackbone(configName,version,newBackboneNameAdd)			
 
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
@@ -1020,8 +1021,16 @@
 				Debug.log("Back-link = " + backLinkStr);
 
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
-				str += "<br>";
-			}			
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			}	
+			else backLinkStr = "";		
+
+			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupSpecificConfigGroup(\"" + 
+					groupName + "\",\"" +
+					groupKey + "\",\"" + backLinkStr + "\");"; 
+			str += "<a href='javascript:" + refreshLinkStr + 
+					"'>Refresh</a>";
+			str += "<br>";
 
 			str += "<h3><u>Specific Configuration Group View</u></h3>";
 			str += "<label id='configGroupModified'></label><b>" + 
@@ -1061,6 +1070,22 @@
 			str += "<br><a href='javascript:addMemberToConfigGroup(\"" + 
 					groupName + "\",\"" + returnToHereLink + "\");'>";
 			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
+			
+			str += "<br>";
+			var setMembersToDefaultReq = 
+					"DesktopContent.XMLHttpRequest(\"Request?RequestType=setAliasOfGroupMembers" +
+							"&versionAlias=Default" + 
+							"&groupName=" + groupName +
+							"&groupKey=" + groupKey + "\", \"\"," +
+							"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";
+					
+			str += "<a href='javascript:" + setMembersToDefaultReq + "' title='Make all member versions" + 
+					" the &apos;Default&apos; version for that member " + 
+					" by automatically setting up the &apos;Default&apos; alias " + 
+					"in the active Backbone group.'" +
+					">";
+			str += "Set all Member Versions to 'Default'";
+			str += "</a>";
 			str += "<br><br>";
 			
 
@@ -1291,8 +1316,16 @@
 				Debug.log("Back-link = " + backLinkStr);
 
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
-				str += "<br><br>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
+			else backLinkStr = "";
+
+			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupSpecificConfig(\"" + 
+					configName + "\",\"" +
+					version + "\",\"" + backLinkStr + "\");"; 
+			str += "<a href='javascript:" + refreshLinkStr + 
+					"'>Refresh</a>";
+			str += "<br><br>";
 
 			//display edit menu
 			str +=
@@ -1483,7 +1516,7 @@
 					"&configName=" + configName + 
 					"&version=" + version, "", 
 					newWizBackboneMemberHandler,
-					[("VersionAlias" + newBackboneNameAdd),function(){Debug.log("hi");}]);
+					[("VersionAlias" + newBackboneNameAdd),undefined]);
 		}
 		
 		//isTemporary
@@ -1564,19 +1597,28 @@
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
 				
-				//add back link
+				//add back link				
 				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
 				{
 					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
 					if(treeViewBackLinkStr_.indexOf("'") >= 0)
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
-								else
-									treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
-								Debug.log("Back-link = " + treeViewBackLinkStr_);
+					else
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
+					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-								treeViewHandlerStr_ += "<a href='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + "\")'>Back</a>";
-								treeViewHandlerStr_ += "<br><br>";
-				}
+					treeViewHandlerStr_ += "<a href='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
+							"\")'>Back</a>";
+					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				}				
+				else treeViewHandlerStr_ = "";
+
+				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+						treeGroupName_ + "\",\"" +
+						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
+				treeViewHandlerStr_ += "<a href='javascript:" + refreshLinkStr + 
+						"'>Refresh</a>";
+				treeViewHandlerStr_ += "<br><br>";
 
 				if(treeErr) 
 				{
