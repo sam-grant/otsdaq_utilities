@@ -341,24 +341,66 @@ else {
         }
 
         var _oldUserNameWithLock = "";
-        this.displayUserLock = function(usernameWithLock) {      	
-       		var el = document.getElementById("DesktopDashboard-userWithLock");
-       		
+        this.displayUserLock = function(usernameWithLock, el) {      
+        	if(!el)
+        		el = document.getElementById("DesktopDashboard-userWithLock");
+
+   			el.style.display = "block";
+        	
+        	var user = Desktop.desktop.login.getUsername();
+        	var data = "";
+        	data += "lock=" + ((!usernameWithLock || usernameWithLock == "")?"1":"0") + "&";
+        	data += "username=" + user;
+
+        	var jsReq =   			
+        			"Desktop.XMLHttpRequest(\"" +
+					"Request?RequestType=setUserWithLock&accounts=1\"," +
+					"\"" + data + "\",Desktop.desktop.dashboard.handleSetUserWithLock)";
+
        		if(!usernameWithLock || usernameWithLock == "") 
-       		{		//nobody has lock
-       			el.style.display = "none";
-       			el.innerHTML = ""; 
+       		{		
+       			//nobody has lock
+       			var str = "";       			
+       			str += "<a href='javascript:" + jsReq + "'>";
+       			str += "<img " +
+       					"src='/WebPath/images/dashboardImages/icon-Settings-Unlock.png' " +
+       					"title='Click to lockout the system and take the ots Lock'>";
+       			str += "</a>";
+       			el.innerHTML = str; 
        			_oldUserNameWithLock = "";       			
        			return; 
        		}  	
        		
        		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
+
+       		var str = "";       			
+       		if(usernameWithLock != user) //not user so cant unlock
+       			el.innerHTML = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
+       					"title='User " + 
+       					usernameWithLock + " has the ots Lock'>"; 
+       		else //this is user so can unlock
+       		{
+				str += "<a href='javascript:" + jsReq + "'>";
+				str += "<img " +	
+						"src='/WebPath/images/dashboardImages/icon-Settings-Lock.png' " +
+						"title='Click to unlock the system and release the ots Lock'>";
+				str += "</a>";
+       		}
        		
-       		el.innerHTML = "<img src='/WebPath/images/dashboardImages/icon-Settings-Lock.png' title='User " + 
-       			usernameWithLock + " has the ots Lock'>";
-   			el.style.display = "block";
+   			el.innerHTML = str; 
+   			
        		_oldUserNameWithLock = usernameWithLock; 
         }        
+        
+        this.handleSetUserWithLock = function(req) {
+        	Debug.log(req);
+			//extract alert from server
+			var serverAlert = Desktop.getXMLValue(req,"server_alert");
+			if(serverAlert) Debug.log("Message from Server: " + serverAlert, Debug.HIGH_PRIORITY);
+
+        	Desktop.desktop.dashboard.displayUserLock(
+        			Desktop.getXMLValue(req,"username_with_lock"));
+        }
         
 
         //displayConnectionStatus ~~
@@ -490,8 +532,8 @@ else {
         tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
         tmpBtn.innerHTML = "<a target='_blank' href='" + 
-        	"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" +
-        	" 'title='Click to open ots documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
+        	"https://cdcvs.fnal.gov/redmine/projects/otsdaq/wiki/Otsdaq_User_Manual" +
+        	" 'title='Click to open ots documentation in a new tab' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
         _topBar.appendChild(tmpBtn);
         
         if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
@@ -507,7 +549,7 @@ else {
 			tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
 			tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
 			tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
-				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='/WebPath/images/dashboardImages/icon-Settings.png'></a>";
+				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open the settings window'><img src='/WebPath/images/dashboardImages/icon-Settings.png'></a>";
 			_topBar.appendChild(tmpBtn);
 					
 			tmpBtn = document.createElement("div");
@@ -546,7 +588,7 @@ else {
 	   	_windowDashboard.onmouseup = Desktop.handleWindowMouseUp;
 
 	   	_windowDashboardWindowCSSRule = _getDashboardWindowWidthCSSRule(); //get CSS rule for the dashboard window divs
-	   	        
+	   	        	   	
         Debug.log("Desktop Window Dashboard created",Debug.LOW_PRIORITY);
 
         Debug.log("Desktop Dashboard created",Debug.LOW_PRIORITY);

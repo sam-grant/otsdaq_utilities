@@ -329,8 +329,9 @@ else {
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
+			
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
-				_user = _displayName;
+				_user = Desktop.getXMLValue(req,"pref_username");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);

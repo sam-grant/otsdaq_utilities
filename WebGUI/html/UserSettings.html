@@ -900,7 +900,8 @@
 				var data = "";
 				data += "lock=" + (lock?"1":"0") + "&";
 				data += "username=" + _accountsArray[0][i].getAttribute('value');
-				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1", data, settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1",
+						data, settingsRequestHandler);				
 			}
 		</script>
 		
