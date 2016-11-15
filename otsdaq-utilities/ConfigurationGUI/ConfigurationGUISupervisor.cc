@@ -510,7 +510,7 @@ throw (xgi::exception::Exception)
 	std::map<std::string /*type*/,
 	std::pair<std::string /*groupName*/,
 	ConfigurationGroupKey>> activeGroupMap =
-			cfgMgr->getActiveGlobalConfiguration();
+			cfgMgr->getActiveConfigurationGroups();
 
 	for(auto &type:activeGroupMap)
 	{

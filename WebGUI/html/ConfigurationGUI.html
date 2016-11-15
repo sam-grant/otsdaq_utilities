@@ -1223,7 +1223,7 @@
 					str += " ";
 					str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + configName + "\"," + 
-							version;
+							"\"" + version + "\"";
 					str += ")'>" + version;
 					str += "</a>";
 					cfgVersionStr += version + ",";
@@ -1422,7 +1422,7 @@
 			str += "<div id='copyAndMoveRows'></div>";
 			
 			//create table details
-			str += "<div id='tableDetails' style='display:none'>";
+			str += "<div id='tableDetails' style='display:none'>Table Details:";
 			var tableComment = DesktopContent.getXMLValue(req,"TableComment");
 			var tableAuthor = DesktopContent.getXMLValue(req,"TableAuthor");
 			var tableCreationTime = DesktopContent.getXMLValue(req,"TableCreationTime");
@@ -3868,7 +3868,7 @@
 				str += " ";
 				str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
 						groupName + "\",\"" + configName + "\"," + 
-						configNameArr[i];
+						"\"" + configNameArr[i] + "\"";
 				str += ")'>" + configNameArr[i];
 				str += "</a>";
 			}
