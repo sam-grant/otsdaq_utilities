@@ -132,6 +132,7 @@ throw (xgi::exception::Exception)
 	//	saveNewConfigurationGroup
 	//	getSpecificConfiguration
 	//	saveSpecificConfiguration
+	//	clearConfigurationTemporaryVersions
 	//	getTreeView
 	//	activateConfigGroup
 	//	getActiveConfigGroups
@@ -351,11 +352,12 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveSpecificConfiguration")
 	{
-		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); //from GET
-		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");	//from GET
-		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
+		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");		//from GET
 		//int				chunkSize 	= CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
-		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");	//from GET
+		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");		//from GET
+		std::string		comment 	= CgiDataUtilities::getData		(cgi,"tableComment");	//from GET
 
 		std::string	data = CgiDataUtilities::postData(cgi,"data"); //from POST
 		//data format: commas and semi-colons indicate new row
@@ -363,11 +365,29 @@ throw (xgi::exception::Exception)
 
 		__MOUT__ << "getSpecificConfiguration: " << configName << " version: " << version
 				<< " temporary: " << temporary << " dataOffset: " << dataOffset << std::endl;
-
+		__MOUT__ << "comment: " << comment << std::endl;
 		__MOUT__ << "data: " << data << std::endl;
 
 		handleCreateConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
-				temporary,data,dataOffset,userName);
+				temporary,data,dataOffset,userName, comment);
+	}
+	else if(Command == "clearConfigurationTemporaryVersions")
+	{
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		__MOUT__ << "configName: " << configName << std::endl;
+
+		try { cfgMgr->eraseTemporaryVersion(configName);}
+		catch(std::runtime_error &e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing temporary views!\n " +
+					std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!\n\n "<< std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing temporary views! ");
+		}
 	}
 	else if(Command == "getTreeView")
 	{
@@ -933,6 +953,12 @@ try
 		}
 	}
 
+	//add "other" fields associated with configView
+	xmldoc.addTextElementToData("TableComment", cfgViewPtr->getComment());
+	xmldoc.addTextElementToData("TableAuthor", cfgViewPtr->getAuthor());
+	xmldoc.addTextElementToData("TableCreationTime", std::to_string(cfgViewPtr->getCreationTime()));
+	xmldoc.addTextElementToData("TableLastAccessTime", std::to_string(cfgViewPtr->getLastAccessTime()));
+
 	//add to xml the default row values
 	std::vector<std::string> defaultRowValues =
 			cfgViewPtr->getDefaultRowValues();
@@ -989,7 +1015,8 @@ catch(...)
 //	if starting version is -1 start from mock-up
 void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version,
-		bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author)
+		bool makeTemporary, const std::string &data, const int &dataOffset,
+		const std::string &author, const std::string &comment)
 try
 {
 	//__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
@@ -1011,31 +1038,49 @@ try
 		}
 	}
 	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
-			createTemporaryView(version);
+		createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
 	//returns -1 on error that data was unchanged
-	int retVal = cfgMgr->getConfigurationByName(configName)->
-			getTemporaryView(temporaryVersion)->fillFromCSV(data,dataOffset,author);
+	ConfigurationView* cfgView = cfgMgr->getConfigurationByName(configName)->
+			getTemporaryView(temporaryVersion);
+	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
+	bool needToEraseTemporarySource = false;
 
 	//only consider it an error if source version was persistent version
-	//	allow it if it is temporary and we are making a persistent version now
+	//	allow it if source version is temporary and we are making a persistent version now
 	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
 	{
 		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
 		throw std::runtime_error(ss.str());
 	}
-	else
+	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
+	{
+		needToEraseTemporarySource = true;
 		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
+	}
+	else if(retVal < 0)
+	{
+		__SS__ << "This should not be possible! Fatal error." << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+	cfgView->setURIEncodedComment(comment);
+	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
 
 	if(makeTemporary)
 		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
 	else
 		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
+
+
 	ConfigurationVersion newAssignedVersion =
 			cfgMgr->saveNewConfiguration(configName,temporaryVersion,makeTemporary);
+
+	if(needToEraseTemporarySource)
+		cfgMgr->eraseTemporaryVersion(configName,version);
 
 	xmldoc.addTextElementToData("savedAlias", configName);
 	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());

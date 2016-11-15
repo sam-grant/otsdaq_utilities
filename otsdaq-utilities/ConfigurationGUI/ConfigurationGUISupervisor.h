@@ -61,7 +61,7 @@ private:
 
     void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool allowIllegalColumns=false);
-    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author);
+    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author, const std::string &comment);
 
     void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth);
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl);
