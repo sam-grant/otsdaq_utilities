@@ -239,7 +239,7 @@
 			//activateSystemConfigHandler(req)
 			//selectForCreateConfig(i)
 			//versionsForCreateConfig(i)		
-			//createConfigGroup()
+			//createConfigGroup(ignoreWarnings)
 			//createConfigGroupHandler(req)
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
 			//wizToLatestConfigGroup(groupAlias)
@@ -943,7 +943,8 @@
 		function specificGroupRequestHandler(req, param) {
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
-			{	
+			{					
+				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
 				Debug.log("There were problems identified in the tree view of the new group." +
 						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
@@ -953,9 +954,9 @@
 				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
 						"style='margin-bottom:15px;' " +
 						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
-						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						attemptedNewGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
-						"'/>";	
+						"'/><br>";	
 
 				//remove all previous buttons
 				var el;
@@ -2541,37 +2542,6 @@
 		// preSelectStr may contain "&backLinkStr=..." in it
 		function setupConfigCreatorHandler(req,preSelectStr)
 		{
-			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
-			if(treeErr) 
-			{	
-				Debug.log(treeErr,Debug.WARN_PRIORITY);
-				Debug.log("There were problems identified in the tree view of the new group." +
-						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
-						"'<u>Save Group with Warnings Ignored</u>'",
-						Debug.WARN_PRIORITY);
-				treeErr = "";
-				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
-						"style='margin-bottom:15px;' " +
-						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
-						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
-						"Save the modified group as a new persistent key for this group name." +
-						"'/>";	
-
-				//remove all previous buttons
-				var el;
-				do
-				{
-					el = document.getElementById("saveGroupWithWarningsIgnored");
-					if(el) el.parentNode.removeChild(el);
-				} while(el);	
-
-				el = document.getElementById("display");
-				var str = el.innerHTML;
-				str = treeErr + str; //add save with warnings ignored button
-				el.innerHTML = str;
-				return;
-			}
-
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -2893,7 +2863,7 @@
 		}
 		
 		//createConfigGroup ~
-		function createConfigGroup()
+		function createConfigGroup(ignoreWarnings)
 		{
 			var config = document.getElementById("newConfigName").value;
 			Debug.log("config " + config);
@@ -2923,16 +2893,18 @@
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
 			{	
+				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
-				Debug.log("There were problems identified in the tree view of the new group." +
-						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+				Debug.log("There were problems identified in the tree view of the attempted new group " +
+						attemptedNewGroupName +
+						".\nYou can save the group anyway (if you think it is a good idea) by clicking " +
 						"'<u>Save Group with Warnings Ignored</u>'",
 						Debug.WARN_PRIORITY);
 				treeErr = "";
 				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
 						"style='margin-bottom:15px;' " +
-						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
-						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						"type='button' onmouseup='createConfigGroup(1);' " + 
+						" value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
 						"'/>";	
 
@@ -3424,10 +3396,12 @@
 			//detect proper views
 			var el = document.getElementById("treeView-ConfigGroupLink");			
 			if(el) //tree view key handler
-			{			
-				var expandKeys = [65,69,190,221,187]; // a, e, >, }, + (no shift needed)
-				var hideKeys = [90,77,188,219,189]; // z, m, <, {, - (no shift needed)			
-				//Debug.log("treeView bodyKey " + e.keyCode);
+			{	
+				//NOTE: Firefox and Chrome have different keycodes for +/-
+				var expandKeys = [65,69,190,221,187,61]; // a, e, >, }, +, FF+ (no shift needed)
+				var hideKeys = [90,77,188,219,189,173]; // z, m, <, {, -, FF- (no shift needed)
+				
+				Debug.log("treeView bodyKey " + e.keyCode);				
 				
 				for(var i=0;i<expandKeys.length;++i)
 					if(expandKeys[i] == e.keyCode)
