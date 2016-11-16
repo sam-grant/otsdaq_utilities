@@ -999,6 +999,58 @@ catch(...)
 
 
 //========================================================================================================================
+//saveModifiedVersionXML
+//
+// once source version has been modified in temporary version
+//	this function finishes it off.
+void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &configName,
+		ConfigurationVersion version,
+		bool makeTemporary,
+		ConfigurationBase * config,
+		ConfigurationVersion temporaryVersion)
+{
+	bool needToEraseTemporarySource = (version.isTemporaryVersion() && !makeTemporary);
+
+
+	//check for duplicate tables already in cache
+	{
+		ConfigurationVersion duplicateVersion;
+
+		duplicateVersion = config->checkForDuplicate(temporaryVersion, version);
+
+		if(!duplicateVersion.isInvalid())
+		{
+			__SS__ << "This version is identical to another version currently cached v" <<
+					duplicateVersion << ". No reason to save a duplicate." << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			//delete temporaryVersion
+			config->eraseView(temporaryVersion);
+			throw std::runtime_error(ss.str());
+		}
+	}
+
+
+	if(makeTemporary)
+		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
+	else
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+
+
+	ConfigurationVersion newAssignedVersion =
+			cfgMgr->saveNewConfiguration(configName,temporaryVersion,makeTemporary);
+
+	if(needToEraseTemporarySource)
+		cfgMgr->eraseTemporaryVersion(configName,version);
+
+	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+
+//========================================================================================================================
 //handleCreateConfigurationXML
 //
 //
@@ -1041,7 +1093,10 @@ try
 	//returns -1 on error that data was unchanged
 	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
 	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
-	bool needToEraseTemporarySource = false;
+
+	cfgView->setURIEncodedComment(comment);
+	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
+
 
 	//only consider it an error if source version was persistent version
 	//	allow it if source version is temporary and we are making a persistent version now
@@ -1055,7 +1110,6 @@ try
 	}
 	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
 	{
-		needToEraseTemporarySource = true;
 		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
 	}
 	else if(retVal < 0)
@@ -1066,46 +1120,8 @@ try
 		throw std::runtime_error(ss.str());
 	}
 
-
-	//check for duplicate tables already in cache
-	{
-		ConfigurationVersion duplicateVersion;
-
-		duplicateVersion = config->checkForDuplicate(temporaryVersion);
-
-		if(!duplicateVersion.isInvalid())
-		{
-			__SS__ << "This version is identical to another version currently cached v" <<
-					duplicateVersion << ". No reason to save a duplicate." << std::endl;
-			__MOUT_ERR__ << "\n" << ss.str();
-			//delete temporaryVersion
-			config->eraseView(temporaryVersion);
-			throw std::runtime_error(ss.str());
-		}
-	}
-
-
-
-	cfgView->setURIEncodedComment(comment);
-	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
-
-	if(makeTemporary)
-		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
-	else
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
-
-
-
-	ConfigurationVersion newAssignedVersion =
-			cfgMgr->saveNewConfiguration(configName,temporaryVersion,makeTemporary);
-
-	if(needToEraseTemporarySource)
-		cfgMgr->eraseTemporaryVersion(configName,version);
-
-	xmldoc.addTextElementToData("savedAlias", configName);
-	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
-
-	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,makeTemporary,
+			config,temporaryVersion);
 }
 catch(std::runtime_error &e)
 {
@@ -1636,14 +1652,13 @@ try
 	//modify the chosen groupAlias row
 	//save as new version
 
-	std::string configName = groupAliasesTableName;
-	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
-			createTemporaryView(activeVersions[configName]);
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(groupAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->
+			createTemporaryView(activeVersions[groupAliasesTableName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
-	ConfigurationView* configView = cfgMgr->getConfigurationByName(configName)->
-			getTemporaryView(temporaryVersion);
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
 
 	unsigned int col = configView->findCol("GroupKeyAlias");
 
@@ -1698,16 +1713,18 @@ try
 		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
 		newAssignedVersion =
-				cfgMgr->saveNewConfiguration(configName,temporaryVersion);
+				cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
 		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
 
-		newAssignedVersion = activeVersions[configName];
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		newAssignedVersion = activeVersions[groupAliasesTableName];
 	}
 
-	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedAlias", groupAliasesTableName);
 	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 }
@@ -1763,15 +1780,13 @@ try
 	//modify the chosen versionAlias row
 	//save as new version
 
-	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(
-			versionAliasesTableName)->
-					createTemporaryView(activeVersions[versionAliasesTableName]);
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(
+			activeVersions[versionAliasesTableName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
-	ConfigurationView* configView = cfgMgr->getConfigurationByName(
-			versionAliasesTableName)->
-					getTemporaryView(temporaryVersion);
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
 
 	unsigned int col;
 	unsigned int col2 = configView->findCol("VersionAlias");
@@ -1831,13 +1846,15 @@ try
 
 		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
 
-		newAssignedVersion =
+		newAssignedVersion  =
 				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
 		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
 
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 	}
 
@@ -1897,15 +1914,14 @@ try
 	//modify the chosen versionAlias row
 	//save as new version
 
-	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(
-			versionAliasesTableName)->
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->
 					createTemporaryView(activeVersions[versionAliasesTableName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
-	ConfigurationView* configView = cfgMgr->getConfigurationByName(
-			versionAliasesTableName)->
-					getTemporaryView(temporaryVersion);
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
 
 
 	//only make a new version if we are changing compared to active backbone
@@ -1994,7 +2010,7 @@ try
 			isDifferent = true;
 	}
 
-	configView->print();
+	//configView->print();
 
 	ConfigurationVersion newAssignedVersion;
 	if(isDifferent)	//make new version if different
@@ -2008,6 +2024,8 @@ try
 	{
 		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
 
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 	}
 

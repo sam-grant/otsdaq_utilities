@@ -108,12 +108,13 @@
 			border-bottom: 1px solid #b9a3a3;
 	    }
 	    	
-		#popUpSaveTableCommentForm {
+		#popUpSaveTableCommentForm, #popUpAssignTableAliasForm {
 			position: absolute;
 			z-index: 1000;    
 			border: 1px solid #770000;
 		    background-color: #efeaea;
 		    text-align: center;
+		    padding: 10px;
 		}
 		
 	</style>
@@ -256,6 +257,7 @@
 			//deleteRow(r)									//delete row at destination
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
 			//popUpSaveTableCommentForm()
+			//popUpAssignTableAliasForm()
 			//saveConfigAsNewVersion(temporary, backLinkStr)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
@@ -1383,12 +1385,22 @@
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
 				str +=  "<a href='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
-						version + "\");' title='Make version " + version + 
-					" the &apos;Default&apos; version for " + configName + 
-					" by automatically setting up the &apos;Default&apos; alias " + 
-					"in the active Backbone group.'" +
-					">";	
+						version + "\");' title='Make " + configName + " version " + version + 
+						" the &apos;Default&apos; version " + 
+						" by automatically setting up the &apos;Default&apos; alias " + 
+						"in the active Backbone group.'" +
+						">";	
 				str += "Wiz-to-Default";
+				str += "</a>";
+				str += "</div>";
+
+				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
+				str +=  "<a href='javascript:popUpAssignTableAliasForm();' "+
+						"title='Assign an Alias to " + configName + 
+						" version " + version +					
+						" by automatically modifying the active Backbone group.'" +
+						">";	
+				str += "Wiz-to-Other-Alias";
 				str += "</a>";
 				str += "</div>";
 			}
@@ -1813,6 +1825,10 @@
 			{
 				uid = treeNodeUID_++;
 				nodeName = nodes[i].getAttribute("value");
+
+				//make nodeName html safe
+				nodeName = nodeName.replace(/</g, "&lt");
+				nodeName = nodeName.replace(/>/g, "&gt");
 				
 				Debug.log("nodeName= " + nodeName + " depth=" + depth + " uid=" + uid);
 								
@@ -1821,6 +1837,12 @@
 									
 				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
 				{	
+					value = value.getAttribute("value");
+					
+					//make value html safe
+					value = value.replace(/</g, "&lt");
+					value = value.replace(/>/g, "&gt");
+					
 					//this is a value node!	
 					//////////=======================
 					treeViewHandlerStr_ += 
@@ -1828,7 +1850,7 @@
 							"<div class='treeNode-Connection'></div>" +
 							"<div class='treeNode-Value'>" + 
 							"<b class='bold-header'>" + nodeName + "</b>" + 
-							" : " + value.getAttribute("value") +
+							" : " + value +
 							"</div>" + //end treeNode Value div		
 							"</div>" + //end treeNode div							
 							"<div id='clearDiv'></div>";  
@@ -1841,7 +1863,7 @@
 
 				//get value and table link name for this parent
 				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
-				{	
+				{						
 					//this is a link node!
 					--childrenLength; //subtract the link ID node from children length
 					value = nodeName + " (" + 
@@ -1854,6 +1876,12 @@
 					value = nodeName;
 					tableLinkName = nodeName;
 				}
+
+				//make value and tableLinkName html safe
+				value = value.replace(/</g, "&lt");
+				value = value.replace(/>/g, "&gt");
+				tableLinkName = tableLinkName.replace(/</g, "&lt");
+				tableLinkName = tableLinkName.replace(/>/g, "&gt");
 				
 				var onmouseupJS = "";
 				var newwindowJS = "";
@@ -3367,8 +3395,8 @@
 			var el = document.getElementById("treeView-ConfigGroupLink");			
 			if(el) //tree view key handler
 			{			
-				var expandKeys = [65,69,190,221,188]; // a, e, >, }, + (no shift needed)
-				var hideKeys = [90,77,187,219,189]; // z, m, <, {, - (no shift needed)			
+				var expandKeys = [65,69,190,221,187]; // a, e, >, }, + (no shift needed)
+				var hideKeys = [90,77,188,219,189]; // z, m, <, {, - (no shift needed)			
 				//Debug.log("treeView bodyKey " + e.keyCode);
 				
 				for(var i=0;i<expandKeys.length;++i)
@@ -3757,38 +3785,125 @@
 
 		//deleteRow ~~
 		// delete row at destination
-		function deleteRow(r) 
+		function deleteRow(rowToDelete) 
 		{
-			Debug.log("CfgGUI deleteRow " + r);
+			Debug.log("CfgGUI deleteRow " + rowToDelete);
 			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
+			var cols = [];
 			
-			//make sure el references the container of rows ("TR")
-			while(el.childNodes[0].tagName != "TR")
-				el = el.childNodes[0];
-			el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
-			
-			//update all row numbers after row added
-			for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
+			if(!_tableViewIsTransposed) //reading from normal view
 			{
-				if(i < r) continue;
+				var r = rowToDelete;
+				//make sure el references the container of rows ("TR")
+				while(el.childNodes[0].tagName != "TR")
+					el = el.childNodes[0];
+				el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
 				
-				str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-				
-				//add +/- row controls
-				str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
-				str += "+";
-				str += "</a>";
-				str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
-				str += "-";
-				str += "</a>";							
-				rows[i].childNodes[0].innerHTML = str;
+				//update all row numbers after row added
+				for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
+				{
+					if(i < r) continue;
+					
+					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+					
+					//add +/- row controls
+					str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "-";
+					str += "</a>";							
+					rows[i].childNodes[0].innerHTML = str;
+				}
 			}
-			
-			//update last add row link
-			document.getElementById("lastAddRowLink").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");"	
+			else
+			{
+				//get all cols (transposed)
+				var tmpCols;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
 
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");					
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+2;++r) //+1 for th, and +1 for new row
+					{			
+						if(r-_CONFIG_DATA_ROW_OFFSET == rowToDelete) 
+						{ ++tmpColsIndex; continue; }//skip row to delete
+						
+						if(r >= tmpCols.length+1) continue; //gone through all data already
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{	
+							cols[c][newr] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}				
+						++newr;		
+					}
+				}	
+				
+				//create output string based on cols
+				str = "";
+				for(var c=0;c<cols.length;++c) 
+				{				
+					str += "<tr>";	
+					for(var r=0;r<cols[0].length;++r) 
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							str += "<th>"; 
+						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+								c >= _CONFIG_DATA_COL_OFFSET) 
+							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+							(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+						else
+							str += "<td>"; 
+
+
+						//first column is row numbers
+						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
+						{							
+							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+
+							//add +/- row controls
+							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "+";
+							str += "</a>";
+							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "-";
+							str += "</a>";	
+						}
+						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
+							str += "Row";
+						else
+							str += cols[c][r].innerHTML
+
+							if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+								str += "</th>"; 
+							else
+								str += "</td>";
+					}
+					str += "</tr>";	
+				}
+				
+				document.getElementById("SubSystemTable").innerHTML = str;
+			}
+				
+			//update last add row link
+			if(_tableViewIsTransposed)
+			{
+				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
+				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			}
+			else
+			{
+				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
+			}
 			versionHasChanged();
 		}
 		//popUpClearTemporaryVersionsPrompt
@@ -3903,6 +4018,63 @@
 			
 			document.getElementById("display").appendChild(el); //add element to display div
 			
+
+			el.style.display = "block";
+		}
+		
+		//popUpAssignTableAliasForm
+		function popUpAssignTableAliasForm()
+		{
+			Debug.log("CfgGUI popUpAssignTableAliasForm");
+
+			var str = "";
+
+			el = document.createElement("div");			
+			el.setAttribute("id", "popUpAssignTableAliasForm");
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='javascript:var el = document.getElementById(" +
+					"\"popUpAssignTableAliasForm\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+
+			str += "<div id='popUpAssignTableAliasForm-div'>";
+			str += "Please enter the Alias you would like to assign to version &apos;" + 
+					_version + "&apos; of <b>" + 
+					_currentConfigName + "</b>:<br><br>";
+			str += "<input type='text' id='popUpAssignTableAliasForm-alias' value='myAlias'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "setVersionAliasInActiveBackbone(" +
+					"document.getElementById(\"popUpAssignTableAliasForm-alias\").value" +
+					",\"" + 
+					_currentConfigName + "\",\"" + 
+					_version + "\"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpAssignTableAliasForm\"); el.parentNode.removeChild(el); ";
+			
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Assign Alias' title='" +
+					"Assign an Alias to " + _currentConfigName + 
+					" version " + _version +					
+					" by automatically modifying the active Backbone group." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+
 
 			el.style.display = "block";
 		}
