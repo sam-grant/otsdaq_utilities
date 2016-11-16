@@ -1037,14 +1037,14 @@ try
 			version = ConfigurationVersion();
 		}
 	}
-	ConfigurationVersion temporaryVersion = cfgMgr->getConfigurationByName(configName)->
-		createTemporaryView(version);
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
 	//returns -1 on error that data was unchanged
-	ConfigurationView* cfgView = cfgMgr->getConfigurationByName(configName)->
-			getTemporaryView(temporaryVersion);
+	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
 	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
 	bool needToEraseTemporarySource = false;
 
@@ -1053,6 +1053,9 @@ try
 	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
 	{
 		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
 		throw std::runtime_error(ss.str());
 	}
 	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
@@ -1063,8 +1066,30 @@ try
 	else if(retVal < 0)
 	{
 		__SS__ << "This should not be possible! Fatal error." << std::endl;
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
 		throw std::runtime_error(ss.str());
 	}
+
+
+	//check for duplicate tables already in cache
+	{
+		ConfigurationVersion duplicateVersion;
+
+		duplicateVersion = config->checkForDuplicate(temporaryVersion);
+
+		if(!duplicateVersion.isInvalid())
+		{
+			__SS__ << "This version is identical to another version currently cached v" <<
+					duplicateVersion << ". No reason to save a duplicate." << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			//delete temporaryVersion
+			config->eraseView(temporaryVersion);
+			throw std::runtime_error(ss.str());
+		}
+	}
+
+
 
 	cfgView->setURIEncodedComment(comment);
 	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
