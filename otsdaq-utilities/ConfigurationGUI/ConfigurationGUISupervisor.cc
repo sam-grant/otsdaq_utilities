@@ -1220,6 +1220,9 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
 		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
 {
+
+	xmldoc.addTextElementToData("AttemptedNewGroupName",groupName);
+
 	//make sure not using partial tables or anything weird when creating the group
 	//	so start from scratch and load backbone
 	cfgMgr->getAllConfigurationInfo(true);
