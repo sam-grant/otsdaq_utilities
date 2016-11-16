@@ -217,7 +217,6 @@
 			
 			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
 			//specificGroupRequestHandler(req,param)
-			//setMemberVersionsAsDefault(groupName,groupKey)
 		
 			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
 			//setupSpecificConfigInRight(configName,version)
@@ -2921,6 +2920,37 @@
 		//createConfigGroupHandler ~
 		function createConfigGroupHandler(req)
 		{
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{	
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+				Debug.log("There were problems identified in the tree view of the new group." +
+						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"'<u>Save Group with Warnings Ignored</u>'",
+						Debug.WARN_PRIORITY);
+				treeErr = "";
+				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
+						"style='margin-bottom:15px;' " +
+						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+						_currentGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						"Save the modified group as a new persistent key for this group name." +
+						"'/>";	
+
+				//remove all previous buttons
+				var el;
+				do
+				{
+					el = document.getElementById("saveGroupWithWarningsIgnored");
+					if(el) el.parentNode.removeChild(el);
+				} while(el);	
+
+				el = document.getElementById("display");
+				var str = el.innerHTML;
+				str = treeErr + str; //add save with warnings ignored button
+				el.innerHTML = str;
+				return;
+			}
+
 			var err = DesktopContent.getXMLValue(req,"Error");
 			var el = document.getElementById('createGroupInfo');
 			if(err) 
