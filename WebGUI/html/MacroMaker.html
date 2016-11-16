@@ -174,12 +174,10 @@
 		.deletex{
 			width:18px;
 			height:18px;
-			color: #993333 !important;
 			float:right;
-			background-color: #993333;
 			cursor: pointer; 
-			border-radius:20%;
 			border : 2px solid #c4e9f5;
+			border-radius: 50%;
 			text-align:center;
 			vertical-align: middle;
 			z-index:99;
@@ -732,7 +730,7 @@
 			</div>
 		</div>
 		<div id="popupIllegalNaming" class="smallPopup">
-			<h4>Macro name cannot contain special characters.</h4>
+			<h4>Macro name can only contain alphanumeric and underscore</h4>
 		    <div class="buttongroup">
 			  <center>
 				<button onclick="hideSmallPopup(this)">Okay</button>
@@ -742,6 +740,22 @@
 		<div id="popupIllegalInput" class="smallPopup">
 			<h4>Found illegal characters in the following field: </h4>
 			<h4 id="illegalInputValue"></h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+	    <div id="popupIllegalEdit" class="smallPopup">
+			<h4>Address/data field can only be a number</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+	    <div id="popupEmptyInput" class="smallPopup">
+			<h4>You have one or more empty address/data field(s)</h4>
 		    <div class="buttongroup">
 			  <center>
 				<button onclick="hideSmallPopup(this)">Okay</button>

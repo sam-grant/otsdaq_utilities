@@ -588,8 +588,7 @@
 			}
 				var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 						+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
-						+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
-						+ SEQINDEX + ")\"><b>X</b></div></div>";
+						+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
 				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
 				macroString.push(writeMacroString);
 			break;
@@ -606,8 +605,7 @@
 			else var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
-					+ "</b></p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
-					+ SEQINDEX + ")\"><b>X</b></div></div>";
+					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
 			var readMacroString = SEQINDEX+":r:"+addressStr+":";
 			macroString.push(readMacroString);
 			break;
@@ -624,8 +622,7 @@
 			else var delayStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
-					+ "</b> s</p><div id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
-					+ SEQINDEX + ")\"><b>X</b></div></div>";
+					+ "</b> s</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
 			break;
@@ -762,12 +759,19 @@
     {
     	getOrder();
     	var macroName = document.getElementById("macroName").value;
-    	var Regex = /^[\w\s]+$/;
+    	//var Regex = /^[\w\s]+$/;
+    	var Regex = /^[a-zA-Z0-9\_]+$/g;
+
     	if (!Regex.test(macroName)) 
 			document.getElementById("popupIllegalNaming").style.display = "block";
     	else
     	{
     		var macroNotes = document.getElementById("macroNotes").value;
+			if(macroNotes.search("@") != -1 || macroNotes.search("#") != -1 || macroNotes.includes(".."))
+			{
+				document.getElementById("popupIllegalNotes").style.display = "block";
+				return;
+			}
     		var macroLibEl = document.getElementById('listOfPrivateMacros');
     		stringOfAllMacros[MACROINDEX] = tempString;
     		var isMacroPublic = document.getElementById("isMacroPublic").checked;
@@ -775,7 +779,7 @@
     				+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
 					+macroNotes,"",createMacroHandler);
     		loadExistingMacros();
-    		hidePopupSaveMacro();
+    		hidePopupSaveMacro();   
     		macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
     	}
     }
@@ -1176,10 +1180,18 @@
    	}
        
     function editCommands(textarea, seqID, index)
-    {
+    {	
     	var x = arrayOfCommandsForEdit[seqID].split(":");
-    	x[index] = textarea.value;
-    	arrayOfCommandsForEdit[seqID] = x.join(":");
+		if(isNaN("0x" + textarea.value) && textarea.value !== "")
+		{
+			document.getElementById("popupIllegalEdit").style.display = "block";
+			textarea.value = x[index];
+		}
+		else
+    	{
+			x[index] = textarea.value;
+			arrayOfCommandsForEdit[seqID] = x.join(":");
+    	}
     }
     
     function deleteMacroHandler(req)
@@ -1187,14 +1199,15 @@
 		Debug.log("deleteMacroHandler() was called. Req: " + req.responseText);
 		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
 		var reminderEl = document.getElementById('reminder');
-		reminderEl.innerHTML = "Successfully deleted " + deletedMacroName;
+		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);
 		loadExistingMacros();  
 	}
     
     function saveChangedMacro()
     {
     	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
-    	var Regex = /^[\w\s]+$/;
+    	//var Regex = /^[\w\s]+$/;
+    	var Regex = /^[a-zA-Z0-9\_]+$/g;
 		if (!Regex.test(newMacroNameForEdit)) 
 			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
@@ -1209,6 +1222,16 @@
 						document.getElementById("popupIllegalInput").style.display = "block";
 						document.getElementById("illegalInputValue").innerHTML = eachCommand[j];
 					    return;
+					}
+					else if (eachCommand[j] === '') 
+					{
+						if(eachCommand[j-2] == 'r') continue;		//OK if readback result is empty!
+						else
+						{
+							document.getElementById("popupEmptyInput").style.display = "block";
+							console.log(eachCommand + "index: " + j);
+							return;
+						}
 					}
 				}
 			}
