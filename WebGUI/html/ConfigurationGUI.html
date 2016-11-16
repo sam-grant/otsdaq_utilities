@@ -228,7 +228,9 @@
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path)
 			//toggleTreeChildren(depth,uid,nodeName,path)
-
+			//expandTreeChildrenDepth()
+			//hideTreeChildrenDepth()
+		
 			//addMemberToConfigGroup(groupName,backLinkStr) 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
@@ -248,6 +250,7 @@
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
 			//keyHandler(e)
+			//bodyKeyHandler(e)
 			//editCellOK(r,c)
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
@@ -1723,6 +1726,19 @@
 						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
 				treeViewHandlerStr_ += "<a href='javascript:" + refreshLinkStr + 
 						"'>Refresh</a>";
+				
+
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				treeViewHandlerStr_ += "<a href='javascript:expandTreeChildrenDepth()' " + 
+						"title='Expand all children at deepest depth; " +
+						"if deepest depth is 0, expand XDAQContextConfiguration preferentially.' " + 
+						">+ All Children</a>";
+				
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				treeViewHandlerStr_ += "<a href='javascript:hideTreeChildrenDepth()'" + 
+						"title='Hide all children at deepest depth.' " +
+						">- All Children</a>";
+				
 				treeViewHandlerStr_ += "<br><br>";
 
 				if(treeErr) 
@@ -1798,10 +1814,10 @@
 				uid = treeNodeUID_++;
 				nodeName = nodes[i].getAttribute("value");
 				
-				Debug.log("nodeName=" + nodeName + " depth=" + depth + " uid=" + uid);
+				Debug.log("nodeName= " + nodeName + " depth=" + depth + " uid=" + uid);
 								
 				childrenLength = nodes[i].children.length;
-				Debug.log("child's childrenLength=" + childrenLength);
+				//Debug.log("child's childrenLength=" + childrenLength);
 									
 				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
 				{	
@@ -1962,21 +1978,132 @@
 			}
 		}
 		
+		//expandTreeChildrenDepth ~
+		//	expand all children at deepest depth
+		//	if deepest depth is 0, expand XDAQContextConfiguration preferentially
+		function expandTreeChildrenDepth()
+		{
+			Debug.log("expandTreeChildrenDepth " + "");
+			
+			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			var params = []; //(depth,uid,nodeName,path)
+			var contextIndex = -1;
+			
+			var deepestDepth = -1;
+			//find deepest depth and build params array
+			for(var i=0;i<allNodes.length;++i)
+			{
+				//skip hidden nodes in search
+				if(allNodes[i].offsetParent === null) continue;
+				
+				params.push(
+						allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(","));
+				if((params[params.length-1][0]|0) > deepestDepth)
+					deepestDepth = params[params.length-1][0]|0;
+				
+				if(params[params.length-1][2] == "\"XDAQContextConfiguration\"") 
+					contextIndex = i; //found XDAQContextConfiguration, save index
+			}
+
+			Debug.log("deepestDepth " + deepestDepth);	
+			if(deepestDepth < 0) return;
+
+			//if deepestDepth is 0 and XDAQContextConfiguration is present
+			//	expand only XDAQContextConfiguration
+			//else expand all children at deepestDepth
+			
+			if(deepestDepth == 0 && contextIndex != -1)
+			{	//	expand only XDAQContextConfiguration
+				Debug.log("Expand only XDAQContextConfiguration " + contextIndex);
+				toggleTreeChildren(
+						params[contextIndex][0]|0, 		//make integer
+						params[contextIndex][1]|0,		//make integer
+						params[contextIndex][2].substr( //strip off surrounding quotes
+								1,params[contextIndex][2].length-2),
+						params[contextIndex][3].substr( //strip off surrounding quotes
+								1,params[contextIndex][3].length-2));
+				return;
+			}
+
+			for(var i=0;i<params.length;++i)
+				if((params[i][0]|0) == deepestDepth)
+				{
+					toggleTreeChildren(
+							params[i][0]|0, 		//make integer
+							params[i][1]|0,			//make integer
+							params[i][2].substr( 	//strip off surrounding quotes
+									1,params[i][2].length-2),
+							params[i][3].substr( 	//strip off surrounding quotes
+									1,params[i][3].length-2),
+							true);					//show
+				}
+		}
+		
+		//hideTreeChildrenDepth ~
+		//	hide all children at deepest depth
+		function hideTreeChildrenDepth()
+		{
+			Debug.log("hideTreeChildrenDepth " + "");
+			
+			//this means toggling all children at second deepest depth
+			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			var params = []; //(depth,uid,nodeName,path)
+			var contextIndex = -1;
+
+			var deepestDepth = -1;
+			var secondDeepestDepth = -1;
+			//find deepest depth and build params array
+			for(var i=0;i<allNodes.length;++i)
+			{
+				//skip hidden nodes in search
+				if(allNodes[i].offsetParent === null) continue;
+				
+				params.push(
+						allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(","));
+				if((params[params.length-1][0]|0) > deepestDepth)
+				{
+					secondDeepestDepth = deepestDepth; //track 2nd place
+					deepestDepth = params[params.length-1][0]|0;
+				}
+			}
+
+			Debug.log("secondDeepestDepth " + secondDeepestDepth);
+			if(secondDeepestDepth < 0) return;
+			
+			for(var i=0;i<params.length;++i)
+				if((params[i][0]|0) == secondDeepestDepth)
+				{
+					toggleTreeChildren(
+							params[i][0]|0, 		//make integer
+							params[i][1]|0,			//make integer
+							params[i][2].substr( 	//strip off surrounding quotes
+									1,params[i][2].length-2),
+							params[i][3].substr( 	//strip off surrounding quotes
+									1,params[i][3].length-2),
+							false); //hide
+				}
+		}
+		
 		//toggleTreeChildren ~ 
 		//	if expanding
 		//		if no children div, request new depth
 		//		else display children
 		//	if minimizing
 		//		hide children
-		function toggleTreeChildren(depth,uid,nodeName,path) 
+		//
+		//	setVal can be used to avoid toggling
+		//		- true = show, false = hide, undefined = toggle
+		function toggleTreeChildren(depth,uid,nodeName,path,setVal) 
 		{
-			Debug.log("depth: " + depth);
-			Debug.log("uid: " + uid);
-			Debug.log("nodeName: " + nodeName);
-			Debug.log("path: " + path);
+			var setValUsed = (setVal !== undefined);
+					
+			//			Debug.log("depth: " + depth);
+			//			Debug.log("uid: " + uid);
+			//			Debug.log("nodeName: " + nodeName);
+			//			Debug.log("path: " + path);
 			
 			var idString = depth + "-" + uid + "-" + nodeName;
-			Debug.log("idString: " + idString);
+			//Debug.log("idString: " + idString);
 			
 			var el = document.getElementById("treeNode-ChildrenOf-" + idString);
 			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
@@ -1985,7 +2112,13 @@
 			if(str != "") //if children already exist, then toggle display
 			{
 				var toggleEl = document.getElementById("treeNode-toggle-" + idString);
-				if(el.style.display == "none") //if not shown, show and "-"
+				var doShow = false;
+				
+				if(	(!setValUsed && el.style.display == "none") ||
+						(setValUsed && setVal) )
+					doShow = true;
+				
+				if(doShow) //if not shown, show and "-"
 				{
 					el.style.display = "block";
 					toggleEl.style.backgroundImage = 
@@ -1998,7 +2131,7 @@
 							"url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png)";
 				}
 			}
-			else	//if no children div, then request it
+			else if(!setValUsed || setVal)	//if no children div, then request it
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 						"&configGroup=" + configGroupEls[0].innerHTML + 
 						"&configGroupKey=" + configGroupEls[1].innerHTML +
@@ -3227,6 +3360,38 @@
             elem.setSelectionRange(caretPos, endPos);
 		}
 		
+		//bodyKeyHandler
+		function bodyKeyHandler(e) 
+		{
+			//detect proper views
+			var el = document.getElementById("treeView-ConfigGroupLink");			
+			if(el) //tree view key handler
+			{			
+				var expandKeys = [65,69,190,221,188]; // a, e, >, }, + (no shift needed)
+				var hideKeys = [90,77,187,219,189]; // z, m, <, {, - (no shift needed)			
+				//Debug.log("treeView bodyKey " + e.keyCode);
+				
+				for(var i=0;i<expandKeys.length;++i)
+					if(expandKeys[i] == e.keyCode)
+					{
+						//handle expand
+						Debug.log("treeView bodyKey expand " + e.keyCode);
+						expandTreeChildrenDepth();
+						break;
+					}
+
+				for(var i=0;i<hideKeys.length;++i)
+					if(hideKeys[i] == e.keyCode)
+					{
+						//handle hide
+						Debug.log("treeView bodyKey hide " + e.keyCode);
+						hideTreeChildrenDepth();
+						break;
+					}
+			}
+			//else no handler			
+		}
+		
 		//keyHandler
 		function keyHandler(e) 
 		{
@@ -4106,7 +4271,7 @@
 </head>
 	
 
-<body onload='Javascript:init();'>	
+<body onload='Javascript:init();' onkeydown='Javascript:bodyKeyHandler(event);'>	
 		
 	<h1>Configuration GUI</h1>
 		<div style='width:550px'>		
