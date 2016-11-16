@@ -548,8 +548,8 @@ else {
 			tmpBtn = document.createElement("div");
 			tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
 			tmpBtn.setAttribute("id", "DesktopDashboard-settings-icon");
-			tmpBtn.innerHTML = "<a href='Javascript:Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
-				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open the settings window'><img src='/WebPath/images/dashboardImages/icon-Settings.png'></a>";
+			tmpBtn.innerHTML = "<a href='Javascript:var win = Desktop.desktop.addWindow(\"Settings\",Desktop.desktop.login.getUsername()," +
+				"\"/WebPath/html/UserSettings.html\",true);'  title='Click to open settings window'><img src='/WebPath/images/dashboardImages/icon-Settings.png'></a>";
 			_topBar.appendChild(tmpBtn);
 					
 			tmpBtn = document.createElement("div");
