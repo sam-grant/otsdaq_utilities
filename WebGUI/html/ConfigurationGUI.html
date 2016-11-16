@@ -572,12 +572,12 @@
 			str += "<label id='filteredGroupCount'></label> of " +
 					groupNames.length + " groups. ";
 			str += "Don't see what you need: ";
-			str += "<button type='button' onmouseup='" +
+			str += "<a href='" +
 					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 					"\");' title='" +
 					"Goto the group creator interface." +
 					"'>" + 
-					"Create a new Group</button>";
+					"Create a new Group</a>";
 			str += "<br>";
 
 					
@@ -941,35 +941,38 @@
 		//specificGroupRequestHandler ~~
 		//	backLinkStr is defined to call functions one after the other
 		function specificGroupRequestHandler(req, param) {
+
+			//remove all previous buttons
+			var el;
+			do
+			{
+				el = document.getElementById("saveGroupWithWarningsIgnored");
+				if(el) el.parentNode.removeChild(el);
+			} while(el);	
+			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
 			{					
 				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
-				Debug.log("There were problems identified in the tree view of the new group." +
-						"\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+				Debug.log("TThere were problems identified in the tree view of the " +
+						"attempted new group &apos;" +
+						attemptedNewGroupName +
+						"&apos;.\nYou can save the group anyway (if you think it is a good idea) by clicking " +
 						"'<u>Save Group with Warnings Ignored</u>'",
 						Debug.WARN_PRIORITY);
-				treeErr = "";
-				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
+				var str = "";
+				str += " <input id='saveGroupWithWarningsIgnored' " + 
 						"style='margin-bottom:15px;' " +
 						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
 						attemptedNewGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
 						"'/><br>";	
 
-				//remove all previous buttons
-				var el;
-				do
-				{
-					el = document.getElementById("saveGroupWithWarningsIgnored");
-					if(el) el.parentNode.removeChild(el);
-				} while(el);	
-					
-				el = document.getElementById("display");
-				var str = el.innerHTML;
-				str = treeErr + str; //add save with warnings ignored button
-				el.innerHTML = str;
+				el = document.createElement("div");
+				el.innerHTML = str; //create element with save with warnings ignored button
+				var displayEl = document.getElementById("display");
+				displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child
 				return;
 			}
 			
@@ -2883,43 +2886,46 @@
 					}
 				}			
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-					config, configMap, createConfigGroupHandler);
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" +	config +
+					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
+					configMap, createConfigGroupHandler);
 		}
 
 		//createConfigGroupHandler ~
 		function createConfigGroupHandler(req)
 		{
+			//remove all previous buttons
+			var el;
+			do
+			{
+				el = document.getElementById("saveGroupWithWarningsIgnored");
+				if(el) el.parentNode.removeChild(el);
+			} while(el);	
+			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
 			{	
 				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
-				Debug.log("There were problems identified in the tree view of the attempted new group " +
+				Debug.log("There were problems identified in the tree view of the " +
+						"attempted new group &apos;" +
 						attemptedNewGroupName +
-						".\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"&apos;.\nYou can save the group anyway (if you think it is a good idea) by clicking " +
 						"'<u>Save Group with Warnings Ignored</u>'",
 						Debug.WARN_PRIORITY);
-				treeErr = "";
-				treeErr += " <input id='saveGroupWithWarningsIgnored' " + 
+				var str = "";
+				str += " <input id='saveGroupWithWarningsIgnored' " + 
 						"style='margin-bottom:15px;' " +
 						"type='button' onmouseup='createConfigGroup(1);' " + 
 						" value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
 						"'/>";	
 
-				//remove all previous buttons
-				var el;
-				do
-				{
-					el = document.getElementById("saveGroupWithWarningsIgnored");
-					if(el) el.parentNode.removeChild(el);
-				} while(el);	
-
-				el = document.getElementById("display");
-				var str = el.innerHTML;
-				str = treeErr + str; //add save with warnings ignored button
-				el.innerHTML = str;
+				el = document.createElement("div");
+				el.innerHTML = str; //create element with save with warnings ignored button
+				var displayEl = document.getElementById("display");
+				displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child
 				return;
 			}
 
@@ -2942,7 +2948,9 @@
 			str += "<a href='javascript:setupSpecificConfigGroup(\"" + name + 
 					"\",\"" + key + "\");'>Member-View</a> or ";
 			str += "<a href='javascript:setupConfigGroupTreeView(\"" + name + 
-					"\",\"" + key + "\");'>Tree-View</a>";
+					"\",\"" + key + "\");'>Tree-View</a>, or ";
+			str += "<a href='javascript:activateSystemConfig(\"" + name + 
+					"\",\"" + key + "\");'>Activate</a> it.";
 			
 			el.innerHTML = str;
 		}
