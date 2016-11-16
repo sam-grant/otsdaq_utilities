@@ -52,17 +52,12 @@ throw (xdaq::exception::Exception)
 	//new user gets a config mgr assigned
 	//user can fill any of the sub-configs (fill from version or init empty), which becomes the active view for that sub-config
 
+
+	return;
+
 	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
-
-	//FIXME
 	__MOUT__ << "To prove the concept..." << std::endl;
-
-	return;
-
 	testXDAQContext(); //test new config
-
-	return;
-
 }
 
 //========================================================================================================================

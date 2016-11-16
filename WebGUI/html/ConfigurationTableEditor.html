@@ -487,8 +487,8 @@
 			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
-					colType == "Comment" || 
-					(r == _CONFIG_TYPE_ROW_OFFSET && colType == "UID"))
+					colType == "Comment" )//|| 
+					//(r == _CONFIG_TYPE_ROW_OFFSET && colType == "UID"))
 				return false;
 			
 			
@@ -507,18 +507,28 @@
 			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //column type and data types
 			{
-				str += "<select  onkeydown='keyHandler(event)' onchange='handleTypeSelect()' id='selectCellTypeSelect' style='float:left'>";
-				for(var i=0;i<_typeArray.length;++i)
-				{			
-					str += "<option value='" + _typeArray[i] + "'>";
-					str += _typeArray[i];	//can display however
-					str += "</option>";
-					
-					if(typeOptionIndex == -1 && //only take first match
-							el.getElementsByTagName("div")[0].innerHTML.indexOf(_typeArray[i]) == 0) 
-						typeOptionIndex = i; //get starting sel index for type
-				}				
-				str += "</select>";
+				//do not allow type change if UID type
+				if(colType != "UID")
+				{
+					str += "<select  onkeydown='keyHandler(event)' onchange='handleTypeSelect()' id='selectCellTypeSelect' style='float:left'>";
+					for(var i=0;i<_typeArray.length;++i)
+					{			
+						str += "<option value='" + _typeArray[i] + "'>";
+						str += _typeArray[i];	//can display however
+						str += "</option>";
+						
+						if(typeOptionIndex == -1 && //only take first match
+								el.getElementsByTagName("div")[0].innerHTML.indexOf(_typeArray[i]) == 0) 
+							typeOptionIndex = i; //get starting sel index for type
+					}				
+					str += "</select>";
+				}
+				else
+				{
+					str += "UID ";
+					str += "<input id='selectCellTypeSelect' value='UID' style='display:none'></input>";
+				}
+				
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
 						"style='display:none; width:40px; float:left; height: 13px' value='0'>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
@@ -554,12 +564,22 @@
 			
 			if(r == _CONFIG_TYPE_ROW_OFFSET) //select dropdown menu
 			{
-				Debug.log("typeOptionIndex=" + typeOptionIndex +
-						" dataTypeOptionIndex=" + dataTypeOptionIndex);
-				el.getElementsByTagName("select")[0].selectedIndex = typeOptionIndex;
-				el.getElementsByTagName("select")[1].selectedIndex = dataTypeOptionIndex;
-				el.getElementsByTagName("select")[0].focus();
-				handleTypeSelect();
+				//Debug.log("typeOptionIndex=" + typeOptionIndex +
+				//		" dataTypeOptionIndex=" + dataTypeOptionIndex);
+				
+				if(colType != "UID")
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = typeOptionIndex;
+					el.getElementsByTagName("select")[1].selectedIndex = dataTypeOptionIndex;
+					el.getElementsByTagName("select")[0].focus();
+					handleTypeSelect();
+				}
+				else
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = dataTypeOptionIndex;
+					el.getElementsByTagName("select")[0].focus();
+				}
+					
 			}
 			else //select text box
 				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
@@ -694,16 +714,20 @@
 				Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c);
 				//get type and data type from select boxes (and input field for link ID)
 				var sel = document.getElementById("selectCellTypeSelect");				
-				var colType = sel.options[sel.selectedIndex].value;
+				var colType = sel.selectedIndex?sel.options[sel.selectedIndex].value:
+						sel.value; //the else is case should be UID
 				sel = document.getElementById("selectCellDataTypeSelect");
 				var colDataType = sel.options[sel.selectedIndex].value;
 				
-				var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
-						
-				//if child link special type, append special type ID
-				for(var i=0;i<specTypeArray.length;++i)
-					if(colType == specTypeArray[i])
-						colType += "-" + document.getElementById("selectCellSpecTypeID").value;
+				if(colType != "UID")
+				{
+					var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+							
+					//if child link special type, append special type ID
+					for(var i=0;i<specTypeArray.length;++i)
+						if(colType == specTypeArray[i])
+							colType += "-" + document.getElementById("selectCellSpecTypeID").value;
+				}
 				
 				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
 						colType + "," + colDataType);
