@@ -2687,10 +2687,10 @@
 				name = configNames[i].getAttribute("value");
 				
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='javascript:{" +
+				str += "<a style='text-decoration:none;color:black;' href='javascript:" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"el[" + i + "].checked = !el[" + i + "].checked;" +
-						"}'>";
+						"'>";
 				//add checkbox
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
