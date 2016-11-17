@@ -238,7 +238,7 @@
 			//activateSystemConfig(groupName, groupKey)
 			//activateSystemConfigHandler(req)
 			//selectForCreateConfig(i)
-			//versionsForCreateConfig(i)		
+			//versionsForCreateConfig(i, alias)		
 			//createConfigGroup(ignoreWarnings)
 			//createConfigGroupHandler(req)
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
@@ -257,6 +257,8 @@
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
 			//popUpSaveNewTableForm()
 			//popUpVersionAliasForm()
+			//popUpVersionAliasGroupEditorForm()
+			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
 			//saveConfigAsNewVersion(temporary, backLinkStr)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
@@ -1121,6 +1123,15 @@
 					">";
 			str += "Set all Member Versions to 'Default'";
 			str += "</a>";
+			str += "<br>";
+
+			str += "<a href='javascript:popUpVersionAliasSpecificGroupForm(" + 
+					"\"" + groupName + "\",\"" + groupKey + "\");' title='Set an Alias for all member versions" +
+					" by automatically setting up the specified Alias " + 
+					"in the active Backbone group.'" +
+					">";
+			str += "Set all Member Versions to an Alias";
+			str += "</a>";
 			str += "<br><br>";
 			
 
@@ -1222,19 +1233,24 @@
 				
 				str += "Existing versions: ";
 				str += "<label id='" + configName + "-existingVersions'>";
-				str += version;
+				//str += version;
 				cfgVersionStr = version + ",";
 				configExistingVersions = configVersions[i].getElementsByTagName("ConfigurationExistingVersion");
+				var existingVersion;
 				for(var j=0;j<configExistingVersions.length;++j)
 				{
-					version = configExistingVersions[j].getAttribute("value");
+					existingVersion = configExistingVersions[j].getAttribute("value");
+					if(existingVersion == version) //skip link
+					{
+						str += " " + version; continue;
+					}
 					str += " ";
 					str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + configName + "\"," + 
-							"\"" + version + "\"";
-					str += ")'>" + version;
+							"\"" + existingVersion + "\"";
+					str += ")'>" + existingVersion;
 					str += "</a>";
-					cfgVersionStr += version + ",";
+					cfgVersionStr += existingVersion + ",";
 				}			
 				str += "</label>";	
 				
@@ -2605,15 +2621,19 @@
 			str += "<table>";			
 
 			str += "<tr><td>";
-			str += "<a href='javascript:selectForCreateConfig(1)'>All</a> | " +
-					"<a href='javascript:selectForCreateConfig(0)'>None</a> | " + 
-					"<a href='javascript:selectForCreateConfig(2)'>Context</a> | " +
-					"<a href='javascript:selectForCreateConfig(3)'>Backbone</a> | " +
-					"<a href='javascript:selectForCreateConfig(4)'>Configuration</a>";
+			
+			var title = "Select/Deselect checkboxes based on this selection.";
+			str += "<a href='javascript:selectForCreateConfig(1)' title='" + title + "'>All</a> | " +
+					"<a href='javascript:selectForCreateConfig(0)' title='" + title + "'>None</a> | " + 
+					"<a href='javascript:selectForCreateConfig(2)' title='" + title + "'>Context</a> | " +
+					"<a href='javascript:selectForCreateConfig(3)' title='" + title + "'>Backbone</a> | " +
+					"<a href='javascript:selectForCreateConfig(4)' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td>";
-			str += "<a href='javascript:versionsForCreateConfig(0)'>Defaults</a> | " + 
-					"<a href='javascript:versionsForCreateConfig(1)'>Latest</a>";
+			var title = "Select the version in the drop-downs for all tables based on this selection.";
+			str += "<a href='javascript:versionsForCreateConfig(0)' title='" + title + "'>Latest</a> | " +
+					"<a href='javascript:versionsForCreateConfig(1)' title='" + title + "'>Defaults</a> | " +
+					"<a href='javascript:popUpVersionAliasGroupEditorForm()' title='" + title + "'>Other Alias</a>";
 			str += "</td><td></td>";
 			str += "</tr>";
 			
@@ -2772,43 +2792,14 @@
 		}
 		
 		//versionsForCreateConfig ~
-		//0 is default, 1 is latest
-		function versionsForCreateConfig(i,reqIndex)
-		{
-			if(i == 0) //handle defaults request
-				return DesktopContent.XMLHttpRequest("Request?RequestType=getVersionAliases", "", 
-						versionsForCreateConfig, 2);	
-			var req;
-						
-			var aliases;
-			var names;
-			var versions;
-			var comments;
-			if(reqIndex) //handle defaults response
-			{
-				req = i;
-				i = reqIndex;
-				
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
-				
-				activateSystemConfigHandler(req); //display active config groups
-				
-				aliases = req.responseXML.getElementsByTagName("VersionAlias");
-				names = req.responseXML.getElementsByTagName("ConfigurationName");
-				versions = req.responseXML.getElementsByTagName("Version");
-				comments = req.responseXML.getElementsByTagName("Comment");
-			}
-								
+		//0 is latest, 1 is default, 2 is otherAlias 
+		function versionsForCreateConfig(i,alias)
+		{						
 			var els = document.getElementsByClassName("memberConfigCheckbox");
 			var sel,options;
 			switch(i)
 			{
-			case 1: //latest
+			case 0: //latest
 				for(var el=0;el<els.length;++el)
 				{
 					Debug.log(els[el].value);
@@ -2824,43 +2815,59 @@
 						}
 				}
 				break;
-			case 2: //defaults response
-				//select defaults
-				var name, found, i;
-				var defaultVersion;
+			case 1: //defaults
+				
+				var defaultToSel;
 				for(var el=0;el<els.length;++el)
 				{
-					name = els[el].value;
-					
-					//find default for name
-					found = false;
-					for(i=0;i<names.length;++i)
-						if(name == names[i].getAttribute("value") &&
-								"Default" == aliases[i].getAttribute("value"))
-						{ 
-							Debug.log("Found default for " + els[el].value);
-							found = true;
-							break;
-						}
-
+					Debug.log(els[el].value);
 					sel = document.getElementById("select-" + els[el].value);
 					options = sel.options;
-					
-					if(!found)
-					{
-						//no default found
-						Debug.log("Default to oldest for " + els[el].value);
-						if(options.length)
-							options[0].selected = true;
-						continue;
-					}
-					
-					//found so select default
-					defaultVersion = versions[i].getAttribute("value");
-					Debug.log("Found default as " + defaultVersion);
-					if(defaultVersion < options.length)
-						options[defaultVersion].selected = true;
+
+					//find ALIAS:Default or else first that is not temporary
+					defaultToSel = -1;
+					for(var i=0;i<options.length;++i)
+						if(options[i].value == "ALIAS:Default")
+						{
+							//done!
+							defaultToSel = i;
+							break;
+						}
+						else if(defaultToSel == -1 && 
+								options[i].value[0] != '-') //assume leading '-' means temporary
+							defaultToSel = i; //found backup default, keep looking for ALIAS:Default				
+
+					if(defaultToSel >= 0)
+						options[defaultToSel].selected = true;
 				}
+				
+				break;
+			case 2: //other alias
+				
+				var defaultToSel;
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+
+					//find ALIAS:Default or else first that is not temporary
+					defaultToSel = -1;
+					for(var i=0;i<options.length;++i)
+						if(options[i].value == "ALIAS:" + alias)
+						{
+							//done!
+							defaultToSel = i;
+							break;
+						}
+						else if(defaultToSel == -1 && 
+								options[i].value[0] != '-') //assume leading '-' means temporary
+							defaultToSel = i; //found backup default, keep looking for ALIAS:Default				
+
+					if(defaultToSel >= 0)
+						options[defaultToSel].selected = true;
+				}
+				
 				break;
 			default: 
 				Debug.log("Impossible! Should never happen!! Alert system admins.",Debug.HIGH_PRIORITY);				
@@ -3920,6 +3927,130 @@
 			}
 			versionHasChanged();
 		}
+		
+		//popUpVersionAliasSpecificGroupForm
+		function popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+		{
+			Debug.log("CfgGUI popUpVersionAliasSpecificGroupForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "myAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the Alias you would like to apply to all member table versions:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += 
+					"DesktopContent.XMLHttpRequest(\"Request?RequestType=setAliasOfGroupMembers" +
+					"&versionAlias=\" + " + 
+					"document.getElementById(\"popUpDialog-alias\").value + \"" +
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey + "\", \"\"," +
+					"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";			
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Set Member Aliases' title='" +
+					"Set the Alias for all members in the actve Backbone." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		//popUpVersionAliasGroupEditorForm
+		function popUpVersionAliasGroupEditorForm()
+		{
+			Debug.log("CfgGUI popUpVersionAliasGroupEditorForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "myAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the Alias you would like to select for all tables:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "versionsForCreateConfig(2," +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Select Alias' title='" +
+					"Select the Alias in the drop-down for all tables." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		
 		//popUpClearTemporaryVersionsPrompt
 		function popUpClearTemporaryVersionsPrompt(backLinkStr)
 		{
