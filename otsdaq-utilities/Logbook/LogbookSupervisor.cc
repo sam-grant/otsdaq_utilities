@@ -685,7 +685,7 @@ void LogbookSupervisor::refreshLogbook(time_t date, unsigned char duration,
 			}
 			drnt->d_name[finish] = '\0';
 			extractedDay = atoi((char *)(&(drnt->d_name[start])));
-			if(out) *out << __COUT_HDR_FL__ << "dirContents " << (char *)(&(drnt->d_name[start])) << " " << extractedDay << std::endl;
+			//if(out) *out << __COUT_HDR_FL__ << "dirContents " << (char *)(&(drnt->d_name[start])) << " " << extractedDay << std::endl;
 			if(!mostRecentDayIndex_ || mostRecentDayIndex_ < extractedDay) mostRecentDayIndex_ = extractedDay;
 		}
 		if(out) *out << __COUT_HDR_FL__ << "dirContents done, found most recent day: " << mostRecentDayIndex_ << std::endl;

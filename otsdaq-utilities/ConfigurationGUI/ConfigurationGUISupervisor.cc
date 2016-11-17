@@ -563,6 +563,8 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 		if(startPath == "/")
 			cfgMgr->getAllConfigurationInfo(true); //do refresh
 
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
 				cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
@@ -572,6 +574,8 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 		{
 			xmldoc.addTextElementToData("MemberName", activePair.first);
 			xmldoc.addTextElementToData("MemberVersion", activePair.second.toString());
+			xmldoc.addTextElementToData("MemberComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
 		}
 
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
@@ -741,6 +745,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 	std::map<std::string, ConfigurationInfo>::const_iterator it;
 
+	//load group so comments can be had
+	cfgMgr->loadConfigurationGroup(groupName,groupKey);
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 			cfgMgr->getActiveVersionAliases();
@@ -751,6 +757,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	{
 		__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
 		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+		xmldoc.addTextElementToParent("MemberComment",
+				allCfgInfo[memberPair.first].configurationPtr_->getView().getComment(), parentEl);
 		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 
 		it = allCfgInfo.find(memberPair.first);

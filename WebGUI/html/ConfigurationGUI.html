@@ -154,6 +154,8 @@
 		var _MAX_CHUNK_SIZE = 100; //100 rows per page
 		var _CONFIG_DATA_ROW_OFFSET = 2;
 		var _CONFIG_DATA_COL_OFFSET = 1;
+
+		var _DEFAULT_COMMENT = "No comment.";
 	
 		var _currentConfigName, _currentGroupName;
 		var _editingCell = false;
@@ -189,7 +191,7 @@
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var fancyTreeViewHandlerStr_;
 		var treeNodeUID_;		//incrementing unique id for nodes
-		var treeMemberNames_, treeMemberVersions_;
+		var treeMemberNames_, treeMemberVersions_, treeMemberComments_;
 		var treeViewBackLinkStr_;
 		var treeGroupName_, treeGroupKey_;
 		
@@ -1041,7 +1043,9 @@
 
 			var configNames = req.responseXML.getElementsByTagName("MemberName");
 			var configVersions = req.responseXML.getElementsByTagName("MemberVersion");
-			var key,version,configName;
+			var configComments = req.responseXML.getElementsByTagName("MemberComment");
+			
+			var key,version,configName,configComment;
 			var el = document.getElementById("display");
 
 			var str = "";
@@ -1147,6 +1151,7 @@
 			{
 				configName = configNames[i].getAttribute("value");
 				version = configVersions[i].getAttribute("value");
+				configComment = configComments[i].getAttribute("value");
 				
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 						groupKey + "\\\",undefined,\\\"anchorTag-" + 
@@ -1155,8 +1160,9 @@
 				replaceScreenJS = "setupSpecificConfig(\"" + 
 						configName + "\",\"" +
 						version + "\",\"" + backLinkStr + "\");";
-				
-				str += "<div style='float:left;'>";
+
+				str += "<div style='float:left;width:500px'>"; //open pre-comment div
+				str += "<div style='float:left;'>";	//open name div
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
 				
@@ -1222,11 +1228,22 @@
 							//"onmouseup='" + onmouseupJS + "' " +
 							">" +	
 							"<div class='gotoNavDiv'></div>" +			
-							"</div>"; //end nav Link
-					str += "<div id='clearDiv'></div>";
+							"</div>"; //end nav Link					
 				}
 				
+				str += "</div>"; //close pre-comment div
 				
+				//add comment
+				//make comment html safe
+				configComment = configComment.replace(/</g, "&lt");
+				configComment = configComment.replace(/>/g, "&gt");
+				if(configComment != _DEFAULT_COMMENT) //do not show if default
+					str += "<div style='font-size:14px; margin:2px 0 0 20px; float:left'>" +
+						"//" + configComment +
+						"</div>";
+				
+				//add prompt and existing versions
+				str += "<div id='clearDiv'></div>";
 				str += "Click below to change "  + niceName(configName) + 
 					" Version for " + groupName + ":<br>";		
 				
@@ -1706,12 +1723,15 @@
 			
 			var memberNames = req.responseXML.getElementsByTagName("MemberName");
 			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
+			var memberComments = req.responseXML.getElementsByTagName("MemberComment");
 			treeMemberNames_ = [];
 			treeMemberVersions_ = [];
+			treeMemberComments_ = [];
 			for(var i=0;i<memberNames.length;++i)
 			{
 				treeMemberNames_.push(memberNames[i].getAttribute("value"));
-				treeMemberVersions_.push(memberVersions[i].getAttribute("value"));			 
+				treeMemberVersions_.push(memberVersions[i].getAttribute("value"));		
+				treeMemberComments_.push(memberComments[i].getAttribute("value"));				
 			}
 			
 			var el;
@@ -1908,6 +1928,7 @@
 				var newwindowJS = "";
 				var newtabJS = ""; //FIXME TODO allow new tab creation
 				var treeNavContextMenuItemHandlers = [];
+				var tableComment = "";
 				
 				//search for table link
 				for(j=0;j<treeMemberNames_.length;++j)
@@ -1958,6 +1979,13 @@
 					//							"\"" +
 					//							");";
 					treeNavContextMenuItemHandlers.push(newtabJS);
+					
+					tableComment = treeMemberComments_[j];
+					//make comment html safe
+					tableComment = tableComment.replace(/</g, "&lt");
+					tableComment = tableComment.replace(/>/g, "&gt");
+					if(tableComment == _DEFAULT_COMMENT) //do not show if default
+						tableComment = "";
 				}
 
 				//////////=======================
@@ -1970,7 +1998,14 @@
 						depth + "," +	uid + ",\"" +							
 						nodeName + "\",\"" + path +
 						"\");' " + // end expander onmouseup
-						"></div>" +
+						"></div>";
+
+				if(onmouseupJS != "") //fix width if this is a config node so comments show up aligned
+					treeViewHandlerStr_ += "<div style='float:left;width:350px'>"; //open pre-comment div
+				else
+					treeViewHandlerStr_ += "<div style='float:left;'>"; //open pre-comment div
+				
+				treeViewHandlerStr_	+=
 						"<div class='treeNode-Value'>" + value + "</div>";
 				
 				if(onmouseupJS != "") //if there is a link, add it
@@ -2005,6 +2040,15 @@
 						"<div class='gotoNavDiv'></div>" +			
 						"</div>"; //end treeNode Link div
 				}
+				
+				treeViewHandlerStr_ += "</div>"; //close pre-comment div
+				
+				//add comment if applicable
+				if(tableComment != "")
+					treeViewHandlerStr_ += "<div style='font-size:14px; margin:2px 0 0 20px; float:left'>" +
+						"//" + tableComment +
+						"</div>";
+					
 				
 				treeViewHandlerStr_ += 
 						"<div id='clearDiv'></div>" +
@@ -4146,7 +4190,6 @@
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 			
-			var defaultComment = "No comment.";
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
@@ -4156,7 +4199,7 @@
 			str += "Please enter a comment describing this new version of <b>" + 
 					_currentConfigName + "</b>:<br>";
 			str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
-			str += defaultComment;
+			str += _DEFAULT_COMMENT;
 			str += "</textarea>";
 			str += "</div>";
 			
@@ -4172,7 +4215,7 @@
 			
 			//select comment text
 			setCaretPosition(document.getElementById("popUpDialog-comment"),
-					0,defaultComment.length);
+					0,_DEFAULT_COMMENT.length);
 		}
 		
 		//popUpVersionAliasForm
