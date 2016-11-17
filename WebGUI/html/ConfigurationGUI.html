@@ -1746,12 +1746,14 @@
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				treeViewHandlerStr_ += "<a href='javascript:expandTreeChildrenDepth()' " + 
 						"title='Expand all children at deepest depth; " +
-						"if deepest depth is 0, expand XDAQContextConfiguration preferentially.' " + 
+						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
+						"(Hot-keys: + , &gt; , } , A , E )' " +
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				treeViewHandlerStr_ += "<a href='javascript:hideTreeChildrenDepth()'" + 
-						"title='Hide all children at deepest depth.' " +
+						"title='Hide all children at deepest depth.\n\n" +
+						"(Hot-keys: - , &lt; , { , Z , M )' " +
 						">- All Children</a>";
 				
 				treeViewHandlerStr_ += "<br><br>";
