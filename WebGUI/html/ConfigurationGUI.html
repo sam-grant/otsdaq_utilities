@@ -4402,12 +4402,16 @@
 			str = el.innerHTML;
 			var configNameArr = str.split(',');
 			str = "";
-			str += newVersion;
+			//str += newVersion;
 			//for each member configuration					
 			for(var i=0;i<configNameArr.length-1;++i) //skip last ',' empty element
 			{
-				Debug.log(configNameArr[i]);
-				if(configNameArr[i] == newVersion) continue;
+				//Debug.log(configNameArr[i]);
+				if(configNameArr[i] == newVersion)  //skip link
+				{
+					str += " " + newVersion;
+ 					continue;
+				}
 				str += " ";
 				str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
 						groupName + "\",\"" + configName + "\"," + 
