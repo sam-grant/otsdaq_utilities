@@ -1015,8 +1015,9 @@
 					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
 					
-				el.innerHTML = str;
-				return;
+				Debug.log(str,Debug.WARN_PRIORITY);
+				//el.innerHTML = str;
+				//return;
 			}
 			
 			var backLinkStr = "";
@@ -2686,17 +2687,18 @@
 				str += "<tr><td>";
 				name = configNames[i].getAttribute("value");
 				
+				
+				//add checkbox
+				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
+						name + "'>";
 				//add link so text toggles checkbox
 				str += "<a style='text-decoration:none;color:black;' href='javascript:" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 						"'>";
-				//add checkbox
-				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
-						name + "'>";
 				str += niceName(name); //can display however
-				str += "</input>";
 				str += "</a>";
+				str += "</input>";
 
 				configVersions = configVersionHdr[i].getElementsByTagName("Version");
 				//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
