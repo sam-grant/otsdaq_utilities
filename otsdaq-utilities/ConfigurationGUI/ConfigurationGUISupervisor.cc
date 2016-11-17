@@ -770,6 +770,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 		if(commentsLoaded)
 			xmldoc.addTextElementToParent("MemberComment",
 					allCfgInfo[memberPair.first].configurationPtr_->getView().getComment(), parentEl);
+		else
+			xmldoc.addTextElementToParent("MemberComment", "", parentEl);
 		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 
 		it = allCfgInfo.find(memberPair.first);
