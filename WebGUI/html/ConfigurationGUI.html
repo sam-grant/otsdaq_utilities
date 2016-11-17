@@ -108,7 +108,7 @@
 			border-bottom: 1px solid #b9a3a3;
 	    }
 	    	
-		#popUpSaveTableCommentForm, #popUpAssignTableAliasForm {
+		#popUpDialog {
 			position: absolute;
 			z-index: 1000;    
 			border: 1px solid #770000;
@@ -255,8 +255,8 @@
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
-			//popUpSaveTableCommentForm()
-			//popUpAssignTableAliasForm()
+			//popUpSaveNewTableForm()
+			//popUpVersionAliasForm()
 			//saveConfigAsNewVersion(temporary, backLinkStr)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
@@ -1398,7 +1398,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='javascript:popUpAssignTableAliasForm();' "+
+				str +=  "<a href='javascript:popUpVersionAliasForm();' "+
 						"title='Assign an Alias to " + configName + 
 						" version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -1557,7 +1557,7 @@
 				var dispStr = el.innerHTML;
 				str = "";
 				str += "<div id='config-firstSaveButton'>";
-				str += "<input type='button' onmouseup='popUpSaveTableCommentForm()' value='Save Changes as New Version' title='" +
+				str += "<input type='button' onmouseup='popUpSaveNewTableForm()' value='Save Changes as New Version' title='" +
 					"Save the current table view as a new persistent version." +
 					"'/>";
 				str += "</div><br>";
@@ -3289,7 +3289,7 @@
 				var dispStr = el.innerHTML;
 				str = "";
 				str += "<div>";
-				str += "<input type='button' onmouseup='popUpSaveTableCommentForm()' " + 
+				str += "<input type='button' onmouseup='popUpSaveNewTableForm()' " + 
 						"value='Save Changes as New Version' title='" +
 						"Save the current table view as new persitent version." +
 						"'/>";
@@ -3926,9 +3926,12 @@
 			Debug.log("CfgGUI popUpClearTemporaryVersionsPrompt");
 			var str = "";
 
-			el = document.createElement("div");			
-			el.setAttribute("id", "popUpSaveTableCommentForm");
-			el.style.display = "none";
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
 
 			//set position and size
 			var w = 300;
@@ -3944,9 +3947,9 @@
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpSaveTableCommentForm\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
-			str += "<div id='popUpSaveTableCommentForm-div'>";
+			str += "<div id='popUpDialog-div'>";
 			str += "Are you sure you want to clear all temporary versions of <b>" + 
 					_currentConfigName + "</b>?<br>";			
 			str += "</div>";
@@ -3987,17 +3990,20 @@
 			el.style.display = "block";
 		}
 		
-		//popUpSaveTableCommentForm
-		function popUpSaveTableCommentForm()
+		//popUpSaveNewTableForm
+		function popUpSaveNewTableForm()
 		{
 			editCellCancel();
-			Debug.log("CfgGUI popUpSaveTableCommentForm");
+			Debug.log("CfgGUI popUpSaveNewTableForm");
 			
 			var str = "";
-			
-			el = document.createElement("div");			
-			el.setAttribute("id", "popUpSaveTableCommentForm");
-			el.style.display = "none";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
 			
 			//set position and size
 			var w = 500;
@@ -4009,17 +4015,17 @@
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 			
-			
+			var defaultComment = "No comment.";
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpSaveTableCommentForm\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 			
-			str += "<div id='popUpSaveTableCommentForm-div'>";
+			str += "<div id='popUpDialog-div'>";
 			str += "Please enter a comment describing this new version of <b>" + 
 					_currentConfigName + "</b>:<br>";
-			str += "<textarea id='popUpSaveTableCommentForm-comment' rows='4' cols='50'>";
-			str += "No comment.";
+			str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
+			str += defaultComment;
 			str += "</textarea>";
 			str += "</div>";
 			
@@ -4031,20 +4037,26 @@
 			
 			
 			document.getElementById("display").appendChild(el); //add element to display div
-			
-
 			el.style.display = "block";
+			
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-comment"),
+					0,defaultComment.length);
 		}
 		
-		//popUpAssignTableAliasForm
-		function popUpAssignTableAliasForm()
+		//popUpVersionAliasForm
+		function popUpVersionAliasForm()
 		{
-			Debug.log("CfgGUI popUpAssignTableAliasForm");
+			Debug.log("CfgGUI popUpVersionAliasForm");
 
 			var str = "";
 
-			el = document.createElement("div");			
-			el.setAttribute("id", "popUpAssignTableAliasForm");
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
 			el.style.display = "none";
 
 			//set position and size
@@ -4057,26 +4069,28 @@
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
+			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpAssignTableAliasForm\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
-			str += "<div id='popUpAssignTableAliasForm-div'>";
+			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to assign to version &apos;" + 
 					_version + "&apos; of <b>" + 
 					_currentConfigName + "</b>:<br><br>";
-			str += "<input type='text' id='popUpAssignTableAliasForm-alias' value='myAlias'></input>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
 			str += "</div><br><br>";
 
 			var onmouseupJS = "";
 			onmouseupJS += "setVersionAliasInActiveBackbone(" +
-					"document.getElementById(\"popUpAssignTableAliasForm-alias\").value" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
 					",\"" + 
 					_currentConfigName + "\",\"" + 
 					_version + "\"); ";
 			onmouseupJS += "var el = document.getElementById(" +
-					"\"popUpAssignTableAliasForm\"); el.parentNode.removeChild(el); ";
+					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
 			
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 					"value='Assign Alias' title='" +
@@ -4088,9 +4102,11 @@
 
 
 			document.getElementById("display").appendChild(el); //add element to display div
-
-
 			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
 		}
 		
 		//saveConfigAsNewVersion ~~
@@ -4099,7 +4115,7 @@
 			editCellCancel();
 			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
 			
-			var el = document.getElementById("popUpSaveTableCommentForm-comment");
+			var el = document.getElementById("popUpDialog-comment");
 			var comment;
 			if(el)
 				comment = encodeURIComponent(el.value);
