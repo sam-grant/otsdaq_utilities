@@ -379,9 +379,24 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 	if(progressHandler) req.upload.addEventListener("progress", progressHandler, false); //add progress listener if defined
 
+	//set timeout to detect infinite loops or long waits
+	var timeoutTimer;
+	var timeoutFunction = function() 
+					{
+						Debug.log("It has been 5 seconds.. still waiting for a response. " +
+							"Is there an infinite loop occuring at the server? " +
+							"Or is this just a really long request..",
+							Debug.HIGH_PRIORITY);
+						timeoutTimer = window.setTimeout(timeoutFunction, 5000); 
+					}
+	timeoutTimer = window.setTimeout(timeoutFunction, 5000);
+	
+	//setup response handler
 	req.onreadystatechange = function() {
+		//Debug.log(req.readyState + " " + req.status);
 		if (req.readyState==4) 
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
+			window.clearTimeout(timeoutTimer);
 			if(req.status==200)
 			{				
 				//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
