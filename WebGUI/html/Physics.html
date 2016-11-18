@@ -510,9 +510,9 @@
 							    Debug.log("State was changed unexpectedly from " + 
 										_stateNames[_currState] + " to " + _stateNames[i] +
 										". (Likely another user changed the state)",Debug.HIGH_PRIORITY);
-								alert("State was changed unexpectedly from " + 
-										_stateNames[_currState] + " to " + _stateNames[i] +
-										". (Likely another user changed the state)");								
+								//								alert("State was changed unexpectedly from " + 
+								//										_stateNames[_currState] + " to " + _stateNames[i] +
+								//										". (Likely another user changed the state)");								
 							}
 								
 							_currState = i;
@@ -529,7 +529,7 @@
 			    _currState = -1; //no current state found
 			    
 			    Debug.log("Illegal state received as current state: " + cs,Debug.HIGH_PRIORITY);
-			    alert("Illegal state received as current state: " + cs);
+			    //alert("Illegal state received as current state: " + cs);
 			}
 			
 			//updateTimeInState ~~
@@ -604,7 +604,7 @@
                 if(!success) 
                 {
                 	Debug.log("Server indicated failure to attempt state transition.",Debug.HIGH_PRIORITY);
-                	alert("Server indicated failure to attempt state transition.");
+                	//alert("Server indicated failure to attempt state transition.");
                 	return;
                 }
                 
@@ -695,7 +695,7 @@
                             if(_transitionResultingState != _stateNames[_currState]) 
                             {
                             	Debug.log("Error! State result not anticipated. Attempting to re-align with server.",Debug.HIGH_PRIORITY);
-                            	alert("Error! State result not anticipated. Attempting to re-align with server.");
+                            	//alert("Error! State result not anticipated. Attempting to re-align with server.");
                 				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);                            	
                             }
                             _selectedTransition = -1;
