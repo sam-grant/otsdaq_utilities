@@ -528,9 +528,10 @@
 					str += "UID ";
 					str += "<input id='selectCellTypeSelect' value='UID' style='display:none'></input>";
 				}
-				
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
-						"style='display:none; width:40px; float:left; height: 13px' value='0'>";				
+						"style='display:none; width:40px; float:left; height: 13px' value='0'>";
+
+				str += "<div id='clearDiv'></div>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
 				for(var i=0;i<_dataTypeArray.length;++i)
 				{			
