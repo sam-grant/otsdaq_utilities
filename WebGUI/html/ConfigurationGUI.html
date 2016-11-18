@@ -1535,32 +1535,66 @@
 			}
 			str += "</tr>";
 			
-			for(var r=0;r<rows.length;++r)
 			{
-				var rowEntries = rows[r].getElementsByTagName("Entry");
-				str += "<tr>";
-				str += "<td>" + (_dataOffset + r);	//insert row index column
+				var statusTypes =  ["OnOff","TrueFalse","YesNo"];
+				var statusTypeTrues =  ["On","True","Yes"];
+				var isStatusType;
+				var val;
 				
-				//add +/- row controls
-				str += "<br><a href='javascript:addRow(" + r + ");'>";
-				str += "+";
-				str += "</a>";
-				str += "/<a href='javascript:deleteRow(" + r + ");'>";
-				str += "-";
-				str += "</a>";
-				
-				str += "</td>"; 
-				
-				for(var c=0;c<colHdrs.length;++c)
+				for(var r=0;r<rows.length;++r)
 				{
-					str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";
-					//str += "<input type='text' value='";
-					str += rowEntries[c].getAttribute("value");
-					//str += "'>";
-					str += "</td>";					
+					var rowEntries = rows[r].getElementsByTagName("Entry");
+					str += "<tr>";
+					str += "<td>" + (_dataOffset + r);	//insert row index column
 					
+					//add +/- row controls
+					str += "<br><a href='javascript:addRow(" + r + ");'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='javascript:deleteRow(" + r + ");'>";
+					str += "-";
+					str += "</a>";
+					
+					str += "</td>"; 
+					
+					for(var c=0;c<colHdrs.length;++c)
+					{
+						val = rowEntries[c].getAttribute("value");
+						
+						//determine if value is of type status
+						isStatusType = false;
+						for(var i=0;i<statusTypes.length;++i)
+							if(statusTypes[i] == 
+									colTypes[c].getAttribute("value"))
+							{
+								isStatusType = true; break;
+							}
+						
+						str += "<td onmouseup='selectThisCell("+r+","+c+",this);' ";
+						
+						if(isStatusType)
+						{
+							//determine if true value
+							var isTrue = false;
+							for(var i=0;i<statusTypeTrues.length;++i)
+								if(statusTypeTrues[i] == val)
+								{
+									isTrue = true; break;
+								}
+							str += "style='background-color:";
+							str += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+							str += "'";
+						}
+								
+						str += ">";
+						
+						str += val
+						
+						str += "</td>";					
+						
+					}
+					str += "</tr>";
 				}
-				str += "</tr>";
 			}
 				
 			str += "</table>";

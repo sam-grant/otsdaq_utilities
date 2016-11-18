@@ -885,7 +885,7 @@ try
 
 	//get view pointer
 	ConfigurationView* cfgViewPtr;
-	if(version.isInvalid()) //use mockup
+	if(version.isInvalid()) //use mock-up
 	{
 		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
 	}
@@ -895,31 +895,32 @@ try
 		{
 			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
 		}
-		catch(std::runtime_error &e) //default to mockup for fail-safe in GUI editor
+		catch(std::runtime_error &e) //default to mock-up for fail-safe in GUI editor
 		{
-			__SS__ << "Failed to get configuration name: " << configName <<
-					" and version: " << version <<
-					"... defaulting to mockup! " <<
+			__SS__ << "Failed to get table " << configName <<
+					" version " << version <<
+					"... defaulting to mock-up! " <<
 					std::endl;
 			ss << "\n\n...Here is why it failed:\n\n" << e.what() << std::endl;
 
-			std::cout << ss.str();
+			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
 			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
 
 			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
-		catch(...) //default to mockup for fail-safe in GUI editor
+		catch(...) //default to mock-up for fail-safe in GUI editor
 		{
-			__SS__ << "Failed to get configuration name: " << configName <<
-					" and version: " << version <<
-					"... defaulting to mockup! " <<
+			__SS__ << "Failed to get table " << configName <<
+					" version: " << version <<
+					"... defaulting to mock-up! " <<
 					"(You may want to try again to see what was partially loaded into cache before failure. " <<
 					"If you think, the failure is due to a column name change, " <<
 					"you can also try to Copy the failing view to the new column names using " <<
 					"'Copy and Move' functionality.)" <<
 					std::endl;
-			std::cout << ss.str();
+
+			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
 			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
 
@@ -965,7 +966,7 @@ try
 				xmldoc.addTextElementToParent("Entry", timeAsString, tmpParentEl);
 			}
 			else
-				xmldoc.addTextElementToParent("Entry", cfgViewPtr->getValueAsString(r,c), tmpParentEl);
+				xmldoc.addTextElementToParent("Entry", cfgViewPtr->getDataView()[r][c], tmpParentEl);
 		}
 	}
 
