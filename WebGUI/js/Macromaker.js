@@ -64,6 +64,7 @@
 	var stringOfAllMacros = [];
 	var tempString = [];
 	var readoutDictionary = [];
+	var namesOfAllMacros = [];
 	
 	var theAddressStrForRead = ""; // for callread and its handler
 	var isOnMacroMakerPage = false;
@@ -388,7 +389,7 @@
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
 		var convertedOutput;
-		if (isNaN(dataOutput)) convertedOutput = "<span class='red'>" + dataOutput + "</span>";
+		if (isNaN("0x"+dataOutput)) convertedOutput = "<span class='red'>" + dataOutput + "</span>";
 		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
 	
 		var selectionStrArray = [];
@@ -761,7 +762,6 @@
     	var macroName = document.getElementById("macroName").value;
     	//var Regex = /^[\w\s]+$/;
     	var Regex = /^[a-zA-Z0-9\_]+$/g;
-
     	if (!Regex.test(macroName)) 
 			document.getElementById("popupIllegalNaming").style.display = "block";
     	else
@@ -775,12 +775,36 @@
     		var macroLibEl = document.getElementById('listOfPrivateMacros');
     		stringOfAllMacros[MACROINDEX] = tempString;
     		var isMacroPublic = document.getElementById("isMacroPublic").checked;
-    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
-    				+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-					+macroNotes,"",createMacroHandler);
-    		loadExistingMacros();
-    		hidePopupSaveMacro();   
-    		macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    		
+        	if(namesOfAllMacros.indexOf(macroName) !== -1) //duplicate name
+        	{
+        		document.getElementById("popupMacroAlreadyExists").style.display = "block";
+        		document.getElementById("duplicateName").innerHTML = macroName;
+    			document.getElementById("popupMacroAlreadyExistsCancel").onclick = function(){
+    				hideSmallPopup(this);
+    				return;
+    			};
+    			document.getElementById('popupMacroAlreadyExistsOverwrite').onclick = function(){ //call edit
+    				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
+    								+isMacroPublic+"&oldMacroName="
+    								+macroName+"&newMacroName="+macroName+"&Sequence="
+    								+tempString+"&Time="+Date().toString()+"&Notes="
+    								+macroNotes,"",saveChangedMacroHandler);
+    				hideSmallPopup(this);
+    				loadExistingMacros();
+    				hidePopupSaveMacro();   
+    				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    			};
+        	}
+        	else
+        	{
+				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
+						+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
+						+macroNotes,"",createMacroHandler);
+				loadExistingMacros();
+				hidePopupSaveMacro();   
+				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+        	}
     	}
     }
     
@@ -895,7 +919,7 @@
     	Debug.log("loadingMacrosHandler() was called. Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
     	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
-    	
+    	namesOfAllMacros = [];
     	if (hugeStringOfMacros && hugeStringOfMacros.length > 0)
     	{
 			var macrosArray = hugeStringOfMacros.split("@");
@@ -904,6 +928,7 @@
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
+				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
 				for (var j = 0; j < macroString.length; j++) //because users don't need to see that
@@ -933,6 +958,7 @@
 			for(var i = 0; i < publicMacrosArray.length; i++) 
 			{
 				var arr = JSON.parse(publicMacrosArray[i]);
+				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
 				for (var j = 0; j < macroString.length; j++)
@@ -953,7 +979,7 @@
 		}
 		else 
 			document.getElementById("listOfPublicMacros").innerHTML = "";
-
+    	console.log(namesOfAllMacros);
     }
     
     function loadingHistHandler(req)
@@ -978,7 +1004,7 @@
 			var dataFormat = arr.Format.split(":")[1];		
 			var convertedAddress = convertFromHex(addressFormat,oneCommand[1]);
 			var convertedData = convertFromHex(dataFormat,oneCommand[2]);
-			if (isNaN(oneCommand[2])) convertedData = "<span class='red'>" + oneCommand[2] + "</span>";
+			if (isNaN('0x'+oneCommand[2])) convertedData = "<span class='red'>" + oneCommand[2] + "</span>";
 
 			if(commandType=='w')
 			{
@@ -1208,6 +1234,7 @@
     	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
     	//var Regex = /^[\w\s]+$/;
     	var Regex = /^[a-zA-Z0-9\_]+$/g;
+    	var Regex2 = /^[a-z0-9]+$/i;
 		if (!Regex.test(newMacroNameForEdit)) 
 			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
@@ -1215,12 +1242,14 @@
 			for(var i = 0; i < arrayOfCommandsForEdit.length; i++)
 			{
 				var eachCommand = arrayOfCommandsForEdit[i].split(":");
-				for (var j = 0; j < eachCommand.length; j++)
+				console.log(eachCommand);
+				for (var j = 1; j < eachCommand.length; j++)
 				{
-					if(!Regex.test(eachCommand[j]) && eachCommand[j] !== '')
+					if(!Regex2.test(eachCommand[j]) && eachCommand[j] !== '')
 					{
 						document.getElementById("popupIllegalInput").style.display = "block";
 						document.getElementById("illegalInputValue").innerHTML = eachCommand[j];
+						console.log("eachCommand[j] is "+eachCommand[j]+" and j is "+j+" and i is "+i);
 					    return;
 					}
 					else if (eachCommand[j] === '') 
@@ -1235,13 +1264,19 @@
 					}
 				}
 			}
+			if(namesOfAllMacros.indexOf(newMacroNameForEdit) !== -1) //duplicate name
+			{
+				document.getElementById("popupMacroEditDuplicateName").style.display = "block";
+				document.getElementById("duplicateNameEdit").innerHTML = newMacroNameForEdit;
+				return;
+			}
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
 			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;
 			}
-			
+
 			var isMacroPublic = !isOnPrivateMacros;
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
 							+isMacroPublic+"&oldMacroName="
