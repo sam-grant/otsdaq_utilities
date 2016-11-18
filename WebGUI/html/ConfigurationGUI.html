@@ -1542,7 +1542,7 @@
 				str += "<td>" + (_dataOffset + r);	//insert row index column
 				
 				//add +/- row controls
-				str += " <a href='javascript:addRow(" + r + ");'>";
+				str += "<br><a href='javascript:addRow(" + r + ");'>";
 				str += "+";
 				str += "</a>";
 				str += "/<a href='javascript:deleteRow(" + r + ");'>";
@@ -3645,6 +3645,8 @@
 		{
 			Debug.log("CfgGUI addRow " + rowToAdd);
 			
+			editCellCancel();
+			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");				
 			var str = "";
@@ -3708,7 +3710,7 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
 							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
@@ -3816,7 +3818,7 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
 							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
@@ -3865,6 +3867,8 @@
 		{
 			Debug.log("CfgGUI deleteRow " + rowToDelete);
 			
+			editCellCancel();
+			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
 			var cols = [];
@@ -3885,7 +3889,7 @@
 					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 					
 					//add +/- row controls
-					str += " <a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "<br><a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 					str += "+";
 					str += "</a>";
 					str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
@@ -3946,7 +3950,7 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += " <a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
 							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
