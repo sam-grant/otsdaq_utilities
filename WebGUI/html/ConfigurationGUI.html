@@ -56,12 +56,12 @@
 		
 		.treeNode-Link {
 			float:				left;
-		    margin: 			3px 0 -3px 10px;
+		    margin: 			-1px 0 -3px 10px;
 		    padding: 			3px 4px 3px 4px;
 		    border-radius: 		3px;
 		} .treeNode-Link:hover {
 			background-color:	rgb(218, 194, 194);
-		    margin: 			2px 0 -2px 10px;
+		    margin: 			-2px 0 -2px 10px;
 		    cursor:				pointer;
 		}
 		
@@ -165,6 +165,7 @@
 		var _version;
 		var _dataOffset = 0;
 		var _lastFindRow, _lastFindCol;
+		var _cachedTableComment;
 		
 		var _firstTimeSilentActive = true;
 		var _useTableLinkDropdown = true;		
@@ -1328,7 +1329,7 @@
 			
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
-						
+									
 			_tableLinkDropdownChoices = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
 			
 			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
@@ -1366,6 +1367,9 @@
 				_tableDefaultRowValues.push(defaultRowValues[i].getAttribute("value"));
 			
 			//reset globals
+			
+			if(_currentConfigName != configName) //clear  cached comment
+				_cachedTableComment = "";
 			_currentConfigName = configName;
 			_version = version;
 			_editingCell = false;
@@ -1476,6 +1480,8 @@
 			//create table details
 			str += "<div id='tableDetails' style='display:none'>Table Details:";
 			var tableComment = DesktopContent.getXMLValue(req,"TableComment");
+			if(version[0] != '-') //only cache permanent table comments
+				_cachedTableComment = tableComment;
 			var tableAuthor = DesktopContent.getXMLValue(req,"TableAuthor");
 			var tableCreationTime = DesktopContent.getXMLValue(req,"TableCreationTime");
 			var tableLastAccessTime = DesktopContent.getXMLValue(req,"TableLastAccessTime");
@@ -2006,9 +2012,10 @@
 				else
 					treeViewHandlerStr_ += "<div style='float:left;'>"; //open pre-comment div
 				
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
 				treeViewHandlerStr_	+=
 						"<div class='treeNode-Value'>" + value + "</div>";
-				
+				treeViewHandlerStr_ += "</td><td>";
 				if(onmouseupJS != "") //if there is a link, add it
 				{
 					treeViewHandlerStr_ += 
@@ -2040,7 +2047,9 @@
 						">" +	
 						"<div class='gotoNavDiv'></div>" +			
 						"</div>"; //end treeNode Link div
+					
 				}
+				treeViewHandlerStr_ += "</td></tr></table>";
 				
 				treeViewHandlerStr_ += "</div>"; //close pre-comment div
 				
@@ -4184,7 +4193,7 @@
 			
 			//set position and size
 			var w = 500;
-			var h = 250;
+			var h = 260;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
 			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
@@ -4204,6 +4213,16 @@
 			str += _DEFAULT_COMMENT;
 			str += "</textarea>";
 			str += "</div>";
+			
+			//give option to use cached comment
+			if(_cachedTableComment != "") 			
+				str += "<a href='#' onmouseup='" + 
+					"var el = document.getElementById(" +
+					"\"popUpDialog-comment\"); el.value = _cachedTableComment;' " +
+					"title='Load the cached comment associated with last persistent version " +
+					"of " + _currentConfigName + " that was viewed. " + 
+					"You will still have a chance to append to the comment.' " +
+					">Get cached table comment</a><br><br>"; 
 			
 			str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' " +
 					"value='Save Changes as New Version' title='" +
