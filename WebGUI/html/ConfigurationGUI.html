@@ -195,6 +195,7 @@
 		var treeMemberNames_, treeMemberVersions_, treeMemberComments_;
 		var treeViewBackLinkStr_;
 		var treeGroupName_, treeGroupKey_;
+		var treeViewHideStatus_ = true;
 		
 	
 		
@@ -1833,6 +1834,14 @@
 						"(Hot-keys: - , &lt; , { , Z , M )' " +
 						">- All Children</a>";
 				
+				
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				treeViewHandlerStr_ += "<a href='#' onmouseup='" +
+						"treeViewHideStatus_ = !treeViewHideStatus_;" +
+						refreshLinkStr +
+						"' title='' " +
+						">" + (treeViewHideStatus_?"Show":"Hide") + " Status=False</a>";				
+				
 				treeViewHandlerStr_ += "<br><br>";
 
 				if(treeErr) 
@@ -2272,6 +2281,7 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 						"&configGroup=" + configGroupEls[0].innerHTML + 
 						"&configGroupKey=" + configGroupEls[1].innerHTML +
+						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
 						"startPath="+path+nodeName+"/",treeViewHandler,idString);				
 		}
@@ -2283,8 +2293,11 @@
 				treeViewBackLinkStr_ = backLinkStr;
 			else 
 				treeViewBackLinkStr_ = "";
-			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView&configGroup=" + 
-					configGroupName + "&configGroupKey=" + configGroupKey + "&depth=1", 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
+					"&configGroup=" + configGroupName + 
+					"&configGroupKey=" + configGroupKey +
+					"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
+					"&depth=1", 
 					"startPath=/",treeViewHandler);
 		}
 		

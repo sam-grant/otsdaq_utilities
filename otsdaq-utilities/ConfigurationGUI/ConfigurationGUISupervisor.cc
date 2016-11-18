@@ -390,19 +390,22 @@ throw (xgi::exception::Exception)
 		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
 		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
 		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+		bool			hideStatusFalse	= CgiDataUtilities::getDataAsInt(cgi,"hideStatusFalse");
 
 		__MOUT__ << "configGroup: " << configGroup << std::endl;
 		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
 		__MOUT__ << "startPath: " << startPath << std::endl;
 		__MOUT__ << "depth: " << depth << std::endl;
+		__MOUT__ << "hideStatusFalse: " << hideStatusFalse << std::endl;
+
 		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,depth);
+				startPath,depth,hideStatusFalse);
 	}
 	else if(Command == "activateConfigGroup")
 	{
 		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
 		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
-		std::string 	ignoreWarnings 	= CgiDataUtilities::getData(cgi,"ignoreWarnings");
+		bool		 	ignoreWarnings 	= CgiDataUtilities::getDataAsInt(cgi,"ignoreWarnings");
 
 		__MOUT__ << "Activating config: " << groupName <<
 				"(" << groupKey << ")" << std::endl;
@@ -412,7 +415,7 @@ throw (xgi::exception::Exception)
 		try
 		{
 			cfgMgr->activateConfigurationGroup(groupName, ConfigurationGroupKey(groupKey),
-					(ignoreWarnings=="1")?0:&accumulatedTreeErrors); //if ignore warning then pass null
+					ignoreWarnings?0:&accumulatedTreeErrors); //if ignore warning then pass null
 		}
 		catch(std::runtime_error& e)
 		{
@@ -532,7 +535,7 @@ throw (xgi::exception::Exception)
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
-		const std::string &startPath, int depth)
+		const std::string &startPath, int depth, bool hideStatusFalse)
 {
 	//return xml
 	//	<groupName="groupName"/>
@@ -597,7 +600,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			rootMap = cfgMgr->getNode(startPath).getChildren();
 
 		for(auto &treePair:rootMap)
-			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl);
+			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl,hideStatusFalse);
 	}
 	catch(std::runtime_error& e)
 	{
@@ -618,7 +621,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 //	depth of 1 means include this node's children's values, etc..
 //	depth of -1(unsigned int) effectively means output full tree
 void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc,
-		DOMElement* parentEl)
+		DOMElement* parentEl, bool hideStatusFalse)
 {
 	//__MOUT__ << t.getValueAsString() << std::endl;
 	if(t.isValueNode())
@@ -645,7 +648,22 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 					parentEl);
 		}
 		else
-			parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
+		{
+			bool returnNode = true; //default to shown
+
+			if(hideStatusFalse) //only show if status evaluates to true
+			{
+				try //try to get Status child as boolean..
+				{	//if Status bool doesn't exist exception will be thrown
+					t.getNode("Status").getValue(returnNode);
+				} catch(...) {}
+			}
+
+			if(returnNode)
+				parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
+			else
+				return; //done.. no further depth needed for node that is not shown
+		}
 
 		//if depth>=1 toXml all children
 		//child.toXml(depth-1)
@@ -653,7 +671,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 		{
 			auto C = t.getChildren();
 			for(auto &c:C)
-				recursiveTreeToXML(c.second,depth-1,xmldoc,parentEl);
+				recursiveTreeToXML(c.second,depth-1,xmldoc,parentEl,hideStatusFalse);
 		}
 	}
 }
