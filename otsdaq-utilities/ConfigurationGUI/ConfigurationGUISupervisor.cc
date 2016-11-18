@@ -986,8 +986,9 @@ try
 		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
 				"but please note the following errors:\n" + accumulatedErrors);
 	else if(!version.isTemporaryVersion() && //not temporary (these are not filled from interface source)
-			cfgViewPtr->getSourceColumnSize() !=
-			cfgViewPtr->getNumberOfColumns()) //check for column size mismatch
+			(cfgViewPtr->getSourceColumnSize() !=
+					cfgViewPtr->getNumberOfColumns() ||
+					cfgViewPtr->getSourceColumnMismatch() != 0)) //check for column size mismatch
 	{
 		__SS__ << "\n\nThere were warnings found when loading the table " <<
 				configName << ":v" << version << ". Please see the details below:\n\n" <<
@@ -998,11 +999,22 @@ try
 				cfgViewPtr->getSourceColumnMissing() << " table entries missing in " <<
 				cfgViewPtr->getNumberOfRows() << " row(s) of data." << std::endl;
 
+
+
 		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names were as follows:\n";
+		char index = 'a';
 		for(auto &srcColName:srcColNames)
-			ss << "\n\t" << srcColName;
+			ss << "\n\t" <<index++ << ". " <<  srcColName;
 		ss << std::endl;
+
+		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
+		ss << "\n\nCurrent table column names are as follows:\n";
+		index = 'a';
+		for(auto &destColName:destColNames)
+			ss << "\n\t" << index++ << ". " << destColName;
+		ss << std::endl;
+
 		__MOUT__ << "\n" << ss.str();
  		xmldoc.addTextElementToData("TableWarnings",ss.str());
 	}
@@ -1335,7 +1347,8 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			ConfigurationView* cfgViewPtr =
 					cfgMgr->getConfigurationByName(groupMemberPair.first)->getViewP();
 			if(cfgViewPtr->getSourceColumnSize() !=
-					cfgViewPtr->getNumberOfColumns()) //check for column size mismatch
+					cfgViewPtr->getNumberOfColumns() ||
+					cfgViewPtr->getSourceColumnMismatch() != 0) //check for column size mismatch
 			{
 				__SS__ << "\n\nThere were errors found in loading a member table " <<
 						groupMemberPair.first << ":v" << cfgViewPtr->getVersion() <<
