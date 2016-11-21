@@ -328,7 +328,6 @@
 			CMDHISTDIVINDEX++;
 			contentEl.scrollTop = contentEl.scrollHeight;
 			reminderEl.innerHTML = "Data successfully written!";
-			runningMacroLSBF = 0;
 		}
     }
   
@@ -439,8 +438,6 @@
 		barEl.style.width = barWidth + '%'; 
 		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
 		waitForCurrentCommandToComeBack = false;
-		runningMacroLSBF = 0;
-
 	}
     
     function isArrayAllZero(arr)
@@ -881,6 +878,7 @@
 	                }, 150);
 					barWidth = 0;
 				    barIncrement = 0;
+				    runningMacroLSBF = 0;
 					clearInterval(timeIntervalID);
 				}
 				else
@@ -1435,7 +1433,7 @@
     
     function dealWithVariables(stringOfCommands,macroName,LSBF)
     {
-    	runningMacroLSBF = LSBF ? 1 : 2;
+    	if (LSBF == "true") runningMacroLSBF = 1; else runningMacroLSBF = 2;
     	console.log(runningMacroLSBF + " and " + LSBF);
     	var reminderEl = document.getElementById('reminder');
     	var waitForUserInputFlag = 0;
