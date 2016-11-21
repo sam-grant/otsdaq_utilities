@@ -192,8 +192,11 @@ else {
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {					
 					win = Desktop.desktop.getWindowByIndex(
 							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
-					if(win.isMinimized() || win.isMaximized()) win.minimize();
+					if(win.isMinimized()) win.minimize();
+					if(win.isMaximized()) win.maximize();
+					
 					xx += ww;
 					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
 					//Debug.log("Desktop Dashboard Organize i:" + (i+1)%cols + " -  " + xx + " , " + yy,Debug.LOW_PRIORITY);	

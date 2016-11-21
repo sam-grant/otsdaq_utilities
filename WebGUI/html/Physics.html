@@ -220,6 +220,7 @@
 			//functions:
 				//init()
             	//initTransitionParameters()
+            	//handleTransitionParameterChange()
             	//smRequestHandler(req)
             	//getCurrentState() 
             	//currStateRequestHandler(req)
@@ -327,7 +328,8 @@
 				document.body.onmouseup = handleMouseUp;
 
 				//get state machine from server
-				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", 
+						smRequestHandler);	
 				
 				window.setTimeout(redrawPhysics,1000); //for firefox drawing glitch
 				window.setTimeout(redrawPhysics,5000); //for firefox drawing glitch
@@ -360,16 +362,37 @@
                     {
                     case 0: //ConfigurationAlias
     
-                        var aliasArr = req.responseXML.getElementsByTagName("config_alias");
+                    	//get all system aliases and put in drop-down
+                        var aliasArr = req.responseXML.getElementsByTagName("config_alias");                        ""
+            			var userLastConfigAlias = 
+            					DesktopContent.getXMLValue(req,"UserLastConfigAlias");
+            			if(!userLastConfigAlias) userLastConfigAlias = "";
+            			
+            			var lastIndex = -1;
+            			var alias;
                         for(var i=0;i<aliasArr.length;++i) {
-                            if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                             
-                            _transParamsHtmlStr += "<option value='" + aliasArr[i].getAttribute('value') + "'>" +
-                                aliasArr[i].getAttribute('value') + "</option>";
-    
-                            if(!i) _transitionParameterValues[i] = aliasArr[i].getAttribute('value');
+                        	//this skips all except for Physics.. don't want this anymore
+                        	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
+                        	alias = aliasArr[i].getAttribute('value');
+                        	
+                            //choose the first system alias by default
+                            if(!i) _transitionParameterValues[_parameterInitCount] = alias;
+                            _transParamsHtmlStr += "<option value='" + alias + "' ";
+
+                            //otherwise choose last alias
+                            if(userLastConfigAlias == alias)
+                            {
+                            	_transitionParameterValues[_parameterInitCount] = alias;
+                            	_transParamsHtmlStr += "selected";
+                            }
+                            
+                            _transParamsHtmlStr += ">" + 
+                            		alias + "</option>";
+                                
                         }
     
+                        	
                         break;
                     default:;
                     }
@@ -393,11 +416,28 @@
                 switch(_parameterInitCount)
                 {
                 case 0: //ConfigurationAlias
-                    DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", initTransitionParameters);	
+                    DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", 
+                    		initTransitionParameters);	
                     break;
                 default:;
                 }
     
+			}
+			
+			//handleTransitionParameterChange
+			function handleTransitionParameterChange(paramIndex,el) 
+			{
+				switch(paramIndex)
+				{
+				case 0: //ConfigurationAlias
+					Debug.log("handleTransitionParameterChange ConfigurationAlias " + 
+							el.options[el.selectedIndex].value);
+					_transitionParameterValues[paramIndex] = el.options[el.selectedIndex].value;
+					break;
+				default:
+					Debug.log("handleTransitionParameterChange UNKNOWN?!");
+				}
+				
 			}
 			
 			//smRequestHandler
@@ -412,7 +452,8 @@
 			//		<state_transition_action 'aaa'/>
 			//		<state_transition_name 'aaa'/> ...
 			//	</state>			
-			function smRequestHandler(req) {			
+			function smRequestHandler(req) 
+			{			
 			    Debug.log("Physics smRequestHandler" + req.responseText);	    
 			    
 
@@ -512,7 +553,18 @@
 										". (Likely another user changed the state)",Debug.HIGH_PRIORITY);
 								//								alert("State was changed unexpectedly from " + 
 								//										_stateNames[_currState] + " to " + _stateNames[i] +
-								//										". (Likely another user changed the state)");								
+								//										". (Likely another user changed the state)");
+							    
+							    if(_states[i] == "F") //Failed state occured, so get error message
+							    {
+							    	DesktopContent.XMLHttpRequest(
+							    			"Request?RequestType=getErrorInStateMatchine", "",
+											function(req) {
+							    		var err = DesktopContent.getXMLValue(req,"FSM_Error");
+					            		Debug.log("State Machine Error:\n\n" + err, 
+					            				Debug.HIGH_PRIORITY);
+							    	}	); //end handler	
+							    }
 							}
 								
 							_currState = i;
