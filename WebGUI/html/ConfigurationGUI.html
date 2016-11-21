@@ -466,14 +466,14 @@
 			var backLinkStr;
 
 			backLinkStr = "setupSystemViewMode();"; 
-			str += "<a href='javascript:setupSpecificConfig(\"" + 
+			str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
 					groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
 			str += "Edit System Aliases</a>";
 
 			str += "<br>";
 			
-			str += "<a href='javascript:popUpGroupAliasForm(1);' " +
+			str += "<a href='#' onmouseup='javascript:popUpGroupAliasForm(1);' " +
 					"title='Automatically assign a new System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
 					">";
 			str += "Wiz-New System Alias-to-Latest</a>";
@@ -481,7 +481,7 @@
 			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "<br>";
 
-			str += "<a href='javascript:popUpGroupAliasForm(0);'  " +
+			str += "<a href='#' onmouseup='javascript:popUpGroupAliasForm(0);'  " +
 						"title='Automatically assign a new System Alias to the currently initialized Configuration Group.'" +
 						">";
 			str += "Wiz-New System Alias-to-Initialized</a>";
@@ -505,36 +505,36 @@
 				str += "<a name='anchorTag-" + 
 						groupAlias + "'></a>";
 				str += "&quot;";
-				str += "<a href='javascript:setupSpecificConfig(\"" + 
+				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + 
 						groupAliasesName + "\",\"" +
 						groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
 				str += groupAlias + "</a>&quot; &lt; "; 
 
 				//add group view link
-				str += " <a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+				str += " <a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
 				str += groupName + "</a>";	
 				
 				str += "(" + groupKey +") &gt;";	
 
 				//add tree view link
-				str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+				str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
 				str += "Tree-view</a>";		
 				
 				//add Activate link
-				str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+				str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\");'>";
 				str += "Activate</a>";
 
 				//Wiz to latest of all tables
-				str += " <a href='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");' "+
+				str += " <a href='#' onmouseup='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");' "+
 						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
 						">";
 				str += "Wiz-to-Latest</a>";
 
 				//Wiz to last initialized config group
-				str += " <a href='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\");' " +
+				str += " <a href='#' onmouseup='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\");' " +
 						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
 						">";
 				str += "Wiz-to-Initialized</a>";
@@ -588,7 +588,7 @@
 					str += " <b>" + typeName[i] + "</b>";
 				else
 				{
-					str += " <a href='javascript:_groupViewFilterIndex=" + 
+					str += " <a href='#' onmouseup='javascript:_groupViewFilterIndex=" + 
 							typeFilterIndex[i] + ";setupGroupViewMode();'>";
 					str += typeName[i];
 					str += "</a>";
@@ -829,7 +829,7 @@
 				backLinkStr = "setupGroupViewMode()";
 			for(var j=0;j<allKeys.length-2;++j)
 			{
-				str += "<a href='javascript:setupSpecificConfigGroup(\"" + 
+				str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + 
 						groupName + "\",\"" + 
 						allKeys[j] + "\",\"" + 
 						backLinkStr + "\");'>";
@@ -842,17 +842,17 @@
 
 			str += "<a name='anchorTag-" + 
 					groupName + "-" + latestKey + "'></a>";
-			str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+			str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
 					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
 			str += groupName + "</a> (" + latestKey +")";
 
 			//add tree view link
-			str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+			str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
 			str += "Tree-view</a>";										
 
 			//add Activate link
-			str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+			str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
 					"\",\"" + latestKey + "\");'>";
 			str += "Activate</a>";
 
@@ -876,7 +876,7 @@
 
 				str += "<a name='anchorTag-" + 
 						groupName + "-" + configName + "'></a>";
-				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
 						"\",\"" + configVersion + "\",\"" + backLinkStr + "\");'>";
 				str += niceName(configName) + "</a><br>" + configVersion;
 				str += "</td>";
@@ -931,7 +931,7 @@
 				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + configName + "\\\");"; 
 
 				str += "<a name='anchorTag-" + configName + "'></a>";
-				str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
 					"\",\"\",\"" + backLinkStr + "\");'>";
 				str += niceName(configName);
 				str += "</a><br><table><tr>";
@@ -946,7 +946,7 @@
 					version = configVersions[j].getAttribute("value");
 					str += "<td align='center'>";
 					str += "version" + "<br>";
-					str += "<a href='javascript:setupSpecificConfig(\"" + configName +
+					str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
 							"\",\"" + version + "\",\"" + backLinkStr + "\");'>";
 					str += version;
 					str += "</td>";
@@ -1021,7 +1021,7 @@
 				if(groupName && groupKey)
 				{
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='javascript:setupSpecificConfigGroup(\"" + groupName +
+					str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
 						"\",\"" + groupKey + "\");'>";
 					str += "Go-to group &quot;" + groupName + "&quot;</a>";	
 				}
@@ -1034,7 +1034,7 @@
 							 "in ots wiz to verify the column info is valid; or you can try " +
 							 "goint to to the table view:";
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='javascript:setupSpecificConfig(\"" + errSplit[1] +
+					str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + errSplit[1] +
 						"\");'>";
 					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
@@ -1086,7 +1086,7 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}	
 			else backLinkStr = "";		
@@ -1094,7 +1094,7 @@
 			var refreshLinkStr = "setupSpecificConfigGroup(\"" + 
 					groupName + "\",\"" +
 					groupKey + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
 					"'>Refresh</a>";
 			str += "<br>";
 
@@ -1105,12 +1105,12 @@
 			//add tree view link
 			var returnToHereLink = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 					groupKey + "\\\");"; 	
-			str += " <a href='javascript:setupConfigGroupTreeView(\"" + groupName +
+			str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
 				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\");'>";
 			str += "Tree-view</a>";	
 			
 			//add Activate link
-			str += " <a href='javascript:activateSystemConfig(\"" + groupName +
+			str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
 					"\",\"" + groupKey + "\");'>";
 			str += "Activate</a><br>";
 			
@@ -1126,7 +1126,7 @@
 					if(groupKey == key)
 					{ str += " " + key; continue; }
 					
-					str += " <a href='javascript:setupSpecificConfigGroup(\"" +
+					str += " <a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" +
 								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\");'>";
 					str += key;
 					str += "</a>";
@@ -1136,7 +1136,7 @@
 				str += "No Historical keys exist for " + groupName + ".<br>";
 			
 			
-			str += "<br><a href='javascript:addMemberToConfigGroup(\"" + 
+			str += "<br><a href='#' onmouseup='javascript:addMemberToConfigGroup(\"" + 
 					groupName + "\",\"" + returnToHereLink + "\");'>";
 			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			
@@ -1148,7 +1148,7 @@
 							"&groupKey=" + groupKey + "\", \"\"," +
 							"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";
 					
-			str += "<a href='javascript:" + setMembersToDefaultReq + "' title='Make all member versions" + 
+			str += "<a href='#' onmouseup='javascript:" + setMembersToDefaultReq + "' title='Make all member versions" + 
 					" the &apos;Default&apos; version for that member " + 
 					" by automatically setting up the &apos;Default&apos; alias " + 
 					"in the active Backbone group.'" +
@@ -1157,7 +1157,7 @@
 			str += "</a>";
 			str += "<br>";
 
-			str += "<a href='javascript:popUpVersionAliasSpecificGroupForm(" + 
+			str += "<a href='#' onmouseup='javascript:popUpVersionAliasSpecificGroupForm(" + 
 					"\"" + groupName + "\",\"" + groupKey + "\");' title='Set an Alias for all member versions" +
 					" by automatically setting up the specified Alias " + 
 					"in the active Backbone group.'" +
@@ -1197,7 +1197,7 @@
 				str += "<b>" + niceName(configName) + "</b> ";
 				
 				str += "<a id='" + configName + "-currentVersionLink' " +
-						"href='javascript:" + replaceScreenJS + "'>";
+						"href='#' onmouseup='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
@@ -1296,7 +1296,7 @@
 						str += " " + version; continue;
 					}
 					str += " ";
-					str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
+					str += "<a href='#' onmouseup='javascript:changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + configName + "\"," + 
 							"\"" + existingVersion + "\"";
 					str += ")'>" + existingVersion;
@@ -1420,7 +1420,7 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			else backLinkStr = "";
@@ -1428,13 +1428,13 @@
 			var refreshLinkStr = "setupSpecificConfig(\"" + 
 					configName + "\",\"" +
 					version + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
 					"'>Refresh</a>";
 
 			var clearTempLinkStr = "popUpClearTemporaryVersionsPrompt(\"" + 
 					backLinkStr + "\");"; 
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			str += "<a href='javascript:" + clearTempLinkStr + 
+			str += "<a href='#' onmouseup='javascript:" + clearTempLinkStr + 
 					"'>Clear Temporary Versions</a>";		
 			
 			str += "<br><br>";
@@ -1456,7 +1456,7 @@
 			if(version != -1)
 			{
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
+				str +=  "<a href='#' onmouseup='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
 						version + "\");' title='Make " + configName + " version " + version + 
 						" the &apos;Default&apos; version " + 
@@ -1468,7 +1468,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='javascript:popUpVersionAliasForm();' "+
+				str +=  "<a href='#' onmouseup='javascript:popUpVersionAliasForm();' "+
 						"title='Assign an Alias to " + configName + 
 						" version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -1486,7 +1486,7 @@
 			//display mockup link (mockup always present)
 			str += " ";
 			if(-1 != version)				
-				str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
+				str +=  "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
 					"\",\"" + "-1" + "\", \"" + backLinkStr + "\");'>";
 			str += "Mockup-View";
 			if(-1 != version)				
@@ -1497,7 +1497,7 @@
 			{
 				str += " ";
 				if(configVersions[j].getAttribute("value") != version)
-					str +=  "<a href='javascript:setupSpecificConfig(\"" + configName +
+					str +=  "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
 						"\",\"" + configVersions[j].getAttribute("value") + 
 						"\", \"" + backLinkStr + "\");'>";
 				str += configVersions[j].getAttribute("value");
@@ -1580,10 +1580,10 @@
 					str += "<td>" + (_dataOffset + r);	//insert row index column
 					
 					//add +/- row controls
-					str += "<br><a href='javascript:addRow(" + r + ");'>";
+					str += "<br><a href='#' onmouseup='javascript:addRow(" + r + ");'>";
 					str += "+";
 					str += "</a>";
-					str += "/<a href='javascript:deleteRow(" + r + ");'>";
+					str += "/<a href='#' onmouseup='javascript:deleteRow(" + r + ");'>";
 					str += "-";
 					str += "</a>";
 					
@@ -1634,7 +1634,7 @@
 			str += "</td><td valign='top'>"; //four corners continued
 
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink1' style='display:none' href='javascript:addRow(" + r + ");'>";
+			str += " <a id='lastAddRowLink1' style='display:none' href='#' onmouseup='javascript:addRow(" + r + ");'>";
 			str += "+";
 			str += "</a>";
 			
@@ -1642,7 +1642,7 @@
 			str += "<tr><td valign='top'>"; //four corners continued
 			
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink0' href='javascript:addRow(" + r + ");'>";
+			str += " <a id='lastAddRowLink0' href='#' onmouseup='javascript:addRow(" + r + ");'>";
 			str += "+";
 			str += "</a>";
 			
@@ -1839,7 +1839,7 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-					treeViewHandlerStr_ += "<a href='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
+					treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
 							"\")'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
@@ -1848,19 +1848,19 @@
 				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 						treeGroupName_ + "\",\"" +
 						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
-				treeViewHandlerStr_ += "<a href='javascript:" + refreshLinkStr + 
+				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
 						"'>Refresh</a>";
 				
 
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='javascript:expandTreeChildrenDepth()' " + 
+				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:expandTreeChildrenDepth()' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
 						"(Hot-keys: + , &gt; , } , A , E )' " +
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='javascript:hideTreeChildrenDepth()'" + 
+				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:hideTreeChildrenDepth()'" + 
 						"title='Hide all children at deepest depth.\n\n" +
 						"(Hot-keys: - , &lt; , { , Z , M )' " +
 						">- All Children</a>";
@@ -1893,7 +1893,7 @@
 				
 				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
-					"href='javascript:setupSpecificConfigGroup(\"" + configGroupName +
+					"href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + configGroupName +
 					"\",\"" + configGroupKey + "\");'>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
@@ -1903,7 +1903,7 @@
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
 				
 				//add Activate link
-				treeViewHandlerStr_ += " <a href='javascript:activateSystemConfig(\"" + configGroupName +
+				treeViewHandlerStr_ += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + configGroupName +
 						"\",\"" + configGroupKey + "\");'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
@@ -2417,7 +2417,7 @@
 						name = name[0];					
 												
 						//add ignore warnings Activate link
-						withWarningsStr += " <a href='javascript:activateSystemConfig(\"" + 
+						withWarningsStr += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + 
 								name +
 								"\",\"" + key + "\",1);'>"; //ignore warnings
 						withWarningsStr += "Activate " + 
@@ -2454,7 +2454,7 @@
 				}
 				else
 				{
-					str += "<a href='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
+					str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
 					"\",\"" + activeConfigGroups[i*2+1] + "\");'>";
 					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
 				}
@@ -2840,13 +2840,13 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			
 			var refreshLinkStr = "setupConfigCreator(\"" + 
 					preSelectStr + "&backLinkStr=" + backLinkStr + "\");"; 
-			str += "<a href='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
 					"'>Refresh</a>";
 			str += "<br>";
 
@@ -2874,17 +2874,17 @@
 			str += "<tr><td>";
 			
 			var title = "Select/Deselect checkboxes based on this selection.";
-			str += "<a href='javascript:selectForCreateConfig(1)' title='" + title + "'>All</a> | " +
-					"<a href='javascript:selectForCreateConfig(0)' title='" + title + "'>None</a> | " + 
-					"<a href='javascript:selectForCreateConfig(2)' title='" + title + "'>Context</a> | " +
-					"<a href='javascript:selectForCreateConfig(3)' title='" + title + "'>Backbone</a> | " +
-					"<a href='javascript:selectForCreateConfig(4)' title='" + title + "'>Configuration</a>";
+			str += "<a href='#' onmouseup='javascript:selectForCreateConfig(1)' title='" + title + "'>All</a> | " +
+					"<a href='#' onmouseup='javascript:selectForCreateConfig(0)' title='" + title + "'>None</a> | " + 
+					"<a href='#' onmouseup='javascript:selectForCreateConfig(2)' title='" + title + "'>Context</a> | " +
+					"<a href='#' onmouseup='javascript:selectForCreateConfig(3)' title='" + title + "'>Backbone</a> | " +
+					"<a href='#' onmouseup='javascript:selectForCreateConfig(4)' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
-			str += "<a href='javascript:versionsForCreateConfig(0)' title='" + title + "'>Latest</a> | " +
-					"<a href='javascript:versionsForCreateConfig(1)' title='" + title + "'>Defaults</a> | " +
-					"<a href='javascript:popUpVersionAliasGroupEditorForm()' title='" + title + "'>Other Alias</a>";
+			str += "<a href='#' onmouseup='javascript:versionsForCreateConfig(0)' title='" + title + "'>Latest</a> | " +
+					"<a href='#' onmouseup='javascript:versionsForCreateConfig(1)' title='" + title + "'>Defaults</a> | " +
+					"<a href='#' onmouseup='javascript:popUpVersionAliasGroupEditorForm()' title='" + title + "'>Other Alias</a>";
 			str += "</td><td></td>";
 			str += "</tr>";
 			
@@ -2898,7 +2898,7 @@
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='javascript:" +
+				str += "<a style='text-decoration:none;color:black;' href='#' onmouseup='javascript:" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 						"'>";
@@ -3208,11 +3208,11 @@
 			str += "New Configuration Group Created: <b class='bold-header'>" +
 					name + " (" + key + ")</b>"; 
 			str += "<br>Goto its ";
-			str += "<a href='javascript:setupSpecificConfigGroup(\"" + name + 
+			str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + name + 
 					"\",\"" + key + "\");'>Member-View</a> or ";
-			str += "<a href='javascript:setupConfigGroupTreeView(\"" + name + 
+			str += "<a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + name + 
 					"\",\"" + key + "\");'>Tree-View</a>, or ";
-			str += "<a href='javascript:activateSystemConfig(\"" + name + 
+			str += "<a href='#' onmouseup='javascript:activateSystemConfig(\"" + name + 
 					"\",\"" + key + "\");'>Activate</a> it.";
 			
 			el.innerHTML = str;
@@ -3632,9 +3632,9 @@
 						
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
 					"width:105px;height:20px;margin:0 -122px -32px 10px;text-size: 16px;'>";
-			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
+			str += "<a href='#' onmouseup='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
 					"<b style='color:green'>OK</b></a> | " +
-					"<a href='javascript:editCellCancel();' style='color:red'>" + 
+					"<a href='#' onmouseup='javascript:editCellCancel();' style='color:red'>" + 
 					"<b style='color:red'>Cancel</b></a>";
 			str += "</div>";		
 			
@@ -3909,10 +3909,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4017,10 +4017,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4088,10 +4088,10 @@
 					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 					
 					//add +/- row controls
-					str += "<br><a href='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "<br><a href='#' onmouseup='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 					str += "+";
 					str += "</a>";
-					str += "/<a href='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "/<a href='#' onmouseup='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 					str += "-";
 					str += "</a>";							
 					rows[i].childNodes[0].innerHTML = str;
@@ -4149,10 +4149,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4214,7 +4214,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -4277,7 +4277,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -4335,7 +4335,7 @@
 
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -4406,7 +4406,7 @@
 			
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
@@ -4471,7 +4471,7 @@
 			var defaultAlias = "mySystemAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -4541,7 +4541,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='javascript:var el = document.getElementById(" +
+					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -4706,7 +4706,7 @@
  					continue;
 				}
 				str += " ";
-				str += "<a href='javascript:changeMemberVersionForConfigGroup(\"" +
+				str += "<a href='#' onmouseup='javascript:changeMemberVersionForConfigGroup(\"" +
 						groupName + "\",\"" + configName + "\"," + 
 						"\"" + configNameArr[i] + "\"";
 				str += ")'>" + configNameArr[i];
@@ -4950,9 +4950,9 @@
 		
 	<h1>Configuration GUI</h1>
 		<div style='width:550px'>		
-	<a href='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
-	<a href='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
-	<a href='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
+	<a href='#' onmouseup='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
+	<a href='#' onmouseup='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
+	<a href='#' onmouseup='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
 
 	<a style='margin-left:50px;' target="_blank" 
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
