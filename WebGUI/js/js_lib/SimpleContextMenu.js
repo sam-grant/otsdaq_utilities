@@ -62,14 +62,14 @@ SimpleContextMenu._secondaryColor = "";
 SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 		popupID,topLeftX,topLeftY, primaryColor, secondaryColor)	{
 
-	Debug.log("Creating SimpleContextMenu...");
-	Debug.log("menuItems=" + menuItems);
-	Debug.log("menuItemHandlers=" + menuItemHandlers);
-	Debug.log("popupID=" + popupID);
-	Debug.log("topLeftX=" + topLeftX);
-	Debug.log("topLeftY=" + topLeftY);
-	Debug.log("primaryColor=" + primaryColor);
-	Debug.log("secondaryColor=" + secondaryColor);
+	//	Debug.log("Creating SimpleContextMenu...");
+	//	Debug.log("menuItems=" + menuItems);
+	//	Debug.log("menuItemHandlers=" + menuItemHandlers);
+	//	Debug.log("popupID=" + popupID);
+	//	Debug.log("topLeftX=" + topLeftX);
+	//	Debug.log("topLeftY=" + topLeftY);
+	//	Debug.log("primaryColor=" + primaryColor);
+	//	Debug.log("secondaryColor=" + secondaryColor);
 	
 	SimpleContextMenu._menuItemHandlers = menuItemHandlers;
 	SimpleContextMenu._primaryColor = primaryColor;

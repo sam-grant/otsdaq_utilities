@@ -628,6 +628,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+		xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
 	}
 	else
 	{
@@ -637,6 +638,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			{
 				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
 				return;
 			}
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
@@ -783,11 +785,14 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 
 	for(auto &memberPair:memberMap)
 	{
-		__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+		__MOUT__ << "\tMember config " << memberPair.first << ":" <<
+				memberPair.second << std::endl;
+
 		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
 		if(commentsLoaded)
 			xmldoc.addTextElementToParent("MemberComment",
-					allCfgInfo[memberPair.first].configurationPtr_->getView().getComment(), parentEl);
+					allCfgInfo[memberPair.first].configurationPtr_->getView().getComment(),
+					parentEl);
 		else
 			xmldoc.addTextElementToParent("MemberComment", "", parentEl);
 		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
@@ -1732,8 +1737,7 @@ try
 
 		//set all columns in new row
 		col = configView->findCol("CommentDescription");
-		configView->setValue(std::string("Entry was added by server in ") +
-				"ConfigurationGUISupervisor::setGroupAliasInActiveBackbone()." ,
+		configView->setValue("This Group Alias was automatically setup by the server." ,
 				row, col);
 		col = configView->findCol("GroupKeyAlias");
 		configView->setValue(groupAlias, row, col);

@@ -302,7 +302,7 @@ Desktop.createDesktop = function(security) {
 	//_handleSystemMessages ~~~
 	//	handles request returns periodically (ever _SYS_MSG_MAX_COUNT times through _checkMailboxes)
 	var _handleSystemMessages = function(req) {
-		Debug.log("Desktop _handleSystemMessages " + req.responseText,Debug.LOW_PRIORITY);
+		//Debug.log("Desktop _handleSystemMessages " + req.responseText,Debug.LOW_PRIORITY);
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
 

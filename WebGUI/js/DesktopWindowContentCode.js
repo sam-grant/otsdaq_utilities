@@ -835,7 +835,7 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 			Debug.log("requestingWindowId=" + requestingWindowId);
 			Debug.log("done=" + done);
 			if(requestingWindowId != DesktopContent._myDesktopFrame.id.split('-')[1])
-				Debug.log("There was a mismatch in wid!",Debug.MED_PRIORITY);
+				Debug.log("There was a mismatch in window id!",Debug.MED_PRIORITY);
 
 			//clear mailbox 
 			DesktopContent._openWindowMailbox.innerHTML = "";

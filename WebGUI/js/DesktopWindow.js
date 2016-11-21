@@ -236,7 +236,8 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
-            if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
+			_isMinimized = false; 
+            //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
             _isMaximized = !_isMaximized;
             this.setWindowSizeAndPosition(_x,_y,_w,_h);
         }

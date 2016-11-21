@@ -234,10 +234,10 @@
 			//toggleTreeChildren(depth,uid,nodeName,path)
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
-		
-			//addMemberToConfigGroup(groupName,backLinkStr) 
+
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
+			//addMemberToConfigGroup(groupName,backLinkStr) 
 		
 			//activateSystemConfig(groupName, groupKey)
 			//activateSystemConfigHandler(req)
@@ -246,8 +246,8 @@
 			//createConfigGroup(ignoreWarnings)
 			//createConfigGroupHandler(req)
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
-			//wizToLatestConfigGroup(groupAlias)
-			//wizToInitializedConfigGroup(groupAlias)		
+			//wizToLatestConfigGroup(groupAlias, ignoreWarnings)
+			//wizToInitializedConfigGroup(groupAlias, ignoreWarnings)		
 			//newWizBackboneMemberHandler(req,params)
 		
 			//selectThisCell(r,c,el)
@@ -260,6 +260,7 @@
 			//deleteRow(r)									//delete row at destination
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
 			//popUpSaveNewTableForm()
+			//popUpGroupAliasForm(isLatest)
 			//popUpVersionAliasForm()
 			//popUpVersionAliasGroupEditorForm()
 			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
@@ -340,7 +341,7 @@
 				);
 			
 			//get command string if opening a new window
-			var cmdStr = DesktopContent.getParameter(1); //from  location.href
+			var cmdStr = DesktopContent.getParameter(1); //from  location.search
 			if(cmdStr && cmdStr != "")
 			{
 				//do incoming commands!
@@ -468,8 +469,24 @@
 			str += "<a href='javascript:setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
 					groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
-			str += "Create a New System Alias</a>";
-			str += "<br><br>";
+			str += "Edit System Aliases</a>";
+
+			str += "<br>";
+			
+			str += "<a href='javascript:popUpGroupAliasForm(1);' " +
+					"title='Automatically assign a new System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+					">";
+			str += "Wiz-New System Alias-to-Latest</a>";
+
+			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			str += "<br>";
+
+			str += "<a href='javascript:popUpGroupAliasForm(0);'  " +
+						"title='Automatically assign a new System Alias to the currently initialized Configuration Group.'" +
+						">";
+			str += "Wiz-New System Alias-to-Initialized</a>";
+			
+			str += "<br><br><br>";
 
 			Debug.log("CfgGUI groupAliasesRequestHandler groupAliases.length " + groupAliases.length);
 			
@@ -511,11 +528,15 @@
 				str += "Activate</a>";
 
 				//Wiz to latest of all tables
-				str += " <a href='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");'>";
+				str += " <a href='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");' "+
+						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+						">";
 				str += "Wiz-to-Latest</a>";
 
 				//Wiz to last initialized config group
-				str += " <a href='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\");'>";
+				str += " <a href='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\");' " +
+						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
+						">";
 				str += "Wiz-to-Initialized</a>";
 				
 				//add comment
@@ -961,7 +982,7 @@
 			{					
 				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
-				Debug.log("TThere were problems identified in the tree view of the " +
+				Debug.log("There were problems identified in the tree view of the " +
 						"attempted new group &apos;" +
 						attemptedNewGroupName +
 						"&apos;.\nYou can save the group anyway (if you think it is a good idea) by clicking " +
@@ -973,7 +994,8 @@
 						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
 						attemptedNewGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
-						"'/><br>";	
+						"'/>";	
+				str += "<div id='clearDiv'></div>";
 
 				el = document.createElement("div");
 				el.innerHTML = str; //create element with save with warnings ignored button
@@ -1096,11 +1118,14 @@
 			if(historicalKeys.length)
 			{
 				str += "Existing &quot;" + groupName + "&quot; group keys: ";
-				str += " " + groupKey;
+				//str += " " + groupKey;
 				
 				for(var i=0;i<historicalKeys.length;++i)
 				{
 					key = historicalKeys[i].getAttribute("value");
+					if(groupKey == key)
+					{ str += " " + key; continue; }
+					
 					str += " <a href='javascript:setupSpecificConfigGroup(\"" +
 								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\");'>";
 					str += key;
@@ -1164,7 +1189,9 @@
 						configName + "\",\"" +
 						version + "\",\"" + backLinkStr + "\");";
 
-				str += "<div style='float:left;width:500px'>"; //open pre-comment div
+				str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row
+				str += "<td>";
+				str += "<div style='width:500px'>"; //open pre-comment div
 				str += "<div style='float:left;'>";	//open name div
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
@@ -1191,7 +1218,9 @@
 							configName + "\",\"" +
 							version + "\")";
 					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					newWindowStr = location.pathname + 
+							location.search +
+							"&newWindowOps=" + newWindowStr;
 					newwindowJS = "DesktopContent.openNewWindow(" +
 							"\"Configure\",\"\",\"" + 
 							newWindowStr + "\",false);";
@@ -1235,15 +1264,17 @@
 				}
 				
 				str += "</div>"; //close pre-comment div
+				str += "</td><td>";
 				
 				//add comment
 				//make comment html safe
 				configComment = configComment.replace(/</g, "&lt");
 				configComment = configComment.replace(/>/g, "&gt");
 				if(configComment != _DEFAULT_COMMENT) //do not show if default
-					str += "<div style='font-size:14px; margin:2px 0 0 20px; float:left'>" +
+					str += "<div style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>" +
 						"//" + configComment +
 						"</div>";
+				str += "</td></tr></table>"; //close pre/comment table row
 				
 				//add prompt and existing versions
 				str += "<div id='clearDiv'></div>";
@@ -1887,8 +1918,23 @@
 			var tree = DesktopContent.getXMLNode(req,"tree");
 			var preLength = treeViewHandlerStr_.length;
 			recursiveDrawTree(tree,depth,tree.getAttribute("value"));
-			if(preLength == treeViewHandlerStr_.length)
-				treeViewHandlerStr_ += "Empty Tree Found.";
+			if(preLength == treeViewHandlerStr_.length) //no children found 	
+			{
+				//treat this is an empty value node!
+				
+				//////////=======================
+				treeViewHandlerStr_ += 
+						"<div class='treeNode'> " +
+						"<div class='treeNode-Connection'></div>" +
+						"<div class='treeNode-Value'>";
+
+				treeViewHandlerStr_ += "No Children Nodes Found.";
+
+				treeViewHandlerStr_ += "</div>" + //end treeNode Value div		
+						"</div>" + //end treeNode div							
+						"<div id='clearDiv'></div>";  
+				//////////=======================
+			}
 			
 			el.innerHTML = treeViewHandlerStr_;
 			
@@ -1905,7 +1951,7 @@
 			var uid;
 			var nodes = parent.children;
 			var nodeName;
-			var value;
+			var value, valueType;
 			var tableLinkName;
 			var i,j;
 			var childrenLength;
@@ -1929,6 +1975,7 @@
 				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
 				{	
 					value = value.getAttribute("value");
+					valueType =  nodes[i].children[1].getAttribute("value"); //dataType
 					
 					//make value html safe
 					value = value.replace(/</g, "&lt");
@@ -1940,8 +1987,36 @@
 							"<div class='treeNode'> " +
 							"<div class='treeNode-Connection'></div>" +
 							"<div class='treeNode-Value'>" + 
+							"<div style='float:left'>" +
 							"<b class='bold-header'>" + nodeName + "</b>" + 
-							" : " + value +
+							" : </div><div style='float:left; margin-left:9px;'>";
+					
+					if(valueType == "OnOff" || 
+							valueType == "YesNo" || 
+							valueType == "TrueFalse")
+					{
+						//colorize true false														
+						treeViewHandlerStr_ += "<div style='float:left'>";										
+						treeViewHandlerStr_ += value;											
+						treeViewHandlerStr_ += "</div>";
+						
+						var color = (value == "On" || value == "Yes" || value == "True")?
+								"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+						treeViewHandlerStr_ += "<div style='width:10px;height:10px;" +
+								"background-color:" + color + ";" +
+							    "float: left;" +
+							    "border-radius: 7px;" +
+							    "border: 2px solid white;" +
+							    "margin: 2px 0 0 6px;" +								
+								"'></div>";								
+					}
+					else if(valueType == "Timestamp")				
+						treeViewHandlerStr_ += getDateString(new Date((value|0)*1000));						
+					else
+						treeViewHandlerStr_ += value; 
+							
+					treeViewHandlerStr_ += 
+							"</div>" + //end treeNode Value value side div
 							"</div>" + //end treeNode Value div		
 							"</div>" + //end treeNode div							
 							"<div id='clearDiv'></div>";  
@@ -1960,7 +2035,7 @@
 					value = nodeName + " (" + 
 							value.nodeName + " = " + value.getAttribute("value") + ")";
 					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
-					--childrenLength; //subtract the config name node from children length
+					--childrenLength; //subtract the config name node from children length					
 				}
 				else
 				{
@@ -1976,7 +2051,7 @@
 				
 				var onmouseupJS = "";
 				var newwindowJS = "";
-				var newtabJS = ""; //FIXME TODO allow new tab creation
+				var newtabJS = ""; 
 				var treeNavContextMenuItemHandlers = [];
 				var tableComment = "";
 				
@@ -2002,7 +2077,10 @@
 							treeMemberNames_[j] + "\",\"" +
 							treeMemberVersions_[j] + "\")";
 					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-					newWindowStr = location.href + "&newWindowOps=" + newWindowStr;
+					
+					newWindowStr = location.pathname + 
+						location.search +
+						"&newWindowOps=" + newWindowStr;
 					
 					newwindowJS += "DesktopContent.openNewWindow(" +
 							"\"Configure\",\"\",\"" + 
@@ -2014,7 +2092,7 @@
 					newtabJS += "DesktopContent.openNewBrowserTab(" +
 							"\"Configure\",\"\",\"" + 
 							newWindowStr + "\",false);";
-
+					
 					//escape another level for json string
 					//					newWindowStr = newWindowStr.replace(/\\\"/g, "AAAAA");
 					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
@@ -2050,14 +2128,20 @@
 						"\");' " + // end expander onmouseup
 						"></div>";
 
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row 
 				if(onmouseupJS != "") //fix width if this is a config node so comments show up aligned
-					treeViewHandlerStr_ += "<div style='float:left;width:350px'>"; //open pre-comment div
+					treeViewHandlerStr_ += "<td><div style='width:470px'>"; //open pre-comment td and div
 				else
-					treeViewHandlerStr_ += "<div style='float:left;'>"; //open pre-comment div
+					treeViewHandlerStr_ += "<td><div>"; //open pre-comment td and div
 				
-				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
-				treeViewHandlerStr_	+=
-						"<div class='treeNode-Value'>" + value + "</div>";
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr><td>"; //open tree node name/link table row
+				treeViewHandlerStr_	+= "<div class='treeNode-Value' ";
+				
+				if(tableComment != "") 
+					treeViewHandlerStr_ += "title='Table Comment: " + tableComment +"' ";
+				
+				treeViewHandlerStr_ += ">"+ value + "</div>";
+				
 				treeViewHandlerStr_ += "</td><td>";
 				if(onmouseupJS != "") //if there is a link, add it
 				{
@@ -2092,15 +2176,16 @@
 						"</div>"; //end treeNode Link div
 					
 				}
-				treeViewHandlerStr_ += "</td></tr></table>";
+				treeViewHandlerStr_ += "</td></tr></table>"; //close tree node name/link table row
 				
-				treeViewHandlerStr_ += "</div>"; //close pre-comment div
+				treeViewHandlerStr_ += "</div></td>"; //close pre-comment div and td
 				
 				//add comment if applicable
 				if(tableComment != "")
-					treeViewHandlerStr_ += "<div style='font-size:14px; margin:2px 0 0 20px; float:left'>" +
+					treeViewHandlerStr_ += "<td style='font-size:14px; white-space: nowrap;'>" +
 						"//" + tableComment +
-						"</div>";
+						"</td>";
+				treeViewHandlerStr_ += "</tr></table>"; //close pre/comment table row
 					
 				
 				treeViewHandlerStr_ += 
@@ -2449,19 +2534,28 @@
 				var name = DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName");
 				var key =  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey");
 				
+				if(!name || !key)
+				{
+					Debug.log("Process interrupted. There was no active Configuration Group found.",
+							Debug.HIGH_PRIORITY);
+					setupSystemViewMode();
+					return;
+				}
+				
 				setGroupAliasInActiveBackbone(groupAlias,name,key);				
 				
 					}); //end of getActiveConfigGroups handler
 		}
 		
 		//wizToLatestConfigGroup ~~
-		function wizToLatestConfigGroup(groupAlias)
+		function wizToLatestConfigGroup(groupAlias,ignoreWarnings)
 		{	
 			//get latest version of all tables for configuration group
 			//make a new group with those versions
 			//set group alias to the resulting group
 			
-			var el = document.getElementById("display");			
+			var el = document.getElementById("display");	
+			var originalDisplayStr = el.innerHTML;
 			el.innerHTML = "Loading...";
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
@@ -2518,8 +2612,10 @@
 						}
 				}
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-						("ConfigGroup" + "WizToLatest"), configMap, 
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+						"&groupName=" +	("ConfigGroup" + "WizToLatest") +
+						"&ignoreWarnings=" + (ignoreWarnings?1:0),
+						configMap, 
 						function(req)
 						{
 					var err = DesktopContent.getXMLValue(req,"Error");
@@ -2543,6 +2639,54 @@
 							" (Likely the Group Alias points tp an equivalent Configuration group already)",
 							Debug.WARN_PRIORITY);
 					}
+					
+					//handle "TreeError" warnings
+					{	
+						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+						if(treeErr) 
+						{					
+							var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+							Debug.log(treeErr,Debug.WARN_PRIORITY);
+							Debug.log("There were problems identified in the tree view of the " +
+									"attempted new group &apos;" +
+									attemptedNewGroupName +
+									"&apos;.\nYou can wiz the group anyway (if you think it is a good idea) by clicking " +
+									"'<u>Wiz-to-Latest with Warnings Ignored</u>'",
+									Debug.WARN_PRIORITY);
+							var str = "";
+							str += " <input id='saveGroupWithWarningsIgnored' " + 
+									"style='margin-bottom:15px;' " +
+									"type='button' onmouseup=' wizToLatestConfigGroup(\"" +
+									groupAlias + "\",1)' value='Wiz-to-Latest with Warnings Ignored' " +
+									"title='Automatically assign System Alias &apos;" + groupAlias + 
+									"&apos; to a Configuration Group comprised of the latest Configuration tables.'" +									
+									"'/>";
+							str += "<div id='clearDiv'></div>";	
+	
+							var displayEl = document.getElementById("display");							
+							//since "Loading..." hid the popup from being closed properly
+							// relaod original html and do it here
+							displayEl.innerHTML = originalDisplayStr;
+							//remove all previous buttons
+							var el;
+							do
+							{
+								el = document.getElementById("saveGroupWithWarningsIgnored");
+								if(el) el.parentNode.removeChild(el);
+							} while(el);	
+							el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);							
+
+							//add new button
+							el = document.createElement("div");
+							el.innerHTML = str; //create element with save with warnings ignored button							
+							displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child					
+							
+							return;
+						}
+					}
+					
+					//else proceeding normally
 					
 					setGroupAliasInActiveBackbone(groupAlias,name,key);
 
@@ -2697,9 +2841,15 @@
 				Debug.log("Back-link = " + backLinkStr);
 
 				str += "<a href='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
-				str += "<br>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			
+			var refreshLinkStr = "setupConfigCreator(\"" + 
+					preSelectStr + "&backLinkStr=" + backLinkStr + "\");"; 
+			str += "<a href='javascript:" + refreshLinkStr + 
+					"'>Refresh</a>";
+			str += "<br>";
+
 			if(preSelectStr)
 				str += "<br>Choose the versions of configurations you would like to add...<br>";
 			
@@ -2740,7 +2890,7 @@
 			
 			for(var i=0;i<configNames.length;++i)
 			{		
-				str += "<tr><td>";
+				str += "<tr><td style='white-space: nowrap;'>";
 				name = configNames[i].getAttribute("value");
 				
 				
@@ -3032,6 +3182,7 @@
 						" value='Save Group with Warnings Ignored' title='" +
 						"Save the modified group as a new persistent key for this group name." +
 						"'/>";	
+				str += "<div id='clearDiv'></div>";
 
 				el = document.createElement("div");
 				el.innerHTML = str; //create element with save with warnings ignored button
@@ -3054,7 +3205,8 @@
 			var str = "";
 			
 			str += "<br>";
-			str += "New Configuration Group Created: " + name + "_v" + key;
+			str += "New Configuration Group Created: <b class='bold-header'>" +
+					name + " (" + key + ")</b>"; 
 			str += "<br>Goto its ";
 			str += "<a href='javascript:setupSpecificConfigGroup(\"" + name + 
 					"\",\"" + key + "\");'>Member-View</a> or ";
@@ -4063,7 +4215,7 @@
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to apply to all member table versions:<br><br>";
@@ -4080,7 +4232,7 @@
 					"&groupKey=" + groupKey + "\", \"\"," +
 					"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";			
 			onmouseupJS += "var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
 
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 					"value='Set Member Aliases' title='" +
@@ -4126,7 +4278,7 @@
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to select for all tables:<br><br>";
@@ -4139,7 +4291,7 @@
 					"document.getElementById(\"popUpDialog-alias\").value" +
 					"); ";
 			onmouseupJS += "var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
 
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 					"value='Select Alias' title='" +
@@ -4184,7 +4336,7 @@
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Are you sure you want to clear all temporary versions of <b>" + 
@@ -4255,7 +4407,7 @@
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter a comment describing this new version of <b>" + 
@@ -4290,6 +4442,77 @@
 					0,_DEFAULT_COMMENT.length);
 		}
 		
+		//popUpGroupAliasForm
+		// either isLatest or isInitialized
+		function popUpGroupAliasForm(isLatest)
+		{
+			Debug.log("CfgGUI popUpGroupAliasForm " + isLatest);
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "mySystemAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the System Alias you would like to assign to the ";
+			str += isLatest?"Latest":"Initialized";
+			str += " Configuration group:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			if(isLatest)
+				onmouseupJS += "wizToLatestConfigGroup(" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			else	//initialized
+				onmouseupJS += "wizToInitializedConfigGroup(" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Setup System Alias' title='" +
+					"Assign a System Alias to the";
+			str += isLatest?"Latest":"Initialized";
+			str += " Configuration group" +
+					" by automatically modifying the active Backbone group." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
 		//popUpVersionAliasForm
 		function popUpVersionAliasForm()
 		{
@@ -4319,7 +4542,7 @@
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to assign to version &apos;" + 
@@ -4336,7 +4559,7 @@
 					_currentConfigName + "\",\"" + 
 					_version + "\"); ";
 			onmouseupJS += "var el = document.getElementById(" +
-					"\"popUpDialog\"); el.parentNode.removeChild(el); ";
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
 			
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 					"value='Assign Alias' title='" +
