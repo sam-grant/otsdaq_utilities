@@ -395,6 +395,8 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 	std::string Time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Time"));
 	std::string Notes = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Notes"));
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
+	std::string isMacroLSBF = CgiDataUtilities::getData(cgi, "isLSBF");
+
 
 	__MOUT__<< MACROS_DB_PATH << std::endl;
 
@@ -411,7 +413,8 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 		macrofile << "\"name\":\"" << Name << "\",\n";
 		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
 		macrofile << "\"time\":\"" << Time << "\",\n";
-		macrofile << "\"notes\":\"" << Notes << "\"\n";
+		macrofile << "\"notes\":\"" << Notes << "\",\n";
+		macrofile << "\"LSBF\":\"" << isMacroLSBF << "\"\n";
 		macrofile << "}@" << std::endl;
 		macrofile.close();
 	}

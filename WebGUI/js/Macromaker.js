@@ -4,6 +4,7 @@
 
 	//Function List:
 		//init
+		//initLite
 	    //redrawWindow
 		//FElistHandler
 		//getPermissionHandler
@@ -73,6 +74,7 @@
 	var isMacroRunning = false;
 	var waitForCurrentCommandToComeBack = false;
 	var putReadResultInBoxFlag = false;
+	var runningMacroLSBF = 0; //0 = Don't care; 1 = no LSBF; 2 = yes LSBF
 	var SEQFORMAT = "hex";
 	
 	var arrayOfCommandsForEdit = [];
@@ -111,6 +113,12 @@
 		loadUserHistory();
 		toggleDisplay(0);
 		toggleMacroPublicity(0);
+	}
+	
+	function initLite()
+	{
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
+		MultiSelectBox.initMySelectBoxes(true);
 	}
 	
 	//Handling window resizing
@@ -187,7 +195,7 @@
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
-	    	listoffecs.innerHTML = "<p class='red'>Please refresh after configuring in Physics</p>";
+	    	listoffecs.innerHTML = "<p class='red'>Please refresh after Configure in the State Machine</p>";
 	    else
 	    {
 			var w = window.innerWidth;
@@ -296,15 +304,20 @@
 			var innerClass = "class=\"innerClass1\"";
 			if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
 			
+			var reverse = document.getElementById("lsbFirst").checked;
+			if(runningMacroLSBF == 1) reverse = true; 
+			if(runningMacroLSBF == 2) reverse = false; 
+			
 			var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\"  title=\"" + "Entered: " 
 					+ Date().toString() + "\nSelected interface: " + selectionStrArray 
 					+ "\" onclick=\"histCmdWriteDivOnclick(" + "'" + addressStr + "','" + dataStr + "','" 
 					+ addressFormatStr + "','" + dataFormatStr + "')\">Write [" + dataFormatStr + "]<b>"
-					+ dataStr + LSBchecker() + "</b> into register [" + addressFormatStr + "]<b> " 
-					+ addressStr + LSBchecker() + "</b></div>";
+					+ dataStr + LSBchecker(reverse) + "</b> into register [" + addressFormatStr + "]<b> " 
+					+ addressStr + LSBchecker(reverse) + "</b></div>";
 			
-			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
-			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr));
+	    	
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr),reverse);
+			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr),reverse);
 					
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="
 					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
@@ -315,6 +328,7 @@
 			CMDHISTDIVINDEX++;
 			contentEl.scrollTop = contentEl.scrollHeight;
 			reminderEl.innerHTML = "Data successfully written!";
+			runningMacroLSBF = 0;
 		}
     }
   
@@ -348,12 +362,16 @@
 			{
 				if (selected[i]!==0) 
 				{
-					var oneInterface = FEELEMENTS[i].getAttribute("value")
+					var oneInterface = FEELEMENTS[i].getAttribute("value");
 					supervisorIndexArray.push(oneInterface.split(":")[1]);
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
 			}
-			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead));
+	    	var reverse = document.getElementById("lsbFirst").checked;
+	    	if(runningMacroLSBF == 1) reverse = true; 
+	    	if(runningMacroLSBF == 2) reverse = false; 
+	    	
+			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead),reverse);
 			var selectionStrArray = [];
 			for (var i = 0; i < selected.length; i++) 
 			{
@@ -389,9 +407,13 @@
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
 		var convertedOutput;
+    	var reverse = document.getElementById("lsbFirst").checked;
+    	if(runningMacroLSBF == 1) reverse = true; 
+        if(runningMacroLSBF == 2) reverse = false; 
+        
 		if (isNaN("0x"+dataOutput)) convertedOutput = "<span class='red'>" + dataOutput + "</span>";
-		else convertedOutput = reverseLSB(convertFromHex(dataFormatStr,dataOutput));
-	
+		else convertedOutput = convertFromHex(dataFormatStr,reverseLSB(dataOutput,reverse));
+
 		var selectionStrArray = [];
 		for (var i = 0; i < selected.length; i++) 
 		{
@@ -404,8 +426,8 @@
 		var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
 				+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdReadDivOnclick(" +"'" 
 				+ theAddressStrForRead + "','" + addressFormatStr + "'" + ")\">Read [" + dataFormatStr + "]<b>" 
-				+ convertedOutput + LSBchecker()
-				+ "</b> from register [" + addressFormatStr + "]<b>" + theAddressStrForRead + LSBchecker() + "</b></div>";
+				+ convertedOutput + LSBchecker(reverse)
+				+ "</b> from register [" + addressFormatStr + "]<b>" + theAddressStrForRead + LSBchecker(reverse) + "</b></div>";
 		theAddressStrForRead = "";
 		contentEl.innerHTML += update;
 		CMDHISTDIVINDEX++; 
@@ -417,6 +439,8 @@
 		barEl.style.width = barWidth + '%'; 
 		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
 		waitForCurrentCommandToComeBack = false;
+		runningMacroLSBF = 0;
+
 	}
     
     function isArrayAllZero(arr)
@@ -484,9 +508,9 @@
         }
     }
     
-    function reverseLSB(original)
+    function reverseLSB(original, execute)
     {
-    	if(document.getElementById("lsbFirst").checked)
+    	if(execute)
 		{
 			var str = '';
 			if(original.length%2) 
@@ -498,9 +522,9 @@
     	else return original;
     }
     
-    function LSBchecker()
+    function LSBchecker(LSBF)
     {
-    	if(document.getElementById("lsbFirst").checked) return "*";
+    	if(LSBF) return "*";
     	else return "";
     }
     
@@ -523,6 +547,9 @@
     		 makerEl.style.display = "block";
     		 document.getElementById("page1tag").style.fontWeight = "400";
     		 document.getElementById("page2tag").style.fontWeight = "900";
+    		 document.getElementById("page2tag").style.background = "#002a52";
+    		 document.getElementById("page1tag").style.background = "#001626";
+
     	 } 
     	 else 
     	 {
@@ -535,6 +562,10 @@
     		 makerEl.style.display = "none";
     		 document.getElementById("page2tag").style.fontWeight = "400";
     		 document.getElementById("page1tag").style.fontWeight = "900";
+    		 document.getElementById("page1tag").style.background = "#002a52";
+    		 document.getElementById("page2tag").style.background = "#001626";
+
+
     	 }
     }
    
@@ -547,6 +578,9 @@
     		publicEl.style.display = "block";
     		document.getElementById("publicTag").style.fontWeight = "900";
     		document.getElementById("privateTag").style.fontWeight = "400";
+    		document.getElementById("publicTag").style.background = "#002a52";
+    		document.getElementById("privateTag").style.background = "#001626";
+
     		isOnPrivateMacros = false;
     	}
     	else
@@ -555,6 +589,9 @@
     		publicEl.style.display = "none";
     		document.getElementById("privateTag").style.fontWeight = "900";
      		document.getElementById("publicTag").style.fontWeight = "400";
+    		document.getElementById("privateTag").style.background = "#002a52";
+    		document.getElementById("publicTag").style.background = "#001626";
+
     		isOnPrivateMacros = true;
     	}
     }
@@ -747,6 +784,7 @@
     	popupSaveMacro.style.display = "none";
         document.getElementById("macroName").value="";
         document.getElementById("macroNotes").value="";
+		document.getElementById('macroReminder').innerHTML = "Macro successfully saved!";
     }
 
     function hidePopupEditMacro()
@@ -775,6 +813,8 @@
     		var macroLibEl = document.getElementById('listOfPrivateMacros');
     		stringOfAllMacros[MACROINDEX] = tempString;
     		var isMacroPublic = document.getElementById("isMacroPublic").checked;
+    		var isMacroLSBF = document.getElementById("isMacroLSBF").checked;
+    		console.log(isMacroLSBF);
     		
         	if(namesOfAllMacros.indexOf(macroName) !== -1) //duplicate name
         	{
@@ -786,7 +826,7 @@
     			};
     			document.getElementById('popupMacroAlreadyExistsOverwrite').onclick = function(){ //call edit
     				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
-    								+isMacroPublic+"&oldMacroName="
+    								+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
     								+macroName+"&newMacroName="+macroName+"&Sequence="
     								+tempString+"&Time="+Date().toString()+"&Notes="
     								+macroNotes,"",saveChangedMacroHandler);
@@ -799,7 +839,7 @@
         	else
         	{
 				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
-						+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
+						+"&isLSBF="+isMacroLSBF+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
 						+macroNotes,"",createMacroHandler);
 				loadExistingMacros();
 				hidePopupSaveMacro();   
@@ -928,6 +968,7 @@
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
+				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
@@ -936,12 +977,12 @@
 				
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
-						+ arr.notes + "\nCreated: " + arr.time
+						+ arr.notes + "\nCreated: " + arr.time + "\nLSBF: " + arr.LSBF
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
 						+ arr.notes + "\" data-time=\"" 
 						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
-						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
+						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
 			finalOutput = decodeURI(out);
@@ -958,6 +999,7 @@
 			for(var i = 0; i < publicMacrosArray.length; i++) 
 			{
 				var arr = JSON.parse(publicMacrosArray[i]);
+				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
@@ -966,12 +1008,12 @@
 				
 				stringOfAllMacros[MACROINDEX] = macroString;
 				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
-						+ arr.notes + "\nCreated: " + arr.time
+						+ arr.notes + "\nCreated: " + arr.time + "\nLSBF: " + arr.LSBF
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
 						+ arr.notes + "\" data-time=\"" 
 						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
-						+ MACROINDEX + "],\"" + arr.name + "\")'><b>" + arr.name + "</b></br></div>"; 
+						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
 				finalOutput = decodeURI(out);
 				MACROINDEX++;
 			}
@@ -1039,8 +1081,9 @@
     
     function histCmdWriteDivOnclick(addressStr, dataStr, addressFormatStr, dataFormatStr)
     {
-		var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
-		var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr));
+    	var reverse = document.getElementById("lsbFirst").checked;
+		var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr),reverse);
+		var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr),reverse);
     	if(isOnMacroMakerPage)
     	{
     		addCommand("w",convertedAddress,convertedData);
@@ -1050,7 +1093,8 @@
     
     function histCmdReadDivOnclick(addressStr, addressFormatStr)
 	{
-    	var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr));
+    	var reverse = document.getElementById("lsbFirst").checked;
+    	var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr),reverse);
 		if(isOnMacroMakerPage)
 		{
 			addCommand("r",convertedAddress)
@@ -1389,8 +1433,10 @@
     }
 
     
-    function dealWithVariables(stringOfCommands,macroName)
+    function dealWithVariables(stringOfCommands,macroName,LSBF)
     {
+    	runningMacroLSBF = LSBF ? 1 : 2;
+    	console.log(runningMacroLSBF + " and " + LSBF);
     	var reminderEl = document.getElementById('reminder');
     	var waitForUserInputFlag = 0;
     	var copyOfStringOfCommands = stringOfCommands.slice();           //Needed because the variable assignments are temporary

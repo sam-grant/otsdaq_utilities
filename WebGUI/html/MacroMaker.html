@@ -132,6 +132,10 @@
 			padding:2px;
 		}
 		
+		#privateTag, #publicTag, #page1tag, #page2tag {
+		  	padding: 1px 1px 1px 3px;
+		}
+		
 		.listOfMacros {
 			overflow:scroll;
 			overflow-x: hidden;
@@ -169,7 +173,6 @@
 		    width:90%;
 		    float:left;
 		}
-		
 
 		.deletex{
 			width:18px;
@@ -375,10 +378,16 @@
 		}
 		
 		#makeMacroPublic {
-			padding: 10px;
+			padding: 4px;
 			text-align: center;
 			width: 100%;
 			display: none;
+		}
+		
+	    #makeMacroLSBF {
+			padding: 4px;
+			text-align: center;
+			width: 100%;
 		}
 		
         .context-menu {
@@ -512,8 +521,8 @@
 		    <h3>Macro Library</h3>
 		    <p><small>
 		    <center>
-			<a id="privateTag" onclick="toggleMacroPublicity(0)">Private Macros</a>
-			<a id="publicTag" style="margin-left:8px" onclick="toggleMacroPublicity(1)">Public Macros</a>
+			<a id="privateTag" onclick="toggleMacroPublicity(0)"> Private Macros </a>
+			<a id="publicTag" style="margin-left:8px" onclick="toggleMacroPublicity(1)"> Public Macros </a>
 			</small></p>
 			</center>
 			<div id="listOfPrivateMacros" class="listOfMacros"></div>
@@ -527,8 +536,8 @@
 		
 		<div id="nav">
 			<p class="center"><small>
-			<a id="page1tag" onclick="toggleDisplay(0)">Manual Commands</a>
-			<a id="page2tag" style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
+			<a id="page1tag" onclick="toggleDisplay(0)"> Manual Commands </a>
+			<a id="page2tag" style="margin-left:15px" onclick="toggleDisplay(1)"> Macro Maker </a>
 			</small></p>
 			<div class="right">
 				<a href="https://docs.google.com/a/iit.edu/document/d/1tTeaO9wKnVJshU9OrY7FFOGC39TTIieD1uZ9cTtY-hs/edit?usp=sharing" target="_blank">
@@ -536,7 +545,7 @@
 				     width='26' height='26' title="Info"/>
 				</a>
 				<img src="/WebPath/images/windowContentImages/macromaker-refresh.png" alt="Refresh" id="refreshButton" 
-					width='20' height='20' onclick="init()" title="Refresh"/>
+					width='20' height='20' onclick="initLite()" title="Refresh"/>
 			</div>
 		</div>
 		
@@ -635,14 +644,17 @@
 				<textarea id="macroName" cols="43" rows="1"></textarea>
 				<p><b>Macro Notes</b></p>
 				<textarea id="macroNotes" cols="43" rows="6"></textarea>
+				<div id="makeMacroPublic">
+				    <input type="checkbox" id="isMacroPublic"> Make accessible to public</input>
+				</div>
+				<div id="makeMacroLSBF">
+				    <input type="checkbox" id="isMacroLSBF"> Set LSB first for this macro</input>
+				</div>
 				<div class="buttongroup">
 					<center>
 						<button onclick="hidePopupSaveMacro()">Cancel</button>
 						<button onclick="saveAsMacro()">Save as Macro</button>
 					</center>
-				</div>
-				<div id="makeMacroPublic">
-				    <input type="checkbox" id="isMacroPublic"> Make accessible to public</input>
 				</div>
 			</div>
 		</div>
