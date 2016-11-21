@@ -2473,9 +2473,13 @@
 						name + "(" + key + ") w/warnings ignored</u>' " +
 						"at the top of the page.",Debug.HIGH_PRIORITY);
 			}
-			else if(str != oldStr)
+			else 
 			{
-				if(!_firstTimeSilentActive) //only popup after the first time
+				var el = document.getElementById("activeConfig");
+				el.innerHTML = str;
+				str = el.innerHTML;				
+				
+				if(!_firstTimeSilentActive && str != oldStr) //only popup after the first time
 				{						
 					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
 						Debug.log("Note: There was a change in the active groups (check the top of the page)!",
@@ -2486,7 +2490,6 @@
 				}
 				else
 					_firstTimeSilentActive = false;
-				document.getElementById("activeConfig").innerHTML = str;
 			}				
 		}
 		
@@ -3631,11 +3634,11 @@
 			}
 						
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:105px;height:20px;margin:0 -122px -32px 10px;text-size: 16px;'>";
-			str += "<a href='#' onmouseup='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
-					"<b style='color:green'>OK</b></a> | " +
-					"<a href='#' onmouseup='javascript:editCellCancel();' style='color:red'>" + 
-					"<b style='color:red'>Cancel</b></a>";
+					"width:105px;height:20px;margin:0 -122px -32px 10px; font-size: 16px;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
+					"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+					"<a href='javascript:editCellCancel();' style='color:red'>" + 
+					"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 			str += "</div>";		
 			
 			el.innerHTML = str;
