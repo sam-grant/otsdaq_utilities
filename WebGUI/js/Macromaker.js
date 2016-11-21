@@ -1433,7 +1433,9 @@
     
     function dealWithVariables(stringOfCommands,macroName,LSBF)
     {
-    	if (LSBF == "true") runningMacroLSBF = 1; else runningMacroLSBF = 2;
+    	if (LSBF == "true") runningMacroLSBF = 1; 
+    	if (LSBF == "false") runningMacroLSBF = 2;
+    	
     	console.log(runningMacroLSBF + " and " + LSBF);
     	var reminderEl = document.getElementById('reminder');
     	var waitForUserInputFlag = 0;
