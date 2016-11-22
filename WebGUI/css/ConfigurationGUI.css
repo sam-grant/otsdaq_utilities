@@ -38,3 +38,12 @@
 			font-size: 16px;
 		}
 		
+		/*firefox seems to put an extra pixel of letter-spacing in bold words*/
+		@-moz-document url-prefix() {  /*target firefox*/
+			b, th {
+				letter-spacing: -1px;
+			}
+			h1, h2, h3, h4, h5, h6 {
+				letter-spacing: -2px;
+			}
+		}
