@@ -226,7 +226,7 @@
 		.macroDiv{
 		    padding: 0.2em 0.2em 0.2em 0.2em;
 		    margin: 0.2em 0.2em 0.2em 0.2em;
-		    cursor: context-menu; 
+		    cursor: pointer; 
 		    border: 2px solid #993333;
 		    width: 90%;
 		    border-radius:2px;
@@ -670,6 +670,7 @@
 					<textarea id="macroNotesEdit" cols="49" rows="3">Pre-fill here</textarea>
 					<div class="buttongroup">
 					  <center>
+				   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>
 						<button onclick="hidePopupEditMacro()">Cancel</button>
 						<button onclick="saveChangedMacro()">Save changes</button>
 					  </center>

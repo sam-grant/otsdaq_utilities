@@ -221,7 +221,7 @@
     toggleMenuOff();
     macroActionOnRightClick(taskItemInContext.getAttribute("data-id"), link.getAttribute("data-action"), 
     		taskItemInContext.getAttribute("data-sequence"), taskItemInContext.getAttribute("data-notes"),
-			taskItemInContext.getAttribute("data-time"));
+			taskItemInContext.getAttribute("data-time"), taskItemInContext.getAttribute("data-LSBF"));
   }
 
   /**

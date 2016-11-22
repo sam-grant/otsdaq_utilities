@@ -257,7 +257,7 @@
     {
     	var reminderEl = document.getElementById('reminder');
     	if(isArrayAllZero(selected))
-    		reminderEl.innerHTML = "Please select at least one interface from the list";
+			Debug.log("Please select at least one interface from the list",Debug.HIGH_PRIORITY);
 		else 
 		{ 
 			var addressFormatStr = document.getElementById("addressFormat").value;
@@ -335,7 +335,7 @@
     {
 		var reminderEl = document.getElementById('reminder');
 		if(isArrayAllZero(selected))
-			reminderEl.innerHTML = "Please select at least one interface from the list";
+			Debug.log("Please select at least one interface from the list",Debug.HIGH_PRIORITY);
 		else 
 		{ 
 			var addressFormatStr = document.getElementById("addressFormat").value;
@@ -977,9 +977,9 @@
 				out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
 						+ arr.notes + "\nCreated: " + arr.time + "\nLSBF: " + arr.LSBF
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
-						+ macroString + "\" data-notes=\"" 
-						+ arr.notes + "\" data-time=\"" 
-						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
+						+ macroString + "\" data-notes=\"" + arr.notes + "\" data-time=\"" 
+						+ arr.time + "\" data-LSBF=\"" + arr.LSBF
+						+ "\" onclick='dealWithVariables(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
@@ -1009,8 +1009,9 @@
 						+ arr.notes + "\nCreated: " + arr.time + "\nLSBF: " + arr.LSBF
 						+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
 						+ macroString + "\" data-notes=\"" 
-						+ arr.notes + "\" data-time=\"" 
-						+ arr.time + "\" onclick='dealWithVariables(stringOfAllMacros[" 
+						+ arr.notes + "\" data-time=\"" + arr.time 
+						+ "\" data-LSBF=\"" + arr.LSBF
+						+ "\" onclick='dealWithVariables(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
 				finalOutput = decodeURI(out);
 				MACROINDEX++;
@@ -1100,7 +1101,7 @@
 		else callRead(addressStr);
 	}
     
-    function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate)
+    function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
     {
     	console.log("macroName" + macroName+ "macroAction" +macroAction + "macroSequence" + macroSequence+ "macroNotes" + macroNotes+ "macroDate" +macroDate);
     	var isMacroPublic = !isOnPrivateMacros;
@@ -1198,7 +1199,9 @@
 						console.log("ERROR! Command type "+commandType+" not found");
 				}
 				macroSequenceEditEl.innerHTML = output;
-			
+				if(macroLSBF == "true")
+					document.getElementById("isMacroEditLSBF").checked = true;
+
 				var macroNameEl = document.getElementById("macroNameEdit");
 				macroNameEl.value = macroName;
 				var macroNotesEl = document.getElementById("macroNotesEdit");
@@ -1306,22 +1309,25 @@
 					}
 				}
 			}
-			if(namesOfAllMacros.indexOf(newMacroNameForEdit) !== -1) //duplicate name
-			{
-				document.getElementById("popupMacroEditDuplicateName").style.display = "block";
-				document.getElementById("duplicateNameEdit").innerHTML = newMacroNameForEdit;
-				return;
-			}
+//    		var tempAllNames = namesOfAllMacros.splice(namesOfAllMacros.indexOf(macroName));
+//
+//			if(tempAllNames.indexOf(macroName) !== -1) //duplicate name
+//			{
+//				document.getElementById("popupMacroEditDuplicateName").style.display = "block";
+//				document.getElementById("duplicateNameEdit").innerHTML = newMacroNameForEdit;
+//				return;
+//			}
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
 			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;
 			}
-
+			var isMacroLSBF = document.getElementById('isMacroEditLSBF').checked;
+			console.log(isMacroLSBF);
 			var isMacroPublic = !isOnPrivateMacros;
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
-							+isMacroPublic+"&oldMacroName="
+							+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
 							+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
 							+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
 							+macroNotesForEdit,"",saveChangedMacroHandler);

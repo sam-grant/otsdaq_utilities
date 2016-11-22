@@ -456,7 +456,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 		}
 		std::string returnMacroStr = returnStr.substr(0, returnStr.size()-1);
 
-		__MOUT__<<  "Loading existing macros! " << std::endl;
+		__MOUT__<<  "Loading existing macros! " << returnMacroStr << std::endl;
 
 		closedir (dir);
 		xmldoc.addTextElementToData("returnMacroStr",returnMacroStr);
@@ -586,13 +586,14 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	std::string Time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Time"));
 	std::string Notes = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Notes"));
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
+	std::string isMacroLSBF = CgiDataUtilities::getData(cgi, "isLSBF");
 
 	std::string fileName = oldMacroName + ".dat";
 	std::string fullPath;
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
 
-	__MOUT__<<  fullPath << std::endl;
+	__MOUT__<<  fullPath << isMacroLSBF << std::endl;
 
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())
@@ -601,7 +602,8 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 		macrofile << "\"name\":\"" << newMacroName << "\",\n";
 		macrofile << "\"sequence\":\"" << Sequence << "\",\n";
 		macrofile << "\"time\":\"" << Time << "\",\n";
-		macrofile << "\"notes\":\"" << Notes << "\"\n";
+		macrofile << "\"notes\":\"" << Notes << "\",\n";
+		macrofile << "\"LSBF\":\"" << isMacroLSBF << "\"\n";
 		macrofile << "}@" << std::endl;
 		macrofile.close();
 	}
