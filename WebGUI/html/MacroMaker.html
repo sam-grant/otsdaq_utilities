@@ -1,6 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
@@ -261,7 +262,7 @@
 			margin:5px 0 0 0;
 		}
         .buttonGroup{
-        	margin: 12px 0 10px 25px;
+        	margin: 12px 15px 10px 15px;
         }
         
         .red{
@@ -320,10 +321,11 @@
         }
         
         .popupEdit{
-            top: 40%;
-			left: 50%;
+            top: 20% !important;
+			left: 0 !important;
 			margin-top: -30px;
-			margin-left: -30px;
+			margin-left: 10%;
+			margin-right: 10%;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
@@ -332,9 +334,38 @@
 			padding:6px;
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
-			width:460px;
+			width:78%;
+			overflow:auto;
+			overflow-y: auto;	
+			overflow-x: auto;	
+			
         }
         
+        .JStextarea {
+        	width:28%;
+        	height: 1.2em;
+        }
+        
+		#macroNameEdit {
+		    width: 90%;
+		    height:1.2em;
+		}
+        #macroNotesEdit {
+		    width: 90%;
+		    height: 20%;
+	    }
+	    
+	    #macroEditSettings {
+		  	margin-top: 10px;
+		}
+	    #macroName {
+	        width: 360px;
+	    }
+	    #macroNotes {
+	        width: 360px;
+	        height:106px;
+	    }
+
         .smallPopup{
         	width:225px;
         	height:112px;
@@ -361,16 +392,13 @@
         	display:none;
         }
         
-        .stayAtBottomOfParent{
-			position: absolute;
-			bottom:10px;
-        }
-        
         #macroSequenceEdit {
 			overflow:scroll;
 			overflow-x: hidden;
+			overflow-y: auto;	
 			padding:5px;
-			height: 75px;
+			height: 30%;
+			margin-bottom: 5px;
 		}
 		
 		lable textarea {
@@ -475,14 +503,25 @@
 		#popupNameVariableYesButton {
 			display:none;
 		}
+		
+		#macroEditContainer{
+			height:95%;
+		}
         
-        @media only screen and (max-height: 400px){
-        	#progressBar{
-        	display:none;
-        	}
+        @media screen and (max-height: 300px){
         	#macroLib {
-		    display:none;
+		    	display:none !important;
 			}
+        }
+        
+        @media screen and (max-height: 528px){
+        	#progressBarOuter{
+        		position:relative !important;
+        	}
+        	#progressBarInner{
+				position:absolute !important;
+        		bottom:0 !important;
+        	}
         }
         
         @media only screen and (min-width: 1215px){
@@ -641,9 +680,9 @@
 			<center><h2>Save your Macro</h2></center>
 			<div>
 				<p><b>Macro Name</b></p>
-				<textarea id="macroName" cols="43" rows="1"></textarea>
+				<center><textarea id="macroName" cols="43" rows="1"></textarea></center>
 				<p><b>Macro Notes</b></p>
-				<textarea id="macroNotes" cols="43" rows="6"></textarea>
+				<center><textarea id="macroNotes" cols="43" rows="6"></textarea></center>
 				<div id="makeMacroPublic">
 				    <input type="checkbox" id="isMacroPublic"> Make accessible to public</input>
 				</div>
@@ -662,25 +701,23 @@
 			<h2><center>Macro Editor</center></h2>
 			<div id="macroEditContainer">
 				<p><b>Macro Name</b></p>
-				<textarea id="macroNameEdit" cols="49" rows="1"></textarea>
+				<center><textarea id="macroNameEdit"></textarea></center>
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
-				<div class="stayAtBottomOfParent">
-					<p><b>Macro Notes</b></p>
-					<textarea id="macroNotesEdit" cols="49" rows="3">Pre-fill here</textarea>
-					<div class="buttongroup">
-					  <center>
-				   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>
-						<button onclick="hidePopupEditMacro()">Cancel</button>
-						<button onclick="saveChangedMacro()">Save changes</button>
-					  </center>
-					</div>
+				<p><b>Macro Notes</b></p>
+				<center><textarea id="macroNotesEdit">Pre-fill here</textarea></center>
+				<div class="buttongroup" id="macroEditSettings">
+				  <center>
+			   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>
+					<button onclick="hidePopupEditMacro()">Cancel</button>
+					<button onclick="saveChangedMacro()">Save changes</button>
+				  </center>
 				</div>
 			</div>
 		</div>
 		<div id="popupNameVariable" class="smallPopup">
 			<h4 id="nameVariablePrompt">How would you like to name this variable?</h4>
-		    <textarea id="nameVariable" cols="20" rows="1"></textarea>
+		    <center><textarea id="nameVariable" cols="20" rows="1"></textarea></center>
 		    <div class="buttongroup">
 			  <center>
 			  	<button id="popupNameVariableYesButton">Yes</button>
@@ -699,7 +736,7 @@
 			</div>
 		</div>
 		<div id="popupClearHistoryConfirm" class="smallPopup">
-		    <h4>You will be clearing macro history. Do you wish to continue?</h4>
+		    <h4>You will be clearing command history. Do you wish to continue?</h4>
 		    <div class="buttongroup">
 			  <center>
 				<button onclick="clearHistory(this)">Yes, please</button>
@@ -709,7 +746,7 @@
 		</div>
 		<div id="popupAskForVariableValue" class="smallPopup">
 		    <h4 id="assignValuePrompt">What value would you assign to variable <span id="variableNameAtRunTime" class="red"></span>?</h4>
-		    <textarea id="valueAtRunTime" cols="20" rows="1"></textarea>
+		    <center><textarea id="valueAtRunTime" cols="20" rows="1"></textarea></center>
 		    <div class="buttongroup">
 			  <center>
 				<button id="popupAskForVariableValueContinue">Continue</button>

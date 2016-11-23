@@ -106,7 +106,6 @@
 		sequencebox = document.getElementById('sequenceContent');
 		privateMacroBox = document.getElementById('listOfPrivateMacros');
 		publicMacroBox = document.getElementById('listOfPublicMacros');
-		macroSequenceEdit = document.getElementById("macroSequenceEdit");
 		window.onresize = redrawWindow;
 		redrawWindow(); //redraw window for the first time
 		loadExistingMacros();
@@ -184,9 +183,8 @@
 		sequencebox.style.height =  h*0.88 + "px";
 		privateMacroBox.style.height =  h*0.38 + "px";
 		publicMacroBox.style.height =  h*0.38 + "px";
-		macroSequenceEdit.style.height = h*0.6-250 + "px";
 		
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
+		initLite();
 	}
 			 
 	function FElistHandler(req) 
@@ -1159,9 +1157,9 @@
 							markColorData = "2";
 							disableData = "disabled";
 						}
-						var writeEdit = "<lable>Write 0x<textarea  " + disableData + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
+						var writeEdit = "<lable>Write 0x<textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3)'>V</div> into address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+							+ ",3)'>V</div> into address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1177,9 +1175,9 @@
 							markColorData = "2";
 							readResult = Command[3];
 						}
-						var readEdit = "<lable>Read <textarea disabled cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
+						var readEdit = "<lable>Read <textarea disabled class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3,1)'>V</div> from address 0x<textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ ",3,1)'>V</div> from address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1190,7 +1188,7 @@
 							markColor = "2";
 							disable = "disabled";
 						}
-						var delayEdit = "<lable>Delay <textarea " + disable + " cols='12' rows='1' onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+						var delayEdit = "<lable>Delay <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div> seconds<br/></lable>";
 						seqID++;
@@ -1201,7 +1199,10 @@
 				macroSequenceEditEl.innerHTML = output;
 				if(macroLSBF == "true")
 					document.getElementById("isMacroEditLSBF").checked = true;
+				else 					
+					document.getElementById("isMacroEditLSBF").checked = false;
 
+				
 				var macroNameEl = document.getElementById("macroNameEdit");
 				macroNameEl.value = macroName;
 				var macroNotesEl = document.getElementById("macroNotesEdit");
@@ -1455,7 +1456,7 @@
     	if(isMacroRunning)
     		reminderEl.innerHTML = "Please wait till the current macro ends";
     	else if(isArrayAllZero(selected))
-    		reminderEl.innerHTML = "Please select at least one interface from the list";
+			Debug.log("Please select at least one interface from the list",Debug.HIGH_PRIORITY);
     	else
     	{
     		isMacroRunning = true;
