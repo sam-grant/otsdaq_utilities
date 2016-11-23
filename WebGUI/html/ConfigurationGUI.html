@@ -426,7 +426,8 @@
 			var v = "";
 			if(version !== undefined && version != "") v = "&version="+version;
 			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
-				"&configName=" + configName + v, 
+				"&configName=" + configName + 
+				v, 
 				"", specificConfigRequestHandler, backLinkStr);		
 		}
 		//setupSpecificConfigInRight ~
@@ -1197,7 +1198,7 @@
 				str += "<b>" + niceName(configName) + "</b> ";
 				
 				str += "<a id='" + configName + "-currentVersionLink' " +
-						"href='#' onmouseup='javascript:" + replaceScreenJS + "'>";
+						"href='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
@@ -1271,7 +1272,8 @@
 				configComment = configComment.replace(/</g, "&lt");
 				configComment = configComment.replace(/>/g, "&gt");
 				if(configComment != _DEFAULT_COMMENT) //do not show if default
-					str += "<div style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>" +
+					str += "<div id='" + configName + "-comment' " +
+						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>" +
 						"//" + configComment +
 						"</div>";
 				str += "</td></tr></table>"; //close pre/comment table row
@@ -1284,8 +1286,9 @@
 				
 				str += "Existing versions: ";
 				str += "<label id='" + configName + "-existingVersions'>";
+				cfgVersionStr = ""; //keep CSV list of versions for use by changeMemberVersionForConfigGroup
 				//str += version;
-				cfgVersionStr = version + ",";
+				//cfgVersionStr = version + ",";
 				configExistingVersions = configVersions[i].getElementsByTagName("ConfigurationExistingVersion");
 				var existingVersion;
 				for(var j=0;j<configExistingVersions.length;++j)
@@ -1293,6 +1296,7 @@
 					existingVersion = configExistingVersions[j].getAttribute("value");
 					if(existingVersion == version) //skip link
 					{
+						cfgVersionStr += version + ",";
 						str += " " + version; continue;
 					}
 					str += " ";
@@ -3634,7 +3638,7 @@
 			}
 						
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:105px;height:20px;margin:0 -122px -32px 10px; font-size: 16px;'>";
+					"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap;'>";
 			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
 					"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
 					"<a href='javascript:editCellCancel();' style='color:red'>" + 
@@ -4715,13 +4719,48 @@
 				str += ")'>" + configNameArr[i];
 				str += "</a>";
 			}
-			
+
 			el = document.getElementById(configName + "-existingVersions");
 			el.innerHTML = str;
 			
+
+			//get new version comment and show ----------
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + 
+					"&dataOffset=0&chunkSize=" + 0 +  
+					"&configName=" + configName + 
+					"&version=" + newVersion, 
+					"", 
+					function (req) {		
+				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+
+					Debug.log("There were errors loading this version.\n\n" +
+							"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
+					//try to power through
+				}
+
+				var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+				if(warns)
+					Debug.log("There were warnings found when loading this table " +
+							"(you can treat them as informational):\n\n" +
+							warns,Debug.WARN_PRIORITY);
+
+				var tableComment = DesktopContent.getXMLValue(req,"TableComment");
+				Debug.log("tableComment=" + tableComment);	
+
+				document.getElementById(configName + "-comment").innerHTML =
+						"//" + tableComment;
+			}
+			);
 			
-			//add button
-			var el = document.getElementById("display");
+			
+			
+			//add Save Changes button -------------
+			el = document.getElementById("display");
 			if(el.getElementsByTagName("div")[0].childNodes[0].tagName == "INPUT")
 				return; //only add button once
 			
@@ -4741,6 +4780,9 @@
 			el = document.getElementById("saveGroupWithWarningsIgnored");
 			if(el)
 				el.style.display = "none";			
+			
+			
+			
 		}
 		
 		//saveConfigGroupAsNewKey ~~

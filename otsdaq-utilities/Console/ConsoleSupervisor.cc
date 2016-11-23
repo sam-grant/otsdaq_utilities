@@ -99,6 +99,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 	std::string buffer;
 	int i = 0;
+	int heartbeatCount = 0;
 	while(1)
 	{
 		//if receive succeeds display message
@@ -122,9 +123,16 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			if(i < 5)
 				++i;
 			sleep(1); //sleep one second, if timeout
+
+			if(heartbeatCount%5 == 4) //every 5 seconds print a heartbeat message
+			{
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
+			}
+
+			++heartbeatCount;
 		}
 
-		if(i==5) break; //assume something wrong, and break loop
+		//if(i==5) break; //assume something wrong, and break loop
 	}
 
 }

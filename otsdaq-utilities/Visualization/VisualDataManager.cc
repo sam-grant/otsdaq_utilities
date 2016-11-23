@@ -51,7 +51,7 @@ void VisualDataManager::configure(void)
 				__MOUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
 				if(bufferConfiguration.second.getNode("ProcessorStatus").getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
-						&& (bufferConfiguration.second.getNode("ProcessorPluginName").getValue<std::string>() == "OTDQMHistosConsumer")
+						//&& (bufferConfiguration.second.getNode("ProcessorPluginName").getValue<std::string>() == "OTDQMHistosConsumer")
 				)
 				{
 						__MOUT__ << "FOUND DQM: OTDQMHistosConsumer!" << std::endl;

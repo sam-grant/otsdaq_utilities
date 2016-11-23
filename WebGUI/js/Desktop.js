@@ -365,9 +365,8 @@ Desktop.createDesktop = function(security) {
 	    	sysMsgEl.style.height = 300 + "px";
 
 	    //play sound alert
-	    _sysMsgSound.src = _SYS_MSG_SOUND_PATH; // buffers automatically when created
-	    _sysMsgSound.play();   	
-	   
+	    //_sysMsgSound.src = _SYS_MSG_SOUND_PATH; // buffers automatically when created
+	    //_sysMsgSound.play(); //Muted for now
 	}
 	
 	//------------------------------------------------------------------
