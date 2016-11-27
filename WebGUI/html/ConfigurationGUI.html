@@ -5158,6 +5158,57 @@
 			var rows = el.getElementsByTagName("tr");				
 			var str = "";
 			var cols = [];
+			var colIsStatusType = [];
+			var statusTypeTrues =  ["On","True","Yes"];
+			var tdStyle;
+			
+			//init pre-data columns
+			for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
+				colIsStatusType.push(false);
+			
+			//////////////////////////
+			{	//determine the boolean columns
+				var statusTypes =  ["OnOff","TrueFalse","YesNo"];				
+				var isStatusType;		
+				var colType;
+				
+				if(!_tableViewIsTransposed) //table is currently transposed, type is at col 0
+				{
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<rows.length;++c)
+					{
+						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+						isStatusType = false;
+						for(var i=0;i<statusTypes.length;++i)
+							if(statusTypes[i] == 
+									colType)
+							{
+								isStatusType = true; break;
+							}
+						colIsStatusType.push(isStatusType);
+					}
+				}
+				else						//table is currently normal view, type is at row 0
+				{
+					var firstRowEls = rows[0].getElementsByTagName("td");
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<firstRowEls.length;++c)
+					{
+						colType = firstRowEls[c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
+						isStatusType = false;
+						for(var i=0;i<statusTypes.length;++i)
+							if(statusTypes[i] == 
+									colType)
+							{
+								isStatusType = true; break;
+							}
+						colIsStatusType.push(isStatusType);
+					}
+				}						
+							
+									
+
+			}
+			/////////// done determining bool columns
+										
 			
 			if(_tableViewIsTransposed) //reading from normal view and transposing
 			{
@@ -5167,7 +5218,7 @@
 					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
 						cols[r] = rows[r].getElementsByTagName("th");
 					else
-						cols[r] = rows[r].getElementsByTagName("td");
+						cols[r] = rows[r].getElementsByTagName("td");					
 				}
 
 				//create output string based on cols
@@ -5175,13 +5226,30 @@
 				{				
 					str += "<tr>";	
 					for(var r=0;r<rows.length;++r) 
-					{			
+					{		
+						tdStyle = "";	
+						if(colIsStatusType[c])
+						{
+							//determine if true value
+							var isTrue = false;
+							for(var i=0;i<statusTypeTrues.length;++i)
+								if(statusTypeTrues[i] == cols[r][c].innerHTML)
+								{
+									isTrue = true; break;
+								}
+							tdStyle += "style='background-color:";
+							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+							tdStyle += "'";
+						}		
+						
+						
 						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
 							str += "<th>"; 
 						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
 								c >= _CONFIG_DATA_COL_OFFSET) 
 							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-									(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+									(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
+									tdStyle + ">";
 						else						
 							str += "<td>";
 						
@@ -5226,12 +5294,28 @@
 					str += "<tr>";	
 					for(var c=0;c<cols.length;++c) 
 					{			
+						tdStyle = "";	
+						if(colIsStatusType[c])
+						{
+							//determine if true value
+							var isTrue = false;
+							for(var i=0;i<statusTypeTrues.length;++i)
+								if(statusTypeTrues[i] == cols[c][r].innerHTML)
+								{
+									isTrue = true; break;
+								}
+							tdStyle += "style='background-color:";
+							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+							tdStyle += "'";
+						}	
+						
 						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
 							str += "<th>"; 
 						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
 								c >= _CONFIG_DATA_COL_OFFSET) 
 							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-									(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
+									(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
+									tdStyle + ">";
 						else						
 							str += "<td>";
 						
