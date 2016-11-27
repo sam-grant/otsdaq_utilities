@@ -15,8 +15,8 @@ cet_make(LIBRARY_NAME Visualization
 		 SupervisorDescriptorInfo
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
-		 otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
+		 #otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
+		 #otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
 		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
 		 XmlUtilities
 		 SOAPUtilities

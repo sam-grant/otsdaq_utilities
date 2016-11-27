@@ -196,6 +196,8 @@
 		var treeViewBackLinkStr_;
 		var treeGroupName_, treeGroupKey_;
 		var treeViewHideStatus_ = true;
+		var treeFilterApplied_ = false;
+		var treeFilter_ = "";
 		
 	
 		
@@ -231,9 +233,11 @@
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path)
+			//applyTreeFilter(filter)
 			//toggleTreeChildren(depth,uid,nodeName,path)
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
+			//createTreeViewMenu()
 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
@@ -264,6 +268,7 @@
 			//popUpVersionAliasForm()
 			//popUpVersionAliasGroupEditorForm()
 			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+			//popUpFilterTreeForm()
 			//saveConfigAsNewVersion(temporary, backLinkStr)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
@@ -467,14 +472,14 @@
 			var backLinkStr;
 
 			backLinkStr = "setupSystemViewMode();"; 
-			str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + 
+			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
-					groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
+					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += "Edit System Aliases</a>";
 
 			str += "<br>";
 			
-			str += "<a href='#' onmouseup='javascript:popUpGroupAliasForm(1);' " +
+			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(1); return false;' " +
 					"title='Automatically assign a new System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
 					">";
 			str += "Wiz-New System Alias-to-Latest</a>";
@@ -482,7 +487,7 @@
 			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "<br>";
 
-			str += "<a href='#' onmouseup='javascript:popUpGroupAliasForm(0);'  " +
+			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(0); return false;'  " +
 						"title='Automatically assign a new System Alias to the currently initialized Configuration Group.'" +
 						">";
 			str += "Wiz-New System Alias-to-Initialized</a>";
@@ -506,36 +511,36 @@
 				str += "<a name='anchorTag-" + 
 						groupAlias + "'></a>";
 				str += "&quot;";
-				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + 
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
 						groupAliasesName + "\",\"" +
-						groupAliasesVersion + "\",\"" + backLinkStr + "\");'>";
+						groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += groupAlias + "</a>&quot; &lt; "; 
 
 				//add group view link
-				str += " <a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
-					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
+				str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += groupName + "</a>";	
 				
 				str += "(" + groupKey +") &gt;";	
 
 				//add tree view link
-				str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
-					"\",\"" + groupKey + "\",\"" + backLinkStr + "\");'>";
+				str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += "Tree-view</a>";		
 				
 				//add Activate link
-				str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
-						"\",\"" + groupKey + "\");'>";
+				str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+						"\",\"" + groupKey + "\"); return false;'>";
 				str += "Activate</a>";
 
 				//Wiz to latest of all tables
-				str += " <a href='#' onmouseup='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\");' "+
+				str += " <a href='#' onclick='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
 						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
 						">";
 				str += "Wiz-to-Latest</a>";
 
 				//Wiz to last initialized config group
-				str += " <a href='#' onmouseup='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\");' " +
+				str += " <a href='#' onclick='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
 						">";
 				str += "Wiz-to-Initialized</a>";
@@ -589,8 +594,8 @@
 					str += " <b>" + typeName[i] + "</b>";
 				else
 				{
-					str += " <a href='#' onmouseup='javascript:_groupViewFilterIndex=" + 
-							typeFilterIndex[i] + ";setupGroupViewMode();'>";
+					str += " <a href='#' onclick='javascript:_groupViewFilterIndex=" + 
+							typeFilterIndex[i] + ";setupGroupViewMode(); return false;'>";
 					str += typeName[i];
 					str += "</a>";
 				}
@@ -830,10 +835,10 @@
 				backLinkStr = "setupGroupViewMode()";
 			for(var j=0;j<allKeys.length-2;++j)
 			{
-				str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + 
+				str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + 
 						groupName + "\",\"" + 
 						allKeys[j] + "\",\"" + 
-						backLinkStr + "\");'>";
+						backLinkStr + "\"); return false;'>";
 				str += allKeys[j] + "</a> ";
 
 			}
@@ -843,18 +848,18 @@
 
 			str += "<a name='anchorTag-" + 
 					groupName + "-" + latestKey + "'></a>";
-			str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
-					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
+			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += groupName + "</a> (" + latestKey +")";
 
 			//add tree view link
-			str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
-					"\",\"" + latestKey + "\",\"" + backLinkStr + "\");'>";
+			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += "Tree-view</a>";										
 
 			//add Activate link
-			str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
-					"\",\"" + latestKey + "\");'>";
+			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + latestKey + "\"); return false;'>";
 			str += "Activate</a>";
 
 			//show  members for latest version
@@ -877,8 +882,8 @@
 
 				str += "<a name='anchorTag-" + 
 						groupName + "-" + configName + "'></a>";
-				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
-						"\",\"" + configVersion + "\",\"" + backLinkStr + "\");'>";
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(configName) + "</a><br>" + configVersion;
 				str += "</td>";
 			}
@@ -932,8 +937,8 @@
 				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + configName + "\\\");"; 
 
 				str += "<a name='anchorTag-" + configName + "'></a>";
-				str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
-					"\",\"\",\"" + backLinkStr + "\");'>";
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+					"\",\"\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(configName);
 				str += "</a><br><table><tr>";
 
@@ -947,8 +952,8 @@
 					version = configVersions[j].getAttribute("value");
 					str += "<td align='center'>";
 					str += "version" + "<br>";
-					str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
-							"\",\"" + version + "\",\"" + backLinkStr + "\");'>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+							"\",\"" + version + "\",\"" + backLinkStr + "\"); return false;'>";
 					str += version;
 					str += "</td>";
 				}
@@ -1022,8 +1027,8 @@
 				if(groupName && groupKey)
 				{
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + groupName +
-						"\",\"" + groupKey + "\");'>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+						"\",\"" + groupKey + "\"); return false;'>";
 					str += "Go-to group &quot;" + groupName + "&quot;</a>";	
 				}
 				
@@ -1035,8 +1040,8 @@
 							 "in ots wiz to verify the column info is valid; or you can try " +
 							 "goint to to the table view:";
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + errSplit[1] +
-						"\");'>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + errSplit[1] +
+						"\"); return false;'>";
 					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
 					
@@ -1087,7 +1092,7 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\");  return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}	
 			else backLinkStr = "";		
@@ -1095,8 +1100,8 @@
 			var refreshLinkStr = "setupSpecificConfigGroup(\"" + 
 					groupName + "\",\"" +
 					groupKey + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
-					"'>Refresh</a>";
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
 			str += "<br>";
 
 			str += "<h3><u>Specific Configuration Group View</u></h3>";
@@ -1106,13 +1111,13 @@
 			//add tree view link
 			var returnToHereLink = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 					groupKey + "\\\");"; 	
-			str += " <a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + groupName +
-				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\");'>";
+			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\"); return false;'>";
 			str += "Tree-view</a>";	
 			
 			//add Activate link
-			str += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + groupName +
-					"\",\"" + groupKey + "\");'>";
+			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + groupKey + "\"); return false;'>";
 			str += "Activate</a><br>";
 			
 			
@@ -1127,8 +1132,8 @@
 					if(groupKey == key)
 					{ str += " " + key; continue; }
 					
-					str += " <a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" +
-								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\");'>";
+					str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" +
+								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\"); return false;'>";
 					str += key;
 					str += "</a>";
 				}
@@ -1137,8 +1142,8 @@
 				str += "No Historical keys exist for " + groupName + ".<br>";
 			
 			
-			str += "<br><a href='#' onmouseup='javascript:addMemberToConfigGroup(\"" + 
-					groupName + "\",\"" + returnToHereLink + "\");'>";
+			str += "<br><a href='#' onclick='javascript:addMemberToConfigGroup(\"" + 
+					groupName + "\",\"" + returnToHereLink + "\"); return false;'>";
 			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			
 			str += "<br>";
@@ -1149,7 +1154,7 @@
 							"&groupKey=" + groupKey + "\", \"\"," +
 							"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";
 					
-			str += "<a href='#' onmouseup='javascript:" + setMembersToDefaultReq + "' title='Make all member versions" + 
+			str += "<a href='#' onclick='javascript:" + setMembersToDefaultReq + "; return false;' title='Make all member versions" + 
 					" the &apos;Default&apos; version for that member " + 
 					" by automatically setting up the &apos;Default&apos; alias " + 
 					"in the active Backbone group.'" +
@@ -1158,8 +1163,8 @@
 			str += "</a>";
 			str += "<br>";
 
-			str += "<a href='#' onmouseup='javascript:popUpVersionAliasSpecificGroupForm(" + 
-					"\"" + groupName + "\",\"" + groupKey + "\");' title='Set an Alias for all member versions" +
+			str += "<a href='#' onclick='javascript:popUpVersionAliasSpecificGroupForm(" + 
+					"\"" + groupName + "\",\"" + groupKey + "\"); return false;' title='Set an Alias for all member versions" +
 					" by automatically setting up the specified Alias " + 
 					"in the active Backbone group.'" +
 					">";
@@ -1300,10 +1305,10 @@
 						str += " " + version; continue;
 					}
 					str += " ";
-					str += "<a href='#' onmouseup='javascript:changeMemberVersionForConfigGroup(\"" +
+					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + configName + "\"," + 
 							"\"" + existingVersion + "\"";
-					str += ")'>" + existingVersion;
+					str += "); return false;'>" + existingVersion;
 					str += "</a>";
 					cfgVersionStr += existingVersion + ",";
 				}			
@@ -1424,7 +1429,7 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			else backLinkStr = "";
@@ -1432,14 +1437,14 @@
 			var refreshLinkStr = "setupSpecificConfig(\"" + 
 					configName + "\",\"" +
 					version + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
-					"'>Refresh</a>";
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
 
 			var clearTempLinkStr = "popUpClearTemporaryVersionsPrompt(\"" + 
 					backLinkStr + "\");"; 
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			str += "<a href='#' onmouseup='javascript:" + clearTempLinkStr + 
-					"'>Clear Temporary Versions</a>";		
+			str += "<a href='#' onclick='javascript:" + clearTempLinkStr + 
+					"; return false;'>Clear Temporary Versions</a>";		
 			
 			str += "<br><br>";
 			
@@ -1460,9 +1465,9 @@
 			if(version != -1)
 			{
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onmouseup='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
+				str +=  "<a href='#' onclick='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
-						version + "\");' title='Make " + configName + " version " + version + 
+						version + "\"); return false;' title='Make " + configName + " version " + version + 
 						" the &apos;Default&apos; version " + 
 						" by automatically setting up the &apos;Default&apos; alias " + 
 						"in the active Backbone group.'" +
@@ -1472,7 +1477,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onmouseup='javascript:popUpVersionAliasForm();' "+
+				str +=  "<a href='#' onclick='javascript:popUpVersionAliasForm(); return false;' "+
 						"title='Assign an Alias to " + configName + 
 						" version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -1490,8 +1495,8 @@
 			//display mockup link (mockup always present)
 			str += " ";
 			if(-1 != version)				
-				str +=  "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
-					"\",\"" + "-1" + "\", \"" + backLinkStr + "\");'>";
+				str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
 			str += "Mockup-View";
 			if(-1 != version)				
 				str +=  "</a>";				
@@ -1501,9 +1506,9 @@
 			{
 				str += " ";
 				if(configVersions[j].getAttribute("value") != version)
-					str +=  "<a href='#' onmouseup='javascript:setupSpecificConfig(\"" + configName +
+					str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
 						"\",\"" + configVersions[j].getAttribute("value") + 
-						"\", \"" + backLinkStr + "\");'>";
+						"\", \"" + backLinkStr + "\"); return false;'>";
 				str += configVersions[j].getAttribute("value");
 				if(configVersions[j].getAttribute("value") != version)
 					str += "</a>";
@@ -1584,10 +1589,10 @@
 					str += "<td>" + (_dataOffset + r);	//insert row index column
 					
 					//add +/- row controls
-					str += "<br><a href='#' onmouseup='javascript:addRow(" + r + ");'>";
+					str += "<br><a href='#' onclick='javascript:addRow(" + r + "); return false;'>";
 					str += "+";
 					str += "</a>";
-					str += "/<a href='#' onmouseup='javascript:deleteRow(" + r + ");'>";
+					str += "/<a href='#' onclick='javascript:deleteRow(" + r + "); return false;'>";
 					str += "-";
 					str += "</a>";
 					
@@ -1638,7 +1643,7 @@
 			str += "</td><td valign='top'>"; //four corners continued
 
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink1' style='display:none' href='#' onmouseup='javascript:addRow(" + r + ");'>";
+			str += " <a id='lastAddRowLink1' style='display:none' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -1646,7 +1651,7 @@
 			str += "<tr><td valign='top'>"; //four corners continued
 			
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink0' href='#' onmouseup='javascript:addRow(" + r + ");'>";
+			str += " <a id='lastAddRowLink0' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -1843,39 +1848,46 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-					treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
-							"\")'>Back</a>";
+					treeViewHandlerStr_ += "<a href='#' onclick='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
+							"\"); return false;'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
 				else treeViewHandlerStr_ = "";
 
-				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
-						treeGroupName_ + "\",\"" +
-						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
-				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
-						"'>Refresh</a>";
+				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+				//						treeGroupName_ + "\",\"" +
+				//						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
+				//				treeViewHandlerStr_ += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+				//						"; return false;'>Refresh</a>";	
+				//treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				
-
-				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:expandTreeChildrenDepth()' " + 
+				treeViewHandlerStr_ += "<a href='#' onclick='javascript:expandTreeChildrenDepth(); return false;' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
 						"(Hot-keys: + , &gt; , } , A , E )' " +
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onmouseup='javascript:hideTreeChildrenDepth()'" + 
+				treeViewHandlerStr_ += "<a href='#' onclick='javascript:hideTreeChildrenDepth(); return false;'" + 
 						"title='Hide all children at deepest depth.\n\n" +
 						"(Hot-keys: - , &lt; , { , Z , M )' " +
 						">- All Children</a>";
 				
 				
-				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onmouseup='" +
-						"treeViewHideStatus_ = !treeViewHideStatus_;" +
-						refreshLinkStr +
-						"' title='' " +
-						">" + (treeViewHideStatus_?"Show":"Hide") + " Status=False</a>";				
+				//				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				//				treeViewHandlerStr_ += "<a href='#' onclick='" +
+				//						"treeViewHideStatus_ = !treeViewHideStatus_;" +
+				//						refreshLinkStr +
+				//						"; return false;' title='' " +
+				//						">" + (treeViewHideStatus_?"Show":"Hide") + " Status=False</a>";				
+				//				
+
+				//display edit menu
+				treeViewHandlerStr_ +=
+						"<div class='tableView-Menu' onmousedown='createTreeViewMenu(event);' " +
+						"title='Edit Menu'>" +
+						"<div class='gotoNavDiv'></div>" +
+						"</div>"; //end context menu link div
 				
 				treeViewHandlerStr_ += "<br><br>";
 
@@ -1897,8 +1909,8 @@
 				
 				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
-					"href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + configGroupName +
-					"\",\"" + configGroupKey + "\");'>";
+					"href='#' onclick='javascript:setupSpecificConfigGroup(\"" + configGroupName +
+					"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
 				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
@@ -1907,8 +1919,8 @@
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
 				
 				//add Activate link
-				treeViewHandlerStr_ += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + configGroupName +
-						"\",\"" + configGroupKey + "\");'>";
+				treeViewHandlerStr_ += " <a href='#' onclick='javascript:activateSystemConfig(\"" + configGroupName +
+						"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
 				treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
@@ -1944,6 +1956,8 @@
 			
 			//save the full string for posterity (and for back links)
 			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
+			
+			applyTreeFilter("",1); //reapplyFilter
 		}
 
 		//recursiveDrawTree ~		
@@ -2213,6 +2227,76 @@
 			}
 		}
 		
+		//applyTreeFilter ~
+		function applyTreeFilter(filter, reapplyFilter)
+		{
+			Debug.log("applyTreeFilter " + filter);
+			var allValues = document.getElementsByClassName("bold-header");
+			if(treeFilterApplied_)
+			{
+				//clear Tree Filter
+				for(var i=0;i<allValues.length;++i)
+					allValues[i].parentNode.parentNode.parentNode.style.display = "block";
+				
+				treeFilterApplied_ = false;
+			}
+			
+			if(reapplyFilter)
+				filter = treeFilter_;
+			else 
+				treeFilter_ = filter;
+			
+			if(!filter || filter == "" || filter == "*") return;			
+			
+			//apply new filter
+			var filterArr = filter.split('*');
+
+			//if only one element find exact
+			//for each !"" component find it one after the other..
+			
+			var valName;
+			var filterMatch;
+			for(var i=0;i<allValues.length;++i)
+			{
+				filterMatch = true;
+				valName = allValues[i].innerHTML;
+				if(filterArr.length == 1)
+				{
+					if(valName != filterArr[0])
+						filterMatch = false;						
+				}
+				else
+				{
+					var nextIndex = -1;
+					for(var j=0;j<filterArr.length;++j)
+					{
+						Debug.log("j=" + j + " filterArr[j]=" + filterArr[j] + 
+								" nextIndex=" + nextIndex);
+						if(filterArr[j] == "") continue; //skip empty filters
+						
+						if(j == 0) //must start with filter
+						{
+							if((nextIndex = valName.indexOf(filterArr[j])) != 0)
+							{
+								filterMatch = false;
+								break; //done
+							}
+						}
+						else if((nextIndex = valName.indexOf(filterArr[j],nextIndex+1)) < 0)
+						{
+							filterMatch = false;
+							break; //done
+						}
+					}					
+				}
+				
+				if(!filterMatch)	//get to treeNode element
+					allValues[i].parentNode.parentNode.parentNode.style.display = "none";
+			}
+			
+			treeFilterApplied_ = true;
+		}		
+		
 		//expandTreeChildrenDepth ~
 		//	expand all children at deepest depth
 		//	if deepest depth is 0, expand XDAQContextConfiguration preferentially
@@ -2237,7 +2321,7 @@
 					deepestDepth = params[params.length-1][0]|0;
 				
 				if(params[params.length-1][2] == "\"XDAQContextConfiguration\"") 
-					contextIndex = i; //found XDAQContextConfiguration, save index
+					contextIndex = params.length-1; //found XDAQContextConfiguration, save index
 			}
 
 			Debug.log("deepestDepth " + deepestDepth);	
@@ -2421,9 +2505,9 @@
 						name = name[0];					
 												
 						//add ignore warnings Activate link
-						withWarningsStr += " <a href='#' onmouseup='javascript:activateSystemConfig(\"" + 
+						withWarningsStr += " <a href='#' onclick='javascript:activateSystemConfig(\"" + 
 								name +
-								"\",\"" + key + "\",1);'>"; //ignore warnings
+								"\",\"" + key + "\",1); return false;'>"; //ignore warnings
 						withWarningsStr += "Activate " + 
 								name + "(" + key + ") w/warnings ignored</a>";
 					}
@@ -2458,8 +2542,8 @@
 				}
 				else
 				{
-					str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
-					"\",\"" + activeConfigGroups[i*2+1] + "\");'>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
+					"\",\"" + activeConfigGroups[i*2+1] + "\"); return false;'>";
 					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
 				}
 				str += "<br>";
@@ -2847,14 +2931,14 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onmouseup='javascript:evaluateJS(\"" + backLinkStr + "\")'>Back</a>";
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			
 			var refreshLinkStr = "setupConfigCreator(\"" + 
 					preSelectStr + "&backLinkStr=" + backLinkStr + "\");"; 
-			str += "<a href='#' onmouseup='javascript:" + refreshLinkStr + 
-					"'>Refresh</a>";
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
 			str += "<br>";
 
 			if(preSelectStr)
@@ -2881,17 +2965,17 @@
 			str += "<tr><td>";
 			
 			var title = "Select/Deselect checkboxes based on this selection.";
-			str += "<a href='#' onmouseup='javascript:selectForCreateConfig(1)' title='" + title + "'>All</a> | " +
-					"<a href='#' onmouseup='javascript:selectForCreateConfig(0)' title='" + title + "'>None</a> | " + 
-					"<a href='#' onmouseup='javascript:selectForCreateConfig(2)' title='" + title + "'>Context</a> | " +
-					"<a href='#' onmouseup='javascript:selectForCreateConfig(3)' title='" + title + "'>Backbone</a> | " +
-					"<a href='#' onmouseup='javascript:selectForCreateConfig(4)' title='" + title + "'>Configuration</a>";
+			str += "<a href='#' onclick='javascript:selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
+					"<a href='#' onclick='javascript:selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
-			str += "<a href='#' onmouseup='javascript:versionsForCreateConfig(0)' title='" + title + "'>Latest</a> | " +
-					"<a href='#' onmouseup='javascript:versionsForCreateConfig(1)' title='" + title + "'>Defaults</a> | " +
-					"<a href='#' onmouseup='javascript:popUpVersionAliasGroupEditorForm()' title='" + title + "'>Other Alias</a>";
+			str += "<a href='#' onclick='javascript:versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
+					"<a href='#' onclick='javascript:versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
+					"<a href='#' onclick='javascript:popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
 			str += "</td><td></td>";
 			str += "</tr>";
 			
@@ -2905,10 +2989,10 @@
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='#' onmouseup='javascript:" +
+				str += "<a style='text-decoration:none;color:black;' href='#' onclick='javascript:" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
-						"'>";
+						" return false;'>";
 				str += niceName(name); //can display however
 				str += "</a>";
 				str += "</input>";
@@ -2932,11 +3016,11 @@
 				backLinkStr = "setupConfigCreator(\\\"" + preSelectStr + "\\\");";
 				
 				str += "<td>";
-				str += "<a href='#' onmouseup='" +
+				str += "<a href='#' onclick='" +
 						"var sel = document.getElementById(\"select-" + name + "\");" +
 						"setupSpecificConfig(\"" + name + "\"," +
 						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
-						",\"" + backLinkStr + "\");'>";
+						",\"" + backLinkStr + "\"); return false;'>";
 				str += "goto</a>";
 						//"(configName, version)"
 				str += "</td>";
@@ -3215,14 +3299,19 @@
 			str += "New Configuration Group Created: <b class='bold-header'>" +
 					name + " (" + key + ")</b>"; 
 			str += "<br>Goto its ";
-			str += "<a href='#' onmouseup='javascript:setupSpecificConfigGroup(\"" + name + 
-					"\",\"" + key + "\");'>Member-View</a> or ";
-			str += "<a href='#' onmouseup='javascript:setupConfigGroupTreeView(\"" + name + 
-					"\",\"" + key + "\");'>Tree-View</a>, or ";
-			str += "<a href='#' onmouseup='javascript:activateSystemConfig(\"" + name + 
-					"\",\"" + key + "\");'>Activate</a> it.";
+			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Member-View</a> or ";
+			str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Tree-View</a>, or ";
+			str += "<a href='#' onclick='javascript:activateSystemConfig(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Activate</a> it.";
 			
 			el.innerHTML = str;
+			
+			//scroll to the top
+			window.scrollTo(0,0);
+			Debug.log("New Configuration Group Created: " +
+					name + " (" + key + ")",Debug.INFO_PRIORITY);
 		}
 		
 		//setupCopyAndMoveRows
@@ -3581,7 +3670,7 @@
 			if(_editingCell) //already have the edit box open, cancel it
 			{
 				if(_editingCellEl == el) //if same cell do nothing
-					return false;
+					return true;
 				editCellCancel(); //if new cell cancel
 			}
 			
@@ -3617,7 +3706,7 @@
 					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
 			{
 				str += "<select  onkeydown='keyHandler(event)' " +
-						"id='selectCellLinkSelect' style='margin:-4px -2px -4px 1px;width:" + 
+						"style='margin:-4px -2px -4px 1px;width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
 				{			
@@ -3628,6 +3717,33 @@
 						optionIndex = i; //get starting sel index
 				}				
 				str += "</select>";				
+			}
+			else if(colType == "YesNo" || 
+					colType == "TrueFalse" || 
+					colType == "OnOff")  //if column type is boolean, use dropdown
+			{
+				var boolVals = [];
+				if(colType == "YesNo")
+					boolVals = ["No","Yes"];
+				else if(colType == "TrueFalse")
+					boolVals = ["False","True"];
+				else if(colType == "OnOff")
+					boolVals = ["Off","On"];
+				
+
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"style='margin:-4px -2px -4px 1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+				for(var i=0;i<boolVals.length;++i)
+				{			
+					str += "<option value='" + boolVals[i] + "'>";
+					str += boolVals[i];	//can display however
+					str += "</option>";
+					if(boolVals[i] == _editingCellElOldValue)
+						optionIndex = i; //get starting sel index					
+				}			
+				str += "</select>";
+				if(optionIndex == -1) optionIndex = 0; //use False option by default
 			}
 			else // normal cells, with text input
 			{
@@ -3655,6 +3771,13 @@
 				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 				el.getElementsByTagName("select")[0].focus();
 			}
+			else if(colType == "YesNo" || 
+					colType == "TrueFalse" || 
+					colType == "OnOff")  //if column type is boolean, use dropdown
+			{
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+				el.getElementsByTagName("select")[0].focus();				
+			}
 			else //select text box
 				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			
@@ -3672,8 +3795,10 @@
 		function bodyKeyHandler(e) 
 		{
 			//detect proper views
-			var el = document.getElementById("treeView-ConfigGroupLink");			
-			if(el) //tree view key handler
+			var el = document.getElementById("treeView-ConfigGroupLink");	
+			var popUpEl = document.getElementById("popUpDialog");
+			
+			if(el && !popUpEl) //tree view key handler and no popup
 			{	
 				//NOTE: Firefox and Chrome have different keycodes for +/-
 				var expandKeys = [65,69,190,221,187,61]; // a, e, >, }, +, FF+ (no shift needed)
@@ -3799,16 +3924,37 @@
 				editCellCancel();
 				return false;
 			}
+			else if((e.keyCode >= 48 < e.keyCode <= 57) || 
+					(e.keyCode >= 96 < e.keyCode <= 105))// number
+			{
+				//if child link cell or boolean cell			
+				var sel;
+				if((sel = _editingCellEl.getElementsByTagName("select")).length)
+				{
+					sel = sel[0]; //assume the first select in the cell is the select
+					//select based on number
+					var selNum;
+					if(e.keyCode >= 96)
+						selNum = e.keyCode - 96;
+					else
+						selNum = e.keyCode - 48;
+					
+					sel.selectedIndex = selNum % (sel.options.length);
+					sel.focus();	
+					Debug.log("number select =" + sel.selectedIndex);
+				}
+			}
 		}
 		
 		//editCellOK
 		function editCellOK(r,c) 
 		{	
-			//if child link cell
-			if(_editingCellEl.getElementsByTagName("select").length)
+			//if child link cell or boolean cell
+			var sel;
+			if((sel = _editingCellEl.getElementsByTagName("select")).length)
 			{
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);
-				var sel = document.getElementById("selectCellLinkSelect");	
+				sel = sel[0]; //assume the first select in the cell is the select
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);				
 				var selVal = sel.options[sel.selectedIndex].value;
 
 				Debug.log("CfgGUI editCellOK = " + 
@@ -3816,7 +3962,30 @@
 
 				str = "";
 				str += selVal;
-				_editingCellEl.innerHTML = str;			
+				_editingCellEl.innerHTML = str;		
+				
+				//assume no child link will be named a booleam word
+				var statusTypeTrues =  ["On","True","Yes"];
+				var statusTypeFalses =  ["Off","False","No"];
+				
+				//determine if true value
+				var isTrue = false;
+				var isFalse = false;
+				for(var i=0;i<statusTypeTrues.length;++i)
+					if(statusTypeTrues[i] == selVal)
+					{
+						isTrue = true; break;
+					}
+				for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+					if(statusTypeFalses[i] == selVal)
+					{
+						isFalse = true; break;
+					}
+				
+				if(isTrue)
+					_editingCellEl.style.backgroundColor = "rgb(201, 255, 201)";
+				else if(isFalse)
+					_editingCellEl.style.backgroundColor = "rgb(255, 178, 178)";
 			}
 			else //normal cell
 			{
@@ -3916,10 +4085,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4024,10 +4193,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4095,10 +4264,10 @@
 					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 					
 					//add +/- row controls
-					str += "<br><a href='#' onmouseup='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "<br><a href='#' onclick='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 					str += "+";
 					str += "</a>";
-					str += "/<a href='#' onmouseup='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+					str += "/<a href='#' onclick='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 					str += "-";
 					str += "</a>";							
 					rows[i].childNodes[0].innerHTML = str;
@@ -4156,10 +4325,10 @@
 							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 							//add +/- row controls
-							str += "<br><a href='#' onmouseup='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "+";
 							str += "</a>";
-							str += "/<a href='#' onmouseup='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + ");'>";
+							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 							str += "-";
 							str += "</a>";	
 						}
@@ -4221,8 +4390,8 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to apply to all member table versions:<br><br>";
@@ -4256,6 +4425,66 @@
 					0,defaultAlias.length);
 		}
 		
+		//popUpFilterTreeForm
+		function popUpFilterTreeForm()
+		{
+			Debug.log("CfgGUI popUpFilterTreeForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultFilter = "*Port";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the filter (* may be used) to select which values are " +
+					"shown in the tree:<br><br>";
+			str += "<input type='text' id='popUpDialog-filter' value='" +
+					defaultFilter + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "applyTreeFilter(" +
+					"document.getElementById(\"popUpDialog-filter\").value" +
+					"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Filter Values' title='" +
+					"Select the Alias in the drop-down for all tables." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-filter"),
+					0,defaultFilter.length);
+		}
+		
 		//popUpVersionAliasGroupEditorForm
 		function popUpVersionAliasGroupEditorForm()
 		{
@@ -4284,8 +4513,8 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to select for all tables:<br><br>";
@@ -4342,8 +4571,8 @@
 
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Are you sure you want to clear all temporary versions of <b>" + 
@@ -4413,8 +4642,8 @@
 			
 			var str = "<br><a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter a comment describing this new version of <b>" + 
@@ -4426,9 +4655,9 @@
 			
 			//give option to use cached comment
 			if(_cachedTableComment != "") 			
-				str += "<a href='#' onmouseup='" + 
+				str += "<a href='#' onclick='" + 
 					"var el = document.getElementById(" +
-					"\"popUpDialog-comment\"); el.value = _cachedTableComment;' " +
+					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
 					"title='Load the cached comment associated with last persistent version " +
 					"of " + _currentConfigName + " that was viewed. " + 
 					"You will still have a chance to append to the comment.' " +
@@ -4478,8 +4707,8 @@
 			var defaultAlias = "mySystemAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the System Alias you would like to assign to the ";
@@ -4548,8 +4777,8 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
-					"-header' href='#' onmouseup='javascript:var el = document.getElementById(" +
-					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el);'>Cancel</a><br><br>";
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
 			str += "Please enter the Alias you would like to assign to version &apos;" + 
@@ -4713,10 +4942,10 @@
  					continue;
 				}
 				str += " ";
-				str += "<a href='#' onmouseup='javascript:changeMemberVersionForConfigGroup(\"" +
+				str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
 						groupName + "\",\"" + configName + "\"," + 
 						"\"" + configNameArr[i] + "\"";
-				str += ")'>" + configNameArr[i];
+				str += "); return false;'>" + configNameArr[i];
 				str += "</a>";
 			}
 
@@ -4884,6 +5113,40 @@
 			);
 		}
 		
+		//createEditTableMenu ~~
+		function createTreeViewMenu(event)
+		{
+			var menuItems = [
+							 "Refresh",
+							 treeViewHideStatus_?
+									 "Show Status=False":
+									 "Hide Status=False",
+							 treeFilterApplied_?
+									 "Clear Tree View Filter":
+									 "Filter Tree View Values"
+									 ];
+			
+			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+									treeGroupName_ + "\",\"" +
+									treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
+			
+			var menuItemHandlers = [
+							refreshLinkStr,
+							"treeViewHideStatus_ = !treeViewHideStatus_;" +
+													refreshLinkStr,
+							 "treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()"							 
+									 ];
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+			);
+		}
+		
 		//transposeTableView ~~
 		function transposeTableView()
 		{
@@ -4995,9 +5258,9 @@
 		
 	<h1>Configuration GUI</h1>
 		<div style='width:550px'>		
-	<a href='#' onmouseup='javascript:setupSystemViewMode()'>System View</a> 	&nbsp;&nbsp;
-	<a href='#' onmouseup='javascript:setupGroupViewMode()'>Group View</a>	&nbsp;&nbsp;
-	<a href='#' onmouseup='javascript:setupTableViewMode()'>Table View</a>	&nbsp;&nbsp;
+	<a href='#' onclick='javascript:setupSystemViewMode(); return false;'>System View</a> 	&nbsp;&nbsp;
+	<a href='#' onclick='javascript:setupGroupViewMode(); return false;'>Group View</a>	&nbsp;&nbsp;
+	<a href='#' onclick='javascript:setupTableViewMode(); return false;'>Table View</a>	&nbsp;&nbsp;
 
 	<a style='margin-left:50px;' target="_blank" 
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
