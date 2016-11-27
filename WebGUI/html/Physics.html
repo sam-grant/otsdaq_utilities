@@ -550,7 +550,7 @@
 
 							    Debug.log("State was changed unexpectedly from " + 
 										_stateNames[_currState] + " to " + _stateNames[i] +
-										". (Likely another user changed the state)",Debug.HIGH_PRIORITY);
+										". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
 								//								alert("State was changed unexpectedly from " + 
 								//										_stateNames[_currState] + " to " + _stateNames[i] +
 								//										". (Likely another user changed the state)");
@@ -695,11 +695,15 @@
             function handleMouseUp(mouseEvent) {
                 if(_selectedTransition == -1) return;
                     
+                //stop verifying state during transition
+        		window.clearTimeout(_verifyStateTimeout);
+        		
 				var transitionPostData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
                 Debug.log("Physics handleMouseUp to state " + _transitionActions[_currStateTransArr[_selectedTransition]] +
                     "?" + transitionPostData);
                 DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
-						_transitionActions[_currStateTransArr[_selectedTransition]], transitionPostData, physicsLaunchHandler);
+						_transitionActions[_currStateTransArr[_selectedTransition]], 
+						transitionPostData, physicsLaunchHandler);
             }
                     
             //getTransitionParameterData
@@ -774,6 +778,10 @@
     			    _blackout.style.display = 'none';    			    
     			    updateTimeInState(0); //reset local time in state
                     redrawPhysics(); //draw new state under blackout
+                    
+                    //resume verifying state
+            		window.clearTimeout(_verifyStateTimeout);
+					_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
                     return;
                 }
             	else 														//normal fade in or fade out -------------------
