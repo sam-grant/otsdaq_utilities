@@ -500,6 +500,10 @@
 			
 			_editingCellElOldValue = el.innerHTML;
 			
+			var startingLinkId = "0";
+			if(colType.indexOf('-') != -1)
+				startingLinkId = colType.substr(colType.indexOf('-')+1);
+			Debug.log("startingLinkId=" + startingLinkId);
 			
 			var str = "";			
 			var typeOptionIndex = -1;
@@ -529,7 +533,8 @@
 					str += "<input id='selectCellTypeSelect' value='UID' style='display:none'></input>";
 				}
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
-						"style='display:none; width:40px; float:left; height: 13px' value='0'>";
+						"style='display:none; width:40px; float:left; height: 13px' value='" + 
+						startingLinkId + "'>";
 
 				str += "<div id='clearDiv'></div>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";

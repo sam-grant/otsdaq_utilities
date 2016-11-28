@@ -1,16 +1,16 @@
-#ifndef _ots_SlowControlsInterface_h
-#define _ots_SlowControlsInterface_h
+#ifndef _ots_SlowControlsVInterface_h
+#define _ots_SlowControlsVInterface_h
 
 #include <string>
 namespace ots
 {
   
-  class SlowControlsInterface
+  class SlowControlsVInterface
   {
     
   public:
-    SlowControlsInterface			(void)				{;}
-	virtual ~SlowControlsInterface  (void) 				{;}
+    SlowControlsVInterface			(void)				{;}
+	virtual ~SlowControlsVInterface  (void) 				{;}
 
     
     virtual void initialize        	(                                        );

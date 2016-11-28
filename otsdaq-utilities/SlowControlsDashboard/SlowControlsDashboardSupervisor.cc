@@ -19,8 +19,8 @@
 #include <chrono>         // std::chrono::seconds
 #include <errno.h>
 
-#include "otsdaq-utilities/SlowControlsDashboard/EpicsInterface.h"
-#include "otsdaq-utilities/SlowControlsDashboard/SlowControlsInterface.h"
+//#include "EpicsInterface.h.bkup"
+#include "SlowControlsVInterface.h"
 #define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/SlowControlsDashboardData/pages/";
 
 using namespace ots;

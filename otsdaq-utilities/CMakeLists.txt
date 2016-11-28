@@ -2,6 +2,7 @@
 add_subdirectory(Chat)
 add_subdirectory(ConfigurationGUI)
 #add_subdirectory(SlowControlsDashboard)
+add_subdirectory(SlowControlsInterfacePlugins)
 add_subdirectory(Logbook)
 add_subdirectory(OtsConfigurationWizard)
 add_subdirectory(Visualization)

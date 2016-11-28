@@ -22,7 +22,7 @@
 #include <arpa/inet.h>
 #include <string>
 
-#include "otsdaq-utilities/SlowControlsDashboard/SlowControlsInterface.h"
+#include "SlowControlsVInterface.h"
 
 
 struct dbr_ctrl_char;
