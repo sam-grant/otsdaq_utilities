@@ -31,14 +31,14 @@ public:
     //Getters
     DQMHistosBase*          getLiveDQMHistos    (void);
     DQMHistosBase&          getFileDQMHistos    (void);
-    const Visual3DEvents&   getVisual3DEvents   (void);
-    const Visual3DGeometry& getVisual3DGeometry (void);
+    //const Visual3DEvents&   getVisual3DEvents   (void);
+    //const Visual3DGeometry& getVisual3DGeometry (void);
 
 private:
     DQMHistosBase*             theLiveDQMHistos_;
     DQMHistosBase              theFileDQMHistos_;
-    MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
-    MonicelliGeometryConverter theMonicelliGeometryConverter_;
+    //MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
+    //MonicelliGeometryConverter theMonicelliGeometryConverter_;
     //Visual3DData           the3DData_;
 };
 

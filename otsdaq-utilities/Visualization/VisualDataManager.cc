@@ -76,10 +76,10 @@ void VisualDataManager::load(std::string fileName, std::string type)
 {
 	if(type == "Histograms")
 		theFileDQMHistos_.load(fileName);
-	else if(type == "Monicelli")
-		theMonicelliEventAnalyzer_.load(fileName);
-	else if(type == "Geometry")
-		theMonicelliGeometryConverter_.loadGeometry(fileName);
+//	else if(type == "Monicelli")
+//		theMonicelliEventAnalyzer_.load(fileName);
+//	else if(type == "Geometry")
+//		theMonicelliGeometryConverter_.loadGeometry(fileName);
 
 }
 
@@ -95,14 +95,14 @@ DQMHistosBase& VisualDataManager::getFileDQMHistos(void)
 	return theFileDQMHistos_;
 }
 
-//========================================================================================================================
-const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)
-{
-	return theMonicelliEventAnalyzer_.getEvents();
-}
-
-//========================================================================================================================
-const Visual3DGeometry& VisualDataManager::getVisual3DGeometry(void)
-{
-	return theMonicelliGeometryConverter_.getGeometry();
-}
+////========================================================================================================================
+//const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)
+//{
+//	return theMonicelliEventAnalyzer_.getEvents();
+//}
+//
+////========================================================================================================================
+//const Visual3DGeometry& VisualDataManager::getVisual3DGeometry(void)
+//{
+//	return theMonicelliGeometryConverter_.getGeometry();
+//}

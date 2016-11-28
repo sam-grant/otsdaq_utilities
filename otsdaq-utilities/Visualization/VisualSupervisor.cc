@@ -544,39 +544,39 @@ throw (xgi::exception::Exception)
 		DOMElement* eventParent;
 		char str[40];
 
-		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
-		__MOUT__ << "Preparing hits xml" << std::endl;
-		int numberOfEvents = 0;
-		for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() && numberOfEvents < 10000; it++, numberOfEvents++)
-		{
-			//__MOUT__ << "Event: " << numberOfEvents << std::endl;
-			eventParent = xmldoc.addTextElementToParent("event", str, eventsParent);
-			const VisualHits& hits = it->getHits();
-			for(VisualHits::const_iterator itHits=hits.begin(); itHits!=hits.end(); itHits++)
-			{
-				sprintf(str,"%f",itHits->x);
-				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
-				sprintf(str,"%f",itHits->y);
-				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
-				sprintf(str,"%f",itHits->z);
-				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
-				//__MOUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z: " << itHits->z << std::endl;
-			}
-			const VisualTracks& tracks = it->getTracks();
-			for(VisualTracks::const_iterator itTrks=tracks.begin(); itTrks!=tracks.end(); itTrks++)
-			{
-				sprintf(str,"%f",itTrks->slopeX);
-				xmldoc.addTextElementToParent("slope", str, eventParent);
-				sprintf(str,"%f",itTrks->slopeY);
-				xmldoc.addTextElementToParent("slope", str, eventParent);
-				sprintf(str,"%f",itTrks->interceptX);
-				xmldoc.addTextElementToParent("intcpt", str, eventParent);
-				sprintf(str,"%f",itTrks->interceptY);
-				xmldoc.addTextElementToParent("intcpt", str, eventParent);
-
-			}
-
-		}
+		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
+		//		__MOUT__ << "Preparing hits xml" << std::endl;
+		//		int numberOfEvents = 0;
+		//		for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() && numberOfEvents < 10000; it++, numberOfEvents++)
+		//		{
+		//			//__MOUT__ << "Event: " << numberOfEvents << std::endl;
+		//			eventParent = xmldoc.addTextElementToParent("event", str, eventsParent);
+		//			const VisualHits& hits = it->getHits();
+		//			for(VisualHits::const_iterator itHits=hits.begin(); itHits!=hits.end(); itHits++)
+		//			{
+		//				sprintf(str,"%f",itHits->x);
+		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				sprintf(str,"%f",itHits->y);
+		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				sprintf(str,"%f",itHits->z);
+		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				//__MOUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z: " << itHits->z << std::endl;
+		//			}
+		//			const VisualTracks& tracks = it->getTracks();
+		//			for(VisualTracks::const_iterator itTrks=tracks.begin(); itTrks!=tracks.end(); itTrks++)
+		//			{
+		//				sprintf(str,"%f",itTrks->slopeX);
+		//				xmldoc.addTextElementToParent("slope", str, eventParent);
+		//				sprintf(str,"%f",itTrks->slopeY);
+		//				xmldoc.addTextElementToParent("slope", str, eventParent);
+		//				sprintf(str,"%f",itTrks->interceptX);
+		//				xmldoc.addTextElementToParent("intcpt", str, eventParent);
+		//				sprintf(str,"%f",itTrks->interceptY);
+		//				xmldoc.addTextElementToParent("intcpt", str, eventParent);
+		//
+		//			}
+		//
+		//		}
 		__MOUT__ << "Done hits xml" << std::endl;
 	}
 	else if (Command == "getGeometry")
@@ -589,31 +589,31 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "getGeometry" << std::endl;
 
 		DOMElement* geometryParent = xmldoc.addTextElementToData("geometry", "");
-		const Visual3DShapes& shapes = theDataManager_->getVisual3DGeometry().getShapes();
-
-		__MOUT__ << "getGeometry" << std::endl;
-
-
-		DOMElement* objectParent;
-		char str[40];
-		for(Visual3DShapes::const_iterator itShapes=shapes.begin(); itShapes!=shapes.end(); itShapes++)
-		{
-			objectParent = xmldoc.addTextElementToParent("object", str, geometryParent);
-			xmldoc.addTextElementToParent("object_type", "LINE_LOOP", objectParent);
-			sprintf(str,"%d",itShapes->numberOfRows);
-			xmldoc.addTextElementToParent("object_rows", str, objectParent);
-			sprintf(str,"%d",itShapes->numberOfColumns);
-			xmldoc.addTextElementToParent("object_columns", str, objectParent);
-			for(Points::const_iterator itCorners=itShapes->corners.begin(); itCorners!=itShapes->corners.end(); itCorners++)
-			{
-				sprintf(str,"%f",itCorners->x);
-				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
-				sprintf(str,"%f",itCorners->y);
-				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
-				sprintf(str,"%f",itCorners->z);
-				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
-			}
-		}
+		//		const Visual3DShapes& shapes = theDataManager_->getVisual3DGeometry().getShapes();
+		//
+		//		__MOUT__ << "getGeometry" << std::endl;
+		//
+		//
+		//		DOMElement* objectParent;
+		//		char str[40];
+		//		for(Visual3DShapes::const_iterator itShapes=shapes.begin(); itShapes!=shapes.end(); itShapes++)
+		//		{
+		//			objectParent = xmldoc.addTextElementToParent("object", str, geometryParent);
+		//			xmldoc.addTextElementToParent("object_type", "LINE_LOOP", objectParent);
+		//			sprintf(str,"%d",itShapes->numberOfRows);
+		//			xmldoc.addTextElementToParent("object_rows", str, objectParent);
+		//			sprintf(str,"%d",itShapes->numberOfColumns);
+		//			xmldoc.addTextElementToParent("object_columns", str, objectParent);
+		//			for(Points::const_iterator itCorners=itShapes->corners.begin(); itCorners!=itShapes->corners.end(); itCorners++)
+		//			{
+		//				sprintf(str,"%f",itCorners->x);
+		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//				sprintf(str,"%f",itCorners->y);
+		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//				sprintf(str,"%f",itCorners->z);
+		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//			}
+		//		}
 	}
 	else if (Command == "getRootConfig")
 	{
