@@ -47,3 +47,11 @@
 				letter-spacing: -2px;
 			}
 		}
+		
+
+		#SubSystemTable {
+			background-color : rgb(241, 231, 231);			
+		}
+		#SubSystemTable td, #SubSystemTable th {
+			background-color : rgb(226, 216, 216);			
+		}
