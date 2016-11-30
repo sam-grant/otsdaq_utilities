@@ -295,7 +295,13 @@
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
-						
+
+		//firefox is awful, but this interval fixes firefox from deleting this array (?)
+		window.setInterval(function()
+				{
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+				},1000);
+		
 		
 		//init called once body has loaded
 		function init() {			
@@ -361,6 +367,7 @@
 			}
 			else
 				setupSystemViewMode();
+			
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -986,10 +993,12 @@
 				if(el) el.parentNode.removeChild(el);
 			} while(el);	
 			
+			var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
 			{					
-				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+				
 				Debug.log(treeErr,Debug.WARN_PRIORITY);
 				Debug.log("There were problems identified in the tree view of the " +
 						"attempted new group &apos;" +
@@ -1051,7 +1060,15 @@
 				Debug.log(str,Debug.WARN_PRIORITY);
 				//el.innerHTML = str;
 				//return;
+				
+				//don't power through if a new group was attempted
+				if(attemptedNewGroupName && attemptedNewGroupName != "")
+					return;
 			}
+			else if(attemptedNewGroupName && attemptedNewGroupName != "") //if attempted and no errors, shout success
+				Debug.log("New group '" + attemptedNewGroupName + "' successfully created!",
+						Debug.INFO_PRIORITY);
+				
 			
 			var backLinkStr = "";
 			var anchorTarget = "";
@@ -1377,6 +1394,8 @@
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
 									
 			_tableLinkDropdownChoices = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
+
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
 			
 			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 			if(!kocVersionHdr.length)
@@ -1783,6 +1802,8 @@
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 
+			
+			
 			if(!parentId && 
 					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
 					treeGroupName_ == configGroupName &&
@@ -1791,6 +1812,17 @@
 				Debug.log("Re-using tree handler string that we already have!");
 				var el = document.getElementById("display");
 				el.innerHTML = treeViewHandlerStr_;
+				
+				//setup back link string properly for menu generation
+				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
+				{
+					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
+					if(treeViewBackLinkStr_.indexOf("'") >= 0)
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
+					else
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
+					Debug.log("Back-link = " + treeViewBackLinkStr_);
+				}
 				return;
 			}
 			else
@@ -1846,6 +1878,7 @@
 				//add back link				
 				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
 				{
+					//setup back link string properly
 					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
 					if(treeViewBackLinkStr_.indexOf("'") >= 0)
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
@@ -1857,7 +1890,6 @@
 							"\"); return false;'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
-				else treeViewHandlerStr_ = "";
 
 				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 				//						treeGroupName_ + "\",\"" +
