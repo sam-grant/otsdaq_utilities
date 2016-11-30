@@ -4085,48 +4085,6 @@
 
 				//create output string based on cols
 				str += createTableViewOutputStr(cols,colIsBoolType);
-						
-		//								str = "";
-		//								for(var r=0;r<cols.length;++r) 
-		//								{				
-		//									str += "<tr>";	
-		//				
-		//									for(var c=0;c<cols[0].length;++c) 
-		//									{			
-		//										if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-		//											str += "<th>"; 
-		//										else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-		//												c >= _CONFIG_DATA_COL_OFFSET) 
-		//											str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-		//													(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
-		//										else						
-		//											str += "<td>";
-		//				
-		//										//first column is row numbers
-		//										if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-		//										{							
-		//											str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-		//				
-		//											//add +/- row controls
-		//											str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-		//											str += "+";
-		//											str += "</a>";
-		//											str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-		//											str += "-";
-		//											str += "</a>";	
-		//										}
-		//										else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
-		//											str += "Row";
-		//										else
-		//											str += cols[r][c].innerHTML;
-		//				
-		//										if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-		//											str += "</th>"; 
-		//										else
-		//											str += "</td>";
-		//									}
-		//									str += "</tr>";	
-		//								}
 			}
 			else						//reading from transposed view
 			{
@@ -4172,50 +4130,7 @@
 				}		
 
 				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType);
-				
-				//				//create output string based on cols
-				//				str = "";
-				//				for(var c=0;c<cols.length;++c) 
-				//				{				
-				//					str += "<tr>";	
-				//					for(var r=0;r<cols[0].length;++r) 
-				//					{			
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "<th>"; 
-				//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-				//								c >= _CONFIG_DATA_COL_OFFSET) 
-				//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-				//							(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
-				//						else
-				//							str += "<td>"; 
-				//
-				//
-				//						//first column is row numbers
-				//						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-				//						{							
-				//							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-				//
-				//							//add +/- row controls
-				//							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-				//							str += "+";
-				//							str += "</a>";
-				//							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-				//							str += "-";
-				//							str += "</a>";	
-				//						}
-				//						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
-				//							str += "Row";
-				//						else
-				//							str += cols[c][r].innerHTML
-				//
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "</th>"; 
-				//						else
-				//							str += "</td>";
-				//					}
-				//					str += "</tr>";	
-				//				}
+				str += createTableViewOutputStr(cols,colIsBoolType);				
 			}
 
 			el.innerHTML = str;		
@@ -4322,48 +4237,6 @@
 				}	
 				
 				var str = createTableViewOutputStr(cols,colIsBoolType);
-							//				//create output string based on cols
-				//				str = "";
-				//				for(var c=0;c<cols.length;++c) 
-				//				{				
-				//					str += "<tr>";	
-				//					for(var r=0;r<cols[0].length;++r) 
-				//					{			
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "<th>"; 
-				//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-				//								c >= _CONFIG_DATA_COL_OFFSET) 
-				//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-				//							(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
-				//						else
-				//							str += "<td>"; 
-				//
-				//
-				//						//first column is row numbers
-				//						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-				//						{							
-				//							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-				//
-				//							//add +/- row controls
-				//							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-				//							str += "+";
-				//							str += "</a>";
-				//							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-				//							str += "-";
-				//							str += "</a>";	
-				//						}
-				//						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
-				//							str += "Row";
-				//						else
-				//							str += cols[c][r].innerHTML
-				//
-				//							if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//								str += "</th>"; 
-				//							else
-				//								str += "</td>";
-				//					}
-				//					str += "</tr>";	
-				//				}
 				
 				document.getElementById("SubSystemTable").innerHTML = str;
 			}
@@ -4397,17 +4270,6 @@
 					return false;
 				};
 			}
-			//			//update last add row link
-			//			if(_tableViewIsTransposed)
-			//			{
-			//				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
-			//				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (cols[0].length-_CONFIG_DATA_ROW_OFFSET) + ");";
-			//			}
-			//			else
-			//			{
-			//				document.getElementById("lastAddRowLink0").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
-			//				document.getElementById("lastAddRowLink1").href = "javascript:addRow(" + (rows.length-_CONFIG_DATA_ROW_OFFSET) + ");";
-			//			}
 		}
 		
 		//popUpVersionAliasSpecificGroupForm
@@ -5353,140 +5215,6 @@
 
 			return str;
 			
-			//			if(!_tableViewIsTransposed && sourceDataTransposed) //normal source and leaving normal
-			//			{
-			//				for(var r=0;r<cols.length;++r) 
-			//				{				
-			//					str += "<tr>";	
-			//
-			//					for(var c=0;c<cols[0].length;++c) 
-			//					{			
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "<th>"; 
-			//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-			//								c >= _CONFIG_DATA_COL_OFFSET) 
-			//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-			//							(c-_CONFIG_DATA_COL_OFFSET)+",this);'>";
-			//						else						
-			//							str += "<td>";
-			//
-			//						//first column is row numbers
-			//						if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-			//						{							
-			//							str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-			//
-			//							//add +/- row controls
-			//							str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-			//							str += "+";
-			//							str += "</a>";
-			//							str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-			//							str += "-";
-			//							str += "</a>";	
-			//						}
-			//						else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
-			//							str += "Row";
-			//						else
-			//							str += cols[r][c].innerHTML;
-			//
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "</th>"; 
-			//						else
-			//							str += "</td>";
-			//					}
-			//					str += "</tr>";	
-			//				}
-			//			}
-			//			else if(!_tableViewIsTransposed && sourceDataTransposed) //transposed source and leaving transposed
-			//			{
-			//				
-			//			}
-			//			else if(!_tableViewIsTransposed && sourceDataTransposed) //reading from normal view and transposing
-			//			{
-			//				//create output string based on cols
-			//				for(var c=0;c<cols[0].length;++c) 
-			//				{				
-			//					str += "<tr>";	
-			//					for(var r=0;r<cols.length;++r) 
-			//					{		
-			//						tdStyle = "";	
-			//						if(colIsBoolType[c])
-			//						{
-			//							//determine if true value
-			//							var isTrue = false;
-			//							for(var i=0;i<boolTypeTrues.length;++i)
-			//								if(boolTypeTrues[i] == cols[r][c].innerHTML)
-			//								{
-			//									isTrue = true; break;
-			//								}
-			//							tdStyle += "style='background-color:";
-			//							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
-			//							tdStyle += "'";
-			//						}		
-			//
-			//
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "<th>"; 
-			//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-			//								c >= _CONFIG_DATA_COL_OFFSET) 
-			//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-			//							(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
-			//							tdStyle + ">";
-			//						else						
-			//							str += "<td>";
-			//
-			//						str += cols[r][c].innerHTML;
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "</th>"; 
-			//						else
-			//							str += "</td>";
-			//					}
-			//					str += "</tr>";	
-			//				}
-			//			}
-			//			else if(_tableViewIsTransposed && sourceDataTransposed) //reading from transpoed view and normalizing			
-			//			{
-			//				//create output string based on cols
-			//				for(var r=0;r<cols[0].length;++r) 
-			//				{				
-			//					str += "<tr>";	
-			//					for(var c=0;c<cols.length;++c) 
-			//					{			
-			//						tdStyle = "";	
-			//						if(colIsBoolType[c])
-			//						{
-			//							//determine if true value
-			//							var isTrue = false;
-			//							for(var i=0;i<boolTypeTrues.length;++i)
-			//								if(boolTypeTrues[i] == cols[c][r].innerHTML)
-			//								{
-			//									isTrue = true; break;
-			//								}
-			//							tdStyle += "style='background-color:";
-			//							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
-			//							tdStyle += "'";
-			//						}	
-			//
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "<th>"; 
-			//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-			//								c >= _CONFIG_DATA_COL_OFFSET) 
-			//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-			//							(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
-			//							tdStyle + ">";
-			//						else						
-			//							str += "<td>";
-			//
-			//						str += cols[c][r].innerHTML;
-			//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-			//							str += "</th>"; 
-			//						else
-			//							str += "</td>";
-			//					}
-			//					str += "</tr>";	
-			//				}
-			//				
-			//			}
-			//			return str;
 		}		
 		
 		//transposeTableView ~~
@@ -5515,48 +5243,7 @@
 				}
 
 				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType,true);
-				
-				//				//create output string based on cols
-				//				for(var c=0;c<cols[0].length;++c) 
-				//				{				
-				//					str += "<tr>";	
-				//					for(var r=0;r<rows.length;++r) 
-				//					{		
-				//						tdStyle = "";	
-				//						if(colIsBoolType[c])
-				//						{
-				//							//determine if true value
-				//							var isTrue = false;
-				//							for(var i=0;i<boolTypeTrues.length;++i)
-				//								if(boolTypeTrues[i] == cols[r][c].innerHTML)
-				//								{
-				//									isTrue = true; break;
-				//								}
-				//							tdStyle += "style='background-color:";
-				//							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
-				//							tdStyle += "'";
-				//						}		
-				//						
-				//						
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "<th>"; 
-				//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-				//								c >= _CONFIG_DATA_COL_OFFSET) 
-				//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-				//									(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
-				//									tdStyle + ">";
-				//						else						
-				//							str += "<td>";
-				//						
-				//						str += cols[r][c].innerHTML;
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "</th>"; 
-				//						else
-				//							str += "</td>";
-				//					}
-				//					str += "</tr>";	
-				//				}
+				str += createTableViewOutputStr(cols,colIsBoolType,true);							
 				
 				document.getElementById("lastAddRowLink0").style.display = "none";
 				document.getElementById("lastAddRowLink1").style.display = "block";
@@ -5588,45 +5275,6 @@
 				//create output string based on cols
 				str += createTableViewOutputStr(cols,colIsBoolType, true);
 				
-				//				//create output string based on cols
-				//				for(var r=0;r<cols[0].length;++r) 
-				//				{				
-				//					str += "<tr>";	
-				//					for(var c=0;c<cols.length;++c) 
-				//					{			
-				//						tdStyle = "";	
-				//						if(colIsBoolType[c])
-				//						{
-				//							//determine if true value
-				//							var isTrue = false;
-				//							for(var i=0;i<boolTypeTrues.length;++i)
-				//								if(boolTypeTrues[i] == cols[c][r].innerHTML)
-				//								{
-				//									isTrue = true; break;
-				//								}
-				//							tdStyle += "style='background-color:";
-				//							tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
-				//							tdStyle += "'";
-				//						}	
-				//						
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "<th>"; 
-				//						else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
-				//								c >= _CONFIG_DATA_COL_OFFSET) 
-				//							str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-				//									(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
-				//									tdStyle + ">";
-				//						else						
-				//							str += "<td>";
-				//						
-				//						str += cols[c][r].innerHTML;
-				//						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
-				//							str += "</th>"; 
-				//						else
-				//							str += "</td>";
-				//					}
-				//					str += "</tr>";	
-				//				}
 				document.getElementById("lastAddRowLink0").style.display = "block";
 				document.getElementById("lastAddRowLink1").style.display = "none";
 			}
