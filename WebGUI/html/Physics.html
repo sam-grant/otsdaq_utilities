@@ -681,8 +681,12 @@
 			    _blackoutReveal.style.height = _canvas.height + "px";
 			    
                 _inAnimation = true;
-                _blackoutRevealText.innerHTML = _transitionNames[_currStateTransArr[_selectedTransition]] + " from " + 
-                	_states[_currState] + " to " + _states[_transitions[_currStateTransArr[_selectedTransition]][1]];
+                var bstr = _transitionNames[_currStateTransArr[_selectedTransition]] + " from " + 
+                	_states[_currState];
+                if(_transitions[_currStateTransArr[_selectedTransition]] && //sometimes this error happens (not sure how!?) so catch it 
+                		_transitions[_currStateTransArr[_selectedTransition]][1])
+                	bstr += " to " + _states[_transitions[_currStateTransArr[_selectedTransition]][1]];
+                _blackoutRevealText.innerHTML = bstr;
                 _transitionProgress = -1; //use -1 to indicate need to check
                 _transitionFadeAlpha = 0;
                 _transitionFadeAlphaInc =  _TRANS_TRANSLATE_PERIOD/_TRANS_TRANSLATE_DURATION/1000.0;

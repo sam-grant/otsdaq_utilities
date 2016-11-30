@@ -749,6 +749,12 @@ ViewerRoot.getRootDataHandler = function(req) {
 		
 	if(!ojbect || !rootType || !rootName)
 	{ 
+		Debug.log("Pausing auto-refresh! \n\nPlease resolve the erros before resuming refreshes.", Debug.HIGH_PRIORITY);
+
+		var chk = document.getElementById("hudCheckbox" + 2); //pause refresh checkbox
+		chk.checked = true;
+		ViewerRoot.pauseRefresh = true;
+		
 	  	Debug.log("Error reading Root object from server - Name: " + rootName, Debug.HIGH_PRIORITY);
 	    ViewerRoot.autoRefreshMatchArr = [];	//clearing the array so that future refreshes work
 	    return;

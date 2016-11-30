@@ -1276,11 +1276,13 @@
 				//make comment html safe
 				configComment = configComment.replace(/</g, "&lt");
 				configComment = configComment.replace(/>/g, "&gt");
+				
+				str += "<div id='" + configName + "-comment' " +
+						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
 				if(configComment != _DEFAULT_COMMENT) //do not show if default
-					str += "<div id='" + configName + "-comment' " +
-						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>" +
-						"//" + configComment +
-						"</div>";
+					str += "//" + configComment;
+				
+				str += "</div>";
 				str += "</td></tr></table>"; //close pre/comment table row
 				
 				//add prompt and existing versions
@@ -3466,6 +3468,7 @@
 		//	use _lastFindRow, _lastFindCol as starting point
 		function configFind()
 		{
+			editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var needle = document.getElementById("findAndReplaceNeedle").value;
 			var convertEl = document.getElementById("findAndReplaceHTML");
@@ -3531,6 +3534,7 @@
 		//configIncrementByReplace ~~
 		function configIncrementByReplace()
 		{
+			editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var incrementNum = document.getElementById("findAndReplaceWith").value | 0;			
 
@@ -3577,6 +3581,7 @@
 		//configReplace ~~
 		function configReplace()
 		{			
+			editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var needle = document.getElementById("findAndReplaceNeedle").value;
 			var convertEl = document.getElementById("findAndReplaceHTML");

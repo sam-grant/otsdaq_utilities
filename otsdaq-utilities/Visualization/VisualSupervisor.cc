@@ -436,8 +436,13 @@ throw (xgi::exception::Exception)
 		{
 			__MOUT__ << "Attempting to get LIVE file." << std::endl;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
-			__MOUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
-			rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
+			if(!rootFile)
+				__MOUT__ << "File was closed." << std::endl;
+			else
+			{
+				__MOUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
+				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
+			}
 		}
 		else
 			rootFile = TFile::Open(rootFileName.c_str());
