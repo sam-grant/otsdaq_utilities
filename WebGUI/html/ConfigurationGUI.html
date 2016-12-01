@@ -2311,12 +2311,21 @@
 								" nextIndex=" + nextIndex);
 						if(filterArr[j] == "") continue; //skip empty filters
 						
-						if(j == 0) //must start with filter
+						if(j == 0) //must start with this filter
 						{
 							if((nextIndex = valName.indexOf(filterArr[j])) != 0)
 							{
 								filterMatch = false;
 								break; //done
+							}
+						}
+						else if(j == filterArr.length-1) //must end with this filter
+						{
+							if(valName.lastIndexOf(filterArr[j]) !=
+									valName.length - filterArr[j].length)
+							{
+								filterMatch = false;
+								break;
 							}
 						}
 						else if((nextIndex = valName.indexOf(filterArr[j],nextIndex+1)) < 0)
