@@ -3676,6 +3676,7 @@
 			var cells;
 			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
 			var cellStr, tmpStr;
+			var needleStartIndex;
 			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 			{
 				cells = rows[r].getElementsByTagName("td");
@@ -3688,11 +3689,13 @@
 					cellStr = cells[c].innerHTML;
 					tmpStr = cellStr;
 					Debug.log("[" + r + "," + c + "]=" + cellStr);
-					while(cellStr.indexOf(needle) >= 0)
+					needleStartIndex = 0;
+					while(cellStr.indexOf(needle,needleStartIndex) >= 0)
 					{
 						cellStr = cellStr.replace(needle,replaceStr);
 						if(cellStr == tmpStr) break; //in case replace is same as needle
-						Debug.log("REPLACED=" + cellStr);						
+						Debug.log("REPLACED=" + cellStr);		
+						needleStartIndex += replaceStr.length;
 					}
 					cells[c].innerHTML = cellStr;
 				}
