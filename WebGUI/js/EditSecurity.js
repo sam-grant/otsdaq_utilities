@@ -167,15 +167,15 @@ function showVisualSelection(){
 }
 
 function confirm(){
-	if(prompt("Are you sure? This will delete all use data. Type 15091420 to continue")==15091420)
-		if(confirm("I know exactly what I'm doing.")){
+	if(prompt("Are you sure? This will delete ALL user data. Type 15091420 to continue:")==15091420)
+		if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
 			setSecurity('ResetSecurityUserData');
 		}
 		else
-			alert("Mission aborted!");
+			alert("You did not type 'I Do.' Mission aborted!");
 
 	else
-		alert("Mission aborted!");
+		alert("You did not type the correct number. Mission aborted!");
 }
 
 function setSecurity(id){
@@ -224,6 +224,17 @@ function restructure(){
 }
 
 var editSecurityHandler = function(req){
+	
+	if(!req || !req.responseText.length)
+	{
+		Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
+		selectedSecurityChoice_ = "";
+		showVisualSelection();
+		return;
+	}
+	
+	if(selectedSecurityChoice_ == "ResetSecurityUserData")
+		Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 	
 	selectedSecurityChoice_ = req.responseText; 
 	console.log(selectedSecurityChoice_);
