@@ -116,8 +116,8 @@
 	
 	function initLite()
 	{
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
-		MultiSelectBox.initMySelectBoxes(true);
+		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",
+				FElistHandler);
 	}
 	
 	//Handling window resizing
@@ -193,7 +193,12 @@
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
-	    	listoffecs.innerHTML = "<p class='red'>Please refresh after Configure in the State Machine</p>";
+	    	listoffecs.innerHTML = "<p class='red'>" +
+				"<br>No Front-End interfaces were found. <br><br>Once FE interfaces are " +
+				"added, " +
+				"click " +
+				"<a href='#' onclick='initLite(); return false;' >refresh</a>" +
+				" in the upper right of Macro Maker.</p>";
 	    else
 	    {
 			var w = window.innerWidth;
@@ -235,6 +240,8 @@
 					vals,keys,types,"listSelectionHandler",noMultiSelect);            
 			//End of making box
 	    }
+	    
+	    MultiSelectBox.initMySelectBoxes();
 	}
 
 	function getPermissionHandler(req)
@@ -1101,7 +1108,9 @@
     
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
     {
-    	console.log("macroName" + macroName+ "macroAction" +macroAction + "macroSequence" + macroSequence+ "macroNotes" + macroNotes+ "macroDate" +macroDate);
+    	Debug.log("macroName" + macroName+ " macroAction" +macroAction + 
+    			" macroSequence" + macroSequence+ " macroNotes" + macroNotes + 
+				" macroDate" +macroDate);
     	var isMacroPublic = !isOnPrivateMacros;
     	switch(macroAction)
     	{
@@ -1248,7 +1257,12 @@
     
     function exportMacroHandler(req)
    	{
-   		Debug.log("exportMacroHandler() was called. Req: " + req.responseText);
+   		Debug.log("exportMacroHandler() was called. Req: " + req.responseText);   		
+
+		var exportFile = DesktopContent.getXMLValue(req,"ExportFile");
+		if(exportFile)
+			Debug.log("Your Macro was succesfully exported!" +
+					" It was saved to...\n\n" + exportFile,Debug.INFO_PRIORITY);
    	}
        
     function editCommands(textarea, seqID, index)

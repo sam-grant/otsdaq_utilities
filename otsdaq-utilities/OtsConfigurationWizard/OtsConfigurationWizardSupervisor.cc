@@ -76,7 +76,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(0);//time(0));
+	srand(time(0));
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];

@@ -73,6 +73,8 @@ private:
 	std::string username;
 	uint8_t userPermissions;
 
+	std::string generateHexArray(const std::string& sourceHexString,int &numOfBytes);
+
 
 	//generateInterfaceCodeFromMacro
 	// 	input

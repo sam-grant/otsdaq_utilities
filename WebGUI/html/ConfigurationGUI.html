@@ -199,6 +199,7 @@
 		var treeViewHideStatus_ = true;
 		var treeFilterApplied_ = false;
 		var treeFilter_ = "";
+		var lastTreeFilter_ = "";
 		
 	
 		
@@ -2275,7 +2276,9 @@
 				for(var i=0;i<allValues.length;++i)
 					allValues[i].parentNode.parentNode.parentNode.style.display = "block";
 				
-				treeFilterApplied_ = false;
+				treeFilterApplied_ = false;	
+				
+				lastTreeFilter_ = treeFilter_;
 			}
 			
 			if(reapplyFilter)
@@ -2394,15 +2397,15 @@
 			for(var i=0;i<params.length;++i)
 				if((params[i][0]|0) == deepestDepth)
 				{
-					++countExpanded;
-					toggleTreeChildren(
+					if(toggleTreeChildren(
 							params[i][0]|0, 		//make integer
 							params[i][1]|0,			//make integer
 							params[i][2].substr( 	//strip off surrounding quotes
 									1,params[i][2].length-2),
 							params[i][3].substr( 	//strip off surrounding quotes
 									1,params[i][3].length-2),
-							true);					//show
+							true))					//show
+						++countExpanded;
 				}
 			
 			if(!countExpanded)
@@ -2438,21 +2441,25 @@
 			}
 
 			Debug.log("secondDeepestDepth " + secondDeepestDepth);
-			if(secondDeepestDepth < 0) return;
+			if(secondDeepestDepth < 0) 
+			{
+				Debug.log("The tree has been collapsed as far as possible!",Debug.INFO_PRIORITY);
+				return;
+			}
 
 			var countHidden = 0;
 			for(var i=0;i<params.length;++i)
 				if((params[i][0]|0) == secondDeepestDepth)
 				{
-					++countHidden;
-					toggleTreeChildren(
+					if(toggleTreeChildren(
 							params[i][0]|0, 		//make integer
 							params[i][1]|0,			//make integer
 							params[i][2].substr( 	//strip off surrounding quotes
 									1,params[i][2].length-2),
 							params[i][3].substr( 	//strip off surrounding quotes
 									1,params[i][3].length-2),
-							false); //hide
+							false)) //hide
+						++countHidden;
 				}
 			
 			if(!countHidden)
@@ -2468,6 +2475,8 @@
 		//
 		//	setVal can be used to avoid toggling
 		//		- true = show, false = hide, undefined = toggle
+		//
+		// return true if action taken, else false
 		function toggleTreeChildren(depth,uid,nodeName,path,setVal) 
 		{
 			var setValUsed = (setVal !== undefined);
@@ -2495,24 +2504,32 @@
 				
 				if(doShow) //if not shown, show and "-"
 				{
+					if(el.style.display == "block") return false; //already was shown
 					el.style.display = "block";
 					toggleEl.style.backgroundImage = 
 							"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+					return true;
 				}
 				else //else shown, so hide and "+"
 				{
+					if(el.style.display == "none") return false; //already was hidden
 					el.style.display = "none";
 					toggleEl.style.backgroundImage = 
 							"url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png)";
+					return true;
 				}
 			}
 			else if(!setValUsed || setVal)	//if no children div, then request it
+			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 						"&configGroup=" + configGroupEls[0].innerHTML + 
 						"&configGroupKey=" + configGroupEls[1].innerHTML +
 						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
-						"startPath="+path+nodeName+"/",treeViewHandler,idString);				
+						"startPath="+path+nodeName+"/",treeViewHandler,idString);
+				return true;
+			}
+			return false;
 		}
 		
 		//setupConfigGroupTreeView ~
@@ -4401,7 +4418,9 @@
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
-			var defaultFilter = "*Port";
+			Debug.log("Previous filter = " + lastTreeFilter_);
+			var defaultFilter = lastTreeFilter_ == ""?"*Port":lastTreeFilter_;
+			
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +

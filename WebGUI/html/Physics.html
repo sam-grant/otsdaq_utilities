@@ -1193,6 +1193,7 @@
 			function getStateDrawingColor(i, isBorder) {				
 				if(i == _currState) return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_CURR_STATE_COLOR;
 				else if(_selectedTransition != -1 && 
+						_currStateTransArr[_selectedTransition] && //to prevent errors in strange server situations
 						_transitions[_currStateTransArr[_selectedTransition]][1] == i)
 					return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_TRANS_STATE_COLOR_SEL;
 				else 

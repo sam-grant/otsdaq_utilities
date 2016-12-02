@@ -644,11 +644,34 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 
 	std::string fileName = macroName + ".cc";
 
+	int numOfHexBytes;
+	std::string hexInitStr;
+
 	std::string fullPath = (std::string)MACROS_EXPORT_PATH + username + "/" + fileName;
 	std::cout << fullPath << std::endl;
-	std::ofstream exportFile (fullPath.c_str(),std::ios::app);
+	std::ofstream exportFile (fullPath.c_str(),std::ios::trunc);
 	if (exportFile.is_open())
 	{
+		exportFile << "//Generated Macro Name:\t" << macroName << "\n";
+
+		{
+			time_t rawtime;
+			struct tm * timeinfo;
+			char buffer[100];
+
+			time (&rawtime);
+			timeinfo = localtime(&rawtime);
+
+			strftime(buffer,100,"%b-%d-%Y %I:%M:%S",timeinfo);
+			exportFile << "//Generated Time: \t\t" << buffer << "\n";
+		}
+
+		exportFile << "//Paste this whole file into an interface to transfer Macro functionality.\n";
+		exportFile << "{\n";
+
+		exportFile << "\n\tuint8_t addrs[universalAddressSize_];	//create address buffer of interface size";
+		exportFile << "\n\tuint8_t data[universalDataSize_];		//create data buffer of interface size";
+
 		for(unsigned int i = 0; i < Commands.size(); i++)
 		{
 			std::stringstream sst(Commands[i]);
@@ -656,17 +679,160 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 			std::vector<std::string> oneCommand;
 			while (getline(sst, tokens, ':'))  oneCommand.push_back(tokens);
 			std::cout << oneCommand[1] << oneCommand[2] << std::endl;
-            		if (oneCommand[1] == "w")
-            			exportFile << "universalWrite(" << oneCommand[2] << "," << oneCommand[3] << ");\n";
-           		else if (oneCommand[1] == "r")
-            			exportFile << "universalRead(" << oneCommand[2] << ",data);\n";
-            		else if (oneCommand[1] == "d")
-            			exportFile << "delay(" << oneCommand[2] << ");\n";
-            		else
-            			__MOUT__<< "FATAL ERROR: command is not w, r or d" << std::endl;
+
+			//make this:
+			//			{
+			//				uint8_t addrs[universalAddressSize_];	//create address buffer of interface size
+			//				uint8_t macroAddrs[8] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09}; //create macro address buffer
+			//				for(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill
+			//					addrs[i] = (i < 8)?macroAddrs[i]:0;
+			//				uint8_t data[universalDataSize_];		//create data buffer of interface size
+			//				uint8_t macroData[8] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09}; //create macro data buffer
+			//				for(unsigned int i=0;i<universalDataSize_;++i) //fill with macro data and 0 fill
+			//					data[i] = (i < 8)?macroData[i]:0;
+			//
+			//				universalWrite(addrs,data);
+			//			}
+			//
+			//			//if variable
+			//			{
+			//				uint8_t addrs[universalAddressSize_];
+			//				uint64_t macroAddrs = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode("variableName").getValue<uint64_t>();
+			//				for(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill
+			//					addrs[i] = (i < 8)?((uint8_t *)(&macroAddrs))[i]:0;
+			//			}
+
+			exportFile << "\n\n\t// ";
+			if (oneCommand[1] == "w")
+				exportFile << "universalWrite(0x" << oneCommand[2] << ",0x" << oneCommand[3] << ");\n";
+			else if (oneCommand[1] == "r")
+				exportFile << "universalRead(0x" << oneCommand[2] << ",data);\n";
+			else if (oneCommand[1] == "d")
+			{
+				exportFile << "delay(" << oneCommand[2] << ");\n";
+				exportFile << "sleep(" << oneCommand[2] << ");\n";
+				continue;
+			}
+			else
+			{
+				__MOUT_ERR__<< "FATAL ERROR: command is not w, r or d" << std::endl;
+				continue;
+			}
+
+			hexInitStr = generateHexArray(oneCommand[2],numOfHexBytes);
+
+			exportFile << "\t{";
+			if(numOfHexBytes == -1) //handle as variable
+			{
+				exportFile << "\n\t\tuint64_t macroAddrs = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
+						"\n\t\t\t\"" <<
+						oneCommand[2] << "\").getValue<uint64_t>();";
+				exportFile << "\t//create macro address buffer";
+				exportFile << "\n\t\tfor(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill";
+				exportFile << "\n\t\t\t\taddrs[i] = (i < 8)?((uint8_t *)(&macroAddrs))[i]:0;";
+			}
+			else	//handle as literal
+			{
+				exportFile << "\n\t\tuint8_t macroAddrs" <<
+						hexInitStr <<
+						"\t//create macro address buffer";
+				exportFile << "\n\t\tfor(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill";
+				exportFile << "\n\t\t\t\taddrs[i] = (i < " << numOfHexBytes <<
+										")?macroAddrs[i]:0;";
+			}
+			exportFile << "\n";
+
+			if (oneCommand[1] == "w") //if write, handle data too
+			{
+
+				hexInitStr = generateHexArray(oneCommand[3],numOfHexBytes);
+
+				if(numOfHexBytes == -1) //handle as variable
+				{
+					exportFile << "\n\t\tuint64_t macroData = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
+							"\n\t\t\t\"" <<
+							oneCommand[3] << "\").getValue<uint64_t>();";
+					exportFile << "\t//create macro data buffer";
+					exportFile << "\n\t\tfor(unsigned int i=0;i<universalDataSize_;++i) //fill with macro address and 0 fill";
+					exportFile << "\n\t\t\t\tdata[i] = (i < 8)?((uint8_t *)(&macroData))[i]:0;";
+				}
+				else //handle as literal
+				{
+					exportFile << "\n\t\tuint8_t macroData" <<
+							hexInitStr <<
+							"\t//create macro data buffer";
+					exportFile << "\n\t\tfor(unsigned int i=0;i<universalDataSize_;++i) //fill with macro address and 0 fill";
+					exportFile << "\n\t\t\t\tdata[i] = (i < " << numOfHexBytes <<
+							")?macroData[i]:0;";
+				}
+				exportFile << "\n\t\tuniversalWrite((char *)addrs,(char *)data);";
+			}
+			else
+				exportFile << "\n\t\tuniversalRead((char *)addrs,(char *)data);";
+			exportFile << "\n\t}";
 		}
+
+		exportFile << "\n}";
 		exportFile.close();
+
+		xmldoc.addTextElementToData("ExportFile",fullPath);
 	}
 	else
 		__MOUT__ << "Unable to open file" << std::endl;
 }
+
+
+//========================================================================================================================
+//generateHexArray
+//	returns a char array initializer
+//	something like this
+//	"[8] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09};"
+//		..depending a size of source string
+//
+//FIXME -- identify variables in a better way from macromaker...!
+//	for now just assume a non hex is a variable name
+//	return -1 size
+std::string MacroMakerSupervisor::generateHexArray(const std::string &sourceHexString,
+		int &numOfBytes)
+{
+	std::stringstream retSs;
+
+	std::string srcHexStr = sourceHexString;
+	__MOUT__<< "Translating: \n";
+	__MOUT__ << srcHexStr << std::endl;
+
+	if(srcHexStr.size()%2) //if odd, make even
+		srcHexStr = "0" + srcHexStr;
+
+	numOfBytes = srcHexStr.size()/2;
+	retSs << "[" << numOfBytes << "] = {";
+
+	for(int i=0; i<numOfBytes*2; i+=2)
+	{
+		//detect non-hex
+		if(!((srcHexStr[i] >= '0' && srcHexStr[i] <= '9') ||
+				(srcHexStr[i] >= 'a' && srcHexStr[i] <= 'f')||
+				(srcHexStr[i] >= 'A' && srcHexStr[i] <= 'F')) ||
+				!((srcHexStr[i+1] >= '0' && srcHexStr[i+1] <= '9') ||
+						(srcHexStr[i+1] >= 'a' && srcHexStr[i+1] <= 'f')||
+						(srcHexStr[i+1] >= 'A' && srcHexStr[i+1] <= 'F'))
+		)
+		{
+			numOfBytes = -1;
+			return srcHexStr;
+		}
+
+		if(i != 0) retSs << ", ";
+		retSs << "0x" <<
+				srcHexStr[srcHexStr.size()-1-i-1] <<
+				srcHexStr[srcHexStr.size()-1-i];
+	}
+	retSs << "};";
+
+	__MOUT__ << retSs.str() << std::endl;
+
+	return retSs.str();
+}
+
+
+

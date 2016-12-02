@@ -65,7 +65,8 @@ else {
         Debug.log("window.parent.window.location.hash=" + window.parent.window.location.hash,
         		Debug.MED_PRIORITY);
         var _displayWindowDashboard = //default window dashboard view
-        		window.parent.window.location.hash[1] | 0; //will be opposite of initial choice 
+        		window.parent.window.location.hash[1]? 
+        				(window.parent.window.location.hash[1] | 0):1; 
         var _windowDashboard,_topBar,_fullScreenBtn;
         
         var _windowDashboardWindowCSSRule;  //e.g. _var.style.width = "100px"

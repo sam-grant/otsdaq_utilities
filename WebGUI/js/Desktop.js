@@ -411,7 +411,10 @@ Desktop.createDesktop = function(security) {
 			for(var i=0;i<_windows.length;++i)
 				if(_windows[i].getWindowName() == name && _windows[i].getWindowSubName() == subname) {
 					Debug.log("Window creation failed. Not unique.",Debug.LOW_PRIORITY);
-                    this.setForeWindow(_windows[i]); //bring window to front
+					if(_windows[i].isMinimized())
+						_windows[i].minimize(); //restore window
+					else
+						Desktop.desktop.setForeWindow(_windows[i]); //bring window to front                   
 					return;
 				}
 		}
