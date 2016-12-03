@@ -7,6 +7,8 @@ cet_make(LIBRARY_NAME Console
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
 		 SupervisorDescriptorInfo
+		${MF_MESSAGELOGGER}
+		${MF_UTILITIES}
 		 XmlUtilities
 		 SOAPUtilities
 		 CgiDataUtilities
