@@ -10,9 +10,27 @@
 //	This function is called by user to actually create the multi select box
 // 	These parameters are optional and can be omitted or set to 0: 
 //		keys, types, handler, noMultiSelect 
-// Note: handler is the string name of the function
+// 	Note: handler is the string name of the function (put in quotes).
 //
-// Example usage: WebGUI/html/MultiSelectBox.html
+// 	Can use MultiSelectBox.initMySelectBoxes after manually setting the mySelects_ array
+//
+//
+//
+// Example selection handler:
+//
+//        function exampleSelectionHandler(el)
+//        {
+//            var splits = el.id.split('_');
+//            var i = splits[splits.length-1] | 0;
+//            MultiSelectBox.dbg("Chosen element index:",i,
+//            		" key:",el.getAttribute("key-value"),
+//            		" type:",el.getAttribute("type-value"));
+//            for(var s in MultiSelectBox.mySelects_[el.parentElement.id])
+//                MultiSelectBox.dbg("selected: ",MultiSelectBox.mySelects_[el.parentElement.id][s]);
+//            	
+//        }
+//
+// Example usage: /WebPath/html/MultiSelectBoxTest.html
 //
 //////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -72,6 +90,26 @@ MultiSelectBox.toggleClass = function(ele,cls)
 	}
 }
 
+MultiSelectBox.getSelectedIndex = function(el)
+{
+    var splits = el.id.split('_');
+    return splits[splits.length-1] | 0;    
+}
+
+MultiSelectBox.getSelectionArray = function(el)
+{    
+	console.log(el.id);
+	if(el.parentElement.id.indexOf("selbox-") == 0)
+		return MultiSelectBox.mySelects_[el.parentElement.id];
+	else
+		return MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id];		
+}
+
+MultiSelectBox.getSelectionElementByIndex = function(el,i)
+{    
+	return document.getElementById(el.getElementsByClassName("mySelect")[0].id + 
+			"-option_" + i);
+}
 
 //for multiple selects to behave like checkboxes
 MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
@@ -119,12 +157,21 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,noMultiSelect)
 {
-	if(!el) return;
+	if(!el) 
+	{ throw new Error("Invalid Element given to MultiSelectBox: " + el); return; } 
+	
+	el.innerHTML = ""; //delete current contents
 
 	name = "selbox-" + name;
 	MultiSelectBox.addClass(el,"multiselectbox"); //add multiselectbox class to div  
 	
 	MultiSelectBox.omnis_[name] = el; 
+
+	//searchglass=28x28, margin=5, vscroll=16, border=1
+	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
+	var msH = el.offsetHeight - 40 - 2; 
+	
+	
 	el = document.createElement("div"); //create element within element
 	MultiSelectBox.omnis_[name].appendChild(el);
 
@@ -141,7 +188,10 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 	
 	//make selbox
 	str += "<div class='mySelect' unselectable='on' id='" + 
-			name + "' style='float:left' name='" + name + "' >";
+			name + "' style='float:left;" + 
+			"width: " + (msW) + "px;" + 
+			"height: " + (msH) + "px;" + 
+			"' name='" + name + "' >";
 
 	for (var i = 0; i < keys.length;++i)//cactus length
 	{
@@ -149,8 +199,10 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 			"id='" + name + "-option_" + i + "' " +
 			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
 			noMultiSelect + "); ";
-		if(handler)
+		if(handler && (typeof handler) == "string") //if handler supplied as string
 			str += handler + "(this);"; //user selection handler
+		else if(handler) //assume it is a function
+			str += handler.name + "(this);"; //user selection handler
 		str += "' ";
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
@@ -166,38 +218,51 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
     el.innerHTML = str;
 }
 
-MultiSelectBox.initMySelectBoxes = function()
+//for initializing the highlights if selects are made "manually" (without clicking)
+MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 {
-	var divs=document.getElementsByTagName('div');
+	var divs=document.getElementsByClassName('mySelect');
 	for (var el=0; el<divs.length; el++){
 		var select = divs[el];
-		if (MultiSelectBox.hasClass(select,'mySelect'))
-		{
-			var id = select.getAttribute("id");
-			var options = select.childNodes;
-			if (!MultiSelectBox.mySelects_[id] || 
-					MultiSelectBox.mySelects_[id].length!=options.length)
-			{//if first time drawing select box
-				MultiSelectBox.mySelects_[id]=[];
-				for (var opt=0; opt<options.length; opt++)
-				{
-					MultiSelectBox.mySelects_[id].push(0);
-					options[opt].setAttribute("unselectable","on");//make not selectable for ie<10
-				}
-			}
-			else
-			{ //if repaint: set highlighted options
-				MultiSelectBox.dbg("repaint")
-				for (var opt=0; opt < options.length; opt++)
-				{
-					if (MultiSelectBox.mySelects_[id][opt])
-					{
-						//MultiSelectBox.dbg(opt);
-						MultiSelectBox.addClass(options[opt],"optionhighlighted");
-					}
-				}
+		
+		var id = select.getAttribute("id");
+		var options = select.childNodes;
+		if (!MultiSelectBox.mySelects_[id] ||
+				MultiSelectBox.mySelects_[id].length > options.length)
+		{//if first time drawing select box OR size was reduced
+			MultiSelectBox.mySelects_[id]=[];
+			for (var opt=0; opt<options.length; opt++)
+			{
+				MultiSelectBox.mySelects_[id].push(0);
+				options[opt].setAttribute("unselectable","on");//make not selectable for ie<10
 			}
 		}
+		else
+		{ 	//if repaint: set highlighted options
+			MultiSelectBox.dbg("repaint");
+			
+			//if more elements were added, expand the selects array
+			for (var opt=MultiSelectBox.mySelects_[id].length; opt<options.length; opt++)
+			{
+				MultiSelectBox.mySelects_[id].push(0);
+				options[opt].setAttribute("unselectable","on");//make not selectable for ie<10
+			}
+			
+			//highlight properly according to mySelects_ array
+			for (var opt=0; opt < options.length; opt++)
+			{
+				if (clearPreviousSelections)
+					MultiSelectBox.mySelects_[id][opt] = 0; //clear
+				
+				if (MultiSelectBox.mySelects_[id][opt])
+				{
+					//MultiSelectBox.dbg(opt);
+					MultiSelectBox.addClass(options[opt],"optionhighlighted");
+				}
+				else
+					MultiSelectBox.removeClass(options[opt],"optionhighlighted");
+			}
+		}		
 	}
 }
 
@@ -328,7 +393,7 @@ MultiSelectBox.makeSearchBar = function(id)
 				MultiSelectBox.mySelects_[id] = []; //initialize to empty the selected items
 			
 			var selRect = select.getBoundingClientRect(),
-				omniRect = MultiSelectBox.omnis_[id].getBoundingClientRect();
+				omniRect = select.offsetParent.getBoundingClientRect();//MultiSelectBox.omnis_[id].getBoundingClientRect();
 			
 			var offsetx = selRect.left - omniRect.left,
 				offsety = selRect.top - omniRect.top;
@@ -337,11 +402,11 @@ MultiSelectBox.makeSearchBar = function(id)
 			searchBox.style.position="absolute";
 			searchBox.style.top=(offsety)+"px";
 			searchBox.style.left=(offsetx)+"px";
-			searchBox.style.width=(selRect.width-margin*2-20)+"px";
+			searchBox.style.width=(selRect.width-margin*2-30)+"px";
 			
-			searchErrBox.style.position="absolute";
-			searchErrBox.style.top=(offsety-50)+"px";
-			searchErrBox.style.left=(offsetx+0)+"px";
+			searchErrBox.style.position="absolute"; //place above title
+			searchErrBox.style.top=(offsety - 37)+"px";
+			searchErrBox.style.left=(offsetx + 0)+"px";
 			
 			MultiSelectBox.omnis_[id].appendChild(searchBox);
 			MultiSelectBox.omnis_[id].appendChild(searchErrBox);
@@ -352,7 +417,7 @@ MultiSelectBox.makeSearchBar = function(id)
 	
 	interval = setInterval( addSearchBox, 50);
 	
-	imgstr = "<img src='../images/windowContentImages/multiselectbox-magnifying-glass.jpg' " +
+	imgstr = "<img src='/WebPath/images/windowContentImages/multiselectbox-magnifying-glass.jpg' " +
 				" style='float:left' height='28' width='28' alt='&#128269;' ";
 	imgstr += "onclick = 'MultiSelectBox.showSearch(\"" + id + "\");' title='Search' class='searchimg'>";
 	return imgstr;  

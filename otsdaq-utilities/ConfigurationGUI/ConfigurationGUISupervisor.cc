@@ -5,15 +5,14 @@
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 
-#include "otsdaq-core/ConfigurationPluginDataFormats/ConfigurationAliases.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/Configurations.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DetectorConfiguration.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DefaultConfigurations.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/VersionAliases.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/ConfigurationAliases.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/Configurations.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/DetectorConfiguration.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/DefaultConfigurations.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/VersionAliases.h"
 
-#include "otsdaq-demo/UserConfigurationDataFormats/FSSRDACsConfiguration.h"
-#include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
+//#include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
 
 
 #include <xdaq/NamespaceURI.h>
@@ -22,626 +21,43 @@
 #include <map>
 #include <utility>
 
+
+
 using namespace ots;
+
+#undef 	__MF_SUBJECT__
+#define __MF_SUBJECT__ "CfgGUI"
+
+#define CONFIG_INFO_PATH	std::string(getenv("CONFIGURATION_INFO_PATH")) + "/"
+#define CONFIG_INFO_EXT		std::string("Info.xml")
+
 
 XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 
+
 //========================================================================================================================
-ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-xdaq::Application	(s   ),
-SOAPMessenger  		(this),
-theRemoteWebUsers_  (this)
+ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* stub)
+throw (xdaq::exception::Exception)
+: xdaq::Application	 (stub)
+, SOAPMessenger  	 (this)
+, theRemoteWebUsers_ (this)
 {
 	INIT_MF("ConfigurationGUI");
 	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
 	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
-	init();
 
+	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
+	init();
 
 	//new user gets a config mgr assigned
 	//user can fill any of the sub-configs (fill from version or init empty), which becomes the active view for that sub-config
-	//if user then edits one of the sub-configs, just before editing, active view is copied to edit view which is version -1
-	//if the user saves the configuration, then any sub-configurations with active view -1 get saved with a new version number
 
-
-	//how do we know which version numbers of a KOC exist already?
-		//getAllConfigurationInfo fills the version list for each KOC found in "Configurations"
-
-	//FIXME TODO
-	//LEFT OFF - Proof of Concept
-	//	Choose a sub-config
-	//	Make a copy of a view
-	//	Edit copy
-	//	Save as new sub-config version
-
-
-
-	std::cout << __COUT_HDR_FL__ << "comment/uncomment here for debugging Configuration!" << std::endl;
-
-	mf::LogDebug("cfgGUI") << "hi";
-	return;
-
-	//for (with Gennadiy) saving all configurations as a new version
-	if(0)
-	{
-		std::vector<std::string> configTables;
-		configTables.push_back("ConfigurationAliases");
-		configTables.push_back("Configurations");
-		configTables.push_back("DefaultConfigurations");
-		configTables.push_back("VersionAliases");
-
-		ConfigurationInterface* theInterface_ = ConfigurationInterface::getInstance(true);
-
-		for(unsigned int i = 0; i < configTables.size(); ++i)
-		{
-			theInterface_ = ConfigurationInterface::getInstance(true);
-			ConfigurationBase* base = 0;
-			std::cout << __COUT_HDR_FL__ << std::endl;
-			std::cout << __COUT_HDR_FL__ << std::endl;
-			std::cout << __COUT_HDR_FL__ << (i+1) << " of " << configTables.size() << ": " << configTables[i] << std::endl;
-
-			theInterface_->get(base,configTables[i], 0, 0, false, 0); //load version 0 for all
-
-			std::cout << __COUT_HDR_FL__ << "loaded " << configTables[i]<< std::endl;
-
-			//do cool things for special tables
-			if( configTables[i] == "ConfigurationAliases")
-			{
-				//view alias-key map
-				std::map<std::string, ConfigurationKey>	aliasMap = ((ConfigurationAliases *)base)->getAliasesMap();
-				std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
-
-				std::set<std::string> listOfKocs;
-				std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
-				while (it != aliasMap.end())
-				{
-					//for each configuration alias and key
-						//print
-					std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-					++it;
-				}
-			}
-
-			if( configTables[i] == "Configurations")
-			{
-				//get all other tables and add to vector of tables
-
-				std::set<std::string> listOfKocs = ((Configurations *)base)->getListOfKocs();
-				std::cout << __COUT_HDR_FL__ << "listOfKocs size: " << listOfKocs.size() << std::endl;
-
-				for(auto it=listOfKocs.begin();it != listOfKocs.end(); ++it)
-				{
-					std::cout << __COUT_HDR_FL__ << "Koc: " << *it << std::endl;
-					configTables.push_back(*it);
-				}
-			}
-
-
-			//save the active version
-			std::cout << __COUT_HDR_FL__ << "Current version: " << base->getViewVersion() << std::endl;
-
-			//
-			//		**** switch to db style interface?!!?!? ****   //
-			//
-			//theInterface_ = ConfigurationInterface::getInstance(false);
-			//
-			//
-
-			theInterface_->saveActiveVersion(base);
-			delete base; //cleanup config instance
-			break;
-		}
-
-		std::cout << __COUT_HDR_FL__ << "end of debugging Configuration!" << std::endl;
-		return;
-	}
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//behave like a new user
-
-	std::string userConfigurationManagerIndex = "1";
-	userConfigurationManagers_["1"] = new ConfigurationManager();
-	userConfigurationManagers_["2"] = new ConfigurationManager();
-	ConfigurationManager *cfgMgr = userConfigurationManagers_[userConfigurationManagerIndex];
-
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-	std::cout << __COUT_HDR_FL__ << "All config info loaded." << std::endl;
-	std::map<std::string, ConfigurationKey>	aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
-
-
-	std::cout << __COUT_HDR_FL__ << "aliasMap size: " << aliasMap.size() << std::endl;
-	std::cout << __COUT_HDR_FL__ << "getAllConfigurationInfo size: " << allCfgInfo.size() << std::endl;
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//for each configuration alias and key
-		//get KOC version numbers (this is the version "conditioned" by the alias-key pair)
-
-	std::set<std::string> listOfKocs;
-	std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
-	while (it != aliasMap.end())
-	{
-
-		std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-		listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-		std::cout << __COUT_HDR_FL__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-		for (auto& koc : listOfKocs)
-		{
-			unsigned int conditionVersion = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),koc);
-
-			std::cout << __COUT_HDR_FL__ << "\tKoc: " << koc << " Version: " << conditionVersion << std::endl;
-		}
-		++it;
-
-	}
-	//return;
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//For each existing KOC (comes from anything in "Configurations")
-		//get existing versions
-
-	auto mapIt = allCfgInfo.begin();
-	while(mapIt != allCfgInfo.end())
-	{
-		std::cout << __COUT_HDR_FL__ << "KOC Alias: " << mapIt->first << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\t\tExisting Versions: " << mapIt->second.versions_.size() << std::endl;
-
-		//get version key for the current system subconfiguration key
-		for (std::set<int>::iterator vit=mapIt->second.versions_.begin(); vit!=mapIt->second.versions_.end(); ++vit)
-		{
-			std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
-		}
-		++mapIt;
-	}
-	//return;
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//Choose a sub config
-	mf::LogDebug("cfgGUI");
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a sub config" << std::endl;
-	std::string chosenSubConfig = "FSSRDACsConfiguration"; //must be less than allCfgInfo.size()
-
-	{
-		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
-
-		//check if is an existing version
-		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << std::endl;
-
-		//check if version is already loaded
-		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << std::endl;
-
-		//load configuration view and set as active view
-		if(!isInConfiguration)
-			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
-		else
-			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
-
-		//verify version is loaded now
-		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << std::endl;
-	}
-
-	//return;
-
-
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////////
-	//view this version
-	//general base class
-	{
-		//get 'columns' of sub config
-
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << std::endl;
-		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
-
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
-	}
 
 	return;
 
-
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a different sub config" << std::endl;
-
-
-	{
-		int versionToCopy = 2; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
-
-		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << "     ";
-
-		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
-
-		if(!isInConfiguration) //load configuration view
-			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
-		else
-			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
-
-		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
-	}
-
-	{
-		//get 'columns' of sub config
-
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << "     ";
-		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
-
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
-	}
-
-
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Choose a different sub config" << std::endl;
-
-	{
-		int versionToCopy = 0; //-1 is empty, //must be less than allCfgInfo[chosenSubConfig].versions_.size()
-
-		bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-				(isInDatabase?"YES":"NO") << "     ";
-
-		bool isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
-
-		if(!isInConfiguration) //load configuration view
-			cfgMgr->getVersionedConfigurationByName(chosenSubConfig, versionToCopy);
-		else
-			allCfgInfo[chosenSubConfig].configurationPtr_->setActiveView(versionToCopy);
-
-		isInConfiguration = (allCfgInfo[chosenSubConfig].configurationPtr_->isStored(versionToCopy));
-		std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is loaded: " <<
-				(isInConfiguration?"YES":"NO") << "     ";
-	}
-
-	{
-		//get 'columns' of sub config
-
-		std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-				allCfgInfo[chosenSubConfig].configurationPtr_->getViewVersion() << "     ";
-		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getViewP();
-
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
-	}
-
-
-	int versionToCopy = 0;
-	//	Make a copy of a view
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Make a copy of a view" << std::endl;
-	int temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
-	std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
-
-
-	//	Edit copy
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Edit copy" << std::endl;
-
-	//view temp version
-	//general base class
-	{
-		//get 'columns' of sub config
-
-		std::cout << __COUT_HDR_FL__ << "\t\t******** Before change" << std::endl;
-		ConfigurationView* cfgViewPtr = allCfgInfo[chosenSubConfig].configurationPtr_->getTemporaryView(temporaryVersion);
-
-		std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-		std::stringstream ss;
-		cfgViewPtr->print(ss);
-		std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
-
-
-		//edit something
-
-		// add a new row for example
-
-		int r = cfgViewPtr->addRow();
-		//set all numbers to 10
-		r = cfgViewPtr->addRow();
-		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-			if(colInfo[c].getViewType() == "NUMBER")
-				cfgViewPtr->setValue(c,r,c);
-			else
-				cfgViewPtr->setValue(std::string("Hi"),r,c);
-		cfgViewPtr->addRow();
-
-		//after change
-		std::cout << __COUT_HDR_FL__ << "\t\t******** After change" << std::endl;
-
-
-
-		std::stringstream ss2;
-		cfgViewPtr->print(ss2);
-		std::cout << __COUT_HDR_FL__ << ss2.str() << std::endl;
-
-
-		// add a new col for example
-		//		int cret = cfgViewPtr->addColumn("TestCol","TEST_COL","TIMESTAMP WITH TIMEZONE");
-		//		std::cout << __COUT_HDR_FL__ << "\t\t******** After change col: " << cret << std::endl;
-		//		colInfo = cfgViewPtr->getColumnsInfo();
-		//		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Cols " << colInfo.size() << std::endl;
-		//		std::cout << __COUT_HDR_FL__ << "\t\tNumber of Rows " << cfgViewPtr->getNumberOfRows() << std::endl;
-		//
-		//		for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
-		//		{
-		//			std::cout << __COUT_HDR_FL__ << "\t\tRow " << r << ": "  << std::endl;
-		//
-		//			for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-		//				if(colInfo[c].getViewType() == "NUMBER")
-		//				{
-		//					int num;
-		//					cfgViewPtr->getValue(num,r,c);
-		//					std::cout << __COUT_HDR_FL__ << "\t " << num << std::endl;
-		//				}
-		//				else
-		//				{
-		//				std::string val;
-		//					cfgViewPtr->getValue(val,r,c);
-		//					std::cout << __COUT_HDR_FL__ << "\t " << val << std::endl;
-		//				}
-		//			
-		//		}
-
-	}
-	//FSSRDACsConfiguration* subConfig = ((FSSRDACsConfiguration*)(allCfgInfo[chosenSubConfig].configurationPtr_));
-
-	//actually need to load detector configuration!!
-	//	std::map<std::string, unsigned int>	FssrNameMap = cfgMgr->getDetectorConfiguration()->getNameToRowMap();
-	//	///NOTE: FssrNameMap could be any kind of Roc ... check RocType
-	//
-	//	std::map<std::string, unsigned int>::const_iterator dit;
-	//	dit = FssrNameMap.begin();
-	//
-	//	if (dit != FssrNameMap.end())
-	//	{
-	//		ROCDACs	rocDacs = subConfig->getROCDACs(dit->first);
-	//		DACList	dacs  = rocDacs.getDACList(); //map of std::string to pair (int, int)
-	//
-	//		DACList::const_iterator rdit = dacs.begin();
-	//		while(rdit != dacs.end())
-	//		{
-	//			std::cout << __COUT_HDR_FL__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
-	//			rocDacs.setDAC(rdit->first,7,1);
-	//
-	//			rdit++;
-	//		}
-	//	}
-
-	//	Save as new sub-config version
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Save as new sub-config version" << std::endl;
-
-	int newAssignedVersion = 0;//cfgMgr->saveNewConfiguration(allCfgInfo[chosenSubConfig].configurationPtr_,temporaryVersion);
-
-	std::cout << __COUT_HDR_FL__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
-
-
-
-
-	//proof of concept.. change a KOC version (this makes a new backbone version?!)
-	std::cout << __COUT_HDR_FL__ << "\t\t**************************** Edit a KOC for a System Alias" << std::endl;
-
-	std::stringstream ss;
-	cfgMgr->getConfiguration<ConfigurationAliases>()->print(ss);
-	cfgMgr->getConfiguration<DefaultConfigurations>()->print(ss);
-	cfgMgr->getConfiguration<Configurations>()->print(ss);
-	cfgMgr->getConfiguration<VersionAliases>()->print(ss);
-	std::cout << __COUT_HDR_FL__ << ss.str() << std::endl;
-
-	{
-		std::string specSystemAlias = "Physics";
-		std::string KOCAlias = "FSSRDACsConfiguration";
-		int newVersion = 3;
-
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
-
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(specSystemAlias);
-		if(it != aliasMap.end())
-		{
-			std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-			std::cout << __COUT_HDR_FL__ << "Alias exists: " << specSystemAlias << std::endl;
-			std::cout << __COUT_HDR_FL__ << "Sub system alias: " << KOCAlias << std::endl;
-			std::cout << __COUT_HDR_FL__ << "Changing to new version: " << newVersion << std::endl;
-
-			std::set<std::string> listOfKocs;
-			listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-			{
-				unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
-
-				std::cout << __COUT_HDR_FL__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-				std::set<int> versions = allCfgInfo.find(*sit)->second.versions_;
-				std::cout << __COUT_HDR_FL__ << "\t\tAll versions: " << std::endl;
-				for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
-					std::cout << __COUT_HDR_FL__ << " " << *vit << std::endl;
-				
-			}
-
-			//need to change
-
-			std::cout << __COUT_HDR_FL__ << "\t\t**************************** Make temporary backbone" << std::endl;
-
-			chosenSubConfig = "ConfigurationAliases";
-			int temporaryVersion;
-			int versionToCopy = cfgMgr->getConfiguration<ConfigurationAliases>()->getViewVersion();
-			//cfgMgr->__GET_CONFIG__(DefaultConfigurations)->print();
-			///////////////////////cfgMgr->getConfiguration<Configurations>()->print();
-			//cfgMgr->__GET_CONFIG__(VersionAliases)
-
-			std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion versionToCopy: " << versionToCopy << std::endl;
-
-			assert(allCfgInfo.find(chosenSubConfig) != allCfgInfo.end());
-
-			bool isInDatabase = allCfgInfo[chosenSubConfig].versions_.find(versionToCopy) != allCfgInfo[chosenSubConfig].versions_.end();
-			std::cout << __COUT_HDR_FL__ << "Version " << versionToCopy << " is in database: " <<
-					(isInDatabase?"YES":"NO") << "     ";
-
-			temporaryVersion = allCfgInfo[chosenSubConfig].configurationPtr_->createTemporaryView(versionToCopy);
-			//FSSRDACsConfiguration
-			//allCfgInfo["ConfigurationAliases"].configurationPtr_->createTemporaryView(versionToCopy);
-			std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion ConfigurationAliases: " << temporaryVersion << std::endl;
-
-
-
-
-		}
-		else
-			std::cout << __COUT_HDR_FL__ << "Alias doesnt exist: " << specSystemAlias << std::endl;
-
-
-
-
-	}
-
-
-	/*
-   	//cfgMgr->getFSSRDACsConfiguration();
-
-
-   	//Get KOC list
-	//for each configuration alias and key
-		//Get KOC keys for Alias key
-
-
-   	it = aliasMap.begin();
-
-   	std::set<std::string> listOfKocs;
-
-   	while (it != aliasMap.end())
-   	{
-
-   		//for each configuration alias and key
-   			//get KOC version numbers
-
-		std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-		//cfgMgr->loadConfiguration(cfgMgr->theConfigurations_,&(it->second));
-		//cfgMgr->loadConfiguration(cfgMgr->theDefaultConfigurations_,&(it->second));
-		//cfgMgr->loadConfiguration(cfgMgr->theVersionAliases_,&(it->second));
-	    //cfgMgr->setupConfigurationGUI(&(it->second));	//load
-
-		if(cfgMgr->getConfigurations())	// get Kocs
-		{
-			listOfKocs = cfgMgr->getConfigurations()->getListOfKocs(it->second.key());
-			std::cout << __COUT_HDR_FL__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-
-			for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-			{
-				unsigned int cv = cfgMgr->getConfigurations()->getConditionVersion(it->second.key(),*sit);
-
-				std::cout << __COUT_HDR_FL__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-			}
-		}
-
-
-		// get Detector Config
-	   	if(cfgMgr->getDetectorConfiguration())
-	   	{
-
-
-			std::map<std::string, unsigned int>	FssrNameMap = cfgMgr->getDetectorConfiguration()->getNameToRowMap();
-			///NOTE: FssrNameMap could be any kind of Roc ... check RocType
-
-			std::map<std::string, unsigned int>::const_iterator dit;
-			dit = FssrNameMap.begin();
-
-			while (dit != FssrNameMap.end())
-			{
-
-				//for each configuration alias and key
-					//get KOC version numbers
-
-			   std::cout << __COUT_HDR_FL__ << "\tFssr Name: " << dit->first << " - Row: " << dit->second << std::endl;
-
-
-
-				// get FSSR Configs
-			   	if(cfgMgr->getFSSRDACsConfiguration())
-			   	{
-			   		ROCDACs	rocDacs = cfgMgr->getFSSRDACsConfiguration()->getROCDACs(dit->first);
-
-			   		DACList	dacs  = rocDacs.getDACList(); //map of std::string to pair (int, int)
-
-
-			   		DACList::const_iterator rdit = dacs.begin();
-			   		while(rdit != dacs.end())
-			   		{
-						   std::cout << __COUT_HDR_FL__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
-							rocDacs.setDAC(rdit->first,7,1);
-
-						   rdit++;
-
-			   		}
-
-
-			   		dacs  = rocDacs.getDACList(); //map of std::string to pair (int, int)
-					rdit = dacs.begin();
-					while(rdit != dacs.end())
-					{
-						   std::cout << __COUT_HDR_FL__ << "\t\tDac Name: " << rdit->first << " - Addr: " << rdit->second.first << ", Val: " << rdit->second.second << std::endl;
-						   rdit++;
-
-					}
-
-			   	}
-
-
-			   	dit++;
-			}
-
-
-	   	}
-
-
-   	   it++;
-   	}
-
-
-
-   	//createTemporaryView
-
-	 */
-	std::cout << __COUT_HDR_FL__ << "done getAliasList" << std::endl;
-
-
-	//clear config managers
-	for (std::map<std::string, ConfigurationManager *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
-	{
-		std::cout << __COUT_HDR_FL__ << it->first << std::endl;
-		delete it->second;
-		it->second = 0;
-	}
-	userConfigurationManagers_.clear();
-
+	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
+	__MOUT__ << "To prove the concept..." << std::endl;
+	testXDAQContext(); //test new config
 }
 
 //========================================================================================================================
@@ -653,20 +69,21 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 void ConfigurationGUISupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
 void ConfigurationGUISupervisor::destroy(void)
 {
 	//called by destructor
-	for (std::map<std::string, ConfigurationManager *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
+	for (std::map<std::string, ConfigurationManagerRW *> ::iterator it=userConfigurationManagers_.begin(); it!=userConfigurationManagers_.end(); ++it)
 	{
 		delete it->second;
 		it->second = 0;
 	}
 	userConfigurationManagers_.clear();
 
+	//NOTE: Moved to ConfigurationGUISupervisor [FIXME is this correct?? should we use shared_ptr??]
 	if( ConfigurationInterface::getInstance(true) != 0 )
 		delete ConfigurationInterface::getInstance(true);
 }
@@ -675,597 +92,1106 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
-			getenv("CONFIGURATION_GUI_SUPERVISOR_ID") <<"'></frameset></html>";
-
+	cgicc::Cgicc cgi(in);
+	std::string configName = CgiDataUtilities::getData(cgi,"tableEditor"); //from GET
+	if(configName != "")
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationTableEditor.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	else
+		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/ConfigurationGUI.html?urn=" <<
+		this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================
 void ConfigurationGUISupervisor::request(xgi::Input * in, xgi::Output * out)
 throw (xgi::exception::Exception)
 {
-	
-
 	cgicc::Cgicc cgi(in);
-	std::string Command;
-	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
-		Command = cgi("RequestType"); //from GET or POST
+	std::string Command = CgiDataUtilities::getOrPostData(cgi,"RequestType");//from GET or POST
 
-	std::cout << __COUT_HDR_FL__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
-	//getSystemConfigurations
-	//getSubSystemConfigurations
-	//getSpecificSystemConfiguration
-	//getSpecificSubSystemConfiguration
-	//saveSpecificSubSystemConfiguration
-	//changeKocVersionForSpecificConfig
+	//	saveConfigurationInfo
+	//	deleteConfigurationInfo
+	//	getGroupAliases
+	//	setGroupAliasInActiveBackbone
+	//	setVersionAliasInActiveBackbone
+	//	setAliasOfGroupMembers
+	//	getVersionAliases
+	//	getConfigurationGroups
+	//	getConfigurations
+	//	getContextMemberNames
+	//	getBackboneMemberNames
+	//	getSpecificConfigurationGroup
+	//	saveNewConfigurationGroup
+	//	getSpecificConfiguration
+	//	saveSpecificConfiguration
+	//	clearConfigurationTemporaryVersions
+	//	getTreeView
+	//	activateConfigGroup
+	//	getActiveConfigGroups
+	//  copyViewToCurrentColumns
+
+	HttpXmlDocument xmldoc;
+	uint8_t userPermissions;
+	std::string userWithLock;
+	std::string userName;
+	uint64_t activeSessionIndex;
 
 	//**** start LOGIN GATEWAY CODE ***//
-	//If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for uint8_t userPermissions
-	//Else, error message is returned in cookieCode
-	uint8_t userPermissions;
-	std::string cookieCode;
-	if((cookieCode = CgiDataUtilities::postData(cgi,"CookieCode")) == "")
-		cookieCode = cgi("CookieCode"); //from GET or POST
-
-	//comment to remove security
-	bool AutomaticRefresh = 0;
-	std::string userWithLock;
-	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", !AutomaticRefresh, &userWithLock)) //only refresh cookie if not automatic refresh
 	{
-		*out << cookieCode;
-		std::cout << __COUT_HDR_FL__ << "Invalid Cookie Code" << std::endl;
-		return;
+		bool automaticCommands = 0; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool checkLock = true;
+		bool lockRequired = true;
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
+				&userPermissions,  			//acquire user's access level (optionally null pointer)
+				!automaticCommands,			//true/false refresh cookie code
+				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				lockRequired,				//true/false requires this user has the lock to proceed
+				&userWithLock,				//acquire username with lock (optionally null pointer)
+				&userName					//acquire username of this user (optionally null pointer)
+				,0//,&displayName			//acquire user's Display Name
+				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
+		))
+		{	//failure
+			__MOUT__ << "Failed Login Gateway: " <<
+					out->str() << std::endl; //print out return string on failure
+			return;
+		}
 	}
 	//**** end LOGIN GATEWAY CODE ***//
 
-	//**** start LOCK GATEWAY CODE ***//
-	std::string username = "";
-	uint64_t activeSessionIndex;
-	theRemoteWebUsers_.getUserInfoForCookie(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &username, 0, &activeSessionIndex);
-	if(userWithLock != "" && userWithLock != username)
-	{
-		*out << RemoteWebUsers::REQ_USER_LOCKOUT_RESPONSE;
-		std::cout << __COUT_HDR_FL__ << "User " << username << " is locked out. " << userWithLock << " has lock." << std::endl;
-		return;
-	}
-	//**** end LOCK GATEWAY CODE ***//
-
-	if(userPermissions < USER_PERMISSIONS_THRESHOLD)
-	{
-		*out << RemoteWebUsers::REQ_NO_PERMISSION_RESPONSE;
-		std::cout << __COUT_HDR_FL__ << "User " << username << " has insufficient permissions: " << userPermissions << "." << std::endl;
-		return;
-	}
-
-	HttpXmlDocument xmldoc(cookieCode);
 
 	//acquire user's configuration manager based on username & activeSessionIndex
+	std::string 	refresh = CgiDataUtilities::getData(cgi,"refresh"); 	//from GET
+	__MOUT__ << "refresh: " << refresh << std::endl;
+	//refresh to reload from info files and db (maintains temporary views!)
+	ConfigurationManagerRW* cfgMgr = refreshUserSession(userName, activeSessionIndex,
+			(refresh == "1") );
 
-	std::string  backboneVersionStr = cgi("backboneVersion");		  	//from GET
-	int		backboneVersion = (backboneVersionStr == "")?-1:atoi(backboneVersionStr.c_str()); //default to latest
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManager backboneVersion Version req \t\t" << backboneVersionStr << std::endl;
-	ConfigurationManager* cfgMgr = refreshUserSession(username, activeSessionIndex, backboneVersion);
-	std::cout << __COUT_HDR_FL__ << "ConfigurationManager backboneVersion Version Loaded \t\t" << backboneVersion << std::endl;
-
-	char tmpIntStr[100];
-	DOMElement* parentEl;
-
-	//return this information always
-	//<backboneVersion=xxx />
-	sprintf(tmpIntStr,"%u",backboneVersion);
-	xmldoc.addTextElementToData("backboneVersion", tmpIntStr); //add to response
-
-	if(Command == "getSystemConfigurations")
+	if(Command == "saveConfigurationInfo")
 	{
-		//return this information
-		//<configuration alias=xxx key=xxx>
-		//	<koc alias=xxx key=xxx />
-		//	<koc alias=xxx key=xxx />
-		//	...
-		//</configuration>
-		//<configuration alias=xxx key=xxx>...</configuration>
-		//...
+		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
+		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
+		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
 
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.begin();
+		__MOUT__ << "configName: " << configName << std::endl;
+		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
+		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
-		std::set<std::string> listOfKocs;
-
-		while (it != aliasMap.end())
+		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
 		{
-			//for each configuration alias and key
-			//get KOC version numbers
-
-			//std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-			//add system configuration alias and key
-			xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
-			sprintf(tmpIntStr,"%u",it->second.key());
-			xmldoc.addTextElementToData("SystemConfigurationKey", tmpIntStr);
-			parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
-
-			//get KOCs alias and version for the current system configuration key
-			assert(cfgMgr->getConfiguration<Configurations>());
-			{
-				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-				//std::cout << __COUT_HDR_FL__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-				{
-					unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
-
-					//std::cout << __COUT_HDR_FL__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-					xmldoc.addTextElementToParent("KOC_alias", *sit, parentEl);
-					sprintf(tmpIntStr,"%u",cv);
-					xmldoc.addTextElementToParent("KOC_version", tmpIntStr, parentEl);
-				}
-			}
-			++it;
-		}
-
-	}
-	else if(Command == "getSubSystemConfigurations")
-	{
-		//return this information
-		//<subconfiguration alias=xxx>
-		//	<version key=xxx />
-		//	<version key=xxx />
-		//	...
-		//</subconfiguration>
-		//<subconfiguration alias=xxx>...</subconfiguration>
-		//...
-
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
-
-		while(it != allCfgInfo.end())
-		{
-			//for each subconfiguration alias
-			//get existing version keys
-
-			//std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-			//add system subconfiguration alias
-			xmldoc.addTextElementToData("SystemSubConfigurationAlias", it->first);
-			parentEl = xmldoc.addTextElementToData("SystemSubConfigurationVersions", "");
-
-			//get version key for the current system subconfiguration key
-			for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
-			{
-				//std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
-
-				sprintf(tmpIntStr,"%d",*vit);
-				xmldoc.addTextElementToParent("VersionKey", tmpIntStr, parentEl);
-			}
-
-			++it;
-		}
-	}
-	else if(Command == "getSpecificSystemConfiguration")
-	{
-		//give the detail of specific System Configuration specified
-
-		//Find historical alias keys by
-		//loading all historical configurations
-		//figure out all configurations versions
-		//open file, and check for alias name and associated extract key
-
-		//return this information
-		//<configuration alias=xxx key=xxx>
-		//	<historical key=xxx>
-		//	<historical key=xxx>
-		//	....
-		//	<koc alias=xxx key=xxx>
-		//		<version key=xxx>
-		//		<version key=xxx>
-		//		...
-		//	</koc>
-		//	<koc alias=xxx key=xxx>
-		//	...
-		//</configuration>
-
-		std::string alias = cgi("alias"); //from GET
-
-		std::cout << __COUT_HDR_FL__ << "getSpecificSystemConfiguration: " << alias << std::endl;
-
-		std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
-
-		std::map<std::string, ConfigurationKey>::const_iterator it = aliasMap.find(alias);
-		if(it != aliasMap.end())
-		{
-			xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
-
-			std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-			std::set<int> versions;
-
-			std::set<std::string> listOfKocs;
-
-			DOMElement* parentElKoc;
-
-			//get all KOC alias and version numbers
-
-			//std::cout << __COUT_HDR_FL__ << "Alias: " << it->first << " - Key: " << it->second.key() << std::endl;
-
-			//add system configuration alias and key
-			xmldoc.addTextElementToData("SystemConfigurationAlias", it->first);
-			sprintf(tmpIntStr,"%u",it->second.key());
-			xmldoc.addTextElementToData("SystemConfigurationKey", tmpIntStr);
-			parentEl = xmldoc.addTextElementToData("SystemConfigurationKOCs", "");
-
-			//get KOCs alias and version for the current system configuration key
-			assert(cfgMgr->getConfiguration<Configurations>());
-			{
-				listOfKocs = cfgMgr->getConfiguration<Configurations>()->getListOfKocs(it->second.key());
-				//std::cout << __COUT_HDR_FL__ << "\tKocs size: " << listOfKocs.size() << std::endl;
-
-				for (std::set<std::string>::iterator sit=listOfKocs.begin(); sit!=listOfKocs.end(); ++sit)
-				{
-					//current version
-					unsigned int cv = cfgMgr->getConfiguration<Configurations>()->getConditionVersion(it->second.key(),*sit);
-
-					//all existing versions
-					versions = allCfgInfo.find(*sit)->second.versions_;
-
-					//std::cout << __COUT_HDR_FL__ << "\tKoc: " << *sit << " Version: " << cv << std::endl;
-
-					xmldoc.addTextElementToParent("KOC_alias", *sit, parentEl);
-					sprintf(tmpIntStr,"%u",cv);
-					parentElKoc = xmldoc.addTextElementToParent("KOC_currentVersion", tmpIntStr, parentEl);
-					for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
-					{
-						//std::cout << __COUT_HDR_FL__ << "\t\t" << *vit << std::endl;
-						if(*vit == (int)cv) continue;
-						sprintf(tmpIntStr,"%d",*vit);
-						xmldoc.addTextElementToParent("KOC_existingVersion", tmpIntStr, parentElKoc);
-					}
-				}
-			}
-
-
-			//check for other existing backbone versions - they all (3 backbone pieces) better match!!
-			//	(so we can just check one of them to get the list of historical versions: Configurations)
-			//  (The 3 backbone pieces are Configurations -- ConfigurationAliases -- DefaultConfigurations
-
-			versions = allCfgInfo.find("Configurations")->second.versions_;
-
-			for (std::set<int>::iterator vit=versions.begin(); vit!=versions.end(); ++vit)
-			{
-				std::cout << __COUT_HDR_FL__ << "Configurations Version \t\t" << *vit << std::endl;
-				if(*vit != backboneVersion)
-				{
-					//found a different configurations version then current version:
-					//load it
-					//check for alias
-
-					cfgMgr->loadConfigurationBackbone(*vit);
-
-					std::map<std::string, ConfigurationKey> aliasMap = cfgMgr->getConfiguration<ConfigurationAliases>()->getAliasesMap();
-
-					it = aliasMap.find(alias);
-					if(it != aliasMap.end())
-					{
-						//found a historical version of alias
-						sprintf(tmpIntStr,"%u",it->second.key());
-						xmldoc.addTextElementToData("HistoricalSystemConfigurationKey", tmpIntStr);
-
-					}
-				}
-			}
-		}
-	}
-	else if(Command == "getSpecificSubSystemConfiguration")
-	{
-		//give the detail of specific Sub-System Configuration specified
-		//	by subAlias and version
-
-		//return existing versions
-		//return column headers
-		//return number of rows
-		//from dataOffset
-		//first CHUNK_SIZE rows
-
-		//TODO!!
-		//return this information
-		//<subconfiguration alias=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
-		//	<existing version=xxx>
-		//	<existing version=xxx>
-		//	....
-		//	<colhdr alias=xxx>
-		//	<colhdr alias=xxx>
-		//	....
-		//	<rowdata>
-		//		<cell value=xxx>
-		//		<cell value=xxx>
-		//		....
-		//	</rowdata>
-		//	<rowdata>
-		//		....
-		//	</rowdata>
-		//	....
-		//</subconfiguration>
-
-		std::string 	subAlias = cgi("subAlias"); 			//from GET
-		std::string  versionStr = cgi("version");		  	//from GET
-		int		version = (versionStr == "")?0:atoi(versionStr.c_str());
-		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
-		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
-
-		std::cout << __COUT_HDR_FL__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
-				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << "     ";
-
-		//verify alias and version exists
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.find(subAlias);
-
-		if(it == allCfgInfo.end())
-		{
-			std::cout << __COUT_HDR_FL__ << "SubSystemConfiguration not found" << std::endl;
-		}
-		else if(it->second.versions_.find(version) == it->second.versions_.end())
-		{
-			std::cout << __COUT_HDR_FL__ << "Version not found" << std::endl;
+			__SS__ << "Improper permissions for saving configuration info." << std::endl;
+			xmldoc.addTextElementToData("Error", ss.str());
 		}
 		else
-		{
-			//load current version
-			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
-
-			if(!isInConfiguration) //load configuration view
-				cfgMgr->getVersionedConfigurationByName(subAlias, version);
-			else
-				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
-
-			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
-
-			if(!isInConfiguration)
-			{
-				std::cout << __COUT_HDR_FL__ << "Version could not be loaded" << std::endl;
-			}
-			else
-			{
-
-				xmldoc.addTextElementToData("SubSystemConfigurationAlias", it->first);
-				sprintf(tmpIntStr,"%d",version);
-				xmldoc.addTextElementToData("SubSystemConfigurationVersion", tmpIntStr);
-				parentEl = xmldoc.addTextElementToData("SubSystemConfigurationVersions", "");
-				for (std::set<int>::iterator vit=it->second.versions_.begin(); vit!=it->second.versions_.end(); ++vit)
-				{
-					sprintf(tmpIntStr,"%d",*vit);
-					xmldoc.addTextElementToParent("VersionKey", tmpIntStr, parentEl);
-				}
-
-				//view version
-				{
-					//get 'columns' of sub config
-
-					std::cout << __COUT_HDR_FL__ << "\t\t******** view " <<
-							allCfgInfo[subAlias].configurationPtr_->getViewVersion() << "     ";
-					ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getViewP();
-
-					parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
-					std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-					for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
-					{
-						std::cout << __COUT_HDR_FL__ << "\t\tCol " << i << ": " << colInfo[i].getName() << " "
-								<< colInfo[i].getViewName() << " " << colInfo[i].getViewType() << "     ";
-
-						xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
-						xmldoc.addTextElementToParent("ColumnType", colInfo[i].getViewType(), parentEl);
-					}
-
-					parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
-
-					for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
-					{
-						//std::cout << __COUT_HDR_FL__ << "\t\tRow " << r << ": "  << std::endl;
-
-						sprintf(tmpIntStr,"%d",r);
-						DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
-
-						for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
-							if(colInfo[c].getViewType() == "NUMBER")
-							{
-								int num;
-								cfgViewPtr->getValue(num,r,c);
-								//std::cout << __COUT_HDR_FL__ << "\t " << num << std::endl;
-
-								sprintf(tmpIntStr,"%d",num);
-								xmldoc.addTextElementToParent("Entry", tmpIntStr, tmpParentEl);
-							}
-							else
-							{
-								std::string val;
-								cfgViewPtr->getValue(val,r,c);
-								//std::cout << __COUT_HDR_FL__ << "\t " << val << std::endl;
-
-								xmldoc.addTextElementToParent("Entry", val, tmpParentEl);
-							}
-						//
-					}
-				}
-			}
-
-
-		}
-
-
+			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,allowOverwrite=="1");
 	}
-	else if(Command == "saveSpecificSubSystemConfiguration")
+	else if(Command == "deleteConfigurationInfo")
 	{
-		std::cout << __COUT_HDR_FL__ << "saveSpecificSubSystemConfiguration" << std::endl;
-		//TODO
-		// CHECK MUST HAVE LOCK!!
+		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
+		__MOUT__ << "configName: " << configName << std::endl;
+		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
+	}
+	else if(Command == "getGroupAliases")
+	{
+		handleGroupAliasesXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "setGroupAliasInActiveBackbone")
+	{
+		std::string groupAlias = CgiDataUtilities::getData(cgi,"groupAlias"); //from GET
+		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string groupKey = CgiDataUtilities::getData(cgi,"groupKey"); //from GET
 
-		//save the detail of specific Sub-System Configuration specified
-		//	by subAlias and version
+		__MOUT__ << "groupAlias: " << groupAlias << std::endl;
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
 
-		//starting from dataOffset
-		//save first CHUNK_SIZE rows
-		std::string 	subAlias = cgi("subAlias"); 			//from GET
-		int		version = atoi(cgi("version").c_str());	//from GET
-		int		dataOffset = atoi(cgi("dataOffset").c_str());	//from GET
-		int		chunkSize = atoi(cgi("chunkSize").c_str());	//from GET
+		handleSetGroupAliasInBackboneXML(xmldoc,cfgMgr,groupAlias,groupName,
+				ConfigurationGroupKey(groupKey),userName);
+	}
+	else if(Command == "setVersionAliasInActiveBackbone")
+	{
+		std::string versionAlias = CgiDataUtilities::getData(cgi,"versionAlias"); //from GET
+		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
+		std::string version = CgiDataUtilities::getData(cgi,"version"); //from GET
+
+		__MOUT__ << "versionAlias: " << versionAlias << std::endl;
+		__MOUT__ << "configName: " << configName << std::endl;
+		__MOUT__ << "version: " << version << std::endl;
+
+		handleSetVersionAliasInBackboneXML(xmldoc,cfgMgr,versionAlias,
+				configName,
+				ConfigurationVersion(version),userName);
+	}
+	else if(Command == "setAliasOfGroupMembers")
+	{
+		std::string versionAlias = CgiDataUtilities::getData(cgi,"versionAlias"); //from GET
+		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string groupKey = CgiDataUtilities::getData(cgi,"groupKey"); //from GET
+
+		__MOUT__ << "versionAlias: " << versionAlias << std::endl;
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
+
+		handleAliasGroupMembersInBackboneXML(xmldoc,cfgMgr,versionAlias,
+				groupName,
+				ConfigurationGroupKey(groupKey),userName);
+	}
+	else if(Command == "getVersionAliases")
+	{
+		handleVersionAliasesXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "getConfigurationGroups")
+	{
+		handleConfigurationGroupsXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "getConfigurations")
+	{
+		std::string allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
+
+		__MOUT__ << "allowIllegalColumns: " << allowIllegalColumns << std::endl;
+
+		handleConfigurationsXML(xmldoc,cfgMgr, allowIllegalColumns == "1");
+	}
+	else if(Command == "getContextMemberNames")
+	{
+		std::set<std::string> members = cfgMgr->getContextMemberNames();
+
+		for(auto& member:members)
+			xmldoc.addTextElementToData("ContextMember", member);
+	}
+	else if(Command == "getBackboneMemberNames")
+	{
+		std::set<std::string> members = cfgMgr->getBackboneMemberNames();
+
+		for(auto& member:members)
+			xmldoc.addTextElementToData("BackboneMember", member);
+	}
+	else if(Command == "getSpecificConfigurationGroup")
+	{
+		std::string 	groupName = CgiDataUtilities::getData(cgi,"groupName"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 	//from GET
+
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
+
+		handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey));
+	}
+	else if(Command == "saveNewConfigurationGroup")
+	{
+		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
+		std::string ignoreWarnings = CgiDataUtilities::getData(cgi,"ignoreWarnings"); //from GET
+		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
+		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
+		__MOUT__ << "configList: " << configList << std::endl;
+		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
+
+		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList, false,
+				(ignoreWarnings == "1"));
+	}
+	else if(Command == "getSpecificConfiguration")
+	{
+		std::string		configName = CgiDataUtilities::getData(cgi,		"configName"); 	//from GET
+		std::string  	versionStr = CgiDataUtilities::getData(cgi,		"version");		//from GET
+		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
+		int				chunkSize  = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+
+		std::string 	allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
+		__MOUT__ << "allowIllegalColumns: " << (allowIllegalColumns=="1") << std::endl;
+
+		__MOUT__ << "getSpecificConfiguration: " << configName << " versionStr: " << versionStr
+				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << std::endl;
+
+		ConfigurationVersion version;
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
+		if(versionStr == "" && //take latest version if no version specified
+				allCfgInfo[configName].versions_.size())
+			version = *(allCfgInfo[configName].versions_.rbegin());
+		else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
+		{
+			//convert alias to version
+			std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+					cfgMgr->getActiveVersionAliases();
+			if(versionAliases.find(configName) != versionAliases.end() &&
+					versionAliases[configName].find(versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
+									versionAliases[configName].end())
+			{
+				version = versionAliases[configName][versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
+				__MOUT__ << "version alias translated to: " << version << std::endl;
+			}
+			else
+				__MOUT_WARN__ << "version alias '" << versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
+				"'was not found in active version aliases!" << std::endl;
+		}
+		else					//else take specified version
+			version = atoi(versionStr.c_str());
+
+		__MOUT__ << "version: " << version << std::endl;
+
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
+				(allowIllegalColumns=="1"));
+		//append author column default value
+		xmldoc.addTextElementToData("DefaultRowValue", userName);
+	}
+	else if(Command == "saveSpecificConfiguration")
+	{
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
+		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");		//from GET
+		//int				chunkSize 	= CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");		//from GET
+		std::string		comment 	= CgiDataUtilities::getData		(cgi,"tableComment");	//from GET
 
 		std::string	data = CgiDataUtilities::postData(cgi,"data"); //from POST
 		//data format: commas and semi-colons indicate new row
 		//r0c0,r0c1,...,r0cN,;r1c0,...
 
+		__MOUT__ << "getSpecificConfiguration: " << configName << " version: " << version
+				<< " temporary: " << temporary << " dataOffset: " << dataOffset << std::endl;
+		__MOUT__ << "comment: " << comment << std::endl;
+		__MOUT__ << "data: " << data << std::endl;
 
+		handleCreateConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
+				temporary,data,dataOffset,userName, comment);
+	}
+	else if(Command == "clearConfigurationTemporaryVersions")
+	{
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		__MOUT__ << "configName: " << configName << std::endl;
 
-		//verify alias and version exists
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
-		std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.find(subAlias);
-
-
-		std::cout << __COUT_HDR_FL__ << "getSpecificSubSystemConfiguration: " << subAlias << " version: " << version
-				<< " chunkSize: " << chunkSize << " dataOffset: " << dataOffset << "     ";
-
-		std::cout << __COUT_HDR_FL__ << "data: " << data << std::endl;
-
-		//FIXME CHECK MUST HAVE LOCK!!
-		// CHECK MUST HAVE LOCK!!
-		// CHECK MUST HAVE LOCK!!
-		// CHECK MUST HAVE LOCK!!
-		// CHECK MUST HAVE LOCK!!
-		if(it == allCfgInfo.end())
+		try { cfgMgr->eraseTemporaryVersion(configName);}
+		catch(std::runtime_error &e)
 		{
-			std::cout << __COUT_HDR_FL__ << "SubSystemConfiguration not found" << std::endl;
-
-			xmldoc.addTextElementToData("Error", "SubSystemConfiguration not found");
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing temporary views!\n " +
+					std::string(e.what()));
 		}
-		else if(it->second.versions_.find(version) == it->second.versions_.end())
+		catch(...)
 		{
-			std::cout << __COUT_HDR_FL__ << "Version not found" << std::endl;
+			__MOUT__ << "Error detected!\n\n "<< std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing temporary views! ");
+		}
+	}
+	else if(Command == "getTreeView")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+		bool			hideStatusFalse	= CgiDataUtilities::getDataAsInt(cgi,"hideStatusFalse");
 
-			xmldoc.addTextElementToData("Error", "Version not found");
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "depth: " << depth << std::endl;
+		__MOUT__ << "hideStatusFalse: " << hideStatusFalse << std::endl;
+
+		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,depth,hideStatusFalse);
+	}
+	else if(Command == "activateConfigGroup")
+	{
+		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
+		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
+		bool		 	ignoreWarnings 	= CgiDataUtilities::getDataAsInt(cgi,"ignoreWarnings");
+
+		__MOUT__ << "Activating config: " << groupName <<
+				"(" << groupKey << ")" << std::endl;
+		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
+
+		std::string accumulatedTreeErrors;
+		try
+		{
+			cfgMgr->activateConfigurationGroup(groupName, ConfigurationGroupKey(groupKey),
+					ignoreWarnings?0:&accumulatedTreeErrors); //if ignore warning then pass null
+		}
+		catch(std::runtime_error& e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error activating config group " +
+					groupName +	"(" + groupKey + ")" + ". Please see details below:\n\n" +
+					std::string(e.what()));
+			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
+					groupName << " (" << groupKey << ")" << std::endl;
+			try //just in case any lingering pieces, lets deactivate
+			{ cfgMgr->destroyConfigurationGroup(groupName,true); }
+			catch(...){}
+		}
+		catch(cet::exception& e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error activating config group '" +
+					groupName +	"(" + groupKey + ")" + "'!\n\n" +
+					std::string(e.what()));
+			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
+					groupName << " (" << groupKey << ")" << std::endl;
+			try	//just in case any lingering pieces, lets deactivate
+			{ cfgMgr->destroyConfigurationGroup(groupName,true); }
+			catch(...){}
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!" << std::endl;
+			throw; //unexpected exception!
+		}
+
+		if(accumulatedTreeErrors != "")
+			xmldoc.addTextElementToData("Error", "Warnings were found when activating group '" +
+					groupName +	"(" + groupKey + ")" + "'! Please see details below:\n\n" +
+					accumulatedTreeErrors);
+	}
+	else if(Command == "getActiveConfigGroups"); //do nothing, since they are always returned
+	else if(Command == "copyViewToCurrentColumns")
+	{
+		std::string 	configName 		= CgiDataUtilities::getData(cgi,"configName"); //from GET
+		std::string 	sourceVersion 	= CgiDataUtilities::getData(cgi,"sourceVersion");
+
+		__MOUT__ << "configName: " << configName << std::endl;
+		__MOUT__ << "sourceVersion: " << sourceVersion << std::endl;
+		__MOUT__ << "userName: " << userName << std::endl;
+
+		//copy source version to new temporary version
+		ConfigurationVersion newTemporaryVersion;
+		try
+		{
+			//force emptying of cache for this configuration
+			newTemporaryVersion = cfgMgr->copyViewToCurrentColumns(configName,
+							ConfigurationVersion(sourceVersion));
+//
+//			getConfigurationByName(configName)->reset();
+//
+//			//make sure source version is loaded
+//			//need to load with loose column rules!
+//			config = cfgMgr->getVersionedConfigurationByName(configName,
+//					ConfigurationVersion(sourceVersion), true);
+//
+//			//copy from source version to a new temporary version
+//			newTemporaryVersion = config->copyView(config->getView(),
+//							ConfigurationVersion(),userName);
+
+			__MOUT__ << "New temporary version = " << newTemporaryVersion << std::endl;
+		}
+		catch(std::runtime_error &e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error copying view from '" +
+					configName +	"_v" + sourceVersion + "'! " +
+					std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!\n\n " << std::endl;
+			xmldoc.addTextElementToData("Error", "Error copying view from '" +
+					configName +	"_v" + sourceVersion + "'! ");
+		}
+
+		handleGetConfigurationXML(xmldoc,cfgMgr,configName,newTemporaryVersion);
+	}
+	else
+		__MOUT__ << "Command request not recognized." << std::endl;
+
+	__MOUT__ << "Wrapping up..." << std::endl;
+
+	//always add active config groups to xml response
+	std::map<std::string /*type*/,
+	std::pair<std::string /*groupName*/,
+	ConfigurationGroupKey>> activeGroupMap =
+			cfgMgr->getActiveConfigurationGroups();
+
+	for(auto &type:activeGroupMap)
+	{
+		xmldoc.addTextElementToData(type.first + "-ActiveGroupName",
+				type.second.first);
+		xmldoc.addTextElementToData(type.first + "-ActiveGroupKey",
+				type.second.second.toString());
+	}
+
+	__MOUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
+
+	//return xml doc holding server response
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true); //true for debug printout
+}
+
+//========================================================================================================================
+//handleFillTreeViewXML
+//	returns xml tree from path for given depth
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	depth from starting node path
+//
+void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath, int depth, bool hideStatusFalse)
+{
+	//return xml
+	//	<groupName="groupName"/>
+	//	<tree="path">
+	//		<node="...">
+	//			<node="...">
+	//				<node="...">
+	//					<value="...">
+	//				</node>
+	//				<node="...">
+	//					<value="...">
+	//				</node>
+	//			</node>
+	//			<node="...">
+	//				<value="..">
+	//			</node>
+	//		...
+	//		</node>
+	//	</tree>
+
+	//return the startPath as root "tree" element
+	//	and then display all children if depth > 0
+	xmldoc.addTextElementToData("configGroup", groupName);
+	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
+
+	try {
+		//if add root node, reload all tables so that partially loaded tables are not allowed
+		if(startPath == "/")
+			cfgMgr->getAllConfigurationInfo(true); //do refresh
+
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
+				cfgMgr->loadConfigurationGroup(groupName,groupKey);
+
+		//add all active configuration pairs to xmldoc
+		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+		for(auto &activePair: allActivePairs)
+		{
+			xmldoc.addTextElementToData("MemberName", activePair.first);
+			xmldoc.addTextElementToData("MemberVersion", activePair.second.toString());
+			xmldoc.addTextElementToData("MemberComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		}
+
+		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
+
+		if(depth == 0) return; //already returned root node in itself
+
+		std::vector<std::pair<std::string,ConfigurationTree> > rootMap;
+
+		if(startPath == "/") //then consider the configurationManager the root node
+		{
+			std::string accumulateTreeErrs;
+			rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
+			__MOUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
+			if(accumulateTreeErrs != "")
+				xmldoc.addTextElementToData("TreeErrors",
+						accumulateTreeErrs);
+		}
+		else
+			rootMap = cfgMgr->getNode(startPath).getChildren();
+
+		for(auto &treePair:rootMap)
+			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl,hideStatusFalse);
+	}
+	catch(std::runtime_error& e)
+	{
+		__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!\n\n" + std::string(e.what()));
+	}
+	catch(...)
+	{
+		__MOUT__ << "Error detected!" << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+	}
+}
+
+//==============================================================================
+//recursiveToXml
+//	output tree to XML from this node for desired depth
+//	depth of 0 means output only this node's value
+//	depth of 1 means include this node's children's values, etc..
+//	depth of -1(unsigned int) effectively means output full tree
+void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc,
+		DOMElement* parentEl, bool hideStatusFalse)
+{
+	//__MOUT__ << t.getValueAsString() << std::endl;
+	if(t.isValueNode())
+	{
+		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+		xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+	}
+	else
+	{
+		if(t.isLinkNode())
+		{
+			if(t.isDisconnected())
+			{
+				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+				return;
+			}
+			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+			xmldoc.addTextElementToParent(
+					(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+					t.getValueAsString(), parentEl);
+
+			xmldoc.addTextElementToParent("LinkConfigurationName", t.getConfigurationName(),
+					parentEl);
 		}
 		else
 		{
-			//load current version
-			bool isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
+			bool returnNode = true; //default to shown
 
-			if(!isInConfiguration) //load configuration view
-				cfgMgr->getVersionedConfigurationByName(subAlias, version);
-			else
-				allCfgInfo[subAlias].configurationPtr_->setActiveView(version);
-
-			isInConfiguration = (allCfgInfo[subAlias].configurationPtr_->isStored(version));
-			std::cout << __COUT_HDR_FL__ << "Version " << version << " is loaded: " <<
-					(isInConfiguration?"YES":"NO") << "     ";
-
-			if(!isInConfiguration)
+			if(hideStatusFalse) //only show if status evaluates to true
 			{
-				std::cout << __COUT_HDR_FL__ << "Version could not be loaded" << std::endl;
-
-				xmldoc.addTextElementToData("Error", "Version could not be loaded");
+				try //try to get Status child as boolean..
+				{	//if Status bool doesn't exist exception will be thrown
+					t.getNode("Status").getValue(returnNode);
+				} catch(...) {}
 			}
+
+			if(returnNode)
+				parentEl = xmldoc.addTextElementToParent("node", t.getValueAsString(), parentEl);
 			else
-			{
-				int temporaryVersion = allCfgInfo[subAlias].configurationPtr_->createTemporaryView(version);
+				return; //done.. no further depth needed for node that is not shown
+		}
 
-				std::cout << __COUT_HDR_FL__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
-				ConfigurationView* cfgViewPtr = allCfgInfo[subAlias].configurationPtr_->getTemporaryView(temporaryVersion);
-				std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
-
-				//while there are row entries in the data.. replace
-				// data range from [dataOffset, dataOffset+chunkSize-1]
-				// ... note if less rows, this means rows were deleted
-				// ... if more, then rows were added.
-				int r = dataOffset;
-				int c = 0;
-
-				//int cellNum;
-				//string cellStr;
-
-				int i = 0; //use to parse data std::string
-				int j = data.find(',',i); //find next cell delimiter
-				int k = data.find(';',i); //find next row delimiter
-
-				while(k != (int)(std::string::npos))
-				{
-					if(r >= (int)cfgViewPtr->getNumberOfRows())
-					{
-						cfgViewPtr->addRow();
-						std::cout << __COUT_HDR_FL__ << "Row added" << std::endl;
-					}
-
-					while(j < k && j != (int)(std::string::npos))
-					{
-						//std::cout << __COUT_HDR_FL__ << r << "|" << c << "][" << i << "|" << k << "][" << std::endl;
-						//std::cout << __COUT_HDR_FL__ << data.substr(i,j-i) << "|" << std::endl;
-						if(colInfo[c].getViewType() == "NUMBER")
-						{
-							//std::cout << __COUT_HDR_FL__ << atoi(data.substr(i,j-i).c_str()) << "|" << std::endl;
-							cfgViewPtr->setValue(atoi(data.substr(i,j-i).c_str()),r,c);
-							//cfgViewPtr->getValue(cellNum,r,c);
-							//std::cout << __COUT_HDR_FL__ << cellNum << " " << std::endl;
-						}
-						else
-						{
-							//std::cout << __COUT_HDR_FL__ << data.substr(i,j-i) << "|" << std::endl;
-							cfgViewPtr->setValue(data.substr(i,j-i),r,c);
-							//cfgViewPtr->getValue(cellStr,r,c);
-							//std::cout << __COUT_HDR_FL__ << cellStr << " " << std::endl;
-						}
-						i=j+1;
-						j = data.find(',',i); //find next cell delimiter
-						++c;
-					}
-					++r;
-					c = 0;
-					
-
-					i = k+1;
-					j = data.find(',',i); //find next cell delimiter
-					k = data.find(';',i); //find new row delimiter
-				}
-
-				//delete excess rows
-				while(r < (int)cfgViewPtr->getNumberOfRows())
-				{
-					cfgViewPtr->deleteRow(r);
-					std::cout << __COUT_HDR_FL__ << "Row deleted" << std::endl;
-				}
-
-
-				std::cout << __COUT_HDR_FL__ << "\t\t**************************** Save as new sub-config version" << std::endl;
-
-				int newAssignedVersion = cfgMgr->saveNewConfiguration(allCfgInfo[subAlias].configurationPtr_,temporaryVersion);
-
-				xmldoc.addTextElementToData("savedAlias", subAlias);
-				sprintf(tmpIntStr,"%d",newAssignedVersion);
-				xmldoc.addTextElementToData("savedVersion", tmpIntStr);
-
-				std::cout << __COUT_HDR_FL__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
-
-			}
+		//if depth>=1 toXml all children
+		//child.toXml(depth-1)
+		if(depth >= 1)
+		{
+			auto C = t.getChildren();
+			for(auto &c:C)
+				recursiveTreeToXML(c.second,depth-1,xmldoc,parentEl,hideStatusFalse);
 		}
 	}
-	else if(Command == "changeKocVersionForSpecificConfig")
-	{
-		std::cout << __COUT_HDR_FL__ << "changeKocVersionForSpecificConfig" << std::endl;
-		//TODO
-	}
-	else
-		std::cout << __COUT_HDR_FL__ << "Command request not recognized." << std::endl;
-
-
-
-	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
+
+//========================================================================================================================
+//handleGetConfigurationGroupXML
+//
+//	give the detail of specific System Configuration specified
+//		groupKey=-1 returns latest
+//
+//	Find historical group keys
+//		and figure out all member configurations versions
+
+//
+//	return this information
+//	<group name=xxx key=xxx>
+//		<historical key=xxx>
+//		<historical key=xxx>
+//		....
+//		<config name=xxx version=xxx />
+//			<historical version=xxx>
+//			<historical version=xxx>
+//			...
+//		</config>
+//		<config name=xxx version=xxx>
+//		...
+//	</configuration>
+void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
+		ConfigurationGroupKey groupKey)
+{
+	char tmpIntStr[100];
+	DOMElement *parentEl, *configEl;
+
+	//steps:
+	//	if invalid key, get latest key
+	//	get specific group with key
+	//		give member names and versions
+	//		get all configuration groups to locate historical keys
+	//	get all groups to find historical keys
+
+
+	std::set<std::string /*name+version*/> allGroups =
+			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
+	std::string name;
+	ConfigurationGroupKey key;
+	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
+	std::set<ConfigurationGroupKey> sortedKeys;
+	for(auto &group: allGroups)
+	{
+		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
+		if(name == groupName)
+			sortedKeys.emplace(key);
+	}
+	if(groupKey.isInvalid() || //if invalid or not found, get latest
+			sortedKeys.find(groupKey) == sortedKeys.end())
+	{
+		if(sortedKeys.size())
+			groupKey = *sortedKeys.rbegin();
+		__MOUT__ << "Group key requested was invalid or not found, going with latest " <<
+				groupKey << std::endl;
+	}
+
+
+
+	xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+	xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+	parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+
+	//	get specific group with key
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+	try
+	{
+		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+	}
+	catch(...)
+	{
+		xmldoc.addTextElementToData("Error","Configuration group \"" +
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey) +
+				"\" can not be retrieved!");
+		return;
+	}
+
+
+	__MOUT__ << "groupName=" << groupName << std::endl;
+	__MOUT__ << "groupKey=" << groupKey << std::endl;
+
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::map<std::string, ConfigurationInfo>::const_iterator it;
+
+	//load group so comments can be had
+	bool commentsLoaded = false;
+	try
+	{
+		cfgMgr->loadConfigurationGroup(groupName,groupKey);
+		commentsLoaded = true;
+	}
+	catch(...) {
+		__MOUT__ << "Error occurred loading group, so giving up on comments." <<
+				std::endl;
+		commentsLoaded = false;
+	}
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
+	__MOUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
+
+	for(auto &memberPair:memberMap)
+	{
+		__MOUT__ << "\tMember config " << memberPair.first << ":" <<
+				memberPair.second << std::endl;
+
+		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+		if(commentsLoaded)
+			xmldoc.addTextElementToParent("MemberComment",
+					allCfgInfo[memberPair.first].configurationPtr_->getView().getComment(),
+					parentEl);
+		else
+			xmldoc.addTextElementToParent("MemberComment", "", parentEl);
+		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+
+		it = allCfgInfo.find(memberPair.first);
+		if(it == allCfgInfo.end())
+		{
+			xmldoc.addTextElementToData("Error","Configuration \"" +
+					memberPair.first +
+					"\" can not be retrieved!");
+			return;
+		}
+
+		//include aliases for this table
+		if(versionAliases.find(it->first) != versionAliases.end())
+			for (auto &aliasVersion:versionAliases[it->first])
+				xmldoc.addTextElementToParent("ConfigurationExistingVersion",
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
+						configEl);
+
+		for (auto &version:it->second.versions_)
+			//if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016 (might as well show all versions in list to avoid user confusion)
+			//else
+			xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
+
+	}
+
+	//add all other sorted keys for this groupName
+	for(auto &keyInOrder:sortedKeys)
+		xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", keyInOrder.toString());
+
+	return;
+}
+
+//========================================================================================================================
+//handleGetConfigurationXML
+//
+//	if INVALID or version does not exists, default to mock-up
+//
+//give the detail of specific Sub-System Configuration specified
+//	by configName and version
+//
+//if no version selected, default to latest version
+//if no versions exists, default to mock-up
+//
+//return existing versions
+//return column headers
+//return number of rows
+//from dataOffset
+//first CHUNK_SIZE rows
+//
+//return this information
+//<subconfiguration name=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
+//	<existing version=xxx>
+//	<existing version=xxx>
+//	....
+//	<colhdr name=xxx>
+//	<colhdr name=xxx>
+//	....
+//	<rowdata>
+//		<cell value=xxx>
+//		<cell value=xxx>
+//		....
+//	</rowdata>
+//	<rowdata>
+//		....
+//	</rowdata>
+//	....
+//</subconfiguration>
+//
+//
+// Note: options.. if allowIllegalColumns then attempts to load data to current mockup column names
+//	if not allowIllegalColumns, then it is still ok if the source has more or less columns:
+//	the client is notified through "TableWarnings" field in this case.
+void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &configName,
+		ConfigurationVersion version, bool allowIllegalColumns)
+try
+{
+	char tmpIntStr[100];
+	DOMElement* parentEl;
+
+	std::string accumulatedErrors = "";
+	std::map<std::string, ConfigurationInfo> allCfgInfo = //if allowIllegalColumns, then also refresh
+			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
+					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
+
+	//send all config names along with
+	//	and check for specific version
+	xmldoc.addTextElementToData("ExistingConfigurationNames", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
+	for(auto &configPair:allCfgInfo)
+	{
+		xmldoc.addTextElementToData("ExistingConfigurationNames",
+				configPair.first);
+		if(configPair.first == configName && //check that version exists
+				configPair.second.versions_.find(version) ==
+						configPair.second.versions_.end())
+		{
+			__MOUT__ << "Version not found, so using mockup." << std::endl;
+			version = ConfigurationVersion(); //use INVALID
+		}
+	}
+
+	xmldoc.addTextElementToData("ConfigurationName", configName);	//table name
+
+	//existing table versions
+	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
+	for (auto &v:allCfgInfo[configName.c_str()].versions_)
+		xmldoc.addTextElementToParent("Version", v.toString(), parentEl);
+
+
+	//table columns and then rows (from config view)
+
+	//get view pointer
+	ConfigurationView* cfgViewPtr;
+	if(version.isInvalid()) //use mock-up
+	{
+		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+	}
+	else					//use view version
+	{
+		try
+		{
+			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+		}
+		catch(std::runtime_error &e) //default to mock-up for fail-safe in GUI editor
+		{
+			__SS__ << "Failed to get table " << configName <<
+					" version " << version <<
+					"... defaulting to mock-up! " <<
+					std::endl;
+			ss << "\n\n...Here is why it failed:\n\n" << e.what() << std::endl;
+
+			__MOUT_ERR__ << "\n" << ss.str();
+			version = ConfigurationVersion();
+			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+
+			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
+		}
+		catch(...) //default to mock-up for fail-safe in GUI editor
+		{
+			__SS__ << "Failed to get table " << configName <<
+					" version: " << version <<
+					"... defaulting to mock-up! " <<
+					"(You may want to try again to see what was partially loaded into cache before failure. " <<
+					"If you think, the failure is due to a column name change, " <<
+					"you can also try to Copy the failing view to the new column names using " <<
+					"'Copy and Move' functionality.)" <<
+					std::endl;
+
+			__MOUT_ERR__ << "\n" << ss.str();
+			version = ConfigurationVersion();
+			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+
+			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
+		}
+	}
+	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
+
+	//get 'columns' of view
+	parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
+	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
+	{
+		__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
+				colInfo[i].getName() << " "
+				<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
+
+		xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
+		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
+		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
+	}
+
+	//verify mockup columns after columns are posted to xmldoc
+	if(version.isInvalid())
+		cfgViewPtr->init();
+
+	parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
+
+	for(int r=0;r<(int)cfgViewPtr->getNumberOfRows();++r)
+	{
+		//__MOUT__ << "\t\tRow " << r << ": "  << std::endl;
+
+		sprintf(tmpIntStr,"%d",r);
+		DOMElement* tmpParentEl = xmldoc.addTextElementToParent("Row", tmpIntStr, parentEl);
+
+		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
+		{
+
+			if(colInfo[c].getDataType() == ViewColumnInfo::DATATYPE_TIME)
+			{
+				std::string timeAsString;
+				cfgViewPtr->getValue(timeAsString,r,c);
+				xmldoc.addTextElementToParent("Entry", timeAsString, tmpParentEl);
+			}
+			else
+				xmldoc.addTextElementToParent("Entry", cfgViewPtr->getDataView()[r][c], tmpParentEl);
+		}
+	}
+
+	//add "other" fields associated with configView
+	xmldoc.addTextElementToData("TableComment", cfgViewPtr->getComment());
+	xmldoc.addTextElementToData("TableAuthor", cfgViewPtr->getAuthor());
+	xmldoc.addTextElementToData("TableCreationTime", std::to_string(cfgViewPtr->getCreationTime()));
+	xmldoc.addTextElementToData("TableLastAccessTime", std::to_string(cfgViewPtr->getLastAccessTime()));
+
+	//add to xml the default row values
+	std::vector<std::string> defaultRowValues =
+			cfgViewPtr->getDefaultRowValues();
+	//don't give author and time.. force default author, let JS fill time
+	for(unsigned int c = 0; c<defaultRowValues.size()-2; ++c)
+		xmldoc.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
+
+	if(accumulatedErrors != "") //add accumulated errors to xmldoc
+		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
+				"but please note the following errors:\n" + accumulatedErrors);
+	else if(!version.isTemporaryVersion() && //not temporary (these are not filled from interface source)
+			(cfgViewPtr->getSourceColumnSize() !=
+					cfgViewPtr->getNumberOfColumns() ||
+					cfgViewPtr->getSourceColumnMismatch() != 0)) //check for column size mismatch
+	{
+		__SS__ << "\n\nThere were warnings found when loading the table " <<
+				configName << ":v" << version << ". Please see the details below:\n\n" <<
+				"The source column size was found to be " << cfgViewPtr->getSourceColumnSize() <<
+				", and the current number of columns for this table is " <<
+				cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
+				cfgViewPtr->getSourceColumnMismatch() << " source column mismatches, and a count of " <<
+				cfgViewPtr->getSourceColumnMissing() << " table entries missing in " <<
+				cfgViewPtr->getNumberOfRows() << " row(s) of data." << std::endl;
+
+
+
+		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+		ss << "\n\nSource column names were as follows:\n";
+		char index = 'a';
+		for(auto &srcColName:srcColNames)
+			ss << "\n\t" <<index++ << ". " <<  srcColName;
+		ss << std::endl;
+
+		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
+		ss << "\n\nCurrent table column names are as follows:\n";
+		index = 'a';
+		for(auto &destColName:destColNames)
+			ss << "\n\t" << index++ << ". " << destColName;
+		ss << std::endl;
+
+		__MOUT__ << "\n" << ss.str();
+ 		xmldoc.addTextElementToData("TableWarnings",ss.str());
+	}
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting view! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting view! ");
+}
+
+
+//========================================================================================================================
+//saveModifiedVersionXML
+//
+// once source version has been modified in temporary version
+//	this function finishes it off.
+void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &configName,
+		ConfigurationVersion version,
+		bool makeTemporary,
+		ConfigurationBase * config,
+		ConfigurationVersion temporaryVersion)
+{
+	bool needToEraseTemporarySource = (version.isTemporaryVersion() && !makeTemporary);
+
+
+	//check for duplicate tables already in cache
+	{
+		ConfigurationVersion duplicateVersion;
+
+		duplicateVersion = config->checkForDuplicate(temporaryVersion, version);
+
+		if(!duplicateVersion.isInvalid())
+		{
+			__SS__ << "This version is identical to another version currently cached v" <<
+					duplicateVersion << ". No reason to save a duplicate." << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			//delete temporaryVersion
+			config->eraseView(temporaryVersion);
+			throw std::runtime_error(ss.str());
+		}
+	}
+
+
+	if(makeTemporary)
+		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
+	else
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+
+
+	ConfigurationVersion newAssignedVersion =
+			cfgMgr->saveNewConfiguration(configName,temporaryVersion,makeTemporary);
+
+	if(needToEraseTemporarySource)
+		cfgMgr->eraseTemporaryVersion(configName,version);
+
+	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+
+//========================================================================================================================
+//handleCreateConfigurationXML
+//
+//
+//save the detail of specific Sub-System Configuration specified
+//	by configName and version
+
+//starting from dataOffset
+//
+//	if starting version is -1 start from mock-up
+void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version,
+		bool makeTemporary, const std::string &data, const int &dataOffset,
+		const std::string &author, const std::string &comment)
+try
+{
+	//__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
+	//		<< " dataOffset: " << dataOffset << std::endl;
+
+	//__MOUT__ << "data: " << data << std::endl;
+
+	//create temporary version from starting version
+	if(!version.isInvalid()) //if not using mock-up, make sure starting version is loaded
+	{
+		try
+		{
+			cfgMgr->getVersionedConfigurationByName(configName,version);
+		}
+		catch(...)
+		{
+			//force to mockup
+			version = ConfigurationVersion();
+		}
+	}
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
+
+	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
+
+	//returns -1 on error that data was unchanged
+	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
+	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
+
+	cfgView->setURIEncodedComment(comment);
+	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
+
+
+	//only consider it an error if source version was persistent version
+	//	allow it if source version is temporary and we are making a persistent version now
+	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
+	{
+		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		throw std::runtime_error(ss.str());
+	}
+	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
+	{
+		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
+	}
+	else if(retVal < 0)
+	{
+		__SS__ << "This should not be possible! Fatal error." << std::endl;
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		throw std::runtime_error(ss.str());
+	}
+
+	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,makeTemporary,
+			config,temporaryVersion);
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new view!\n " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new view! ");
+}
+
 
 //========================================================================================================================
 //	refreshUserSession
@@ -1276,28 +1202,45 @@ throw (xgi::exception::Exception)
 //		and will load the backbone configurations to specified backboneVersion
 //
 //		If backboneVersion is -1, then latest, and backboneVersion passed by reference will be updated
-ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion)
+ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::string username,
+		uint64_t activeSessionIndex, bool refresh)
+//, ConfigurationVersion &backboneVersion)
 {
+	activeSessionIndex = 0; //make session by username for now! (may never want to change back)
+
 	std::stringstream ssMapKey;
 	ssMapKey << username << ":" << activeSessionIndex;
 	std::string mapKey = ssMapKey.str();
-	std::cout << __COUT_HDR_FL__ << mapKey << " ... current size: " << userConfigurationManagers_.size() << std::endl;
+	__MOUT__ << "Config Session: " << mapKey << " ... out of size: " << userConfigurationManagers_.size() << std::endl;
+
+	time_t now = time(0);
+
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
-		userConfigurationManagers_[mapKey] = new ConfigurationManager();
+		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW(username);
 
 		//update configuration info for each new configuration manager
 		//	IMPORTANTLY this also fills all configuration manager pointers with instances,
 		//	so we are not dealing with changing pointers later on
-		userConfigurationManagers_[mapKey]->getAllConfigurationInfo();	//load empty instance of everything important
+		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);	//load empty instance of everything important
+	}
+	else if(userLastUseTime_.find(mapKey) == userLastUseTime_.end())
+	{
+		__MOUT_ERR__ << "Fatal error managing userLastUseTime_!" << std::endl;
+		throw std::runtime_error("Fatal error managing userLastUseTime_!");
+	}
+	else if(refresh || now - userLastUseTime_[mapKey] >
+	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
+	{
+		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
+		userConfigurationManagers_[mapKey]->getAllConfigurationInfo(true);
 	}
 
 	//load backbone configurations always based on backboneVersion
 	//if backboneVersion is -1, then latest
-	backboneVersion = userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
+	//backboneVersion = 0;// userConfigurationManagers_[mapKey]->loadConfigurationBackbone(backboneVersion);
 
-	time_t now = time(0);
 	//update active sessionIndex last use time
 	userLastUseTime_[mapKey] = now;
 
@@ -1305,9 +1248,13 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 	for (std::map<std::string, time_t> ::iterator it=userLastUseTime_.begin(); it!=userLastUseTime_.end(); ++it)
 		if(now - it->second > CONFIGURATION_MANAGER_EXPIRATION_TIME) // expired!
 		{
-			std::cout << __COUT_HDR_FL__ << now << ":" << it->second << " = " << now - it->second << std::endl;
+			__MOUT__ << now << ":" << it->second << " = " << now - it->second << std::endl;
 			delete userConfigurationManagers_[it->first]; //call destructor
-			assert(userConfigurationManagers_.erase(it->first));	//erase by key
+			if(!(userConfigurationManagers_.erase(it->first)))	//erase by key
+			{
+				__MOUT_ERR__ << "Fatal error erasing configuration manager by key!" << std::endl;
+				throw std::runtime_error("Fatal error erasing configuration manager by key!");
+			}
 			userLastUseTime_.erase(it);								//erase by iterator
 
 			it=userLastUseTime_.begin(); //fail safe.. reset it, to avoid trying to understand what happens with the next iterator
@@ -1315,3 +1262,1180 @@ ConfigurationManager* ConfigurationGUISupervisor::refreshUserSession(std::string
 
 	return userConfigurationManagers_[mapKey];
 }
+
+//========================================================================================================================
+//	handleCreateConfigurationGroupXML
+//
+//		Save a new ConfigurationGroup:
+//			Search for existing ConfigurationGroupKeys for this ConfigurationGroup
+//			Append a "bumped" system key to name
+//			Save based on list of configuration name/ConfigurationVersion
+//
+//		configList parameter is comma separated configuration name and version
+//
+void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
+		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
+{
+
+	xmldoc.addTextElementToData("AttemptedNewGroupName",groupName);
+
+	//make sure not using partial tables or anything weird when creating the group
+	//	so start from scratch and load backbone
+	cfgMgr->getAllConfigurationInfo(true);
+	cfgMgr->loadConfigurationBackbone();
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
+	std::string name, versionStr;
+	ConfigurationVersion version;
+	auto c = configList.find(',',0);
+	auto i = c; i = 0; //auto used to get proper index/length type
+	while(c < configList.length())
+	{
+		//add the configuration and version pair to the map
+		name = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+		if(c == std::string::npos) //missing version list entry?!
+		{
+			xmldoc.addTextElementToData("Error", "Incomplete Configuration-Version pair!");
+			return;
+		}
+
+		versionStr = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+
+		__MOUT__ << "name: " << name << std::endl;
+		__MOUT__ << "versionStr: " << versionStr << std::endl;
+
+		//check if version is an alias and convert
+		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
+		{
+			//convert alias to version
+			if(versionAliases.find(name) != versionAliases.end() &&
+					versionAliases[name].find(versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
+									versionAliases[name].end())
+			{
+				version = versionAliases[name][versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
+				__MOUT__ << "version alias translated to: " << version << std::endl;
+			}
+			else
+			{
+				__SS__ << "version alias '" << versionStr.substr(
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
+						"'was not found in active version aliases!" << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error",
+						ss.str());
+				return;
+			}
+		}
+		else
+			version = ConfigurationVersion(versionStr);
+
+		__MOUT__ << "version: " << version << std::endl;
+		groupMembers[name] = version;
+	}
+
+
+	if(!allowDuplicates)
+	{
+		ConfigurationGroupKey foundKey =
+				cfgMgr->findConfigurationGroup(groupName,groupMembers);
+		if(!foundKey.isInvalid())
+		{
+			//return old keys
+			xmldoc.addTextElementToData("ConfigurationGroupName",groupName);
+			xmldoc.addTextElementToData("ConfigurationGroupKey",foundKey.toString());
+			xmldoc.addTextElementToData("Error",
+					"Failed to create configuration group: " + groupName +
+					". It is a duplicate of an existing group key (" + foundKey.toString() + ")");
+			return;
+		}
+	}
+
+	//check the group for errors before creating group
+	try
+	{
+		cfgMgr->loadMemberMap(groupMembers);
+
+		std::string accumulateErrors = "";
+		for(auto &groupMemberPair:groupMembers)
+		{
+			ConfigurationView* cfgViewPtr =
+					cfgMgr->getConfigurationByName(groupMemberPair.first)->getViewP();
+			if(cfgViewPtr->getSourceColumnSize() !=
+					cfgViewPtr->getNumberOfColumns() ||
+					cfgViewPtr->getSourceColumnMismatch() != 0) //check for column size mismatch
+			{
+				__SS__ << "\n\nThere were errors found in loading a member table " <<
+						groupMemberPair.first << ":v" << cfgViewPtr->getVersion() <<
+						". Please see the details below:\n\n" <<
+						"The source column size was found to be " <<
+						cfgViewPtr->getSourceColumnSize() <<
+						", and the current number of columns for this table is " <<
+						cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
+						cfgViewPtr->getSourceColumnMismatch() << " source column mismatches, and a count of " <<
+						cfgViewPtr->getSourceColumnMissing() << " table entries missing in " <<
+						cfgViewPtr->getNumberOfRows() << " row(s) of data." <<
+						std::endl;
+
+				const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
+				ss << "\n\nSource column names were as follows:\n";
+				char index = 'a';
+				for(auto &srcColName:srcColNames)
+					ss << "\n\t" <<index++ << ". " <<  srcColName;
+				ss << std::endl;
+
+				std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
+				ss << "\n\nCurrent table column names are as follows:\n";
+				index = 'a';
+				for(auto &destColName:destColNames)
+					ss << "\n\t" << index++ << ". " << destColName;
+				ss << std::endl;
+
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error", ss.str());
+				return;
+			}
+		}
+	}
+	catch(std::runtime_error &e)
+	{
+		__SS__ << "Failed to create config group: " << groupName <<
+				".\nThere were problems loading the chosen members:\n\n" <<
+				e.what() << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+	catch(...)
+	{
+		__SS__ << "Failed to create config group: " << groupName << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//check the tree for warnings before creating group
+	std::string accumulateTreeErrs;
+	cfgMgr->getChildren(&groupMembers,&accumulateTreeErrs);
+	if(accumulateTreeErrs != "" )
+	{
+		__MOUT_WARN__ << "\n" << accumulateTreeErrs << std::endl;
+		if(!ignoreWarnings)
+		{
+			xmldoc.addTextElementToData("TreeErrors",
+					accumulateTreeErrs);
+			return;
+		}
+	}
+
+	ConfigurationGroupKey newKey;
+	try
+	{
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+	}
+	catch(std::runtime_error &e)
+	{
+		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
+		__MOUT_ERR__ << "\n\n" << e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName +
+				".\n\n" + e.what());
+		return;
+	}
+	catch(...)
+	{
+		__MOUT_ERR__ << "Failed to create config group: " << groupName << std::endl;
+		xmldoc.addTextElementToData("Error", "Failed to create configuration group: " + groupName);
+		return;
+	}
+
+	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
+}
+
+//========================================================================================================================
+//	handleDeleteConfigurationInfoXML
+//
+//		return nothing except Error in xmldoc
+//
+void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		std::string& configName)
+{
+
+	if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
+			(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
+		__MOUT_INFO__ << ( "Table Info File successfully renamed: " +
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+	else
+	{
+		__MOUT_ERR__ << ( "Error renaming file to " +
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+
+		xmldoc.addTextElementToData("Error",
+				( "Error renaming Table Info File to " +
+								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
+		return;
+	}
+
+	//reload all with refresh to remove new configuration
+	cfgMgr->getAllConfigurationInfo(true);
+}
+
+//========================================================================================================================
+//	handleSaveConfigurationInfoXML
+//
+//		write new info file for configName based CSV column info
+//			data="type,name,dataType;type,name,dataType;..."
+//		return resulting handleGetConfigurationXML mock-up view
+//
+void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		std::string& configName, const std::string& data,
+		bool allowOverwrite)
+{
+	//create all caps name and validate
+	//	only allow alpha-numeric names with Configuration at end
+	std::string capsName;
+	try
+	{
+		capsName = ConfigurationBase::convertToCaps(configName, true);
+	}
+	catch(std::runtime_error &e)
+	{	//error! non-alpha
+		xmldoc.addTextElementToData("Error",e.what());
+		return;
+	}
+
+	if(!allowOverwrite)
+	{
+		FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "r");
+		if(fp)
+		{
+			fclose(fp);
+			xmldoc.addTextElementToData("ConfigurationName",
+					configName);
+			xmldoc.addTextElementToData("OverwriteError",
+					"1");
+			xmldoc.addTextElementToData("Error",
+					"File already exists! ('" +
+					(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT) +
+					"')");
+			return;
+		}
+	}
+
+	__MOUT__ << "capsName=" << capsName << std::endl;
+	__MOUT__ << "configName=" << configName << std::endl;
+
+	//create preview string to validate column info before write to file
+	std::stringstream outss;
+	char tmp[300];
+
+	sprintf(tmp,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+	outss << tmp;
+	sprintf(tmp,"\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ConfigurationInfo.xsd\">\n");
+	outss << tmp;
+	sprintf(tmp,"\t\t<CONFIGURATION Name=\"%s\">\n",configName.c_str());
+	outss << tmp;
+	sprintf(tmp,"\t\t\t<VIEW Name=\"%s\" Type=\"File,Database,DatabaseTest\">\n",capsName.c_str());
+	outss << tmp;
+
+	//each column is represented by 3 fields
+	//	- type, name, dataType
+	int i = 0; //use to parse data std::string
+	int j = data.find(',',i); //find next field delimiter
+	int k = data.find(';',i); //find next col delimiter
+
+	while(k != (int)(std::string::npos))
+	{
+		//type
+		outss << "\t\t\t\t<COLUMN Type=\"";
+		outss << data.substr(i,j-i);
+
+		i=j+1;
+		j = data.find(',',i); //find next field delimiter
+
+		//name and storage name
+		outss << "\" \t Name=\"";
+		capsName = data.substr(i,j-i); //not caps yet
+		outss << capsName;
+		outss << "\" \t StorageName=\"";
+
+		try
+		{
+			outss << ConfigurationBase::convertToCaps(capsName); //now caps
+		}
+		catch(std::runtime_error &e)
+		{	//error! non-alpha
+			xmldoc.addTextElementToData("Error", std::string("For column name '") +
+					data.substr(i,j-i) + "' - " + e.what());
+			return;
+		}
+
+		i=j+1;
+		j = data.find(',',i); //find next field delimiter
+
+		//data type
+		outss << "\" \t	DataType=\"";
+		outss << data.substr(i,k-i);
+		outss << "\"/>\n";
+
+		i = k+1;
+		j = data.find(',',i); //find next field delimiter
+		k = data.find(';',i); //find new col delimiter
+	}
+
+	sprintf(tmp,"\t\t\t</VIEW>\n");
+	outss << tmp;
+	sprintf(tmp,"\t\t</CONFIGURATION>\n");
+	outss << tmp;
+	sprintf(tmp,"\t</ROOT>\n");
+	outss << tmp;
+
+
+	FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "w");
+	if(!fp)
+	{
+		xmldoc.addTextElementToData("Error", "Failed to open destination Configuration Info file:" +
+				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT));
+		return;
+	}
+	fprintf(fp,outss.str().c_str());
+	fclose(fp);
+
+	//reload all config info with refresh AND reset to pick up possibly new config
+	// check for errors related to this configName
+	std::string accumulatedErrors = "";
+	cfgMgr->getAllConfigurationInfo(true,&accumulatedErrors,configName);
+
+	//if errors associated with this config name stop and report
+	if(accumulatedErrors != "")
+	{
+		__MOUT_ERR__ << accumulatedErrors << std::endl;
+		xmldoc.addTextElementToData("Error", "Error detected reading back the configuration '" +
+				configName +
+				"' after the attempt to save new column info:\n\n" + accumulatedErrors);
+
+		//if error detected reading back then move the saved configuration info to .unused
+		// // This was disabled by RAR on 11/4/2016.. (just keep broken info files)
+		// // ... especially since now there is a Delete button
+		if(0)
+		{
+			//configuration info is illegal so report error, and disable file
+
+
+			//if error detected //move file to ".unused"
+			if ( 0 == rename( (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str() ,
+					(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str() ) )
+				__MOUT_INFO__ << ( "File successfully renamed: " +
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+			else
+
+
+				__MOUT_ERR__ << ( "Error renaming file to " +
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")) << std::endl;
+
+			//reload all with refresh to remove new configuration
+			cfgMgr->getAllConfigurationInfo(true);
+		}
+		return;
+	}
+
+	//return the new configuration info
+	handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
+
+	//debug all table column info
+	//FIXME -- possibly remove this debug feature in future
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+
+	//give a print out of currently illegal configuration column info
+	__MOUT_INFO__ << "Looking for errors in all configuration column info..." << std::endl;
+	for(auto& cfgInfo: allCfgInfo)
+	{
+		try
+		{
+			cfgMgr->getConfigurationByName(cfgInfo.first)->getMockupViewP()->init();
+		}
+		catch(std::runtime_error& e)
+		{
+			__MOUT_WARN__ << "\n\n##############################################\n" <<
+					"Error identified in column info of configuration '" <<
+					cfgInfo.first << "':\n\n" <<
+					e.what() << "\n\n" << std::endl;
+		}
+	}
+}
+
+//========================================================================================================================
+//	handleSetGroupAliasInBackboneXML
+//		open current backbone
+//		modify GroupAliases
+//		save as new version of groupAliases
+//		return new version of groupAliases
+void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &groupAlias,
+		const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author)
+try
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	const std::string groupAliasesTableName = "GroupAliasesConfiguration";
+	if(activeVersions.find(groupAliasesTableName) == activeVersions.end())
+	{
+		__SS__ << "Active version of " << groupAliasesTableName << " missing!" << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//put all old backbone versions in xmldoc
+	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
+	for(auto &memberName: backboneMembers)
+	{
+		__MOUT__ << "activeVersions[\"" << memberName << "\"]=" <<
+				activeVersions[memberName] << std::endl;
+
+		xmldoc.addTextElementToData("oldBackboneName",
+				memberName);
+		xmldoc.addTextElementToData("oldBackboneVersion",
+				activeVersions[memberName].toString());
+	}
+
+	//make a temporary version from active view
+	//modify the chosen groupAlias row
+	//save as new version
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(groupAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->
+			createTemporaryView(activeVersions[groupAliasesTableName]);
+
+	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
+
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
+
+	unsigned int col = configView->findCol("GroupKeyAlias");
+
+	//only make a new version if we are changing compared to active backbone
+	bool isDifferent = false;
+
+	unsigned int row = -1;
+	//find groupAlias row
+	try	{ row = configView->findRow(col,groupAlias); }
+	catch (...) {}
+	if(row == (unsigned int)-1) //if row not found then add a row
+	{
+		isDifferent = true;
+		row = configView->addRow();
+
+		//set all columns in new row
+		col = configView->findCol("CommentDescription");
+		configView->setValue("This Group Alias was automatically setup by the server." ,
+				row, col);
+		col = configView->findCol("GroupKeyAlias");
+		configView->setValue(groupAlias, row, col);
+	}
+
+	__MOUT__ << "\t\t row: " << row << std::endl;
+
+	col = configView->findCol("GroupName");
+
+	__MOUT__ << "\t\t groupName: " << groupName << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(groupName != configView->getDataView()[row][col])
+	{
+		configView->setValue(groupName, row, col);
+		isDifferent = true;
+	}
+
+	col = configView->findCol("GroupKey");
+	__MOUT__ << "\t\t groupKey: " << groupKey << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(groupKey.toString() != configView->getDataView()[row][col])
+	{
+		configView->setValue(groupKey.toString(), row, col);
+		isDifferent = true;
+	}
+
+	ConfigurationVersion newAssignedVersion;
+	if(isDifferent)	//make new version if different
+	{
+		configView->setValue(author, row, configView->findCol("Author"));
+		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+		newAssignedVersion =
+				cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
+	}
+	else	//use existing version
+	{
+		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		newAssignedVersion = activeVersions[groupAliasesTableName];
+	}
+
+	xmldoc.addTextElementToData("savedAlias", groupAliasesTableName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view!\n " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view! ");
+}
+
+//========================================================================================================================
+//	handleSetVersionAliasInBackboneXML
+//		open current backbone
+//		modify VersionAliases
+//		save as new version of VersionAliases
+//		return new version of VersionAliases
+void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string& versionAlias,
+		const std::string& configName, ConfigurationVersion version, const std::string &author)
+try
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	const std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
+	{
+		__SS__ << "Active version of " << versionAliasesTableName << " missing!" << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//put all old backbone versions in xmldoc
+	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
+	for(auto &memberName: backboneMembers)
+	{
+		__MOUT__ << "activeVersions[\"" << memberName << "\"]=" <<
+				activeVersions[memberName] << std::endl;
+
+		xmldoc.addTextElementToData("oldBackboneName",
+				memberName);
+		xmldoc.addTextElementToData("oldBackboneVersion",
+				activeVersions[memberName].toString());
+	}
+
+	//make a temporary version from active view
+	//modify the chosen versionAlias row
+	//save as new version
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(
+			activeVersions[versionAliasesTableName]);
+
+	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
+
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
+
+	unsigned int col;
+	unsigned int col2 = configView->findCol("VersionAlias");
+	unsigned int col3 = configView->findCol("ConfigurationName");
+
+	//only make a new version if we are changing compared to active backbone
+	bool isDifferent = false;
+
+	unsigned int row = -1;
+	//find configName, versionAlias pair
+	//	NOTE: only accept the first pair, repeats are ignored.
+	try	{
+		unsigned int tmpRow = -1;
+		do
+		{	//start looking from beyond last find
+			tmpRow = configView->findRow(col3,configName,tmpRow+1);
+		} while (configView->getDataView()[tmpRow][col2] != versionAlias);
+		//at this point the first pair was found! (else exception was thrown)
+		row = tmpRow;
+	}
+	catch (...) {}
+	if(row == (unsigned int)-1) //if row not found then add a row
+	{
+		isDifferent = true;
+		row = configView->addRow();
+
+		//set all columns in new row
+		col = configView->findCol("CommentDescription");
+		configView->setValue(std::string("Entry was added by server in ") +
+				"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
+				row, col);
+
+		col = configView->findCol("VersionAliasId");
+		configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
+				versionAlias, row, col);
+
+		configView->setValue(versionAlias, row, col2);
+		configView->setValue(configName, row, col3);
+	}
+
+	__MOUT__ << "\t\t row: " << row << std::endl;
+
+	col = configView->findCol("Version");
+	__MOUT__ << "\t\t version: " << version << " vs " <<
+			configView->getDataView()[row][col] << std::endl;
+	if(version.toString() != configView->getDataView()[row][col])
+	{
+		configView->setValue(version.toString(), row, col);
+		isDifferent = true;
+	}
+
+	ConfigurationVersion newAssignedVersion;
+	if(isDifferent)	//make new version if different
+	{
+		configView->setValue(author, row, configView->findCol("Author"));
+		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+		newAssignedVersion  =
+				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
+	}
+	else	//use existing version
+	{
+		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		newAssignedVersion = activeVersions[versionAliasesTableName];
+	}
+
+	xmldoc.addTextElementToData("savedAlias", versionAliasesTableName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view!\n " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view! ");
+}
+
+//========================================================================================================================
+//	handleAliasGroupMembersInBackboneXML
+//		open current backbone
+//		modify VersionAliases
+//		save as new version of VersionAliases
+//		return new version of VersionAliases
+void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string& versionAlias,
+		const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author)
+try
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	const std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
+	{
+		__SS__ << "Active version of " << versionAliasesTableName << " missing!" << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+
+	//put all old backbone versions in xmldoc
+	const std::set<std::string> backboneMembers = cfgMgr->getBackboneMemberNames();
+	for(auto &memberName: backboneMembers)
+	{
+		__MOUT__ << "activeVersions[\"" << memberName << "\"]=" <<
+				activeVersions[memberName] << std::endl;
+
+		xmldoc.addTextElementToData("oldBackboneName",
+				memberName);
+		xmldoc.addTextElementToData("oldBackboneVersion",
+				activeVersions[memberName].toString());
+	}
+
+	//make a temporary version from active view
+	//modify the chosen versionAlias row
+	//save as new version
+
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
+	ConfigurationVersion temporaryVersion = config->
+					createTemporaryView(activeVersions[versionAliasesTableName]);
+
+	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
+
+	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
+
+
+	//only make a new version if we are changing compared to active backbone
+	bool isDifferent = false;
+
+	//get member names and versions
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+	try
+	{
+		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+	}
+	catch(...)
+	{
+		xmldoc.addTextElementToData("Error","Configuration group \"" +
+				ConfigurationGroupKey::getFullGroupString(groupName,groupKey) +
+				"\" can not be retrieved!");
+		return;
+	}
+
+	unsigned int col;
+	unsigned int col2 = configView->findCol("VersionAlias");
+	unsigned int col3 = configView->findCol("ConfigurationName");
+
+	for(auto &memberPair:memberMap)
+	{
+		bool thisMemberIsDifferent = false;
+		unsigned int row = -1;
+
+		__MOUT__ << "Adding alias for " << memberPair.first <<
+				"_v" << memberPair.second << std::endl;
+
+		//find configName, versionAlias pair
+		//	NOTE: only accept the first pair, repeats are ignored.
+		try	{
+			unsigned int tmpRow = -1;
+			do
+			{	//start looking from beyond last find
+				tmpRow = configView->findRow(col3,memberPair.first,tmpRow+1);
+				__MOUT__ << configView->getDataView()[tmpRow][col2] << std::endl;
+			} while (configView->getDataView()[tmpRow][col2] != versionAlias);
+			//at this point the first pair was found! (else exception was thrown)
+			row = tmpRow;
+		}
+		catch (...) {}
+		if(row == (unsigned int)-1) //if row not found then add a row
+		{
+			thisMemberIsDifferent = true;
+			row = configView->addRow();
+
+			//set all columns in new row
+			col = configView->findCol("CommentDescription");
+			configView->setValue(std::string("Entry was added by server in ") +
+					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
+					row, col);
+
+			col = configView->findCol("VersionAliasId");
+			configView->setValue(memberPair.first.substr(
+					0,memberPair.first.rfind("Configuration")) +
+					versionAlias, row, col);
+
+			configView->setValue(versionAlias, row, col2);
+			configView->setValue(memberPair.first, row, col3);
+		}
+
+		__MOUT__ << "\t\t row: " << row << std::endl;
+
+		col = configView->findCol("Version");
+		__MOUT__ << "\t\t col: " << col << std::endl;
+		__MOUT__ << "\t\t version: " << memberPair.second << " vs " <<
+				configView->getDataView()[row][col] << std::endl;
+		if(memberPair.second.toString() !=
+				configView->getDataView()[row][col])
+		{
+			configView->setValue(memberPair.second.toString(), row, col);
+			thisMemberIsDifferent = true;
+		}
+
+		if(thisMemberIsDifferent)	//change author and time if row is different
+		{
+			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+		}
+
+		if(thisMemberIsDifferent)
+			isDifferent = true;
+	}
+
+	//configView->print();
+
+	ConfigurationVersion newAssignedVersion;
+	if(isDifferent)	//make new version if different
+	{
+		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+
+		newAssignedVersion =
+				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
+	}
+	else	//use existing version
+	{
+		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		newAssignedVersion = activeVersions[versionAliasesTableName];
+	}
+
+	xmldoc.addTextElementToData("savedAlias", versionAliasesTableName);
+	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
+	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view!\n " +
+			std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving new Version Alias view! ");
+}
+
+//========================================================================================================================
+//	handleGroupAliasesXML
+//
+//		return aliases and backbone groupAlias table version
+//
+//		return this information:
+//		<backbone groupTableName=xxx version=xxx>
+//		<group alias=xxx name=xxx key=xxx comment=xxx>
+//		<group alias=xxx name=xxx key=xxx comment=xxx>
+//		...
+//
+void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr)
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
+	{
+		__SS__ << "\nActive version of GroupAliasesConfiguration missing! " <<
+				"GroupAliasesConfiguration is a required member of the Backbone configuration group." <<
+				"\n\nLikely you need to activate a valid Backbone group." <<
+				std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+	__MOUT__ << "activeVersions[\"GroupAliasesConfiguration\"]=" <<
+			activeVersions["GroupAliasesConfiguration"] << std::endl;
+	xmldoc.addTextElementToData("GroupAliasesConfigurationName",
+			"GroupAliasesConfiguration");
+	xmldoc.addTextElementToData("GroupAliasesConfigurationVersion",
+			activeVersions["GroupAliasesConfiguration"].toString());
+
+	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
+			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
+
+	for(auto& aliasNodePair:aliasNodePairs)
+	{
+		xmldoc.addTextElementToData("GroupAlias", aliasNodePair.first);
+		xmldoc.addTextElementToData("GroupName",
+				aliasNodePair.second.getNode("GroupName").getValueAsString());
+		xmldoc.addTextElementToData("GroupKey",
+				aliasNodePair.second.getNode("GroupKey").getValueAsString());
+		xmldoc.addTextElementToData("GroupComment",
+				aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+	}
+}
+
+//========================================================================================================================
+//	handleConfigurationVersionAliasesXML
+//
+//		return version aliases and backbone versionAliases table version
+//
+//		return this information:
+//		<backbone aliasTableName=xxx version=xxx>
+//		<version alias=xxx name=xxx version=xxx comment=xxx>
+//		<version alias=xxx name=xxx version=xxx comment=xxx>
+//		...
+//
+void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr)
+{
+	cfgMgr->loadConfigurationBackbone();
+	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
+
+	std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
+	{
+		__SS__ << "Active version of VersionAliases  missing!" <<
+				"Make sure you have a valid active Backbone Group." << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
+		return;
+	}
+	__MOUT__ << "activeVersions[\"VersionAliasesConfiguration\"]=" <<
+			activeVersions[versionAliasesTableName] << std::endl;
+	xmldoc.addTextElementToData("VersionAliasesVersion",
+			activeVersions[versionAliasesTableName].toString());
+
+	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
+			cfgMgr->getNode(versionAliasesTableName).getChildren();
+
+	for(auto& aliasNodePair:aliasNodePairs)
+	{
+		//note : these are column names in the versionAliasesTableName table
+		//VersionAlias, ConfigurationName, Version, CommentDescription
+		xmldoc.addTextElementToData("VersionAlias",
+				aliasNodePair.second.getNode("VersionAlias").getValueAsString());
+		xmldoc.addTextElementToData("ConfigurationName",
+				aliasNodePair.second.getNode("ConfigurationName").getValueAsString());
+		xmldoc.addTextElementToData("Version",
+				aliasNodePair.second.getNode("Version").getValueAsString());
+		xmldoc.addTextElementToData("Comment",
+				aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+	}
+}
+
+
+//========================================================================================================================
+//	handleConfigurationGroupsXML
+//
+//		return this information
+//		<group name=xxx key=xxx>
+//			<config name=xxx version=xxx />
+//			<config name=xxx version=xxx />
+//			...
+//		</group>
+//		<group name=xxx key=xxx>...</group>
+//		...
+//
+void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr)
+{
+	DOMElement* parentEl;
+
+	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
+	std::set<std::string /*name*/>  configGroups = theInterface->getAllConfigurationGroupNames();
+	__MOUT__ << "Number of Config groups: " << configGroups.size() << std::endl;
+
+	ConfigurationGroupKey groupKey;
+	std::string groupName;
+
+	std::map<std::string /*groupName*/,std::set<ConfigurationGroupKey> > allGroupsWithKeys;
+	for(auto &groupString:configGroups)
+	{
+		ConfigurationGroupKey::getGroupNameAndKey(groupString,groupName,groupKey);
+		allGroupsWithKeys[groupName].emplace(groupKey);
+
+		//__MOUT__ << "Config group " << groupString << " := " << groupName <<
+		//"(" << groupKey << ")" << std::endl;
+	}
+	std::string groupString;
+	for(auto &groupWithKeys:allGroupsWithKeys)
+	{
+		groupName = groupWithKeys.first;
+		groupKey = *(groupWithKeys.second.rbegin());
+
+
+
+		groupString = ConfigurationGroupKey::getFullGroupString(groupName,groupKey);
+		__MOUT__ << "Latest Config group " << groupString << " := " << groupName <<
+				"(" << groupKey << ")" << std::endl;
+
+		xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+		xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+
+		parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+
+
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+
+		//try to get members
+		try
+		{
+			memberMap = theInterface->getConfigurationGroupMembers(groupString);
+		}
+		catch(std::runtime_error &e)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has been corrupted! " + e.what() << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("Error",ss.str());
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			continue;
+		}
+		catch(...)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has been corrupted! " << std::endl;
+			__MOUT__ << ss.str();
+			xmldoc.addTextElementToData("Error",ss.str());
+			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			continue;
+		}
+		std::string groupTypeString = "";
+		//try to determine type, dont report errors, just mark "Invalid"
+		try
+		{
+			//determine the type configuration group
+			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
+			groupTypeString =
+					groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
+							(groupType==ConfigurationManager::BACKBONE_TYPE?
+									"Backbone":"Configuration");
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+		}
+		catch(std::runtime_error &e)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has invalid type! " + e.what() << std::endl;
+			__MOUT__ << ss.str();
+			groupTypeString = "Invalid";
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			continue;
+		}
+		catch(...)
+		{
+			__SS__ << "Configuration group \"" + groupString +
+					"\" has invalid type! " << std::endl;
+			__MOUT__ << ss.str();
+			groupTypeString = "Invalid";
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			continue;
+		}
+
+		for(auto &memberPair:memberMap)
+		{
+			//__MOUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+			xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+			xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+		}
+
+
+		//add other group keys to xml for this group name
+		//	but just empty members (not displayed anyway)
+		for(auto &keyInSet: groupWithKeys.second)
+		{
+			if(keyInSet == groupKey) continue; //skip the lastest
+			xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
+			xmldoc.addTextElementToData("ConfigurationGroupKey", keyInSet.toString());
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+		}
+	}
+
+}
+
+//========================================================================================================================
+//	handleConfigurationsXML
+//
+//		return this information
+//		<subconfiguration name=xxx>
+//			<version key=xxx />
+//			<version key=xxx />
+//			...
+//		</subconfiguration>
+//		<subconfiguration name=xxx>...</subconfiguration>
+//		...
+//
+void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		bool allowIllegalColumns)
+{
+	DOMElement* parentEl;
+
+	std::string accumulatedErrors = "";
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(
+			allowIllegalColumns,allowIllegalColumns?&accumulatedErrors:0); //if allowIllegalColumns, then also refresh
+	std::map<std::string, ConfigurationInfo>::const_iterator it = allCfgInfo.begin();
+
+	__MOUT__ << "# of configuration tables found: " << allCfgInfo.size() << std::endl;
+
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getActiveVersionAliases();
+
+	__MOUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
+
+
+	while(it != allCfgInfo.end())
+	{
+		//for each subconfiguration name
+		//get existing version keys
+
+		__MOUT__ << "Name: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
+
+		//add system subconfiguration name
+		xmldoc.addTextElementToData("ConfigurationName", it->first);
+		parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
+
+		//include aliases for this table
+		if(versionAliases.find(it->first) != versionAliases.end())
+			for (auto &aliasVersion:versionAliases[it->first])
+				xmldoc.addTextElementToParent("Version",
+						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
+						parentEl);
+
+		//get version key for the current system subconfiguration key
+		for (auto &version:it->second.versions_)
+			xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
+
+		++it;
+	}
+
+	if(accumulatedErrors != "")
+		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
+				"but please note the following errors:\n" + accumulatedErrors);
+}
+
+//========================================================================================================================
+//	testXDAQContext
+//testXDAQContext just a test bed for navigating the new config tree
+void ConfigurationGUISupervisor::testXDAQContext()
+{
+
+	//behave like a user
+	//start with top level xdaq context
+	//	then add and delete rows proof-of-concept
+	//export xml xdaq config file
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	//behave like a new user
+
+	ConfigurationManagerRW cfgMgrInst("ExampleUser");
+	//
+	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+	//
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
+	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
+	for(auto& mapIt : allCfgInfo)
+	{
+		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
+		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
+
+		//get version key for the current system subconfiguration key
+		for (auto &v:mapIt.second.versions_)
+		{
+			__MOUT__ << "\t\t" << v << std::endl;
+		}
+	}
+	cfgMgr->testXDAQContext();
+
+
+
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+}
+
+
+
+
+
+

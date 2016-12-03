@@ -1,466 +1,5377 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
-	<head>
-		<title>ConfigurationGUI</title>
-		<style type="text/css">			
-			body {
-				background-color: rgb(200,200,200);
-			}
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+
+		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
+		.multiselectbox input, textarea {
+			margin: 			14px 5px 5px 12px;
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: pointer;
+		}
+
+		.treeNode {
+			margin-left: 		30px;
+			float:				left;
+			position:			relative;
+		}
+		
+		.treeNode-Connection {
+			border-left: 		1px solid rgb(44, 44, 187);
+			border-bottom: 		1px solid rgb(44, 44, 187);
+			width: 				24px;
+			height:				16px;
+			margin-top:  		-7px;
+			position:			absolute;
+		}
+		
+		.treeNode-Expander {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png);
+			width: 				11px;
+			height: 			9px;
+			position:			absolute;
+			margin: 			5px 0 0 25px;
+			z-index:			1000; /* make sure it is on top of connect lines */
+		} .treeNode-Expander:hover {
+		    cursor:				pointer;			
+		}
+
+		.treeNode-Value {
+			margin-left: 		40px;
+			float:				left;
+		}
+		
+		.treeNode-Link {
+			float:				left;
+		    margin: 			-1px 0 -3px 10px;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		} .treeNode-Link:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			-2px 0 -2px 10px;
+		    cursor:				pointer;
+		}
+		
+		.gotoNavDiv {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-gotoNav.png);
+			width: 				8px;
+			height: 			7px;
+		} 
+
+		.treeNode-Children {
+			border-left: 		1px solid rgb(181, 170, 210);
+		}
+		
+		.tableView-Menu {
+			float:				left;
+		    margin: 			4px 10px 3px 0;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		    background-color: 	rgb(177, 195, 195);
+		    color: 				rgb(44, 44, 187);
+		    font-size:			14px;
+		} .tableView-Menu:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			3px 10px 4px 0;
+		    cursor:				pointer;
+		}
+
+		#activateConfigWithWarnings {
+			margin-top: 10px;
+		    font-size: 14px;
+		}
+		
+		#tableDetails th {
+			font-size: 14px;
+			text-align: right;
+			vertical-align: top;
+		}
+		#tableDetails td {
+			font-size: 14px;
+			text-align: left;
+			vertical-align: top;
+		}
+		#tableDetails .underlineRow {   
+			border-bottom: 1px solid #b9a3a3;
+	    }
+	    	
+		#popUpDialog {
+			position: absolute;
+			z-index: 1000;    
+			border: 1px solid #770000;
+		    background-color: #efeaea;
+		    text-align: center;
+		    padding: 10px;
+		}
+		
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	
+	<script>		
+		
+		//Start by offering two views (System Configurations) (Sub-Configurations)
+		//	and default to System Configurations
+		//
+		//High Level Goals:
+		//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
+		//		- Be able to edit the versions associated with the System Config while 
+		//		viewing other System Configs for inspiration
+		//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
+		//		- Be able to edit a sub-config, and view others to copy chunks from them
+		//
+	
+	
+		//In System Configuration mode:
+		//	List the existing configuration aliases
+		//		with possibly ability to scroll through associated sub-configs
+		//
+	
+		//In Sub-Configuration mode:
+		//	List the existing versions
+		//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
+		//	Some Sub-Configurations will need special views:
+		//		ability to add chips (of certain types) to system config...
+		//
+	
+		var _MAX_CHUNK_SIZE = 100; //100 rows per page
+		var _CONFIG_DATA_ROW_OFFSET = 2;
+		var _CONFIG_DATA_COL_OFFSET = 1;
+
+		var _DEFAULT_COMMENT = "No comment.";
+	
+		var _currentConfigName, _currentGroupName;
+		var _editingCell = false;
+		var _editingCellEl, _editingCellElOldValue;
+		var _editingCellPos = [-1,-1];
+		var _versionIsChanged = false;
+		var _version;
+		var _dataOffset = 0;
+		var _lastFindRow, _lastFindCol;
+		var _cachedTableComment;
+		
+		var _firstTimeSilentActive = true;
+		var _useTableLinkDropdown = true;		
+		var _tableViewIsTransposed = false;
+		var _showTableDetails = true;
+		var _tableLinkDropdownChoices = []; 
+		var _tableDefaultRowValues = []; 
+		var _tableViewBackLinkStr;
+		
+		var _displayTargetEl = 0;
+
+		var _contextMemberNames = [];
+		var _backboneMemberNames = [];
+		
+
+		var _contextMenuEl = 0;
+		var _treeNavContextMenuItems = ["Go-to Table View","Open in new Desktop Window","Open in new Browser Tab"];
+		
+		var _msChosenGroupName;
+		var _msChosenGroupKey;
+		var _groupViewFilterIndex = 2; //-1=all, 0=context, 1=backbone, 2=configuration
+		
+		//for tree view
+		var treeViewHandlerStr_; //used by recursive function to build html string
+		var fancyTreeViewHandlerStr_;
+		var treeNodeUID_;		//incrementing unique id for nodes
+		var treeMemberNames_, treeMemberVersions_, treeMemberComments_;
+		var treeViewBackLinkStr_;
+		var treeGroupName_, treeGroupKey_;
+		var treeViewHideStatus_ = true;
+		var treeFilterApplied_ = false;
+		var treeFilter_ = "";
+		var lastTreeFilter_ = "";
+		
+	
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			//niceName(str)									//removes "Configuration" from name
+		
+			//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
+			//groupAliasesRequestHandler(req,anchorTarget)		 
 			
-			#clearDiv {
-				clear: both;
-			}
+			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
+			//configGroupsRequestHandler(req,anchorTarget)
+			//groupSearchSelectionHandler(el)
+			//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
+			//gotoSelectedMSGroup()
 			
-			a {
-				color: blue;
-			}
+			//setupTableViewMode(anchorTarget)							//gets configuration tables
+			//configsRequestHandler(req,anchorTarget)
 			
-			#display {
-				padding: 20px;
-			}
+			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
+			//specificGroupRequestHandler(req,param)
+		
+			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
+			//setupSpecificConfigInRight(configName,version)
+			//specificConfigRequestHandler(req,backLinkStr)
+			//setVersionAliasInActiveBackbone(configName,version,newBackboneNameAdd)
+			//toggleTableDetails(setVal)
+			//transposeTableView()
+			//getTableViewColIsBoolType(rows)
+			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput)
+
+			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
+			//treeViewHandler(req,parentId,errStr)
+			//recursiveDrawTree(parent,depth,path)
+			//applyTreeFilter(filter)
+			//toggleTreeChildren(depth,uid,nodeName,path)
+			//expandTreeChildrenDepth()
+			//hideTreeChildrenDepth()
+			//createTreeViewMenu()
+
+			//setupConfigCreator(preSelectStr)
+			//setupConfigCreatorHandler(req,preSelectStr)
+			//addMemberToConfigGroup(groupName,backLinkStr) 
+		
+			//activateSystemConfig(groupName, groupKey)
+			//activateSystemConfigHandler(req)
+			//selectForCreateConfig(i)
+			//versionsForCreateConfig(i, alias)		
+			//createConfigGroup(ignoreWarnings)
+			//createConfigGroupHandler(req)
+			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
+			//wizToLatestConfigGroup(groupAlias, ignoreWarnings)
+			//wizToInitializedConfigGroup(groupAlias, ignoreWarnings)		
+			//newWizBackboneMemberHandler(req,params)
+		
+			//selectThisCell(r,c,el)
+			//setCaretPosition(el,start,stop)
+			//editCellCancel()
+			//keyHandler(e)
+			//bodyKeyHandler(e)
+			//editCellOK(r,c)
+			//addRow(r)										//add row at destination with default values populated
+			//deleteRow(r)									//delete row at destination
+			//popUpClearTemporaryVersionsPrompt(backLinkStr)
+			//popUpSaveNewTableForm()
+			//popUpGroupAliasForm(isLatest)
+			//popUpVersionAliasForm()
+			//popUpVersionAliasGroupEditorForm()
+			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+			//popUpFilterTreeForm()
+			//saveConfigAsNewVersion(temporary, backLinkStr)
+			//saveConfigAsNewVersionHandler(req, backLinkStr)
+			//saveConfigGroupAsNewKey()	
+			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
+			//isTemporary(version)
+			//getDateString(date)
+		
+			//setupFindAndReplace()
+			//configFind()
+			//configReplace() 
+			//configIncrementByReplace()
+			//versionHasChanged()
+		
+			//setupCopyAndMoveRows()
+			//configCopyView()
+			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
+			//jump(anchor)
+			//evaluateJS(str)			
+			//createEditTableMenu()
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+
+		//firefox is awful, but this interval fixes firefox from deleting this array (?)
+		window.setInterval(function()
+				{
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+				},1000);
+		
+		
+		//init called once body has loaded
+		function init() {			
 						
-		</style>
-		
-		
-		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-		
-		
-		<script>		
-			
-			//Start by offering two views (System Configurations) (Sub-Configurations)
-			//	and default to System Configurations
-			//
-			//High Level Goals:
-			//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
-			//		- Be able to edit the versions associated with the System Config while 
-			//		viewing other System Configs for inspiration
-			//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
-			//		- Be able to edit a sub-config, and view others to copy chunks from them
-			//
-		
-		
-			//In System Configuration mode:
-			//	List the existing configuration aliases
-			//		with possibly ability to scroll through associated sub-configs
-			//
-		
-			//In Sub-Configuration mode:
-			//	List the existing versions
-			//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
-			//	Some Sub-Configurations will need special views:
-			//		ability to add chips (of certain types) to system config...
-			//
-		
-			var _MAX_CHUNK_SIZE = 100; //100 rows per page
-		
-			var _currentAlias;
-			var _editingCell = false;
-			var _editingCellEl;
-			var _versionIsChanged = false;
-			var _version;
-			var _dataOffset = 0;
-			
-		
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-		
-			//functions:			
-				//init()
-				//setupSystemConfigMode()
-				//setupSubSystemConfigMode()
-				//setupSpecificSystemConfig(configAlias)
-				//setupSpecificSubSystemConfig(subConfigAlias)
-				//configRequestHandler(req)
-				//subConfigRequestHandler(req)
-				//specificConfigRequestHandler(req)
-				//specificSubConfigRequestHandler(req)
-		
-		
-			/////////////////////////////////////////////////////////////////////////////////////////
-			/////////////////////////////////////////////////////////////////////////////////////////
-							
-			
-			//init called once body has loaded
-			function init() {			
-				Debug.log("CfgGUI init");
+			Debug.log("CfgGUI init ");
 						
-				setupSystemConfigMode();
-			}	
-			
-			//return name without "Configuration" unless it is start of the name 
-				//or part of the word "Configurations"
-			function niceName(str) {	
-				var i = str.search("Configuration");
-				return str.substr(0,(i && str[i+13] != 's')?i:str.length);
-			}
-			
-			function setupSystemConfigMode() {
+			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSystemConfigurations", "", configRequestHandler);		
-			}
+			//setupSpecificConfigGroup("PhysicsWizToLatest","3","","anchorTag-RawDataSaverConsumerConfiguration"); return;
 			
-			function setupSubSystemConfigMode() {
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSubSystemConfigurations", "", subConfigRequestHandler);		
-			}
-
-			function setupSpecificSystemConfig(configAlias) {
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSystemConfiguration&alias=" + configAlias, "", specificConfigRequestHandler);		
-			}
+			//setupConfigCreator(); return
 			
-			function setupSpecificSubSystemConfig(subConfigAlias,version) {
-				var v = "";
-				if(version) v = "&version="+version;
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificSubSystemConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
-					"&subAlias=" + subConfigAlias + v, "", specificSubConfigRequestHandler);		
-			}
+			//setupConfigGroupTreeView("aaContext","11"); return;
 			
-			function configRequestHandler(req) {				
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
+			//setupGroupViewMode(); return;
+
+			//get context and backbone member list 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
+					function (req) {				
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}
+						var memberNames = req.responseXML.getElementsByTagName("ContextMember");
+						_contextMemberNames = []; //reset
+						for(var i=0;i<memberNames.length;++i)
+							_contextMemberNames[i] = memberNames[i].getAttribute("value");
+						Debug.log(_contextMemberNames);
+						if(_contextMemberNames.length == 0) 
+							Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
+					}
+				);
+			DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "", 
+					function (req) {				
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							return;
+						}
+						var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
+						_backboneMemberNames = []; //reset
+						for(var i=0;i<memberNames.length;++i)
+							_backboneMemberNames[i] = memberNames[i].getAttribute("value");
+						Debug.log(_backboneMemberNames);
+						if(_backboneMemberNames.length == 0) 
+							Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
+					}
+				);
+			
+			//get command string if opening a new window
+			var cmdStr = DesktopContent.getParameter(1); //from  location.search
+			if(cmdStr && cmdStr != "")
+			{
+				//do incoming commands!
+				Debug.log("cmdStr=" + cmdStr);
+				//replace %22 with "
+				cmdStr = cmdStr.replace(/%22/g, "\"");
 				
-				var aliases = req.responseXML.getElementsByTagName("SystemConfigurationAlias");
-				var keys = req.responseXML.getElementsByTagName("SystemConfigurationKey");
-				var kocsHdr = req.responseXML.getElementsByTagName("SystemConfigurationKOCs");
+				evaluateJS(cmdStr);	
+			}
+			else
+				setupSystemViewMode();
+			
+		}	
+		
+		//return name without "Configuration" unless it is start of the name 
+			//or part of the word "Configurations"
+		function niceName(str) {	
+			var i = str.lastIndexOf("Configuration");
+			return str.substr(0,(i>1 && str[i+13] != 's')?i:str.length);
+		}
+
+		//setupSystemViewMode ~
+		function setupSystemViewMode(anchorTarget) {
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
+					groupAliasesRequestHandler,anchorTarget);		
+		}
+		
+		//setupGroupViewMode ~
+		function setupGroupViewMode(anchorTarget) {
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
+					configGroupsRequestHandler, anchorTarget);		
+		}
+		
+		//setupTableViewMode ~
+		function setupTableViewMode(anchorTarget) {
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
+					configsRequestHandler,anchorTarget);		
+		}
+
+		//setupSpecificConfigGroup ~		
+		function setupSpecificConfigGroup(groupName, groupKey, backLinkStr, anchorTarget) {
+
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			var param = "";
+			if(backLinkStr && backLinkStr != "")
+				param += "&backLinkStr=" + backLinkStr;
+			if(anchorTarget && anchorTarget != "")
+				param += "&anchorTarget=" + anchorTarget;
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey,
+					"", specificGroupRequestHandler, param);		
+		}
+		
+		//setupSpecificConfig ~
+		//	undefined version gives latest
+		function setupSpecificConfig(configName, version, backLinkStr) {
+			
+			var el;
+			if(_displayTargetEl && backLinkStr == "special display target")
+			{
+				el = _displayTargetEl;
+				backLinkStr = ""; //clear the link string
+			}
+			else
+			{
+				el = document.getElementById("display");
+				_displayTargetEl = 0;
+			}
+			
+			el.innerHTML = "Loading...";
+			var v = "";
+			if(version !== undefined && version != "") v = "&version="+version;
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + "&dataOffset=0&chunkSize=" + _MAX_CHUNK_SIZE +  
+				"&configName=" + configName + 
+				v, 
+				"", specificConfigRequestHandler, backLinkStr);		
+		}
+		//setupSpecificConfigInRight ~
+		//	undefined version gives latest
+		function setupSpecificConfigInRight(configName, version) {
+			_displayTargetEl = document.getElementById("display-right");
+			setupSpecificConfig(configName,version,"special display target");
+		}
+		
+		//groupAliasesRequestHandler ~
+		function groupAliasesRequestHandler(req, anchorTarget) {
+			
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				
+				//attempt to go on, in case error was just associtate with one group
+				//return;
+			}
+			
+			activateSystemConfigHandler(req); //display active config groups			
+			
+			var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
+			var groupNames = req.responseXML.getElementsByTagName("GroupName");
+			var groupKeys = req.responseXML.getElementsByTagName("GroupKey");
+			var groupComments = req.responseXML.getElementsByTagName("GroupComment");
+
+			var groupAliasesVersion = 
+					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationVersion");		
+			var groupAliasesName = 
+					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationName");		
+
+			var str = ""; //string for html content			
+			
+			var groupAlias, groupName, groupKey, groupComment;
+			var backLinkStr;
+
+			backLinkStr = "setupSystemViewMode();"; 
+			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
+					groupAliasesName + "\",\"" +
+					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+			str += "Edit System Aliases</a>";
+
+			str += "<br>";
+			
+			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(1); return false;' " +
+					"title='Automatically assign a new System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+					">";
+			str += "Wiz-New System Alias-to-Latest</a>";
+
+			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			str += "<br>";
+
+			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(0); return false;'  " +
+						"title='Automatically assign a new System Alias to the currently initialized Configuration Group.'" +
+						">";
+			str += "Wiz-New System Alias-to-Initialized</a>";
+			
+			str += "<br><br><br>";
+
+			Debug.log("CfgGUI groupAliasesRequestHandler groupAliases.length " + groupAliases.length);
+			
+			if(!groupAliases.length)
+				str += "No Configuration Group Aliases found.";
+			for(var i=0;i<groupNames.length;++i)
+			{		
+				groupAlias 	= groupAliases[i].getAttribute("value");
+				groupName 	= groupNames[i].getAttribute("value");
+				groupKey 	= groupKeys[i].getAttribute("value");
+				groupComment= groupComments[i].getAttribute("value");								
+
+				backLinkStr = "setupSystemViewMode(\\\"anchorTag-" + 
+						groupAlias + "\\\");"; 				
+
+				str += "<a name='anchorTag-" + 
+						groupAlias + "'></a>";
+				str += "&quot;";
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
+						groupAliasesName + "\",\"" +
+						groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+				str += groupAlias + "</a>&quot; &lt; "; 
+
+				//add group view link
+				str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
+				str += groupName + "</a>";	
+				
+				str += "(" + groupKey +") &gt;";	
+
+				//add tree view link
+				str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
+				str += "Tree-view</a>";		
+				
+				//add Activate link
+				str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+						"\",\"" + groupKey + "\"); return false;'>";
+				str += "Activate</a>";
+
+				//Wiz to latest of all tables
+				str += " <a href='#' onclick='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
+						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+						">";
+				str += "Wiz-to-Latest</a>";
+
+				//Wiz to last initialized config group
+				str += " <a href='#' onclick='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
+						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
+						">";
+				str += "Wiz-to-Initialized</a>";
+				
+				//add comment
+				str += "<br><pre style='margin: 2px 0 0 30px;'>" + groupComment + "</pre>"; 
+				
+				str += "<br><br>";
+			}
+
+			var el = document.getElementById("display");
+			el.innerHTML = str;
+		}
+		
+		//configGroupsRequestHandler ~
+		function configGroupsRequestHandler(req, anchorTarget) {				
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				
+				//attempt to go on, in case error was just associtate with one group
+				//return;
+			}
+			
+			activateSystemConfigHandler(req);
+
+			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+			var membersHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
+			var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+					
+			var groupName, key;
+			
+			var el = document.getElementById("display");
+
+			var str = "";
+			var configNames, configVersions;
+			var backLinkStr;
+			var configName, configVersion;									
+			
+			backLinkStr = "setupGroupViewMode();"; 
+			
+			var typeName = ["All","Contexts","Backbones","Configurations"];
+			var typeFilterIndex = [-1,0,1,2];
+			
+			str += "Showing:";
+			for(var i=0;i<typeName.length;++i)
+			{
+				if(_groupViewFilterIndex == typeFilterIndex[i])
+					str += " <b>" + typeName[i] + "</b>";
+				else
+				{
+					str += " <a href='#' onclick='javascript:_groupViewFilterIndex=" + 
+							typeFilterIndex[i] + ";setupGroupViewMode(); return false;'>";
+					str += typeName[i];
+					str += "</a>";
+				}
+			}
+			
+			str += "<br>";
+			str += "<label id='filteredGroupCount'></label> of " +
+					groupNames.length + " groups. ";
+			str += "Don't see what you need: ";
+			str += "<a href='" +
+					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
+					"\");' title='" +
+					"Goto the group creator interface." +
+					"'>" + 
+					"Create a new Group</a>";
+			str += "<br>";
+
+					
+			Debug.log("CfgGUI requestHandler groupNames.length " + groupNames.length);
+			if(!groupNames.length)
+				str += "No Configuration Groups found.";
+			else
+			{
+				_msChosenGroupName = "";
+				_msChosenGroupKey = "";
+				//////////////////////////////////////
+				//add search box div
+
+				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+						"View the Latest Key for the Selected Group." +
+						"'>" +
+						"View Latest Key for Selected Group</button>";
+				str += "<div id='groupSearchDiv' ";
+				str += "style='margin-top:-20px; height:200px; width:450px;";
+				str += ">";				
+				str += "</div>";
+
+				str += "<div id='clearDiv'></div>";
+
+				str += "<button style='margin-top:-25px' " + 
+						"type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+						"View the Latest Key for the Selected Group." +
+						"'>" +
+						"View Latest Key for Selected Group</button>";
+				
+				str += "<div style='margin-top:10px' id='msSelectedGroupDiv'></div>";
 								
-				var el = document.getElementById("display");
-
-				var str = "";
-				var kocAliases, kocVersions;
-
-				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
-				for(var i=0;i<aliases.length;++i)
-				{		
-					str += "<a href='javascript:setupSpecificSystemConfig(\"" + aliases[i].getAttribute("value") +
-						"\");'>";
-					str += aliases[i].getAttribute("value") + "</a> (" + keys[i].getAttribute("value") +")";
-					str += "<br><table><tr>";
-
-					kocAliases = kocsHdr[i].getElementsByTagName("KOC_alias");
-					kocVersions = kocsHdr[i].getElementsByTagName("KOC_version");
-					Debug.log("CfgGUI requestHandler kocAliases.length " + kocAliases.length);
-					
-					for(var j=0;j<kocAliases.length;++j)
-					{
-						str += "<td align='center'>";
-						str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + kocAliases[j].getAttribute("value") +
-							"\");'>";
-						str += niceName(kocAliases[j].getAttribute("value")) + "</a><br>" + kocVersions[j].getAttribute("value");
-						str += "</td>";
-					}
-					str += "</tr></table><br>";
-				}				
-				//Debug.log("CfgGUI requestHandler str " + str);
-				el.innerHTML = str;
-			}
-
-			function subConfigRequestHandler(req) {					
-				Debug.log("CfgGUI requestHandler req " + req.responseText);
+				str += "<div style='margin-top:0px'>";
+				str += "<hr><b >";
+				str += "Exhaustive Configuration Group List:";
+				str += "</b></div><br>";
 				
-				var aliases = req.responseXML.getElementsByTagName("SystemSubConfigurationAlias");
-				var keyHdr = req.responseXML.getElementsByTagName("SystemSubConfigurationVersions");
-				
-				var el = document.getElementById("display");
-
-				var str = "";
-				var keyVersions;
-
-				Debug.log("CfgGUI requestHandler aliases.length " + aliases.length);
-				for(var i=0;i<aliases.length;++i)
-				{					
-					str += "<a href='javascript:setupSpecificSubSystemConfig(\"" + aliases[i].getAttribute("value") +
-						"\");'>";
-					str += niceName(aliases[i].getAttribute("value"));
-					str += "</a><br><table><tr>";
-
-					keyVersions = keyHdr[i].getElementsByTagName("VersionKey");
-					//Debug.log("CfgGUI requestHandler kocAliases.length " + keyVersions.length);
-					
-					for(var j=0;j<keyVersions.length;++j)
-					{
-						str += "<td align='center'>";
-						str += "version" + "<br>" + keyVersions[j].getAttribute("value");
-						str += "</td>";
-					}
-					str += "</tr></table><br>";
-				}				
-				//Debug.log("CfgGUI requestHandler str " + str);
-				el.innerHTML = str;
-			}
-
-
-			function specificConfigRequestHandler(req) {	
-				Debug.log("CfgGUI specificConfigRequestHandler req " + req.responseText);
-				
-				var alias = DesktopContent.getXMLValue(req,"SystemConfigurationAlias");
-				var key = DesktopContent.getXMLValue(req,"SystemConfigurationKey");
-				var historicalKeys = req.responseXML.getElementsByTagName("HistoricalSystemConfigurationKey");
-
-				var kocAliases = req.responseXML.getElementsByTagName("KOC_alias");
-				var kocVersions = req.responseXML.getElementsByTagName("KOC_currentVersion");
-				
-				var el = document.getElementById("display");
-
-				var str = "";
-				
-				var kocExistingVersions;
-
-				str += "<h3><u>Specific System Configuration View</u></h3>";
-				str += "<b>" + alias + "</b> (key: " + key + ")<br>";
-				
-				if(historicalKeys.length)
-				{
-					str += "View Historical " + alias + " key: ";
-
-					for(var i=0;i<historicalKeys.length;++i)
-						str += " " + historicalKeys[i].getAttribute("value");
-				}
-				else 
-					str += "No Historical keys exist for " + alias + ".<br>";
-				
-				
-				str += "<br><a href='javascript:addNewKocForSpecificConfig()'>Add new KOC</a> to "  + alias + "<br><br>";
-				//Debug.log("CfgGUI specificConfigRequestHandler KOC length " + kocAliases.length + " - " + kocVersions.length);
-				for(var i=0;i<kocAliases.length && i<kocVersions.length;++i)
-				{
-					str += "<b>" + niceName(kocAliases[i].getAttribute("value")) + "</b> (Current version: " + 
-						kocVersions[i].getAttribute("value") + 
-						") <a href='javascript:changeKocVersionForSpecificConfig()'>Change "  + niceName(kocAliases[i].getAttribute("value")) + " Version</a> for " + alias + "<br>";
-					
-					str += "Existing versions: " + kocVersions[i].getAttribute("value");
-
-					kocExistingVersions = kocVersions[i].getElementsByTagName("KOC_existingVersion");
-					for(var j=0;j<kocExistingVersions.length;++j)
-						str += " " + kocExistingVersions[j].getAttribute("value");
-					
-					str += "<br><br>";		
-				}
-
-				el.innerHTML = str;
+				//end search box add div
+				//////////////////////////////////////				
 			}
 			
-			function specificSubConfigRequestHandler(req) {	
-				Debug.log("specificSubConfigRequestHandler requestHandler req " + req.responseText);
+			str += "<div id='exhaustiveGroupList'></div>";
+			
+			el.innerHTML = str;
+			
+			//////////// make search box
+			{	
+				var noMultiSelect = true; // true or false (false for multiselect functionality) 
+
+				var msValues = []; 	//group names for multi-select
+				var msKeys = []; 	//group keys for multi-select
+				var msTypes = [];	//back link strings for multi-select
+				var skipRepeat;
+				var msAllKeys = []; //all keys separated by '-'
+				var indexToLatest = []; //index to latest, used for exhaustive list
+				var filteredGroupCount = 0;
+				backLinkStr = "setupGroupViewMode();";
 				
-				var subAlias = DesktopContent.getXMLValue(req,"SubSystemConfigurationAlias");
-				var version = DesktopContent.getXMLValue(req,"SubSystemConfigurationVersion");
+				for(var i=0;i<groupNames.length;++i)
+				{	
+					groupName = groupNames[i].getAttribute("value");
+					key = keys[i].getAttribute("value");
+
+					if(_groupViewFilterIndex == 0 && //context only
+							types[i].getAttribute("value") != "Context")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+					else if(_groupViewFilterIndex == 1 && //context only
+							types[i].getAttribute("value") != "Backbone")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+					else if(_groupViewFilterIndex == 2 && //context only
+							types[i].getAttribute("value") != "Configuration")
+					{
+						Debug.log("Filtering out " + groupName + "_v" + key);
+						continue;
+					}
+
+					++filteredGroupCount;
+					skipRepeat = false;
+					for(var j=0;j<msValues.length;++j)
+						if(msValues[j] == groupName)
+						{							
+							//only represent single latest group/key
+							if((key|0) > (msKeys[j]|0))
+							{
+								msKeys[j] = key; //found new latest key
+								indexToLatest[j] = i; //update latest index
+							}
+							
+							//add to all keys
+							msAllKeys[j] += "-" + key;
+							
+							skipRepeat = true;							
+							break;							
+						}
+					if(skipRepeat) continue; //do not add repeats to multi-select array
 				
-				
-				var kocVersionHdr = req.responseXML.getElementsByTagName("SubSystemConfigurationVersions");
-				if(!kocVersionHdr.length)
-				{
-					alert("Error?! No versions returned for subAlias: " + subAlias);
-					return;
+					msValues.push(groupName);
+					msKeys.push(key);
+					msTypes.push(backLinkStr);
+					msAllKeys.push(key);
+					indexToLatest.push(i);
 				}
-				var kocVersions = kocVersionHdr[0].getElementsByTagName("VersionKey");
 				
-				var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
 				
-				var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
-				var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+				//prepare key string (last key in key string is latest)
+				// and display exhastive list
+				str = "";
+				for(var i=0;i<msValues.length;++i)
+				{
+					msAllKeys[i] += "-" + msKeys[i] + "-" + msValues[i];
+					
+					str += makeGroupInfoDisplayString(
+							msValues[i],
+							msAllKeys[i].split('-'),
+							msKeys[i],
+							membersHdr[indexToLatest[i]],
+							true  //back link to the exhaustive list
+							);					
+				}
+				var el = document.getElementById('exhaustiveGroupList');
+				el.innerHTML = str;
+				el = document.getElementById('filteredGroupCount');
+				el.innerHTML = filteredGroupCount;
 				
-				var el = document.getElementById("display");
 				
+				//write to a particular div
+				el = document.getElementById('groupSearchDiv');  
+				MultiSelectBox.createSelectBox(el,
+						"groupSearch",
+						"Search and Select a Group:",
+						msValues,msAllKeys,msTypes,groupSearchSelectionHandler,noMultiSelect);
 
-				//reset globals
-				_currentAlias = subAlias;
-				_version = version;
-				_editingCell = false;
-				_editingCellEl = 0;
-				_versionIsChanged = false;
-				_dataOffset = rows[0].getAttribute("value") | 0;
+				MultiSelectBox.initMySelectBoxes();
 
+	            //if anything is selected from before.. handle as selected
+	            var selArr = MultiSelectBox.getSelectionArray(el);
+	            for(var s in selArr)
+	            {
+	            	if(selArr[s])
+	            		groupSearchSelectionHandler(
+	                			MultiSelectBox.getSelectionElementByIndex(el,s));
+	            }
+				
+			}			
+			//////////// end make search box
+
+			//if there is a target to jump to, do it
+			if(anchorTarget)
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
+		}
+		
+		//groupSearchSelectionHandler ~~
+		//	make group search selection handler
+		//	el points to the div of selected element
+		function groupSearchSelectionHandler(el)
+		{
+            var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);            
+            if(selArr[i])
+			{
+				Debug.log("Chosen element index:" + i +
+						" value:" + el.innerHTML +
+						" key:" + el.getAttribute("key-value") +
+						" type:" + el.getAttribute("type-value"));
+				var keyArr = el.getAttribute("key-value").split('-');
+
+				_msChosenGroupName = keyArr[keyArr.length-1];
+				_msChosenGroupKey = keyArr[keyArr.length-2];
+				
+				//copy selected div and show as selected
+				var srcEl = document.getElementById("groupViewGroupDiv-" + 
+						_msChosenGroupName + "-" + _msChosenGroupKey);
 				var str = "";
 				
+				str += "<b class='bold-header'>";
+				str += "Selected Group: " + _msChosenGroupName;
+				str += "</b><br>";			
+				str += srcEl.innerHTML;
+				str += "<br>";				
 
-				str += "<h3><u>Specific Sub-System Configuration View</u></h3>";
-				str += "<b>" + subAlias + "</b> (version: " + version + ")<br>";
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = str;				
+			}
+			else
+			{
+				_msChosenGroupName = "";
+				_msChosenGroupKey = "";
+				el = document.getElementById('msSelectedGroupDiv');
+				el.innerHTML = "";				
+			}
+		}
+		
 
-				str += "<br>All versions:";
-				for(var j=0;j<kocVersions.length;++j)
+		//getGroupInfoDisplayString ~~
+		function makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,
+				backLinkToList)
+		{			
+			var str = "";
+
+			str += "<b class='bold-header'>";
+			str += groupName;
+			str += "</b>";
+			str += "<br>";
+			
+			str += "<div id='groupViewGroupDiv-" + groupName + "-" + latestKey + "'>";
+			str += "Existing Valid Keys: ";			
+
+			var backLinkStr;
+			if(backLinkToList)
+				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+					groupName + "-" + latestKey + "\\\");"; 
+			else
+				backLinkStr = "setupGroupViewMode()";
+			for(var j=0;j<allKeys.length-2;++j)
+			{
+				str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + 
+						groupName + "\",\"" + 
+						allKeys[j] + "\",\"" + 
+						backLinkStr + "\"); return false;'>";
+				str += allKeys[j] + "</a> ";
+
+			}
+			str += "<br>";
+			str += "Latest Key: " + latestKey + " (shown below)";
+			str += "<br>";			
+
+			str += "<a name='anchorTag-" + 
+					groupName + "-" + latestKey + "'></a>";
+			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
+			str += groupName + "</a> (" + latestKey +")";
+
+			//add tree view link
+			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
+			str += "Tree-view</a>";										
+
+			//add Activate link
+			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + latestKey + "\"); return false;'>";
+			str += "Activate</a>";
+
+			//show  members for latest version
+			str += "<br><table><tr>";
+
+			//members are only returned for the latest
+			configNames = latestMembersHdr.getElementsByTagName("MemberName");
+			configVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
+				
+			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
+
+			for(var j=0;j<configNames.length;++j)
+			{
+				configName = configNames[j].getAttribute("value");
+				configVersion = configVersions[j].getAttribute("value");
+				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
+						groupName + "-" + configName + "\\\");"; 
+
+				str += "<td align='center'>";
+
+				str += "<a name='anchorTag-" + 
+						groupName + "-" + configName + "'></a>";
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+				str += niceName(configName) + "</a><br>" + configVersion;
+				str += "</td>";
+			}
+			str += "</tr></table>";	
+			str += "</div>"; //close groupViewGroupDiv-*
+			
+			str += "<hr>";
+
+			return str;
+		}
+		
+		//gotoSelectedMSGroup ~~
+		function gotoSelectedMSGroup()
+		{
+			if(_msChosenGroupName == "" || _msChosenGroupKey == "")
+			{
+				Debug.log("Must first select a Group name from the select box.", 
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			setupSpecificConfigGroup(_msChosenGroupName,_msChosenGroupKey,
+					"setupGroupViewMode()");
+		}
+		
+
+		//configsRequestHandler ~~
+		function configsRequestHandler(req, anchorTarget)
+		{					
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			
+			var el = document.getElementById("display");
+
+			var str = "";
+			var configVersions;
+			var configName, version;
+			var backLinkStr;
+
+			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
+			for(var i=0;i<configNames.length;++i)
+			{			
+				configName = configNames[i].getAttribute("value");
+				
+				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + configName + "\\\");"; 
+
+				str += "<a name='anchorTag-" + configName + "'></a>";
+				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+					"\",\"\",\"" + backLinkStr + "\"); return false;'>";
+				str += niceName(configName);
+				str += "</a><br><table><tr>";
+
+				configVersions = configVersionHdr[i].getElementsByTagName("Version");
+				
+				//Debug.log("CfgGUI requestHandler config= " + configName +
+				//				+ " configNames.length " + configVersions.length);
+				
+				for(var j=0;j<configVersions.length;++j)
 				{
-					str += " ";
-					if(kocVersions[j].getAttribute("value") != version)
-						str +=  "<a href='javascript:setupSpecificSubSystemConfig(\"" + subAlias +
-						"\",\"" + kocVersions[j].getAttribute("value") + "\");'>";
-					str += kocVersions[j].getAttribute("value");
-					if(kocVersions[j].getAttribute("value") != version)
-						str += "</a>";
+					version = configVersions[j].getAttribute("value");
+					str += "<td align='center'>";
+					str += "version" + "<br>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+							"\",\"" + version + "\",\"" + backLinkStr + "\"); return false;'>";
+					str += version;
+					str += "</td>";
+				}
+				str += "</tr></table><br>";
+			}				
+			//Debug.log("CfgGUI requestHandler str " + str);
+			el.innerHTML = str;
+			
+			//if there is a target to jump to, do it
+			if(anchorTarget)
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
+		}
+
+
+		//specificGroupRequestHandler ~~
+		//	backLinkStr is defined to call functions one after the other
+		function specificGroupRequestHandler(req, param) {
+
+			//remove all previous buttons
+			var el;
+			do
+			{
+				el = document.getElementById("saveGroupWithWarningsIgnored");
+				if(el) el.parentNode.removeChild(el);
+			} while(el);	
+			
+			var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+			
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{					
+				
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+				Debug.log("There were problems identified in the tree view of the " +
+						"attempted new group &apos;" +
+						attemptedNewGroupName +
+						"&apos;.\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"'<u>Save Group with Warnings Ignored</u>'",
+						Debug.WARN_PRIORITY);
+				var str = "";
+				str += " <input id='saveGroupWithWarningsIgnored' " + 
+						"style='margin-bottom:15px;' " +
+						"type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+						attemptedNewGroupName + "\",1)' value='Save Group with Warnings Ignored' title='" +
+						"Save the modified group as a new persistent key for this group name." +
+						"'/>";	
+				str += "<div id='clearDiv'></div>";
+
+				el = document.createElement("div");
+				el.innerHTML = str; //create element with save with warnings ignored button
+				var displayEl = document.getElementById("display");
+				displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child
+				return;
+			}
+			
+			
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{	
+				Debug.log(err,Debug.HIGH_PRIORITY);
+
+				var el = document.getElementById("display");
+				var str = "";
+				str += "Failed.<br><br>" + err; 
+				
+
+				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				
+				if(groupName && groupKey)
+				{
+					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+						"\",\"" + groupKey + "\"); return false;'>";
+					str += "Go-to group &quot;" + groupName + "&quot;</a>";	
 				}
 				
-				//display table
-				str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
-				str += "<tr>";
-				str += "<th>Row</th>"; //insert row index column
-				for(var c=0;c<colHdrs.length;++c)
+				var errSplit = err.split('"');
+				if(errSplit.length > 1)
 				{
-					str += "<th>";
-					str += colHdrs[c].getAttribute("value");
-					str += "</th>";					
-					
+					str += "<br><br>It seems like there was trouble with a specific table, " +
+							 "&quot;" + errSplit[1] + "&quot;. Try using the Table Editor " +
+							 "in ots wiz to verify the column info is valid; or you can try " +
+							 "goint to to the table view:";
+					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
+					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + errSplit[1] +
+						"\"); return false;'>";
+					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
-				str += "</tr>";
+					
+				Debug.log(str,Debug.WARN_PRIORITY);
+				//el.innerHTML = str;
+				//return;
+				
+				//don't power through if a new group was attempted
+				if(attemptedNewGroupName && attemptedNewGroupName != "")
+					return;
+			}
+			else if(attemptedNewGroupName && attemptedNewGroupName != "") //if attempted and no errors, shout success
+				Debug.log("New group '" + attemptedNewGroupName + "' successfully created!",
+						Debug.INFO_PRIORITY);
+				
+			
+			var backLinkStr = "";
+			var anchorTarget = "";
+			
+			if(param)
+			{
+				Debug.log("param= " + param);
+				param = param.split("&");			
+				for(var i=1;i<param.length;i+=2)
+				{
+					var pi;
+					if((pi=param[i].indexOf("backLinkStr=")) >= 0)			
+						backLinkStr = param[i].substr(param[i].indexOf("=")+1);
+					if((pi=param[i].indexOf("anchorTarget=")) >= 0)			
+						anchorTarget = param[i].substr(param[i].indexOf("=")+1);
+				}			
+			}
+			
+			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			_currentGroupName = groupName;
+			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
+
+			var configNames = req.responseXML.getElementsByTagName("MemberName");
+			var configVersions = req.responseXML.getElementsByTagName("MemberVersion");
+			var configComments = req.responseXML.getElementsByTagName("MemberComment");
+			
+			var key,version,configName,configComment;
+			var el = document.getElementById("display");
+
+			var str = "";
+			
+			var configExistingVersions;			
+			
+			if(backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\");  return false;'>Back</a>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			}	
+			else backLinkStr = "";		
+
+			var refreshLinkStr = "setupSpecificConfigGroup(\"" + 
+					groupName + "\",\"" +
+					groupKey + "\",\"" + backLinkStr + "\");"; 
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
+			str += "<br>";
+
+			str += "<h3><u>Specific Configuration Group View</u></h3>";
+			str += "<label id='configGroupModified'></label><b>" + 
+					groupName + "</b> (group key: " + groupKey + ") ";
+
+			//add tree view link
+			var returnToHereLink = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
+					groupKey + "\\\");"; 	
+			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\"); return false;'>";
+			str += "Tree-view</a>";	
+			
+			//add Activate link
+			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+					"\",\"" + groupKey + "\"); return false;'>";
+			str += "Activate</a><br>";
+			
+			
+			if(historicalKeys.length)
+			{
+				str += "Existing &quot;" + groupName + "&quot; group keys: ";
+				//str += " " + groupKey;
+				
+				for(var i=0;i<historicalKeys.length;++i)
+				{
+					key = historicalKeys[i].getAttribute("value");
+					if(groupKey == key)
+					{ str += " " + key; continue; }
+					
+					str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" +
+								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\"); return false;'>";
+					str += key;
+					str += "</a>";
+				}
+			}
+			else 
+				str += "No Historical keys exist for " + groupName + ".<br>";
+			
+			
+			str += "<br><a href='#' onclick='javascript:addMemberToConfigGroup(\"" + 
+					groupName + "\",\"" + returnToHereLink + "\"); return false;'>";
+			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
+			
+			str += "<br>";
+			var setMembersToDefaultReq = 
+					"DesktopContent.XMLHttpRequest(\"Request?RequestType=setAliasOfGroupMembers" +
+							"&versionAlias=Default" + 
+							"&groupName=" + groupName +
+							"&groupKey=" + groupKey + "\", \"\"," +
+							"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";
+					
+			str += "<a href='#' onclick='javascript:" + setMembersToDefaultReq + "; return false;' title='Make all member versions" + 
+					" the &apos;Default&apos; version for that member " + 
+					" by automatically setting up the &apos;Default&apos; alias " + 
+					"in the active Backbone group.'" +
+					">";
+			str += "Set all Member Versions to 'Default'";
+			str += "</a>";
+			str += "<br>";
+
+			str += "<a href='#' onclick='javascript:popUpVersionAliasSpecificGroupForm(" + 
+					"\"" + groupName + "\",\"" + groupKey + "\"); return false;' title='Set an Alias for all member versions" +
+					" by automatically setting up the specified Alias " + 
+					"in the active Backbone group.'" +
+					">";
+			str += "Set all Member Versions to an Alias";
+			str += "</a>";
+			str += "<br><br>";
+			
+
+			str += "<div style='margin-left:30px'>";
+			
+			var cfgVersionStr;
+			var cfgNameStr = "";
+			var replaceScreenJS,newWindowStr,newwindowJS,newtabJS;
+			var groupMemberNavContextMenuItemHandlers = [];
+			
+			//Debug.log("CfgGUI specificConfigRequestHandler Member length " + configNames.length + " - " + configVersions.length);
+			for(var i=0;i<configNames.length && i<configVersions.length;++i)
+			{
+				configName = configNames[i].getAttribute("value");
+				version = configVersions[i].getAttribute("value");
+				configComment = configComments[i].getAttribute("value");
+				
+				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
+						groupKey + "\\\",undefined,\\\"anchorTag-" + 
+						configName + "\\\");"; 
+				//make replace screen js
+				replaceScreenJS = "setupSpecificConfig(\"" + 
+						configName + "\",\"" +
+						version + "\",\"" + backLinkStr + "\");";
+
+				str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row
+				str += "<td>";
+				str += "<div style='width:500px'>"; //open pre-comment div
+				str += "<div style='float:left;'>";	//open name div
+				str += "<a name='anchorTag-" + configName + "'></a>";
+				str += "<b>" + niceName(configName) + "</b> ";
+				
+				str += "<a id='" + configName + "-currentVersionLink' " +
+						"href='javascript:" + replaceScreenJS + "'>";
+				str += "(Current version: ";
+				str += "<label id='" + configName + "-currentVersion'>";					
+				str +=	version;
+				str += "</label>";
+					
+				str += ")";
+				str += "</a>";
+				str += "</div>"; //close member header
+				
+				//add member nav goto link
+				{
+					//make context menu
+					groupMemberNavContextMenuItemHandlers = [];															 
+					groupMemberNavContextMenuItemHandlers.push(replaceScreenJS);
+
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							configName + "\",\"" +
+							version + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					newWindowStr = location.pathname + 
+							location.search +
+							"&newWindowOps=" + newWindowStr;
+					newwindowJS = "DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+					groupMemberNavContextMenuItemHandlers.push(newwindowJS);
+
+					//make new tab link
+					newtabJS = "DesktopContent.openNewBrowserTab(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+					groupMemberNavContextMenuItemHandlers.push(newtabJS);
+					
+					str += //start member Link div
+							"<div class='treeNode-Link' style='float:left;margin-top: 5px;'  " + 
+							"onmousedown='" + // start link onmousedown	
+							"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+							"[";
+
+					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
+					{
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//need to escape all quotes by one more level
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
+						if(j != groupMemberNavContextMenuItemHandlers.length-1)
+							str += ",";
+					}
+					str += "]" + //end treeNavContextMenuItemHandlers array
+							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
+							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+					str += 
+							"' " + // end link onmousedown
+							//"onmouseup='" + onmouseupJS + "' " +
+							">" +	
+							"<div class='gotoNavDiv'></div>" +			
+							"</div>"; //end nav Link					
+				}
+				
+				str += "</div>"; //close pre-comment div
+				str += "</td><td>";
+				
+				//add comment
+				//make comment html safe
+				configComment = configComment.replace(/</g, "&lt");
+				configComment = configComment.replace(/>/g, "&gt");
+				
+				str += "<div id='" + configName + "-comment' " +
+						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
+				if(configComment != _DEFAULT_COMMENT) //do not show if default
+					str += "//" + configComment;
+				
+				str += "</div>";
+				str += "</td></tr></table>"; //close pre/comment table row
+				
+				//add prompt and existing versions
+				str += "<div id='clearDiv'></div>";
+				str += "Click below to change "  + niceName(configName) + 
+					" Version for " + groupName + ":<br>";		
+				
+				
+				str += "Existing versions: ";
+				str += "<label id='" + configName + "-existingVersions'>";
+				cfgVersionStr = ""; //keep CSV list of versions for use by changeMemberVersionForConfigGroup
+				//str += version;
+				//cfgVersionStr = version + ",";
+				configExistingVersions = configVersions[i].getElementsByTagName("ConfigurationExistingVersion");
+				var existingVersion;
+				for(var j=0;j<configExistingVersions.length;++j)
+				{
+					existingVersion = configExistingVersions[j].getAttribute("value");
+					if(existingVersion == version) //skip link
+					{
+						cfgVersionStr += version + ",";
+						str += " " + version; continue;
+					}
+					str += " ";
+					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
+							groupName + "\",\"" + configName + "\"," + 
+							"\"" + existingVersion + "\"";
+					str += "); return false;'>" + existingVersion;
+					str += "</a>";
+					cfgVersionStr += existingVersion + ",";
+				}			
+				str += "</label>";	
+				
+
+				str += "<br><br>";
+				
+				//add div holding existing versions for modifications
+				str += "<div id='" + configName + "-versions' style='display:none'>";
+				str += cfgVersionStr;
+				str += "</div>";
+				cfgNameStr += configName + ",";							
+			}
+			str += "</div>";
+			
+			str += "<div id='GroupMember-names' style='display:none'>";
+			str += cfgNameStr;
+			str += "</div>";
+			
+
+			el.innerHTML = str;
+			
+			//if there is a target to jump to, do it
+			if(anchorTarget && anchorTarget != "")
+			{
+				Debug.log("anchorTarget = " + anchorTarget);
+				jump(anchorTarget);
+			}
+		}
+		
+		//specificConfigRequestHandler
+		function specificConfigRequestHandler(req, backLinkStr) {	
+
+			_tableViewBackLinkStr = backLinkStr;
+			
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				
+				Debug.log("There were errors loading this version.\n\n(You may want to try loading this version again " +
+						"to see what was partially loaded into the cache before failure. " +
+						"If you think, the failure is due to a column name change, " +
+						"you can also try to Copy the failing view to the new column names using the " +
+						"'Copy and Move' functionality.) " +
+						"\n\nPlease see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
+				//try to power through
+			}
+			
+			var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+			if(warns)
+				Debug.log("There were warnings found when loading this table " +
+						"(you can treat them as informational):\n\n" +
+						warns,Debug.WARN_PRIORITY);
+						
+			activateSystemConfigHandler(req); //display active config groups
+			
+			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
+									
+			_tableLinkDropdownChoices = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
+
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+			
+			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			if(!kocVersionHdr.length)
+			{	//should never happen (tag can be empty, but must be there)
+				Debug.log("Error?! No tag for versions returned for configName: " + configName, Debug.HIGH_PRIORITY);
+				return;
+			}
+			var configVersions = kocVersionHdr[0].getElementsByTagName("Version");
+			
+			var xmlRows = req.responseXML.getElementsByTagName("CurrentVersionRows");
+			if(!xmlRows.length)
+			{
+				var el;
+				if(_displayTargetEl)
+					el = _displayTargetEl;
+				else
+					el = document.getElementById("display");
+				var str = el.innerHTML;
+				str += "<br><br>";
+				str += "The column names failed to load!<br>" +
+						"Go to the 'Table Editor' to check on the validity of the table '" + configName + "'...";
+				el.innerHTML = str;
+				return;
+			}
+			var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
+			
+			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
+					
+			_tableDefaultRowValues = [];
+			var defaultRowValues = req.responseXML.getElementsByTagName("DefaultRowValue");
+			for(var i=0;i<defaultRowValues.length;++i)
+				_tableDefaultRowValues.push(defaultRowValues[i].getAttribute("value"));
+			
+			//reset globals
+			
+			if(_currentConfigName != configName) //clear  cached comment
+				_cachedTableComment = "";
+			_currentConfigName = configName;
+			_version = version;
+			_editingCell = false;
+			_editingCellEl = 0;
+			_versionIsChanged = false;
+			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
+
+			var str = "";			
+
+			if(backLinkStr && backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			}
+			else backLinkStr = "";
+
+			var refreshLinkStr = "setupSpecificConfig(\"" + 
+					configName + "\",\"" +
+					version + "\",\"" + backLinkStr + "\");"; 
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
+
+			var clearTempLinkStr = "popUpClearTemporaryVersionsPrompt(\"" + 
+					backLinkStr + "\");"; 
+			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			str += "<a href='#' onclick='javascript:" + clearTempLinkStr + 
+					"; return false;'>Clear Temporary Versions</a>";		
+			
+			str += "<br><br>";
+			
+			
+
+			//display edit menu
+			str +=
+					"<div class='tableView-Menu' onmousedown='createEditTableMenu(event);' title='Edit Menu'>" +
+					"<div class='gotoNavDiv'></div>" +
+					"</div>"; //end context menu link div
+			
+			//display config name and version
+			str += "<div style='float:left;'>";
+			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
+			str += "</div>";
+			
+			//add link for wiz to default
+			if(version != -1)
+			{
+				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
+				str +=  "<a href='#' onclick='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
+						configName + "\",\"" + 
+						version + "\"); return false;' title='Make " + configName + " version " + version + 
+						" the &apos;Default&apos; version " + 
+						" by automatically setting up the &apos;Default&apos; alias " + 
+						"in the active Backbone group.'" +
+						">";	
+				str += "Wiz-to-Default";
+				str += "</a>";
+				str += "</div>";
+
+				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
+				str +=  "<a href='#' onclick='javascript:popUpVersionAliasForm(); return false;' "+
+						"title='Assign an Alias to " + configName + 
+						" version " + version +					
+						" by automatically modifying the active Backbone group.'" +
+						">";	
+				str += "Wiz-to-Other-Alias";
+				str += "</a>";
+				str += "</div>";
+			}
+
+			
+			str += "<div id='clearDiv'></div>";
+			
+			str += "All versions:";
+			
+			//display mockup link (mockup always present)
+			str += " ";
+			if(-1 != version)				
+				str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
+			str += "Mockup-View";
+			if(-1 != version)				
+				str +=  "</a>";				
+			
+			//display all other version links
+			for(var j=0;j<configVersions.length;++j)
+			{
+				str += " ";
+				if(configVersions[j].getAttribute("value") != version)
+					str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+						"\",\"" + configVersions[j].getAttribute("value") + 
+						"\", \"" + backLinkStr + "\"); return false;'>";
+				str += configVersions[j].getAttribute("value");
+				if(configVersions[j].getAttribute("value") != version)
+					str += "</a>";
+			}
+			
+			str += "<div id='clearDiv'></div>";						
+			str += "<div id='findAndReplace'></div>";
+			str += "<div id='copyAndMoveRows'></div>";
+			
+			//create table details
+			str += "<div id='tableDetails' style='display:none'>Table Details:";
+			var tableComment = DesktopContent.getXMLValue(req,"TableComment");
+			if(version[0] != '-') //only cache permanent table comments
+				_cachedTableComment = tableComment;
+			var tableAuthor = DesktopContent.getXMLValue(req,"TableAuthor");
+			var tableCreationTime = DesktopContent.getXMLValue(req,"TableCreationTime");
+			var tableLastAccessTime = DesktopContent.getXMLValue(req,"TableLastAccessTime");
+					
+			//convert linux time to Date
+			tableCreationTime = getDateString(new Date((tableCreationTime|0)*1000)); 
+			tableLastAccessTime = getDateString(new Date((tableLastAccessTime|0)*1000)); 
+			
+			str += "<table border='0' style='" +
+					"border: 1px solid #9c5e5e;" +
+					"margin: 5px 0 5px 30px;" +
+					"background-color: #d2c1c1;" +
+					"'>";
+			str += "<tr><th>Author:</th><td class='underlineRow'>" + tableAuthor + "</td></tr>";
+			str += "<tr><th>Created:</th><td class='underlineRow'>" + tableCreationTime + "</td></tr>";
+			str += "<tr><th>Last Load:</th><td class='underlineRow'>" + tableLastAccessTime + "</td></tr>";
+			str += "<tr><th>Comment:</th><td>" + 
+					tableComment.replace(/\n/g , "<br>") + "</td></tr>";
+			str += "</table>"
+			str += "</div>";
+			
+			str += "<div id='clearDiv'></div>";
+			
+			//four corners for last +/- (w & w/o transpose)
+			str += "<table><tr><td>";
+			//display table
+			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
+			str += "<tr>";
+			str += "<td>"; //row
+			str += "</td>";			
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<td><div style='font-size:12px' title='";		
+				str += colTypes[c].getAttribute("value");
+				str += " &#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "'>";
+				str += colTypes[c].getAttribute("value");
+				str += "<br>&#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "</div></td>";					
+				
+			}
+			str += "</tr>";
+			str += "<tr>";
+			str += "<th>Row</th>"; //insert row index column
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<th>";
+				str += colHdrs[c].getAttribute("value");
+				str += "</th>";					
+				
+			}
+			str += "</tr>";
+			
+			{
+				var boolTypes =  ["OnOff","TrueFalse","YesNo"];
+				var boolTypeTrues =  ["On","True","Yes"];
+				var isStatusType;
+				var val;
 				
 				for(var r=0;r<rows.length;++r)
 				{
 					var rowEntries = rows[r].getElementsByTagName("Entry");
 					str += "<tr>";
-					str += "<td>" + (_dataOffset + r) + "</td>"; //insert row index column
+					str += "<td>" + (_dataOffset + r);	//insert row index column
+					
+					//add +/- row controls
+					str += "<br><a href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='#' onclick='javascript:deleteRow(" + r + "); return false;'>";
+					str += "-";
+					str += "</a>";
+					
+					str += "</td>"; 
+					
 					for(var c=0;c<colHdrs.length;++c)
 					{
-						str += "<td onmouseup='selectThisCell("+r+","+c+",this);'>";
-						//str += "<input type='text' value='";
-						str += rowEntries[c].getAttribute("value");
-						//str += "'>";
+						val = rowEntries[c].getAttribute("value");
+						
+						//determine if value is of type status
+						isStatusType = false;
+						for(var i=0;i<boolTypes.length;++i)
+							if(boolTypes[i] == 
+									colTypes[c].getAttribute("value"))
+							{
+								isStatusType = true; break;
+							}
+						
+						str += "<td onmouseup='selectThisCell("+r+","+c+",this);' ";
+						
+						if(isStatusType)
+						{
+							//determine if true value
+							var isTrue = false;
+							for(var i=0;i<boolTypeTrues.length;++i)
+								if(boolTypeTrues[i] == val)
+								{
+									isTrue = true; break;
+								}
+							str += "style='background-color:";
+							str += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+							str += "'";
+						}
+								
+						str += ">";
+						
+						str += val
+						
 						str += "</td>";					
 						
 					}
 					str += "</tr>";
 				}
+			}
+				
+			str += "</table>";
+			
+			str += "</td><td valign='top'>"; //four corners continued
+
+			//add + row controls for new last row
+			str += " <a id='lastAddRowLink1' style='display:none' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += "+";
+			str += "</a>";
+			
+			str += "</td></tr>"; //four corners continued
+			str += "<tr><td valign='top'>"; //four corners continued
+			
+			//add + row controls for new last row
+			str += " <a id='lastAddRowLink0' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += "+";
+			str += "</a>";
+			
+			str += "</td><td></td></tr></table>"; //four corners ended
+			
+
+			var el;
+			if(_displayTargetEl)
+				el = _displayTargetEl;
+			else
+				el = document.getElementById("display");
+			
+			el.innerHTML = str;
+			
+			if(isTemporary(version)) //if temporary
+			{
+				//show save button
+				var dispStr = el.innerHTML;
+				str = "";
+				str += "<div id='config-firstSaveButton'>";
+				str += "<input type='button' onmouseup='popUpSaveNewTableForm()' value='Save Changes as New Version' title='" +
+					"Save the current table view as a new persistent version." +
+					"'/>";
+				str += "</div><br>";
+				
+				var i = dispStr.indexOf("<div class=\"tableView-Menu\"");
+				
+				el.innerHTML = dispStr.substr(0,i) + str + 
+						dispStr.substr(i) + "<br>" + str;
+			}
+			
+			if(_tableViewIsTransposed) //check if need to transpose view
+			{
+				//invert so it can be inverted again in transposeTableView()
+				_tableViewIsTransposed = !_tableViewIsTransposed; 
+				transposeTableView();
+			}
+			
+			toggleTableDetails(_showTableDetails);
+		}
+		
+		//toggleTableDetails ~~
+		function toggleTableDetails(setVal)
+		{
+			if(setVal !== undefined)
+				_showTableDetails = setVal;
+			else	
+				_showTableDetails = !_showTableDetails; //invert
+
+			Debug.log("toggleTableDetails " + _showTableDetails);
+			var el = document.getElementById("tableDetails");
+			el.style.display = _showTableDetails?"block":"none";
+		}
+		
+		//getDateString ~~
+		var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+		var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+		function getDateString(date)
+		{
+			var dateStr = "";
+
+			dateStr += dayArr_[date.getDay()];
+			dateStr += " ";
+			dateStr += monthArr_[date.getMonth()];
+			dateStr += " ";
+			dateStr += date.getDate();
+			dateStr += " ";
+			dateStr += date.getHours();
+			dateStr += ":";
+			dateStr += ((date.getMinutes()<10)?"0":"") + date.getMinutes();
+			dateStr += ":";
+			dateStr += ((date.getSeconds()<10)?"0":"") + date.getSeconds();
+			dateStr += " ";
+			dateStr += date.getFullYear();
+			dateStr += " ";
+			dateStr += date.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+			return dateStr;
+		}
+		
+		//setVersionAliasInActiveBackbone ~~
+		function setVersionAliasInActiveBackbone(versionAlias, configName,version,newBackboneNameAdd)
+		{			
+			Debug.log("setVersionAliasInActiveBackbone versionAlias " + versionAlias);
+			Debug.log("setVersionAliasInActiveBackbone configName " + configName);
+			Debug.log("setVersionAliasInActiveBackbone version " + version);
+
+			if(!configName || configName == "" || !version || version == "")
+			{
+				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);				
+				return;
+			}
+			
+			if(!newBackboneNameAdd || newBackboneNameAdd == "")
+				newBackboneNameAdd = "Wiz";
+			newBackboneNameAdd += "Backbone";
+			Debug.log("setVersionAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=setVersionAliasInActiveBackbone" +
+					"&versionAlias=" + versionAlias +
+					"&configName=" + configName + 
+					"&version=" + version, "", 
+					newWizBackboneMemberHandler,
+					[("VersionAlias" + newBackboneNameAdd),undefined]);
+		}
+		
+		//isTemporary
+		function isTemporary(version)
+		{
+			return version < -1;
+		}
+		
+		//treeViewHandler ~		
+		function treeViewHandler(req,parentId) 
+		{				
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			//draw tree				
+
+			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
+			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
+
+			
+			
+			if(!parentId && 
+					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
+					treeGroupName_ == configGroupName &&
+							treeGroupKey_ == configGroupKey)
+			{
+				Debug.log("Re-using tree handler string that we already have!");
+				var el = document.getElementById("display");
+				el.innerHTML = treeViewHandlerStr_;
+				
+				//setup back link string properly for menu generation
+				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
+				{
+					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
+					if(treeViewBackLinkStr_.indexOf("'") >= 0)
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
+					else
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
+					Debug.log("Back-link = " + treeViewBackLinkStr_);
+				}
+				return;
+			}
+			else
+				treeViewHandlerStr_ = "";
+			
+			
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{
+				Debug.log("There were errors detected when attempting to verify the group '" +
+						configGroupName + " (" + configGroupKey + ")'. " + 
+						"Please see the detailed report below:\n\n" + treeErr,Debug.WARN_PRIORITY);
+			}
+						
+			treeGroupName_ = configGroupName;
+			treeGroupKey_ = configGroupKey;
+			
+			var memberNames = req.responseXML.getElementsByTagName("MemberName");
+			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
+			var memberComments = req.responseXML.getElementsByTagName("MemberComment");
+			treeMemberNames_ = [];
+			treeMemberVersions_ = [];
+			treeMemberComments_ = [];
+			for(var i=0;i<memberNames.length;++i)
+			{
+				treeMemberNames_.push(memberNames[i].getAttribute("value"));
+				treeMemberVersions_.push(memberVersions[i].getAttribute("value"));		
+				treeMemberComments_.push(memberComments[i].getAttribute("value"));				
+			}
+			
+			var el;
+			var depth;
+			
+			if(parentId) //this is an expansion
+			{
+				depth = (parentId.split("-")[0] | 0)+1; //parent depth + 1
+				
+				//target is children area				
+				el = document.getElementById("treeNode-ChildrenOf-" + parentId);
+				el.style.display = "block"; //make sure it is shown
+
+				//change toggle to "-"
+				var toggleEl = document.getElementById("treeNode-toggle-" + parentId);
+				toggleEl.style.backgroundImage = 
+						"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+			}
+			else //this is the initial top level request
+			{
+				depth = 0;
+				treeNodeUID_ = 0; //reset node id
+				el = document.getElementById("display");
+				
+				//add back link				
+				if(treeViewBackLinkStr_ && treeViewBackLinkStr_ != "")
+				{
+					//setup back link string properly
+					//Note: be careful with the source of treeViewBackLinkStr_.. don't use both quote styles!
+					if(treeViewBackLinkStr_.indexOf("'") >= 0)
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/'/g, "\\\"");
+					else
+						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
+					Debug.log("Back-link = " + treeViewBackLinkStr_);
+
+					treeViewHandlerStr_ += "<a href='#' onclick='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
+							"\"); return false;'>Back</a>";
+					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				}				
+
+				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+				//						treeGroupName_ + "\",\"" +
+				//						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
+				//				treeViewHandlerStr_ += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+				//						"; return false;'>Refresh</a>";	
+				//treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				
+				treeViewHandlerStr_ += "<a href='#' onclick='javascript:expandTreeChildrenDepth(); return false;' " + 
+						"title='Expand all children at deepest depth; " +
+						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
+						"(Hot-keys: + , &gt; , } , A , E )' " +
+						">+ All Children</a>";
+				
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				treeViewHandlerStr_ += "<a href='#' onclick='javascript:hideTreeChildrenDepth(); return false;'" + 
+						"title='Hide all children at deepest depth.\n\n" +
+						"(Hot-keys: - , &lt; , { , Z , M )' " +
+						">- All Children</a>";
+				
+				
+				//				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				//				treeViewHandlerStr_ += "<a href='#' onclick='" +
+				//						"treeViewHideStatus_ = !treeViewHideStatus_;" +
+				//						refreshLinkStr +
+				//						"; return false;' title='' " +
+				//						">" + (treeViewHideStatus_?"Show":"Hide") + " Status=False</a>";				
+				//				
+
+				//display edit menu
+				treeViewHandlerStr_ +=
+						"<div class='tableView-Menu' onmousedown='createTreeViewMenu(event);' " +
+						"title='Edit Menu'>" +
+						"<div class='gotoNavDiv'></div>" +
+						"</div>"; //end context menu link div
+				
+				treeViewHandlerStr_ += "<br><br>";
+
+				if(treeErr) 
+				{
+					treeViewHandlerStr_ += "<div style='color:red; cursor:pointer' title='" + 
+							//treeErr.replace(/'/g , "&apos;") + "' ";
+							"Click to view errors' ";
+					treeViewHandlerStr_ += "onmouseup='" +
+							"var el = document.getElementById(\"treeViewErrors\"); el.style.display = " +
+							"el.style.display == \"none\"?\"block\":\"none\"" +
+							"'>";
+					treeViewHandlerStr_ += "<u>Warning: Errors were detected in this tree!</u>";
+					treeViewHandlerStr_ += "</div>";
+					treeViewHandlerStr_ += "<div id='treeViewErrors' style='display:none'>" + 
+							treeErr.replace(/\n/g , "<br>") + "</div>";
+					treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
+				}
+				
+				//add config group header
+				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
+					"href='#' onclick='javascript:setupSpecificConfigGroup(\"" + configGroupName +
+					"\",\"" + configGroupKey + "\"); return false;'>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
+				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
+				treeViewHandlerStr_ += "</a>";
+
+				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
+				
+				//add Activate link
+				treeViewHandlerStr_ += " <a href='#' onclick='javascript:activateSystemConfig(\"" + configGroupName +
+						"\",\"" + configGroupKey + "\"); return false;'>";
+				treeViewHandlerStr_ += "Activate</a>";
+				
+				treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
+				
+				//preload hide image
+				treeViewHandlerStr_ += "<img style='display:none' src='" + 
+						"/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png" +"'>";
+			}			
+			
+			//add tree
+			var tree = DesktopContent.getXMLNode(req,"tree");
+			var preLength = treeViewHandlerStr_.length;
+			recursiveDrawTree(tree,depth,tree.getAttribute("value"));
+			if(preLength == treeViewHandlerStr_.length) //no children found 	
+			{
+				//treat this is an empty value node!
+				
+				//////////=======================
+				treeViewHandlerStr_ += 
+						"<div class='treeNode'> " +
+						"<div class='treeNode-Connection'></div>" +
+						"<div class='treeNode-Value'>";
+
+				treeViewHandlerStr_ += "No Children Nodes Found.";
+
+				treeViewHandlerStr_ += "</div>" + //end treeNode Value div		
+						"</div>" + //end treeNode div							
+						"<div id='clearDiv'></div>";  
+				//////////=======================
+			}
+			
+			el.innerHTML = treeViewHandlerStr_;
+			
+			//save the full string for posterity (and for back links)
+			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
+			
+			applyTreeFilter("",1); //reapplyFilter
+		}
+
+		//recursiveDrawTree ~		
+		function recursiveDrawTree(parent,depth,path) 
+		{				
+			document.getElementById("display").style.width = (30*depth + 740) + "px";
+			document.getElementById("tempTree").style.width = (30*depth + 740) + "px";
+
+			var uid;
+			var nodes = parent.children;
+			var nodeName;
+			var value, valueType;
+			var tableLinkName;
+			var i,j;
+			var childrenLength;
+			var newWindowStr;
+			var backLinkStr;
 					
-				str += "</table>";
+			for(i=0;i<nodes.length;++i)
+			{
+				uid = treeNodeUID_++;
+				nodeName = nodes[i].getAttribute("value");
+
+				//make nodeName html safe
+				nodeName = nodeName.replace(/</g, "&lt");
+				nodeName = nodeName.replace(/>/g, "&gt");
 				
-				
-				el.innerHTML = str;
-			}
-			
-			function selectThisCell(r,c,el) {	
-				
-				if(_editingCell) //if(v.indexOf("<input type") != -1) //already have the edit box open
-					return;
-				
-				_editingCell = true;
-				_editingCellEl = el;
-				
-				var v = el.innerHTML;				
-				var str = "";
-				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-				str += v;
-				str += "'>";
-				str += "<div style='padding:5px;background-color:#ffffcc;border:1px solid #cc6600;position:relative;" + 
-						"width:150px;height:50px;margin:0 -122px -62px 10px;'>";
-				str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'><b>OK</b></a> | <a href='javascript:editCellCancel();' style='color:red'><b>Cancel</b></a>";
-				str += "</div>";
-				
-				el.innerHTML = str;
-			}
-			
-			function keyHandler(e) {
-				var TABKEY = 9;
-				var ENTERKEY = 13;
-				var UPKEY = 38;
-				var DNKEY = 40;
-				var ESCKEY = 27;
-				//Debug.log("key " + e.keyCode);
-				if(e.keyCode == TABKEY) {
-					//this.value += "    ";
-					if(e.preventDefault) {
-						e.preventDefault();
+				Debug.log("nodeName= " + nodeName + " depth=" + depth + " uid=" + uid);
+								
+				childrenLength = nodes[i].children.length;
+				//Debug.log("child's childrenLength=" + childrenLength);
+									
+				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
+				{	
+					value = value.getAttribute("value");
+					valueType =  nodes[i].children[1].getAttribute("value"); //dataType
+					
+					//make value html safe
+					value = value.replace(/</g, "&lt");
+					value = value.replace(/>/g, "&gt");
+					
+					//this is a value node!	
+					//////////=======================
+					treeViewHandlerStr_ += 
+							"<div class='treeNode'> " +
+							"<div class='treeNode-Connection'></div>" +
+							"<div class='treeNode-Value'>" + 
+							"<div style='float:left'>" +
+							"<b class='bold-header'>" + nodeName + "</b>" + 
+							" : </div><div style='float:left; margin-left:9px;'>";
+					
+					if(valueType == "OnOff" || 
+							valueType == "YesNo" || 
+							valueType == "TrueFalse")
+					{
+						//colorize true false														
+						treeViewHandlerStr_ += "<div style='float:left'>";										
+						treeViewHandlerStr_ += value;											
+						treeViewHandlerStr_ += "</div>";
+						
+						var color = (value == "On" || value == "Yes" || value == "True")?
+								"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+						treeViewHandlerStr_ += "<div style='width:10px;height:10px;" +
+								"background-color:" + color + ";" +
+							    "float: left;" +
+							    "border-radius: 7px;" +
+							    "border: 2px solid white;" +
+							    "margin: 2px 0 0 6px;" +								
+								"'></div>";								
 					}
-					return false;
-				}
-			}
-			
-			function editCellOK(r,c) {	
-				
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " + _editingCellEl.getElementsByTagName("input")[0].value);
-				
-				var str = "";
-				str += _editingCellEl.getElementsByTagName("input")[0].value;
-				_editingCellEl.innerHTML = str;
-
-				_editingCell = false;
-				_editingCellEl = 0;		
-				
-				if(!_versionIsChanged)
-				{
-					_versionIsChanged = true;
+					else if(valueType == "Timestamp")				
+						treeViewHandlerStr_ += getDateString(new Date((value|0)*1000));						
+					else
+						treeViewHandlerStr_ += value; 
+							
+					treeViewHandlerStr_ += 
+							"</div>" + //end treeNode Value value side div
+							"</div>" + //end treeNode Value div		
+							"</div>" + //end treeNode div							
+							"<div id='clearDiv'></div>";  
+					//////////=======================
 					
-					//give button for saving changes
-	
-					var el = document.getElementById("display");
-					var dispStr = el.innerHTML;
-					str = "";
-					str += "<br><div><input type='button' onmouseup='saveSubSystemAsNewVersion()' value='Save Changes as New Version'/></div>";
-					el.innerHTML = str + dispStr + str;
+					continue; //so no need to recurse
+				}
+				
+				//not a value node so try to recurse				
+
+				//get value and table link name for this parent
+				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
+				{						
+					//this is a link node!
+					--childrenLength; //subtract the link ID node from children length
+					value = nodeName + " (" + 
+							value.nodeName + " = " + value.getAttribute("value") + ")";
+					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
+					--childrenLength; //subtract the config name node from children length					
+				}
+				else
+				{
+					value = nodeName;
+					tableLinkName = nodeName;
+				}
+
+				//make value and tableLinkName html safe
+				value = value.replace(/</g, "&lt");
+				value = value.replace(/>/g, "&gt");
+				tableLinkName = tableLinkName.replace(/</g, "&lt");
+				tableLinkName = tableLinkName.replace(/>/g, "&gt");
+				
+				var onmouseupJS = "";
+				var newwindowJS = "";
+				var newtabJS = ""; 
+				var treeNavContextMenuItemHandlers = [];
+				var tableComment = "";
+				
+				//search for table link
+				for(j=0;j<treeMemberNames_.length;++j)
+					if(tableLinkName == treeMemberNames_[j])
+						break;
+				if(j != treeMemberNames_.length) //found table link
+				{
+					backLinkStr = "setupConfigGroupTreeView(\\\"" + 
+							treeGroupName_ + "\\\",\\\"" +
+							treeGroupKey_ + "\\\");"; 	
+					
+					//make replace screen js
+					onmouseupJS += "setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
+					
+					treeNavContextMenuItemHandlers.push(onmouseupJS);
+										
+					//make new window link
+					newWindowStr = "setupSpecificConfig(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					
+					newWindowStr = location.pathname + 
+						location.search +
+						"&newWindowOps=" + newWindowStr;
+					
+					newwindowJS += "DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+
+					treeNavContextMenuItemHandlers.push(newwindowJS);
+
+					
+					newtabJS += "DesktopContent.openNewBrowserTab(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+					
+					//escape another level for json string
+					//					newWindowStr = newWindowStr.replace(/\\\"/g, "AAAAA");
+					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+					//					newWindowStr = newWindowStr.replace(/AAAAA/g, "\\\\\\\"");
+					//					newtabJS += "DesktopContent.openNewBrowserTab(" +
+					//							"\"" +
+					//							//"http://rulinux03.dhcp.fnal.gov:1983/urn:xdaq-application:lid=290/fa37JncCHryDsbzayy4cBWDxS22JjzhM" +
+					//							//"\"," +
+					//							//"\"" +
+					//							//"hello" +
+					//							newWindowStr +
+					//							"\"" +
+					//							");";
+					treeNavContextMenuItemHandlers.push(newtabJS);
+					
+					tableComment = treeMemberComments_[j];
+					//make comment html safe
+					tableComment = tableComment.replace(/</g, "&lt");
+					tableComment = tableComment.replace(/>/g, "&gt");
+					if(tableComment == _DEFAULT_COMMENT) //do not show if default
+						tableComment = "";
+				}
+
+				//////////=======================
+				treeViewHandlerStr_ += 
+						"<div class='treeNode'> " +
+						"<div class='treeNode-Connection'></div>" +
+						"<div class='treeNode-Expander' id='treeNode-toggle-" +
+						( + depth + "-" + uid + "-" + nodeName) + "' " + // end expander id
+						"onmouseup='toggleTreeChildren(" + 
+						depth + "," +	uid + ",\"" +							
+						nodeName + "\",\"" + path +
+						"\");' " + // end expander onmouseup
+						"></div>";
+
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row 
+				if(onmouseupJS != "") //fix width if this is a config node so comments show up aligned
+					treeViewHandlerStr_ += "<td><div style='width:470px'>"; //open pre-comment td and div
+				else
+					treeViewHandlerStr_ += "<td><div>"; //open pre-comment td and div
+				
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr><td>"; //open tree node name/link table row
+				treeViewHandlerStr_	+= "<div class='treeNode-Value' ";
+				
+				if(tableComment != "") 
+					treeViewHandlerStr_ += "title='Table Comment: " + tableComment +"' ";
+				
+				treeViewHandlerStr_ += ">"+ value + "</div>";
+				
+				treeViewHandlerStr_ += "</td><td>";
+				if(onmouseupJS != "") //if there is a link, add it
+				{
+					treeViewHandlerStr_ += 
+						"<div class='treeNode-Link' " + //start treeNode Link div
+						"onmousedown='" + // start link onmousedown	
+						"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+						"[";
+					
+					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+					{
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//need to escape all quotes by one more level
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+						if(j != treeNavContextMenuItemHandlers.length-1)
+							treeViewHandlerStr_ += ",";
+					}
+					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
+							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+					treeViewHandlerStr_ += 
+						"' " + // end link onmousedown
+						//"onmouseup='" + onmouseupJS + "' " +
+						">" +	
+						"<div class='gotoNavDiv'></div>" +			
+						"</div>"; //end treeNode Link div
+					
+				}
+				treeViewHandlerStr_ += "</td></tr></table>"; //close tree node name/link table row
+				
+				treeViewHandlerStr_ += "</div></td>"; //close pre-comment div and td
+				
+				//add comment if applicable
+				if(tableComment != "")
+					treeViewHandlerStr_ += "<td style='font-size:14px; white-space: nowrap;'>" +
+						"//" + tableComment +
+						"</td>";
+				treeViewHandlerStr_ += "</tr></table>"; //close pre/comment table row
+					
+				
+				treeViewHandlerStr_ += 
+						"<div id='clearDiv'></div>" +
+						"<div class='treeNode-Children' id='treeNode-ChildrenOf-" +
+						( + depth + "-" + uid + "-" + nodeName) + "'>";
+						
+				if(childrenLength)
+				{					
+					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");					
+				}
+				
+				treeViewHandlerStr_ += 
+						"</div>" +						
+						"</div>" + //end treeNode div
+						"<div id='clearDiv'></div>";  
+				//////////=======================
+				
+				
+				
+			}
+		}
+		
+		//applyTreeFilter ~
+		function applyTreeFilter(filter, reapplyFilter)
+		{
+			Debug.log("applyTreeFilter " + filter);
+			var allValues = document.getElementsByClassName("bold-header");
+			if(treeFilterApplied_)
+			{
+				//clear Tree Filter
+				for(var i=0;i<allValues.length;++i)
+					allValues[i].parentNode.parentNode.parentNode.style.display = "block";
+				
+				treeFilterApplied_ = false;	
+				
+				lastTreeFilter_ = treeFilter_;
+			}
+			
+			if(reapplyFilter)
+				filter = treeFilter_;
+			else 
+				treeFilter_ = filter;
+			
+			if(!filter || filter == "" || filter == "*") return;			
+			
+			//apply new filter
+			var filterArr = filter.split('*');
+
+			//if only one element find exact
+			//for each !"" component find it one after the other..
+			
+			var valName;
+			var filterMatch;
+			for(var i=0;i<allValues.length;++i)
+			{
+				filterMatch = true;
+				valName = allValues[i].innerHTML;
+				if(filterArr.length == 1)
+				{
+					if(valName != filterArr[0])
+						filterMatch = false;						
+				}
+				else
+				{
+					var nextIndex = -1;
+					for(var j=0;j<filterArr.length;++j)
+					{
+						Debug.log("j=" + j + " filterArr[j]=" + filterArr[j] + 
+								" nextIndex=" + nextIndex);
+						if(filterArr[j] == "") continue; //skip empty filters
+						
+						if(j == 0) //must start with this filter
+						{
+							if((nextIndex = valName.indexOf(filterArr[j])) != 0)
+							{
+								filterMatch = false;
+								break; //done
+							}
+						}
+						else if(j == filterArr.length-1) //must end with this filter
+						{
+							if(valName.lastIndexOf(filterArr[j]) !=
+									valName.length - filterArr[j].length)
+							{
+								filterMatch = false;
+								break;
+							}
+						}
+						else if((nextIndex = valName.indexOf(filterArr[j],nextIndex+1)) < 0)
+						{
+							filterMatch = false;
+							break; //done
+						}
+					}					
+				}
+				
+				if(!filterMatch)	//get to treeNode element
+					allValues[i].parentNode.parentNode.parentNode.style.display = "none";
+			}
+			
+			treeFilterApplied_ = true;
+		}		
+		
+		//expandTreeChildrenDepth ~
+		//	expand all children at deepest depth
+		//	if deepest depth is 0, expand XDAQContextConfiguration preferentially
+		function expandTreeChildrenDepth()
+		{
+			Debug.log("expandTreeChildrenDepth " + "");
+			
+			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			var params = []; //(depth,uid,nodeName,path)
+			var contextIndex = -1;
+			
+			var deepestDepth = -1;
+			//find deepest depth and build params array
+			for(var i=0;i<allNodes.length;++i)
+			{
+				//skip hidden nodes in search
+				if(allNodes[i].offsetParent === null) continue;
+				
+				params.push(
+						allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(","));
+				if((params[params.length-1][0]|0) > deepestDepth)
+					deepestDepth = params[params.length-1][0]|0;
+				
+				if(params[params.length-1][2] == "\"XDAQContextConfiguration\"") 
+					contextIndex = params.length-1; //found XDAQContextConfiguration, save index
+			}
+
+			Debug.log("deepestDepth " + deepestDepth);	
+			if(deepestDepth < 0) return;
+
+			//if deepestDepth is 0 and XDAQContextConfiguration is present
+			//	expand only XDAQContextConfiguration
+			//else expand all children at deepestDepth
+			
+			if(deepestDepth == 0 && contextIndex != -1)
+			{	//	expand only XDAQContextConfiguration
+				Debug.log("Expand only XDAQContextConfiguration " + contextIndex);
+				toggleTreeChildren(
+						params[contextIndex][0]|0, 		//make integer
+						params[contextIndex][1]|0,		//make integer
+						params[contextIndex][2].substr( //strip off surrounding quotes
+								1,params[contextIndex][2].length-2),
+						params[contextIndex][3].substr( //strip off surrounding quotes
+								1,params[contextIndex][3].length-2));
+				return;
+			}
+
+			var countExpanded = 0;
+			for(var i=0;i<params.length;++i)
+				if((params[i][0]|0) == deepestDepth)
+				{
+					if(toggleTreeChildren(
+							params[i][0]|0, 		//make integer
+							params[i][1]|0,			//make integer
+							params[i][2].substr( 	//strip off surrounding quotes
+									1,params[i][2].length-2),
+							params[i][3].substr( 	//strip off surrounding quotes
+									1,params[i][3].length-2),
+							true))					//show
+						++countExpanded;
+				}
+			
+			if(!countExpanded)
+				Debug.log("The tree has been expanded as far as possible!",Debug.INFO_PRIORITY);
+		}
+		
+		//hideTreeChildrenDepth ~
+		//	hide all children at deepest depth
+		function hideTreeChildrenDepth()
+		{
+			Debug.log("hideTreeChildrenDepth " + "");
+			
+			//this means toggling all children at second deepest depth
+			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			var params = []; //(depth,uid,nodeName,path)
+			var contextIndex = -1;
+
+			var deepestDepth = -1;
+			var secondDeepestDepth = -1;
+			//find deepest depth and build params array
+			for(var i=0;i<allNodes.length;++i)
+			{
+				//skip hidden nodes in search
+				if(allNodes[i].offsetParent === null) continue;
+				
+				params.push(
+						allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(","));
+				if((params[params.length-1][0]|0) > deepestDepth)
+				{
+					secondDeepestDepth = deepestDepth; //track 2nd place
+					deepestDepth = params[params.length-1][0]|0;
+				}
+			}
+
+			Debug.log("secondDeepestDepth " + secondDeepestDepth);
+			if(secondDeepestDepth < 0) 
+			{
+				Debug.log("The tree has been collapsed as far as possible!",Debug.INFO_PRIORITY);
+				return;
+			}
+
+			var countHidden = 0;
+			for(var i=0;i<params.length;++i)
+				if((params[i][0]|0) == secondDeepestDepth)
+				{
+					if(toggleTreeChildren(
+							params[i][0]|0, 		//make integer
+							params[i][1]|0,			//make integer
+							params[i][2].substr( 	//strip off surrounding quotes
+									1,params[i][2].length-2),
+							params[i][3].substr( 	//strip off surrounding quotes
+									1,params[i][3].length-2),
+							false)) //hide
+						++countHidden;
+				}
+			
+			if(!countHidden)
+				Debug.log("The tree has been collapsed as far as possible!",Debug.INFO_PRIORITY);
+		}
+		
+		//toggleTreeChildren ~ 
+		//	if expanding
+		//		if no children div, request new depth
+		//		else display children
+		//	if minimizing
+		//		hide children
+		//
+		//	setVal can be used to avoid toggling
+		//		- true = show, false = hide, undefined = toggle
+		//
+		// return true if action taken, else false
+		function toggleTreeChildren(depth,uid,nodeName,path,setVal) 
+		{
+			var setValUsed = (setVal !== undefined);
+					
+			//			Debug.log("depth: " + depth);
+			//			Debug.log("uid: " + uid);
+			//			Debug.log("nodeName: " + nodeName);
+			//			Debug.log("path: " + path);
+			
+			var idString = depth + "-" + uid + "-" + nodeName;
+			//Debug.log("idString: " + idString);
+			
+			var el = document.getElementById("treeNode-ChildrenOf-" + idString);
+			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			var str = el.innerHTML;
+			
+			if(str != "") //if children already exist, then toggle display
+			{
+				var toggleEl = document.getElementById("treeNode-toggle-" + idString);
+				var doShow = false;
+				
+				if(	(!setValUsed && el.style.display == "none") ||
+						(setValUsed && setVal) )
+					doShow = true;
+				
+				if(doShow) //if not shown, show and "-"
+				{
+					if(el.style.display == "block") return false; //already was shown
+					el.style.display = "block";
+					toggleEl.style.backgroundImage = 
+							"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+					return true;
+				}
+				else //else shown, so hide and "+"
+				{
+					if(el.style.display == "none") return false; //already was hidden
+					el.style.display = "none";
+					toggleEl.style.backgroundImage = 
+							"url(/WebPath/images/windowContentImages/ConfigurationGUI-expandTree.png)";
+					return true;
+				}
+			}
+			else if(!setValUsed || setVal)	//if no children div, then request it
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+						"&configGroup=" + configGroupEls[0].innerHTML + 
+						"&configGroupKey=" + configGroupEls[1].innerHTML +
+						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
+						"&depth=1", 
+						"startPath="+path+nodeName+"/",treeViewHandler,idString);
+				return true;
+			}
+			return false;
+		}
+		
+		//setupConfigGroupTreeView ~
+		function setupConfigGroupTreeView(configGroupName, configGroupKey, backLinkStr)
+		{
+			if(backLinkStr && backLinkStr != "")
+				treeViewBackLinkStr_ = backLinkStr;
+			else 
+				treeViewBackLinkStr_ = "";
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
+					"&configGroup=" + configGroupName + 
+					"&configGroupKey=" + configGroupKey +
+					"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
+					"&depth=1", 
+					"startPath=/",treeViewHandler);
+		}
+		
+		//activateSystemConfig ~
+		function activateSystemConfig(groupName, groupKey, ignoreWarnings)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
+					groupName + "&groupKey=" + groupKey +
+					(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
+					"",activateSystemConfigHandler,true);
+		}
+		
+		//activateSystemConfigHandler ~
+		function activateSystemConfigHandler(req,displayErrors)
+		{	
+			var withWarningsStr = "";
+			var name,key; //only filled in if withWarningsStr != ""
+			if(displayErrors)
+			{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+
+					//try to find group name and key
+					//	if found, show activate with warnings button
+					var i = err.indexOf("activating group '") + ("activating group '").length;
+					name = err.substr(i,err.indexOf("'",i)-i).split("(");
+					if(name.length == 2)
+					{
+						key = name[1].split(")")[0];
+						name = name[0];					
+												
+						//add ignore warnings Activate link
+						withWarningsStr += " <a href='#' onclick='javascript:activateSystemConfig(\"" + 
+								name +
+								"\",\"" + key + "\",1); return false;'>"; //ignore warnings
+						withWarningsStr += "Activate " + 
+								name + "(" + key + ") w/warnings ignored</a>";
+					}
 				}
 			}
 			
-			function editCellCancel() {	
-				var str = _editingCellEl.innerHTML;
-				var i = str.indexOf("value=")+7;
-				str = str.substr(i,str.indexOf(">")-1-i);
+			var activeConfigGroups = [
+									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
+									  
+			var activeConfigHeaders = ["Context","Backbone","Configuration"];
+			Debug.log("activeConfig: " + activeConfig);
+			
+			var oldStr = document.getElementById("activeConfig").innerHTML;
+			var str = "";
+			var thereIsAnEmpty = false;
+			for(var i=0;i<activeConfigHeaders.length;++i)
+			{
+				if(i==2)
+					str += "Last Initialized " + activeConfigHeaders[i] + "... ";
+				else
+					str += "Active " + activeConfigHeaders[i] + ": ";
 				
-				_editingCellEl.innerHTML = str;
-				_editingCell = false;
-				_editingCellEl = 0;
+				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
+				{
+					str += "None";
+					thereIsAnEmpty = true;
+				}
+				else
+				{
+					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
+					"\",\"" + activeConfigGroups[i*2+1] + "\"); return false;'>";
+					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
+				}
+				str += "<br>";
+			}
+			
+			document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;			
+			if(withWarningsStr != "")
+			{
+				Debug.log("Group " + name + "(" + key + ") was not activated.\n\n" +
+						"Please see detailed Warnings and Errors below. " +
+						"You can try to activate " + 
+						"with warnings ignored " + 
+						"<label style='font-weight:bold;text-decoration:underline;font-size:inherit;'>" +
+						"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
+						name + "(" + key + ") w/warnings ignored</u>' " +
+						"at the top of the page.",Debug.HIGH_PRIORITY);
+			}
+			else 
+			{
+				var el = document.getElementById("activeConfig");
+				el.innerHTML = str;
+				str = el.innerHTML;				
+				
+				if(!_firstTimeSilentActive && str != oldStr) //only popup after the first time
+				{						
+					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
+						Debug.log("Note: There was a change in the active groups (check the top of the page)!",
+								Debug.INFO_PRIORITY);
+					else //must have been an activation
+						Debug.log("Note: There was a successful activation of a group (check the top of the page)!",
+								Debug.INFO_PRIORITY);
+				}
+				else
+					_firstTimeSilentActive = false;
+			}				
+		}
+		
+		//setGroupAliasInActiveBackbone ~~
+		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd)
+		{
+			Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
+			Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
+			Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
+			
+			if(!groupName || groupName == "" || !groupKey || groupKey == "")
+			{
+				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
+				setupSystemViewMode(); //error so return to system view
+				return;
+			}
+			
+			if(!newBackboneNameAdd || newBackboneNameAdd == "")
+				newBackboneNameAdd = "Wiz";
+			newBackboneNameAdd += "Backbone";
+			Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+					"&groupAlias=" + groupAlias + 
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey, "", 
+					newWizBackboneMemberHandler,
+					[("GroupAlias" + newBackboneNameAdd),setupSystemViewMode]);					
+		}
+		
+		//wizToInitializedConfigGroup ~~
+		function wizToInitializedConfigGroup(groupAlias)
+		{			
+			//set group alias to the last initialized configuration group
+			
+			var el = document.getElementById("display");			
+			el.innerHTML = "Loading...";
+
+			//get active configuration group
+			DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
+					"", function(req) 
+					{
+				activateSystemConfigHandler(req);
+				
+				var name = DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName");
+				var key =  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey");
+				
+				if(!name || !key)
+				{
+					Debug.log("Process interrupted. There was no active Configuration Group found.",
+							Debug.HIGH_PRIORITY);
+					setupSystemViewMode();
+					return;
+				}
+				
+				setGroupAliasInActiveBackbone(groupAlias,name,key);				
+				
+					}); //end of getActiveConfigGroups handler
+		}
+		
+		//wizToLatestConfigGroup ~~
+		function wizToLatestConfigGroup(groupAlias,ignoreWarnings)
+		{	
+			//get latest version of all tables for configuration group
+			//make a new group with those versions
+			//set group alias to the resulting group
+			
+			var el = document.getElementById("display");	
+			var originalDisplayStr = el.innerHTML;
+			el.innerHTML = "Loading...";
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
+					"", function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+				var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+				
+				var name;
+				var configVersions;
+
+				Debug.log("configNames.length " + configNames.length);
+
+				var context = _contextMemberNames;
+				var backbone = _backboneMemberNames;
+				var configMap = "configList=";
+				var found;
+				for(var i=0;i<configNames.length;++i)
+				{		
+					name = configNames[i].getAttribute("value");
+					configVersions = configVersionHdr[i].getElementsByTagName("Version");
+
+					found = false;
+					for(var c in context)
+						if(name == context[c])
+						{	
+							found = true;
+							break;
+						}
+					for(var c in backbone)
+						if(name == backbone[c])
+						{	
+							found = true;
+							break;
+						}
+					if(found) continue; //only include configuration members
+					
+					
+					//find the latest that is not temporary
+					for(var v=configVersions.length-1;v>=0;--v)
+						if(configVersions[v].getAttribute("value")[0] != 
+								'-') //assume leading '-' means temporary
+						{
+							configMap += name + "," + 
+									configVersions[v].getAttribute("value") + ",";
+							break;							
+						}
+				}
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+						"&groupName=" +	("ConfigGroup" + "WizToLatest") +
+						"&ignoreWarnings=" + (ignoreWarnings?1:0),
+						configMap, 
+						function(req)
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+					var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+					if(err) 
+					{
+						if(!name || !key)
+						{
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							Debug.log("Process interrupted. Failed to create a new Configuration group!" +
+								" Please see details below.",
+								Debug.HIGH_PRIORITY);
+							setupSystemViewMode();
+							return;
+						}
+						Debug.log(err,Debug.WARN_PRIORITY);
+						Debug.log("Going on with existing name=" + name + " & key=" + key,
+								Debug.WARN_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Configuration group!" +
+							" (Likely the Group Alias points tp an equivalent Configuration group already)",
+							Debug.WARN_PRIORITY);
+					}
+					
+					//handle "TreeError" warnings
+					{	
+						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+						if(treeErr) 
+						{					
+							var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+							Debug.log(treeErr,Debug.WARN_PRIORITY);
+							Debug.log("There were problems identified in the tree view of the " +
+									"attempted new group &apos;" +
+									attemptedNewGroupName +
+									"&apos;.\nYou can wiz the group anyway (if you think it is a good idea) by clicking " +
+									"'<u>Wiz-to-Latest with Warnings Ignored</u>'",
+									Debug.WARN_PRIORITY);
+							var str = "";
+							str += " <input id='saveGroupWithWarningsIgnored' " + 
+									"style='margin-bottom:15px;' " +
+									"type='button' onmouseup=' wizToLatestConfigGroup(\"" +
+									groupAlias + "\",1)' value='Wiz-to-Latest with Warnings Ignored' " +
+									"title='Automatically assign System Alias &apos;" + groupAlias + 
+									"&apos; to a Configuration Group comprised of the latest Configuration tables.'" +									
+									"'/>";
+							str += "<div id='clearDiv'></div>";	
+	
+							var displayEl = document.getElementById("display");							
+							//since "Loading..." hid the popup from being closed properly
+							// relaod original html and do it here
+							displayEl.innerHTML = originalDisplayStr;
+							//remove all previous buttons
+							var el;
+							do
+							{
+								el = document.getElementById("saveGroupWithWarningsIgnored");
+								if(el) el.parentNode.removeChild(el);
+							} while(el);	
+							el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);							
+
+							//add new button
+							el = document.createElement("div");
+							el.innerHTML = str; //create element with save with warnings ignored button							
+							displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child					
+							
+							return;
+						}
+					}
+					
+					//else proceeding normally
+					
+					setGroupAliasInActiveBackbone(groupAlias,name,key);
+
+
+						}); //end of saveNewConfigurationGroup handler
+
+
+					});	//end of getConfigurations handler
+		}
+
+		//newWizBackboneMemberHandler
+		//	params = [newBackboneGroupName, doneHandler]
+		function newWizBackboneMemberHandler(req,params)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+				if(params[1])
+					params[1](); //error so call done handler
+				return;
+			}		
+
+			var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
+			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+
+			Debug.log("groupAliasName=" + groupAliasName);
+			Debug.log("groupAliasVersion=" + groupAliasVersion);
+
+			var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+			var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+			//make a new backbone with old versions of everything except Group Alias 
+			var configMap = "configList=";
+			var name;
+			for(var i=0;i<configNames.length;++i)
+			{		
+				name = configNames[i].getAttribute("value");
+
+				if(name == groupAliasName)
+				{
+					configMap += name + "," + 
+							groupAliasVersion + ",";
+					continue;
+				}
+				//else use old member
+				configMap += name + "," + 
+						configVersions[i].getAttribute("value") + ",";							
 			}
 
-			function saveSubSystemAsNewVersion() {	
-				Debug.log("CfgGUI saveSubSystemAsNewVersion");
-				
-				//create data string from html table
-				var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
-				var el = document.getElementById("SubSystemTable");
-				var rows = el.getElementsByTagName("tr");				
-				
-				var cells;
-				for(var r=1;r<rows.length;++r) //skip header row
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+					params[0], configMap, 
+					function(req)
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				if(err) 
 				{
-					cells = rows[r].getElementsByTagName("td");
+					if(!name || !key)
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+							" Please see details below.",
+							Debug.HIGH_PRIORITY);
 
-					for(var c=1;c<cells.length;++c) //skip row index column
-						dataStr += encodeURIComponent(cells[c].innerHTML) + ","; //replaces all special characters					
+						if(params[1])
+							params[1](); //error so call done handler
+						return;
+					}
+					else
+					{
+						Debug.log(err,Debug.WARN_PRIORITY);						
+						Debug.log("Going on with existing name=" + name + " & key=" + key,
+								Debug.WARN_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+							" (Likely the currently active Backbone already represents what is being requested)",
+							Debug.WARN_PRIORITY);
+					}					
+				}
+
+				//now activate the new backbone group
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+						"&groupName=" + name +
+						"&groupKey=" + key, "", 
+						function(req)
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						return;
+					}
+
+					activateSystemConfigHandler(req);
+
+					if(params[1])
+						params[1](); //done so call done handler
+
+						});	//end of activate new backbone handler
+
+
+					}); //end of backbone saveNewConfigurationGroup handler
+		}
+		
+		//setupConfigCreator ~
+		function setupConfigCreator(preSelectStr)
+		{
+			var el = document.getElementById("display");
+			el.innerHTML = "Loading...";
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
+					"", setupConfigCreatorHandler, preSelectStr);			
+		}
+		
+		//setupConfigCreatorHandler ~
+		// preSelectStr may contain "&backLinkStr=..." in it
+		function setupConfigCreatorHandler(req,preSelectStr)
+		{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				var el = document.getElementById("display");
+				el.innerHTML = "Failed.";
+				return;
+			}
+		
+			var backLinkStr = "";		
+			//if backLinkStr is present parse it out
+			if(preSelectStr && preSelectStr.indexOf("&") >= 0)
+			{
+				preSelectStr = preSelectStr.split("&");
+				backLinkStr = preSelectStr[1].substr(preSelectStr[1].indexOf("=")+1);
+				preSelectStr = preSelectStr[0];
+			}
+			Debug.log("preSelectStr=" + preSelectStr);
+			Debug.log("backLinkStr=" + backLinkStr);
+
+			var el = document.getElementById("display");
+			var str = "";
+
+			if(backLinkStr && backLinkStr != "")
+			{
+				//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+				if(backLinkStr.indexOf("'") >= 0)
+					backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+				else
+					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+				Debug.log("Back-link = " + backLinkStr);
+
+				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
+				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			}
+			
+			var refreshLinkStr = "setupConfigCreator(\"" + 
+					preSelectStr + "&backLinkStr=" + backLinkStr + "\");"; 
+			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+					"; return false;'>Refresh</a>";
+			str += "<br>";
+
+			if(preSelectStr)
+				str += "<br>Choose the versions of configurations you would like to add...<br>";
+			
+			str += "<div id='createGroupInfo'></div><br>";
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
+					"Create the new persistent group and group key pair." +
+					"'>" +
+					"Create the new Group</button>";
+			str += "<br><br>";
+			str += "Group Name: <input id='newConfigName'/>";
+			str += "<br><br>";
+			
+			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			var name;
+			var configVersions, version;
+		
+			Debug.log("configNames.length " + configNames.length);
+			
+			str += "<table>";			
+
+			str += "<tr><td>";
+			
+			var title = "Select/Deselect checkboxes based on this selection.";
+			str += "<a href='#' onclick='javascript:selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
+					"<a href='#' onclick='javascript:selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
+					"<a href='#' onclick='javascript:selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
+			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			str += "</td><td>";
+			var title = "Select the version in the drop-downs for all tables based on this selection.";
+			str += "<a href='#' onclick='javascript:versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
+					"<a href='#' onclick='javascript:versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
+					"<a href='#' onclick='javascript:popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
+			str += "</td><td></td>";
+			str += "</tr>";
+			
+			for(var i=0;i<configNames.length;++i)
+			{		
+				str += "<tr><td style='white-space: nowrap;'>";
+				name = configNames[i].getAttribute("value");
+				
+				
+				//add checkbox
+				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
+						name + "'>";
+				//add link so text toggles checkbox
+				str += "<a style='text-decoration:none;color:black;' href='#' onclick='javascript:" +
+						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
+						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
+						" return false;'>";
+				str += niceName(name); //can display however
+				str += "</a>";
+				str += "</input>";
+
+				configVersions = configVersionHdr[i].getElementsByTagName("Version");
+				//Debug.log("CfgGUI requestHandler configNames.length " + configVersions.length);
+
+				str += "</td><td>";
+				
+				str += "<select id='select-" + name + "'>";
+				for(var j=0;j<configVersions.length;++j)
+				{
+					version = configVersions[j].getAttribute("value");
+					str += "<option value='" + version + "'>";
+					str += version;	//can display however
+					str += "</option>";
+				}
+				str += "</select>";
+				str += "</td>";
+				
+				backLinkStr = "setupConfigCreator(\\\"" + preSelectStr + "\\\");";
+				
+				str += "<td>";
+				str += "<a href='#' onclick='" +
+						"var sel = document.getElementById(\"select-" + name + "\");" +
+						"setupSpecificConfig(\"" + name + "\"," +
+						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
+						",\"" + backLinkStr + "\"); return false;'>";
+				str += "goto</a>";
+						//"(configName, version)"
+				str += "</td>";
+				str += "</tr>";
+			}	
+			str += "</table>";
+
+			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
+					"Create the new persistent group and group key pair." +
+					"'>" +
+					"Create the new Group</button>";
+			el.innerHTML = str;		
+			
+
+			if(preSelectStr)
+			{
+				//preSelectStr is CSV with groupName followed by member name/version pairs
+				//use preset string to fill in preselected config group components
+				var preSelectArr = preSelectStr.split(",");
+				el = document.getElementById("newConfigName");
+				el.value = preSelectArr[0]; //set group name
+				var els = document.getElementsByClassName("memberConfigCheckbox");
+				var options;
+				//set member configs and versions
+				for(el=0;el<els.length;++el)
+				{
+					els[el].checked = false;
+					for(var c=1;c<preSelectArr.length-1;c+=2)
+						if(els[el].value == preSelectArr[c])
+						{	
+							//found so check to include
+							els[el].checked = true;
+							//and set version
+							sel = document.getElementById("select-" + els[el].value);
+							options = sel.options;
+							for(var i=0;i<options.length;++i)
+								if(options[i].value == preSelectArr[c+1])
+								{
+									options[i].selected = true;
+									break;
+								}
+							break;
+						}
+				}
+			}
+		}
+		
+		//createConfigSelect ~
+		//0 is none, 1 is all, 2 is context, 3 is backbone, 4 is others (configuration)			
+		function selectForCreateConfig(i)
+		{
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			
+			//use list of context/backbone configuration from server
+			var context = _contextMemberNames;
+			var backbone = _backboneMemberNames
+			switch(i)
+			{
+			case 1: //check all
+				for(var el=0;el<els.length;++el)
+					els[el].checked = true;
+				break;			
+			case 2: //context	
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					els[el].checked = false;
+					for(var c=0;c<context.length;++c)
+						if(els[el].value == context[c])
+						{	
+							els[el].checked = true;
+							break;
+						}
+				}
+				break;		
+			case 3: //backbone	
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					els[el].checked = false;
+					for(var c=0;c<backbone.length;++c)
+						if(els[el].value == backbone[c])
+						{	
+							els[el].checked = true;
+							break;
+						}
+				}
+				break;	
+			case 4: //configuration	
+				for(var el=0;el<els.length;++el)
+				{
+					els[el].checked = true;
+					for(var c in context)
+						if(els[el].value == context[c])
+						{	
+							els[el].checked = false;
+							break;
+						}
+					for(var c in backbone)
+						if(els[el].value == backbone[c])
+						{	
+							els[el].checked = false;
+							break;
+						}
+				}
+				break;		
+			default:
+				//select none
+				for(var el=0;el<els.length;++el)
+					els[el].checked = false;
+			}
+		}
+		
+		//versionsForCreateConfig ~
+		//0 is latest, 1 is default, 2 is otherAlias 
+		function versionsForCreateConfig(i,alias)
+		{						
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			var sel,options;
+			switch(i)
+			{
+			case 0: //latest
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+					
+					//find the latest that is not temporary
+					for(var i=options.length-1;i>=0;--i)
+						if(options[i].value[0] != '-') //assume leading '-' means temporary
+						{
+							options[i].selected = true;
+							break;							
+						}
+				}
+				break;
+			case 1: //defaults
+				
+				var defaultToSel;
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+
+					//find ALIAS:Default or else first that is not temporary
+					defaultToSel = -1;
+					for(var i=0;i<options.length;++i)
+						if(options[i].value == "ALIAS:Default")
+						{
+							//done!
+							defaultToSel = i;
+							break;
+						}
+						else if(defaultToSel == -1 && 
+								options[i].value[0] != '-') //assume leading '-' means temporary
+							defaultToSel = i; //found backup default, keep looking for ALIAS:Default				
+
+					if(defaultToSel >= 0)
+						options[defaultToSel].selected = true;
+				}
+				
+				break;
+			case 2: //other alias
+				
+				var defaultToSel;
+				for(var el=0;el<els.length;++el)
+				{
+					Debug.log(els[el].value);
+					sel = document.getElementById("select-" + els[el].value);
+					options = sel.options;
+
+					//find ALIAS:Default or else first that is not temporary
+					defaultToSel = -1;
+					for(var i=0;i<options.length;++i)
+						if(options[i].value == "ALIAS:" + alias)
+						{
+							//done!
+							defaultToSel = i;
+							break;
+						}
+						else if(defaultToSel == -1 && 
+								options[i].value[0] != '-') //assume leading '-' means temporary
+							defaultToSel = i; //found backup default, keep looking for ALIAS:Default				
+
+					if(defaultToSel >= 0)
+						options[defaultToSel].selected = true;
+				}
+				
+				break;
+			default: 
+				Debug.log("Impossible! Should never happen!! Alert system admins.",Debug.HIGH_PRIORITY);				
+			}
+		}
+		
+		//createConfigGroup ~
+		function createConfigGroup(ignoreWarnings)
+		{
+			var config = document.getElementById("newConfigName").value;
+			Debug.log("config " + config);
+			
+			var configMap = "configList=";
+			var els = document.getElementsByClassName("memberConfigCheckbox");
+			var sel;
+			for(var el=0;el<els.length;++el)
+				if(els[el].checked)
+				{
+					sel = document.getElementById("select-" + els[el].value);
+					if(sel.options.length)
+					{
+						Debug.log("subconfig=" + els[el].value + " version=" + 
+							sel.options[sel.selectedIndex].value);
+						configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
+					}
+				}			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" +	config +
+					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
+					configMap, createConfigGroupHandler);
+		}
+
+		//createConfigGroupHandler ~
+		function createConfigGroupHandler(req)
+		{
+			//remove all previous buttons
+			var el;
+			do
+			{
+				el = document.getElementById("saveGroupWithWarningsIgnored");
+				if(el) el.parentNode.removeChild(el);
+			} while(el);	
+			
+			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+			if(treeErr) 
+			{	
+				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+				Debug.log("There were problems identified in the tree view of the " +
+						"attempted new group &apos;" +
+						attemptedNewGroupName +
+						"&apos;.\nYou can save the group anyway (if you think it is a good idea) by clicking " +
+						"'<u>Save Group with Warnings Ignored</u>'",
+						Debug.WARN_PRIORITY);
+				var str = "";
+				str += " <input id='saveGroupWithWarningsIgnored' " + 
+						"style='margin-bottom:15px;' " +
+						"type='button' onmouseup='createConfigGroup(1);' " + 
+						" value='Save Group with Warnings Ignored' title='" +
+						"Save the modified group as a new persistent key for this group name." +
+						"'/>";	
+				str += "<div id='clearDiv'></div>";
+
+				el = document.createElement("div");
+				el.innerHTML = str; //create element with save with warnings ignored button
+				var displayEl = document.getElementById("display");
+				displayEl.insertBefore(el,displayEl.childNodes[0]); //insert new first child
+				return;
+			}
+
+			var err = DesktopContent.getXMLValue(req,"Error");
+			var el = document.getElementById('createGroupInfo');
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				el.innerHTML = ""; //clear any previous success stories
+				return;
+			}
+			
+			var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var str = "";
+			
+			str += "<br>";
+			str += "New Configuration Group Created: <b class='bold-header'>" +
+					name + " (" + key + ")</b>"; 
+			str += "<br>Goto its ";
+			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Member-View</a> or ";
+			str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Tree-View</a>, or ";
+			str += "<a href='#' onclick='javascript:activateSystemConfig(\"" + name + 
+					"\",\"" + key + "\"); return false;'>Activate</a> it.";
+			
+			el.innerHTML = str;
+			
+			//scroll to the top
+			window.scrollTo(0,0);
+			Debug.log("New Configuration Group Created: " +
+					name + " (" + key + ")",Debug.INFO_PRIORITY);
+		}
+		
+		//setupCopyAndMoveRows
+		function setupCopyAndMoveRows()
+		{
+			var el = document.getElementById('findAndReplace');
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('copyAndMoveRows');  
+			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			
+			var str = "";
+			str += "Source... ";
+			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='0'>";
+			str += "<br>";
+			str += "Destination row (-1 for new last row)... ";
+			str += "<input type='text' id='copyAndMoveRowsDest' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='-1'>";
+
+			//make div for translating innerHTML and value
+			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
+			
+			str += "<br><br>";
+			str += "<input type='button' onmouseup='configCopyRow(0)' value='Copy Row' title='" +
+					"Copy Source Row and paste at Destination Row, pushing previously existing rows down." +
+					"'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configCopyRow(1)' value='Move Row' title='" +
+					"Cut Source Row and paste at Destination Row, pushing previously existing rows down." +
+					"'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configCopyView()' value='" +
+					"Copy Source Version to new Temporary Version' title='" +
+					"Copy Source Version (with possibly different column names) to a new Temporary Version with current column names." +
+					"'/>";			
+			str += "<br><br>";
+			el.innerHTML = str;	
+		}	
+		
+		//configCopyView ~~
+		function configCopyView()
+		{
+			var src = document.getElementById("copyAndMoveRowsSrc").value;	
+			Debug.log("configCopyView src=" + src);	
+			Debug.log("configCopyView _currentConfigName=" + _currentConfigName);			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=copyViewToCurrentColumns" +
+					"&configName=" + _currentConfigName +
+					"&sourceVersion=" + src,
+					"", specificConfigRequestHandler);
+		}
+		
+		//configCopyRow
+		function configCopyRow(deleteSrc)
+		{
+			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
+			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
+			
+			Debug.log("configCopyRow src=" + src + " dest=" + dest);
+
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");
+			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+			{
+				Debug.log("Error: Illegal source row of '" + src + 
+						"' given. Row must be less than " + 
+						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+				return;
+			}
+			if(dest < -1 || dest >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+			{
+				Debug.log("Error: Illegal destination row of '" + dest + 
+						"' given. Use '-1' for a new row, otherwise row must be less than " + 
+						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			//steps:
+			//	- add destination row
+			//	- for each src col 
+			//		- dest[col] = src[col]
+
+			//if(deleteSrc) --dest;	//when move, add before target row	
+			
+			if(dest == -1) //new row, so point to last row for addRow use
+				dest = rows.length - _CONFIG_DATA_ROW_OFFSET;		
+
+			//get source row before adding row
+			var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
+			
+			addRow(dest); 	
+			Debug.log("src=" + src + " dest=" + dest);
+			
+			//get destinat row after add
+			el = document.getElementById("SubSystemTable");
+			rows = el.getElementsByTagName("tr");
+			
+			var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
+			for(var c=1;c<srcCols.length;++c)
+			{
+				Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
+				destCols[c].innerHTML = srcCols[c].innerHTML;
+			}
+			
+			if(deleteSrc)
+			{
+				if(dest < src) ++src; //to account for added row
+				deleteRow(src);
+			}
+		}	
+		
+		//setupFindAndReplace
+		function setupFindAndReplace()
+		{			 
+			var el = document.getElementById('copyAndMoveRows'); 
+			el.innerHTML = ""; //clear the other type of controls
+			el = document.getElementById('findAndReplace'); 
+			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			
+			_lastFindRow = _lastFindCol = -1; //initialize find location
+			var str = "";
+			str += "Search in column ('*' for all)... <br>";
+			str += "<input type='text' id='findAndReplaceTarget' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='*'>";
+			str += "<br>";
+			str += "For text... <br>";
+			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
+			str += "<br>";
+			str += "Replace with... <br>";
+			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
+			
+			//make div for translating innerHTML and value
+			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
+			
+			str += "<br><br>";
+			str += "<input type='button' onmouseup='configFind()' value='Find' title='" +
+					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
+					"'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
+					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\'" +
+					"'/>";
+			str += "&nbsp;&nbsp; or..."
+			for(var i=0;i<3;++i)
+				str += "&nbsp;";
+			str += "<input type='button' onmouseup='configIncrementByReplace()' " +
+					"value='Increment by &quot;Replace with...&quot; Field' title='" +
+					"Increment the trailing number in all fields in the Column(s) specified by \'Search in column\' by the signed integer number specified in \'Replace with...\' If there is no trailing number, a zero is inferred." +
+					"'/>";
+			str += "<br><br>";
+			el.innerHTML = str;						
+		}
+				
+		//configFind
+		//	use _lastFindRow, _lastFindCol as starting point
+		function configFind()
+		{
+			editCellCancel();
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var needle = document.getElementById("findAndReplaceNeedle").value;
+			var convertEl = document.getElementById("findAndReplaceHTML");
+			
+			//convert needle to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(needle));
+			needle = convertEl.innerHTML; //converted text
+			Debug.log("configFind '" + needle + "' @ " + target);
+						
+
+			Debug.log("_lastFindRow=" + _lastFindRow + " _lastFindCol=" + _lastFindCol);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
+			var cellStr;			
+			var svLast = [_lastFindRow-_CONFIG_DATA_ROW_OFFSET,
+						  _lastFindCol-_CONFIG_DATA_COL_OFFSET];
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				if(r < _lastFindRow) continue; //skip rows already looked at 
+				
+				cells = rows[r].getElementsByTagName("td");
+				
+				if(r != _lastFindRow)
+				{
+					_lastFindCol = -1; //reset last col for row
+					_lastFindRow = r;
+				}
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					if(target != "*" && cols[c].innerHTML != target) continue; //skip if not target column 
+
+					if(c <= _lastFindCol) continue; //skip cols already looked at in this row
+
+					_lastFindCol = c; 
+					
+					cellStr = cells[c].innerHTML;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					if(cellStr.indexOf(needle) >= 0)
+					{
+						Debug.log("FOUND=" + cellStr);
+						
+						//cancel any other cells and target the found cell
+						editCellCancel();
+						selectThisCell(r,c,cells[c]);
+						return;
+					}
+					
+				}
+			}
+			Debug.log("Info: Reached end of table and was not able to find '" +
+					needle + "' in columns '" + 
+					target + "' after row,col = [" + svLast[0] + "," + svLast[1] + 
+					"]. Try Find again to wrap around.", 
+					Debug.HIGH_PRIORITY);
+			_lastFindRow = -1; //reset for next find
+		}
+		
+		//configIncrementByReplace ~~
+		function configIncrementByReplace()
+		{
+			editCellCancel();
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var incrementNum = document.getElementById("findAndReplaceWith").value | 0;			
+
+			Debug.log("configIncrementByReplace +=" + incrementNum + " @ " + target);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
+			var cellStr,cellNumIndex,cellNum;
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				cells = rows[r].getElementsByTagName("td");
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					//skip if not target column
+					if(target != "*" && cols[c].innerHTML != target) continue;  
+
+					cellStr = cells[c].innerHTML;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					
+					//find any trailing number					
+					for(cellNumIndex = cellStr.length-1; 
+							cellNumIndex >= 0; --cellNumIndex)
+						if(cellStr[cellNumIndex] < '0' ||
+								cellStr[cellNumIndex] > '9')
+							break;
+					++cellNumIndex;
+					Debug.log("cellNumIndex=" + cellNumIndex + " - " + cellStr.substr(cellNumIndex));
+					cellNum = cellStr.substr(cellNumIndex) | 0;
+					Debug.log("cellNum=" + cellNum);
+
+					cellNum += incrementNum;
+					Debug.log("newNum=" + cellNum);
+					
+					cells[c].innerHTML = cellStr.substr(0,cellNumIndex) + cellNum;
+				}
+			}
+
+			versionHasChanged();
+		}
+		
+		//configReplace ~~
+		function configReplace()
+		{			
+			editCellCancel();
+			var target = document.getElementById("findAndReplaceTarget").value;
+			var needle = document.getElementById("findAndReplaceNeedle").value;
+			var convertEl = document.getElementById("findAndReplaceHTML");
+			
+			//convert needle to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(needle));
+			needle = convertEl.innerHTML; //converted text
+			
+			var replaceStr = document.getElementById("findAndReplaceWith").value;
+			
+			//convert replaceStr to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(replaceStr));
+			replaceStr = convertEl.innerHTML; //converted text
+			
+			Debug.log("configReplace '" + needle + "' with '" + replaceStr + "' @ " + target);
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");	
+			var cells;
+			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
+			var cellStr, tmpStr;
+			var needleStartIndex;
+			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+			{
+				cells = rows[r].getElementsByTagName("td");
+
+				for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+				{
+					//skip if not target column
+					if(target != "*" && cols[c].innerHTML != target) continue;  
+					
+					cellStr = cells[c].innerHTML;
+					tmpStr = cellStr;
+					Debug.log("[" + r + "," + c + "]=" + cellStr);
+					needleStartIndex = 0;
+					while(cellStr.indexOf(needle,needleStartIndex) >= 0)
+					{
+						cellStr = cellStr.replace(needle,replaceStr);
+						if(cellStr == tmpStr) break; //in case replace is same as needle
+						Debug.log("REPLACED=" + cellStr);		
+						needleStartIndex += replaceStr.length;
+					}
+					cells[c].innerHTML = cellStr;
+				}
+			}
+			
+			versionHasChanged();
+		}
+		
+		function versionHasChanged()
+		{		
+			if(!_versionIsChanged)
+			{
+				_versionIsChanged = true;
+				
+				//give button for saving changes
+
+				//get rid of all first save buttons (for temporary views)
+				var el = document.getElementById("config-firstSaveButton");
+				while(el)
+				{				
+					el.parentNode.removeChild(el);
+					el = document.getElementById("config-firstSaveButton");
+				}
+				
+				
+				el = document.getElementById("display");
+				var dispStr = el.innerHTML;
+				str = "";
+				str += "<div>";
+				str += "<input type='button' onmouseup='popUpSaveNewTableForm()' " + 
+						"value='Save Changes as New Version' title='" +
+						"Save the current table view as new persitent version." +
+						"'/>";
+				str += " ";
+				str += "<input type='button' onmouseup='saveConfigAsNewVersion(1)' " +
+						"value='Save Changes as Temporary Version' title='" +
+						"Save the current table view as new temporary version." +
+						"'/>";
+				str += "</div><br>";
+				
+				var i = dispStr.indexOf("<div class=\"tableView-Menu\"");
+				
+				el.innerHTML = dispStr.substr(0,i) + str + 
+						dispStr.substr(i) + "<br>" + str;
+			}			
+		}
+		
+		//selectThisCell
+		function selectThisCell(r,c,el) 
+		{				
+			if(_editingCell) //already have the edit box open, cancel it
+			{
+				if(_editingCellEl == el) //if same cell do nothing
+					return true;
+				editCellCancel(); //if new cell cancel
+			}
+			
+			var tableEl = document.getElementById("SubSystemTable");
+			var rows = tableEl.getElementsByTagName("tr");
+
+			//if column type is Author or Timestamp, don't allow select
+			var colType;
+			if(_tableViewIsTransposed) 	//type is at col 0
+				colType = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+			else						//type is at row 0
+				colType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+			
+			if(colType == "Author" || 
+					colType == "Timestamp")
+				return false;
+			
+			
+			_editingCell = true;
+			_editingCellEl = el;
+			_editingCellPos = [r,c];
+			
+			_editingCellElOldValue = el.innerHTML;
+			var str = "";		
+			var optionIndex = -1;
+					
+			Debug.log("colType=" + colType);
+			Debug.log("colType.indexOf('ChildLink')" + colType.indexOf("ChildLink"));
+			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+			if(_useTableLinkDropdown && 
+					colType.indexOf("ChildLink") == 0 &&
+					colType.indexOf("ChildLinkGroupID") < 0 &&
+					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+			{
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"style='margin:-4px -2px -4px 1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+				{			
+					str += "<option value='" + _tableLinkDropdownChoices[i].getAttribute("value") + "'>";
+					str += _tableLinkDropdownChoices[i].getAttribute("value");	//can display however
+					str += "</option>";
+					if(_tableLinkDropdownChoices[i].getAttribute("value") == _editingCellElOldValue)
+						optionIndex = i; //get starting sel index
+				}				
+				str += "</select>";				
+			}
+			else if(colType == "YesNo" || 
+					colType == "TrueFalse" || 
+					colType == "OnOff")  //if column type is boolean, use dropdown
+			{
+				var boolVals = [];
+				if(colType == "YesNo")
+					boolVals = ["No","Yes"];
+				else if(colType == "TrueFalse")
+					boolVals = ["False","True"];
+				else if(colType == "OnOff")
+					boolVals = ["Off","On"];
+				
+
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"style='margin:-4px -2px -4px 1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+				for(var i=0;i<boolVals.length;++i)
+				{			
+					str += "<option value='" + boolVals[i] + "'>";
+					str += boolVals[i];	//can display however
+					str += "</option>";
+					if(boolVals[i] == _editingCellElOldValue)
+						optionIndex = i; //get starting sel index					
+				}			
+				str += "</select>";
+				if(optionIndex == -1) optionIndex = 0; //use False option by default
+			}
+			else // normal cells, with text input
+			{
+				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+				str += _editingCellElOldValue;
+				str += "'>";
+			}
+						
+			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
+					"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap;'>";
+			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
+					"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+					"<a href='javascript:editCellCancel();' style='color:red'>" + 
+					"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
+			str += "</div>";		
+			
+			el.innerHTML = str;
+
+			if(_useTableLinkDropdown && 
+					colType.indexOf("ChildLink") == 0 &&
+					colType.indexOf("ChildLinkGroupID") < 0 &&
+					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+			{
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+				el.getElementsByTagName("select")[0].focus();
+			}
+			else if(colType == "YesNo" || 
+					colType == "TrueFalse" || 
+					colType == "OnOff")  //if column type is boolean, use dropdown
+			{
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+				el.getElementsByTagName("select")[0].focus();				
+			}
+			else //select text box
+				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			
+			return true;
+		}
+				
+		//setCaretPosition ~~
+		function setCaretPosition(elem, caretPos, endPos) 
+		{
+            elem.focus();
+            elem.setSelectionRange(caretPos, endPos);
+		}
+		
+		//bodyKeyHandler
+		function bodyKeyHandler(e) 
+		{
+			//detect proper views
+			var el = document.getElementById("treeView-ConfigGroupLink");	
+			var popUpEl = document.getElementById("popUpDialog");
+			
+			if(el && !popUpEl) //tree view key handler and no popup
+			{	
+				//NOTE: Firefox and Chrome have different keycodes for +/-
+				var expandKeys = [65,69,190,221,187,61]; // a, e, >, }, +, FF+ (no shift needed)
+				var hideKeys = [90,77,188,219,189,173]; // z, m, <, {, -, FF- (no shift needed)
+				
+				Debug.log("treeView bodyKey " + e.keyCode);				
+				
+				for(var i=0;i<expandKeys.length;++i)
+					if(expandKeys[i] == e.keyCode)
+					{
+						//handle expand
+						Debug.log("treeView bodyKey expand " + e.keyCode);
+						expandTreeChildrenDepth();
+						break;
+					}
+
+				for(var i=0;i<hideKeys.length;++i)
+					if(hideKeys[i] == e.keyCode)
+					{
+						//handle hide
+						Debug.log("treeView bodyKey hide " + e.keyCode);
+						hideTreeChildrenDepth();
+						break;
+					}
+			}
+			//else no handler			
+		}
+		
+		//keyHandler
+		function keyHandler(e) 
+		{
+			var TABKEY = 9;
+			var ENTERKEY = 13;
+			var UPKEY = 38;
+			var DNKEY = 40;
+			var ESCKEY = 27;
+			//Debug.log("key " + e.keyCode);
+			
+			var shiftIsDown;
+			if (window.event) 
+			{
+				key = window.event.keyCode;
+				shiftIsDown = !!window.event.shiftKey; // typecast to boolean
+			} 
+			else
+			{
+				key = e.which;
+				shiftIsDown = !!e.shiftKey;	// typecast to boolean
+			}
+			//Debug.log("shift=" + shiftIsDown);
+			
+			//tab key jumps to next cell with a CANCEL
+			//	(enter key does same except saves/OKs value)
+			//	shift is reverse jump
+			if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
+					e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+			{
+				//this.value += "    ";
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				if(e.keyCode == ENTERKEY) 
+					editCellOK(_editingCellPos[0],_editingCellPos[1]);
+				
+				//jump forward (tab/enter) or backward (tab/enter+shift)
+				//	or up or down.
+				//get number of rows and cols
+				//	to determine next row and col to jump to
+				
+				
+				var newRow = _editingCellPos[0];
+				var newCol = _editingCellPos[1];
+				var el = document.getElementById("SubSystemTable");
+				var rows = el.getElementsByTagName("tr");
+
+				var numOfRows;
+				var numOfCols;
+				
+				if(_tableViewIsTransposed)
+				{
+					numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+					numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+							_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
+				}
+				else
+				{
+					numOfRows = rows.length - _CONFIG_DATA_ROW_OFFSET;
+					numOfCols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th").length - 
+							_CONFIG_DATA_COL_OFFSET;					
+				}
+				
+				do
+				{					
+					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+						newCol += (shiftIsDown?-1:1);
+					else if(e.keyCode == UPKEY)
+						--newRow;
+					else if(e.keyCode == DNKEY)
+						++newRow;
+					
+					//new position is chosen! now make it happen (in a clean way)	
+									
+					if(newCol == numOfCols)	{ ++newRow; newCol = 0;	}
+					if(newRow == numOfRows) newRow = 0;
+					if(newCol < 0) {--newRow; newCol = numOfCols-1; }
+					if(newRow < 0) newRow = numOfRows-1;					
+
+					if(_tableViewIsTransposed)
+						el = rows[_CONFIG_DATA_COL_OFFSET+newCol].getElementsByTagName("td")[_CONFIG_DATA_ROW_OFFSET-1+newRow];
+					else
+						el = rows[_CONFIG_DATA_ROW_OFFSET+newRow].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+newCol];
+				
+				} while(!selectThisCell(newRow,newCol,el));
+
+				Debug.log("newRow=" + newRow + " newCol=" + newCol);
+				
+				return false;
+			}
+			else if(e.keyCode == ESCKEY) 
+			{				
+				if(e.preventDefault) 
+					e.preventDefault();
+				editCellCancel();
+				return false;
+			}
+			else if((e.keyCode >= 48 < e.keyCode <= 57) || 
+					(e.keyCode >= 96 < e.keyCode <= 105))// number
+			{
+				//if child link cell or boolean cell			
+				var sel;
+				if((sel = _editingCellEl.getElementsByTagName("select")).length)
+				{
+					sel = sel[0]; //assume the first select in the cell is the select
+					//select based on number
+					var selNum;
+					if(e.keyCode >= 96)
+						selNum = e.keyCode - 96;
+					else
+						selNum = e.keyCode - 48;
+					
+					sel.selectedIndex = selNum % (sel.options.length);
+					sel.focus();	
+					Debug.log("number select =" + sel.selectedIndex);
+				}
+			}
+		}
+		
+		//editCellOK
+		function editCellOK(r,c) 
+		{	
+			//if child link cell or boolean cell
+			var sel;
+			if((sel = _editingCellEl.getElementsByTagName("select")).length)
+			{
+				sel = sel[0]; //assume the first select in the cell is the select
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);				
+				var selVal = sel.options[sel.selectedIndex].value;
+
+				Debug.log("CfgGUI editCellOK = " + 
+						selVal);
+
+				str = "";
+				str += selVal;
+				_editingCellEl.innerHTML = str;		
+				
+				//assume no child link will be named a booleam word
+				var boolTypeTrues =  ["On","True","Yes"];
+				var statusTypeFalses =  ["Off","False","No"];
+				
+				//determine if true value
+				var isTrue = false;
+				var isFalse = false;
+				for(var i=0;i<boolTypeTrues.length;++i)
+					if(boolTypeTrues[i] == selVal)
+					{
+						isTrue = true; break;
+					}
+				for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+					if(statusTypeFalses[i] == selVal)
+					{
+						isFalse = true; break;
+					}
+				
+				if(isTrue)
+					_editingCellEl.style.backgroundColor = "rgb(201, 255, 201)";
+				else if(isFalse)
+					_editingCellEl.style.backgroundColor = "rgb(255, 178, 178)";
+			}
+			else //normal cell
+			{
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+						_editingCellEl.getElementsByTagName("input")[0].value);
+				
+				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
+			}
+			
+			_editingCell = false;
+			_editingCellEl = 0;		
+			
+			versionHasChanged();
+		}
+		
+		//editCellCancel
+		function editCellCancel() 
+		{	
+			if(_editingCellEl)
+				_editingCellEl.innerHTML = _editingCellElOldValue;
+			
+			_editingCell = false;
+			_editingCellEl = 0;
+		}
+		
+		//addRow ~~
+		// adds row to position r (relative to view on page)
+		// absolute row is _dataOffset + r
+		function addRow(rowToAdd) 
+		{
+			Debug.log("CfgGUI addRow " + rowToAdd);
+			
+			editCellCancel();
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+
+			var colIsBoolType = getTableViewColIsBoolType(rows);
+			
+
+			if(!_tableViewIsTransposed) //reading from normal view
+			{				
+				//get all cols
+				for(var r=0,newr=0;r<rows.length+1;++r) 
+				{
+					if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd)
+					{				
+						//create row of default column cells
+						var newRowArr = [];		
+						for(var c=0;c<rows[0].childNodes.length;++c)
+						{
+							newRowArr.push(document.createElement("td"));
+							if(c >= _CONFIG_DATA_COL_OFFSET) //skip row # column
+							{
+								if(c - _CONFIG_DATA_COL_OFFSET == 
+										_tableDefaultRowValues.length) //add date
+									newRowArr[c].innerHTML = getDateString(new Date());
+								else
+									newRowArr[c].innerHTML = 
+										_tableDefaultRowValues[c - _CONFIG_DATA_COL_OFFSET];
+							}
+						}
+						cols[newr] = newRowArr; //add new row
+						++newr;
+					}
+					
+					if(r >= rows.length) continue; //gone through all data already
+					
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[newr] = rows[r].getElementsByTagName("th");
+					else
+						cols[newr] = rows[r].getElementsByTagName("td");
+					++newr;
+				}
+
+				//create output string based on cols
+				str += createTableViewOutputStr(cols,colIsBoolType);
+			}
+			else						//reading from transposed view
+			{
+				//get all cols (transposed)
+				var tmpCols;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");					
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+2;++r) //+1 for th, and +1 for new row
+					{			
+						if(r-_CONFIG_DATA_ROW_OFFSET == rowToAdd) 
+						{				
+							//create default col cell to new row
+							cols[c][newr] = document.createElement("td");
+							if(c >= _CONFIG_DATA_COL_OFFSET) //skip row # column
+							{
+								if(c - _CONFIG_DATA_COL_OFFSET == 
+										_tableDefaultRowValues.length) //add date
+									cols[c][newr].innerHTML = getDateString(new Date());
+								else
+									cols[c][newr].innerHTML = 
+										_tableDefaultRowValues[c - _CONFIG_DATA_COL_OFFSET];
+							}
+							
+							++newr;
+						}
+						
+						if(r >= tmpCols.length+1) continue; //gone through all data already
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{	
+							cols[c][newr] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}				
+						++newr;		
+					}
+				}		
+
+				//create output string based on cols
+				str += createTableViewOutputStr(cols,colIsBoolType);				
+			}
+
+			el.innerHTML = str;		
+
+			versionHasChanged();
+
+			//update last add row link
+			if(_tableViewIsTransposed)
+			{
+				document.getElementById("lastAddRowLink0").onclick = 
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+				document.getElementById("lastAddRowLink1").onclick =
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+			}
+			else
+			{
+				document.getElementById("lastAddRowLink0").onclick =
+						function() {											
+					addRow(cols.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};					
+				document.getElementById("lastAddRowLink1").onclick = 
+						function() {											
+					addRow(cols.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+			}
+				
+		}
+
+
+		//deleteRow ~~
+		// delete row at destination
+		function deleteRow(rowToDelete) 
+		{
+			Debug.log("CfgGUI deleteRow " + rowToDelete);
+			
+			editCellCancel();
+			
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");
+			var cols = [];
+			
+			if(!_tableViewIsTransposed) //reading from normal view
+			{
+				var r = rowToDelete;
+				//make sure el references the container of rows ("TR")
+				while(el.childNodes[0].tagName != "TR")
+					el = el.childNodes[0];
+				el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
+				
+				//update all row numbers after row added
+				for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
+				{
+					if(i < r) continue;
+					
+					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+					
+					//add +/- row controls
+					str += "<br><a href='#' onclick='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='#' onclick='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+					str += "-";
+					str += "</a>";							
+					rows[i].childNodes[0].innerHTML = str;
+				}
+			}
+			else
+			{
+				var colIsBoolType = getTableViewColIsBoolType(rows);
+				
+				//get all cols (transposed)
+				var tmpCols;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");					
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+2;++r) //+1 for th, and +1 for new row
+					{			
+						if(r-_CONFIG_DATA_ROW_OFFSET == rowToDelete) 
+						{ ++tmpColsIndex; continue; }//skip row to delete
+						
+						if(r >= tmpCols.length+1) continue; //gone through all data already
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{	
+							cols[c][newr] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}				
+						++newr;		
+					}
+				}	
+				
+				var str = createTableViewOutputStr(cols,colIsBoolType);
+				
+				document.getElementById("SubSystemTable").innerHTML = str;
+			}
+
+			versionHasChanged();
+			
+			//update last add row link
+			if(_tableViewIsTransposed)
+			{
+				document.getElementById("lastAddRowLink0").onclick = 
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+				document.getElementById("lastAddRowLink1").onclick =
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+			}
+			else
+			{
+				document.getElementById("lastAddRowLink0").onclick =
+						function() {											
+					addRow(rows.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};					
+				document.getElementById("lastAddRowLink1").onclick = 
+						function() {											
+					addRow(rows.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+			}
+		}
+		
+		//popUpVersionAliasSpecificGroupForm
+		function popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+		{
+			Debug.log("CfgGUI popUpVersionAliasSpecificGroupForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "myAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the Alias you would like to apply to all member table versions:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += 
+					"DesktopContent.XMLHttpRequest(\"Request?RequestType=setAliasOfGroupMembers" +
+					"&versionAlias=\" + " + 
+					"document.getElementById(\"popUpDialog-alias\").value + \"" +
+					"&groupName=" + groupName +
+					"&groupKey=" + groupKey + "\", \"\"," +
+					"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]);";			
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Set Member Aliases' title='" +
+					"Set the Alias for all members in the actve Backbone." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		//popUpFilterTreeForm
+		function popUpFilterTreeForm()
+		{
+			Debug.log("CfgGUI popUpFilterTreeForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			Debug.log("Previous filter = " + lastTreeFilter_);
+			var defaultFilter = lastTreeFilter_ == ""?"*Port":lastTreeFilter_;
+			
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the filter (* may be used) to select which values are " +
+					"shown in the tree:<br><br>";
+			str += "<input type='text' id='popUpDialog-filter' value='" +
+					defaultFilter + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "applyTreeFilter(" +
+					"document.getElementById(\"popUpDialog-filter\").value" +
+					"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Filter Values' title='" +
+					"Select the Alias in the drop-down for all tables." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-filter"),
+					0,defaultFilter.length);
+		}
+		
+		//popUpVersionAliasGroupEditorForm
+		function popUpVersionAliasGroupEditorForm()
+		{
+			Debug.log("CfgGUI popUpVersionAliasGroupEditorForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "myAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the Alias you would like to select for all tables:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "versionsForCreateConfig(2," +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Select Alias' title='" +
+					"Select the Alias in the drop-down for all tables." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		
+		//popUpClearTemporaryVersionsPrompt
+		function popUpClearTemporaryVersionsPrompt(backLinkStr)
+		{
+			Debug.log("CfgGUI popUpClearTemporaryVersionsPrompt");
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+
+			//set position and size
+			var w = 300;
+			var h = 170;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+
+			var str = "<br><a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Are you sure you want to clear all temporary versions of <b>" + 
+					_currentConfigName + "</b>?<br>";			
+			str += "</div>";
+			
+			//Note: be careful with the source of backLinkStr.. don't use both quote styles!
+			if(backLinkStr.indexOf("'") >= 0)
+				backLinkStr = backLinkStr.replace(/'/g, "\\\"");
+			else
+				backLinkStr = backLinkStr.replace(/"/g, "\\\"");
+
+			var refreshLinkStr = "setupSpecificConfig(\"" + 
+					_currentConfigName + "\",\"" +
+					_version + "\",\"" + backLinkStr + "\");"; 
+			
+			var clearTempLinkStr = "DesktopContent.XMLHttpRequest(" +
+					"\"Request?RequestType=clearConfigurationTemporaryVersions" + 
+					"&configName=" + _currentConfigName + "\",\"\"," +
+					" function(req) { " +
+					"var err = DesktopContent.getXMLValue(req,\"Error\");" +
+					"if(err && err != \"\")" +
+					"{ Debug.log(err,Debug.HIGH_PRIORITY);	return;	}" +
+					refreshLinkStr +
+					"}" + //end handler function
+					");"; 
+			
+			str += "<input style='margin-top: 20px;' " +
+					"type='button' onmouseup='" + clearTempLinkStr + "' " +
+					"value='Clear Temporary Versions!' title='" +
+					"Permanently delete all the temporary versions associated with " +
+					_currentConfigName + "." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+
+
+			el.style.display = "block";
+		}
+		
+		//popUpSaveNewTableForm
+		function popUpSaveNewTableForm()
+		{
+			editCellCancel();
+			Debug.log("CfgGUI popUpSaveNewTableForm");
+			
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			
+			//set position and size
+			var w = 500;
+			var h = 320;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+			
+			var str = "<br><a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+			
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter a comment describing this new version of <b>" + 
+					_currentConfigName + "</b>:<br>";
+			str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
+			str += _DEFAULT_COMMENT;
+			str += "</textarea>";
+			str += "</div>";
+			
+			//give option to use cached comment
+			if(_cachedTableComment != "") 			
+				str += "<a href='#' onclick='" + 
+					"var el = document.getElementById(" +
+					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
+					"title='Load the cached comment associated with last persistent version " +
+					"of " + _currentConfigName + " that was viewed. " + 
+					"You will still have a chance to append to the comment.' " +
+					">Get cached table comment</a><br><br>"; 
+			
+			str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' " +
+					"value='Save Changes as New Version' title='" +
+					"Save the current table view as new persitent version." +
+					"'/>";
+			el.innerHTML = str;
+			
+			
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+			
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-comment"),
+					0,_DEFAULT_COMMENT.length);
+		}
+		
+		//popUpGroupAliasForm
+		// either isLatest or isInitialized
+		function popUpGroupAliasForm(isLatest)
+		{
+			Debug.log("CfgGUI popUpGroupAliasForm " + isLatest);
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "mySystemAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the System Alias you would like to assign to the ";
+			str += isLatest?"Latest":"Initialized";
+			str += " Configuration group:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			if(isLatest)
+				onmouseupJS += "wizToLatestConfigGroup(" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			else	//initialized
+				onmouseupJS += "wizToInitializedConfigGroup(" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					"); ";
+			
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Setup System Alias' title='" +
+					"Assign a System Alias to the";
+			str += isLatest?"Latest":"Initialized";
+			str += " Configuration group" +
+					" by automatically modifying the active Backbone group." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		//popUpVersionAliasForm
+		function popUpVersionAliasForm()
+		{
+			Debug.log("CfgGUI popUpVersionAliasForm");
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 300;
+			var h = 200;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			var defaultAlias = "myAlias";
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Please enter the Alias you would like to assign to version &apos;" + 
+					_version + "&apos; of <b>" + 
+					_currentConfigName + "</b>:<br><br>";
+			str += "<input type='text' id='popUpDialog-alias' value='" +
+					defaultAlias + "'></input>";
+			str += "</div><br><br>";
+
+			var onmouseupJS = "";
+			onmouseupJS += "setVersionAliasInActiveBackbone(" +
+					"document.getElementById(\"popUpDialog-alias\").value" +
+					",\"" + 
+					_currentConfigName + "\",\"" + 
+					_version + "\"); ";
+			onmouseupJS += "var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
+			
+			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
+					"value='Assign Alias' title='" +
+					"Assign an Alias to " + _currentConfigName + 
+					" version " + _version +					
+					" by automatically modifying the active Backbone group." +
+					"'/>";
+			el.innerHTML = str;
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+
+			//select comment text
+			setCaretPosition(document.getElementById("popUpDialog-alias"),
+					0,defaultAlias.length);
+		}
+		
+		//saveConfigAsNewVersion ~~
+		function saveConfigAsNewVersion(temporary, backLinkStr) 
+		{	
+			editCellCancel();
+			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
+			
+			var el = document.getElementById("popUpDialog-comment");
+			var comment;
+			if(el)
+				comment = encodeURIComponent(el.value);
+			else
+				comment = "This is a temporary table.";
+			
+			//create data string from html table
+			var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
+			el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			
+			var cells;
+
+			if(_tableViewIsTransposed)
+			{
+				var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+				var numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+						_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
+				
+				//have to locate each cell individually
+				for(var r=0;r<numOfRows;++r)
+				{
+					for(var c=0;c<numOfCols;++c) //skip row index column
+					{
+						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
+						//assume one th column so minus 1
+						dataStr += encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].innerHTML.trim()) + ","; //replaces all special characters				
+					}
 					dataStr += ";";
 				}
-				
-				var req = "Request?RequestType=saveSpecificSubSystemConfiguration" + 
-						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-						"&subAlias=" + _currentAlias + "&version="+_version;
-				Debug.log(dataStr);
-				Debug.log(req);
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveSpecificSubSystemConfiguration" + 
-					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-1) +  
-					"&subAlias=" + _currentAlias + "&version="+_version, "data=" + dataStr, saveSubSystemAsNewVersionHandler);	
-				
+			}
+			else
+			{
+				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+				{
+					cells = rows[r].getElementsByTagName("td");
+	
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+						dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
+					dataStr += ";";
+				}
 			}
 			
-			function saveSubSystemAsNewVersionHandler(req) {	
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler req " + req.responseText);
+			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
+					"&configName=" + _currentConfigName + "&version="+_version +
+					"&temporary="+(temporary?1:0) +
+					"&tableComment=" + comment; 
+			Debug.log(dataStr);
+			Debug.log(reqStr);
+			DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, 
+					saveConfigAsNewVersionHandler, backLinkStr);
+		}
+		
+		//saveConfigAsNewVersionHandler ~~
+		function saveConfigAsNewVersionHandler(req, backLinkStr) 
+		{	
+			if(!backLinkStr) backLinkStr = _tableViewBackLinkStr;
+			Debug.log("saveConfigAsNewVersionHandler requestHandler req " + req.responseText);
 
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err && err != "")
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			var configName = DesktopContent.getXMLValue(req,"savedAlias");
+			var version = DesktopContent.getXMLValue(req,"savedVersion");
+
+			Debug.log("saveConfigAsNewVersionHandler requestHandler configName " + configName + " version " + version);
+			setupSpecificConfig(configName,version, backLinkStr);
+		}
+		
+		//changeMemberVersionForConfigGroup ~~
+		function changeMemberVersionForConfigGroup(groupName, configName, newVersion) 
+		{
+			Debug.log("CfgGUI changeMemberVersionForConfigGroup configName=" + configName +
+					" newVersion=" + newVersion);
+
+			//steps:
+			//	change current version
+			//	update existing versions
+			//	add button to save new group
+
+			//change current version
+			var el = document.getElementById(configName + "-currentVersion");
+			el.innerHTML = newVersion;
+			
+			//change link
+			el = document.getElementById(configName + "-currentVersionLink");
+			var str = el.href;
+			var linkSplitArr = str.split(',');
+			str = ""; //build link href str back up with new version
+			for(var i=0;i<linkSplitArr.length;++i)
+			{
+				if(i) str += ","; 
+				if(i == 1)
+					str += "\"" + newVersion + "\"";
+				else
+					str += linkSplitArr[i];				
+			}
+			el.href = str;
+			
+			//update existing
+			el = document.getElementById(configName + "-versions");
+			str = el.innerHTML;
+			var configNameArr = str.split(',');
+			str = "";
+			//str += newVersion;
+			//for each member configuration					
+			for(var i=0;i<configNameArr.length-1;++i) //skip last ',' empty element
+			{
+				//Debug.log(configNameArr[i]);
+				if(configNameArr[i] == newVersion)  //skip link
+				{
+					str += " " + newVersion;
+ 					continue;
+				}
+				str += " ";
+				str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
+						groupName + "\",\"" + configName + "\"," + 
+						"\"" + configNameArr[i] + "\"";
+				str += "); return false;'>" + configNameArr[i];
+				str += "</a>";
+			}
+
+			el = document.getElementById(configName + "-existingVersions");
+			el.innerHTML = str;
+			
+
+			//get new version comment and show ----------
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + 
+					"&dataOffset=0&chunkSize=" + 0 +  
+					"&configName=" + configName + 
+					"&version=" + newVersion, 
+					"", 
+					function (req) {		
+				
 				var err = DesktopContent.getXMLValue(req,"Error");
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler Error " + err);
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
 
-				var subConfigAlias = DesktopContent.getXMLValue(req,"savedAlias");
-				var version = DesktopContent.getXMLValue(req,"savedVersion");
+					Debug.log("There were errors loading this version.\n\n" +
+							"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
 
-				Debug.log("saveSubSystemAsNewVersionHandler requestHandler subConfigAlias " + subConfigAlias + " version " + version);
-				setupSpecificSubSystemConfig(subConfigAlias,version);
+					//try to power through
+				}
+
+				var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+				if(warns)
+					Debug.log("There were warnings found when loading this table " +
+							"(you can treat them as informational):\n\n" +
+							warns,Debug.WARN_PRIORITY);
+
+				var tableComment = DesktopContent.getXMLValue(req,"TableComment");
+				Debug.log("tableComment=" + tableComment);	
+
+				document.getElementById(configName + "-comment").innerHTML =
+						"//" + tableComment;
+			}
+			);
+			
+			
+			
+			//add Save Changes button -------------
+			el = document.getElementById("display");
+			if(el.getElementsByTagName("div")[0].childNodes[0].tagName == "INPUT")
+				return; //only add button once
+			
+			var dispStr = el.innerHTML;
+			str = "";
+			str += "<br><div>";
+			str += "<input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
+					groupName + "\")' value='Save Changes as New Group' title='" +
+					"Save the modified group as a new persistent key for this group name." +
+					"'/>";				
+			str += "</div>";
+			el.innerHTML = str + "<br>" + dispStr + "<br>" + str;
+			
+			el = document.getElementById("configGroupModified");
+			el.innerHTML = "*Modified* "; //mark modified
+
+			el = document.getElementById("saveGroupWithWarningsIgnored");
+			if(el)
+				el.style.display = "none";			
+			
+			
+			
+		}
+		
+		//saveConfigGroupAsNewKey ~~
+		function saveConfigGroupAsNewKey(groupName, ignoreWarnings) 
+		{
+			Debug.log("CfgGUI saveConfigGroupAsNewKey");	
+			
+			var memberArr = document.getElementById("GroupMember-names").innerHTML.split(",");
+			Debug.log("memberArr " + memberArr);
+			
+			var configMap = "configList=";
+			var version;
+			for(var i=0;i<memberArr.length-1;++i)
+			{
+				version = document.getElementById(memberArr[i] + 
+						"-currentVersion").innerHTML;
+				Debug.log("subconfig=" + memberArr[i] + 
+						" version=" + version);
+				configMap += memberArr[i] + "," + version + ",";
+			}			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" + groupName +
+					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
+					configMap, specificGroupRequestHandler);
+			
+		}
+		
+		//addMemberToConfigGroup ~~
+		function addMemberToConfigGroup(groupName,backLinkStr) 
+		{
+			Debug.log("CfgGUI addMemberToConfigGroup " + groupName);
+			
+			var memberArr = document.getElementById("GroupMember-names").innerHTML.split(",");
+			Debug.log("memberArr " + memberArr);
+			
+			//make special preselectStr CSV string with groupName and then current members
+			var preSelectStr = groupName + ",";
+			var version;
+			for(var i=0;i<memberArr.length-1;++i)
+			{
+				version = document.getElementById(memberArr[i] + 
+						"-currentVersion").innerHTML;
+				Debug.log("subconfig=" + memberArr[i] + 
+						" version=" + version);
+				preSelectStr += memberArr[i] + "," + version + ",";
 			}
 			
-			function changeKocVersionForSpecificConfig() {
-				//TODO
-				Debug.log("CfgGUI changeKocVersionForSpecificConfig");
+			if(backLinkStr && backLinkStr != "")
+				preSelectStr += "&backLinkStr=" + backLinkStr;
+			setupConfigCreator(preSelectStr);			
+		}
+		
+		//jump ~~
+		function jump(anchor)
+		{
+			Debug.log("jump = " + anchor);
+			var url = location.href;
+			location.href = "#" + anchor;
+			history.replaceState(null,null,url);
+		}
+		
+		//evaluateJS ~~
+		function evaluateJS(str)
+		{
+			Debug.log("evaluateJS = " + str);
+			eval(str);
+		}		
+		
+		//createEditTableMenu ~~
+		function createEditTableMenu(event)
+		{
+			var menuItems = [
+							 "Find and Replace",
+							 "Copy and Move",
+							 _showTableDetails?
+									 "Hide Table Details":
+									 "Show Table Details",
+							 "Transpose Table View",
+							 _useTableLinkDropdown?
+									 "Disable Table Link Drop-down Assistance":
+									 "Enable Table Link Drop-down Assistance"
+									 ];
+			var menuItemHandlers = [
+							 "setupFindAndReplace()",
+							 "setupCopyAndMoveRows()",
+							 "toggleTableDetails()",
+							 "transposeTableView()",
+							 "_useTableLinkDropdown = !_useTableLinkDropdown;"							 
+									 ];
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+			);
+		}
+		
+		//createEditTableMenu ~~
+		function createTreeViewMenu(event)
+		{
+			var menuItems = [
+							 "Refresh",
+							 treeViewHideStatus_?
+									 "Show Status=False":
+									 "Hide Status=False",
+							 treeFilterApplied_?
+									 "Clear Tree View Filter":
+									 "Filter Tree View Values"
+									 ];
+			
+			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+									treeGroupName_ + "\",\"" +
+									treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
+			
+			var menuItemHandlers = [
+							refreshLinkStr,
+							"treeViewHideStatus_ = !treeViewHideStatus_;" +
+													refreshLinkStr,
+							 "treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()"							 
+									 ];
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+			);
+		}
+
+		//transposeTableView ~~
+		//	returns a bool array indicating the columns 
+		//	that have a bool type
+		function getTableViewColIsBoolType(rows)
+		{
+			var colIsBoolArray 	= [];
+			var boolTypes 		= ["OnOff","TrueFalse","YesNo"];	
+			
+			//init pre-data columns
+			for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
+				colIsBoolArray.push(false);	
+			
+			//////////////////////////
+			{	//determine the boolean columns			
+				var isStatusType;		
+				var colType;
+
+				if(_tableViewIsTransposed) //table is currently transposed, type is at col 0
+				{
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<rows.length;++c)
+					{
+						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+						isStatusType = false;
+						for(var i=0;i<boolTypes.length;++i)
+							if(boolTypes[i] == 
+									colType)
+							{
+								isStatusType = true; break;
+							}
+						colIsBoolArray.push(isStatusType);
+					}
+				}
+				else						//table is currently normal view, type is at row 0
+				{
+					var firstRowEls = rows[0].getElementsByTagName("td");
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<firstRowEls.length;++c)
+					{
+						colType = firstRowEls[c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
+						isStatusType = false;
+						for(var i=0;i<boolTypes.length;++i)
+							if(boolTypes[i] == 
+									colType)
+							{
+								isStatusType = true; break;
+							}
+						colIsBoolArray.push(isStatusType);
+					}
+				}		
+			}
+			/////////// done determining bool columns
+			
+			return colIsBoolArray;
+		}
+
+		//createTableViewOutputStr ~~
+		function createTableViewOutputStr(cols,colIsBoolType,transposeOutput)
+		{
+			var boolTypeTrues = ["On","True","Yes"];
+			var tdStyle;	
+			var str = "";
+			var val;
+			var rowsSz = transposeOutput? cols[0].length : cols.length;
+			var colsSz = transposeOutput? cols.length : cols[0].length;
+			
+			var r,c;
+			
+			//create output string based on cols
+			for(var rr=0;rr<rowsSz;++rr) 
+			{				
+				str += "<tr>";	
+				for(var cc=0;cc<colsSz;++cc) 
+				{		
+					//choose proper value based on situation
+					if(!_tableViewIsTransposed && !transposeOutput) //normal source and leaving normal
+					{
+						r = rr;
+						c = cc;
+						val = cols[rr][cc].innerHTML;
+					}	
+					else if(!_tableViewIsTransposed && transposeOutput) //normal source and transposing
+					{
+						r = cc;
+						c = rr;
+						val = cols[cc][rr].innerHTML;	
+					}					
+					else if(_tableViewIsTransposed && !transposeOutput) //transposed source and leaving transpoed
+					{
+						r = cc;
+						c = rr;
+						val = cols[rr][cc].innerHTML;
+					}
+					else if(_tableViewIsTransposed && transposeOutput) //transposed source and normalizing
+					{
+						r = rr;
+						c = cc;
+						val = cols[cc][rr].innerHTML;
+					}
+					
+						
+					
+					//handle bool style
+					tdStyle = "";	
+					if(colIsBoolType[c]) //use r/c depending on source data
+					{
+						//determine if true value
+						var isTrue = false;
+						for(var i=0;i<boolTypeTrues.length;++i)
+							if(boolTypeTrues[i] == val)
+							{
+								isTrue = true; break;
+							}
+						tdStyle += "style='background-color:";
+						tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+						tdStyle += "'";
+					}	
+					
+					
+					//open table cell
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						str += "<th>"; 
+					else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
+							c >= _CONFIG_DATA_COL_OFFSET) 
+						str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
+						(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
+						tdStyle + ">";
+					else						
+						str += "<td>";
+
+					//cell value
+					//first column is row numbers
+					if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
+					{							
+						str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+
+						//add +/- row controls
+						str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "+";
+						str += "</a>";
+						str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "-";
+						str += "</a>";	
+					}
+					else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
+						str += "Row";
+					else
+						str += val;
+					
+					//close table cell
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						str += "</th>"; 
+					else
+						str += "</td>";
+				}
+				str += "</tr>";	
+			}
+
+			return str;
+			
+		}		
+		
+		//transposeTableView ~~
+		function transposeTableView()
+		{
+			editCellCancel();
+			Debug.log("transposeTableView() transposed was =" + _tableViewIsTransposed);
+
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+			
+			var colIsBoolType = getTableViewColIsBoolType(rows);				
+	
+			
+			if(!_tableViewIsTransposed) //reading from normal view and transposing
+			{
+				//get all cols
+				for(var r=0;r<rows.length;++r) 
+				{
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[r] = rows[r].getElementsByTagName("th");
+					else
+						cols[r] = rows[r].getElementsByTagName("td");					
+				}
+
+				//create output string based on cols
+				str += createTableViewOutputStr(cols,colIsBoolType,true);							
 				
+				document.getElementById("lastAddRowLink0").style.display = "none";
+				document.getElementById("lastAddRowLink1").style.display = "block";
 			}
+			else
+			{
+				//get all cols (transposed)
+				var tmpCols, tmpColsIndex;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+					
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");
+					tmpColsIndex = 0;
+					for(var r=0;r<tmpCols.length+1;++r)
+					{			
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[cols.length-1][r] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+						{
+							cols[cols.length-1][r] = tmpCols[tmpColsIndex];
+							++tmpColsIndex;
+						}						
+					}
+				}
 
-			function addNewKocForSpecificConfig(req) {
-				//TODO
-				Debug.log("CfgGUI addNewKocForSpecificConfig");
+				//create output string based on cols
+				str += createTableViewOutputStr(cols,colIsBoolType, true);
+				
+				document.getElementById("lastAddRowLink0").style.display = "block";
+				document.getElementById("lastAddRowLink1").style.display = "none";
 			}
+				
+			el.innerHTML = str;		
+
+			_tableViewIsTransposed = !_tableViewIsTransposed;
+			Debug.log("transposeTableView() transposed now =" + _tableViewIsTransposed);
+		}
+		
 		</script>
-		
-	</head>
+</head>
 	
-	
-	<body onload='Javascript:init();'>	
-			
-		<h1>Configuration GUI</h1>
-		<a href='javascript:setupSystemConfigMode()'>System View</a>  <a href='javascript:setupSubSystemConfigMode()'>Sub-System View</a>
-		<div id='display'></div>
+
+<body onload='Javascript:init();' onkeydown='Javascript:bodyKeyHandler(event);'>	
 		
-	</body>
+	<h1>Configuration GUI</h1>
+		<div style='width:550px'>		
+	<a href='#' onclick='javascript:setupSystemViewMode(); return false;'>System View</a> 	&nbsp;&nbsp;
+	<a href='#' onclick='javascript:setupGroupViewMode(); return false;'>Group View</a>	&nbsp;&nbsp;
+	<a href='#' onclick='javascript:setupTableViewMode(); return false;'>Table View</a>	&nbsp;&nbsp;
+
+	<a style='margin-left:50px;' target="_blank" 
+			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
+					title="Click to open ots documentation">
+	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
+		</div>
+	
+	<hr>
+	<div id='activeConfig'></div>
+	<div id='activateConfigWithWarnings'></div>
+	<div id='tempTree'></div>
+	<div id='display'></div>
+	
+</body>
 	
 </html>

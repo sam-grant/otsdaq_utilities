@@ -2,7 +2,6 @@
 #define _ots_ChatSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
 #include "xdaq/Application.h"
@@ -23,6 +22,8 @@
 
 #include <string>
 #include <map>
+
+#include "../../../otsdaq/otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 namespace ots
 {
@@ -49,7 +50,7 @@ public:
 private:
 
 
-    SupervisorConfiguration    	theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo    theSupervisorDescriptorInfo_;
     RemoteWebUsers				theRemoteWebUsers_;
 
     //"Chat History" database associations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

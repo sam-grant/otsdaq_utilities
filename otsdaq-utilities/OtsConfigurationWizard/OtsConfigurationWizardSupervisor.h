@@ -2,9 +2,6 @@
 #define _ots_OtsConfiguraionWizardSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -24,6 +21,8 @@
 #include <string>
 #include <map>
 
+#include "../../../otsdaq/otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+
 namespace ots
 {
 
@@ -39,13 +38,18 @@ public:
     virtual ~OtsConfigurationWizardSupervisor(void                                                              );
     void init                  		  		 (void                                                              );
     void destroy                      		 (void                                                              );
+
     void Default                      		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void Verification                 		 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void generateURL                         (                                                                  );
-    void printURL();
+    void generateURL                         (void                                                                  );
+    static void printURL					 (OtsConfigurationWizardSupervisor *ptr, std::string securityCode);
     void RequestIcons                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    //void IconEditor                          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void EditSecurity                        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+
+    //External Supervisor XOAP handlers
+    xoap::MessageReference 		supervisorSequenceCheck 		 (xoap::MessageReference msg) 			throw (xoap::exception::Exception);
+
 
 private:
     std::string				securityCode_;

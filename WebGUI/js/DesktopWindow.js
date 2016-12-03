@@ -87,8 +87,9 @@ else {
 		
 		var _handleWindowContentLoading = function() {
 			//remove the "Loading" once iframe loades
-			if(_winfrmHolder.childNodes.length == 2) 
-				_winfrmHolder.removeChild(_winfrmHolder.childNodes[0]);
+			if(_winfrmHolder.childNodes.length > 1) 
+				_winfrmHolder.removeChild(
+						document.getElementById("DesktopWindowFrameLoadingDiv-"+_id));
 		}
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
@@ -161,25 +162,49 @@ else {
 			
             //Debug.log("Desktop Window position to " + _x + "," +
             //           _y + " size to " + _w + "," + _h,Debug.LOW_PRIORITY);
-            
+					
             if(_isMaximized){ //keep proper dimensions
                 _winfrm.style.position = "absolute";
                 _winfrm.style.zIndex = _z + 1;
                 _winfrm.style.width = _w + "px";
                 _winfrm.style.height = _h + "px";
-                _winfrm.style.left ="0px";
+                _winfrm.style.left ="-1px";
                 _winfrm.style.top = "-1px";
+                _winfrmHolder.style.position = "absolute";
+                _winfrmHolder.style.width = (_w)+"px";  //extra 2 for border pixels 
+                _winfrmHolder.style.height = (_h)+"px"; 	//extra 2 for border pixels
+                _winfrmHolder.style.left =(-_defaultFrameBorder-2) + "px";
+                _winfrmHolder.style.top = "-1px";	
+                			
 
                 _w = w < _defaultWindowMinWidth?_defaultWindowMinWidth:w;
                 _h = h < _defaultWindowMinHeight?_defaultWindowMinHeight:h;
                 _x = x;
                 _y = y;
+                
+                //hide window header (in case user page is transparent)
+                var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+                	hdrs[h].style.display = "none";
+                hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+					hdrs[h].style.display = "none";
             }
             else {
                 _winfrm.style.zIndex = _z;
                 _winfrm.style.position = "static";
+                _winfrmHolder.style.position = "static";
+
+                //show window header (for case user page is transparent)
+                var hdrs = this.windiv.getElementsByClassName("DesktopWindowButton");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+                	hdrs[h].style.display = "block";
+                hdrs = this.windiv.getElementsByClassName("DesktopWindowHeader");
+                for(var h=0;hdrs && h<hdrs.length;++h)
+					hdrs[h].style.display = "block";
             }
 			
+            Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
 		}
 			//moveWindowByOffset() ~~~
 			//	move position of window and its elements by an offset
@@ -193,6 +218,9 @@ else {
 		   	
 			//Debug.log("Desktop Window position to " + _x + "," +
 			//	_y ,Debug.LOW_PRIORITY);
+		   	
+		   	//reset current layout update timer if a window moves
+		   	Desktop.desktop.login.resetCurrentLayoutUpdateTimer();
 		}
 			//resizeAndPositionWindow(x,y,w,h) ~~~
 			//	resize and position of window and its elements
@@ -208,16 +236,17 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
+			_isMinimized = false; 
+            //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
             _isMaximized = !_isMaximized;
-            if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
             this.setWindowSizeAndPosition(_x,_y,_w,_h);
         }
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-            _isMinimized = !_isMinimized;
             if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+            _isMinimized = !_isMinimized;
             this.windiv.style.display = _isMinimized?"none":"inline";
             Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
         }
@@ -294,7 +323,8 @@ else {
 		_winfrmHolder.setAttribute("id", "DesktopWindowFrameHolder-" + _id);
 		_winfrmHolder.style.marginLeft = _defaultFrameBorder+"px";	
 		_winfrmHolder.innerHTML = 
-				"<div class='DesktopWindowHeader' style='width:100px;height:50px;position:relative;top:50%;left:50%;margin-top:-25px;margin-left:-50px;text-align:center;margin-bottom:-50px;'>" + 
+				"<div class='DesktopWindowHeader' id='DesktopWindowFrameLoadingDiv-"+
+				_id + "' style='width:100px;height:50px;position:relative;top:50%;left:50%;margin-top:-25px;margin-left:-50px;text-align:center;margin-bottom:-50px;'>" + 
 				"Loading..." + "</div>";
 		
 	   		//create iframe

@@ -4,14 +4,15 @@ cet_make(LIBRARY_NAME OtsConfigurationWizard
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 SupervisorConfigurations
+		 SupervisorDescriptorInfo
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
          MessageFacility
-         ${MF_UTILITIES}
+	 ${MF_MESSAGELOGGER}
+	 ${MF_UTILITIES}
 )
 
 install_headers()

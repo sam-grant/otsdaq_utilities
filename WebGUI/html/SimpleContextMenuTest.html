@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+
+	<style type="text/css">			
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	
+	<script>		
+		
+	
+	
+
+		var _contextMenuEl = 0;
+		var _contextMenuItems = [
+								 "Go-to Table View",
+								 "Open in new Desktop Window",
+								 "Open in new Browser Tab"];
+
+		var _contextMenuItemHandlers = [];
+		_contextMenuItemHandlers.push(myHandler);
+		_contextMenuItemHandlers.push("Debug.log(\"hi\");");
+		_contextMenuItemHandlers.push("Debug.log(\"good\");Debug.log(\"bye\");");	
+		
+			
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			//myCreateMenu(event)
+			//myHandler(event,index)
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+						
+		
+		//init called once body has loaded
+		function init() {			
+			Debug.log("init");
+			
+			var str = "";
+			str += 
+					"<div onmousedown='myCreateMenu(event);'>" +
+					"Click Me For Context Menu" +
+					"</div>"; //end context menu link div
+			
+			document.getElementById("display").innerHTML = str;
+		}
+		
+		function myCreateMenu(event) {
+			SimpleContextMenu.createMenu(
+					_contextMenuItems,
+					_contextMenuItemHandlers,
+					"mySimpleMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+					);
+		}
+		
+		function myHandler(event,index) {
+			Debug.log("myHandler event=" + event);
+			Debug.log("myHandler index=" + index);
+			Debug.log("myHandler menuitem=" + _contextMenuItems[index]);
+		}
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<h1>Simple Context Example</h1>
+	<div id='display'></div>
+	
+</body>
+	
+</html>

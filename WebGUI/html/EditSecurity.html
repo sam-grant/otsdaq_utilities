@@ -5,16 +5,17 @@
 <script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 <script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-<script type="text/JavaScript" src="/WebPath/js/DesktopWizardWindowContentCode.js"></script>
-<script type="text/JavaScript" src="/WebPath/js/editSecurity.js"></script>
-<link rel="stylesheet" type="text/css" href="../css/editSecurity.css">
+<script type="text/JavaScript" src="/WebPath/js/EditSecurity.js"></script>
+<link rel="stylesheet" type="text/css" href="/WebPath/css/EditSecurity.css">
 <style>
-
+	a {
+		color:white;
+	}
 </style>
 </head>
 
 <body onload="init()">
-  <h1>Edit Security</h1>
+  <!--<h1>Edit Security</h1>-->
   <h2 id="state"></h2>
   <ul>
 
@@ -27,14 +28,15 @@
   	<div class="details">
   		<span class="heading">No Security</span>
   		<hr />
-  		<p>Users do not have to provide any authentication to access the OTS software and server. <b>Anybody with the address of the server</b> can access it.</p>		
+  		<p>Users do not have to provide any authentication to access the OTS software and server.
+		<br><br><b>Anybody with the address of the server can access it.</b></p>		
   		<a href="#" onclick="setSecurity('NoSecurity')" class="button">Select</a>
   	</div>
   	
   	<div class="bg"></div>
   	
   	<div class="base">
-  		<img src="../images/windowContentImages/editSecurity-noSecurity.png" alt="" />
+  		<img src="/WebPath/images/windowContentImages/editSecurity-noSecurity.png" alt="" />
   	</div>
    </div>	
   </div>	
@@ -53,7 +55,7 @@
   		<a href="#" onclick="setSecurity('DigestAccessAuthentication')" class="button">Select</a>		
   	</div>
   	<div class="bg"></div>	<div class="base">
-  		<img src="../images/windowContentImages/editSecurity-Digest.png" alt="" />
+  		<img src="/WebPath/images/windowContentImages/editSecurity-Digest.png" alt="" />
   	</div>
   </div>	
   </div>  	
@@ -74,7 +76,7 @@
   	</div>
   	<div class="bg"></div>
   	<div class="base">
-  		<img src="../images/windowContentImages/editSecurity-Cerberus.png" alt="" />
+  		<img src="/WebPath/images/windowContentImages/editSecurity-Cerberus.png" alt="" />
   	</div>
   </div>	
   </div> 	
@@ -87,14 +89,18 @@
 	<div class="glow" id="ResetSecurityUserData">
 	<a href="#"  class="overlay round"></a>
 	<div class="details">
-		<span class="heading">Reset Security User Data</span>
+		<span class="heading">Reset User Data</span>
 		<hr />
-		<p>Click this button to reset all security user data.</p>		
+		<p>Click this button to reset all user data 
+		(i.e. delete accounts, passwords, preferences, etc.). This is irreversible.
+		<br>
+		<br>
+  		<b>Make sure this is really what you want to do before clicking!!</b></p>		
 		<a href="#" onclick="confirm()" class="button">Select</a>		
 	</div>
 	<div class="bg"></div>
 	<div class="base">
-		<img src="../images/windowContentImages/editSecurity-Reset.png" alt="" />
+		<img src="/WebPath/images/windowContentImages/editSecurity-Reset.png" alt="" />
 	</div>
   </div>	
   </div> 	

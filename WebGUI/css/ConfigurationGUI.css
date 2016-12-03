@@ -1,0 +1,57 @@
+
+
+
+
+		* {
+			font-size: 16px;
+			font-family: 'Inconsolata', monospace;	
+		}
+
+		body {
+			background-color: rgb(226, 216, 216);
+		}
+		
+		#clearDiv {
+			clear: both;
+		}
+		
+		a {
+			color: rgb(44, 44, 187);
+		}
+		
+		#display {
+			padding: 20px;
+		}
+		
+		#activeConfig {
+			font-size: 14px;
+			margin: 10px 0 -10px 0;
+		}
+		
+		b, h3, h1 {
+			color: rgb(65, 86, 146);
+			font-size: 20px;
+		}
+		
+		.bold-header {
+			color: rgb(81, 152, 204);
+			font-size: 16px;
+		}
+		
+		/*firefox seems to put an extra pixel of letter-spacing in bold words*/
+		@-moz-document url-prefix() {  /*target firefox*/
+			b, th {
+				letter-spacing: -1px;
+			}
+			h1, h2, h3, h4, h5, h6 {
+				letter-spacing: -2px;
+			}
+		}
+		
+
+		#SubSystemTable {
+			background-color : rgb(241, 231, 231);			
+		}
+		#SubSystemTable td, #SubSystemTable th {
+			background-color : rgb(226, 216, 216);			
+		}

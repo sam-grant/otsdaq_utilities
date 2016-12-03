@@ -3,10 +3,10 @@
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-
+#include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
+#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -44,21 +44,45 @@ public:
     void destroy               (void);
     void Default               (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
-    void 						request                      (xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
+    void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
+    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string& columnCSV, bool allowOverwrite=false);
+    void 			handleDeleteConfigurationInfoXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName);
+
+    void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
+    void 			handleSetVersionAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string& configName, ConfigurationVersion version, const std::string &author);
+    void			handleAliasGroupMembersInBackboneXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
+    void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
+    void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
+    void			handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList, bool allowDuplicates=false, bool ignoreWarnings=false);
+
+    void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, bool allowIllegalColumns);
+    void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool allowIllegalColumns=false);
+    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author, const std::string &comment);
+
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth, bool hideStatusFalse);
+    static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl, bool hideStatusFalse);
+
+    void			saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryVersion);
+
+    void testXDAQContext();
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,
         CONFIGURATION_MANAGER_EXPIRATION_TIME = 60*60*1, //1 hour, in seconds
+        CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*1, //1 minute, in seconds
     };
-    SupervisorConfiguration    			theSupervisorsConfiguration_;
-    RemoteWebUsers             			theRemoteWebUsers_;
+
+    SupervisorDescriptorInfo    						theSupervisorDescriptorInfo_;
+    RemoteWebUsers             							theRemoteWebUsers_;
 
 
-    ConfigurationManager*	refreshUserSession(std::string username, uint64_t activeSessionIndex, int &backboneVersion);
-    std::map<std::string, ConfigurationManager *> 					userConfigurationManagers_;
-    std::map<std::string, time_t> 										userLastUseTime_;
+    ConfigurationManagerRW*								refreshUserSession(std::string username, uint64_t activeSessionIndex, bool refresh);
+    std::map<std::string, ConfigurationManagerRW *> 	userConfigurationManagers_;
+    std::map<std::string, time_t> 						userLastUseTime_;
 };
 
 }

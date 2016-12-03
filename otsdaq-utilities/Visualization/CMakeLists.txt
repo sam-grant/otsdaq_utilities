@@ -1,5 +1,6 @@
 include_directories(${MPI_INCLUDE_PATH})
 include_directories($ENV{XERCES_C_INC})
+
 cet_make(LIBRARY_NAME Visualization
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
@@ -11,8 +12,12 @@ cet_make(LIBRARY_NAME Visualization
 		 FiniteStateMachine
 		 WebUsersUtilities
 		 MonicelliInterface
-		 SupervisorConfigurations
+		 SupervisorDescriptorInfo
 		 ConfigurationInterface
+		 ConfigurationDataFormats
+		 #otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
+		 #otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
+		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
 		 XmlUtilities
 		 SOAPUtilities
 		 MessageFacility

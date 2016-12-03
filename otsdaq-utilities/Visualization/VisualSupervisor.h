@@ -2,10 +2,10 @@
 #define _ots_VisualSupervisor_h
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/SupervisorConfigurations/SupervisorConfiguration.h"
 #include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
@@ -27,11 +27,12 @@
 #include <map>
 
 
+
 namespace ots
 {
 
 class ConfigurationManager;
-class ConfigurationKey;
+class ConfigurationGroupKey;
 
 class VisualSupervisor: public xdaq::Application, public SOAPMessenger, public RunControlStateMachine
 {
@@ -60,13 +61,14 @@ private:
 
     void				binaryBufferToHexString(char *buff, unsigned int len, std::string& dest);
 
-    const std::string                    supervisorType_;
-    const unsigned int                   supervisorInstance_;
-    SupervisorConfiguration              theSupervisorsConfiguration_;
-    RemoteWebUsers                       theRemoteWebUsers_;
     ConfigurationManager*                theConfigurationManager_;
+ 	const std::string                    supervisorContextUID_;
+	const std::string                    supervisorApplicationUID_;
+	const std::string                    supervisorConfigurationPath_;
+    SupervisorDescriptorInfo             supervisorDescriptorInfo_;
+    RemoteWebUsers                       theRemoteWebUsers_;
     VisualDataManager*                   theDataManager_;
-    std::shared_ptr<ConfigurationKey>    theConfigurationKey_;
+    //std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
     unsigned int 			             loadedRunNumber_;
 

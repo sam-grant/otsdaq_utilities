@@ -3,8 +3,8 @@
  
     .multiselectbox .mySelect
     {
-        width:300px;
-        height:200px;
+        /*width:100%;
+        height:100%; */
         padding:5px;
         border:1px solid rgb(153,153,153);
         text-align:left;
@@ -54,9 +54,9 @@
         -webkit-border-radius: 5px;
         -moz-border-radius: 5px;
         border-radius: 5px;
-        -moz-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-        -webkit-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        -moz-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 8px 0 rgba(0, 0, 0, 0.19);
+        -webkit-box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 8px 0 rgba(0, 0, 0, 0.19);
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 8px 0 rgba(0, 0, 0, 0.19);
 
         -webkit-transition: all 0.30s ease-in-out;
         -moz-transition: all 0.30s ease-in-out;
@@ -70,4 +70,14 @@
         font-size:16px;
         color: #222;
         margin: 5px;
+    }
+    
+    /*firefox seems to put an extra pixel of letter-spacing in bold words*/
+    @-moz-document url-prefix() {  /*target firefox*/
+    	b, th {
+    		letter-spacing: -1px;
+    	}
+    	h1, h2, h3, h4, h5, h6 {
+    		letter-spacing: -2px;
+    	}
     }

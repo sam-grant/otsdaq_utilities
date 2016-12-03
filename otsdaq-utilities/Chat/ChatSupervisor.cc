@@ -10,22 +10,25 @@
 
 using namespace ots;
 
+#undef 	__MF_SUBJECT__
+#define __MF_SUBJECT__ "Chat"
 
 XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 
 //========================================================================================================================
-ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
-        xdaq::Application(s   ),
-        SOAPMessenger  (this),
-        theRemoteWebUsers_(this)
+ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
+throw (xdaq::exception::Exception)
+: xdaq::Application (stub)
+, SOAPMessenger     (this)
+, theRemoteWebUsers_(this)
 {
-  INIT_MF("ChatSupervisor");
-    xgi::bind (this, &ChatSupervisor::Default,              "Default" );
-    xgi::bind (this, &ChatSupervisor::Chat,                	"Chat" );
+	INIT_MF("ChatSupervisor");
+	xgi::bind (this, &ChatSupervisor::Default, "Default");
+	xgi::bind (this, &ChatSupervisor::Chat,    "Chat");
 
-    ChatLastUpdateIndex = 1; //skip 0
+	ChatLastUpdateIndex = 1; //skip 0
 
-    init();
+	init();
 }
 
 //========================================================================================================================
@@ -36,97 +39,115 @@ ChatSupervisor::~ChatSupervisor(void)
 //========================================================================================================================
 void ChatSupervisor::init(void)
 {
- 	//called by constructor
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	//called by constructor
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
 void ChatSupervisor::destroy(void)
 {
- 	//called by destructor
+	//called by destructor
 
 }
 
 //========================================================================================================================
-void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-    
+
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
-		getenv("CHAT_SUPERVISOR_ID") <<"'></frameset></html>";
+			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
 
 //========================================================================================================================
 //	Chat
 //		Handles Web Interface requests to chat supervisor.
 //		Does not refresh cookie for automatic update checks.
-void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::exception::Exception)
+void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out )
+throw (xgi::exception::Exception)
 {
-    cgicc::Cgicc cgi(in);
+	cgicc::Cgicc cgi(in);
 
-    std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
-    std::cout << __COUT_HDR_FL__ << "Command: " << Command << std::endl;
+	std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
+	__MOUT__ << "Command: " << Command << std::endl;
 
-    //Commands
-    	//RefreshChat
-    	//RefreshUsers
-    	//SendChat
+	//Commands
+	//RefreshChat
+	//RefreshUsers
+	//SendChat
 
+	HttpXmlDocument xmldoc;
 
-    //**** start LOGIN GATEWAY CODE ***//
-    //If TRUE, cookie code is good, and refreshed code is in cookieCode, also pointers optionally for uint8_t userPermissions
-    //Else, error message is returned in cookieCode
-    uint8_t userPermissions;
-    std::string cookieCode = CgiDataUtilities::postData(cgi,"CookieCode");
-	if(!theRemoteWebUsers_.cookieCodeIsActiveForRequest(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-			cookieCode, &userPermissions, "0", Command != "RefreshChat")) //only refresh cookie if not automatic refresh
+	//**** start LOGIN GATEWAY CODE ***//
 	{
-	    std::cout << __COUT_HDR_FL__ << "Failed login: " << cookieCode << std::endl;
-		*out << cookieCode;
-		return;
+		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool checkLock = true;
+		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
+				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_
+				,0//&userPermissions,  		//acquire user's access level (optionally null pointer)
+				,!automaticCommand			//true/false refresh cookie code
+				,1 //set access level requirement to pass gateway
+				,checkLock					//true/false enable check that system is unlocked or this user has the lock
+				,0//requireLock
+				,0//&userWithLock,			//acquire username with lock (optionally null pointer)
+				,0//(getUser?&user:0)		//acquire username of this user (optionally null pointer)
+				,0//,&displayName			//acquire user's Display Name
+				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+		))
+		{	//failure
+			__MOUT__  << "Failed Login Gateway: " <<
+					out->str() << std::endl; //print out return string on failure
+			return;
+		}
 	}
-    //**** end LOGIN GATEWAY CODE ***//
+	//**** end LOGIN GATEWAY CODE ***//
 
-    cleanupExpiredChats();
 
-    HttpXmlDocument xmldoc(cookieCode);
+	cleanupExpiredChats();
 
-    if(Command == "RefreshChat")
-    {
-        std::string lastUpdateIndexString = CgiDataUtilities::postData(cgi,"lastUpdateIndex");
-        std::string user = CgiDataUtilities::postData(cgi,"user");
-        uint64_t lastUpdateIndex;
-        sscanf(lastUpdateIndexString.c_str(),"%lu",&lastUpdateIndex);
-
-    	insertChatRefresh(&xmldoc,lastUpdateIndex,user);
-    }
-    else if(Command == "RefreshUsers")
+	if(Command == "RefreshChat")
 	{
-    	insertActiveUsers(&xmldoc);
+		std::string lastUpdateIndexString = CgiDataUtilities::postData(cgi,"lastUpdateIndex");
+		std::string user = CgiDataUtilities::postData(cgi,"user");
+		uint64_t lastUpdateIndex;
+		sscanf(lastUpdateIndexString.c_str(),"%lu",&lastUpdateIndex);
+
+		insertChatRefresh(&xmldoc,lastUpdateIndex,user);
 	}
-    else if(Command == "SendChat")
+	else if(Command == "RefreshUsers")
 	{
-        std::string chat = CgiDataUtilities::postData(cgi,"chat");
-        std::string user = CgiDataUtilities::postData(cgi,"user");
-
-        escapeChat(chat);
-
-        newChat(chat, user);
+		insertActiveUsers(&xmldoc);
 	}
-    else if(Command == "PageUser")
+	else if(Command == "SendChat")
 	{
-        std::string topage = CgiDataUtilities::postData(cgi,"topage");
-        std::string user = CgiDataUtilities::postData(cgi,"user");
+		std::string chat = CgiDataUtilities::postData(cgi,"chat");
+		std::string user = CgiDataUtilities::postData(cgi,"user");
 
-        std::cout << __COUT_HDR_FL__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+		escapeChat(chat);
 
-        theRemoteWebUsers_.sendSystemMessage(theSupervisorsConfiguration_.getSupervisorDescriptor(),
-        		topage, user + " is paging you to come chat.");
+		newChat(chat, user);
 	}
-    else
-        std::cout << __COUT_HDR_FL__ << "Command request not recognized." << std::endl;
+	else if(Command == "PageUser")
+	{
+		std::string topage = CgiDataUtilities::postData(cgi,"topage");
+		std::string user = CgiDataUtilities::postData(cgi,"user");
 
-    //return xml doc holding server response
-    xmldoc.outputXmlDocument((std::ostringstream*)out);
+		__MOUT__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+
+		theRemoteWebUsers_.sendSystemMessage(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),
+				topage, user + " is paging you to come chat.");
+	}
+	else
+		__MOUT__ << "Command request not recognized." << std::endl;
+
+	//return xml doc holding server response
+	xmldoc.outputXmlDocument((std::ostringstream*)out);
 }
 
 //========================================================================================================================
@@ -135,19 +156,19 @@ void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out ) throw (xgi::excep
 //	reserved: ", ', &, <, >
 void ChatSupervisor::escapeChat(std::string &chat)
 {
-//	char reserved[] = {'"','\'','&','<','>'};
-//std::string replace[] = {"&#34;","&#39;","&#38;","&#60;","&#62;"};
-//	for(uint64_t i=0;i<chat.size();++i)
-//		for(uint64_t j=0;j<chat.size();++j)
-//		if(chat[i] ==
+	//	char reserved[] = {'"','\'','&','<','>'};
+	//std::string replace[] = {"&#34;","&#39;","&#38;","&#60;","&#62;"};
+	//	for(uint64_t i=0;i<chat.size();++i)
+	//		for(uint64_t j=0;j<chat.size();++j)
+	//		if(chat[i] ==
 }
 
 //========================================================================================================================
 //ChatSupervisor::insertActiveUsers()
 void ChatSupervisor::insertActiveUsers(HttpXmlDocument *xmldoc)
 {
-   	xmldoc->addTextElementToData("active_users",
-   			theRemoteWebUsers_.getActiveUserList(theSupervisorsConfiguration_.getSupervisorDescriptor()));
+	xmldoc->addTextElementToData("active_users",
+			theRemoteWebUsers_.getActiveUserList(theSupervisorDescriptorInfo_.getSupervisorDescriptor()));
 }
 
 //========================================================================================================================
@@ -167,18 +188,18 @@ void ChatSupervisor::insertChatRefresh(HttpXmlDocument *xmldoc, uint64_t lastUpd
 
 	char tempStr[50];
 	sprintf(tempStr,"%lu",ChatLastUpdateIndex);
-   	xmldoc->addTextElementToData("last_update_index",tempStr);
+	xmldoc->addTextElementToData("last_update_index",tempStr);
 
 	//get all users
-   	xmldoc->addTextElementToData("chat_users","");
+	xmldoc->addTextElementToData("chat_users","");
 	for(uint64_t i=0;i<ChatUsers_.size();++i)
 		xmldoc->addTextElementToParent("chat_user",ChatUsers_[i],"chat_users");
 
-   	if(!lastUpdateIndex) //lastUpdateIndex == 0, so just give the <user> entered chat message only
-   		lastUpdateIndex = ChatHistoryIndex_[ChatHistoryIndex_.size()-1]-1; //new user will then get future chats
+	if(!lastUpdateIndex) //lastUpdateIndex == 0, so just give the <user> entered chat message only
+		lastUpdateIndex = ChatHistoryIndex_[ChatHistoryIndex_.size()-1]-1; //new user will then get future chats
 
 	//get all accounts
-   	xmldoc->addTextElementToData("chat_history","");
+	xmldoc->addTextElementToData("chat_history","");
 	for(uint64_t i=0;i<ChatHistoryEntry_.size();++i) //output oldest to new
 	{
 		if(isChatOld(ChatHistoryIndex_[i],lastUpdateIndex)) continue;
@@ -202,7 +223,7 @@ void ChatSupervisor::newUser(std::string user)
 			return; //do not add new if found
 		}
 
-    std::cout << __COUT_HDR_FL__ << "New user: " << user << std::endl;
+	__MOUT__ << "New user: " << user << std::endl;
 	//add and increment
 	ChatUsers_.push_back(user);
 	ChatUsersTime_.push_back(time(0));
@@ -214,10 +235,10 @@ void ChatSupervisor::newUser(std::string user)
 //	create new chat, and increment update
 void ChatSupervisor::newChat(std::string chat, std::string user)
 {
-    ChatHistoryEntry_.push_back(chat);
-    ChatHistoryAuthor_.push_back(user);
-    ChatHistoryTime_.push_back(time(0));
-    ChatHistoryIndex_.push_back(incrementAndGetLastUpdate());
+	ChatHistoryEntry_.push_back(chat);
+	ChatHistoryAuthor_.push_back(user);
+	ChatHistoryTime_.push_back(time(0));
+	ChatHistoryIndex_.push_back(incrementAndGetLastUpdate());
 }
 
 //========================================================================================================================

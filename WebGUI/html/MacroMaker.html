@@ -1,63 +1,106 @@
 <!DOCTYPE HTML>
 <html lang="en">
 	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
 		
 		<style type="text/css">			
-			body {
-				background-color: #001626;
-				color: #c4e9f5 !important;
-				<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
-				overflow: auto;
-				font-family: Sans-serif;
-				font-size:15px;
-			}
+		* {
+			margin: 0;
+			spacing: 0;
+			padding: 0;
+			border: 0;
+			color: #c4e9f5;
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			font-family: serif; /*'Donegal One', serif;*/		
+			outline: none;  /* to stop firefox selection*/	
+		}
 		
-		#fecList {
+		@-moz-document url-prefix() { /* css targeted for firefox */	
+		  *{
+		  	font-size:13px;
+		  }
+		  a, button {
+		  	font-size:12px;
+		  }
+		  h2 {
+		    font-size:17px !important;
+		  }
+		  h3 {
+		    font-size:15px;
+		  }
+		  textarea {
+		  	height: 20px;
+		  	width: 110px;
+		  }
+		  button{
+		  	padding: 0.5px !important;
+		  }
+		  #macroNameEdit {
+		    width: 400px;
+		  }
+		  #macroNotesEdit {
+		    width: 400px;
+		    height:52px;
+		  }
+		  #macroName {
+		    width: 360px;
+		  }
+		  #macroNotes {
+		    width: 360px;
+		    height:106px;
+		  }
+		  #valueAtRunTime {
+		  	width: 200px;
+		  }
+		  #privateTag, #publicTag, #page1tag, #page2tag {
+		  	font-size:11px;
+		  }
+		}
+		
+		body {
+			background-color: #001626;
+			color: #c4e9f5 !important;
+			<!--do not remove..background-image: url(/WebPath/images/windowContentImages/macromaker-bg-texture.jpg);-->
+			overflow: auto;
+			font-family: Sans-serif;
+			font-size:15px;
+		}
+		
+		#fecList, #main, #history {
 		    padding:5px;	
 	    }	
 	    
-		#main {
-		    padding:5px;
-		}
-		
 		#maker {
 		    padding:5px;
 		    display:none;
 		}
 		
 		h3 {	
-			color: #c4e9f5 !important;
 			background-color: #993333;
-			border-radius: 4px;
 			margin: 2px 13px 2px 10px;
 			text-align: center;
 		}
 		
-		div {	
-			color: #c4e9f5;
-		}
-		b {	
-			color: #c4e9f5;
-		}
-		p {	
-			color: #c4e9f5;
-		}
-		
-		lable {	
-			color: #c4e9f5;
+		h4 {
+			margin: 5px 0px 15px 0px;
 		}
 		
 		a {	
-			color: #c4e9f5;
+		    color: #c4e9f5;
 			cursor: pointer; 
 		}
 		
-		#history {
-		    padding:5px;
+		button {
+			padding: 3px;
+		    color: #001626;  
+        	margin: 0 5px 0 5px;
+        	display: inline;
 		}
 		
 		#historyContent {
@@ -71,8 +114,12 @@
 		    margin-bottom:5px;
 		}
 		
-		#instruction {
+		#progressBarOuter {
 		    padding:5px;
+		}
+		
+	    #progressBarInner {
+		    display:none;
 		}
 		
 		#sequence {
@@ -86,7 +133,11 @@
 			padding:2px;
 		}
 		
-		#listOfMacros {
+		#privateTag, #publicTag, #page1tag, #page2tag {
+		  	padding: 1px 1px 1px 3px;
+		}
+		
+		.listOfMacros {
 			overflow:scroll;
 			overflow-x: hidden;
 			padding:5px;
@@ -123,26 +174,45 @@
 		    width:90%;
 		    float:left;
 		}
-		
 
 		.deletex{
 			width:18px;
 			height:18px;
-			
-			color: #993333 !important;
 			float:right;
-			background-color: #993333;
 			cursor: pointer; 
-			border-radius:20%;
 			border : 2px solid #c4e9f5;
-			/*padding:2px;*/
+			border-radius: 50%;
 			text-align:center;
 			vertical-align: middle;
 			z-index:99;
 			display:none;
 			position:absolute;
-			
-			/*margin: -18px 30px -18px -18px;*/ /*0 0 2px 2px;*/
+		}
+		
+		.variableMark1{
+			width:16px;
+			height:16px;
+			background-color: #002a52;
+			cursor: pointer; 
+			padding: 3px;
+			text-align:center;
+			vertical-align: middle;
+			z-index:99;
+			display:inline;
+			margin: -17px 0 0 -23px;
+		}
+		
+		.variableMark2{
+			width:16px;
+			height:16px;
+			background-color: #ff0101;
+			cursor: pointer; 
+			padding: 3px;
+			text-align:center;
+			vertical-align: middle;
+			z-index:99;
+			display:inline;
+			margin: -17px 0 0 -23px;
 		}
 		
 		.chosenClassInSequence{
@@ -157,7 +227,7 @@
 		.macroDiv{
 		    padding: 0.2em 0.2em 0.2em 0.2em;
 		    margin: 0.2em 0.2em 0.2em 0.2em;
-		    cursor: context-menu; 
+		    cursor: pointer; 
 		    border: 2px solid #993333;
 		    width: 90%;
 		    border-radius:2px;
@@ -179,9 +249,6 @@
       		margin-top:5px;
       		text-align:center;
       	}
-      	p small {
-      		color: #c4e9f5;
-      	}
       	
         .select{
         	color:#001626;  
@@ -195,23 +262,25 @@
 			margin:5px 0 0 0;
 		}
         .buttonGroup{
-        	margin: 12px 0 10px 25px;
+        	margin: 12px 15px 10px 15px;
         }
         
         .red{
-        	color: #993333 !important;
+        	color: rgb(253, 195, 195) !important;
         }
 
         .dropdown{
         	color:#001626;
         	margin-bottom:10px;
         	border-radius:1px;
+        	width: 45px;
+        	height: 17px;
         }
         
-        #address{
+        #sequenceAddress{
         	margin: 5px 0 0 0;
         }
-        #data{
+        #sequenceData{
         	margin: 5px 0 0 22px;
         }
 
@@ -223,9 +292,7 @@
         	margin: 0 0 0 10;
         	list-style: none;
         }
-        li {
-         	color: #c4e9f5;
-        }
+
         
         textarea  
 		{  
@@ -254,6 +321,11 @@
         }
         
         .popupEdit{
+            top: 20% !important;
+			left: 0 !important;
+			margin-top: -30px;
+			margin-left: 10%;
+			margin-right: 10%;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
@@ -262,23 +334,53 @@
 			padding:6px;
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
-			width:420px;
+			width:78%;
+			overflow:auto;
+			overflow-y: auto;	
+			overflow-x: auto;	
+			
         }
         
+        .JStextarea {
+        	width:28%;
+        	height: 1.2em;
+        }
+        
+		#macroNameEdit {
+		    width: 90%;
+		    height:1.2em;
+		}
+        #macroNotesEdit {
+		    width: 90%;
+		    height: 20%;
+	    }
+	    
+	    #macroEditSettings {
+		  	margin-top: 10px;
+		}
+	    #macroName {
+	        width: 360px;
+	    }
+	    #macroNotes {
+	        width: 360px;
+	        height:106px;
+	    }
+
         .smallPopup{
-        	width:200px;
-        	height:100px;
+        	width:225px;
+        	height:112px;
         	background-color: #002540;
         	z-index:9;
         	position: fixed;
-			top: 40%;
+			top: 30%;
 			left: 50%;
-			margin-left: -100px;
+			margin-left: -110px;
 			opacity:0.9;
 			border-radius:5px;
 			padding:6px;
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
+			display:none;
         }
 
         
@@ -290,28 +392,30 @@
         	display:none;
         }
         
-        #macroEditContainer{
-        
-        }
-        
-        .stayAtBottomOfParent{
-			position: absolute;
-			bottom:10px;
-        }
-        
-        #popupRenameMacro{
-        	display:none;
-        }
-        
         #macroSequenceEdit {
 			overflow:scroll;
 			overflow-x: hidden;
+			overflow-y: auto;	
 			padding:5px;
-			height: 75px;
+			height: 30%;
+			margin-bottom: 5px;
 		}
 		
-		lable textarea{
+		lable textarea {
 			vertical-align: middle;
+		}
+		
+		#makeMacroPublic {
+			padding: 4px;
+			text-align: center;
+			width: 100%;
+			display: none;
+		}
+		
+	    #makeMacroLSBF {
+			padding: 4px;
+			text-align: center;
+			width: 100%;
 		}
 		
         .context-menu {
@@ -339,7 +443,7 @@
 		  display: block;
 		  margin-bottom: 2px;
 		}
-		
+	
 		.context-menu__link {
 		  display: block;
 		  padding: 4px 12px;
@@ -351,14 +455,73 @@
 		  color: #fff;
 		  background-color: #002a52;
 		}
+		
+		#macroRunningProgress {
+		  position: relative;
+		  width: 80%;
+		  margin: 0 auto; 
+		  height: 30px;
+		  background-color: #c4e9f5;
+		  border-radius:5px;
+		  border: 2px solid #c4e9f5;
+		}
+		
+		#macroRunningBar {
+		  position: absolute;
+		  width: 0%;
+		  height: 100%;
+		  background: repeating-linear-gradient(
+			  45deg,
+			  #002540,
+			  #002540 10px,
+			  #993333 10px,
+			  #993333 20px
+			);
+	      border-radius:5px;
+		}
         
-        @media only screen and (max-height: 400px){
-        	#instruction{
-        	display:none;
-        	}
+        #macroRunningPercentage {
+          margin: 0 auto; 
+          font-weight: bold;
+          padding-top: 5px;
+        }
+        
+        #infoButton {
+  		    top: 4px; 
+  		    right: 7px;
+  		    position: absolute;
+  		    cursor:pointer;
+        }
+        
+        #refreshButton {
+  		    top: 7px; 
+  		    right: 37px;
+  		    position: absolute;
+  		    cursor:pointer;
+        }
+        
+		#popupNameVariableYesButton {
+			display:none;
+		}
+		
+		#macroEditContainer{
+			height:95%;
+		}
+        
+        @media screen and (max-height: 300px){
         	#macroLib {
-		    display:none;
+		    	display:none !important;
 			}
+        }
+        
+        @media screen and (max-height: 528px){
+        	#progressBarOuter{
+        		position:relative !important;
+        	}
+        	#progressBarInner{
+				position:absolute !important;
+        		bottom:0 !important;
+        	}
         }
         
         @media only screen and (min-width: 1215px){
@@ -381,7 +544,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/Macromaker.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
-		<script src="http://rubaxa.github.io/Sortable/Sortable.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/Sortable.js"></script>
 		  
 	</head>
 
@@ -395,7 +558,14 @@
 		
 		<div class='mainBlock' id='macroLib'>
 		    <h3>Macro Library</h3>
-			<div id="listOfMacros"></div>
+		    <p><small>
+		    <center>
+			<a id="privateTag" onclick="toggleMacroPublicity(0)"> Private Macros </a>
+			<a id="publicTag" style="margin-left:8px" onclick="toggleMacroPublicity(1)"> Public Macros </a>
+			</small></p>
+			</center>
+			<div id="listOfPrivateMacros" class="listOfMacros"></div>
+			<div id="listOfPublicMacros" class="listOfMacros"></div>
 		</div>
 		
 		<div class='mainBlock' id='sequence'>
@@ -403,38 +573,49 @@
 	        <div id="sequenceContent"></div>
 		</div>
 		
-		<div id="nav" class="center">
-			<p><small>
-			<a onclick="toggleDisplay(0)">Manual Commands</a>
-			<a style="margin-left:15px" onclick="toggleDisplay(1)">Macro Maker</a>
+		<div id="nav">
+			<p class="center"><small>
+			<a id="page1tag" onclick="toggleDisplay(0)"> Manual Commands </a>
+			<a id="page2tag" style="margin-left:15px" onclick="toggleDisplay(1)"> Macro Maker </a>
 			</small></p>
+			<div class="right">
+				<a href="https://docs.google.com/a/iit.edu/document/d/1tTeaO9wKnVJshU9OrY7FFOGC39TTIieD1uZ9cTtY-hs/edit?usp=sharing" target="_blank">
+					<img src="/WebPath/images/windowContentImages/macromaker-information.png" alt="Info" id="infoButton"
+				     width='26' height='26' title="Info"/>
+				</a>
+				<img src="/WebPath/images/windowContentImages/macromaker-refresh.png" alt="Refresh" id="refreshButton" 
+					width='20' height='20' onclick="initLite()" title="Refresh"/>
+			</div>
 		</div>
 		
 		<div class='mainBlock' id='main'>
 	        <h3>Manual Commands</h3>
 	        <div class="center">
 		        <p>Address:  <input type="text" id="addressInput" class="inputBox"/></p>
-		        <div id="output1" class="formatSelection">Address is in
+		        <div id="output1" class="formatSelection">Address format:
 		           <select id="addressFormat" class="dropdown" onchange="toggleLSBF()">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
-				format.</div>
-		        <p style="margin-left:22px">Data:  <input type="text" id="dataInput" class="inputBox"/></p>
-		        <div id="output2" class="formatSelection">Data is in
-		           <select id="dataFormat" class="dropdown">
+				</div>
+		        <p>Data:  <input style="margin-left:23px" type="text" id="dataInput" class="inputBox"/></p>
+		        <div id="output2" class="formatSelection">Data format:
+		           <select style="margin-left:23px" id="dataFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
-				format.</div>
+				</div>
 				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
 		        <b><div id="reminder" class="red"></div></b>
 		        
 		        <div class="buttonGroup">
-		        	<button onclick="callRead()" class="select">Read</button>
-		        	<button onclick="callWrite()" class="select">Write</button>
+		        	<button onclick="callRead()">Read</button>
+		        	<button onclick="callWrite()">Write</button>
+		        </div>
+		        <div class="buttonGroup">
+		        	<button onclick="showPopupClearHistoryConfirm()">Clear History</button>
 		        </div>
 		    </div>
 		</div>
@@ -442,12 +623,12 @@
 		<div class='mainBlock' id='maker'>
 	        <h3>Macro Maker</h3>
 	        <div class="center">
-		        <p id = "address">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
-			    <p id="data">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
+		        <p id = "sequenceAddress">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
+			    <p id = "sequenceData">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
 				
 				<div class="buttonGroup">
-		        	<button onclick="addCommand('w')" class="select">Add Write</button>
-		        	<button onclick="addCommand('r')" class="select">Add Read</button>
+		        	<button onclick="addCommand('w')">Add Write</button>
+		        	<button onclick="addCommand('r')">Add Read</button>
 		        </div>
 		        
 		        <p>Delay:  <input type="text" id="delayInput" class="inputBox"/>
@@ -457,15 +638,15 @@
 				   </select>
 		        </p>
 		        <div class="buttonGroup">
-		        	<button onclick="addCommand('d')" class="select">Add Delay</button>
+		        	<button onclick="addCommand('d')">Add Delay</button>
 		        </div>
 		        <b><div id="macroReminder" class="red"></div></b>
 		        <div id="twoButtons">
-		            <button onclick="clearAll()" class="select">Clear All</button>
-		        	<button onclick="saveMacro()" class="select">Save as Macro</button>
+		            <button onclick="showPopupClearAllConfirm()">Clear All</button>
+		        	<button onclick="saveMacro()">Save as Macro</button>
 		        </div>
 		        <div class="buttonGroup">
-		        	<button id="undoDelete" onclick="undoDelete()" disabled class="select">Undo Delete</button>
+		        	<button id="undoDelete" onclick="undoDelete()" disabled>Undo Delete</button>
 		        </div>
 		         <div class="formatSelection" onchange="reloadMacroSequence()">Display 
 		           <select id="sequenceFormat" class="dropdown">
@@ -477,12 +658,17 @@
 		    </div>
 		</div>
 		
-		<div class='mainBlock' id='instruction'>
-		  <h3>Instructions</h3>
-          <p style="text-align:justify">To read or write:<br>1. Select one or more FEs from the list of FEs.
-          <br>2. Enter the address to read from/write to. Data is also required for a write.
-          <br>3. Select the format of your address and data (hex/dec/ascii).
-          <br>4. Select either "Write" or "Read" to finish your manual command.
+		<div class='mainBlock' id='progressBarOuter'>
+		  <div id='progressBarInner'>
+		    <center><h4>Macro Running...</h4></center>
+			<div id="macroRunningProgress">
+ 			   <div id="macroRunningBar">
+ 			     <center>
+ 			      <p id="macroRunningPercentage">5%</p>
+ 			     </center>
+ 			   </div>
+			</div>
+		  </div>
 		</div>
 		
 		<div class='mainBlock' id='history'>
@@ -491,15 +677,23 @@
 		</div>
 		
 		<div id="popupSaveMacro" class="popup">
-			<h2><center>Save your Macro</center></h2>
+			<center><h2>Save your Macro</h2></center>
 			<div>
 				<p><b>Macro Name</b></p>
-				<textarea id="macroName" cols="40" rows="1"></textarea>
+				<center><textarea id="macroName" cols="43" rows="1"></textarea></center>
 				<p><b>Macro Notes</b></p>
-				<textarea id="macroNotes" cols="40" rows="6"></textarea>
+				<center><textarea id="macroNotes" cols="43" rows="6"></textarea></center>
+				<div id="makeMacroPublic">
+				    <input type="checkbox" id="isMacroPublic"> Make accessible to public</input>
+				</div>
+				<div id="makeMacroLSBF">
+				    <input type="checkbox" id="isMacroLSBF"> Set LSB first for this macro</input>
+				</div>
 				<div class="buttongroup">
-					<button class="select" onclick="hidePopupSaveMacro()">Cancel</button>
-					<button class="select" onclick="saveAsMacro()">Save as Macro</button>
+					<center>
+						<button onclick="hidePopupSaveMacro()">Cancel</button>
+						<button onclick="saveAsMacro()">Save as Macro</button>
+					</center>
 				</div>
 			</div>
 		</div>
@@ -507,28 +701,139 @@
 			<h2><center>Macro Editor</center></h2>
 			<div id="macroEditContainer">
 				<p><b>Macro Name</b></p>
-				<textarea id="macroNameEdit" cols="45" rows="1"></textarea>
+				<center><textarea id="macroNameEdit"></textarea></center>
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
-				<div class="stayAtBottomOfParent">
-					<p><b>Macro Notes</b></p>
-					<textarea id="macroNotesEdit" cols="45" rows="3">Pre-fill here</textarea>
-					<div class="buttongroup">
-					  <center>
-						<button class="select" onclick="hidePopupEditMacro()">Cancel</button>
-						<button class="select" onclick="saveChangedMacro()">Save changes</button>
-					  </center>
-					</div>
+				<p><b>Macro Notes</b></p>
+				<center><textarea id="macroNotesEdit">Pre-fill here</textarea></center>
+				<div class="buttongroup" id="macroEditSettings">
+				  <center>
+			   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>
+					<button onclick="hidePopupEditMacro()">Cancel</button>
+					<button onclick="saveChangedMacro()">Save changes</button>
+				  </center>
 				</div>
 			</div>
 		</div>
-		<div id="popupRenameMacro" class="smallPopup">
-			<h2>New Name:</h2>
-		    <textarea id="RenameMacro" cols="20" rows="1"></textarea>
+		<div id="popupNameVariable" class="smallPopup">
+			<h4 id="nameVariablePrompt">How would you like to name this variable?</h4>
+		    <center><textarea id="nameVariable" cols="20" rows="1"></textarea></center>
 		    <div class="buttongroup">
 			  <center>
-				<button class="select" onclick="hidePopupRenameMacro()">Cancel</button>
-				<button class="select" onclick="renameMacro()">Save</button>
+			  	<button id="popupNameVariableYesButton">Yes</button>
+				<button id="popupNameVariableCancelButton">Cancel</button>
+				<button id="popupNameVariableSaveButton"">Save</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupClearAllConfirm" class="smallPopup">
+			<h4>You will be clearing macro sequence. Do you wish to continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="clearAll(this)">Yes, please</button>
+				<button onclick="hideSmallPopup(this)">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupClearHistoryConfirm" class="smallPopup">
+		    <h4>You will be clearing command history. Do you wish to continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="clearHistory(this)">Yes, please</button>
+				<button onclick="hideSmallPopup(this)">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupAskForVariableValue" class="smallPopup">
+		    <h4 id="assignValuePrompt">What value would you assign to variable <span id="variableNameAtRunTime" class="red"></span>?</h4>
+		    <center><textarea id="valueAtRunTime" cols="20" rows="1"></textarea></center>
+		    <div class="buttongroup">
+			  <center>
+				<button id="popupAskForVariableValueContinue">Continue</button>
+				<button onclick="hideSmallPopup(this);isMacroRunning=false">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupDeleteMacroConfirm" class="smallPopup">
+			<h4>You are deleting <span id="macroNameForDelete" class="red"></span>. Do you wish to continue?</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button id="popupDeleteMacroConfirmYes">Yes, please</button>
+				<button id="popupDeleteMacroConfirmCancel">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupNoEditPermission" class="smallPopup">
+			<h4>You have no permission to edit public macros</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupNoDeletePermission" class="smallPopup">
+			<h4>You have no permission to delete public macros</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupIllegalNaming" class="smallPopup">
+			<h4>Macro name can only contain alphanumeric and underscore</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupIllegalInput" class="smallPopup">
+			<h4>Found illegal characters in the following field: </h4>
+			<h4 id="illegalInputValue"></h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+	    <div id="popupIllegalEdit" class="smallPopup">
+			<h4>Address/data field can only be a number</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+	    <div id="popupEmptyInput" class="smallPopup">
+			<h4>You have one or more empty address/data field(s)</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupIllegalNotes" class="smallPopup">
+			<h4>Macro notes cannot contain "#", "@" or ".."</h4>
+		    <div class="buttongroup">
+			  <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupMacroAlreadyExists" class="smallPopup">
+			<h4><span id="duplicateName" class="red"></span> already exists. Do you wish to overwrite?</h4>
+		    <div class="buttongroup">
+		      <center>
+				<button id="popupMacroAlreadyExistsOverwrite">Yes, please</button>
+				<button id="popupMacroAlreadyExistsCancel">Cancel</button>
+			  </center>
+			</div>
+		</div>
+		<div id="popupMacroEditDuplicateName" class="smallPopup">
+			<h4><span id="duplicateNameEdit" class="red"></span> already exists. Please enter another name.</h4>
+		    <div class="buttongroup">
+		      <center>
+				<button onclick="hideSmallPopup(this)">Okay</button>
 			  </center>
 			</div>
 		</div>
@@ -538,9 +843,6 @@
 	        <a href="#" class="context-menu__link" data-action="Edit"> Edit Macro</a>
 	      </li>
 	      <li class="context-menu__item">
-	        <a href="#" class="context-menu__link" data-action="Rename"> Rename Macro</a>
-	      </li>
-	      <li class="context-menu__item">
 	        <a href="#" class="context-menu__link" data-action="Delete"> Delete Macro</a>
 	      </li>
 	      <li class="context-menu__item">
@@ -548,6 +850,9 @@
 	      </li>
 	      <li class="context-menu__item">
 	        <a href="#" class="context-menu__link" data-action="End"> Clone to end of sequence</a>
+	      </li>
+	      <li class="context-menu__item">
+	        <a href="#" class="context-menu__link" data-action="Export"> Export Macro to C++ file</a>
 	      </li>
 	    </ul>
 	  </nav>

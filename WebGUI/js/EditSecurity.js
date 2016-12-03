@@ -23,13 +23,6 @@ var selectedtargetBlue;
 
 
 
-
-
-
-
-
-
-
 function init(){
 	console.log("init()");
 
@@ -42,7 +35,7 @@ function init(){
 	state_= document.getElementById("state");
 	state_.innerHTML = "Loading...";
 
-	var setSelection=setTimeout(makeServerRequest, 4000);
+	var setSelection=setTimeout(makeServerRequest, 1000);
 }
 
 
@@ -109,7 +102,7 @@ function decreaseColor(){
 		--nonSelectedGreen;
 	if(nonSelectedBlue > 0)
 		--nonSelectedBlue;
-	console.log("Called");
+	//console.log("Called");
 	setDivGlow();
 	
 	if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) > 0)
@@ -174,15 +167,15 @@ function showVisualSelection(){
 }
 
 function confirm(){
-	if(prompt("Are you sure? This will delete all use data. Type 15091420 to continue")==15091420)
-		if(confirm("I know exactly what I'm doing.")){
+	if(prompt("Are you sure? This will delete ALL user data. Type 15091420 to continue:")==15091420)
+		if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
 			setSecurity('ResetSecurityUserData');
 		}
 		else
-			alert("Mission aborted!");
+			alert("You did not type 'I Do.' Mission aborted!");
 
 	else
-		alert("Mission aborted!");
+		alert("You did not type the correct number. Mission aborted!");
 }
 
 function setSecurity(id){
@@ -212,7 +205,7 @@ function setSecurity(id){
 
 function makeServerRequest(data){
 	
-	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined, DesktopWizardContent.getSequence());
+	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined);
 }
 
 function restructure(){
@@ -232,7 +225,16 @@ function restructure(){
 
 var editSecurityHandler = function(req){
 	
+	if(!req || !req.responseText.length)
+	{
+		Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
+		selectedSecurityChoice_ = "";
+		showVisualSelection();
+		return;
+	}
 	
+	if(selectedSecurityChoice_ == "ResetSecurityUserData")
+		Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 	
 	selectedSecurityChoice_ = req.responseText; 
 	console.log(selectedSecurityChoice_);

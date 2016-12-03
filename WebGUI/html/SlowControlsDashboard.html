@@ -1,0 +1,2179 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>Slow Controls Dashboard</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(255,204,0);
+		    	overflow-x: hidden;
+	    		overflow-y: hidden;
+				transition: background-color .25s;
+			
+			}
+			
+			iframe{
+				padding: 0
+				border: 0px 0px 0px 0px;
+				frameBorder=0;
+				hspace=0;
+				vspace=0;
+				marginheight=0;
+				marginwidth=0;
+			}
+			
+			#clearDiv {
+				clear: both;
+			}
+			
+			
+			#fileBlock {
+				  border: none;
+				  marginheight = 0;
+				  transition: margin-left .25s;
+//		    	//transition: width 0.5s;
+//				  background: red; /* For browsers that do not support gradients */
+//				  background: -webkit-linear-gradient(left, red , yellow); /* For Safari 5.1 to 6.0 */
+//				  background: -o-linear-gradient(right, red, yellow); /* For Opera 11.1 to 12.0 */
+//				  background: -moz-linear-gradient(right, red, yellow); /* For Firefox 3.6 to 15 */
+//				  background: linear-gradient(to right, red , yellow); /* Standard syntax */
+			}
+			}				
+
+			#mainBlock {
+			    //transition: margin-left 10s;
+			  	transition: left .25s;
+				background-color: rgb(250,250,250);
+
+			}
+			.editMode {
+				background-color: rgba(255, 59, 48, 0.4);
+
+			}
+			
+			#editBlock {
+				transition-timing-function: ease-out;
+				transition: margin-bottom .5s;
+				-webkit-transition-timing-function: ease-out;
+				-webkit-transition: margin-bottom .5s;
+				overflow: hidden;
+				//background-color: rgb(200,0,0);
+			}
+			
+			.widgetCover{
+				z-index: 9;
+//			  	background-color: rgba(239, 28, 190, 0.6);
+
+			}
+			
+			.mainBlock {
+			    transition: background-color .25s;
+				position:absolute;
+
+			}
+			
+			.ghost-active {
+				display: block !important;
+			}
+
+			.ghost-select > span {
+				background-color: rgba(255, 45, 85, 0.6);
+			  	border: 1px solid #b20e8c;
+			  	width: 100%;
+			  	height: 100%;
+			  	float: left;
+			}
+
+
+			.ghost-select {
+				display: none;
+			  	z-index: 10;
+				position: absolute !important;
+			  	cursor: default !important;
+			}
+			
+
+			.cover {
+			    transition: background-color .25s;
+		        z-index: 4;
+				position:absolute;
+			}
+			
+			.action-required {
+				border: 10px solid rgb(255, 204, 0);
+			  	box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
+		  		-webkit-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);
+				-moz-box-shadow: 0px 10px 20px 10px rgba(0, 0, 0, 0.05) inset, 0px 0px 16px 10px rgba(255, 204, 0, 0.6);				
+			}
+			
+			
+			#addPVMenuDiv {
+				margin: auto;
+				position: absolute;
+				display: none;
+				height: auto;
+				width: 28%;
+				top: 30%;
+				left: 36%;
+				z-index: 32;
+
+				box-shadow: 1px 1px 2px #cfcfcf;
+				
+
+			}
+			
+			#addPVMenu {
+				position: relative;
+				top: 0px;
+				left: -1px;
+				height: 100%;
+				width: 100%;
+				background-color: rgba(178,178,178,0.9);
+				border: solid 2px rgba(0,0,0,0.5);
+				border-radius: 1px;
+				
+			}
+			
+			
+			#contextMenuDiv {
+				position: absolute;
+				z-index: 10;
+			}
+			
+			#hotkeyMenuDiv {
+				z-index: 10;	
+				margin: auto;
+				height: auto;
+				width: auto;
+				position: absolute;
+				top: 0px;
+				left: 0px;
+			    -webkit-animation-name: animatetop;
+			    -webkit-animation-duration: 0.4s;
+		    	-moz-animation-name: animatetop;
+		    	-moz-animation-duration: 0.4s;
+				animation-name: animatetop;
+			    animation-duration: 0.4s;
+			}
+			
+			.menu {
+				display: none;
+				position: absolute;
+			  	z-index: 10;
+				background-color: rgba(0, 0, 0, 0.7);
+				padding: 12px 0;
+				width: 240px;
+				border: solid 1px #dfdfdf;
+				box-shadow: 1px 1px 2px #cfcfcf;
+			}
+			.menu--active {
+			  display: block;
+			}
+			
+			.menu__items {
+				list-style: none;
+				margin: 0;
+				padding: 0;
+				background-color: transparent !important;
+
+			}
+
+			.menu__item {
+				display: block;
+				margin-bottom: 4px;
+			}
+
+			.menu__item:last-child {
+			  margin-bottom: 0;
+			}
+
+			.menu__link {
+			    display: block;
+			    padding: 4px 12px;
+			    color: #d3d3d3;
+			    text-decoration: none;
+				background-color: transparent;
+			}
+			
+			.menu__setting {
+				position:absolute;
+				right: 5px;
+				color: rgb(255, 59, 48);
+				//color: #ff0000;
+				width: 60%;
+				text-align: right;
+			}
+			
+			.menu__spacer {
+				width: 35%;
+				height: 100%;
+			}
+			
+			.menu__label {
+			    display: block;
+			    padding: 4px 12px;
+				color: rgba(0, 0, 0, 0.8) !important;
+				background-color: #d3d3d3 !important;
+			    text-decoration: none;
+				font-weight: bold;
+			}
+			.menu__link:hover {
+				color: rgba(0, 0, 0, 0.8) !important;
+				background-color: #d3d3d3 !important;
+			}
+			
+			.menu__button {
+				width: 100%;
+				background-color: rgba(0,0,0,0.6);
+				color: #fff;
+				font: bold "lucida grande", sans-serif;
+				padding: 3px 5px;
+				padding-top: 2.5%;
+				padding-bottom: 2.5%;
+				text-align: center;
+				border:none;
+			}
+			
+			.addPVMenuInput {
+				border-bottom: 1px solid rgba(0,0,0,0.5) !important;
+				color: rgba(0,0,0,0.8) !important;
+			}
+			
+			.hud {
+				z-index: 20;
+				//background-color: rgba(250, 250, 250, 0.8);
+				color: rgba(0, 0, 0, 0.8);
+				position: absolute;
+				left: 2%;
+				top: 2%;
+				height: 4%;
+				width: 20%;
+//				border-style: solid double;
+//				border-color: #d3d3d3;
+				text-align: left;
+				vertical-align: middle;
+
+			}
+			
+			#navigationBarDiv {
+				top: 0%;
+				left: 0%;
+			}
+			
+			#navigationMenu {
+				padding: 0px !important;
+			    margin: 0px;
+				list-style:none;
+			    font-family: "Lucida Sans Unicode", "Lucida Grande", Verdana, Arial, Helvetica, sans-serif; letter-spacing:-0.5px; font-size:13px;   
+			    text-shadow: 0 -1px 3px #202020;
+				top: 0%;
+				left: 0%;
+			    width:100%;
+				z-index: 15;			    
+			    -moz-border-radius:4px;
+			    -webkit-border-radius:4px;
+			    border-radius:4px;			    
+
+			}
+			 
+			#navigationMenu li {
+			    display:block; 
+				float:left; 
+				border-right:1px solid #5d5d5d; 
+				border-left:1px solid #929292; 
+				width:18%;
+				height:5%; 
+				border-bottom:1px solid #575757; 
+				border-top:1px solid #797979;
+				padding: 0px !important;
+			    margin: 0px;			 
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #787878), color-stop(0.5, #5E5E5E), color-stop(0.51, #707070), color-stop(1, #838383));
+			    background-image: -moz-linear-gradient(center bottom, #787878 0%, #5E5E5E 50%, #707070 51%, #838383 100%);
+			    background-color:#5f5f5f; 
+			}
+			 
+			#navigationMenu li:hover {
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+			    background-color:#383838; 
+			    
+			    -moz-box-shadow: inset 0 0 5px 5px #535353;
+			    -webkit-box-shadow: inset 0 0 5px 5px #535353;
+			    box-shadow: inset 0 0 5px 5px #535353;
+			}
+			 
+			#navigationMenu li:active {
+			    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #3F3F3F), color-stop(0.5, #383838), color-stop(0.51, #434343), color-stop(1, #555555));
+			    background-image: -moz-linear-gradient(center bottom, #3F3F3F 0%, #383838 50%, #434343 51%, #555555 100% );
+			    background-color:#383838; 
+			    
+			    -moz-box-shadow: inset 0 1px 2px 2px #000;
+			    -webkit-box-shadow: inset 0 1px 2px 2px #000;
+			    box-shadow: inset 0 1px 2px 2px #000;
+			}
+			 
+			#navigationMenu li a {
+			    color:white; 
+				text-decoration:none;
+				text-align:center; 
+				display:block; 
+				line-height:34px;
+				outline:none; 
+			}
+			 
+			
+			 
+			#navigationMenu li:first-child {
+			    -moz-border-radius:4px 0 0 4px;
+			    -webkit-border-radius:4px 0 0 4px;
+			    border-radius:4px 0 0 4px;
+			    
+			    border-left:none;
+			}
+			 
+			 
+			#navigationMenu li:last-child {
+			    -moz-border-radius:0 4px 4px 0;
+			    -webkit-border-radius:0 4px 4px 0;
+			    border-radius:0 4px 4px 0;
+			    border-right:none;   
+			    //width:124px;
+			}
+			 
+			#navigationMenu {
+				position:absolute;
+				left: 4.5%;
+				top: 1%;
+				display: none:
+			}
+			
+			.navigationMenu--active {
+				display: block;
+				z-index: 15;
+			    -webkit-animation: showMenu 1s;
+		     	-moz-animation: showMenu 1s;
+		     	animation: showMenu 1s;
+			}
+			
+			.editWidgetAttributesPopup-container {
+				position: absolute;
+				display: none;
+				z-index: 100;
+				top: 0%;
+				left: 10%;
+				background-color: rgba(0, 0, 0, 0.8);
+				border: 1px solid #888;
+			    width: 80%;
+				height: 80%;
+			    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+			    -webkit-animation-name: animatetop;
+			    -webkit-animation-duration: 0.4s;
+		    	-moz-animation-name: animatetop;
+		    	-moz-animation-duration: 0.4s;
+				animation-name: animatetop;
+			    animation-duration: 0.4s;
+			}
+			
+			.editWidgetAttributesPopup-header {
+				position: absolute;
+				top: 0%;
+				left: 0%;
+				height: 10%;
+				width: 100%;
+				background-color: rgba(48, 45, 45, 0.7);
+				
+			}
+			
+			.editWidgetAttributesPopup-body {
+				background-color: rgba(76, 76, 76, 0.7);
+				position: absolute;
+				top: 10%;
+				left: 20%;
+				height: 80%;
+				width: 80%
+				overflow-y: scroll;
+				overflow-x: hidden;
+
+			}
+
+			.editWidgetAttributesPopup-menu {
+				background-color: rgba(53, 53, 53, 0.3);
+				position: absolute;
+				top: 10%;
+				left: 0%;
+				height: 80%;
+				width: 20%;
+			}
+			
+			.editWidgetAttributesPopup-footer {
+				position: absolute;
+				top: 90%;
+				left: 0%;
+				width: 100%;
+				height:10%;
+				background-color: rgba(48, 45, 45, 0.7);
+
+			}
+			
+			.editableInput {
+				text-decoration: none;
+				background-color: transparent;
+				border: none;
+				padding: 0px;
+				margin: 0px;
+				outline: none;
+				color: rgba(211,211,211, 0.8);
+				width: 100%;
+				height: 90%;
+			}
+			
+
+			.editPopupButton {
+				color: #fff;
+				text-shadow: -1px 1px #666666;
+				background-color: #333333;
+				background-image: linear-gradient(top, #808080, #666666);
+				box-shadow: inset 0 0 0 1px #333333;
+				border: none;
+				border-radius: 5px;
+				height: 50%;
+				width: 15%;
+				position:absolute;
+				top: 25%;
+			}
+
+			.editPopupButton:hover,
+			.editPopupButton.hover {
+			  box-shadow: inset 0 0 0 1px #262626,0 5px 15px #191919;
+			}
+
+			.editPopupButton:active,
+			.editPopupButton.active {
+			  box-shadow: inset 0 0 0 1px #262626, inset 0 5px 30px #191919;
+			}
+			
+			.widgetPopupTable {
+				width: 100%;
+				border-spacing: 0px;
+				border-collapse: collapse;
+			}
+			
+			
+			tr.widgetPopupTable {
+				width: 100%;
+			}
+
+			tr.widgetPopupTable {
+			    background-color: rgba(154,154,154,0.8);
+			}					
+			
+			tr:nth-child(even).widgetPopupTable {
+			    background-color: rgba(198,198,198, 0.8);
+			}
+			td.widgetPopupTable {
+			    border: 1px solid rgba(154,154,154,0.8);
+			}
+
+	
+			
+			/* Animations */
+			@-webkit-keyframes animatetop {
+			    from {top: -300px; opacity: 0} 
+			    to {top: 1%; opacity: 1}
+			}
+			@-moz-keyframes animatetop {
+			    from {top: -300px; opacity: 0}
+			    to {top: 1%; opacity: 1}
+			}
+			@keyframes animatetop {
+			    from {top: -300px; opacity: 0}
+			    to {top: 1%; opacity: 1}
+			}
+			/* Fade in animation (Webkit only) */
+			@-webkit-keyframes showMenu {
+			    from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			@-moz-keyframes animatetop {
+				from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			@keyframes animatetop {
+				from { opacity: 0; top:-20px; }
+			    to   { opacity: 1; }
+			}
+			
+			
+		</style>
+		
+		
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/widgetLibrary.js"></script>
+
+		
+		<script>		
+			
+			
+		
+			//functions:			
+				//init()					
+				
+			//top-level scope (global) variables:
+			var pvList_ = [];
+			var elPointer_ = {};
+			var pagesList_ = [];
+			var fileBlock_ = {name:"", isHidden:false, el:""};// = ["fileBlock", false ];
+			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
+			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
+			var page_ = page_ || {}; //define the namespace
+			var refreshRate_ = -1;
+			var timerVariable_;
+			var UID_ = 0;
+			var timeToPoll_ = false;
+			var hiddenWidth_;
+			var unhiddenWidth_;
+			//BEGIN 
+			var xPos_;
+			var yPos_;
+			//END
+			//BEGIN Context Menu
+			var menuState_ = 0;
+			var menu_;
+			var menuDiv_;
+			var activeMenu_ = "menu--active";
+			//END Context Menu
+			var nav_;
+			var gridColor_;
+			var addPVMenuDiv_;
+			var addPVMenu_;
+			
+			page_.createPage = function(){
+				
+				this.widgets = {};
+				this.addPV = function(pv){
+					console.log("Reached " + pv);
+					
+				}
+				
+			}
+			//BEGIN Drag
+			var x_Pos_forDrag_;
+			var y_Pos_forDrag_;
+			var id_forDrag_;
+			var target_forDrag;
+			//END Drag		
+			hotkey_ = [];
+			var hud_;
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+
+			//init called once body has loaded
+			function init() {			
+				
+				Debug.log("init() was called");
+
+				fileBlock_.el = document.getElementById('fileBlock');//red
+				mainBlock_.el = document.getElementById('mainBlock');//yellow
+				editBlock_.el = document.getElementById('editBlock');//green
+
+				page_.createPage;
+				widgetLibrary.init;
+
+				fileBlock_.name = fileBlock_.el.id;
+				mainBlock_.name = mainBlock_.el.id;
+				editBlock_.name = editBlock_.el.id;
+				
+				mainBlock_.el.style.cursor = "grab";
+				mainBlock_.el.addEventListener("mousedown", startDrag, true);
+
+				
+				var datalist = document.getElementById("pvDatalist");//document.createElement("datalist");
+//				datalist.id = "pvDatalist";
+//				document.body.appendChild(datalist);
+				
+				//elPointer_[""] = document.getElementById("");
+				elPointer_["addPVMenu"] = document.getElementById("addPVMenu");
+				elPointer_["addPVMenuDiv"] = document.getElementById("addPVMenuDiv");
+				elPointer_["editWidgetAttributesPopup-body-pvlist"] = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				elPointer_["editWidgetAttributesPopup-body-attributes"] = document.getElementById("editWidgetAttributesPopup-body-attributes");
+				elPointer_["editWidgetAttributesPopup-body-macromaker"] = document.getElementById("editWidgetAttributesPopup-body-macromaker");
+				elPointer_["hotkeyMenuDiv"] = document.getElementById("hotkeyMenuDiv");
+				elPointer_["hotkeyMenuDiv"].style.display = "none";
+					
+				menuDiv_ = document.getElementById("contextMenuDiv");
+				menu_= document.getElementById("contextMenu");
+				menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
+				hud_ = document.getElementById("coordinatesHUD");
+				
+//				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
+//				addPVMenu_ = document.getElementById("addPVMenu");
+
+				
+				//console.log("editBlock_.hidden : " + editBlock_.hidden);
+				DesktopContent.XMLHttpRequest("Default?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
+				pagesList_ = "Loading";
+				//get frame and set some text to loading
+
+				DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", pvListReqHandler);
+
+				var fileFrame = document.createElement("iframe");
+				fileFrame.id = "fileFrame";
+				fileFrame.src = "/WebPath/html/SlowControlsDashboardFileTree.html";
+				fileFrame.style.height = "inherit";
+				fileFrame.style.width = "inherit";
+				fileBlock_.el.innerHTML = "";
+				fileBlock_.el.style.border = "0";
+				fileBlock_.el.appendChild(fileFrame);
+				fileBlock_.isHidden = true;
+				
+				var editFrame = document.createElement("iframe");
+				editFrame.id = "editFrame";
+				editFrame.src = "/WebPath/html/SlowControlsDashboardEdit.html";
+				editFrame.style.height = "inherit";
+				editFrame.style.width = "inherit";
+				editBlock_.el.innerHTML = "";
+				editBlock_.el.style.border = "0";
+				editBlock_.el.appendChild(editFrame);
+				
+				
+				//BEGIN JS Style
+				mainBlock_.el.style["background-color"] = "rgb(250, 250, 250)";
+				gridColor_ = "rgba(128, 128, 128, 0.3)"
+				toggleGrid(true);
+				console.log("*************************888888888888888888888888888888");
+				console.log(("-" + fileBlock_.el.style.width));
+				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
+				editBlock_.el.style.bottom = "-4000px";//hack because the edit page probably didnt load by now
+				backgroundCover_ = "rgba(87,87,87, 0.6)";
+				nav_ = document.getElementById("navigationMenu");
+				nav_.classList.add("navigationMenu--active");
+
+				//END JS Style 
+				
+				
+				window.onresize = redrawWindow;
+				redrawWindow(); //redraw window for first time
+			}	
+			function pagesReqHandler(req){
+				
+				pagesList_ = []; //overwrite the loading text
+
+				//console.log(req.responseText);
+				//console.log(DesktopContent.getXMLValue(req, "JSON"));
+				var pagesJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				for(var x in pagesJSON)
+				{
+					//console.log(pagesJSON[x]);
+					pagesList_.push(pagesJSON[x]);
+				}
+			
+			}
+
+			function pvListReqHandler(req){
+				//console.log(req.responseText);
+				var pvListJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log(pvListJSON);
+				var datalist = document.getElementById("pvDatalist");
+				datalist.innerHTML = "";
+				for (var x in pvListJSON)
+				{
+					//console.log(pvListJSON[x]);
+					pvList_.push(pvListJSON[x]);
+					var option = document.createElement("option");
+					option.value = pvListJSON[x];
+					datalist.appendChild(option);
+				}
+				
+				//console.log(pvList_);
+			}
+		
+			
+			function loadPageReqHandler(req) {
+				//Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+				//console.log(req.responseText);
+				toggleFileMenu();
+				var page = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log(page);
+				
+				page_.createPage;
+				page_.widgets = {};
+				clearBlock(mainBlock_.el);
+				
+				
+				for (var widget in page)
+				{
+					//console.log(page[widget]);
+					page_.widgets[widget] = page[widget];
+					
+					//BEGIN Determine how quickly we have to poll the server
+					for(var pv in page[widget].PVList)
+					{
+						if(page[widget].PVList[pv] > 0)
+						{
+							if(page[widget].PVList[pv] < refreshRate_)
+							{
+								refreshRate_ = page[widget].PVList[pv];
+								updateRefreshInterval();
+							}
+							else if(refreshRate_ <= 0)
+							{
+								refreshRate_ = page[widget].PVList[pv];
+								updateRefreshInterval();
+							}
+						} 
+					}
+					//END Determine how quickly we have to poll the server
+					drawWidget(widget, false, page[widget].x, page[widget].y, page[widget].size_x, page[widget].size_y);	
+				}
+				
+		    	pageOffSetX_ = 0;
+				pageOffSetY_ = 0;
+				redrawWindow();
+				turnOnWidgets();
+			}
+		
+			function pollServerHandlerFunction(req) {
+				//Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
+				var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+
+				if(serverResponse.message == "NOT_FOUND")
+				{
+					//console.log("Have to generate new UID!");
+					generateUID();
+					timeToPoll_ = true;
+				}
+				else
+				{
+
+					for(var pv in serverResponse)//have to use each pv and then loop through
+					{	
+						//console.log("pollServerHandlerFunction: pv" + pv);						
+						for (var widget in page_.widgets)
+						{
+							//console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
+							for(var dependendentPV in page_.widgets[widget].PVList)
+							{
+								//console.log(dependendentPV);
+								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
+								{
+									//console.log("Widget*************", widget, pv);
+									document.getElementById(widget).contentWindow.newValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			function generateUIDHandlerFunction(req) {
+				//Debug.log("generateUIDHandlerFunction() was called. Req: " + req.responseText);
+				var uid = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//console.log("New UID: " + uid.message);
+				//console.log("New UID: " + DesktopContent.getXMLValue(req, "JSON"));
+
+				if(uid.message != "-1")
+					UID_ = uid.message;
+				else
+				{
+					UID_ = "";
+					debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
+				}
+				
+				if(timeToPoll_)
+				{
+					timeToPoll_ = false;
+					pollServer();
+				}
+
+			}
+			
+			function settingsReqHandler(req) {
+				var settings = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				var id = DesktopContent.getXMLValue(req,"id");
+				
+				page_.widgets[id].el.contentWindow.setupPVs(settings);
+
+			}
+			
+			function handlerFunction(req) {
+				//Debug.log("handlerFunction() was called. Req: " + req.responseText);
+
+				var child1data = DesktopContent.getXMLValue(req,"child");
+				var child2data = DesktopContent.getXMLValue(req,"child2");
+				
+				Debug.log("--child1data:",child1data," --child2data:",child2data);
+				//block1El = document.getElementById('block1');
+				//block1.innerHTML = child1data;
+				
+			}
+			
+			function pollServer()
+			{
+				timeToPoll_ = false;
+				//Debug.log("pollServer");
+				//console.log("UID is ", UID_);
+				DesktopContent.XMLHttpRequest("Default?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
+
+			}
+			
+			function generateUID()
+			{
+				//Debug.log("GenerateUID");
+				//BEGIN Put all pvs in a JSON and send to server
+				var pvList = "";
+				//console.log("page: ", page_);
+				for (var widget in page_.widgets)
+				{
+					//console.log("generateUID: " +  page_.widgets[widget]);
+
+					for(var pv in page_.widgets[widget].PVList)
+					{
+						//console.log(pv);
+						pvList += pv + ",";
+					}
+				}
+				
+				//END Put all pvs in a JSON and send to server
+
+				DesktopContent.XMLHttpRequest("Default?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
+
+				
+			}
+			
+			function updateRefreshInterval()
+			{
+				console.log(refreshRate_);
+				window.clearInterval(timerVariable_);
+				timerVariable_ = setInterval(pollServer, 500);//refreshRate_);
+			}
+			
+			function loadPage(page)
+			{
+				DesktopContent.XMLHttpRequest("Default?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");	
+				
+			}
+			
+			
+			function setupWidget(id, parameters)
+			{
+				console.log("setting up widget!");
+				page_.widgets[id].loaded = "true";
+				page_.widgets[id].el = document.getElementById(id);
+				if(typeof page_.widgets[id].attributes == 'undefined')
+				{
+					page_.widgets[id].attributes = parameters;
+				}
+				else
+				{
+					compareAttributes(id, parameters);
+				}
+				var pvList = "";
+
+				for(var pv in page_.widgets[id].PVList)
+				{
+					pvList += pv + ",";
+				}
+				
+				console.log("******************************^^^^^^^^^^^^^^^^^^^^^" + pvList);
+				
+				DesktopContent.XMLHttpRequest("Default?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
+				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
+
+
+			}
+			
+			function addPVToWidget(pv, refreshRate, widgetID, fromAddPV)
+			{
+				if(fromAddPV){toggleAddPV();}
+				page_.widgets[widgetID].PVList[pv] = refreshRate;
+//				if(refreshRate > 0)
+//				{
+//					if(refreshRate < refreshRate_ || refreshRate_ <= 0)
+//					{
+//						refreshRate_ = refreshRate
+//					}
+//				} 
+				document.getElementById(widgetID).contentWindow.init();
+
+			}
+			
+			function compareAttributes(id, parameters)
+			{
+				var actionRequired = false;
+				
+				for(var attribute = 0; attribute < Object.keys(page_.widgets[id].attributes).length; attribute++)
+				{
+					if(Object.keys(parameters).indexOf(Object.keys(page_.widgets[id].attributes)[attribute]) == -1)
+					{
+						Debug.log("Attribute [" + Object.keys(page_.widgets[id].attributes)[attribute] + "] for " + page_.widgets[id].Display_Name + " is no longer required. No action required.", Debug.HIGH_PRIORITY);
+//						page_.widgets[id].attributes.splice(attribute, 1);
+					}
+
+				}
+				var attributesNew = {};
+				
+				for(attribute = 0; attribute < Object.keys(parameters).length; attribute++)
+				{
+					if(Object.keys(page_.widgets[id].attributes).indexOf(Object.keys(parameters)[attribute]) != -1)
+					{
+						attributesNew[Object.keys(parameters)[attribute]] = page_.widgets[id].attributes[Object.keys(parameters)[attribute]];
+					}
+					else 
+					{
+						actionRequired = true;
+						attributesNew[Object.keys(parameters)[attribute]] = 'undefined';
+						Debug.log("Attribute [" + Object.keys(parameters)[attribute] + "] for " + page_.widgets[id].Display_Name + " is now a required attribute. Action Required.", Debug.HIGH_PRIORITY);
+					}
+
+				}
+				page_.widgets[id].attributes = attributesNew;
+				if(actionRequired)
+					document.getElementById(id).className = "action-required";
+				
+			}
+			
+			function setupForDrawSelectionRectangle(id)
+			{
+				document.body.style.cursor = "crosshair";
+				mainBlock_.el.removeEventListener("mousedown", startDrag, true);
+				mainBlock_.el.addEventListener("mousedown", drawSelectionRectangle(id), false);
+			}
+			
+			//var drawSelectionRectangle = 
+			function drawSelectionRectangle (id) {
+				return function(event){
+					xPos_ = event.clientX;
+					yPos_ = event.clientY;
+					mainBlock_.el.removeEventListener("mousedown", arguments.callee, false); //Thanks Preston!
+					var selectionRectangle = document.getElementById("selectionRectangle");
+					selectionRectangle.style.top = event.clientY + "px";
+					selectionRectangle.style.left = event.clientX + "px";
+					selectionRectangle.style.width = "1px";
+					selectionRectangle.style.height = "1px";
+					selectionRectangle.style.display = "block";
+					mainBlock_.el.addEventListener("mousemove", redrawSelectionRectangle(), false);
+					mainBlock_.el.addEventListener("mouseup"  , stopdrawSelectionRectangle(id), false);
+				};
+				
+			};
+			
+			function redrawSelectionRectangle() {
+				return function(event){
+					var ghost = document.getElementById("selectionRectangle");
+					ghost.style.width = (event.clientX - xPos_) + "px";
+					ghost.style.height = (event.clientY - yPos_) + "px";
+				};
+			};
+			
+		//	var stopdrawSelectionRectangle = 
+				function stopdrawSelectionRectangle(id) {
+				return function(event) {			
+					mainBlock_.el.removeEventListener("mousemove", arguments.callee, false);
+					mainBlock_.el.removeEventListener("mouseup"  , arguments.callee, false);
+					document.body.style.cursor = "pointer";
+					document.getElementById("selectionRectangle").style.display = "none";
+					drawWidget(id, true, xPos_ - pageOffSetX_, yPos_ - pageOffSetY_, (event.clientX - xPos_), (event.clientY - yPos_));
+					turnOnWidgets();
+					mainBlock_.el.addEventListener("mousedown", startDrag, true);
+				};
+			};
+		
+			function drawWidget(widget, newWidget, x, y, width, height)
+			{
+				
+				var widgetFrame = document.createElement("iframe");
+			
+				if(newWidget)
+				{
+					if(typeof page_.widgets == 'undefined')
+					{
+						page_.widgets = [];
+					}
+					
+					widgetFrame.id = "widget" + Object.keys(page_.widgets).length;//page[widget].Display_Name;
+					if(typeof page_.widgets[widgetFrame.id] != 'undefined')
+					{
+						var pos = 0;
+						while(typeof page_.widgets[widgetFrame.id] != 'undefined')
+						{
+							widgetFrame.id = "widget" + (pos++);
+						}
+					}
+					
+					var widgetObject = [];
+					widgetObject.type = widget;
+
+					widgetObject.size_x = width;
+					widgetObject.size_y = height;
+					widgetObject.x = x;
+					widgetObject.y = y;
+					widgetObject.PVList = {};
+					widgetObject.attributes = {};
+					widgetObject.Display_Name = widgetFrame.id;
+					widgetObject.loaded = "false";
+					widget = widgetFrame.id
+					page_.widgets[widget] = widgetObject;
+					
+				}
+				else
+				{
+					widgetFrame.id = widget;//page[widget].Display_Name;
+				}	
+					//console.log("type: ", page[widget].type , " : ", widgetLibrary.typeToSrc[page[widget].type]);
+				
+				var containerDiv = document.createElement("div");
+				containerDiv.style.width = page_.widgets[widget].size_x + "px";
+				containerDiv.style.height = page_.widgets[widget].size_y + "px";
+				containerDiv.style.position = "absolute";
+				containerDiv.style.left = page_.widgets[widget].x + "px";
+				containerDiv.style.top = page_.widgets[widget].y + "px";
+				containerDiv.id = widgetFrame.id + "-container";
+				containerDiv.style["background-color"] = "rgba(0,0,0,0.7)";
+				containerDiv.style.zIndex = "5";
+				
+				var coverDiv = document.createElement("div");
+				coverDiv.className = "widgetCover";
+				coverDiv.style.width = page_.widgets[widget].size_x + "px";
+				coverDiv.style.height = page_.widgets[widget].size_y + "px";
+				coverDiv.style.position = "absolute";
+				coverDiv.style.left = "0px";
+				coverDiv.style.top = "0px";
+				coverDiv.id = widgetFrame.id + "-cover";
+				coverDiv.style.zIndex = "-5";
+
+				if(!editBlock_.isHidden) 
+					coverDiv.addEventListener("contextmenu", toggleContextMenuCaller(widgetFrame.id), true);//function(e){
+//					toggleContextMenu(e, widgetFrame.id);
+//				});
+				
+				coverDiv.addEventListener("mousedown", startDrag, true);
+
+
+				
+				
+				containerDiv.appendChild(coverDiv);
+				
+				widgetFrame.src = widgetLibrary.typeToSrc[page_.widgets[widget].type];
+				widgetFrame.style.border = "0";
+				widgetFrame.style.position = "absolute";
+				widgetFrame.innerHTML = page_.widgets[widget].Display_Name;
+				widgetFrame.width = page_.widgets[widget].size_x + "px";
+				widgetFrame.height = page_.widgets[widget].size_y + "px";
+				//BEGIN Mechanics for selecting what to display
+				widgetFrame.style.left = "0px"//.style.left = page_.widgets[widget].x + "px";
+				widgetFrame.style.top = "0px";//.top = page_.widgets[widget].y + "px";
+				
+				
+				
+				//END Mechanics for selecting what to display
+				page_.widgets[widget].el = widgetFrame;
+				console.log(page_.widgets[widget].el);
+				//select x and y
+				containerDiv.appendChild(widgetFrame);
+				mainBlock_.el.appendChild(containerDiv);
+//				document.getElementById(widget).window.addEventListener("mousemove", function(e){
+//					console.log("88888888888888888888888888888888888888");
+//					e.preventDefault();
+//					toggleContextMenu(e);
+//					});
+				//document.getElementById(widgetFrame.id).contentWindow.newWidget(page[widget].PVList);
+
+				toggleWidgetSelection(page_.widgets[widget].el);
+
+				document.getElementById(widget).contentWindow.newWidget;
+				
+			}
+			
+			function mouseoverEditBlock(e){
+				editBlock_.el.style.marginBottom = editBlock_.el.style.height;
+			}
+			
+			function mouseoutEditBlock(e){
+				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
+				editBlock_.el.style.marginBottom = 1.5 * hiddenWidth_ + "px";
+				editBlock_.el.style.marginBottom = hiddenWidth_ + "px";
+
+			}
+			
+
+			function toggleEditMode()
+			{
+				console.log(window.innerWidth);
+				console.log()
+				editBlock_.el.style.bottom = "-" + parseInt(editBlock_.el.style.height) + "px"; 
+				var covers = document.getElementsByClassName("widgetCover");
+
+				
+				if(editBlock_.isHidden)
+				{
+					//window.clearInterval(timerVariable_);
+					mainBlock_.el.classList.add("editMode");
+//					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
+					editBlock_.el.style.zIndex = "50";
+					editBlock_.el.style.marginBottom = hiddenWidth_ + "px";//editBlock_.el.style.width;
+					editBlock_.el.addEventListener("mouseover", mouseoverEditBlock, true);
+					editBlock_.el.addEventListener("mouseleave", mouseoutEditBlock, true);
+				//	mainBlock_.el.style.display = "none";
+					editBlock_.isHidden = false;
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("contextmenu", toggleContextMenuCaller(widget), true);
+						document.getElementById(widget).contentWindow.init();
+					}
+					if(covers.length > 0)
+					{
+						for(widgetCover in covers)
+						{
+							console.log(widgetCover);
+							console.log(covers);
+							covers[widgetCover].style["z-index"] = "9";
+						}
+					}
+				}
+				else
+				{
+					timerVariable_ = setInterval(pollServer, refreshRate_);
+					mainBlock_.el.classList.remove("editMode");
+					editBlock_.el.style.marginBottom = "0px";
+					editBlock_.el.style.zIndex = "30";
+					editBlock_.isHidden = true;
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("contextmenu", toggleContextMenu, true);
+					}
+					if(covers.length > 0)
+					{
+						for(widgetCover in covers)
+						{
+							covers[widgetCover].style["z-index"] = "-9";
+						}
+					}
+					//dissable all right clicks
+					//updateRefreshInterval();
+					turnOnWidgets();
+					toggleWidgetSelection();
+//					editCover.style["z-index"] = "4";
+				}
+			}
+			
+			function toggleContextMenuCaller(id) {
+				 return function(event) {
+					 if(!editBlock_.isHidden)
+					 {
+						 event.preventDefault();
+					 	toggleContextMenu(event, id);
+					 }
+				};
+			};
+			
+			function toggleContextMenu(e, id)
+			{	
+				e.preventDefault();
+
+				
+				if(menuState_ !== 1)
+				{
+					menu_.style.left = e.clientX + "px";
+					menu_.style.top = e.clientY + "px";
+					menu_.setAttribute("widgetID", id);
+					menuState_ = 1;
+					menu_.classList.add(activeMenu_);
+				}
+			}
+//				var cover = document.getElementById("coverDiv");
+//				editBlock_.el.style.right = window.innerWidth + parseInt(editBlock_.el.style.width) + "px";
+//				
+//				if(fileBlock_.isHidden)
+//				{
+//					editBlock_.isHidden = false;
+//					editBlock_.el.style.zIndex = "150";
+//					cover.style.backgroundColor = "rgba(0,0,0,0.1)";
+//					//cover.onmouseover=function(){openFileMenu()};
+//					//mainBlock_.el.style.left = fileBlock.el.style.width;
+////					mainBlock_.el.style.display = "none";
+//					editBlock_.el.style.marginRight = editBlock.el.style.width;
+//
+//				}
+//				else
+//				{
+//					editBlock_.isHidden = true;
+//					editBlock_.el.style.zIndex = "30";
+//					editBlock_.el.style.marginRight = "0px";
+////					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
+//					cover.style.backgroundColor = "rgba(0,0,0,0)";
+//
+//					//fileWidth = hiddenWidth;
+//					//fileBlock_.el.innerHTML = "";
+//					//fileBlock_.el.style["background-color"] = "transparent";
+//					//mainWidth += unhiddenWidth - hiddenWidth;
+//					//mainLeft = fileLeft + ;
+//
+//				}
+//				
+//			}
+			
+			function toggleContextMenuOff(e)
+			{
+				if(menuState_ !== 0)
+				{
+					menuState_ = 0;
+					menu_.classList.remove(activeMenu_);
+				}
+			}
+			
+			
+			function toggleHotkeyMenu()
+			{
+
+				var rectangle = document.getElementById("menuli2").getBoundingClientRect();
+				if((elPointer_["hotkeyMenuDiv"].style.display).indexOf("block") != -1)
+				{
+					elPointer_["hotkeyMenuDiv"].style.display = "none";
+				}
+				else
+				{
+					elPointer_["hotkeyMenuDiv"].style.display = "block";
+					elPointer_["hotkeyMenuDiv"].style.left = rectangle.left + "px";
+					elPointer_["hotkeyMenuDiv"].style.top = rectangle.top + "px";
+				}
+			}
+			
+			function toggleAddPV()
+			{
+				console.log(menu_.getAttribute("widgetID"));
+				
+				if(elPointer_["addPVMenuDiv"].style.display == "none")
+				{
+					toggleContextMenuOff();
+					elPointer_["addPVMenuDiv"].setAttribute("widgetID", menu_.getAttribute("widgetID"));
+					elPointer_["addPVMenuDiv"].style.display = "block";
+					elPointer_["addPVMenu"].style.display = "block";
+				}
+				else
+				{
+					elPointer_["addPVMenuDiv"].style.display = "none"
+					elPointer_["addPVMenu"].style.display = "none";
+
+				}
+			}
+			
+			function toggleFileMenu()
+			{
+
+				var coverDiv = document.getElementById("coverDiv")
+				var cover = document.getElementById("mainBlockCoverDiv");
+				cover.style.width = coverDiv.style.width;
+				cover.style.height = coverDiv.style.height;
+				cover.style.x = coverDiv.style.x;
+				cover.style.y = coverDiv.style.y;
+				fileBlock_.el.style.left = ("-" + fileBlock_.el.style.width)
+				
+				if(fileBlock_.isHidden)
+				{
+					nav_.classList.remove("navigationMenu--active");
+					nav_.style.display = "none";
+					editBlock_.isHidden = true;
+					fileBlock_.isHidden = false;
+					fileBlock_.el.style.zIndex = "150";
+					console.log("Hovering!");
+					cover.style.backgroundColor = backgroundCover_;//"rgba(0,0,0,0.4)";
+					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
+					//cover.onmouseover=function(){openFileMenu()};
+					//mainBlock_.el.style.left = fileBlock.el.style.width;
+					//mainBlock_.el.style.display = "none";
+					//mainBlock_.el.zIndex = "-100";
+					editBlock_.el.style.display = "none";
+					fileBlock_.el.style.marginLeft = fileBlock_.el.style.width;
+
+				}
+				else
+				{
+					fileBlock_.isHidden = true;
+					fileBlock_.el.style.zIndex = "30";
+					fileBlock_.el.style.marginLeft = "0px";
+//					mainBlock_.el.style.left = "0px";
+//					fileBlock_.el.onmouseover = function(){redrawWindow(null, true);};
+					cover.style.backgroundColor = "rgba(0,0,0,0)";
+					mainBlock_.el.style.display = "block";
+					editBlock_.el.style.display = "block";
+					fileBlock_.el.style.zIndex = "-1";
+					cover.style.zIndex = parseInt(fileBlock_.el.style.zIndex) -1;
+					nav_.classList.add("navigationMenu--active");
+					nav_.style.display = "block";
+					//fileWidth = hiddenWidth;
+					//fileBlock_.el.innerHTML = "";
+					//fileBlock_.el.style["background-color"] = "transparent";
+					//mainWidth += unhiddenWidth - hiddenWidth;
+					//mainLeft = fileLeft + ;
+
+				}
+			}
+			
+
+			
+			function editWidgetAttributesOpen()
+			{
+				document.getElementById("editWidgetAttributesPopup-container").style.display = "block";
+				toggleContextMenuOff();
+				
+				
+				//BEGIN HEADER
+				var header = document.getElementById("editWidgetAttributesPopup-header");
+				header.innerHTML = "";
+				var title = document.createElement("input");
+				title.setAttribute("type", "text")
+				title.value = page_.widgets[menu_.getAttribute("widgetID")].Display_Name;
+				title.onchange = function(){setWidgetDisplayName(menu_.getAttribute("widgetID") , this.value);};
+				title.className = "editableInput";
+//				title.style.width = "100%";
+//				title.style.height = "90%";
+				header.appendChild(title);
+				console.log(header.clientHeight);
+				var fontsize = 5;
+				while(fontsize < (0.6 * header.clientHeight))
+				{
+					title.style.fontSize = ++fontsize + "px";
+				}
+				//END HEADER
+				//BEGIN PVTable 
+				var popupBody = document.getElementById("editWidgetAttributesPopup-body-pvlist");
+				popupBody.innerHTML = "";
+				var table = document.createElement("table");
+				table.id = "widgetPVTable";
+				table.className = "widgetPopupTable";
+				table.style.width = "100%";
+				table.style.height = "100%";
+				var thead = document.createElement("thead");
+				var trhead = document.createElement("tr");
+				var thPV = document.createElement("th");
+//				thPV.className = "widgetPopupTable";
+				thPV.innerHTML = "PV Name";
+				thPV.style.width = "75%";
+				var thRefresh = document.createElement("th");
+//				thRefresh.className = "widgetPopupTable";
+				thRefresh.innerHTML = "Refresh Rate";
+				thRefresh.style.width = "25%";
+				trhead.appendChild(thPV);
+				trhead.appendChild(thRefresh);
+				thead.appendChild(trhead);
+				table.appendChild(thead);
+				var tbody = document.createElement("tbody");
+				tbody.id = "widgetPVTableBody";
+				table.appendChild(tbody);
+				elPointer_["editWidgetAttributesPopup-body-pvlist"].appendChild(table);
+
+				for(var pv in page_.widgets[menu_.getAttribute("widgetID")].PVList)
+				{
+					editWidgetAttributesaddRowPVList(pv, page_.widgets[menu_.getAttribute("widgetID")].PVList[pv], "widgetPVTableBody", "pvDatalist");
+				}				
+
+				for(var i = 0; i < 15; i++)
+				{
+					editWidgetAttributesaddRowPVList("", "", "widgetPVTableBody", "pvDatalist");
+				}
+				//END PVTable
+				
+				//BEGIN AttributesTable 
+				
+				var attributeBody = elPointer_["editWidgetAttributesPopup-body-attributes"];
+				attributeBody.innerHTML = "";
+				var attributeTable = document.createElement("table");
+				attributeTable.id = "widgetAttributesTable";
+				attributeTable.className = "widgetPopupTable";
+				attributeTable.style.width = "100%";
+				attributeTable.style.height = "100%";
+				var thead = document.createElement("thead");
+				var trhead = document.createElement("tr");
+				var thParameter = document.createElement("th");
+				thParameter.className = "widgetPVTable";
+				thParameter.innerHTML = "Parameter";
+				thParameter.style.width = "40%";
+				var thParameterValue = document.createElement("th");
+				thParameterValue.className = "widgetPopupTable";
+				thParameterValue.innerHTML = "Value";
+				thParameterValue.style.width = "60%";
+				trhead.appendChild(thParameter);
+				trhead.appendChild(thParameterValue);
+				thead.appendChild(trhead);
+				attributeTable.appendChild(thead);
+				var tbody = document.createElement("tbody");
+				tbody.id = "widgetAttributesTableBody";
+				attributeTable.appendChild(tbody);
+				elPointer_["editWidgetAttributesPopup-body-attributes"].appendChild(attributeTable);
+
+				console.log(page_.widgets[menu_.getAttribute("widgetID")].attributes);
+				
+				for(var attribute in page_.widgets[menu_.getAttribute("widgetID")].attributes)
+				{
+					console.log(attribute);
+					editWidgetAttributesaddRowPVList(attribute, page_.widgets[menu_.getAttribute("widgetID")].attributes[attribute], "widgetAttributesTableBody", "");
+				}
+				
+				//END   AttributesTableTable
+
+				showeditWidgetAttributesPopupBody("EditPVlist");
+
+				//BEGIN FOOTER
+				var footer = document.getElementById("editWidgetAttributesPopup-footer");
+				footer.innerHTML = "";
+				var closeButton = document.createElement("button");
+				closeButton.className = "editPopupButton";
+				closeButton.style.left = "80%";
+				closeButton.innerHTML = "Close";
+				closeButton.onclick = function(){editWidgetAttributesClose();};
+				footer.appendChild(closeButton);
+				var saveButton = document.createElement("button");
+				saveButton.className = "editPopupButton";
+				saveButton.style.left = "60%";
+				saveButton.innerHTML = "Save";
+				saveButton.onclick = function(){editWidgetAttributesSave();};
+				footer.appendChild(saveButton);				
+				//END FOOTER
+				
+
+			}
+			
+			
+			function editWidgetAttributesClose()
+			{
+				document.getElementById("editWidgetAttributesPopup-container").style.display = "none";
+
+			}
+			
+			function editWidgetAttributesSave()
+			{
+				if(elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display == "table-row"){
+					page_.widgets[menu_.getAttribute("widgetID")].PVList = {};
+					var table = document.getElementById("widgetPVTable");
+					for(var tr = 0; tr < table.getElementsByTagName("tr").length; tr++)
+					{
+	//					table.getElementsByTagName("tr")[tr]
+						if(table.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+						{
+							var pv = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
+							if(pv != "")
+							{
+								console.log(pv);
+								var refreshRate = table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value;
+								console.log(refreshRate);
+								if(refreshRate == "")
+									refreshRate = -1;
+								
+								page_.widgets[menu_.getAttribute("widgetID")].PVList[pv] = refreshRate; 
+								console.log(pv);
+								addPVToWidget(pv, refreshRate, menu_.getAttribute("widgetID"));
+							}
+							//console.log(table.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value);
+						}
+						//page_.widgets[menu_.getAttribute("widgetID")].PVList[] = 
+					}
+				}
+				else if(elPointer_["editWidgetAttributesPopup-body-attributes"].style.display == "table-row")
+				{
+					var actionRequired = false;
+					page_.widgets[menu_.getAttribute("widgetID")].attributes = {};
+					var attributesTable = document.getElementById("widgetAttributesTable");
+					console.log(attributesTable);
+					for(var tr = 0; tr < attributesTable.getElementsByTagName("tr").length; tr++)
+					{
+						console.log(tr);
+						if(attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td").length > 0)
+						{
+							var parameter = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[0].getElementsByTagName("input")[0].value;
+							if(parameter != "")
+							{
+								var value = attributesTable.getElementsByTagName("tr")[tr].getElementsByTagName("td")[1].getElementsByTagName("input")[0].value;							
+								console.log(" a: " + parameter, value);
+								if(value == 'undefined')
+									actionRequired = true;
+								
+								page_.widgets[menu_.getAttribute("widgetID")].attributes[parameter] = value; 
+							}
+						}
+					}
+					if(actionRequired)
+						document.getElementById(menu_.getAttribute("widgetID")).className = "action-required";
+					else
+						document.getElementById(menu_.getAttribute("widgetID")).className = "";
+				}
+			}
+			
+			function editWidgetAttributesaddRowPVList(keyParam, valueParam, tablebody, list)
+			{
+				var tbody = document.getElementById(tablebody);
+				var dummytr = document.createElement("tr");
+				dummytr.className = "widgetPopupTable";
+				var dummyts = document.createElement("td");
+				dummyts.className = "widgetPopupTable";
+				var keyField = document.createElement("input");
+				keyField.setAttribute("type", "text")
+				keyField.className = "editableInput";
+				keyField.style.color = "black";
+				keyField.setAttribute("list", list);
+				keyField.value = keyParam;
+				keyField.onchange = function(){checkIfMoreRowsNeeded(this); };
+				dummyts.appendChild(keyField);
+				var dummyts2 = document.createElement("td");
+				dummyts2.className = "widgetPopupTable";
+				var valueField = document.createElement("input");
+				valueField.setAttribute("type", "text")
+				valueField.className = "editableInput";
+				valueField.style.color = "black";
+				valueField.value = valueParam;
+				dummyts2.appendChild(valueField);
+				dummytr.appendChild(dummyts);
+				dummytr.appendChild(dummyts2);
+				dummytr.style["max-height"] = "10%";
+				tbody.appendChild(dummytr);
+				
+			}
+			
+			function checkIfMoreRowsNeeded(inputEl)
+			{
+				console.log(inputEl.parentElement.parentElement.parentElement.lastElementChild);
+				if(inputEl.parentElement.parentElement == inputEl.parentElement.parentElement.parentElement.lastElementChild)
+				{
+					editWidgetAttributesaddRowPVList("", "");
+				}
+			}
+			
+			function setWidgetDisplayName(widget, displayName)
+			{
+				page_.widgets[widget].Display_Name = displayName;
+			}
+			
+			function showeditWidgetAttributesPopupBody(body)
+			{
+				elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "none";
+				elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "none";
+				elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "none";
+				
+				if (body == "EditAttributes")
+				{
+					console.log("EditAttributes");
+					elPointer_["editWidgetAttributesPopup-body-attributes"].style.display = "table-row";
+
+				}
+				else if (body == "Macromaker")
+				{
+					elPointer_["editWidgetAttributesPopup-body-macromaker"].style.display = "table-row";
+				}
+				else
+				{
+					elPointer_["editWidgetAttributesPopup-body-pvlist"].style.display = "table-row";
+
+				}
+
+			}
+			
+			function sleep(miliseconds) 
+			{
+				   var currentTime = new Date().getTime();
+				   while (currentTime + miliseconds >= new Date().getTime()) {
+				   }
+			}
+			
+			function clearBlock(el)
+			{
+				for(var child = 0; child < el.childNodes.length; child++)
+				{
+					if(child.id == "contextMenuDiv"){}
+					else if(child.id == "selectionRectangle"){}
+					else 
+					{
+						el.removeChild(el.childNodes[child]);
+					}
+				}	
+			}
+			
+			function toggleGrid(on)
+			{
+				if(on)
+				{
+					mainBlock_.el.style["background-image"] = "linear-gradient(to right, " + gridColor_ + " 1px, transparent 1px), linear-gradient(" + gridColor_ + " 1px, transparent 1px)";//, linear-gradient(to right, rgba(128, 128, 128, 0.5) 10px, transparent 10px)";//, linear-gradient(rgba(128, 128, 128, 0.5) 10px, transparent 10px)";
+					mainBlock_.el.style["background-size"]  =  "10px";
+				}
+				else
+				{
+					mainBlock_.el.style["background-image"] = "";
+					mainBlock_.el.style["background-size"]  =  "";
+				}
+			}
+			
+			function setBackgroundColor(color)
+			{
+				mainBlock_.el.style["background-color"] = color;
+			}
+			
+			function setGridColor(color, on)
+			{
+				gridColor_ = color;
+				toggleGrid(on);
+			}
+			
+			function setHotkey(key)
+			{
+				hotkey_[key] = [pageOffSetX_, pageOffSetY_];
+				document.getElementById(("hotkey" + key)).innerHTML = pageOffSetX_ + "x" + pageOffSetY_;
+				document.getElementById(("hotkey" + key)).style.color = "#00cc00";
+			}
+			
+			keyMap_ = [];
+			
+			window.onkeyup = window.onkeydown = function(e){
+			    //e = e || event; // to deal with IE
+				keyMap_[e.keyCode]  = e.type == 'keydown';
+				handleKeys(e);
+			 }
+			 
+			function handleKeys(event) {
+			    //var code = e.keyCode ? e.keyCode : e.which;
+				event.clientX = 0;
+				event.clientY = 0;
+				
+			    if (event.shiftKey && keyMap_[82])//Shift + r(eset)
+			    { 
+			    	resetToOrigin();
+				}
+			    else if(event.shiftKey && (keyMap_[48] || keyMap_[49] || keyMap_[50] || keyMap_[51] || keyMap_[52] || keyMap_[53] || keyMap_[54] || keyMap_[55] || keyMap_[56] || keyMap_[57]))
+			    {
+			    	pageOffSetX_ = hotkey_[event.keyCode][0];
+					pageOffSetY_ = hotkey_[event.keyCode][1];
+					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
+					redrawWindow();
+			    }
+			    else if(event.shiftKey && keyMap_[72]) //Shift + h(otkey)
+			    {
+			    	toggleHotkeyMenu();
+			    }
+			    else if(event.shiftKey && keyMap_[88])//Shift Key + X(cut)
+			    {
+			    	console.log(targetElement_);
+			    	cutWidget(targetElement_);
+			    }
+			    else if(event.shiftKey && keyMap_[86])//Shift Key + v(paste)
+			    {
+			    	pasteWidget();
+			    }
+			    else if(event.shiftKey && keyMap_[79])//Shift Key + o(pen)
+			    {
+			    	toggleFileMenu();
+			    }
+			    else if(event.shiftKey && keyMap_[69])//Shift Key + e(dit)
+			    {
+			    	toggleEditMode();
+			    }
+			    
+			    if(keyMap_[38])//up arrow
+			    {
+			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, -1);}
+			    	else {pageOffSetY_+=3; redrawWindow(); turnOnWidgets();}	
+					
+			    }
+			    if(keyMap_[40])//down arrow
+			    {
+			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 0, 1);}
+			    	else {pageOffSetY_-=3; redrawWindow(); turnOnWidgets(); } 
+						
+			    }
+			    if(keyMap_[37])//left arrow
+			    {
+			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, -1, 0);}
+			    	else { pageOffSetX_+=3; redrawWindow(); turnOnWidgets(); }
+						
+			    }
+			    if(keyMap_[39])// right arrow
+			    {
+			    	if(typeof targetElement_ != 'undefined') {translateWidget(targetElement_, 1, 0)}
+			    	else { pageOffSetX_-=3; redrawWindow(); turnOnWidgets();	}
+					
+			    }	
+			    
+			};
+			
+			var resetToOriginInterval_;
+			
+			function resetToOrigin()
+			{
+				resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
+			}
+			
+			function moveToOrigin()
+			{
+				console.log(pageOffSetX_, pageOffSetY_);
+				if(pageOffSetX_ == 0 && pageOffSetY_ == 0)
+				{
+					return;
+					//clearInterval(resetToOriginInterval_)
+				} else 
+				{
+					if(pageOffSetX_ > 0)
+						pageOffSetX_--;
+					else if(pageOffSetX_ < 0)
+						pageOffSetX_++;
+					
+					if(pageOffSetY_ > 0)
+						pageOffSetY_--;
+					else if(pageOffSetY_ < 0)
+						pageOffSetY_++;
+					
+					redrawWindow();
+					turnOnWidgets();
+					resetToOriginInterval_ = setTimeout(moveToOrigin, 0.1);
+
+
+				} 	
+			}
+			
+			function deleteWidget()
+			{
+				var widgetCover = document.getElementById(menu_.getAttribute("widgetID") + "-cover")
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				mainBlock_.el.removeChild(widgetCover.parentNode);
+				toggleContextMenuOff();
+			}
+			
+			var cutWidget_;
+			var cutWidgetName_;
+			
+			function cutWidget(widgetCover)
+			{
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el
+				cutWidget_ = page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				console.log("here");
+//				console.log(widgetCover.parentNode.getElementsByTagName("iframe")[0].id);
+				console.log(page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id].el);
+				cutWidgetName_ = widgetCover.parentNode.getElementsByTagName("iframe")[0].id;
+				delete page_.widgets[widgetCover.parentNode.getElementsByTagName("iframe")[0].id];
+				mainBlock_.el.removeChild(widgetCover.parentNode);
+			}
+			
+			function pasteWidget()
+			{
+				if(typeof page_.widgets[cutWidgetName_] == 'undefined')
+				{
+					console.log("it was undefined");
+					cutWidget_.x = parseInt(cutWidget_.x) - pageOffSetX_;
+					cutWidget_.y = parseInt(cutWidget_.y) - pageOffSetY_;
+					page_.widgets[cutWidgetName_] = cutWidget_;
+					drawWidget(cutWidgetName_, false);
+				}
+				else
+				{
+					console.log("it wasn't undefined");
+					var widgetNumber = 0;
+					var name = "widget";
+					console.log((name + widgetNumber));
+					while(typeof page_.widgets[(name + widgetNumber)] != 'undefined')
+					{
+						widgetNumber++;
+					}
+					cutWidget_.x = parseInt(cutWidget_.x) + pageOffSetX_;
+					cutWidget_.y = parseInt(cutWidget_.y) + pageOffSetY_;
+	
+					page_.widgets[(name + widgetNumber)] = cutWidget_;
+					
+					drawWidget((name + widgetNumber), false);
+				}
+				redrawWindow();
+				turnOnWidgets();
+			}
+			
+			function toggleWidgetSelection(target)
+			{
+				if(typeof targetElement_ != 'undefined'  && typeof targetElement_.parentNode != 'undefined')
+				{
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "block";
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = "none";
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "0px";			
+				}
+				
+				targetElement_ = target;
+				if(typeof targetElement_ != 'undefined' && typeof targetElement_.parentNode != 'undefined')
+				{
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = " thin dashed";
+					targetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
+				}	
+			}
+			
+			var pageOffSetX_ = 0;
+			var pageOffSetY_ = 0;
+			var dragLockout_ = false;
+			var targetElement_ = 'undefined';
+			var dragTargetElement_;
+			var elementOffSetWhileDraggingandMovingWithArrowKeys_X = 0;
+			var elementOffSetWhileDraggingandMovingWithArrowKeys_Y = 0;
+
+			function startDrag(e)
+			{
+				if(!dragLockout_)
+				{
+					dragTargetElement_ = e.target;
+					
+					x_Pos_forDrag_ = e.clientX;
+					y_Pos_forDrag_ = e.clientY;
+					
+					if((dragTargetElement_.id).indexOf("mainBlock") != -1 )
+					{
+						toggleWidgetSelection();
+
+						for(widget in page_.widgets)
+						{
+							page_.widgets[widget].el.style.display = "none";
+						}	
+					}
+					else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && editBlock_.isHidden == false)
+					{
+						console.log("editBlock is hidden ", editBlock_.isHidden);
+						toggleWidgetSelection(e.target);
+						dragTargetElement_.parentNode.style.zIndex ="105";
+						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.display = "none";
+						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outline = " thin dashed";
+						dragTargetElement_.parentNode.getElementsByTagName("iframe")[0].style.outlineOffset = "15px";
+									
+					}
+					//kill all activators for eventlisteners
+					mainBlock_.el.removeEventListener("mousedown", startDrag, true);
+					for(widget in page_.widgets)
+					{
+						page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
+					}	
+					dragLockout_ = true;
+					window.addEventListener("mousemove", redrawPage, true);					
+					window.addEventListener("mouseup",   endDrag, true);
+				}
+			}
+			
+			function translateWidget(widgetCover, deltaX, deltaY)
+			{
+				console.log("translateWidget");
+				var frame = widgetCover.parentNode.getElementsByTagName("iframe")[0];
+				page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + deltaX;// + "px";//(parseFloat((e.target.parentNode.style.left) + (e.clientX - x_Pos_forDrag_))) + "px";
+				page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + deltaY;// + "px";
+				widgetCover.parentNode.style.left = page_.widgets[frame.id].x + pageOffSetX_ + "px";
+				widgetCover.parentNode.style.top  = page_.widgets[frame.id].y + pageOffSetY_ + "px";
+			}
+			
+			function redrawPage(e)
+			{
+				if(dragTargetElement_.id.indexOf("mainBlock") != -1 || editBlock_.isHidden)
+				{			
+					pageOffSetX_ += (e.clientX - x_Pos_forDrag_);
+					pageOffSetY_ += (e.clientY - y_Pos_forDrag_);
+					mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
+					redrawWindow();
+				}
+				else if(dragTargetElement_.className.indexOf("widgetCover") != -1 && !editBlock_.isHidden)
+				{
+					translateWidget(dragTargetElement_, (e.clientX - x_Pos_forDrag_), (e.clientY - y_Pos_forDrag_));
+				}
+				x_Pos_forDrag_ = e.clientX;
+				y_Pos_forDrag_ = e.clientY;
+			}		
+			function endDrag(e)
+			{
+				if(dragTargetElement_.className.indexOf("widgetCover") != -1)
+				{
+					var frame = dragTargetElement_.parentNode.getElementsByTagName("iframe")[0];
+					page_.widgets[frame.id].x = parseInt(page_.widgets[frame.id].x) + e.clientX - x_Pos_forDrag_;
+					page_.widgets[frame.id].y = parseInt(page_.widgets[frame.id].y) + e.clientY - y_Pos_forDrag_;
+					frame.style.display = "block";
+					dragTargetElement_.parentNode.style.zIndex = "5";
+				}
+			
+				redrawWindow();
+				turnOnWidgets();
+
+				window.removeEventListener("mousemove", redrawPage, true);
+				window.removeEventListener("mouseup",   endDrag, true);				
+				mainBlock_.el.addEventListener("mousedown", startDrag, true);
+				x_Pos_forDrag_ = 0;
+				y_Pos_forDrag_ = 0;
+				
+				dragLockout_ = false;
+				dragTargetElement_ = 'undefined';
+			}
+			
+			function turnOnWidgets()
+			{
+				//Figure out the viewport we are now looking at
+				var startPosX = -1 * pageOffSetX_;
+				var startPosY = -1 * pageOffSetY_;
+				var endPosX   = (startPosX + parseInt(mainBlock_.el.style.width));
+				var endPosY   = (startPosY + parseInt(mainBlock_.el.style.height));
+	
+				//See which widgets fall into the viewport					
+				for(widget in page_.widgets)
+				{
+					 leftSide   = parseInt(page_.widgets[widget].x);// + startPosX;
+					 rightSide  = parseInt(page_.widgets[widget].x) + parseInt(page_.widgets[widget].size_x);// + startPosX;
+					 topSide    = parseInt(page_.widgets[widget].y);// + startPosY;
+					 bottomSide = parseInt(page_.widgets[widget].y) + parseInt(page_.widgets[widget].size_y);// + startPosY; 
+					 console.log(leftSide + "," + rightSide + "," + topSide + "," + bottomSide);
+					 console.log(startPosX+ "," +endPosX  + "," + startPosY + "," + endPosY);
+					 if(((leftSide > startPosX  && leftSide < endPosX)  || (rightSide > startPosX  && rightSide < endPosX )) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY)))//) || ((rightSide > startPosX  || rightSide <endPosX ) &&  ((topSide > startPosY && topSide < endPosY) || (bottomSide > startPosY && bottomSide < endPosY))))
+					 if(true)
+					 {
+//						 	console.log("true for " + page_.widgets[widget].Display_Name + leftSide);
+							page_.widgets[widget].el.style.display = "block";
+//							page_.widgets[widget].el.onmousedown = "startDrag()";
+							page_.widgets[widget].el.addEventListener("mousedown", startDrag, true);
+					 }
+					 else
+					 {
+							page_.widgets[widget].el.style.display = "none";
+							page_.widgets[widget].el.removeEventListener("mousedown", startDrag, true);
+					 }
+				}
+			}
+			
+			function drawGrid()
+			{
+				mainBlock_.el.style["background-position"] =  ("right " + pageOffSetX_ + "px top " + pageOffSetY_ + "px");
+				hud_.innerHTML = pageOffSetX_ + " x " + pageOffSetY_;
+			}
+			
+
+			function redrawWindow(clicked, hover) {
+				//Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
+				var _MARGIN = 10;
+				var _TOPMARGIN = 40;
+				var maxWidth = window.innerWidth;//   - (2 * _MARGIN);
+				var maxHeight = window.innerHeight - (1 * _MARGIN);
+				var marginLeft = 0;
+				var cover = document.getElementById("coverDiv");
+				var editCover = document.getElementById("editCoverDiv");
+				
+				hiddenWidth_ = maxWidth * 0.05;
+				unhiddenWidth_ = maxWidth * 0.35;
+				
+
+				//DEFAULT VALUES //Sides Hidden
+				var fileTop = _MARGIN, fileWidth = unhiddenWidth_       , fileHeight = window.innerHeight;
+				var editWidth = maxWidth         , editHeight = unhiddenWidth_;
+				var mainLeft = 0    , mainTop = 0, mainWidth = maxWidth, mainHeight = window.innerHeight;
+				
+//				editLeft = mainLeft + mainWidth;				
+
+				mainBlock_.el.style.left = mainLeft + "px";
+				mainBlock_.el.style.top = "0px";
+				mainBlock_.el.style.width =  mainWidth + "px";
+				mainBlock_.el.style.height =  mainHeight + "px";
+				mainBlock_.el.style.marginLeft = "0px";
+				
+				
+				//fileBlock_.el.style.marginLeft = fileLeft + "px";
+				//fileBlock_.el.style.left = fileLeft + "px";
+				fileBlock_.el.style.top =  0 + "px";
+			    fileBlock_.el.style.width =  fileWidth + "px";
+				fileBlock_.el.style.height =  fileHeight + "px";
+//
+//				editCover.style.position = "absolute";
+//				editCover.style.left   = (mainLeft + mainWidth) + "px";
+//				editCover.style.top    =  editTop + "px";
+//				editCover.style.width  =  editWidth + "px";
+//				editCover.style.height =  editHeight + "px";
+//				
+				//editBlock_.el.style.left = (mainLeft + mainWidth) + "px";
+				editBlock_.el.style.width =  editWidth + "px";
+				editBlock_.el.style.height =  editHeight + "px";
+
+				cover.style.top        = mainTop + "px";
+				cover.style.width      = (window.innerWidth-mainLeft) + "px";
+				cover.style.height     =  window.innerHeight + "px";
+				cover.style.left = mainLeft + "px";
+				
+				if(!editBlock_.isHidden)
+				{
+					editCover.styledisplay = "none";
+				}
+				else
+				{
+					editCover.style.display = "block";
+
+				}
+				
+				for(widget in page_.widgets)
+				{
+					page_.widgets[widget].el.parentNode.style.left = parseInt(page_.widgets[widget].x) + pageOffSetX_ + "px";
+				 	page_.widgets[widget].el.parentNode.style.top  = parseInt(page_.widgets[widget].y) + pageOffSetY_ + "px";
+				}
+
+				
+				drawGrid();
+				
+
+		
+			}
+
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:init();'>	
+		<div id="navigationBarDiv">	
+	    	<nav>
+		        <ul id="navigationMenu">
+		            <li><a href="#" title="" id="coordinatesHUD" onclick="resetToOrigin()"> 0 x 0</a></li>
+		            <li><a href="#" title="" id="menuli1" onclick="toggleFileMenu()">Open File</a></li>
+		            <li><a href="#" title="" id="menuli2" onclick="toggleHotkeyMenu()">Hotkeys</a></li>
+		            <li><a href="#" title="" id="menuli3" onclick="toggleEditMode()">EditMode</a></li>
+		            <li><a href="https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit" target="_blank" title="" id="menuli4" >Help</a></li>
+		        </ul>
+	        </nav>
+	    </div>
+		<div class='mainBlock' 	id='fileBlock'  ></div>
+		<div class="cover" 		id="mainBlockCoverDiv"></div>
+		<div class="cover"     	id="coverDiv" height="auto" width="auto">
+		<div class='mainBlock '	id='mainBlock' onclick=redrawWindow("mainBlock") onmouseover="redrawWindow(null, false)">
+		<div id="contextMenuDiv">
+		<nav id="contextMenu" class="menu ">
+		  <ul class="menu__items ">
+		    <li class="menu__item ">
+		      <a href="#" class="menu__link " onclick="toggleAddPV()">
+		        <i class=""></i> Add PV
+		      </a>
+		    </li>
+		    <li class="menu__item">
+		      <a href="#" class="menu__link" onclick="editWidgetAttributesOpen()" >
+		        <i class=""></i> Edit Attributes
+		      </a>
+		    </li>
+		    <li class="menu__item">
+		      <a href="#" class="menu__link" onclick="deleteWidget()">
+		        <i class=""></i> Delete Widget
+		      </a>
+		    </li>
+		    <li class="menu__item">
+		      <a href="#" class="menu__link" onclick="toggleContextMenuOff()" >
+		        <i class=""></i> Close
+		      </a>
+		    </li>
+		  </ul>
+		</nav>
+		</div>
+		<div id="addPVMenuDiv">
+			<nav id="addPVMenu" class="menu ">
+			  <ul class="menu__items ">
+			    <li class="menu__item ">
+			    	<span class="menu__link">
+			      		<i class=""></i><input type="text" id="addPVPV" class="editableInput addPVMenuInput" placeholder="PV" list="pvDatalist"></input>
+			      	</span> 		
+			    </li>
+			    <li class="menu__item">
+			    	<span class="menu__link">
+			    		<i class=""></i><input type="text" id="addPVRefreshRate" class="editableInput addPVMenuInput" placeholder="Refresh Rate (ms)"></input>
+			    	</span>
+			    </li>
+			    <li class="menu__item" style="height: auto">
+			    	<span style="width: 100%; height: auto;">
+			    	<a href="#" onclick="addPVToWidget(document.getElementById('addPVPV').value, document.getElementById('addPVRefreshRate').value, document.getElementById('addPVMenuDiv').getAttribute('widgetID'), true)"><button type="button" class="menu__button" >Add PV </button></a>
+			    	<a href="#"	onclick="toggleAddPV()"><button type="button" class="menu__button">Close</button></a>
+		    		</span>
+		    </li>
+			  </ul>
+			</nav>
+		</div>
+		<div class="ghost-select" id="selectionRectangle"><span></span></div>
+		</div>
+		<div class="cover"     id='editCoverDiv' onclick=toggleEditMode(true)></div>
+		<div class='mainBlock' id='editBlock' ></div>
+		</div>
+		<div id="hotkeyMenuDiv">
+			<nav id="hotkeyMenu" class="menu menu--active">
+			  <ul class="menu__items ">
+			    <li class="menu__item ">
+			      <span class="menu__label " >
+			        <i class=""></i> &nbsp
+			      </span>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(49)">
+			        <span class="">Shift + 1</span> <span id="hotkey49" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(50)">
+			        <span class="">Shift + 2</span> <span id="hotkey50" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(51)">
+			        <span class="">Shift + 3</span> <span id="hotkey51" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(52)">
+			        <span class="">Shift + 4</span> <span id="hotkey52" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(53)">
+			        <span class="">Shift + 5</span> <span id="hotkey53" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item ">
+			      <a href="#" class="menu__link " onclick="setHotkey(54)">
+			        <span class="">Shift + 6</span> <span id="hotkey54" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item">
+			      <a href="#" class="menu__link" onclick="setHotkey(55)" >
+			        <span class="">Shift + 7</span> <span id="hotkey55" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item">
+			      <a href="#" class="menu__link" onclick="setHotkey(56)">
+			        <span class="">Shift + 8</span> <span id="hotkey56" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item">
+			      <a href="#" class="menu__link" onclick="setHotkey(57)">
+			        <span class="">Shift + 9</span> <span id="hotkey57" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			    <li class="menu__item">
+			      <a href="#" class="menu__link" onclick="setHotkey(48)">
+			        <span class="">Shift + 0</span> <span id="hotkey48" class="menu__setting">Not Set</span>
+			      </a>
+			    </li>
+			  </ul>
+			</nav>
+		</div>
+		<div class="editWidgetAttributesPopup-container" id="editWidgetAttributesPopup-container">
+			<div class="editWidgetAttributesPopup-header" id="editWidgetAttributesPopup-header" ></div>
+			<div class="editWidgetAttributesPopup-menu"   id="editWidgetAttributesPopup-menu">
+				<nav id="editWidgetAttributesPopup-menu-nav">
+					<ul class="menu__items ">
+					    <li class="menu__item ">
+					      <a href="#" class="menu__link " onclick="showeditWidgetAttributesPopupBody('PVList')">
+					        <i class=""></i> Edits PVs
+					      </a>
+					    </li>
+					    <li class="menu__item">
+					      <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('EditAttributes')" >
+					        <i class=""></i> Edit Attributes
+					      </a>
+					    </li>
+					    <li class="menu__item">
+					      <a href="#" class="menu__link" onclick="showeditWidgetAttributesPopupBody('Macromaker')">
+					        <i class=""></i> Macromaker
+					      </a>
+					    </li>
+				    </ul>
+				</nav>
+			</div>
+			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-pvlist"></div>
+			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-attributes"><p>body</p></div>
+			<div class="editWidgetAttributesPopup-body"   id="editWidgetAttributesPopup-body-macromaker"></div>
+			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
+		</div>
+		<datalist id="pvDatalist"></datalist>
+		
+	</body>
+	
+</html>

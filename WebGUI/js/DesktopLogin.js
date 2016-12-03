@@ -68,8 +68,10 @@ else {
 		var _loginDiv;
 		
 		//user preferences
-		var _userPref_bgColor, _userPref_dbColor, _userPref_winColor, _userPref_layout;
+		var _userPref_bgColor, _userPref_dbColor, _userPref_winColor, _userPref_layout, _sysPref_layout;
 		var _applyUserPreferences;
+		var _updateCurrentLayoutTimeout = 0;
+		var _UPDATE_LAYOUT_TIMEOUT_PERIOD = 2000; //give time for user to stop making changes, in ms
 		
 	    //------------------------------------------------------------------
 		//create public members variables ----------------------
@@ -94,13 +96,16 @@ else {
 				ldiv.parentNode.removeChild(ldiv);
 			}
 			
-			if(isLoginSuccess) {
+			if(isLoginSuccess) 
+			{
 				
 				//update display name
 				ldiv = document.getElementById("DesktopDashboard-user-displayName");
 				var tmpStr = "Welcome to ots, " + _displayName;
 				
-				if(ldiv.innerHTML != tmpStr) {
+				if(ldiv.innerHTML != "" && //if not first time
+						ldiv.innerHTML != tmpStr) //and name is different
+				{
 					//if _display name is different then close all windows!
 					Debug.log("Desktop.desktop.closeAllWindows() for new user",Debug.LOW_PRIORITY);
 					Desktop.desktop.closeAllWindows();
@@ -156,7 +161,7 @@ else {
 			str += "<div id='newAccountCodeDiv' style='display:none' >New Account Code: <input id='loginInput3' type='text' /><br /></div>";
 			str += "<a target='_blank' href='" + 
 				"https://docs.google.com/document/d/1Mw4HByYfLo1bO5Hy9npDWkD4CFxa9xNsYZ5pJ7qwaTM/edit?usp=sharing" + 
-				"' title='Click to open Help documentation' ><img src='../images/dashboardImages/icon-Help.png'></a>";
+				"' title='Click to open Help documentation' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
 			str += "<a href='#' onmouseup='Desktop.desktop.login.promptNewUser(this); return false;' style='margin:0 100px 0 50px'>New User?</a>";
 			str += "<input type='submit' class='DesktopDashboard-button' value='    Login    ' onmouseup='Desktop.desktop.login.attemptLogin();' /><br />"
 			
@@ -324,8 +329,9 @@ else {
 			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
+			
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
-				_user = _displayName;
+				_user = Desktop.getXMLValue(req,"pref_username");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);
@@ -470,6 +476,50 @@ else {
 			document.cookie= _cookieRememberMeStr + "=" + c_value;
 		}
 				
+		//_updateLayoutTimeoutHandler
+		//	updates all user preference settings (since that is the only method)
+		//	just to update the current window layout for user.
+		//
+		//	Note: this is very similar to what happens in UserSettings.html/setServerSettings()
+		//		They should be changed together.
+		var _updateLayoutTimeoutHandler = function() {
+			Debug.log("Desktop login _updateLayoutTimeoutHandler");
+			
+			var data = "";
+
+			////////////////////////
+			//colors
+			var colorFields = ["bgcolor","dbcolor","wincolor"];
+			var colorPrefVals = [_userPref_bgColor,_userPref_dbColor,_userPref_winColor];
+			for(var j=0;j<3;++j)
+				data += colorFields[j] + "=" + colorPrefVals[j] + "&";
+
+			////////////////////////
+			//layout with updated current layout
+			var layoutArray = _userPref_layout.split(";"); //get user layout array
+			layoutArray[layoutArray.length-1] = Desktop.desktop.getWindowLayoutStr(); //update extra layout for most recent layout checkpoint										
+
+			var layoutStr = "";
+			for(var j=0;j<layoutArray.length;++j)
+				layoutStr += layoutArray[j] + (j==layoutArray.length-1?"":";");
+			data += "layout=" + layoutStr + "&";
+
+			////////////////////////
+			//system layout
+			layoutArray = _sysPref_layout.split(";");
+
+			layoutStr = "";
+			for(var j=0;j<layoutArray.length;++j)
+				layoutStr += layoutArray[j] + (j==layoutArray.length-1?"":";");
+			data += "syslayout=" + layoutStr + "&";
+
+
+			////////////////////////
+			//send save req
+			Debug.log("Desktop Login Settings Save Preferences -- " + data);
+			Desktop.XMLHttpRequest("Request?RequestType=setSettings", data);
+		}
+		
 		//------------------------------------------------------------------
 		//create PUBLIC members functions ----------------------
 		//------------------------------------------------------------------
@@ -477,7 +527,7 @@ else {
 		//logout ~
 		//	Public logout function. Logs out at server and locally.
 		this.logout = function() {
-       		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.HIGH_PRIORITY);  
+       		Debug.log("Desktop Logout occured " + _killLogoutInfiniteLoop,Debug.MED_PRIORITY);  
        		
        		if(_cookieCode && !_killLogoutInfiniteLoop)
        			Desktop.XMLHttpRequest("LoginRequest?RequestType=logout"); //server logout
@@ -569,10 +619,11 @@ else {
 		
 			if (typeof req != 'undefined') {
 					//update user pref if req is defined as xml doc
-				_userPref_bgColor = Desktop.getXMLValue(req,"pref_bgcolor");
-				_userPref_dbColor = Desktop.getXMLValue(req,"pref_dbcolor");
-				_userPref_winColor = Desktop.getXMLValue(req,"pref_wincolor");
-				_userPref_layout = Desktop.getXMLValue(req,"pref_layout");	
+				_userPref_bgColor 	= Desktop.getXMLValue(req,"pref_bgcolor");
+				_userPref_dbColor 	= Desktop.getXMLValue(req,"pref_dbcolor");
+				_userPref_winColor 	= Desktop.getXMLValue(req,"pref_wincolor");
+				_userPref_layout 	= Desktop.getXMLValue(req,"pref_layout");	
+				_sysPref_layout 	= Desktop.getXMLValue(req,"pref_syslayout");
 			}					
 			
        		Desktop.desktop.dashboard.setDefaultDashboardColor(_userPref_dbColor);
@@ -580,10 +631,26 @@ else {
        		document.body.style.backgroundColor = _userPref_bgColor;
 		}
 		
-		this.getUserDefaultLayout = function(i) { return _userPref_layout.split(";")[i];}
+		//resetCurrentLayoutUpdateTimer
+		//	called by DesktopWindow.js any time a window moves
+		//	the timeout allows for maintaining the current layout for the user
+		//
+		// NOTE: This was disabled!! Because what is the point of saving current layout
+		//	when users may have multiple logins/multiple instances of the desktop/multiple tabs
+		this.resetCurrentLayoutUpdateTimer = function() {
+			return; //DISABLE THIS FEATURE
+			
+			//Debug.log("Desktop login resetCurrentLayoutUpdateTimer")e;
+			if(_updateCurrentLayoutTimeout)
+				clearTimeout(_updateCurrentLayoutTimeout);
+			_updateCurrentLayoutTimeout = setTimeout(_updateLayoutTimeoutHandler,_UPDATE_LAYOUT_TIMEOUT_PERIOD);
+		}
+		
+		this.getUserDefaultLayout = function(i) { return _userPref_layout.split(";")[i]; }
+		this.getSystemDefaultLayout = function(i) { return _sysPref_layout.split(";")[i]; }
 		
 		this.activeSessionLogoutOption = function() {
-			Debug.log("Desktop activeSessionLogoutOption");
+			Debug.log("Desktop login activeSessionLogoutOption");
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=logout","LogoutOthers=1"); //server logout of other active sessions
 			_closeLoginPrompt(1); //clear login prompt - pass 1 just so it will check new username
 		

@@ -14,7 +14,11 @@
 
 
 if (typeof Debug == 'undefined') 
-	Debug.log('ERROR: Debug is undefined! Must include Debug.js before Desktop.js');
+	Debug.log('ERROR: Debug is undefined! Must include Debug.js before DesktopIcons.js');
+if (typeof SimpleContextMenu == 'undefined') 
+	Debug.log('ERROR: SimpleContextMenu is undefined! Must include SimpleContextMenu.js before DesktopIcons.js');
+
+
 	
 if (typeof Desktop == 'undefined') 
 	Debug.log('ERROR: Desktop is undefined! Must include Desktop.js before DesktopIcons.js');
@@ -50,6 +54,8 @@ else {
         var _iconsElement;
         
         var _numOfIcons = 0;
+        
+        var _deepClickTimer = 0;
         
 		//------------------------------------------------------------------
 		//create public members variables ----------------------
@@ -119,7 +125,7 @@ else {
       			iconArray = req.responseText.split(","); 
       		}
 		    
-			//Debug.log("icon Array split: " + iconArray);
+			Debug.log("icon Array split: " + iconArray);
       		//Debug.log(_permissions);
 
      	    //an icon is 6 fields.. give comma-separated
@@ -150,7 +156,7 @@ else {
 			var link;
 			var div;
 			
-			var jsCmd = "Javascript:Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
+			var jsCmd = "Javascript:var newWin = Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
 				 + "\",\"" + linkurl + "\","+uniqueWin+");";
 				
 			//create icon square
@@ -167,7 +173,7 @@ else {
 			
 			//define icon content
 			if(picfn != "0"){ //if icon image			
-				div.style.backgroundImage = "url(../images/iconImages/" + picfn+")";
+				div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
 				
 				var div2 = document.createElement("div");
 				div2.setAttribute("class", "DesktopIcons-iconDiv");
@@ -199,6 +205,60 @@ else {
       		
 			link.appendChild(div);				
 			iconContainer.appendChild(link); //add subtext to icon container
+
+			//add context click menu handlers
+			//	mouseup and contextMenu to stop default right-click behavior
+			//	and mousedown to start the menu (so "deep clicks" work)
+			iconContainer.addEventListener("mouseup", function(event) {
+				if(_deepClickTimer)
+				{
+					window.clearTimeout(_deepClickTimer);
+					_deepClickTimer = 0;
+				}
+			}); //end onmouseup event
+			
+			var deepClickHandler = function(event) {				
+				event.cancelBubble = true; //prevent default behavior 
+				event.preventDefault();
+				_deepClickTimer = window.setTimeout(function() {
+
+					Debug.log("Create Icon Menu");
+					var menuItems = [
+									 "Open and Maximize Window",
+									 "Open in New Browser Tab",
+									 "Open and Tile All Windows"
+									 ];
+					console.log(linkurl);
+					var menuItemHandlers = [
+											"Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
+											+ "\",\"" + linkurl + "\","+uniqueWin+",2);", // 2 for maximize
+											"Desktop.openNewBrowserTab(\""+ alt + "\",\"" + ""
+											+ "\",\"" + linkurl + "\","+uniqueWin+");", // 2 for maximize
+											"Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
+											+ "\",\"" + linkurl + "\","+uniqueWin+",1);", // 1 for tile					 
+											];
+					Debug.log("createEditTableMenu()");
+					SimpleContextMenu.createMenu(
+							menuItems,
+							menuItemHandlers,
+							"DesktopIconContextMenu",		//element ID
+							event.pageX-1,event.pageY-1, 	//top left position
+							Desktop.desktop.dashboard.getDefaultDashboardColor(), 	//primary color
+							"white"				//secondary color
+					);
+					
+				},500); //end timeout handler
+				
+			}; //end deepClickHandler event
+			
+			//FIXME ... debug touchstart on android to block browser context
+			//			iconContainer.addEventListener("touchstart", function(event) {	
+			//				event.preventDefault();
+			//				
+			//				deepClickHandler(event);
+			//				return false;
+			//			});
+			iconContainer.addEventListener("mousedown",	deepClickHandler); 
 			
 			_iconsElement.appendChild(iconContainer); //add to desktop icon element
 			

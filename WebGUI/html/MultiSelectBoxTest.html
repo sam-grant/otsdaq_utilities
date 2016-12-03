@@ -1,10 +1,19 @@
 <html>
 <head>
 
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
-	<script src="../js/js_lib/MultiSelectBox.js"></script>
     <script>
+
+		//THIS IS AN EXAMPLE 
+		//THIS IS AN EXAMPLE 
+		//THIS IS AN EXAMPLE 
+		//THIS IS AN EXAMPLE 
+		//THIS IS AN EXAMPLE 
+			//of how to use the library MultiSelectBox.js
+
 
         function init()
         {
@@ -13,27 +22,55 @@
             //////////// make search box
             {	
 				var noMultiSelect = false; // true or false (false for multiselect functionality) 
+				var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
 				
-				var keys = ["one","two","three"];
 				var vals = ["One little piggy","two little piggies","three little piggies"];
+				var keys = ["one","two","three"];
 				var types = ["number","numbers","numbers"];
 									
 				//write to a particular div
-	            var el = document.getElementById('box1Div');  
-	            MultiSelectBox.createSelectBox(el,
+	            var el1 = document.getElementById('box1Div');  
+	            MultiSelectBox.createSelectBox(el1,
 	            		"box1",
 	            		"Multi-Select Box Example",
-						vals,keys,types,"box1SelectionHandler",noMultiSelect);
+						vals,keys,types,box1SelectionHandler,noMultiSelect);
 	            
 	            noMultiSelect = true;
 	            
 	            //for fun, make a second
 				//write to a particular div
-	            var el = document.getElementById('box2Div');  
-	            MultiSelectBox.createSelectBox(el,
+	            var el2 = document.getElementById('box2Div');  
+	            MultiSelectBox.createSelectBox(el2,
 	            		"box2",
 	            		"Multi-Select Box Example 2",
 						vals,keys,types,"box2SelectionHandler",noMultiSelect);
+	            
+	            
+	            //use init to setup/clear previous selections
+	            MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
+	            
+	            //print out current state of selection array
+	            //if anything is selected from before.. handle as selected
+	            var selArr = MultiSelectBox.getSelectionArray(el1);
+	            for(var s in selArr)
+	            {
+	                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",
+	                		selArr[s]);
+	                if(selArr[s])
+	                	box1SelectionHandler(
+	                			MultiSelectBox.getSelectionElementByIndex(el1,s));
+	            }
+
+	            selArr = MultiSelectBox.getSelectionArray(el2);
+	            for(var s in selArr)
+	            {
+	                MultiSelectBox.dbg("box 2 selected [" + s + "]: ",
+	                		selArr[s]);
+
+	                if(selArr[s])
+	                	box2SelectionHandler(
+	                			MultiSelectBox.getSelectionElementByIndex(el1,s));
+	            }
             }
             //////////// end make search box
 
@@ -42,16 +79,31 @@
 
         function box1SelectionHandler(el)
         {
-            var splits = el.id.split('_');
-            var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 1 Chosen element index:",i);
+            var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);
+            if(selArr[i])
+            	MultiSelectBox.dbg("box 1 Chosen element index:",i,            		
+            		" value:",el.innerHTML,
+            		" key:",el.getAttribute("key-value"),
+            		" type:",el.getAttribute("type-value"));
+            for(var s in selArr)
+                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",
+                		selArr[s]);
+            	
         }
         
         function box2SelectionHandler(el)
         {
-            var splits = el.id.split('_');
-            var i = splits[splits.length-1] | 0;
-            MultiSelectBox.dbg("box 2 Chosen element index:",i);
+            var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);
+            if(selArr[i])
+            	MultiSelectBox.dbg("box 2 Chosen element index:",i,            		
+            		" value:",el.innerHTML,
+            		" key:",el.getAttribute("key-value"),
+            		" type:",el.getAttribute("type-value"));
+            for(var s in selArr)
+                MultiSelectBox.dbg("box 1 selected [" + s + "]: ",
+                		selArr[s]);
         }
     </script>
     

@@ -3,7 +3,8 @@
 <head>
 <title>Supervisor</title>
 
-<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'>
+<link rel='stylesheet' type='text/css' href='/WebPath/css/fonts.css?family=Donegal+One'>
+
 <style type="text/css">			
 			body {
 				background-color: rgb(5,10,50);
@@ -23,7 +24,24 @@
 				position: absolute;
 			}
 			
-			#parameter-setup {	
+			#error-box {
+				position: absolute;
+				display: none;
+				border: 2px solid gray;
+				background-color: rgba(153,0,51,0.8);
+				overflow-y: scroll;
+				overflow-x: hidden;
+				padding: 5px;
+				-moz-border-radius: 2px;
+				-webkit-border-radius: 2px;
+				border-radius: 2px;
+				color: rgb(255,200,100);
+				font-size: 18px;
+				font-family: 'Donegal One', arial;
+				text-align: center;
+			}			
+			
+			#parameter-setup, #extras-box, #alarm-setup-box {	
 				position: absolute;
 				display: none;
 				border: 2px solid gray;
@@ -39,19 +57,30 @@
 				text-align: center;
 			}
 			
-			#parameter-setup a {
+			#parameter-setup a, #extras-box a, #alarm-setup-box a,
+			#error-box a
+			{
 				color: white;
 				text-decoration: none;
 				font-weight: 800;
 			}
 			
-			#parameter-setup a:hover {
+			#parameter-setup a:hover, #extras-box a:hover, #alarm-setup-box a:hover,
+			#error-box a:hover
+			{
 				text-decoration: underline;
 			}
     
 			#parameter-setup table {	
 				font-size: 12px;
             }
+            
+			#run-number, #extras-box {
+				font-size: 14px;
+            }
+			#run-number {
+				margin-bottom: 10px;
+			}
 			
 			.blackout {
 				position: absolute;
@@ -63,8 +92,7 @@
 				font-size: 20px;
 				font-family: 'Donegal One', arial;
 			}
-			
-			
+						
 			.progress-bar {
 				background-color: #1a1a1a;
 				height: 25px;
@@ -135,6 +163,10 @@
 
 			@-moz-keyframes animate-stripes {
 				0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+			}			
+			
+			#parameter-setup td {
+				text-align: left;
 			}
 		</style>
 
@@ -143,11 +175,6 @@
 <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
 <script type="text/JavaScript"
 	src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	
-<!--<script type="text/JavaScript"
-	src="/WebPath/js/DesktopStatusMonitor.js"></script>-->
-
-
 
 <script>		
 
@@ -181,8 +208,14 @@
             
 
 			var _PARAMETER_SETUP_MIN_HEIGHT = 25; 
-			var _PARAMETER_SETUP_MAX_HEIGHT = 300; 
+			var _PARAMETER_SETUP_MAX_HEIGHT = 100; 
 			var _PARAMETER_SETUP_WIDTH = 260; 
+			
+			var _EXTRAS_WIDTH = 200; 
+			var _EXTRAS_HEIGHT = 65; 
+			
+			var _ALARM_WIDTH = 200; 
+			var _ALARM_HEIGHT = 120; 
     
             var _STATE_ANGLE_OFFSET = 0;
             
@@ -191,8 +224,11 @@
 			//functions:
 				//init()
             	//initTransitionParameters()
+            	//handleTransitionParameterChange()
             	//smRequestHandler(req)
+            	//getCurrentState() 
             	//currStateRequestHandler(req)
+            	//updateTimeInState(t)
             	//physicsLaunchHandler(req)
                 //handleMouseUp(mouseEvent)
             	//getTransitionParameterData(param)
@@ -210,6 +246,10 @@
                 //drawState(stateIndex, x, y)
             	//toggleParameterSetup()
             	//eatParameterMouseEvent(touchEvent) 
+        		//showAlarmSetup()
+            	//setAlarm(start)
+				//displayError(err)
+				//closeErrorBox()
             
 			            
 			var _states, _stateNames, _transitions, _transitionNames, 
@@ -219,7 +259,15 @@
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
 				_blackoutRevealText, _blackoutRevealContent, _progressBar,
-				_parameterSetup;
+				_parameterSetup, _extrasBox, _alarmBox, _errorBox;
+			
+			var _timeUpdateTimeout = 0;
+			var _verifyStateTimeout = 0;
+			var _timeInState = 0;
+			var _alarmRunning = false;
+			var _alarmTimeLeft = 0;
+			var _ALARM_SOUND_PATH = "/WebPath/sounds/fx-Alarm-Beep.wav"; // "http://www.soundjay.com/button/button-2.wav"; //must be .wav for firefox incompatibility	
+			var _AlarmSound = new Audio(_ALARM_SOUND_PATH);
 			
 			var _parameterSetupMinimized = true;	//default to minimized
 			var _parameterInitCount;
@@ -229,8 +277,8 @@
             var _selectedTransition;
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
-            
-			var _statusMonitor;
+            	
+			
 			/////////////////////////////////////////////////////////////////////////////////////////
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
@@ -250,8 +298,7 @@
             //			display fades in (goto start of gui strategy)			
 			
 			//init called once body has loaded
-			function init() {			
-				//_statusMonitor = new DesktopContent.statusMonitor();				
+			function init() {						
 								
 				_currState = -1;
 				_prevState = -1;
@@ -265,6 +312,13 @@
 				_parameterSetup = document.getElementById("parameter-setup");
 				_parameterSetup.onmousemove = eatParameterMouseEvent;
 				_parameterSetup.onmouseup = eatParameterMouseEvent;
+				_extrasBox = document.getElementById("extras-box");
+				_extrasBox.onmousemove = eatParameterMouseEvent;
+				_extrasBox.onmouseup = eatParameterMouseEvent;
+				_alarmBox = document.getElementById("alarm-setup-box");
+				_alarmBox.onmousemove = eatParameterMouseEvent;
+				_alarmBox.onmouseup = eatParameterMouseEvent;	
+				_errorBox = document.getElementById("error-box");
 				initTransitionParameters();
 				
 				_canvas = document.getElementById("physicsCanvas");
@@ -278,10 +332,12 @@
 				document.body.onmouseup = handleMouseUp;
 
 				//get state machine from server
-				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", 
+						smRequestHandler);	
 				
 				window.setTimeout(redrawPhysics,1000); //for firefox drawing glitch
 				window.setTimeout(redrawPhysics,5000); //for firefox drawing glitch
+				
 			}
 
             
@@ -310,16 +366,37 @@
                     {
                     case 0: //ConfigurationAlias
     
-                        var aliasArr = req.responseXML.getElementsByTagName("config_alias");
+                    	//get all system aliases and put in drop-down
+                        var aliasArr = req.responseXML.getElementsByTagName("config_alias");                        ""
+            			var userLastConfigAlias = 
+            					DesktopContent.getXMLValue(req,"UserLastConfigAlias");
+            			if(!userLastConfigAlias) userLastConfigAlias = "";
+            			
+            			var lastIndex = -1;
+            			var alias;
                         for(var i=0;i<aliasArr.length;++i) {
-                            if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                             
-                            _transParamsHtmlStr += "<option value='" + aliasArr[i].getAttribute('value') + "'>" +
-                                aliasArr[i].getAttribute('value') + "</option>";
-    
-                            if(!i) _transitionParameterValues[i] = aliasArr[i].getAttribute('value');
+                        	//this skips all except for Physics.. don't want this anymore
+                        	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
+                        	alias = aliasArr[i].getAttribute('value');
+                        	
+                            //choose the first system alias by default
+                            if(!i) _transitionParameterValues[_parameterInitCount] = alias;
+                            _transParamsHtmlStr += "<option value='" + alias + "' ";
+
+                            //otherwise choose last alias
+                            if(userLastConfigAlias == alias)
+                            {
+                            	_transitionParameterValues[_parameterInitCount] = alias;
+                            	_transParamsHtmlStr += "selected";
+                            }
+                            
+                            _transParamsHtmlStr += ">" + 
+                            		alias + "</option>";
+                                
                         }
     
+                        	
                         break;
                     default:;
                     }
@@ -343,11 +420,28 @@
                 switch(_parameterInitCount)
                 {
                 case 0: //ConfigurationAlias
-                    DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", initTransitionParameters);	
+                    DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList", "", 
+                    		initTransitionParameters);	
                     break;
                 default:;
                 }
     
+			}
+			
+			//handleTransitionParameterChange
+			function handleTransitionParameterChange(paramIndex,el) 
+			{
+				switch(paramIndex)
+				{
+				case 0: //ConfigurationAlias
+					Debug.log("handleTransitionParameterChange ConfigurationAlias " + 
+							el.options[el.selectedIndex].value);
+					_transitionParameterValues[paramIndex] = el.options[el.selectedIndex].value;
+					break;
+				default:
+					Debug.log("handleTransitionParameterChange UNKNOWN?!");
+				}
+				
 			}
 			
 			//smRequestHandler
@@ -362,7 +456,8 @@
 			//		<state_transition_action 'aaa'/>
 			//		<state_transition_name 'aaa'/> ...
 			//	</state>			
-			function smRequestHandler(req) {			
+			function smRequestHandler(req) 
+			{			
 			    Debug.log("Physics smRequestHandler" + req.responseText);	    
 			    
 
@@ -409,25 +504,150 @@
                 }
 
                 Debug.log("Physics _transitions \n\t" + _transitions + "\n\t" + _transitionNames + "\n\t" + _transitionActions);
-			    
-			   // _statusMonitor.subscribeTo("StateMachineStatus");			    
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", currStateRequestHandler);	
-			    
+	
+                getCurrentState();	
 			}
+			
+			//getCurrentState ~~
+			function getCurrentState() {
+				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", currStateRequestHandler);
+			}
+			
 
 			//currStateRequestHandler ~~
 			//	poll current state of state machine
-			function currStateRequestHandler(req) {			
-			    
+			function currStateRequestHandler(req,id,err) {		
+
+            	if(!req) //error! stop handler
+            	{            		
+            		window.clearTimeout(_verifyStateTimeout);
+            		window.clearInterval(_timeUpdateTimeout);
+            		Debug.log("Error: " + err, Debug.HIGH_PRIORITY); 
+            		return;
+            	}
+            	
 			    var cs = DesktopContent.getXMLValue(req,"current_state");
 			    var inTrans = DesktopContent.getXMLValue(req,"in_transition") == "1";
 			    
 			    Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
 
+			    //find current state in stateNames array
                 for(var i=0;i<_stateNames.length;++i)
-                	if(_stateNames[i] == cs) {_currState = i; redrawPhysics(); return;}
+                	if(_stateNames[i] == cs) 
+                	{                	
+                		//handle time elapsed
+                		if(!_alarmRunning)
+                		{
+							window.clearInterval(_timeUpdateTimeout);
+							_timeUpdateTimeout = window.setInterval(updateTimeInState,1000);
+	        			    updateTimeInState(DesktopContent.getXMLValue(req,"time_in_state"));
+                		}
+        			    
+                		
+        			    //draw current state if changed
+						if(i != _currState)
+						{								
+							//notify if state was changed unexpectedly
+							if(_currState != -1 && _transitionResultingState != i)
+							{
+								_prevState = -1; //invalidate previous state
+
+							    Debug.log("State was changed unexpectedly from " + 
+										_stateNames[_currState] + " to " + _stateNames[i] +
+										". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+								//								alert("State was changed unexpectedly from " + 
+								//										_stateNames[_currState] + " to " + _stateNames[i] +
+								//										". (Likely another user changed the state)");
+							    
+							    if(_states[i] == "F") //Failed state occured, so get error message
+							    {
+							    	DesktopContent.XMLHttpRequest(
+							    			"Request?RequestType=getErrorInStateMatchine", "",
+											function(req) {
+							    		var err = DesktopContent.getXMLValue(req,"FSM_Error");
+					            		Debug.log("State Machine Error:\n\n" + err, 
+					            				Debug.HIGH_PRIORITY);
+							    	}	); //end handler	
+							    }
+							}
+								
+							_currState = i;
+							redrawPhysics();
+
+							//update run number
+							document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
+						}
+                		
+                		window.clearTimeout(_verifyStateTimeout);
+						_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
+                		return;
+                	}
 			    _currState = -1; //no current state found
+			    
+			    Debug.log("Illegal state received as current state: " + cs,Debug.HIGH_PRIORITY);
+			    //alert("Illegal state received as current state: " + cs);
+			}
+			
+			//updateTimeInState ~~
+			//  updates time in state by 1 second if not given a time value
+			function updateTimeInState(t) {
+				
+				if(t == undefined)
+					++_timeInState;
+				else
+					_timeInState = t|0; //take integer values only
+			    //Debug.log("Physics updateTimeInState: " + _timeInState);
+				
+				if(_alarmRunning)
+				{ 
+					if(_alarmTimeLeft > 0)
+						--_alarmTimeLeft;
+					else //alarmWentOff!! //make it blink
+					{
+						--_alarmTimeLeft;
+						
+						if(_alarmTimeLeft == -8) _alarmTimeLeft = 0;// = -(1+_alarmTimeLeft); //alternate between -1 and 0
+						
+						if(_alarmTimeLeft > -3)
+						{
+							//play sound alert
+							_AlarmSound.src = _ALARM_SOUND_PATH; // buffers automatically when created
+							_AlarmSound.play();
+						}
+						
+						if(_alarmTimeLeft%2 == 0)
+							document.getElementById("time-elapsed").style.color = "black";
+						else
+							document.getElementById("time-elapsed").style.color = "white";
+						
+						document.getElementById("time-elapsed").addEventListener("mouseup",stopAlarm);
+						document.getElementById("time-elapsed").style.cursor = "pointer";
+						return;
+					}	
+				}
+				else
+				{
+					document.getElementById("time-elapsed").style.color = "white";
+					document.getElementById("time-elapsed").removeEventListener("mouseup",stopAlarm);
+					document.getElementById("time-elapsed").style.cursor = "default";
+				}
+				
+				var showCountdown = _alarmRunning || _alarmBox.style.display == "block";	
+				
+				var str = showCountdown?"Countdown: ":"Elapsed: ";		
+				t = showCountdown?_alarmTimeLeft:_timeInState;
+				
+				var hours = (t/60.0/60.0)|0;
+				var mins = ((t%(60*60))/60.0)|0;
+				var secs = t%60;
+				
+				str += hours + ":";
+				if(mins < 10)	str += "0"; //keep to 2 digits
+				str += mins + ":";
+				if(secs < 10)	str += "0"; //keep to 2 digits
+				str += secs ;
+				
+				document.getElementById("time-elapsed").innerHTML = str;			
 			}
 
             //physicsLaunchHandler ~~
@@ -439,7 +659,8 @@
                 var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
                 if(!success) 
                 {
-                	alert("Server indicated failure to attempt state transition.");
+                	Debug.log("Server indicated failure to attempt state transition.",Debug.HIGH_PRIORITY);
+                	//alert("Server indicated failure to attempt state transition.");
                 	return;
                 }
                 
@@ -464,8 +685,12 @@
 			    _blackoutReveal.style.height = _canvas.height + "px";
 			    
                 _inAnimation = true;
-                _blackoutRevealText.innerHTML = _transitionNames[_currStateTransArr[_selectedTransition]] + " from " + 
-                	_states[_currState] + " to " + _states[_transitions[_currStateTransArr[_selectedTransition]][1]];
+                var bstr = _transitionNames[_currStateTransArr[_selectedTransition]] + " from " + 
+                	_states[_currState];
+                if(_transitions[_currStateTransArr[_selectedTransition]] && //sometimes this error happens (not sure how!?) so catch it 
+                		_transitions[_currStateTransArr[_selectedTransition]][1])
+                	bstr += " to " + _states[_transitions[_currStateTransArr[_selectedTransition]][1]];
+                _blackoutRevealText.innerHTML = bstr;
                 _transitionProgress = -1; //use -1 to indicate need to check
                 _transitionFadeAlpha = 0;
                 _transitionFadeAlphaInc =  _TRANS_TRANSLATE_PERIOD/_TRANS_TRANSLATE_DURATION/1000.0;
@@ -478,11 +703,15 @@
             function handleMouseUp(mouseEvent) {
                 if(_selectedTransition == -1) return;
                     
+                //stop verifying state during transition
+        		window.clearTimeout(_verifyStateTimeout);
+        		
 				var transitionPostData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
                 Debug.log("Physics handleMouseUp to state " + _transitionActions[_currStateTransArr[_selectedTransition]] +
                     "?" + transitionPostData);
                 DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
-						_transitionActions[_currStateTransArr[_selectedTransition]], transitionPostData, physicsLaunchHandler);
+						_transitionActions[_currStateTransArr[_selectedTransition]], 
+						transitionPostData, physicsLaunchHandler);
             }
                     
             //getTransitionParameterData
@@ -506,7 +735,8 @@
                 {                    
                     //if first time, start checking for complete with server
     			    if(_transitionProgress == -1)
-    			    {                       	
+    			    {             
+    			    	_transitionProgress = 0;
     			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);	
     			    }
 
@@ -528,7 +758,8 @@
                             _currState = _transitions[_currStateTransArr[_selectedTransition]][1];
                             if(_transitionResultingState != _stateNames[_currState]) 
                             {
-                            	alert("Error! State result not anticipated. Attempting to re-align with server.");
+                            	Debug.log("Error! State result not anticipated. Attempting to re-align with server.",Debug.HIGH_PRIORITY);
+                            	//alert("Error! State result not anticipated. Attempting to re-align with server.");
                 				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);                            	
                             }
                             _selectedTransition = -1;
@@ -552,8 +783,13 @@
                 {
                 	clearInterval(_transitionTimer);
                     _inAnimation = false;
-    			    _blackout.style.display = 'none';
+    			    _blackout.style.display = 'none';    			    
+    			    updateTimeInState(0); //reset local time in state
                     redrawPhysics(); //draw new state under blackout
+                    
+                    //resume verifying state
+            		window.clearTimeout(_verifyStateTimeout);
+					_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
                     return;
                 }
             	else 														//normal fade in or fade out -------------------
@@ -566,17 +802,28 @@
             }
 
             //handleCheckTransitionProgress ~~
-            function handleCheckTransitionProgress(req) {
+            function handleCheckTransitionProgress(req,id,err) {
             	
                 //Debug.log("Physics handleCheckTransitionProgress " + req.responseText);
+            	
+            	if(!req) //error! stop checking progress..
+            	{            		
+            		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
+            		return;
+            	}
 
 			    var inTransition = DesktopContent.getXMLValue(req,"in_transition")=="1";			    
 			    var progress = DesktopContent.getXMLValue(req,"transition_progress");		    
-			    //TODO confirm state transition
+			    
 			    _transitionResultingState = DesktopContent.getXMLValue(req,"current_state");
 			    
 			    if(!inTransition)
+			    {
 			    	_transitionProgress = 100;
+			    	
+					//update run number
+					document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
+			    }
 			    else
 			    {
 			    	if(progress > 99) progress = 99; //if not completed with transition, make sure progress is a legal value
@@ -597,8 +844,11 @@
 
 		    	_progressBar.style.width = _transitionProgress + "%";
             	
-            	if(_transitionProgress < 100)			    	
-			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
+            	if(_transitionProgress < 100)	
+            		window.setTimeout(function(){
+            			DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState", "", handleCheckTransitionProgress);
+            		},10); //attempt to get current state again in 10ms
+			    	
             }
             
             //handleMouseMove ~~
@@ -670,6 +920,19 @@
                 _parameterSetup.style.height = 
 			    	(_parameterSetupMinimized?_PARAMETER_SETUP_MIN_HEIGHT:_PARAMETER_SETUP_MAX_HEIGHT) + "px";
                 _parameterSetup.style.display = "block";
+                
+                
+				_extrasBox.style.left = (w - _MARGIN - _HUD_X - _EXTRAS_WIDTH - 10) + "px";  
+                _extrasBox.style.top =  (h - _MARGIN - _HUD_Y - 10 - //2 for border //-10 for padding
+                		_EXTRAS_HEIGHT) + "px";
+                _extrasBox.style.width = _EXTRAS_WIDTH + "px";
+                _extrasBox.style.height = _EXTRAS_HEIGHT + "px";
+                _extrasBox.style.display = "block";
+                
+                _alarmBox.style.left = (w/2 -_ALARM_WIDTH/2 - 5) + "px";  
+                _alarmBox.style.top =  (h/2 -_ALARM_HEIGHT/2 - 5) + "px";
+                _alarmBox.style.width = _ALARM_WIDTH + "px";
+                _alarmBox.style.height = _ALARM_HEIGHT + "px";
                 
 			    _canvas.style.left = _MARGIN + "px";
 			    _canvas.style.top = _MARGIN + "px";
@@ -930,6 +1193,7 @@
 			function getStateDrawingColor(i, isBorder) {				
 				if(i == _currState) return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_CURR_STATE_COLOR;
 				else if(_selectedTransition != -1 && 
+						_currStateTransArr[_selectedTransition] && //to prevent errors in strange server situations
 						_transitions[_currStateTransArr[_selectedTransition]][1] == i)
 					return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_TRANS_STATE_COLOR_SEL;
 				else 
@@ -1027,6 +1291,63 @@
 				mouseEvent.cancelBubble=true; //eat event away so state changes don't occur
 			}
 			
+			//showAlarmSetup() ~~
+			function showAlarmSetup(display)
+			{
+				_alarmBox.style.display = display?"block":"none";
+			}
+
+			//setAlarm() ~~
+			function setAlarm(start)
+			{
+				if(start && !_alarmTimeLeft) //if start and alarm time is at 0, then initialize alarm time
+				{
+					var val = document.getElementById("alarm-time").value;
+					val *= 100;
+					val |= 0; //gaurantee is an integer
+					val /= 100;
+					if(val < 0) val = 0;
+					_alarmTimeLeft = (val*60)|0;
+				}
+				Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft); 
+				
+                //set alarm running
+                _alarmRunning = start?true:false;
+			}
+			
+			//stopAlarm() ~~
+			function stopAlarm()
+			{
+				_alarmRunning = false;
+				_alarmTimeLeft = 0;
+			}
+			
+			//displayError(err) ~~
+			//put new error at top of current error strings
+			function displayError(err)
+			{
+				var el = document.getElementById("error-box-err");
+				var str = el.innerHTML;				
+				var d = new Date();
+				
+				if(str.length)
+					err += "<br>...<br>";
+				str = d.toLocaleDateString() + " " + d.toLocaleTimeString() + ": " +
+						err.replace(/\n/g , "<br>") + str;
+				
+        		Debug.log("Physics displayError Error: " + str + "\n\n" + err);   
+				
+        		el.innerHTML = str;
+				_errorBox.style.display = "block";				
+			}
+			
+			//closeErrorBox() ~~
+			function closeErrorBox()
+			{
+				_errorBox.style.display = "none";
+				document.getElementById("error-box-err").innerHTML = ""; //clear string
+			}
+			
 		</script>
 </head>
 
@@ -1037,9 +1358,25 @@
 
 <div id='parameter-setup'>
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
-	<br><br>
-	
+	<br><br>	
 </div>
+
+<div id='extras-box'>
+	<div id='run-number'></div>
+	<div id='time-elapsed'></div>
+	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>
+</div>
+		
+<div id='alarm-setup-box'>
+	<center><b><u>Alarm Setup</u></b></center><br>
+		
+	Minutes: <input style='width:50px' id='alarm-time'/>
+		<br><br>
+	<a href='Javascript:setAlarm(1);' title='Start the Alarm Countdown'>Start</a>
+	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown'>Pause</a>
+	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>
+</div>	
+
 
 <div class='blackout' id='blackout'>	
 
@@ -1059,6 +1396,12 @@
 	<div class='blackout' id='blackout-reveal'>
 	</div>
 
+</div>
+		
+
+<div id='error-box'>
+<a href="javascript:closeErrorBox()">Close Errors</a><br><br>
+<div id='error-box-err'></div>
 </div>
 
 </body>

@@ -164,32 +164,7 @@
 			
 			#loaderGif {
 				margin: 60px 50px 0 0;
-			}
-						
-			.adminPopUpDiv {
-				position: absolute;
-				left: 50px;
-				top: 75px;
-				border-radius: 5px;
-				padding: 10px;
-				background-color: rgb(255,241,189); 
-				border: 2px solid rgb(0,0,0);
-				text-align: center;
-				color: black;
-			}
-
-			#adminPopUpDiv-removeExperiment {
-				background-color: #ffddd1;
-			}
-			
-			#adminPopUpText {
-				width: 200px;
-				color: black;
-			}
-			
-			.adminPopUpDiv u, .adminPopUpDiv i, .adminPopUpDiv b {
-				color: black;	
-			}
+			}				
 			
 			#experimentTextBox {
 				width: 200px;
@@ -376,7 +351,7 @@
 		</style>
 		
 
-		<link href='http://fonts.googleapis.com/css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
@@ -406,8 +381,6 @@
 				//handleExperimentInputKeyDown(e)
 				//handleSearchKeyUp()
 				//handleTimeoutSearchKeyUp()
-				//popUpVerification(prompt, func)
-				//clearPopUpVerification(func)
 				//createExperiment()
 				//removeExperiment()
 				//displayExperiments()
@@ -461,7 +434,7 @@
 			/////////////////////////////////////////////////////////////////////////////////////////
 			
 			//init called once body has loaded
-			function init() {		
+			function init() {	
 				
 				//init area elements
 				for(var i=0;i<_AREAS.length;++i)
@@ -490,7 +463,7 @@
 			}	
 
 			//setActiveExperiment ~
-			function setActiveExperiment(experiment) {	
+			function setActiveExperiment(experiment) {					
 			    Debug.log("Logbook setActiveExperiment to " + experiment);
 				_activeExperiment = experiment;
 				if(!_activeExperiment || _activeExperiment == "")
@@ -785,39 +758,6 @@
 				applyExperimentsSearch(el.value);
 				displayExperiments();
 			}
-
-			//popUpVerification ~~
-			//	asks user if sure
-			//	replace REPLACE in prompt with value in text box
-			function popUpVerification(prompt, func) {				
-				//remove pop up if already exist
-				if(_adminPopUpDiv) _adminPopUpDiv.parentNode.removeChild(_adminPopUpDiv);
-				
-				//replace REPLACE
-				prompt = prompt.replace(/REPLACE/g, document.getElementById("experimentTextBox").value); 
-		         
-				var el = document.getElementById("adminArea");	
-				_adminPopUpDiv = document.createElement("div");
-				_adminPopUpDiv.setAttribute("class", "adminPopUpDiv");
-				_adminPopUpDiv.setAttribute("id", "adminPopUpDiv-"+func);				
-				var str = "<div id='adminPopUpText'>" + prompt + "</div>" +
-					"<input type='submit' onmouseup='clearPopUpVerification(" + func + ");' value='Yes'> " +
-					"&nbsp;&nbsp;&nbsp;" + 
-					"<input type='submit' onmouseup='clearPopUpVerification();' value='Cancel'>";
-				_adminPopUpDiv.innerHTML = str;
-				el.appendChild(_adminPopUpDiv);
-			}
-			
-			//clearPopUpVerification ~~
-			//	call func after clearing, if exists
-			function clearPopUpVerification(func) {
-				//remove pop up if already exist
-				if(_adminPopUpDiv) _adminPopUpDiv.parentNode.removeChild(_adminPopUpDiv);
-				_adminPopUpDiv = 0;
-				if(func) func();
-				else			
-					_adminStatusEl.innerHTML = "Action was cancelled by user!";
-			}
 			
 			//createExperiment ~~ 
 			function createExperiment() {	
@@ -908,6 +848,10 @@
 				Debug.log("Logbook activeExperimentSetRequest experiment " + experiment);
 				DesktopContent.XMLHttpRequest("Log", 		//update experiment list 
 						"RequestType=SetActiveExperiment&Experiment="+experiment, handleExperimentChangeRequest);
+
+				var el = document.getElementById("experimentTextBox");	
+				el.value = experiment;
+				el.focus();
 			}
 			
 			//clearExperimentInput ~~ 
@@ -1336,14 +1280,14 @@
 					src='/WebPath/images/windowContentImages/logbook-clear.png'></a>
 				<div style='margin:-5px 0 10px 0;font-size:11px'>(alpha-numeric, dashes, and underscores)</div>
 				<input type='submit' onmouseup=
-					'popUpVerification(
+					'DesktopContent.popUpVerification(
 						"Are you sure you want to <u><i>Create</i></u> the new experiment, <i><b>REPLACE</b></i>?<br><br>",
-						"createExperiment");' 
+						createExperiment, document.getElementById("experimentTextBox").value);' 
 					value='Create Experiment' title='Create a new experiment, or re-add to list'><br><br>
 				<input type='submit' onmouseup=
-					'popUpVerification(
+					'DesktopContent.popUpVerification(
 					"Are you sure you want to <u><i>Remove</i></u> the experiment, <i><b>REPLACE</b></i>?<br><br>",
-					"removeExperiment");' 
+					removeExperiment, document.getElementById("experimentTextBox").value,"#ffddd1");'  
 					value='Remove Experiment'  title='Remove an experiment from list' style='color:red'>
 				<div id='adminStatusDiv'>Status updates are displayed here.</div> 
 			</div>
