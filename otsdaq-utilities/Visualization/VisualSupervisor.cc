@@ -317,23 +317,25 @@ throw (xgi::exception::Exception)
 		if(fp)
 		{
 			char line[100];
-			char val[100];
+			//char val[100];
+			int val;
 
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("radioSelect", val);
+			sscanf(line,"%*s %d",&val);
+			if(val < 0 || val > 3) val = 0; //FIXME.. value can get corrupt...
+			xmldoc.addTextElementToData("radioSelect", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoRefresh", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoRefresh", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoHide", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoHide", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("hardRefresh", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("hardRefresh", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoRefreshPeriod", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoRefreshPeriod", std::to_string(val));
 			fclose(fp);
 		}
 		else
