@@ -593,7 +593,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
 
-	__MOUT__<<  fullPath << isMacroLSBF << std::endl;
+	__MOUT__<<  fullPath << std::endl;
 
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())

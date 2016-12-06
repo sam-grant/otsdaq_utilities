@@ -276,13 +276,6 @@
         	width: 45px;
         	height: 17px;
         }
-        
-        #sequenceAddress{
-        	margin: 5px 0 0 0;
-        }
-        #sequenceData{
-        	margin: 5px 0 0 22px;
-        }
 
 		#twoButtons{
         	margin-top: 50px;
@@ -623,9 +616,24 @@
 		<div class='mainBlock' id='maker'>
 	        <h3>Macro Maker</h3>
 	        <div class="center">
-		        <p id = "sequenceAddress">Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
-			    <p id = "sequenceData">Data:  <input type="text" id="macroDataInput" class="inputBox"/></p>
-				
+	            <p>Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
+		        <div id="macroFormat1" class="formatSelection">Address format:
+		           <select id="macroAddressFormat" class="dropdown" onchange="toggleLSBF()">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				</div>
+		        <p>Data:  <input style="margin-left:23px" type="text" id="macroDataInput" class="inputBox"/></p>
+		        <div id="macroFormat2" class="formatSelection">Data format:
+		           <select style="margin-left:23px" id="macroDataFormat" class="dropdown">
+				    <option class="select" value="hex" selected="selected">hex</option>
+				    <option class="select" value="dec">dec</option>
+				    <option class="select" value="ascii">ascii</option>
+				   </select>
+				</div>
+				<input id="macroLsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>		        
+
 				<div class="buttonGroup">
 		        	<button onclick="addCommand('w')">Add Write</button>
 		        	<button onclick="addCommand('r')">Add Read</button>

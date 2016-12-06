@@ -267,7 +267,12 @@
 		{ 
 			var addressFormatStr = document.getElementById("addressFormat").value;
 			var dataFormatStr = document.getElementById("dataFormat").value;
-			
+	    	if(isMacroRunning == true)
+	    	{
+	    		addressFormatStr = "hex";
+	    		dataFormatStr = "hex";
+	    	}
+	    	
 			if (typeof address === 'undefined') 
 			{ 
 				var addressStr = document.getElementById('addressInput').value.toString();
@@ -406,11 +411,20 @@
 		Debug.log("readHandler() was called. Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
+    	
+    	if(isMacroRunning == true)
+    	{
+    		addressFormatStr = "hex";
+    		dataFormatStr = "hex";
+    	}
+    	
     	var reminderEl = document.getElementById('reminder');
-
+    	
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
+		
 		var convertedOutput;
+		
     	var reverse = document.getElementById("lsbFirst").checked;
     	if(runningMacroLSBF == 1) reverse = true; 
         if(runningMacroLSBF == 2) reverse = false; 
@@ -598,7 +612,7 @@
     	}
     }
 	
-    function addCommand(command,address,data)
+    function addCommand(command,address,data)//either has address+data, or have no address/data. # of parameters = 1 or 3
     {
 		var contentEl = document.getElementById('sequenceContent');
 		var macroReminderEl = document.getElementById('macroReminder');
@@ -608,39 +622,47 @@
 		case 'w':
 	    	if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('macroAddressInput').value.toString();
-				var dataStr = document.getElementById('macroDataInput').value.toString();
-	    		if(addressStr === "") 
+				var addressStrBefore = document.getElementById('macroAddressInput').value.toString();
+				var dataStrBefore = document.getElementById('macroDataInput').value.toString();
+	    		if(addressStrBefore === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to write to";
 					return;
 				} 
-	    		else if(dataStr === "") 
+	    		else if(dataStrBefore === "") 
 	    		{
 					macroReminderEl.innerHTML = "Please enter your data";
 					return;
 				}
+				var addressFormatStr = document.getElementById("macroAddressFormat").value;
+				var dataFormatStr = document.getElementById("macroDataFormat").value;
+		    	var reverse = document.getElementById("lsbFirst").checked;
+				var addressStr = reverseLSB(convertToHex(addressFormatStr,addressStrBefore),reverse);
+				var dataStr = reverseLSB(convertToHex(dataFormatStr,dataStrBefore),reverse);
 			} 
 	    	else 
 			{
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
-				var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-						+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
-						+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
-				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
-				macroString.push(writeMacroString);
+			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
+					+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+			var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
+			macroString.push(writeMacroString);
 			break;
 		case 'r':
 			if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('macroAddressInput').value.toString();
-				if(addressStr === "") 
+				var addressStrBefore = document.getElementById('macroAddressInput').value.toString();
+				if(addressStrBefore === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to read from";
 					return;
 				}
+				var addressFormatStr = document.getElementById("macroAddressFormat").value;
+				var reverse = document.getElementById("lsbFirst").checked;
+				var addressStr = reverseLSB(convertToHex(addressFormatStr,addressStrBefore),reverse);
 			} 
 			else var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
@@ -816,7 +838,6 @@
     		stringOfAllMacros[MACROINDEX] = tempString;
     		var isMacroPublic = document.getElementById("isMacroPublic").checked;
     		var isMacroLSBF = document.getElementById("isMacroLSBF").checked;
-    		console.log(isMacroLSBF);
     		
         	if(namesOfAllMacros.indexOf(macroName) !== -1) //duplicate name
         	{
@@ -836,16 +857,18 @@
     				loadExistingMacros();
     				hidePopupSaveMacro();   
     				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    				Debug.log("Your Macro was succesfully saved!",Debug.INFO_PRIORITY);
     			};
         	}
         	else
         	{
 				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
 						+"&isLSBF="+isMacroLSBF+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-						+macroNotes,"",createMacroHandler);
+						+macroNotes,"",createMacroHandler);		
 				loadExistingMacros();
-				hidePopupSaveMacro();   
+				hidePopupSaveMacro(); 
 				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+				Debug.log("Your Macro was succesfully saved!",Debug.INFO_PRIORITY);
         	}
     	}
     }
@@ -933,12 +956,17 @@
 						}
 					}
 					else if(commandType=='d'){
-						var runningPercentageEl = document.getElementById('macroRunningPercentage');
-						var barEl = document.getElementById('macroRunningBar');
-						barWidth += barIncrement;
-						barEl.style.width = barWidth + '%'; 
-						runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
-						console.log("delay "+Command[2]+"ms");
+						waitForCurrentCommandToComeBack = true;
+						setTimeout(delay(),10000);
+						function delay(){
+							var runningPercentageEl = document.getElementById('macroRunningPercentage');
+							var barEl = document.getElementById('macroRunningBar');
+							barWidth += barIncrement;
+							barEl.style.width = barWidth + '%'; 
+							runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
+							console.log("delay "+Command[2]+"ms");
+							waitForCurrentCommandToComeBack = false;
+						}
 					}else
 						console.log("ERROR! Command type "+commandType+" not found");
 					i++;
@@ -1510,6 +1538,7 @@
 								else
 								{
 									promptEl.style.display = "block";				   //Pop-up window prompting user for value of variable
+									document.getElementById('assignValuePrompt').innerHTML = "What value would you assign to variable <span id=\"variableNameAtRunTime\" class=\"red\"></span>?</h4>"
 									document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
 								}
 							}
