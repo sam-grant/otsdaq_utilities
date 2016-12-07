@@ -328,10 +328,7 @@
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
 			width:78%;
-			overflow:auto;
-			overflow-y: auto;	
-			overflow-x: auto;	
-			
+			overflow:auto;	
         }
         
         .JStextarea {
@@ -347,10 +344,6 @@
 		    width: 90%;
 		    height: 20%;
 	    }
-	    
-	    #macroEditSettings {
-		  	margin-top: 10px;
-		}
 	    #macroName {
 	        width: 360px;
 	    }
@@ -530,6 +523,11 @@
 	    		margin: 0 auto; 
             }
         }
+        @media only screen and (max-width: 550px) {
+        	html {
+        		overflow:auto;
+        	}
+        }
 		</style>
 		
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
@@ -600,7 +598,7 @@
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
 				</div>
-				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
+				<input id="lsbFirst" type="checkbox"> Least Significant Byte First</input>
 		        <b><div id="reminder" class="red"></div></b>
 		        
 		        <div class="buttonGroup">
@@ -618,7 +616,7 @@
 	        <div class="center">
 	            <p>Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
 		        <div id="macroFormat1" class="formatSelection">Address format:
-		           <select id="macroAddressFormat" class="dropdown" onchange="toggleLSBF()">
+		           <select id="macroAddressFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
@@ -713,7 +711,15 @@
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
 				<p><b>Macro Notes</b></p>
-				<center><textarea id="macroNotesEdit">Pre-fill here</textarea></center>
+				<center>
+					<textarea id="macroNotesEdit">Pre-fill here</textarea>
+					<div onchange="reloadMacroSequence()">Display 
+			           <select id="editFormat" class="dropdown">
+					    <option class="select" value="hex" selected="selected">hex</option>
+					    <option class="select" value="dec">dec</option>
+					   </select>
+					format for all numerical fields in this macro</div>
+				</center>
 				<div class="buttongroup" id="macroEditSettings">
 				  <center>
 			   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>

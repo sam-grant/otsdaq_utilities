@@ -16,7 +16,6 @@
 		//isArrayAllZero
 		//convertToHex
 		//convertFromHex
-		//toggleLSBF
 		//reverseLSB
 		//LSBchecker
 		//toggleDisplay
@@ -45,6 +44,7 @@
 		//loadingHistHandler
 		//histCmdWriteDivOnclick
 		//histCmdReadDivOnclick
+		//histCmdDelayDivOnclick
 		//macroActionOnRightClick
 		//exportMacroHandler
 		//editCommands
@@ -127,7 +127,7 @@
 						
 		var w = window.innerWidth;
 		var h = window.innerHeight;
-		
+		if(w < 550) return;
 		//square [x,y] [w,h]
 		var _MARGIN = 5;
 		
@@ -138,7 +138,7 @@
 		var b5 = [w*2/3,_MARGIN+4*_MARGIN,w/3-_MARGIN, h-2*_MARGIN]; //right 
 		var b6 = [_MARGIN, _MARGIN+4*_MARGIN,w/3-2*_MARGIN, h-2*_MARGIN]; //left
 		var b7 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN];//middle
-		var b8 = [w/2-200,h/5,2*w/3,3*h/5];
+		var b8 = [w/2-200,h/5,2*w/3,3*h/5+15];//popup
 		
 		block1El.style.left = b1[0] + "px";
 		block1El.style.top =  b1[1] + "px";
@@ -365,6 +365,7 @@
 			
 			if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
 			
+			var selectionStrArray = [];
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
 			for (var i = 0; i < selected.length; i++) 
@@ -372,6 +373,7 @@
 				if (selected[i]!==0) 
 				{
 					var oneInterface = FEELEMENTS[i].getAttribute("value");
+					if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
 					supervisorIndexArray.push(oneInterface.split(":")[1]);
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
@@ -381,11 +383,7 @@
 	    	if(runningMacroLSBF == 2) reverse = false; 
 	    	
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead),reverse);
-			var selectionStrArray = [];
-			for (var i = 0; i < selected.length; i++) 
-			{
-				if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
-			}
+
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
 					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
@@ -498,30 +496,6 @@
 			str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
 			return str;
 		}
-    }
-    
-    function toggleLSBF() //Only listens to addressFormat
-    {
-    	var addressFormatStr = document.getElementById("addressFormat").value;
-        var macroAddressInputEl = document.getElementById('macroAddressInput');
-
-        switch (addressFormatStr) {
-          case "hex":
-            document.getElementById("lsbFirst").checked = true;
-            document.getElementById("lsbFirst").disabled = false;
-        //    macroAddressInputEl.setAttribute("placeholder", "0x64");
-            break;
-          case "dec":
-            document.getElementById("lsbFirst").checked = false;
-            document.getElementById("lsbFirst").disabled = true;
-         //   macroAddressInputEl.setAttribute("placeholder", "1234");
-            break;
-          case "ascii":
-            document.getElementById("lsbFirst").checked = false;
-            document.getElementById("lsbFirst").disabled = false;
-      //      macroAddressInputEl.setAttribute("placeholder", "Hi");
-            break;
-        }
     }
     
     function reverseLSB(original, execute)
@@ -672,19 +646,27 @@
 			macroString.push(readMacroString);
 			break;
 		case 'd':
-			if (typeof address === 'undefined') 
+			if (typeof address === 'undefined') //adding from Sequence Maker
 			{ 
 				var delayStr = document.getElementById('delayInput').value.toString();
-				if(addressStr === "") 
+				if(delayStr === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter a delay";
 					return;
 				}
+				else if (isNaN(delayStr))
+				{
+					macroReminderEl.innerHTML = "Delay has to be a numerical number";
+					return;
+				}
+				if(document.getElementById("delayUnit").value === "s") delayStr = Number(delayStr)*1000;
+
 			}
-			else var delayStr = address.toString();
+			else // adding from Command History
+				var delayStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
 					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
-					+ "</b> s</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ "</b> ms</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
 			break;
@@ -957,14 +939,28 @@
 					}
 					else if(commandType=='d'){
 						waitForCurrentCommandToComeBack = true;
-						setTimeout(delay(),10000);
+						setTimeout(function(){delay();},Number(Command[2]));
 						function delay(){
+							//delay handler here, does what read and write handlers do
+							var contentEl = document.getElementById('historyContent');
+							var innerClass = "class=\"innerClass1\"";
+							if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
+							var selectionStrArray = [];
+							for (var i = 0; i < selected.length; i++) 
+							{
+								if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+							}
+							var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+											+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdDelayDivOnclick(" + Command[2]
+											+ ")\">Delay <b>" + Command[2] + "</b> ms</div>";
+							contentEl.innerHTML += update;
+							contentEl.scrollTop = contentEl.scrollHeight;
+							CMDHISTDIVINDEX++;
 							var runningPercentageEl = document.getElementById('macroRunningPercentage');
 							var barEl = document.getElementById('macroRunningBar');
 							barWidth += barIncrement;
 							barEl.style.width = barWidth + '%'; 
-							runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
-							console.log("delay "+Command[2]+"ms");
+							runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   
 							waitForCurrentCommandToComeBack = false;
 						}
 					}else
@@ -999,7 +995,6 @@
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
-				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
@@ -1018,7 +1013,6 @@
 			}
 			finalOutput = decodeURI(out);
 			document.getElementById("listOfPrivateMacros").innerHTML = finalOutput;
-			console.log(finalOutput);
     	}
     	else 
     		document.getElementById("listOfPrivateMacros").innerHTML = "";
@@ -1030,7 +1024,6 @@
 			for(var i = 0; i < publicMacrosArray.length; i++) 
 			{
 				var arr = JSON.parse(publicMacrosArray[i]);
-				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
@@ -1101,8 +1094,6 @@
 				finalOutPut += decodeURI(out);
 				CMDHISTDIVINDEX++;
 			}
-			else if(commandType=='d')
-				console.log("delay "+oneCommand[1]+"ms");
 			else
 				console.log("ERROR! Command type "+commandType+" not found");
 
@@ -1132,6 +1123,15 @@
 			addCommand("r",convertedAddress)
 		}
 		else callRead(addressStr);
+	}
+    
+    function histCmdDelayDivOnclick(delayStr)
+	{
+		if(isOnMacroMakerPage)
+		{
+			addCommand("d",delayStr);
+		}
+		else return;
 	}
     
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
@@ -1194,9 +1194,9 @@
 							markColorData = "2";
 							disableData = "disabled";
 						}
-						var writeEdit = "<lable>Write 0x<textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
+						var writeEdit = "<lable>Write <textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3)'>V</div> into address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+							+ ",3)'>V</div> into address <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1214,7 +1214,7 @@
 						}
 						var readEdit = "<lable>Read <textarea disabled class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3,1)'>V</div> from address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ ",3,1)'>V</div> from address <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1227,7 +1227,7 @@
 						}
 						var delayEdit = "<lable>Delay <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",2)'>V</div> seconds<br/></lable>";
+							+ ",2)'>V</div> milliseconds<br/></lable>";
 						seqID++;
 						output += delayEdit;
 					}else
@@ -1330,14 +1330,12 @@
 			for(var i = 0; i < arrayOfCommandsForEdit.length; i++)
 			{
 				var eachCommand = arrayOfCommandsForEdit[i].split(":");
-				console.log(eachCommand);
 				for (var j = 1; j < eachCommand.length; j++)
 				{
 					if(!Regex2.test(eachCommand[j]) && eachCommand[j] !== '')
 					{
 						document.getElementById("popupIllegalInput").style.display = "block";
 						document.getElementById("illegalInputValue").innerHTML = eachCommand[j];
-						console.log("eachCommand[j] is "+eachCommand[j]+" and j is "+j+" and i is "+i);
 					    return;
 					}
 					else if (eachCommand[j] === '') 
@@ -1346,7 +1344,6 @@
 						else
 						{
 							document.getElementById("popupEmptyInput").style.display = "block";
-							console.log(eachCommand + "index: " + j);
 							return;
 						}
 					}
@@ -1367,7 +1364,6 @@
 				return;
 			}
 			var isMacroLSBF = document.getElementById('isMacroEditLSBF').checked;
-			console.log(isMacroLSBF);
 			var isMacroPublic = !isOnPrivateMacros;
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
 							+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
@@ -1485,7 +1481,6 @@
     	if (LSBF == "true") runningMacroLSBF = 1; 
     	if (LSBF == "false") runningMacroLSBF = 2;
     	
-    	console.log(runningMacroLSBF + " and " + LSBF);
     	var reminderEl = document.getElementById('reminder');
     	var waitForUserInputFlag = 0;
     	var copyOfStringOfCommands = stringOfCommands.slice();           //Needed because the variable assignments are temporary
