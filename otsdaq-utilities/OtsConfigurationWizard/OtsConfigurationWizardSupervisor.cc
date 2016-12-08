@@ -22,6 +22,7 @@ using namespace ots;
 
 
 #define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/security.dat"
+#define SEQUENCE_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
 //#define ICON_FILE_NAME 			std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/iconList.dat";
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
@@ -74,6 +75,21 @@ void OtsConfigurationWizardSupervisor::init(void)
 void OtsConfigurationWizardSupervisor::generateURL()
 {
 	int length = 4;
+	FILE *fp = fopen((SEQUENCE_FILE_NAME).c_str(),"r");
+	if(fp)
+	{
+		__MOUT_INFO__ <<  "Sequence length file found: " << SEQUENCE_FILE_NAME << std::endl;
+		char line[100];
+		fgets(line,100,fp);
+		sscanf(line,"%d",&length);
+		fclose(fp);
+		if(length < 4) length = 4; //don't allow shorter than 4
+	}
+	else
+		__MOUT_INFO__ <<  "Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+
+	__MOUT__ << "Sequence length = " << length << std::endl;
+
 	securityCode_ = "";
 
 	static const char alphanum[] =
@@ -81,7 +97,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(time(0));
+	srand(0);//time(0));
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
