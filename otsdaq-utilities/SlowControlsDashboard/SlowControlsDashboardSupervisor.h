@@ -67,10 +67,9 @@ public:
 
 private:
 	//SlowControlsInterface 
-    SupervisorConfiguration              	theSupervisorsConfiguration_;
+    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
 	//EpicsInterface                        * interface_;
     ConfigurationManager*          			theConfigurationManager_;
-
     RemoteWebUsers							theRemoteWebUsers_;
 	std::string                             username;
 	std::map<int, std::set<std::string>> 	pvDependencyLookupMap_;
