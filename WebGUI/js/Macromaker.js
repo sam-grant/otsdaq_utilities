@@ -114,10 +114,12 @@
 		toggleMacroPublicity(0);
 	}
 	
-	function initLite()
+	//This is what refresh button and redrawWindow() calls
+	function initLite() 
 	{
 		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",
 				FElistHandler);
+		loadUserHistory();
 	}
 	
 	//Handling window resizing
@@ -591,6 +593,18 @@
 		var contentEl = document.getElementById('sequenceContent');
 		var macroReminderEl = document.getElementById('macroReminder');
 		macroReminderEl.innerHTML = "";
+		var formatMarkerHead, formatMarkerTail = "";
+		if(SEQFORMAT == "hex") formatMarkerHead = "0x";
+		else if(SEQFORMAT == "ascii")
+		{
+			formatMarkerHead = "\"";
+			formatMarkerTail = "\"";
+		}
+		else 
+		{
+			formatMarkerHead = "";
+			formatMarkerTail = "";
+		}
 		switch(command)
 		{
 		case 'w':
@@ -620,8 +634,14 @@
 				var dataStr = data.toString();
 			}
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
-					+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,dataStr) + formatMarkerTail + "</b> into <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,addressStr) + formatMarkerTail 
+					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ SEQINDEX + ")\"></></div>";
 			var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
 			macroString.push(writeMacroString);
 			break;
@@ -640,8 +660,13 @@
 			} 
 			else var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
-					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,addressStr) + formatMarkerTail 
+					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ SEQINDEX + ")\"></></div>";
 			var readMacroString = SEQINDEX+":r:"+addressStr+":";
 			macroString.push(readMacroString);
 			break;
@@ -665,8 +690,12 @@
 			else // adding from Command History
 				var delayStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
-					+ "</b> ms</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" 
+					+ delayStr + "</b> ms</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX 
+					+ ")\"></></div>";
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
 			break;
@@ -1251,6 +1280,7 @@
 				var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
 				macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
 				macroNotesEl.value = macroNotesForEdit;
+				document.getElementById("editFormat").selectedIndex = 0;
 			}
     		break;
     	case "Start":
@@ -1327,6 +1357,15 @@
 			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
 		{
+			if(document.getElementById("editFormat").value == "dec")
+			{
+				var nodeListOfTextareas=document.getElementsByTagName('textarea');
+				for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+				{
+					if(!isNaN('0x'+nodeListOfTextareas[i].value))
+						nodeListOfTextareas[i].innerHTML = convertToHex("dec",nodeListOfTextareas[i].value);
+				}
+			}
 			for(var i = 0; i < arrayOfCommandsForEdit.length; i++)
 			{
 				var eachCommand = arrayOfCommandsForEdit[i].split(":");
@@ -1349,14 +1388,7 @@
 					}
 				}
 			}
-//    		var tempAllNames = namesOfAllMacros.splice(namesOfAllMacros.indexOf(macroName));
-//
-//			if(tempAllNames.indexOf(macroName) !== -1) //duplicate name
-//			{
-//				document.getElementById("popupMacroEditDuplicateName").style.display = "block";
-//				document.getElementById("duplicateNameEdit").innerHTML = newMacroNameForEdit;
-//				return;
-//			}
+
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
 			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
 			{
@@ -1394,6 +1426,36 @@
     	}
     }
 
+    function reloadEditSequence()
+	{
+    	//FIXME: this function needs to know the old value before onchange!
+		var nodeListOfTextareas=document.getElementsByTagName('textarea');
+		if(document.getElementById("editFormat").value == "dec")
+		{
+			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+			{
+				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+					nodeListOfTextareas[i].innerHTML = convertFromHex("dec",nodeListOfTextareas[i].value);
+			}
+		}
+//		else if(document.getElementById("editFormat").value == "ascii")
+//		{
+//			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+//			{
+//				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+//					nodeListOfTextareas[i].innerHTML = convertToHex("ascii",nodeListOfTextareas[i].value);
+//			}
+//		}
+		else
+		{
+			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+			{
+				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+					nodeListOfTextareas[i].innerHTML = convertToHex("dec",nodeListOfTextareas[i].value);
+			}
+		}
+    }
+    
     function setFieldToVariable(div, seqID, index,isReadResultField)
     {
     	var popupNameVariableEl = document.getElementById("popupNameVariable");
@@ -1533,7 +1595,8 @@
 								else
 								{
 									promptEl.style.display = "block";				   //Pop-up window prompting user for value of variable
-									document.getElementById('assignValuePrompt').innerHTML = "What value would you assign to variable <span id=\"variableNameAtRunTime\" class=\"red\"></span>?</h4>"
+									document.getElementById('assignValuePrompt').innerHTML 
+											= "What value would you assign to variable <span id=\"variableNameAtRunTime\" class=\"red\"></span>?</h4>"
 									document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
 								}
 							}
