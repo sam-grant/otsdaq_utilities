@@ -189,6 +189,8 @@
 		var _msChosenGroupKey;
 		var _groupViewFilterIndex = 2; //-1=all, 0=context, 1=backbone, 2=configuration
 		
+		var _mouseIsSelecting = false;	//to block switching cells when selecting text
+		
 		//for tree view
 		var treeViewHandlerStr_; //used by recursive function to build html string
 		var fancyTreeViewHandlerStr_;
@@ -369,6 +371,13 @@
 			else
 				setupSystemViewMode();
 			
+			
+			window.onkeydown = bodyKeyHandler;
+			window.onmouseup = function(event) 
+					{	
+					editCellCancel();  
+					_mouseIsSelecting = false; 
+					Debug.log(_mouseIsSelecting);};			
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -1636,7 +1645,7 @@
 								isStatusType = true; break;
 							}
 						
-						str += "<td onmouseup='selectThisCell("+r+","+c+",this);' ";
+						str += "<td onmouseup='selectThisCell("+r+","+c+",this,event);' ";
 						
 						if(isStatusType)
 						{
@@ -3744,8 +3753,21 @@
 		}
 		
 		//selectThisCell
-		function selectThisCell(r,c,el) 
-		{				
+		function selectThisCell(r,c,el,event) 
+		{	
+			if(event) //stop the body from also calling onmouseup and cancelling select
+			{
+				event.stopPropagation();
+
+				Debug.log(_mouseIsSelecting);
+				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
+				{
+					_mouseIsSelecting = false;
+					Debug.log(_mouseIsSelecting);
+					return; 							
+				}
+			}
+			
 			if(_editingCell) //already have the edit box open, cancel it
 			{
 				if(_editingCellEl == el) //if same cell do nothing
@@ -3829,7 +3851,9 @@
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
 				str += _editingCellElOldValue;
-				str += "'>";
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
 			}
 						
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
@@ -4085,6 +4109,8 @@
 		//editCellCancel
 		function editCellCancel() 
 		{	
+			Debug.log("editCellCancel");
+			
 			if(_editingCellEl)
 				_editingCellEl.innerHTML = _editingCellElOldValue;
 			
@@ -5243,7 +5269,7 @@
 					else if(r >= _CONFIG_DATA_ROW_OFFSET &&	//data cells
 							c >= _CONFIG_DATA_COL_OFFSET) 
 						str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
-						(c-_CONFIG_DATA_COL_OFFSET)+",this);' " + 
+						(c-_CONFIG_DATA_COL_OFFSET)+",this,event);' " + 
 						tdStyle + ">";
 					else						
 						str += "<td>";
@@ -5352,7 +5378,7 @@
 </head>
 	
 
-<body onload='Javascript:init();' onkeydown='Javascript:bodyKeyHandler(event);'>	
+<body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
 		<div style='width:550px'>		
