@@ -6,6 +6,7 @@
 #include "otsdaq-core/CoreSupervisors/FESupervisor.h"
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
+
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -30,7 +31,6 @@ namespace ots
 
 class ConfigurationManager;
 class HttpXmlDocument;
-
 
 class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
 {
