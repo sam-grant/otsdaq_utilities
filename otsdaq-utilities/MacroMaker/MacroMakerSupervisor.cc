@@ -291,8 +291,8 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
 	__MOUT__<< "Address: " << Address << " Data: " << Data << std::endl;
 
-	__MOUT__<<"Here comes the array from multiselect box for WRITE, behold: "
-			<< supervisorIndexArray << interfaceIndexArray << std::endl;
+	__MOUT__<< "Here comes the array from multiselect box for WRITE, behold: \n"
+			<< supervisorIndexArray << "\n" << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
 
