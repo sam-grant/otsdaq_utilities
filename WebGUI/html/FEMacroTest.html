@@ -1,0 +1,93 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>FE Macros</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+
+		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
+		.multiselectbox input, textarea {
+			margin: 			14px 5px 5px 12px;
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: pointer;
+		}
+	
+		#popUpDialog {
+			position: absolute;
+			z-index: 1000;    
+			border: 1px solid #770000;
+		    background-color: #efeaea;
+		    text-align: center;
+		    padding: 10px;
+		}
+		
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	
+	<script>		
+		
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		
+		//init called once body has loaded
+		function init() {			
+	
+			Debug.log("CfgGUI init ");
+	
+	
+			//get context and backbone member list 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getFEMacroList", "", 
+					function (req) {				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				var feMacros = req.responseXML.getElementsByTagName("FEMacro");						
+				for(var i=0;i<feMacros.length;++i)
+					Debug.log(feMacros[i].getAttribute("value"));
+			}
+			);
+		}
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<h1>FE Macros</h1>
+		<div style='width:550px'>		
+
+	<div id='display'></div>
+	
+</body>
+	
+</html>
