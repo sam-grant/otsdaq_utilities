@@ -27,7 +27,8 @@
 #include <set>
 
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
-#include "otsdaq-utilities/UtilitiesPluginMakers/MakeMonitor.h"
+#include "otsdaq-core/PluginMakers/MakeControls.h"
+#include "otsdaq-core/ControlsCore/SlowControlsVInterface.h"
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 

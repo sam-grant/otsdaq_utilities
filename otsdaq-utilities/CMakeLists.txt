@@ -1,9 +1,9 @@
 # Extra parts for the XDAQ GUI
-add_subdirectory(SlowControlsInterfaceCore)
+
 
 #add_subdirectory(SlowControlsInterfacePlugins)
-add_subdirectory(UtilitiesPluginMakers)
-add_subdirectory(SlowControlsInterfacePlugins)
+
+
 add_subdirectory(Chat)
 add_subdirectory(ConfigurationGUI)
 add_subdirectory(Logbook)

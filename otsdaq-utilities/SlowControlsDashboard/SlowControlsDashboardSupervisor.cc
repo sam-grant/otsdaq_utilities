@@ -20,8 +20,7 @@
 #include <errno.h>
 
 //#include "EpicsInterface.h.bkup"
-#include "otsdaq-utilities/SlowControlsInterfaceCore/SlowControlsVInterface.h"
-#include "otsdaq-utilities/UtilitiesPluginMakers/MakeMonitor.h"
+#include "otsdaq-core/PluginMakers/MakeControls.h"
 #define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/SlowControlsDashboardData/pages/";
 
 using namespace ots;
@@ -154,7 +153,7 @@ void SlowControlsDashboardSupervisor::init(void)
 
 	theSupervisorDescriptorInfo_.init(getApplicationContext());
 	//if(true)
-	interface_ = makeMonitor("EpicsInterface");
+	interface_ = makeControls("SlowControlsOtsInterface");
 	//interface_->initialize();
 	std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
