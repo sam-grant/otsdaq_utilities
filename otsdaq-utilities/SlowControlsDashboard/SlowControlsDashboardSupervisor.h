@@ -28,7 +28,7 @@
 
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 #include "otsdaq-core/PluginMakers/MakeControls.h"
-#include "otsdaq-core/ControlsCore/SlowControlsVInterface.h"
+#include "otsdaq-core/ControlsCore/ControlsVInterface.h"
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
@@ -37,7 +37,7 @@
 namespace ots
 {
 
-	class SlowControlsVInterface;
+	class ControlsVInterface;
 	class ConfigurationManager;
 
 class SlowControlsDashboardSupervisor: public xdaq::Application, public SOAPMessenger
@@ -72,7 +72,7 @@ private:
 	//SlowControlsInterface 
     SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
 	//EpicsInterface                        * interface_;
-    SlowControlsVInterface					* interface_;
+    ControlsVInterface				* interface_;
     ConfigurationManager*          			theConfigurationManager_;
     RemoteWebUsers							theRemoteWebUsers_;
 	std::string                             username;
