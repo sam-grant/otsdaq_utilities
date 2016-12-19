@@ -1,10 +1,14 @@
 # Extra parts for the XDAQ GUI
+add_subdirectory(SlowControlsInterfaceCore)
+
+#add_subdirectory(SlowControlsInterfacePlugins)
+add_subdirectory(UtilitiesPluginMakers)
+add_subdirectory(SlowControlsInterfacePlugins)
 add_subdirectory(Chat)
 add_subdirectory(ConfigurationGUI)
-add_subdirectory(SlowControlsDashboard)
-add_subdirectory(SlowControlsInterfacePlugins)
 add_subdirectory(Logbook)
 add_subdirectory(OtsConfigurationWizard)
 add_subdirectory(Visualization)
 add_subdirectory(MacroMaker)
 add_subdirectory(Console)
+add_subdirectory(SlowControlsDashboard)

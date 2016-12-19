@@ -10,8 +10,8 @@ namespace ots
   {
     
   public:
-    //SlowControlsVInterface		 (void){} //Nothing happens but it is defined!
-    //virtual ~SlowControlsVInterface      (void){} //^	
+    SlowControlsVInterface		 (void){} //Nothing happens but it is defined!
+    //virtual ~SlowControlsVInterface    (void){} //^	
 
     
     virtual void initialize        	(                       );

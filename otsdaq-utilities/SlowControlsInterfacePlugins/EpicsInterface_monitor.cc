@@ -3,8 +3,6 @@
 #include "alarm.h" //Holds strings that we can use to access the alarm status, severity, and parameters
 //#include "/mu2e/ups/epics/v3_15_4/Linux64bit+2.6-2.12-e10/include/alarm.h"
 //#include "alarmString.h"
-
-
 #include "cadef.h" //EPICS Channel Access:
 //http://www.aps.anl.gov/epics/base/R3-14/12-docs/CAref.html
 //Example compile options:
@@ -610,9 +608,9 @@ void EpicsInterface::popQueue (std::string pvName)
 }
 
 
-std::array<std::string, 4>  EpicsInterface::getCurrentPVValue(std::string pvName)
+std::array<std::string, 4>  EpicsInterface::getCurrentValue(std::string pvName)
 {
-	std::cout << "void EpicsInterface::getCurrentPVValue() reached" << std::endl;
+	std::cout << "void EpicsInterface::getCurrentValue() reached" << std::endl;
 
 	if( mapOfPVInfo_.find(pvName) != mapOfPVInfo_.end())
 	{
@@ -680,7 +678,7 @@ std::array<std::string, 4>  EpicsInterface::getCurrentPVValue(std::string pvName
 	return currentValues;
 }
 
-std::array<std::string, 9>  EpicsInterface::getPVSettings(std::string pvName)
+std::array<std::string, 9>  EpicsInterface::getSettings(std::string pvName)
 {
 	std::cout << "void EpicsInterface::getPVSettings() reached" << std::endl;
 
@@ -742,4 +740,7 @@ std::array<std::string, 9>  EpicsInterface::getPVSettings(std::string pvName)
 	std::array<std::string, 9> s = {"DC'd", "DC'd", "DC'd", "DC'd", "DC'd", "DC'd", "DC'd", "DC'd", "DC'd"};
 	return s;
 }
+
+DEFINE_OTS_MONITOR(EpicsInterface)
+
 

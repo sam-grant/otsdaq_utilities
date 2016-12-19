@@ -22,7 +22,7 @@
 #include <arpa/inet.h>
 #include <string>
 
-#include "SlowControlsVInterface.h"
+#include "otsdaq-utilities/SlowControlsInterfaceCore/SlowControlsVInterface.h"
 
 
 struct dbr_ctrl_char;
@@ -30,7 +30,8 @@ struct dbr_ctrl_char;
 namespace ots
 {
 
-class EpicsInterface;
+ class EpicsInterface;
+ class SlowControlsVInterface;
 
 struct  PVHandlerParameters
 {
@@ -88,7 +89,7 @@ struct PVInfo
   struct dbr_ctrl_char settings;
 };
 
-class EpicsInterface//: public SlowControlsInterface
+ class EpicsInterface : public SlowControlsVInterface
 {
  
 
@@ -103,8 +104,8 @@ class EpicsInterface//: public SlowControlsInterface
   void subscribe     (std::string pvName                         );
   void subscribeJSON (std::string pvList                         );
   void unsubscribe   (std::string pvName                         );
-  std::array<std::string, 4> getCurrentPVValue(std::string pvName	 );
-  std::array<std::string, 9> getPVSettings    (std::string pvName	 );
+  std::array<std::string, 4> getCurrentValue(std::string pvName	 );
+  std::array<std::string, 9> getSettings    (std::string pvName	 );
 
  private:
   bool checkIfPVExists            				   (std::string pvName                         );

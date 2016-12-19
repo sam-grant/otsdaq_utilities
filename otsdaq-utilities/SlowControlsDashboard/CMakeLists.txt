@@ -10,6 +10,7 @@ cet_make(LIBRARY_NAME SlowControlsDashboard
 		 WebUsersUtilities
 		 SOAPUtilities
 		 XmlUtilities
+		 UtilitiesPluginMakers
          $ENV{XERCES_C_LIB}/libxerces-c.so
          MessageFacility
 	 ${MF_MESSAGELOGGER}

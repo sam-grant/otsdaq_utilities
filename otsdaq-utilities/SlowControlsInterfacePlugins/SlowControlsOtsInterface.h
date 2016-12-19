@@ -2,10 +2,9 @@
 #define _ots_SlowControlsOtsInterface_h
 
 #include "otsdaq-core/NetworkUtilities/ReceiverSocket.h"  // Make sure this is always first because <sys/types.h> (defined in Socket.h) must be first
-#include "otsdaq-utilities/SlowControlsDashboard/SlowControlsVInterface.h"
-#include "otsdaq-core/ConfigurationInterface/Configurable.h"
-
+#include "otsdaq-utilities/SlowControlsInterfaceCore/SlowControlsVInterface.h"
 #include <string>
+#include <array>
 namespace ots
 {
   
@@ -13,10 +12,8 @@ namespace ots
   {
     
   public:
-    SlowControlsOtsInterface			(void)
-//  :Configurable                	(theXDAQContextConfigTree, configurationPath)
-  	  {;}
-	~SlowControlsOtsInterface  			(void) 				{;}
+    SlowControlsOtsInterface		();
+    ~SlowControlsOtsInterface  		();				
 
     
     void initialize        	(                                        );
@@ -26,7 +23,8 @@ namespace ots
     void subscribe      	(std::string Name                        );
     void subscribeJSON  	(std::string List                        );
     void unsubscribe    	(std::string Name                        );
-    
+    std::array<std::string, 4>  getCurrentValue (std::string Name	 );
+    std::array<std::string, 9>  getSettings     (std::string Name	 );   
   };
   
 }

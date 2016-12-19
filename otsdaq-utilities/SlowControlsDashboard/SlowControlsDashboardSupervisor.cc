@@ -20,7 +20,8 @@
 #include <errno.h>
 
 //#include "EpicsInterface.h.bkup"
-#include "SlowControlsVInterface.h"
+#include "otsdaq-utilities/SlowControlsInterfaceCore/SlowControlsVInterface.h"
+#include "otsdaq-utilities/UtilitiesPluginMakers/MakeMonitor.h"
 #define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/SlowControlsDashboardData/pages/";
 
 using namespace ots;
@@ -153,7 +154,7 @@ void SlowControlsDashboardSupervisor::init(void)
 
 	theSupervisorDescriptorInfo_.init(getApplicationContext());
 	//if(true)
-	interface_ = new EpicsInterface();
+	interface_ = makeMonitor("EpicsInterface");
 	//interface_->initialize();
 	std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
@@ -191,7 +192,7 @@ void SlowControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, H
 			//PVInfo * pvInfo = interface_->mapOfPVInfo_.find(pv)->second;
 			//std::cout << __COUT_HDR_FL__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			//interface_->getCurrentPVValue(pv);
-			std::array<std::string, 4> pvInformation = interface_->getCurrentPVValue(pv);
+			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
 
 			std::cout << __COUT_HDR_FL__ << pv << ": " << pvInformation[1] <<  " : " << pvInformation[3] << std::endl;
 
@@ -284,7 +285,7 @@ void SlowControlsDashboardSupervisor::GetPVSettings(xgi::Input * in, xgi::Output
 
 			std::cout << __COUT_HDR_FL__ << pv << std::endl;
 
-			std::array<std::string, 9> pvSettings = interface_->getPVSettings(pv);
+			std::array<std::string, 9> pvSettings = interface_->getSettings(pv);
 
 
 			JSONMessage += "\"" + pv + "\": {";			
