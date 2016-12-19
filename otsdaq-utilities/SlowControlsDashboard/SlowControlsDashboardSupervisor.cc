@@ -74,19 +74,24 @@ void SlowControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Outpu
 	//**** start LOGIN GATEWAY CODE ***//
 	{
 		bool automaticCommand = Command == "poll"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
-		bool getUser = false;
-
+		bool checkLock   = true;
+		bool getUser     = false;
+		bool requireLock = false;
+		
 		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,out,&xmldoc,theSupervisorsConfiguration_,
+				cgi,
+				out,
+				&xmldoc,
+				theSupervisorDescriptorInfo_,
 				&userPermissions,  		//acquire user's access level (optionally null pointer)
-				"0",						//report user's ip address, if known
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				(getUser?&user:0),				//acquire username of this user (optionally null pointer)
-				0,//,&displayName			//acquire user's Display Name
+				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
+				&username,
+				0,						//acquire user's Display Name
 				&activeSessionIndex		//acquire user's session index associated with the cookieCode
 		))
 		{	//failure
@@ -141,12 +146,12 @@ void SlowControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Outpu
 
 }
 //========================================================================================================================
-void SlowControlsDashboardSupervisor::init(ConfigurationManager *configManager)
+void SlowControlsDashboardSupervisor::init(void)
 //called by constructor
 {
 	UID_= 0;
 
-	theSupervisorsConfiguration_.init(getApplicationContext());
+	theSupervisorDescriptorInfo_.init(getApplicationContext());
 	//if(true)
 	interface_ = new EpicsInterface();
 	//interface_->initialize();
