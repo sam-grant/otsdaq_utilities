@@ -289,11 +289,11 @@
         
         textarea  
 		{  
-		   font-family:sans-serif;  
-		   font-size: 14px;   
-		   color: #002540;
-		   background-color: #c4e9f5;
-		   resize: none;
+		    font-family:sans-serif;  
+		    font-size: 14px;   
+		    color: #002540;
+		    background-color: #c4e9f5;
+		    resize: none;
 		}
 		
         .popup{
@@ -328,10 +328,7 @@
 			color:#c4e9f5;
 			border: 2px solid #c4e9f5;
 			width:78%;
-			overflow:auto;
-			overflow-y: auto;	
-			overflow-x: auto;	
-			
+			overflow:auto;	
         }
         
         .JStextarea {
@@ -347,10 +344,6 @@
 		    width: 90%;
 		    height: 20%;
 	    }
-	    
-	    #macroEditSettings {
-		  	margin-top: 10px;
-		}
 	    #macroName {
 	        width: 360px;
 	    }
@@ -412,71 +405,71 @@
 		}
 		
         .context-menu {
-		  display: none;
-		  position: absolute;
-		  z-index: 10;
-		  padding: 5px 0;
-		  width: 200px;
-		  background-color: #c4e9f5;
-		  border: solid 1px #dfdfdf;
-		  box-shadow: 1px 1px 2px #cfcfcf;
+		    display: none;
+		    position: absolute;
+		    z-index: 10;
+		    padding: 5px 0;
+		    width: 200px;
+		    background-color: #c4e9f5;
+		    border: solid 1px #dfdfdf;
+		    box-shadow: 1px 1px 2px #cfcfcf;
 		}
 		
 		.context-menu--active {
-		  display: block;
+		    display: block;
 		}
 		
 		.context-menu__items {
-		  list-style: none;
-		  margin: 0;
-		  padding: 0;
+		    list-style: none;
+		    margin: 0;
+		    padding: 0;
 		}
 		
 		.context-menu__item {
-		  display: block;
-		  margin-bottom: 2px;
+		    display: block;
+		    margin-bottom: 2px;
 		}
 	
 		.context-menu__link {
-		  display: block;
-		  padding: 4px 12px;
-		  color: #001626;
-		  text-decoration: none;
+		    display: block;
+		    padding: 4px 12px;
+		    color: #001626;
+		    text-decoration: none;
 		}
 		
 		.context-menu__link:hover {
-		  color: #fff;
-		  background-color: #002a52;
+		    color: #fff;
+		    background-color: #002a52;
 		}
 		
 		#macroRunningProgress {
-		  position: relative;
-		  width: 80%;
-		  margin: 0 auto; 
-		  height: 30px;
-		  background-color: #c4e9f5;
-		  border-radius:5px;
-		  border: 2px solid #c4e9f5;
+		    position: relative;
+		    width: 80%;
+		    margin: 0 auto; 
+		    height: 30px;
+		    background-color: #c4e9f5;
+		    border-radius:5px;
+		    border: 2px solid #c4e9f5;
 		}
 		
 		#macroRunningBar {
-		  position: absolute;
-		  width: 0%;
-		  height: 100%;
-		  background: repeating-linear-gradient(
+		    position: absolute;
+		    width: 0%;
+		    height: 100%;
+		    background: repeating-linear-gradient(
 			  45deg,
 			  #002540,
 			  #002540 10px,
 			  #993333 10px,
 			  #993333 20px
 			);
-	      border-radius:5px;
+	        border-radius:5px;
 		}
         
         #macroRunningPercentage {
-          margin: 0 auto; 
-          font-weight: bold;
-          padding-top: 5px;
+            margin: 0 auto; 
+            font-weight: bold;
+            padding-top: 5px;
         }
         
         #infoButton {
@@ -529,6 +522,11 @@
 	            width:75%;
 	    		margin: 0 auto; 
             }
+        }
+        @media only screen and (max-width: 550px) {
+        	html {
+        		overflow:auto;
+        	}
         }
 		</style>
 		
@@ -600,7 +598,7 @@
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
 				</div>
-				<input id="lsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>
+				<input id="lsbFirst" type="checkbox"> Least Significant Byte First</input>
 		        <b><div id="reminder" class="red"></div></b>
 		        
 		        <div class="buttonGroup">
@@ -618,7 +616,7 @@
 	        <div class="center">
 	            <p>Address:  <input type="text" id="macroAddressInput" class="inputBox"/></p>
 		        <div id="macroFormat1" class="formatSelection">Address format:
-		           <select id="macroAddressFormat" class="dropdown" onchange="toggleLSBF()">
+		           <select id="macroAddressFormat" class="dropdown">
 				    <option class="select" value="hex" selected="selected">hex</option>
 				    <option class="select" value="dec">dec</option>
 				    <option class="select" value="ascii">ascii</option>
@@ -632,7 +630,7 @@
 				    <option class="select" value="ascii">ascii</option>
 				   </select>
 				</div>
-				<input id="macroLsbFirst" type="checkbox" checked="checked"> Least Significant Byte First</input>		        
+				<input id="macroLsbFirst" type="checkbox"> Least Significant Byte First</input>		        
 
 				<div class="buttonGroup">
 		        	<button onclick="addCommand('w')">Add Write</button>
@@ -713,7 +711,16 @@
 				<p><b>Macro Sequence</b></p>
 				<div id="macroSequenceEdit">Loading</div>
 				<p><b>Macro Notes</b></p>
-				<center><textarea id="macroNotesEdit">Pre-fill here</textarea></center>
+				<center>
+					<textarea id="macroNotesEdit">Pre-fill here</textarea>
+					<div onchange="reloadEditSequence()">Display 
+			           <select id="editFormat" class="dropdown">
+					    <option class="select" value="hex" selected="selected">hex</option>
+					    <option class="select" value="dec">dec</option>
+					    <option class="select" value="ascii">ascii</option>
+					   </select>
+					format for all numerical fields in this macro</div>
+				</center>
 				<div class="buttongroup" id="macroEditSettings">
 				  <center>
 			   		<input type="checkbox" id="isMacroEditLSBF"> Set LSB first for this macro</input>

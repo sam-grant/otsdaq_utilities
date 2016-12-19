@@ -6,6 +6,7 @@
 #include "otsdaq-core/CoreSupervisors/FESupervisor.h"
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
+
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -31,7 +32,6 @@ namespace ots
 class ConfigurationManager;
 class HttpXmlDocument;
 
-
 class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
 {
 
@@ -55,9 +55,12 @@ private:
     SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
     FESupervisor*			 				theFESupervisor_;
-//	void printStatus();
+
+    //	void printStatus();
+
 	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void getFElist(HttpXmlDocument& xmldoc);
+	void getFEMacroList(HttpXmlDocument& xmldoc);
 
 	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
@@ -75,24 +78,9 @@ private:
 
 	std::string generateHexArray(const std::string& sourceHexString,int &numOfBytes);
 
-
-	//generateInterfaceCodeFromMacro
-	// 	input
-		// macro name
-		// user
-	//  from
-		// out c++ to the ..../MacroCodeGen/<user>/<macro>.cc
-				//  //comment generated from macro user/macro on this date
-				// universalread(0xff,0xfa);
-//
-//
-//	SupervisorConfiguration* superConfiguration_;
-//	SupervisorsInfo* 		 superInfo_;
-//	FEWInterfacesManager*    theFEWInterfacesManager_;
 	ConfigurationManager*    theConfigurationManager_;
 
-//
-//
+	std::vector<std::pair<std::string, const SupervisorDescriptors&> > FESupervisorLists_;
 
 
 };

@@ -715,7 +715,7 @@
             }
                     
             //getTransitionParameterData
-            //  return the post data for the StateMachineXgiHandler?StateMachine call parameter
+            //  return the get/post data for the StateMachineXgiHandler?StateMachine call parameter
             function getTransitionParameterData(param) {
                 for(var i=0;i<_TRANSITION_PARAMETERS.length;++i)
                     if(_TRANSITION_PARAMETERS[i] == param)
@@ -994,6 +994,19 @@
 	                _context.fillText("Click to transition from ", x, y);
 	                y += f;
 	                _context.fillText(_stateNames[_currState] + " to " + _stateNames[_transitions[_currStateTransArr[_selectedTransition]][1]], x, y);
+	                
+	                
+	                var transitionParameterData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
+	                Debug.log("transitionParameterData..." + transitionParameterData);
+	                if(transitionParameterData != "")
+	                {
+						transitionParameterData = transitionParameterData.split('=');	                
+						var transitionParameterName = transitionParameterData[0];
+						var transitionParameterValue = transitionParameterData[1];
+						y += 2*f;
+						_context.fillText(transitionParameterName + 
+								" = '" + transitionParameterValue + "'", x, y);
+	                }
                 }
                 else
                 {
