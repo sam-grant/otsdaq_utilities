@@ -66,13 +66,13 @@ throw (xdaq::exception::Exception)
 	//		- FEDescriptors
 	//		- FEDataManagerDescriptors
 	//		- ARTDAQFEDataManagerDescriptors
-	FESupervisorLists_.push_back(std::pair<std::string, const SupervisorDescriptors&>(
+	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
 			"FEDescriptors",
 			theSupervisorDescriptorInfo_.getFEDescriptors()));
-	FESupervisorLists_.push_back(std::pair<std::string, const SupervisorDescriptors&>(
+	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
 			"FEDataManagerDescriptors",
 			theSupervisorDescriptorInfo_.getFEDataManagerDescriptors()));
-	FESupervisorLists_.push_back(std::pair<std::string, const SupervisorDescriptors&>(
+	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
 			"ARTDAQFEDataManagerDescriptors",
 			theSupervisorDescriptorInfo_.getARTDAQFEDataManagerDescriptors()));
 
@@ -126,6 +126,7 @@ throw (xgi::exception::Exception)
 	HttpXmlDocument xmldoc;
 	uint64_t activeSessionIndex;
 	uint8_t userPermissions;
+	std::string username;
 
 	//**** start LOGIN GATEWAY CODE ***//
 	{
@@ -177,37 +178,44 @@ throw (xgi::exception::Exception)
 	if(Command == "getPermission")
 		xmldoc.addTextElementToData("Permission", std::to_string(unsigned(userPermissions)));
 	else
-		handleRequest(Command,xmldoc,cgi);
+		handleRequest(Command,xmldoc,cgi,username,userPermissions);
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::handleRequest(const std::string Command,
+		HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
+		const std::string &username,
+		const uint8_t userPermissions)
 {
 	if(Command 				== "FElist")
 		getFElist(xmldoc);
 	else if(Command 		== "writeData")
-		writeData(xmldoc,cgi);
+		writeData(xmldoc,cgi,username);
 	else if(Command 		== "readData")
-		readData(xmldoc,cgi);
+		readData(xmldoc,cgi,username);
 	else if(Command 		== "createMacro")
-		createMacro(xmldoc,cgi);
+		createMacro(xmldoc,cgi,username);
 	else if(Command 		== "loadMacros")
-		loadMacros(xmldoc);
+		loadMacros(xmldoc,username);
 	else if(Command 		== "loadHistory")
-		loadHistory(xmldoc);
+		loadHistory(xmldoc,username);
 	else if(Command 		== "deleteMacro")
-		deleteMacro(xmldoc,cgi);
+		deleteMacro(xmldoc,cgi,username);
 	else if(Command 		== "editMacro")
-		editMacro(xmldoc,cgi);
+		editMacro(xmldoc,cgi,username);
 	else if(Command 		== "clearHistory")
-		clearHistory();
+		clearHistory(username);
 	else if(Command 		== "exportMacro")
-		exportMacro(xmldoc,cgi);
+		exportMacro(xmldoc,cgi,username);
 	else if(Command 		== "getFEMacroList")
-		getFEMacroList(xmldoc);
+		getFEMacroList(xmldoc,username);
+	else if(Command 		== "runFEMacro")
+		runFEMacro(xmldoc,cgi);
+	else
+		xmldoc.addTextElementToData("Error","Unrecognized command '" + Command + "'");
 }
 
 //========================================================================================================================
@@ -248,7 +256,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 			std::istringstream allInterfaces(rxFEList);
 			while (std::getline(allInterfaces, oneInterface))
 			{
-				interfaceList.push_back(oneInterface);
+				//interfaceList.push_back(oneInterface);
 				xmldoc.addTextElementToData("FE",oneInterface);
 			}
 		}
@@ -259,7 +267,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 
 //========================================================================================================================
-void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	__MOUT__<< "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
@@ -273,7 +281,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 
 	std::string command = "w:" + Address + ":" + Data;
 	std::string format = addressFormatStr + ":" + dataFormatStr;
-	appendCommandToHistory(command,format,time,interfaces);
+	appendCommandToHistory(command,format,time,interfaces,username);
 
 	SOAPParameters txParameters; //params for xoap to send
 	txParameters.addParameter("Request", "UniversalWrite");
@@ -324,7 +332,7 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	__MOUT__<< "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
@@ -385,12 +393,12 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 		xmldoc.addTextElementToData("readData",dataReadResult);
 		std::string command = "r:" + Address + ":" + dataReadResult;
 		std::string format = addressFormatStr + ":" + dataFormatStr;
-		appendCommandToHistory(command,format,time,interfaces);
+		appendCommandToHistory(command,format,time,interfaces,username);
 	}
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	__MOUT__<< "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
 	std::string Name = CgiDataUtilities::getData(cgi, "Name");
@@ -426,7 +434,7 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
+void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc, const std::string &username)
 {
 	DIR *dir;
 	struct dirent *ent;
@@ -449,8 +457,10 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					{
 						getline (read,line);
 						buffer << line;
+						//__MOUT__ << line << std::endl;
 					}
 					returnStr += buffer.str();
+
 					read.close();
 				}
 				else
@@ -487,6 +497,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 					{
 						getline (read,line);
 						buffer << line;
+						//__MOUT__ << line << std::endl;
 					}
 					returnStr += buffer.str();
 					read.close();
@@ -509,7 +520,8 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc)
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::string Format, std::string Time, std::string Interfaces)
+void MacroMakerSupervisor::appendCommandToHistory(std::string Command,
+		std::string Format, std::string Time, std::string Interfaces, const std::string &username)
 {
 	std::string fileName = "history.hist";
 	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
@@ -530,7 +542,7 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command, std::stri
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
+void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::string &username)
 {
 	std::string line;
 	std::string returnStr = "";
@@ -562,7 +574,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc)
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi, const std::string &username)
 {
 	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
@@ -581,7 +593,7 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
 	std::string newMacroName = CgiDataUtilities::getData(cgi, "newMacroName");
@@ -625,7 +637,7 @@ void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::clearHistory()
+void MacroMakerSupervisor::clearHistory(const std::string &username)
 {
 	std::string fileName = "history.hist";
 	std::string fullPath = (std::string)MACROS_HIST_PATH + username + "/" + fileName;
@@ -635,7 +647,7 @@ void MacroMakerSupervisor::clearHistory()
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");
 	std::string macroSequence = CgiDataUtilities::getData(cgi, "MacroSequence");
@@ -838,7 +850,74 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string &sourceHexS
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc)
+void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+{
+	__MOUT__<< __COUT_HDR_P__ << std::endl;
+
+	std::string feSupervisorType = CgiDataUtilities::getData(cgi, "feSupervisorType");
+	unsigned int supervisorLID = CgiDataUtilities::getDataAsInt(cgi, "supervisorLID");
+	std::string feUID = CgiDataUtilities::getData(cgi, "feUID");
+	std::string macroName = CgiDataUtilities::getData(cgi, "macroName");
+	std::string inputArgs = CgiDataUtilities::postData(cgi, "inputArgs");
+	std::string outputArgs = CgiDataUtilities::postData(cgi, "outputArgs");
+
+	__MOUT__ << "feSupervisorType = " << feSupervisorType << std::endl;
+	__MOUT__ << "supervisorLID = " << supervisorLID << std::endl;
+	__MOUT__ << "feUID = " << feUID << std::endl;
+	__MOUT__ << "macroName = " << macroName << std::endl;
+	__MOUT__ << "inputArgs = " << inputArgs << std::endl;
+	__MOUT__ << "outputArgs = " << outputArgs << std::endl;
+
+	//send command to chosen FE and await response
+	SOAPParameters txParameters; //params for xoap to send
+	txParameters.addParameter("Request", "RunInterfaceMacro");
+	txParameters.addParameter("InterfaceID", feUID);
+	txParameters.addParameter("feMacroName", macroName);
+	txParameters.addParameter("inputArgs", inputArgs);
+	txParameters.addParameter("outputArgs", outputArgs);
+
+	SOAPParameters rxParameters;  //params for xoap to recv
+	rxParameters.addParameter("success");
+	rxParameters.addParameter("outputArgs");
+
+	//find feSupervisorType in lists
+	auto supervisorListPairIt = FESupervisorLists_.find(feSupervisorType);
+	if(supervisorListPairIt == FESupervisorLists_.end())
+	{
+		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target" <<
+				"was feSupervisorType=" << feSupervisorType << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error",ss.str());
+		return;
+	}
+
+	//find supervisorLID in target list
+	auto supervisorDescriptorPairIt = supervisorListPairIt->second.find(supervisorLID);
+	if(supervisorDescriptorPairIt == supervisorListPairIt->second.end())
+	{
+		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target" <<
+				"was feSupervisorType=" << feSupervisorType << " and " <<
+				"supervisorLID=" << supervisorLID << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error",ss.str());
+		return;
+	}
+
+	//have FE supervisor descriptor, so send
+	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+			supervisorDescriptorPairIt->second, //supervisor descriptor
+			"MacroMakerSupervisorRequest",
+			txParameters);
+	SOAPMessenger::receive(retMsg, rxParameters);
+	bool success = rxParameters.getValue("success") == "1";
+	outputArgs = rxParameters.getValue("outputArgs");
+
+	__MOUT__ << "rx success = " << success << std::endl;
+	__MOUT__ << "outputArgs = " << outputArgs << std::endl;
+}
+
+//========================================================================================================================
+void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::string &username)
 {
 	__MOUT__<< "Getting FE Macro list!!!!!!!!!" << std::endl;
 
@@ -852,11 +931,12 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc)
 	std::string oneInterface;
 	std::string rxFEMacros;
 
-	//for each list of FE Supervisors,
-	//	loop through each FE Supervisors and get FE interfaces list
+	//get all FE specific macros
+	//		for each list of FE Supervisors,
+	//			loop through each FE Supervisors and get FE interfaces list
 	for(auto &listPair:FESupervisorLists_)
 	{
-		__MOUT__ << "Number of " << listPair.first << " = " <<
+		__MOUT__ << "===== Number of " << listPair.first << " = " <<
 				listPair.second.size() << std::endl;
 
 		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
@@ -867,18 +947,19 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc)
 					it->second,
 					"MacroMakerSupervisorRequest",
 					txParameters);
-			receive(retMsg, rxParameters);
+			SOAPMessenger::receive(retMsg, rxParameters);
 			rxFEMacros = rxParameters.getValue("FEMacros");
 
 			__MOUT__ << "FE Macros received: \n" << rxFEMacros << std::endl;
 
 			std::istringstream allInterfaces(rxFEMacros);
 			while (std::getline(allInterfaces, oneInterface))
-			{
-				xmldoc.addTextElementToData("FEMacros",oneInterface);
-			}
+				xmldoc.addTextElementToData("FEMacros",listPair.first + ":" + oneInterface);
 		}
 	}
+
+	//add macros to response
+	loadMacros(xmldoc, username);
 
 	return;
 }

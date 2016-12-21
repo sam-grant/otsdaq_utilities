@@ -55,6 +55,7 @@
 		//setFieldToVariable
 		//dealWithVariables
 
+	var ADMIN_PERMISSION_THRESHOLD = 255;
     var userPermission = 10;
 	var CMDHISTDIVINDEX = 0;
 	var SEQINDEX = 0;
@@ -808,7 +809,7 @@
     	else
     	{
 			document.getElementById("popupSaveMacro").style.display = "block";
-			if (userPermission == 255)
+			if (userPermission == ADMIN_PERMISSION_THRESHOLD)
 				document.getElementById("makeMacroPublic").style.display = "block";
     	}
     }
@@ -1172,7 +1173,7 @@
     	switch(macroAction)
     	{
     	case "Delete":
-    		if (userPermission != 255 && isMacroPublic)
+    		if (userPermission != ADMIN_PERMISSION_THRESHOLD && isMacroPublic)
     			document.getElementById("popupNoDeletePermission").style.display = "block";
     		else
     		{
@@ -1187,7 +1188,7 @@
     		}
     		break;
     	case "Edit":
-    		if (userPermission != 255 && isMacroPublic)
+    		if (userPermission != ADMIN_PERMISSION_THRESHOLD && isMacroPublic)
 				document.getElementById("popupNoEditPermission").style.display = "block";
 			else
 			{

@@ -58,30 +58,28 @@ private:
 
     //	void printStatus();
 
-	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username, const uint8_t userPermissions);
 	void getFElist(HttpXmlDocument& xmldoc);
-	void getFEMacroList(HttpXmlDocument& xmldoc);
+	void getFEMacroList(HttpXmlDocument& xmldoc, const std::string &username);
 
-	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void loadMacros(HttpXmlDocument& xmldoc);
-	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces);
-	void loadHistory(HttpXmlDocument& xmldoc);
-	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
-	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void clearHistory();
-	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	std::vector<std::string> interfaceList;
-	std::string username;
-	uint8_t userPermissions;
+	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void loadMacros(HttpXmlDocument& xmldoc, const std::string &username);
+	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces, const std::string &username);
+	void loadHistory(HttpXmlDocument& xmldoc, const std::string &username);
+	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi, const std::string &username);
+	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void clearHistory(const std::string &username);
+	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+
 
 	std::string generateHexArray(const std::string& sourceHexString,int &numOfBytes);
 
 	ConfigurationManager*    theConfigurationManager_;
 
-	std::vector<std::pair<std::string, const SupervisorDescriptors&> > FESupervisorLists_;
-
+	std::map<std::string /*FESupervisorType*/, const SupervisorDescriptors&> FESupervisorLists_;
 
 };
 
