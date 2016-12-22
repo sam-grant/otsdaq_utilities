@@ -928,6 +928,24 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 		xmldoc.addTextElementToData("Error",ss.str());
 		return;
 	}
+
+
+	//build output arguments
+	//	parse args, colon-separated pairs, and then comma-separated
+	{
+		std::istringstream inputStream(outputArgs);
+		std::string splitVal, argName, argValue;
+		while (getline(inputStream, splitVal, ';'))
+		{
+			std::istringstream pairInputStream(splitVal);
+			getline(pairInputStream, argName, ',');
+			getline(pairInputStream, argValue, ',');
+			xmldoc.addTextElementToData("outputArgs_name",argName);
+			xmldoc.addTextElementToData("outputArgs_value",argValue);
+			__MOUT__ << argName << ": " << argValue << std::endl;
+		}
+	}
+
 }
 
 //========================================================================================================================

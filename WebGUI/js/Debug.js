@@ -118,7 +118,7 @@ Debug.errorPop = function(err,severity) {
 			el.style.display = "none";
 			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' href='javascript:Debug.closeErrorPop();'>Close Errors</a>";
+				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();'>Close Errors</a>";
 			str = str + "<br><br>" + 
 				"<div id='" + 
 				Debug._errBoxId +

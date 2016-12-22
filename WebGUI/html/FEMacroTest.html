@@ -52,7 +52,7 @@
 			//callFEMacro(feSupervisorType, supervisorLID, feUID, macroName, inputArgs)
 			//callPublicMacro()
 			//callUserMacro()
-			
+			//getDateString(date)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -344,9 +344,45 @@
 					return;
 				}
 				
-				var outputArgs = req.responseXML.getElementsByTagName("outputArgs");
-				Debug.log("outputArgs.length = " + outputArgs.length);	
+				var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
+				var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");
+				Debug.log("outputArgNames.length = " + outputArgNames.length);	
+				
+				var str = "";
+				str += "Last ran... " + getDateString(new Date);
+				str += "<br>";
+				for(var i=0;i<outputArgNames.length;++i)
+					str += outputArgNames[i].getAttribute("value") + " = " + 
+					outputArgValues[i].getAttribute("value") + "<br>";
+				var el = document.getElementById(
+						supervisorLID + "-" + feUID + "-" + macroName + "-out");
+				el.innerHTML = str;
 			});
+		}
+
+		//getDateString ~~
+		var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+		var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+		function getDateString(date)
+		{
+			var dateStr = "";
+
+			dateStr += dayArr_[date.getDay()];
+			dateStr += " ";
+			dateStr += monthArr_[date.getMonth()];
+			dateStr += " ";
+			dateStr += date.getDate();
+			dateStr += " ";
+			dateStr += date.getHours();
+			dateStr += ":";
+			dateStr += ((date.getMinutes()<10)?"0":"") + date.getMinutes();
+			dateStr += ":";
+			dateStr += ((date.getSeconds()<10)?"0":"") + date.getSeconds();
+			dateStr += " ";
+			dateStr += date.getFullYear();
+			dateStr += " ";
+			dateStr += date.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+			return dateStr;
 		}
 		
 		</script>
