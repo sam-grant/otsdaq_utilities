@@ -884,7 +884,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	auto supervisorListPairIt = FESupervisorLists_.find(feSupervisorType);
 	if(supervisorListPairIt == FESupervisorLists_.end())
 	{
-		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target" <<
+		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target " <<
 				"was feSupervisorType=" << feSupervisorType << std::endl;
 		__MOUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
@@ -909,11 +909,25 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 			"MacroMakerSupervisorRequest",
 			txParameters);
 	SOAPMessenger::receive(retMsg, rxParameters);
+
+	__MOUT__ << "Received it " << std::endl;
+
 	bool success = rxParameters.getValue("success") == "1";
 	outputArgs = rxParameters.getValue("outputArgs");
 
 	__MOUT__ << "rx success = " << success << std::endl;
 	__MOUT__ << "outputArgs = " << outputArgs << std::endl;
+
+	if(!success)
+	{
+		__SS__ << "Attempted FE Macro Failed. Attempted target" <<
+				"was feSupervisorType=" << feSupervisorType << " and " <<
+				"supervisorLID=" << supervisorLID << std::endl;
+		ss << ".\n\n The error was:\n\n" << outputArgs << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error",ss.str());
+		return;
+	}
 }
 
 //========================================================================================================================

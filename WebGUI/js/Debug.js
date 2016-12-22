@@ -116,12 +116,14 @@ Debug.errorPop = function(err,severity) {
 			el = document.createElement("div");			
 			el.setAttribute("id", Debug._errBoxId);
 			el.style.display = "none";
-			var str = "<a id='" + 
+			var str = "<a class='" + 
 				Debug._errBoxId + 
-				"-header' href='javascript:Debug.closeErrorPop();'>Close Errors</a><br><br>" + 
+				"-header' href='javascript:Debug.closeErrorPop();'>Close Errors</a>";
+			str = str + "<br><br>" + 
 				"<div id='" + 
 				Debug._errBoxId +
-				"-err'></div>";
+				"-err'></div>" + 
+				"<br>" + str;
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			
@@ -208,7 +210,8 @@ Debug.errorPop = function(err,severity) {
 	
 	//change color based on info
 	
-	el = document.getElementById(Debug._errBoxId + "-header");
+	var els = document.getElementsByClassName(Debug._errBoxId + "-header");
+	el = els[0];
 	switch(severity)
 	{
 	case Debug.INFO_PRIORITY:
@@ -232,6 +235,7 @@ Debug.errorPop = function(err,severity) {
 		el.innerHTML = "Close Errors";
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.8)";
 	}
+	els[1].innerHTML = el.innerHTML;
 }
 
 
