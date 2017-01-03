@@ -641,7 +641,7 @@
 				mainBlock_.el.style["background-color"] = "rgb(250, 250, 250)";
 				gridColor_ = "rgba(128, 128, 128, 0.3)"
 				toggleGrid(true);
-				console.log("*************************888888888888888888888888888888");
+				//console.log("*************************888888888888888888888888888888");
 				console.log(("-" + fileBlock_.el.style.width));
 				fileBlock_.el.style.left = "-4000px"; //hack because the file tree page probably didnt load by now
 				editBlock_.el.style.bottom = "-4000px";//hack because the edit page probably didnt load by now
@@ -651,29 +651,36 @@
 
 				//END JS Style 
 				
-				
+			
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
+				
 			}	
 			function pagesReqHandler(req){
-				
+			
 				pagesList_ = []; //overwrite the loading text
 
-				//console.log(req.responseText);
-				//console.log(DesktopContent.getXMLValue(req, "JSON"));
-				var pagesJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				for(var x in pagesJSON)
+				console.log(req.responseText);
+				console.log(DesktopContent.getXMLValue(req, "JSON"));
+				if(DesktopContent.getXMLValue(req, "JSON") != "[\"None\"]")
 				{
-					//console.log(pagesJSON[x]);
-					pagesList_.push(pagesJSON[x]);
+					var pagesJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+					for(var x in pagesJSON)
+					{
+						//console.log(pagesJSON[x]);
+						pagesList_.push(pagesJSON[x]);
+					}
+				}else
+				{
+					
+					console.log("No pages found in server!");
 				}
-			
 			}
 
 			function pvListReqHandler(req){
-				//console.log(req.responseText);
+				console.log(req.responseText);
 				var pvListJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				//console.log(pvListJSON);
+				console.log(pvListJSON);
 				var datalist = document.getElementById("pvDatalist");
 				datalist.innerHTML = "";
 				for (var x in pvListJSON)

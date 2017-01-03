@@ -3,8 +3,9 @@ include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME ControlsDashboard
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
+#		 CoreSupervisors
 		 ConfigurationInterface
-		 ConfigurationDataFormats
+#		 ConfigurationDataFormats
 		 SupervisorDescriptorInfo
 		 CgiDataUtilities
 		 WebUsersUtilities
@@ -12,8 +13,8 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
          MessageFacility
-	 ${MF_MESSAGELOGGER}
-	 ${MF_UTILITIES}
+	     ${MF_MESSAGELOGGER}
+	     ${MF_UTILITIES}
 )
 
 install_headers()
