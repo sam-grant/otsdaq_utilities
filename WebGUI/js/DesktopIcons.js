@@ -156,14 +156,17 @@ else {
 			var link;
 			var div;
 			
-			var jsCmd = "Javascript:var newWin = Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
-				 + "\",\"" + linkurl + "\","+uniqueWin+");";
-				
+			//var jsCmd = "Javascript:var newWin = Desktop.desktop.addWindow(\""+ alt + "\",\"" + ""
+			//	 + "\",\"" + linkurl + "\","+uniqueWin+");";
+			
 			//create icon square
 			link = document.createElement("a");
 			link.setAttribute("class", "DesktopIcons-iconLink");
       		link.title = alt;
-			link.href = jsCmd;
+			//link.href = "#";//jsCmd;
+			link.addEventListener("click", function(e) {
+				Desktop.desktop.addWindow(alt,"",linkurl,uniqueWin);
+			}, false);
 			
       		div = document.createElement("div");
 			div.setAttribute("class", "DesktopIcons-iconDiv");
@@ -195,7 +198,11 @@ else {
       		link = document.createElement("a");
 			link.setAttribute("class", "DesktopIcons-iconLink");
       		link.title = alt;
-			link.href = jsCmd;
+      		//link.href = "#";////link.href = jsCmd;
+			link.addEventListener("click", function(e) {
+				Desktop.desktop.addWindow(alt,"",linkurl,uniqueWin);
+			}, false);
+      		
 			
       		div = document.createElement("div");
 			div.setAttribute("class", "DesktopIcons-iconSubText");

@@ -181,6 +181,7 @@
 	}
 	
 	#Desktop .DesktopIcons-iconLink {
+		cursor: pointer;
 	}
 	
 	.DesktopDashboard-user-logout {		

@@ -53,5 +53,6 @@
 			background-color : rgb(241, 231, 231);			
 		}
 		#SubSystemTable td, #SubSystemTable th {
-			background-color : rgb(226, 216, 216);			
+			background-color : rgb(226, 216, 216);	
+			white-space: pre-wrap;
 		}

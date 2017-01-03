@@ -424,7 +424,9 @@ Desktop.createDesktop = function(security) {
 			return;
 		}
 				
+		//KEEP..
         //subname += _winId; //for visual window debugging (but destroys uniqueness)
+		//end KEEP.
 		var newWin = Desktop.createWindow(_winId++,_windows.length + _defaultWindowMinZindex,name,subname,url,
 			_defaultWidth,_defaultHeight,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
 

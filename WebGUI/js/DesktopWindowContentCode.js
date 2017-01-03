@@ -211,26 +211,28 @@ DesktopContent.init = function() {
 DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
-	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
 	if(name)
 	{
-		for(var i=0;i<params.length;++i)
+		for(index=0;index<params.length;++index)
 		{
 			spliti = params[index].indexOf('=');
 			if(spliti < 0) continue; //poorly formed parameter?	
 			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 			if(vs[0] == name)
-				return vs[1];
+				return decodeURIComponent(vs[1]);
 		}
 		return; //return undefined .. name not found
 	}
+
+	//using index 
+	if(index >= params.length) return; //return undefined
 	
 	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
-	return vs[1]; //return value
+	return decodeURIComponent(vs[1]); //return value
 }
 
 //DesktopContent.getDesktopParameter ~
@@ -244,13 +246,13 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	//if name given, make it the priority
 	if(name)
 	{
-		for(var i=0;i<params.length;++i)
+		for(var index=0;index<params.length;++index)
 		{
 			spliti = params[index].indexOf('=');
 			if(spliti < 0) continue; //poorly formed parameter?	
 			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 			if(vs[0] == name)
-				return vs[1];
+				return decodeURIComponent(vs[1]);
 		}
 		return; //return undefined .. name not found
 	}
@@ -258,7 +260,7 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
-	return vs[1]; //return value
+	return decodeURIComponent(vs[1]); //return value
 }
 
 //DesktopContent.handleFocus ~

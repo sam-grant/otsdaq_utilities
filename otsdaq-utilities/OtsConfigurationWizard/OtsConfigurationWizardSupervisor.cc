@@ -42,6 +42,7 @@ SOAPMessenger  (this)
 
 
 	//attempt to make directory structure (just in case)
+	mkdir((std::string(getenv("SERVICE_DATA_PATH"))).c_str(), 0755);
 	mkdir((std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData").c_str(), 0755);
 
 	generateURL();

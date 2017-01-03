@@ -3794,7 +3794,7 @@
 			_editingCellEl = el;
 			_editingCellPos = [r,c];
 			
-			_editingCellElOldValue = el.innerHTML;
+			_editingCellElOldValue = el.innerText;//el.innerHTML;
 			var str = "";		
 			var optionIndex = -1;
 					
@@ -4111,8 +4111,11 @@
 		{	
 			Debug.log("editCellCancel");
 			
-			if(_editingCellEl)
-				_editingCellEl.innerHTML = _editingCellElOldValue;
+			if(_editingCellEl) //return old value, convert from text to html
+			{
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+			}
 			
 			_editingCell = false;
 			_editingCellEl = 0;
@@ -4847,7 +4850,7 @@
 						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
 						//assume one th column so minus 1
 						dataStr += encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].innerHTML.trim()) + ","; //replaces all special characters				
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].innerText.trim()) + ","; //replaces all special characters				
 					}
 					dataStr += ";";
 				}
@@ -4859,7 +4862,7 @@
 					cells = rows[r].getElementsByTagName("td");
 	
 					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
-						dataStr += encodeURIComponent(cells[c].innerHTML.trim()) + ","; //replaces all special characters					
+						dataStr += encodeURIComponent(cells[c].innerText.trim()) + ","; //replaces all special characters					
 					dataStr += ";";
 				}
 			}
