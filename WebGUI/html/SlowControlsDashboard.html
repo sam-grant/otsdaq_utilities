@@ -784,7 +784,7 @@
 				else
 				{
 					UID_ = "";
-					debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
+					Debug.log("Unable to generate UID!", Debug.HIGH_PRIORITY);
 				}
 				
 				if(timeToPoll_)
@@ -1047,12 +1047,14 @@
 				coverDiv.style.left = "0px";
 				coverDiv.style.top = "0px";
 				coverDiv.id = widgetFrame.id + "-cover";
-				coverDiv.style.zIndex = "-5";
+				coverDiv.style.zIndex = "50";
 
 				if(!editBlock_.isHidden) 
-					coverDiv.addEventListener("contextmenu", toggleContextMenuCaller(widgetFrame.id), true);//function(e){
-//					toggleContextMenu(e, widgetFrame.id);
-//				});
+				{
+					coverDiv.addEventListener("dblclick", toggleContextMenuCaller(widgetFrame.id), true);	
+				}
+			//		toggleContextMenu(e, widgetFrame.id);
+			//		});
 				
 				coverDiv.addEventListener("mousedown", startDrag, true);
 
@@ -1165,10 +1167,11 @@
 			}
 			
 			function toggleContextMenuCaller(id) {
+				//alert("toggleContextMenuCaller reached!");
 				 return function(event) {
 					 if(!editBlock_.isHidden)
 					 {
-						 event.preventDefault();
+						// event.preventDefault();
 					 	toggleContextMenu(event, id);
 					 }
 				};
@@ -1176,9 +1179,9 @@
 			
 			function toggleContextMenu(e, id)
 			{	
-				e.preventDefault();
+				//e.preventDefault();
 
-				
+				//alert("It works!");	
 				if(menuState_ !== 1)
 				{
 					menu_.style.left = e.clientX + "px";
