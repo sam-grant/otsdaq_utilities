@@ -105,11 +105,12 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //	DesktopContent.mouseMoveSubscriber(newHandler) 
 //	DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//	DesktopContent.getParameter(index, name)
+//	DesktopContent.getDesktopParameter(index, name)
+//	DesktopContent.getDesktopWindowTitle()
 
 //"private" function list:
 //	DesktopContent.init()
-//	DesktopContent.getParameter(index)
-//	DesktopContent.getDesktopParameter(index)
 //	DesktopContent.handleFocus(e)
 //	DesktopContent.handleBlur(e)
 //	DesktopContent.handleScroll(e)
@@ -924,8 +925,13 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 }
 
-
-
+//getDesktopWindowTitle ~~
+//	returns the text in header of the current desktop window
+DesktopContent.getDesktopWindowTitle = function() {
+	return DesktopContent._theWindow.parent.document.getElementById(
+			"DesktopWindowHeader-" + 
+			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
+}
 
 
 
