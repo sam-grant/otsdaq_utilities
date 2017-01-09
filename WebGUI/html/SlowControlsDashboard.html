@@ -603,7 +603,7 @@
 					
 				menuDiv_ = document.getElementById("contextMenuDiv");
 				menu_= document.getElementById("contextMenu");
-				menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
+				//menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
 				hud_ = document.getElementById("coordinatesHUD");
 				
 //				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
@@ -1135,7 +1135,7 @@
 					editBlock_.isHidden = false;
 					for(widget in page_.widgets)
 					{
-						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("contextmenu", toggleContextMenuCaller(widget), true);
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].addEventListener("dblclick", toggleContextMenuCaller(widget), true);
 						document.getElementById(widget).contentWindow.init();
 					}
 					if(covers.length > 0)
@@ -1157,7 +1157,7 @@
 					editBlock_.isHidden = true;
 					for(widget in page_.widgets)
 					{
-						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("contextmenu", toggleContextMenu, true);
+						page_.widgets[widget].el.parentNode.getElementsByClassName("widgetCover")[0].removeEventListener("dblclick", toggleContextMenu, true);
 					}
 					if(covers.length > 0)
 					{
