@@ -679,10 +679,18 @@
 
 			function pvListReqHandler(req){
 				console.log(req.responseText);
-				var pvListJSON = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				console.log(pvListJSON);
 				var datalist = document.getElementById("pvDatalist");
 				datalist.innerHTML = "";
+				
+				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
+				if(!jsonStr || jsonStr == "") return;				
+				var pvListJSON;
+				
+				//if invalid JSON return
+				try { pvListJSON = JSON.parse(jsonStr); }
+				catch(e){return;}
+				
+				console.log(pvListJSON);
 				for (var x in pvListJSON)
 				{
 					//console.log(pvListJSON[x]);
