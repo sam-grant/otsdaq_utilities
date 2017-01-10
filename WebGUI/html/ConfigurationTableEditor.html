@@ -32,6 +32,8 @@
 		var _srcName;
 		var _colHdrArr, _colTypeArr, _colDataTypeArr;
 		var _tableIsTransposed = false;
+		
+		var _mouseIsSelecting = false;	//to block switching cells when selecting text
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -69,6 +71,12 @@
 					setupTableEditor);
 			
 			setupEmptyTable();
+
+			window.onmouseup = function(event) {	
+				editCellCancel();  
+				_mouseIsSelecting = false; 
+				Debug.log(_mouseIsSelecting);
+			};		
 		}
 		
 		//setupTableEditor(req) ~
@@ -367,7 +375,7 @@
 					/////////////////////////////////
 					//type and data type row
 					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
-							c + ",this);' style='width:100px'>";
+							c + ",this,event);' style='width:100px'>";
 					str += "<div style='font-size:12px' title='";		
 					str += colTypes[c];
 					str += " &#60;" + colDataTypes[c] + "&#62;";
@@ -380,7 +388,7 @@
 					/////////////////////////////////
 					//col name type row
 					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
-							c + ",this);'>";
+							c + ",this,event);'>";
 					str += colHdrs[c];
 					str += "</th>";
 					
@@ -422,7 +430,7 @@
 				for(var c=0;c<colTypes.length;++c)
 				{
 					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
-							c + ",this);'>";
+							c + ",this,event);'>";
 					str += "<div style='font-size:12px' title='";		
 					str += colTypes[c];
 					str += " &#60;" + colDataTypes[c] + "&#62;";
@@ -438,7 +446,7 @@
 				for(var c=0;c<colHdrs.length;++c)
 				{
 					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
-							c + ",this);'>";
+							c + ",this,event);'>";
 					str += colHdrs[c];
 					str += "</th>";					
 	
@@ -456,7 +464,20 @@
 
 		//selectThisCell ~~
 		function selectThisCell(r,c,el) 
-		{				
+		{		
+			if(event) //stop the body from also calling onmouseup and cancelling select
+			{
+				event.stopPropagation();
+
+				Debug.log(_mouseIsSelecting);
+				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
+				{
+					_mouseIsSelecting = false;
+					Debug.log(_mouseIsSelecting);
+					return; 							
+				}
+			}
+
 			if(_editingCell) //already have the edit box open, cancel it
 			{
 				if(_editingCellEl == el) //if same cell do nothing
@@ -534,7 +555,10 @@
 				}
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
 						"style='display:none; width:40px; float:left; height: 13px' value='" + 
-						startingLinkId + "'>";
+						startingLinkId;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
 
 				str += "<div id='clearDiv'></div>";				
 				str += "<select onkeydown='keyHandler(event)'  id='selectCellDataTypeSelect'>";
@@ -555,7 +579,9 @@
 						"style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + 
 						"px; height:" + (el.offsetHeight-8) + "px' value='";
 				str += _editingCellElOldValue;
-				str += "'>";
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
 			}
 
 			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 

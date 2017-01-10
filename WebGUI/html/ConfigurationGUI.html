@@ -200,6 +200,7 @@
 		var treeGroupName_, treeGroupKey_;
 		var treeViewHideStatus_ = true;
 		var treeFilterApplied_ = false;
+		var treeViewHideInfo_ = true;
 		var treeFilter_ = "";
 		var lastTreeFilter_ = "";
 		
@@ -240,7 +241,7 @@
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path)
-			//applyTreeFilter(filter)
+			//applyTreeFilter(filter, reapplyFilter, infoWasToggled)
 			//toggleTreeChildren(depth,uid,nodeName,path)
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
@@ -373,11 +374,11 @@
 			
 			
 			window.onkeydown = bodyKeyHandler;
-			window.onmouseup = function(event) 
-					{	
-					editCellCancel();  
-					_mouseIsSelecting = false; 
-					Debug.log(_mouseIsSelecting);};			
+			window.onmouseup = function(event) {	
+				editCellCancel();  
+				_mouseIsSelecting = false; 
+				Debug.log(_mouseIsSelecting);
+			};			
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -2275,15 +2276,31 @@
 		}
 		
 		//applyTreeFilter ~
-		function applyTreeFilter(filter, reapplyFilter)
+		function applyTreeFilter(filter, reapplyFilter, infoWasToggled)
 		{
 			Debug.log("applyTreeFilter " + filter);
+			Debug.log("treeViewHideInfo_ " + treeViewHideInfo_);
+
+			var valName;
 			var allValues = document.getElementsByClassName("bold-header");
-			if(treeFilterApplied_)
+			if(treeFilterApplied_ || treeViewHideInfo_ || infoWasToggled)
 			{
 				//clear Tree Filter
 				for(var i=0;i<allValues.length;++i)
+				{
 					allValues[i].parentNode.parentNode.parentNode.style.display = "block";
+
+					//if not hiding info (comment/author/time) then done
+					if(!treeViewHideInfo_)
+						continue;
+					
+					//else hide all info fields
+					valName = allValues[i].innerHTML;
+					if(valName == "CommentDescription" ||
+							valName == "Author" ||
+							valName == "RecordInsertionTime")
+						allValues[i].parentNode.parentNode.parentNode.style.display = "none";					
+				}
 				
 				treeFilterApplied_ = false;	
 				
@@ -2303,7 +2320,6 @@
 			//if only one element find exact
 			//for each !"" component find it one after the other..
 			
-			var valName;
 			var filterMatch;
 			for(var i=0;i<allValues.length;++i)
 			{
@@ -5125,7 +5141,10 @@
 									 "Hide Status=False",
 							 treeFilterApplied_?
 									 "Clear Tree View Filter":
-									 "Filter Tree View Values"
+									 "Filter Tree View Values",
+							 treeViewHideInfo_?
+									 "Show Info Fields":
+									 "Hide Info Fields"
 									 ];
 			
 			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
@@ -5136,7 +5155,9 @@
 							refreshLinkStr,
 							"treeViewHideStatus_ = !treeViewHideStatus_;" +
 													refreshLinkStr,
-							 "treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()"							 
+							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
+							"treeViewHideInfo_ = !treeViewHideInfo_; " +
+													"applyTreeFilter('',0,1)"
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(
