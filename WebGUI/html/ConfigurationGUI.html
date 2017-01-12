@@ -267,7 +267,7 @@
 			//editCellCancel()
 			//keyHandler(e)
 			//bodyKeyHandler(e)
-			//editCellOK(r,c)
+			//editCellOK()									//assumes edited cell is specified by its global variables
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
@@ -301,10 +301,18 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 
 		//firefox is awful, but this interval fixes firefox from deleting this array (?)
-		window.setInterval(function()
-				{
-			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
-				},1000);
+		//		window.setInterval(function()
+		//				{
+		//			if(!_tableLinkDropdownChoices.length)
+		//				{
+		//					Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+		//					
+		//					DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
+		//							function {
+		//						
+		//					});
+		//				}
+		//				},1000);
 		
 		
 		//init called once body has loaded
@@ -375,9 +383,9 @@
 			
 			window.onkeydown = bodyKeyHandler;
 			window.onmouseup = function(event) {	
-				editCellCancel();  
+				editCellOK();//editCellCancel();
 				_mouseIsSelecting = false; 
-				Debug.log(_mouseIsSelecting);
+				//Debug.log(_mouseIsSelecting);
 			};			
 		}	
 		
@@ -1175,7 +1183,7 @@
 			
 			str += "<br><a href='#' onclick='javascript:addMemberToConfigGroup(\"" + 
 					groupName + "\",\"" + returnToHereLink + "\"); return false;'>";
-			str += "Add/Remove Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
+			str += "Add/Remove/Modify Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			
 			str += "<br>";
 			var setMembersToDefaultReq = 
@@ -1190,7 +1198,7 @@
 					" by automatically setting up the &apos;Default&apos; alias " + 
 					"in the active Backbone group.'" +
 					">";
-			str += "Set all Member Versions to 'Default'";
+			str += "Set all Members' chosen Version to 'Default'";
 			str += "</a>";
 			str += "<br>";
 
@@ -1199,7 +1207,7 @@
 					" by automatically setting up the specified Alias " + 
 					"in the active Backbone group.'" +
 					">";
-			str += "Set all Member Versions to an Alias";
+			str += "Set all Members' chosen Versions to an Alias";
 			str += "</a>";
 			str += "<br><br>";
 			
@@ -1404,8 +1412,11 @@
 			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
 									
-			_tableLinkDropdownChoices = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
-
+			var existingNames = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
+			_tableLinkDropdownChoices = [];
+			for(var i=0;i<existingNames.length;++i)
+				_tableLinkDropdownChoices.push(existingNames[i].getAttribute("value"));
+			
 			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
 			
 			var kocVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
@@ -2055,7 +2066,8 @@
 							"<div class='treeNode-Value'>" + 
 							"<div style='float:left'>" +
 							"<b class='bold-header'>" + nodeName + "</b>" + 
-							" : </div><div style='float:left; margin-left:9px;'>";
+							"</div><div style='float:left'>&nbsp;:</div>" + 
+							"<div style='float:left; margin-left:9px;'>";
 					
 					if(valueType == "OnOff" || 
 							valueType == "YesNo" || 
@@ -2098,7 +2110,7 @@
 				{						
 					//this is a link node!
 					--childrenLength; //subtract the link ID node from children length
-					value = nodeName + " (" + 
+					value = nodeName + "-(" + 
 							value.nodeName + " = " + value.getAttribute("value") + ")";
 					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
 					--childrenLength; //subtract the config name node from children length					
@@ -3827,10 +3839,12 @@
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
 				{			
-					str += "<option value='" + _tableLinkDropdownChoices[i].getAttribute("value") + "'>";
-					str += _tableLinkDropdownChoices[i].getAttribute("value");	//can display however
+					str += "<option value='" + _tableLinkDropdownChoices[i]//.getAttribute("value")
+							+ "'>";
+					str += _tableLinkDropdownChoices[i];//.getAttribute("value");	//can display however
 					str += "</option>";
-					if(_tableLinkDropdownChoices[i].getAttribute("value") == _editingCellElOldValue)
+					if(_tableLinkDropdownChoices[i]//getAttribute("value") 
+							== _editingCellElOldValue)
 						optionIndex = i; //get starting sel index
 				}				
 				str += "</select>";				
@@ -3979,8 +3993,8 @@
 				if(e.preventDefault) 
 					e.preventDefault();
 
-				if(e.keyCode == ENTERKEY) 
-					editCellOK(_editingCellPos[0],_editingCellPos[1]);
+				//if(e.keyCode == ENTERKEY) 
+				editCellOK();
 				
 				//jump forward (tab/enter) or backward (tab/enter+shift)
 				//	or up or down.
@@ -4066,8 +4080,13 @@
 		}
 		
 		//editCellOK
-		function editCellOK(r,c) 
+		function editCellOK() 
 		{	
+			if(!_editingCellEl) return;
+			
+			var r = _editingCellPos[0];
+			var c = _editingCellPos[1];
+			
 			//if child link cell or boolean cell
 			var sel;
 			if((sel = _editingCellEl.getElementsByTagName("select")).length)

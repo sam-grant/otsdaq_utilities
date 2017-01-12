@@ -73,7 +73,7 @@
 			setupEmptyTable();
 
 			window.onmouseup = function(event) {	
-				editCellCancel();  
+				editCellOK(_editingCellPos[0],_editingCellPos[1]);//editCellCancel();  
 				_mouseIsSelecting = false; 
 				Debug.log(_mouseIsSelecting);
 			};		
@@ -340,7 +340,7 @@
 
 			str += "<a href='javascript:transposeTable()'>Transpose Table View</a><br><br>";
 			
-			str += "Starting point was...<br><b>" + srcName + "</b> (version: Mockup-View)<br>";
+			str += "Starting point was...<br><b>" + srcName + "</b> (Mockup-View)<br>";
 							
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
@@ -658,8 +658,8 @@
 				if(e.preventDefault) 
 					e.preventDefault();
 
-				if(e.keyCode == ENTERKEY) 
-					editCellOK(_editingCellPos[0],_editingCellPos[1]);
+				//if(e.keyCode == ENTERKEY) 
+				editCellOK(_editingCellPos[0],_editingCellPos[1]);
 				
 				//jump forward (tab/enter) or backward (tab/enter+shift)
 				//	or up or down.
@@ -738,6 +738,7 @@
 		//editCellOK
 		function editCellOK(r,c) 
 		{				
+			if(r < 0 || c < 0) return;
 			
 			var str;
 			

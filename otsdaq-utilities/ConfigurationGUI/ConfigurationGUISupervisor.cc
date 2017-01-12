@@ -1143,12 +1143,31 @@ try
 	}
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+
+	//check that the source version has the right number of columns
+	//	if there is a mismatch, start from mockup
+	if(!version.isInvalid()) //if not using mock-up, then the starting version is the active one
+	{
+		if(config->latestAndMockupColumnNumberMismatch())
+			__MOUT_INFO__ << "Source view has a mismatch in the number of columns, so using mockup as source." << std::endl;
+
+		//compare active to mockup column counts
+		if(config->getViewP()->getNumberOfColumns() !=
+				config->getMockupViewP()->getNumberOfColumns())
+		{
+			__MOUT_INFO__ << "Source view has a mismatch in the number of columns, so using mockup as source." << std::endl;
+			version = ConfigurationVersion(); //invalid = mockup
+		}
+	}
+
+	//create a temporary version from the source version
 	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
 	//returns -1 on error that data was unchanged
 	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
+
 	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
 
 	cfgView->setURIEncodedComment(comment);
@@ -1167,7 +1186,7 @@ try
 	}
 	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
 	{
-		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
+		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version." << std::endl;
 	}
 	else if(retVal < 0)
 	{
