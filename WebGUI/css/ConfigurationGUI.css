@@ -56,3 +56,29 @@
 			background-color : rgb(226, 216, 216);	
 			white-space: pre-wrap;
 		}
+		
+
+		.tableView-Menu {
+			float:				left;
+		    margin: 			4px 10px 3px 0;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		    background-color: 	rgb(177, 195, 195);
+		    color: 				rgb(44, 44, 187);
+		    font-size:			14px;
+		} .tableView-Menu:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			3px 10px 4px 0;
+		    cursor:				pointer;
+		}
+		
+		.gotoNavDiv {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-gotoNav.png);
+			width: 				8px;
+			height: 			7px;
+		} 
+
+		
+		
+		
+		
