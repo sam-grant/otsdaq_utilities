@@ -9,7 +9,7 @@
 //#include "otsdaq-core/DataManager/NetworkDataManager.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
-#include "otsdaq-core/RootUtilities/DQMHistos.h"
+//#include "otsdaq-core/RootUtilities/DQMHistos.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
 
