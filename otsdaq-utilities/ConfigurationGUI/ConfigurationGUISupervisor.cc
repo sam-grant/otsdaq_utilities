@@ -50,7 +50,7 @@ throw (xdaq::exception::Exception)
 	init();
 
 	//new user gets a config mgr assigned
-	//user can fill any of the sub-configs (fill from version or init empty), which becomes the active view for that sub-config
+	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 
 
 	return;
@@ -1089,9 +1089,9 @@ void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
 
 
 	if(makeTemporary)
-		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as temporary table version" << std::endl;
 	else
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 
 
@@ -1787,14 +1787,14 @@ try
 		configView->setValue(author, row, configView->findCol("Author"));
 		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
 
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion =
 				cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
@@ -1921,14 +1921,14 @@ try
 		configView->setValue(author, row, configView->findCol("Author"));
 		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
 
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion  =
 				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
@@ -2092,14 +2092,14 @@ try
 	ConfigurationVersion newAssignedVersion;
 	if(isDifferent)	//make new version if different
 	{
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion =
 				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
