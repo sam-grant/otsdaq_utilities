@@ -14,7 +14,8 @@
 	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+
 	<script>		
 		
 	
@@ -53,10 +54,13 @@
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
 			//keyHandler(e)
-			//editCellOK(r,c)
+			//editCellOK()
 			//addColumn(c)
 			//deleteColumn(c)
 			//transposeTable()
+			//createEditTableMenu(event)
+			//setupFindAndReplace()
+			//configReplace()
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -73,9 +77,9 @@
 			setupEmptyTable();
 
 			window.onmouseup = function(event) {	
-				editCellOK(_editingCellPos[0],_editingCellPos[1]);//editCellCancel();  
+				editCellOK();//editCellCancel();  
 				_mouseIsSelecting = false; 
-				Debug.log(_mouseIsSelecting);
+				//Debug.log(_mouseIsSelecting);
 			};		
 		}
 		
@@ -337,11 +341,23 @@
 			
 						
 			var str = "";
-
-			str += "<a href='javascript:transposeTable()'>Transpose Table View</a><br><br>";
 			
-			str += "Starting point was...<br><b>" + srcName + "</b> (Mockup-View)<br>";
-							
+			str += "Starting point was...<br>";
+
+			//display edit menu
+			str +=
+					"<div class='tableView-Menu' onmousedown='createEditTableMenu(event);' title='Edit Menu'>" +
+					"<div class='gotoNavDiv'></div>" +
+					"</div>"; //end context menu link div
+
+			str += "<div style='float:left;'>";
+			str += "<b>" + srcName + "</b> (Mockup-View)";
+			str += "</div>";
+			
+
+			str += "<div id='clearDiv'></div>";						
+			str += "<div id='findAndReplace'></div>";
+			
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
 			
@@ -482,7 +498,7 @@
 			{
 				if(_editingCellEl == el) //if same cell do nothing
 					return false;
-				editCellCancel(); //if new cell cancel
+				editCellOK(); //editCelleditCellCancel(); //if new cell cancel
 			}			
 			
 			//if column is Author or Timestamp, don't allow select
@@ -736,9 +752,12 @@
 		}
 		
 		//editCellOK
-		function editCellOK(r,c) 
+		function editCellOK() 
 		{				
-			if(r < 0 || c < 0) return;
+			if(!_editingCellEl) return;
+			
+			var r = _editingCellPos[0];
+			var c = _editingCellPos[1];
 			
 			var str;
 			
@@ -795,7 +814,8 @@
 		//editCellCancel
 		function editCellCancel() 
 		{	
-			_editingCellEl.innerHTML = _editingCellElOldValue;
+			if(_editingCellEl)
+				_editingCellEl.innerHTML = _editingCellElOldValue;
 			
 			_editingCell = false;
 			_editingCellEl = 0;
@@ -838,6 +858,189 @@
 			
 			setupTable();
 		}
+		
+
+		//createEditTableMenu ~~
+		function createEditTableMenu(event)
+		{
+			var menuItems = [
+							 "Find and Replace",							 
+							 "Transpose Table View"
+									 ];
+			var menuItemHandlers = [
+							 "setupFindAndReplace()",
+							 "transposeTable()"							 							 
+									 ];
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 	//top left position
+					"rgb(220, 187, 165)", 			//primary color
+					"rgb(130, 51, 51)"				//secondary color
+			);
+		}
+		
+
+		//setupFindAndReplace
+		function setupFindAndReplace()
+		{			 
+			var el;
+			
+			//if there were any other types of controls, clear them 
+			//	here {}
+			
+			el = document.getElementById('findAndReplace'); 
+			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
+			
+			_lastFindRow = _lastFindCol = -1; //initialize find location
+			var str = "";
+			str += "Search in all column names for text... <br>";			
+			str += "<input type='text' id='findAndReplaceNeedle' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
+			str += "<br>";
+			str += "Replace with... <br>";
+			str += "<input type='text' id='findAndReplaceWith' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value=''>";
+			
+			//make div for translating innerHTML and value
+			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
+			
+			str += "<br><br>";
+			//			str += "<input type='button' onmouseup='configFind()' value='Find' title='" +
+			//					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
+			//					"'/>";
+			//			str += " ";
+			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
+					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\'" +
+					"'/>";			
+			str += "<br><br>";
+			el.innerHTML = str;						
+		}
+
+		//configReplace ~~
+		function configReplace()
+		{			
+			editCellCancel();			
+			var needle = document.getElementById("findAndReplaceNeedle").value;
+			var convertEl = document.getElementById("findAndReplaceHTML");
+			
+			//convert needle to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(needle));
+			needle = convertEl.innerHTML; //converted text
+			
+			var replaceStr = document.getElementById("findAndReplaceWith").value;
+			
+			//convert replaceStr to HTML for search
+			convertEl.innerHTML = "";
+			convertEl.appendChild(document.createTextNode(replaceStr));
+			replaceStr = convertEl.innerHTML; //converted text
+			
+			Debug.log("configReplace '" + needle + "' with '" + replaceStr + "'");
+			
+			//change hdrs and types 
+			var cellStr;
+			
+			for(var c=0;c<_colHdrArr.length-3;++c) //skip last 3 fixed columns
+			{
+				cellStr = _colHdrArr[c];
+				tmpStr = cellStr;
+				Debug.log("[" + c + "]=" + cellStr);
+				needleStartIndex = 0;
+				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
+				{
+					cellStr = cellStr.replace(needle,replaceStr);
+					if(cellStr == tmpStr) break; //in case replace is same as needle
+					Debug.log("REPLACED=" + cellStr);		
+					needleStartIndex += replaceStr.length;
+				}
+				_colHdrArr[c] = cellStr;
+			}
+
+			var linkIdIndex, linkType;
+			for(var c=0;c<_colTypeArr.length-3;++c) //skip last 3 fixed columns
+			{
+				cellStr = _colTypeArr[c];
+				linkIdIndex = cellStr.indexOf('-');
+				if(linkIdIndex < 0) continue; //skip all non-link cells
+				
+				linkType = cellStr.substr(0,++linkIdIndex);
+				cellStr = cellStr.substr(linkIdIndex);
+				
+				tmpStr = cellStr;
+				Debug.log("[" + c + "]=" + cellStr);
+				needleStartIndex = 0;
+				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
+				{
+					cellStr = cellStr.replace(needle,replaceStr);
+					if(cellStr == tmpStr) break; //in case replace is same as needle
+					Debug.log("REPLACED=" + cellStr);		
+					needleStartIndex += replaceStr.length;
+				}
+				_colTypeArr[c] = linkType + cellStr;
+			}
+			
+			setupTable();
+
+
+//			var el = document.getElementById("SubSystemTable");
+//			
+//			var cells;
+//			var cellStr, tmpStr;
+//			var needleStartIndex;
+//			var linkIdStartStr,linkIdEndStr;
+//			var indexS, indexE;
+//			
+//			cells = el.getElementsByTagName("th");
+//			
+//			for(var c=0;c<cells.length-3;++c) //skip last 3 fixed columns
+//			{
+//				cellStr = cells[c].innerHTML;
+//				tmpStr = cellStr;
+//				Debug.log("[" + c + "]=" + cellStr);
+//				needleStartIndex = 0;
+//				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
+//				{
+//					cellStr = cellStr.replace(needle,replaceStr);
+//					if(cellStr == tmpStr) break; //in case replace is same as needle
+//					Debug.log("REPLACED=" + cellStr);		
+//					needleStartIndex += replaceStr.length;
+//				}
+//				cells[c].innerHTML = cellStr;
+//			}
+//			
+//			cells = el.getElementsByTagName("td");
+//			
+//			for(var c=0;c<cells.length;++c) //skip all non-link cells
+//			{
+//				//extract link ID and check for replace
+//				
+//				cellStr = cells[c].innerHTML;
+//				if(cellStr.indexOf("<div") != 0) continue;
+//				
+//				indexS = cellStr.indexOf(">");
+//				indexS = cellStr.indexOf(">",indexS+1)+1;
+//				indexE = cellStr.indexOf("<",indexS);
+//				linkIdStartStr = cellStr.substr(0,indexS);
+//				linkIdEndStr = cellStr.substr(indexE);
+//				cellStr = cellStr.substr(indexS,indexE-indexS);
+//					
+//				tmpStr = cellStr;
+//				Debug.log("linkIdStartStr=" + linkIdStartStr );
+//				Debug.log("linkIdEndStr=" + linkIdEndStr );
+//				needleStartIndex = 0;
+//				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
+//				{
+//					cellStr = cellStr.replace(needle,replaceStr);
+//					if(cellStr == tmpStr) break; //in case replace is same as needle
+//					Debug.log("REPLACED=" + cellStr);		
+//					needleStartIndex += replaceStr.length;
+//				}
+//				cells[c].innerHTML = linkIdStartStr + cellStr + linkIdEndStr;
+//			}
+						
+		}
+		
 		
 	</script>
 		

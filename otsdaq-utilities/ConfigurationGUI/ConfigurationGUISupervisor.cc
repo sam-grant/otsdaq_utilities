@@ -1174,15 +1174,22 @@ try
 
 	//only consider it an error if source version was persistent version
 	//	allow it if source version is temporary and we are making a persistent version now
-	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
+	if(retVal < 0 &&
+			(!version.isTemporaryVersion() || makeTemporary))
 	{
-		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
-		__MOUT_ERR__ << "\n" << ss.str();
-		//delete temporaryVersion
-		config->eraseView(temporaryVersion);
-		throw std::runtime_error(ss.str());
+		if(!version.isInvalid()) //if source version was mockup, then consider it attempt to create a blank table
+		{
+			__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			//delete temporaryVersion
+			config->eraseView(temporaryVersion);
+			throw std::runtime_error(ss.str());
+		}
+		else
+			__MOUT__ << "This was interpreted as an attempt to create a blank table." << std::endl;
 	}
-	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
+	else if(retVal < 0 &&
+			(version.isTemporaryVersion() && !makeTemporary))
 	{
 		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version." << std::endl;
 	}
