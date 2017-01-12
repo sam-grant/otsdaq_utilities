@@ -1148,12 +1148,10 @@ try
 	//	if there is a mismatch, start from mockup
 	if(!version.isInvalid()) //if not using mock-up, then the starting version is the active one
 	{
-		if(config->latestAndMockupColumnNumberMismatch())
-			__MOUT_INFO__ << "Source view has a mismatch in the number of columns, so using mockup as source." << std::endl;
-
 		//compare active to mockup column counts
-		if(config->getViewP()->getNumberOfColumns() !=
-				config->getMockupViewP()->getNumberOfColumns())
+		if(config->getViewP()->getSourceColumnSize() !=
+				config->getMockupViewP()->getNumberOfColumns() ||
+				config->getViewP()->getSourceColumnMismatch() != 0)
 		{
 			__MOUT_INFO__ << "Source view has a mismatch in the number of columns, so using mockup as source." << std::endl;
 			version = ConfigurationVersion(); //invalid = mockup
