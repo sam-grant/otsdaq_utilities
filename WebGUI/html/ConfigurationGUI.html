@@ -4635,7 +4635,7 @@
 		//popUpSaveNewTableForm
 		function popUpSaveNewTableForm()
 		{
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI popUpSaveNewTableForm");
 			
 			var str = "";
@@ -4834,7 +4834,7 @@
 		//saveConfigAsNewVersion ~~
 		function saveConfigAsNewVersion(temporary, backLinkStr) 
 		{	
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
 			
 			var el = document.getElementById("popUpDialog-comment");
