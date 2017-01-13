@@ -137,6 +137,8 @@
 		var _CONFIG_DATA_COL_OFFSET = 1;
 
 		var _DEFAULT_COMMENT = "No comment.";
+		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
+		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
 	
 		var _currentConfigName, _currentGroupName;
 		var _editingCell = false;
@@ -1649,7 +1651,7 @@
 									isTrue = true; break;
 								}
 							str += "style='background-color:";
-							str += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+							str += (isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;
 							str += "'";
 						}
 								
@@ -3484,7 +3486,11 @@
 			//	- for each src col 
 			//		- dest[col] = src[col]
 
-			//if(deleteSrc) --dest;	//when move, add before target row	
+			//if(deleteSrc) --dest;	//when move, add before target row
+			
+			//get col types for bool coloring
+			var colIsBoolType = getTableViewColIsBoolType(rows);
+			var boolTypeTrues = ["On","True","Yes"];
 			
 			if(dest == -1) //new row, so point to last row for addRow use
 				dest = rows.length - _CONFIG_DATA_ROW_OFFSET;		
@@ -3495,15 +3501,30 @@
 			addRow(dest); 	
 			Debug.log("src=" + src + " dest=" + dest);
 			
-			//get destinat row after add
+			//get destination row after add
 			el = document.getElementById("SubSystemTable");
 			rows = el.getElementsByTagName("tr");
 			
+			var val;
 			var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
 			for(var c=1;c<srcCols.length;++c)
 			{
 				Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
-				destCols[c].innerHTML = srcCols[c].innerHTML;
+				val = srcCols[c].innerHTML;
+				destCols[c].innerHTML = val;
+				if(colIsBoolType[c]) //colorize bool types
+				{
+					//determine if true value
+					var isTrue = false;
+					for(var i=0;i<boolTypeTrues.length;++i)
+						if(boolTypeTrues[i] == val)
+						{
+							isTrue = true; break;
+						}
+					
+					destCols[c].style.backgroundColor =
+							(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
+				}
 			}
 			
 			if(deleteSrc)
@@ -3536,20 +3557,27 @@
 			str += "<div id='findAndReplaceHTML' style='display:none'></div>";
 			
 			str += "<br><br>";
+			str += "<div style='white-space:nowrap;'>";
 			str += "<input type='button' onmouseup='configFind()' value='Find' title='" +
-					"Find every occurance of \'For text...\" in the Column(s) specified by \'Search in column.\'" +
+					"Find every occurance of &apos;For text...&quot; in the Column(s) specified by &apos;Search in column.&apos;" +
 					"'/>";
 			str += " ";
 			str += "<input type='button' onmouseup='configReplace()' value='Replace' title='" +
-					"Replace every occurance of \'For text...\" in the Column(s) specified by \'Search in column\' with the string specified in \'Replace with...\'" +
+					"Replace every occurance of &apos;For text...&quot; in the Column(s) specified by &apos;Search in column&apos; with the string specified in &apos;Replace with...&apos;" +
 					"'/>";
 			str += "&nbsp;&nbsp; or..."
 			for(var i=0;i<3;++i)
 				str += "&nbsp;";
 			str += "<input type='button' onmouseup='configIncrementByReplace()' " +
 					"value='Increment by &quot;Replace with...&quot; Field' title='" +
-					"Increment the trailing number in all fields in the Column(s) specified by \'Search in column\' by the signed integer number specified in \'Replace with...\' If there is no trailing number, a zero is inferred." +
+					"Increment the trailing number in all fields in the Column(s) specified by &apos;Search in column&apos; by the signed integer number specified in &apos;Replace with...&apos; If there is no trailing number, a zero is inferred." +
 					"'/>";
+			str += " ";
+			str += "<input type='button' onmouseup='configIncrementByReplace(true)' " +
+					"value='Increment each row uniquely by &quot;Replace with...&quot; Field' title='" +
+					"Increment the trailing number in all fields, uniquely from row to row, in the Column(s) specified by &apos;Search in column&apos; by the signed integer number specified in &apos;Replace with...&apos; The starting number comes from the first cell encountered; if there is no trailing number, a zero is inferred." +
+					"'/>";
+			str += "</div>";
 			str += "<br><br>";
 			el.innerHTML = str;						
 		}
@@ -3622,12 +3650,13 @@
 		}
 		
 		//configIncrementByReplace ~~
-		function configIncrementByReplace()
+		function configIncrementByReplace(uniquely)
 		{
 			editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var incrementNum = document.getElementById("findAndReplaceWith").value | 0;			
-
+			if(!incrementNum)
+				incrementNum = 1;
 			Debug.log("configIncrementByReplace +=" + incrementNum + " @ " + target);
 			
 			var el = document.getElementById("SubSystemTable");
@@ -3635,6 +3664,10 @@
 			var cells;
 			var cols = rows[_CONFIG_DATA_ROW_OFFSET-1].getElementsByTagName("th");
 			var cellStr,cellNumIndex,cellNum;
+			
+			var uniqueCellNumIndex = -1;
+			var cellNumIndex;
+			
 			for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 			{
 				cells = rows[r].getElementsByTagName("td");
@@ -3657,8 +3690,20 @@
 					Debug.log("cellNumIndex=" + cellNumIndex + " - " + cellStr.substr(cellNumIndex));
 					cellNum = cellStr.substr(cellNumIndex) | 0;
 					Debug.log("cellNum=" + cellNum);
-
-					cellNum += incrementNum;
+					
+					if(uniquely)
+					{
+						if(uniqueCellNumIndex < 0) //take starting value from cell
+							uniqueCellNumIndex = cellNum;
+						else
+						{
+							uniqueCellNumIndex += incrementNum;
+							cellNum = uniqueCellNumIndex;
+						}
+					}
+					else
+						cellNum += incrementNum;
+					
 					Debug.log("newNum=" + cellNum);
 					
 					cells[c].innerHTML = cellStr.substr(0,cellNumIndex) + cellNum;
@@ -4105,9 +4150,9 @@
 					}
 				
 				if(isTrue)
-					_editingCellEl.style.backgroundColor = "rgb(201, 255, 201)";
+					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
 				else if(isFalse)
-					_editingCellEl.style.backgroundColor = "rgb(255, 178, 178)";
+					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
 			}
 			else //normal cell
 			{
@@ -5287,7 +5332,7 @@
 								isTrue = true; break;
 							}
 						tdStyle += "style='background-color:";
-						tdStyle += (isTrue)?"rgb(201, 255, 201)":"rgb(255, 178, 178)";
+						tdStyle += (isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;
 						tdStyle += "'";
 					}	
 					
