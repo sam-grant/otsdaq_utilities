@@ -139,7 +139,7 @@ else {
      		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
       		{
            		if(_permissions >= iconArray[i+3])
-           			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2],iconArray[i+4]);       
+           			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2]|0,iconArray[i+4]);       
       		}
      		
      		_permissions = 0;
