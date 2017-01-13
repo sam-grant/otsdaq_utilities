@@ -2,7 +2,6 @@
 #include "otsdaq-core/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq-core/DataManager/DataManager.h"
 #include "otsdaq-core/DataManager/DataProcessor.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/DataBufferConfiguration.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
