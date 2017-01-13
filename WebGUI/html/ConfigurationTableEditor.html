@@ -674,9 +674,11 @@
 				if(e.preventDefault) 
 					e.preventDefault();
 
-				//if(e.keyCode == ENTERKEY) 
-				editCellOK(_editingCellPos[0],_editingCellPos[1]);
-				
+				editCellOK();
+
+				if(e.keyCode == ENTERKEY) //dont move to new cell
+					return false;
+							
 				//jump forward (tab/enter) or backward (tab/enter+shift)
 				//	or up or down.
 				//get number of rows and cols

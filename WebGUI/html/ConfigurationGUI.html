@@ -3061,12 +3061,12 @@
 					"<a href='#' onclick='javascript:selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
 					"<a href='#' onclick='javascript:selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			str += "</td><td>";
+			str += "</td><td colspan='2' style='white-space: nowrap;'>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
 			str += "<a href='#' onclick='javascript:versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
 					"<a href='#' onclick='javascript:versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
 					"<a href='#' onclick='javascript:popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
-			str += "</td><td></td>";
+			str += "</td>";
 			str += "</tr>";
 			
 			for(var i=0;i<configNames.length;++i)
@@ -3110,7 +3110,9 @@
 						"var sel = document.getElementById(\"select-" + name + "\");" +
 						"setupSpecificConfig(\"" + name + "\"," +
 						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
-						",\"" + backLinkStr + "\"); return false;'>";
+						",\"" + backLinkStr + "\"); return false;'" +
+						" title='Go to " + name + "&apos;s selected version'" +
+						">";
 				str += "goto</a>";
 						//"(configName, version)"
 				str += "</td>";
@@ -3973,8 +3975,10 @@
 				if(e.preventDefault) 
 					e.preventDefault();
 
-				//if(e.keyCode == ENTERKEY) 
+				 
 				editCellOK();
+				if(e.keyCode == ENTERKEY) //dont move to new cell
+					return false;
 				
 				//jump forward (tab/enter) or backward (tab/enter+shift)
 				//	or up or down.
@@ -4666,19 +4670,21 @@
 			str += "Please enter a comment describing this new version of <b>" + 
 					_currentConfigName + "</b>:<br>";
 			str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
-			str += _DEFAULT_COMMENT;
+			var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
+			str += comment;
 			str += "</textarea>";
 			str += "</div>";
 			
+			//Note: 1/13/2017 - changed to always using cached comment 
 			//give option to use cached comment
-			if(_cachedTableComment != "") 			
-				str += "<a href='#' onclick='" + 
-					"var el = document.getElementById(" +
-					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
-					"title='Load the cached comment associated with last persistent version " +
-					"of " + _currentConfigName + " that was viewed. " + 
-					"You will still have a chance to append to the comment.' " +
-					">Get cached table comment</a><br><br>"; 
+			//			if(_cachedTableComment != "") 			
+			//				str += "<a href='#' onclick='" + 
+			//					"var el = document.getElementById(" +
+			//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
+			//					"title='Load the cached comment associated with last persistent version " +
+			//					"of " + _currentConfigName + " that was viewed. " + 
+			//					"You will still have a chance to append to the comment.' " +
+			//					">Get cached table comment</a><br><br>"; 
 			
 			str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' " +
 					"value='Save Changes as New Version' title='" +
@@ -4692,7 +4698,7 @@
 			
 			//select comment text
 			setCaretPosition(document.getElementById("popUpDialog-comment"),
-					0,_DEFAULT_COMMENT.length);
+					0,comment.length);
 		}
 		
 		//popUpGroupAliasForm
