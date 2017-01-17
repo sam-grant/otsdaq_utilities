@@ -144,7 +144,7 @@ Debug.errorPop = function(err,severity) {
 			css += "#" + Debug._errBoxId +
 					"{" +
 					"position: absolute; display: none; border: 2px solid gray;" +
-					"background-color: rgba(153,0,51,0.8); overflow-y: scroll;" +
+					"background-color: rgba(153,0,51,0.9); overflow-y: scroll;" +
 					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
 					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
@@ -221,7 +221,7 @@ Debug.errorPop = function(err,severity) {
 						el.innerHTML == "Close Warnings"))
 			return;
 		el.innerHTML = "Close Info";		
-		Debug._errBox.style.backgroundColor = "rgba(0,153,51,0.8)";
+		Debug._errBox.style.backgroundColor = "rgba(0,153,51,0.9)";
 		break;
 	case Debug.WARN_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
@@ -229,11 +229,11 @@ Debug.errorPop = function(err,severity) {
 				el.innerHTML == "Close Errors")
 			return;
 		el.innerHTML = "Close Warnings";		
-		Debug._errBox.style.backgroundColor = "rgba(160, 79, 0, 0.8)";	
+		Debug._errBox.style.backgroundColor = "rgba(160, 79, 0, 0.9)";	
 		break;
 	default: //Debug.HIGH_PRIORITY
 		el.innerHTML = "Close Errors";
-		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.8)";
+		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.9)";
 	}
 	els[1].innerHTML = el.innerHTML;
 }

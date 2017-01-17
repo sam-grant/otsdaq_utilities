@@ -29,11 +29,11 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>, progressHandler <optional>, callHandlerOnErr <optional>)
-//			... to make server request, returnHandler is called with response in req and reqIndex if user defined
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, showLoadingOverlay <optional>)
+//			... to make server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
-//					function returnHandler(req,reqIndex,errStr)
+//					function returnHandler(req,reqParam,errStr)
 //					{
 //						if(errStr != "") return; //error occured!
 //
@@ -44,9 +44,9 @@
 //							return;
 //						}
 //
-//						if(reqIndex = 0)
+//						if(reqParam = 0)
 //						{ //... do something }
-//						else if(reqIndex = 1)
+//						else if(reqParam = 1)
 //						{ //... do something else}
 //						else
 //						{ //... do something else}
@@ -88,7 +88,7 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
@@ -315,7 +315,132 @@ DesktopContent.init(); //initialize handlers
 //(this is a result of bad error handling in the desktop window page.. so this is meant to inform the developer to fix the issue)
 DesktopContent._arrayOfFailedHandlers = new Array();
 
+//=====================================================================================
+//=====================================================================================
+//Loading pop up helpers
+DesktopContent._loadBox = 0;
+DesktopContent._loadBoxId = "DesktopContent-load-box";
+DesktopContent._loadBoxTimer = 0;
 
+//=====================================================================================
+DesktopContent.showLoading = function()	{
+	Debug.log("DesktopContent.showLoading");
+	
+	//check if DesktopContent._loadBox has been set
+	if(!DesktopContent._loadBox)
+	{	
+		//check if there is already an error box with same id and share
+		var el = document.getElementById(DesktopContent._loadBoxId);
+		if(!el) //element doesn't already exist, so we need to create the element
+		{
+			var body = document.getElementsByTagName("BODY")[0];
+			if(!body) //maybe page not loaded yet.. so wait to report
+			{
+				//try again in 1 second
+				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+				return;
+			}
+
+			//create the element
+			el = document.createElement("div");			
+			el.setAttribute("id", DesktopContent._loadBoxId);
+			el.style.display = "none";
+			var str = "";
+			
+			str += "<table height='100%' width='100%'><td id='" + 
+					DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
+			el.innerHTML = str;
+			body.appendChild(el); //add element to body of page
+
+
+			//add style for loading to page HEAD tag			
+			var css = "";
+
+			
+			//load box style
+			css += "#" + DesktopContent._loadBoxId +
+					"{" +
+					"position: absolute; display: none; border: 2px solid gray;" +
+					"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
+					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
+					"-webkit-border-radius: 2px;	border-radius: 2px;" +
+					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
+					"color: white; " +
+					"font-family: 'Comfortaa', arial; text-align: left;" +
+					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
+					"}\n\n";			
+
+			//load box text style
+			//			css += "#" + DesktopContent._loadBoxId + "-td" +
+			//					"{" +					
+			//					"color: white; font-size: 18px;" +
+			//					"font-family: 'Comfortaa', arial;" +
+			//					"text-align: center;" +
+			//					"}\n\n";
+
+			//add style element to HEAD tag
+			var style = document.createElement('style');
+
+			if (style.styleSheet) {
+				style.styleSheet.cssText = css;
+			} else {
+				style.appendChild(document.createTextNode(css));
+			}
+
+			document.getElementsByTagName('head')[0].appendChild(style);
+		}
+		DesktopContent._loadBox = el;	
+	}	
+	
+	//have load popup element now, so display it at center of page
+	
+	var W = 100;
+	var H = 60;
+	
+	var WW,WH; //window width and height
+	//get width and height properly 
+	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+	{
+		WW = DesktopContent.getWindowWidth();
+		WH = DesktopContent.getWindowHeight();
+	}
+	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+	{
+		WW = DesktopContent.getDesktopWidth();
+		WH = DesktopContent.getDesktopHeight();
+	}
+	
+	var X = document.body.scrollLeft + (DesktopContent.getWindowWidth()/2 - W/2-4); //for 2px borders
+	var Y = document.body.scrollTop + (DesktopContent.getWindowWidth()/2 - H/2-4); //for 2px borders
+	
+	//show the load box whereever the current scroll is
+	DesktopContent._loadBox.style.top = (X) + "px";
+	DesktopContent._loadBox.style.left = (Y) + "px";	
+	DesktopContent._loadBox.style.width = (W) + "px";
+	DesktopContent._loadBox.style.height = (H) + "px";
+
+	DesktopContent._loadBox.style.display = "block";
+	
+	//===================
+	//setup Loading.. animation
+	var loadBoxStr = "";
+	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
+	var loadBoxAnimationFunction = function() {
+		if(loadBoxStr.length > 3) loadBoxStr = "";
+		else
+			loadBoxStr += ".";
+		el.innerHTML = "Loading" + loadBoxStr;
+	}; 
+	
+	window.clearInterval(DesktopContent._loadBoxTimer);
+	DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
+}
+//=====================================================================================
+DesktopContent.hideLoading = function()	{
+	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+	Debug.log("DesktopContent.hideLoading");
+	DesktopContent._loadBox.style.display = "none";
+}
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data
@@ -333,18 +458,21 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 //
 // Where CookieCode and DisplayName can change upon every server response
 //
-// reqIndex is used to give the returnHandler an index to route responses to.
+// reqParam is used to give the returnHandler an index to route responses to.
 // progressHandler can be given to receive progress updates (e.g. for file uploads)
 // callHandlerOnErr can be set to true to have handler called with errStr parameter
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqIndex, progressHandler, callHandlerOnErr) {
+		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
 	var errStr = "";
 	var req;
+	
+	if(showLoadingOverlay)
+		DesktopContent.showLoading();
 
 	//check if already marked the mailbox.. and do nothing because we know something is wrong
 	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1")		
@@ -374,7 +502,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqIndex, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqParam, errStr); 
 		return;
 	}
 
@@ -400,6 +528,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if (req.readyState==4) 
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
+			
+			if(showLoadingOverlay)
+				DesktopContent.hideLoading();
+			
 			if(req.status==200)
 			{				
 				//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
@@ -511,7 +643,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
-				returnHandler(req, reqIndex, errStr);
+				returnHandler(req, reqParam, errStr);
 		}
 	}
 

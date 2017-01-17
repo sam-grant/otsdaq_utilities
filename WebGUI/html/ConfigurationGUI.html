@@ -2572,7 +2572,9 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
 					groupName + "&groupKey=" + groupKey +
 					(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
-					"",activateSystemConfigHandler,true);
+					"",activateSystemConfigHandler,
+					true, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
+					true); //showLoadingOverlay
 		}
 		
 		//activateSystemConfigHandler ~
@@ -3335,7 +3337,9 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
 					"&groupName=" +	config +
 					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
-					configMap, createConfigGroupHandler);
+					configMap, createConfigGroupHandler,
+					0, 0, 0, //reqIndex, progressHandler, callHandlerOnErr
+					true); //showLoadingOverlay
 		}
 
 		//createConfigGroupHandler ~
@@ -3417,8 +3421,11 @@
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 			
 			var str = "";
-			str += "Source... ";
+			str += "Source starting row... ";
 			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='0'>";
+			str += "<br>";
+			str += "Number of rows to Copy or Move... ";
+			str += "<input type='text' id='copyAndMoveRowsSrcCount' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='1'>";
 			str += "<br>";
 			str += "Destination row (-1 for new last row)... ";
 			str += "<input type='text' id='copyAndMoveRowsDest' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='-1'>";
@@ -3461,14 +3468,23 @@
 		{
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
+			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
 			
-			Debug.log("configCopyRow src=" + src + " dest=" + dest);
+			
+			Debug.log("configCopyRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);
 
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
 			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
 			{
 				Debug.log("Error: Illegal source row of '" + src + 
+						"' given. Row must be less than " + 
+						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+				return;
+			}
+			if(src+srcCount-1 < 0 || src+srcCount-1 >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+			{
+				Debug.log("Error: Illegal last source row of '" + (src+srcCount-1) + 
 						"' given. Row must be less than " + 
 						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
 				return;
@@ -3492,45 +3508,51 @@
 			var colIsBoolType = getTableViewColIsBoolType(rows);
 			var boolTypeTrues = ["On","True","Yes"];
 			
-			if(dest == -1) //new row, so point to last row for addRow use
-				dest = rows.length - _CONFIG_DATA_ROW_OFFSET;		
-
-			//get source row before adding row
-			var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
-			
-			addRow(dest); 	
-			Debug.log("src=" + src + " dest=" + dest);
-			
-			//get destination row after add
-			el = document.getElementById("SubSystemTable");
-			rows = el.getElementsByTagName("tr");
-			
-			var val;
-			var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
-			for(var c=1;c<srcCols.length;++c)
+			var inputDest = dest;
+			for(var r=0;r<srcCount;++r,++src,++dest)
 			{
-				Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
-				val = srcCols[c].innerHTML;
-				destCols[c].innerHTML = val;
-				if(colIsBoolType[c]) //colorize bool types
+				if(inputDest == -1) //new row, so point to last row for addRow use
+					dest = rows.length - _CONFIG_DATA_ROW_OFFSET;				
+	
+				//get source row before adding row
+				var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
+				
+				addRow(dest); 	
+				Debug.log("src=" + src + " dest=" + dest);
+				
+				//get destination row after add
+				el = document.getElementById("SubSystemTable");
+				rows = el.getElementsByTagName("tr");
+				
+				var val;
+				var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
+				for(var c=1;c<srcCols.length;++c)
 				{
-					//determine if true value
-					var isTrue = false;
-					for(var i=0;i<boolTypeTrues.length;++i)
-						if(boolTypeTrues[i] == val)
-						{
-							isTrue = true; break;
-						}
-					
-					destCols[c].style.backgroundColor =
-							(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
+					Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
+					val = srcCols[c].innerHTML;
+					destCols[c].innerHTML = val;
+					if(colIsBoolType[c]) //colorize bool types
+					{
+						//determine if true value
+						var isTrue = false;
+						for(var i=0;i<boolTypeTrues.length;++i)
+							if(boolTypeTrues[i] == val)
+							{
+								isTrue = true; break;
+							}
+						
+						destCols[c].style.backgroundColor =
+								(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
+					}
 				}
-			}
-			
-			if(deleteSrc)
-			{
+				
 				if(dest < src) ++src; //to account for added row
-				deleteRow(src);
+				
+				if(deleteSrc)
+				{					
+					deleteRow(src);
+					--src;	//to account for deleted row
+				}
 			}
 		}	
 		
@@ -3586,7 +3608,7 @@
 		//	use _lastFindRow, _lastFindCol as starting point
 		function configFind()
 		{
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var needle = document.getElementById("findAndReplaceNeedle").value;
 			var convertEl = document.getElementById("findAndReplaceHTML");
@@ -3634,7 +3656,7 @@
 						Debug.log("FOUND=" + cellStr);
 						
 						//cancel any other cells and target the found cell
-						editCellCancel();
+						editCellOK(); //editCellCancel();
 						selectThisCell(r,c,cells[c]);
 						return;
 					}
@@ -3652,7 +3674,7 @@
 		//configIncrementByReplace ~~
 		function configIncrementByReplace(uniquely)
 		{
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var incrementNum = document.getElementById("findAndReplaceWith").value | 0;			
 			if(!incrementNum)
@@ -3716,7 +3738,7 @@
 		//configReplace ~~
 		function configReplace()
 		{			
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			var target = document.getElementById("findAndReplaceTarget").value;
 			var needle = document.getElementById("findAndReplaceNeedle").value;
 			var convertEl = document.getElementById("findAndReplaceHTML");
@@ -3782,13 +3804,10 @@
 				{				
 					el.parentNode.removeChild(el);
 					el = document.getElementById("config-firstSaveButton");
-				}
+				}								
 				
-				
-				el = document.getElementById("display");
-				var dispStr = el.innerHTML;
+				var newDiv = document.createElement("div");
 				str = "";
-				str += "<div>";
 				str += "<input type='button' onmouseup='popUpSaveNewTableForm()' " + 
 						"value='Save Changes as New Version' title='" +
 						"Save the current table view as new persitent version." +
@@ -3798,12 +3817,16 @@
 						"value='Save Changes as Temporary Version' title='" +
 						"Save the current table view as new temporary version." +
 						"'/>";
-				str += "</div><br>";
+				str += "<br><br>";
+				newDiv.innerHTML = str;
 				
-				var i = dispStr.indexOf("<div class=\"tableView-Menu\"");
-				
-				el.innerHTML = dispStr.substr(0,i) + str + 
-						dispStr.substr(i) + "<br>" + str;
+				//insert a new div before and after table
+				el = document.getElementById("display");
+				var targetEl = document.getElementsByClassName("tableView-Menu");
+				el.insertBefore(newDiv, targetEl[0]);
+				newDiv = document.createElement("div");
+				newDiv.innerHTML = "<br>" + str;				
+				el.appendChild(newDiv);	
 			}			
 		}
 		
@@ -4192,7 +4215,7 @@
 		{
 			Debug.log("CfgGUI addRow " + rowToAdd);
 			
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");				
@@ -4328,7 +4351,7 @@
 		{
 			Debug.log("CfgGUI deleteRow " + rowToDelete);
 			
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
@@ -5383,7 +5406,7 @@
 		//transposeTableView ~~
 		function transposeTableView()
 		{
-			editCellCancel();
+			editCellOK(); //editCellCancel();
 			Debug.log("transposeTableView() transposed was =" + _tableViewIsTransposed);
 
 			var el = document.getElementById("SubSystemTable");

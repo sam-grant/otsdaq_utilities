@@ -133,11 +133,11 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			++heartbeatCount;
 		}
 
-		if(i==5)
-		{
-			__MOUT_INFO__ << "Exiting Console MFReceiverWorkLoop" << std::endl;
-			break; //assume something wrong, and break loop
-		}
+		//		if(i==5)
+		//		{
+		//			__MOUT_INFO__ << "Exiting Console MFReceiverWorkLoop" << std::endl;
+		//			break; //assume something wrong, and break loop
+		//		}
 	}
 
 }
