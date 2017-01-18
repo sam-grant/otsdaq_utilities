@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v1_00_05
-defaultqual	e10:s35
+parent otsdaq_utilities	v1_00_06
+defaultqual	e10:s41
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -18,10 +18,10 @@ fcldir      -
 
 #
 product		 version	optional
-otsdaq           v1_00_05     
-xdaq             v13_2_2
-artdaq_mfextensions v1_01_02    -        optional
-cetbuildtools    v5_04_03       -       only_for_build
+otsdaq           v1_00_06
+xdaq             -
+artdaq_mfextensions v1_01_03    -        optional
+cetbuildtools    v5_06_03       -       only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -30,12 +30,12 @@ end_product_list
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
 qualifier    	   otsdaq	 xdaq	    notes
+e10:s44:prof       e10:s44:prof  e10:prof   -std=c++1y
+e10:s44:debug      e10:s44:debug e10:debug  -std=c++1y
 e10:s43:prof       e10:s43:prof  e10:prof   -std=c++1y
 e10:s43:debug      e10:s43:debug e10:debug  -std=c++1y
 e10:s41:prof       e10:s41:prof  e10:prof   -std=c++1y
 e10:s41:debug      e10:s41:debug e10:debug  -std=c++1y
-e10:s35:prof       e10:s35:prof  e10:prof   -std=c++1y
-e10:s35:debug      e10:s35:debug e10:debug  -std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
