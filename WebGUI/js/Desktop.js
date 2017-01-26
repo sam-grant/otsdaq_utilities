@@ -177,7 +177,7 @@ Desktop.createDesktop = function(security) {
 	    //		innerHTML = requestingWindowId=<window uid>&done=1
 	    if(_openWindowMailbox.innerHTML != "")
 	    {
-	    	Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+	    	//Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 	    	
 	    	//get parameters
 	    	var paramsStr = _openWindowMailbox.innerHTML;

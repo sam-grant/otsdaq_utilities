@@ -321,10 +321,15 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 DesktopContent._loadBox = 0;
 DesktopContent._loadBoxId = "DesktopContent-load-box";
 DesktopContent._loadBoxTimer = 0;
+DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to 0
 
 //=====================================================================================
 DesktopContent.showLoading = function()	{
-	Debug.log("DesktopContent.showLoading");
+	
+	Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+	
+	if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
+		return;
 	
 	//check if DesktopContent._loadBox has been set
 	if(!DesktopContent._loadBox)
@@ -410,12 +415,12 @@ DesktopContent.showLoading = function()	{
 		WH = DesktopContent.getDesktopHeight();
 	}
 	
-	var X = document.body.scrollLeft + (DesktopContent.getWindowWidth()/2 - W/2-4); //for 2px borders
-	var Y = document.body.scrollTop + (DesktopContent.getWindowWidth()/2 - H/2-4); //for 2px borders
+	var X = document.body.scrollLeft + (WW - W - 4)/2; //for 2px borders
+	var Y = document.body.scrollTop + (WH - H -4)/2; //for 2px borders
 	
-	//show the load box whereever the current scroll is
-	DesktopContent._loadBox.style.top = (X) + "px";
-	DesktopContent._loadBox.style.left = (Y) + "px";	
+	//show the load box whereever the current scroll is	
+	DesktopContent._loadBox.style.left = (X) + "px";	
+	DesktopContent._loadBox.style.top = (Y) + "px";
 	DesktopContent._loadBox.style.width = (W) + "px";
 	DesktopContent._loadBox.style.height = (H) + "px";
 
@@ -423,7 +428,7 @@ DesktopContent.showLoading = function()	{
 	
 	//===================
 	//setup Loading.. animation
-	var loadBoxStr = "";
+	var loadBoxStr = "..";
 	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
 	var loadBoxAnimationFunction = function() {
 		if(loadBoxStr.length > 3) loadBoxStr = "";
@@ -437,6 +442,10 @@ DesktopContent.showLoading = function()	{
 }
 //=====================================================================================
 DesktopContent.hideLoading = function()	{
+	
+	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+		return;
+	
 	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
 	Debug.log("DesktopContent.hideLoading");
 	DesktopContent._loadBox.style.display = "none";
@@ -693,25 +702,31 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
+//	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
+	if(!name)
+		return req.getAttribute("value");	
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
 }
 
 //=====================================================================================
 //returns xml entry node (first node with name)
-//	go only to depth 1 in DATA
-//	...former way was els = req.responseXML.getElementsByTagName(name)
+//	Note: could be any depth (not just depth 1)
+//	...uses getElementsByTagName(name)
 DesktopContent.getXMLNode = function(req, name) {
 	var els;
-	if(req && req.responseXML)
+	if(req && req.responseXML) //to allow for arbitrary starting xml node
+		req = req.responseXML;
+	if(req)
 	{
 		//find DATA
 		var i;
-		els = req.responseXML.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
 		if(els.length)
 			return els[0];
 		//reverted to former way
 
+		//for depth 1 sometime?
 		//		for(var i=0;i<els.length;++i)
 		//			if(els[i].nodeName == "DATA")
 		//			{

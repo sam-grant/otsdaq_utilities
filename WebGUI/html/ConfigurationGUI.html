@@ -54,6 +54,37 @@
 			float:				left;
 		}
 		
+		/*
+		.treeNode-Value:hover {
+			background-color:	rgb(218, 194, 194);
+		}*/
+		
+		.treeNode-Value-nonLeafNode:hover {
+			cursor:				pointer;
+		}
+		
+		.treeNode-Value-editIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+			width: 				24px;
+			height: 			20px;
+			float: 				left;
+			border: 			0;
+			margin: 			-2px 0 -7px 10px;
+			display:			none;
+		}
+		.treeNode-Value-editIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+			cursor: 			pointer;
+		}
+		#preloadImage-treeEditIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100px;
+			top: 				0;
+		}
+		
 		.treeNode-Link {
 			float:				left;
 		    margin: 			-1px 0 -3px 10px;
@@ -139,6 +170,16 @@
 		var _DEFAULT_COMMENT = "No comment.";
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
+		
+		var _OK_CANCEL_DIALOG_STR = "";
+
+		_OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
+				"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap;'>";
+		_OK_CANCEL_DIALOG_STR += "<a href='#' onclick='javascript:editCellOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
+				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+				"<a href='#' onclick='javascript:editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
+				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
+		_OK_CANCEL_DIALOG_STR += "</div>";	
 	
 		var _currentConfigName, _currentGroupName;
 		var _editingCell = false;
@@ -185,7 +226,15 @@
 		var treeViewHideInfo_ = true;
 		var treeFilter_ = "";
 		var lastTreeFilter_ = "";
-		
+		var treeNodeClickDelayTimer_ = 0;
+		var treeHasChanged_ = true;
+		var treeEditingNodeType_ = "";
+		var treeEditingTargetTable_ = "";
+		var treeEditingTargetUID_ = "";
+		var treeEditingTargetColumn_ = "";
+		var treeEditingTargetParentEl_ = "";	
+		var treeEditingEditIconShownEl_ = 0;
+		var treeEditingEditIconShownIdString_ = "";
 	
 		
 	
@@ -222,12 +271,16 @@
 
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
 			//treeViewHandler(req,parentId,errStr)
-			//recursiveDrawTree(parent,depth,path)
-			//applyTreeFilter(filter, reapplyFilter, infoWasToggled)
-			//toggleTreeChildren(depth,uid,nodeName,path)
+			//recursiveDrawTree(parent,depth,path,parentIdString)
+			//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
+			//toggleTreeChildren(depth,uid,setVal) 	
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
 			//createTreeViewMenu()
+			//handleTreeNodeClick(depth,uid,editClick,type,delayed) 
+
+			//saveModifiedTree(ignoreWarnings)
+			//handleEditTreeCheckboxToggle(h,gh)
 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
@@ -243,12 +296,17 @@
 			//wizToLatestConfigGroup(groupAlias, ignoreWarnings)
 			//wizToInitializedConfigGroup(groupAlias, ignoreWarnings)		
 			//newWizBackboneMemberHandler(req,params)
-		
-			//selectThisCell(r,c,el)
+			//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+
+			//selectThisTreeNode(idString,type,event)
+			//selectThisCell(r,c,el,event)
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
 			//keyHandler(e)
 			//bodyKeyHandler(e)
+			//bodyMouseHandler(e)
+			
+			//editTreeNodeOK()
 			//editCellOK()									//assumes edited cell is specified by its global variables
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
@@ -259,6 +317,7 @@
 			//popUpVersionAliasGroupEditorForm()
 			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
 			//popUpFilterTreeForm()
+			//popUpSaveTreeForm()
 			//saveConfigAsNewVersion(temporary, backLinkStr)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
@@ -282,33 +341,66 @@
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		//firefox is awful, but this interval fixes firefox from deleting this array (?)
-		//		window.setInterval(function()
-		//				{
-		//			if(!_tableLinkDropdownChoices.length)
-		//				{
-		//					Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
-		//					
-		//					DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
-		//							function {
-		//						
-		//					});
-		//				}
-		//				},1000);
-		
+				
+		//bodyMouseMoveHandler ~~
+		function bodyMouseMoveHandler(e)
+		{
+			if(treeEditingEditIconShownEl_)
+			{
+				//Debug.log("bodyMouseMoveHandler clearing ");
+				treeEditingEditIconShownEl_.style.display = "none";
+				treeEditingEditIconShownEl_ = 0;
+				
+				var vel = document.getElementById("treeNode-Value-" + treeEditingEditIconShownIdString_);
+				if(vel)
+					vel.style.backgroundColor = "transparent";
+			}
+			
+		}
+		//handleTreeNodeMouseMove ~~
+		function handleTreeNodeMouseMove(depth,uid,event)
+		{
+			event.stopPropagation();
+			
+			if(_editingCell) return; //no setting while editing
+			
+			var idString = depth + "-" + uid;
+			var el = document.getElementById("treeNode-Value-editIcon-" + idString);
+			if(treeEditingEditIconShownEl_ == el) return;
+			
+			if(treeEditingEditIconShownEl_)
+			{
+				//Debug.log("bodyMouseMoveHandler clearing ");
+				bodyMouseMoveHandler();
+			}
+						
+			//Debug.log("handleTreeNodeMouseMove setting ");
+			treeEditingEditIconShownIdString_ = idString;
+			treeEditingEditIconShownEl_ = el;
+			treeEditingEditIconShownEl_.style.display = "block";	
+			var vel = document.getElementById("treeNode-Value-" + treeEditingEditIconShownIdString_);
+			vel.style.backgroundColor = "rgb(218, 194, 194)";		
+		}
 		
 		//init called once body has loaded
 		function init() {			
 						
 			Debug.log("CfgGUI init ");
-						
+			
+
+			
+			window.onkeydown = bodyKeyHandler;
+			window.onmouseup = bodyMouseHandler;
+			//be careful to not override the window.onmousemove DesktopContent action
+			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler); 
+			
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("PhysicsWizToLatest","3","","anchorTag-RawDataSaverConsumerConfiguration"); return;
 			
 			//setupConfigCreator(); return
 			
-			//setupConfigGroupTreeView("aaContext","11"); return;
+			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -362,13 +454,6 @@
 			else
 				setupSystemViewMode();
 			
-			
-			window.onkeydown = bodyKeyHandler;
-			window.onmouseup = function(event) {	
-				editCellOK();//editCellCancel();
-				_mouseIsSelecting = false; 
-				//Debug.log(_mouseIsSelecting);
-			};			
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -1322,6 +1407,8 @@
 				for(var j=0;j<configExistingVersions.length;++j)
 				{
 					existingVersion = configExistingVersions[j].getAttribute("value");
+					if((existingVersion|0) < 0) //skip temporary versions
+						continue;
 					if(existingVersion == version) //skip link
 					{
 						cfgVersionStr += version + ",";
@@ -1801,8 +1888,10 @@
 				return;
 			}
 			
-			//draw tree				
-
+			editCellCancel();
+			
+			//draw tree		
+			
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
 
@@ -1844,21 +1933,25 @@
 			treeGroupName_ = configGroupName;
 			treeGroupKey_ = configGroupKey;
 			
-			var memberNames = req.responseXML.getElementsByTagName("MemberName");
-			var memberVersions = req.responseXML.getElementsByTagName("MemberVersion");
-			var memberComments = req.responseXML.getElementsByTagName("MemberComment");
+			var activeTableNames = req.responseXML.getElementsByTagName("ActiveTableName");
+			var activeTableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
+			var activeTableComments = req.responseXML.getElementsByTagName("ActiveTableComment");
 			treeMemberNames_ = [];
 			treeMemberVersions_ = [];
 			treeMemberComments_ = [];
-			for(var i=0;i<memberNames.length;++i)
+			
+			_tableLinkDropdownChoices = [];			
+			_tableLinkDropdownChoices.push(DesktopContent.getXMLValue(req,"DefaultNoLink"));
+			for(var i=0;i<activeTableNames.length;++i)
 			{
-				treeMemberNames_.push(memberNames[i].getAttribute("value"));
-				treeMemberVersions_.push(memberVersions[i].getAttribute("value"));		
-				treeMemberComments_.push(memberComments[i].getAttribute("value"));				
+				treeMemberNames_.push(activeTableNames[i].getAttribute("value"));
+				_tableLinkDropdownChoices.push(treeMemberNames_[i]);
+				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
+				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
 			}
 			
 			var el;
-			var depth;
+			var depth;			
 			
 			if(parentId) //this is an expansion
 			{
@@ -1875,6 +1968,11 @@
 			}
 			else //this is the initial top level request
 			{
+				//reset globals
+				_editingCell = false;
+				_editingCellEl = 0;
+				treeHasChanged_ = false;
+
 				depth = 0;
 				treeNodeUID_ = 0; //reset node id
 				el = document.getElementById("display");
@@ -1974,7 +2072,7 @@
 			//add tree
 			var tree = DesktopContent.getXMLNode(req,"tree");
 			var preLength = treeViewHandlerStr_.length;
-			recursiveDrawTree(tree,depth,tree.getAttribute("value"));
+			recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
 			if(preLength == treeViewHandlerStr_.length) //no children found 	
 			{
 				//treat this is an empty value node!
@@ -2002,7 +2100,7 @@
 		}
 
 		//recursiveDrawTree ~		
-		function recursiveDrawTree(parent,depth,path) 
+		function recursiveDrawTree(parent,depth,path,parentIdString) 
 		{				
 			document.getElementById("display").style.width = (30*depth + 740) + "px";
 			document.getElementById("tempTree").style.width = (30*depth + 740) + "px";
@@ -2016,6 +2114,11 @@
 			var childrenLength;
 			var newWindowStr;
 			var backLinkStr;
+			
+			var pathHTML = path;
+			//make path html safe
+			pathHTML = pathHTML.replace(/</g, "&lt");
+			pathHTML = pathHTML.replace(/>/g, "&gt");				
 					
 			for(i=0;i<nodes.length;++i)
 			{
@@ -2026,7 +2129,7 @@
 				nodeName = nodeName.replace(/</g, "&lt");
 				nodeName = nodeName.replace(/>/g, "&gt");
 				
-				Debug.log("nodeName= " + nodeName + " depth=" + depth + " uid=" + uid);
+				//Debug.log("nodeName= " + nodeName + " depth=" + depth + " uid=" + uid);
 								
 				childrenLength = nodes[i].children.length;
 				//Debug.log("child's childrenLength=" + childrenLength);
@@ -2044,12 +2147,43 @@
 					//////////=======================
 					treeViewHandlerStr_ += 
 							"<div class='treeNode'> " +
+							"<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
+							( depth + "-" + uid ) + "'>" + // end path id
+							pathHTML + //save path for future use.. and a central place to edit when changes occur
+							"</div>" +
+							"<div class='treeNode-ParentId' style='display:none' id='treeNode-ParentId-" +
+							( depth + "-" + uid ) + "'>" + 
+							parentIdString + //save parentId for future use navigating up tree
+							"</div>" +
 							"<div class='treeNode-Connection'></div>" +
-							"<div class='treeNode-Value'>" + 
+							"<div class='treeNode-Value treeNode-ValueType-" + valueType + "' " +
+							"id='treeNode-Value-" +
+							(depth + "-" + uid) + "' " +
+							
+							"onclick='handleTreeNodeClick(" +							
+							depth + "," + uid + "," + 	
+							"0,\"value\")' " +
+							
+							"onmousemove='handleTreeNodeMouseMove(" +							
+							depth + "," + uid + "," + 	
+							"event)' " +
+								
+							">" +
+							
 							"<div style='float:left'>" +
 							"<b class='bold-header'>" + nodeName + "</b>" + 
-							"</div><div style='float:left'>&nbsp;:</div>" + 
-							"<div style='float:left; margin-left:9px;'>";
+							"</div><div style='float:left'>&nbsp;:</div>" +
+
+							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+							(depth + "-" + uid) + "' " +
+							"onclick='handleTreeNodeClick(" +							 
+							depth + "," + uid + "," + 	
+							"1,\"value\"); event.stopPropagation();' " +
+							"></div>" +		
+							
+							"<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
+							(depth + "-" + uid) + "' " +
+							">";
 					
 					if(valueType == "OnOff" || 
 							valueType == "YesNo" || 
@@ -2077,6 +2211,7 @@
 							
 					treeViewHandlerStr_ += 
 							"</div>" + //end treeNode Value value side div
+														
 							"</div>" + //end treeNode Value div		
 							"</div>" + //end treeNode div							
 							"<div id='clearDiv'></div>";  
@@ -2087,6 +2222,7 @@
 				
 				//not a value node so try to recurse				
 
+				var isLink = false;
 				//get value and table link name for this parent
 				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
 				{						
@@ -2095,7 +2231,8 @@
 					value = nodeName + "-(" + 
 							value.nodeName + " = " + value.getAttribute("value") + ")";
 					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
-					--childrenLength; //subtract the config name node from children length					
+					--childrenLength; //subtract the config name node from children length
+					isLink = true;
 				}
 				else
 				{
@@ -2114,6 +2251,7 @@
 				var newtabJS = ""; 
 				var treeNavContextMenuItemHandlers = [];
 				var tableComment = "";
+				var tableTitle = "";
 				
 				//search for table link
 				for(j=0;j<treeMemberNames_.length;++j)
@@ -2174,19 +2312,56 @@
 					tableComment = tableComment.replace(/>/g, "&gt");
 					if(tableComment == _DEFAULT_COMMENT) //do not show if default
 						tableComment = "";
+					tableTitle = treeMemberNames_[j] + "-v" + 
+							treeMemberVersions_[j];
+					if(tableComment != "")
+						tableTitle += "\n\"" +
+							tableComment + "\"";
 				}
+				
 
 				//////////=======================
+
+				var nodeEditType = (onmouseupJS == ""?"uid":
+						(depth == 0?"table":"link"));
+				
 				treeViewHandlerStr_ += 
-						"<div class='treeNode'> " +
-						"<div class='treeNode-Connection'></div>" +
+						"<div class='treeNode' ";
+								
+				treeViewHandlerStr_	+= 	"onmousemove='handleTreeNodeMouseMove(" +							
+					depth + "," + uid + "," + 	
+					"event)' "							
+					;		
+				
+				treeViewHandlerStr_ += ">"; //end treeNode div open
+											
+				treeViewHandlerStr_ += 
+						"<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
+						( depth + "-" + uid ) + "'>" + // end path id
+						pathHTML + //save path for future use.. and a central place to edit when changes occur
+						"</div>" +
+						"<div class='treeNode-ParentId' style='display:none' id='treeNode-ParentId-" +
+						( depth + "-" + uid ) + "'>" + 
+						parentIdString + //save parentId for future use navigating up tree
+						"</div>" +
+						"<div class='treeNode-NodeName' style='display:none' id='treeNode-nodeName-" +
+						( depth + "-" + uid ) + "'>" + // end nodeName id
+						nodeName + //save nodeName for future use.. and a central place to edit when changes occur
+						"</div>" +
+						"<div class='treeNode-Connection'></div>" +						
 						"<div class='treeNode-Expander' id='treeNode-toggle-" +
-						( + depth + "-" + uid + "-" + nodeName) + "' " + // end expander id
+						( depth + "-" + uid ) + "' " + // end expander id
 						"onmouseup='toggleTreeChildren(" + 
-						depth + "," +	uid + ",\"" +							
-						nodeName + "\",\"" + path +
-						"\");' " + // end expander onmouseup
+						depth + "," +
+						uid + ");' " + // end expander onmouseup
 						"></div>";
+
+				if(isLink) //if link node save table name in hidden div
+					treeViewHandlerStr_ += 
+							"<div class='treeNode-linkTableName' style='display:none' id='treeNode-linkTableName-" +
+							( depth + "-" + uid ) + "'>" + // end path id
+							tableLinkName + //save table name for future use.. and a central place to edit when changes occur
+							"</div>";
 
 				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row 
 				if(onmouseupJS != "") //fix width if this is a config node so comments show up aligned
@@ -2195,14 +2370,50 @@
 					treeViewHandlerStr_ += "<td><div>"; //open pre-comment td and div
 				
 				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr><td>"; //open tree node name/link table row
-				treeViewHandlerStr_	+= "<div class='treeNode-Value' ";
+				treeViewHandlerStr_	+= "<div class='treeNode-Value treeNode-Value-nonLeafNode " +
+						"treeNode-Value-nodeEditType-" + nodeEditType +
+						"' " +
+						"id='treeNode-Value-" +
+						(depth + "-" + uid) + "' ";
 				
-				if(tableComment != "") 
-					treeViewHandlerStr_ += "title='Table Comment: " + tableComment +"' ";
+				treeViewHandlerStr_	+= "onclick='handleTreeNodeClick(" +												
+												depth + "," + uid + "," + 	
+												"0,\"" +
+												nodeEditType +
+												"\")' ";
 				
-				treeViewHandlerStr_ += ">"+ value + "</div>";
+				//				if(nodeEditType != "table")
+				//					treeViewHandlerStr_	+= 	"onmousemove='handleTreeNodeMouseMove(" +							
+				//						depth + "," + uid + "," + 	
+				//						"event)' "									
+				//						;
+				
+				if(tableTitle != "") 
+					treeViewHandlerStr_ += "title='" + tableTitle +"' ";
+				
+				treeViewHandlerStr_ += ">";
+				treeViewHandlerStr_ += value;
+				treeViewHandlerStr_ += "</div>"; //end treeNode Value
 				
 				treeViewHandlerStr_ += "</td><td>";
+				
+				//within this TD, put editClick and link
+				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open edit/link table row
+				treeViewHandlerStr_ += "<td>";
+				if(nodeEditType != "table")
+					treeViewHandlerStr_ += 
+							"<div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
+							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+							(depth + "-" + uid) + "' " +
+							"onclick='handleTreeNodeClick(" +							 
+							depth + "," + uid + "," + 	
+							"1,\"" +
+							nodeEditType +
+							"\"); event.stopPropagation();' " +
+							"></div>" +
+							"</div>";
+				treeViewHandlerStr_ += "</td><td>";
+
 				if(onmouseupJS != "") //if there is a link, add it
 				{
 					treeViewHandlerStr_ += 
@@ -2236,26 +2447,47 @@
 						"</div>"; //end treeNode Link div
 					
 				}
+				treeViewHandlerStr_ += "</td></tr></table>"; //close edit/link table row
 				treeViewHandlerStr_ += "</td></tr></table>"; //close tree node name/link table row
-				
+								
 				treeViewHandlerStr_ += "</div></td>"; //close pre-comment div and td
 				
+				if(nodeEditType == "table")
+					treeViewHandlerStr_ += 
+							"<td><div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
+							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+							(depth + "-" + uid) + "' " +
+							"onclick='handleTreeNodeClick(" +							 
+							depth + "," + uid + "," + 	
+							"1,\"" +
+							nodeEditType +
+							"\"); event.stopPropagation();' " +
+							"></div>" +
+							"</div></td>";
+				
+				
 				//add comment if applicable
+				treeViewHandlerStr_ += "<td style='font-size:14px; white-space: nowrap;' id='" +
+						"treeNode-TableComment-" + 
+						(depth + "-" + uid) + "' " +
+						">";
 				if(tableComment != "")
-					treeViewHandlerStr_ += "<td style='font-size:14px; white-space: nowrap;'>" +
-						"//" + tableComment +
-						"</td>";
+					treeViewHandlerStr_ += //"<td style='font-size:14px; white-space: nowrap;'>" +
+						"//" + tableComment;
+				else 
+					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"; //for mouse over area
+				treeViewHandlerStr_ += "</td>";
 				treeViewHandlerStr_ += "</tr></table>"; //close pre/comment table row
 					
-				
 				treeViewHandlerStr_ += 
 						"<div id='clearDiv'></div>" +
 						"<div class='treeNode-Children' id='treeNode-ChildrenOf-" +
-						( + depth + "-" + uid + "-" + nodeName) + "'>";
+						( depth + "-" + uid ) + "'>";
 						
 				if(childrenLength)
 				{					
-					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/");					
+					recursiveDrawTree(nodes[i],depth+1,path+nodeName+"/",
+							( depth + "-" + uid ));					
 				}
 				
 				treeViewHandlerStr_ += 
@@ -2267,6 +2499,180 @@
 				
 				
 			}
+		}
+
+		
+		//handleTreeNodeClick ~
+		function handleTreeNodeClick(depth,uid,editClick,type,delayed)
+		{
+			var idString = depth + "-" + uid;
+			
+			//Debug.log("handleTreeNodeClick editClick " + editClick + " " + delayed);
+			
+			var el = document.getElementById("treeNode-Value-" + idString);
+			
+			if(treeEditingEditIconShownEl_)
+			{
+				//Debug.log("handleTreeNodeClick editClick clearing ");
+				bodyMouseMoveHandler();
+			}
+					
+			if(_editingCell) //already have the edit box open, cancel it
+			{
+				if(_editingCellEl == el) //if same cell do nothing
+					return true;
+				editTreeNodeOK(); //if new cell, click ok on old cell before continuing
+			}
+
+			//delay single clicks so they can be ignored on double click
+			//			if(type != "table" && !editClick && !delayed) 
+			//			{				
+			//				window.clearTimeout(treeNodeClickDelayTimer_);
+			//				treeNodeClickDelayTimer_ = window.setTimeout(function() {			
+			//					handleTreeNodeClick(el,depth,uid,editClick,type,true);
+			//				},500);
+			//				return;
+			//			}			
+			//			else if(editClick)
+			//				window.clearTimeout(treeNodeClickDelayTimer_);
+
+			var path = document.getElementById("treeNode-path-" + idString).innerText;
+			
+			//			Debug.log("handleTreeNodeClick el       " + el.innerHTML);
+			Debug.log("handleTreeNodeClick idString    " + idString);
+			//Debug.log("handleTreeNodeClick uid      " + uid);
+			//			Debug.log("handleTreeNodeClick nodeName " + nodeName);
+			Debug.log("handleTreeNodeClick path     " + path);
+			Debug.log("handleTreeNodeClick editClick " + editClick);
+			Debug.log("handleTreeNodeClick type     " + type);
+			
+			//determine type clicked:
+			//	- table name 
+			//	- uid
+			//	- link ID 
+			//	- value
+			//
+			//allow different behavior for each	depending on single or edit(2x) click	
+			//	- table name 	
+			//		1x = toggle Children
+			//		2x = N/A
+			//	- uid		 	
+			//		1x = toggle Children, 
+			//		2x = edit UID mode (up/down tab/shtab enter esc active)
+			//	- link ID 	 	
+			//		1x = toggle Children 
+			//		2x = edit ID (no keys active)
+			//	- value		 	
+			//		1x = N/A 
+			//		2x = edit record Value mode (up/down tab/shtab enter esc active)
+			//
+			//on tree node edit OK
+			//	- table name 
+			//		N/A
+			//	- uid
+			//		save affected table as temporary version (re-use active temporary version at server)
+			//		if saved successfully
+			//			scan tree nodes for all other table/uid nodes and change that uid 
+			//	- link ID 
+			//		save affected table as temporary version (re-use active temporary version at server)
+			//		if saved successfully
+			//			clear children and re-request children (just one level)
+			//			scan tree nodes for all other table/uid/linkid nodes and change that linkid
+			//				for each, clear children and re-request children (just one level)
+			//	- value
+			//		save affected table as temporary version (re-use active temporary version at server)
+			//		if saved successfully
+			//			scan tree nodes for all other table/uid/value nodes and change that value
+			//
+			//on tree node edit cancel
+			//	return previous value
+			
+			
+			//==================
+			//take action based on editClick and type string:
+			//	- table 
+			//	- uid
+			//	- link 
+			//	- value
+			//
+			//params:
+			//	(el,depth,uid,	//nodeName,
+			//path,editClick,type,delayed)
+			
+			if(editClick)	//2x click
+			{
+				if(type == "table")
+				{
+					//edit table comment
+					treeEditingTargetTable_ = el.innerText; 
+					selectThisTreeNode(idString,type);
+					return;
+				}
+
+				var splitArr = path.split('/');
+				
+				treeEditingTargetParentEl_ = el;
+				for(var i=0; i<20;++i) //look at parents until children container node is found
+				{
+					treeEditingTargetParentEl_ =  treeEditingTargetParentEl_.parentElement;
+					if(treeEditingTargetParentEl_.id.indexOf("treeNode-ChildrenOf-") == 0) 
+						break;						
+				}
+								
+				
+				if(type == "uid")
+				{
+					//edit UID mode (up/down tab/shtab enter esc active)
+					treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
+					treeEditingTargetUID_ = el.innerText;
+					treeEditingTargetColumn_ = "UID";
+					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
+							"/" + treeEditingTargetUID_ + "/" +
+							treeEditingTargetColumn_);
+					
+					selectThisTreeNode(idString,type);
+				}
+				else if(type == "link" || type == "value")
+				{
+					//edit ID (no keys active)
+					Debug.log("edit link/value mode");
+					treeEditingTargetTable_ = splitArr[splitArr.length-3]; //table should be before last slash in path
+					treeEditingTargetUID_ = splitArr[splitArr.length-2];
+					
+					if(type == "value")
+						treeEditingTargetColumn_ = el.childNodes[0].innerText; //get from bold node
+					else
+						treeEditingTargetColumn_ = el.innerText.split('-')[0]; //get before dash
+					
+					Debug.log("edit link/value mode target=" + treeEditingTargetTable_ +
+							"/" + treeEditingTargetUID_ + "/" +
+							treeEditingTargetColumn_);
+					selectThisTreeNode(idString,type);
+				}
+				else
+				{
+					Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+					return;
+				}
+			}
+			else		//1x click
+			{
+				if(type == "table" || type == "uid" || type == "link")
+				{
+					toggleTreeChildren(depth,uid);
+				}
+				else if(type == "value")
+				{
+					//N/A
+				}
+				else
+				{
+					Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+					return;
+				}
+			}
+			
+			
 		}
 		
 		//applyTreeFilter ~
@@ -2371,6 +2777,14 @@
 		function expandTreeChildrenDepth()
 		{
 			Debug.log("expandTreeChildrenDepth " + "");
+
+			//prevent overloading expand/hide commands
+			if(DesktopContent._loadBoxRequestStack)
+			{
+				Debug.log("rejected command due to active load box stack " +
+						DesktopContent._loadBoxRequestStack);
+				return;
+			}
 			
 			var allNodes = document.getElementsByClassName("treeNode-Expander");
 			var params = []; //(depth,uid,nodeName,path)
@@ -2388,7 +2802,12 @@
 				if((params[params.length-1][0]|0) > deepestDepth)
 					deepestDepth = params[params.length-1][0]|0;
 				
-				if(params[params.length-1][2] == "\"XDAQContextConfiguration\"") 
+				if(contextIndex == -1 &&
+						(params[params.length-1][0]|0) == 0 && 
+						document.getElementById("treeNode-nodeName-" + 
+								params[params.length-1][0] + "-" + 
+								params[params.length-1][1]).innerText ==
+								"XDAQContextConfiguration") 
 					contextIndex = params.length-1; //found XDAQContextConfiguration, save index
 			}
 
@@ -2404,11 +2823,7 @@
 				Debug.log("Expand only XDAQContextConfiguration " + contextIndex);
 				toggleTreeChildren(
 						params[contextIndex][0]|0, 		//make integer
-						params[contextIndex][1]|0,		//make integer
-						params[contextIndex][2].substr( //strip off surrounding quotes
-								1,params[contextIndex][2].length-2),
-						params[contextIndex][3].substr( //strip off surrounding quotes
-								1,params[contextIndex][3].length-2));
+						params[contextIndex][1]|0);		//make integer					
 				return;
 			}
 
@@ -2419,10 +2834,6 @@
 					if(toggleTreeChildren(
 							params[i][0]|0, 		//make integer
 							params[i][1]|0,			//make integer
-							params[i][2].substr( 	//strip off surrounding quotes
-									1,params[i][2].length-2),
-							params[i][3].substr( 	//strip off surrounding quotes
-									1,params[i][3].length-2),
 							true))					//show
 						++countExpanded;
 				}
@@ -2436,6 +2847,14 @@
 		function hideTreeChildrenDepth()
 		{
 			Debug.log("hideTreeChildrenDepth " + "");
+
+			//prevent overloading expand/hide commands
+			if(DesktopContent._loadBoxRequestStack)
+			{
+				Debug.log("rejected command due to active load box stack " +
+						DesktopContent._loadBoxRequestStack);
+				return;
+			}
 			
 			//this means toggling all children at second deepest depth
 			var allNodes = document.getElementsByClassName("treeNode-Expander");
@@ -2472,11 +2891,7 @@
 				{
 					if(toggleTreeChildren(
 							params[i][0]|0, 		//make integer
-							params[i][1]|0,			//make integer
-							params[i][2].substr( 	//strip off surrounding quotes
-									1,params[i][2].length-2),
-							params[i][3].substr( 	//strip off surrounding quotes
-									1,params[i][3].length-2),
+							params[i][1]|0,			//make integer							
 							false)) //hide
 						++countHidden;
 				}
@@ -2496,8 +2911,10 @@
 		//		- true = show, false = hide, undefined = toggle
 		//
 		// return true if action taken, else false
-		function toggleTreeChildren(depth,uid,nodeName,path,setVal) 
+		function toggleTreeChildren(depth,uid,setVal) 
 		{
+			if(_mouseIsSelecting) return;
+			
 			var setValUsed = (setVal !== undefined);
 					
 			//			Debug.log("depth: " + depth);
@@ -2505,7 +2922,7 @@
 			//			Debug.log("nodeName: " + nodeName);
 			//			Debug.log("path: " + path);
 			
-			var idString = depth + "-" + uid + "-" + nodeName;
+			var idString = depth + "-" + uid;
 			//Debug.log("idString: " + idString);
 			
 			var el = document.getElementById("treeNode-ChildrenOf-" + idString);
@@ -2540,12 +2957,29 @@
 			}
 			else if(!setValUsed || setVal)	//if no children div, then request it
 			{
+				var path = document.getElementById("treeNode-path-" + idString).innerText;
+				var nodeName = document.getElementById("treeNode-nodeName-" + idString).innerText;
+				
+				var modifiedTables = ""; //csv table, temporay version,...
+				for(var j=0;j<treeMemberNames_.length;++j)
+					if((treeMemberVersions_[j]|0) < -1)
+					{
+						if(modifiedTables.length)
+							modifiedTables += ",";
+						modifiedTables += treeMemberNames_[j];
+						modifiedTables += ",";
+						modifiedTables += treeMemberVersions_[j];
+					}
+						
+				
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 						"&configGroup=" + configGroupEls[0].innerHTML + 
 						"&configGroupKey=" + configGroupEls[1].innerHTML +
 						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
-						"startPath="+path+nodeName+"/",treeViewHandler,idString);
+						"startPath=" + path + nodeName + "/"+ 
+						"&modifiedTables=" + modifiedTables,treeViewHandler,idString,
+						0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 				return true;
 			}
 			return false;
@@ -2563,7 +2997,9 @@
 					"&configGroupKey=" + configGroupKey +
 					"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 					"&depth=1", 
-					"startPath=/",treeViewHandler);
+					"startPath=/",treeViewHandler,
+					0, 0, 0, //reqIndex, progressHandler, callHandlerOnErr
+					true); //showLoadingOverlay
 		}
 		
 		//activateSystemConfig ~
@@ -2882,6 +3318,78 @@
 					});	//end of getConfigurations handler
 		}
 
+		//saveGroupAndActivate
+		function saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+					groupName, configMap, 
+					function(req)
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				if(err) 
+				{
+					if(!name || !key)
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+								" Please see details below.",
+								Debug.HIGH_PRIORITY);
+
+						if(doneHandler)
+							doneHandler(); //error so call done handler
+						return;
+					}
+					else
+					{
+						Debug.log(err,Debug.WARN_PRIORITY);						
+						Debug.log("Going on with existing name=" + name + " & key=" + key,
+								Debug.WARN_PRIORITY);
+						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+								" (Likely the currently active Backbone already represents what is being requested)",
+								Debug.WARN_PRIORITY);
+					}					
+				}
+
+				//now activate the new backbone group
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+						"&groupName=" + name +
+						"&groupKey=" + key, "", 
+						function(req)
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						return;
+					}
+
+					activateSystemConfigHandler(req);
+
+					if(doneHandler)
+					{
+						//done so call done handler (and indicate success)
+						if(!doReturnParams)
+							doneHandler(); //done so call done handler
+						else
+						{
+							var retParams = {
+									"groupName" : name,
+									"groupKey" : key
+							}
+							doneHandler(retParams); 	 //(and indicate success)
+						}
+					}
+
+						},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				);	//end of activate new backbone handler
+
+					},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			); //end of backbone saveNewConfigurationGroup handler
+		}
+		
 		//newWizBackboneMemberHandler
 		//	params = [newBackboneGroupName, doneHandler]
 		function newWizBackboneMemberHandler(req,params)
@@ -2897,7 +3405,7 @@
 				return;
 			}		
 
-			var groupAliasName = DesktopContent.getXMLValue(req,"savedAlias");
+			var groupAliasName = DesktopContent.getXMLValue(req,"savedName");
 			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
 
 			Debug.log("groupAliasName=" + groupAliasName);
@@ -2924,60 +3432,62 @@
 						configVersions[i].getAttribute("value") + ",";							
 			}
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-					params[0], configMap, 
-					function(req)
-					{
-				var err = DesktopContent.getXMLValue(req,"Error");
-				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-				if(err) 
-				{
-					if(!name || !key)
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);
-						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-							" Please see details below.",
-							Debug.HIGH_PRIORITY);
-
-						if(params[1])
-							params[1](); //error so call done handler
-						return;
-					}
-					else
-					{
-						Debug.log(err,Debug.WARN_PRIORITY);						
-						Debug.log("Going on with existing name=" + name + " & key=" + key,
-								Debug.WARN_PRIORITY);
-						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-							" (Likely the currently active Backbone already represents what is being requested)",
-							Debug.WARN_PRIORITY);
-					}					
-				}
-
-				//now activate the new backbone group
-
-				DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
-						"&groupName=" + name +
-						"&groupKey=" + key, "", 
-						function(req)
-						{
-					var err = DesktopContent.getXMLValue(req,"Error");
-					if(err) 
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);
-						return;
-					}
-
-					activateSystemConfigHandler(req);
-
-					if(params[1])
-						params[1](); //done so call done handler
-
-						});	//end of activate new backbone handler
-
-
-					}); //end of backbone saveNewConfigurationGroup handler
+			saveGroupAndActivate(params[0],configMap,params[1]);
+			
+//			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+//					params[0], configMap, 
+//					function(req)
+//					{
+//				var err = DesktopContent.getXMLValue(req,"Error");
+//				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+//				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+//				if(err) 
+//				{
+//					if(!name || !key)
+//					{
+//						Debug.log(err,Debug.HIGH_PRIORITY);
+//						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+//							" Please see details below.",
+//							Debug.HIGH_PRIORITY);
+//
+//						if(params[1])
+//							params[1](); //error so call done handler
+//						return;
+//					}
+//					else
+//					{
+//						Debug.log(err,Debug.WARN_PRIORITY);						
+//						Debug.log("Going on with existing name=" + name + " & key=" + key,
+//								Debug.WARN_PRIORITY);
+//						Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+//							" (Likely the currently active Backbone already represents what is being requested)",
+//							Debug.WARN_PRIORITY);
+//					}					
+//				}
+//
+//				//now activate the new backbone group
+//
+//				DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+//						"&groupName=" + name +
+//						"&groupKey=" + key, "", 
+//						function(req)
+//						{
+//					var err = DesktopContent.getXMLValue(req,"Error");
+//					if(err) 
+//					{
+//						Debug.log(err,Debug.HIGH_PRIORITY);
+//						return;
+//					}
+//
+//					activateSystemConfigHandler(req);
+//
+//					if(params[1])
+//						params[1](); //done so call done handler
+//
+//						});	//end of activate new backbone handler
+//
+//
+//					}); //end of backbone saveNewConfigurationGroup handler
 		}
 		
 		//setupConfigCreator ~
@@ -3830,7 +4340,242 @@
 			}			
 		}
 		
-		//selectThisCell
+		//selectThisTreeNode
+		function selectThisTreeNode(idString,type,event) 
+		{	
+			if(event) //stop the body from also calling onmouseup and cancelling select
+			{
+				event.stopPropagation();
+
+				Debug.log(_mouseIsSelecting);
+				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
+				{
+					_mouseIsSelecting = false;
+					Debug.log(_mouseIsSelecting);
+					return; 							
+				}
+			}
+
+			//var tableEl = document.getElementById("SubSystemTable");
+			//var rows = tableEl.getElementsByTagName("tr");
+
+			//if column type is Author or Timestamp, don't allow select
+			//			el.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.id
+			//			"treeNode-ChildrenOf-0-0-ARTDAQAggregatorConfiguration"
+			
+			var el = 0;
+			
+			if(type == "table")
+			{
+				treeEditingNodeType_ = type;
+				
+				//edit table comment
+				el = document.getElementById("treeNode-TableComment-" + idString);				
+				_editingCellElOldValue = el.innerText;
+				var initVal = _editingCellElOldValue.substr(2).trim();				
+				
+				//add input into element
+				var str = "";
+				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+				str += initVal;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
+						">";
+
+				str += _OK_CANCEL_DIALOG_STR;		
+
+				el.innerHTML = str;
+				
+				//select text in new input
+				setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
+			}			
+			else if(type == "uid")
+			{
+				treeEditingNodeType_ = type;
+				
+				//edit record uid
+				el = document.getElementById("treeNode-Value-" + idString);				
+				_editingCellElOldValue = el.innerText;
+
+				var str = "";
+				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+				str += _editingCellElOldValue;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
+						">";
+
+				str += _OK_CANCEL_DIALOG_STR;		
+
+				el.innerHTML = str;
+				
+				//select text in new input
+				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			}
+			else if(type == "value")
+			{
+				treeEditingNodeType_ = type;
+				
+				//edit column entry in record
+				//	data type matters here, also don't edit author, timestamp
+				el = document.getElementById("treeNode-Value-leafNode-" + idString);
+				var vel = document.getElementById("treeNode-Value-" + idString);
+				
+				//if value node, dataType is in element class name
+				var colType = vel.className.split('-');
+				if(colType[colType.length-2] == "ValueType")
+					colType = colType[colType.length-1];
+
+				//Debug.log("el.className=" + vel.className);
+				Debug.log("colType=" + colType);
+				
+				if(colType == "Author" || 
+						colType == "Timestamp")
+					return false;
+				
+				var str = "";		
+				var optionIndex = -1;
+				
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{
+					treeEditingNodeType_ += "-bool";
+					_editingCellElOldValue = el.innerHTML;
+					
+					var initVal = el.childNodes[0].innerText;
+					
+					var boolVals = [];
+					if(colType == "YesNo")
+						boolVals = ["No","Yes"];
+					else if(colType == "TrueFalse")
+						boolVals = ["False","True"];
+					else if(colType == "OnOff")
+						boolVals = ["Off","On"];
+
+
+					str += "<select  onkeydown='keyHandler(event)' " +
+							"onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							"style='margin:-4px -2px -4px -1px; height:" + (el.offsetHeight+6) + "px'>";
+					for(var i=0;i<boolVals.length;++i)
+					{			
+						str += "<option value='" + boolVals[i] + "'>";
+						str += boolVals[i];	//can display however
+						str += "</option>";
+						if(boolVals[i] == initVal)
+							optionIndex = i; //get starting sel index					
+					}			
+					str += "</select>";
+					if(optionIndex == -1) optionIndex = 0; //use False option by default					
+				}
+				else // normal cells, with text input
+				{
+					_editingCellElOldValue = el.innerText;
+					
+					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+							(el.offsetWidth+6) + "px; height:" + (el.offsetHeight) + "px' value='";
+					str += _editingCellElOldValue;
+					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							">";					
+				}
+
+
+				str += _OK_CANCEL_DIALOG_STR;	
+
+				el.innerHTML = str;
+				
+				//handle default selection
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{					//select initial value
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();
+				}
+				else 					//select text in new input
+					setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+				
+			}	
+			else if(type == "link")
+			{
+				treeEditingNodeType_ = type;
+								
+				//edit link entry in record (2 columns: link table and id)							
+				el = document.getElementById("treeNode-Value-" + idString);
+				_editingCellElOldValue = el.innerText;				
+				var linkIdType = el.innerText.split('(')[1].split(' ')[0]; 
+				var initVal = el.innerText.split(')')[0].split('=')[1].substr(1);
+				
+				var linkTable = document.getElementById("treeNode-linkTableName-" + idString).innerText; 
+
+				Debug.log("linkTable " + linkTable);
+				Debug.log("linkIdType " + linkIdType); // "UID" or "GroupID"
+				Debug.log("initIdVal " + initVal);  //the ID
+				
+				treeEditingNodeType_ += "-" + linkIdType;
+				
+				var str = "";		
+				var optionIndex = -1;
+
+				Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+				
+				str += treeEditingTargetColumn_ + "<br>";
+				
+				str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
+				str += "<td style='text-align:right'>Table:</td><td>";
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"onmouseup='event.stopPropagation();'" +
+						"onclick='event.stopPropagation();'" +
+						"style='" + 
+						"height:" + (el.offsetHeight+4) + "px'>";
+				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+				{			
+					str += "<option value='" + _tableLinkDropdownChoices[i] 
+																		 + "'>";
+					str += _tableLinkDropdownChoices[i];	//can display however
+					str += "</option>";
+					if(_tableLinkDropdownChoices[i] 
+												 == linkTable)
+						optionIndex = i; //get starting sel index
+				}				
+				str += "</select>";
+				str += "</td></tr><tr>";
+				
+				str += "<td style='text-align:right'>";
+				str += linkIdType + ":";
+				str += "</td><td>";
+				
+				str += "<input type='text' onkeydown='keyHandler(event)' style='width:" + 
+						(150) + "px; height:" + (el.offsetHeight) + "px' value='";
+				str += initVal;
+				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
+						"onclick='event.stopPropagation();'" +
+						">";
+				str += "</td></tr></table>";
+				
+				str += _OK_CANCEL_DIALOG_STR;		
+
+				el.innerHTML = str;
+
+				//select initial value
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;				
+				//select text in new input
+				setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
+			}
+						
+			_editingCell = true;
+			_editingCellEl = el;
+						
+			return true;
+		}
+		
+		//selectThisCell ~~
 		function selectThisCell(r,c,el,event) 
 		{	
 			if(event) //stop the body from also calling onmouseup and cancelling select
@@ -3936,13 +4681,7 @@
 						">";
 			}
 						
-			str += "<div style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;" + 
-					"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap;'>";
-			str += "<a href='javascript:editCellOK("+r+","+c+");' style='color:green'>" +
-					"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
-					"<a href='javascript:editCellCancel();' style='color:red'>" + 
-					"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
-			str += "</div>";		
+			str += _OK_CANCEL_DIALOG_STR;		
 			
 			el.innerHTML = str;
 
@@ -3974,21 +4713,39 @@
             elem.setSelectionRange(caretPos, endPos);
 		}
 		
-		//bodyKeyHandler
+		//bodyMouseHandler ~~
+		function bodyMouseHandler(e)
+		{		
+			//Debug.log("bodyMouseHandler");
+			if(!_mouseIsSelecting)
+			{
+				//detect proper views
+				var el = document.getElementById("treeView-ConfigGroupLink");
+				if(el) //tree view ok handler
+					editTreeNodeOK();
+				else
+					editCellOK();
+			}
+			_mouseIsSelecting = false; 
+			//Debug.log(_mouseIsSelecting);
+		}
+		
+		//bodyKeyHandler ~~
 		function bodyKeyHandler(e) 
 		{
 			//detect proper views
 			var el = document.getElementById("treeView-ConfigGroupLink");	
 			var popUpEl = document.getElementById("popUpDialog");
-			
-			if(el && !popUpEl) //tree view key handler and no popup
+
+			//tree view key handler and no popup and no editing cell
+			if(el && !popUpEl && !_editingCellEl) 
 			{	
 				//NOTE: Firefox and Chrome have different keycodes for +/-
 				var expandKeys = [65,69,190,221,187,61]; // a, e, >, }, +, FF+ (no shift needed)
 				var hideKeys = [90,77,188,219,189,173]; // z, m, <, {, -, FF- (no shift needed)
 				
-				Debug.log("treeView bodyKey " + e.keyCode);				
-				
+				Debug.log("treeView bodyKey " + e.keyCode);
+								
 				for(var i=0;i<expandKeys.length;++i)
 					if(expandKeys[i] == e.keyCode)
 					{
@@ -4018,7 +4775,7 @@
 			var UPKEY = 38;
 			var DNKEY = 40;
 			var ESCKEY = 27;
-			//Debug.log("key " + e.keyCode);
+			Debug.log("key " + e.keyCode);
 			
 			var shiftIsDown;
 			if (window.event) 
@@ -4047,6 +4804,14 @@
 				editCellOK();
 				if(e.keyCode == ENTERKEY) //dont move to new cell
 					return false;
+				
+				//detect tree view
+				var el = document.getElementById("treeView-ConfigGroupLink");
+				if(el)
+				{
+					Debug.log("TODO - Could move to next cell in future in tree-view.");
+					return;
+				}
 				
 				//jump forward (tab/enter) or backward (tab/enter+shift)
 				//	or up or down.
@@ -4131,9 +4896,1207 @@
 			}
 		}
 		
+		//popUpSaveTreeForm ~~
+		function popUpSaveTreeForm()
+		{
+			Debug.log("CfgGUI popUpSaveTreeForm");	
+
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 380;
+			var h = 300;
+			var gh = 40;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+
+			//always
+			//	- save modified tables (show list of modified tables)
+			//		(and which active group they are in)
+			//
+			//optionally
+			//	- checkbox to bump version of modified active groups
+			//	- checkbox to assign system alias to bumped active group 
+				
+			
+			var modTblCount = 0;
+			var modTblStr = "";
+			var modifiedTables = ""; //csv table, temporay version,...
+			for(var j=0;j<treeMemberNames_.length;++j)
+				if((treeMemberVersions_[j]|0) < -1)
+				{
+					if(modTblCount++)
+						modTblStr += ",";
+					modTblStr += treeMemberNames_[j];
+					
+					if(modifiedTables.length)
+						modifiedTables += ",";
+					modifiedTables += treeMemberNames_[j];
+					modifiedTables += ",";
+					modifiedTables += treeMemberVersions_[j];
+				}
+
+			var str = "<a id='" + 
+					Debug._errBoxId + 
+					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";
+			str += "Saving the tree will create new persistent versions of each modified table." + 
+					"<br><br>" + 
+					"Here is the list of modified tables (count=" + modTblCount + 
+					"):" +					
+					"<br>";
+			
+			
+			//display modified tables
+			str += "<div style='white-space:nowrap; width:" + w + "px; height:40px; " + 
+					"overflow:auto; font-weight: bold;'>";
+			str += modTblStr;
+			str += "</div>";			
+			
+			//get affected groups
+			//	and save member map to hidden div for Save action			
+			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			///////////////////////////////////////////////////////////
+			DesktopContent.XMLHttpRequest("Request?RequestType=getAffectedActiveGroups" +	
+					"&groupName=" + configGroupEls[0].innerHTML + 
+					"&groupKey=" + configGroupEls[1].innerHTML,
+					"&modifiedTables=" + modifiedTables,
+					function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					el.innerHTML = str;
+					return;
+				}
+
+				//for each affected group
+				//	 put csv: name,key,memberName,memberVersion...
+				var groups = req.responseXML.getElementsByTagName("AffectedActiveGroup");				
+				var memberNames, memberVersions;
+				modTblStr = ""; //re-use
+				for(var i=0;i<groups.length;++i)
+				{
+					str += "<div style='display:none' class='popUpDialog-affectedGroups' >";
+					str += DesktopContent.getXMLValue(groups[i],"GroupName");
+					str += "," + DesktopContent.getXMLValue(groups[i],"GroupKey");
+
+					memberNames = groups[i].getElementsByTagName("MemberName");
+					memberVersions = groups[i].getElementsByTagName("MemberVersion");
+					Debug.log("memberNames.length " + memberNames.length);
+					for(var j=0;j<memberNames.length;++j)
+						str += "," + DesktopContent.getXMLValue(memberNames[j]) + 
+							"," + DesktopContent.getXMLValue(memberVersions[j]);
+					str += "</div>"; //close div popUpDialog-affectedGroups
+
+
+					if(modTblStr.length)
+						modTblStr += ",";
+					modTblStr += DesktopContent.getXMLValue(groups[i],"GroupName");
+				}
+
+				str += "Please choose the options you want and click 'Save Tree':" +
+						"<br>";
+				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
+						"onclick='handleEditTreeCheckboxToggle(" + h + "," + gh + ");'>";
+				//add link so text toggles checkbox
+				str += "<a href='#' onclick='javascript:" +
+						"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
+						"var forFirefox = (el.checked = !el.checked);" +
+						" handleEditTreeCheckboxToggle(" + h + "," + gh + "); return false;'>";
+				str += "Save Affected Groups as New Keys";
+				str += "</a>";
+				str +=	"</input><br>";
+
+				str += "Here is the list of affected groups (count=" + groups.length + 
+						"):" +					
+						"<br>";
+
+				//display affected groups
+				str += "<div style='white-space:nowrap; width:" + w + "px; height:40px; " + 
+						"overflow:auto; font-weight: bold;'>";
+				str += modTblStr;
+				str += "</div>";	
+
+				str += "<div id='popUpDialog-groupAliasArea' ><center>";
+
+				//get existing group aliases	
+				///////////////////////////////////////////////////////////
+				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" +	
+						"",
+						"",
+						function(req) 
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{					
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						el.innerHTML = str;
+						return;
+					}
+
+					var aliases = req.responseXML.getElementsByTagName("GroupAlias");
+					var aliasGroupNames = req.responseXML.getElementsByTagName("GroupName");
+					var aliasGroupKeys = req.responseXML.getElementsByTagName("GroupKey");
+
+					//for each affected group
+					//	-Show checkbox for setting alias and dropdown for alias
+					//	and a pencil to change dropdown to text box to free-form alias.
+					//	-Also, identify if already aliased and choose that as default option
+					//	in dropwdown.
+					var alias, aliasGroupName, aliasGroupKey;
+					var groupName, groupKey;
+					var foundAlias;
+					var optionIndex;
+					for(var i=0;i<groups.length;++i)
+					{						
+						foundAlias = -1;
+						groupName = DesktopContent.getXMLValue(groups[i],"GroupName");
+						groupKey = DesktopContent.getXMLValue(groups[i],"GroupKey");
+
+						//find alias
+						modTblStr = ""; //re-use
+						for(var j=0;j<aliasGroupNames.length;++j)
+						{
+							alias = DesktopContent.getXMLValue(aliases[j]);
+							aliasGroupName = DesktopContent.getXMLValue(aliasGroupNames[j]);
+							aliasGroupKey = DesktopContent.getXMLValue(aliasGroupKeys[j]);	
+
+							//Debug.log("compare " + aliasGroupName + ":" +
+							//		aliasGroupKey);
+
+							//also build drop down
+							modTblStr += "<option value='" + alias + "' ";
+
+							if(foundAlias == -1 &&	//take first match
+									aliasGroupName == groupName &&
+									aliasGroupKey == groupKey)
+							{
+								Debug.log("found alias");
+								foundAlias = j;
+								modTblStr += "selected='selected' ";
+							}
+							modTblStr += ">";
+							modTblStr += alias;	//can display however
+							modTblStr += "</option>";
+						}
+
+						str += "<input type='checkbox' class='popUpDialog-setGroupAlias' " +
+								(foundAlias >= 0?"checked":"") + //check if has an alias already
+								">";
+						//add link so text toggles checkbox
+						str += "<a href='#' onclick='javascript:" +
+								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
+								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
+								" return false;'>";
+						str += "Set '<b style='font-size:16px'>" + groupName + "</b>' to alias:";
+						str += "</a><br>";
+
+						str += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+						str += "<select " +
+								"id='popUpDialog-editAliasSelect-" + (i) + "' " +
+								"style='margin:2px; height:" + (25) + "px'>";						
+						str += modTblStr;
+						str += "</select>";						
+
+						str += "<input type='text' " +
+								"id='popUpDialog-editAliasTextBox-" + (i) + "' " +
+								"style='display:none; margin:2px; width:150px; height:" + 
+								(19) + "px'>";						
+						str += "";
+						str += "</input>";	
+						str += "</td><td>";
+
+						str += "<div style='display:block' " + 
+								"class='treeNode-Value-editIcon' id='popUpDialog-editIcon-" +
+								(i) + "' " +
+								"onclick='handleEditTreeAliasEditToggle(" +							 
+								i + 
+								");' " +
+								"title='Toggle free-form system alias editing' " +
+								"></div>";
+
+						str += "</td></tr></table>";
+
+						str +=	"</input>";
+
+						//increase height each time a group check is added
+						h += gh;
+						el.style.height = h + "px";						
+					}
+
+					str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
+
+
+					// done with system alias handling
+					// continue with pop-up prompt
+
+					str += "</div><br>"; //close main popup div
+
+					var onmouseupJS = "";
+					onmouseupJS += "saveModifiedTree();";
+
+					str += "<input id='popUpDialog-submitButton' type='button' onmouseup='" + 
+							onmouseupJS + "' " +
+							"value='Save Tree' title='" +
+							"Save new versions of every modified table\n" +
+							"(Optionally, save new active groups and assign system aliases)" +
+							"'/>";
+					el.innerHTML = str;
+
+						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				); //end of getGroupAliases handler
+
+					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			); //end of getActiveConfigGroups handler			
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+		}
+		
+		//saveModifiedTree ~~
+		//	ignoreWarnings = true will ignore warnings when saving groups
+		function saveModifiedTree(ignoreWarnings)
+		{
+			Debug.log("saveModifiedTree " + (ignoreWarnings?1:0));			
+			
+			//for each modified table
+			//	save new version
+			//	update tree member table version based on result
+			//if saving groups
+			//	for each affected group
+			//		save member list but with tree table versions
+			//		modify root group name if changed
+			//if saving aliases
+			//	for each alias
+			//		set alias for new group
+			
+			//Note: all information comes from popup dialog
+			//	any return must also kill the popup
+
+			var numberOfRequests = 0;
+			var numberOfReturns = 0;
+			var allRequestsSent = false;		
+			
+			//localHandleAffectedGroups ~~
+			function localHandleAffectedGroups()
+			{
+				Debug.log("Done with table saving.");
+
+				//check if saving groups
+				var savingGroups = 
+						document.getElementById("popUpDialog-bumpGroupVersions").checked;
+
+				if(!savingGroups) //then no need to proceed. exit!
+				{
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);	
+					return;
+				}
+
+				Debug.log("On to saving groups");
+
+				numberOfRequests = 0;		//re-use
+				numberOfReturns = 0;		//re-use
+				allRequestsSent = false; 	//re-use
+
+				var affectedGroupNames = []; //to be populated for use by alias setting
+				var affectedGroupKeys = []; //to be populated for use by alias setting
+				var affectedGroupEls = 
+						document.getElementsByClassName("popUpDialog-affectedGroups");
+				//	for each affected group
+				for(var i=0;i<affectedGroupEls.length;++i)
+				{
+					//save member list but with tree table versions
+					Debug.log(affectedGroupEls[i].innerText);
+
+					var affectedArr = affectedGroupEls[i].innerText.split(','); 
+
+					//build member config map
+					var configMap = "configList=";
+					//member map starts after group name/key (i.e. [2])
+					for(var a=2;a<affectedArr.length;a+=2)								
+						if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+						{
+							Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+							//find version
+							for(var k=0;k<treeMemberNames_.length;++k)
+								if(affectedArr[a] == treeMemberNames_[k])
+								{
+									Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
+									Debug.log("j=" + treeMemberIndex + " k=" + k);
+									configMap += affectedArr[a] + "," + 
+											treeMemberVersions_[k] + ",";
+									break;
+								}
+						}
+						else //use existing version
+							configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+
+					affectedGroupNames.push(affectedArr[0]);		
+					reqStr = ""; //reuse
+					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+							"&groupName=" + affectedArr[0] +
+							"&ignoreWarnings=" + (ignoreWarnings?1:0);										
+					Debug.log(reqStr);
+					Debug.log(configMap);
+
+					++numberOfRequests;
+					///////////////////////////////////////////////////////////
+					DesktopContent.XMLHttpRequest(reqStr, configMap, 
+							function(req,treeMemberIndex) 
+							{
+
+						var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+						if(treeErr) 
+						{	
+							Debug.log(treeErr,Debug.HIGH_PRIORITY);
+							Debug.log("There were problems identified in the tree view of the " +
+									"attempted new group '" +
+									attemptedNewGroupName +
+									"'.\nThe new group was not created.\n" +
+									"(Note: Other tables and groups may have been successfully created, " +
+									"and would have success indications below this error info)\n\n" +
+									"You can save the group anyway (if you think it is a good idea) by clicking " +
+									"the button in the pop-up dialog " +
+									"'<u>Save Groups with Warnings Ignored</u>.' " +
+									"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+									"Below you will find the description of the problem:",																		
+									Debug.HIGH_PRIORITY);
+
+							//change dialog save button
+							var el = document.getElementById("popUpDialog-submitButton");
+							el.onmouseup = function() {saveModifiedTree(1);};
+							el.value = "Save Groups with Warnings Ignored";
+							return;
+						}
+
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{					
+							Debug.log(err,Debug.HIGH_PRIORITY);
+
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);	
+							return;
+						}			
+
+						++numberOfReturns;
+
+						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+						affectedGroupKeys.push(newGroupKey);
+
+						//FIXME -- need to modify root group name if changed
+						Debug.log("FIXME FIXME");
+
+						if(allRequestsSent && 
+								numberOfReturns == numberOfRequests)
+						{
+							Debug.log("Done with group saving.");
+
+							Debug.log("Moving on to Alias creation...");										
+
+							//check each alias checkbox
+							//	for each alias that is checked
+							//		set alias for new group
+							//if any aliases modified, save and activate backbone
+
+							//get checkboxes
+							var setAliasCheckboxes = 
+									document.getElementsByClassName("popUpDialog-setGroupAlias");
+
+							var groupAlias, groupName, groupKey;
+							var setAliasCheckboxIndex = 0;
+							var groupAliasName, groupAliasVersion;
+
+							//in order to set alias, we need:
+							//	groupAlias
+							//	groupName
+							//	groupKey				
+
+							//for each set alias checkbox that is checked
+							//	modify the active group alias table one after the other
+
+							//localNextAliasHandler
+							//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
+							//	and send the next request to modify the activegroupAlias table
+							//	sequentially
+							function localNextAliasHandler(req) 
+							{
+								//first time there is no req
+								if(req)
+								{
+									var err = DesktopContent.getXMLValue(req,"Error");
+									if(err) 
+									{
+										Debug.log(err,Debug.HIGH_PRIORITY);
+										Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);	
+										return;
+									}	
+
+									groupAliasName = DesktopContent.getXMLValue(req,"savedName");
+									groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+
+									Debug.log("Successfully added the system alias '" + groupAlias + 
+											"' reference to '" + groupName + " (" + groupKey + ")' " + 
+											" in table '" + groupAliasName + "-v" + groupAliasVersion +
+											"'.",
+											Debug.INFO_PRIORITY);
+									++setAliasCheckboxIndex; //req back, so ready for next index
+								}
+
+								//get next affected group index			
+								while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
+										!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+									Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+
+								if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
+								{
+									Debug.log("Done with alias checkboxes ");
+
+									if(!req) 
+									{
+										Debug.log("Backbone was not modified, so no need to save.");
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);	
+										return;
+									}
+									Debug.log("Saving and activating modified Backbone");
+
+
+									Debug.log("groupAliasName=" + groupAliasName);
+									Debug.log("groupAliasVersion=" + groupAliasVersion);
+									var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+									var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+									//make a new backbone with old versions of everything except Group Alias 
+									var configMap = "configList=";
+									var name;
+									for(var i=0;i<configNames.length;++i)
+									{		
+										name = configNames[i].getAttribute("value");
+
+										if(name == groupAliasName)
+										{
+											configMap += name + "," + 
+													groupAliasVersion + ",";
+											continue;
+										}
+										//else use old member
+										configMap += name + "," + 
+												configVersions[i].getAttribute("value") + ",";							
+									}
+									Debug.log(configMap);
+
+									saveGroupAndActivate("TreeEditWizBackone",configMap,
+											function(retParams)
+											{
+										Debug.log("Save and activate is done.");
+
+										if(retParams)
+										{							
+											Debug.log("Successfully modified the active Backbone group.\n" +
+													"Backbone group '" + retParams.groupName + "(" + 
+													retParams.groupKey + ")' was created and activated.",
+													Debug.INFO_PRIORITY);							
+										}
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);	
+										return;
+											},	//end of done handler for saveGroupAndActivate
+											true //request return parameters
+									);
+									return;
+								}	
+
+								//get next alias
+								{
+									var el = document.getElementById("popUpDialog-editAliasSelect-" +
+											setAliasCheckboxIndex);
+									if(el.style.display == "none")
+									{
+										//get value from text box
+										el = document.getElementById("popUpDialog-editAliasTextBox-" + 
+												setAliasCheckboxIndex);					
+									}
+									groupAlias = el.value;
+								}
+
+								groupName = affectedGroupNames[setAliasCheckboxIndex];
+								groupKey = affectedGroupKeys[setAliasCheckboxIndex];
+
+								Debug.log("groupAlias = " + groupAlias);
+								Debug.log("groupName = " + groupName);
+								Debug.log("groupKey = " + groupKey);
+
+								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+										"&groupAlias=" + groupAlias + 
+										"&groupName=" + groupName +
+										"&groupKey=" + groupKey, "",
+										localNextAliasHandler,
+										0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+								);
+							}
+
+							localNextAliasHandler();
+
+							Debug.log("Aliases set in motion");
+
+							return;
+						}
+
+							},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					); //end save new group request								
+				} //end affected group for loop
+
+				allRequestsSent = true;
+			}
+			
+			
+			for(var j=0;j<treeMemberNames_.length;++j)
+				if((treeMemberVersions_[j]|0) < -1) //for each modified table
+				{
+					var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+							"&dataOffset=0&chunkSize=0" +  
+							"&configName=" + treeMemberNames_[j] + 
+							"&version="+treeMemberVersions_[j] +	
+							"&temporary=0" +
+							"&tableComment=" + treeMemberComments_[j] +
+							"&sourceTableAsIs=1"; 
+					Debug.log(reqStr);
+					
+					++numberOfRequests;
+					
+					//	save new version
+					///////////////////////////////////////////////////////////
+					DesktopContent.XMLHttpRequest(reqStr, "", 
+							function(req,treeMemberIndex) 
+							{
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{					
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);	
+							return;
+						}						
+
+						var configName = DesktopContent.getXMLValue(req,"savedName");
+						var version = DesktopContent.getXMLValue(req,"savedVersion");
+						
+						Debug.log("Successfully created new table " + configName + "-v" + version,Debug.INFO_PRIORITY);
+
+						//update tree member table version based on result
+						treeMemberVersions_[treeMemberIndex] = version;					
+						
+						++numberOfReturns;
+
+						if(allRequestsSent && 
+								numberOfReturns == numberOfRequests)
+						{
+							localHandleAffectedGroups();							
+						}
+						
+//							Debug.log("Done with table saving.");
+//							
+//							//check if saving groups
+//							var savingGroups = 
+//									document.getElementById("popUpDialog-bumpGroupVersions").checked;
+//							
+//							if(!savingGroups) //then no need to proceed. exit!
+//							{
+//								//kill popup dialog
+//								var el = document.getElementById("popUpDialog"); 
+//								if(el) el.parentNode.removeChild(el);	
+//								return;
+//							}
+//							
+//							Debug.log("On to saving groups");
+//
+//							numberOfRequests = 0;		//re-use
+//							numberOfReturns = 0;		//re-use
+//							allRequestsSent = false; 	//re-use
+//							
+//							var affectedGroupNames = []; //to be populated for use by alias setting
+//							var affectedGroupKeys = []; //to be populated for use by alias setting
+//							var affectedGroupEls = 
+//									document.getElementsByClassName("popUpDialog-affectedGroups");
+//							//	for each affected group
+//							for(var i=0;i<affectedGroupEls.length;++i)
+//							{
+//								//save member list but with tree table versions
+//								Debug.log(affectedGroupEls[i].innerText);
+//								
+//								var affectedArr = affectedGroupEls[i].innerText.split(','); 
+//								
+//								//build member config map
+//								var configMap = "configList=";
+//								//member map starts after group name/key (i.e. [2])
+//								for(var a=2;a<affectedArr.length;a+=2)								
+//									if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+//									{
+//										Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+//										//find version
+//										for(var k=0;k<treeMemberNames_.length;++k)
+//											if(affectedArr[a] == treeMemberNames_[k])
+//											{
+//												Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
+//												Debug.log("j=" + treeMemberIndex + " k=" + k);
+//												configMap += affectedArr[a] + "," + 
+//														treeMemberVersions_[k] + ",";
+//												break;
+//											}
+//									}
+//									else //use existing version
+//										configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+//								
+//								affectedGroupNames.push(affectedArr[0]);		
+//								reqStr = ""; //reuse
+//								reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+//										"&groupName=" + affectedArr[0] +
+//										"&ignoreWarnings=" + (ignoreWarnings?1:0);										
+//								Debug.log(reqStr);
+//								Debug.log(configMap);
+//								
+//								++numberOfRequests;
+//								///////////////////////////////////////////////////////////
+//								DesktopContent.XMLHttpRequest(reqStr, configMap, 
+//										function(req,treeMemberIndex) 
+//										{
+//									
+//									var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+//									var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+//									if(treeErr) 
+//									{	
+//										Debug.log(treeErr,Debug.HIGH_PRIORITY);
+//										Debug.log("There were problems identified in the tree view of the " +
+//												"attempted new group '" +
+//												attemptedNewGroupName +
+//												"'.\nThe new group was not created.\n" +
+//												"(Note: Other tables and groups may have been successfully created, " +
+//												"and would have success indications below this error info)\n\n" +
+//												"You can save the group anyway (if you think it is a good idea) by clicking " +
+//												"the button in the pop-up dialog " +
+//												"'<u>Save Groups with Warnings Ignored</u>.' " +
+//												"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+//												"Below you will find the description of the problem:",																		
+//												Debug.HIGH_PRIORITY);
+//
+//										//change dialog save button
+//										var el = document.getElementById("popUpDialog-submitButton");
+//										el.onmouseup = function() {saveModifiedTree(1);};
+//										el.value = "Save Groups with Warnings Ignored";
+//										return;
+//									}
+//									
+//									var err = DesktopContent.getXMLValue(req,"Error");
+//									if(err) 
+//									{					
+//										Debug.log(err,Debug.HIGH_PRIORITY);
+//
+//										//kill popup dialog
+//										var el = document.getElementById("popUpDialog"); 
+//										if(el) el.parentNode.removeChild(el);	
+//										return;
+//									}			
+//									
+//									++numberOfReturns;
+//									
+//									var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+//									affectedGroupKeys.push(newGroupKey);
+//									
+//									//FIXME -- need to modify root group name if changed
+//									Debug.log("FIXME FIXME");
+//
+//									if(allRequestsSent && 
+//											numberOfReturns == numberOfRequests)
+//									{
+//										Debug.log("Done with group saving.");
+//										
+//										Debug.log("Moving on to Alias creation...");										
+//		
+//										//check each alias checkbox
+//										//	for each alias that is checked
+//										//		set alias for new group
+//										//if any aliases modified, save and activate backbone
+//
+//										//get checkboxes
+//										var setAliasCheckboxes = 
+//												document.getElementsByClassName("popUpDialog-setGroupAlias");
+//
+//										var groupAlias, groupName, groupKey;
+//										var setAliasCheckboxIndex = 0;
+//										var groupAliasName, groupAliasVersion;
+//										
+//										//in order to set alias, we need:
+//										//	groupAlias
+//										//	groupName
+//										//	groupKey				
+//
+//										//for each set alias checkbox that is checked
+//										//	modify the active group alias table one after the other
+//
+//										//localNextAliasHandler
+//										//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
+//										//	and send the next request to modify the activegroupAlias table
+//										//	sequentially
+//										function localNextAliasHandler(req) 
+//										{
+//											//first time there is no req
+//											if(req)
+//											{
+//												var err = DesktopContent.getXMLValue(req,"Error");
+//												if(err) 
+//												{
+//													Debug.log(err,Debug.HIGH_PRIORITY);
+//													Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+//
+//													//kill popup dialog
+//													var el = document.getElementById("popUpDialog"); 
+//													if(el) el.parentNode.removeChild(el);	
+//													return;
+//												}	
+//
+//												groupAliasName = DesktopContent.getXMLValue(req,"savedName");
+//												groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+//
+//												Debug.log("Successfully added the system alias '" + groupAlias + 
+//														"' reference to '" + groupName + " (" + groupKey + ")' " + 
+//														" in table '" + groupAliasName + "-v" + groupAliasVersion +
+//														"'.",
+//														Debug.INFO_PRIORITY);
+//												++setAliasCheckboxIndex; //req back, so ready for next index
+//											}
+//
+//											//get next affected group index			
+//											while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
+//													!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+//												Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+//
+//											if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
+//											{
+//												Debug.log("Done with alias checkboxes ");
+//
+//												if(!req) 
+//												{
+//													Debug.log("Backbone was not modified, so no need to save.");
+//
+//													//kill popup dialog
+//													var el = document.getElementById("popUpDialog"); 
+//													if(el) el.parentNode.removeChild(el);	
+//													return;
+//												}
+//												Debug.log("Saving and activating modified Backbone");
+//
+//
+//												Debug.log("groupAliasName=" + groupAliasName);
+//												Debug.log("groupAliasVersion=" + groupAliasVersion);
+//												var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+//												var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+//
+//												//make a new backbone with old versions of everything except Group Alias 
+//												var configMap = "configList=";
+//												var name;
+//												for(var i=0;i<configNames.length;++i)
+//												{		
+//													name = configNames[i].getAttribute("value");
+//
+//													if(name == groupAliasName)
+//													{
+//														configMap += name + "," + 
+//																groupAliasVersion + ",";
+//														continue;
+//													}
+//													//else use old member
+//													configMap += name + "," + 
+//															configVersions[i].getAttribute("value") + ",";							
+//												}
+//												Debug.log(configMap);
+//
+//												saveGroupAndActivate("TreeEditWizBackone",configMap,
+//														function(retParams)
+//														{
+//													Debug.log("Save and activate is done.");
+//
+//													if(retParams)
+//													{							
+//														Debug.log("Successfully modified the active Backbone group.\n" +
+//																"Backbone group '" + retParams.groupName + "(" + 
+//																retParams.groupKey + ")' was created and activated.",
+//																Debug.INFO_PRIORITY);							
+//													}
+//
+//													//kill popup dialog
+//													var el = document.getElementById("popUpDialog"); 
+//													if(el) el.parentNode.removeChild(el);	
+//													return;
+//														},	//end of done handler for saveGroupAndActivate
+//														true //request return parameters
+//												);
+//												return;
+//											}	
+//
+//											//get next alias
+//											{
+//												var el = document.getElementById("popUpDialog-editAliasSelect-" +
+//														setAliasCheckboxIndex);
+//												if(el.style.display == "none")
+//												{
+//													//get value from text box
+//													el = document.getElementById("popUpDialog-editAliasTextBox-" + 
+//															setAliasCheckboxIndex);					
+//												}
+//												groupAlias = el.value;
+//											}
+//											
+//											groupName = affectedGroupNames[setAliasCheckboxIndex];
+//											groupKey = affectedGroupKeys[setAliasCheckboxIndex];
+//													
+//											Debug.log("groupAlias = " + groupAlias);
+//											Debug.log("groupName = " + groupName);
+//											Debug.log("groupKey = " + groupKey);
+//
+//											DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+//													"&groupAlias=" + groupAlias + 
+//													"&groupName=" + groupName +
+//													"&groupKey=" + groupKey, "",
+//													localNextAliasHandler,
+//													0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+//											);
+//										}
+//
+//										localNextAliasHandler();
+//
+//										Debug.log("Aliases set in motion");
+//
+//										return;
+//									}
+//									
+//										},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+//								); //end save new group request								
+//							} //end affected group for loop
+//							
+//							allRequestsSent = true;
+//						}
+							},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					);	//end save new table request
+				}	//end modified table for loop
+			
+			allRequestsSent = true;
+			if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
+				localHandleAffectedGroups();
+		}
+		
+		//treeHasChanged ~~
+		function treeHasChanged()
+		{
+			if(treeHasChanged_) return;
+			return;
+			treeHasChanged_ = true;
+			
+			//add buttons to save tree		
+									
+
+			var newDiv = document.createElement("div");
+			str = "";
+			str += "<input type='button' onmouseup='popUpSaveTreeForm()' " + 
+					"value='Save All Tree Changes' title='" +
+					"Save new versions of every modified table\n" +
+					"(Optionally, save new active groups and assign system aliases)" + 
+					"'/>";
+			str += "<br><br>";
+			newDiv.innerHTML = str;
+
+			//insert a new div before and after table
+			el = document.getElementById("display");
+			var targetEl = document.getElementById("treeView-ConfigGroupLink");
+			el.insertBefore(newDiv, targetEl);
+			newDiv = document.createElement("div");
+			newDiv.innerHTML = "<br>" + str;				
+			el.appendChild(newDiv);	
+		}
+		
+		//editTreeNodeOK
+		function editTreeNodeOK() 
+		{							
+			if(!_editingCellEl) return;
+			Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
+
+			
+			if(treeEditingNodeType_ == "uid")
+			{
+				var newValue = _editingCellEl.getElementsByTagName("input")[0].value;
+				Debug.log("CfgGUI editTreeNodeOK editing node = " +
+						newValue);
+
+				//save affected table as temporary version (re-use active temporary version at server)
+				//		if saved successfully
+				//			scan tree nodes for all other table/uid nodes and change that uid
+				//			(
+				//				this happens through 2 cases:
+				//				- group links: uid should just change
+				//				- UID links: link will now be disconnected
+				//			)
+				
+				//saveTreeNodeEdit
+				//	parameters:
+				//		target table name/version
+				//		target UID
+				//		new	UID value
+				
+				var tableVersion = -1;
+				var tableIndex = -1;
+				for(var j=0;j<treeMemberNames_.length;++j)
+					if(treeEditingTargetTable_ == treeMemberNames_[j])
+						{
+							tableVersion = treeMemberVersions_[j];
+							tableIndex = j;
+							break;
+						}
+				if(tableIndex == -1)
+				{
+					Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+					return;					
+				}
+				
+				
+				//get active configuration group
+				DesktopContent.XMLHttpRequest("Request?RequestType=saveTreeNodeEdit" +	
+						"&editNodeType=" + treeEditingNodeType_ +						
+						"&targetTable=" + treeEditingTargetTable_ +
+						"&targetTableVersion=" + tableVersion +
+						"&targetUID=" + treeEditingTargetUID_ +
+						"&targetColumn=" + treeEditingTargetColumn_ +
+						"&newValue=" + newValue,
+						"", function(req) 
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						//suppress same value error
+						if(err.indexOf("is the same as the current value. No need to save node.") > 0)
+						{
+							Debug.log(err);
+							return;
+						}
+						Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page",Debug.HIGH_PRIORITY);
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						
+						return;
+					}
+					
+					treeHasChanged();
+					
+					var resultingTargetTableVersion = 
+							DesktopContent.getXMLValue(req,"resultingTargetTableVersion");
+					
+					Debug.log("New table version " + resultingTargetTableVersion);
+					treeMemberVersions_[tableIndex] = resultingTargetTableVersion;
+
+					
+					//now need to propagate changes throughout tree
+					editTreeNodePropagateChange(							
+							newValue
+							);
+
+						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						); //end of getActiveConfigGroups handler
+				
+				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
+				
+				 
+			}
+			else
+				{editCellCancel(); return;}
+
+			_editingCell = false;
+			_editingCellEl = 0;		
+			
+			return;
+			
+			//if child link cell or boolean cell
+			var sel;
+			if((sel = _editingCellEl.getElementsByTagName("select")).length)
+			{
+				sel = sel[0]; //assume the first select in the cell is the select
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);				
+				var selVal = sel.options[sel.selectedIndex].value;
+
+				Debug.log("CfgGUI editCellOK = " + 
+						selVal);
+
+				str = "";
+				str += selVal;
+				_editingCellEl.innerHTML = str;		
+
+				//assume no child link will be named a booleam word
+				var boolTypeTrues =  ["On","True","Yes"];
+				var statusTypeFalses =  ["Off","False","No"];
+
+				//determine if true value
+				var isTrue = false;
+				var isFalse = false;
+				for(var i=0;i<boolTypeTrues.length;++i)
+					if(boolTypeTrues[i] == selVal)
+					{
+						isTrue = true; break;
+					}
+				for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+					if(statusTypeFalses[i] == selVal)
+					{
+						isFalse = true; break;
+					}
+
+				if(isTrue)
+					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+				else if(isFalse)
+					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+			}
+			else //normal cell
+			{
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+						_editingCellEl.getElementsByTagName("input")[0].value);
+
+				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
+			}
+
+			_editingCell = false;
+			_editingCellEl = 0;		
+
+			versionHasChanged();
+		}
+		
+		//editTreeNodePropagateChange ~~
+		//	arguments are different depending on treeEditingNodeType_
+		function editTreeNodePropagateChange()
+		{
+			Debug.log("arguments.length " + arguments.length);
+			
+			if(treeEditingNodeType_ == "uid")
+			{				
+				Debug.log("editTreeNodePropagateChange " + treeEditingNodeType_);					
+				
+				//parameters:
+				// 	treeEditingTargetTable_
+				//	treeEditingTargetUID_
+				//	newValue -- arg0
+				
+				var newValue = arguments[0];
+				Debug.log("editTreeNodePropagateChange " + newValue);
+				
+				//if no change, then done
+				if(newValue == treeEditingTargetUID_) return;
+				
+					
+				
+				//find all LinkUIDs with target table and UID and clear children				
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-link");
+					var idString;
+					var table, uid;
+					var linkIdType;
+					for(var i=0;i<els.length;++i)
+					{
+						idString = els[i].id.substr(("treeNode-Value-").length);
+						uid = els[i].innerText;
+						linkIdType = uid.split('(')[1].split(' ')[0];
+						
+						if(linkIdType == "GroupID") continue; //only consider UIDs
+						
+						uid = uid.split(')')[0].split('=')[1].substr(1);
+						
+						//Debug.log("link-idString " + idString + " " + uid);
+						
+						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						if(table == treeEditingTargetTable_ && 
+								uid == treeEditingTargetUID_)
+						{
+							//hide children and delete them							
+							//Debug.log("link-idString " + idString + " " + uid);
+							//Debug.log("link-idString CHANGE to " + newValue);
+							toggleTreeChildren(idString.split('-')[0],idString.split('-')[1],false);
+							document.getElementById("treeNode-ChildrenOf-" + idString).innerHTML = "";							
+						}							
+					}
+				}
+				
+				//find all UID nodes with target table and UID and change
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-uid");
+					var table, uid;
+					var depth;
+					for(var i=0;i<els.length;++i)
+					{
+						var idString = els[i].id.substr(("treeNode-Value-").length);
+						depth = idString.split('-')[0];
+						
+						if(depth == 1) continue; //can only possibly be self, which has already changed
+
+						Debug.log("uid-idString " + idString + " " + els[i].innerText);
+						
+						//need table to verify match.. must get from parent
+						table = document.getElementById("treeNode-linkTableName-" + 
+								(document.getElementById("treeNode-ParentId-" + idString).innerText)
+							).innerText;						
+						Debug.log("uid-table " + table);
+						uid = els[i].innerText;
+						
+						if(table == treeEditingTargetTable_ && 
+								uid == treeEditingTargetUID_)
+						{
+							//hide children and delete them							
+							//Debug.log("link-idString " + idString + " " + uid);
+							Debug.log("uid-idString CHANGE to " + newValue);
+							els[i].innerText = newValue;							
+						}	
+					}
+				}
+			}
+		}
+		
 		//editCellOK
 		function editCellOK() 
 		{	
+			//detect proper views
+			var el = document.getElementById("treeView-ConfigGroupLink");
+			if(el) //tree view 
+				return editTreeNodeOK();
+			
+			//else table view
+			
 			if(!_editingCellEl) return;
 			
 			var r = _editingCellPos[0];
@@ -4200,8 +6163,16 @@
 			
 			if(_editingCellEl) //return old value, convert from text to html
 			{
-				_editingCellEl.innerHTML = "";
-				_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+				if(treeEditingNodeType_ == "value-bool") 
+				{
+					//take old value as HTML for bool values
+					_editingCellEl.innerHTML = _editingCellElOldValue;
+				}
+				else
+				{
+					_editingCellEl.innerHTML = "";
+					_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+				}
 			}
 			
 			_editingCell = false;
@@ -4980,7 +6951,7 @@
 				return;
 			}
 
-			var configName = DesktopContent.getXMLValue(req,"savedAlias");
+			var configName = DesktopContent.getXMLValue(req,"savedName");
 			var version = DesktopContent.getXMLValue(req,"savedVersion");
 
 			Debug.log("saveConfigAsNewVersionHandler requestHandler configName " + configName + " version " + version);
@@ -5471,6 +7442,58 @@
 			Debug.log("transposeTableView() transposed now =" + _tableViewIsTransposed);
 		}
 		
+		//handleEditTreeCheckboxToggle ~~
+		//	checkbox was already set before this function call
+		//	this responds to current value
+		//
+		//	pass height and group height
+		function handleEditTreeCheckboxToggle(h,gh)
+		{
+			var el = document.getElementById("popUpDialog-bumpGroupVersions");			
+			Debug.log("handleEditTreeCheckboxToggle " + el.checked);
+			
+			var popEl = document.getElementById("popUpDialog");			
+			if(!el.checked)
+			{
+				//hide alias area and subtract the height
+				
+				document.getElementById("popUpDialog-groupAliasArea").style.display = "none";								
+				popEl.style.height = (h) + "px";		
+			}
+			else
+			{
+				//show alias area and add the height
+				
+				//count if grps is 1 or 2
+				var grps = document.getElementsByClassName("popUpDialog-affectedGroups");				
+				popEl.style.height = (h + grps.length*gh) + "px";
+				document.getElementById("popUpDialog-groupAliasArea").style.display = "block";
+			}			
+		}
+		
+		//handleEditTreeAliasEditToggle ~~
+		function handleEditTreeAliasEditToggle(i)
+		{	
+			Debug.log("handleEditTreeCheckboxToggle " + i);
+			
+			var sel = document.getElementById("popUpDialog-editAliasSelect-"+i);
+			var tel = document.getElementById("popUpDialog-editAliasTextBox-"+i);
+			Debug.log("sel.style.display  " + sel.style.display);
+			if(sel.style.display == "none")
+			{
+				sel.style.display = "block";
+				tel.style.display = "none";
+			}
+			else
+			{
+				tel.style.width = (sel.offsetWidth-2) + "px";
+				sel.style.display = "none";
+				tel.style.display = "block";
+				setCaretPosition(tel,0,tel.value.length);
+			}
+						
+		}
+		
 		</script>
 </head>
 	
@@ -5494,6 +7517,7 @@
 	<div id='activateConfigWithWarnings'></div>
 	<div id='tempTree'></div>
 	<div id='display'></div>
+	<div id='preloadImage-treeEditIconHover'></div>
 	
 </body>
 	

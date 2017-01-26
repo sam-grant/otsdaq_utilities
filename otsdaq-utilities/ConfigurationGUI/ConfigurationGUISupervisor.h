@@ -61,10 +61,12 @@ private:
 
     void 			handleConfigurationsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool allowIllegalColumns=false);
-    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author, const std::string &comment);
+    void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author, const std::string &comment, bool sourceTableAsIs);
 
-    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth, bool hideStatusFalse);
+    void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, int depth, bool hideStatusFalse, const std::string &modifiedTables);
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl, bool hideStatusFalse);
+    void 			handleSaveTreeNodeEditXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, const std::string &type, const std::string &uid, const std::string &column, const std::string &newValue);
+    void 			handleGetAffectedGroupsXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey, const std::string &modifiedTables);
 
     void			saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryVersion);
 
