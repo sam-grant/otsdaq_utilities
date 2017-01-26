@@ -976,6 +976,18 @@ try
 		throw std::runtime_error(ss.str());
 	}
 
+	//verify new table (throws runtime_errors)
+	try
+	{
+		cfgView->init(); //verify new table (throws runtime_errors)
+	}
+	catch(...) //erase temporary view before re-throwing error
+	{
+		__MOUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
+		config->eraseView(version);
+		throw;
+	}
+
 	//cfgView->print();
 	xmldoc.addTextElementToData("resultingTargetTableVersion", version.toString());
 }
@@ -1479,11 +1491,24 @@ try
 	//returns -1 on error that data was unchanged
 	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
 
-	int retVal = sourceTableAsIs?0:cfgView->fillFromCSV(data,dataOffset,author);
+	int retVal;
 
-	cfgView->setURIEncodedComment(comment);
-	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
+	try
+	{
+		retVal = sourceTableAsIs?0:cfgView->fillFromCSV(data,dataOffset,author);
+		cfgView->setURIEncodedComment(comment);
+		__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
 
+	}
+	catch(...) //erase temporary view before re-throwing error
+	{
+		__MOUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
+		config->eraseView(temporaryVersion);
+		throw;
+	}
+
+	//Note: be careful with any further table operations at this point..
+	//	must catch errors and erase temporary version on failure.
 
 	//only consider it an error if source version was persistent version
 	//	allow it if source version is temporary and we are making a persistent version now
@@ -1567,7 +1592,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		__MOUT_ERR__ << "Fatal error managing userLastUseTime_!" << std::endl;
 		throw std::runtime_error("Fatal error managing userLastUseTime_!");
 	}
-	else if(refresh || now - userLastUseTime_[mapKey] >
+	else if(refresh || (now - userLastUseTime_[mapKey]) >
 	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
 	{
 		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;

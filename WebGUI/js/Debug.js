@@ -119,7 +119,8 @@ Debug.errorPop = function(err,severity) {
 			var str = "<a class='" + 
 				Debug._errBoxId + 
 				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();'>Close Errors</a>";
-			str = str + "<br><br>" + 
+			str = str + "<br>" + 
+				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top.</div><br>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err'></div>" + 
@@ -191,7 +192,9 @@ Debug.errorPop = function(err,severity) {
 	var tstr = d.toLocaleTimeString();
 	tstr = tstr.substring(0,tstr.lastIndexOf(' ')) + //convert AM/PM to am/pm with no space
 			(tstr[tstr.length-2]=='A'?"am":"pm");
-	str = d.toLocaleDateString() + " " + tstr + ": " +
+	str = "<label style='color:white;font-size:16px;'>" + 
+			d.toLocaleDateString() +
+			" " + tstr + ":</label><br>" +
 			err.replace(/\n/g , "<br>") + str;
 		
 	el.innerHTML = str;
@@ -235,7 +238,7 @@ Debug.errorPop = function(err,severity) {
 		el.innerHTML = "Close Errors";
 		Debug._errBox.style.backgroundColor = "rgba(153,0,51,0.9)";
 	}
-	els[1].innerHTML = el.innerHTML;
+	els[1].innerHTML = el.innerHTML;	
 }
 
 
