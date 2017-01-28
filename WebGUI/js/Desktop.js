@@ -177,7 +177,7 @@ Desktop.createDesktop = function(security) {
 	    //		innerHTML = requestingWindowId=<window uid>&done=1
 	    if(_openWindowMailbox.innerHTML != "")
 	    {
-	    	//Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+	    	Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 	    	
 	    	//get parameters
 	    	var paramsStr = _openWindowMailbox.innerHTML;
@@ -714,9 +714,10 @@ Desktop.createDesktop = function(security) {
 			Desktop.desktop.toggleFullScreen();
 			Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
 
-			var str = "requestingWindowId=" + requestingWindowId;
-			str += "&done=1";	
-			_openWindowMailbox.innerHTML = str; //indicate done
+			//var str = "requestingWindowId=" + requestingWindowId;
+			//str += "&done=1";
+			//Changed by RAR.. since no window is listening for done when a new desktop begins			
+			_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
 	}
 	

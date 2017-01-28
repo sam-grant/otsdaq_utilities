@@ -134,6 +134,7 @@ throw (xgi::exception::Exception)
 	//  copyViewToCurrentColumns
 	//	saveTreeNodeEdit
 	//	getAffectedActiveGroups
+	// 	getLinkToChoices
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -434,6 +435,21 @@ throw (xgi::exception::Exception)
 
 		handleSaveTreeNodeEditXML(xmldoc,cfgMgr,targetTable,ConfigurationVersion(targetTableVersion),
 				editNodeType,targetUID,targetColumn,newValue);
+	}
+	else if(Command == "getLinkToChoices")
+	{
+		std::string 	linkToTableName 	= CgiDataUtilities::getData(cgi,"linkToTableName");
+		std::string 	linkToTableVersion 	= CgiDataUtilities::getData(cgi,"linkToTableVersion");
+		std::string 	linkIdType 			= CgiDataUtilities::getData(cgi,"linkIdType");
+		std::string 	linkIndex 			= CgiDataUtilities::getData(cgi,"linkIndex");
+
+		__MOUT__ << "linkToTableName: " << linkToTableName << std::endl;
+		__MOUT__ << "linkToTableVersion: " << linkToTableVersion << std::endl;
+		__MOUT__ << "linkIdType: " << linkIdType << std::endl;
+		__MOUT__ << "linkIndex: " << linkIndex << std::endl;
+
+		handleGetLinkToChoicesXML(xmldoc,cfgMgr,linkToTableName,
+				ConfigurationVersion(linkToTableVersion),linkIdType,linkIndex);
 	}
 	else if(Command == "activateConfigGroup")
 	{
@@ -844,6 +860,9 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 
 			xmldoc.addTextElementToParent("LinkConfigurationName", t.getConfigurationName(),
 					parentEl);
+
+			xmldoc.addTextElementToParent("LinkIndex", t.getChildLinkIndex(),
+					parentEl);
 		}
 		else
 		{
@@ -874,6 +893,98 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 	}
 }
 
+
+
+//========================================================================================================================
+//handleGetLinkToChoicesXML
+//	return all possible choices for link
+//		linkIdType = "UID" or "GroupID"
+//
+//	as xml:
+//	<linkToChoice = xxx>
+void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName,
+		const ConfigurationVersion &linkToTableVersion,
+		const std::string &linkIdType, const std::string &linkIndex)
+try
+{
+	//get table
+	//	if uid link
+	//		return all uids
+	//	if groupid link
+	//		find target column
+	//		create the set of values (unique values only)
+	//			note: insert group unions individually (i.e. groups | separated)
+
+
+	//get table and activate target version
+	//	rename to re-use code template
+	const std::string &configName = linkToTableName;
+	const ConfigurationVersion &version = linkToTableVersion;
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	try
+	{
+		config->setActiveView(version);
+	}
+	catch(...)
+	{
+		__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
+				version << std::endl;
+		cfgMgr->getVersionedConfigurationByName(
+						configName, version);
+	}
+
+	if(version != config->getViewVersion())
+	{
+		__SS__ << "Target table version (" << version <<
+				") is not the currently active version (" << config->getViewVersion()
+				<< ". Try refreshing the tree." << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+	__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+	if(linkIdType == "UID")
+	{
+		//give all UIDs
+		unsigned int col = config->getView().getColUID();
+		for(unsigned int row = 0; row < config->getView().getNumberOfRows(); ++row)
+			xmldoc.addTextElementToData("linkToChoice",
+					config->getView().getDataView()[row][col]);
+	}
+	else if(linkIdType == "GroupID")
+	{
+		//		find target column
+		//		create the set of values (unique values only)
+		//			note: insert group unions individually (i.e. groups | separated)
+
+		std::set<std::string> setOfGroupIDs =
+				config->getView().getSetOfGroupIDs(linkIndex);
+
+		for(const auto &groupID : setOfGroupIDs)
+			xmldoc.addTextElementToData("linkToChoice",
+					groupID);
+	}
+	else
+	{
+		__SS__ << "Unrecognized linkIdType '" << linkIdType
+				<< ".'" << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! ");
+}
+
 //========================================================================================================================
 //handleSaveTreeNodeEditXML
 //	Changes the value specified by UID/Column
@@ -887,7 +998,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &configName,
 		ConfigurationVersion version, const std::string &type,
-		const std::string &uid, const std::string &column, const std::string &newValue)
+		const std::string &uid, const std::string &colName, const std::string &newValue)
 try
 {
 	__MOUT__ << "table " <<
@@ -923,73 +1034,107 @@ try
 		throw std::runtime_error(ss.str());
 	}
 
-	//check if the value is new
+	unsigned int col = -1;
 	if(type == "uid")
-	{
-		if(config->getView().isValueTheSame(newValue,
-				config->getView().findRow(config->getView().getColUID(),uid),
-				config->getView().getColUID()))
-		{
-			__SS__ << "Value '" << newValue <<
-					"' is the same as the current value. No need to save node." <<
-					std::endl;
-			throw std::runtime_error(ss.str());
-		}
-	}
-//	else if(type == "link")
-//	{
-//
-//	}
-	else
-	{
-		__SS__ << "Unrecognized edit type: " << type << std::endl;
-		throw std::runtime_error(ss.str());
-	}
-
-
-	//if version is not temporary make a new temporary version
-	if(!version.isTemporaryVersion())
-	{
-		version = config->createTemporaryView(version);
-		__MOUT__ << "Created temporary version " << version << std::endl;
-		config->setActiveView(version);
-	}
-
-	__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
-
-	ConfigurationView* cfgView = config->getTemporaryView(version);
-
-	//have view so edit it
-	if(type == "uid")
-	{
-		cfgView->setValue(newValue,
-				cfgView->findRow(cfgView->getColUID(),uid),
-				cfgView->getColUID());
-	}
-//	else if(type == "link")
-//	{
-//
-//	}
+		col = config->getView().getColUID();
+	else if(type == "value" ||
+			type == "value-groupid" ||
+			type == "value-bool")
+		col = config->getView().findCol(colName);
 	else
 	{
 		__SS__ << "Impossible! Unrecognized edit type: " << type << std::endl;
 		throw std::runtime_error(ss.str());
 	}
 
-	//verify new table (throws runtime_errors)
+	//check if the comment value is new before making temporary version
+	if(type == "table")
+	{
+		//editing comment, so check if comment is different
+		if(config->getView().isURIEncodedCommentTheSame(newValue))
+		{
+			__SS__ << "Comment '" << newValue <<
+					"' is the same as the current comment. No need to save change." <<
+					std::endl;
+			throw std::runtime_error(ss.str());
+		}
+
+	}
+//	else if(type == "uid" ||
+//			type == "value" ||
+//			type == "value-groupid" ||
+//			type == "value-bool")
+//	{
+//		if(config->getView().isValueTheSame(newValue,
+//				config->getView().findRow(config->getView().getColUID(),uid),
+//				col))
+//		{
+//			__SS__ << "Value '" << newValue <<
+//					"' is the same as the current value. No need to save change to tree node." <<
+//					std::endl;
+//			throw std::runtime_error(ss.str());
+//		}
+//	}
+////	else if(type == "link")
+////	{
+////
+////	}
+//	else
+//	{
+//		__SS__ << "Unrecognized edit type: " << type << std::endl;
+//		throw std::runtime_error(ss.str());
+//	}
+
+
+	//if version is not temporary make a new temporary version
+	ConfigurationVersion temporaryVersion(version);
+	if(!version.isTemporaryVersion())
+	{
+		temporaryVersion = config->createTemporaryView(version);
+		__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+	}
+
+	__MOUT__ << "Editing temporary version " << temporaryVersion << std::endl;
+
+	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
+
+	//edit/verify new table (throws runtime_errors)
 	try
 	{
+		//have view so edit it
+		if(type == "table")
+		{
+			//edit comment
+			cfgView->setURIEncodedComment(newValue);
+		}
+		else if(type == "uid" ||
+				type == "value" ||
+				type == "value-groupid" ||
+				type == "value-bool")
+		{
+			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
+			std::string originalValue = cfgView->getDataView()[row][col];
+			if(!cfgView->setURIEncodedValue(newValue,row,col))
+			{
+				//no change! so discard
+				__SS__ << "Value '" << newValue <<
+						"' is the same as the current value. No need to save change to tree node." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+		}
+
 		cfgView->init(); //verify new table (throws runtime_errors)
 	}
 	catch(...) //erase temporary view before re-throwing error
 	{
 		__MOUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
-		config->eraseView(version);
+		config->eraseView(temporaryVersion);
 		throw;
 	}
 
-	//cfgView->print();
-	xmldoc.addTextElementToData("resultingTargetTableVersion", version.toString());
+	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
+			config,temporaryVersion); //save temporary version properly
 }
 catch(std::runtime_error &e)
 {

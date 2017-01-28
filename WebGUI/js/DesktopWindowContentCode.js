@@ -65,7 +65,7 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional])
+//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getMouseX()
@@ -93,7 +93,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
-//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor)
+//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getMouseX()
@@ -756,7 +756,7 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -779,11 +779,14 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//setup style first
 	if(!bgColor) bgColor = "rgb(255,241,189)";	//set default
 	if(!textColor) textColor = "black";	//set default
+	if(!borderColor) borderColor = "black";
+	
 	var css = "";
 	//pop up div style
+	//note: z-index of 2000 is above config gui treeview
 	css += "#" + DesktopContent._verifyPopUpId + " " +
-			"{position: absolute; border-radius: 5px; padding: 10px;" +			
-			"background-color: " + bgColor + "; border: 2px solid rgb(0,0,0);" +
+			"{position: absolute; z-index: 2000; border-radius: 5px; padding: 10px;" +			
+			"background-color: " + bgColor + "; border: 2px solid " + borderColor + ";" +
 			"color: " + textColor + ";text-align: center;" +
 			"}\n\n";
 	//pop up text style 
