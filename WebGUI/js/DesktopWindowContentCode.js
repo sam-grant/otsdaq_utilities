@@ -280,7 +280,7 @@ DesktopContent.handleBlur = function(e) {
 	DesktopContent._isFocused = false;
 }
 DesktopContent.handleScroll = function(e) {			
-	window.focus();
+	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent) {	
 	//call each subscriber

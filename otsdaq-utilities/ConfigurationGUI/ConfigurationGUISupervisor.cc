@@ -1037,7 +1037,10 @@ try
 	unsigned int col = -1;
 	if(type == "uid")
 		col = config->getView().getColUID();
-	else if(type == "value" ||
+	else if(
+			type == "link-UID" ||
+			type == "link-GroupID" ||
+			type == "value" ||
 			type == "value-groupid" ||
 			type == "value-bool")
 		col = config->getView().findCol(colName);
@@ -1113,7 +1116,6 @@ try
 				type == "value-bool")
 		{
 			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
-			std::string originalValue = cfgView->getDataView()[row][col];
 			if(!cfgView->setURIEncodedValue(newValue,row,col))
 			{
 				//no change! so discard
@@ -1122,6 +1124,66 @@ try
 						std::endl;
 				throw std::runtime_error(ss.str());
 			}
+		}
+		else if(type == "link-UID" || type == "link-GroupID")
+		{
+			bool isGroup;
+			std::pair<unsigned int /*link col*/, unsigned int /*link id col*/> linkPair;
+			if(!cfgView->getChildLink(col,&isGroup,&linkPair))
+			{
+				//not a link ?!
+				__SS__ << "Col '" << colName <<
+						"' is not a link column." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+
+			__MOUT__ << "linkPair " << linkPair.first << "," <<
+					linkPair.second << std::endl;
+
+			//find table value and id value
+			unsigned int csvIndex = newValue.find(',');
+
+			std::string newTable = newValue.substr(0,csvIndex);
+			std::string newLinkId = newValue.substr(csvIndex+1);
+
+			__MOUT__ << "newValue " << newTable << "," <<
+					newLinkId << std::endl;
+
+			//change target table in two parts
+			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
+			bool changed = false;
+			if(!cfgView->setURIEncodedValue(newTable,row,
+					linkPair.first))
+			{
+				//no change
+				__MOUT__ << "Value '" << newTable <<
+						"' is the same as the current value." <<
+						std::endl;
+			}
+			else
+				changed = true;
+
+			if(!cfgView->setURIEncodedValue(newLinkId,row,
+					linkPair.second))
+			{
+				//no change
+				__MOUT__ << "Value '" << newLinkId <<
+						"' is the same as the current value." <<
+						std::endl;
+			}
+			else
+				changed = true;
+
+			if(!changed)
+			{
+				__SS__ << "Link to table '" << newTable <<
+						"' and linkID '" << newLinkId <<
+						"' is the same as the current value. No need to save change to tree node." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+
 		}
 
 		cfgView->init(); //verify new table (throws runtime_errors)
