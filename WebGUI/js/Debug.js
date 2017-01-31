@@ -139,6 +139,7 @@ Debug.errorPop = function(err,severity) {
 					"}\n\n";
 			css += "#" + Debug._errBoxId + " a:hover" +
 					"{text-decoration: underline;" +
+					"cursor:pointer;" +
 					"}\n\n";
 			
 			//error box style

@@ -19,6 +19,10 @@
 			color: rgb(44, 44, 187);
 		}
 		
+		a:hover {
+			pointer: cursor;
+		}
+		
 		#display {
 			padding: 20px;
 		}

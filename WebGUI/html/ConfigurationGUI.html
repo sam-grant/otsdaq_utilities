@@ -210,7 +210,7 @@
 		
 
 		var _contextMenuEl = 0;
-		var _treeNavContextMenuItems = ["Go-to Table View","Open in new Desktop Window","Open in new Browser Tab"];
+		var _treeNavContextMenuItems = ["Add new Record to Table", "Go-to Table View","Open in new Desktop Window","Open in new Browser Tab"];
 		
 		var _msChosenGroupName;
 		var _msChosenGroupKey;
@@ -279,16 +279,18 @@
 			//treeViewHandler(req,parentId,errStr)
 			//recursiveDrawTree(parent,depth,path,parentIdString)
 			//getTreeViewTableStrings(tableLinkName)
+			//refreshTreeView();
 			//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
 			//toggleTreeChildren(depth,uid,setVal) 	
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
 			//createTreeViewMenu(event)
-			//handleTreeNodeClick(depth,uid,editClick,type) 
-
+		
+			//handleTreeNodeClick(depth,uid,editClick,type)			
 			//treeHasChanged(reset)
 			//saveModifiedTree(ignoreWarnings)
 			//handleEditTreeCheckboxToggle(h,gh)
+			//editTreeAddNewRow(tableName)
 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
@@ -375,7 +377,7 @@
 			
 			//setupConfigCreator(); return
 			
-			setupConfigGroupTreeView("artdaqFclTest","46"); return;
+			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -1898,6 +1900,13 @@
 				return;
 			}
 			
+			var warn = DesktopContent.getXMLValue(req,"Warning");
+			if(warn) 
+			{
+				Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
+				Debug.log(warn,Debug.WARN_PRIORITY);	
+			}
+			
 			editCellCancel();
 			
 			//draw tree		
@@ -2126,11 +2135,13 @@
 			var nodes = parent.children;
 			var nodeName;
 			var value, valueType;
-			var tableLinkName, childLinkIndex;
+			var tableLinkName, childLinkIndex, linkIdType, linkId;
 			var i,j;
 			var childrenLength;
 			var newWindowStr;
 			var backLinkStr;
+			var titleStr;
+			var nodeEditType, nodeEditTypeDisplay;
 			
 			var pathHTML = path;
 			//make path html safe
@@ -2187,20 +2198,94 @@
 							depth + "," + uid + "," + 	
 							"event)' " +
 								
-							">" +
+							">";
 							
 							"<div style='float:left'>" +
 							"<b class='bold-header'>" + nodeName + "</b>" + 
-							"</div><div style='float:left'>&nbsp;:</div>" +
+							"</div><div style='float:left'>&nbsp;:</div>";
+					
+					
+					//disconnected value and edit icon
+					//add extra fields for disconnected links
+					//	so that editing is possible
+					if(valueType == "Disconnected")
+					{	
+						tableLinkName = nodes[i].children[2].getAttribute("value"); //link to table
+						childLinkIndex = nodes[i].children[3].getAttribute("value"); //link index
+						linkIdType = nodes[i].children[4].getAttribute("value"); //link id type
+						linkId = nodes[i].children[5].getAttribute("value"); //link id
 
-							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
-							(depth + "-" + uid) + "' " +
-							"onclick='handleTreeNodeClick(" +							 
-							depth + "," + uid + "," + 	
-							"1,\"value\"); event.stopPropagation();' " +
-							"></div>" +		
+						titleStr = 
+								"~ Disconnected Link ~\n" +
+								"Link Table Name: \t\t" + tableLinkName + "\n" +
+								"Link " + linkIdType + ": \t\t" + linkId + "\n";
+								
+						//left side of value
+						treeViewHandlerStr_ += 
+								"<div style='float:left' title='" + titleStr + "'>" +
+								"<b class='bold-header'>" + nodeName + "</b>" + 
+								"</div><div style='float:left'>&nbsp;:</div>";
+						
+						//disconnected link edit icon
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+								(depth + "-" + uid) + "' " +
+								"onclick='handleTreeNodeClick(" +							 
+								depth + "," + uid + "," + 	
+								"1,\"link-disconnected\"); event.stopPropagation();' " +
+								"title='Edit the value of this node.' " +
+								"></div>";
+						
+						//extra disconnected fields
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-linkTableName' style='display:none' " +
+								"id='treeNode-linkTableName-" +
+								( depth + "-" + uid ) + "'>" + // end path id
+								tableLinkName + //save table name for future use.. and a central place to edit when changes occur
+								"</div>";
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-childLinkIndex' style='display:none' " +
+								"id='treeNode-childLinkIndex-" +
+								( depth + "-" + uid ) + "'>" + // end path id
+								childLinkIndex + //save link index name for future use.. and a central place to edit when changes occur
+								"</div>";	
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-linkIdType' style='display:none' " +
+								"id='treeNode-linkIdType-" +
+								( depth + "-" + uid ) + "'>" + // end path id
+								linkIdType + //save table name for future use.. and a central place to edit when changes occur
+								"</div>";	
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-linkId' style='display:none' " +
+								"id='treeNode-linkId-" +
+								( depth + "-" + uid ) + "'>" + // end path id
+								linkId + //save table name for future use.. and a central place to edit when changes occur
+								"</div>";
+						
+					}
+					else //normal value node and edit icon
+					{
+						titleStr = "~ Leaf Value Node ~\n";
+						titleStr +=	"Path: \t" + path + nodeName + "\n";
+						
+						//left side of value
+						treeViewHandlerStr_ += 
+								"<div style='float:left' title='" + titleStr + "'>" +
+								"<b class='bold-header'>" + nodeName + "</b>" + 
+								"</div><div style='float:left'>&nbsp;:</div>";
+						
+						//normal edit icon
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+								(depth + "-" + uid) + "' " +
+								"onclick='handleTreeNodeClick(" +							 
+								depth + "," + uid + "," + 	
+								"1,\"value\"); event.stopPropagation();' " +
+								"title='Edit the value of this node.' " +
+								"></div>";						
+					}
 							
-							"<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
+					treeViewHandlerStr_ += "<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
 							(depth + "-" + uid) +			
 							"' class='" +
 							"treeNode-Value-leafNode-ColumnName-" + nodeName +
@@ -2270,9 +2355,6 @@
 				tableLinkName = tableLinkName.replace(/</g, "&lt");
 				tableLinkName = tableLinkName.replace(/>/g, "&gt");
 				
-				//var onmouseupJS = "";
-				//var newwindowJS = "";
-				//var newtabJS = ""; 
 				var treeNavContextMenuItemHandlers = [];
 				var tableComment = "";
 				var tableTitle = "";
@@ -2280,85 +2362,17 @@
 				{
 					var retVal  = getTreeViewTableStrings(tableLinkName);
 					
-//					onmouseupJS = retVal.onmouseupJS;
-//					newwindowJS = retVal.newwindowJS;
-//					newtabJS = retVal.newtabJS;
 					treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
 					tableComment = retVal.tableComment;
 					tableTitle = retVal.tableTitle;
-//					backLinkStr = retVal.backLinkStr;
-				}
-				//				//search for table link
-				//				for(j=0;j<treeMemberNames_.length;++j)
-				//					if(tableLinkName == treeMemberNames_[j])
-				//						break;
-				//				if(j != treeMemberNames_.length) //found table link
-				//				{
-				//					backLinkStr = "setupConfigGroupTreeView(\\\"" + 
-				//							treeGroupName_ + "\\\",\\\"" +
-				//							treeGroupKey_ + "\\\");"; 	
-				//					
-				//					//make replace screen js
-				//					onmouseupJS += "setupSpecificConfig(\"" + 
-				//							treeMemberNames_[j] + "\",\"" +
-				//							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
-				//					
-				//					treeNavContextMenuItemHandlers.push(onmouseupJS);
-				//										
-				//					//make new window link
-				//					newWindowStr = "setupSpecificConfig(\"" + 
-				//							treeMemberNames_[j] + "\",\"" +
-				//							treeMemberVersions_[j] + "\")";
-				//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-				//					
-				//					newWindowStr = location.pathname + 
-				//						location.search +
-				//						"&newWindowOps=" + newWindowStr;
-				//					
-				//					newwindowJS += "DesktopContent.openNewWindow(" +
-				//							"\"Configure\",\"\",\"" + 
-				//							newWindowStr + "\",false);";
-				//
-				//					treeNavContextMenuItemHandlers.push(newwindowJS);
-				//
-				//					
-				//					newtabJS += "DesktopContent.openNewBrowserTab(" +
-				//							"\"Configure\",\"\",\"" + 
-				//							newWindowStr + "\",false);";
-				//					
-				//					//escape another level for json string
-				//					//					newWindowStr = newWindowStr.replace(/\\\"/g, "AAAAA");
-				//					//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-				//					//					newWindowStr = newWindowStr.replace(/AAAAA/g, "\\\\\\\"");
-				//					//					newtabJS += "DesktopContent.openNewBrowserTab(" +
-				//					//							"\"" +
-				//					//							//"http://rulinux03.dhcp.fnal.gov:1983/urn:xdaq-application:lid=290/fa37JncCHryDsbzayy4cBWDxS22JjzhM" +
-				//					//							//"\"," +
-				//					//							//"\"" +
-				//					//							//"hello" +
-				//					//							newWindowStr +
-				//					//							"\"" +
-				//					//							");";
-				//					treeNavContextMenuItemHandlers.push(newtabJS);
-				//					
-				//					tableComment = treeMemberComments_[j];
-				//					//make comment html safe
-				//					tableComment = tableComment.replace(/</g, "&lt");
-				//					tableComment = tableComment.replace(/>/g, "&gt");
-				//					if(tableComment == _DEFAULT_COMMENT) //do not show if default
-				//						tableComment = "";
-				//					tableTitle = treeMemberNames_[j] + "-v" + 
-				//							treeMemberVersions_[j];
-				//					if(tableComment != "")
-				//						tableTitle += "\n\"" +
-				//							tableComment + "\"";
-				//				}
-				
+				}				
 
 				//////////=======================
 
-				var nodeEditType = (treeNavContextMenuItemHandlers.length == 0?"uid":
+				nodeEditType = (treeNavContextMenuItemHandlers.length == 0?"uid":
 						(depth == 0?"table":"link"));
+				nodeEditTypeDisplay = (treeNavContextMenuItemHandlers.length == 0?"UID":
+						(depth == 0?"Table":"Link"));
 				
 				treeViewHandlerStr_ += 
 						"<div class='treeNode' id='treeNode-" +
@@ -2416,6 +2430,15 @@
 					treeViewHandlerStr_ += "<td><div>"; //open pre-comment td and div
 				
 				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr><td>"; //open tree node name/link table row
+				
+
+				titleStr = 
+						"~ " + nodeEditTypeDisplay + " Tree Node ~";
+				if(tableTitle)
+					titleStr += "\n" + tableTitle;
+				if(depth > 0)
+					titleStr +=	"\nPath: \t\t" + path + nodeName + "\n";
+				
 				treeViewHandlerStr_	+= "<div class='treeNode-Value treeNode-Value-nonLeafNode " +
 						"treeNode-Value-nodeEditType-" + nodeEditType +
 						"' " +
@@ -2427,15 +2450,8 @@
 												"0,\"" +
 												nodeEditType +
 												"\")' ";
-				
-				//				if(nodeEditType != "table")
-				//					treeViewHandlerStr_	+= 	"onmousemove='handleTreeNodeMouseMove(" +							
-				//						depth + "," + uid + "," + 	
-				//						"event)' "									
-				//						;
-				
-				if(tableTitle != "") 
-					treeViewHandlerStr_ += "title='" + tableTitle +"' ";
+								
+				treeViewHandlerStr_ += "title='" + titleStr + "' ";
 				
 				treeViewHandlerStr_ += ">";
 				treeViewHandlerStr_ += value;
@@ -2456,6 +2472,7 @@
 							"1,\"" +
 							nodeEditType +
 							"\"); event.stopPropagation();' " +
+							"title='Edit the UID for this record (with the option to delete this record entirely).' " +
 							"></div>" +
 							"</div>";
 				treeViewHandlerStr_ += "</td><td style='width:100px'>";
@@ -2508,6 +2525,7 @@
 								"1,\"" +
 								nodeEditType +
 								"\"); event.stopPropagation();' " +
+								"title='Edit this link.' " + 
 								"></div>";// +
 								//"</div>";
 					treeViewHandlerStr_ += "</td></tr></table>"; //close linkmenu/editicon table row
@@ -2529,6 +2547,7 @@
 							"1,\"" +
 							nodeEditType +
 							"\"); event.stopPropagation();' " +
+							"title='Edit the comment for this table.' " +
 							"></div>" +
 							"</div></td>";
 				
@@ -2589,12 +2608,19 @@
 						treeGroupName_ + "\\\",\\\"" +
 						treeGroupKey_ + "\\\");"; 	
 
+				//make add new row js
+				onmouseupJS = "editTreeAddNewRow(\"" + 
+						treeMemberNames_[j] + "\");";
+
+				treeNavContextMenuItemHandlers.push(onmouseupJS);
+
 				//make replace screen js
-				onmouseupJS += "setupSpecificConfig(\"" + 
+				onmouseupJS = "setupSpecificConfig(\"" + 
 						treeMemberNames_[j] + "\",\"" +
 						treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
 
 				treeNavContextMenuItemHandlers.push(onmouseupJS);
+				
 
 				//make new window link
 				newWindowStr = "setupSpecificConfig(\"" + 
@@ -2638,11 +2664,11 @@
 				tableComment = tableComment.replace(/>/g, "&gt");
 				if(tableComment == _DEFAULT_COMMENT) //do not show if default
 					tableComment = "";
-				tableTitle = treeMemberNames_[j] + "-v" + 
+				tableTitle = "Table: \t\t" + treeMemberNames_[j] + "-v" + 
 						treeMemberVersions_[j];
 				if(tableComment != "")
-					tableTitle += "\n\"" +
-					tableComment + "\"";
+					tableTitle += "\nComment: \t\"" +
+						tableComment + "\"";
 			}
 			
 			return {
@@ -2652,7 +2678,47 @@
 			};
 		}
 		
-		//handleTreeNodeClick ~
+		//editTreeAddNewRow ~~
+		function editTreeAddNewRow(tableName)
+		{
+			Debug.log("editTreeAddNewRow " + tableName);
+					
+			//find table node element
+			var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
+			{
+				var i;
+				for(i=0;i<els.length;++i)
+					if(els[i].innerText == tableName)
+					{
+						_editingCellEl = els[i];
+						break;
+					}
+				if(i==els.length)
+				{
+					Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+					return;					
+				}
+			}
+
+			//setup globals (acting like a node edit)
+			treeEditingNodeType_ = "table-newRow";
+			treeEditingNodeIdString_ = _editingCellEl.id.substr(("treeNode-Value-").length);
+			treeEditingTargetTable_ = _editingCellEl.innerText;
+			_editingCellElOldValue = tableName;
+			treeEditingNodeDepth_ = 0;
+			
+			
+			//other globals are unused
+			treeEditingNodeParentIdString_ = "";
+			treeEditingTargetUID_ = "";
+			treeEditingTargetColumn_ = "";	
+			treeEditingNodeInitValue_ = "1"; //just something so editTreeNodeOK proceeds
+
+			
+			editTreeNodeOK();//act on globals			
+		}
+		
+		//handleTreeNodeClick ~~
 		function handleTreeNodeClick(depth,uid,editClick,type)
 		{
 			var idString = depth + "-" + uid;
@@ -2776,7 +2842,8 @@
 					
 					selectThisTreeNode(idString,type);
 				}
-				else if(type == "link" || type == "value")
+				else if(type == "link" || type == "value" ||
+						type == "link-disconnected")
 				{
 					//edit ID (no keys active)
 					Debug.log("edit link/value mode");
@@ -2809,7 +2876,7 @@
 						treeEditingTargetTable_ = pel.innerText;
 					}										
 					
-					if(type == "value")
+					if(type == "value" || type == "link-disconnected")
 						treeEditingTargetColumn_ = el.childNodes[0].innerText; //get from bold node
 					else //link has col as start of value
 						treeEditingTargetColumn_ = el.innerText.split('-')[0]; //get before dash
@@ -4571,7 +4638,11 @@
 				
 				if(colType == "Author" || 
 						colType == "Timestamp")
+				{
+					Debug.log("Can not edit Author or Timestamp fields.",
+							Debug.WARN_PRIORITY);
 					return false;
+				}
 				
 				var str = "";		
 				var optionIndex = -1;
@@ -4645,34 +4716,131 @@
 					setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 				
 			}	
-			else if(type == "link")
+			else if(type == "link" || 
+					type == "link-disconnected")
 			{
 				treeEditingNodeType_ = type;
 								
 				//edit link entry in record (2 columns: link table and id)							
 				el = document.getElementById("treeNode-Value-" + idString);
-				_editingCellElOldValue = el.innerText;				
-				var linkIdType = el.innerText.split('(')[1].split(' ')[0]; 
-				var initVal = el.innerText.split(')')[0].split('=')[1].substr(1);
+									
+				var linkIdType;		
+				var initIdVal;		
+				if(type == "link-disconnected")
+				{
+					_editingCellElOldValue = el.innerHTML;	
+					linkIdType = document.getElementById("treeNode-linkIdType-" + idString).innerText;
+					initIdVal = document.getElementById("treeNode-linkId-" + idString).innerText;
+				}
+				else
+				{
+					_editingCellElOldValue = el.innerText;	
+					linkIdType = el.innerText.split('(')[1].split(' ')[0];
+					initIdVal = el.innerText.split(')')[0].split('=')[1].substr(1);
+				}
 				
-				var linkTable = document.getElementById("treeNode-linkTableName-" + idString).innerText; 
+				
+				var linkTable = document.getElementById("treeNode-linkTableName-" + idString);
+				if(linkTable)
+					linkTable = linkTable.innerText; 
+				else
+					linkTable = "";
 				var linkIndex = document.getElementById("treeNode-childLinkIndex-" + idString).innerText;										
 
 				Debug.log("linkTable " + linkTable);
 				Debug.log("linkIdType " + linkIdType); // "UID" or "GroupID"
-				Debug.log("initIdVal " + initVal);  //the ID
+				Debug.log("initIdVal " + initIdVal);  //the ID
 				Debug.log("linkIndex " + linkIndex);  //the link index
 				
 				treeEditingNodeType_ += "-" + linkIdType;
-				treeEditingNodeInitValue_ = linkTable + "," + initVal;
+				treeEditingNodeInitValue_ = linkTable + "," + initIdVal;
 				
 				var optionIndex = -1;
 				//////////////////////////
-				//used to repeatedly get link-to-choices
-				//	save last successfuly table index to optionIndex
+				//localGetLinkToChoices
+				//	used to repeatedly get link-to-choices
+				//		save last successfull table index to optionIndex
 				function localGetLinkToChoices(linkTableName)
-				{				
+				{
+					
+					//localCreateLinkEditHTML ~~
+					//	creates edit link html based on linkToChoices
+					//	and linkTableName
+					function localCreateLinkEditHTML(linkToChoices)
+					{
+						var str = "";		
+						optionIndex = -1;
 
+						Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+
+						str += treeEditingTargetColumn_ + "<br>";
+
+						str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
+						str += "<td style='text-align:right'>Table:</td><td>";
+						str += "<select  onkeydown='keyHandler(event,this)' " +
+								"onmouseup='event.stopPropagation();'" +
+								"onclick='event.stopPropagation();'" +
+								"style='" + 
+								"height:" + (21) + "px'>";
+						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+						{			
+							str += "<option value='" + _tableLinkDropdownChoices[i] 
+																				 + "'>";
+							str += _tableLinkDropdownChoices[i];	//can display however
+							str += "</option>";
+							if(_tableLinkDropdownChoices[i] 
+														 == linkTableName)
+								optionIndex = i; //get starting sel index
+						}				
+						str += "</select>";
+						str += "</td></tr><tr>";
+
+						str += "<td style='text-align:right'>";
+						str += linkIdType + ":";
+						str += "</td><td>";
+
+						str += "<select  onkeydown='keyHandler(event,this)' " +
+								"onmouseup='event.stopPropagation();'" +
+								"onclick='event.stopPropagation();'" +
+								"style='" + 
+								"height:" + (21) + "px'>";
+						var linkToChoice;
+						var linkToOptionIndex = 0; //default to first
+						for(var i=0;i<linkToChoices.length;++i)
+						{			
+							linkToChoice = DesktopContent.getXMLValue(linkToChoices[i]);
+							str += "<option value='" + linkToChoice	 + "'>";
+							str += linkToChoice;	//can display however
+							str += "</option>";
+							if(linkToChoice	 == initIdVal)
+								linkToOptionIndex = i; //get starting sel index
+						}				
+						str += "</select>";						
+						str += "</td></tr></table>";
+
+						str += _OK_CANCEL_DIALOG_STR;		
+
+						el.innerHTML = str;
+
+						//select initial value
+						var sel = el.getElementsByTagName("select")[0];
+						sel.selectedIndex = optionIndex;	
+						if(linkToChoices.length)
+						{
+							el.getElementsByTagName("select")[1].selectedIndex = linkToOptionIndex;	
+							el.getElementsByTagName("select")[1].focus();
+						}
+						else
+							el.getElementsByTagName("select")[1].disabled = true;
+
+						sel.onchange = 
+								function() {
+							Debug.log("Select table changed: " + sel.value);
+							localGetLinkToChoices(sel.value); //re-request the linkToChoices
+						};
+					} //end of localCreateLinkEditHTML definition
+					
+					
 					var linkTableVersion = -1;
 					for(var j=0;j<treeMemberNames_.length;++j)
 						if(linkTableName == treeMemberNames_[j])
@@ -4682,7 +4850,11 @@
 						}
 					if(linkTableVersion == -1)
 					{
-						Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+						//if there is no valid table name, 
+						//	then jump to html creation
+						
+						Debug.log("Invalid tree member table targeted!");//,Debug.HIGH_PRIORITY);
+						localCreateLinkEditHTML([]);						
 						return;					
 					}
 
@@ -4719,84 +4891,84 @@
 						}
 
 						var linkToChoices = req.responseXML.getElementsByTagName("linkToChoice");
+						localCreateLinkEditHTML(linkToChoices);
 
-
-						var str = "";		
-						optionIndex = -1;
-
-						Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
-
-						str += treeEditingTargetColumn_ + "<br>";
-
-						str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
-						str += "<td style='text-align:right'>Table:</td><td>";
-						str += "<select  onkeydown='keyHandler(event,this)' " +
-								"onmouseup='event.stopPropagation();'" +
-								"onclick='event.stopPropagation();'" +
-								"style='" + 
-								"height:" + (21) + "px'>";
-						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
-						{			
-							str += "<option value='" + _tableLinkDropdownChoices[i] 
-																				 + "'>";
-							str += _tableLinkDropdownChoices[i];	//can display however
-							str += "</option>";
-							if(_tableLinkDropdownChoices[i] 
-														 == linkTableName)
-								optionIndex = i; //get starting sel index
-						}				
-						str += "</select>";
-						str += "</td></tr><tr>";
-
-						str += "<td style='text-align:right'>";
-						str += linkIdType + ":";
-						str += "</td><td>";
-
-
-						str += "<select  onkeydown='keyHandler(event,this)' " +
-								"onmouseup='event.stopPropagation();'" +
-								"onclick='event.stopPropagation();'" +
-								"style='" + 
-								"height:" + (21) + "px'>";
-						var linkToChoice;
-						var linkToOptionIndex = 0; //default to first
-						for(var i=0;i<linkToChoices.length;++i)
-						{			
-							linkToChoice = DesktopContent.getXMLValue(linkToChoices[i]);
-							str += "<option value='" + linkToChoice	 + "'>";
-							str += linkToChoice;	//can display however
-							str += "</option>";
-							if(linkToChoice	 == initVal)
-								linkToOptionIndex = i; //get starting sel index
-						}				
-						str += "</select>";
-						//					str += "<input type='text' onkeydown='keyHandler(event)' style='width:" + 
-						//							(150) + "px; height:" + (el.offsetHeight) + "px' value='";
-						//					str += initVal;
-						//					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
-						//							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
-						//							"onclick='event.stopPropagation();'" +
-						//							">";
-						str += "</td></tr></table>";
-
-						str += _OK_CANCEL_DIALOG_STR;		
-
-						el.innerHTML = str;
-
-						//select initial value
-						var sel = el.getElementsByTagName("select")[0];
-						sel.selectedIndex = optionIndex;	
-						el.getElementsByTagName("select")[1].selectedIndex = linkToOptionIndex;	
-						el.getElementsByTagName("select")[1].focus();	
-						
-						sel.onchange = 
-								function() {
-							Debug.log("Select table changed: " + sel.value);
-							localGetLinkToChoices(sel.value); //re-request the linkToChoices
-						};
-
-						//select text in new input
-						//setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
+//						var str = "";		
+//						optionIndex = -1;
+//
+//						Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+//
+//						str += treeEditingTargetColumn_ + "<br>";
+//
+//						str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
+//						str += "<td style='text-align:right'>Table:</td><td>";
+//						str += "<select  onkeydown='keyHandler(event,this)' " +
+//								"onmouseup='event.stopPropagation();'" +
+//								"onclick='event.stopPropagation();'" +
+//								"style='" + 
+//								"height:" + (21) + "px'>";
+//						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+//						{			
+//							str += "<option value='" + _tableLinkDropdownChoices[i] 
+//																				 + "'>";
+//							str += _tableLinkDropdownChoices[i];	//can display however
+//							str += "</option>";
+//							if(_tableLinkDropdownChoices[i] 
+//														 == linkTableName)
+//								optionIndex = i; //get starting sel index
+//						}				
+//						str += "</select>";
+//						str += "</td></tr><tr>";
+//
+//						str += "<td style='text-align:right'>";
+//						str += linkIdType + ":";
+//						str += "</td><td>";
+//
+//
+//						str += "<select  onkeydown='keyHandler(event,this)' " +
+//								"onmouseup='event.stopPropagation();'" +
+//								"onclick='event.stopPropagation();'" +
+//								"style='" + 
+//								"height:" + (21) + "px'>";
+//						var linkToChoice;
+//						var linkToOptionIndex = 0; //default to first
+//						for(var i=0;i<linkToChoices.length;++i)
+//						{			
+//							linkToChoice = DesktopContent.getXMLValue(linkToChoices[i]);
+//							str += "<option value='" + linkToChoice	 + "'>";
+//							str += linkToChoice;	//can display however
+//							str += "</option>";
+//							if(linkToChoice	 == initVal)
+//								linkToOptionIndex = i; //get starting sel index
+//						}				
+//						str += "</select>";
+//						//					str += "<input type='text' onkeydown='keyHandler(event)' style='width:" + 
+//						//							(150) + "px; height:" + (el.offsetHeight) + "px' value='";
+//						//					str += initVal;
+//						//					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+//						//							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
+//						//							"onclick='event.stopPropagation();'" +
+//						//							">";
+//						str += "</td></tr></table>";
+//
+//						str += _OK_CANCEL_DIALOG_STR;		
+//
+//						el.innerHTML = str;
+//
+//						//select initial value
+//						var sel = el.getElementsByTagName("select")[0];
+//						sel.selectedIndex = optionIndex;	
+//						el.getElementsByTagName("select")[1].selectedIndex = linkToOptionIndex;	
+//						el.getElementsByTagName("select")[1].focus();	
+//						
+//						sel.onchange = 
+//								function() {
+//							Debug.log("Select table changed: " + sel.value);
+//							localGetLinkToChoices(sel.value); //re-request the linkToChoices
+//						};
+//
+//						//select text in new input
+//						//setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
 
 
 							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -6097,7 +6269,6 @@
 		{							
 			if(!_editingCellEl) return;
 			Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
-
 			
 			
 			///////////////////////////////////////////////
@@ -6110,6 +6281,19 @@
 					treeMemberComments_[tableIndex] = newValue;
 					_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
 				}						
+				else if(treeEditingNodeType_ == "table-newRow")
+				{
+					//replace the value that was erased with table name
+					_editingCellEl.appendChild(document.createTextNode(treeEditingTargetTable_));
+					
+					//reset children
+					toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
+							treeEditingNodeIdString_.split('-')[1],false);
+					document.getElementById("treeNode-ChildrenOf-" + 
+							treeEditingNodeIdString_).innerHTML = "";
+					toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
+							treeEditingNodeIdString_.split('-')[1],true);
+				}
 				else if(treeEditingNodeType_ == "uid")
 				{
 					//modify display and nodename with new value
@@ -6349,8 +6533,10 @@
 			} //end localEditTreeNodeOKRequestsComplete
 			///////////////////////////////////////////////
 
-				
-			if(treeEditingNodeType_ == "table" || 
+
+			if(
+					treeEditingNodeType_ == "table" || 
+					treeEditingNodeType_ == "table-newRow" || 
 					treeEditingNodeType_ == "uid" ||
 					treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
 					treeEditingNodeType_ == "value" ||
@@ -6370,8 +6556,12 @@
 					var sel = _editingCellEl.getElementsByTagName("select")[0];
 					newValue = sel.options[sel.selectedIndex].value;					
 					sel = _editingCellEl.getElementsByTagName("select")[1];
-					newValue += "," + sel.options[sel.selectedIndex].value;					
+					newValue += ",";
+					if(sel.selectedIndex >= 0) //if valid
+						newValue += "," + sel.options[sel.selectedIndex].value;					
 				}
+				else if(treeEditingNodeType_ == "table-newRow")
+					newValue = ""; //no value needed
 				else
 					newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 				
@@ -6445,7 +6635,32 @@
 					);
 
 					//add tree save buttons
-					treeHasChanged();					
+					treeHasChanged();				
+					
+					//finish special handling of new row					
+					if(treeEditingNodeType_ == "table-newRow")
+					{						
+						//if hiding status, switch and refresh
+						if(treeViewHideStatus_)
+						{
+							//treeViewHideStatus_ = false;
+							//refreshTreeView();
+							Debug.log("Note: The tree-view menu option 'Hide Status=False' " +
+									" is currently hiding records with Status fields evaluating to " +
+									" false. If you do not see your new record, this may be why; click the tree-view menu " + 
+									"in the top-left and select '" +
+									"<a href='#' onclick='treeViewHideStatus_=false;refreshTreeView();'>" +
+									"Show Status=False" +
+									"</a>" +									
+									".'",
+									Debug.INFO_PRIORITY);
+						}
+						
+						Debug.log("Successfully added a new record to temporary version '" +
+								resultingTargetTableVersion + "' of table '" + 
+								treeEditingTargetTable_ + ".'",
+								Debug.INFO_PRIORITY);						
+					}
 
 						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 				); //end of getActiveConfigGroups handler
@@ -6460,6 +6675,22 @@
 			//withhold ending edit until after request completes
 			//			_editingCell = false;
 			//			_editingCellEl = 0;	
+		}
+		
+		//refreshTreeView ~~
+		//	reduce tree back to only root children
+		function refreshTreeView()
+		{
+			var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
+			var idString;
+			
+			//for each table, toggle children to hidden, and delete childrenOf node
+			for(var i=0;i<els.length;++i)
+			{
+				idString = els[i].id.substr(("treeNode-Value-").length);
+				toggleTreeChildren(idString.split('-')[0],idString.split('-')[1],false);
+				document.getElementById("treeNode-ChildrenOf-" + idString).innerHTML = "";
+			}
 		}
 		
 		//editTreeNodePropagateChange ~~
@@ -6499,6 +6730,44 @@
 					}
 				}
 			}
+			else if(treeEditingNodeType_ == "table-newRow")
+			{
+				//since add row can only be done at root table
+				//find all Links with target table and reset children				
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-link");
+					var idString;
+					var table, uid;
+					var el;
+					for(var i=0;i<els.length;++i)
+					{
+						idString = els[i].id.substr(("treeNode-Value-").length);
+						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						if(table == treeEditingTargetTable_)
+						{
+							uid = els[i].innerText;
+							linkIdType = uid.split('(')[1].split(' ')[0];
+
+							if(linkIdType == "UID") continue; //only consider link GroupIDs
+							
+							//reset children
+							var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+									idString);
+							var wasDisplayed = elChildrenNode.style.display != "none";
+
+							toggleTreeChildren(
+									idString.split('-')[0],
+									idString.split('-')[1],false);
+							elChildrenNode.innerHTML = "";
+
+							if(wasDisplayed)
+								toggleTreeChildren(
+										idString.split('-')[0],
+										idString.split('-')[1],true);
+						}
+					}
+				}
+			}			
 			else if(treeEditingNodeType_ == "uid")
 			{								
 				//parameters:
@@ -7175,7 +7444,8 @@
 			
 			if(_editingCellEl) //return old value, convert from text to html
 			{
-				if(treeEditingNodeType_ == "value-bool") 
+				if(treeEditingNodeType_ == "value-bool" ||
+						treeEditingNodeType_.indexOf("link-disconnected") == 0) 
 				{
 					//take old value as HTML for bool values
 					_editingCellEl.innerHTML = _editingCellElOldValue;
@@ -8211,21 +8481,22 @@
 									 "Hide Info Fields"
 									 ];
 			
-			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
-					treeGroupName_ + "\",\"" +
-					treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");";
-			
-			//if tree has changed, ask if you really want to refresh
-			//else, refresh
-			var refreshWrapper = "if(treeHasChanged_) DesktopContent.popUpVerification(" + 
-					"\"The tree has been modified. Refreshing will discard changes and " +
-					"revert to the tree-view of group '" + treeGroupName_ + " (" + 
-					treeGroupKey_ + ").' <br><br>Are you sure you want to Refresh?\", " +
-					"function() {" + refreshLinkStr + "},0,\"#efeaea\",0,\"#770000\");" + 
-					"else {" + refreshLinkStr + "}";
+			var refreshLinkStr = "refreshTreeView();";
+			//			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
+			//					treeGroupName_ + "\",\"" +
+			//					treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");";
+			//			
+			//			//if tree has changed, ask if you really want to refresh
+			//			//else, refresh
+			//			var refreshWrapper = "if(treeHasChanged_) DesktopContent.popUpVerification(" + 
+			//					"\"The tree has been modified. Refreshing will discard changes and " +
+			//					"revert to the tree-view of group '" + treeGroupName_ + " (" + 
+			//					treeGroupKey_ + ").' <br><br>Are you sure you want to Refresh?\", " +
+			//					"function() {" + refreshLinkStr + "},0,\"#efeaea\",0,\"#770000\");" + 
+			//					"else {" + refreshLinkStr + "}";
 						
 			var menuItemHandlers = [
-							refreshWrapper,
+							refreshLinkStr,
 							"treeViewHideStatus_ = !treeViewHideStatus_;" +
 													refreshLinkStr,
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
@@ -8542,6 +8813,7 @@
 		function handleTreeNodeMouseMove(depth,uid,event)
 		{
 			event.stopPropagation();
+			DesktopContent.mouseMove(event); //keep desktop content happy
 
 			if(_editingCell) return; //no setting while editing
 

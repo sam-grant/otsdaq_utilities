@@ -550,7 +550,11 @@ throw (xgi::exception::Exception)
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,newTemporaryVersion);
 	}
 	else
-		__MOUT__ << "Command request not recognized." << std::endl;
+	{
+		__SS__ << "Command request not recognized." << std::endl;
+		__MOUT__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
 
 	__MOUT__ << "Wrapping up..." << std::endl;
 
@@ -780,11 +784,25 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 					modifiedTablesMap.end())
 			{
 				__MOUT__ << "Found modified table " <<
-						(*modifiedTablesMapIt).first << ":" <<
+						(*modifiedTablesMapIt).first << ": trying... " <<
 						(*modifiedTablesMapIt).second << std::endl;
 
-				allCfgInfo[activePair.first].configurationPtr_->setActiveView(
+				try
+				{
+					allCfgInfo[activePair.first].configurationPtr_->setActiveView(
 						(*modifiedTablesMapIt).second);
+				}
+				catch(...)
+				{
+					__SS__ << "Modified table version v" << (*modifiedTablesMapIt).second <<
+							" failed. Reverting to v" <<
+							allCfgInfo[activePair.first].configurationPtr_->getView().getVersion() <<
+							"." <<
+							std::endl;
+					__MOUT_WARN__ << "Warning detected!\n\n " << ss.str() << std::endl;
+					xmldoc.addTextElementToData("Warning", "Error generating XML tree!\n\n" +
+							std::string(ss.str()));
+				}
 			}
 
 			xmldoc.addTextElementToData("ActiveTableVersion",
@@ -851,6 +869,21 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
 				xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+
+				//add extra fields for disconnected link
+				xmldoc.addTextElementToParent("LinkConfigurationName",
+						t.getDisconnectedTableName(),
+						parentEl);
+				xmldoc.addTextElementToParent("LinkIndex",
+						t.getChildLinkIndex(),
+						parentEl);
+				xmldoc.addTextElementToParent("LinkIDType",
+						(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+						parentEl);
+				xmldoc.addTextElementToParent("LinkID",
+						t.getDisconnectedLinkID(),
+						parentEl);
+
 				return;
 			}
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
@@ -1044,6 +1077,9 @@ try
 			type == "value-groupid" ||
 			type == "value-bool")
 		col = config->getView().findCol(colName);
+	else if(
+			type == "table" ||
+			type == "table-newRow"); // column N/A
 	else
 	{
 		__SS__ << "Impossible! Unrecognized edit type: " << type << std::endl;
@@ -1063,41 +1099,21 @@ try
 		}
 
 	}
-//	else if(type == "uid" ||
-//			type == "value" ||
-//			type == "value-groupid" ||
-//			type == "value-bool")
-//	{
-//		if(config->getView().isValueTheSame(newValue,
-//				config->getView().findRow(config->getView().getColUID(),uid),
-//				col))
-//		{
-//			__SS__ << "Value '" << newValue <<
-//					"' is the same as the current value. No need to save change to tree node." <<
-//					std::endl;
-//			throw std::runtime_error(ss.str());
-//		}
-//	}
-////	else if(type == "link")
-////	{
-////
-////	}
-//	else
-//	{
-//		__SS__ << "Unrecognized edit type: " << type << std::endl;
-//		throw std::runtime_error(ss.str());
-//	}
 
 
-	//if version is not temporary make a new temporary version
-	ConfigurationVersion temporaryVersion(version);
-	if(!version.isTemporaryVersion())
-	{
-		temporaryVersion = config->createTemporaryView(version);
-		__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
-	}
+	//version handling:
+	//	always make a new temporary-version from source-version
+	//	edit temporary-version
+	//		if edit fails
+	//			delete temporary-version
+	//		else
+	//			return new temporary-version
+	//			if source-version was temporary
+	//				then delete source-version
 
-	__MOUT__ << "Editing temporary version " << temporaryVersion << std::endl;
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
+
+	__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
 
 	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
 
@@ -1109,6 +1125,11 @@ try
 		{
 			//edit comment
 			cfgView->setURIEncodedComment(newValue);
+		}
+		else if(type == "table-newRow")
+		{
+			//add row
+			cfgView->addRow();
 		}
 		else if(type == "uid" ||
 				type == "value" ||
