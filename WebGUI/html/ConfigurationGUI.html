@@ -231,7 +231,6 @@
 		
 
 		var _contextMenuEl = 0;
-		var _treeNavContextMenuItems = ["Add new Record to Table", "Go-to Table View","Open in new Desktop Window","Open in new Browser Tab"];
 		
 		var _msChosenGroupName;
 		var _msChosenGroupKey;
@@ -2176,7 +2175,7 @@
 			var backLinkStr;
 			var titleStr;
 			var nodeEditType, nodeEditTypeDisplay;
-			var isLink,isDisconnected;
+			var isLink,isDisconnected, isGroupLink;
 			
 			var pathHTML = path;
 			//make path html safe
@@ -2309,6 +2308,7 @@
 
 				isLink = false;
 				isDisconnected = false;
+				isGroupLink = false;
 				tableLinkName = "";
 				
 				//get value and table link name for this parent
@@ -2324,6 +2324,7 @@
 						++offset;
 						value = nodes[i].children[offset]; //get link ID node
 						--childrenLength;
+						isGroupLink = value.nodeName == "GroupID";
 						value =  
 								nodeName + "-(" + 
 								value.nodeName + " = " + value.getAttribute("value") + ")";	
@@ -2358,14 +2359,16 @@
 						"</label>";
 				tableLinkName = tableLinkName.replace(/</g, "&lt");
 				tableLinkName = tableLinkName.replace(/>/g, "&gt");
-				
+
+				var treeNavContextMenuItems = [];
 				var treeNavContextMenuItemHandlers = [];
 				var tableComment = "";
 				var tableTitle = "";
 				
 				{
-					var retVal  = getTreeViewTableStrings(tableLinkName);
+					var retVal  = getTreeViewTableStrings(tableLinkName, isLink);
 					
+					treeNavContextMenuItems = retVal.treeNavContextMenuItems;
 					treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
 					tableComment = retVal.tableComment;
 					tableTitle = retVal.tableTitle;
@@ -2497,11 +2500,25 @@
 					
 					treeViewHandlerStr_ += 
 						"onmousedown='" + // start link onmousedown	
-						"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
-						"[";
+						"SimpleContextMenu.createMenu(["; //open array for items
+					
+					//output item strings
+					for(j=0;j<treeNavContextMenuItems.length;++j)
+					{
+						if(j)
+							treeViewHandlerStr_ += ",";
+						treeViewHandlerStr_ += "\"" + treeNavContextMenuItems[j] + "\"";
+					}
+					
+					treeViewHandlerStr_ += //end items and open array for item handlers
+							"]," +
+							"[";
 					
 					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
 					{
+						if(j)
+							treeViewHandlerStr_ += ",";
+						
 						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//need to escape all quotes by one more level
 						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
@@ -2511,8 +2528,6 @@
 						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
 						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
 						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-						if(j != treeNavContextMenuItemHandlers.length-1)
-							treeViewHandlerStr_ += ",";
 					}
 					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
 							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
@@ -2598,13 +2613,22 @@
 		}
 
 		//getTreeViewTableStrings ~
-		function getTreeViewTableStrings(tableLinkName)
+		function getTreeViewTableStrings(tableLinkName, isLink)
 		{
 			var backLinkStr;
 			var onmouseupJS = "";
 			var newwindowJS = "";
-			var newtabJS = ""; 
+			var newtabJS = "";
+			
+			var DEFAULT_treeNavContextMenuItems = [
+					   "Add new Record to Table", 
+					   "Go-to Table View",
+					   "Open in new Desktop Window",
+					   "Open in new Browser Tab"];
+			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
+			var menuIndex = 0;
+					
 			var tableComment = ""; 
 			var tableTitle = ""; 
 			
@@ -2622,13 +2646,20 @@
 				onmouseupJS = "editTreeAddNewRow(\"" + 
 						treeMemberNames_[j] + "\");";
 
-				treeNavContextMenuItemHandlers.push(onmouseupJS);
+				if(!isLink)
+				{
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(onmouseupJS);
+				}
+				else
+					++menuIndex; //skip 1st menu item
 
 				//make replace screen js
 				onmouseupJS = "setupSpecificConfig(\"" + 
 						treeMemberNames_[j] + "\",\"" +
 						treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
 
+				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 				treeNavContextMenuItemHandlers.push(onmouseupJS);
 				
 
@@ -2646,26 +2677,15 @@
 						"\"Configure\",\"\",\"" + 
 						newWindowStr + "\",false);";
 
+				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 				treeNavContextMenuItemHandlers.push(newwindowJS);
 
 
 				newtabJS += "DesktopContent.openNewBrowserTab(" +
 						"\"Configure\",\"\",\"" + 
 						newWindowStr + "\",false);";
-
-				//escape another level for json string
-				//					newWindowStr = newWindowStr.replace(/\\\"/g, "AAAAA");
-				//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-				//					newWindowStr = newWindowStr.replace(/AAAAA/g, "\\\\\\\"");
-				//					newtabJS += "DesktopContent.openNewBrowserTab(" +
-				//							"\"" +
-				//							//"http://rulinux03.dhcp.fnal.gov:1983/urn:xdaq-application:lid=290/fa37JncCHryDsbzayy4cBWDxS22JjzhM" +
-				//							//"\"," +
-				//							//"\"" +
-				//							//"hello" +
-				//							newWindowStr +
-				//							"\"" +
-				//							");";
+				
+				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 				treeNavContextMenuItemHandlers.push(newtabJS);
 
 				tableComment = treeMemberComments_[j];
@@ -2684,6 +2704,7 @@
 			return {
 				"tableTitle" : 						tableTitle,
 				"tableComment" : 					tableComment,
+				"treeNavContextMenuItems" :			treeNavContextMenuItems,
 				"treeNavContextMenuItemHandlers" : 	treeNavContextMenuItemHandlers
 			};
 		}
@@ -4749,15 +4770,14 @@
 									
 				var linkIdType;		
 				var initIdVal;		
+				_editingCellElOldValue = el.innerHTML;
 				if(type == "link-disconnected")
-				{
-					_editingCellElOldValue = el.innerHTML;	
+				{	
 					linkIdType = document.getElementById("treeNode-linkIdType-" + idString).innerText;
 					initIdVal = document.getElementById("treeNode-linkId-" + idString).innerText;
 				}
 				else
 				{
-					_editingCellElOldValue = el.innerText;	
 					linkIdType = el.innerText.split('(')[1].split(' ')[0];
 					initIdVal = el.innerText.split(')')[0].split('=')[1].substr(1);
 				}
@@ -4780,6 +4800,23 @@
 				treeEditingNodeInitValue_ = linkTable + "," + initIdVal;
 				
 				var optionIndex = -1;
+				
+				
+				//////////////////////////
+				//localSetupGroupMemberEdit
+				//	setup add/remove group members controls
+				//	parameters are member uids and all possible uids
+				function localSetupGroupMemberEdit(groupMembers, groupChoices)
+				{
+					Debug.log("localSetupGroupMemberEdit");
+
+					//new element with multi-select box of UID members
+					var nel = document.createElement("div");
+				}
+				
+				
+				
+				
 				//////////////////////////
 				//localGetLinkToChoices
 				//	used to repeatedly get link-to-choices
@@ -4861,7 +4898,8 @@
 								function() {
 							Debug.log("Select table changed: " + sel.value);
 							localGetLinkToChoices(sel.value); //re-request the linkToChoices
-						};
+						};						
+						
 					} //end of localCreateLinkEditHTML definition
 					
 					
@@ -4917,83 +4955,12 @@
 						var linkToChoices = req.responseXML.getElementsByTagName("linkToChoice");
 						localCreateLinkEditHTML(linkToChoices);
 
-//						var str = "";		
-//						optionIndex = -1;
-//
-//						Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
-//
-//						str += treeEditingTargetColumn_ + "<br>";
-//
-//						str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
-//						str += "<td style='text-align:right'>Table:</td><td>";
-//						str += "<select  onkeydown='keyHandler(event,this)' " +
-//								"onmouseup='event.stopPropagation();'" +
-//								"onclick='event.stopPropagation();'" +
-//								"style='" + 
-//								"height:" + (21) + "px'>";
-//						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
-//						{			
-//							str += "<option value='" + _tableLinkDropdownChoices[i] 
-//																				 + "'>";
-//							str += _tableLinkDropdownChoices[i];	//can display however
-//							str += "</option>";
-//							if(_tableLinkDropdownChoices[i] 
-//														 == linkTableName)
-//								optionIndex = i; //get starting sel index
-//						}				
-//						str += "</select>";
-//						str += "</td></tr><tr>";
-//
-//						str += "<td style='text-align:right'>";
-//						str += linkIdType + ":";
-//						str += "</td><td>";
-//
-//
-//						str += "<select  onkeydown='keyHandler(event,this)' " +
-//								"onmouseup='event.stopPropagation();'" +
-//								"onclick='event.stopPropagation();'" +
-//								"style='" + 
-//								"height:" + (21) + "px'>";
-//						var linkToChoice;
-//						var linkToOptionIndex = 0; //default to first
-//						for(var i=0;i<linkToChoices.length;++i)
-//						{			
-//							linkToChoice = DesktopContent.getXMLValue(linkToChoices[i]);
-//							str += "<option value='" + linkToChoice	 + "'>";
-//							str += linkToChoice;	//can display however
-//							str += "</option>";
-//							if(linkToChoice	 == initVal)
-//								linkToOptionIndex = i; //get starting sel index
-//						}				
-//						str += "</select>";
-//						//					str += "<input type='text' onkeydown='keyHandler(event)' style='width:" + 
-//						//							(150) + "px; height:" + (el.offsetHeight) + "px' value='";
-//						//					str += initVal;
-//						//					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
-//						//							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
-//						//							"onclick='event.stopPropagation();'" +
-//						//							">";
-//						str += "</td></tr></table>";
-//
-//						str += _OK_CANCEL_DIALOG_STR;		
-//
-//						el.innerHTML = str;
-//
-//						//select initial value
-//						var sel = el.getElementsByTagName("select")[0];
-//						sel.selectedIndex = optionIndex;	
-//						el.getElementsByTagName("select")[1].selectedIndex = linkToOptionIndex;	
-//						el.getElementsByTagName("select")[1].focus();	
-//						
-//						sel.onchange = 
-//								function() {
-//							Debug.log("Select table changed: " + sel.value);
-//							localGetLinkToChoices(sel.value); //re-request the linkToChoices
-//						};
-//
-//						//select text in new input
-//						//setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
-
+						if(0 && linkIdType == "GroupID")
+						{
+							var groupMembers = req.responseXML.getElementsByTagName("GroupMember");
+							var groupChoices = req.responseXML.getElementsByTagName("GroupChoice");
+							localSetupGroupMemberEdit(groupMembers,groupChoices);
+						}
 
 							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 					); //end of getLinkToChoices handler
@@ -6260,6 +6227,15 @@
 			}
 			
 			if(treeHasChanged_) return;
+
+			//delete all buttons
+			var svBtn = document.getElementById("treeSaveButton");
+			while(svBtn)				
+			{
+				svBtn.parentNode.removeChild(svBtn);
+				svBtn = document.getElementById("treeSaveButton");
+			}
+
 			
 			treeHasChanged_ = true;
 			
@@ -6325,7 +6301,9 @@
 					
 					var el = document.getElementById("treeNode-nodeName-" + treeEditingNodeIdString_);
 					el.innerHTML = "";
-					el.appendChild(document.createTextNode(newValue)); 
+					el.appendChild(document.createTextNode(newValue));
+					
+					//reset children
 				}
 				else if(treeEditingNodeType_ == "delete-uid")
 				{
@@ -7616,7 +7594,7 @@
 			if(_editingCellEl) //return old value, convert from text to html
 			{
 				if(treeEditingNodeType_ == "value-bool" ||
-						treeEditingNodeType_.indexOf("link-disconnected") == 0) 
+						treeEditingNodeType_.indexOf("link") == 0) 
 				{
 					//take old value as HTML for bool values
 					_editingCellEl.innerHTML = _editingCellElOldValue;

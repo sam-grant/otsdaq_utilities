@@ -67,7 +67,7 @@ private:
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl, bool hideStatusFalse);
     void 			handleSaveTreeNodeEditXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, const std::string &type, const std::string &uid, const std::string &column, const std::string &newValue);
     void 			handleGetAffectedGroupsXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey, const std::string &modifiedTables);
-    void			handleGetLinkToChoicesXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName, const ConfigurationVersion &linkToTableVersion, const std::string &linkIdType, const std::string &linkIndex);
+    void			handleGetLinkToChoicesXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName, const ConfigurationVersion &linkToTableVersion, const std::string &linkIdType, const std::string &linkIndex, const std::string &initLinkId);
 
     void			saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryVersion);
 

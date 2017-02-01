@@ -442,14 +442,16 @@ throw (xgi::exception::Exception)
 		std::string 	linkToTableVersion 	= CgiDataUtilities::getData(cgi,"linkToTableVersion");
 		std::string 	linkIdType 			= CgiDataUtilities::getData(cgi,"linkIdType");
 		std::string 	linkIndex 			= CgiDataUtilities::getData(cgi,"linkIndex");
+		std::string 	initLinkId 			= CgiDataUtilities::getData(cgi,"initLinkId");
 
 		__MOUT__ << "linkToTableName: " << linkToTableName << std::endl;
 		__MOUT__ << "linkToTableVersion: " << linkToTableVersion << std::endl;
 		__MOUT__ << "linkIdType: " << linkIdType << std::endl;
 		__MOUT__ << "linkIndex: " << linkIndex << std::endl;
+		__MOUT__ << "initLinkId: " << initLinkId << std::endl;
 
 		handleGetLinkToChoicesXML(xmldoc,cfgMgr,linkToTableName,
-				ConfigurationVersion(linkToTableVersion),linkIdType,linkIndex);
+				ConfigurationVersion(linkToTableVersion),linkIdType,linkIndex,initLinkId);
 	}
 	else if(Command == "activateConfigGroup")
 	{
@@ -944,7 +946,8 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName,
 		const ConfigurationVersion &linkToTableVersion,
-		const std::string &linkIdType, const std::string &linkIndex)
+		const std::string &linkIdType, const std::string &linkIndex,
+		const std::string &initLinkId)
 try
 {
 	//get table
@@ -1003,6 +1006,17 @@ try
 		for(const auto &groupID : setOfGroupIDs)
 			xmldoc.addTextElementToData("linkToChoice",
 					groupID);
+
+		//give all UIDs
+		unsigned int col = config->getView().getColUID();
+		for(unsigned int row = 0; row < config->getView().getNumberOfRows(); ++row)
+		{
+			xmldoc.addTextElementToData("groupChoice",
+					config->getView().getDataView()[row][col]);
+			if(config->getView().isEntryInGroup(row,linkIndex,initLinkId))
+				xmldoc.addTextElementToData("groupMember",
+						config->getView().getDataView()[row][col]);
+		}
 	}
 	else
 	{
