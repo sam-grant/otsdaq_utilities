@@ -397,7 +397,7 @@
 			
 			//setupConfigCreator(); return
 			
-			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
+			setupConfigGroupTreeView("artdaqFclTest","46"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -4769,17 +4769,17 @@
 				el = document.getElementById("treeNode-Value-" + idString);
 									
 				var linkIdType;		
-				var initIdVal;		
+				var linkInitId;		
 				_editingCellElOldValue = el.innerHTML;
 				if(type == "link-disconnected")
 				{	
 					linkIdType = document.getElementById("treeNode-linkIdType-" + idString).innerText;
-					initIdVal = document.getElementById("treeNode-linkId-" + idString).innerText;
+					linkInitId = document.getElementById("treeNode-linkId-" + idString).innerText;
 				}
 				else
 				{
 					linkIdType = el.innerText.split('(')[1].split(' ')[0];
-					initIdVal = el.innerText.split(')')[0].split('=')[1].substr(1);
+					linkInitId = el.innerText.split(')')[0].split('=')[1].substr(1);
 				}
 				
 				
@@ -4792,12 +4792,12 @@
 
 				Debug.log("linkTable " + linkTable);
 				Debug.log("linkIdType " + linkIdType); // "UID" or "GroupID"
-				Debug.log("initIdVal " + initIdVal);  //the ID
+				Debug.log("linkInitId " + linkInitId);  //the ID
 				Debug.log("linkIndex " + linkIndex);  //the link index
 
 				treeEditingNodeType_ = "link"; //get rid of "disconnected"
 				treeEditingNodeType_ += "-" + linkIdType;
-				treeEditingNodeInitValue_ = linkTable + "," + initIdVal;
+				treeEditingNodeInitValue_ = linkTable + "," + linkInitId;
 				
 				var optionIndex = -1;
 				
@@ -4873,7 +4873,7 @@
 							str += "<option value='" + linkToChoice	 + "'>";
 							str += linkToChoice;	//can display however
 							str += "</option>";
-							if(linkToChoice	 == initIdVal)
+							if(linkToChoice	 == linkInitId)
 								linkToOptionIndex = i; //get starting sel index
 						}				
 						str += "</select>";						
@@ -4927,7 +4927,8 @@
 							"&linkToTableName=" + linkTableName +		
 							"&linkToTableVersion=" + linkTableVersion +		
 							"&linkIdType=" + linkIdType +
-							"&linkIndex=" + linkIndex,
+							"&linkIndex=" + linkIndex+
+							"&linkInitId=" + linkInitId,
 							"", function(req) 
 							{
 						var err = DesktopContent.getXMLValue(req,"Error");
@@ -4955,7 +4956,7 @@
 						var linkToChoices = req.responseXML.getElementsByTagName("linkToChoice");
 						localCreateLinkEditHTML(linkToChoices);
 
-						if(0 && linkIdType == "GroupID")
+						if(linkIdType == "GroupID")
 						{
 							var groupMembers = req.responseXML.getElementsByTagName("GroupMember");
 							var groupChoices = req.responseXML.getElementsByTagName("GroupChoice");
