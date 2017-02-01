@@ -867,22 +867,28 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			if(t.isDisconnected())
 			{
 				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
-				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				//xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				//xmldoc.addTextElementToParent("DisconnectedLink", t.getValueAsString(), parentEl);
+
 				xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
 
 				//add extra fields for disconnected link
+				xmldoc.addTextElementToParent(
+						(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+						t.getDisconnectedLinkID(),
+						parentEl);
 				xmldoc.addTextElementToParent("LinkConfigurationName",
 						t.getDisconnectedTableName(),
 						parentEl);
 				xmldoc.addTextElementToParent("LinkIndex",
 						t.getChildLinkIndex(),
 						parentEl);
-				xmldoc.addTextElementToParent("LinkIDType",
-						(t.isGroupLink()?"Group":"U") +	std::string("ID"),
-						parentEl);
-				xmldoc.addTextElementToParent("LinkID",
-						t.getDisconnectedLinkID(),
-						parentEl);
+
+
+
+				//				xmldoc.addTextElementToParent("LinkID",
+				//						t.getDisconnectedLinkID(),
+				//						parentEl);
 
 				return;
 			}
@@ -897,7 +903,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			xmldoc.addTextElementToParent("LinkIndex", t.getChildLinkIndex(),
 					parentEl);
 		}
-		else
+		else //uid node
 		{
 			bool returnNode = true; //default to shown
 
@@ -1068,7 +1074,7 @@ try
 	}
 
 	unsigned int col = -1;
-	if(type == "uid")
+	if(type == "uid" || type == "delete-uid")
 		col = config->getView().getColUID();
 	else if(
 			type == "link-UID" ||
@@ -1130,6 +1136,12 @@ try
 		{
 			//add row
 			cfgView->addRow();
+		}
+		else if(type == "delete-uid")
+		{
+			//delete row
+			unsigned int row = cfgView->findRow(col,uid);
+			cfgView->deleteRow(row);
 		}
 		else if(type == "uid" ||
 				type == "value" ||

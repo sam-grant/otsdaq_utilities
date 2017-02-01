@@ -76,13 +76,34 @@
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
 			cursor: 			pointer;
 		}
-		#preloadImage-treeEditIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+		
+		.treeNode-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 10px;
+		}
+		.treeNode-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+		
+		.preloadImage {			
 			width: 				24px;
 			height: 			20px;
 			position:			absolute;
 			left: 				-100px;
 			top: 				0;
+		}
+		#preloadImage-treeEditIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+		}
+		#preloadImage-treeEditTrashIcon {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		}
+		#preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 		
 		.treeNode-Link {
@@ -291,6 +312,7 @@
 			//saveModifiedTree(ignoreWarnings)
 			//handleEditTreeCheckboxToggle(h,gh)
 			//editTreeAddNewRow(tableName)
+			//editTreeNodeOK()
 
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
@@ -318,7 +340,6 @@
 			//bodyKeyHandler(e,keyEl)
 			//bodyMouseHandler(e)
 
-			//editTreeNodeOK()
 			//editCellOK()									//assumes edited cell is specified by its global variables
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
@@ -2142,6 +2163,7 @@
 			var backLinkStr;
 			var titleStr;
 			var nodeEditType, nodeEditTypeDisplay;
+			var isLink,isDisconnected;
 			
 			var pathHTML = path;
 			//make path html safe
@@ -2162,7 +2184,9 @@
 				childrenLength = nodes[i].children.length;
 				//Debug.log("child's childrenLength=" + childrenLength);
 									
-				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value")
+				//handle value nodes
+				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value"
+						)//&& (valueType = nodes[i].children[1]).nodeName != "Disconnected")
 				{	
 					value = value.getAttribute("value");
 					valueType =  nodes[i].children[1].getAttribute("value"); //dataType
@@ -2184,87 +2208,105 @@
 							( depth + "-" + uid ) + "'>" + 
 							parentIdString + //save parentId for future use navigating up tree
 							"</div>" +
-							"<div class='treeNode-Connection'></div>" +
-							"<div class='treeNode-Value treeNode-ValueType-" + valueType +
-							"' " +
-							"id='treeNode-Value-" +
-							(depth + "-" + uid) + "' " +
-							
-							"onclick='handleTreeNodeClick(" +							
-							depth + "," + uid + "," + 	
-							"0,\"value\")' " +
-							
-							"onmousemove='handleTreeNodeMouseMove(" +							
-							depth + "," + uid + "," + 	
-							"event)' " +
-								
-							">";
-							
-							"<div style='float:left'>" +
-							"<b class='bold-header'>" + nodeName + "</b>" + 
-							"</div><div style='float:left'>&nbsp;:</div>";
+							"<div class='treeNode-Connection'></div>";																	
 					
 					
-					//disconnected value and edit icon
-					//add extra fields for disconnected links
-					//	so that editing is possible
-					if(valueType == "Disconnected")
-					{	
-						tableLinkName = nodes[i].children[2].getAttribute("value"); //link to table
-						childLinkIndex = nodes[i].children[3].getAttribute("value"); //link index
-						linkIdType = nodes[i].children[4].getAttribute("value"); //link id type
-						linkId = nodes[i].children[5].getAttribute("value"); //link id
-
-						titleStr = 
-								"~ Disconnected Link ~\n" +
-								"Link Table Name: \t\t" + tableLinkName + "\n" +
-								"Link " + linkIdType + ": \t\t" + linkId + "\n";
-								
-						//left side of value
-						treeViewHandlerStr_ += 
-								"<div style='float:left' title='" + titleStr + "'>" +
-								"<b class='bold-header'>" + nodeName + "</b>" + 
-								"</div><div style='float:left'>&nbsp;:</div>";
-						
-						//disconnected link edit icon
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
-								(depth + "-" + uid) + "' " +
-								"onclick='handleTreeNodeClick(" +							 
-								depth + "," + uid + "," + 	
-								"1,\"link-disconnected\"); event.stopPropagation();' " +
-								"title='Edit the value of this node.' " +
-								"></div>";
-						
-						//extra disconnected fields
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-linkTableName' style='display:none' " +
-								"id='treeNode-linkTableName-" +
-								( depth + "-" + uid ) + "'>" + // end path id
-								tableLinkName + //save table name for future use.. and a central place to edit when changes occur
-								"</div>";
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-childLinkIndex' style='display:none' " +
-								"id='treeNode-childLinkIndex-" +
-								( depth + "-" + uid ) + "'>" + // end path id
-								childLinkIndex + //save link index name for future use.. and a central place to edit when changes occur
-								"</div>";	
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-linkIdType' style='display:none' " +
-								"id='treeNode-linkIdType-" +
-								( depth + "-" + uid ) + "'>" + // end path id
-								linkIdType + //save table name for future use.. and a central place to edit when changes occur
-								"</div>";	
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-linkId' style='display:none' " +
-								"id='treeNode-linkId-" +
-								( depth + "-" + uid ) + "'>" + // end path id
-								linkId + //save table name for future use.. and a central place to edit when changes occur
-								"</div>";
-						
-					}
-					else //normal value node and edit icon
+//					//disconnected value and edit icon
+//					//add extra fields for disconnected links
+//					//	so that editing is possible
+//					if(valueType == "Disconnected")
+//					{	
+//						tableLinkName = nodes[i].children[2].getAttribute("value"); //link to table
+//						childLinkIndex = nodes[i].children[3].getAttribute("value"); //link index
+//						linkIdType = nodes[i].children[4].getAttribute("value"); //link id type
+//						linkId = nodes[i].children[5].getAttribute("value"); //link id
+//
+//						//extra disconnected fields
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-linkTableName' style='display:none' " +
+//								"id='treeNode-linkTableName-" +
+//								( depth + "-" + uid ) + "'>" + // end path id
+//								tableLinkName + //save table name for future use.. and a central place to edit when changes occur
+//								"</div>";
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-childLinkIndex' style='display:none' " +
+//								"id='treeNode-childLinkIndex-" +
+//								( depth + "-" + uid ) + "'>" + // end path id
+//								childLinkIndex + //save link index name for future use.. and a central place to edit when changes occur
+//								"</div>";	
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-linkIdType' style='display:none' " +
+//								"id='treeNode-linkIdType-" +
+//								( depth + "-" + uid ) + "'>" + // end path id
+//								linkIdType + //save table name for future use.. and a central place to edit when changes occur
+//								"</div>";	
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-linkId' style='display:none' " +
+//								"id='treeNode-linkId-" +
+//								( depth + "-" + uid ) + "'>" + // end path id
+//								linkId + //save table name for future use.. and a central place to edit when changes occur
+//								"</div>";
+//						
+//						
+//
+//						//start value node
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-Value treeNode-ValueType-" + valueType +
+//								"' " +
+//								"id='treeNode-Value-" +
+//								(depth + "-" + uid) + "' " +
+//
+//								"onclick='handleTreeNodeClick(" +							
+//								depth + "," + uid + "," + 	
+//								"0,\"value\")' " +
+//
+//								"onmousemove='handleTreeNodeMouseMove(" +							
+//								depth + "," + uid + "," + 	
+//								"event)' " +
+//
+//								">";	
+//
+//						titleStr = 
+//								"~ Disconnected Link ~\n" +
+//								"Link Table Name: \t\t" + tableLinkName + "\n" +
+//								"Link " + linkIdType + ": \t\t" + linkId + "\n";
+//						
+//						//left side of value
+//						treeViewHandlerStr_ += 
+//								"<div style='float:left' title='" + titleStr + "'>" +
+//								"<b class='bold-header'>" + nodeName + "</b>" + 
+//								"</div><div style='float:left'>&nbsp;:</div>";
+//						
+//						//disconnected link edit icon
+//						treeViewHandlerStr_ += 
+//								"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+//								(depth + "-" + uid) + "' " +
+//								"onclick='handleTreeNodeClick(" +							 
+//								depth + "," + uid + "," + 	
+//								"1,\"link-disconnected\"); event.stopPropagation();' " +
+//								"title='Edit the value of this node.' " +
+//								"></div>";					
+//						
+//					}
+//					else //normal value node and edit icon
 					{
+						//start value node
+						treeViewHandlerStr_ += 
+								"<div class='treeNode-Value treeNode-ValueType-" + valueType +
+								"' " +
+								"id='treeNode-Value-" +
+								(depth + "-" + uid) + "' " +
+
+								"onclick='handleTreeNodeClick(" +							
+								depth + "," + uid + "," + 	
+								"0,\"value\")' " +
+
+								"onmousemove='handleTreeNodeMouseMove(" +							
+								depth + "," + uid + "," + 	
+								"event)' " +
+
+								">";	
+
 						titleStr = "~ Leaf Value Node ~\n";
 						titleStr +=	"Path: \t" + path + nodeName + "\n";
 						
@@ -2329,18 +2371,39 @@
 				
 				//not a value node so try to recurse				
 
-				var isLink = false;
+				isLink = false;
+				isDisconnected = false;
+				tableLinkName = "";
+				
 				//get value and table link name for this parent
 				if(childrenLength && (value = nodes[i].children[0]).nodeName != "value")
-				{						
-					//this is a link node!
+				{	
 					--childrenLength; //subtract the link ID node from children length
-					value = nodeName + "-(" + 
-							value.nodeName + " = " + value.getAttribute("value") + ")";
-					tableLinkName = nodes[i].children[1].getAttribute("value"); //LinkConfigurationName node
-					childLinkIndex = nodes[i].children[2].getAttribute("value"); //LinkIndex node
-					--childrenLength; //subtract the config name node from children length
-					--childrenLength; //subtract the config name node from children length
+				
+					//this is a link node!	
+					var offset = 0;
+					if(value.getAttribute("value") == "Disconnected")
+					{
+						//this is a disconnected link node!
+						++offset;
+						value = nodes[i].children[offset]; //get link ID node
+						--childrenLength;
+						value =  
+								nodeName + "-(" + 
+								value.nodeName + " = " + value.getAttribute("value") + ")";	
+						isDisconnected = true;
+					}
+					else
+					{
+						value = nodeName + "-(" + 
+								value.nodeName + " = " + value.getAttribute("value") + ")";					
+					}	
+					
+					tableLinkName = nodes[i].children[offset+1].getAttribute("value"); //LinkConfigurationName node
+					--childrenLength; //subtract the tableLinkName name node from children length
+					childLinkIndex = nodes[i].children[offset+2].getAttribute("value"); //LinkIndex node					
+					--childrenLength; //subtract the childLinkIndex node from children length
+					
 					isLink = true;
 				}
 				else
@@ -2352,6 +2415,11 @@
 				//make value and tableLinkName html safe
 				value = value.replace(/</g, "&lt");
 				value = value.replace(/>/g, "&gt");
+				if(isDisconnected)
+					value += "-" + 
+						"<label style='color:red;font-weight:bold;'>" +
+						"DISCONNECTED" +
+						"</label>";
 				tableLinkName = tableLinkName.replace(/</g, "&lt");
 				tableLinkName = tableLinkName.replace(/>/g, "&gt");
 				
@@ -2369,9 +2437,9 @@
 
 				//////////=======================
 
-				nodeEditType = (treeNavContextMenuItemHandlers.length == 0?"uid":
+				nodeEditType = ((treeNavContextMenuItemHandlers.length == 0 && !isLink)?"uid":
 						(depth == 0?"table":"link"));
-				nodeEditTypeDisplay = (treeNavContextMenuItemHandlers.length == 0?"UID":
+				nodeEditTypeDisplay = ((treeNavContextMenuItemHandlers.length == 0 && !isLink)?"UID":
 						(depth == 0?"Table":"Link"));
 				
 				treeViewHandlerStr_ += 
@@ -2462,7 +2530,7 @@
 				//within this TD, put editClick and link
 				treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open edit/link table row
 				treeViewHandlerStr_ += "<td>";
-				if(nodeEditType != "table" && nodeEditType != "link")
+				if(nodeEditType != "table" && nodeEditType != "link") //uid edit icon
 					treeViewHandlerStr_ += 
 							"<div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
 							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
@@ -2477,14 +2545,21 @@
 							"</div>";
 				treeViewHandlerStr_ += "</td><td style='width:100px'>";
 
-				if(treeNavContextMenuItemHandlers.length) //if there is a link, add it
+				//if there is a table link menu (or if disconnected link), add it
+				if(treeNavContextMenuItemHandlers.length || isLink) 
 				{
 					treeViewHandlerStr_ += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open linkmenu/editicon table row
 					treeViewHandlerStr_ += "<td  id='treeNode-LinkContextMenuTD-" +
 							(depth + "-" + uid) + "'>";
-									
+							
 					treeViewHandlerStr_ += 
-						"<div class='treeNode-Link' " + //start treeNode Link div
+						"<div class='treeNode-Link' "; //start treeNode Link div
+					
+					
+					if(isDisconnected) //hide link if disconnected
+						treeViewHandlerStr_ += "style='display:none' ";
+					
+					treeViewHandlerStr_ += 
 						"onmousedown='" + // start link onmousedown	
 						"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
 						"[";
@@ -2526,10 +2601,22 @@
 								nodeEditType +
 								"\"); event.stopPropagation();' " +
 								"title='Edit this link.' " + 
-								"></div>";// +
-								//"</div>";
+								"></div>";
+					
 					treeViewHandlerStr_ += "</td></tr></table>"; //close linkmenu/editicon table row
 				}
+//				else if(isLink && isDisconnected) //add edit icon for disconnected links
+//					treeViewHandlerStr_ += 
+//							//"<div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
+//							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+//							(depth + "-" + uid) + "' " +
+//							"onclick='handleTreeNodeClick(" +							 
+//							depth + "," + uid + "," + 	
+//							"1,\"" +
+//							nodeEditType +
+//							"\"); event.stopPropagation();' " +
+//							"title='Edit this link.' " + 
+//							"></div>";
 				
 				
 				treeViewHandlerStr_ += "</td></tr></table>"; //close edit/link table row
@@ -2713,11 +2800,10 @@
 			treeEditingTargetUID_ = "";
 			treeEditingTargetColumn_ = "";	
 			treeEditingNodeInitValue_ = "1"; //just something so editTreeNodeOK proceeds
-
 			
 			editTreeNodeOK();//act on globals			
 		}
-		
+				
 		//handleTreeNodeClick ~~
 		function handleTreeNodeClick(depth,uid,editClick,type)
 		{
@@ -4560,9 +4646,6 @@
 				}
 			}
 
-			//var tableEl = document.getElementById("SubSystemTable");
-			//var rows = tableEl.getElementsByTagName("tr");
-
 			//if column type is Author or Timestamp, don't allow select
 			//			el.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.parentElement.id
 			//			"treeNode-ChildrenOf-0-0-ARTDAQAggregatorConfiguration"
@@ -4605,12 +4688,30 @@
 				treeEditingNodeInitValue_ = _editingCellElOldValue;
 
 				var str = "";
+				str += "<table cellpadding='0' cellspacing='0' border='0'><tr>";
+				str += "<td>";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
 						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
 				str += _editingCellElOldValue;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
 						">";
+				str += "</td><td>";
+				str += 
+						"<div class='treeNode-deleteIcon' " + 
+						"onmouseup='event.stopPropagation();' " +
+						"onclick='event.stopPropagation();" +
+						"DesktopContent.popUpVerification(" + 
+						"\"Are you sure you want to delete the record associated with the UID &apos;" +
+						treeEditingNodeInitValue_ + "&apos; from the table &apos;" + 
+						treeEditingTargetTable_ + "&apos;?\"," +
+						"function() {" + 
+						"treeEditingNodeType_ = \"delete-uid\";" +
+						"editTreeNodeOK();" +
+						"},0,\"#efeaea\",0,\"#770000\");' " +
+						"title='Delete the record associated with this UID node.' " +
+						"></div>";
+				str += "</td></tr></table>";
 
 				str += _OK_CANCEL_DIALOG_STR;		
 
@@ -4719,7 +4820,6 @@
 			else if(type == "link" || 
 					type == "link-disconnected")
 			{
-				treeEditingNodeType_ = type;
 								
 				//edit link entry in record (2 columns: link table and id)							
 				el = document.getElementById("treeNode-Value-" + idString);
@@ -4751,7 +4851,8 @@
 				Debug.log("linkIdType " + linkIdType); // "UID" or "GroupID"
 				Debug.log("initIdVal " + initIdVal);  //the ID
 				Debug.log("linkIndex " + linkIndex);  //the link index
-				
+
+				treeEditingNodeType_ = "link"; //get rid of "disconnected"
 				treeEditingNodeType_ += "-" + linkIdType;
 				treeEditingNodeInitValue_ = linkTable + "," + initIdVal;
 				
@@ -6538,6 +6639,7 @@
 					treeEditingNodeType_ == "table" || 
 					treeEditingNodeType_ == "table-newRow" || 
 					treeEditingNodeType_ == "uid" ||
+					treeEditingNodeType_ == "delete-uid" ||
 					treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
 					treeEditingNodeType_ == "value" ||
 					treeEditingNodeType_ == "value-bool" || 
@@ -6558,7 +6660,7 @@
 					sel = _editingCellEl.getElementsByTagName("select")[1];
 					newValue += ",";
 					if(sel.selectedIndex >= 0) //if valid
-						newValue += "," + sel.options[sel.selectedIndex].value;					
+						newValue += sel.options[sel.selectedIndex].value;					
 				}
 				else if(treeEditingNodeType_ == "table-newRow")
 					newValue = ""; //no value needed
@@ -6570,7 +6672,21 @@
 				
 				if(treeEditingNodeInitValue_ == newValue)
 				{
-					Debug.log("No change. Do nothing.");
+					if(treeEditingNodeType_ != "delete-uid")
+					{
+						Debug.log("No change. Do nothing.");
+						editCellCancel();
+						return;
+					}
+					else
+						Debug.log("No change. OK to delete.");
+				}
+				else if(treeEditingNodeType_ != "delete-uid")
+				{
+					Debug.log("The UID you are trying to delete has not been " +
+							"saved yet. You can not delete a locally modified UID.",
+							Debug.HIGH_PRIORITY);
+					editCellCancel();
 					return;
 				}
 				
@@ -8842,6 +8958,7 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>Configuration GUI</h1>
+		
 		<div style='width:550px'>		
 	<a href='#' onclick='javascript:setupSystemViewMode(); return false;'>System View</a> 	&nbsp;&nbsp;
 	<a href='#' onclick='javascript:setupGroupViewMode(); return false;'>Group View</a>	&nbsp;&nbsp;
@@ -8858,7 +8975,9 @@
 	<div id='activateConfigWithWarnings'></div>
 	<div id='tempTree'></div>
 	<div id='display'></div>
-	<div id='preloadImage-treeEditIconHover'></div>
+	<div class='preloadImage' id='preloadImage-treeEditIconHover'></div>
+	<div class='preloadImage' id='preloadImage-treeEditTrashIcon'></div>
+	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
 	
 </body>
 	

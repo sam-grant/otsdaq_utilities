@@ -787,7 +787,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	css += "#" + DesktopContent._verifyPopUpId + " " +
 			"{position: absolute; z-index: 2000; border-radius: 5px; padding: 10px;" +			
 			"background-color: " + bgColor + "; border: 2px solid " + borderColor + ";" +
-			"color: " + textColor + ";text-align: center;" +
+			"color: " + textColor + ";text-align: center; overflow: auto;" +
 			"}\n\n";
 	//pop up text style 
 	css += "#" + DesktopContent._verifyPopUpId + "-text " +
@@ -818,14 +818,20 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	el.setAttribute("id", DesktopContent._verifyPopUpId);				
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "</div>" +
-			"<input type='submit' value='Yes'> " + //onmouseup added below so func can be a function object (and not a string)
+			"<input type='submit' value='Yes' " +
+			"onclick='event.stopPropagation();' " + 
+			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
-			"<input type='submit' onmouseup='DesktopContent.clearPopUpVerification();' value='Cancel'>";
+			"<input type='submit' " +
+			"onmouseup='event.stopPropagation();" +
+			"DesktopContent.clearPopUpVerification();' " +
+			"onclick='event.stopPropagation();' " +
+			"value='Cancel'>";
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
 	el.getElementsByTagName('input')[0].onmouseup = 
-			function(){DesktopContent.clearPopUpVerification(func);};
+			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
 
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;
