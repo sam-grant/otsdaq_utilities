@@ -2012,6 +2012,17 @@
 				var toggleEl = document.getElementById("treeNode-toggle-" + parentId);
 				toggleEl.style.backgroundImage = 
 						"url(/WebPath/images/windowContentImages/ConfigurationGUI-hideTree.png)";
+				
+				//if disconnected link remove "DISCONNECTED"
+				var valEl = document.getElementById("treeNode-Value-" + parentId);
+				var valElText= valEl.innerText;
+				var i;
+				if((i = valElText.indexOf(")-DISCONNECTED")) > 0)
+				{
+					valEl.innerHTML = "";
+					valEl.appendChild(document.createTextNode(valElText.substr(0,i+1)));
+				}
+					
 			}
 			else //this is the initial top level request
 			{
@@ -2130,7 +2141,9 @@
 						"<div class='treeNode-Connection'></div>" +
 						"<div class='treeNode-Value'>";
 
+				treeViewHandlerStr_ += "<label style='color:rgb(212, 0, 0)'>";
 				treeViewHandlerStr_ += "No Children Nodes Found.";
+				treeViewHandlerStr_ += "</label>";
 
 				treeViewHandlerStr_ += "</div>" + //end treeNode Value div		
 						"</div>" + //end treeNode div							
@@ -2211,84 +2224,7 @@
 							"<div class='treeNode-Connection'></div>";																	
 					
 					
-//					//disconnected value and edit icon
-//					//add extra fields for disconnected links
-//					//	so that editing is possible
-//					if(valueType == "Disconnected")
-//					{	
-//						tableLinkName = nodes[i].children[2].getAttribute("value"); //link to table
-//						childLinkIndex = nodes[i].children[3].getAttribute("value"); //link index
-//						linkIdType = nodes[i].children[4].getAttribute("value"); //link id type
-//						linkId = nodes[i].children[5].getAttribute("value"); //link id
-//
-//						//extra disconnected fields
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-linkTableName' style='display:none' " +
-//								"id='treeNode-linkTableName-" +
-//								( depth + "-" + uid ) + "'>" + // end path id
-//								tableLinkName + //save table name for future use.. and a central place to edit when changes occur
-//								"</div>";
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-childLinkIndex' style='display:none' " +
-//								"id='treeNode-childLinkIndex-" +
-//								( depth + "-" + uid ) + "'>" + // end path id
-//								childLinkIndex + //save link index name for future use.. and a central place to edit when changes occur
-//								"</div>";	
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-linkIdType' style='display:none' " +
-//								"id='treeNode-linkIdType-" +
-//								( depth + "-" + uid ) + "'>" + // end path id
-//								linkIdType + //save table name for future use.. and a central place to edit when changes occur
-//								"</div>";	
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-linkId' style='display:none' " +
-//								"id='treeNode-linkId-" +
-//								( depth + "-" + uid ) + "'>" + // end path id
-//								linkId + //save table name for future use.. and a central place to edit when changes occur
-//								"</div>";
-//						
-//						
-//
-//						//start value node
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-Value treeNode-ValueType-" + valueType +
-//								"' " +
-//								"id='treeNode-Value-" +
-//								(depth + "-" + uid) + "' " +
-//
-//								"onclick='handleTreeNodeClick(" +							
-//								depth + "," + uid + "," + 	
-//								"0,\"value\")' " +
-//
-//								"onmousemove='handleTreeNodeMouseMove(" +							
-//								depth + "," + uid + "," + 	
-//								"event)' " +
-//
-//								">";	
-//
-//						titleStr = 
-//								"~ Disconnected Link ~\n" +
-//								"Link Table Name: \t\t" + tableLinkName + "\n" +
-//								"Link " + linkIdType + ": \t\t" + linkId + "\n";
-//						
-//						//left side of value
-//						treeViewHandlerStr_ += 
-//								"<div style='float:left' title='" + titleStr + "'>" +
-//								"<b class='bold-header'>" + nodeName + "</b>" + 
-//								"</div><div style='float:left'>&nbsp;:</div>";
-//						
-//						//disconnected link edit icon
-//						treeViewHandlerStr_ += 
-//								"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
-//								(depth + "-" + uid) + "' " +
-//								"onclick='handleTreeNodeClick(" +							 
-//								depth + "," + uid + "," + 	
-//								"1,\"link-disconnected\"); event.stopPropagation();' " +
-//								"title='Edit the value of this node.' " +
-//								"></div>";					
-//						
-//					}
-//					else //normal value node and edit icon
+					//normal value node and edit icon
 					{
 						//start value node
 						treeViewHandlerStr_ += 
@@ -2604,20 +2540,7 @@
 								"></div>";
 					
 					treeViewHandlerStr_ += "</td></tr></table>"; //close linkmenu/editicon table row
-				}
-//				else if(isLink && isDisconnected) //add edit icon for disconnected links
-//					treeViewHandlerStr_ += 
-//							//"<div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
-//							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
-//							(depth + "-" + uid) + "' " +
-//							"onclick='handleTreeNodeClick(" +							 
-//							depth + "," + uid + "," + 	
-//							"1,\"" +
-//							nodeEditType +
-//							"\"); event.stopPropagation();' " +
-//							"title='Edit this link.' " + 
-//							"></div>";
-				
+				}				
 				
 				treeViewHandlerStr_ += "</td></tr></table>"; //close edit/link table row
 				treeViewHandlerStr_ += "</td></tr></table>"; //close tree node name/link table row
@@ -6404,6 +6327,27 @@
 					el.innerHTML = "";
 					el.appendChild(document.createTextNode(newValue)); 
 				}
+				else if(treeEditingNodeType_ == "delete-uid")
+				{
+					//reset parent children is enough
+					//	correct response should come from server
+					
+					
+					
+					//var el = document.getElementById("treeNode-" + treeEditingNodeIdString_);
+					var pel = document.getElementById("treeNode-ChildrenOf-" + 
+							treeEditingNodeParentIdString_);
+					
+					//pel.removeChild(el);
+					
+					//reset parent children
+					toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+							treeEditingNodeParentIdString_.split('-')[1],false);
+					pel.innerHTML = "";
+					toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+							treeEditingNodeParentIdString_.split('-')[1],true);
+					
+				}
 				else if(treeEditingNodeType_.indexOf("link-") == 0)
 				{
 					//change link table/id and clear children
@@ -6681,7 +6625,7 @@
 					else
 						Debug.log("No change. OK to delete.");
 				}
-				else if(treeEditingNodeType_ != "delete-uid")
+				else if(treeEditingNodeType_ == "delete-uid")
 				{
 					Debug.log("The UID you are trying to delete has not been " +
 							"saved yet. You can not delete a locally modified UID.",
@@ -6901,6 +6845,7 @@
 					var idString;
 					var table, uid;
 					var linkIdType;
+					var elChildrenNode, parentIdString;
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
@@ -6917,11 +6862,19 @@
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
 						{
-							//hide children and delete them							
-							//Debug.log("link-idString " + idString + " " + uid);
-							//Debug.log("link-idString CHANGE to " + newValue);
-							toggleTreeChildren(idString.split('-')[0],idString.split('-')[1],false);
-							document.getElementById("treeNode-ChildrenOf-" + idString).innerHTML = "";							
+							//hide parent children, delete them, and re-expand
+
+							parentIdString = document.getElementById("treeNode-ParentId-" + 
+									idString).innerText;
+							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+									parentIdString);							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],false);
+							elChildrenNode.innerHTML = "";							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],true);
 						}							
 					}
 				}
@@ -6970,6 +6923,108 @@
 							var el = document.getElementById("treeNode-nodeName-" + idString);
 							el.innerHTML = "";
 							el.appendChild(document.createTextNode(newValue));
+						}	
+					}
+				}
+			}
+			else if(treeEditingNodeType_ == "delete-uid")
+			{					
+				//for all matches
+				//	reset parent children is enough
+				//		correct response should come from server
+				
+				//parameters:
+				// 	treeEditingTargetTable_
+				//	treeEditingTargetUID_
+
+				//find all LinkUIDs with target table and UID and clear children				
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-link");
+					var idString;
+					var table, uid;
+					var linkIdType;
+					var elChildrenNode, parentIdString;
+					for(var i=0;i<els.length;++i)
+					{
+						idString = els[i].id.substr(("treeNode-Value-").length);
+						uid = els[i].innerText;
+						linkIdType = uid.split('(')[1].split(' ')[0];
+
+						if(linkIdType == "GroupID") continue; //only consider link UIDs
+
+						uid = uid.split(')')[0].split('=')[1].substr(1);
+
+						//Debug.log("link-idString " + idString + " " + uid);
+
+						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						if(table == treeEditingTargetTable_ && 
+								uid == treeEditingTargetUID_)
+						{
+							//hide parent children, delete them, and re-expand
+							
+							parentIdString = document.getElementById("treeNode-ParentId-" + 
+									idString).innerText;
+							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+									parentIdString);							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],false);
+							elChildrenNode.innerHTML = "";							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],true);													
+						}							
+					}
+				}
+				
+				//find all UID nodes with target table and UID and change
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-uid");
+					var table, uid;
+					var depth;
+					var elChildrenNode, parentIdString;
+					for(var i=0;i<els.length;++i)
+					{
+						var idString = els[i].id.substr(("treeNode-Value-").length);
+						depth = idString.split('-')[0];
+
+						if(treeEditingNodeDepth_ == 1 && 
+								depth == 1) continue; //can only possibly be self, which has already changed
+
+						//if verifiably self, also skip
+						if(idString == treeEditingNodeIdString_) continue;
+
+						//Debug.log("uid-idString " + idString + " " + els[i].innerText);
+
+						//need table to verify match.. must get from parent
+						if(depth == 1)
+							table = document.getElementById("treeNode-Value-" + 
+									(document.getElementById("treeNode-ParentId-" + 
+											idString).innerText)).innerText;
+						else 
+							table = document.getElementById("treeNode-linkTableName-" + 
+									(document.getElementById("treeNode-ParentId-" + 
+											idString).innerText)).innerText;						
+
+						//Debug.log("uid-table " + table);
+						uid = els[i].innerText;
+
+						if(table == treeEditingTargetTable_ && 
+								uid == treeEditingTargetUID_)
+						{
+							//hide parent children, delete them, and re-expand
+							
+							parentIdString = document.getElementById("treeNode-ParentId-" + 
+									idString).innerText;
+							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+									parentIdString);							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],false);
+							elChildrenNode.innerHTML = "";							
+							toggleTreeChildren(
+									parentIdString.split('-')[0],
+									parentIdString.split('-')[1],true);
 						}	
 					}
 				}
