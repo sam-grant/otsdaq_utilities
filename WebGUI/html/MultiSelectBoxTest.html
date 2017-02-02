@@ -63,6 +63,14 @@
 	                	box1SelectionHandler(
 	                			MultiSelectBox.getSelectionElementByIndex(el1,s));
 	            }
+	            
+
+				//Example: set pre-selections for box2 already in group
+				MultiSelectBox.initMySelectBoxes(true); //init to clear
+				for(var i=0;i<2;++i)
+					MultiSelectBox.setSelectionElementByIndex(el2,i,true);	
+				MultiSelectBox.initMySelectBoxes(false); //setup selections	
+				
 
 	            selArr = MultiSelectBox.getSelectionArray(el2);
 	            for(var s in selArr)

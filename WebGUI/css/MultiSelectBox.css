@@ -26,7 +26,8 @@
     {
         display:none;
     }
-    .multiselectbox .mySelect .optionhighlighted
+    .multiselectbox .mySelect .optionhighlighted,
+	.multiselectbox .mySelect .optionhighlighted u
     {
         background:rgb(0,111,255);
         color:white;

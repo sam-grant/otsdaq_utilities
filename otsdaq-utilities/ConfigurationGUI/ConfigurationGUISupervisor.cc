@@ -1099,6 +1099,7 @@ try
 		col = config->getView().findCol(colName);
 	else if(
 			type == "table" ||
+			type == "table-newGroupRow" ||
 			type == "table-newRow"); // column N/A
 	else
 	{
@@ -1151,6 +1152,35 @@ try
 			//add row
 			cfgView->addRow();
 		}
+		else if(type == "table-newGroupRow")
+		{
+			//add row
+			unsigned int row = cfgView->addRow();
+
+			//get index value and group id value
+			unsigned int csvIndex = newValue.find(',');
+
+			std::string linkIndex = newValue.substr(0,csvIndex);
+			std::string groupId = newValue.substr(csvIndex+1);
+
+			__MOUT__ << "newValue " << linkIndex << "," <<
+					groupId << std::endl;
+
+			//find groupId column from link index
+			col = cfgView->getColLinkGroupID(linkIndex);
+
+			//set group id
+			cfgView->setURIEncodedValue(groupId,row,col);
+
+			//if "Status" exists, set it to true
+			try
+			{
+				col = cfgView->findCol("Status");
+				cfgView->setURIEncodedValue("1",row,col);
+			}
+			catch(...) {} //if not, ignore
+
+		}
 		else if(type == "delete-uid")
 		{
 			//delete row
@@ -1189,10 +1219,12 @@ try
 					linkPair.second << std::endl;
 
 			//find table value and id value
-			unsigned int csvIndex = newValue.find(',');
+			unsigned int csvIndexStart = 0,csvIndex = newValue.find(',');
 
-			std::string newTable = newValue.substr(0,csvIndex);
-			std::string newLinkId = newValue.substr(csvIndex+1);
+			std::string newTable = newValue.substr(csvIndexStart,csvIndex);
+			csvIndexStart = csvIndex + 1;
+			csvIndex = newValue.find(',',csvIndexStart);
+			std::string newLinkId = newValue.substr(csvIndexStart,csvIndex-csvIndexStart); //if no more commas will take the rest of string
 
 			__MOUT__ << "newValue " << newTable << "," <<
 					newLinkId << std::endl;
@@ -1221,6 +1253,17 @@ try
 			}
 			else
 				changed = true;
+
+
+			//if group ID set all in member list to be members of group
+			if(type == "link-GroupID")
+			{
+				__MOUT__ << "FIXME " << std::endl;
+				//				std::string newLinkId = newValue.substr(csvIndex+1,
+				//									csvIndex = newValue.find(',')); //if no more commas will take the rest of string
+
+			}
+
 
 			if(!changed)
 			{

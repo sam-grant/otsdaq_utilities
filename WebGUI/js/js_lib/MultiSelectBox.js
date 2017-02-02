@@ -111,6 +111,12 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 			"-option_" + i);
 }
 
+MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
+{    
+	MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id][i] = selected?1:0;
+}
+
+
 //for multiple selects to behave like checkboxes
 MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 {
@@ -178,7 +184,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 	var str = "";
 	if(title)
 	{
-		str += "<div style='margin-top:20px;width:100%'><b>"
+		str += "<div id='" + name + "header' " +
+				"style='margin-top:20px;width:100%'><b>"
 		str += title;
 		str += "</b></div>";
 	}
@@ -275,12 +282,16 @@ MultiSelectBox.showSearch = function(boxid)
 	{
 		MultiSelectBox.selInitBoxHeight_ = $(boxid).clientHeight; //as soon as hidden is toggled H changes
 	}
+		 
+	//RAR decided on 2/2/2017 to not show er
+	//MultiSelectBox.toggleClass($(boxid+"searchErr"),"hidden");
+	$(boxid+"searchErr").innerHTML = "";
 	
-	MultiSelectBox.toggleClass($(boxid+"searchErr"),"hidden")
 	if (MultiSelectBox.toggleClass(textinput,"hidden")){
 		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_-47) + "px";
 		$(boxid).style.paddingTop = "42px";
 		//$(boxid).childNodes[0].style.marginTop="42px";
+		//textinput.style.left = ($(boxid).offsetLeft-8) + "px"
 		textinput.focus();
 		MultiSelectBox.searchSelect(boxid,textinput);
 	}
@@ -409,6 +420,7 @@ MultiSelectBox.makeSearchBar = function(id)
 			searchErrBox.style.left=(offsetx + 0)+"px";
 			
 			MultiSelectBox.omnis_[id].appendChild(searchBox);
+			
 			MultiSelectBox.omnis_[id].appendChild(searchErrBox);
 			
 			clearInterval(interval);
