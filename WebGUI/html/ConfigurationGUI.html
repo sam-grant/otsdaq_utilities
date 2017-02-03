@@ -2257,7 +2257,8 @@
 						//left side of value
 						treeViewHandlerStr_ += 
 								"<div style='float:left' title='" + titleStr + "'>" +
-								"<b class='bold-header'>" + nodeName + "</b>" + 
+								"<b class='treeNode-Value-leafNode-fieldName bold-header'>" + 
+								nodeName + "</b>" + 
 								"</div><div style='float:left'>&nbsp;:</div>";
 						
 						//normal edit icon
@@ -2964,8 +2965,9 @@
 			Debug.log("applyTreeFilter " + filter);
 			Debug.log("treeViewHideInfo_ " + treeViewHideInfo_);
 
-			var valName;
-			var allValues = document.getElementsByClassName("bold-header");
+			var valName;			
+
+			var allValues = document.getElementsByClassName("treeNode-Value-leafNode-fieldName");
 			if(treeFilterApplied_ || treeViewHideInfo_ || infoWasToggled)
 			{
 				//clear Tree Filter
@@ -6510,7 +6512,8 @@
 					
 					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 							treeEditingNodeIdString_);
-					var wasDisplayed = elChildrenNode.style.display != "none";
+					var wasDisplayed = elChildrenNode.style.display != "none" && 
+							elChildrenNode.innerHTML != "";
 
 					toggleTreeChildren(
 							treeEditingNodeIdString_.split('-')[0],
@@ -6588,9 +6591,9 @@
 					//change link table/id and clear children
 					//and edit peripheral link info
 					
-					var csvIndex = newValue.indexOf(',');
-					var linkTable = newValue.substr(0,csvIndex);
-					var linkId = newValue.substr(csvIndex+1);
+					var csvArr = newValue.split(',');
+					var linkTable = csvArr[0];
+					var linkId = csvArr[1];
 					newValue = treeEditingTargetColumn_ + "-(" + 
 							treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
 					_editingCellEl.appendChild(document.createTextNode(newValue));
@@ -6671,7 +6674,8 @@
 					//		then toggle/show new children 
 					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 							treeEditingNodeIdString_);
-					var wasDisplayed = elChildrenNode.style.display != "none";
+					var wasDisplayed = elChildrenNode.style.display != "none" && 
+							elChildrenNode.innerHTML != "";
 
 					toggleTreeChildren(
 							treeEditingNodeDepth_,
@@ -6845,6 +6849,26 @@
 					
 					if(treeEditingNodeType_ == "link-GroupID")
 					{
+						//make csv newValue := linkTable,linkGroupID,linkTableVersion,groupMemberUID,...
+						
+						//add link target table version and chosen group members						
+						var linkTargetTable = _editingCellEl.getElementsByTagName("select")[0].value;
+						var tableVersion = -1;
+						var tableIndex = -1;
+						for(var j=0;j<treeMemberNames_.length;++j)
+							if(linkTargetTable == treeMemberNames_[j])
+							{
+								tableVersion = treeMemberVersions_[j];
+								tableIndex = j;
+								break;
+							}
+						if(tableIndex == -1)
+						{
+							Debug.log("Invalid linked tree member table!",Debug.HIGH_PRIORITY);
+							return;					
+						}
+						newValue += "," + tableVersion;
+								
 						//save new group members 
 						// if different from treeEditingInitGroupMembers_
 
@@ -6940,6 +6964,11 @@
 					var err = DesktopContent.getXMLValue(req,"Error");
 					if(err) 
 					{
+						var warnings = req.responseXML.getElementsByTagName("Warning");
+						for(var i=0;i<warnings.length;++i)
+							Debug.log(DesktopContent.getXMLValue(warnings[i]),
+									Debug.WARN_PRIORITY);
+						
 						//suppress same value error
 						if(err.indexOf("is the same as the current value. No need to save node.") > 0)
 						{
@@ -6954,11 +6983,36 @@
 					}
 
 					//maintain tree member versions
-					var resultingTargetTableVersion = 
-							DesktopContent.getXMLValue(req,"savedVersion");
-					Debug.log("New table version " + resultingTargetTableVersion);					
-					treeMemberVersions_[tableIndex] = resultingTargetTableVersion;
+					// (Note: more than one table may have changed!)
+					var resultingTableNames = req.responseXML.getElementsByTagName("savedName");
+					var resultingTableVersions = req.responseXML.getElementsByTagName("savedVersion");
 
+					var resultingTableIndex;
+					var resultingTableName;
+					for(var i=0;i<resultingTableNames.length;++i)
+					{
+						resultingTableIndex = -1;
+						resultingTableName = DesktopContent.getXMLValue(resultingTableNames[i]);
+						
+						for(var j=0;j<treeMemberNames_.length;++j)
+							if(resultingTableName == treeMemberNames_[j])
+							{
+								treeMemberVersions_[j] = 
+										DesktopContent.getXMLValue(resultingTableVersions[i]);
+								resultingTableIndex = j;
+								break;
+							}
+						if(resultingTableIndex == -1)
+						{
+							Debug.log("Invalid tree member '" + resultingTableName +
+									"' was changed! Should be impossible. If repeatable, alert admins.",
+									Debug.HIGH_PRIORITY);
+							return;					
+						}		
+						Debug.log("New table version for " + resultingTableName + " = " +
+								treeMemberVersions_[resultingTableIndex]);					
+					}
+					
 					//change target edit tree node 
 					localEditTreeNodeOKRequestsComplete(tableIndex,newValue);
 
@@ -6989,10 +7043,15 @@
 						}
 						
 						Debug.log("Successfully added a new record to temporary version '" +
-								resultingTargetTableVersion + "' of table '" + 
+								treeMemberVersions_[resultingTableIndex] + "' of table '" + 
 								treeEditingTargetTable_ + ".'",
 								Debug.INFO_PRIORITY);						
-					}					
+					}		
+					else if(treeEditingNodeType_ == "table-newGroupRow")
+					{
+						//rever edit type back to link-GroupID
+						treeEditingNodeType_ = "link-GroupID";
+					}
 
 					//recover (possibly) modified target table
 					treeEditingTargetTable_ = initTargetTable;
@@ -7094,7 +7153,8 @@
 							//reset children
 							var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 									idString);
-							var wasDisplayed = elChildrenNode.style.display != "none";
+							var wasDisplayed = elChildrenNode.style.display != "none" && 
+									elChildrenNode.innerHTML != "";
 
 							toggleTreeChildren(
 									idString.split('-')[0],
@@ -7123,7 +7183,8 @@
 						//reset children
 						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 								idString);
-						var wasDisplayed = elChildrenNode.style.display != "none";
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
 
 						toggleTreeChildren(
 								idString.split('-')[0],
@@ -7507,7 +7568,8 @@
 						//		then toggle/show new children 
 						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 								idString);
-						var wasDisplayed = elChildrenNode.style.display != "none";
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
 
 						toggleTreeChildren(
 								idString.split('-')[0],
@@ -7827,7 +7889,8 @@
 								//Debug.log("link-idString " + idString + " " + uid);
 								//Debug.log("link-idString CHANGE to " + newValue);
 								
-								var wasDisplayed = elChildrenNode.style.display != "none";
+								var wasDisplayed = elChildrenNode.style.display != "none" && 
+										elChildrenNode.innerHTML != "";
 								
 								toggleTreeChildren(idString.split('-')[0],idString.split('-')[1],false);
 								elChildrenNode.innerHTML = "";

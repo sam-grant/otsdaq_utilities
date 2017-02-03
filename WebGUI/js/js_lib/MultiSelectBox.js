@@ -164,7 +164,8 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,noMultiSelect)
 {
 	if(!el) 
-	{ throw new Error("Invalid Element given to MultiSelectBox: " + el); return; } 
+	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
+		throw new Error("Invalid Element given to MultiSelectBox: " + el); return; } 
 	
 	el.innerHTML = ""; //delete current contents
 
@@ -404,7 +405,8 @@ MultiSelectBox.makeSearchBar = function(id)
 				MultiSelectBox.mySelects_[id] = []; //initialize to empty the selected items
 			
 			var selRect = select.getBoundingClientRect(),
-				omniRect = select.offsetParent.getBoundingClientRect();//MultiSelectBox.omnis_[id].getBoundingClientRect();
+				omniRect = MultiSelectBox.omnis_[id].getBoundingClientRect();
+				//select.offsetParent.getBoundingClientRect();
 			
 			var offsetx = selRect.left - omniRect.left,
 				offsety = selRect.top - omniRect.top;

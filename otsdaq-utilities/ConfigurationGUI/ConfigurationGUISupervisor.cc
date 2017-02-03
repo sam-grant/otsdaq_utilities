@@ -1218,13 +1218,18 @@ try
 			__MOUT__ << "linkPair " << linkPair.first << "," <<
 					linkPair.second << std::endl;
 
+			std::string linkIndex = cfgView->getColumnInfo(col).getChildLinkIndex();
+
+			__MOUT__ << "linkIndex " << linkIndex << std::endl;
+
 			//find table value and id value
 			unsigned int csvIndexStart = 0,csvIndex = newValue.find(',');
 
 			std::string newTable = newValue.substr(csvIndexStart,csvIndex);
 			csvIndexStart = csvIndex + 1;
 			csvIndex = newValue.find(',',csvIndexStart);
-			std::string newLinkId = newValue.substr(csvIndexStart,csvIndex-csvIndexStart); //if no more commas will take the rest of string
+			std::string newLinkId =
+					newValue.substr(csvIndexStart,csvIndex-csvIndexStart); //if no more commas will take the rest of string
 
 			__MOUT__ << "newValue " << newTable << "," <<
 					newLinkId << std::endl;
@@ -1255,24 +1260,198 @@ try
 				changed = true;
 
 
+
+			//handle groupID links slightly differently
+			//	have to look at changing link table too!
 			//if group ID set all in member list to be members of group
 			if(type == "link-GroupID")
 			{
-				__MOUT__ << "FIXME " << std::endl;
-				//				std::string newLinkId = newValue.substr(csvIndex+1,
-				//									csvIndex = newValue.find(',')); //if no more commas will take the rest of string
+				bool secondaryChanged = false;
 
+				//first close out main target table
+				if(!changed) //if no changes throw out new version
+				{
+					__MOUT__ << "No changes to primary view. Erasing temporary table." << std::endl;
+					config->eraseView(temporaryVersion);
+				}
+				else	//if changes, save it
+				{
+					try
+					{
+						cfgView->init(); //verify new table (throws runtime_errors)
+
+						saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
+													config,temporaryVersion); //save temporary version properly
+					}
+					catch(std::runtime_error &e) //erase temporary view before re-throwing error
+					{
+						__MOUT__ << "Caught error while editing main table. Erasing temporary version." << std::endl;
+						config->eraseView(temporaryVersion);
+						changed = false; //undo changed bool
+
+						//send warning so that, secondary table can still be changed
+						xmldoc.addTextElementToData("Warning", "Error saving primary tree node! " + std::string(e.what()));
+					}
+				}
+
+				//now, onto linked table
+
+				//get the current linked table/version
+				//check if the value is new
+				//if new edit value (in a temporary version only)
+
+				csvIndexStart = csvIndex + 1;
+				csvIndex = newValue.find(',',csvIndexStart);
+				version = ConfigurationVersion(
+						newValue.substr(csvIndexStart,csvIndex-csvIndexStart)); //if no more commas will take the rest of string
+
+
+
+				//get table and activate target version
+				config = cfgMgr->getConfigurationByName(newTable);
+				try
+				{
+					config->setActiveView(version);
+				}
+				catch(...)
+				{
+					__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
+							version << std::endl;
+					cfgMgr->getVersionedConfigurationByName(
+							newTable, version);
+				}
+
+				__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+				if(version != config->getViewVersion())
+				{
+					__SS__ << "Target table version (" << version <<
+							") is not the currently active version (" << config->getViewVersion()
+							<< ". Try refreshing the tree." << std::endl;
+					throw std::runtime_error(ss.str());
+				}
+
+
+				//create temporary version for editing
+				temporaryVersion = config->createTemporaryView(version);
+
+				__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+
+				cfgView = config->getTemporaryView(temporaryVersion);
+
+				col = cfgView->getColLinkGroupID(linkIndex);
+
+				__MOUT__ << "target col " << col << std::endl;
+
+
+				//extract vector of members to be
+				std::vector<std::string> memberUIDs;
+				do
+				{
+					csvIndexStart = csvIndex + 1;
+					csvIndex = newValue.find(',',csvIndexStart);
+					memberUIDs.push_back(newValue.substr(csvIndexStart,csvIndex-csvIndexStart));
+					__MOUT__ << "memberUIDs: " << memberUIDs.back() << std::endl;
+				} while(csvIndex != (unsigned int)std::string::npos); //no more commas
+
+
+				//for each row,
+				//	check if should be in group
+				//		if should be but is not
+				//			add to group, CHANGE
+				//		if should not be but is
+				//			remove from group, CHANGE
+				//
+
+				std::string targetUID;
+				bool shouldBeInGroup;
+				auto defaultRowValues = cfgView->getDefaultRowValues();
+
+				for(unsigned int row=0;row<cfgView->getNumberOfRows();++row)
+				{
+					targetUID = cfgView->getDataView()[row][cfgView->getColUID()];
+					__MOUT__ << "targetUID: " << targetUID << std::endl;
+
+					shouldBeInGroup = false;
+					for(unsigned int i=0;i<memberUIDs.size();++i)
+						if(targetUID == memberUIDs[i])
+						{
+							//found in member uid list
+							shouldBeInGroup = true;
+							break;
+						}
+
+					//if should be but is not
+					if(shouldBeInGroup &&
+							!cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					{
+
+						__MOUT__ << "Changed YES: " << row << std::endl;
+						secondaryChanged = true;
+
+						cfgView->addRowToGroup(row,col,newLinkId,defaultRowValues[col]);
+
+					}//if should not be but is
+					else if(!shouldBeInGroup &&
+							cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					{
+
+						__MOUT__ << "Changed NO: " << row << std::endl;
+						secondaryChanged = true;
+
+						cfgView->removeRowFromGroup(row,col,newLinkId);
+					}
+				}
+
+
+				//first close out main target table
+				if(!secondaryChanged) //if no changes throw out new version
+				{
+					__MOUT__ << "No changes to secondary view. Erasing temporary table." << std::endl;
+					config->eraseView(temporaryVersion);
+				}
+				else	//if changes, save it
+				{
+					try
+					{
+						cfgView->init(); //verify new table (throws runtime_errors)
+
+						saveModifiedVersionXML(xmldoc,cfgMgr,newTable,version,true /*make temporary*/,
+								config,temporaryVersion); //save temporary version properly
+					}
+					catch(std::runtime_error &e) //erase temporary view before re-throwing error
+					{
+						__MOUT__ << "Caught error while editing secondary table. Erasing temporary version." << std::endl;
+						config->eraseView(temporaryVersion);
+						secondaryChanged = false; //undo changed bool
+
+						//send warning so that, secondary table can still be changed
+						xmldoc.addTextElementToData("Warning", "Error saving secondary tree node! " + std::string(e.what()));
+					}
+				}
+
+				if(!changed && !secondaryChanged)
+				{
+					__SS__ << "Link to table '" << newTable <<
+							"', linkID '" << newLinkId <<
+							"', and selected group members are the same as the current value. " <<
+							"No need to save changes to tree." <<
+							std::endl;
+					throw std::runtime_error(ss.str());
+				}
+
+				return;	//exit since table inits were already tested
 			}
-
-
-			if(!changed)
+			else if(!changed)
 			{
 				__SS__ << "Link to table '" << newTable <<
 						"' and linkID '" << newLinkId <<
-						"' is the same as the current value. No need to save change to tree node." <<
+						"' are the same as the current values. No need to save change to tree node." <<
 						std::endl;
 				throw std::runtime_error(ss.str());
 			}
+
+
 
 		}
 
