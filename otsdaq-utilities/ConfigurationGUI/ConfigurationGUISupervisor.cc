@@ -292,12 +292,15 @@ throw (xgi::exception::Exception)
 	{
 		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
 		std::string ignoreWarnings = CgiDataUtilities::getData(cgi,"ignoreWarnings"); //from GET
+		std::string allowDuplicates = CgiDataUtilities::getData(cgi,"allowDuplicates"); //from GET
 		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__MOUT__ << "configList: " << configList << std::endl;
 		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
+		__MOUT__ << "allowDuplicates: " << allowDuplicates << std::endl;
 
-		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList, false,
+		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList,
+				(allowDuplicates == "1"),
 				(ignoreWarnings == "1"));
 	}
 	else if(Command == "getSpecificConfiguration")
