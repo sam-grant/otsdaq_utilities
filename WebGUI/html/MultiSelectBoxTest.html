@@ -50,7 +50,15 @@
 	            
 	            
 	            //use init to setup/clear previous selections
-	            MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
+	            //MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
+	            
+
+				//Example: set pre-selections for box1 already in group	  
+	            //	note doesn't work because is single-select
+				MultiSelectBox.initMySelectBoxes(true); //init to clear
+				for(var i=0;i<2;++i)
+					MultiSelectBox.setSelectionElementByIndex(el1,i,true);	
+				MultiSelectBox.initMySelectBoxes(false); //setup selections	
 	            
 	            //print out current state of selection array
 	            //if anything is selected from before.. handle as selected
@@ -65,8 +73,8 @@
 	            }
 	            
 
-				//Example: set pre-selections for box2 already in group
-				MultiSelectBox.initMySelectBoxes(true); //init to clear
+				//Example: set pre-selections for box2 already in group	  
+	            //	note doesn't work because is single-select
 				for(var i=0;i<2;++i)
 					MultiSelectBox.setSelectionElementByIndex(el2,i,true);	
 				MultiSelectBox.initMySelectBoxes(false); //setup selections	

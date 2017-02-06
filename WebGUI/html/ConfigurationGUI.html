@@ -405,7 +405,7 @@
 			
 			//setupConfigCreator(); return
 			
-			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
+			setupConfigGroupTreeView("artdaqFclTest","46"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -5048,7 +5048,7 @@
 						str += "</select>";						
 						str += "</td></tr></table>";
 
-						if(linkIdType == "GroupID")		//add extra group stuff	
+						if(linkIdType == "GroupID")		//add extra group-link stuff	
 						{
 							str += "<div id='clearDiv'></div>";
 							str += "<div id='treeView-groupMemberEditDiv' " +
@@ -5076,6 +5076,26 @@
 							str += "</a>";
 									
 						}
+						else if(linkIdType == "UID")		//add extra UID-link stuff	
+						{
+							str += "<div id='clearDiv'></div>";
+							//link for new default record in group
+							str += "<a onmouseup='event.stopPropagation();' " +
+									"id='treeView-editUIDLink-uidCreate' " +
+									"style='" +
+									"position: absolute;" + 
+									"left: 300px; top: 40px;" +
+									"white-space: nowrap; text-decoration: underline;" + 
+									"' " + //end style
+									"onclick='event.stopPropagation(); " +
+									"treeEditingNodeType_ = \"table-newUIDRow\";" +
+									"editTreeNodeOK();" +									
+									"'" +
+									">";
+							str += "Create a new Default Record in Linked Table";
+							str += "</a>";
+							
+						}
 						str += "<div id='treeView-editLink-uidInfo' " +
 								"onclick='event.stopPropagation();' onmouseup='event.stopPropagation();'" +
 								"style='" +
@@ -5083,6 +5103,7 @@
 								"display: none; background-color: rgb(193, 152, 152); " +
 								"left: 300px; top: 100px; border-radius: 5px; cursor: auto;" +
 								"padding: 10px; overflow: auto; white-space: nowrap;" +
+								"z-index: 10;" +
 								"'>";
 							
 						str += "</div>";
@@ -5117,8 +5138,75 @@
 						sel.onchange = localLinkEditSelectOnChangeHandler;
 						selId.onchange = localLinkEditSelectOnChangeHandler;
 
-						if(linkIdType == "GroupID")		//add extra group stuff					
+						if(linkIdType == "GroupID")		//add extra group-link stuff					
 							localSetupGroupMemberEdit();
+						else if(linkIdType == "UID" &&
+								!selId.disabled)		//add extra UID-link stuff
+						{
+							//sneak peak the chosen UID
+							
+							//show uid info box			
+							var uel = document.getElementById("treeView-editLink-uidInfo");
+							uel.style.display = "block";	
+							uel.style.left = 300 + "px";	
+							uel.style.top = 60 + "px";
+							Debug.log("sneak peak UID");
+							
+							var modifiedTables = ""; //csv table, temporay version,...
+							for(var j=0;j<treeMemberNames_.length;++j)
+								if((treeMemberVersions_[j]|0) < -1)
+								{
+									if(modifiedTables.length)
+										modifiedTables += ",";
+									modifiedTables += treeMemberNames_[j];
+									modifiedTables += ",";
+									modifiedTables += treeMemberVersions_[j];
+								}
+
+							DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+									"&configGroup=" + treeGroupName_ + 
+									"&configGroupKey=" + treeGroupKey_ +
+									"&hideStatusFalse=" + 1 +
+									"&depth=1", 
+									"startPath=" + "/" + 
+									_editingCellEl.getElementsByTagName("select")[0].value + "/" + 
+									selId.value + "/"+ 
+									"&modifiedTables=" + modifiedTables,
+									function(req) 
+									{
+								var err = DesktopContent.getXMLValue(req,"Error");
+								if(err) 
+								{		
+									uel.innerHTML = "Error occurred.";
+									return;
+								}
+
+								var warn = DesktopContent.getXMLValue(req,"Warning");
+								if(warn) 
+								{
+									uel.innerHTML = "Warning occurred.";
+									return;
+								}
+
+								var str = "";
+
+								str += "<u>UID '" + selId.value + "' values:</u><br>";
+								str += "<div id='clearDiv' style='margin-top:10px'></div>"; //little padding
+								var children = req.responseXML.getElementsByTagName("node");
+								for(var j=0;j<children.length;++j)
+								{
+									//must all be value/link nodes					
+									str += "<b class='bold-header' style='color:rgb(65, 86, 146);'>" +
+											DesktopContent.getXMLValue(children[j]) + "</b>";
+									str += " : ";
+									str += DesktopContent.getXMLValue(children[j].children[0]);
+									str += "<br>";
+								}				
+
+								uel.innerHTML = str;
+									},
+									0,0,0,true); //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						}
 						
 					} //end of localCreateLinkEditHTML definition
 					
@@ -5136,7 +5224,7 @@
 						//	then jump to html creation
 						
 						Debug.log("Invalid tree member table targeted!");//,Debug.HIGH_PRIORITY);
-						localCreateLinkEditHTML([]);						
+						localCreateLinkEditHTML([],[],[]);						
 						return;					
 					}
 
@@ -6504,6 +6592,7 @@
 
 				//some types should be handled before cell is cleared
 				//	e.g. for continuation of editing, like "table-newGroupRow"
+				//	and "table-newUIDRow"
 				if(treeEditingNodeType_ == "table-newGroupRow") //spawns from group link edit)
 				{					
 					//clear children and re-toggle if shown	
@@ -6528,6 +6617,12 @@
 					//reload members in multiselect
 					_editingCellEl.getElementsByTagName("select")[0].onchange();										
 					return;
+				}
+				else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
+				{	
+					//reload members uid dropdown
+					_editingCellEl.getElementsByTagName("select")[0].onchange();										
+					return;					
 				}
 				
 				
@@ -6825,6 +6920,7 @@
 					treeEditingNodeType_ == "delete-uid" ||
 					treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
 					treeEditingNodeType_ == "table-newGroupRow" || //spawns from group link edit
+					treeEditingNodeType_ == "table-newUIDRow" || //spawns from uid link edit
 					treeEditingNodeType_ == "value" ||
 					treeEditingNodeType_ == "value-bool" || 
 					treeEditingNodeType_ == "value-groupid")
@@ -6886,13 +6982,14 @@
 						}
 					}
 				}
-				else if(treeEditingNodeType_ == "table-newGroupRow")
+				else if(treeEditingNodeType_ == "table-newGroupRow" || 
+						treeEditingNodeType_ == "table-newUIDRow")
 				{
-					//coming from edit setup of group link "link-GroupID"
+					//coming from edit setup of group link "link-GroupID" or "link-UID"
 					var sel = _editingCellEl.getElementsByTagName("select")[0];					
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
-					//make csv newValue := linkIndex,linkGroupID
+					//make csv newValue := linkIndex,linkID
 
 					newValue = document.getElementById("treeNode-childLinkIndex-" + 
 							treeEditingNodeIdString_).innerText;
@@ -6913,14 +7010,15 @@
 				{
 					//some types allow no change
 					if(treeEditingNodeType_ != "delete-uid" &&
-							treeEditingNodeType_ != "table-newGroupRow")
+							treeEditingNodeType_ != "table-newGroupRow" &&  
+							treeEditingNodeType_ != "table-newUIDRow")
 					{
 						Debug.log("No change. Do nothing.");
 						editCellCancel();
 						return;
 					}
 					else
-						Debug.log("No change. OK to delete.");
+						Debug.log("No change. OK for operation.");
 				}
 				else if(	//some types REQUIRE no change
 						treeEditingNodeType_ == "delete-uid" ) 
@@ -7049,8 +7147,13 @@
 					}		
 					else if(treeEditingNodeType_ == "table-newGroupRow")
 					{
-						//rever edit type back to link-GroupID
+						//revert edit type back to link-GroupID
 						treeEditingNodeType_ = "link-GroupID";
+					}	
+					else if(treeEditingNodeType_ == "table-newUIDRow")
+					{
+						//revert edit type back to link-GroupID
+						treeEditingNodeType_ = "link-UID";
 					}
 
 					//recover (possibly) modified target table
@@ -7125,7 +7228,8 @@
 				}
 			}
 			else if(treeEditingNodeType_ == "table-newRow" || 
-					treeEditingNodeType_ == "table-newGroupRow")
+					treeEditingNodeType_ == "table-newGroupRow" || 
+					treeEditingNodeType_ == "table-newUIDRow")
 			{
 				//since add row can only be done at root table
 				//find all Links with target table and reset children				
@@ -7169,8 +7273,9 @@
 					}
 				}
 				
-				//for groupRow also have to refresh target table
-				if(treeEditingNodeType_ == "table-newGroupRow")
+				//for groupRow and UIDRow also have to refresh target table
+				if(treeEditingNodeType_ == "table-newGroupRow" ||
+						treeEditingNodeType_ == "table-newUIDRow")
 				{
 					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
 

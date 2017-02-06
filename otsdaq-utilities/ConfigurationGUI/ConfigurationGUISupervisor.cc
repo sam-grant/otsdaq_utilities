@@ -1100,6 +1100,7 @@ try
 	else if(
 			type == "table" ||
 			type == "table-newGroupRow" ||
+			type == "table-newUIDRow" ||
 			type == "table-newRow"); // column N/A
 	else
 	{
@@ -1151,6 +1152,19 @@ try
 		{
 			//add row
 			cfgView->addRow();
+		}
+		else if(type == "table-newUIDRow")
+		{
+			//add row
+			unsigned int row = cfgView->addRow();
+
+			//if "Status" exists, set it to true
+			try
+			{
+				col = cfgView->findCol("Status");
+				cfgView->setURIEncodedValue("1",row,col);
+			}
+			catch(...) {} //if not, ignore
 		}
 		else if(type == "table-newGroupRow")
 		{

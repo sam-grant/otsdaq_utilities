@@ -49,6 +49,8 @@ function $(id) {return document.getElementById(id);}
 
 MultiSelectBox.mySelects_ = {};
 MultiSelectBox.omnis_ = {}; 
+MultiSelectBox.isSingleSelect_ = {}; 
+MultiSelectBox.lastOptSelect_ = {};  //maintain last opt clicked
 
 MultiSelectBox.selInitBoxHeight_ = 0; //init with first showing of search box in showSearch()
 MultiSelectBox.SEL_INIT_PADDING = 5; 
@@ -113,22 +115,38 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 
 MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
 {    
-	MultiSelectBox.mySelects_[el.getElementsByClassName("mySelect")[0].id][i] = selected?1:0;
+	var name = el.getElementsByClassName("mySelect")[0].id;
+	if(MultiSelectBox.isSingleSelect_[name] && 
+			selected) //if true, only allow one select at a time, so deselect others
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = 0;
+	}
+	MultiSelectBox.mySelects_[name][i] = selected?1:0;
 }
 
-
 //for multiple selects to behave like checkboxes
-MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
+MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 {
 	var select = option.parentElement;
 	var id = select.getAttribute("id");
 	var selectList = MultiSelectBox.mySelects_[id];
 	var size = select.childNodes.length;
 	
+	if(event)
+		MultiSelectBox.dbg("Shift click = " + event.shiftKey);
+
+	//if shift.. then select or deselect 
+	//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
+	//	MultiSelectBox.lastOptSelect_[id]
+	//	to this click
+	
 	//MultiSelectBox.dbg(selectList);
 	if (!selectList || selectList.length!=size)
 	{ //first time, populate select list
-		MultiSelectBox.mySelects_[id]=[]; 
+		MultiSelectBox.mySelects_[id] = []; 
+		MultiSelectBox.lastOptSelect_[id] = -1;
 		selectList=MultiSelectBox.mySelects_[id];	
 		for (var opt=0; opt<size; opt++)
 			selectList.push(0);
@@ -152,9 +170,39 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 				selectList[cindex] = 0;
 			}
         }
+	else if(event.shiftKey && 
+			MultiSelectBox.lastOptSelect_[id] != -1)
+	{
+		//if shift.. then select or deselect 
+		//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
+		//	MultiSelectBox.lastOptSelect_[id]
+		//	to this click
+		
+		var lo = MultiSelectBox.lastOptSelect_[id] < index? 
+				MultiSelectBox.lastOptSelect_[id]:index;
+		var hi = MultiSelectBox.lastOptSelect_[id] < index? 
+				index:MultiSelectBox.lastOptSelect_[id];
+
+		MultiSelectBox.dbg("lo ",lo," hi ",hi);
+		//handle multi shift click
+		for (var opt=lo; opt<=hi; opt++)
+		{
+			MultiSelectBox.dbg(selectList[opt]," vs ",
+					selectList[MultiSelectBox.lastOptSelect_[id]]);
+			if(selectList[opt] != 
+					selectList[MultiSelectBox.lastOptSelect_[id]]) //if not matching selected value
+			{
+				MultiSelectBox.dbg("flip");
+				//toggle highlighted style and global array
+				MultiSelectBox.toggleClass(select.childNodes[opt],"optionhighlighted");
+				selectList[opt] ^= 1;
+			}
+		}
+	}
 
 	MultiSelectBox.dbg(selectList);
 	selected = selectList;
+	MultiSelectBox.lastOptSelect_[id] = index; //save selection
 }
 
 //This function is called by user to actually create the multi select box
@@ -173,6 +221,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 	MultiSelectBox.addClass(el,"multiselectbox"); //add multiselectbox class to div  
 	
 	MultiSelectBox.omnis_[name] = el; 
+	MultiSelectBox.isSingleSelect_[name] = noMultiSelect;
+	MultiSelectBox.lastOptSelect_[name] = -1; //default to nothing selected
 
 	//searchglass=28x28, margin=5, vscroll=16, border=1
 	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
@@ -199,14 +249,15 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 			name + "' style='float:left;" + 
 			"width: " + (msW) + "px;" + 
 			"height: " + (msH) + "px;" + 
-			"' name='" + name + "' >";
+			"' name='" + name + "' " +
+			">";
 
 	for (var i = 0; i < keys.length;++i)//cactus length
 	{
 		str += "<div  class='myOption' " +
 			"id='" + name + "-option_" + i + "' " +
 			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
-			noMultiSelect + "); ";
+			noMultiSelect + ", event); ";
 		if(handler && (typeof handler) == "string") //if handler supplied as string
 			str += handler + "(this);"; //user selection handler
 		else if(handler) //assume it is a function
@@ -235,6 +286,7 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 		
 		var id = select.getAttribute("id");
 		var options = select.childNodes;
+		MultiSelectBox.lastOptSelect_[id] = -1;
 		if (!MultiSelectBox.mySelects_[id] ||
 				MultiSelectBox.mySelects_[id].length > options.length)
 		{//if first time drawing select box OR size was reduced
