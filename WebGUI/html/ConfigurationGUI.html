@@ -319,6 +319,7 @@
 		
 			//selectThisTreeNode(idString,type,event)
 			//treeViewGroupMemberEditMultiSelectHandler(sel) 
+			//handleEditTreeGroupIDEditFreeformToggle()
 		//end tree-view focused
 		
 			//selectThisCell(r,c,el,event)
@@ -5005,13 +5006,16 @@
 
 						str += treeEditingTargetColumn_ + "<br>";
 
-						str += "<table cellpadding='0' cellspacing='0' border='0'><tr>"; 
+						str += "<table cellpadding='0' cellspacing='0' border='0' " +
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();' " +
+								"><tr>"; 
 						str += "<td style='text-align:right'>Table:</td><td>";
 						str += "<select  onkeydown='keyHandler(event,this)' " +
 								"onmouseup='event.stopPropagation();'" +
 								"onclick='event.stopPropagation();'" +
 								"style='" + 
-								"height:" + (21) + "px'>";
+								"height:" + (29) + "px'>";
 						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
 						{			
 							str += "<option value='" + _tableLinkDropdownChoices[i] 
@@ -5028,12 +5032,16 @@
 						str += "<td style='text-align:right'>";
 						str += linkIdType + ":";
 						str += "</td><td>";
+						
+						//start new table for select and editIcon
+						str += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>"; 
 
 						str += "<select  onkeydown='keyHandler(event,this)' " +
+								"id='editTree-groupIdFreeform-select' " +
 								"onmouseup='event.stopPropagation();'" +
 								"onclick='event.stopPropagation();'" +
 								"style='" + 
-								"height:" + (21) + "px'>";
+								"height:" + (29) + "px'>";
 						var linkToChoice;
 						var linkToOptionIndex = 0; //default to first
 						for(var i=0;i<linkToChoices.length;++i)
@@ -5045,7 +5053,26 @@
 							if(linkToChoice	 == selectLinkId)
 								linkToOptionIndex = i; //get starting sel index
 						}				
-						str += "</select>";						
+						str += "</select>";		
+
+						str += "<input type='text' " +
+								"id='editTree-groupIdFreeform-input' " +
+								"style='display:none; margin:2px; width:150px; height:" + 
+								(19) + "px'>";						
+						str += "";
+						str += "</input>";	
+						
+						str += "</td><td>";
+
+						str += "<div style='display:block' " + 
+								"class='treeNode-Value-editIcon' " +
+								"id='editTree-groupIdFreeform-editIcon' " +
+								"onmouseup='event.stopPropagation();'" +
+								"onclick='handleEditTreeGroupIDEditFreeformToggle();event.stopPropagation();' " +
+								"title='Toggle free-form GroupID editing' " +
+								"></div>";		
+						str += "</td></tr></table>"; //end select and editIcon table
+						
 						str += "</td></tr></table>";
 
 						if(linkIdType == "GroupID")		//add extra group-link stuff	
@@ -6937,11 +6964,19 @@
 				{
 					//make csv newValue := linkTable,linkGroupID
 					var sel = _editingCellEl.getElementsByTagName("select")[0];					
-					newValue = sel.options[sel.selectedIndex].value;					
+					newValue = sel.options[sel.selectedIndex].value;
+					newValue += ",";					
 					sel = _editingCellEl.getElementsByTagName("select")[1];
-					newValue += ",";
-					if(sel.selectedIndex >= 0) //if valid
-						newValue += sel.options[sel.selectedIndex].value;	
+					if(sel.style.display == "none")
+					{
+						//get value from text box if not displayed 
+						newValue += _editingCellEl.getElementsByTagName("input")[0].value;
+					}
+					else
+					{
+						if(sel.selectedIndex >= 0) //if valid
+							newValue += sel.options[sel.selectedIndex].value;
+					}
 					
 					if(treeEditingNodeType_ == "link-GroupID")
 					{
@@ -9426,6 +9461,28 @@
 				popEl.style.height = (h + grps.length*gh) + "px";
 				document.getElementById("popUpDialog-groupAliasArea").style.display = "block";
 			}			
+		}
+		
+		//handleEditTreeGroupIDEditFreeformToggle
+		function handleEditTreeGroupIDEditFreeformToggle()
+		{
+			Debug.log("handleEditTreeGroupIDEditFreeformToggle ");
+
+			var sel = document.getElementById("editTree-groupIdFreeform-select");
+			var tel = document.getElementById("editTree-groupIdFreeform-input");
+			Debug.log("sel.style.display  " + sel.style.display);
+			if(sel.style.display == "none")
+			{
+				sel.style.display = "block";
+				tel.style.display = "none";
+			}
+			else
+			{
+				tel.style.width = (sel.offsetWidth-2) + "px";
+				sel.style.display = "none";
+				tel.style.display = "block";
+				setCaretPosition(tel,0,tel.value.length);
+			}
 		}
 		
 		//handleEditTreeAliasEditToggle ~~
