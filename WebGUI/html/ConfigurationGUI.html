@@ -7222,6 +7222,7 @@
 		//	reduce tree back to only root children
 		function refreshTreeView()
 		{
+			
 			var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
 			var idString;
 			
@@ -7232,6 +7233,13 @@
 				toggleTreeChildren(idString.split('-')[0],idString.split('-')[1],false);
 				document.getElementById("treeNode-ChildrenOf-" + idString).innerHTML = "";
 			}
+			
+			//re-acquired the tree string
+			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
+			
+			//reset editing cell, since it was destroyed
+			_editingCell = false;
+			_editingCellEl = 0;
 		}
 		
 		//editTreeNodePropagateChange ~~

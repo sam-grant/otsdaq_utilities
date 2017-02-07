@@ -1009,13 +1009,20 @@ try
 		//build list of groupids
 		//	always include initial link group id in choices
 		//	(even if not in set of group ids)
-		xmldoc.addTextElementToData("linkToChoice",
-				linkInitId);
+		bool foundInitId = false;
 		for(const auto &groupID : setOfGroupIDs)
-			if(linkInitId == groupID) continue; //skip init id, since it was added first
-			else
-				xmldoc.addTextElementToData("linkToChoice",
+		{
+			if(!foundInitId &&
+					linkInitId == groupID)
+				foundInitId = true; //mark init id found
+
+			xmldoc.addTextElementToData("linkToChoice",
 					groupID);
+		}
+		//if init id was not found, add to list
+		if(!foundInitId)
+			xmldoc.addTextElementToData("linkToChoice",
+				linkInitId);
 
 		//give all UIDs
 		unsigned int col = config->getView().getColUID();
