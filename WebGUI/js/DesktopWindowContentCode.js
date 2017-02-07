@@ -523,13 +523,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var timeoutTimer;	
 	var timeoutFunction = function() 
 					{
-						Debug.log("It has been 10 seconds.. still waiting for a response. " +
+						Debug.log("It has been 20 seconds.. still waiting for a response. " +
 							"Is there an infinite loop occuring at the server? " +
 							"Or is this just a really long request..",
 							Debug.HIGH_PRIORITY);
-						timeoutTimer = window.setTimeout(timeoutFunction, 10000); 
+						timeoutTimer = window.setTimeout(timeoutFunction, 20000); 
 					}
-	timeoutTimer = window.setTimeout(timeoutFunction, 10000);
+	timeoutTimer = window.setTimeout(timeoutFunction, 20000);
 	
 	//setup response handler
 	req.onreadystatechange = function() {
