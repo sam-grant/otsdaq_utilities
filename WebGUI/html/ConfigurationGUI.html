@@ -2125,7 +2125,8 @@
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
 				
 				//add Activate link
-				treeViewHandlerStr_ += " <a href='#' onclick='javascript:activateSystemConfig(\"" + configGroupName +
+				treeViewHandlerStr_ += " <a id='treeView-ConfigGroupActivateLink' " +
+						href='#' onclick='javascript:activateSystemConfig(\"" + configGroupName +
 						"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
@@ -6299,6 +6300,13 @@
 							rootGroupEl.innerHTML = str;
 							rootGroupEl.onclick = function() {
 								setupSpecificConfigGroup(rootGroupName,newGroupKey);
+								return false;
+							};
+							
+							//modify the activate link
+							rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
+							rootGroupEl.onclick = function() {
+								activateSystemConfig(rootGroupName,newGroupKey);
 								return false;
 							};
 							
