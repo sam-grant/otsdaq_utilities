@@ -6979,7 +6979,9 @@
 					if(sel.style.display == "none")
 					{
 						//get value from text box if not displayed 
-						newValue += _editingCellEl.getElementsByTagName("input")[0].value;
+						newValue += 
+								encodeURIComponent(
+										_editingCellEl.getElementsByTagName("input")[0].value.trim());
 					}
 					else
 					{
@@ -7045,7 +7047,10 @@
 				else if(treeEditingNodeType_ == "table-newRow")
 					newValue = ""; //no value needed
 				else
+				{
 					newValue = _editingCellEl.getElementsByTagName("input")[0].value;
+					encodeURIComponent(newValue.trim());
+				}
 				
 				Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
 						newValue);
