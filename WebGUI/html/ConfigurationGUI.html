@@ -2024,7 +2024,7 @@
 				
 				//if disconnected link remove "DISCONNECTED"
 				var valEl = document.getElementById("treeNode-Value-" + parentId);
-				var valElText= valEl.innerText;
+				var valElText= valEl.textContent;
 				var i;
 				if((i = valElText.indexOf(")-DISCONNECTED")) > 0)
 				{
@@ -2738,7 +2738,7 @@
 			{
 				var i;
 				for(i=0;i<els.length;++i)
-					if(els[i].innerText == tableName)
+					if(els[i].textContent == tableName)
 					{
 						_editingCellEl = els[i];
 						break;
@@ -2753,7 +2753,7 @@
 			//setup globals (acting like a node edit)
 			treeEditingNodeType_ = "table-newRow";
 			treeEditingNodeIdString_ = _editingCellEl.id.substr(("treeNode-Value-").length);
-			treeEditingTargetTable_ = _editingCellEl.innerText;
+			treeEditingTargetTable_ = _editingCellEl.textContent;
 			_editingCellElOldValue = tableName;
 			treeEditingNodeDepth_ = 0;
 			
@@ -2791,7 +2791,7 @@
 				editTreeNodeOK(); //if new cell, click ok on old cell before continuing
 			}
 
-			var path = document.getElementById("treeNode-path-" + idString).innerText;
+			var path = document.getElementById("treeNode-path-" + idString).textContent;
 			
 			//			Debug.log("handleTreeNodeClick el       " + el.innerHTML);
 			//Debug.log("handleTreeNodeClick idString    " + idString);
@@ -2858,7 +2858,7 @@
 				if(type == "table")
 				{
 					//edit table comment
-					treeEditingTargetTable_ = el.innerText;
+					treeEditingTargetTable_ = el.textContent;
 					
 					//other globals are unused
 					treeEditingNodeParentIdString_ = "";
@@ -2871,7 +2871,7 @@
 
 				var splitArr = path.split('/');
 				treeEditingNodeParentIdString_ = 		
-						document.getElementById("treeNode-ParentId-" + idString).innerText;
+						document.getElementById("treeNode-ParentId-" + idString).textContent;
 				
 				if(type == "uid")
 				{
@@ -2881,9 +2881,9 @@
 					else //accessing through link so need to get from parent
 					{
 						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" + 
-								treeEditingNodeParentIdString_).innerText;	
+								treeEditingNodeParentIdString_).textContent;	
 					}
-					treeEditingTargetUID_ = el.innerText;
+					treeEditingTargetUID_ = el.textContent;
 					treeEditingTargetColumn_ = "UID";
 					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
 							"/" + treeEditingTargetUID_ + "/" +
@@ -2913,22 +2913,22 @@
 						if(!pel)
 							pel = document.getElementById("treeNode-linkTableName-" +
 								(document.getElementById("treeNode-ParentId-" + 
-										treeEditingNodeParentIdString_).innerText));
+										treeEditingNodeParentIdString_).textContent));
 						else //parent is uid link, so UID from path is wrong, fix it
 						{
 							//take uid from parent value, right side						
 							treeEditingTargetUID_ = document.getElementById("treeNode-Value-" +
-									treeEditingNodeParentIdString_).innerText.
+									treeEditingNodeParentIdString_).textContent.
 											split(')')[0].split('=')[1].substr(1);
 						}
 						
-						treeEditingTargetTable_ = pel.innerText;
+						treeEditingTargetTable_ = pel.textContent;
 					}										
 					
 					if(type == "value" || type == "link-disconnected")
-						treeEditingTargetColumn_ = el.childNodes[0].innerText; //get from bold node
+						treeEditingTargetColumn_ = el.childNodes[0].textContent; //get from bold node
 					else //link has col as start of value
-						treeEditingTargetColumn_ = el.innerText.split('-')[0]; //get before dash
+						treeEditingTargetColumn_ = el.textContent.split('-')[0]; //get before dash
 					
 					Debug.log("edit link/value mode target=" + treeEditingTargetTable_ +
 							"/" + treeEditingTargetUID_ + "/" +
@@ -3093,7 +3093,7 @@
 						(params[params.length-1][0]|0) == 0 && 
 						document.getElementById("treeNode-nodeName-" + 
 								params[params.length-1][0] + "-" + 
-								params[params.length-1][1]).innerText ==
+								params[params.length-1][1]).textContent ==
 								"XDAQContextConfiguration") 
 					contextIndex = params.length-1; //found XDAQContextConfiguration, save index
 			}
@@ -3244,8 +3244,8 @@
 			}
 			else if(!setValUsed || setVal)	//if no children div, then request it
 			{
-				var path = document.getElementById("treeNode-path-" + idString).innerText;
-				var nodeName = document.getElementById("treeNode-nodeName-" + idString).innerText;
+				var path = document.getElementById("treeNode-path-" + idString).textContent;
+				var nodeName = document.getElementById("treeNode-nodeName-" + idString).textContent;
 				
 				var modifiedTables = ""; //csv table, temporay version,...
 				for(var j=0;j<treeMemberNames_.length;++j)
@@ -4613,10 +4613,10 @@
 			el.style.left = 300 + "px";	
 			el.style.top = 80 + "px";
 			
-			if(treeEditingGroupMembersLastSelect_ == sel.innerText)
+			if(treeEditingGroupMembersLastSelect_ == sel.textContent)
 				return; //already shown uid values
 			
-			treeEditingGroupMembersLastSelect_ = sel.innerText;
+			treeEditingGroupMembersLastSelect_ = sel.textContent;
 			
 			el.innerHTML = ""; //clear
 			
@@ -4658,7 +4658,7 @@
 				
 				var str = "";
 				
-				str += "<u>UID '" + sel.innerText + "' values:</u><br>";
+				str += "<u>UID '" + sel.textContent + "' values:</u><br>";
 				str += "<div id='clearDiv' style='margin-top:10px'></div>"; //little padding
 				var children = req.responseXML.getElementsByTagName("node");
 				for(var j=0;j<children.length;++j)
@@ -4704,7 +4704,7 @@
 				
 				//edit table comment
 				el = document.getElementById("treeNode-TableComment-" + idString);				
-				_editingCellElOldValue = el.innerText;				
+				_editingCellElOldValue = el.textContent;				
 				var initVal = _editingCellElOldValue.substr(2).trim();	
 				treeEditingNodeInitValue_ = initVal;
 				
@@ -4730,7 +4730,7 @@
 				
 				//edit record uid
 				el = document.getElementById("treeNode-Value-" + idString);				
-				_editingCellElOldValue = el.innerText;
+				_editingCellElOldValue = el.textContent;
 				treeEditingNodeInitValue_ = _editingCellElOldValue;
 
 				var str = "";
@@ -4801,7 +4801,7 @@
 					treeEditingNodeType_ += "-bool";
 					_editingCellElOldValue = el.innerHTML;
 					
-					var initVal = el.childNodes[0].innerText;
+					var initVal = el.childNodes[0].textContent;
 					treeEditingNodeInitValue_ = initVal;
 					
 					var boolVals = [];
@@ -4834,7 +4834,7 @@
 					if(colType == "GroupID") //track type if it is groupid field
 						treeEditingNodeType_ += "-groupid";
 					
-					_editingCellElOldValue = el.innerText;
+					_editingCellElOldValue = el.textContent;
 					treeEditingNodeInitValue_ = _editingCellElOldValue;
 					
 					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
@@ -4879,22 +4879,22 @@
 				_editingCellElOldValue = el.innerHTML;
 				if(type == "link-disconnected")
 				{	
-					linkIdType = document.getElementById("treeNode-linkIdType-" + idString).innerText;
-					linkInitId = document.getElementById("treeNode-linkId-" + idString).innerText;
+					linkIdType = document.getElementById("treeNode-linkIdType-" + idString).textContent;
+					linkInitId = document.getElementById("treeNode-linkId-" + idString).textContent;
 				}
 				else
 				{
-					linkIdType = el.innerText.split('(')[1].split(' ')[0];
-					linkInitId = el.innerText.split(')')[0].split('=')[1].substr(1);
+					linkIdType = el.textContent.split('(')[1].split(' ')[0];
+					linkInitId = el.textContent.split(')')[0].split('=')[1].substr(1);
 				}
 				
 				
 				var linkTable = document.getElementById("treeNode-linkTableName-" + idString);
 				if(linkTable)
-					linkTable = linkTable.innerText; 
+					linkTable = linkTable.textContent; 
 				else
 					linkTable = "";
-				var linkIndex = document.getElementById("treeNode-childLinkIndex-" + idString).innerText;										
+				var linkIndex = document.getElementById("treeNode-childLinkIndex-" + idString).textContent;										
 
 				Debug.log("linkTable " + linkTable);
 				Debug.log("linkIdType " + linkIdType); // "UID" or "GroupID"
@@ -5357,7 +5357,7 @@
 			_editingCellEl = el;
 			_editingCellPos = [r,c];
 			
-			_editingCellElOldValue = el.innerText;//el.innerHTML;
+			_editingCellElOldValue = el.textContent;//el.innerHTML;
 			var str = "";		
 			var optionIndex = -1;
 					
@@ -6183,8 +6183,8 @@
 				
 				//identify root group name/key
 				var rootGroupEl = document.getElementById("treeView-ConfigGroupLink");
-				var rootGroupName = rootGroupEl.childNodes[0].innerText;
-				var rootGroupKey = rootGroupEl.childNodes[1].innerText;
+				var rootGroupName = rootGroupEl.childNodes[0].textContent;
+				var rootGroupKey = rootGroupEl.childNodes[1].textContent;
 
 				Debug.log("rootGroup = " + rootGroupName + "(" + rootGroupKey + ")");
 				Debug.log("On to saving groups");
@@ -6201,9 +6201,9 @@
 				for(var i=0;i<affectedGroupEls.length;++i)
 				{
 					//save member list but with tree table versions
-					Debug.log(affectedGroupEls[i].innerText);
+					Debug.log(affectedGroupEls[i].textContent);
 
-					var affectedArr = affectedGroupEls[i].innerText.split(','); 
+					var affectedArr = affectedGroupEls[i].textContent.split(','); 
 
 					//build member config map
 					var configMap = "configList=";
@@ -6866,7 +6866,7 @@
 						var parentLinkIndex = 
 								document.getElementById("treeNode-childLinkIndex-" + 
 								(document.getElementById("treeNode-ParentId-" + 
-										treeEditingNodeParentIdString_).innerText)).innerText;
+										treeEditingNodeParentIdString_).textContent)).textContent;
 								
 						var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
 
@@ -6877,7 +6877,7 @@
 						
 						var groupId = document.getElementById("treeNode-Value-" + 
 								((document.getElementById("treeNode-ParentId-" + 
-										treeEditingNodeParentIdString_).innerText))).innerText;
+										treeEditingNodeParentIdString_).textContent))).textContent;
 						groupId = groupId.split('=')[1].substr(1); //get after =
 						groupId = groupId.substr(0,groupId.length-1); //remove ending )
 						
@@ -7022,9 +7022,9 @@
 							Debug.log("ms selected [" + s + "]: " +
 									selArr[s]);
 							if(!selArr[s]) continue;
-							Debug.log(MultiSelectBox.getSelectionElementByIndex(el,s).innerText);
+							Debug.log(MultiSelectBox.getSelectionElementByIndex(el,s).textContent);
 							newValue += "," + 
-									MultiSelectBox.getSelectionElementByIndex(el,s).innerText;
+									MultiSelectBox.getSelectionElementByIndex(el,s).textContent;
 						}
 					}
 				}
@@ -7038,7 +7038,7 @@
 					//make csv newValue := linkIndex,linkID
 
 					newValue = document.getElementById("treeNode-childLinkIndex-" + 
-							treeEditingNodeIdString_).innerText;
+							treeEditingNodeIdString_).textContent;
 					newValue += ",";		
 					sel = _editingCellEl.getElementsByTagName("select")[1];
 					if(sel.selectedIndex >= 0) //if valid
@@ -7274,7 +7274,7 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 						if(table == treeEditingTargetTable_)
 						{
 							el = document.getElementById("treeNode-TableComment-" + idString);
@@ -7298,10 +7298,10 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 						if(table == treeEditingTargetTable_)
 						{
-							elValSplit = els[i].innerText.split('(');
+							elValSplit = els[i].textContent.split('(');
 							
 							//if ( is missing, then this cell is currently being edited 
 							// by type "table-newGroupRow", so skip it
@@ -7338,7 +7338,7 @@
 
 					for(var i=0;i<els.length;++i)
 					{
-						if(els[i].innerText != treeEditingTargetTable_) continue;
+						if(els[i].textContent != treeEditingTargetTable_) continue;
 
 						idString = els[i].id.substr(("treeNode-Value-").length);
 						
@@ -7383,7 +7383,7 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						uid = els[i].innerText;
+						uid = els[i].textContent;
 						linkIdType = uid.split('(')[1].split(' ')[0];
 						
 						if(linkIdType == "GroupID") continue; //only consider link UIDs
@@ -7392,14 +7392,14 @@
 						
 						//Debug.log("link-idString " + idString + " " + uid);
 						
-						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
 						{
 							//hide parent children, delete them, and re-expand
 
 							parentIdString = document.getElementById("treeNode-ParentId-" + 
-									idString).innerText;
+									idString).textContent;
 							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 									parentIdString);							
 							toggleTreeChildren(
@@ -7429,20 +7429,20 @@
 						//if verifiably self, also skip
 						if(idString == treeEditingNodeIdString_) continue;
 						
-						//Debug.log("uid-idString " + idString + " " + els[i].innerText);
+						//Debug.log("uid-idString " + idString + " " + els[i].textContent);
 
 						//need table to verify match.. must get from parent
 						if(depth == 1)
 							table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).innerText)).innerText;
+											idString).textContent)).textContent;
 						else 
 							table = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).innerText)).innerText;						
+											idString).textContent)).textContent;						
 
 						//Debug.log("uid-table " + table);
-						uid = els[i].innerText;
+						uid = els[i].textContent;
 
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
@@ -7481,7 +7481,7 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						uid = els[i].innerText;
+						uid = els[i].textContent;
 						linkIdType = uid.split('(')[1].split(' ')[0];
 
 						if(linkIdType == "GroupID") continue; //only consider link UIDs
@@ -7490,14 +7490,14 @@
 
 						//Debug.log("link-idString " + idString + " " + uid);
 
-						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
 						{
 							//hide parent children, delete them, and re-expand
 							
 							parentIdString = document.getElementById("treeNode-ParentId-" + 
-									idString).innerText;
+									idString).textContent;
 							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 									parentIdString);							
 							toggleTreeChildren(
@@ -7528,20 +7528,20 @@
 						//if verifiably self, also skip
 						if(idString == treeEditingNodeIdString_) continue;
 
-						//Debug.log("uid-idString " + idString + " " + els[i].innerText);
+						//Debug.log("uid-idString " + idString + " " + els[i].textContent);
 
 						//need table to verify match.. must get from parent
 						if(depth == 1)
 							table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).innerText)).innerText;
+											idString).textContent)).textContent;
 						else 
 							table = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).innerText)).innerText;						
+											idString).textContent)).textContent;						
 
 						//Debug.log("uid-table " + table);
-						uid = els[i].innerText;
+						uid = els[i].textContent;
 
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
@@ -7549,7 +7549,7 @@
 							//hide parent children, delete them, and re-expand
 							
 							parentIdString = document.getElementById("treeNode-ParentId-" + 
-									idString).innerText;
+									idString).textContent;
 							elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 									parentIdString);							
 							toggleTreeChildren(
@@ -7609,25 +7609,25 @@
 						//if verifiably self, also skip
 						if(idString == treeEditingNodeIdString_) continue;
 
-						Debug.log("value-idString " + idString + " " + els[i].innerText);
+						Debug.log("value-idString " + idString + " " + els[i].textContent);
 
 						//verify column match...
 						
-						col = els[i].innerText.split('-')[0]; //get before dash
+						col = els[i].textContent.split('-')[0]; //get before dash
 						if(col != treeEditingTargetColumn_)
 							continue; //skip if not column match
 						
 						//need table/uid to verify match.. must get from parent of parent
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
-								idString).innerText;
+								idString).textContent;
 						
 						uid = document.getElementById("treeNode-Value-" + 
-								parentIdString).innerText;
+								parentIdString).textContent;
 						
 						if(depth == 2)
 							table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).innerText)).innerText;
+											parentIdString).textContent)).textContent;
 						else 
 						{
 							//needs to get table from parent OR parent-of-parent
@@ -7639,16 +7639,16 @@
 							if(!pel)
 								pel = document.getElementById("treeNode-linkTableName-" +
 										(document.getElementById("treeNode-ParentId-" + 
-												parentIdString).innerText));
+												parentIdString).textContent));
 							else //parent is uid link, so UID from path is wrong, fix it
 							{
 								//take uid from parent value, right side						
 								uid = document.getElementById("treeNode-Value-" +
-										parentIdString).innerText.
+										parentIdString).textContent.
 												split(')')[0].split('=')[1].substr(1);
 							}
 
-							table = pel.innerText;
+							table = pel.textContent;
 						}
 
 						Debug.log("link-table " + table);
@@ -7776,23 +7776,23 @@
 						//if verifiably self, also skip
 						if(idString == treeEditingNodeIdString_) continue;
 						
-						Debug.log("value-idString " + idString + " " + els[i].innerText);
+						Debug.log("value-idString " + idString + " " + els[i].textContent);
 
 						//need table to verify match.. must get from parent of parent
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
-								idString).innerText;
+								idString).textContent;
 						if(depth == 2)
 							table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).innerText)).innerText;
+											parentIdString).textContent)).textContent;
 						else 
 							table = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).innerText)).innerText;						
+											parentIdString).textContent)).textContent;						
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
-								parentIdString).innerText;
+								parentIdString).textContent;
 						Debug.log("value-uid " + table);
 
 						if(table == treeEditingTargetTable_ && 
@@ -7860,23 +7860,23 @@
 						if(depth != 2) continue; //can only possibly be self, which has already changed
 
 
-						Debug.log("value-idString " + idString + " " + els[i].innerText);
+						Debug.log("value-idString " + idString + " " + els[i].textContent);
 
 						//need table to verify match.. must get from parent of parent
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
-								idString).innerText;
+								idString).textContent;
 						if(depth == 2)
 							table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).innerText)).innerText;
+											parentIdString).textContent)).textContent;
 						else 
 							table = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).innerText)).innerText;						
+											parentIdString).textContent)).textContent;						
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
-								parentIdString).innerText;
+								parentIdString).textContent;
 						Debug.log("value-uid " + table);
 
 						if(table == treeEditingTargetTable_ && 
@@ -7908,23 +7908,23 @@
 
 						if(depth == 1) continue; //only care about group-linked uid nodes
 
-						//Debug.log("uid-idString " + idString + " " + els[i].innerText);
+						//Debug.log("uid-idString " + idString + " " + els[i].textContent);
 
 						//need table to verify match.. must get from parent link	
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
-								idString).innerText;
+								idString).textContent;
 						table = document.getElementById("treeNode-linkTableName-" + 
-								parentIdString).innerText;						
+								parentIdString).textContent;						
 
 						//Debug.log("uid-table " + table);
-						uid = els[i].innerText;
+						uid = els[i].textContent;
 
 						if(table == treeEditingTargetTable_ && 
 								uid == treeEditingTargetUID_)
 						{
 							//verify parent link is group-link else skip
 							groupId = document.getElementById("treeNode-Value-" + 
-									parentIdString).innerText;
+									parentIdString).textContent;
 							linkIdType = groupId.split('(')[1].split(' ')[0];
 							
 							if(linkIdType != "GroupID") continue;
@@ -7994,13 +7994,13 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						groupId = els[i].innerText;
+						groupId = els[i].textContent;
 						linkIdType = groupId.split('(')[1].split(' ')[0];
 						
 						if(linkIdType != "GroupID") continue; //only consider group links
 
 
-						table = document.getElementById("treeNode-linkTableName-" + idString).innerText;
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 						if(table != treeEditingTargetTable_) continue; //skip if table does not match
 							
 						//check if group id matches
@@ -8032,7 +8032,7 @@
 								if(elChildren[j].id.indexOf("treeNode") != 0) continue; //skip superfluous children
 								
 								uid = document.getElementById("treeNode-Value-" + 
-										elChildren[j].id.substr(("treeNode-").length)).innerText;
+										elChildren[j].id.substr(("treeNode-").length)).textContent;
 								
 								Debug.log("uid = " + uid);
 								
@@ -8909,7 +8909,7 @@
 						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
 						//assume one th column so minus 1
 						dataStr += encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].innerText.trim()) + ","; //replaces all special characters				
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim()) + ","; //replaces all special characters				
 					}
 					dataStr += ";";
 				}
@@ -8921,7 +8921,7 @@
 					cells = rows[r].getElementsByTagName("td");
 	
 					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
-						dataStr += encodeURIComponent(cells[c].innerText.trim()) + ","; //replaces all special characters					
+						dataStr += encodeURIComponent(cells[c].textContent.trim()) + ","; //replaces all special characters					
 					dataStr += ";";
 				}
 			}
