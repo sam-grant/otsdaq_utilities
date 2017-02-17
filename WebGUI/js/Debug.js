@@ -201,8 +201,11 @@ Debug.errorPop = function(err,severity) {
 	el.innerHTML = str;
 
 	//show the error box whereever the current scroll is
-	Debug._errBox.style.top = (document.body.scrollTop + 8) + "px";
-	Debug._errBox.style.left = (document.body.scrollLeft + 8) + "px";
+	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+	var offY = document.documentElement.scrollTop || document.body.scrollTop || 0;
+
+	Debug._errBox.style.left = (offX + 8) + "px";
+	Debug._errBox.style.top = (offY + 8) + "px";
 	
 	//and, set width properly so error box is scrollable for long winded errors
 	if(typeof DesktopContent != 'undefined') //define width using DesktopContent

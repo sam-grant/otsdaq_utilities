@@ -304,7 +304,7 @@
 			//getTreeViewTableStrings(tableLinkName)
 			//refreshTreeView();
 			//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
-			//toggleTreeChildren(depth,uid,setVal) 	
+			//toggleTreeChildren(depth,uid,setVal)
 			//expandTreeChildrenDepth()
 			//hideTreeChildrenDepth()
 			//createTreeViewMenu(event)
@@ -328,6 +328,7 @@
 			//keyHandler(e)
 			//bodyKeyHandler(e,keyEl)
 			//bodyMouseHandler(e)
+			//bodyMouseMoveHandler(e)
 
 			//editCellOK()									//assumes edited cell is specified by its global variables
 			//addRow(r)										//add row at destination with default values populated
@@ -402,11 +403,12 @@
 			
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
-			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;
+			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
 			
 			//setupConfigCreator(); return
 			
 			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
+			//setupConfigGroupTreeView("artdaqContext","5"); return;
 			
 			//setupGroupViewMode(); return;
 
@@ -609,6 +611,21 @@
 			str += "<br><br><br>";
 
 			Debug.log("CfgGUI groupAliasesRequestHandler groupAliases.length " + groupAliases.length);
+
+			
+			
+			str += "<table style='white-space:nowrap' cellpadding='0' cellspacing='0' border='0' >"; //open system aliases table
+			
+			str += "<tr><th>";
+			str += "<u>System Alias</u>";
+			str += "</th><th style='background-color:rgb(218, 194, 194);'>";
+			str += "<u>Translation</u>";
+			str += "</th><th colspan='4'>";
+			str += "";		
+			str += "<th style='text-align:left;padding-left: 20px;'>";
+			str += "<u>Alias Comment</u>";
+			str += "</th></tr>";
+			
 			
 			if(!groupAliases.length)
 				str += "No Configuration Group Aliases found.";
@@ -622,48 +639,79 @@
 				backLinkStr = "setupSystemViewMode(\\\"anchorTag-" + 
 						groupAlias + "\\\");"; 				
 
+
+				str += "<tr style='height:30px;'><td style='text-align:left;padding: 0 10px 0 0px;'>";
+				
+				//system alias
 				str += "<a name='anchorTag-" + 
 						groupAlias + "'></a>";
 				str += "&quot;";
 				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
 						groupAliasesName + "\",\"" +
-						groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
-				str += groupAlias + "</a>&quot; &lt; "; 
+						groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;' " +
+						"title='Alias Comment:\n\"" + groupComment + "\"' " +
+						">";
+				str += groupAlias + "</a>&quot;";
+				
 
-				//add group view link
+				str += "</td><td style='text-align:left; padding: 0 10px 0 10px; background-color:rgb(218, 194, 194);'>";
+
+				
+				//add group view link				
+				str += "&lt; ";
 				str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
-				str += groupName + "</a>";	
-				
+				str += groupName + "</a>";					
 				str += "(" + groupKey +") &gt;";	
 
+				
+				str += "</td><td style='text-align:left; padding-left:20px;'>";
+				
+				
 				//add tree view link
 				str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += "Tree-view</a>";		
+
+				
+				str += "</td><td style='text-align:left; padding: 0 10px 0 10px;'>";
+				
 				
 				//add Activate link
 				str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
 				str += "Activate</a>";
 
+				
+				str += "</td><td style='text-align:left; padding: 0 10px 0 10px;;'>";
+				
+				
 				//Wiz to latest of all tables
 				str += " <a href='#' onclick='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
 						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
 						">";
 				str += "Wiz-to-Latest</a>";
 
+				
+				str += "</td><td style='text-align:left; padding: 0 10px 0 10px;'>";
+				
+				
 				//Wiz to last initialized config group
 				str += " <a href='#' onclick='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
 						">";
 				str += "Wiz-to-Initialized</a>";
 				
+
+				str += "</td>";
+						
 				//add comment
-				str += "<br><pre style='margin: 2px 0 0 30px;'>" + groupComment + "</pre>"; 
-				
-				str += "<br><br>";
+				str += "<td colspan='6' style='text-align:left; padding: 0 10px 0 10px;'>"
+				str += "<pre >//" + groupComment + "</pre>"; 
+				str += "</td></tr>";
+				//str += "<br><br>";
 			}
+			str += "</table>"; //close system aliases table
 
 			var el = document.getElementById("display");
 			el.innerHTML = str;
@@ -2028,8 +2076,17 @@
 				var i;
 				if((i = valElText.indexOf(")-DISCONNECTED")) > 0)
 				{
-					valEl.innerHTML = "";
-					valEl.appendChild(document.createTextNode(valElText.substr(0,i+1)));
+					var testStillDisconnected = DesktopContent.getXMLValue(req,"DisconnectedStartNode");
+					if(testStillDisconnected && testStillDisconnected == "1")
+					{
+						Debug.log("Still disconnected.");
+					}
+					else
+					{					
+						//only remove disconnected indicator if really 
+						valEl.innerHTML = "";
+						valEl.appendChild(document.createTextNode(valElText.substr(0,i+1)));
+					}
 				}
 					
 			}
@@ -2070,13 +2127,15 @@
 				treeViewHandlerStr_ += "<a href='#' onclick='javascript:expandTreeChildrenDepth(); return false;' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
-						"(Hot-keys: + , &gt; , } , A , E )' " +
+						"(Hot-keys: + , &gt; , } , A , E )" +
+						"\nNote: hot-keys will target the highlighted node.'" +
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				treeViewHandlerStr_ += "<a href='#' onclick='javascript:hideTreeChildrenDepth(); return false;'" + 
 						"title='Hide all children at deepest depth.\n\n" +
-						"(Hot-keys: - , &lt; , { , Z , M )' " +
+						"(Hot-keys: - , &lt; , { , Z , M )" +
+						"\nNote: hot keys will target the highlighted node.'" +
 						">- All Children</a>";
 				
 				
@@ -3057,7 +3116,7 @@
 			
 			treeFilterApplied_ = true;
 		}		
-		
+				
 		//expandTreeChildrenDepth ~
 		//	expand all children at deepest depth
 		//	if deepest depth is 0, expand XDAQContextConfiguration preferentially
@@ -3072,12 +3131,42 @@
 						DesktopContent._loadBoxRequestStack);
 				return;
 			}
-			
-			var allNodes = document.getElementsByClassName("treeNode-Expander");
-			var params = []; //(depth,uid,nodeName,path)
-			var contextIndex = -1;
-			
+
+			var params = []; //(depth,uid)
+			var allNodes;
+			var contextIndex = -1;			
 			var deepestDepth = -1;
+			var nameOfTargetNode = "";
+			
+			//choose which nodes are considered:
+			//if a node is highlighted only expand and collapse considering its children
+			if(treeEditingEditIconShownEl_)
+			{
+				Debug.log("treeEditingEditIconShownIdString_ " + treeEditingEditIconShownIdString_);
+				
+				//if this is a leaf node 
+				//	consider parent the target node
+				
+				var telIdString = treeEditingEditIconShownIdString_;
+				var tel = document.getElementById("treeNode-Value-leafNode-" +
+											treeEditingEditIconShownIdString_);
+				if(tel) //if leaf node, change target id string
+					telIdString = document.getElementById("treeNode-ParentId-" +
+							treeEditingEditIconShownIdString_).textContent;
+					
+				tel = document.getElementById("treeNode-" +
+							telIdString);
+				
+				nameOfTargetNode = document.getElementById("treeNode-Value-" +
+						telIdString).textContent;
+				Debug.log("nameOfTargetNode " + nameOfTargetNode);
+					
+				//add self and all children				
+				allNodes = tel.getElementsByClassName("treeNode-Expander");
+			}
+			else	//all nodes
+				allNodes = document.getElementsByClassName("treeNode-Expander");
+			
 			//find deepest depth and build params array
 			for(var i=0;i<allNodes.length;++i)
 			{
@@ -3126,7 +3215,9 @@
 				}
 			
 			if(!countExpanded)
-				Debug.log("The tree has been expanded as far as possible!",Debug.INFO_PRIORITY);
+				Debug.log("The tree has been expanded as far as possible" +
+						(treeEditingEditIconShownEl_?(" with respect to the highlighted node " +
+								"'" + nameOfTargetNode + "'"):"") + "!",Debug.INFO_PRIORITY);
 		}
 		
 		//hideTreeChildrenDepth ~
@@ -3144,12 +3235,44 @@
 			}
 			
 			//this means toggling all children at second deepest depth
-			var allNodes = document.getElementsByClassName("treeNode-Expander");
+			var allNodes;
 			var params = []; //(depth,uid,nodeName,path)
 			var contextIndex = -1;
+			var nameOfTargetNode = "";
 
 			var deepestDepth = -1;
 			var secondDeepestDepth = -1;
+			
+			//choose which nodes are considered:
+			//if a node is highlighted only expand and collapse considering its children
+			if(treeEditingEditIconShownEl_)
+			{
+				Debug.log("treeEditingEditIconShownIdString_ " + treeEditingEditIconShownIdString_);
+
+				//if this is a leaf node 
+				//	consider parent the target node
+
+				var telIdString = treeEditingEditIconShownIdString_;
+				var tel = document.getElementById("treeNode-Value-leafNode-" +
+						treeEditingEditIconShownIdString_);
+				if(tel) //if leaf node, change target id string
+					telIdString = document.getElementById("treeNode-ParentId-" +
+							treeEditingEditIconShownIdString_).textContent;
+
+				tel = document.getElementById("treeNode-" +
+						telIdString);
+
+				nameOfTargetNode = document.getElementById("treeNode-Value-" +
+						telIdString).textContent;
+				Debug.log("nameOfTargetNode " + nameOfTargetNode);
+
+				//add self and all children				
+				allNodes = tel.getElementsByClassName("treeNode-Expander");
+			}
+			else	//all nodes
+				allNodes = document.getElementsByClassName("treeNode-Expander");
+			
+			
 			//find deepest depth and build params array
 			for(var i=0;i<allNodes.length;++i)
 			{
@@ -3168,7 +3291,9 @@
 			Debug.log("secondDeepestDepth " + secondDeepestDepth);
 			if(secondDeepestDepth < 0) 
 			{
-				Debug.log("The tree has been collapsed as far as possible!",Debug.INFO_PRIORITY);
+				Debug.log("The tree has been collapsed as far as possible" +
+						(treeEditingEditIconShownEl_?(" with respect to the highlighted node " +
+								"'" + nameOfTargetNode + "'"):"") + "!",Debug.INFO_PRIORITY);
 				return;
 			}
 
@@ -3184,7 +3309,9 @@
 				}
 			
 			if(!countHidden)
-				Debug.log("The tree has been collapsed as far as possible!",Debug.INFO_PRIORITY);
+				Debug.log("The tree has been collapsed as far as possible" +
+						(treeEditingEditIconShownEl_?(" with respect to the highlighted node " +
+								"'" + nameOfTargetNode + "'"):"") + "!",Debug.INFO_PRIORITY);
 		}
 		
 		//toggleTreeChildren ~ 
@@ -3345,12 +3472,19 @@
 			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
 			var thereIsAnEmpty = false;
+			
+			str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
+			
 			for(var i=0;i<activeConfigHeaders.length;++i)
 			{
+				str += "<tr><td style='text-align:left'>";
 				if(i==2)
-					str += "Last Initialized " + activeConfigHeaders[i] + "... ";
+					str += "Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
 				else
 					str += "Active " + activeConfigHeaders[i] + ": ";
+				
+
+				str += "</td><td style='text-align:left; padding-left:20px;'>";
 				
 				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
 				{
@@ -3363,8 +3497,17 @@
 					"\",\"" + activeConfigGroups[i*2+1] + "\"); return false;'>";
 					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
 				}
-				str += "<br>";
+				//str += "<br>";
+
+				str += "</td><td style='text-align:left; padding-left:20px;'>";
+				str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+						activeConfigGroups[i*2] + 
+									"\",\"" + 
+									activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
+				
+				str += "</td></tr>";
 			}
+			str += "</table>"; //close active groups table
 			
 			document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;			
 			if(withWarningsStr != "")
@@ -4160,9 +4303,9 @@
 					name + " (" + key + ")</b>"; 
 			str += "<br>Goto its ";
 			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + name + 
-					"\",\"" + key + "\"); return false;'>Member-View</a> or ";
+					"\",\"" + key + "\"); return false;'>Member-view</a> or ";
 			str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + name + 
-					"\",\"" + key + "\"); return false;'>Tree-View</a>, or ";
+					"\",\"" + key + "\"); return false;'>Tree-view</a>, or ";
 			str += "<a href='#' onclick='javascript:activateSystemConfig(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Activate</a> it.";
 			
@@ -7590,7 +7733,7 @@
 					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-link");
 					var idString;
 					var table, uid, col;
-					//var linkIdType;
+					var depth;
 					
 					var retVal = getTreeViewTableStrings(linkTable);
 					var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
@@ -7600,7 +7743,7 @@
 					for(var i=0;i<els.length;++i)
 					{	
 						idString = els[i].id.substr(("treeNode-Value-").length);
-									
+						depth = idString.split('-')[0];
 						
 						//this could save a substantial amount of searching
 						if(treeEditingNodeDepth_ == 2 && 
@@ -9194,7 +9337,7 @@
 									 "Show Info Fields":
 									 "Hide Info Fields"
 									 ];
-			
+						
 			var refreshLinkStr = "refreshTreeView();";
 			//			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 			//					treeGroupName_ + "\",\"" +

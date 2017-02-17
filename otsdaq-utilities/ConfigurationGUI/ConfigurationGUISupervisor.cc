@@ -832,7 +832,17 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 						accumulateTreeErrs);
 		}
 		else
+		{
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			if(startNode.isLinkNode() && startNode.isDisconnected())
+			{
+				xmldoc.addTextElementToData("DisconnectedStartNode","1");
+				return; //quietly ignore disconnected links at depth
+						//note: at the root level they will be flagged for the user
+			}
+
 			rootMap = cfgMgr->getNode(startPath).getChildren();
+		}
 
 		for(auto &treePair:rootMap)
 			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl,hideStatusFalse);

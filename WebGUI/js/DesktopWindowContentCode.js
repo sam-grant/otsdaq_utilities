@@ -68,6 +68,8 @@
 //		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
+//		DesktopContent.getWindowScrollLeft()
+//		DesktopContent.getWindowScrollTop()
 //		DesktopContent.getMouseX()
 //		DesktopContent.getMouseY()
 //		DesktopContent.getDefaultWindowColor() 	 // returns "rgb(#,#,#)"
@@ -96,6 +98,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
+//	DesktopContent.getWindowScrollLeft()
+//	DesktopContent.getWindowScrollTop()
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
@@ -415,8 +419,8 @@ DesktopContent.showLoading = function()	{
 		WH = DesktopContent.getDesktopHeight();
 	}
 	
-	var X = document.body.scrollLeft + (WW - W - 4)/2; //for 2px borders
-	var Y = document.body.scrollTop + (WH - H -4)/2; //for 2px borders
+	var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
+	var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
 	
 	//show the load box whereever the current scroll is	
 	DesktopContent._loadBox.style.left = (X) + "px";	
@@ -523,13 +527,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var timeoutTimer;	
 	var timeoutFunction = function() 
 					{
-						Debug.log("It has been 20 seconds.. still waiting for a response. " +
+						Debug.log("It has been 60 seconds.. still waiting for a response. " +
 							"Is there an infinite loop occuring at the server? " +
 							"Or is this just a really long request..",
 							Debug.HIGH_PRIORITY);
-						timeoutTimer = window.setTimeout(timeoutFunction, 20000); 
+						timeoutTimer = window.setTimeout(timeoutFunction, 60000); 
 					}
-	timeoutTimer = window.setTimeout(timeoutFunction, 20000);
+	timeoutTimer = window.setTimeout(timeoutFunction, 60000);
 	
 	//setup response handler
 	req.onreadystatechange = function() {
@@ -898,6 +902,8 @@ DesktopContent.parseColor = function(colorStr) {
 //get window and mouse info ~~
 DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
+DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }
+DesktopContent.getWindowScrollTop = function() { return document.documentElement.scrollTop || document.body.scrollTop || 0; }
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
 DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
 DesktopContent.getDefaultWindowColor = function() {
