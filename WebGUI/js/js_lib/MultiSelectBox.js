@@ -209,7 +209,8 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 // These parameters are optional and can be omitted or set to 0: 
 //		keys, types, handler, noMultiSelect 
 // Note: handler is the string name of the function
-MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,noMultiSelect)
+MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
+		handler,noMultiSelect,mouseOverHandler)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -263,6 +264,14 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 		else if(handler) //assume it is a function
 			str += handler.name + "(this);"; //user selection handler
 		str += "' ";
+		
+		str += "onmouseover = '";
+		if(mouseOverHandler && (typeof mouseOverHandler) == "string") //if mouseOverHandler supplied as string
+			str += mouseOverHandler + "(this);"; //user selection mouseOverHandler
+		else if(mouseOverHandler) //assume it is a function
+			str += mouseOverHandler.name + "(this);"; //user selection mouseOverHandler
+		str += "' ";
+		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
 		str += vals[i];

@@ -407,7 +407,7 @@
 			
 			//setupConfigCreator(); return
 			
-			//setupConfigGroupTreeView("artdaqFclTest","46"); return;
+			setupConfigGroupTreeView("artdaqFclTest","6"); return; //"46"); return;
 			//setupConfigGroupTreeView("artdaqContext","5"); return;
 			
 			//setupGroupViewMode(); return;
@@ -4753,8 +4753,6 @@
 			//show uid info box			
 			var el = document.getElementById("treeView-editLink-uidInfo");
 			el.style.display = "block";	
-			el.style.left = 300 + "px";	
-			el.style.top = 80 + "px";
 			
 			if(treeEditingGroupMembersLastSelect_ == sel.textContent)
 				return; //already shown uid values
@@ -5113,7 +5111,8 @@
 										"Select Group Members:",
 										msValues,msValues,msValues,
 										treeViewGroupMemberEditMultiSelectHandler,
-										noMultiSelect);
+										noMultiSelect,
+										treeViewGroupMemberEditMultiSelectHandler);
 
 								
 
@@ -5235,7 +5234,8 @@
 									"id='treeView-editGroupLink-uidCreate' " +
 									"style='" +
 									"position: absolute;" + 
-									"left: 300px; top: 60px;" +
+									"left: 300px; top: 80px;" +
+									"z-index: 10;" +
 									"white-space: nowrap; text-decoration: underline;" + 
 									"' " + //end style
 									"onclick='event.stopPropagation(); " +
@@ -5245,17 +5245,41 @@
 									">";
 							str += "Create a new Default Record in Group";
 							str += "</a>";
+							
+							//uid info box
+							str += "<div id='treeView-editLink-uidInfo' " +
+									"onclick='event.stopPropagation();' onmouseup='event.stopPropagation();'" +
+									"style='" +
+									"height: 148px; width: 350px; position: absolute; " + 
+									"display: none; background-color: rgb(193, 152, 152); " +
+									"left: 300px; top: 100px; border-radius: 5px; cursor: auto;" +
+									"padding: 10px; overflow: auto; white-space: nowrap;" +
+									"z-index: 10;" +
+									"'>";
 									
 						}
 						else if(linkIdType == "UID")		//add extra UID-link stuff	
 						{
 							str += "<div id='clearDiv'></div>";
+							
+							//backgroun box
+							str += "<div style='" +
+									"position: absolute;" + 
+									"left: 170px; top: 76px; " +
+									"height: 199px; width:389px;" +
+									"background-color: rgb(226, 216, 216);" +
+									"border-radius: 5px;" + 
+									"z-index: 10;" +
+									"border: 1px solid rgb(153, 153, 153);" +									
+									"'" +
+									"></div>";
 							//link for new default record in group
 							str += "<a onmouseup='event.stopPropagation();' " +
 									"id='treeView-editUIDLink-uidCreate' " +
 									"style='" +
 									"position: absolute;" + 
-									"left: 300px; top: 40px;" +
+									"left: 180px; top: 80px;" +
+									"z-index: 10;" +
 									"white-space: nowrap; text-decoration: underline;" + 
 									"' " + //end style
 									"onclick='event.stopPropagation(); " +
@@ -5266,16 +5290,18 @@
 							str += "Create a new Default Record in Linked Table";
 							str += "</a>";
 							
+							//uid info box
+							str += "<div id='treeView-editLink-uidInfo' " +
+									"onclick='event.stopPropagation();' onmouseup='event.stopPropagation();'" +
+									"style='" +
+									"height: 148px; width: 350px; position: absolute; " + 
+									"display: none; background-color: rgb(193, 152, 152); " +
+									"left: 180px; top: 100px; border-radius: 5px; cursor: auto;" +
+									"padding: 10px; overflow: auto; white-space: nowrap;" +
+									"z-index: 10;" +
+									"'>";
+							
 						}
-						str += "<div id='treeView-editLink-uidInfo' " +
-								"onclick='event.stopPropagation();' onmouseup='event.stopPropagation();'" +
-								"style='" +
-								"height: 148px; width: 350px; position: absolute; " + 
-								"display: none; background-color: rgb(193, 152, 152); " +
-								"left: 300px; top: 100px; border-radius: 5px; cursor: auto;" +
-								"padding: 10px; overflow: auto; white-space: nowrap;" +
-								"z-index: 10;" +
-								"'>";
 							
 						str += "</div>";
 
@@ -5318,9 +5344,7 @@
 							
 							//show uid info box			
 							var uel = document.getElementById("treeView-editLink-uidInfo");
-							uel.style.display = "block";	
-							uel.style.left = 300 + "px";	
-							uel.style.top = 60 + "px";
+							uel.style.display = "block";
 							Debug.log("sneak peak UID");
 							
 							var modifiedTables = ""; //csv table, temporay version,...
@@ -5406,7 +5430,7 @@
 							"&linkToTableName=" + selectLinkTableName +		
 							"&linkToTableVersion=" + linkTableVersion +		
 							"&linkIdType=" + linkIdType +
-							"&linkIndex=" + linkIndex+
+							"&linkIndex=" + linkIndex +
 							"&linkInitId=" + selectLinkId,
 							"", function(req) 
 							{
@@ -5436,6 +5460,11 @@
 						var groupMembers = req.responseXML.getElementsByTagName("groupMember");
 						var groupChoices = req.responseXML.getElementsByTagName("groupChoice");
 						
+						//group links also need table version in init value
+						if(treeEditingNodeType_ == "link-GroupID" &&
+								firstTimeMembers)
+							treeEditingNodeInitValue_ += "," + linkTableVersion;
+									
 						localCreateLinkEditHTML(linkToChoices,groupMembers,groupChoices);
 
 
@@ -5757,8 +5786,8 @@
 				editCellCancel();
 				return false;
 			}
-			else if((e.keyCode >= 48 < e.keyCode <= 57) || 
-					(e.keyCode >= 96 < e.keyCode <= 105))// number
+			else if((e.keyCode >= 48 && e.keyCode <= 57) || 
+					(e.keyCode >= 96 && e.keyCode <= 105))// number
 			{
 				//if child link cell or boolean cell			
 				var sel;
@@ -5889,7 +5918,7 @@
 				
 				str += "<center>";
 				str += "Set '<b style='font-size:16px'>" + groupName + " (" + 
-						groupKey + ")</b>' to alias:";
+						groupKey + ")</b>' to System Alias:";
 				str += "</a><br>";
 				str += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
 				str += "<select " +
@@ -6016,7 +6045,7 @@
 
 			//set position and size
 			var w = 380;
-			var h = 320;
+			var h = 300;
 			var gh = 40;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
@@ -6210,7 +6239,7 @@
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
-						str += "Set '<b style='font-size:16px'>" + groupName + "</b>' to alias:";
+						str += "Set '<b style='font-size:16px'>" + groupName + "</b>' to System Alias:";
 						str += "</a><br>";
 
 						str += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
@@ -6833,11 +6862,28 @@
 					//modify display and nodename with new value
 					_editingCellEl.appendChild(document.createTextNode(newValue)); 
 					
-					var el = document.getElementById("treeNode-nodeName-" + treeEditingNodeIdString_);
+					var el = document.getElementById("treeNode-nodeName-" + 
+							treeEditingNodeIdString_);
 					el.innerHTML = "";
 					el.appendChild(document.createTextNode(newValue));
 					
-					//reset children
+					//clear children,
+					//and if children were displayed
+					//		then toggle/show new children 
+					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+							treeEditingNodeIdString_);
+					var wasDisplayed = elChildrenNode.style.display != "none" && 
+							elChildrenNode.innerHTML != "";
+
+					toggleTreeChildren(
+							treeEditingNodeDepth_,
+							treeEditingNodeIdString_.split('-')[1],false);
+					elChildrenNode.innerHTML = "";
+
+					if(wasDisplayed)
+						toggleTreeChildren(
+								treeEditingNodeDepth_,
+								treeEditingNodeIdString_.split('-')[1],true);
 				}
 				else if(treeEditingNodeType_ == "delete-uid")
 				{
@@ -7114,7 +7160,7 @@
 				}
 				else if(treeEditingNodeType_.indexOf("link-") == 0)
 				{
-					//make csv newValue := linkTable,linkGroupID
+					//make csv newValue := linkTable,linkInitId
 					var sel = _editingCellEl.getElementsByTagName("select")[0];					
 					newValue = sel.options[sel.selectedIndex].value;
 					newValue += ",";					
@@ -7600,6 +7646,22 @@
 							var el = document.getElementById("treeNode-nodeName-" + idString);
 							el.innerHTML = "";
 							el.appendChild(document.createTextNode(newValue));
+							
+							//reset children
+							var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+									idString);
+							var wasDisplayed = elChildrenNode.style.display != "none" && 
+									elChildrenNode.innerHTML != "";
+
+							toggleTreeChildren(
+									idString.split('-')[0],
+									idString.split('-')[1],false);
+							elChildrenNode.innerHTML = "";
+
+							if(wasDisplayed)
+								toggleTreeChildren(
+										idString.split('-')[0],
+										idString.split('-')[1],true);
 						}	
 					}
 				}
