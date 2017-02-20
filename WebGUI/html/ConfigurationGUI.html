@@ -336,7 +336,7 @@
 		
 			//popUpClearTemporaryVersionsPrompt(backLinkStr)
 			//popUpSaveNewTableForm()
-			//popUpGroupAliasForm(isLatest)
+			//popUpGroupAliasForm(isLatest, myAlias)
 			//popUpVersionAliasForm()
 			//popUpVersionAliasGroupEditorForm()
 			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
@@ -357,8 +357,8 @@
 
 			//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)
 			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
-			//wizToLatestConfigGroup(groupAlias, ignoreWarnings)
-			//wizToInitializedConfigGroup(groupAlias, ignoreWarnings)		
+			//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
+			//wizToActiveConfigGroup(groupAlias, groupType)		
 			//newWizBackboneMemberHandler(req,params)
 			//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 	
@@ -596,7 +596,7 @@
 			str += "<br>";
 			
 			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(1); return false;' " +
-					"title='Automatically assign a new System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
 					">";
 			str += "Wiz-New System Alias-to-Latest</a>";
 
@@ -604,9 +604,9 @@
 			str += "<br>";
 
 			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(0); return false;'  " +
-						"title='Automatically assign a new System Alias to the currently initialized Configuration Group.'" +
+						"title='Automatically assign a new System Alias to an Active Group.'" +
 						">";
-			str += "Wiz-New System Alias-to-Initialized</a>";
+			str += "Wiz-New System Alias-to-Active</a>";
 			
 			str += "<br><br><br>";
 
@@ -687,8 +687,10 @@
 				
 				
 				//Wiz to latest of all tables
-				str += " <a href='#' onclick='javascript:wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
-						"title='Automatically assign this System Alias to a Configuration Group comprised of the latest Configuration tables.'" +
+				str += " <a href='#' onclick='javascript:" + 
+						//"wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
+						"popUpGroupAliasForm(1,\"" + groupAlias + "\"); return false;' " +
+						"title='Automatically assign this System Alias to a Group comprised of the latest table versions.'" +
 						">";
 				str += "Wiz-to-Latest</a>";
 
@@ -696,11 +698,13 @@
 				str += "</td><td style='text-align:left; padding: 0 10px 0 10px;'>";
 				
 				
-				//Wiz to last initialized config group
-				str += " <a href='#' onclick='javascript:wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
-						"title='Automatically assign this System Alias to the currently initialized Configuration Group.'" +
+				//Wiz to active config group
+				str += " <a href='#' onclick='javascript:" +
+						//"wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
+						"popUpGroupAliasForm(0,\"" + groupAlias + "\"); return false;' " +
+						"title='Automatically assign this System Alias to an Active Group.'" +
 						">";
-				str += "Wiz-to-Initialized</a>";
+				str += "Wiz-to-Active</a>";
 				
 
 				str += "</td>";
@@ -3467,7 +3471,7 @@
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 									  
 			var activeConfigHeaders = ["Context","Backbone","Configuration"];
-			Debug.log("activeConfig: " + activeConfig);
+			Debug.log("activeConfigGroups: " + activeConfigGroups);
 			
 			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
@@ -3574,9 +3578,17 @@
 					);					
 		}
 		
-		//wizToInitializedConfigGroup ~~
-		function wizToInitializedConfigGroup(groupAlias)
+		//wizToActiveConfigGroup ~~
+		//	groupType := 0-context, 1-backbone, 2-configuration
+		function wizToActiveConfigGroup(groupAlias,groupType)
 		{			
+			if(groupType !== undefined)groupType |= 0; //make integer
+			else groupType = 2; //default to config group
+			
+			var groupTypeName = groupType==0?"Context":(groupType==1?"Backbone":"Configuration");
+			
+			Debug.log("CfgGUI wizToActiveConfigGroup " + groupType + ":" + groupTypeName);
+			
 			//set group alias to the last initialized configuration group
 			
 			var el = document.getElementById("display");			
@@ -3588,12 +3600,15 @@
 					{
 				activateSystemConfigHandler(req);
 				
-				var name = DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName");
-				var key =  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey");
+				var name = DesktopContent.getXMLValue(req,
+						groupTypeName + "-ActiveGroupName");
+				var key =  DesktopContent.getXMLValue(req,
+						groupTypeName + "-ActiveGroupKey");
 				
 				if(!name || !key)
 				{
-					Debug.log("Process interrupted. There was no active Configuration Group found.",
+					Debug.log("Process interrupted. There was no active " + 
+							groupTypeName + " Group found.",
 							Debug.HIGH_PRIORITY);
 					setupSystemViewMode();
 					return;
@@ -3607,8 +3622,17 @@
 		}
 		
 		//wizToLatestConfigGroup ~~
-		function wizToLatestConfigGroup(groupAlias,ignoreWarnings)
+		//	groupType := 0-context, 1-backbone, 2-configuration
+		function wizToLatestConfigGroup(groupAlias,ignoreWarnings,groupType)
 		{	
+			if(groupType !== undefined)groupType |= 0; //make integer
+			else groupType = 2; //default to config group
+			
+			var groupTypeName = groupType==0?"Context":(groupType==1?"Backbone":"Configuration");
+			
+			Debug.log("CfgGUI wizToLatestConfigGroup " + groupType + ":" + groupTypeName);
+			
+			
 			//get latest version of all tables for configuration group
 			//make a new group with those versions
 			//set group alias to the resulting group
@@ -3645,20 +3669,26 @@
 					configVersions = configVersionHdr[i].getElementsByTagName("Version");
 
 					found = false;
-					for(var c in context)
-						if(name == context[c])
-						{	
-							found = true;
-							break;
-						}
-					for(var c in backbone)
-						if(name == backbone[c])
-						{	
-							found = true;
-							break;
-						}
-					if(found) continue; //only include configuration members
+					if(groupType == 0 || groupType == 2)
+						for(var c in context)
+							if(name == context[c])
+							{	
+								found = true;
+								break;
+							}
+					if(!found && 
+							(groupType == 1 || groupType == 2))
+						for(var c in backbone)
+							if(name == backbone[c])
+							{	
+								found = true;
+								break;
+							}
 					
+					if(groupType == 2 && found) continue; //not in config group, so skip
+					if(groupType != 2 && !found) continue; //not in group type, so skip
+										
+					//this is an included table in target group type!
 					
 					//find the latest that is not temporary
 					for(var v=configVersions.length-1;v>=0;--v)
@@ -3671,8 +3701,11 @@
 						}
 				}
 
+				Debug.log("configMap " + configMap);
+				//return;
+
 				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
-						"&groupName=" +	("ConfigGroup" + "WizToLatest") +
+						"&groupName=" +	(groupTypeName + "Group" + "WizToLatest") +
 						"&ignoreWarnings=" + (ignoreWarnings?1:0),
 						configMap, 
 						function(req)
@@ -3695,7 +3728,7 @@
 						Debug.log("Going on with existing name=" + name + " & key=" + key,
 								Debug.WARN_PRIORITY);
 						Debug.log("Process interrupted. Failed to create a new Configuration group!" +
-							" (Likely the Group Alias points tp an equivalent Configuration group already)",
+							" (Likely the Group Alias points to an equivalent Configuration group already)",
 							Debug.WARN_PRIORITY);
 					}
 					
@@ -3715,10 +3748,13 @@
 							var str = "";
 							str += " <input id='saveGroupWithWarningsIgnored' " + 
 									"style='margin-bottom:15px;' " +
-									"type='button' onmouseup=' wizToLatestConfigGroup(\"" +
-									groupAlias + "\",1)' value='Wiz-to-Latest with Warnings Ignored' " +
+									"type='button' onmouseup='wizToLatestConfigGroup(\"" +
+									groupAlias + "\",1," + groupType + 
+									")' value='Wiz-to-Latest with Warnings Ignored' " +
 									"title='Automatically assign System Alias &apos;" + groupAlias + 
-									"&apos; to a Configuration Group comprised of the latest Configuration tables.'" +									
+									"&apos; to a ";
+							str += groupTypeName;
+							str += " Group comprised of the latest table versions.'" +									
 									"'/>";
 							str += "<div id='clearDiv'></div>";	
 	
@@ -8946,8 +8982,8 @@
 		}
 		
 		//popUpGroupAliasForm
-		// either isLatest or isInitialized
-		function popUpGroupAliasForm(isLatest)
+		// target either isLatest or isActivated
+		function popUpGroupAliasForm(isLatest, myAlias)
 		{
 			Debug.log("CfgGUI popUpGroupAliasForm " + isLatest);
 
@@ -8963,7 +8999,7 @@
 
 			//set position and size
 			var w = 300;
-			var h = 200;
+			var h = 220;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
 			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
@@ -8971,28 +9007,58 @@
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
-			var defaultAlias = "mySystemAlias";
+			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
 					Debug._errBoxId + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
-			str += "Please enter the System Alias you would like to assign to the ";
-			str += isLatest?"Latest":"Initialized";
-			str += " Configuration group:<br><br>";
+			str += "<center>";
+			str += "Please enter the System Alias to assign, and select the targeted ";
+			str += isLatest?"Latest":"Active";
+			str += " Group Type:<br><br>";
+			
+			str += "<table cellpadding='2px' cellspacing='2px' border='0'><tr><td style='text-align:right'>";
+			str += "System Alias:</td><td style='text-align:left'>";
 			str += "<input type='text' id='popUpDialog-alias' value='" +
 					defaultAlias + "'></input>";
-			str += "</div><br><br>";
+			str += "</td></tr>";
+			
+			//add group type drop down
+			str += "<tr><td style='text-align:right'>";		
 
+			if(isLatest) 
+				str += "Latest Group";
+			else
+				str += "Active Group";
+			str += ":</td><td style='text-align:left'>";
+			str += "<select " +
+					"id='popUpDialog-aliasGroupType' " +
+					"style='height:" + (25) + "px'>";						
+			str += "<option value='" + "0" + "'>" + "Context" + "</option>";
+			str += "<option value='" + "1" + "'>" + "Backbone" + "</option>";
+			str += "<option value='" + "2" + "' selected>" + "Configuration" + "</option>";
+			str += "</select>";
+			str += "</td></tr>";
+			
+			str += "</table>";
+			
+			str += "</center>";
+			str += "</div>"; 
+			str += "<br><br>";
+						
 			var onmouseupJS = "";
 			if(isLatest)
 				onmouseupJS += "wizToLatestConfigGroup(" +
 					"document.getElementById(\"popUpDialog-alias\").value" +
+					",0," +
+					"document.getElementById(\"popUpDialog-aliasGroupType\").value" +
 					"); ";
 			else	//initialized
-				onmouseupJS += "wizToInitializedConfigGroup(" +
+				onmouseupJS += "wizToActiveConfigGroup(" +
 					"document.getElementById(\"popUpDialog-alias\").value" +
+					",document.getElementById(\"popUpDialog-aliasGroupType\").value" +
 					"); ";
 			
 			onmouseupJS += "var el = document.getElementById(" +
@@ -9000,9 +9066,9 @@
 
 			str += "<input type='button' onmouseup='" + onmouseupJS + "' " +
 					"value='Setup System Alias' title='" +
-					"Assign a System Alias to the";
-			str += isLatest?"Latest":"Initialized";
-			str += " Configuration group" +
+					"Assign a System Alias to the selected ";
+			str += isLatest?"Latest":"Active";
+			str += " Group Type" +
 					" by automatically modifying the active Backbone group." +
 					"'/>";
 			el.innerHTML = str;
