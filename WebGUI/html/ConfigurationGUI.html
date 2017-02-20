@@ -407,7 +407,7 @@
 			
 			//setupConfigCreator(); return
 			
-			setupConfigGroupTreeView("artdaqFclTest","6"); return; //"46"); return;
+			//setupConfigGroupTreeView("artdaqFclTest","6"); return; //"46"); return;
 			//setupConfigGroupTreeView("artdaqContext","5"); return;
 			
 			//setupGroupViewMode(); return;
@@ -7487,7 +7487,8 @@
 					for(var i=0;i<els.length;++i)
 					{
 						idString = els[i].id.substr(("treeNode-Value-").length);
-						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
+						table = document.getElementById("treeNode-linkTableName-" + 
+								idString).textContent;
 						if(table == treeEditingTargetTable_)
 						{
 							elValSplit = els[i].textContent.split('(');
