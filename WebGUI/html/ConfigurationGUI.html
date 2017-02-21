@@ -1483,7 +1483,7 @@
 				str += "Click below to change "  + niceName(configName) + 
 					" Version for " + groupName + ":<br>";		
 				
-				
+				str += "<div style='white-space:nowrap'>";
 				str += "Existing versions: ";
 				str += "<label id='" + configName + "-existingVersions'>";
 				cfgVersionStr = ""; //keep CSV list of versions for use by changeMemberVersionForConfigGroup
@@ -1505,11 +1505,15 @@
 					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + configName + "\"," + 
 							"\"" + existingVersion + "\"";
-					str += "); return false;'>" + existingVersion;
+					str += "); return false;' " +
+							"title='Select v" + existingVersion + " of table &apos;" +
+							configName + "&apos; to be a member of the &apos;" + groupName + "&apos; group.' " +
+							">" + existingVersion;
 					str += "</a>";
 					cfgVersionStr += existingVersion + ",";
 				}			
 				str += "</label>";	
+				str += "</div>";
 				
 
 				str += "<br><br>";
@@ -2703,10 +2707,10 @@
 			var newtabJS = "";
 			
 			var DEFAULT_treeNavContextMenuItems = [
-					   "Add new Record to Table", 
 					   "Go-to Table View",
 					   "Open in new Desktop Window",
-					   "Open in new Browser Tab"];
+					   "Open in new Browser Tab",
+					   "Add new Record to Table"];
 			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
 			var menuIndex = 0;
@@ -2723,18 +2727,7 @@
 				backLinkStr = "setupConfigGroupTreeView(\\\"" + 
 						treeGroupName_ + "\\\",\\\"" +
 						treeGroupKey_ + "\\\");"; 	
-
-				//make add new row js
-				onmouseupJS = "editTreeAddNewRow(\"" + 
-						treeMemberNames_[j] + "\");";
-
-				if(!isLink)
-				{
-					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
-					treeNavContextMenuItemHandlers.push(onmouseupJS);
-				}
-				else
-					++menuIndex; //skip 1st menu item
+				
 
 				//make replace screen js
 				onmouseupJS = "setupSpecificConfig(\"" + 
@@ -2763,12 +2756,27 @@
 				treeNavContextMenuItemHandlers.push(newwindowJS);
 
 
+				//make new browser tab link
 				newtabJS += "DesktopContent.openNewBrowserTab(" +
 						"\"Configure\",\"\",\"" + 
 						newWindowStr + "\",false);";
 				
 				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 				treeNavContextMenuItemHandlers.push(newtabJS);
+				
+				
+				//make add new row js
+				onmouseupJS = "editTreeAddNewRow(\"" + 
+						treeMemberNames_[j] + "\");";
+
+				if(!isLink)
+				{
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(onmouseupJS);
+				}
+				else
+					++menuIndex; //skip 1st menu item
+				
 
 				tableComment = treeMemberComments_[j];
 				//make comment html safe
@@ -6081,7 +6089,7 @@
 
 			//set position and size
 			var w = 380;
-			var h = 300;
+			var h = 315;
 			var gh = 40;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
