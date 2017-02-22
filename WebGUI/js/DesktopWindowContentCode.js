@@ -29,7 +29,7 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, showLoadingOverlay <optional>)
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, showLoadingOverlay <optional>, targetSupervisor <optional>)
 //			... to make server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
@@ -66,6 +66,7 @@
 //
 //	Additional Functionality:
 //		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
+//		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
 //		DesktopContent.getWindowScrollLeft()
@@ -96,6 +97,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor)
+//	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
@@ -122,7 +124,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
-
+//	DesktopContent.tooltipNeverShow(srcFunc,srcFile,srcId)
 
 DesktopContent._isFocused = false;
 DesktopContent._theWindow = 0;
@@ -133,6 +135,8 @@ DesktopContent._mouseOverYmailbox = 0;
 DesktopContent._windowMouseX = -1;
 DesktopContent._windowMouseY = -1;
 
+DesktopContent._serverOrigin = "";
+DesktopContent._localOrigin = "";
 DesktopContent._serverUrnLid = 0;
 DesktopContent._localUrnLid = 0;
 
@@ -197,10 +201,15 @@ DesktopContent.init = function() {
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
+	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
+	
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
+	DesktopContent._localOrigin = window.location.origin;
+	Debug.log("Local Application Origin = " + DesktopContent._localOrigin);
 
 	//get Wizard sequence (if in Wizard mode)
 	DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
@@ -477,7 +486,7 @@ DesktopContent.hideLoading = function()	{
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay) {
+		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
@@ -669,9 +678,18 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	{   	
 		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
 	}
-	var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
-
-	requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
+	
+	
+	var urn = DesktopContent._localUrnLid;
+	var origin = DesktopContent._localOrigin;
+	
+	if(!urn || targetSupervisor) //desktop supervisor, instead of local application
+	{
+		urn = DesktopContent._serverUrnLid;
+		origin = DesktopContent._serverOrigin;
+	}
+	
+	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
 	Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
@@ -752,6 +770,77 @@ DesktopContent.getXMLDataNode = function(req, name) {
 	return DesktopContent.getXMLNode("DATA");	
 }
 
+//=====================================================================================
+//tooltip ~~
+//	use uid to determine if tip should still be displayed
+//		- ask server about user/file/function/id combo
+//		- if shouldShow:
+//			then show 
+//			add checkbox to never show again
+DesktopContent.tooltip = function(id,tip) {
+	
+	var srcStackString = (new Error).stack.split('\n')[2];
+	var srcFunc = srcStackString.trim().split(' ')[1];
+	var srcFile = srcStackString.substr(srcStackString.lastIndexOf('/')+1);
+	if(srcFile.indexOf('?') >= 0)
+		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
+	if(srcFile.indexOf(':') >= 0)
+		srcFile.substr(0,srcFile.indexOf(':'));
+	
+	DesktopContent.XMLHttpRequest(
+			"TooltipRequest?RequestType=check" + 
+			"&srcFunc=" + srcFunc +
+			"&srcFile=" + srcFile +
+			"&srcId=" + id
+			,""
+			, function(req) {
+
+		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
+		Debug.log("showTooltip: " + showTooltip);
+
+		if(showTooltip|0)
+		{			
+			tip = "<br><center><b style='color:inherit'>'" + id + "' Tooltip:</b></center><br>" + tip;
+			tip += "<br><br>";
+			tip += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
+					"onclick='" + "var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +					
+					"DesktopContent.tooltipSetNeverShow(\"" + 
+					srcFunc + "\",\"" +
+					srcFile + "\",\"" +
+					id + "\", el.checked);" + "'>";
+			tip += "<a href='#' onclick='" +
+					"var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +
+					"el.checked = !el.checked;" +
+					"DesktopContent.tooltipSetNeverShow(\"" + 
+					srcFunc + "\",\"" +
+					srcFile + "\",\"" +
+					id + "\", el.checked);" +
+					"'>";
+			tip += "Never show the above Tooltip again.";
+			tip += "</a>";
+			tip +="</input>";
+					
+			Debug.log(tip,Debug.TIP_PRIORITY);
+		}
+	},0,0,0,true,true); //show loading, and target supervisor
+	
+}
+
+//=====================================================================================
+//tooltipSetNeverShow ~~
+//	set value of never show for target tip to 1/0 based on doNeverShow
+DesktopContent.tooltipSetNeverShow = function(srcFunc,srcFile,id,doNeverShow) {
+	Debug.log("doNeverShow = " + doNeverShow);
+	DesktopContent.XMLHttpRequest(
+			"TooltipRequest?RequestType=setNeverShow" + 
+			"&srcFunc=" + srcFunc +
+			"&srcFile=" + srcFile +
+			"&srcId=" + id + 
+			"&doNeverShow=" + (doNeverShow?1:0)
+			,""
+			,0,0,0,0,true,true); //show loading, and target supervisor
+}
+		
 //=====================================================================================
 //popUpVerification ~~
 //	asks user if sure

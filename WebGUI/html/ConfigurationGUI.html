@@ -393,8 +393,28 @@
 		function init() {			
 						
 			Debug.log("CfgGUI init ");
+			DesktopContent.tooltip("Introduction",
+					"Welcome to the Configuration GUI. Here you can manipulate every configuration "+
+					"parameter in your entire <i>otsdaq</i> system. \n\n" +
+					"The organization of the Configuration GUI is as follows:\n" +
+					"There are links at the top of the page to switch between the main views" +
+					" 'System View', 'Group View', and " +					
+					"'Table View'; " +
+					"then below those links is a display of the currently Active groups; " +
+					"and then below that is the view content." +
+					"\n\nIf you would like to take a look at the available online documentation, " +
+					"click the question mark at the top of the page.\n\n" +
+					
+					"Briefly, here is a description of the main views: " +
+					"\n\t- 'System View' is for viewing and editing the translation from System Aliases to groups." +
+					"\n\t- 'Group View' is for viewing and editing groups of tables." +
+					"\n\t- 'Table View' is for viewing and editing tables." + 
+					"\n\n" +
+					"You will see one more type view in the Configuration GUI and that is the 'Tree-view'." +
+					"Briefly, the 'Tree-view' is a way of viewing tables that are linked together - " +
+					"each group can be viewed in 'Tree-view' format."
+			);
 			
-
 			
 			window.onkeydown = bodyKeyHandler;
 			window.onmouseup = bodyMouseHandler;
@@ -569,6 +589,46 @@
 				//attempt to go on, in case error was just associtate with one group
 				//return;
 			}
+
+			DesktopContent.tooltip("System View",
+					"You are looking at your configuration through the 'System View' now. " +
+					"From this view you can see existing System Aliases, edit them, " +
+					"and create new ones." +
+					"\n\n" +				
+					"It is important to note that the Backbone group has a table called " +
+					"'GroupAliases' and this is the table that defines your " +
+					"System Aliases (Clicking <i>Edit System Aliases</i> at the top of " +
+					"this view will take you to the 'GroupAliases' table)." +
+					"The System Aliases defined in the Active Backbone group are what you " +
+					"are seeing now!\n\n" +
+					"You can edit and create System Aliases from this view. All of the links " +
+					"with <i>Wiz-</i> in the name will either edit or create a System Alias for you. " +
+					"The wiz process you select, under the hood, will modify the currently active " +
+					"'GroupAliases' table, save it, create a new Backbone group with the new 'GroupAliases' " +
+					"table as a member, and activate the new Backbone group. Handling many steps for you " +
+					"like a wiz!" + 
+					"\n\n" +		
+					"There are two key terms you will find in the 'System View' involving 'Latest' and " +
+					"'Active'; here is a brief" +
+					"description of each: " +
+					"\n\t - 'Wiz-to-Latest': This will setup a System Alias to refer to a group comprised " +
+					"of the latest/newest versions of each table in the group. When you select this route, you will " +
+					"be prompted for the group type: Context, Backbone, or Configuration. " +
+					"For example, if you select the Configuration group type, then a Configuration group consisting of the " +
+					"latest versions of each table, that are not members of Context or Backbone groups, will be " +
+					"created, the active 'GroupAliases' table will be modified to include a System Alias to the" +
+					"new Configuration group, the modified 'GroupAlias' table will saved as a new version, " +
+					"and a new Backbone group (with that new 'GroupAlias' table as a member) will be created and activated. Very handy!" +
+					"\n\t - 'Wiz-to-Active': This will setup a System Alias to refer to one of the Active groups. " +
+					"When you select this route, you will " +
+					"be prompted for the group type: Context, Backbone, or Configuration." +
+					"For example, if you select the Configuration group type, then the active 'GroupAliases' table " +
+					"will be modified to include a System Alias to the" +
+					"currently Active Configuration group, the modified 'GroupAlias' table will saved as a new version, " +
+					"and a new Backbone group (with that new 'GroupAlias' table as a member) will be created and activated. Also very handy!" +
+					"\n\nRemember, if you would like to take a look at the available online documentation, " +
+					"click the question mark at the top of the page.\n\n"
+			);
 			
 			activateSystemConfigHandler(req); //display active config groups			
 			
@@ -9873,6 +9933,7 @@
 	<hr>
 	<div id='activeConfig'></div>
 	<div id='activateConfigWithWarnings'></div>
+	<hr>
 	<div id='tempTree'></div>
 	<div id='display'></div>
 	<div class='preloadImage' id='preloadImage-treeEditIconHover'></div>

@@ -23,7 +23,6 @@ using namespace ots;
 
 #define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/security.dat"
 #define SEQUENCE_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
-//#define ICON_FILE_NAME 			std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/iconList.dat";
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
@@ -48,11 +47,11 @@ SOAPMessenger  (this)
 	generateURL();
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,            	"Default" 			);
 
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::Verification,        	"Verify" 	  		);	//securityCode_);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::verification,        	"Verify" 	  		);
 
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::RequestIcons,       	"requestIcons"		);
-	//xgi::bind (this, &OtsConfigurationWizardSupervisor::IconEditor,           	"iconEditor"		);
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::EditSecurity,       	"editSecurity"		);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::requestIcons,       	"requestIcons"		);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	"editSecurity"		);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,         "TooltipRequest"	);
 
 	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,        "SupervisorSequenceCheck",        XDAQ_NS_URI);
 
@@ -137,6 +136,60 @@ void OtsConfigurationWizardSupervisor::destroy(void)
 	//called by destructor
 
 }
+
+
+//========================================================================================================================
+void OtsConfigurationWizardSupervisor::tooltipRequest(xgi::Input * in, xgi::Output * out)
+throw (xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+
+	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
+	__MOUT__ << Command <<  std::endl;
+
+	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+
+	//SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		return;
+	}
+	else
+	{
+		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
+	}
+	//SECURITY CHECK END ****
+
+	HttpXmlDocument xmldoc;
+
+	if(Command == "check")
+	{
+		WebUsers::tooltipCheckForUsername(
+				WebUsers::DEFAULT_ADMIN_USERNAME,
+				&xmldoc,
+				CgiDataUtilities::getData(cgi, "srcFile"),
+				CgiDataUtilities::getData(cgi, "srcFunc"),
+				CgiDataUtilities::getData(cgi, "srcId"));
+	}
+	else if(Command == "setNeverShow")
+	{
+		WebUsers::tooltipSetNeverShowForUsername(
+				WebUsers::DEFAULT_ADMIN_USERNAME,
+				&xmldoc,
+				CgiDataUtilities::getData(cgi, "srcFile"),
+				CgiDataUtilities::getData(cgi, "srcFunc"),
+				CgiDataUtilities::getData(cgi, "srcId"),
+				CgiDataUtilities::getData(cgi, "doNeverShow") == "1"?true:false);
+
+	}
+	else
+		__MOUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
+
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true);
+}
+
+
 //========================================================================================================================
 //xoap::supervisorSequenceCheck
 //	verify cookie
@@ -180,7 +233,7 @@ throw (xgi::exception::Exception)
 }
 
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::Verification(xgi::Input * in, xgi::Output * out )
+void OtsConfigurationWizardSupervisor::verification(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
@@ -206,11 +259,14 @@ throw (xgi::exception::Exception)
 }
 
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::RequestIcons(xgi::Input * in, xgi::Output * out )
+void OtsConfigurationWizardSupervisor::requestIcons(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
+
 	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+
+	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
@@ -220,6 +276,8 @@ throw (xgi::exception::Exception)
 	{
 		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
 	}
+	//SECURITY CHECK END ****
+
 
 	//an icon is 6 fields.. give comma-separated
 	//0 - alt = text below icon
@@ -239,84 +297,8 @@ throw (xgi::exception::Exception)
 	return;
 }
 
-////========================================================================================================================
-//void OtsConfigurationWizardSupervisor::IconEditor(xgi::Input * in, xgi::Output * out )
-//throw (xgi::exception::Exception)
-//{
-//
-//	//if sequence doesn't match up -> return
-//	cgicc::Cgicc cgi(in);
-//	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
-//	std::string submittedIconList = CgiDataUtilities::postData(cgi, "iconList");
-//	//std::string iconFileName = ICON_FILE_NAME;
-//
-//
-//
-//	//Security Check ================
-//	if(securityCode_ != submittedSequence)
-//	{
-//		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
-//		return;
-//	}
-//	//Security Check complete ================
-//
-//	__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
-//
-//
-//
-//	if(submittedIconList != "")
-//	{
-//		__MOUT__ << "Icon List exists!" << std::endl;
-//		__MOUT__ << submittedIconList << std::endl;
-//
-//		std::ofstream writeIconFile;
-//
-//		writeIconFile.open(iconFileName.c_str());
-//		if(writeIconFile.is_open())
-//			writeIconFile << submittedIconList;
-//		else
-//			__MOUT__ << "Error writing file!" << std::endl;
-//
-//
-//		writeIconFile.close();
-//	}
-//
-//
-//	//Always return the file
-//	std::ifstream iconFile;
-//	std::string line;
-//	std::string iconList = "";
-//	int lineNumber = 0;
-//
-//	iconFile.open(iconFileName.c_str());
-//
-//	if(!iconFile)
-//	{
-//		__MOUT__<<"Error opening file: "<< iconFileName << std::endl;
-//		system("pause");
-//		return;
-//	}
-//	if(iconFile.is_open())
-//	{
-//		__MOUT__ << "Opened File: " << iconFileName << std::endl;
-//		while(std::getline(iconFile, line))
-//		{
-//			iconList += line;
-//			lineNumber++;
-//		}
-//		//__MOUT__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
-//
-//		//Close file
-//		iconFile.close();
-//	}
-//
-//	*out << iconList;
-//
-//	return;
-//}
-
 //========================================================================================================================
-void OtsConfigurationWizardSupervisor::EditSecurity(xgi::Input * in, xgi::Output * out )
+void OtsConfigurationWizardSupervisor::editSecurity(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
 

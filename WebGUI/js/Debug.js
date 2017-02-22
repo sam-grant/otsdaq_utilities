@@ -31,6 +31,7 @@ Debug.lastLogger = "";
 Debug.HIGH_PRIORITY = 0;
 Debug.WARN_PRIORITY = 1;
 Debug.INFO_PRIORITY = 2;
+Debug.TIP_PRIORITY = 3;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
 
@@ -51,8 +52,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
-					var type = num < 3?
-							(num==0?"High":(num==1?"Warn":"Info"))
+					var type = num < 4?
+							(num==0?"High":(num==1?"Warn":(num==2?"Info":"Tip")))
 							:(num<99?"Med":"Low");
 					
 					Debug.lastLogger = (new Error).stack.split("\n")[2];
@@ -63,10 +64,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							 ":\t " + Debug.lastLog + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									 :(num < 99?"color:#092":"")); 
+									 :(num < 99?"color:#092":"color:#333")); 
 					Debug.lastLog = str;
 					
-					if(num < 3) //show all high priorities as popup!
+					if(num < 4) //show all high priorities as popup!
 						Debug.errorPop(str,num);
 				}
 			}
@@ -186,18 +187,27 @@ Debug.errorPop = function(err,severity) {
 	
 	//add new err to top of errors
 	if(str.length)
-	{
-		err += "<br>...<br>";
 		wasAlreadyContent = true;
-	}
+	
 	var tstr = d.toLocaleTimeString();
 	tstr = tstr.substring(0,tstr.lastIndexOf(' ')) + //convert AM/PM to am/pm with no space
 			(tstr[tstr.length-2]=='A'?"am":"pm");
-	str = "<label style='color:white;font-size:16px;'>" + 
+	
+	if(severity == Debug.TIP_PRIORITY) //put oldest at top so it reads like a document
+		str = str + 
+			(wasAlreadyContent?"<br>...<br>":"") +
+			"<label style='color:white;font-size:16px;'>" + 
 			d.toLocaleDateString() +
 			" " + tstr + ":</label><br>" +
-			err.replace(/\n/g , "<br>") + str;
-		
+			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;");	
+	else //normally put newest at top since likely highest priority
+		str = "<label style='color:white;font-size:16px;'>" + 
+			d.toLocaleDateString() +
+			" " + tstr + ":</label><br>" +
+			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;") + 
+			(wasAlreadyContent?"<br>...<br>":"") +
+			str;
+
 	el.innerHTML = str;
 
 	//show the error box whereever the current scroll is
@@ -221,6 +231,16 @@ Debug.errorPop = function(err,severity) {
 	el = els[0];
 	switch(severity)
 	{
+	case Debug.TIP_PRIORITY:
+		//don't change color or header for info, if there are still errors displayed
+	if(wasAlreadyContent && 
+			(el.innerHTML == "Close Errors" ||
+					el.innerHTML == "Close Warnings" ||
+					el.innerHTML == "Close Info"))
+			return;
+		el.innerHTML = "Close Tooltip";		
+		Debug._errBox.style.backgroundColor = "rgba(0, 79, 160, 0.9)";	
+		break;
 	case Debug.INFO_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
 		if(wasAlreadyContent && 
