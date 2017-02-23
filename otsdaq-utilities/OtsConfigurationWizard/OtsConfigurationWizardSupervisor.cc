@@ -300,7 +300,7 @@ throw (xgi::exception::Exception)
 	//5 - linkurl = url of the window to open
 
 	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html" <<
-			//",Icon Editor,ICON,1,1,icon-IconEditor.png,/WebPath/html/IconEditor.html" <<
+			",Edit User Data,USER,1,1,icon-Chat.png,/WebPath/html/EditUserData.html" <<
 			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
 			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?tableEditor=1" <<
 			//",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=261/" <<
@@ -340,11 +340,18 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "Selection exists!" << std::endl;
 		__MOUT__ <<  submittedSecurity << std::endl;
 
-		if (strcmp(submittedSecurity.c_str(), "ResetSecurityUserData") == 0)
+		if(submittedSecurity == "ResetSecurityUserData")
 		{
 			WebUsers::deleteUserData();
 		}
-		else
+		else if(submittedSecurity == "ResetAllUserTooltips")
+		{
+			WebUsers::resetAllUserTooltips();
+			*out << submittedSecurity;
+			return;
+		}
+		else if(submittedSecurity == "DigestAccessAuthentication" ||
+				submittedSecurity == "NoSecurity")
 		{
 			std::ofstream writeSecurityFile;
 
@@ -355,6 +362,13 @@ throw (xgi::exception::Exception)
 				__MOUT__ << "Error writing file!" << std::endl;
 
 			writeSecurityFile.close();
+		}
+		else
+		{
+			__MOUT_ERR__ << "Invalid submittedSecurity string: " <<
+					submittedSecurity << std::endl;
+			*out << "Error";
+			return;
 		}
 	}
 
