@@ -35,6 +35,19 @@ Debug.TIP_PRIORITY = 3;
 Debug.MED_PRIORITY = 50;
 Debug.LOW_PRIORITY = 100;
 
+
+//determine if chrome or firefox or other
+//	0:other, 1:chrome, 2:firefox
+Debug.BROWSER_TYPE = 0;
+{
+	var tmp = (new Error).stack; 
+	if(tmp[0] == 'E')
+		Debug.BROWSER_TYPE = 1;
+	else if(tmp[0] == '@')
+		Debug.BROWSER_TYPE = 2;
+}
+
+
 if (Debug.mode) //IF DEBUG MODE IS ON!
 {
 	if (Debug.simple)
@@ -56,10 +69,21 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							(num==0?"High":(num==1?"Warn":(num==2?"Info":"Tip")))
 							:(num<99?"Med":"Low");
 					
-					Debug.lastLogger = (new Error).stack.split("\n")[2];
-					Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('(')-1);
-					Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
-							Debug.lastLogger.length-1);
+					if(Debug.BROWSER_TYPE == 1) //chrome
+					{
+						Debug.lastLogger = (new Error).stack.split("\n")[2];						
+						Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf(' ('));
+						Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+2,
+								Debug.lastLogger.length-1);
+					}
+					else if(Debug.BROWSER_TYPE == 2) //firefox
+					{
+						Debug.lastLogger = (new Error).stack.split("\n")[1];						
+						Debug.lastLog = Debug.lastLogger.slice(0,Debug.lastLogger.indexOf('@'));
+						Debug.lastLogger = Debug.lastLogger.slice(Debug.lastLog.length+1,
+								Debug.lastLogger.length);
+					}
+					
 					console.log("%c" + type + "-Priority" +  
 							 ":\t " + Debug.lastLog + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
@@ -157,6 +181,17 @@ Debug.errorPop = function(err,severity) {
 
 			//error box err text style
 			css += "#" + Debug._errBoxId + "-err" +
+					"{" +					
+					"color: rgb(255,200,100); font-size: 18px;" +
+					"font-family: 'Comfortaa', arial;" +
+					"left: 8px, top: 8px; margin-right: 8px;" +
+					"text-align: left;" +
+					"}\n\n";
+			
+			css += "#" + Debug._errBoxId + "-err i" +
+					",#" + Debug._errBoxId + "-err b" + 
+					",#" + Debug._errBoxId + "-err u" + 
+					",#" + Debug._errBoxId + "-err div" + 
 					"{" +					
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +

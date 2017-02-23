@@ -207,6 +207,22 @@
 				_settingsLayoutMailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-settingsLayoutMailbox");	
 				
 				settingsRequest();
+				
+				DesktopContent.tooltip("User Settings Introduction",
+						"Welcome to the User Settings window. Here you can personalize " +
+						"your user experience.\n\n" +
+						"Here is what you can personalize:" +
+						"\n\t- Color Scheme: " +
+						"<div style='margin-left:40px'>" +
+						"You can change your color scheme by choosing colors for " +
+						"the desktop dashboard, the desktop background, and desktop windows." +
+						"</div>" +
+						"\n\t- Window Layouts: each user can customize their window layout presets. " +
+						"A layout preset is a set of windows (including their size and position on your " +
+						"desktop) that you can recall any time you would like by clicking 'Layouts' " +
+						"in the top left of the desktop environment and choosing a preset. This is useful" +
+						"of you find yourself always using the same few windows - you can open them all with one click! "
+						);
 			}	
 			
 			//request current settings immediately once page loads

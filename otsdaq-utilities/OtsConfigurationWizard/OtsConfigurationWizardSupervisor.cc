@@ -23,6 +23,7 @@ using namespace ots;
 
 #define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/security.dat"
 #define SEQUENCE_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
+#define SEQUENCE_OUT_FILE_NAME 	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
@@ -53,7 +54,7 @@ SOAPMessenger  (this)
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	"editSecurity"		);
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,         "TooltipRequest"	);
 
-	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,        "SupervisorSequenceCheck",        XDAQ_NS_URI);
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,"SupervisorSequenceCheck",        XDAQ_NS_URI);
 
 	init();
 
@@ -108,8 +109,19 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"/urn:xdaq-application:lid="
 			<< this->getApplicationDescriptor()->getLocalId() << "/Verify?code=" << securityCode_ << std::endl;
 
-	std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
-			{printURL(ptr,securityCode);},this,securityCode_).detach();
+	//Note: print out handled by StartOTS.sh now
+	//std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
+	//		{printURL(ptr,securityCode);},this,securityCode_).detach();
+
+	fp = fopen((SEQUENCE_OUT_FILE_NAME).c_str(),"w");
+	if(fp)
+	{
+		fprintf(fp,"%s",securityCode_.c_str());
+		fclose(fp);
+	}
+	else
+		__MOUT_ERR__ <<  "Sequence output file NOT found: " << SEQUENCE_OUT_FILE_NAME << std::endl;
+
 
 	return;
 }

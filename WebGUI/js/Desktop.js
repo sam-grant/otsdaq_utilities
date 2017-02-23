@@ -817,7 +817,6 @@ Desktop.createDesktop = function(security) {
 	
 	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
 	this.actOnParameterAction();    
-
 }
 
 ////////////////////////////////////////////////////////////////////

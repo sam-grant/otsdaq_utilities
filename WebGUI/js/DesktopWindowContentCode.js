@@ -167,7 +167,9 @@ DesktopContent._mouseMoveSubscribers = [];
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
 DesktopContent.init = function() {
-
+	
+	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip
+	
 	var tmpCnt = 0;
 	DesktopContent._theWindow = self;
 	while(tmpCnt++ < 5 && DesktopContent._theWindow &&  //while can not find the top window frame in the desktop
@@ -203,7 +205,7 @@ DesktopContent.init = function() {
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
 	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
 	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
-	
+		
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
@@ -386,7 +388,12 @@ DesktopContent.showLoading = function()	{
 					"color: white; " +
 					"font-family: 'Comfortaa', arial; text-align: left;" +
 					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
-					"}\n\n";			
+					"}\n\n";	
+			css += "#" + DesktopContent._loadBoxId + " table" +		
+					"{" +
+					"background-color: rgba(0,0,0,0.8);" +
+					"border: 0;" +
+					"}\n\n";
 
 			//load box text style
 			//			css += "#" + DesktopContent._loadBoxId + "-td" +
@@ -778,15 +785,31 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //			then show 
 //			add checkbox to never show again
 DesktopContent.tooltip = function(id,tip) {
+
+	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
+	{
+		DesktopContent._serverUrnLid = urnLid;
+		DesktopContent._serverOrigin = "";
+	}
 	
-	var srcStackString = (new Error).stack.split('\n')[2];
-	var srcFunc = srcStackString.trim().split(' ')[1];
-	var srcFile = srcStackString.substr(srcStackString.lastIndexOf('/')+1);
+	var srcStackString,srcFunc,srcFile;
+	
+	if(Debug.BROWSER_TYPE == 1) //chrome
+	{
+		srcStackString = (new Error).stack.split("\n")[2];						
+		srcFunc = srcStackString.trim().split(' ')[1];
+	}
+	else if(Debug.BROWSER_TYPE == 2) //firefox
+	{
+		srcStackString = (new Error).stack.split("\n")[1];						
+		srcFunc = srcStackString.trim().split('@')[0];	
+	}
+	srcFile = srcStackString.substr(srcStackString.lastIndexOf('/')+1);	
 	if(srcFile.indexOf('?') >= 0)
 		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
 	if(srcFile.indexOf(':') >= 0)
 		srcFile.substr(0,srcFile.indexOf(':'));
-	
+
 	DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=check" + 
 			"&srcFunc=" + srcFunc +
@@ -800,15 +823,16 @@ DesktopContent.tooltip = function(id,tip) {
 
 		if(showTooltip|0)
 		{			
-			tip = "<br><center><b style='color:inherit'>'" + id + "' Tooltip:</b></center><br>" + tip;
-			tip += "<br><br>";
-			tip += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
+			var str = "";
+			
+			str += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
 					"onclick='" + "var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +					
 					"DesktopContent.tooltipSetNeverShow(\"" + 
 					srcFunc + "\",\"" +
 					srcFile + "\",\"" +
 					id + "\", el.checked);" + "'>";
-			tip += "<a href='#' onclick='" +
+			str += " ";
+			str += "<a href='#' onclick='" +
 					"var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +
 					"el.checked = !el.checked;" +
 					"DesktopContent.tooltipSetNeverShow(\"" + 
@@ -816,11 +840,36 @@ DesktopContent.tooltip = function(id,tip) {
 					srcFile + "\",\"" +
 					id + "\", el.checked);" +
 					"'>";
-			tip += "Never show the above Tooltip again.";
-			tip += "</a>";
-			tip +="</input>";
+			str += "Never show again the Tooltip below:";
+			str += "</a>";
+			str +="</input>";
+			
+			str += "<br><br>";
+			str += "<center><b>'" + id + "' Tooltip</b></center><br>";
+			
+			str += tip;
+			
+			str += "<br><br>";
+			str += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
+					"onclick='" + "var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +					
+					"DesktopContent.tooltipSetNeverShow(\"" + 
+					srcFunc + "\",\"" +
+					srcFile + "\",\"" +
+					id + "\", el.checked);" + "'>";
+			str += " ";
+			str += "<a href='#' onclick='" +
+					"var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +
+					"el.checked = !el.checked;" +
+					"DesktopContent.tooltipSetNeverShow(\"" + 
+					srcFunc + "\",\"" +
+					srcFile + "\",\"" +
+					id + "\", el.checked);" +
+					"'>";
+			str += "Never show again the Tooltip above.";
+			str += "</a>";
+			str +="</input>";
 					
-			Debug.log(tip,Debug.TIP_PRIORITY);
+			Debug.log(str,Debug.TIP_PRIORITY);
 		}
 	},0,0,0,true,true); //show loading, and target supervisor
 	

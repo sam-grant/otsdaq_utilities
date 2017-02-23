@@ -22,7 +22,7 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindow.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopIcons.js"></script>
 		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
-		
+
 		<script>
 			var urnLid = ((window.location.search.substr(1)).split('='))[1];
 			Debug.log("Application URN-LID #" + urnLid);
@@ -30,6 +30,19 @@
 			function init() {				
 				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 				Desktop.desktop.icons.resetWithPermissions(255);
+				
+//				DesktopContent.tooltip("Introduction",
+//						"Welcome to the User Settings window. Here you can personalize " +
+//						"your user experience.\n\n" +
+//						"Here is what you can personalize:" +
+//						"\n\t-Color Scheme: you can change your color scheme by choosing colors for " +
+//						"the desktop dashboard, the desktop background, and desktop windows." +
+//						"\n\t-Window Layouts: each user can customize their window layout presets. " +
+//						"A layout preset is a set of windows (including their size and position on your " +
+//						"desktop) that you can recall any time you would like by clicking 'Layouts' " +
+//						"in the top left of the desktop environment and choosing a preset. This is useful" +
+//						"of you find yourself always using the same few windows - you can open them all with one click! "
+//				);
 			}			            
         </script>
 		
