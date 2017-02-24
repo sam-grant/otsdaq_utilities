@@ -1175,12 +1175,13 @@ try
 			//edit comment
 			cfgView->setURIEncodedComment(newValue);
 		}
-		else if(type == "table-newRow")
-		{
-			//add row
-			cfgView->addRow();
-		}
-		else if(type == "table-newUIDRow")
+//		else if(type == "table-newRow")
+//		{
+//			//add row
+//			cfgView->addRow();
+//		}
+		else if(type == "table-newRow" ||
+				type == "table-newUIDRow")
 		{
 			//add row
 			unsigned int row = cfgView->addRow();
