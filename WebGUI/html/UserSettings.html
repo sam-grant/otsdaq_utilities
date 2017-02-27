@@ -131,8 +131,9 @@
 			
 		</style>
 		
-
-		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		
+		<!--link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'-->
+		<link href="https://fonts.googleapis.com/css?family=Comfortaa" rel="stylesheet"> 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
@@ -919,6 +920,22 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1",
 						data, settingsRequestHandler);				
 			}
+			
+			function resetUserTooltips() {
+				DesktopContent.popUpVerification("Are you sure you want to reset all your " +
+						"Tooltips?<br><br>This will reset the 'never show' property of your " +
+						"Tooltips. It is irreversible, and will result in you seeing all " +
+						"Tooltips again.",
+						function() {
+					Debug.log("accepted");
+					DesktopContent.XMLHttpRequest("Request?RequestType=resetUserTooltips","",
+							function() {
+						Debug.log("All of your Tooltips have been reset!",
+								Debug.INFO_PRIORITY);
+					}, 0, 0, 0, true); //show loading
+				});
+			}
+			
 		</script>
 		
 	</head>
@@ -962,10 +979,19 @@
 		
 		
 		<div id='clearDiv'></div>
+		
 		<br>
 		<input id='prefBtn' type='submit' value='Save Preferences' onmouseup='saveGenPreferences(event); return false;' />
+
+		<div id='clearDiv'></div>
+		<h3>Misc. Personal Customizations:</h3>
+		<ul>
+			<li>
+				<a href='Javascript:resetUserTooltips()'>Reset My Tooltips</a>
+			</li>
+		</ul>
 		
-<a name="ACCOUNTS_LABEL"></a>
+		<a name="ACCOUNTS_LABEL"></a>
 		<div id='accountsDiv'></div>
 		<div id='newAccountFeedbackDiv'></div>
 		<br><br><br><br>

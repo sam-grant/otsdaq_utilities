@@ -102,6 +102,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getWindowHeight()
 //	DesktopContent.getWindowScrollLeft()
 //	DesktopContent.getWindowScrollTop()
+//	DesktopContent.getBodyWidth()
+//	DesktopContent.getBodyHeight()
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
@@ -1004,8 +1006,8 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			" W: " + w + 
 			" H: " + h);		
 	//var 
-	el.style.left = x + "px";
-	el.style.top = y + "px";
+	el.style.left = (DesktopContent.getWindowScrollLeft() + x) + "px";
+	el.style.top = (DesktopContent.getWindowScrollTop() + y) + "px";
 }
 //=====================================================================================
 //clearPopUpVerification ~~
@@ -1040,6 +1042,8 @@ DesktopContent.parseColor = function(colorStr) {
 //get window and mouse info ~~
 DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
+DesktopContent.getBodyWidth = function() { return document.body.offsetWidth; }
+DesktopContent.getBodyHeight = function() { return document.body.offsetHeight; }
 DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }
 DesktopContent.getWindowScrollTop = function() { return document.documentElement.scrollTop || document.body.scrollTop || 0; }
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
