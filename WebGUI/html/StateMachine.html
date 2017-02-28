@@ -260,6 +260,8 @@
                 _transitionParameters, _transitionParameterValues, _transitionActions;
             //NOTE: Wildcards for transitions from every state.. -1 allows transition to self, -2 does not
     
+			var _aliasTranslationMap = []; //e.g. _aliasTranslationMap["Physics"] => config_v2
+			
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
 				_blackoutRevealText, _blackoutRevealContent, _progressBar,
@@ -394,7 +396,8 @@
                     case 0: //ConfigurationAlias
     
                     	//get all system aliases and put in drop-down
-                        var aliasArr = req.responseXML.getElementsByTagName("config_alias");                        ""
+                        var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
+                        var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
             			var userLastConfigAlias = 
             					DesktopContent.getXMLValue(req,"UserLastConfigAlias");
             			if(!userLastConfigAlias) userLastConfigAlias = "";
@@ -406,6 +409,7 @@
                         	//this skips all except for Physics.. don't want this anymore
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
+                        	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
                         	
                             //choose the first system alias by default
                             if(!i) _transitionParameterValues[_parameterInitCount] = alias;
@@ -1046,6 +1050,9 @@
 						y += 2*f;
 						_context.fillText(transitionParameterName + 
 								" = '" + transitionParameterValue + "'", x, y);
+						y += f;
+						_context.fillText("              	          " + 
+								"<" + _aliasTranslationMap[transitionParameterValue] + ">", x, y);
 	                }
                 }
                 else
