@@ -6,18 +6,17 @@ Periodically the fonts are updated, so it is desireable to refresh them.
 
 Note: that fonts.css is important for Firefox display to use truetype!
 This works for firefox and chrome (the extra src directives do not seem to help):
-"src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype');"
+	 "src: url('/WebPath/fonts/comfortaa/Comfortaa-Regular.ttf') format('truetype');"
 
 
 Here is an example approach to updating a particular font "Comfortaa":
 
 	wget https://github.com/google/fonts/archive/master.zip
 	unzip master.zip
-	cd fonts-master/ofl/comfortaa/
-	cp Comfortaa-Regular.ttf <WebGUI path>/fonts/Comfortaa-regular.ttf
+	cp fonts-master/ofl/comfortaa <WebGUI path>/fonts/
 	
-	#the file name has to match the handling in WebGUI/css/fonts.css
-	#	 "src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype');"
+Note the file names have to match the handling in WebGUI/css/fonts.css
+	 "src: url('/WebPath/fonts/comfortaa/Comfortaa-Regular.ttf') format('truetype');"
 	
 	
 	

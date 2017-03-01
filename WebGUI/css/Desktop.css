@@ -1,5 +1,10 @@
 	/* 	Created Dec 2012 by Ryan Rivera (rrivera at fnal.gov)	*/
 	/* 	Style for Desktop elements including windows and dashboard	*/
+
+	/* CSS Reset */
+	html{color:white;background:#FFF}
+	body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,textarea,p,blockquote,th,td{margin:0;padding:0}table{border-collapse:collapse;border-spacing:0}fieldset,img{border:0}address,caption,cite,code,dfn,em,strong,th,var{font-style:normal;font-weight:normal}ol,ul{list-style:none}caption,th{text-align:left}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal}q:before,q:after{content:''}abbr,acronym{border:0;font-variant:normal}sup{vertical-align:text-top}sub{vertical-align:text-bottom}input,textarea,select{font-family:inherit;font-size:inherit;font-weight:inherit;*font-size:100%}
+	legend{color:#000}	
 	* {
 		margin: 0;
 		spacing: 0;
@@ -13,6 +18,7 @@
 		font-size: 20px;
 		outline: none;  /* to stop firefox selection*/	
 	}
+
 	
 	#Desktop {
 		height: 1000px;
@@ -178,6 +184,7 @@
 	#Desktop .DesktopIcons-iconSubText {
 		text-align: center;
 		font-size: 16px;
+		margin-top: 2px;
 	}
 	
 	#Desktop .DesktopIcons-iconLink {
@@ -246,8 +253,8 @@
 	}
 	
 	#Desktop .DesktopWindowHeader {
-		padding-top: 3px;  /* push text off window top just for looks */
-		margin-bottom: -3px;  /* to compensate for top padding */
+		padding-top: 5px;  /* push text off window top just for looks */
+		margin-bottom: -5px;  /* to compensate for top padding */
 		white-space: nowrap; /* disable multi-line header*/
 		overflow: hidden;
 		color: #0f2269;
@@ -269,10 +276,12 @@
 	#Desktop .DesktopWindowButtonGraphicClose {
 		width: 12px;
 		height: 12px;
-		margin: 0 0 0 6px;
+		margin: 1px 0 0 5px;
 		color: #0f2269;
-		font-family: arial;	
+		/*font-family: arial; this is displaying differently in chrome and firefox .. so trying different font */	
+		font-family: 'Comfortaa', serif;
 		font-size: 18px;	
+		line-height: 16px;
 	}
 	
 	#Desktop .Desktop-systemMessageBox {
