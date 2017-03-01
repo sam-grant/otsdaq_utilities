@@ -2088,6 +2088,36 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 				}
+				
+				
+				//fix root group name/key links just in case
+				//	(this avoids errors in manipulating treeViewHandlerStr_ and re-acquiring the tree string)
+				{
+					var rootGroupEl = document.getElementById("treeView-ConfigGroupLink");
+					Debug.log("Modifying root group key " + treeGroupKey_);
+					var str = "";
+					str += "<div style='display:none'>" + treeGroupName_ + "</div>";
+					str += "<div style='display:none'>" + treeGroupKey_ + "</div>";
+					str += treeGroupName_ + " (" + treeGroupKey_ + ")";
+					rootGroupEl.innerHTML = str;
+					rootGroupEl.onclick = function() {
+
+						var backLinkStr = "setupConfigGroupTreeView(\"" + 
+								treeGroupName_ + "\",\"" +
+								treeGroupKey_ + "\");";
+						setupSpecificConfigGroup(treeGroupName_,treeGroupKey_,
+								backLinkStr);
+						return false;
+					};
+
+					//modify the activate link
+					rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
+					rootGroupEl.onclick = function() {
+						activateSystemConfig(treeGroupName_,treeGroupKey_);
+						return false;
+					};
+				}
+				
 				return;
 			}
 			else
@@ -2155,8 +2185,7 @@
 						valEl.innerHTML = "";
 						valEl.appendChild(document.createTextNode(valElText.substr(0,i+1)));
 					}
-				}
-					
+				}				
 			}
 			else //this is the initial top level request
 			{
@@ -6153,7 +6182,7 @@
 
 			//set position and size
 			var w = 380;
-			var h = 315;
+			var h = 330;
 			var gh = 40;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
@@ -6252,6 +6281,8 @@
 
 				str += "Please choose the options you want and click 'Save Tree':" +
 						"<br>";
+				
+				//add checkbox to save affected groups
 				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 						"onclick='handleEditTreeCheckboxToggle(" + h + "," + gh + ");'>";
 				//add link so text toggles checkbox
@@ -6260,6 +6291,19 @@
 						"var forFirefox = (el.checked = !el.checked);" +
 						" handleEditTreeCheckboxToggle(" + h + "," + gh + "); return false;'>";
 				str += "Save Affected Groups as New Keys";
+				str += "</a>";
+				str +=	"</input><br>";
+				
+				//add checkbox to activate saved affected groups
+				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
+						">";
+				//add link so text toggles checkbox
+				str += "<a href='#' onclick='javascript:" +
+						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
+						"if(el.disabled) return false; " +
+						"var forFirefox = (el.checked = !el.checked);" +
+						"return false;'>";
+				str += "Also Activate New Groups";
 				str += "</a>";
 				str +=	"</input><br>";
 
@@ -6452,6 +6496,8 @@
 				//check if saving groups
 				var savingGroups = 
 						document.getElementById("popUpDialog-bumpGroupVersions").checked;
+				var activatingSavedGroups = 
+						document.getElementById("popUpDialog-activateBumpedGroupVersions").checked;
 
 				if(!savingGroups) //then no need to proceed. exit!
 				{
@@ -6568,6 +6614,11 @@
 						//need to modify root group name if changed
 						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
 								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						
+						//activate if option was selected
+						if(activatingSavedGroups)
+							activateSystemConfig(attemptedNewGroupName,newGroupKey);
+						
 						//if this was root group, modify
 						if(rootGroupName == attemptedNewGroupName)
 						{
@@ -6579,7 +6630,12 @@
 							str += rootGroupName + " (" + newGroupKey + ")";
 							rootGroupEl.innerHTML = str;
 							rootGroupEl.onclick = function() {
-								setupSpecificConfigGroup(rootGroupName,newGroupKey);
+								
+								var backLinkStr = "setupConfigGroupTreeView(\"" + 
+										rootGroupName + "\",\"" +
+										newGroupKey + "\");";
+								setupSpecificConfigGroup(rootGroupName,newGroupKey,
+										backLinkStr);
 								return false;
 							};
 							
@@ -6593,7 +6649,6 @@
 							//edit global key value
 							treeGroupKey_ = newGroupKey;
 						}
-						
 
 						if(allRequestsSent && 
 								numberOfReturns == numberOfRequests)
@@ -9814,6 +9869,8 @@
 		{
 			var el = document.getElementById("popUpDialog-bumpGroupVersions");			
 			Debug.log("handleEditTreeCheckboxToggle " + el.checked);
+
+			var ael = document.getElementById("popUpDialog-activateBumpedGroupVersions");	
 			
 			var popEl = document.getElementById("popUpDialog");			
 			if(!el.checked)
@@ -9822,6 +9879,7 @@
 				
 				document.getElementById("popUpDialog-groupAliasArea").style.display = "none";								
 				popEl.style.height = (h) + "px";		
+				ael.disabled = true;
 			}
 			else
 			{
@@ -9831,6 +9889,7 @@
 				var grps = document.getElementsByClassName("popUpDialog-affectedGroups");				
 				popEl.style.height = (h + grps.length*gh) + "px";
 				document.getElementById("popUpDialog-groupAliasArea").style.display = "block";
+				ael.disabled = false;
 			}			
 		}
 		
