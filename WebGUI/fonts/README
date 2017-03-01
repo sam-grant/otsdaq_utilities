@@ -1,0 +1,23 @@
+In order to offer the fonts offline, the google fonts here were downloaded from here: 
+
+https://github.com/google/fonts/archive/master.zip
+
+Periodically the fonts are updated, so it is desireable to refresh them.
+
+Note: that fonts.css is important for Firefox display to use truetype!
+This works for firefox and chrome (the extra src directives do not seem to help):
+"src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype');"
+
+
+Here is an example approach to updating a particular font "Comfortaa":
+
+	wget https://github.com/google/fonts/archive/master.zip
+	unzip master.zip
+	cd fonts-master/ofl/comfortaa/
+	cp Comfortaa-Regular.ttf <WebGUI path>/fonts/Comfortaa-regular.ttf
+	
+	#the file name has to match the handling in WebGUI/css/fonts.css
+	#	 "src: url('/WebPath/fonts/Comfortaa-regular/Comfortaa-regular.ttf') format('truetype');"
+	
+	
+	
