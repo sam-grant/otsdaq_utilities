@@ -108,6 +108,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
 			i = 10; //so things are good for all time.
+			heartbeatCount = 0; //reset heartbeat if messages are coming through
 
 			//std::cout << buffer << std::endl;
 
@@ -125,7 +126,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 				++i;
 			sleep(1); //sleep one second, if timeout
 
-			if(heartbeatCount%30 == 29) //every 30 seconds print a heartbeat message
+			if(heartbeatCount%60 == 59) //every 30 seconds print a heartbeat message
 			{
 				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
 			}

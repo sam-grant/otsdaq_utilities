@@ -2240,10 +2240,14 @@
 					treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
 				}
 				
+				var backLinkStr = "setupConfigGroupTreeView(\\\"" + 
+										treeGroupName_ + "\\\",\\\"" +
+										treeGroupKey_ + "\\\");"; 
+				
 				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
 					"href='#' onclick='javascript:setupSpecificConfigGroup(\"" + configGroupName +
-					"\",\"" + configGroupKey + "\"); return false;'>";
+					"\",\"" + configGroupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
 				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
@@ -7515,12 +7519,19 @@
 			//			_editingCell = false;
 			//			_editingCellEl = 0;	
 		}
+
+		//hardRefreshTreeView ~~
+		//	redraw tree completely from server request
+		function hardRefreshTreeView()
+		{	
+			treeViewHandlerStr_ = "";
+			setupConfigGroupTreeView(treeGroupName_,treeGroupKey_);
+		}
 		
 		//refreshTreeView ~~
 		//	reduce tree back to only root children
 		function refreshTreeView()
-		{
-			
+		{	
 			var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
 			var idString;
 			
@@ -9536,21 +9547,19 @@
 									 ];
 						
 			var refreshLinkStr = "refreshTreeView();";
-			//			var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
-			//					treeGroupName_ + "\",\"" +
-			//					treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");";
-			//			
-			//			//if tree has changed, ask if you really want to refresh
-			//			//else, refresh
-			//			var refreshWrapper = "if(treeHasChanged_) DesktopContent.popUpVerification(" + 
-			//					"\"The tree has been modified. Refreshing will discard changes and " +
-			//					"revert to the tree-view of group '" + treeGroupName_ + " (" + 
-			//					treeGroupKey_ + ").' <br><br>Are you sure you want to Refresh?\", " +
-			//					"function() {" + refreshLinkStr + "},0,\"#efeaea\",0,\"#770000\");" + 
-			//					"else {" + refreshLinkStr + "}";
+			var hardRefreshLinkStr = "hardRefreshTreeView();";
+	
+			//if tree has changed, ask if you really want to refresh
+			//else, refresh
+			var refreshWrapper = "if(treeHasChanged_) DesktopContent.popUpVerification(" + 
+					"\"The tree has been modified. Refreshing will discard changes and " +
+					"revert to the tree-view of group '" + treeGroupName_ + " (" + 
+					treeGroupKey_ + ").' <br><br>Are you sure you want to Refresh?\", " +
+					"function() {" + hardRefreshLinkStr + "},0,\"#efeaea\",0,\"#770000\");" + 
+					"else {" + hardRefreshLinkStr + "}";
 						
 			var menuItemHandlers = [
-							refreshLinkStr,
+							refreshWrapper,
 							"treeViewHideStatus_ = !treeViewHideStatus_;" +
 													refreshLinkStr,
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
