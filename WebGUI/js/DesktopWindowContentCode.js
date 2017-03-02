@@ -258,7 +258,13 @@ DesktopContent.getParameter = function(index,name) {
 //	if using name, then (mostly) ignore index
 DesktopContent.getDesktopParameter = function(index, name) {	
 	// Debug.log(window.location)
-	var params = (DesktopContent._theWindow.parent.parent.window.location.search.substr(1)).split('&');
+	
+	var win = DesktopContent._theWindow;
+	if(!win)	//for parameter directly from desktop code
+		win = window.parent.window;
+	else 
+		win = win.parent.parent.window;
+	var params = (win.location.search.substr(1)).split('&');
 	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
@@ -792,6 +798,12 @@ DesktopContent.tooltip = function(id,tip) {
 	{
 		DesktopContent._serverUrnLid = urnLid;
 		DesktopContent._serverOrigin = "";
+		
+		DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
+		if(!DesktopContent._sequence || DesktopContent._sequence == "")
+			DesktopContent._sequence = 0; //normal desktop mode
+		else
+			Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
 	}
 	
 	var srcStackString,srcFunc,srcFile;

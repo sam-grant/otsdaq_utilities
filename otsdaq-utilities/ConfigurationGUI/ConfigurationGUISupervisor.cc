@@ -184,9 +184,11 @@ throw (xgi::exception::Exception)
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
 		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
+		std::string tableDescription = CgiDataUtilities::postData(cgi,"tableDescription"); //from POST
 
 		__MOUT__ << "configName: " << configName << std::endl;
 		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
+		__MOUT__ << "tableDescription: " << tableDescription << std::endl;
 		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
 		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
