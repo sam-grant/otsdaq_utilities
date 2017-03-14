@@ -47,13 +47,13 @@ public:
     void 						request                      			(xgi::Input* in, xgi::Output* out )  	throw (xgi::exception::Exception);
 
 private:
-    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string& columnCSV, bool allowOverwrite=false);
+    void 			handleSaveConfigurationInfoXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName, const std::string &columnCSV, const std::string &tableDescription, const std::string &columnChoicesCSV, bool allowOverwrite=false);
     void 			handleDeleteConfigurationInfoXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, std::string &configName);
 
     void 			handleGroupAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
-    void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
-    void 			handleSetVersionAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string& configName, ConfigurationVersion version, const std::string &author);
-    void			handleAliasGroupMembersInBackboneXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string &author);
+    void 			handleSetGroupAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupAlias, const std::string &groupName, ConfigurationGroupKey groupKey, const std::string &author);
+    void 			handleSetVersionAliasInBackboneXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string &configName, ConfigurationVersion version, const std::string &author);
+    void			handleAliasGroupMembersInBackboneXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &versionAlias, const std::string &groupName, ConfigurationGroupKey groupKey, const std::string &author);
     void 			handleVersionAliasesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleConfigurationGroupsXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationGroupXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);

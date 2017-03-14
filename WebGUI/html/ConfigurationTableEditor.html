@@ -8,6 +8,40 @@
 	
 	<style type="text/css">		
 	
+		.fixedChoiceAdd	{
+			text-decoration: none;
+			font-size: 30px;
+			font-weight: bold;
+			color: rgb(15, 152, 76);
+		}
+
+
+		.treeNode-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 0px;
+		}
+		.treeNode-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+		
+		preloadImage {			
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100px;
+			top: 				0;
+		}
+		#preloadImage-treeEditTrashIcon {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		}
+		#preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+		}
+		
 	</style>
 	
 	
@@ -24,14 +58,16 @@
 		var _CONFIG_FIXED_CELLS = 3;
 	
 
-		var _typeArray = ["Data","UniqueData", "OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
+		var _typeArray = ["Data","UniqueData","FixedChoiceData", //"MultilineData", FIXME when multiline data is functional
+						  "OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
 		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
 				
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
 		var _editingCellPos = [-1,-1];	
 		var _srcName;
-		var _colHdrArr, _colTypeArr, _colDataTypeArr;
+		var _colHdrArr, _colTypeArr, _colDataTypeArr, _colChoicesArr;
+		var _tableDescription;
 		var _tableIsTransposed = false;
 		
 		var _mouseIsSelecting = false;	//to block switching cells when selecting text
@@ -49,7 +85,7 @@
 			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
 			//specificConfigRequestHandler(req)
 			//setupEmptyTable();
-			//setupTable(srcName,colHdrs,colTypes,colDataTypes)
+			//setupTable(srcName,colHdrs,colTypes,colDataTypes,colChoices,tableDescription)
 			//selectThisCell(r,c,el)
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
@@ -61,6 +97,9 @@
 			//createEditTableMenu(event)
 			//setupFindAndReplace()
 			//configReplace()
+		
+			//addFixedChoice(c)
+			//deleteSelectedFixedChoice(c)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -189,12 +228,27 @@
 			
 			var data = "";
 			for(var i=0;i<_colHdrArr.length;++i)
-				data += _colTypeArr[i] + "," + _colHdrArr[i].trim() + "," + _colDataTypeArr[i] + ";";
+				data += _colTypeArr[i] + "," + encodeURIComponent(_colHdrArr[i].trim()) + "," + _colDataTypeArr[i] + ";";
+			
+			//handle table description
+			var tableDescription = document.getElementById("table-description").value.trim();			
+			if(tableDescription.length)
+				tableDescription = encodeURIComponent(tableDescription);
+			else
+				tableDescription = "No description.";
+			
+			//col choices are CSV for each column and ; separated columns
+			var colChoicesData = "";
+			for(var i=0;i<_colChoicesArr.length;++i)
+				colChoicesData += _colChoicesArr[i] + ";";
+			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
 				"&configName=" + configName + 
 				"&allowOverwrite="+allowOverwrite, 
-				"columnCSV=" + data, specificConfigRequestHandler, 1);	
+				"columnCSV=" + data + 
+				"&tableDescription=" + tableDescription +
+				"&columnChoicesCSV=" + colChoicesData, specificConfigRequestHandler, 1);	
 		}
 		
 
@@ -293,10 +347,16 @@
 			if(isFromSaveReq && !err)
 				Debug.log("Successful response to save request of Info for '" + configName + "'",Debug.INFO_PRIORITY);
 			
+			if(!req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0])
+				return;
+			
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
+			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
 
+			var tableDescription = DesktopContent.getXMLValue(req,"ConfigurationDescription");
+			
 			var colHdrsArr = [];
 			for(var i=0;i<colHdrs.length;++i)
 				colHdrsArr.push(colHdrs[i].getAttribute("value"));
@@ -306,14 +366,29 @@
 			var colDataTypesArr = [];
 			for(var i=0;i<colDataTypes.length;++i)
 				colDataTypesArr.push(colDataTypes[i].getAttribute("value"));
+			var colChoicesArr = [];
+			for(var i=0;i<colChoices.length;++i)
+			{
+				var colChoiceArr = colChoices[i].getElementsByTagName("ColumnChoice");
+				var csvStr = "";
+				for(var j=0;j<colChoiceArr.length;++j)
+					if(j)
+						csvStr += "," + colChoiceArr[j].getAttribute("value");
+					else
+						csvStr += colChoiceArr[j].getAttribute("value");
+				Debug.log("csvStr col=" + i + " csvChoices=" + csvStr);
+				colChoicesArr.push(csvStr);
+			}
 			
 			if(!isFromSaveReq)
 				document.getElementById('SaveAsConfigName').value = configName;
-			setupTable(configName,colHdrsArr,colTypesArr,colDataTypesArr);
+			
+			Debug.log("tableDescription = " + tableDescription);
+			setupTable(configName,colHdrsArr,colTypesArr,colDataTypesArr,colChoicesArr,tableDescription);
 		}
 		
 		//setupTable ~
-		function setupTable(srcName,colHdrs,colTypes,colDataTypes)
+		function setupTable(srcName,colHdrs,colTypes,colDataTypes,colChoices,tableDescription)
 		{
 			//handle use of cached _srcName
 			if(!srcName)
@@ -333,7 +408,15 @@
 			if(!colDataTypes)
 				colDataTypes = _colDataTypeArr;
 			else
-				_colDataTypeArr = colDataTypes;			
+				_colDataTypeArr = colDataTypes;	
+			if(!colChoices)
+				colChoices = _colChoicesArr;
+			else
+				_colChoicesArr = colChoices;	
+			if(!tableDescription)
+				tableDescription = _tableDescription;
+			else
+				_tableDescription = tableDescription;			
 
 			//force proper comment name
 			colHdrs[colHdrs.length-3] = "CommentDescription";
@@ -408,6 +491,60 @@
 					str += colHdrs[c];
 					str += "</th>";
 					
+
+					/////////////////////////////////
+					//add data choices if type = FixedChoiceData
+					if(colTypes[c] != "FixedChoiceData") 
+					{
+						str += "<td style='border:0; background-color:transparent;'></td>";
+					}
+					else
+					{
+						Debug.log("col=" + c + " colTypes[c]=" + colTypes[c]);
+						str += "<td>";
+
+						str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
+						str += "<tr><td>";
+						str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"setCaretPosition(this,0,this.value.length);' " +
+								"style='width:150px' />";
+						str += "</td><td style='white-space:nowrap' >";
+						str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
+								"title='Add text as a new fixed choice option for this column.\"'" +
+								">";
+						str += "+";
+						str += "</a>";
+						str += "</td></tr>";
+
+
+						str += "<tr><td>";
+
+						str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+						var colChoicesArr = colChoices[c].split(',');
+						for(var f=0;f<colChoicesArr.length;++f)					
+							str += "<option>" +
+							decodeURIComponent(colChoicesArr[f]) +
+							"</option>";					
+						str += "</select>";
+
+						str += "</td><td>";
+						str += 
+								"<div class='treeNode-deleteIcon' " + 
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"deleteSelectedFixedChoice(" + c + ");' " +
+								"title='Delete the currently selected choice for this column.' " +
+								"></div>";
+
+
+						str += "</td></tr>";
+						str += "</table>";
+
+						str += "</td>";			
+
+					}
 					
 					///// close row
 					str += "</tr>";
@@ -468,10 +605,79 @@
 	
 				}
 				str += "</tr>";
+				
+				
+				
+
+				//add data choices if type = FixedChoiceData
+				str += "<tr>";	
+				for(var c=0;c<colTypes.length;++c)
+				{
+					if(colTypes[c] != "FixedChoiceData") 
+					{
+						str += "<td style='border:0; background-color:transparent;'></td>";
+						continue;
+					}
+					Debug.log("col=" + c + " colTypes[c]=" + colTypes[c]);
+					str += "<td>";
+					
+					str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
+					str += "<tr><td>";
+					str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"setCaretPosition(this,0,this.value.length);' " +
+							"style='width:150px' />";
+					str += "</td><td style='white-space:nowrap' >";
+					str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
+							"title='Add text as a new fixed choice option for this column.\"'" +
+							">";
+					str += "+";
+					str += "</a>";
+					str += "</td></tr>";
+					
+					
+					str += "<tr><td>";
+
+					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+					var colChoicesArr = colChoices[c].split(',');
+					for(var f=0;f<colChoicesArr.length;++f)					
+						str += "<option>" +
+								decodeURIComponent(colChoicesArr[f]) +
+								"</option>";					
+					str += "</select>";
+					
+					str += "</td><td>";
+					str += 
+							"<div class='treeNode-deleteIcon' " + 
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"deleteSelectedFixedChoice(" + c + ");' " +
+							"title='Delete the currently selected choice for this column.' " +
+							"></div>";
+					
+
+					str += "</td></tr>";
+					str += "</table>";
+					
+					str += "</td>";			
+	
+				}
+				str += "</tr>";
 			}
 
 			str += "</table>";		
 
+			
+			//add table description editing
+			if(!tableDescription || tableDescription == "")
+				tableDescription = "No description.";
+			str += "<br><br>";
+			str += "Table description (changes will be saved with the column info):<br>";
+			str += "<textarea id='table-description' rows='6' cols='60'>";			 
+			str += tableDescription;
+			str += "</textarea>";
+			
 			var el = document.getElementById("display");
 			el.innerHTML = str;		
 		}
@@ -983,64 +1189,104 @@
 			}
 			
 			setupTable();
-
-
-//			var el = document.getElementById("SubSystemTable");
-//			
-//			var cells;
-//			var cellStr, tmpStr;
-//			var needleStartIndex;
-//			var linkIdStartStr,linkIdEndStr;
-//			var indexS, indexE;
-//			
-//			cells = el.getElementsByTagName("th");
-//			
-//			for(var c=0;c<cells.length-3;++c) //skip last 3 fixed columns
-//			{
-//				cellStr = cells[c].innerHTML;
-//				tmpStr = cellStr;
-//				Debug.log("[" + c + "]=" + cellStr);
-//				needleStartIndex = 0;
-//				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
-//				{
-//					cellStr = cellStr.replace(needle,replaceStr);
-//					if(cellStr == tmpStr) break; //in case replace is same as needle
-//					Debug.log("REPLACED=" + cellStr);		
-//					needleStartIndex += replaceStr.length;
-//				}
-//				cells[c].innerHTML = cellStr;
-//			}
-//			
-//			cells = el.getElementsByTagName("td");
-//			
-//			for(var c=0;c<cells.length;++c) //skip all non-link cells
-//			{
-//				//extract link ID and check for replace
-//				
-//				cellStr = cells[c].innerHTML;
-//				if(cellStr.indexOf("<div") != 0) continue;
-//				
-//				indexS = cellStr.indexOf(">");
-//				indexS = cellStr.indexOf(">",indexS+1)+1;
-//				indexE = cellStr.indexOf("<",indexS);
-//				linkIdStartStr = cellStr.substr(0,indexS);
-//				linkIdEndStr = cellStr.substr(indexE);
-//				cellStr = cellStr.substr(indexS,indexE-indexS);
-//					
-//				tmpStr = cellStr;
-//				Debug.log("linkIdStartStr=" + linkIdStartStr );
-//				Debug.log("linkIdEndStr=" + linkIdEndStr );
-//				needleStartIndex = 0;
-//				while(cellStr.indexOf(needle,needleStartIndex) >= 0)
-//				{
-//					cellStr = cellStr.replace(needle,replaceStr);
-//					if(cellStr == tmpStr) break; //in case replace is same as needle
-//					Debug.log("REPLACED=" + cellStr);		
-//					needleStartIndex += replaceStr.length;
-//				}
-//				cells[c].innerHTML = linkIdStartStr + cellStr + linkIdEndStr;
-//			}
 						
+		}
+		
+		//addFixedChoice
+		//	for column c
+		function addFixedChoice(c)
+		{
+			//if not already in choices, add it		
+			
+			var val = document.getElementById("newChoiceInput-" + c).value;
+			Debug.log("addFixedChoice Value = " + val);
+			
+			
+			if(c >= _colChoicesArr.length)
+			{
+				Debug.log("Invalid column '" + c + "' given.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+				
+			var colChoicesArr = _colChoicesArr[c].split(',');
+			var found = false;
+			for(var i=0;i<colChoicesArr.length;++i)
+				if(colChoicesArr[i] == val)
+				{	found = true; break; }
+			
+			if(found)
+			{
+				Debug.log("Value '" + val + "' is already a fixed choice option for column '" + 
+					_colHdrArr[c] + "'",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			if(_colChoicesArr[c].length) //other values exist
+				_colChoicesArr[c] += "," + encodeURIComponent(val);
+			else						//first value
+				_colChoicesArr[c] = encodeURIComponent(val);
+			
+			setupTable();
+			Debug.log("Value '" + val + 
+					"' was successfully added as a fixed choice option for column '" + 
+					_colHdrArr[c] + "'",
+					Debug.INFO_PRIORITY);
+		}
+		
+		//deleteSelectedFixedChoice
+		//	for column c
+		function deleteSelectedFixedChoice(c)
+		{
+			//find the value in choices, and remove it
+
+			if(c >= _colChoicesArr.length)
+			{
+				Debug.log("Invalid column '" + c + "' given.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			var val = document.getElementById("fixedChoicesSelect-" + c).value;
+			Debug.log("deleteSelectedFixedChoice Value = " + val);
+			val = encodeURIComponent(val);
+			var colChoicesArr = _colChoicesArr[c].split(',');
+			
+			var found = -1;
+			for(var i=0;i<colChoicesArr.length;++i)
+				if(colChoicesArr[i] == val)
+				{	found = i; break; }
+
+			if(found == -1)
+			{
+				Debug.log("Value '" + val + 
+						"' was not found in existing fixed choice options for column '" + 
+					_colHdrArr[c] + "'",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			//rebuild choices string
+			_colChoicesArr[c] = "";
+			var cnt = 0;
+			for(var i=0;i<colChoicesArr.length;++i)
+			{
+				if(i == found) continue; //skip one to be removed
+				
+				if(cnt)
+					_colChoicesArr[c] += "," + colChoicesArr[i];
+				else	//first choice added
+					_colChoicesArr[c] = colChoicesArr[i];
+				
+				++cnt;
+			}
+
+			setupTable();
+			Debug.log("Value '" + val + 
+					"' was successfully removed from the fixed choice options for column '" + 
+					_colHdrArr[c] + "'",
+					Debug.INFO_PRIORITY);
 		}
 		
 		
@@ -1067,7 +1313,9 @@
 	
 	<div id='controls'></div>
 	<div id='display'></div>
-	
+
+	<div class='preloadImage' id='preloadImage-treeEditTrashIcon'></div>
+	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
 </body>
 	
 </html>

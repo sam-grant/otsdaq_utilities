@@ -185,10 +185,15 @@ throw (xgi::exception::Exception)
 		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
 		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
 		std::string tableDescription = CgiDataUtilities::postData(cgi,"tableDescription"); //from POST
+		std::string columnChoicesCSV = CgiDataUtilities::postData(cgi,"columnChoicesCSV"); //from POST
+
+		//columnCSV = CgiDataUtilities::decodeURIComponent(columnCSV);
+		//tableDescription = CgiDataUtilities::decodeURIComponent(tableDescription);
 
 		__MOUT__ << "configName: " << configName << std::endl;
 		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
 		__MOUT__ << "tableDescription: " << tableDescription << std::endl;
+		__MOUT__ << "columnChoicesCSV: " << columnChoicesCSV << std::endl;
 		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
 		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
@@ -197,7 +202,8 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", ss.str());
 		}
 		else
-			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,allowOverwrite=="1");
+			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,tableDescription,
+					columnChoicesCSV,allowOverwrite=="1");
 	}
 	else if(Command == "deleteConfigurationInfo")
 	{
@@ -1724,6 +1730,8 @@ try
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
 					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
 
+	ConfigurationBase *config = cfgMgr->getConfigurationByName(configName);
+
 	//send all config names along with
 	//	and check for specific version
 	xmldoc.addTextElementToData("ExistingConfigurationNames", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
@@ -1741,6 +1749,8 @@ try
 	}
 
 	xmldoc.addTextElementToData("ConfigurationName", configName);	//table name
+	xmldoc.addTextElementToData("ConfigurationDescription",
+			config->getConfigurationDescription());	//table name
 
 	//existing table versions
 	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
@@ -1754,7 +1764,7 @@ try
 	ConfigurationView* cfgViewPtr;
 	if(version.isInvalid()) //use mock-up
 	{
-		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+		cfgViewPtr = config->getMockupViewP();
 	}
 	else					//use view version
 	{
@@ -1772,7 +1782,7 @@ try
 
 			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
-			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+			cfgViewPtr = config->getMockupViewP();
 
 			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -1789,7 +1799,7 @@ try
 
 			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
-			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+			cfgViewPtr = config->getMockupViewP();
 
 			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -1797,6 +1807,7 @@ try
 	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
 
 	//get 'columns' of view
+	DOMElement* choicesParentEl;
 	parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
 	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
@@ -1808,6 +1819,16 @@ try
 		xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
 		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
 		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
+
+		choicesParentEl =
+				xmldoc.addTextElementToParent("ColumnChoices", "", parentEl);
+		//add data choices if necessary
+		if(colInfo[i].getType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA)
+		{
+
+			for(auto &choice:colInfo[i].getDataChoices())
+				xmldoc.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
+		}
 	}
 
 	//verify mockup columns after columns are posted to xmldoc
@@ -2388,7 +2409,8 @@ void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocumen
 //
 void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr,
-		std::string& configName, const std::string& data,
+		std::string &configName, const std::string &data,
+		const std::string &tableDescription, const std::string &columnChoicesCSV,
 		bool allowOverwrite)
 {
 	//create all caps name and validate
@@ -2424,19 +2446,19 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 
 	__MOUT__ << "capsName=" << capsName << std::endl;
 	__MOUT__ << "configName=" << configName << std::endl;
+	__MOUT__ << "tableDescription=" << tableDescription << std::endl;
+	__MOUT__ << "columnChoicesCSV=" << columnChoicesCSV << std::endl;
 
 	//create preview string to validate column info before write to file
 	std::stringstream outss;
-	char tmp[300];
 
-	sprintf(tmp,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-	outss << tmp;
-	sprintf(tmp,"\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ConfigurationInfo.xsd\">\n");
-	outss << tmp;
-	sprintf(tmp,"\t\t<CONFIGURATION Name=\"%s\">\n",configName.c_str());
-	outss << tmp;
-	sprintf(tmp,"\t\t\t<VIEW Name=\"%s\" Type=\"File,Database,DatabaseTest\">\n",capsName.c_str());
-	outss << tmp;
+	outss << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n";
+	outss << "\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ConfigurationInfo.xsd\">\n";
+	outss << "\t\t<CONFIGURATION Name=\"" <<
+			configName	<< "\">\n";
+	outss << "\t\t\t<VIEW Name=\"" << capsName <<
+			"\" Type=\"File,Database,DatabaseTest\" Description=\"" <<
+			tableDescription << "\">\n";
 
 	//each column is represented by 3 fields
 	//	- type, name, dataType
@@ -2444,11 +2466,17 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	int j = data.find(',',i); //find next field delimiter
 	int k = data.find(';',i); //find next col delimiter
 
+
+	std::istringstream columnChoicesISS(columnChoicesCSV);
+	std::string columnChoicesString;
+	std::string columnType;
+
 	while(k != (int)(std::string::npos))
 	{
 		//type
+		columnType = data.substr(i,j-i);
 		outss << "\t\t\t\t<COLUMN Type=\"";
-		outss << data.substr(i,j-i);
+		outss << columnType;
 
 		i=j+1;
 		j = data.find(',',i); //find next field delimiter
@@ -2476,6 +2504,16 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		//data type
 		outss << "\" \t	DataType=\"";
 		outss << data.substr(i,k-i);
+
+
+		//fixed data choices for ViewColumnInfo::TYPE_FIXED_CHOICE_DATA
+		getline(columnChoicesISS, columnChoicesString, ';');
+		//__MOUT__ << "columnChoicesString = " << columnChoicesString << std::endl;
+		outss << "\" \t	DataChoices=\"";
+		outss << columnChoicesString;
+
+
+		//end column info
 		outss << "\"/>\n";
 
 		i = k+1;
@@ -2483,13 +2521,11 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		k = data.find(';',i); //find new col delimiter
 	}
 
-	sprintf(tmp,"\t\t\t</VIEW>\n");
-	outss << tmp;
-	sprintf(tmp,"\t\t</CONFIGURATION>\n");
-	outss << tmp;
-	sprintf(tmp,"\t</ROOT>\n");
-	outss << tmp;
+	outss << "\t\t\t</VIEW>\n";
+	outss << "\t\t</CONFIGURATION>\n";
+	outss << "\t</ROOT>\n";
 
+	__MOUT__ << outss.str() << std::endl;
 
 	FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "w");
 	if(!fp)
@@ -2498,14 +2534,19 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT));
 		return;
 	}
-	fprintf(fp,outss.str().c_str());
+
+	__MOUT__ << std::endl;
+	fprintf(fp,"%s",outss.str().c_str());
+
+	__MOUT__ << std::endl;
 	fclose(fp);
 
+	__MOUT__ << std::endl;
 	//reload all config info with refresh AND reset to pick up possibly new config
 	// check for errors related to this configName
 	std::string accumulatedErrors = "";
 	cfgMgr->getAllConfigurationInfo(true,&accumulatedErrors,configName);
-
+	__MOUT__ << std::endl;
 	//if errors associated with this config name stop and report
 	if(accumulatedErrors != "")
 	{
@@ -2538,10 +2579,10 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		}
 		return;
 	}
-
+	__MOUT__ << std::endl;
 	//return the new configuration info
 	handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
-
+	__MOUT__ << std::endl;
 	//debug all table column info
 	//FIXME -- possibly remove this debug feature in future
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
