@@ -18,10 +18,10 @@ fcldir      -
 
 #
 product		 version	optional
-otsdaq           v1_00_06
-xdaq             -
-artdaq_mfextensions v1_01_03    -        optional
-cetbuildtools    v5_06_03       -       only_for_build
+otsdaq              v1_00_06
+artdaq_mfextensions v1_01_06   	 -        optional
+cetbuildtools       v5_06_07     -        only_for_build
+xdaq                -
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
