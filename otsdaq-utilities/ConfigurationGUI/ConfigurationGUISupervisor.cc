@@ -114,6 +114,7 @@ throw (xgi::exception::Exception)
 	//Commands
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
+	//	getColumnTypes
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
 	//	setVersionAliasInActiveBackbone
@@ -210,6 +211,31 @@ throw (xgi::exception::Exception)
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		__MOUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
+	}
+	else if(Command == "getColumnTypes")
+	{
+		//return the possible column types and their defaults
+		std::vector<std::string> allTypes = ViewColumnInfo::getAllTypesForGUI();
+		std::vector<std::string> allDataTypes = ViewColumnInfo::getAllDataTypesForGUI();
+		std::map<std::pair<std::string,std::string>,std::string> allDefaults =
+				ViewColumnInfo::getAllDefaultsForGUI();
+
+		for(const auto &type:allTypes)
+			xmldoc.addTextElementToData("columnTypeForGUI",
+					type);
+		for(const auto &dataType:allDataTypes)
+			xmldoc.addTextElementToData("columnDataTypeForGUI",
+					dataType);
+
+		for(const auto &colDefault:allDefaults)
+		{
+			xmldoc.addTextElementToData("columnDefaultDataType",
+					colDefault.first.first);
+			xmldoc.addTextElementToData("columnDefaultTypeFilter",
+					colDefault.first.second);
+			xmldoc.addTextElementToData("columnDefaultValue",
+					colDefault.second);
+		}
 	}
 	else if(Command == "getGroupAliases")
 	{

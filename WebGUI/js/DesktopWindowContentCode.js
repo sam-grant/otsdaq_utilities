@@ -126,7 +126,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
-//	DesktopContent.tooltipNeverShow(srcFunc,srcFile,srcId)
+//	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,alwaysShow)
 
 DesktopContent._isFocused = false;
 DesktopContent._theWindow = 0;
@@ -823,6 +823,15 @@ DesktopContent.tooltip = function(id,tip) {
 		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
 	if(srcFile.indexOf(':') >= 0)
 		srcFile.substr(0,srcFile.indexOf(':'));
+	
+	var oldId = id;
+	//remove all special characters from ID
+	id = "";
+	for(var i=0;i<oldId.length;++i)
+		if((oldId[i] >= 'a' && oldId[i] <= 'z') || 
+				(oldId[i] >= 'A' && oldId[i] <= 'Z') ||
+				(oldId[i] >= '0' && oldId[i] <= '9'))
+			id += oldId[i];
 
 	DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=check" + 
@@ -834,52 +843,60 @@ DesktopContent.tooltip = function(id,tip) {
 
 		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
 		Debug.log("showTooltip: " + showTooltip);
-
+		
 		if(showTooltip|0)
 		{			
 			var str = "";
 			
-			str += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
-					"onclick='" + "var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +					
-					"DesktopContent.tooltipSetNeverShow(\"" + 
+			str += "<input checked type='checkbox' " +
+					"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+					id + "' " +
+					"onclick='" + 					
+					"DesktopContent.tooltipSetAlwaysShow(\"" + 
 					srcFunc + "\",\"" +
 					srcFile + "\",\"" +
-					id + "\", el.checked);" + "'>";
+					id + "\", this.checked);" + "'>";
 			str += " ";
 			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +
+					"var el = document.getElementById(\"" +
+					"DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+					id + "\");" +
 					"el.checked = !el.checked;" +
-					"DesktopContent.tooltipSetNeverShow(\"" + 
+					"DesktopContent.tooltipSetAlwaysShow(\"" + 
 					srcFunc + "\",\"" +
 					srcFile + "\",\"" +
 					id + "\", el.checked);" +
 					"'>";
-			str += "Never show again the Tooltip below:";
+			str += "Always show the Tooltip below:";
 			str += "</a>";
 			str +="</input>";
 			
 			str += "<br><br>";
-			str += "<center><b>'" + id + "' Tooltip</b></center><br>";
+			str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
 			
 			str += tip;
 			
 			str += "<br><br>";
-			str += "<input type='checkbox' id='DesktopContent-tooltip-SetNeverShowCheckbox' " +
-					"onclick='" + "var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +					
-					"DesktopContent.tooltipSetNeverShow(\"" + 
+			str += "<input checked type='checkbox' " +
+					"id='DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+					id + "' " +
+					"onclick='" + 					
+					"DesktopContent.tooltipSetAlwaysShow(\"" + 
 					srcFunc + "\",\"" +
 					srcFile + "\",\"" +
-					id + "\", el.checked);" + "'>";
+					id + "\", this.checked);" + "'>";
 			str += " ";
 			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"DesktopContent-tooltip-SetNeverShowCheckbox\");" +
+					"var el = document.getElementById(\"" +
+					"DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+					id + "\");" +
 					"el.checked = !el.checked;" +
-					"DesktopContent.tooltipSetNeverShow(\"" + 
+					"DesktopContent.tooltipSetAlwaysShow(\"" + 
 					srcFunc + "\",\"" +
 					srcFile + "\",\"" +
 					id + "\", el.checked);" +
 					"'>";
-			str += "Never show again the Tooltip above.";
+			str += "Always show the Tooltip above.";
 			str += "</a>";
 			str +="</input>";
 					
@@ -891,17 +908,23 @@ DesktopContent.tooltip = function(id,tip) {
 
 //=====================================================================================
 //tooltipSetNeverShow ~~
-//	set value of never show for target tip to 1/0 based on doNeverShow
-DesktopContent.tooltipSetNeverShow = function(srcFunc,srcFile,id,doNeverShow) {
-	Debug.log("doNeverShow = " + doNeverShow);
+//	set value of never show for target tip to 1/0 based on alwaysShow
+DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow) {
+	Debug.log("alwaysShow = " + alwaysShow);
 	DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=setNeverShow" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id + 
-			"&doNeverShow=" + (doNeverShow?1:0)
+			"&doNeverShow=" + (alwaysShow?0:1)
 			,""
 			,0,0,0,0,true,true); //show loading, and target supervisor
+	
+	//make sure all checkboxes mirror choice
+	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+			id).checked = alwaysShow;
+	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+			id).checked = alwaysShow;
 }
 		
 //=====================================================================================

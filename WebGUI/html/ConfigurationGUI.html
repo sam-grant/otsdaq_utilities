@@ -131,7 +131,7 @@
 			text-align: right;
 			vertical-align: top;
 		}
-		#tableDetails td {
+		#tableDetails td, #tableDetails a, #tableDetails label {
 			font-size: 14px;
 			text-align: left;
 			vertical-align: top;
@@ -221,6 +221,7 @@
 		var _tableViewIsTransposed = false;
 		var _showTableDetails = true;
 		var _tableLinkDropdownChoices = []; 
+		var _tableFixedChoiceData = {}; 
 		var _tableDefaultRowValues = []; 
 		var _tableViewBackLinkStr;
 		
@@ -296,6 +297,7 @@
 			//transposeTableView()
 			//getTableViewColIsBoolType(rows)
 			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput)
+			//downloadTableAsCSV()
 
 		//tree-view focused
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
@@ -421,6 +423,7 @@
 			//be careful to not override the window.onmousemove DesktopContent action
 			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler); 
 			
+			setupSpecificConfig("FEConfiguration","-1",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -1667,7 +1670,22 @@
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
 			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
-					
+			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
+			
+			//fill fixed choice structure
+			_tableFixedChoiceData = {};
+			var fixedChoiceArr;
+			for(var i=0;i<colChoices.length;++i)
+			{
+				fixedChoiceArr = colChoices[i].getElementsByTagName("ColumnChoice");
+				if(fixedChoiceArr.length)
+				{
+					_tableFixedChoiceData[i] = [];
+					for(var j=0;j<fixedChoiceArr.length;++j)
+						_tableFixedChoiceData[i].push(fixedChoiceArr[j].getAttribute("value"));
+				}
+			}
+			
 			_tableDefaultRowValues = [];
 			var defaultRowValues = req.responseXML.getElementsByTagName("DefaultRowValue");
 			for(var i=0;i<defaultRowValues.length;++i)
@@ -1725,6 +1743,11 @@
 			//display config name and version
 			str += "<div style='float:left;'>";
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
+			str += "</div>";
+			
+			//display download csv link
+			str += "<div style='float:left;margin: 3px 0 0 15px;'>";
+			str += "<a href='#' onclick='downloadTableAsCSV()'>Download CSV</a>";	
 			str += "</div>";
 			
 			//add link for wiz to default
@@ -1792,6 +1815,18 @@
 			var tableAuthor = DesktopContent.getXMLValue(req,"TableAuthor");
 			var tableCreationTime = DesktopContent.getXMLValue(req,"TableCreationTime");
 			var tableLastAccessTime = DesktopContent.getXMLValue(req,"TableLastAccessTime");
+			var tableDescription = DesktopContent.getXMLValue(req,"ConfigurationDescription");
+
+			//if there is a description show tooltip
+			if(tableDescription != "" && 
+					tableDescription.toUpperCase().indexOf("NO DESCRIPTION") != 0)
+				DesktopContent.tooltip(configName +" Table Description",
+					"The table description may be useful in determining how to use this " +
+					"table or the meaning of the column fields. Here is the description for " +
+					"the '" + configName + "' table:<br><br>" +
+					"<div style='margin-left:20px'>" +
+					tableDescription + "</div>");
+			
 					
 			//convert linux time to Date
 			tableCreationTime = getDateString(new Date((tableCreationTime|0)*1000)); 
@@ -1805,8 +1840,21 @@
 			str += "<tr><th>Author:</th><td class='underlineRow'>" + tableAuthor + "</td></tr>";
 			str += "<tr><th>Created:</th><td class='underlineRow'>" + tableCreationTime + "</td></tr>";
 			str += "<tr><th>Last Load:</th><td class='underlineRow'>" + tableLastAccessTime + "</td></tr>";
-			str += "<tr><th>Comment:</th><td>" + 
+			str += "<tr><th>Comment:</th><td class='underlineRow'>" + 
 					tableComment.replace(/\n/g , "<br>") + "</td></tr>";
+			str += "<tr><th>Description:</th><td>";
+
+			str += "<label id='tableDescriptionText-Show' style='display:block'>";
+			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"block\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"none\";'>" +
+					"show</a>";
+			str += "</label>";			
+			str += "<label id='tableDescriptionText' style='display:none'>";
+			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
+					"hide</a><br>" +					
+					tableDescription.replace(/\n/g , "<br>") + 
+					"</label>";			
+			str += "</td></tr>";	
+			
 			str += "</table>"
 			str += "</div>";
 			
@@ -5693,6 +5741,31 @@
 				}				
 				str += "</select>";				
 			}
+			else if(colType == "FixedChoiceData")
+			{
+				str += "<select  onkeydown='keyHandler(event)' " +
+						"style='margin:-4px -2px -4px 1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+				
+				//default value is assumed in list
+				str += "<option>";
+				str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
+				str += "</option>";
+				if(decodeURIComponent(_tableDefaultRowValues[c])
+											 == _editingCellElOldValue)
+					optionIndex = 0; //get starting sel index
+				
+				for(var i=0;i<_tableFixedChoiceData[c].length;++i)
+				{			
+					str += "<option>";
+					str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
+					str += "</option>";
+					if(decodeURIComponent(_tableFixedChoiceData[c][i]) 
+												 == _editingCellElOldValue)
+						optionIndex = i+1; //get starting sel index
+				}				
+				str += "</select>";	
+			}
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
 					colType == "OnOff")  //if column type is boolean, use dropdown
@@ -5741,6 +5814,11 @@
 			{
 				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 				el.getElementsByTagName("select")[0].focus();
+			}
+			else if(colType == "FixedChoiceData")
+			{
+				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+				el.getElementsByTagName("select")[0].focus();				
 			}
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
@@ -8480,7 +8558,7 @@
 				str += selVal;
 				_editingCellEl.innerHTML = str;		
 				
-				//assume no child link will be named a booleam word
+				//assume no child link will be named a boolean word
 				var boolTypeTrues =  ["On","True","Yes"];
 				var statusTypeFalses =  ["Off","False","No"];
 				
@@ -8526,6 +8604,19 @@
 			
 			if(_editingCellEl) //return old value, convert from text to html
 			{
+				if(treeEditingNodeType_.indexOf("link") == 0)
+				{
+					//if canceling from link edit, show tooltip
+
+					DesktopContent.tooltip("Tables Available in Link Editing",
+							"It is important to note that, when editing links, only currently active " +
+							"tables are available to be linked to. If you do not see the table " +
+							"name you are looking for, it is probably because that table is not a member " +
+							"of the currently active group. To resolve this issue, you must go to the group view and edit " +
+							"the group to include the new table as a member.");
+					
+				}
+				
 				if(treeEditingNodeType_ == "value-bool" ||
 						treeEditingNodeType_.indexOf("link") == 0) 
 				{
@@ -9278,6 +9369,68 @@
 			//select comment text
 			setCaretPosition(document.getElementById("popUpDialog-alias"),
 					0,defaultAlias.length);
+		}
+		
+		//downloadTableAsCSV ~~
+		function downloadTableAsCSV()
+		{
+			editCellOK(); //editCellCancel();
+			Debug.log("CfgGUI downloadTableAsCSV ");
+			
+			//create CSV data string from html table
+			var dataStr = "data:text/csv;charset=utf-8\n";
+			el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+
+			var cells;
+
+			if(_tableViewIsTransposed)
+			{
+				var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
+				var numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
+						_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
+
+				//have to locate each cell individually
+				for(var r=0;r<numOfRows;++r)
+				{
+					for(var c=0;c<numOfCols;++c) //skip row index column
+					{
+						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
+						//assume one th column so minus 1
+						if(c)
+							dataStr += ",";
+						dataStr += encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim()); //replaces all special characters				
+					}
+					dataStr += "\n";
+				}
+			}
+			else
+			{
+				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
+				{
+					cells = rows[r].getElementsByTagName("td");
+
+					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
+					{
+						if(c)
+							dataStr += ",";
+						dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
+					}
+					dataStr += "\n";
+				}
+			}
+			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
+			
+			var link = document.createElement("a");
+			link.setAttribute("href", dataStr);
+			link.setAttribute("style", "display:none");
+			link.setAttribute("download", _currentConfigName + "_download.csv");
+			document.body.appendChild(link); // Required for FF
+
+			link.click(); // This will download the data file named "my_data.csv"
+			
+			link.parentNode.removeChild(link);
 		}
 		
 		//saveConfigAsNewVersion ~~

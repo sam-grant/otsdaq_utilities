@@ -61,6 +61,7 @@
 		var _typeArray = ["Data","UniqueData","FixedChoiceData", //"MultilineData", FIXME when multiline data is functional
 						  "OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
 		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
+		var _defaultArray = {};
 				
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue;
@@ -112,6 +113,75 @@
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
 					setupTableEditor);
+			DesktopContent.XMLHttpRequest("Request?RequestType=getColumnTypes", "",
+					function(req) {
+
+				var colTypes = req.responseXML.getElementsByTagName("columnTypeForGUI");
+				var colDataTypes = req.responseXML.getElementsByTagName("columnDataTypeForGUI");								
+				var defDataType = req.responseXML.getElementsByTagName("columnDefaultDataType");
+				var defTypeFilter = req.responseXML.getElementsByTagName("columnDefaultTypeFilter");
+				var defValue = req.responseXML.getElementsByTagName("columnDefaultValue");
+				
+				if(colTypes.length)
+					_typeArray = []; //clear and take from data
+				for(var i=0;i<colTypes.length;++i)
+					_typeArray.push(colTypes[i].getAttribute("value"));
+				
+				Debug.log("colTypes.length = " + colTypes.length);
+
+				if(colDataTypes.length)
+					_dataTypeArray = []; //clear and take from data
+				for(var i=0;i<colDataTypes.length;++i)
+					_dataTypeArray.push(colDataTypes[i].getAttribute("value"));				
+				
+				_defaultArray = {};
+				var dVal;
+				for(var i=0;i<_dataTypeArray.length;++i)
+				{
+					_defaultArray[_dataTypeArray[i]] = {};
+					for(var j=0;j<_typeArray.length;++j)
+					{
+						//search through default dataTypes and type filter pairs
+						var found = false;
+						for(var a=0;a<defDataType.length;++a)
+						{
+							if(_dataTypeArray[i] == 
+									defDataType[a].getAttribute("value"))
+							{
+								if("*" == 
+										defTypeFilter[a].getAttribute("value"))
+								{
+									found = true;
+									dVal = defValue[a].getAttribute("value");
+									break;
+								}
+								else if(_typeArray[j] == 
+										defTypeFilter[a].getAttribute("value"))
+								{
+									found = true;
+									dVal = defValue[a].getAttribute("value");
+									break;
+								}
+							}
+						}
+						
+						if(!found)
+						{
+							Debug.log("Impossible error occured!... Looking for " +
+									_dataTypeArray[i] + " and " + _typeArray[j] + ".",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+						
+						_defaultArray[_dataTypeArray[i]]
+									  [_typeArray[j]]
+									  = dVal;						
+					}
+				}
+				Debug.log("default array = " + _defaultArray);
+				
+			},0,0,0,true  //parameter, progressHandler, callHandlerOnErr, showLoadingOverlay
+			);
 			
 			setupEmptyTable();
 
@@ -523,10 +593,19 @@
 
 						str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
 						var colChoicesArr = colChoices[c].split(',');
-						for(var f=0;f<colChoicesArr.length;++f)					
-							str += "<option>" +
-							decodeURIComponent(colChoicesArr[f]) +
-							"</option>";					
+						
+						//always show default first
+						str += "<option>" +
+						decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
+						"</option>";					
+						
+						for(var f=0;f<colChoicesArr.length;++f)	
+							if(colChoicesArr[f] == "") continue; //skip empty values
+							else
+								str += "<option>" +
+									decodeURIComponent(colChoicesArr[f]) +
+									"</option>";		
+						
 						str += "</select>";
 
 						str += "</td><td>";
@@ -640,9 +719,17 @@
 					str += "<tr><td>";
 
 					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+
+					//always show default first
+					str += "<option>" +
+					decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
+					"</option>";	
+					
 					var colChoicesArr = colChoices[c].split(',');
-					for(var f=0;f<colChoicesArr.length;++f)					
-						str += "<option>" +
+					for(var f=0;f<colChoicesArr.length;++f)
+						if(colChoicesArr[f] == "") continue; //skip empty values
+						else
+							str += "<option>" +
 								decodeURIComponent(colChoicesArr[f]) +
 								"</option>";					
 					str += "</select>";
@@ -994,16 +1081,7 @@
 				
 				_colTypeArr[c] = colType;
 				_colDataTypeArr[c] = colDataType;
-				
-				str = "";
-				str += "<div style='font-size:12px' title='";		
-				str += colType;
-				str += " &#60;" + colDataType + "&#62;";
-				str += "'>";
-				str += colType;
-				str += "<br>&#60;" + colDataType + "&#62;";
-				str += "</div>";
-				_editingCellEl.innerHTML = str;
+				setupTable();				
 			}			
 			else //colHdr row
 			{
@@ -1200,7 +1278,17 @@
 			
 			var val = document.getElementById("newChoiceInput-" + c).value;
 			Debug.log("addFixedChoice Value = " + val);
-			
+			var defaultVal = _defaultArray[_colDataTypeArr[c]][_colTypeArr[c]];
+			Debug.log("deleteSelectedFixedChoice defaultVal = " + defaultVal);
+
+			if(encodeURIComponent(val) == defaultVal)
+			{
+				Debug.log("Value '" + val + "' is the default value for column '" + 
+					_colHdrArr[c] + "' and so it is always a fixed choice option. " +
+							"No need to add it to the list.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
 			
 			if(c >= _colChoicesArr.length)
 			{
@@ -1252,38 +1340,71 @@
 			Debug.log("deleteSelectedFixedChoice Value = " + val);
 			val = encodeURIComponent(val);
 			var colChoicesArr = _colChoicesArr[c].split(',');
+			var defaultVal = _defaultArray[_colDataTypeArr[c]][_colTypeArr[c]];
+			Debug.log("deleteSelectedFixedChoice defaultVal = " + defaultVal);
+			
 			
 			var found = -1;
+			var deletedDefault = false;
 			for(var i=0;i<colChoicesArr.length;++i)
-				if(colChoicesArr[i] == val)
+				if(colChoicesArr[i] == defaultVal) //do not allow defaultVal to be in the list	
+				{
+					colChoicesArr[i] = ""; //clear value, default value is implied as first in list always
+					deletedDefault = true;
+				}
+				else if(colChoicesArr[i] == val)
 				{	found = i; break; }
 
+			
+			//rebuild choices string
+			if(found != -1 || deletedDefault)
+			{
+				_colChoicesArr[c] = "";
+				var cnt = 0;
+				for(var i=0;i<colChoicesArr.length;++i)
+				{
+					if(i == found) continue; //skip one to be removed
+					if(colChoicesArr[i] == "") continue; //skip empty values
+					
+					if(cnt)
+						_colChoicesArr[c] += "," + colChoicesArr[i];
+					else	//first choice added
+						_colChoicesArr[c] = colChoicesArr[i];
+					
+					++cnt;					
+				}
+				setupTable();
+			}
+
+			//finish up with message to user
+
+			if(deletedDefault)
+			{
+				Debug.log("Deafult Value '" + decodeURIComponent(defaultVal) + 
+						"' was found multiple times in the list of choices. " +
+						"The fixed choice options were cleaned up for column '" + 
+					_colHdrArr[c] + "'",
+						Debug.INFO_PRIORITY);
+			}
+			
 			if(found == -1)
 			{
-				Debug.log("Value '" + val + 
+				if(val == defaultVal)
+				{
+					Debug.log("Value '" + decodeURIComponent(val) + 
+							"' is the default value for column '" + 
+						_colHdrArr[c] + "' and can not be removed from the fixed choice options.",
+							Debug.HIGH_PRIORITY);
+				}
+				
+				Debug.log("Value '" + decodeURIComponent(val) + 
 						"' was not found in existing fixed choice options for column '" + 
 					_colHdrArr[c] + "'",
 						Debug.HIGH_PRIORITY);
 				return;
 			}
 			
-			//rebuild choices string
-			_colChoicesArr[c] = "";
-			var cnt = 0;
-			for(var i=0;i<colChoicesArr.length;++i)
-			{
-				if(i == found) continue; //skip one to be removed
-				
-				if(cnt)
-					_colChoicesArr[c] += "," + colChoicesArr[i];
-				else	//first choice added
-					_colChoicesArr[c] = colChoicesArr[i];
-				
-				++cnt;
-			}
-
-			setupTable();
-			Debug.log("Value '" + val + 
+			Debug.log("Value '" + decodeURIComponent(val) + 
 					"' was successfully removed from the fixed choice options for column '" + 
 					_colHdrArr[c] + "'",
 					Debug.INFO_PRIORITY);
