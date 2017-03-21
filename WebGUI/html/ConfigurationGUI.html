@@ -224,6 +224,7 @@
 		var _tableFixedChoiceData = {}; 
 		var _tableDefaultRowValues = []; 
 		var _tableViewBackLinkStr;
+		var _tableUploadStr = "";
 		
 		var _displayTargetEl = 0;
 
@@ -296,8 +297,9 @@
 			//toggleTableDetails(setVal)
 			//transposeTableView()
 			//getTableViewColIsBoolType(rows)
-			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput)
+			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
 			//downloadTableAsCSV()
+			//uploadTableFromCSV()
 
 		//tree-view focused
 			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
@@ -1744,12 +1746,7 @@
 			str += "<div style='float:left;'>";
 			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
 			str += "</div>";
-			
-			//display download csv link
-			str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-			str += "<a href='#' onclick='downloadTableAsCSV()'>Download CSV</a>";	
-			str += "</div>";
-			
+						
 			//add link for wiz to default
 			if(version != -1)
 			{
@@ -6034,7 +6031,7 @@
 		//popUpSaveTreeForm ~~
 		function popUpGroupViewAliasForm(groupName,groupKey)
 		{
-			Debug.log("CfgGUI popUpSaveTreeForm");	
+			Debug.log("CfgGUI popUpGroupViewAliasForm");	
 
 			var str = "";
 
@@ -8693,8 +8690,6 @@
 					++newr;
 				}
 
-				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType);
 			}
 			else						//reading from transposed view
 			{
@@ -8731,17 +8726,14 @@
 						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
 							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
 						else //take from the td cels
-						{	
-							cols[c][newr] = tmpCols[tmpColsIndex];
-							++tmpColsIndex;
-						}				
+							cols[c][newr] = tmpCols[tmpColsIndex++];
 						++newr;		
 					}
-				}		
-
-				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType);				
+				}			
 			}
+			
+			//create output string based on cols
+			str += createTableViewOutputStr(cols,colIsBoolType);
 
 			el.innerHTML = str;		
 
@@ -9371,7 +9363,271 @@
 					0,defaultAlias.length);
 		}
 		
+		//uploadTableFromCSV ~~
+		function uploadTableFromCSV()
+		{
+			editCellOK(); //editCellCancel();
+			Debug.log("CfgGUI uploadTableFromCSV _tableUploadStr = " + _tableUploadStr);
+
+			var doReplace = document.getElementById("popUpDialog-replaceData").checked;
+			var doAppend = document.getElementById("popUpDialog-appendData").checked;
+			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
+			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
+			
+			var srcRows = _tableUploadStr.split('\n');
+			var src = []; //src = [r][c]
+			for(var i=0;i<srcRows.length;++i)
+				src.push(srcRows[i].split(','));
+			
+			//Note: similar to addRow
+			var el = document.getElementById("SubSystemTable");
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+			var colIsBoolType = getTableViewColIsBoolType(rows);
+			
+			var rowOffset = 0;
+			
+			//if transposed cols = [c][r], else cols = [r][c]
+			
+			//localInsertSourceData ~~
+			function localInsertSourceData() 
+			{
+				if(_tableViewIsTransposed) 
+				{
+					for(var r=0;r<src.length;++r)
+					{
+						for(var c=0;c<src[r].length;++c)
+						{
+							if(rowOffset + r == 0) cols[c] = [];
+							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
+							cols[c+1][rowOffset + r] = src[r][c];
+						}
+					}
+				}
+				else
+				{
+					for(var r=0;r<src.length;++r)
+					{
+						cols[rowOffset + r] = [];
+						for(var c=0;c<src[r].length;++c)
+						{
+							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
+							cols[rowOffset + r][c+1] = src[r][c];
+						}
+					}
+				}
+				rowOffset += src.length;
+			}
+			//end localInsertSourceData()
+			
+			//-------------------------			
+			
+			
+			//localInsertCurrentData ~~
+			function localInsertCurrentData(rowStart,rowEnd) 
+			{
+				if(rowEnd === undefined || rowEnd < 0 || rowEnd >= rows.length)
+					rowEnd = (_tableViewIsTransposed?
+							(rows[0].getElementsByTagName("td").length + 1):
+							rows.length) - 1;
+				
+				var tmpCols;
+				if(!_tableViewIsTransposed) //reading from normal view
+				{
+					for(var r=rowStart;r<=rowEnd;++r)
+					{
+						cols.push([]); //push empty column, for each 
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						{
+							tmpCols = rows[r].getElementsByTagName("th");	
+							for(var c=0;c<tmpCols.length;++c) 
+								cols[rowOffset + r - rowStart][c] = tmpCols[c].innerHTML;
+						}
+						else
+						{
+							tmpCols = rows[r].getElementsByTagName("td");	
+							for(var c=0;c<tmpCols.length;++c) 
+								cols[rowOffset + r - rowStart][c] = tmpCols[c].innerHTML;
+						}
+					}
+				}
+				else //reading from transposed view
+				{					
+					var tmpColsIndex;
+					for(var c=0;c<rows.length;++c) 
+					{		
+						if(c >= cols.length)
+							cols.push([]); //push empty column, for each 
+
+						//assume there is 1 th cell
+						tmpCols = rows[c].getElementsByTagName("td");	
+						for(var r=rowStart, tmpColsIndex=rowStart - 
+								(rowStart>=_CONFIG_DATA_ROW_OFFSET?1:0);r<=rowEnd;++r) //-1 for th when starting at DATA OFFSET
+						{	
+							if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+								cols[c][rowOffset + r - rowStart] = rows[c].getElementsByTagName("th")[0].innerHTML;
+							else //take from the td cels
+								cols[c][rowOffset + r - rowStart] = tmpCols[tmpColsIndex++].innerHTML;
+						}
+					}					
+				}
+				rowOffset += (rowEnd - rowStart) + 1;
+			}
+			//end localInsertCurrentData(rowStart,rowEnd)
+			
+			//-------------------------		
+			
+			
+			
+			
+
+			//FIRST, always get rows up to data offset
+			localInsertCurrentData(0,_CONFIG_DATA_ROW_OFFSET-1);
+			
+			if(!doAppend) //prepending or replacing data, so add first
+			{
+				localInsertSourceData();
+			}
+			
+			if(!doReplace) //get current values from table
+			{
+				localInsertCurrentData(_CONFIG_DATA_ROW_OFFSET);
+			}
+			
+			if(doAppend) //appending or replacing data, so add last
+			{
+				localInsertSourceData();
+			}
+			
+
+			//create output string based on cols
+			str += createTableViewOutputStr(cols,colIsBoolType,0,true);
+			
+			el.innerHTML = str;	
+			
+			//on succes remove popup
+			el = document.getElementById("popUpDialog"); 
+			if(el) el.parentNode.removeChild(el);	
+		}
+		
+		//popUpUploadCSVTableForm ~~
+		function popUpUploadCSVTableForm(groupName,groupKey)
+		{
+			Debug.log("CfgGUI popUpUploadCSVTableForm");	
+			_tableUploadStr = ""; //clear previous upload
+			
+			var str = "";
+
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 380;
+			var h = 305;
+			var ww = DesktopContent.getWindowWidth();
+			var wh = DesktopContent.getWindowHeight();
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px"; 
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
+			el.style.width = w + "px";
+			el.style.height = h + "px";
+			
+			var str = "<a id='" + 
+					Debug._errBoxId + //clear upload string on cancel!
+					"-header' href='#' onclick='javascript:_tableUploadStr = \"\"; var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";	
+
+			str += "Please choose a CSV formatted data file (i.e. commas for columns, and new lines for rows) " +
+					"to upload, and choose whether you want to replace the current " +
+					"data or prepend/append the new data:<br><br>";
+			
+			str += "<center>";
+			
+			str += "<input type='file' id='popUpDialog-fileUpload' " + 
+					"accept='.csv' enctype='multipart/form-data' />";
+			str += "<br><br>";
+			
+			//add checkbox to replaceData
+			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
+					">";			
+			//add link so text toggles checkbox
+			str += "<a href='#' onclick='javascript:" +
+					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
+					"var forFirefox = (el.checked = !el.checked);" +					
+					"return false;'>";
+			str += "Overwrite current data";
+			str += "</a>";
+			str +=	"</input><br>";
+			
+
+			//add append or prepend radop
+			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:110px;'> ";
+			str += "<input checked type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
+			//add link so text toggles checkbox
+			str += "<a href='#' onclick='javascript:" +
+					"var el = document.getElementById(\"popUpDialog-appendData\");" +
+					"var forFirefox = (el.checked = !el.checked);" +
+					"return false;'>";
+			str += "Append";
+			str += "</a>";
+			str +=	"</input><br>";
+			
+			//add append or prepend radop
+			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
+			//add link so text toggles checkbox
+			str += "<a href='#' onclick='javascript:" +
+					"var el = document.getElementById(\"popUpDialog-prependData\");" +
+					"var forFirefox = (el.checked = !el.checked);" +
+					"return false;'>";
+			str += "Prepend";
+			str += "</a>";
+			str +=	"</input><br>";
+			
+			str += "</form>"; //close radio group
+
+			// done with special handling
+			// continue with pop-up prompt
+			str += "</center></div><br><br>"; //close main popup div
+
+			var onmouseupJS = "";
+			onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+			onmouseupJS += "uploadTableFromCSV();";			
+
+			str += "<input id='popUpDialog-submitButton' disabled type='button' onmouseup='" + 
+					onmouseupJS + "' " +
+					"value='Upload File' title='" +
+					"Upload the chosen file to the current table based on your selected options." +					
+					"'/>";
+
+			el.innerHTML = str;
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+			
+			document.getElementById('popUpDialog-fileUpload').addEventListener(
+					'change', function(evt) {
+				var files = evt.target.files;
+				var file = files[0];           
+				var reader = new FileReader();
+				reader.onload = function() {
+					//store uploaded file and enable button
+					_tableUploadStr = this.result;
+					document.getElementById('popUpDialog-submitButton').disabled = false;
+				}
+				reader.readAsText(file);
+			}, false);
+		}
+		
 		//downloadTableAsCSV ~~
+		// online people complain that this doesn't work for big files.
+		// Note: if files are too big, could have server create csv file
+		//	then link to <a href='/WebPath/download.csv' download></a>
 		function downloadTableAsCSV()
 		{
 			editCellOK(); //editCellCancel();
@@ -9717,14 +9973,18 @@
 							 "Transpose Table View",
 							 _useTableLinkDropdown?
 									 "Disable Table Link Drop-down Assistance":
-									 "Enable Table Link Drop-down Assistance"
+									 "Enable Table Link Drop-down Assistance",
+							 "Download Data (CSV)",
+							 "Upload Data (CSV)"
 									 ];
 			var menuItemHandlers = [
 							 "setupFindAndReplace()",
 							 "setupCopyAndMoveRows()",
 							 "toggleTableDetails()",
 							 "transposeTableView()",
-							 "_useTableLinkDropdown = !_useTableLinkDropdown;"							 
+							 "_useTableLinkDropdown = !_useTableLinkDropdown;",
+							 "downloadTableAsCSV()",
+							 "popUpUploadCSVTableForm()"													 
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(
@@ -9839,7 +10099,7 @@
 		}
 
 		//createTableViewOutputStr ~~
-		function createTableViewOutputStr(cols,colIsBoolType,transposeOutput)
+		function createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
 		{
 			var boolTypeTrues = ["On","True","Yes"];
 			var tdStyle;	
@@ -9861,25 +10121,25 @@
 					{
 						r = rr;
 						c = cc;
-						val = cols[rr][cc].innerHTML;
+						val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
 					}	
 					else if(!_tableViewIsTransposed && transposeOutput) //normal source and transposing
 					{
 						r = cc;
 						c = rr;
-						val = cols[cc][rr].innerHTML;	
+						val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;	
 					}					
 					else if(_tableViewIsTransposed && !transposeOutput) //transposed source and leaving transpoed
 					{
 						r = cc;
 						c = rr;
-						val = cols[rr][cc].innerHTML;
+						val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
 					}
 					else if(_tableViewIsTransposed && transposeOutput) //transposed source and normalizing
 					{
 						r = rr;
 						c = cc;
-						val = cols[cc][rr].innerHTML;
+						val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;
 					}
 					
 						
