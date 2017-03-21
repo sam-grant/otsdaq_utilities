@@ -5763,6 +5763,17 @@
 				}				
 				str += "</select>";	
 			}
+			else if(colType == "MultilineData")
+			{
+				//onkeydown='keyHandler(event)' 
+				str += "<textarea rows='4' cols='50' style='margin:-4px -2px -4px -1px;width:" + 
+						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
+				str += " onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+						">";
+				str += _editingCellElOldValue;
+				str += "</textarea>";				
+			}
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
 					colType == "OnOff")  //if column type is boolean, use dropdown
@@ -5817,6 +5828,9 @@
 				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 				el.getElementsByTagName("select")[0].focus();				
 			}
+			else if(colType == "MultilineData")
+				setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);			
+			
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
 					colType == "OnOff")  //if column type is boolean, use dropdown
@@ -5913,6 +5927,25 @@
 				shiftIsDown = !!e.shiftKey;	// typecast to boolean
 			}
 			//Debug.log("shift=" + shiftIsDown);
+			
+			
+			//handle text area specially
+			//			{
+			//				var tel;
+			//				if(_editingCellEl && 
+			//						(tel = _editingCellEl.getElementsByTagName("textarea")).length)
+			//				{
+			//					//handle special keys for text area
+			//					if(e.keyCode == TABKEY)
+			//					{
+			//						if(e.preventDefault) 
+			//							e.preventDefault();
+			//						
+			//						tel.value = tel.value + '    ';
+			//					}
+			//					return false; //done if text area was identified
+			//				}
+			//			}
 			
 			//tab key jumps to next cell with a CANCEL
 			//	(enter key does same except saves/OKs value)
@@ -8577,6 +8610,17 @@
 					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
 				else if(isFalse)
 					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+			}
+			else if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData
+			{
+				sel = sel[0]; //assume the first textarea in the cell is the textarea
+
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+						sel.value);
+				
+				var str = sel.value;
+				_editingCellEl.innerHTML = "";
+				_editingCellEl.appendChild(document.createTextNode(str));
 			}
 			else //normal cell
 			{
