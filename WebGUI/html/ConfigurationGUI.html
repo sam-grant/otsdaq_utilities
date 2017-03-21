@@ -9401,7 +9401,7 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = src[r][c];
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c]);
 						}
 					}
 				}
@@ -9413,7 +9413,7 @@
 						for(var c=0;c<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = src[r][c];
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c]);
 						}
 					}
 				}
@@ -9618,6 +9618,7 @@
 				reader.onload = function() {
 					//store uploaded file and enable button
 					_tableUploadStr = this.result;
+					Debug.log("_tableUploadStr = " + _tableUploadStr);							
 					document.getElementById('popUpDialog-submitButton').disabled = false;
 				}
 				reader.readAsText(file);
@@ -9655,8 +9656,8 @@
 						//assume one th column so minus 1
 						if(c)
 							dataStr += ",";
-						dataStr += encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim()); //replaces all special characters				
+						dataStr += encodeURIComponent(encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim())); //replaces all special characters				
 					}
 					dataStr += "\n";
 				}
@@ -9671,7 +9672,7 @@
 					{
 						if(c)
 							dataStr += ",";
-						dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
+						dataStr += encodeURIComponent(encodeURIComponent(cells[c].textContent.trim())); //replaces all special characters
 					}
 					dataStr += "\n";
 				}
@@ -9679,7 +9680,7 @@
 			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
 			
 			var link = document.createElement("a");
-			link.setAttribute("href", dataStr);
+			link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 			link.setAttribute("style", "display:none");
 			link.setAttribute("download", _currentConfigName + "_download.csv");
 			document.body.appendChild(link); // Required for FF
