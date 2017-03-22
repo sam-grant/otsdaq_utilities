@@ -5766,7 +5766,7 @@
 			else if(colType == "MultilineData")
 			{
 				//onkeydown='keyHandler(event)' 
-				str += "<textarea rows='4' cols='50' style='margin:-4px -2px -4px -1px;width:" + 
+				str += "<textarea rows='4' onkeydown='keyHandler(event)' cols='50' style='font-size: 14px; margin:-4px -2px -4px -1px;width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
 				str += " onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
@@ -5930,22 +5930,29 @@
 			
 			
 			//handle text area specially
-			//			{
-			//				var tel;
-			//				if(_editingCellEl && 
-			//						(tel = _editingCellEl.getElementsByTagName("textarea")).length)
-			//				{
-			//					//handle special keys for text area
-			//					if(e.keyCode == TABKEY)
-			//					{
-			//						if(e.preventDefault) 
-			//							e.preventDefault();
-			//						
-			//						tel.value = tel.value + '    ';
-			//					}
-			//					return false; //done if text area was identified
-			//				}
-			//			}
+			if(!shiftIsDown)
+			{
+				var tel;
+				if(_editingCellEl && 
+						(tel = _editingCellEl.getElementsByTagName("textarea")).length)
+				{
+					tel = tel[0];
+					//handle special keys for text area
+					if(e.keyCode == TABKEY)
+					{
+						Debug.log("tab.");
+						if(e.preventDefault) 
+							e.preventDefault();
+
+						var i = tel.selectionStart;
+						var j = tel.selectionEnd;
+						tel.value =  tel.value.substr(0,i) + 
+								'\t' + tel.value.substr(j);
+						tel.selectionStart = tel.selectionEnd = j+1;
+					}
+					return false; //done if text area was identified
+				}
+			}
 			
 			//tab key jumps to next cell with a CANCEL
 			//	(enter key does same except saves/OKs value)

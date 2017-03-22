@@ -1872,7 +1872,6 @@ try
 
 		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
 		{
-
 			if(colInfo[c].getDataType() == ViewColumnInfo::DATATYPE_TIME)
 			{
 				std::string timeAsString;

@@ -241,7 +241,7 @@ Debug.errorPop = function(err,severity) {
 		str = "<label style='color:white;font-size:16px;'>" + 
 			d.toLocaleDateString() +
 			" " + tstr + ":</label><br>" +
-			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;") + 
+			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") + 
 			(wasAlreadyContent?"<br>...<br>":"") +
 			str;
 
