@@ -79,6 +79,9 @@ include(CetTest)
 # Extra parts for the XDAQ GUI
 add_subdirectory(otsdaq-utilities)
 
+# Scripts
+add_subdirectory(tools)
+
 # UPS Version files
 add_subdirectory(ups)
 

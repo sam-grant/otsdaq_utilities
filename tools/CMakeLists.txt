@@ -1,5 +1,4 @@
-cet_script {
+cet_script( 
 	mega_update.py
-	UpdateOTS.py
-
-}
+	UpdateOTS.sh
+)
