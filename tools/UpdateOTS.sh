@@ -33,10 +33,11 @@ SCRIPT_DIR="$(
   cd "$(dirname "$(readlink "$0" || printf %s "$0")")"
   pwd -P 
 )"
-
+		
 echo "Script directory found as: $SCRIPT_DIR"
 
-REPO_DIR="$(find $SCRIPT_DIR/../../ -maxdepth 1 -iname 'otsdaq*')"
+#REPO_DIR="$(find $SCRIPT_DIR/../../ -maxdepth 1 -iname 'otsdaq*')" #old way before moving script to tools, and allowing compiling with CMake 
+REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')"
 
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then

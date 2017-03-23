@@ -874,7 +874,9 @@ DesktopContent.tooltip = function(id,tip) {
 			str += "<br><br>";
 			str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
 			
-			str += tip;
+			str += tip.replace(/<INDENT>/g,
+					"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+							"</div>");
 			
 			str += "<br><br>";
 			str += "<input checked type='checkbox' " +

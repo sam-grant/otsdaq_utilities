@@ -425,7 +425,7 @@
 			//be careful to not override the window.onmousemove DesktopContent action
 			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler); 
 			
-			setupSpecificConfig("FEConfiguration","-1",""); return;
+			//setupSpecificConfig("FEConfiguration","-1",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -614,9 +614,12 @@
 					"like a wiz!" + 
 					"\n\n" +		
 					"There are two key terms you will find in the 'System View' involving 'Latest' and " +
-					"'Active'; here is a brief" +
+					"'Active'; here is a brief " +
 					"description of each: " +
-					"\n\t - 'Wiz-to-Latest': This will setup a System Alias to refer to a group comprised " +
+					"<INDENT>" +
+					"- 'Wiz-to-Latest':" +
+					"<INDENT>" + 
+					"This will setup a System Alias to refer to a group comprised " +
 					"of the latest/newest versions of each table in the group. When you select this route, you will " +
 					"be prompted for the group type: Context, Backbone, or Configuration. " +
 					"For example, if you select the Configuration group type, then a Configuration group consisting of the " +
@@ -624,13 +627,20 @@
 					"created, the active 'GroupAliases' table will be modified to include a System Alias to the" +
 					"new Configuration group, the modified 'GroupAlias' table will saved as a new version, " +
 					"and a new Backbone group (with that new 'GroupAlias' table as a member) will be created and activated. Very handy!" +
-					"\n\t - 'Wiz-to-Active': This will setup a System Alias to refer to one of the Active groups. " +
+					"</INDENT>" +
+					"</INDENT>" +
+					"<INDENT>" +
+					"- 'Wiz-to-Active':" +
+					"<INDENT>" +
+					"This will setup a System Alias to refer to one of the Active groups. " +
 					"When you select this route, you will " +
 					"be prompted for the group type: Context, Backbone, or Configuration." +
 					"For example, if you select the Configuration group type, then the active 'GroupAliases' table " +
 					"will be modified to include a System Alias to the" +
 					"currently Active Configuration group, the modified 'GroupAlias' table will saved as a new version, " +
 					"and a new Backbone group (with that new 'GroupAlias' table as a member) will be created and activated. Also very handy!" +
+					"</INDENT>" +
+					"</INDENT>" +
 					"\n\nRemember, if you would like to take a look at the available online documentation, " +
 					"click the question mark at the top of the page.\n\n"
 			);
