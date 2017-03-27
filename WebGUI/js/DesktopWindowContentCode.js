@@ -127,6 +127,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
 //	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,alwaysShow)
+//	DesktopContent.tooltipConditionString(str);
 
 DesktopContent._isFocused = false;
 DesktopContent._theWindow = 0;
@@ -792,6 +793,14 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //		- if shouldShow:
 //			then show 
 //			add checkbox to never show again
+// id of "ALWAYS".. disables never show handling (no checkboxes)
+
+DesktopContent.tooltipConditionString = function(str) {
+	return str.replace(/<INDENT>/g,
+			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+					"</div>");
+}
+
 DesktopContent.tooltip = function(id,tip) {
 
 	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
@@ -847,60 +856,71 @@ DesktopContent.tooltip = function(id,tip) {
 		if(showTooltip|0)
 		{			
 			var str = "";
+
+			//add checkbox
+			if(id != "ALWAYS")
+			{
+				str += "<input checked type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked);" + "'>";
+				str += " ";
+				str += "<a href='#' onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked);" +
+						"'>";
+				str += "Always show the Tooltip below:";
+				str += "</a>";
+				str +="</input>";
+			}
 			
-			str += "<input checked type='checkbox' " +
-					"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
-					id + "' " +
-					"onclick='" + 					
-					"DesktopContent.tooltipSetAlwaysShow(\"" + 
-					srcFunc + "\",\"" +
-					srcFile + "\",\"" +
-					id + "\", this.checked);" + "'>";
-			str += " ";
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"" +
-					"DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
-					id + "\");" +
-					"el.checked = !el.checked;" +
-					"DesktopContent.tooltipSetAlwaysShow(\"" + 
-					srcFunc + "\",\"" +
-					srcFile + "\",\"" +
-					id + "\", el.checked);" +
-					"'>";
-			str += "Always show the Tooltip below:";
-			str += "</a>";
-			str +="</input>";
+			//add title
+			if(id != "ALWAYS")
+			{
+				str += "<br><br>";
+				str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
+			}
+			
+			str += DesktopContent.tooltipConditionString(tip);
 			
 			str += "<br><br>";
-			str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
-			
-			str += tip.replace(/<INDENT>/g,
-					"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
-							"</div>");
-			
-			str += "<br><br>";
-			str += "<input checked type='checkbox' " +
-					"id='DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
-					id + "' " +
-					"onclick='" + 					
-					"DesktopContent.tooltipSetAlwaysShow(\"" + 
-					srcFunc + "\",\"" +
-					srcFile + "\",\"" +
-					id + "\", this.checked);" + "'>";
-			str += " ";
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"" +
-					"DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
-					id + "\");" +
-					"el.checked = !el.checked;" +
-					"DesktopContent.tooltipSetAlwaysShow(\"" + 
-					srcFunc + "\",\"" +
-					srcFile + "\",\"" +
-					id + "\", el.checked);" +
-					"'>";
-			str += "Always show the Tooltip above.";
-			str += "</a>";
-			str +="</input>";
+
+			//add checkbox
+			if(id != "ALWAYS")
+			{
+				str += "<input checked type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked);" + "'>";
+				str += " ";
+				str += "<a href='#' onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked);" +
+						"'>";
+				str += "Always show the Tooltip above.";
+				str += "</a>";
+				str +="</input>";
+			}
 					
 			Debug.log(str,Debug.TIP_PRIORITY);
 		}

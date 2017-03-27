@@ -116,6 +116,10 @@ Debug.log("This is an example for posterity that is not printed due to debug pri
 Debug._errBox = 0;
 Debug._errBoxId = "Debug-error-box";
 
+//=====================================================================================
+Debug.errorPopConditionString = function(str) {
+	return str.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+}
 
 //=====================================================================================
 //Show the error string err in the error popup on the window
@@ -236,12 +240,12 @@ Debug.errorPop = function(err,severity) {
 			"<label style='color:white;font-size:16px;'>" + 
 			d.toLocaleDateString() +
 			" " + tstr + ":</label><br>" +
-			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;");	
+			Debug.errorPopConditionString(err);	
 	else //normally put newest at top since likely highest priority
 		str = "<label style='color:white;font-size:16px;'>" + 
 			d.toLocaleDateString() +
 			" " + tstr + ":</label><br>" +
-			err.replace(/\n/g , "<br>").replace(/\t/g,"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;") + 
+			Debug.errorPopConditionString(err) + 
 			(wasAlreadyContent?"<br>...<br>":"") +
 			str;
 

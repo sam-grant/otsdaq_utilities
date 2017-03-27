@@ -760,13 +760,24 @@
 			if(!tableDescription || tableDescription == "")
 				tableDescription = "No description.";
 			str += "<br><br>";
-			str += "Table description (changes will be saved with the column info):<br>";
+			str += "Table Description (Changes will be saved with the column info.";
+			
+			str += " <a href='#' id='table-description-preview-link',Debug.INFO_PRIORITY);'>" +
+					"Preview</a>):";
+			
+			str += "<br>";
 			str += "<textarea id='table-description' rows='6' cols='60'>";			 
 			str += tableDescription;
 			str += "</textarea>";
 			
 			var el = document.getElementById("display");
-			el.innerHTML = str;		
+			el.innerHTML = str;	
+			el = document.getElementById("table-description-preview-link");
+			el.onclick = function(){
+				DesktopContent.tooltip("ALWAYS",
+						"<center>Preview of " + srcName + " Tooltip</center><br>" +
+						tableDescription);
+			}
 		}
 		
 
