@@ -646,18 +646,28 @@ try
 			cfgMgr->getActiveConfigurationGroups();
 
 
-	//determine the type configuration group
-	std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap =
-			cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-							ConfigurationGroupKey::getFullGroupString(
-									rootGroupName,
-									rootGroupKey));
-	const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
-			cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
+	//determine the type of configuration group
+	try
+	{
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap =
+				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+								ConfigurationGroupKey::getFullGroupString(
+										rootGroupName,
+										rootGroupKey));
+		const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
+				cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
 
-	consideredGroups[groupType] = std::pair<std::string, ConfigurationGroupKey>(
-			rootGroupName,rootGroupKey);
+		consideredGroups[groupType] = std::pair<std::string, ConfigurationGroupKey>(
+				rootGroupName,rootGroupKey);
+	}
+	catch(...)
+	{
+		//if actual group name was attempted re-throw
+		if(rootGroupName.size()) throw;
 
+		//else assume it was the intention to just consider the active groups
+		__MOUT__ << "Failed modifying considered groups due to empty group name. Assuming this was intentional." << std::endl;
+	}
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;

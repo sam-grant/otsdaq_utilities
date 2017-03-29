@@ -131,7 +131,7 @@
 			text-align: right;
 			vertical-align: top;
 		}
-		#tableDetails td, #tableDetails a, #tableDetails label {
+		#tableDetails td, #tableDetails a, #tableDetails label, #tableDetails div {
 			font-size: 14px;
 			text-align: left;
 			vertical-align: top;
@@ -206,7 +206,7 @@
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 	
-		var _currentConfigName, _currentGroupName;
+		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
 		var _editingCellEl, _editingCellElOldValue, _editingCellElOldTitle;
 		var _editingCellPos = [-1,-1];
@@ -368,7 +368,7 @@
 	
 			
 			
-			//saveConfigAsNewVersion(temporary, backLinkStr)
+			//saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings)
 			//saveConfigAsNewVersionHandler(req, backLinkStr)
 			//saveConfigGroupAsNewKey()	
 			//changeMemberVersionForConfigGroup(groupName, configName, newVersion)
@@ -1319,7 +1319,6 @@
 			}
 			
 			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-			_currentGroupName = groupName;
 			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
@@ -1621,6 +1620,8 @@
 
 			_tableViewBackLinkStr = backLinkStr;
 			
+			var showSaveButtons = false;
+			
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -1633,14 +1634,20 @@
 						"'Copy and Move' functionality.) " +
 						"\n\nPlease see the detailed Errors below:",Debug.HIGH_PRIORITY);
 
+				showSaveButtons = true; //allow user to try to save and have server fix
+				
 				//try to power through
 			}
 			
 			var warns = DesktopContent.getXMLValue(req,"TableWarnings");
 			if(warns)
+			{
 				Debug.log("There were warnings found when loading this table " +
 						"(you can treat them as informational):\n\n" +
 						warns,Debug.WARN_PRIORITY);
+				
+				showSaveButtons = true; //allow user to try to save and have server fix
+			}
 						
 			activateSystemConfigHandler(req); //display active config groups
 			
@@ -1715,6 +1722,9 @@
 			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
 
 			var str = "";			
+			
+			_associatedGroupName = "";
+			_associatedGroupKey = -1;
 
 			if(backLinkStr && backLinkStr != "")
 			{
@@ -1727,6 +1737,15 @@
 
 				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+				
+				var backLinkStrSplit = backLinkStr.split('"');
+				
+				if(backLinkStr.indexOf("setupTableViewMode") < 0 && 
+						backLinkStrSplit.length > 3)
+				{
+					_associatedGroupName = backLinkStrSplit[1].split('\\')[0];
+					_associatedGroupKey = backLinkStrSplit[3].split('\\')[0];
+				}
 			}
 			else backLinkStr = "";
 
@@ -1858,7 +1877,7 @@
 			str += "<label id='tableDescriptionText' style='display:none'>";
 			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
 					"hide</a><br>" +					
-					tableDescription.replace(/\n/g , "<br>") + 
+					Debug.errorPopConditionString(DesktopContent.tooltipConditionString(tableDescription)) + 
 					"</label>";			
 			str += "</td></tr>";	
 			
@@ -2003,6 +2022,8 @@
 				el.innerHTML = dispStr.substr(0,i) + str + 
 						dispStr.substr(i) + "<br>" + str;
 			}
+			else if(showSaveButtons)
+				versionHasChanged();
 			
 			if(_tableViewIsTransposed) //check if need to transpose view
 			{
@@ -6307,7 +6328,7 @@
 			//set position and size
 			var w = 380;
 			var h = 330;
-			var gh = 40;
+			var gh = 50;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
 			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
@@ -9210,10 +9231,12 @@
 			
 			//set position and size
 			var w = 500;
-			var h = 280;
+			var h = 410;
+			var gh = 50;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			//el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
 			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
@@ -9224,38 +9247,274 @@
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
-			str += "Please enter a comment describing this new version of <b>" + 
-					_currentConfigName + "</b>:<br>";
-			str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
-			var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
-			str += comment;
-			str += "</textarea>";
-			str += "</div>";
 			
-			//Note: 1/13/2017 - changed to always using cached comment 
-			//give option to use cached comment
-			//			if(_cachedTableComment != "") 			
-			//				str += "<a href='#' onclick='" + 
-			//					"var el = document.getElementById(" +
-			//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
-			//					"title='Load the cached comment associated with last persistent version " +
-			//					"of " + _currentConfigName + " that was viewed. " + 
-			//					"You will still have a chance to append to the comment.' " +
-			//					">Get cached table comment</a><br><br>"; 
+			//Mimicking popUpSaveTreeForm() (3/27/2017) RAR
+			{
+				str += "Saving will create a new persistent version for this table." + 
+						"<br><br>";
+				
+				str += "Please enter a comment describing this new version of <b>" + 
+						_currentConfigName + "</b>:<br>";
+				str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
+				var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
+				str += comment;
+				str += "</textarea>";
+				str += "</div>";
+
+				//Note: 1/13/2017 - changed to always using cached comment 
+				//give option to use cached comment
+				//			if(_cachedTableComment != "") 			
+				//				str += "<a href='#' onclick='" + 
+				//					"var el = document.getElementById(" +
+				//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
+				//					"title='Load the cached comment associated with last persistent version " +
+				//					"of " + _currentConfigName + " that was viewed. " + 
+				//					"You will still have a chance to append to the comment.' " +
+				//					">Get cached table comment</a><br><br>"; 
+
+				//				str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' " +
+				//						"value='Save Changes as New Version' title='" +
+				//						"Save the current table view as new persitent version." +
+				//						"'/>";
+
+
+				
+				//put -1 to gaurantee recognizing as a change
+				var modifiedTables = _currentConfigName + ",-1"; //csv table, temporay version,...
+				Debug.log("modifiedTables= " + modifiedTables);
+				//get affected groups
+				//	and save member map to hidden div for Save action
+				///////////////////////////////////////////////////////////
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAffectedActiveGroups" +	
+						"&groupName=" + _associatedGroupName + 
+						"&groupKey=" + _associatedGroupKey,
+						"&modifiedTables=" + modifiedTables,
+						function(req) 
+						{
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{					
+						Debug.log(err,Debug.HIGH_PRIORITY);
+						el.innerHTML = str;
+						return;
+					}
+
+					//for each affected group
+					//	 put csv: name,key,memberName,memberVersion...
+					var groups = req.responseXML.getElementsByTagName("AffectedActiveGroup");				
+					var memberNames, memberVersions;
+					modTblStr = ""; //re-use
+					for(var i=0;i<groups.length;++i)
+					{
+						str += "<div style='display:none' class='popUpDialog-affectedGroups' >";
+						str += DesktopContent.getXMLValue(groups[i],"GroupName");
+						str += "," + DesktopContent.getXMLValue(groups[i],"GroupKey");
+
+						memberNames = groups[i].getElementsByTagName("MemberName");
+						memberVersions = groups[i].getElementsByTagName("MemberVersion");
+						Debug.log("memberNames.length " + memberNames.length);
+						for(var j=0;j<memberNames.length;++j)
+							str += "," + DesktopContent.getXMLValue(memberNames[j]) + 
+							"," + DesktopContent.getXMLValue(memberVersions[j]);
+						str += "</div>"; //close div popUpDialog-affectedGroups
+
+
+						if(modTblStr.length)
+							modTblStr += ",";
+						modTblStr += DesktopContent.getXMLValue(groups[i],"GroupName");
+					}
+
+					str += "<br>...and choose the options you want; then click 'Save Table':" +
+							"<br>";
+
+					//add checkbox to save affected groups
+					str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
+							"onclick='handleEditTreeCheckboxToggle(" + h + "," + gh + ");'>";
+					//add link so text toggles checkbox
+					str += "<a href='#' onclick='javascript:" +
+							"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
+							"var forFirefox = (el.checked = !el.checked);" +
+							" handleEditTreeCheckboxToggle(" + h + "," + gh + "); return false;'>";
+					str += "Save Affected Groups as New Keys";
+					str += "</a>";
+					str +=	"</input><br>";
+
+					//add checkbox to activate saved affected groups
+					str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
+							">";
+					//add link so text toggles checkbox
+					str += "<a href='#' onclick='javascript:" +
+							"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
+							"if(el.disabled) return false; " +
+							"var forFirefox = (el.checked = !el.checked);" +
+							"return false;'>";
+					str += "Also Activate New Groups";
+					str += "</a>";
+					str +=	"</input><br>";
+
+					str += "Here is the list of affected groups (count=" + groups.length + 
+							"):" +					
+							"<br>";
+
+					//display affected groups
+					str += "<div style='white-space:nowrap; width:" + w + "px; height:40px; " + 
+							"overflow:auto; font-weight: bold;'>";
+					str += modTblStr;
+					str += "</div>";	
+
+					str += "<div id='popUpDialog-groupAliasArea' ><center>";
+
+					//get existing group aliases	
+					///////////////////////////////////////////////////////////
+					DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" +	
+							"",
+							"",
+							function(req) 
+							{
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{					
+							Debug.log(err,Debug.HIGH_PRIORITY);
+							el.innerHTML = str;
+							return;
+						}
+
+						var aliases = req.responseXML.getElementsByTagName("GroupAlias");
+						var aliasGroupNames = req.responseXML.getElementsByTagName("GroupName");
+						var aliasGroupKeys = req.responseXML.getElementsByTagName("GroupKey");
+
+						//for each affected group
+						//	-Show checkbox for setting alias and dropdown for alias
+						//	and a pencil to change dropdown to text box to free-form alias.
+						//	-Also, identify if already aliased and choose that as default option
+						//	in dropwdown.					
+						var alias, aliasGroupName, aliasGroupKey;
+						var groupName, groupKey;					
+						var groupOptionIndex = []; //keep distance and index of option for each group, or -1 if none
+						for(var i=0;i<groups.length;++i)
+						{				
+							groupOptionIndex.push([-1,0]); //index and distance
+
+							groupName = DesktopContent.getXMLValue(groups[i],"GroupName");
+							groupKey = DesktopContent.getXMLValue(groups[i],"GroupKey");
+
+							//find alias
+							modTblStr = ""; //re-use
+							for(var j=0;j<aliasGroupNames.length;++j)
+							{
+								alias = DesktopContent.getXMLValue(aliases[j]);
+								aliasGroupName = DesktopContent.getXMLValue(aliasGroupNames[j]);
+								aliasGroupKey = DesktopContent.getXMLValue(aliasGroupKeys[j]);	
+
+								//Debug.log("compare " + aliasGroupName + ":" +
+								//		aliasGroupKey);
+
+								//also build drop down
+								modTblStr += "<option value='" + alias + "' ";
+
+								//consider any alias with same groupName
+								if(aliasGroupName == groupName)
+								{
+									if(groupOptionIndex[i][0] == -1 ||	//take best match
+											groupKey - aliasGroupKey < groupOptionIndex[i][1])
+									{
+										Debug.log("found alias");
+										groupOptionIndex[i][0] = j; //index
+										groupOptionIndex[i][1] = groupKey - aliasGroupKey; //distance
+									}
+								}
+								modTblStr += ">";
+								modTblStr += alias;	//can display however
+								modTblStr += "</option>";
+							}
+
+							str += "<input type='checkbox' class='popUpDialog-setGroupAlias' " +
+									(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
+									">";
+							//add link so text toggles checkbox
+							str += "<a href='#' onclick='javascript:" +
+									"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
+									"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
+									" return false;'>";
+							str += "Set '<b style='font-size:16px'>" + groupName + "</b>' to System Alias:";
+							str += "</a><br>";
+
+							str += "<table cellpadding='0' cellspacing='0' border='0'><tr><td>";
+							str += "<select " +
+									"id='popUpDialog-editAliasSelect-" + (i) + "' " +
+									"style='margin:2px; height:" + (25) + "px'>";						
+							str += modTblStr;
+							str += "</select>";						
+
+							str += "<input type='text' " +
+									"id='popUpDialog-editAliasTextBox-" + (i) + "' " +
+									"style='display:none; margin:2px; width:150px; height:" + 
+									(19) + "px'>";						
+							str += "";
+							str += "</input>";	
+							str += "</td><td>";
+
+							str += "<div style='display:block' " + 
+									"class='treeNode-Value-editIcon' id='popUpDialog-editIcon-" +
+									(i) + "' " +
+									"onclick='handleEditTreeAliasEditToggle(" +							 
+									i + 
+									");' " +
+									"title='Toggle free-form system alias editing' " +
+									"></div>";
+
+							str += "</td></tr></table>";
+
+							str +=	"</input>";
+
+							//increase height each time a group check is added
+							h += gh;
+							el.style.height = h + "px";						
+						}
+
+						str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
+
+
+						// done with system alias handling
+						// continue with pop-up prompt
+
+						str += "</div><br>"; //close main popup div
+
+						var onmouseupJS = "";
+						onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+						onmouseupJS += "saveConfigAsNewVersion(0);";					
+
+						str += "<input id='popUpDialog-submitButton' type='button' onmouseup='" + 
+								onmouseupJS + "' " +
+								"value='Save Table' title='" +
+								"Save new version of the table\n" +
+								"(Optionally, save new active groups and assign system aliases)" +
+								"'/>";
+						el.innerHTML = str;
+
+						//handle default dropdown selections for group alias
+						for(var i=0;i<groups.length;++i)
+							if(groupOptionIndex[i][0] != -1) //have a default
+								document.getElementById("popUpDialog-editAliasSelect-" + 
+										i).selectedIndex = groupOptionIndex[i][0];
+						
+						//select comment text
+						setCaretPosition(document.getElementById("popUpDialog-comment"),
+								0,comment.length);
+
+							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					); //end of getGroupAliases handler
+
+						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				); //end of getActiveConfigGroups handler			
+
+			}			
 			
-			str += "<input type='button' onmouseup='saveConfigAsNewVersion(0)' " +
-					"value='Save Changes as New Version' title='" +
-					"Save the current table view as new persitent version." +
-					"'/>";
-			el.innerHTML = str;
-			
-			
-			document.getElementById("display").appendChild(el); //add element to display div
+			//add element to activeConfig div
+			//	because saving/loading table resets the display!
+			//	(actually could be more 'proper' than appending to display)
+			document.getElementById("activeConfig").appendChild(el); 
 			el.style.display = "block";
-			
-			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-comment"),
-					0,comment.length);
 		}
 		
 		//popUpGroupAliasForm
@@ -9751,24 +10010,28 @@
 			link.parentNode.removeChild(link);
 		}
 		
+		
 		//saveConfigAsNewVersion ~~
-		function saveConfigAsNewVersion(temporary, backLinkStr) 
+		//	ignoreWarnings = true will ignore warnings when saving groups
+		//
+		//	mimicking saveModifiedTree(ignoreWarnings) for group saving aspects
+		function saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings) 
 		{	
 			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI saveConfigAsNewVersion temporary=" + temporary);
-			
+
 			var el = document.getElementById("popUpDialog-comment");
 			var comment;
 			if(el)
 				comment = encodeURIComponent(el.value);
 			else
 				comment = "This is a temporary table.";
-			
+
 			//create data string from html table
 			var dataStr = ""; // semi-colon(;) separated rows.. comma(,) separated entries within row
 			el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");				
-			
+
 			var cells;
 
 			if(_tableViewIsTransposed)
@@ -9776,7 +10039,7 @@
 				var numOfCols = rows.length - _CONFIG_DATA_COL_OFFSET;
 				var numOfRows = rows[0].getElementsByTagName("td").length + 1 - 
 						_CONFIG_DATA_ROW_OFFSET; //assume one TH cell
-				
+
 				//have to locate each cell individually
 				for(var r=0;r<numOfRows;++r)
 				{
@@ -9795,13 +10058,358 @@
 				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 				{
 					cells = rows[r].getElementsByTagName("td");
-	
+
 					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 						dataStr += encodeURIComponent(cells[c].textContent.trim()) + ","; //replaces all special characters					
 					dataStr += ";";
 				}
 			}
+
+			if(temporary)
+			{
+				var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+						"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
+						"&configName=" + _currentConfigName + "&version="+_version +
+						"&temporary="+(temporary?1:0) +
+						"&tableComment=" + comment; 
+				Debug.log(dataStr);
+				Debug.log(reqStr);
+				DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, 
+						saveConfigAsNewVersionHandler, backLinkStr,
+						0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+				);
+				return; //done handling temporary version save
+			}
 			
+			//saving persistent version
+
+			//Note: all information comes from popup dialog
+			//	any return must also kill the popup
+
+			//for each modified table
+			//	save new version
+			//	update tree member table version based on result
+			//if saving groups
+			//	for each affected group
+			//		save member list but with tree table versions
+			//		modify root group name if changed
+			//if saving aliases
+			//	for each alias
+			//		set alias for new group
+
+			Debug.log("saveConfigAsNewVersion " + (ignoreWarnings?1:0));
+			var numberOfRequests = 0;
+			var numberOfReturns = 0;
+			var allRequestsSent = false;		
+
+			//localHandleAffectedGroups ~~
+			//	savedVersion is the new version of this table
+			//	use it to updage member map of affected groups
+			function localHandleAffectedGroups(savedVersion)
+			{
+				Debug.log("Done with table saving.");
+
+				//check if saving groups
+				var savingGroups = 
+						document.getElementById("popUpDialog-bumpGroupVersions").checked;
+				var activatingSavedGroups = 
+						document.getElementById("popUpDialog-activateBumpedGroupVersions").checked;
+
+				if(!savingGroups) //then no need to proceed. exit!
+				{
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);	
+					return;
+				}
+
+				Debug.log("On to saving groups");
+
+				numberOfRequests = 0;		//re-use
+				numberOfReturns = 0;		//re-use
+				allRequestsSent = false; 	//re-use
+
+				var affectedGroupNames = []; //to be populated for use by alias setting
+				var affectedGroupKeys = []; //to be populated for use by alias setting
+				var affectedGroupEls = 
+						document.getElementsByClassName("popUpDialog-affectedGroups");
+				//	for each affected group
+				for(var i=0;i<affectedGroupEls.length;++i)
+				{
+					//save member list but with tree table versions
+					Debug.log(affectedGroupEls[i].textContent);
+
+					var affectedArr = affectedGroupEls[i].textContent.split(','); 
+
+					//build member config map
+					var configMap = "configList=";
+					//member map starts after group name/key (i.e. [2])
+					for(var a=2;a<affectedArr.length;a+=2)								
+						if((affectedArr[a+1]|0) == -1) //replace version with new saved version
+						{
+							Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+							
+							configMap += affectedArr[a] + "," + 
+									savedVersion + ",";							
+						}
+						else //use existing version
+							configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+
+					affectedGroupNames.push(affectedArr[0]);		
+					reqStr = ""; //reuse
+					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+							"&groupName=" + affectedArr[0] +
+							"&allowDuplicates=1" +
+							"&ignoreWarnings=" + (ignoreWarnings?1:0);										
+					Debug.log(reqStr);
+					Debug.log(configMap);
+
+					++numberOfRequests;
+					///////////////////////////////////////////////////////////
+					DesktopContent.XMLHttpRequest(reqStr, configMap, 
+							function(req,treeMemberIndex) 
+							{
+
+						var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+						if(treeErr) 
+						{	
+							Debug.log(treeErr,Debug.HIGH_PRIORITY);
+							Debug.log("There were problems identified in the tree view of the " +
+									"attempted new group '" +
+									attemptedNewGroupName +
+									"'.\nThe new group was not created.\n" +
+									"(Note: Other tables and groups may have been successfully created, " +
+									"and would have success indications below this error info)\n\n" +
+									"You can save the group anyway (if you think it is a good idea) by clicking " +
+									"the button in the pop-up dialog " +
+									"'<u>Save Groups with Warnings Ignored</u>.' " +
+									"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+									"Below you will find the description of the problem:",																		
+									Debug.HIGH_PRIORITY);
+
+							//change dialog save button
+							var el = document.getElementById("popUpDialog-submitButton");
+							el.onmouseup = function() {
+								document.getElementById("popUpDialog-submitButton").disabled = true;
+								saveModifiedTree(1);								
+							};
+							el.value = "Save Groups with Warnings Ignored";
+							el.disabled = false;
+							return;
+						}
+
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{					
+							Debug.log(err,Debug.HIGH_PRIORITY);
+
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);	
+							return;
+						}			
+
+						++numberOfReturns;
+
+						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+						affectedGroupKeys.push(newGroupKey);
+
+						//need to modify root group name if changed
+						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
+						//activate if option was selected
+						if(activatingSavedGroups)
+							activateSystemConfig(attemptedNewGroupName,newGroupKey);
+
+
+						if(allRequestsSent && 
+								numberOfReturns == numberOfRequests)
+						{
+							Debug.log("Done with group saving.");
+
+							Debug.log("Moving on to Alias creation...");										
+
+							//check each alias checkbox
+							//	for each alias that is checked
+							//		set alias for new group
+							//if any aliases modified, save and activate backbone
+
+							//get checkboxes
+							var setAliasCheckboxes = 
+									document.getElementsByClassName("popUpDialog-setGroupAlias");
+
+							var groupAlias, groupName, groupKey;
+							var setAliasCheckboxIndex = 0;
+							var groupAliasName, groupAliasVersion;
+
+							//in order to set alias, we need:
+							//	groupAlias
+							//	groupName
+							//	groupKey				
+
+							//for each set alias checkbox that is checked
+							//	modify the active group alias table one after the other
+
+							//localNextAliasHandler
+							//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
+							//	and send the next request to modify the activegroupAlias table
+							//	sequentially
+							function localNextAliasHandler(req) 
+							{
+								//first time there is no req
+								if(req)
+								{
+									var err = DesktopContent.getXMLValue(req,"Error");
+									if(err) 
+									{
+										Debug.log(err,Debug.HIGH_PRIORITY);
+										Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);	
+										return;
+									}	
+
+									groupAliasName = DesktopContent.getXMLValue(req,"savedName");
+									groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+
+									Debug.log("Successfully added the system alias '" + groupAlias + 
+											"' reference to group '" + groupName + " (" + groupKey + ")' " + 
+											" in table '" + groupAliasName + "-v" + groupAliasVersion +
+											"'.",
+											Debug.INFO_PRIORITY);
+									++setAliasCheckboxIndex; //req back, so ready for next index
+								}
+
+								//get next affected group index			
+								while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
+										!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+									Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+
+								if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
+								{
+									Debug.log("Done with alias checkboxes ");
+
+									if(!req) 
+									{
+										Debug.log("Backbone was not modified, so no need to save.");
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);
+										treeHasChanged(true); // reset
+										return;
+									}
+									Debug.log("Saving and activating modified Backbone");
+
+
+									Debug.log("groupAliasName=" + groupAliasName);
+									Debug.log("groupAliasVersion=" + groupAliasVersion);
+									var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+									var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+									//make a new backbone with old versions of everything except Group Alias 
+									var configMap = "configList=";
+									var name;
+									for(var i=0;i<configNames.length;++i)
+									{		
+										name = configNames[i].getAttribute("value");
+
+										if(name == groupAliasName)
+										{
+											configMap += name + "," + 
+													groupAliasVersion + ",";
+											continue;
+										}
+										//else use old member
+										configMap += name + "," + 
+												configVersions[i].getAttribute("value") + ",";							
+									}
+									Debug.log(configMap);
+
+									saveGroupAndActivate("TableEditWizBackone",configMap,
+											function(retParams)
+											{
+										Debug.log("Save and activate is done.");
+
+										if(retParams)
+										{							
+											Debug.log("Successfully modified the active Backbone group.\n" +
+													"Backbone group '" + retParams.groupName + " (" + 
+													retParams.groupKey + ")' was created and activated.",
+													Debug.INFO_PRIORITY);							
+										}
+
+										//kill popup dialog
+										var el = document.getElementById("popUpDialog"); 
+										if(el) el.parentNode.removeChild(el);	
+										treeHasChanged(true); // reset
+										return;
+											},	//end of done handler for saveGroupAndActivate
+											true //request return parameters
+									);
+									return;
+								}	
+
+								//get next alias
+								{
+									var el = document.getElementById("popUpDialog-editAliasSelect-" +
+											setAliasCheckboxIndex);
+									if(el.style.display == "none")
+									{
+										//get value from text box
+										el = document.getElementById("popUpDialog-editAliasTextBox-" + 
+												setAliasCheckboxIndex);					
+									}
+									groupAlias = el.value;
+								}
+
+								groupName = affectedGroupNames[setAliasCheckboxIndex];
+								groupKey = affectedGroupKeys[setAliasCheckboxIndex];
+
+								Debug.log("groupAlias = " + groupAlias);
+								Debug.log("groupName = " + groupName);
+								Debug.log("groupKey = " + groupKey);
+
+								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+										"&groupAlias=" + groupAlias + 
+										"&groupName=" + groupName +
+										"&groupKey=" + groupKey, "",
+										localNextAliasHandler,
+										0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+								);
+							}
+
+							localNextAliasHandler();
+
+							Debug.log("Aliases set in motion");
+
+							return;
+						}
+
+							},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					); //end save new group request								
+				} //end affected group for loop
+
+				allRequestsSent = true;
+				if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
+				{
+					Debug.log("There was nothing to do! How could this happen?", Debug.INFO_PRIORITY);
+
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);
+					treeHasChanged(true); // reset
+				}
+			}	//end localHandleAffectedGroups
+
+
+			///////////
+			//save the new table version
+						
 			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
 					"&configName=" + _currentConfigName + "&version="+_version +
@@ -9809,11 +10417,40 @@
 					"&tableComment=" + comment; 
 			Debug.log(dataStr);
 			Debug.log(reqStr);
+			
 			DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, 
-					saveConfigAsNewVersionHandler, backLinkStr,
+					function(req)
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);	
+					return;
+				}		
+				
+				var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
+				Debug.log("New persistent version '" + savedVersion + "' for table '" +
+						_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
+				
+				//handle group handling based on popup options
+				localHandleAffectedGroups(savedVersion);
+				
+				//call normal handler to update main table display
+				saveConfigAsNewVersionHandler(req,backLinkStr);
+						
+				
+					},0, 		//parameter
 					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);
+			);
+			
+			//done with initial call..
+			//all further events happen after request for saving table returns
 		}
+		
 		
 		//saveConfigAsNewVersionHandler ~~
 		function saveConfigAsNewVersionHandler(req, backLinkStr) 
