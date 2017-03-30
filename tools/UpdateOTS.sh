@@ -45,6 +45,14 @@ for p in ${REPO_DIR[@]}; do
     fi	   
 done
 
+#handle manual updates that should take place
+echo 
+echo "Updating USER_DATA path $USER_DATA"
+echo "cp $OTSDAQ_DIR/tools/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
+cp $OTSDAQ_DIR/tools/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
+
+echo "cp $OTSDAQ_DIR/tutorial_data/NoGitData_tutorial_first_demo_v2/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
+cp $OTSDAQ_DIR/tutorial_data/NoGitData_tutorial_first_demo_v2/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 
 echo
 echo "=================="

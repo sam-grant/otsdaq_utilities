@@ -879,7 +879,32 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", el.checked);" +
 						"'>";
-				str += "Always show the Tooltip below:";
+				str += "Always show the Tooltip below, or...";
+				str += "</a>";
+				str +="</input>";
+				
+				//snooze button
+				str += "<br>"
+				str += "<input type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-hour-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked,1);" + "'>";
+				str += " ";
+				str += "<a href='#' onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-hour-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked,1);" +
+						"'>";
+				str += "Silence this Tooltip for an hour:";
 				str += "</a>";
 				str +="</input>";
 			}
@@ -931,16 +956,21 @@ DesktopContent.tooltip = function(id,tip) {
 //=====================================================================================
 //tooltipSetNeverShow ~~
 //	set value of never show for target tip to 1/0 based on alwaysShow
-DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow) {
+DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,temporarySilence) {
 	Debug.log("alwaysShow = " + alwaysShow);
+	if(temporarySilence)
+		alwaysShow = 1; //force temporary to have priority
 	DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=setNeverShow" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id + 
-			"&doNeverShow=" + (alwaysShow?0:1)
+			"&doNeverShow=" + (alwaysShow?0:1) + 
+			"&temporarySilence=" + (temporarySilence?1:0) 
 			,""
 			,0,0,0,0,true,true); //show loading, and target supervisor
+	
+	if(temporarySilence) return;
 	
 	//make sure all checkboxes mirror choice
 	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-below-" +

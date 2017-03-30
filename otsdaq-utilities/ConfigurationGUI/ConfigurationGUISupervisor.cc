@@ -1762,7 +1762,9 @@ try
 	DOMElement* parentEl;
 
 	std::string accumulatedErrors = "";
-	std::map<std::string, ConfigurationInfo> allCfgInfo = //if allowIllegalColumns, then also refresh
+
+	std::map<std::string, ConfigurationInfo> allCfgInfo;
+	allCfgInfo = //if allowIllegalColumns, then also refresh
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
 					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
 
@@ -1868,8 +1870,20 @@ try
 	}
 
 	//verify mockup columns after columns are posted to xmldoc
-	if(version.isInvalid())
-		cfgViewPtr->init();
+	try
+	{
+		if(version.isInvalid())
+			cfgViewPtr->init();
+	}
+	catch(std::runtime_error &e)
+	{
+		//append accumulated errors, because they may be most useful
+		throw std::runtime_error(e.what() + std::string("\n\n") + accumulatedErrors);
+	}
+	catch(...)
+	{
+		throw;
+	}
 
 	parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
 

@@ -192,7 +192,8 @@ throw (xgi::exception::Exception)
 				CgiDataUtilities::getData(cgi, "srcFile"),
 				CgiDataUtilities::getData(cgi, "srcFunc"),
 				CgiDataUtilities::getData(cgi, "srcId"),
-				CgiDataUtilities::getData(cgi, "doNeverShow") == "1"?true:false);
+				CgiDataUtilities::getData(cgi, "doNeverShow") == "1"?true:false,
+				CgiDataUtilities::getData(cgi, "temporarySilence") == "1"?true:false);
 
 	}
 	else
