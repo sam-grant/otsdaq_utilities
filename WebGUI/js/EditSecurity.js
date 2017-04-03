@@ -82,7 +82,7 @@ function colorFade(secondColor, which){
 		}
 	}    
 	
-	console.log(selectedRed, selectedGreen, selectedBlue, nonSelectedRed, nonSelectedGreen, nonSelectedBlue);
+	//console.log(selectedRed, selectedGreen, selectedBlue, nonSelectedRed, nonSelectedGreen, nonSelectedBlue);
 	
 	var colorChanger=setTimeout(decreaseColor, INTERVAL_);
 

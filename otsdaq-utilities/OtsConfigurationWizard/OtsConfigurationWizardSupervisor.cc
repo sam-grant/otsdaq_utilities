@@ -292,18 +292,22 @@ throw (xgi::exception::Exception)
 	//SECURITY CHECK END ****
 
 
-	//an icon is 6 fields.. give comma-separated
-	//0 - alt = text below icon
-	//1 - subtext = text for icon if no image
+	//an icon is 7 fields.. give comma-separated
+	//0 - subtext = text below icon
+	//1 - altText = text for icon if image set to 0
 	//2 - uniqueWin = if true, only one window is allowed, else multiple instances of window
 	//3 - permissions = security level needed to see icon
 	//4 - picfn = icon image filename, 0 for no image
 	//5 - linkurl = url of the window to open
+	//6 - folderPath = folder and subfolder location
 
-	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html" <<
-			",Edit User Data,USER,1,1,icon-Chat.png,/WebPath/html/EditUserData.html" <<
-			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/" <<
-			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?tableEditor=1" <<
+	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html,/" <<
+			",Edit User Data,USER,1,1,icon-Chat.png,/WebPath/html/EditUserData.html,/" <<
+			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/" <<
+			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?tableEditor=1,/" <<
+			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,myFolder" <<
+			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/myFolder/mySub.folder" <<
+			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,myFolder/" <<
 			//",Console,C,1,1,icon-Console.png,/urn:xdaq-application:lid=261/" <<
 			//",DB Utilities,DB,1,1,0,http://127.0.0.1:8080/db/client.html" <<
 			"";

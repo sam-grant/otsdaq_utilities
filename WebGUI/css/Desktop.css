@@ -172,7 +172,7 @@
 		transform: 			translateY(.1em);
 	}
 	
-	#Desktop .DesktopIcons-iconDiv {
+	#Desktop .DesktopIcons-iconDiv, #Desktop .DesktopIcons-folderDiv {
 		border: 1px solid grey;
 		border-radius: 6px;    
 		box-shadow: inset rgba(255,255,255,0.6) 0 0.3em .3em;
@@ -190,6 +190,14 @@
 	#Desktop .DesktopIcons-iconLink {
 		cursor: pointer;
 	}
+	
+	/* for mouse over highlighting */
+	#Desktop .DesktopIcons-folderDiv .myOption:hover {
+		background-color : rgb(213, 227, 245);
+	}    
+	/*#Desktop .DesktopIcons-folderDiv .optionhighlighted:hover {
+		background-color : rgb(11, 66, 138);
+	}*/
 	
 	.DesktopDashboard-user-logout {		
 		cursor: pointer;	

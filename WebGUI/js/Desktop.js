@@ -950,6 +950,7 @@ Desktop.handleWindowMouseUp = function(mouseEvent) {
 		
 		//Debug.log("Mouse was released! which=" + mouseEvent.which);
 	}
+	Desktop.desktop.icons.closeFolder();
 	return false;
 }
 
@@ -1161,7 +1162,7 @@ Desktop.handleWindowManipulation = function(delta) {
 }
 
 Desktop.handleWindowButtonDown = function(mouseEvent) {
-	mouseEvent.cancelBubble=true; //do nothing but eat event away from window so window doesn't move
+	mouseEvent.cancelBubble=true; //do nothing but eat event away from window so window doesn't move	
 	return false;
 }
 

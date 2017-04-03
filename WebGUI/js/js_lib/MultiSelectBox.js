@@ -207,10 +207,10 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
-//		keys, types, handler, noMultiSelect 
+//		keys, types, handler, noMultiSelect, mouseOverHandler, iconURLs 
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler)
+		handler,noMultiSelect,mouseOverHandler,iconURLs)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -229,11 +229,13 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
 	var msH = el.offsetHeight - 40 - 2; 
 	
+	if(msH > 200 && msW < 70) msW = 200; //provide a minimum width for looks (to avoid long and skinny)
 	
 	el = document.createElement("div"); //create element within element
 	MultiSelectBox.omnis_[name].appendChild(el);
 
 	var str = "";
+	
 	if(title)
 	{
 		str += "<div id='" + name + "header' " +
@@ -246,6 +248,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	if(!types) types = vals;
 	
 	//make selbox
+	str += "<table cellpadding='0' cellspacing='0'>";
+	str += "<tr><td>";
 	str += "<div class='mySelect' unselectable='on' id='" + 
 			name + "' style='float:left;" + 
 			"width: " + (msW) + "px;" + 
@@ -274,16 +278,22 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
+		if(iconURLs) //add image if available
+			str += "<img style='width:32px; height:32px; margin: 0px 5px -10px 0;' " +
+			"src='" + 
+			iconURLs[i] + "' />";
+		
 		str += vals[i];
 		str += "</div>";
 	}       	
 	str += "</div>"; 
 	//close selbox
 	
+	str += "</td><td valign='top'>";
 	//append search bar
 	str += MultiSelectBox.makeSearchBar(name);
-	
-    el.innerHTML = str;
+	str += "</td></table>";
+    el.innerHTML = str;    
 }
 
 //for initializing the highlights if selects are made "manually" (without clicking)
@@ -408,7 +418,7 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 		//MultiSelectBox.dbg("opt: " + opt);
 		
 		if (option.tagName == 'INPUT') { continue; }
-		var text = option.innerHTML;
+		var html = option.innerHTML;
 		
 		//MultiSelectBox.dbg("tagName: " + option.tagName);
 		
@@ -416,19 +426,24 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 		if (MultiSelectBox.hasClass(option,"hidden"))
 			MultiSelectBox.removeClass(option,"hidden");
 		else
-			option.innerHTML = text = text.replace("<b><u>","").replace("</u></b>","");
+			option.innerHTML = html = html.replace("<b><u>","").replace("</u></b>","");
 	
+		if(searchstr == "") continue; //show all if no search str
 		
-		var index=text.search(re);
-		var len=(text.match(re) || [[]])[0].length; //returns the matched string within an array or null (when null take [[]]), so we want length of element 0
+		var text = option.textContent; //search only the text (assume that is val
+		var endOfImgIndex = html.indexOf(">");
+		var index = text.search(re);
+		var matchedText = (text.match(re) || [[]])[0]; //returns the matched string within an array or null (when null take [[]])
+		var len = matchedText.length; // so we want length of element 0
 		//MultiSelectBox.dbg(text+' '+index);
+		index = html.indexOf(matchedText,endOfImgIndex);	//try to find in html text 
 		
-		if(index == -1)		//if searchstr not in option innerHTML
+		if(!len) 		//if searchstr not in option innerHTML
 			MultiSelectBox.addClass(option,"hidden");		
-		else if(len)		//make searched string bold
-			option.innerHTML = text.slice(0,index) + "<b><u>" + 
-				text.slice(index,index+len) + 
-				"</u></b>" + text.slice(index+len);
+		else if(index != -1)		//make searched string bold (if possible - must be contiguous)
+			option.innerHTML = html.slice(0,index) + "<b><u>" + 
+				html.slice(index,index+len) + 
+				"</u></b>" + html.slice(index+len);
 	}
 }
 

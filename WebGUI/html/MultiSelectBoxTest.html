@@ -102,7 +102,7 @@
             var selArr = MultiSelectBox.getSelectionArray(el);
             if(selArr[i])
             	MultiSelectBox.dbg("box 1 Chosen element index:",i,            		
-            		" value:",el.innerHTML,
+            		" value:",el.textContent,
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in selArr)
@@ -117,7 +117,7 @@
             var selArr = MultiSelectBox.getSelectionArray(el);
             if(selArr[i])
             	MultiSelectBox.dbg("box 2 Chosen element index:",i,            		
-            		" value:",el.innerHTML,
+            		" value:",el.textContent,
             		" key:",el.getAttribute("key-value"),
             		" type:",el.getAttribute("type-value"));
             for(var s in selArr)
@@ -128,10 +128,15 @@
     
     <style>
       
-        .evenMember:hover, .oddMember:hover, .inactiveMember:hover 
+    	/* for mouse over highlighting */
+		#box1Div .myOption:hover 
 		{
-            background-color : rgba(81, 203, 238, 1);
-        }
+            background-color : rgb(213, 227, 245);
+		}    
+		#box1Div .optionhighlighted:hover
+		{
+			background-color : rgb(11, 66, 138);
+		}
     	
 		#box1Div
     	{
