@@ -254,7 +254,10 @@
             	//setAlarm(start)
 				//displayError(err)
 				//closeErrorBox()
+            	//
+            	//alternateDrawCurrentStateAndTransitions
             
+            var _altStateDrawingMode = false;
 			            
 			var _states, _stateNames, _transitions, _transitionNames, 
                 _transitionParameters, _transitionParameterValues, _transitionActions;
@@ -1067,7 +1070,68 @@
             }
             
             function alternateDrawCurrentStateAndTransitions() {
-            
+            	
+            	var x = _canvas.width/2;
+            	var y = _canvas.height/4;
+            	
+            	//get all of transitions for currState
+            	_currStateTransArr = new Array();
+            	var cnt = 0;
+            	for(var i=0;i<_transitions.length;++i)
+            		if(_transitions[i][0] == -1 ||
+            				(_transitions[i][0] == -2 && _transitions[i][0] != _currState) ||
+							_transitions[i][0] == _currState)
+            			_currStateTransArr[cnt++] = i;//_transitions[i][1];
+            	
+            	//draw previous state at top
+            	if(_prevState != -1) drawState(_prevState,_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
+
+            	
+                for(var s=0;s<_states.length;++s)
+                {
+                	x += 0;
+                	y += 50;
+                	
+                	drawState(s,x,y,true);
+                	
+                	var stateTransArr = new Array();
+                	var cnt = 0;
+                	for(var i=0;i<_transitions.length;++i)
+                		if(_transitions[i][0] == -1 ||
+                				(_transitions[i][0] == -2 && _transitions[i][0] != s) ||
+								_transitions[i][0] == s)
+                			stateTransArr[cnt++] = i;	//_transitions[i][1];
+                	
+                	var angleOff = Math.PI/stateTransArr.length;                
+                	var angle = angleOff/2 + _STATE_ANGLE_OFFSET;
+
+                	//draw each state around circle at radius                
+                	for(var i=0;i<stateTransArr.length;++i,angle += angleOff)
+                	{
+                		if(_transitions[stateTransArr[i]][1] == s) //special loop back transition case
+                		{
+                			drawSelfTransition(_transitions[stateTransArr[i]][1],
+                					_perimeterRadius * Math.cos(angle),
+									_perimeterRadius * Math.sin(angle));
+                			continue;
+                		}
+                		drawState(_transitions[stateTransArr[i]][1],
+                				x + _perimeterRadius * Math.cos(angle),
+								y + _perimeterRadius * Math.sin(angle));
+
+                		drawTransition(_transitions[stateTransArr[i]][1],
+                				_perimeterRadius * Math.cos(angle),
+								_perimeterRadius * Math.sin(angle),
+								x,y);
+                		Debug.log(angle);
+                	}
+                	
+                }
+            	//draw current state at center as "root" state
+            	
+
+            	
+            	
             }
 
 			//drawCurrentStateAndTransitions ~~
@@ -1075,8 +1139,11 @@
             //	previous state above and display valid transitions below
 			function drawCurrentStateAndTransitions() {
 				
-				alternateDrawCurrentStateAndTransitions();
-				//return;
+				if(_altStateDrawingMode)
+				{
+					alternateDrawCurrentStateAndTransitions();
+					return;
+				}
 				
                 //draw current state at center as "root" state
 				drawState(_currState,_canvas.width/2,_canvas.height/3, true);
@@ -1112,15 +1179,16 @@
                     
                     drawTransition(_transitions[_currStateTransArr[i]][1],
                                    _perimeterRadius * Math.cos(angle),
-                                   _perimeterRadius * Math.sin(angle));
+                                   _perimeterRadius * Math.sin(angle),
+								   _canvas.width/2,_canvas.height/3);
                 }
                 
 			}
 
 
 			//drawTransition
-			//	draws arrow for state transition towards x, y
-			function drawTransition(stateIndex, x, y) {
+			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
+			function drawTransition(stateIndex, x, y, startx, starty) {
 				var isSelected = _selectedTransition != -1 && stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
                 var mag = Math.sqrt(x*x+y*y);
                 var up = [x/mag,y/mag];
@@ -1132,14 +1200,14 @@
                 
 				_context.fillStyle = getTransitionDrawingColor(stateIndex);
                 _context.beginPath();
-                _context.moveTo(_canvas.width/2 + arrowOff*up[0] +
+                _context.moveTo(startx + arrowOff*up[0] +
                                 (_ARROW_PATH[0][0]*lt[0] + _ARROW_PATH[0][1]*up[0])*arrowSz,
-                                 _canvas.height/3 + arrowOff*up[1] +
+								starty + arrowOff*up[1] +
                                 (_ARROW_PATH[0][0]*lt[1] + _ARROW_PATH[0][1]*up[1])*arrowSz);
                 for(var i=0;i<_ARROW_PATH.length;++i)
-                    _context.lineTo(_canvas.width/2 + arrowOff*up[0] +
+                    _context.lineTo(startx + arrowOff*up[0] +
                                     (_ARROW_PATH[i][0]*lt[0] + _ARROW_PATH[i][1]*up[0])*arrowSz,
-                                 _canvas.height/3 + arrowOff*up[1] +
+									starty + arrowOff*up[1] +
                                     (_ARROW_PATH[i][0]*lt[1] + _ARROW_PATH[i][1]*up[1])*arrowSz);
                 _context.closePath();
                 _context.fill();
@@ -1161,8 +1229,8 @@
 					var rh = 40;
 					//background rectangle
 					_context.beginPath();
-					_context.rect(_canvas.width/2 + (arrowOff+arrowSz/2)*up[0] - rw/2, 
-							_canvas.height/3 + (arrowOff+arrowSz/2)*up[1] -rh/2-9, 
+					_context.rect(startx + (arrowOff+arrowSz/2)*up[0] - rw/2, 
+							starty + (arrowOff+arrowSz/2)*up[1] -rh/2-9, 
 							rw, rh);
 					_context.fillStyle = 'rgba(255,255,255,1)';
 					_context.fill();
@@ -1183,8 +1251,8 @@
 					_context.shadowOffsetX = 0;
 					_context.shadowOffsetY = 0;
                     _context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
-                    		_canvas.width/2 + (arrowOff+arrowSz/2)*up[0],
-                    		_canvas.height/3 + (arrowOff+arrowSz/2)*up[1]);
+                    		startx + (arrowOff+arrowSz/2)*up[0],
+							starty + (arrowOff+arrowSz/2)*up[1]);
 
 				}
                 
