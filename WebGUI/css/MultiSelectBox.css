@@ -20,6 +20,7 @@
     .multiselectbox .mySelect .myOption
     {
         padding:2px;
+        white-space: nowrap;
         cursor:pointer;
     }
     .multiselectbox .hidden

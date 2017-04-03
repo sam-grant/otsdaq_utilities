@@ -229,8 +229,6 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
 	var msH = el.offsetHeight - 40 - 2; 
 	
-	if(msH > 200 && msW < 70) msW = 200; //provide a minimum width for looks (to avoid long and skinny)
-	
 	el = document.createElement("div"); //create element within element
 	MultiSelectBox.omnis_[name].appendChild(el);
 
@@ -278,10 +276,15 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
-		if(iconURLs) //add image if available
-			str += "<img style='width:32px; height:32px; margin: 0px 5px -10px 0;' " +
-			"src='" + 
-			iconURLs[i] + "' />";
+		if(iconURLs && iconURLs[i]) //add image if available
+		{
+			if(iconURLs[i][0] != '=')
+				str += "<img style='width:32px; height:32px; margin: 0px 5px -8px 0;' " +
+					"src='" + 
+					iconURLs[i] + "' />";
+			else //alt text
+				str += iconURLs[i].substr(1) + " - ";
+		}
 		
 		str += vals[i];
 		str += "</div>";
@@ -294,6 +297,14 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	str += MultiSelectBox.makeSearchBar(name);
 	str += "</td></table>";
     el.innerHTML = str;    
+    
+    if(msH > 200)
+    {	//provide a minimum width for looks (to avoid long and skinny)
+    	var el = document.getElementById(name);
+    	if(el.offsetWidth < 200)
+    		el.style.width = 200 + "px"; 
+    }
+    	
 }
 
 //for initializing the highlights if selects are made "manually" (without clicking)

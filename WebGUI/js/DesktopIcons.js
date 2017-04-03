@@ -166,10 +166,10 @@ else {
 			//							"alt",
 			//							iconArray[j%4*7+5],
 			//							1,
-			//							iconArray[j%4*7+4],
+			//							"0",//iconArray[j%4*7+4],
 			//							folder);
 			//			}
-			//     		Desktop.desktop.icons.openFolder(100,100,"folder-0");
+			//			Desktop.desktop.icons.openFolder(100,100,"folder-0");
 			//			return;
 			
 			
@@ -290,7 +290,8 @@ else {
 			div.style.marginLeft = (_defaultIconTextWidth-_defaultIconWidth-2)/2 + "px"; //extra 2 for border
 			
 			//define icon content
-			if(picfn != "0" && picfn != "DEFAULT" && picfn != ""){ //if icon image			
+			if(picfn != "0" && picfn != "DEFAULT" && picfn != "")
+			{ //if icon image			
 				div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
 				
 				var div2 = document.createElement("div");
@@ -531,8 +532,16 @@ else {
       			vals.push(_openFolderPtr[1][i][0]);
       			types.push("icon");
       			keys.push(i);      
-      			imgURLs.push("/WebPath/images/iconImages/" + 
+      			
+      			if(_openFolderPtr[1][i][4] != "0" && 
+      					_openFolderPtr[1][i][4] != "DEFAULT" && 
+						_openFolderPtr[1][i][4] != "") //if icon image	
+      			{      						
+      				imgURLs.push("/WebPath/images/iconImages/" + 
       					_openFolderPtr[1][i][4]);
+      			}
+      			else
+      				imgURLs.push("=" + _openFolderPtr[1][i][1]);
       		}
       		
       		//make link title
