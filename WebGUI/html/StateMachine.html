@@ -1065,11 +1065,18 @@
 				_context.restore(); //matching save/restore 1
                 
             }
+            
+            function alternateDrawCurrentStateAndTransitions() {
+            
+            }
 
 			//drawCurrentStateAndTransitions ~~
 			//	called to draw current state, _currState, in middle
             //	previous state above and display valid transitions below
 			function drawCurrentStateAndTransitions() {
+				
+				alternateDrawCurrentStateAndTransitions();
+				//return;
 				
                 //draw current state at center as "root" state
 				drawState(_currState,_canvas.width/2,_canvas.height/3, true);

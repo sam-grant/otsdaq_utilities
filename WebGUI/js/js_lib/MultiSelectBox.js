@@ -207,10 +207,11 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
-//		keys, types, handler, noMultiSelect, mouseOverHandler, iconURLs 
+//		keys, types, handler, noMultiSelect, mouseOverHandler, 
+//		iconURLs, mouseDownHandler, mouseUpHandler
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler,iconURLs)
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -259,19 +260,33 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	{
 		str += "<div  class='myOption' " +
 			"id='" + name + "-option_" + i + "' " +
-			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
+			"onclick='MultiSelectBox.myOptionSelect(this, " + i + "," +
 			noMultiSelect + ", event); ";
 		if(handler && (typeof handler) == "string") //if handler supplied as string
-			str += handler + "(this);"; //user selection handler
+			str += handler + "(this,event);"; //user selection handler
 		else if(handler) //assume it is a function
-			str += handler.name + "(this);"; //user selection handler
+			str += handler.name + "(this,event);"; //user selection handler
 		str += "' ";
 		
-		str += "onmouseover = '";
+		str += "onmouseover='";
 		if(mouseOverHandler && (typeof mouseOverHandler) == "string") //if mouseOverHandler supplied as string
-			str += mouseOverHandler + "(this);"; //user selection mouseOverHandler
+			str += mouseOverHandler + "(this,event);"; //user selection mouseOverHandler
 		else if(mouseOverHandler) //assume it is a function
-			str += mouseOverHandler.name + "(this);"; //user selection mouseOverHandler
+			str += mouseOverHandler.name + "(this,event);"; //user selection mouseOverHandler
+		str += "' ";
+		
+		str += "onmousedown='";
+		if(mouseDownHandler && (typeof mouseDownHandler) == "string") //if mouseDownHandler supplied as string
+			str += mouseDownHandler + "(this,event);"; //user selection mouseDownHandler
+		else if(mouseDownHandler) //assume it is a function
+			str += mouseDownHandler.name + "(this,event);"; //user selection mouseDownHandler
+		str += "' ";
+		
+		str += "onmouseup='";
+		if(mouseUpHandler && (typeof mouseUpHandler) == "string") //if mouseUpHandler supplied as string
+			str += mouseUpHandler + "(this,event);"; //user selection mouseUpHandler
+		else if(mouseUpHandler) //assume it is a function
+			str += mouseUpHandler.name + "(this,event);"; //user selection mouseUpHandler
 		str += "' ";
 		
 		str += "key-value='" + keys[i] + "' type-value='" +

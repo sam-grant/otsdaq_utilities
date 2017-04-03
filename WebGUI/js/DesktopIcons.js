@@ -75,6 +75,7 @@ else {
 		//------------------------------------------------------------------
 		this.iconsElement;
 		this.folders = _folders;
+		this.deepClickTimer = _deepClickTimer;
 		
 		
 		
@@ -154,23 +155,23 @@ else {
      	    	//5 - linkurl = url of the window to open
 				//6 - folderPath = folder and subfolder location '/' separated
 			
-			//			//debugging
-			//			var depth = 10;
-			//			var breadth = 20;
-			//			var folder = "";
-			//			for(var i=0;i<depth;++i)
-			//			{
-			//				folder += "/folder-" +i;
-			//				for(var j=0;j<breadth;++j)
-			//					Desktop.desktop.icons.addIcon("title-"+i + "-"+j,
-			//							"alt",
-			//							iconArray[j%4*7+5],
-			//							1,
-			//							"0",//iconArray[j%4*7+4],
-			//							folder);
-			//			}
-			//			Desktop.desktop.icons.openFolder(100,100,"folder-0");
-			//			return;
+				//			//debugging
+				//			var depth = 10;
+				//			var breadth = 20;
+				//			var folder = "";
+				//			for(var i=0;i<depth;++i)
+				//			{
+				//				folder += "/folder-" +i;
+				//				for(var j=0;j<breadth;++j)
+				//					Desktop.desktop.icons.addIcon("title-"+i + "-"+j,
+				//							"alt",
+				//							iconArray[j%4*7+5],
+				//							1,
+				//							"0",//iconArray[j%4*7+4],
+				//							folder);
+				//			}
+				//			Desktop.desktop.icons.openFolder(100,100,"folder-0");
+				//			return;
 			
 			
       		var numberOfIconFields = 7;
@@ -342,59 +343,61 @@ else {
 			link.appendChild(div);				
 			iconContainer.appendChild(link); //add subtext to icon container
 
-			//add context click menu handlers
-			//	mouseup and contextMenu to stop default right-click behavior
-			//	and mousedown to start the menu (so "deep clicks" work)
-			iconContainer.addEventListener("mouseup", function(event) {
-				if(_deepClickTimer)
-				{
-					window.clearTimeout(_deepClickTimer);
-					_deepClickTimer = 0;
-				}
-			}); //end onmouseup event
-			
-			var deepClickHandler = function(event) {				
-				event.cancelBubble = true; //prevent default behavior 
-				event.preventDefault();
-				_deepClickTimer = window.setTimeout(function() {
-
-					Debug.log("Create Icon Menu");
-					var menuItems = [
-									 "Open and Maximize Window",
-									 "Open in New Browser Tab",
-									 "Open and Tile All Windows"
-									 ];
-					console.log(linkurl);
-					var menuItemHandlers = [
-											"Desktop.desktop.addWindow(\""+ subtext + "\",\"" + ""
-											+ "\",\"" + linkurl + "\","+uniqueWin+",2);", // 2 for maximize
-											"Desktop.openNewBrowserTab(\""+ subtext + "\",\"" + ""
-											+ "\",\"" + linkurl + "\","+uniqueWin+");", // 2 for maximize
-											"Desktop.desktop.addWindow(\""+ subtext + "\",\"" + ""
-											+ "\",\"" + linkurl + "\","+uniqueWin+",1);", // 1 for tile					 
-											];
-					Debug.log("createEditTableMenu()");
-					SimpleContextMenu.createMenu(
-							menuItems,
-							menuItemHandlers,
-							"DesktopIconContextMenu",		//element ID
-							event.pageX-1,event.pageY-1, 	//top left position
-							Desktop.desktop.dashboard.getDefaultDashboardColor(), 	//primary color
-							"white"				//secondary color
-					);
-					
-				},500); //end timeout handler
+			if(linkurl != "folder") //if not folder, add context click menu handlers
+			{
+				//add context click menu handlers
+				//	mouseup and contextMenu to stop default right-click behavior
+				//	and mousedown to start the menu (so "deep clicks" work)
+				iconContainer.addEventListener("mouseup", function(event) {
+					if(_deepClickTimer)
+					{
+						window.clearTimeout(_deepClickTimer);
+						_deepClickTimer = 0;
+					}
+				}); //end onmouseup event
 				
-			}; //end deepClickHandler event
-			
-			//FIXME ... debug touchstart on android to block browser context
-			//			iconContainer.addEventListener("touchstart", function(event) {	
-			//				event.preventDefault();
-			//				
-			//				deepClickHandler(event);
-			//				return false;
-			//			});
-			iconContainer.addEventListener("mousedown",	deepClickHandler); 
+				var deepClickHandler = function(event) {				
+					event.cancelBubble = true; //prevent default behavior 
+					event.preventDefault();
+					_deepClickTimer = window.setTimeout(function() {
+	
+						Debug.log("Create Icon Menu");
+						var menuItems = [
+										 "Open and Maximize Window",
+										 "Open in New Browser Tab",
+										 "Open and Tile All Windows"
+										 ];
+						var menuItemHandlers = [
+												"Desktop.desktop.addWindow(\""+ subtext + "\",\"" + ""
+												+ "\",\"" + linkurl + "\","+uniqueWin+",2);", // 2 for maximize
+												"Desktop.openNewBrowserTab(\""+ subtext + "\",\"" + ""
+												+ "\",\"" + linkurl + "\","+uniqueWin+");", // 2 for maximize
+												"Desktop.desktop.addWindow(\""+ subtext + "\",\"" + ""
+												+ "\",\"" + linkurl + "\","+uniqueWin+",1);", // 1 for tile					 
+												];
+						Debug.log("createEditTableMenu()");
+						SimpleContextMenu.createMenu(
+								menuItems,
+								menuItemHandlers,
+								"DesktopIconContextMenu",		//element ID
+								event.pageX-1,event.pageY-1, 	//top left position
+								Desktop.desktop.dashboard.getDefaultDashboardColor(), 	//primary color
+								"white"				//secondary color
+						);
+						
+					},500); //end timeout handler
+					
+				}; //end deepClickHandler event
+				
+				//FIXME ... debug touchstart on android to block browser context
+				//			iconContainer.addEventListener("touchstart", function(event) {	
+				//				event.preventDefault();
+				//				
+				//				deepClickHandler(event);
+				//				return false;
+				//			});
+				iconContainer.addEventListener("mousedown",	deepClickHandler);
+			}
 			
 			_iconsElement.appendChild(iconContainer); //add to desktop icon element
 			
@@ -584,7 +587,11 @@ else {
       		MultiSelectBox.createSelectBox(_openFolderElement,
       				"DesktopFolderMultiSelectBox",
 					str,
-					vals,keys,types,"Desktop.desktop.icons.clickFolderContents",noMultiSelect,0,imgURLs);
+					vals,keys,types,
+					"Desktop.desktop.icons.clickFolderContents",
+					noMultiSelect,0,imgURLs,
+					"Desktop.desktop.icons.mouseDownFolderContents",
+					"Desktop.desktop.icons.mouseUpFolderContents");
       		MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
       	}
 
@@ -606,14 +613,14 @@ else {
             var val = el.textContent;
             var type = el.getAttribute("type-value");
             var key = el.getAttribute("key-value")|0;
-            
-            
-            	MultiSelectBox.dbg("box 2 Chosen element index:",i,            		
+
+
+            MultiSelectBox.dbg("Chosen element index:",i,            		
             		" value:",val,
-            		" key:",key,
-            		" type:",type);
-            
-            
+					" key:",key,
+					" type:",type);
+
+
 										
             if(type == "icon")
             {
@@ -624,6 +631,75 @@ else {
             }
             else
             	this.openSubFolder(val);
+      	}
+      	
+      	//this.mouseUpFolderContents ~~
+      	//	this functionality should mirror addIcon()
+      	this.mouseUpFolderContents = function(el,event) {
+      		if(this.deepClickTimer)
+      		{
+      			window.clearTimeout(this.deepClickTimer);
+      			this.deepClickTimer = 0;
+      		}
+      	}
+
+      	//this.mouseDownFolderContents ~~
+      	//	this functionality should mirror local function
+      	//	deepClickHandler() in addIcon()
+      	this.mouseDownFolderContents = function(el,event) {
+            var i = MultiSelectBox.getSelectedIndex(el); 
+            var selArr = MultiSelectBox.getSelectionArray(el);
+            var val = el.textContent;
+            var type = el.getAttribute("type-value");
+            var key = el.getAttribute("key-value")|0;
+
+            MultiSelectBox.dbg("mouseDownFolderContents Chosen element index:",i,            		
+            		" value:",val,
+					" key:",key,
+					" type:",type);
+										
+            if(type != "icon") return;
+            
+            //only deep click functionality for icons
+
+            var target = _openFolderPtr[1][key];
+            //Icon object array (0-subtext, 1-altText, 2-linkurl, 3-uniqueWin, 4-picfn)            	           	
+            
+
+            //========================
+            //	this functionality should mirror local function
+            //	deepClickHandler() in addIcon()
+
+            event.cancelBubble = true; //prevent default behavior 
+            event.preventDefault();
+            this.deepClickTimer = window.setTimeout(function() {
+
+            	Debug.log("Create Icon Menu");
+            	var menuItems = [
+								 "Open and Maximize Window",
+								 "Open in New Browser Tab",
+								 "Open and Tile All Windows"
+								 ];
+            	var menuItemHandlers = [
+										"Desktop.desktop.addWindow(\""+ target[0] + "\",\"" + ""
+										+ "\",\"" + target[2] + "\","+target[3]+",2);", // 2 for maximize
+										"Desktop.openNewBrowserTab(\""+ target[0] + "\",\"" + ""
+										+ "\",\"" + target[2] + "\","+target[3]+");", // 2 for maximize
+										"Desktop.desktop.addWindow(\""+ target[0] + "\",\"" + ""
+										+ "\",\"" + target[2] + "\","+target[3]+",1);", // 1 for tile					 
+										];
+            	Debug.log("createEditTableMenu()");
+            	SimpleContextMenu.createMenu(
+            			menuItems,
+						menuItemHandlers,
+						"DesktopIconContextMenu",		//element ID
+						event.pageX-1,event.pageY-1, 	//top left position
+						Desktop.desktop.dashboard.getDefaultDashboardColor(), 	//primary color
+						"white"				//secondary color
+            	);
+
+            },500); //end timeout handler
+
       	}
 		
 		//------------------------------------------------------------------
