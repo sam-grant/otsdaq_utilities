@@ -62,7 +62,7 @@
 			}
 			
 			#parameter-setup a, #extras-box a, #alarm-setup-box a,
-			#error-box a
+			#error-box a, #view-mode-select
 			{
 				color: white;
 				text-decoration: none;
@@ -70,11 +70,16 @@
 			}
 			
 			#parameter-setup a:hover, #extras-box a:hover, #alarm-setup-box a:hover,
-			#error-box a:hover
+			#error-box a:hover, #view-mode-select:hover
 			{
 				text-decoration: underline;
 			}
     
+			#view-mode-select {
+				font-size: 14px;
+				font-family: 'Donegal One', arial;
+			}
+			
 			#parameter-setup table {	
 				font-size: 12px;
             }
@@ -185,6 +190,7 @@
 			var _CANVAS_COLOR = "rgb(5,10,50)";
 			var _MARGIN = 0;
             var _MIN_WIN_SZ_FOR_BIG_STATES = 600;  //canvas must be at least this size for big state drawing
+            var _MIN_WIN_SZ_FOR_ALT_BIG_STATES = 750;  //canvas must be at least this size for big state drawing
             var _MIN_WIN_SZ = 350;  //canvas is forced to at least this size
             var _SM_MODE_STATE_SZ = 40;
             var _LG_MODE_STATE_SZ = 80;
@@ -200,6 +206,7 @@
             var _TRANS_BLACKOUT_COLOR = "5,10,50";
     
             var _ARROW_PATH = [[-0.1,0],[0.1,0],[0.1,0.7],[0.3,0.7],[0,1],[-0.3,0.7],[-0.1,0.7],[-0.1,0]];
+            var _BIARROW_PATH = [[0,0],[0.3,0.3],[0.1,0.3],[0.1,0.7],[0.3,0.7],[0,1],[-0.3,0.7],[-0.1,0.7],[-0.1,0.3],[-0.3,0.3],[0,0]];
             var _ARROW_COLOR = 'rgb(155,120,50)';
             var _ARROW_BORDER_COLOR = 'gray';
             var _ARROW_SEL_COLOR = 'rgb(255,250,150)';
@@ -216,7 +223,7 @@
 			var _PARAMETER_SETUP_WIDTH = 260; 
 			
 			var _EXTRAS_WIDTH = 200; 
-			var _EXTRAS_HEIGHT = 80; 
+			var _EXTRAS_HEIGHT = 100;//80; 
 			
 			var _ALARM_WIDTH = 200; 
 			var _ALARM_HEIGHT = 120; 
@@ -243,10 +250,10 @@
                 //getTransitionSelection(x,y)
 				//redrawPhysics()
 				//drawCurrentStateAndTransitions()
-                //drawTransition(stateIndex, x, y)
-                //drawSelfTransition(stateIndex, x, y)
+                //drawTransition(stateIndex, x, y, startx, starty)
+                //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected)
             	//getStateDrawingColor(i,isBorder)
-            	//getTransitionDrawingColor(i,isBorder)
+            	//getTransitionDrawingColor(i,isBorder,isSelected)
                 //drawState(stateIndex, x, y, isRootState)
             	//toggleParameterSetup()
             	//eatParameterMouseEvent(touchEvent) 
@@ -255,16 +262,22 @@
 				//displayError(err)
 				//closeErrorBox()
             	//
-            	//altDrawCurrentStateAndTransitions
+            	//altDrawCurrentStateAndTransitions()
+            	//altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
+            	//getAltTransitionSelection(x,y)
+            	//toggleViewMode()
             
-            var _altStateDrawingMode = false;
+            var _altStateDrawingMode = true;
+            var _altStateGrid = [];
+            var _altPlacedStates = [];
+            var _ALT_GRID_WIDTH = 3;
 			            
 			var _states, _stateNames, _transitions, _transitionNames, 
                 _transitionParameters, _transitionParameterValues, _transitionActions;
             //NOTE: Wildcards for transitions from every state.. -1 allows transition to self, -2 does not
     
 			var _aliasTranslationMap = []; //e.g. _aliasTranslationMap["Physics"] => config_v2
-			
+						
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
 				_blackoutRevealText, _blackoutRevealContent, _progressBar,
@@ -283,7 +296,7 @@
 			
 			var _inAnimation; //bool used to indicate if currently in transition (animation taking place)
 			var _smallStateMode, _stateOvalRadius, _perimeterRadius, _currStateTransArr;
-            var _selectedTransition;
+            var _selectedTransition = -1; //init to nothing selected
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
             	
@@ -365,13 +378,58 @@
 				//get state machine from server
 				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine" + 
 						"&fsmName=" + _fsmName, "", 
-						smRequestHandler);	
+						smRequestHandler,
+						0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				);	
 				
-				window.setTimeout(redrawPhysics,1000); //for firefox drawing glitch
-				window.setTimeout(redrawPhysics,5000); //for firefox drawing glitch
+				//delay redraw a bit to gaurantee font (and possibly other things?) has loaded				
+				window.setTimeout(redrawPhysics,1000); 
+				window.setTimeout(redrawPhysics,5000); 			
 				
+				//get view mode preferences for user
+				DesktopContent.XMLHttpRequest("Request?RequestType=stateMatchinePreferences" + 
+						"", "", 
+						function(req) {
+					var altViewMode = DesktopContent.getXMLValue(req,"Default_FSM_View");
+					if(altViewMode && altViewMode != "")
+						toggleViewMode(altViewMode|0);  //treat as integer
+					else //default to js default
+						toggleViewMode(_altStateDrawingMode);
+				},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				);
 			}
 
+			//toggleViewMode ~~
+			function toggleViewMode(setVal) {				
+				if(setVal !== undefined)	
+					_altStateDrawingMode = setVal;
+				else
+				{
+					_altStateDrawingMode = !_altStateDrawingMode;
+					
+					//assume this toggle is caused by user
+					//save setting to server for user					
+					DesktopContent.XMLHttpRequest("Request?RequestType=stateMatchinePreferences" + 
+							"&set=1" + 
+							"&Default_FSM_View=" + (_altStateDrawingMode?"1":"0"),
+							"");
+				}
+				
+				Debug.log("_altStateDrawingMode " + setVal + " " + _altStateDrawingMode);
+				
+				var el = document.getElementById("view-mode-select");
+				if(_altStateDrawingMode)
+				{
+					el.innerHTML = "Toggle View";//"View Only Available Transitions";
+					el.title = "Click to toggle the state machine display mode to show only currently available transitions.";
+				}
+				else
+				{
+					el.innerHTML = "Toggle View";//"View Full State Machine";
+					el.title = "Click to toggle the state machine display mode to always show the full state machine.";
+				}
+				redrawPhysics();
+			}
             
             //initTransitionParameters
             //	user code should call with null input parameters
@@ -538,8 +596,157 @@
                 }
 
                 Debug.log("Physics _transitions \n\t" + _transitions + "\n\t" + _transitionNames + "\n\t" + _transitionActions);
-	
+                
                 getCurrentState();	
+                
+                //==========================
+                //	Build alternative view grid
+                //
+                //grid is _ALT_GRID_WIDTH wide (could be translated for window view)
+                //	constraint is Initial in top left corner
+                //	then place by connections
+                _altStateGrid = [];
+                
+                var emptyRow = [];
+                for(var i=0;i<_ALT_GRID_WIDTH;++i)
+                	emptyRow.push(-1);
+                
+                //find initial 'I'
+                var ii;
+                _altPlacedStates = [];
+                for(var i=0;i<_states.length;++i)
+                {
+                	if(_states[i] == 'I') ii = i;
+                	_altPlacedStates.push([-1,-1]); //init to not placed
+                }
+                if(ii === undefined)
+                {
+                	Debug.log("Critical Error: Alternative view could not be configured, Initial state not found.",
+                			Debug.HIGH_PRIORITY);
+                	return;
+                }
+                
+                
+                //local function 
+                //	localPlaceState
+                //		place state index s 
+                //		adjacent to position (adjr, adjc) in grid
+                //		if the position is specified
+                var localPlaceState = function(s,adjr,adjc) {
+                	
+                	
+                	//find first available opening
+                	//	:= no states to bottom or right
+                	
+                	var r;
+                	var c;
+                	
+                	if(adjr  !== undefined)
+                	{
+                		if(_altPlacedStates[s][0] != -1) return; //already placed
+                		
+                		var placed = false;
+                		//look for openings adjacent starting to right
+                		for(var i=0;i<3 && !placed;++i)
+                			for(var j=0;j<3;++j)
+                			{
+                				r = adjr + ((1+i)%3-1);
+                				c = adjc + ((2+j)%3-1);
+                				
+                				//skip illegal locations
+                				if(r < 0 || r >= _altStateGrid.length) continue;
+                				if(c < 0 || c >= _ALT_GRID_WIDTH) continue;
+                				if(_altStateGrid[r][c] != -1) continue;  
+                				
+                				placed = true;
+                				break;
+                			}
+                		
+                		if(!placed)
+                		{
+                			//no adjacent spots found
+                			//solution: 
+                			//	add a row below
+                			//	if (last row)
+                			//		place directly below
+                			//	else
+                			//		place at opposite extreme of adjc (favor 0 for middle adjc)
+                			//	
+                			
+                			_altStateGrid = _altStateGrid.slice(0,adjr+1).concat(
+                					[emptyRow.slice()],  //copy of emptyRow
+									_altStateGrid.slice(adjr+1)
+                					);
+                			
+                			r = adjr + 1;
+                			if(r + 1 == _altStateGrid.length) //last row added
+                				c = adjc;
+                			else if(adjc == 0 || adjc == _ALT_GRID_WIDTH-1) //extremes
+                				c = (_ALT_GRID_WIDTH - 1) - adjc;
+                			else //favor 0 for middle adjc
+                				c = adjc - 1;
+                		}
+                	}
+                	else //place state with no adjacent requirement
+                	{
+                		if(_altPlacedStates[s][0] != -1) return; //already placed
+                	
+
+                    	r =_altStateGrid.length-1;
+                    	c = -1;
+                    	
+						if(r < 0) //empty grid, add first row
+						{
+							_altStateGrid.push(emptyRow.slice());	//copy of emptyRow
+							r = _altStateGrid.length-1;
+							c = 0;
+						}
+						else 
+						{
+							//check last row, assume best place to look                		
+							for(var i=0;i<_altStateGrid[r].length;++i)
+								if(_altStateGrid[r][i] == -1)
+								{
+									//found free place
+									c = i; 
+									break; 
+								}
+							if(c == -1) //no space found, add a new row
+							{
+								_altStateGrid.push(emptyRow.slice());	//copy of emptyRow
+								r = _altStateGrid.length-1;
+								c = 0;                			
+							}
+						}                	
+                	}
+                	
+                	//at this point position (r,c) has been decided
+                	//	and grid has been potentially resized
+                	_altStateGrid[r][c] = s;                	
+					_altPlacedStates[s] = [r,c];
+                	
+                	Debug.log("placed " + r + "," + c);
+                	console.log(_altPlacedStates);                	
+                	for(var i=0;i<_altStateGrid.length;++i)
+                		console.log("grid",_altStateGrid[i]);
+
+                	//place all transition states adjacent to this
+                	for(var i=0;i<_transitions.length;++i)
+                		if(_transitions[i][0] == -1 ||
+                				(_transitions[i][0] == -2 && _transitions[i][1] != s) ||
+								_transitions[i][0] == s)
+                			localPlaceState(_transitions[i][1],r,c);
+                }
+                
+                
+                //add first row 
+                
+                localPlaceState(ii); //place initialize
+                
+                //then all others
+                for(var i=0;i<_states.length;++i)
+                	if(i != ii)	//skip initial state which was already placed
+                		localPlaceState(i);                
 			}
 			
 			//getCurrentState ~~
@@ -919,13 +1126,64 @@
                     redrawPhysics();
                 }
             }
-    
+
+            //getAltTransitionSelection ~~
+            //  check if over grid state
+            //  return index of transition,
+            //else if not over transition, return -1
+            function getAltTransitionSelection(x,y) {
+            	
+            	//start in upper left of upper left state   
+            	//	and break into _ALT_GRID_WIDTH places
+            	var sx = _canvas.width/2 - (_ALT_GRID_WIDTH * _perimeterRadius)/2 
+            			+ _perimeterRadius/2 - _stateOvalRadius*2;
+            		//sx is equivalent to _MARGIN
+            	var sy = _canvas.height/2 - (_altStateGrid.length * _perimeterRadius)/2
+            			+ _perimeterRadius/2 - _stateOvalRadius;
+            	
+            	var c = (x - sx);
+            	var r = (y - sy);
+            	if(r < 0 || c < 0) return -1;//return none if off the grid
+            	
+            	c = c/_perimeterRadius | 0;
+            	r = r/_perimeterRadius | 0;
+
+            	//Debug.log("_perimeterRadius " + _perimeterRadius);            	
+            	//Debug.log("x,y " + (x - sx) + "," + (y - sy));
+            	//Debug.log("r,c " + r + "," + c);
+            	
+            	//return none if off the grid
+            	if(r >= _altStateGrid.length ||
+            			c >= _ALT_GRID_WIDTH) return -1;
+
+            	//Debug.log("_stateOvalRadius*2 " + _stateOvalRadius*2);
+            	//Debug.log("x,y " + (x - sx - c*_perimeterRadius) + "," + (y - sy - r*_perimeterRadius));
+            	//return if close enough to target state
+            	var match = x-sx - c*_perimeterRadius < _stateOvalRadius*4 && 
+            			y-sy - r*_perimeterRadius < _stateOvalRadius*2;
+            	//Debug.log("match " + match);
+            	if(!match) return -1;
+            	
+            	//here we know the mouse is over grid state r,c at this point
+            	
+            	//search curr transitions for one pointing to that state             	
+            	for(var i=0;i<_currStateTransArr.length;++i)
+            		if(_transitions[_currStateTransArr[i]][1] ==
+            				_altStateGrid[r][c])
+            			return i;
+            	
+            	//if here, then there were no transitions to the state with the mouse over
+            	return -1;
+            }
+            
             //getTransitionSelection ~~
             //  check if within selection band
             //  return index of transition,
             //else if not over transition, return -1
             function getTransitionSelection(x,y) {
                 
+            	if(_altStateDrawingMode) return getAltTransitionSelection(x,y);
+            	
                 var angleOff = Math.PI/(_currStateTransArr.length);
                 var angle = _STATE_ANGLE_OFFSET; //be on boundaries
  
@@ -951,15 +1209,26 @@
 				if(_currState < 0) return; //do nothing if current state not defined
 				
 			    //Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
-			    if(window.innerWidth == 0) window.setTimeout(redrawPhysics,100); //for browser bug?..first time issue when not part of desktop
+			    if(window.innerWidth == 0) 
+			    {
+			    	window.setTimeout(redrawPhysics,100); //for browser bug?..first time issue when not part of desktop
+			    	return;
+			    }
 			    
 			    var w = window.innerWidth;
 			    if(w < _MIN_WIN_SZ) w=_MIN_WIN_SZ; //prevent super squeeze
 			    var h = window.innerHeight;
 			    if(h < _MIN_WIN_SZ) h=_MIN_WIN_SZ; //prevent super squeeze
-			    _smallStateMode = (h < _MIN_WIN_SZ_FOR_BIG_STATES || w < _MIN_WIN_SZ_FOR_BIG_STATES);  //decide if room for big states
-                _stateOvalRadius = (_smallStateMode?_SM_MODE_STATE_SZ:_LG_MODE_STATE_SZ)/2;              
 			    
+
+			    if(_altStateDrawingMode)
+			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_ALT_BIG_STATES || 
+			    			w < _MIN_WIN_SZ_FOR_ALT_BIG_STATES);  //decide if room for big states
+			    else
+			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_BIG_STATES || 
+			    			w < _MIN_WIN_SZ_FOR_BIG_STATES);  //decide if room for big states
+                _stateOvalRadius = (_smallStateMode?_SM_MODE_STATE_SZ:_LG_MODE_STATE_SZ)/2;              
+			                                    
                 _parameterSetup.style.left = _MARGIN + _HUD_X + "px";  
                 _parameterSetup.style.top =  (h - _MARGIN - _HUD_Y  - 10 - //2 for border //-10 for padding
                 		(_parameterSetupMinimized?_PARAMETER_SETUP_MIN_HEIGHT:_PARAMETER_SETUP_MAX_HEIGHT)) + "px";
@@ -989,8 +1258,15 @@
 			    _canvas.height = (h - _MARGIN*2);
 			    _context.clearRect(0, 0, _canvas.width, _canvas.height);
                 
-                _perimeterRadius = (_canvas.width<_canvas.height?_canvas.width:_canvas.height)/2 -
-                    _CANVAS_STATE_MARGIN - _stateOvalRadius*2;
+			    
+			    if(_altStateDrawingMode)
+			    	_perimeterRadius = (_canvas.width - 2*_CANVAS_STATE_MARGIN)/_ALT_GRID_WIDTH;
+			    else
+			    	_perimeterRadius = (_canvas.width<_canvas.height?_canvas.width:_canvas.height)/2 -
+                    	_CANVAS_STATE_MARGIN - _stateOvalRadius*2;
+                
+                
+                
                 
 			    if(!_inAnimation)
                 {
@@ -1069,69 +1345,138 @@
                 
             }
             
+            //altDrawCurrentStateAndTransitions ~~
             function altDrawCurrentStateAndTransitions() {
             	
-            	var x = _canvas.width/2;
-            	var y = _canvas.height/4;
-            	
-            	//get all of transitions for currState
-            	_currStateTransArr = new Array();
-            	var cnt = 0;
+            	//get all of transitions for currState            	
+            	_currStateTransArr = new Array();            	
             	for(var i=0;i<_transitions.length;++i)
             		if(_transitions[i][0] == -1 ||
-            				(_transitions[i][0] == -2 && _transitions[i][0] != _currState) ||
+            				(_transitions[i][0] == -2 && _transitions[i][1] != _currState) ||
 							_transitions[i][0] == _currState)
-            			_currStateTransArr[cnt++] = i;//_transitions[i][1];
+            			_currStateTransArr.push(i);
             	
+
+
+            	
+            	//////================
+            	//draw
+            	
+            	//start in upper left (x,y) is center of state            	
+            	var x = _canvas.width/2 - (_ALT_GRID_WIDTH * _perimeterRadius)/2 
+					+ _perimeterRadius/2;
+            	var y = _canvas.height/2 - (_altStateGrid.length * _perimeterRadius)/2
+            		+ _perimeterRadius/2;
+
             	//draw previous state at top
-            	if(_prevState != -1) drawState(_prevState,_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
-
+            	if(_prevState != -1) 
+            		drawState(_prevState,
+            				_canvas.width - _stateOvalRadius*4 - _MARGIN,
+							_stateOvalRadius*2 + _MARGIN);
             	
-                for(var s=0;s<_states.length;++s)
-                {
-                	x += 0;
-                	y += 50;
-                	
-                	drawState(s,x,y,true);
-                	
-                	var stateTransArr = new Array();
-                	var cnt = 0;
-                	for(var i=0;i<_transitions.length;++i)
-                		if(_transitions[i][0] == -1 ||
-                				(_transitions[i][0] == -2 && _transitions[i][0] != s) ||
-								_transitions[i][0] == s)
-                			stateTransArr[cnt++] = i;	//_transitions[i][1];
-                	
-                	var angleOff = Math.PI/stateTransArr.length;                
-                	var angle = angleOff/2 + _STATE_ANGLE_OFFSET;
-
-                	//draw each state around circle at radius                
-                	for(var i=0;i<stateTransArr.length;++i,angle += angleOff)
-                	{
-                		if(_transitions[stateTransArr[i]][1] == s) //special loop back transition case
-                		{
-                			drawSelfTransition(_transitions[stateTransArr[i]][1],
-                					_perimeterRadius * Math.cos(angle),
-									_perimeterRadius * Math.sin(angle));
-                			continue;
-                		}
-                		drawState(_transitions[stateTransArr[i]][1],
-                				x + _perimeterRadius * Math.cos(angle),
-								y + _perimeterRadius * Math.sin(angle));
-
-                		drawTransition(_transitions[stateTransArr[i]][1],
-                				_perimeterRadius * Math.cos(angle),
-								_perimeterRadius * Math.sin(angle),
-								x,y);
-                		Debug.log(angle);
-                	}
-                	
-                }
-            	//draw current state at center as "root" state
-            	
-
+            	var sx, sy; //source coordinates
+            	var tx, ty; //destination coordinates
+            	var isBidir, alreadyDrawn, isSelected;
+            	var transitionDrawn = []; //used to keep track transitions that have
+            								//already been drawn by a bi-directions transitions
             	
             	
+            	//draw states in grid format
+        		for(var r=0;r<_altStateGrid.length;++r)
+        			for(var c=0;c<_ALT_GRID_WIDTH;++c)
+        			{        		
+        				sx = x + c*_perimeterRadius;
+        				sy = y + r*_perimeterRadius;
+        				
+        				drawState(_altStateGrid[r][c],
+        						sx, sy,
+								_currState == _altStateGrid[r][c]);
+        			}
+
+        		//draw transitions
+        		for(var r=0;r<_altStateGrid.length;++r)
+        			for(var c=0;c<_ALT_GRID_WIDTH;++c)
+        			{        		
+        				sx = x + c*_perimeterRadius;
+        				sy = y + r*_perimeterRadius;
+        				
+        				//draw transitions
+        				for(var i=0;i<_transitions.length;++i)
+        					if(_transitions[i][0] == -1 ||
+        							(_transitions[i][0] == -2 && _transitions[i][1] != _altStateGrid[r][c]) ||
+									_transitions[i][0] == _altStateGrid[r][c])
+        					{
+        						//determine if this transition is selected by mouse        						
+        						isSelected = (_currState == _altStateGrid[r][c] &&
+        								_selectedTransition != -1 &&
+        								_transitions[i][1] == 
+        										_transitions[_currStateTransArr[_selectedTransition]][1]);        						
+
+        						if(_transitions[i][1] == 
+        								_altStateGrid[r][c]) //special loop back transition case
+        						{
+        							if(r == 0) //do on top        								
+        								drawSelfTransition(_transitions[i][1],
+        										0,-1,
+												sx,sy+_stateOvalRadius*2,
+												isSelected);        								
+        							else	//do on bottom
+        								drawSelfTransition(_transitions[i][1],
+        										0,1,
+												sx,sy-_stateOvalRadius*2,
+												isSelected);
+        							continue;
+        						}
+        						
+        						//check if this transition
+        						//	from _altStateGrid[r][c] to _transitions[i][1]
+        						//	 has already been drawn
+        						alreadyDrawn = false;
+        						for(var j=0;j<transitionDrawn.length;++j)
+        							if(transitionDrawn[j][0] == _altStateGrid[r][c] &&
+        									transitionDrawn[j][1] == _transitions[i][1])
+        							{alreadyDrawn = true; break;}
+        						if(alreadyDrawn) continue; //skip if already drawn
+        						
+        						
+        						
+        						//determine if this is bi-directions
+        						//	i.e. if [0][1] and [1][0] exist
+        						isBidir = false;
+        						for(var j=0;j<_transitions.length;++j)
+        							if(
+        									(_transitions[j][0] == -1 && _transitions[j][1] == _altStateGrid[r][c]) ||        									
+											(_transitions[j][0] == _transitions[i][1] && _transitions[j][1] == _altStateGrid[r][c])
+        							)
+        							{
+        								//Debug.log("bi " + _transitions[j][0] + 
+        								//		_transitions[j][1]);
+										isBidir = true; 
+										transitionDrawn.push([_transitions[i][1], 
+																_altStateGrid[r][c]]);
+        								//for(var k=0;k<transitionDrawn.length;++k)
+        								//	console.log(transitionDrawn[k]);
+
+										if(!isSelected) //re-evaluate for the bidir transition
+											isSelected = (_currState == _transitions[i][1] &&
+												_selectedTransition != -1 &&
+												_altStateGrid[r][c] == 
+														_transitions[_currStateTransArr[_selectedTransition]][1]);        						
+
+        								break;
+        							}
+        						
+        						//determine coordinates of destination state as (tx, ty)        						        						
+        						tx = x + _altPlacedStates[_transitions[i][1]][1]*_perimeterRadius;
+        						ty = y + _altPlacedStates[_transitions[i][1]][0]*_perimeterRadius;
+        						        						
+        						altDrawTransition(_transitions[i][1],
+        								tx - sx, ty - sy,  //direction
+										sx, sy, //start point
+										isBidir,
+										isSelected);     
+        					}  //end transition loop      				
+        			} //end 2D state grid loop            	            	
             }
 
 			//drawCurrentStateAndTransitions ~~
@@ -1149,16 +1494,16 @@
 				drawState(_currState,_canvas.width/2,_canvas.height/3, true);
 			
                 //draw previous state at top
-				if(_prevState != -1) drawState(_prevState,_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
+				if(_prevState != -1) drawState(_prevState,
+						_canvas.width/2+_perimeterRadius,_canvas.height/2-_perimeterRadius);
                 
                 //get all of transitions for currState
-                _currStateTransArr = new Array();
-                var cnt = 0;
+                _currStateTransArr = new Array();                
                 for(var i=0;i<_transitions.length;++i)
                     if(_transitions[i][0] == -1 ||
-                       (_transitions[i][0] == -2 && _transitions[i][0] != _currState) ||
+                       (_transitions[i][0] == -2 && _transitions[i][1] != _currState) ||
                         _transitions[i][0] == _currState)
-                        _currStateTransArr[cnt++] = i;//_transitions[i][1];
+                        _currStateTransArr.push(i);
             
                 var angleOff = Math.PI/_currStateTransArr.length;                
                 var angle = angleOff/2 + _STATE_ANGLE_OFFSET;
@@ -1170,7 +1515,8 @@
                     {
                         drawSelfTransition(_transitions[_currStateTransArr[i]][1],
                                            _perimeterRadius * Math.cos(angle),
-                                           _perimeterRadius * Math.sin(angle));
+                                           _perimeterRadius * Math.sin(angle),
+										   _canvas.width/2,_canvas.height/3);
                         continue;
                     }
                     drawState(_transitions[_currStateTransArr[i]][1],
@@ -1185,10 +1531,104 @@
                 
 			}
 
+			//altDrawTransition
+			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
+			function altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected) {
+				
+				var ALT_EXTRA_MARGIN = 8;				
+				
+				var mag = Math.sqrt(x*x+y*y);
+				var up = [x/mag,y/mag];
+				var lt = [y/mag,-x/mag];				
+				var arrowOff = _stateOvalRadius*2 + _ARROW_MARGIN + ALT_EXTRA_MARGIN;
+				var arrowSz = 
+						[_stateOvalRadius*2,
+						 _perimeterRadius - arrowOff*2];
+
+				_context.save(); //matching save/restore 1
+
+				_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
+				_context.beginPath();
+				
+				var arrowPath = isBidir?_BIARROW_PATH:_ARROW_PATH;
+				
+				
+				var arrowPathY
+				for(var i=0;i<arrowPath.length;++i)
+				{
+					
+					if(arrowPath[i][1] < 0.1 || 
+							arrowPath[i][1] > 0.9)
+						arrowPathY = arrowPath[i][1]*arrowSz[1];
+					else if(arrowPath[i][1] < 0.5) //manipulate arrow tip to prevent stretch
+						arrowPathY = arrowPath[i][1]*arrowSz[0];
+					else if(arrowPath[i][1] > 0.5) //manipulate arrow tip to prevent stretch
+						arrowPathY = 1*arrowSz[1]-(1-arrowPath[i][1])*arrowSz[0];
+					
+					if(!i)
+						_context.moveTo(startx + arrowOff*up[0] +
+								arrowPath[0][0]*lt[0]*arrowSz[0] + arrowPathY*up[0],
+								starty + arrowOff*up[1] +
+								arrowPath[0][0]*lt[1]*arrowSz[0] + arrowPathY*up[1]);
+					_context.lineTo(startx + arrowOff*up[0] +
+							arrowPath[i][0]*lt[0]*arrowSz[0] + arrowPathY*up[0],
+							starty + arrowOff*up[1] +
+							arrowPath[i][0]*lt[1]*arrowSz[0] + arrowPathY*up[1]);
+				}
+				
+				_context.closePath();
+				_context.fill();
+
+				//draw shadow border
+				_context.save();
+				_context.lineWidth = 5;
+				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
+				_context.shadowColor = 'black';
+				_context.shadowBlur = 10;
+				_context.shadowOffsetX = 0;
+				_context.shadowOffsetY = 0;
+				_context.stroke();
+				_context.restore();
+
+				if(isSelected) //add text for action if arrow is selected
+				{
+					var rw = 150;
+					var rh = 40;
+					//background rectangle
+					_context.beginPath();
+					_context.rect(startx + (arrowOff+arrowSz[1]/2)*up[0] - rw/2, 
+							starty + (arrowOff+arrowSz[1]/2)*up[1] -rh/2-9, 
+							rw, rh);
+					_context.fillStyle = 'rgba(255,255,255,1)';
+					_context.fill();
+					_context.lineWidth = 3;
+					_context.strokeStyle = _TRANS_STATE_COLOR;
+					_context.shadowColor = 'black'; //add shadow
+					_context.shadowBlur = 10;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.stroke();
+
+					//apply text
+					_context.font = '18pt Donegal One';
+					_context.textAlign = 'center';
+					_context.fillStyle = '#54967e';
+					_context.shadowColor = 'gray';
+					_context.shadowBlur = 1;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
+							startx + (arrowOff+arrowSz[1]/2)*up[0],
+							starty + (arrowOff+arrowSz[1]/2)*up[1]);
+
+				}
+
+				_context.restore(); //matching save/restore 1
+			}
 
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function drawTransition(stateIndex, x, y, startx, starty) {
+			function drawTransition(stateIndex, x, y, startx, starty) {				
 				var isSelected = _selectedTransition != -1 && stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
                 var mag = Math.sqrt(x*x+y*y);
                 var up = [x/mag,y/mag];
@@ -1261,14 +1701,18 @@
             
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
-			function drawSelfTransition(stateIndex, x, y) {
-                var mag = Math.sqrt(x*x+y*y);
-                var up = [x/mag,y/mag]; //from canvas center towards state pos
-                var innerRadius = _stateOvalRadius*2-
-                    (_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)*0.2; //make arrows all same width
+			//	isSelected added for alt drawing mode
+			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected) {
+				
+				var mag = Math.sqrt(x*x+y*y);
+				var up = [x/mag,y/mag]; //from canvas center towards state pos
+                var innerRadius = _altStateDrawingMode?
+                		_stateOvalRadius*2- _stateOvalRadius*2*0.2:
+						(_stateOvalRadius*2 - (_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2)*0.2); //make arrows all same width
+                if(innerRadius < 10) innerRadius = 10;
                 var outerRadius = _stateOvalRadius*2;
-                var arrowPos = [_canvas.width/2 + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[0],
-                                _canvas.height/3 + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[1]];
+                var arrowPos = [startx + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[0],
+								starty + (_stateOvalRadius*2 + outerRadius + _ARROW_MARGIN*2)*up[1]];
                 
                 var startAng = Math.atan2(y,x) - 2*Math.PI/3;
                 var finalAng = startAng - 2*Math.PI/3;
@@ -1281,7 +1725,8 @@
                 _context.lineTo(arrowPos[0] + outerRadius*Math.cos(finalAng),
                                 arrowPos[1] + outerRadius*Math.sin(finalAng));
 				_context.arc(arrowPos[0], arrowPos[1], outerRadius,  finalAng, startAng, true);
-                
+				
+				
                 //draw arrow from here
                 var lt = [-outerRadius*Math.cos(startAng), -outerRadius*Math.sin(startAng)] //towards center
                 mag = Math.sqrt(lt[0]*lt[0]+lt[1]*lt[1]);
@@ -1290,7 +1735,8 @@
                 
                 var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
                                arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
-                var arrowSz = (_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
+                var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
+                		(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
                 var jutSz = 0.1;
                 var pointSz = 0.3;
                 
@@ -1306,13 +1752,13 @@
                                 arrowPos[1] + innerRadius*Math.sin(startAng)); //to finishing point
                 
                 _context.closePath();
-				_context.fillStyle = getTransitionDrawingColor(stateIndex);
+				_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
                 _context.fill();                
                 
                 //draw shadow border
                 _context.save();
 				_context.lineWidth = 5;
-				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1);
+				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
 				_context.shadowColor = 'black';
 				_context.shadowBlur = 10;
 				_context.shadowOffsetX = 0;
@@ -1328,7 +1774,7 @@
 			function getStateDrawingColor(i, isBorder) {				
 				if(i == _currState) return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_CURR_STATE_COLOR;
 				else if(_selectedTransition != -1 && 
-						_currStateTransArr[_selectedTransition] && //to prevent errors in strange server situations
+						_currStateTransArr[_selectedTransition] !== undefined && //to prevent errors in strange server situations
 						_transitions[_currStateTransArr[_selectedTransition]][1] == i)
 					return isBorder?_TRANS_STATE_SEL_BORDER_COLOR:_TRANS_STATE_COLOR_SEL;
 				else 
@@ -1337,9 +1783,11 @@
 			
 			//getTransitionDrawingColor 
 			//	return proper color for drawing based on state index i
-			function getTransitionDrawingColor(i, isBorder) {
-				if(_selectedTransition != -1 && 
-						_transitions[_currStateTransArr[_selectedTransition]][1] == i)
+			//	isSelected is short circuit bool
+			function getTransitionDrawingColor(i, isBorder, isSelected) {				
+				if(isSelected || 
+						(isSelected === undefined && _selectedTransition != -1 && 
+						_transitions[_currStateTransArr[_selectedTransition]][1] == i))
 					return isBorder?_ARROW_SEL_BORDER_COLOR:_ARROW_SEL_COLOR;
 				else 
 						return isBorder?_ARROW_BORDER_COLOR:_ARROW_COLOR;
@@ -1488,9 +1936,9 @@
 
 
 <body onload='Javascript:init();'>
-
+		
 <canvas id="physicsCanvas"></canvas>
-
+		
 <div id='parameter-setup'>
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
@@ -1499,7 +1947,10 @@
 <div id='extras-box'>
 	<div id='run-number'></div>
 	<div id='time-elapsed'></div>
-	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>
+	<a href='Javascript:showAlarmSetup(1);' title='Setup the Alarm'>Setup Alarm</a>		
+		
+	<br><br>
+	<a id='view-mode-select' href='Javascript:toggleViewMode();' title='Toggle State Machine View Mode'>View Full State Machine</a>
 </div>
 		
 <div id='alarm-setup-box'>
@@ -1509,7 +1960,7 @@
 		<br><br>
 	<a href='Javascript:setAlarm(1);' title='Start the Alarm Countdown'>Start</a>
 	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown'>Pause</a>
-	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>
+	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>	
 </div>	
 
 
