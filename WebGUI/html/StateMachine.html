@@ -1770,6 +1770,45 @@
 				_context.shadowOffsetY = 0;
 				_context.stroke();
 				_context.restore();
+				
+				 //add text for action if arrow is selected
+				isSelected = isSelected || 
+						(isSelected === undefined && 
+								_selectedTransition != -1 && 
+								stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1]);
+				if(isSelected)
+				{
+					var rw = 150;
+					var rh = 40;
+					
+					//background rectangle
+					_context.beginPath();
+					_context.rect(arrowPos[0] - rw/2, 
+							arrowPos[1] - rh/2-9, 
+							rw, rh);
+					_context.fillStyle = 'rgba(255,255,255,1)';
+					_context.fill();
+					_context.lineWidth = 3;
+					_context.strokeStyle = _TRANS_STATE_COLOR;
+					_context.shadowColor = 'black'; //add shadow
+					_context.shadowBlur = 10;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.stroke();
+
+					//apply text
+					_context.font = '18pt Donegal One';
+					_context.textAlign = 'center';
+					_context.fillStyle = '#54967e';
+					_context.shadowColor = 'gray';
+					_context.shadowBlur = 1;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
+							arrowPos[0],
+							arrowPos[1]);
+
+				}
                 
 				_context.restore(); //matching save/restore 1
             }
