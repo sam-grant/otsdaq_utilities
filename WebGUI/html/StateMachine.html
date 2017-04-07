@@ -1260,9 +1260,14 @@
                 
 			    
 			    if(_altStateDrawingMode)
-			    	_perimeterRadius = (_canvas.width - 2*_CANVAS_STATE_MARGIN)/_ALT_GRID_WIDTH;
+			    {
+			    	if(_canvas.width < _canvas.height)
+			    		_perimeterRadius = (_canvas.width - 2*_CANVAS_STATE_MARGIN)/_ALT_GRID_WIDTH;
+			    	else
+			    		_perimeterRadius = (_canvas.height - 2*_CANVAS_STATE_MARGIN)/_altStateGrid.length;
+			    }
 			    else
-			    	_perimeterRadius = (_canvas.width<_canvas.height?_canvas.width:_canvas.height)/2 -
+			    	_perimeterRadius = (_canvas.width < _canvas.height?_canvas.width:_canvas.height)/2 -
                     	_CANVAS_STATE_MARGIN - _stateOvalRadius*2;
                 
                 
