@@ -761,20 +761,20 @@ throw (toolbox::fsm::exception::Exception)
 //	theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
 //	theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
 //
-	std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
-			SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-									getParameters().getValue("ConfigurationGroupName"),
-						ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-						getParameters().getValue("ConfigurationGroupKey")));
-
-	__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
-			theGroup.second << std::endl;
-
-	theConfigurationManager_->loadConfigurationGroup(
-			theGroup.first,
-			theGroup.second, true);
-
-	theDataManager_->configure();
+//	std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
+//			SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+//									getParameters().getValue("ConfigurationGroupName"),
+//						ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+//						getParameters().getValue("ConfigurationGroupKey")));
+//
+//	__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
+//			theGroup.second << std::endl;
+//
+//	theConfigurationManager_->loadConfigurationGroup(
+//			theGroup.first,
+//			theGroup.second, true);
+//
+//	//theDataManager_->configure();
 }
 
 //========================================================================================================================
@@ -782,7 +782,7 @@ void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theDataManager_->halt();
+	//theDataManager_->halt();
 }
 
 //========================================================================================================================
@@ -790,7 +790,7 @@ void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+	//theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
 }
 
 //========================================================================================================================
@@ -798,7 +798,7 @@ void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theDataManager_->stop();
+	//theDataManager_->stop();
 }
 
 
