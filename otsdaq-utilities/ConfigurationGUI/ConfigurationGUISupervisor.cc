@@ -1940,14 +1940,14 @@ try
 
 
 		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
-		ss << "\n\nSource column names were as follows:\n";
+		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char index = 'a';
 		for(auto &srcColName:srcColNames)
 			ss << "\n\t" <<index++ << ". " <<  srcColName;
 		ss << std::endl;
 
 		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
-		ss << "\n\nCurrent table column names are as follows:\n";
+		ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
 		index = 'a';
 		for(auto &destColName:destColNames)
 			ss << "\n\t" << index++ << ". " << destColName;

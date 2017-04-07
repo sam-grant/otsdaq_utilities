@@ -45,14 +45,36 @@ for p in ${REPO_DIR[@]}; do
     fi	   
 done
 
-#handle manual updates that should take place
-echo 
-echo "Updating USER_DATA path $USER_DATA"
-echo "cp $OTSDAQ_DIR/tools/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-cp $OTSDAQ_DIR/tools/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
 
-echo "cp $OTSDAQ_DIR/tutorial_data/NoGitData_tutorial_first_demo_v2/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
-cp $OTSDAQ_DIR/tutorial_data/NoGitData_tutorial_first_demo_v2/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
+#handle manual updates that should take place ONLY if it is UPDATING not committing
+if [ "x$1" == "x" ]; then
+
+	echo
+	echo "#######################################################################################################################" 
+	echo "#######################################################################################################################" 
+	echo "Updating USER_DATA path $USER_DATA,"
+	echo "based on the list in $USER_DATA/ServiceData/CoreTableInfoNames.dat."
+	echo "If CoreTableInfoNames.dat doesn't exists the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+	echo
+	
+	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
+		while read line; do    
+			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
+		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
+	else
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/
+	fi
+	
+	echo "cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
+
+fi
 
 echo
 echo "=================="
