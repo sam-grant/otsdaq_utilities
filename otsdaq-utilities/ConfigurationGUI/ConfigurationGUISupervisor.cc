@@ -917,7 +917,15 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
-		xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+		parentEl = xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+
+		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA)
+		{
+			__MOUT__ << ViewColumnInfo::TYPE_FIXED_CHOICE_DATA << std::endl;
+			std::vector<std::string> choices = t.getFixedChoices();
+			for(const auto &choice:choices)
+				xmldoc.addTextElementToParent("fixedChoice", choice, parentEl);
+		}
 	}
 	else
 	{
