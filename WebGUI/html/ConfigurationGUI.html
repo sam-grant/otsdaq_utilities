@@ -474,7 +474,7 @@
 			
 			//setupConfigCreator(); return
 			
-			setupConfigGroupTreeView("testFixedData","0"); return; //"46"); return;
+			//setupConfigGroupTreeView("testFixedData","0"); return; //"46"); return;
 			//setupConfigGroupTreeView("artdaqContext","5"); return;
 			
 			//setupGroupViewMode(); return;
@@ -2543,7 +2543,7 @@
 							"treeNode-Value-leafNode-ColumnName-" + nodeName +
 							"' " +
 							">";
-					
+										
 					if(valueType == "OnOff" || 
 							valueType == "YesNo" || 
 							valueType == "TrueFalse")
@@ -2565,8 +2565,9 @@
 					}
 					else if(valueType == "Timestamp")				
 						treeViewHandlerStr_ += getDateString(new Date((value|0)*1000));						
-					else
-						treeViewHandlerStr_ += value; 
+					else					
+						treeViewHandlerStr_ += value;
+											
 							
 					treeViewHandlerStr_ += 
 							"</div>" + //end treeNode Value value side div
@@ -7391,8 +7392,11 @@
 				}
 				else if(treeEditingNodeType_ == "value")
 				{
-					//multiline data or normal data
+					//if(treeEditingNodeType_ == "MultilineData")
+					//MultilineData and normal
+					//normal data
 					_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
+					
 				}
 				else if(treeEditingNodeType_ == "value-bool")
 				{
@@ -9592,10 +9596,10 @@
 
 			}			
 			
-			//add element to activeConfig div
-			//	because saving/loading table resets the display!
+			//add element to body
+			//	because saving/loading table resets the display and activeConfig!
 			//	(actually could be more 'proper' than appending to display)
-			document.getElementById("activeConfig").appendChild(el); 
+			document.body.appendChild(el); 
 			el.style.display = "block";
 		}
 		
