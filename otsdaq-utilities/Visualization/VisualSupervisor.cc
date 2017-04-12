@@ -758,31 +758,44 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-//	theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
-//	theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
-//
-//	std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
-//			SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-//									getParameters().getValue("ConfigurationGroupName"),
-//						ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-//						getParameters().getValue("ConfigurationGroupKey")));
-//
-//	__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
-//			theGroup.second << std::endl;
-//
-//	theConfigurationManager_->loadConfigurationGroup(
-//			theGroup.first,
-//			theGroup.second, true);
-//
-//	//theDataManager_->configure();
+	try
+	{
+		//theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
+		//theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
+
+		std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
+				SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+										getParameters().getValue("ConfigurationGroupName"),
+							ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+							getParameters().getValue("ConfigurationGroupKey")));
+
+		__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
+				theGroup.second << std::endl;
+
+		theConfigurationManager_->loadConfigurationGroup(
+				theGroup.first,
+				theGroup.second, true);
+
+		theDataManager_->configure();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
 void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
-	//theDataManager_->halt();
+	try
+	{
+		theDataManager_->halt();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
@@ -790,7 +803,14 @@ void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	//theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+	try
+	{
+		theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
@@ -798,7 +818,14 @@ void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	//theDataManager_->stop();
+	try
+	{
+		theDataManager_->stop();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 

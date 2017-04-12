@@ -254,11 +254,12 @@ ViewerRoot.createHud = function() {
 
 			locPath = path.length>DIR_BRW_HDR_MAX_SIZE?("..." + path.substr(path.length-DIR_BRW_HDR_MAX_SIZE+3)):path;
 			str += "<div id='ViewerRoot-hudDirBrowser-header'>";
-			str += "<a title='Refresh\n" + path + "' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
+			str += "<a title='Refresh\n" + path + "'  style='float:left'  href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				path + "\");'>" + locPath + "</a>";
 			str += "<a title='Change to Parent Directory' style='float:right' href='Javascript:ViewerRoot.hud.changeDirectory(\"" + 
 				getPath(currDirPtr[TUPLE_PARENT]) + "\");'> cd .. </a>";
 			str += "</div>";
+			str += "<div style='clear:both'></div>";
 		}
 				
 		for(var i=0;currDir[TUPLE_CONTENT] && i<currDir[TUPLE_CONTENT].length;++i)
