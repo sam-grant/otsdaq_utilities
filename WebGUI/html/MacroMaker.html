@@ -5,7 +5,8 @@
 		<title>MacroMaker</title>
 		
 		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css" />
-		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css">
+		<!--link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBoxForMacroMaker.css"-->
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 		
 		<style type="text/css">			
 		* {
@@ -544,7 +545,8 @@
 	
 	    <div class='mainBlock' id='fecList'>
 	        <h3>List of Available FEs</h3>
-	        <div id='list'></div>
+			<!-- position relative allows MultiSelectBox search box to show-up in the right place, because absolute positioning is relative to this div -->
+	        <div id='list' style='position:relative'></div>
 		</div>
 		
 		<div class='mainBlock' id='macroLib'>
