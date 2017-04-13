@@ -475,7 +475,7 @@
 			//setupConfigCreator(); return
 			
 			//setupConfigGroupTreeView("testFixedData","0"); return; //"46"); return;
-			//setupConfigGroupTreeView("artdaqContext","5"); return;
+			setupConfigGroupTreeView("artdaqFclTest","4"); return;
 			
 			//setupGroupViewMode(); return;
 			
@@ -7604,10 +7604,9 @@
 						}
 					}
 				}
-				else if(treeEditingNodeType_ == "table-newGroupRow" || 
-						treeEditingNodeType_ == "table-newUIDRow")
+				else if(treeEditingNodeType_ == "table-newGroupRow")
 				{
-					//coming from edit setup of group link "link-GroupID" or "link-UID"
+					//coming from edit setup of group link "link-GroupID"
 					var sel = _editingCellEl.getElementsByTagName("select")[0];					
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
@@ -7619,6 +7618,17 @@
 					sel = _editingCellEl.getElementsByTagName("select")[1];
 					if(sel.selectedIndex >= 0) //if valid
 						newValue += sel.options[sel.selectedIndex].value;
+				}
+				else if(treeEditingNodeType_ == "table-newUIDRow")
+				{
+					//coming from edit setup of group link "link-UID"
+					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
+					
+					//make new value the new UID 
+					newValue = prompt("Please enter the UID for the new record:");
+					if(newValue)
+						newValue = encodeURIComponent(newValue.trim());
 				}
 				else if(treeEditingNodeType_ == "table-newRow")
 					newValue = ""; //no value needed
