@@ -1245,6 +1245,9 @@ try
 				cfgView->setURIEncodedValue("1",row,col);
 			}
 			catch(...) {} //if not, ignore
+
+			if(type == "table-newUIDRow") //set UID value
+				cfgView->setURIEncodedValue(newValue,row,cfgView->getColUID());
 		}
 		else if(type == "table-newGroupRow")
 		{
