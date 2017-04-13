@@ -1232,7 +1232,9 @@
                 _parameterSetup.style.left = _MARGIN + _HUD_X + "px";  
                 _parameterSetup.style.top =  (h - _MARGIN - _HUD_Y  - 10 - //2 for border //-10 for padding
                 		(_parameterSetupMinimized?_PARAMETER_SETUP_MIN_HEIGHT:_PARAMETER_SETUP_MAX_HEIGHT)) + "px";
-                _parameterSetup.style.width = _PARAMETER_SETUP_WIDTH + "px";
+                _parameterSetup.style.width = (_parameterSetupMinimized?
+                                		_PARAMETER_SETUP_WIDTH + "px":			
+                						"auto");//changed to auto because it is hard to predict the width of system aliases  
                 _parameterSetup.style.height = 
 			    	(_parameterSetupMinimized?_PARAMETER_SETUP_MIN_HEIGHT:_PARAMETER_SETUP_MAX_HEIGHT) + "px";
                 _parameterSetup.style.display = "block";
