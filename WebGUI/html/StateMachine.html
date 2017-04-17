@@ -1133,6 +1133,100 @@
             //else if not over transition, return -1
             function getAltTransitionSelection(x,y) {
             	
+            	//find which neighbor mouse is closest to
+            	//	so that mouse move not directly over a state are valid
+            	
+            	
+            	//find closest grid state that is not current state
+            	
+            	//_currState
+            	
+            	//start in upper left of upper left state   
+            	//	and break into _ALT_GRID_WIDTH places
+            	var sx = _canvas.width/2 - (_ALT_GRID_WIDTH * _perimeterRadius)/2 
+            			+ _perimeterRadius/2 - _stateOvalRadius*2;
+            	//sx is equivalent to _MARGIN
+            	var sy = _canvas.height/2 - (_altStateGrid.length * _perimeterRadius)/2
+            			+ _perimeterRadius/2 - _stateOvalRadius;
+
+            	var c = (x - sx);
+            	var r = (y - sy);
+            	if(r < 0 || c < 0) return -1;//return none if off the grid
+
+            	c = c/_perimeterRadius;
+            	r = r/_perimeterRadius;
+            	
+            	//look at 4 neighbor states to mouse for closest that is not current state
+            	var mini, minj;
+            	var baser = r | 0, basec = c | 0; //floor
+            	
+            	//return none if off the grid
+            	if(baser >= _altStateGrid.length ||
+            			basec >= _ALT_GRID_WIDTH) return -1;
+            	
+            	var match = x-sx - basec*_perimeterRadius < _stateOvalRadius*4 && 
+            			y-sy - baser*_perimeterRadius < _stateOvalRadius*2;
+            	//Debug.log("match " + match);            	 
+            	
+            	//if(!match) return -1;
+            	
+            	//search curr transitions for one pointing to exact match state             	
+            	for(var i=0;match && i<_currStateTransArr.length;++i)
+            		if(_transitions[_currStateTransArr[i]][1] ==
+            				_altStateGrid[baser][basec])
+            			return i;
+            	
+
+            	
+
+            	//Debug.log("baser,c " + baser + "," + basec);
+            	var mind = -1;
+            	var d;
+            	for(var i=0;i<2;++i)
+            		for(var j=0;j<2;++j)
+            		{
+            			if(baser+i >= _altStateGrid.length ||
+            					basec+j >= _ALT_GRID_WIDTH || 
+            					_altStateGrid[baser+i][basec+j] == 
+            					_currState) continue; //skip current state
+            			
+            			d = (c - (basec+j))*(c - (basec+j)) + (r - (baser+i))*(r - (baser+i));
+
+//            			Debug.log("r,c " + r + "," + c);
+//        				Debug.log("d " + d);
+//        				Debug.log("s " + _stateNames[
+//													 _altStateGrid[baser+i][basec+j]]);
+        				
+            			if(mind == -1 ||
+            					d < mind)
+            			{
+//            				Debug.log("i,j " + i + "," + j);
+//            				Debug.log("d " + d);
+//            				Debug.log("NEW s " + _stateNames[
+//														 _altStateGrid[baser+i][basec+j]]);
+            				mind = d;
+            				mini = i;
+            				minj = j
+            			}
+            				
+            			
+            		}
+            	            	
+            	//Debug.log("MINi,j " + (baser+mini) + "," + (basec+minj));
+            	
+            	//search curr transitions for one pointing to that state             	
+            	for(var i=0;i<_currStateTransArr.length;++i)
+            		if(_transitions[_currStateTransArr[i]][1] ==
+            				_altStateGrid[baser+mini][basec+minj])
+            			return i;
+
+            	//Debug.log("_perimeterRadius " + _perimeterRadius);            	
+            	//Debug.log("x,y " + (x - sx) + "," + (y - sy));
+            	//Debug.log("r,c " + r + "," + c);
+            	
+            	return -1;
+            	
+            	
             	//start in upper left of upper left state   
             	//	and break into _ALT_GRID_WIDTH places
             	var sx = _canvas.width/2 - (_ALT_GRID_WIDTH * _perimeterRadius)/2 
