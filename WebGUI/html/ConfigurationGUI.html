@@ -475,7 +475,7 @@
 			//setupConfigCreator(); return
 			
 			//setupConfigGroupTreeView("testFixedData","0"); return; //"46"); return;
-			setupConfigGroupTreeView("artdaqFclTest","4"); return;
+			//setupConfigGroupTreeView("artdaqFclTest","4"); return;
 			
 			//setupGroupViewMode(); return;
 			
@@ -1315,6 +1315,11 @@
 			var backLinkStr = "";
 			var anchorTarget = "";
 			
+			var DEFAULT_groupNavContextMenuItems = [
+												   "Go-to Table View",
+												   "Open in new Desktop Window",
+												   "Open in new Browser Tab"];
+			
 			if(param)
 			{
 				Debug.log("param= " + param);
@@ -1458,6 +1463,8 @@
 			var replaceScreenJS,newWindowStr,newwindowJS,newtabJS;
 			var groupMemberNavContextMenuItemHandlers = [];
 			
+			str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'>";
+			
 			//Debug.log("CfgGUI specificConfigRequestHandler Member length " + configNames.length + " - " + configVersions.length);
 			for(var i=0;i<configNames.length && i<configVersions.length;++i)
 			{
@@ -1473,24 +1480,29 @@
 						configName + "\",\"" +
 						version + "\",\"" + backLinkStr + "\");";
 
-				str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row
+				str += "<tr>"; //open pre/comment table row
 				str += "<td>";
-				str += "<div style='width:500px'>"; //open pre-comment div
-				str += "<div style='float:left;'>";	//open name div
+				str += "<div style='float:left;margin-right:20px;'>";	//open name div
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
+				str += "</div>"; //close member name 
+
+				str += "</td><td>"; //open "curren version" link
 				
+				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + configName + "-currentVersionLink' " +
 						"href='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
 				str += "</label>";
-					
+
 				str += ")";
 				str += "</a>";
-				str += "</div>"; //close member header
+				str += "</div>"; //close member current version link
 				
+				str += "</td><td>"; //open table nav link
+
 				//add member nav goto link
 				{
 					//make context menu
@@ -1515,11 +1527,21 @@
 							"\"Configure\",\"\",\"" + 
 							newWindowStr + "\",false);";
 					groupMemberNavContextMenuItemHandlers.push(newtabJS);
-					
+
 					str += //start member Link div
-							"<div class='treeNode-Link' style='float:left;margin-top: 5px;'  " + 
+							"<div class='treeNode-Link' style='float:left;'  " + 
 							"onmousedown='" + // start link onmousedown	
-							"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+							"SimpleContextMenu.createMenu(["; //open array for items
+
+					//output item strings
+					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
+					{
+						if(j)
+							str += ",";
+						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
+					}
+					str += //end items and open array for item handlers
+							"]," +
 							"[";
 
 					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
@@ -1527,7 +1549,7 @@
 						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//need to escape all quotes by one more level
 						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
 						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
 						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
@@ -1546,28 +1568,29 @@
 							"<div class='gotoNavDiv'></div>" +			
 							"</div>"; //end nav Link					
 				}
-				
-				str += "</div>"; //close pre-comment div
+
 				str += "</td><td>";
-				
+
 				//add comment
 				//make comment html safe
 				configComment = configComment.replace(/</g, "&lt");
 				configComment = configComment.replace(/>/g, "&gt");
-				
+
 				str += "<div id='" + configName + "-comment' " +
 						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
 				if(configComment != _DEFAULT_COMMENT) //do not show if default
 					str += "//" + configComment;
-				
+
 				str += "</div>";
-				str += "</td></tr></table>"; //close pre/comment table row
+				str += "</td></tr>"; //close pre/comment table row
 				
+				str += "<tr><td colspan='4'>"
+
 				//add prompt and existing versions
 				str += "<div id='clearDiv'></div>";
 				str += "Click below to change "  + niceName(configName) + 
-					" Version for " + groupName + ":<br>";		
-				
+						" Version for " + groupName + ":<br>";		
+
 				str += "<div style='white-space:nowrap'>";
 				str += "Existing versions: ";
 				str += "<label id='" + configName + "-existingVersions'>";
@@ -1599,16 +1622,155 @@
 				}			
 				str += "</label>";	
 				str += "</div>";
-				
 
-				str += "<br><br>";
-				
 				//add div holding existing versions for modifications
 				str += "<div id='" + configName + "-versions' style='display:none'>";
 				str += cfgVersionStr;
 				str += "</div>";
+
+				str += "<br><br>";
+				str += "</td></tr>";
+
+//				str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row
+//				str += "<td>";
+//				str += "<div style='width:500px'>"; //open pre-comment div
+//				str += "<div style='float:left;'>";	//open name div
+//				str += "<a name='anchorTag-" + configName + "'></a>";
+//				str += "<b>" + niceName(configName) + "</b> ";
+//				
+//				str += "<a id='" + configName + "-currentVersionLink' " +
+//						"href='javascript:" + replaceScreenJS + "'>";
+//				str += "(Current version: ";
+//				str += "<label id='" + configName + "-currentVersion'>";					
+//				str +=	version;
+//				str += "</label>";
+//					
+//				str += ")";
+//				str += "</a>";
+//				str += "</div>"; //close member header
+//				
+//				//add member nav goto link
+//				{
+//					//make context menu
+//					groupMemberNavContextMenuItemHandlers = [];															 
+//					groupMemberNavContextMenuItemHandlers.push(replaceScreenJS);
+//
+//					//make new window link
+//					newWindowStr = "setupSpecificConfig(\"" + 
+//							configName + "\",\"" +
+//							version + "\")";
+//					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+//					newWindowStr = location.pathname + 
+//							location.search +
+//							"&newWindowOps=" + newWindowStr;
+//					newwindowJS = "DesktopContent.openNewWindow(" +
+//							"\"Configure\",\"\",\"" + 
+//							newWindowStr + "\",false);";
+//					groupMemberNavContextMenuItemHandlers.push(newwindowJS);
+//
+//					//make new tab link
+//					newtabJS = "DesktopContent.openNewBrowserTab(" +
+//							"\"Configure\",\"\",\"" + 
+//							newWindowStr + "\",false);";
+//					groupMemberNavContextMenuItemHandlers.push(newtabJS);
+//					
+//					str += //start member Link div
+//							"<div class='treeNode-Link' style='float:left;margin-top: 5px;'  " + 
+//							"onmousedown='" + // start link onmousedown	
+//							"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+//							"[";
+//
+//					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
+//					{
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//need to escape all quotes by one more level
+//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
+//						if(j != groupMemberNavContextMenuItemHandlers.length-1)
+//							str += ",";
+//					}
+//					str += "]" + //end treeNavContextMenuItemHandlers array
+//							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+//					str += 
+//							"' " + // end link onmousedown
+//							//"onmouseup='" + onmouseupJS + "' " +
+//							">" +	
+//							"<div class='gotoNavDiv'></div>" +			
+//							"</div>"; //end nav Link					
+//				}
+//				
+//				str += "</div>"; //close pre-comment div
+//				str += "</td><td>";
+//				
+//				//add comment
+//				//make comment html safe
+//				configComment = configComment.replace(/</g, "&lt");
+//				configComment = configComment.replace(/>/g, "&gt");
+//				
+//				str += "<div id='" + configName + "-comment' " +
+//						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
+//				if(configComment != _DEFAULT_COMMENT) //do not show if default
+//					str += "//" + configComment;
+//				
+//				str += "</div>";
+//				str += "</td></tr></table>"; //close pre/comment table row
+//				
+//				//add prompt and existing versions
+//				str += "<div id='clearDiv'></div>";
+//				str += "Click below to change "  + niceName(configName) + 
+//					" Version for " + groupName + ":<br>";		
+//				
+//				str += "<div style='white-space:nowrap'>";
+//				str += "Existing versions: ";
+//				str += "<label id='" + configName + "-existingVersions'>";
+//				cfgVersionStr = ""; //keep CSV list of versions for use by changeMemberVersionForConfigGroup
+//				//str += version;
+//				//cfgVersionStr = version + ",";
+//				configExistingVersions = configVersions[i].getElementsByTagName("ConfigurationExistingVersion");
+//				var existingVersion;
+//				for(var j=0;j<configExistingVersions.length;++j)
+//				{
+//					existingVersion = configExistingVersions[j].getAttribute("value");
+//					if((existingVersion|0) < 0) //skip temporary versions
+//						continue;
+//					if(existingVersion == version) //skip link
+//					{
+//						cfgVersionStr += version + ",";
+//						str += " " + version; continue;
+//					}
+//					str += " ";
+//					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
+//							groupName + "\",\"" + configName + "\"," + 
+//							"\"" + existingVersion + "\"";
+//					str += "); return false;' " +
+//							"title='Select v" + existingVersion + " of table &apos;" +
+//							configName + "&apos; to be a member of the &apos;" + groupName + "&apos; group.' " +
+//							">" + existingVersion;
+//					str += "</a>";
+//					cfgVersionStr += existingVersion + ",";
+//				}			
+//				str += "</label>";	
+//				str += "</div>";
+//				
+//
+//				str += "<br><br>";
+//				
+//				//add div holding existing versions for modifications
+//				str += "<div id='" + configName + "-versions' style='display:none'>";
+//				str += cfgVersionStr;
+//				str += "</div>";
+				
 				cfgNameStr += configName + ",";							
 			}
+			
+			str += "</table>";
+					
 			str += "</div>";
 			
 			str += "<div id='GroupMember-names' style='display:none'>";
@@ -7041,9 +7203,10 @@
 				} //end affected group for loop
 
 				allRequestsSent = true;
-				if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
+				if(numberOfRequests == 0) //no groups to save
 				{
-					Debug.log("There was nothing to do! How could this happen?", Debug.INFO_PRIORITY);
+					//this could happen if editing tables with no current active groups
+					Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
 
 					//kill popup dialog
 					var el = document.getElementById("popUpDialog"); 
