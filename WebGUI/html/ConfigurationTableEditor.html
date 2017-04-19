@@ -381,7 +381,7 @@
 			var colDataTypes = ["VARCHAR2","VARCHAR2","VARCHAR2","TIMESTAMP WITH TIMEZONE"];
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
 			
-			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes);
+			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes,0,"No description.");
 		}
 
 		//specificConfigRequestHandler
@@ -802,30 +802,47 @@
 			{
 				if(_editingCellEl == el) //if same cell do nothing
 					return false;
-				editCellOK(); //editCelleditCellCancel(); //if new cell cancel
+				editCellOK(); //editCellCancel(); //if new cell cancel
 			}			
+			
+			//NOTE!!!! 
+			// editCellOK() may redraw table, by calling setupTable().. 
+			//	this means el can not be trusted to still exist!!
+			// so use r,c to recover element
 			
 			//if column is Author or Timestamp, don't allow select
 			var tableEl = document.getElementById("SubSystemTable");
 			var rows = tableEl.getElementsByTagName("tr");
-			var cols = [];
-			//get col type cols (transposed or not)
+			var typeCell; //cols = []; //just need target column info, not all columns			
+			var colType;
+			
+			//get col type cell and tartget cell (transposed or not)
 			if(_tableIsTransposed)
 			{
 				//transpose all
-				var tcols;
-				for(var i=0;i<rows.length;++i)
-				{
-					tcols = rows[i].getElementsByTagName("td");					
-					cols[i] = tcols[_CONFIG_TYPE_ROW_OFFSET];
-				}
+				//var tcols;
+				//for(var i=0;i<rows.length;++i)
+				//{ i = c
+					//tcols = rows[i].getElementsByTagName("td");					
+					//cols[i] = tcols[_CONFIG_TYPE_ROW_OFFSET];
+						
+				//}
+				typeCell = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[_CONFIG_TYPE_ROW_OFFSET];
+				el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[r];
+				if(!el) //if failed try header cells
+					el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("th")[r];
 			}
 			else
 			{
-				cols = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td");
+				//cols = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td");
+				typeCell = rows[_CONFIG_TYPE_ROW_OFFSET].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+c];
+				el = rows[r].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+c];
+				if(!el) //if failed try header cells
+					el = rows[r].getElementsByTagName("th")[_CONFIG_DATA_COL_OFFSET+c];
 			}
 			
-			var colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+			//colType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
+			colType = typeCell.childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
 			if(colType == "Author" || 
 					colType == "Timestamp"|| 
 					colType == "Comment" )//|| 
@@ -837,7 +854,8 @@
 			_editingCellEl = el;
 			_editingCellPos = [r,c];			
 
-			var colDataType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
+			//var colDataType = cols[_CONFIG_DATA_COL_OFFSET+c].childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
+			var colDataType = typeCell.childNodes[0].innerHTML.split('>')[1]; //type text is in a div for smaller font
 			
 			_editingCellElOldValue = el.innerHTML;
 			
@@ -1067,42 +1085,50 @@
 			
 			var str;
 			
-			if(r == _CONFIG_TYPE_ROW_OFFSET) //type and dataType
+			try
 			{
-				Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c);
-				//get type and data type from select boxes (and input field for link ID)
-				var sel = document.getElementById("selectCellTypeSelect");				
-				var colType = sel.selectedIndex?sel.options[sel.selectedIndex].value:
-						sel.value; //the else is case should be UID
-				sel = document.getElementById("selectCellDataTypeSelect");
-				var colDataType = sel.options[sel.selectedIndex].value;
-				
-				if(colType != "UID")
+				if(r == _CONFIG_TYPE_ROW_OFFSET) //type and dataType
 				{
-					var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
-							
-					//if child link special type, append special type ID
-					for(var i=0;i<specTypeArray.length;++i)
-						if(colType == specTypeArray[i])
-							colType += "-" + document.getElementById("selectCellSpecTypeID").value;
+					Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c);
+					//get type and data type from select boxes (and input field for link ID)
+					var sel = document.getElementById("selectCellTypeSelect");				
+					var colType = sel.selectedIndex?sel.options[sel.selectedIndex].value:
+							sel.value; //the else is case should be UID
+					sel = document.getElementById("selectCellDataTypeSelect");
+					var colDataType = sel.options[sel.selectedIndex].value;
+					
+					if(colType != "UID")
+					{
+						var specTypeArray = ["GroupID","ChildLink","ChildLinkUID","ChildLinkGroupID"];
+								
+						//if child link special type, append special type ID
+						for(var i=0;i<specTypeArray.length;++i)
+							if(colType == specTypeArray[i])
+								colType += "-" + document.getElementById("selectCellSpecTypeID").value;
+					}
+					
+					Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
+							colType + "," + colDataType);
+					
+					_colTypeArr[c] = colType;
+					_colDataTypeArr[c] = colDataType;
+					setupTable();				
+				}			
+				else //colHdr row
+				{
+					Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
+							" = " + _editingCellEl.getElementsByTagName("input")[0].value);
+					str = _editingCellEl.getElementsByTagName("input")[0].value;
+					_colHdrArr[c] = str;
+					_editingCellEl.innerHTML = "";
+					_editingCellEl.appendChild(document.createTextNode(str));				
 				}
-				
-				Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
-						colType + "," + colDataType);
-				
-				_colTypeArr[c] = colType;
-				_colDataTypeArr[c] = colDataType;
-				setupTable();				
-			}			
-			else //colHdr row
-			{
-				Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c + 
-						" = " + _editingCellEl.getElementsByTagName("input")[0].value);
-				str = _editingCellEl.getElementsByTagName("input")[0].value;
-				_colHdrArr[c] = str;
-				_editingCellEl.innerHTML = "";
-				_editingCellEl.appendChild(document.createTextNode(str));				
 			}
+			catch(err)
+			{
+				Debug.log("Error was caught! Error: " + err, Debug.HIGH_PRIORITY);
+			}
+			
 
 			_editingCell = false;
 			_editingCellEl = 0;
@@ -1432,7 +1458,7 @@
 	<h1>Configuration Table Editor</h1>
 
 	<div style='width:550px'>	
-	<a href='javascript:init()'>Refresh</a> 	&nbsp;&nbsp;
+	<a href='javascript:init()'>Refresh Window</a> 	&nbsp;&nbsp;
 	<a href='javascript:setupEmptyTable()'>Clear Table</a> 	&nbsp;&nbsp;
 
 	<a style='margin-left:300px' target="_blank" 

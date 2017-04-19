@@ -114,6 +114,7 @@ throw (xgi::exception::Exception)
 	//Commands
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
+	// 	restartOTS
 	//	getColumnTypes
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
@@ -129,6 +130,7 @@ throw (xgi::exception::Exception)
 	//	getSpecificConfiguration
 	//	saveSpecificConfiguration
 	//	clearConfigurationTemporaryVersions
+	//	clearConfigurationCachedVersions
 	//	getTreeView
 	//	activateConfigGroup
 	//	getActiveConfigGroups
@@ -211,6 +213,30 @@ throw (xgi::exception::Exception)
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		__MOUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
+	}
+	else if(Command == "launchOTS")
+	{
+		__MOUT_WARN__ << "launchOTS command received! Launching... " << std::endl;
+
+		FILE *fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+				"/StartOTS_action.cmd").c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"LAUNCH_OTS");
+			fclose(fp);
+		}
+	}
+	else if(Command == "launchWiz")
+	{
+		__MOUT_WARN__ << "launchWiz command received! Launching... " << std::endl;
+
+		FILE *fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+				"/StartOTS_action.cmd").c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"LAUNCH_WIZ");
+			fclose(fp);
+		}
 	}
 	else if(Command == "getColumnTypes")
 	{
@@ -423,6 +449,24 @@ throw (xgi::exception::Exception)
 		{
 			__MOUT__ << "Error detected!\n\n "<< std::endl;
 			xmldoc.addTextElementToData("Error", "Error clearing temporary views! ");
+		}
+	}
+	else if(Command == "clearConfigurationCachedVersions")
+	{
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		__MOUT__ << "configName: " << configName << std::endl;
+
+		try { cfgMgr->clearCachedVersions(configName);}
+		catch(std::runtime_error &e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing cached views!\n " +
+					std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!\n\n "<< std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing cached views! ");
 		}
 	}
 	else if(Command == "getTreeView")
