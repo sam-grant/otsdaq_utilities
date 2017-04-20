@@ -131,7 +131,7 @@
 			text-align: right;
 			vertical-align: top;
 		}
-		#tableDetails td, #tableDetails a, #tableDetails label, #tableDetails div, #tableDetails b {
+		#tableDetails td, #tableDetails a, #tableDetails label, #tableDetails div {
 			font-size: 14px;
 			text-align: left;
 			vertical-align: top;
@@ -165,34 +165,41 @@
 	
 	<script>		
 		
-		//Start by offering two views (System Configurations) (Sub-Configurations)
-		//	and default to System Configurations
-		//
-		//High Level Goals:
-		//	- Allow to select a System Config to edit or start anew (all sub-config versions are dont cares)
-		//		- Be able to edit the versions associated with the System Config while 
-		//		viewing other System Configs for inspiration
-		//	- Allow to select a sub-configuration to edit or start anew (from mock-up)
-		//		- Be able to edit a sub-config, and view others to copy chunks from them
-		//
-	
-	
-		//In System Configuration mode:
-		//	List the existing configuration aliases
-		//		with possibly ability to scroll through associated sub-configs
-		//
-	
-		//In Sub-Configuration mode:
-		//	List the existing versions
-		//		with possibly scrolling information about the version (# of rows, lastuseddate, etc.)
-		//	Some Sub-Configurations will need special views:
-		//		ability to add chips (of certain types) to system config...
-		//
-	
-		var _MAX_CHUNK_SIZE = 100; //100 rows per page
-		var _CONFIG_DATA_ROW_OFFSET = 2;
-		var _CONFIG_DATA_COL_OFFSET = 1;
+		//	Description of Functionality/Behavior:
+		//	
+		//	GET parameters:
+		//		<baseTable> = Records from this table are the target of this GUI, e.g. “FEInterfaceConfiguration”
+		//		<subLevelGrouping> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+		//		<fieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+		//		
+		//	- Requires user to have LOCK
+		//	
+		//	- Split window into two panes: Left and Right; Left is fixed width and hideable.	
+		//	
+		//	- Left Pane:
+		//		* Fixed width, vertical auto scroll, hideable.
+		//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
+		//		* Filtering:
+		//		 	- AND/OR option if multiple sublevels
+		//			- multi-select for each <subLevelGrouping>
+		//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
+		//		* Record UID Selector:
+		//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
+		//		* Alternatively can represent the detectors as squares (with mouse over UID names)
+		//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+		//					
+		//	- Right Pane:
+		//		* Show fields that are common based on SubLevelGrouping filters
+		//			- E.g. if *,* then can only show SlowControls fields
+		//			- Challenge: show all common fields, even through links
+		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked 
+		//		
+		//	- Save functionality should be same as saving tree	
+		//		* If admin, give options to target a certain system alias.. Etc.
+		//		* Else assume saving to currently active groups
 
+		
+		
 		var _DEFAULT_COMMENT = "No comment.";
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
@@ -206,16 +213,6 @@
 				"<a class='popUpOkCancel' onclick='javascript:editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
-		
-		var _OTS_RELAUNCH_STR = 
-				"You may want to relaunch ots in " +
-				"<a href='#' onclick='javascript:" +
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchOTS\")" +
-				"'>Normal Mode</a>" +
-				" or " +
-				"<a href='#' onclick='javascript:" +
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\")" +
-				"'>Wiz Mode</a>.";
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
@@ -225,7 +222,7 @@
 		var _version;
 		var _dataOffset = 0;
 		var _lastFindRow, _lastFindCol;
-		var _cachedTableComment, _cachedGroupComment;
+		var _cachedTableComment;
 		
 		var _firstTimeSilentActive = true;
 		var _useTableLinkDropdown = true;		
@@ -349,7 +346,7 @@
 			//addRow(r)										//add row at destination with default values populated
 			//deleteRow(r)									//delete row at destination
 		
-			//popUpClearVersionsPrompt(clearTemporary,backLinkStr)
+			//popUpClearTemporaryVersionsPrompt(backLinkStr)
 			//popUpSaveNewTableForm()
 			//popUpGroupAliasForm(isLatest, myAlias)
 			//popUpVersionAliasForm()
@@ -436,6 +433,18 @@
 			//be careful to not override the window.onmousemove DesktopContent action
 			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler); 
 			
+			//setupSpecificConfig("FEConfiguration","-1",""); return;
+			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+
+			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
+			
+			//setupConfigCreator(); return
+			
+			//setupConfigGroupTreeView("artdaqFclTest","6"); return; //"46"); return;
+			//setupConfigGroupTreeView("artdaqContext","5"); return;
+			
+			//setupGroupViewMode(); return;
+
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
 					function (req) {				
@@ -474,27 +483,6 @@
 					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 				);
 			
-
-			//============================
-			//for debugging
-			
-			//setupSpecificConfig("FEConfiguration","-1",""); return;
-			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
-
-			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
-			
-			//setupConfigCreator(); return
-			
-			//setupConfigGroupTreeView("testFixedData","0"); return; //"46"); return;
-			//setupConfigGroupTreeView("artdaqFclTest","4"); return;
-			
-			//setupGroupViewMode(); return;
-			
-			//============================
-
-
-			
-			
 			//get command string if opening a new window
 			var cmdStr = DesktopContent.getParameter(1); //from  location.search
 			if(cmdStr && cmdStr != "")
@@ -509,8 +497,6 @@
 			else
 				setupSystemViewMode();
 			
-			
-
 		}	
 		
 		//return name without "Configuration" unless it is start of the name 
@@ -685,9 +671,6 @@
 			var backLinkStr;
 
 			backLinkStr = "setupSystemViewMode();"; 
-			
-			str += _OTS_RELAUNCH_STR + "<br>";
-			
 			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
 					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
@@ -1329,11 +1312,6 @@
 			var backLinkStr = "";
 			var anchorTarget = "";
 			
-			var DEFAULT_groupNavContextMenuItems = [
-												   "Go-to Table View",
-												   "Open in new Desktop Window",
-												   "Open in new Browser Tab"];
-			
 			if(param)
 			{
 				Debug.log("param= " + param);
@@ -1414,28 +1392,6 @@
 					">";
 			str += "Alias</a><br>";
 			
-			//create group details
-			{
-				str += "<div id='groupDetails' style='display:block'>Group Details:";
-				var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");				
-				_cachedGroupComment = groupComment;
-				var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-				var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
-				groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
-				str += "<table border='0' style='" +
-						"border: 1px solid #9c5e5e;" +
-						"margin: 5px 0 5px 30px;" +
-						"background-color: #d2c1c1;" +
-						"'>";
-				str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
-				str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
-				str += "<tr><th>Comment:</th><td class='underlineRow'>" + 
-						groupComment.replace(/\n/g , "<br>") + "</td></tr>";
-				str += "</table>"
-						str += "</div>";
-
-				str += "<div id='clearDiv'></div>";
-			}
 			
 			if(historicalKeys.length)
 			{
@@ -1499,8 +1455,6 @@
 			var replaceScreenJS,newWindowStr,newwindowJS,newtabJS;
 			var groupMemberNavContextMenuItemHandlers = [];
 			
-			str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'>";
-			
 			//Debug.log("CfgGUI specificConfigRequestHandler Member length " + configNames.length + " - " + configVersions.length);
 			for(var i=0;i<configNames.length && i<configVersions.length;++i)
 			{
@@ -1516,29 +1470,24 @@
 						configName + "\",\"" +
 						version + "\",\"" + backLinkStr + "\");";
 
-				str += "<tr>"; //open pre/comment table row
+				str += "<table cellpadding='0' cellspacing='0' border='0' style='float:left;'><tr>"; //open pre/comment table row
 				str += "<td>";
-				str += "<div style='float:left;margin-right:20px;'>";	//open name div
+				str += "<div style='width:500px'>"; //open pre-comment div
+				str += "<div style='float:left;'>";	//open name div
 				str += "<a name='anchorTag-" + configName + "'></a>";
 				str += "<b>" + niceName(configName) + "</b> ";
-				str += "</div>"; //close member name 
-
-				str += "</td><td style='background-color: rgb(218, 194, 194);'>"; //open "curren version" link
 				
-				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + configName + "-currentVersionLink' " +
 						"href='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str +=	version;
 				str += "</label>";
-
+					
 				str += ")";
 				str += "</a>";
-				str += "</div>"; //close member current version link
+				str += "</div>"; //close member header
 				
-				str += "</td><td>"; //open table nav link
-
 				//add member nav goto link
 				{
 					//make context menu
@@ -1563,21 +1512,11 @@
 							"\"Configure\",\"\",\"" + 
 							newWindowStr + "\",false);";
 					groupMemberNavContextMenuItemHandlers.push(newtabJS);
-
+					
 					str += //start member Link div
-							"<div class='treeNode-Link' style='float:left;'  " + 
+							"<div class='treeNode-Link' style='float:left;margin-top: 5px;'  " + 
 							"onmousedown='" + // start link onmousedown	
-							"SimpleContextMenu.createMenu(["; //open array for items
-
-					//output item strings
-					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
-					{
-						if(j)
-							str += ",";
-						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
-					}
-					str += //end items and open array for item handlers
-							"]," +
+							"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
 							"[";
 
 					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
@@ -1585,7 +1524,7 @@
 						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//need to escape all quotes by one more level
 						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
 						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
 						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
 						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
@@ -1604,29 +1543,28 @@
 							"<div class='gotoNavDiv'></div>" +			
 							"</div>"; //end nav Link					
 				}
-
+				
+				str += "</div>"; //close pre-comment div
 				str += "</td><td>";
-
+				
 				//add comment
 				//make comment html safe
 				configComment = configComment.replace(/</g, "&lt");
 				configComment = configComment.replace(/>/g, "&gt");
-
+				
 				str += "<div id='" + configName + "-comment' " +
 						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
 				if(configComment != _DEFAULT_COMMENT) //do not show if default
 					str += "//" + configComment;
-
-				str += "</div>";
-				str += "</td></tr>"; //close pre/comment table row
 				
-				str += "<tr><td colspan='4'>"
-
+				str += "</div>";
+				str += "</td></tr></table>"; //close pre/comment table row
+				
 				//add prompt and existing versions
 				str += "<div id='clearDiv'></div>";
 				str += "Click below to change "  + niceName(configName) + 
-						" Version for " + groupName + ":<br>";		
-
+					" Version for " + groupName + ":<br>";		
+				
 				str += "<div style='white-space:nowrap'>";
 				str += "Existing versions: ";
 				str += "<label id='" + configName + "-existingVersions'>";
@@ -1658,20 +1596,16 @@
 				}			
 				str += "</label>";	
 				str += "</div>";
+				
 
+				str += "<br><br>";
+				
 				//add div holding existing versions for modifications
 				str += "<div id='" + configName + "-versions' style='display:none'>";
 				str += cfgVersionStr;
 				str += "</div>";
-
-				str += "<br>";
-				str += "</td></tr>";
-				
 				cfgNameStr += configName + ",";							
 			}
-			
-			str += "</table>";
-					
 			str += "</div>";
 			
 			str += "<div id='GroupMember-names' style='display:none'>";
@@ -1829,25 +1763,11 @@
 			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
 					"; return false;'>Refresh</a>";
 
-			{
-				//clear cached versions
-				var clearLinkStr = "popUpClearVersionsPrompt(0,\"" + 
-						backLinkStr + "\");"; 
-				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				str += "<a href='#' onclick='javascript:" + clearLinkStr + 
-						"; return false;'>Clear Cache</a>";
-			}
-
-			{
-				//clear temporary versions
-				var clearLinkStr = "popUpClearVersionsPrompt(1,\"" + 
-						backLinkStr + "\");"; 
-				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				str += "<a href='#' onclick='javascript:" + clearLinkStr + 
-						"; return false;'>Clear Temporary Versions</a>";
-			}
-
-			
+			var clearTempLinkStr = "popUpClearTemporaryVersionsPrompt(\"" + 
+					backLinkStr + "\");"; 
+			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+			str += "<a href='#' onclick='javascript:" + clearTempLinkStr + 
+					"; return false;'>Clear Temporary Versions</a>";		
 			
 			str += "<br><br>";
 			
@@ -1978,195 +1898,93 @@
 			str += "<table><tr><td>";
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
-			
-			
-			//create structure for call to createTableViewOutputStr
+			str += "<tr>";
+			str += "<td>"; //row
+			str += "</td>";			
+			for(var c=0;c<colHdrs.length;++c)
 			{
-				var colIsBoolArray 	= [];				
-				var cols = [];
-				var typeDivStr;
+				str += "<td><div style='font-size:12px' title='";		
+				str += colTypes[c].getAttribute("value");
+				str += " &#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "'>";
+				str += colTypes[c].getAttribute("value");
+				str += "<br>&#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
+				str += "</div></td>";					
 				
-				//add types (first column is for row numbers)
-				//	and fill colIsBoolArray
+			}
+			str += "</tr>";
+			str += "<tr>";
+			str += "<th>Row</th>"; //insert row index column
+			for(var c=0;c<colHdrs.length;++c)
+			{
+				str += "<th>";
+				str += colHdrs[c].getAttribute("value");
+				str += "</th>";					
+				
+			}
+			str += "</tr>";
+			
+			{
+				var boolTypes =  ["OnOff","TrueFalse","YesNo"];
+				var boolTypeTrues =  ["On","True","Yes"];
+				var isStatusType;
+				var val;
+				
+				for(var r=0;r<rows.length;++r)
 				{
-					var boolTypes 		= ["OnOff","TrueFalse","YesNo"];
-					var colType,colDataType,isStatusType;
+					var rowEntries = rows[r].getElementsByTagName("Entry");
+					str += "<tr>";
+					str += "<td>" + (_dataOffset + r);	//insert row index column
 					
-					cols.push([]);
-					//init pre-data columns
-					for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
-					{
-						cols[cols.length-1].push("");
-						colIsBoolArray.push(false);	
-					}
+					//add +/- row controls
+					str += "<br><a href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+					str += "+";
+					str += "</a>";
+					str += "/<a href='#' onclick='javascript:deleteRow(" + r + "); return false;'>";
+					str += "-";
+					str += "</a>";
+					
+					str += "</td>"; 
+					
 					for(var c=0;c<colHdrs.length;++c)
 					{
-						colType = colTypes[c].getAttribute("value");
-						colDataType = colDataTypes[c].getAttribute("value");
+						val = rowEntries[c].getAttribute("value");
 						
-						typeDivStr = "";
-						typeDivStr += "<div style='font-size:12px' title='";		
-						typeDivStr += colType;
-						typeDivStr += " &#60;" + colDataType + "&#62;";
-						typeDivStr += "'>";
-						typeDivStr += colType;
-						typeDivStr += "<br>&#60;" + colDataType + "&#62;";
-						typeDivStr += "</div>";		
-	
-						cols[cols.length-1].push(typeDivStr);	
-						
+						//determine if value is of type status
 						isStatusType = false;
 						for(var i=0;i<boolTypes.length;++i)
 							if(boolTypes[i] == 
-									colType)
+									colTypes[c].getAttribute("value"))
 							{
 								isStatusType = true; break;
 							}
-						colIsBoolArray.push(isStatusType);
-					}
-				}
-					
-				//add headers (first column is for row numbers)
-				cols.push([]);
-				//init pre-data columns
-				for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
-					cols[cols.length-1].push("");	
-				for(var c=0;c<colHdrs.length;++c)
-					cols[cols.length-1].push(colHdrs[c].getAttribute("value"));
-				
-				//add data
-				{
-					var rowEntries;
-					for(var r=0;r<rows.length;++r)
-					{
-						rowEntries = rows[r].getElementsByTagName("Entry");	
-
-						cols.push([]);
-						for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
-							cols[cols.length-1].push("");	
 						
-						for(var c=0;c<colHdrs.length;++c)
-							cols[cols.length-1].push(rowEntries[c].getAttribute("value"));
+						str += "<td onmouseup='selectThisCell("+r+","+c+",this,event);' ";
+						
+						if(isStatusType)
+						{
+							//determine if true value
+							var isTrue = false;
+							for(var i=0;i<boolTypeTrues.length;++i)
+								if(boolTypeTrues[i] == val)
+								{
+									isTrue = true; break;
+								}
+							str += "style='background-color:";
+							str += (isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;
+							str += "'";
+						}
+								
+						str += ">";
+						
+						str += val
+						
+						str += "</td>";					
+						
 					}
+					str += "</tr>";
 				}
-				
-				var transposeOutput = false;
-				var colsIsArray = true;	
-				if(_tableViewIsTransposed) //check if need to transpose view
-				{
-					//invert so it can be inverted again in transposeTableView()
-					_tableViewIsTransposed = !_tableViewIsTransposed; 
-					transposeOutput = true;			
-					str += createTableViewOutputStr(cols,colIsBoolArray,transposeOutput,colsIsArray);
-					_tableViewIsTransposed = !_tableViewIsTransposed; 
-				}
-				else
-					str += createTableViewOutputStr(cols,colIsBoolArray,transposeOutput,colsIsArray);
 			}
-			
-//			str += "<tr>";
-//			str += "<td>"; //row
-//			str += "</td>";			
-//			
-//			var uidCol;
-//			for(var c=0;c<colHdrs.length;++c)
-//			{
-//				str += "<td><div style='font-size:12px' title='";		
-//				str += colTypes[c].getAttribute("value");
-//				if(colTypes[c].getAttribute("value") == "UID")
-//					uidCol = c;
-//				str += " &#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
-//				str += "'>";
-//				str += colTypes[c].getAttribute("value");
-//				str += "<br>&#60;" + colDataTypes[c].getAttribute("value") + "&#62;";
-//				str += "</div></td>";	
-//			}
-//			if(uidCol === undefined) 
-//				Debug.log("Could not find UID column!",Debug.HIGH_PRIORITY);
-//			
-//			str += "</tr>";
-//			str += "<tr>";
-//			str += "<th>Row</th>"; //insert row index column
-//			for(var c=0;c<colHdrs.length;++c)
-//			{
-//				str += "<th>";
-//				str += colHdrs[c].getAttribute("value");
-//				str += "</th>";					
-//				
-//			}
-//			str += "</tr>";
-//			
-			//must exactly match createTableViewOutputStr() !!
-			//			{
-			//				var boolTypes =  ["OnOff","TrueFalse","YesNo"];
-			//				var boolTypeTrues =  ["On","True","Yes"];
-			//				var isStatusType;
-			//				var val;
-			//				var uidVal;
-			//				
-			//				for(var r=0;r<rows.length;++r)
-			//				{
-			//					var rowEntries = rows[r].getElementsByTagName("Entry");
-			//					str += "<tr>";
-			//					str += "<td>" + (_dataOffset + r);	//insert row index column
-			//					
-			//					//add +/- row controls
-			//					str += "<br><a href='#' onclick='javascript:addRow(" + r + "); return false;'>";
-			//					str += "+";
-			//					str += "</a>";
-			//					str += "/<a href='#' onclick='javascript:deleteRow(" + r + "); return false;'>";
-			//					str += "-";
-			//					str += "</a>";
-			//					
-			//					str += "</td>"; 
-			//					
-			//					//get uidVal					
-			//					uidVal = rowEntries[uidCol].getAttribute("value");
-			//					
-			//					for(var c=0;c<colHdrs.length;++c)
-			//					{
-			//						val = rowEntries[c].getAttribute("value");
-			//						
-			//						//determine if value is of type status
-			//						isStatusType = false;
-			//						for(var i=0;i<boolTypes.length;++i)
-			//							if(boolTypes[i] == 
-			//									colTypes[c].getAttribute("value"))
-			//							{
-			//								isStatusType = true; break;
-			//							}
-			//						
-			//						str += "<td onmouseup='selectThisCell("+r+","+c+",this,event);' ";
-			//						
-			//						if(isStatusType)
-			//						{
-			//							//determine if true value
-			//							var isTrue = false;
-			//							for(var i=0;i<boolTypeTrues.length;++i)
-			//								if(boolTypeTrues[i] == val)
-			//								{
-			//									isTrue = true; break;
-			//								}
-			//							str += "style='background-color:";
-			//							str += (isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;
-			//							str += "'";
-			//						}
-			//								
-			//						str += " title='UID : " + uidVal + "\n" + 
-			//								colHdrs[c].getAttribute("value") + 
-			//								" : " + 
-			//								(val.replace(/"/g, "&quot;").replace(/'/g, "&apos;")) +
-			//								"' ";
-			//						str += ">";
-			//						
-			//						str += val
-			//						
-			//						str += "</td>";					
-			//						
-			//					}
-			//					str += "</tr>";
-			//				}
-			//			}
 				
 			str += "</table>";
 			
@@ -2215,12 +2033,12 @@
 			else if(showSaveButtons)
 				versionHasChanged();
 			
-//			if(_tableViewIsTransposed) //check if need to transpose view
-//			{
-//				//invert so it can be inverted again in transposeTableView()
-//				_tableViewIsTransposed = !_tableViewIsTransposed; 
-//				transposeTableView();
-//			}
+			if(_tableViewIsTransposed) //check if need to transpose view
+			{
+				//invert so it can be inverted again in transposeTableView()
+				_tableViewIsTransposed = !_tableViewIsTransposed; 
+				transposeTableView();
+			}
 			
 			toggleTableDetails(_showTableDetails);
 		}
@@ -2238,7 +2056,30 @@
 			el.style.display = _showTableDetails?"block":"none";
 		}
 		
-		
+		//ConfigurationAPI.getDateString ~~
+		var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+		var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+		function ConfigurationAPI.getDateString(date)
+		{
+			var dateStr = "";
+
+			dateStr += dayArr_[date.getDay()];
+			dateStr += " ";
+			dateStr += monthArr_[date.getMonth()];
+			dateStr += " ";
+			dateStr += date.getDate();
+			dateStr += " ";
+			dateStr += date.getHours();
+			dateStr += ":";
+			dateStr += ((date.getMinutes()<10)?"0":"") + date.getMinutes();
+			dateStr += ":";
+			dateStr += ((date.getSeconds()<10)?"0":"") + date.getSeconds();
+			dateStr += " ";
+			dateStr += date.getFullYear();
+			dateStr += " ";
+			dateStr += date.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+			return dateStr;
+		}
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.
@@ -2636,22 +2477,6 @@
 							"</div>" +
 							"<div class='treeNode-Connection'></div>";																	
 					
-					if(valueType == "FixedChoiceData")
-					{
-						//add CSV choices div
-						treeViewHandlerStr_ += 
-								"<div class='treeNode-FixedChoice-CSV' style='display:none' " + 
-								"id='treeNode-FixedChoice-CSV-" +
-								( depth + "-" + uid ) + "'>";
-						
-						var choices = nodes[i].children[1].children; //xml elements
-						for(var j=0;j<choices.length;++j)
-						{
-							if(j) treeViewHandlerStr_ += ",";
-							treeViewHandlerStr_ += choices[j].getAttribute("value");
-						}
-						treeViewHandlerStr_ += "</div>";
-					}
 					
 					//normal value node and edit icon
 					{
@@ -2699,7 +2524,7 @@
 							"treeNode-Value-leafNode-ColumnName-" + nodeName +
 							"' " +
 							">";
-										
+					
 					if(valueType == "OnOff" || 
 							valueType == "YesNo" || 
 							valueType == "TrueFalse")
@@ -2721,9 +2546,8 @@
 					}
 					else if(valueType == "Timestamp")				
 						treeViewHandlerStr_ += ConfigurationAPI.getDateString(new Date((value|0)*1000));						
-					else					
-						treeViewHandlerStr_ += value;
-											
+					else
+						treeViewHandlerStr_ += value; 
 							
 					treeViewHandlerStr_ += 
 							"</div>" + //end treeNode Value value side div
@@ -3802,9 +3626,7 @@
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
 				{
-					Debug.log(err,Debug.HIGH_PRIORITY);				
-					
-					Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
+					Debug.log(err,Debug.HIGH_PRIORITY);
 
 					//try to find group name and key
 					//	if found, show activate with warnings button
@@ -3887,8 +3709,6 @@
 						"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
 						name + "(" + key + ") w/warnings ignored</u>' " +
 						"at the top of the page.",Debug.HIGH_PRIORITY);
-				Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
-				
 			}
 			else 
 			{
@@ -3904,8 +3724,6 @@
 					else //must have been an activation
 						Debug.log("Note: There was a successful activation of a group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
-
-					Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				}
 				else
 					_firstTimeSilentActive = false;
@@ -4729,17 +4547,14 @@
 			if(el.innerHTML != "") { el.innerHTML = ""; return; } //hide if already shown
 			
 			var str = "";
-			str += "Source starting row or Source Version... ";
-			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:0;width:" + 
-					(el.offsetWidth-6) + "px; height:" + (17) + "px' value='0'>";
+			str += "Source starting row... ";
+			str += "<input type='text' id='copyAndMoveRowsSrc' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='0'>";
 			str += "<br>";
 			str += "Number of rows to Copy or Move... ";
-			str += "<input type='text' id='copyAndMoveRowsSrcCount' style='margin:0;width:" +  
-					(el.offsetWidth-6) + "px; height:" + (17) + "px' value='1'>";
+			str += "<input type='text' id='copyAndMoveRowsSrcCount' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='1'>";
 			str += "<br>";
 			str += "Destination row (-1 for new last row)... ";
-			str += "<input type='text' id='copyAndMoveRowsDest' style='margin:0;width:" +  
-					(el.offsetWidth-6) + "px; height:" + (17) + "px' value='-1'>";
+			str += "<input type='text' id='copyAndMoveRowsDest' style='margin:-4px -2px -4px -1px;width:" + (el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='-1'>";
 
 			//make div for translating innerHTML and value
 			str += "<div id='copyAndMoveRowsHTML' style='display:none'></div>";
@@ -5376,47 +5191,6 @@
 					str += "</select>";
 					if(optionIndex == -1) optionIndex = 0; //use False option by default					
 				}
-				else if(colType == "FixedChoiceData")
-				{
-					_editingCellElOldValue = el.textContent;
-					treeEditingNodeInitValue_ = _editingCellElOldValue;
-					
-					str += "<select  onkeydown='keyHandler(event)' " +
-							"onmouseup='event.stopPropagation();' " +
-							"onclick='event.stopPropagation();' " +
-							"style='margin:-4px -2px -4px -1px; height:" + (el.offsetHeight+6) + "px'>";
-
-					//default value is assumed in list
-
-					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
-							idString);
-					var choices = vel.textContent.split(',');
-					
-					for(var i=0;i<choices.length;++i)
-					{			
-						str += "<option>";
-						str += decodeURIComponent(choices[i]);	//can display however
-						str += "</option>";
-						if(decodeURIComponent(choices[i]) 
-								== _editingCellElOldValue)
-							optionIndex = i; //get starting sel index
-					}				
-					str += "</select>";	
-				}
-				else if(colType == "MultilineData")
-				{
-					_editingCellElOldValue = el.textContent;
-					treeEditingNodeInitValue_ = _editingCellElOldValue;
-					
-					str += "<textarea rows='4' onkeydown='keyHandler(event)' cols='50' style='font-size: 14px; margin:-4px -2px -4px -1px;width:" + 
-							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
-					str += " onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
-							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
-							"onclick='event.stopPropagation();'" +
-							">";
-					str += _editingCellElOldValue;
-					str += "</textarea>";				
-				}
 				else // normal cells, with text input
 				{
 					if(colType == "GroupID") //track type if it is groupid field
@@ -5447,13 +5221,6 @@
 					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 					el.getElementsByTagName("select")[0].focus();
 				}
-				else if(colType == "FixedChoiceData")
-				{
-					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();				
-				}
-				else if(colType == "MultilineData")
-					setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);
 				else 					//select text in new input
 					setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 				
@@ -5942,8 +5709,7 @@
 		//selectThisCell ~~
 		function selectThisCell(r,c,el,event) 
 		{	
-			_editingCellElOldTitle = el.title; //originally only used by tree, but 
-											//table cells have title now too
+			_editingCellElOldTitle = ""; //assume table cells have no title (used by tree)
 			
 			if(event) //stop the body from also calling onmouseup and cancelling select
 			{
@@ -6102,7 +5868,8 @@
 				el.getElementsByTagName("select")[0].focus();				
 			}
 			else if(colType == "MultilineData")
-				setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
+				setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);			
+			
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
 					colType == "OnOff")  //if column type is boolean, use dropdown
@@ -6360,8 +6127,8 @@
 			var h = 215;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px"; 
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -6572,8 +6339,8 @@
 			var gh = 50;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -7207,10 +6974,9 @@
 				} //end affected group for loop
 
 				allRequestsSent = true;
-				if(numberOfRequests == 0) //no groups to save
+				if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
 				{
-					//this could happen if editing tables with no current active groups
-					Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
+					Debug.log("There was nothing to do! How could this happen?", Debug.INFO_PRIORITY);
 
 					//kill popup dialog
 					var el = document.getElementById("popUpDialog"); 
@@ -7559,11 +7325,7 @@
 				}
 				else if(treeEditingNodeType_ == "value")
 				{
-					//if(treeEditingNodeType_ == "MultilineData")
-					//MultilineData and normal
-					//normal data
-					_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
-					
+					_editingCellEl.appendChild(document.createTextNode(newValue));
 				}
 				else if(treeEditingNodeType_ == "value-bool")
 				{
@@ -7771,9 +7533,10 @@
 						}
 					}
 				}
-				else if(treeEditingNodeType_ == "table-newGroupRow")
+				else if(treeEditingNodeType_ == "table-newGroupRow" || 
+						treeEditingNodeType_ == "table-newUIDRow")
 				{
-					//coming from edit setup of group link "link-GroupID"
+					//coming from edit setup of group link "link-GroupID" or "link-UID"
 					var sel = _editingCellEl.getElementsByTagName("select")[0];					
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
@@ -7786,30 +7549,12 @@
 					if(sel.selectedIndex >= 0) //if valid
 						newValue += sel.options[sel.selectedIndex].value;
 				}
-				else if(treeEditingNodeType_ == "table-newUIDRow")
-				{
-					//coming from edit setup of group link "link-UID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
-					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
-					
-					//make new value the new UID 
-					newValue = prompt("Please enter the UID for the new record:");
-					if(newValue)
-						newValue = encodeURIComponent(newValue.trim());
-				}
 				else if(treeEditingNodeType_ == "table-newRow")
 					newValue = ""; //no value needed
-				else	//value (normal or multiline data)
+				else
 				{
-					var sel;
-					if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData					
-						newValue = sel[0].value; //assume the first textarea in the cell is the textarea
-					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData					
-						newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
-					else
-						newValue = _editingCellEl.getElementsByTagName("input")[0].value;
-					
-					newValue = encodeURIComponent(newValue.trim());
+					newValue = _editingCellEl.getElementsByTagName("input")[0].value;
+					encodeURIComponent(newValue.trim());
 				}
 				
 				Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
@@ -9239,8 +8984,8 @@
 			var h = 200;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -9304,8 +9049,8 @@
 			var h = 200;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -9366,8 +9111,8 @@
 			var h = 200;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -9406,10 +9151,10 @@
 		}
 		
 		
-		//popUpClearVersionsPrompt
-		function popUpClearVersionsPrompt(clearTemporary,backLinkStr)
+		//popUpClearTemporaryVersionsPrompt
+		function popUpClearTemporaryVersionsPrompt(backLinkStr)
 		{
-			Debug.log("CfgGUI popUpClearVersionsPrompt");
+			Debug.log("CfgGUI popUpClearTemporaryVersionsPrompt");
 			var str = "";
 
 			var el = document.getElementById("popUpDialog");
@@ -9424,8 +9169,8 @@
 			var h = 170;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -9436,9 +9181,7 @@
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
-			str += "Are you sure you want to clear all " + 
-					(clearTemporary?"temporary":"cached") + 
-					" versions of <b>" + 
+			str += "Are you sure you want to clear all temporary versions of <b>" + 
 					_currentConfigName + "</b>?<br>";			
 			str += "</div>";
 			
@@ -9452,23 +9195,8 @@
 					_currentConfigName + "\",\"" +
 					_version + "\",\"" + backLinkStr + "\");"; 
 			
-			var clearLinkStr;
-			
-			if(clearTemporary)
-				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
+			var clearTempLinkStr = "DesktopContent.XMLHttpRequest(" +
 					"\"Request?RequestType=clearConfigurationTemporaryVersions" + 
-					"&configName=" + _currentConfigName + "\",\"\"," +
-					" function(req) { " +
-					"var err = DesktopContent.getXMLValue(req,\"Error\");" +
-					"if(err && err != \"\")" +
-					"{ Debug.log(err,Debug.HIGH_PRIORITY);	return;	}" +
-					refreshLinkStr +
-					"}" + //end handler function
-					",0,0,0,true" +  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-					");"; 
-			else
-				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
-					"\"Request?RequestType=clearConfigurationCachedVersions" + 
 					"&configName=" + _currentConfigName + "\",\"\"," +
 					" function(req) { " +
 					"var err = DesktopContent.getXMLValue(req,\"Error\");" +
@@ -9480,10 +9208,8 @@
 					");"; 
 			
 			str += "<input style='margin-top: 20px;' " +
-					"type='button' onmouseup='" + clearLinkStr + "' " +
-					"value='Clear " + 
-					(clearTemporary?"Temporary":"Cached") +
-					" Versions!' title='" +
+					"type='button' onmouseup='" + clearTempLinkStr + "' " +
+					"value='Clear Temporary Versions!' title='" +
 					"Permanently delete all the temporary versions associated with " +
 					_currentConfigName + "." +
 					"'/>";
@@ -9513,13 +9239,13 @@
 			
 			//set position and size
 			var w = 500;
-			var h = 415;
+			var h = 410;
 			var gh = 50;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			//el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 			
@@ -9537,7 +9263,7 @@
 				
 				str += "Please enter a comment describing this new version of <b>" + 
 						_currentConfigName + "</b>:<br>";
-				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;''>";
+				str += "<textarea id='popUpDialog-comment' rows='4' cols='50'>";
 				var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
 				str += comment;
 				str += "</textarea>";
@@ -9792,10 +9518,10 @@
 
 			}			
 			
-			//add element to body
-			//	because saving/loading table resets the display and activeConfig!
+			//add element to activeConfig div
+			//	because saving/loading table resets the display!
 			//	(actually could be more 'proper' than appending to display)
-			document.body.appendChild(el); 
+			document.getElementById("activeConfig").appendChild(el); 
 			el.style.display = "block";
 		}
 		
@@ -9820,8 +9546,8 @@
 			var h = 220;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -9920,8 +9646,8 @@
 			var h = 200;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px";
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 
@@ -10134,8 +9860,8 @@
 			var h = 305;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+			el.style.top = (document.body.scrollTop + ((wh-h-2)/2)) + "px"; 
+			el.style.left = (document.body.scrollLeft + ((ww-w-2)/2)) + "px";
 			el.style.width = w + "px";
 			el.style.height = h + "px";
 			
@@ -10679,7 +10405,7 @@
 				allRequestsSent = true;
 				if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
 				{
-					Debug.log("There were no affected groups found to save.", Debug.INFO_PRIORITY);
+					Debug.log("There was nothing to do! How could this happen?", Debug.INFO_PRIORITY);
 
 					//kill popup dialog
 					var el = document.getElementById("popUpDialog"); 
@@ -11080,7 +10806,6 @@
 		}
 
 		//createTableViewOutputStr ~~
-		//	must exactly match the data table section of specificConfigRequestHandler()
 		function createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
 		{
 			var boolTypeTrues = ["On","True","Yes"];
@@ -11089,57 +10814,8 @@
 			var val;
 			var rowsSz = transposeOutput? cols[0].length : cols.length;
 			var colsSz = transposeOutput? cols.length : cols[0].length;
-			var uidCol,uidVal,colHdr;
-			var r,c;
 			
-			//determine colUID
-			{
-				var found = false;
-				for(var rr=0;!found && rr<rowsSz;++rr) 
-				{	
-					for(var cc=0;!found && cc<colsSz;++cc) 
-					{	
-						//choose proper value based on situation
-						if(!_tableViewIsTransposed && !transposeOutput) //normal source and leaving normal
-						{
-							r = rr;
-							c = cc;
-							val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
-						}	
-						else if(!_tableViewIsTransposed && transposeOutput) //normal source and transposing
-						{
-							r = cc;
-							c = rr;
-							val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;	
-						}					
-						else if(_tableViewIsTransposed && !transposeOutput) //transposed source and leaving transpoed
-						{
-							r = cc;
-							c = rr;
-							val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
-						}
-						else if(_tableViewIsTransposed && transposeOutput) //transposed source and normalizing
-						{
-							r = rr;
-							c = cc;
-							val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;
-						}
-						
-						if(r == _CONFIG_DATA_ROW_OFFSET-2 && 
-								c >= _CONFIG_DATA_COL_OFFSET) //col types
-						{
-							if(val.substr(val.indexOf('title=') + ('title=').length + 1,3) == //val.split('>')[1].split('<')[0] == 
-									"UID")
-							{
-								uidCol = c;
-								Debug.log("uidCol " + c);
-								found = true;
-							}
-							Debug.log("uidval? " + val);
-						}
-					}
-				}
-			}
+			var r,c;
 			
 			//create output string based on cols
 			for(var rr=0;rr<rowsSz;++rr) 
@@ -11153,34 +10829,27 @@
 						r = rr;
 						c = cc;
 						val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
-						uidVal = colsIsArray?cols[rr][uidCol]:cols[rr][uidCol].innerHTML;
-						colHdr = colsIsArray?cols[_CONFIG_DATA_ROW_OFFSET-1][cc]:cols[_CONFIG_DATA_ROW_OFFSET-1][cc].innerHTML;						
 					}	
 					else if(!_tableViewIsTransposed && transposeOutput) //normal source and transposing
 					{
 						r = cc;
 						c = rr;
 						val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;	
-						uidVal = colsIsArray?cols[cc][uidCol]:cols[cc][uidCol].innerHTML;	
-						colHdr = colsIsArray?cols[_CONFIG_DATA_ROW_OFFSET-1][rr]:cols[_CONFIG_DATA_ROW_OFFSET-1][rr].innerHTML;	
 					}					
 					else if(_tableViewIsTransposed && !transposeOutput) //transposed source and leaving transpoed
 					{
 						r = cc;
 						c = rr;
 						val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
-						uidVal = colsIsArray?cols[cc][uidCol]:cols[cc][uidCol].innerHTML;	
-						colHdr = colsIsArray?cols[_CONFIG_DATA_ROW_OFFSET-1][rr]:cols[_CONFIG_DATA_ROW_OFFSET-1][rr].innerHTML;
 					}
 					else if(_tableViewIsTransposed && transposeOutput) //transposed source and normalizing
 					{
 						r = rr;
 						c = cc;
 						val = colsIsArray?cols[cc][rr]:cols[cc][rr].innerHTML;
-						uidVal = colsIsArray?cols[uidCol][rr]:cols[uidCol][rr].innerHTML;
-						colHdr = colsIsArray?cols[cc][_CONFIG_DATA_ROW_OFFSET-1]:cols[cc][_CONFIG_DATA_ROW_OFFSET-1].innerHTML;
 					}
 					
+						
 					
 					//handle bool style
 					tdStyle = "";	
@@ -11206,15 +10875,7 @@
 							c >= _CONFIG_DATA_COL_OFFSET) 
 						str += "<td onmouseup='selectThisCell("+(r-_CONFIG_DATA_ROW_OFFSET)+","+
 						(c-_CONFIG_DATA_COL_OFFSET)+",this,event);' " + 
-						tdStyle +
-						
-						" title='UID : " + uidVal + "\n" + 
-						colHdr + 
-						" : " + 
-						(val.replace(/"/g, "&quot;").replace(/'/g, "&apos;")) +
-						"' " + 
-						
-						">";
+						tdStyle + ">";
 					else						
 						str += "<td>";
 

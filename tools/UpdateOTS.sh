@@ -46,9 +46,14 @@ for p in ${REPO_DIR[@]}; do
 done
 
 
+
+#######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
 if [ "x$1" == "x" ]; then
 
+	echo "Update status will be logged here: $CURRENT_AWESOME_BASE/updateAll.log"
+	echo "Update log start:" > $CURRENT_AWESOME_BASE/updateAll.log
+	
 	echo
 	echo "#######################################################################################################################" 
 	echo "#######################################################################################################################" 
@@ -69,12 +74,67 @@ if [ "x$1" == "x" ]; then
 	else
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/
+		# undo c++ style comment for Eclipse viewing*/
 	fi
 	
 	echo "cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 
+	echo
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+		
+	echo
+	echo "Updating ups products based on .bz2 files in $MRB_SOURCE/otsdaq/tarballs/"
+	echo "PRODUCTS path found as: $PRODUCTS"
+	IFS=':' read -r -a array <<< "$PRODUCTS"
+	UPS_DIR=${array[@]: -1:1}
+	echo "Unzipping any extra products from otsdaq to: $UPS_DIR"	
+	
+	cd $UPS_DIR
+	for file in $MRB_SOURCE/otsdaq/tarballs/*.bz2 	# undo c++ style comment for Eclipse viewing*/
+	do 
+		IFS='/' read -r -a array <<< "$file"
+		UPS_FILE_NAME=${array[@]: -1:1}
+		IFS='-' read -r -a array <<< "$UPS_FILE_NAME"
+		UPS_FILE_NAME_FIELDS="${#array[@]}"		
+		#echo "$UPS_FILE_NAME_FIELDS fields found"
+		if [ $UPS_FILE_NAME_FIELDS -lt 7 ]; then
+			echo "	$file skipping, (7 fields expected) too few fields in name to identify name, version, qualifier..."
+			continue
+		fi
+		
+		UPS_PRODUCT_NAME=${array[0]}
+		UPS_PRODUCT_VERSION=${array[1]}
+		UPS_PRODUCT_VERSION=${UPS_PRODUCT_VERSION//./_}
+			
+		#e.g. slf6.x86_64.e10.s41.debug
+		UPS_PRODUCT_QUAL="${array[2]}.${array[3]}.${array[4]}.${array[5]}"
+		IFS='.' read -r -a array <<< "${array[6]}"
+		UPS_PRODUCT_QUAL="$UPS_PRODUCT_QUAL.${array[0]}"
+		
+		echo "Checking $UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL..."
+		
+		if [ ! -d "$UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL" ]; then
+			echo "	$file unzipping..."
+			tar -xf $file &>> $CURRENT_AWESOME_BASE/updateAll.log
+		else
+			echo "	...already found in ups products."
+		fi
+			
+	done
+	
+	cd $CURRENT_AWESOME_BASE
+	
+	#done updating ups products from otsdaq repo /tarballs
+	echo
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+
 fi
+
+ 
+#######################################################################################################################
 
 echo
 echo "=================="
@@ -115,14 +175,16 @@ echo
 echo "=================="
 
 echo "Git comment '$1'"
-echo "Status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo "Update status was logged here: $CURRENT_AWESOME_BASE/updateAll.log"
 echo
 echo "log dump in 2 seconds... #######################################################"
 sleep 2s
 echo
 cat $CURRENT_AWESOME_BASE/checkinAll.log
 echo "end log dump... #######################################################"
-echo "Status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo "Update status (not shown above) was logged here: $CURRENT_AWESOME_BASE/updateAll.log"
 
 echo
 echo "=================="

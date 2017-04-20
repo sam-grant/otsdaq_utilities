@@ -341,7 +341,7 @@ throw (xgi::exception::Exception)
 	else if(Command == "getSpecificConfigurationGroup")
 	{
 		std::string 	groupName = CgiDataUtilities::getData(cgi,"groupName"); 	//from GET
-		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 		//from GET
 
 		__MOUT__ << "groupName: " << groupName << std::endl;
 		__MOUT__ << "groupKey: " << groupKey << std::endl;
@@ -350,25 +350,29 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveNewConfigurationGroup")
 	{
-		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
-		std::string ignoreWarnings = CgiDataUtilities::getData(cgi,"ignoreWarnings"); //from GET
-		std::string allowDuplicates = CgiDataUtilities::getData(cgi,"allowDuplicates"); //from GET
-		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
+		std::string groupName 		= CgiDataUtilities::getData (cgi,"groupName"); 		//from GET
+		std::string ignoreWarnings 	= CgiDataUtilities::getData (cgi,"ignoreWarnings"); //from GET
+		std::string allowDuplicates = CgiDataUtilities::getData (cgi,"allowDuplicates");//from GET
+		std::string configList 		= CgiDataUtilities::postData(cgi,"configList"); 	//from POST
+		std::string	comment 		= CgiDataUtilities::getData	(cgi,"groupComment");	//from GET
+
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__MOUT__ << "configList: " << configList << std::endl;
 		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
 		__MOUT__ << "allowDuplicates: " << allowDuplicates << std::endl;
+		__MOUT__ << "comment: " << comment << std::endl;
 
 		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList,
 				(allowDuplicates == "1"),
-				(ignoreWarnings == "1"));
+				(ignoreWarnings == "1"),
+				comment);
 	}
 	else if(Command == "getSpecificConfiguration")
 	{
-		std::string		configName = CgiDataUtilities::getData(cgi,		"configName"); 	//from GET
-		std::string  	versionStr = CgiDataUtilities::getData(cgi,		"version");		//from GET
-		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
-		int				chunkSize  = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		std::string		configName = CgiDataUtilities::getData		(cgi,"configName"); //from GET
+		std::string  	versionStr = CgiDataUtilities::getData		(cgi,"version");	//from GET
+		int				dataOffset = CgiDataUtilities::getDataAsInt	(cgi,"dataOffset");	//from GET
+		int				chunkSize  = CgiDataUtilities::getDataAsInt	(cgi,"chunkSize");	//from GET
 
 		std::string 	allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
 		__MOUT__ << "allowIllegalColumns: " << (allowIllegalColumns=="1") << std::endl;
@@ -1658,16 +1662,17 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 
 
 	std::set<std::string /*name+version*/> allGroups =
-			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
+			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames(groupName);
 	std::string name;
 	ConfigurationGroupKey key;
 	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
 	std::set<ConfigurationGroupKey> sortedKeys;
 	for(auto &group: allGroups)
 	{
+		//now uses database filter
 		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
-		if(name == groupName)
-			sortedKeys.emplace(key);
+		//if(name == groupName)
+		sortedKeys.emplace(key);
 	}
 	if(groupKey.isInvalid() || //if invalid or not found, get latest
 			sortedKeys.find(groupKey) == sortedKeys.end())
@@ -1707,11 +1712,19 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string, ConfigurationInfo>::const_iterator it;
 
 	//load group so comments can be had
+	//	and also group metadata (author, comment, createTime)
 	bool commentsLoaded = false;
 	try
 	{
-		cfgMgr->loadConfigurationGroup(groupName,groupKey);
+		std::string groupAuthor, groupComment, groupCreationTime;
+		cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				false,0,0,
+				&groupComment, &groupAuthor, &groupCreationTime);
 		commentsLoaded = true;
+
+		xmldoc.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
+		xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
+		xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
 	}
 	catch(...) {
 		__MOUT__ << "Error occurred loading group, so giving up on comments." <<
@@ -2282,7 +2295,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
-		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
+		const std::string &configList, bool allowDuplicates, bool ignoreWarnings,
+		const std::string &groupComment)
 {
 
 	xmldoc.addTextElementToData("AttemptedNewGroupName",groupName);
@@ -2455,7 +2469,8 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	ConfigurationGroupKey newKey;
 	try
 	{
-		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,
+				ConfigurationGroupKey(),groupComment);
 	}
 	catch(std::runtime_error &e)
 	{
@@ -3442,25 +3457,25 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
-
-	ConfigurationManagerRW cfgMgrInst("ExampleUser");
-	//
-	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
-	//
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
-	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
-	for(auto& mapIt : allCfgInfo)
-	{
-		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
-		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
-
-		//get version key for the current system subconfiguration key
-		for (auto &v:mapIt.second.versions_)
-		{
-			__MOUT__ << "\t\t" << v << std::endl;
-		}
-	}
-	cfgMgr->testXDAQContext();
+//
+//	ConfigurationManagerRW cfgMgrInst("ExampleUser");
+//	//
+//	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+//	//
+//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
+//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
+//	for(auto& mapIt : allCfgInfo)
+//	{
+//		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
+//		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
+//
+//		//get version key for the current system subconfiguration key
+//		for (auto &v:mapIt.second.versions_)
+//		{
+//			__MOUT__ << "\t\t" << v << std::endl;
+//		}
+//	}
+//	cfgMgr->testXDAQContext();
 
 
 

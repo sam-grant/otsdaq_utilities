@@ -11,7 +11,7 @@
 //				<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 //				<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-//				<script type="text/JavaScript" src="/WebPath/js/SimpleContextMenu.js"></script>
+//				<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
 //
 //		...anywhere inside the <head></head> tag of a window content html page
 //	 2. for proper functionality certain handlers are used:
@@ -20,7 +20,7 @@
 //
 //	Recommendations:
 //	 1. use Debug to output status and errors, e.g.:
-//				Debug.log("this is my status",Debug.LOW_PRIORITY); //LOW_PRIORITY, MED_PRIORITY, HIGH_PRIORITY
+//				Debug.log("this is my status",Debug.LOW_PRIORITY); //LOW_PRIORITY, MED_PRIORITY, INFO_PRIORITY, WARN_PRIORITY, HIGH_PRIORITY
 //	 2. call window.focus() to bring your window to the front of the Desktop
 //
 //	The code of Requirement #1 should be inserted in the header of each page that will be 
