@@ -327,7 +327,8 @@
 			//handleTreeNodeClick(depth,uid,editClick,type)			
 			//treeHasChanged(reset)
 			//saveModifiedTree(ignoreWarnings)
-			//handleEditTreeCheckboxToggle(h,gh)
+			//handlePopUpHeightToggle(h,gh)
+			//handleGroupCommentToggle(groupName, setHideVal)
 			//editTreeAddNewRow(tableName)
 			//editTreeNodeOK()
 			//editTreeNodePropagateChange()
@@ -6679,12 +6680,12 @@
 				
 				//add checkbox to save affected groups
 				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
-						"onclick='handleEditTreeCheckboxToggle(" + h + "," + gh + ");'>";
+						"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 				//add link so text toggles checkbox
 				str += "<a href='#' onclick='javascript:" +
 						"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 						"var forFirefox = (el.checked = !el.checked);" +
-						" handleEditTreeCheckboxToggle(" + h + "," + gh + "); return false;'>";
+						" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
 				str += "Save Affected Groups as New Keys";
 				str += "</a>";
 				str +=	"</input><br>";
@@ -9522,7 +9523,7 @@
 			
 			//set position and size
 			var w = 500;
-			var h = 415;
+			var h = 425;
 			var gh = 50;
 			var ww = DesktopContent.getWindowWidth();
 			var wh = DesktopContent.getWindowHeight();
@@ -9546,7 +9547,7 @@
 				
 				str += "Please enter a comment describing this new version of <b>" + 
 						_currentConfigName + "</b>:<br>";
-				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;''>";
+				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;'>";
 				var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
 				str += comment;
 				str += "</textarea>";
@@ -9594,11 +9595,13 @@
 					//	 put csv: name,key,memberName,memberVersion...
 					var groups = req.responseXML.getElementsByTagName("AffectedActiveGroup");				
 					var memberNames, memberVersions;
+					var xmlGroupName;
 					modTblStr = ""; //re-use
 					for(var i=0;i<groups.length;++i)
 					{
+						xmlGroupName = DesktopContent.getXMLValue(groups[i],"GroupName");
 						str += "<div style='display:none' class='popUpDialog-affectedGroups' >";
-						str += DesktopContent.getXMLValue(groups[i],"GroupName");
+						str += xmlGroupName;
 						str += "," + DesktopContent.getXMLValue(groups[i],"GroupKey");
 
 						memberNames = groups[i].getElementsByTagName("MemberName");
@@ -9612,7 +9615,21 @@
 
 						if(modTblStr.length)
 							modTblStr += ",";
-						modTblStr += DesktopContent.getXMLValue(groups[i],"GroupName");
+						
+												
+						modTblStr += "<a href='#' onclick='javascript:" +								
+								"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
+								" handlePopUpHeightToggle(" + h + "," + gh + ");'>";
+						modTblStr += xmlGroupName;
+						modTblStr += "</a>";
+						
+						//store cached group comment in hidden html
+						modTblStr += "<div id='popUpDialog-groupComment-" + 
+								xmlGroupName + "' " +
+								"class='popUpDialog-groupComment-cache' " + 
+								"style='display:none'>" + 
+								decodeURIComponent(DesktopContent.getXMLValue(groups[i],"GroupComment")) +
+								"</div>";
 					}
 
 					str += "<br>...and choose the options you want; then click 'Save Table':" +
@@ -9620,12 +9637,12 @@
 
 					//add checkbox to save affected groups
 					str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
-							"onclick='handleEditTreeCheckboxToggle(" + h + "," + gh + ");'>";
+							"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 					//add link so text toggles checkbox
 					str += "<a href='#' onclick='javascript:" +
 							"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 							"var forFirefox = (el.checked = !el.checked);" +
-							" handleEditTreeCheckboxToggle(" + h + "," + gh + "); return false;'>";
+							" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
 					str += "Save Affected Groups as New Keys";
 					str += "</a>";
 					str +=	"</input><br>";
@@ -9643,17 +9660,30 @@
 					str += "</a>";
 					str +=	"</input><br>";
 
-					str += "Here is the list of affected groups (count=" + groups.length + 
+					str += "Here is the list of affected groups - click to set a group comment (count=" + groups.length + 
 							"):" +					
 							"<br>";
 
 					//display affected groups
-					str += "<div style='white-space:nowrap; width:" + w + "px; height:40px; " + 
+					str += "<div style='white-space:nowrap; width:" + w + "px; margin-bottom:20px; " + 
 							"overflow:auto; font-weight: bold;'>";
 					str += modTblStr;
-					str += "</div>";	
+					
+					str += "<div id='clearDiv'></div>";
+					str += "<center>";			
+					
+					str += "<div id='popUpDialog-groupComment-header'></div>";
 
-					str += "<div id='popUpDialog-groupAliasArea' ><center>";
+					str += "<div id='clearDiv'></div>";
+					
+					str += "<textarea id='popUpDialog-groupComment' rows='4' cols='50' style='width:417px;height:68px;display:none;margin:0;'>";					 
+					str += _DEFAULT_COMMENT;
+					str += "</textarea>";
+					str += "</center>";
+					
+					str += "</div>"; //end affected groups div	
+
+					str += "<div id='popUpDialog-groupAliasArea' style='margin-bottom:20px' ><center>";
 
 					//get existing group aliases	
 					///////////////////////////////////////////////////////////
@@ -9769,10 +9799,11 @@
 						// done with system alias handling
 						// continue with pop-up prompt
 
-						str += "</div><br>"; //close main popup div
+						str += "</div>"; //close main popup div
 
 						var onmouseupJS = "";
 						onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+						onmouseupJS += "handleGroupCommentToggle(0,1);"; //force cache of group comment
 						onmouseupJS += "saveConfigAsNewVersion(0);";					
 
 						str += "<input id='popUpDialog-submitButton' type='button' onmouseup='" + 
@@ -10648,11 +10679,15 @@
 				var affectedGroupKeys = []; //to be populated for use by alias setting
 				var affectedGroupEls = 
 						document.getElementsByClassName("popUpDialog-affectedGroups");
+				var affectedGroupCommentEls = 
+						document.getElementsByClassName("popUpDialog-groupComment-cache");
+				
 				//	for each affected group
 				for(var i=0;i<affectedGroupEls.length;++i)
 				{
 					//save member list but with tree table versions
 					Debug.log(affectedGroupEls[i].textContent);
+					Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
 
 					var affectedArr = affectedGroupEls[i].textContent.split(','); 
 
@@ -10675,7 +10710,8 @@
 					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 							"&groupName=" + affectedArr[0] +
 							"&allowDuplicates=1" +
-							"&ignoreWarnings=" + (ignoreWarnings?1:0);										
+							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
+							"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);										
 					Debug.log(reqStr);
 					Debug.log(configMap);
 
@@ -11895,17 +11931,23 @@
 			Debug.log("transposeTableView() transposed now =" + _tableViewIsTransposed);
 		}
 		
-		//handleEditTreeCheckboxToggle ~~
+		//handlePopUpHeightToggle ~~
 		//	checkbox was already set before this function call
 		//	this responds to current value
 		//
 		//	pass height and group height
-		function handleEditTreeCheckboxToggle(h,gh)
+		function handlePopUpHeightToggle(h,gh)
 		{
 			var el = document.getElementById("popUpDialog-bumpGroupVersions");			
-			Debug.log("handleEditTreeCheckboxToggle " + el.checked);
+			Debug.log("handlePopUpHeightToggle " + el.checked);
 
 			var ael = document.getElementById("popUpDialog-activateBumpedGroupVersions");	
+			
+			var groupCommentEl = document.getElementById("popUpDialog-groupComment");
+			var groupCommentHeight = 0;
+			
+			if(groupCommentEl && groupCommentEl.style.display != "none")
+				groupCommentHeight += 100;
 			
 			var popEl = document.getElementById("popUpDialog");			
 			if(!el.checked)
@@ -11913,7 +11955,7 @@
 				//hide alias area and subtract the height
 				
 				document.getElementById("popUpDialog-groupAliasArea").style.display = "none";								
-				popEl.style.height = (h) + "px";		
+				popEl.style.height = (h + groupCommentHeight) + "px";		
 				ael.disabled = true;
 			}
 			else
@@ -11922,10 +11964,50 @@
 				
 				//count if grps is 1 or 2
 				var grps = document.getElementsByClassName("popUpDialog-affectedGroups");				
-				popEl.style.height = (h + grps.length*gh) + "px";
+				popEl.style.height = (h + grps.length*gh + groupCommentHeight) + "px";
 				document.getElementById("popUpDialog-groupAliasArea").style.display = "block";
 				ael.disabled = false;
 			}			
+		}
+		
+		//handleGroupCommentToggle ~~		
+		// toggles affectd group comment box and handles details
+		function handleGroupCommentToggle(groupName,setHideVal)
+		{
+			var el = document.getElementById("popUpDialog-groupComment");			
+			var hel = document.getElementById("popUpDialog-groupComment-header");
+			
+			var doHide = el.style.display != "none";
+			if(setHideVal !== undefined)
+				doHide = setHideVal;
+			
+			if(doHide) //cache (possibly modified) group comment
+			{
+				if(hel.textContent == "") return; //assume was a force hide when already hidden
+				
+				//get current groupName so we know where to cache comment
+				var gn = hel.textContent.split("'")[1];
+				Debug.log("gn " + gn);
+				var cel = document.getElementById("popUpDialog-groupComment-" + 
+							gn);				
+				cel.innerHTML = "";
+				cel.appendChild(document.createTextNode(el.value));
+			}
+			else
+			{
+				var cel = document.getElementById("popUpDialog-groupComment-" + 
+						groupName);
+				el.value = cel.textContent;
+				setCaretPosition(el,0,cel.textContent.length);
+			}
+			
+			//setup group commentheader properly
+			hel.innerHTML = doHide?
+					"":
+					("&apos;" + groupName + "&apos; group comment:");
+			
+			//toggle display
+			el.style.display = doHide?"none":"block";
 		}
 		
 		//handleEditTreeGroupIDEditFreeformToggle
@@ -11953,7 +12035,7 @@
 		//handleEditTreeAliasEditToggle ~~
 		function handleEditTreeAliasEditToggle(i)
 		{	
-			Debug.log("handleEditTreeCheckboxToggle " + i);
+			Debug.log("handlePopUpHeightToggle " + i);
 			
 			var sel = document.getElementById("popUpDialog-editAliasSelect-"+i);
 			var tel = document.getElementById("popUpDialog-editAliasTextBox-"+i);

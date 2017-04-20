@@ -698,10 +698,13 @@ try
 	try
 	{
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap =
-				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-								ConfigurationGroupKey::getFullGroupString(
-										rootGroupName,
-										rootGroupKey));
+				cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
+						0,0,0,0,0,0, //defaults
+						true); //doNotLoadMember
+//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+//								ConfigurationGroupKey::getFullGroupString(
+//										rootGroupName,
+//										rootGroupKey));
 		const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
 				cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
 
@@ -739,6 +742,7 @@ try
 
 	bool affected;
 	DOMElement *parentEl;
+	std::string groupComment;
 	for(auto group : consideredGroups)
 	{
 		if(group.second.second.isInvalid()) continue; //skip invalid
@@ -749,11 +753,16 @@ try
 		affected = false;
 
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-						ConfigurationGroupKey::getFullGroupString(
-								group.second.first,
-								group.second.second));
+//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+//						ConfigurationGroupKey::getFullGroupString(
+//								group.second.first,
+//								group.second.second),
+//								true); //include meta data table
+				cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
+										0,0,0,&groupComment,0,0, //mostly defaults
+										true); //doNotLoadMember
 
+		__MOUT__ << "groupComment = " << groupComment << std::endl;
 
 		for(auto &table: memberMap)
 		{
@@ -776,6 +785,7 @@ try
 			xmldoc.addTextElementToParent("GroupName", group.second.first, parentEl);
 			xmldoc.addTextElementToParent("GroupKey",
 					group.second.second.toString(), parentEl);
+			xmldoc.addTextElementToParent("GroupComment", groupComment, parentEl);
 
 
 			for(auto &table: memberMap)
@@ -1693,8 +1703,11 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 	try
 	{
-		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+										0,0,0,0,0,0, //defaults
+										true); //doNotLoadMember
+//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
@@ -3041,8 +3054,11 @@ try
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 	try
 	{
-		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				0,0,0,0,0,0, //defaults
+				true); //doNotLoadMember
+//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
