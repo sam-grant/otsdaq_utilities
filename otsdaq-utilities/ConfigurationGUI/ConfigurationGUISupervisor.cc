@@ -134,7 +134,7 @@ throw (xgi::exception::Exception)
 	//	getTreeView
 	//	activateConfigGroup
 	//	getActiveConfigGroups
-	//      copyViewToCurrentColumns
+	//  copyViewToCurrentColumns
 	//	saveTreeNodeEdit
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
@@ -403,7 +403,7 @@ throw (xgi::exception::Exception)
 			else
 				__MOUT_WARN__ << "version alias '" << versionStr.substr(
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-				"'was not found in active version aliases!" << std::endl;
+						"'was not found in active version aliases!" << std::endl;
 		}
 		else					//else take specified version
 			version = atoi(versionStr.c_str());
@@ -605,18 +605,18 @@ throw (xgi::exception::Exception)
 		{
 			//force emptying of cache for this configuration
 			newTemporaryVersion = cfgMgr->copyViewToCurrentColumns(configName,
-							ConfigurationVersion(sourceVersion));
-//
-//			getConfigurationByName(configName)->reset();
-//
-//			//make sure source version is loaded
-//			//need to load with loose column rules!
-//			config = cfgMgr->getVersionedConfigurationByName(configName,
-//					ConfigurationVersion(sourceVersion), true);
-//
-//			//copy from source version to a new temporary version
-//			newTemporaryVersion = config->copyView(config->getView(),
-//							ConfigurationVersion(),userName);
+					ConfigurationVersion(sourceVersion));
+			//
+			//			getConfigurationByName(configName)->reset();
+			//
+			//			//make sure source version is loaded
+			//			//need to load with loose column rules!
+			//			config = cfgMgr->getVersionedConfigurationByName(configName,
+			//					ConfigurationVersion(sourceVersion), true);
+			//
+			//			//copy from source version to a new temporary version
+			//			newTemporaryVersion = config->copyView(config->getView(),
+			//							ConfigurationVersion(),userName);
 
 			__MOUT__ << "New temporary version = " << newTemporaryVersion << std::endl;
 		}
@@ -701,10 +701,10 @@ try
 				cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
 						0,0,0,0,0,0, //defaults
 						true); //doNotLoadMember
-//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-//								ConfigurationGroupKey::getFullGroupString(
-//										rootGroupName,
-//										rootGroupKey));
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//								ConfigurationGroupKey::getFullGroupString(
+		//										rootGroupName,
+		//										rootGroupKey));
 		const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
 				cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
 
@@ -753,22 +753,22 @@ try
 		affected = false;
 
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-//						ConfigurationGroupKey::getFullGroupString(
-//								group.second.first,
-//								group.second.second),
-//								true); //include meta data table
+				//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+				//						ConfigurationGroupKey::getFullGroupString(
+				//								group.second.first,
+				//								group.second.second),
+				//								true); //include meta data table
 				cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
-										0,0,0,&groupComment,0,0, //mostly defaults
-										true); //doNotLoadMember
+						0,0,0,&groupComment,0,0, //mostly defaults
+						true); //doNotLoadMember
 
 		__MOUT__ << "groupComment = " << groupComment << std::endl;
 
 		for(auto &table: memberMap)
 		{
 			if((modifiedTablesMapIt = modifiedTablesMap.find(table.first)) !=
-				modifiedTablesMap.end() && //check if version is different for member table
-				table.second != (*modifiedTablesMapIt).second)
+					modifiedTablesMap.end() && //check if version is different for member table
+					table.second != (*modifiedTablesMapIt).second)
 			{
 				__MOUT__ << "Affected by " <<
 						(*modifiedTablesMapIt).first << ":" <<
@@ -854,8 +854,17 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 
+		std::string groupComment, groupAuthor, configGroupCreationTime;
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-				cfgMgr->loadConfigurationGroup(groupName,groupKey);
+				cfgMgr->loadConfigurationGroup(groupName,groupKey,
+						0,0,0,&groupComment, &groupAuthor, &configGroupCreationTime);
+
+		if(startPath == "/") //only for root request
+		{
+			xmldoc.addTextElementToData("configGroupComment", groupComment);
+			xmldoc.addTextElementToData("configGroupAuthor", groupAuthor);
+			xmldoc.addTextElementToData("configGroupCreationTime", configGroupCreationTime);
+		}
 
 		//extract modified tables
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
@@ -874,8 +883,8 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			__MOUT__ << modifiedTables << std::endl;
 			for(auto &pair:modifiedTablesMap)
 				__MOUT__ << "modified table " <<
-					pair.first << ":" <<
-					pair.second << std::endl;
+				pair.first << ":" <<
+				pair.second << std::endl;
 		}
 
 		//add all active configuration pairs to xmldoc
@@ -886,7 +895,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			xmldoc.addTextElementToData("ActiveTableName", activePair.first);
 
 			//check if name is in modifiedTables
-				//if so, activate the temporary version
+			//if so, activate the temporary version
 			if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
 					modifiedTablesMap.end())
 			{
@@ -897,7 +906,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 				try
 				{
 					allCfgInfo[activePair.first].configurationPtr_->setActiveView(
-						(*modifiedTablesMapIt).second);
+							(*modifiedTablesMapIt).second);
 				}
 				catch(...)
 				{
@@ -940,7 +949,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			{
 				xmldoc.addTextElementToData("DisconnectedStartNode","1");
 				return; //quietly ignore disconnected links at depth
-						//note: at the root level they will be flagged for the user
+				//note: at the root level they will be flagged for the user
 			}
 
 			rootMap = cfgMgr->getNode(startPath).getChildren();
@@ -1096,7 +1105,7 @@ try
 		__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
 				version << std::endl;
 		cfgMgr->getVersionedConfigurationByName(
-						configName, version);
+				configName, version);
 	}
 
 	if(version != config->getViewVersion())
@@ -1142,7 +1151,7 @@ try
 		//if init id was not found, add to list
 		if(!foundInitId)
 			xmldoc.addTextElementToData("linkToChoice",
-				linkInitId);
+					linkInitId);
 
 		//give all UIDs
 		unsigned int col = config->getView().getColUID();
@@ -1211,7 +1220,7 @@ try
 		__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
 				version << std::endl;
 		cfgMgr->getVersionedConfigurationByName(
-						configName, version);
+				configName, version);
 	}
 
 	__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
@@ -1285,11 +1294,11 @@ try
 			//edit comment
 			cfgView->setURIEncodedComment(newValue);
 		}
-//		else if(type == "table-newRow")
-//		{
-//			//add row
-//			cfgView->addRow();
-//		}
+		//		else if(type == "table-newRow")
+		//		{
+		//			//add row
+		//			cfgView->addRow();
+		//		}
 		else if(type == "table-newRow" ||
 				type == "table-newUIDRow")
 		{
@@ -1436,7 +1445,7 @@ try
 						cfgView->init(); //verify new table (throws runtime_errors)
 
 						saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
-													config,temporaryVersion); //save temporary version properly
+								config,temporaryVersion); //save temporary version properly
 					}
 					catch(std::runtime_error &e) //erase temporary view before re-throwing error
 					{
@@ -1704,10 +1713,10 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	try
 	{
 		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
-										0,0,0,0,0,0, //defaults
-										true); //doNotLoadMember
-//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+				0,0,0,0,0,0, //defaults
+				true); //doNotLoadMember
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
@@ -2035,7 +2044,7 @@ try
 		ss << std::endl;
 
 		__MOUT__ << "\n" << ss.str();
- 		xmldoc.addTextElementToData("TableWarnings",ss.str());
+		xmldoc.addTextElementToData("TableWarnings",ss.str());
 	}
 }
 catch(std::runtime_error &e)
@@ -2363,7 +2372,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			{
 				__SS__ << "version alias '" << versionStr.substr(
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-						"'was not found in active version aliases!" << std::endl;
+								"'was not found in active version aliases!" << std::endl;
 				__MOUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error",
 						ss.str());
@@ -2524,7 +2533,7 @@ void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocumen
 
 		xmldoc.addTextElementToData("Error",
 				( "Error renaming Table Info File to " +
-								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
 		return;
 	}
 
@@ -3040,7 +3049,7 @@ try
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
 	ConfigurationVersion temporaryVersion = config->
-					createTemporaryView(activeVersions[versionAliasesTableName]);
+			createTemporaryView(activeVersions[versionAliasesTableName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
@@ -3057,8 +3066,8 @@ try
 		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
 				0,0,0,0,0,0, //defaults
 				true); //doNotLoadMember
-//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
@@ -3210,8 +3219,8 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	std::string groupName, groupKey, groupComment;
 	for(auto& aliasNodePair:aliasNodePairs)
 	{
-	  groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
-	  groupKey = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+		groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+		groupKey = aliasNodePair.second.getNode("GroupKey").getValueAsString();
 
 		xmldoc.addTextElementToData("GroupAlias", aliasNodePair.first);
 		xmldoc.addTextElementToData("GroupName", groupName);				
@@ -3222,16 +3231,16 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 		//get group comment
 		groupComment = ""; //clear just in case failure
 		try
-		  {
-		    cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
-						   0,0,0,&groupComment,0,0, //mostly defaults                                           
-						   true); //doNotLoadMembers
-		  }
+		{
+			cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
+					0,0,0,&groupComment,0,0, //mostly defaults
+					true); //doNotLoadMembers
+		}
 		catch(...)
-		  {
-		    __MOUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey <<
-		      ")' to extract group comment." << std::endl;
-		  }
+		{
+			__MOUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey <<
+					")' to extract group comment." << std::endl;
+		}
 		xmldoc.addTextElementToData("GroupComment", groupComment);
 	}
 }
@@ -3490,25 +3499,25 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
-//
-//	ConfigurationManagerRW cfgMgrInst("ExampleUser");
-//	//
-//	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
-//	//
-//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
-//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
-//	for(auto& mapIt : allCfgInfo)
-//	{
-//		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
-//		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
-//
-//		//get version key for the current system subconfiguration key
-//		for (auto &v:mapIt.second.versions_)
-//		{
-//			__MOUT__ << "\t\t" << v << std::endl;
-//		}
-//	}
-//	cfgMgr->testXDAQContext();
+	//
+	//	ConfigurationManagerRW cfgMgrInst("ExampleUser");
+	//	//
+	//	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+	//	//
+	//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
+	//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
+	//	for(auto& mapIt : allCfgInfo)
+	//	{
+	//		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
+	//		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
+	//
+	//		//get version key for the current system subconfiguration key
+	//		for (auto &v:mapIt.second.versions_)
+	//		{
+	//			__MOUT__ << "\t\t" << v << std::endl;
+	//		}
+	//	}
+	//	cfgMgr->testXDAQContext();
 
 
 

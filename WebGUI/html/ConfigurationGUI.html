@@ -126,17 +126,20 @@
 		    font-size: 14px;
 		}
 		
-		#tableDetails th {
+		#tableDetails th,
+		#groupDetails th {
 			font-size: 14px;
 			text-align: right;
 			vertical-align: top;
 		}
-		#tableDetails td, #tableDetails a, #tableDetails label, #tableDetails div, #tableDetails b {
+		#tableDetails td, #tableDetails a, #tableDetails label, #tableDetails div, #tableDetails b,
+		#groupDetails td, #groupDetails a, #groupDetails label, #groupDetails div, #groupDetails b {
 			font-size: 14px;
 			text-align: left;
 			vertical-align: top;
 		}
-		#tableDetails .underlineRow {   
+		#tableDetails .underlineRow,
+		#groupDetails .underlineRow {   
 			border-bottom: 1px solid #b9a3a3;
 	    }
 	    	
@@ -239,6 +242,7 @@
 		var _useTableLinkDropdown = true;		
 		var _tableViewIsTransposed = false;
 		var _showTableDetails = true;
+		var _showGroupDetails = true;
 		var _tableLinkDropdownChoices = []; 
 		var _tableFixedChoiceData = {}; 
 		var _tableDefaultRowValues = []; 
@@ -314,6 +318,7 @@
 			//setupSpecificConfigInRight(configName,version)
 			//specificConfigRequestHandler(req,backLinkStr)			
 			//toggleTableDetails(setVal)
+			//toggleGroupDetails(setVal)
 			//transposeTableView()
 			//getTableViewColIsBoolType(rows)
 			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
@@ -1423,10 +1428,11 @@
 					"Create a System to Alias that refers to the current group '" + groupName + 
 					" (" + groupKey + ").'" +
 					">";
-			str += "Alias</a><br>";
+			str += "Alias</a>";
 			
 			//create group details
 			{
+				str += "<div id='clearDiv'></div>";
 				str += "<div id='groupDetails' style='display:block'>Group Details:";
 				var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
 				groupComment = decodeURIComponent(groupComment);
@@ -1441,10 +1447,10 @@
 						"'>";
 				str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
 				str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
-				str += "<tr><th>Comment:</th><td class='underlineRow'>" + 
+				str += "<tr><th>Comment:</th><td>" + 
 						groupComment.replace(/\n/g , "<br>") + "</td></tr>";
-				str += "</table>"
-						str += "</div>";
+				str += "</table>";
+				str += "</div>";
 
 				str += "<div id='clearDiv'></div>";
 			}
@@ -2138,7 +2144,18 @@
 			el.style.display = _showTableDetails?"block":"none";
 		}
 		
-		
+		//toggleGroupDetails ~~
+		function toggleGroupDetails(setVal)
+		{
+			if(setVal !== undefined)
+				_showGroupDetails = setVal;
+			else	
+				_showGroupDetails = !_showGroupDetails; //invert
+
+			Debug.log("showGroupDetails " + _showGroupDetails);
+			var el = document.getElementById("groupDetails");
+			el.style.display = _showGroupDetails?"block":"none";
+		}
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.
@@ -2201,9 +2218,7 @@
 			//draw tree		
 			
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
-			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");
-
-			
+			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");			
 			
 			if(!parentId && 
 					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
@@ -2394,7 +2409,32 @@
 						"<div class='gotoNavDiv'></div>" +
 						"</div>"; //end context menu link div
 				
-				treeViewHandlerStr_ += "<br><br>";
+				//create group details
+				{
+					var groupComment = DesktopContent.getXMLValue(req,"configGroupComment");	
+					groupComment = decodeURIComponent(groupComment);		
+					var groupAuthor = DesktopContent.getXMLValue(req,"configGroupAuthor");
+					var groupCreationTime = DesktopContent.getXMLValue(req,"configGroupCreationTime");
+					groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
+
+					treeViewHandlerStr_ += "<div id='clearDiv'></div>";
+					treeViewHandlerStr_ += "<div id='groupDetails' style='display:block'>" +
+							"Root-Group Details:";					
+					treeViewHandlerStr_ += "<table border='0' style='" +
+							"border: 1px solid #9c5e5e;" +
+							"margin: 5px 0 5px 30px;" +
+							"background-color: #d2c1c1;" +
+							"'>";
+					treeViewHandlerStr_ += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
+					treeViewHandlerStr_ += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
+					treeViewHandlerStr_ += "<tr><th>Comment:</th><td>" + 
+							groupComment.replace(/\n/g , "<br>") + "</td></tr>";
+					treeViewHandlerStr_ += "</table>";
+					treeViewHandlerStr_ += "</div>";
+
+					treeViewHandlerStr_ += "<div id='clearDiv' style='height:15px'></div>";
+				}
+				
 
 				if(treeErr) 
 				{
@@ -2470,6 +2510,7 @@
 			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
 			
 			applyTreeFilter("",1); //reapplyFilter
+			toggleGroupDetails(_showGroupDetails);
 		}
 
 		//recursiveDrawTree ~		
@@ -11504,6 +11545,9 @@
 		{
 			var menuItems = [
 							 "Refresh",
+							 _showGroupDetails?
+									 "Hide Group Details":
+									 "Show Group Details",
 							 treeViewHideStatus_?
 									 "Show Status=False":
 									 "Hide Status=False",
@@ -11529,6 +11573,7 @@
 						
 			var menuItemHandlers = [
 							refreshWrapper,
+							"toggleGroupDetails()",
 							"treeViewHideStatus_ = !treeViewHideStatus_;" +
 													refreshLinkStr,
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
