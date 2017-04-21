@@ -134,7 +134,7 @@ throw (xgi::exception::Exception)
 	//	getTreeView
 	//	activateConfigGroup
 	//	getActiveConfigGroups
-	//  copyViewToCurrentColumns
+	//      copyViewToCurrentColumns
 	//	saveTreeNodeEdit
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
@@ -3207,15 +3207,32 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
 			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
 
+	std::string groupName, groupKey, groupComment;
 	for(auto& aliasNodePair:aliasNodePairs)
 	{
+	  groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+	  groupKey = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+
 		xmldoc.addTextElementToData("GroupAlias", aliasNodePair.first);
-		xmldoc.addTextElementToData("GroupName",
-				aliasNodePair.second.getNode("GroupName").getValueAsString());
-		xmldoc.addTextElementToData("GroupKey",
-				aliasNodePair.second.getNode("GroupKey").getValueAsString());
-		xmldoc.addTextElementToData("GroupComment",
+		xmldoc.addTextElementToData("GroupName", groupName);				
+		xmldoc.addTextElementToData("GroupKey", groupKey);
+		xmldoc.addTextElementToData("AliasComment",
 				aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+
+		//get group comment
+		groupComment = ""; //clear just in case failure
+		try
+		  {
+		    cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
+						   0,0,0,&groupComment,0,0, //mostly defaults                                           
+						   true); //doNotLoadMembers
+		  }
+		catch(...)
+		  {
+		    __MOUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey <<
+		      ")' to extract group comment." << std::endl;
+		  }
+		xmldoc.addTextElementToData("GroupComment", groupComment);
 	}
 }
 

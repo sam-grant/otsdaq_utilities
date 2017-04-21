@@ -116,8 +116,16 @@ if [ "x$1" == "x" ]; then
 		echo "Checking $UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL..."
 		
 		if [ ! -d "$UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL" ]; then
-			echo "	$file unzipping..."
+			echo "   $file unzipping..."
+			echo "   tar -xf $file"
 			tar -xf $file &>> $CURRENT_AWESOME_BASE/updateAll.log
+			
+			if [ ! -d "$UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL" ]; then				
+				echo "   Something went wrong. Unzip was not successful. (Are special permissions required for products area?)"
+				echo
+				echo "	 Pausing for 3 seconds (so you read this!)..."
+				sleep 3s				
+			fi
 		else
 			echo "	...already found in ups products."
 		fi
