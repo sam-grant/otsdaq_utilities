@@ -157,7 +157,7 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	__MOUT__ << Command <<  std::endl;
+	__MOUT__ << "Command = " << Command <<  std::endl;
 
 	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
 
@@ -251,7 +251,8 @@ throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
 	std::string submittedSequence = CgiDataUtilities::getData(cgi, "code");
-	__MOUT__ << "submittedSequence=" << submittedSequence << std::endl;
+	__MOUT__ << "submittedSequence=" << submittedSequence <<
+			" " << time(0) << std::endl;
 
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
@@ -282,12 +283,14 @@ throw (xgi::exception::Exception)
 	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		__MOUT__ << "Unauthorized Request made, security sequence doesn't match! " <<
+				time(0) << std::endl;
 		return;
 	}
 	else
 	{
-		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
+		__MOUT__ << "***Successfully authenticated security sequence. " <<
+				time(0) << std::endl;
 	}
 	//SECURITY CHECK END ****
 
