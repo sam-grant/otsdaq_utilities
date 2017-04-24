@@ -59,7 +59,9 @@
 			background-color:	rgb(218, 194, 194);
 		}*/
 		
-		.treeNode-Value-nonLeafNode:hover {
+		.treeNode-Value-nonLeafNode:hover,
+		.treeNode-Value-nonLeafNode label:hover
+		{
 			cursor:				pointer;
 		}
 		
@@ -400,7 +402,6 @@
 			//changeMemberVersionForConfigGroup(groupName, groupKey, configName, newVersion)
 		
 			//isTemporary(version)
-			//ConfigurationAPI.getDateString(date)
 		
 			//setupFindAndReplace()
 			//configFind()
@@ -414,7 +415,12 @@
 			//jump(anchor)
 			//evaluateJS(str)			
 			//createEditTableMenu(event)
-	
+		
+
+		//ConfigurationAPI functions
+			//ConfigurationAPI.getDateString(date)
+		//end ConfigurationAPI functions
+		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 				
@@ -433,7 +439,7 @@
 					"then below those links is a display of the currently Active groups; " +
 					"and then below that is the view content." +
 					"\n\nIf you would like to take a look at the available online documentation, " +
-					"click the question mark at the top of the page.\n\n" +
+					"click the question mark at the top of the Configuration GUI window.\n\n" +
 					
 					"Briefly, here is a description of the main views: " +
 					"\n\t- 'System View' is for viewing and editing the translation from System Aliases to groups." +
@@ -1440,6 +1446,7 @@
 				var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
 				var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
 				groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
+				
 				str += "<table border='0' style='" +
 						"border: 1px solid #9c5e5e;" +
 						"margin: 5px 0 5px 30px;" +
@@ -2697,17 +2704,26 @@
 						++offset;
 						value = nodes[i].children[offset]; //get link ID node
 						--childrenLength;
-						isGroupLink = value.nodeName == "GroupID";
-						value =  
-								nodeName + "-(" + 
-								value.nodeName + " = " + value.getAttribute("value") + ")";	
+						isGroupLink = value.nodeName == "GroupID";					
 						isDisconnected = true;
+
 					}
-					else
-					{
-						value = nodeName + "-(" + 
-								value.nodeName + " = " + value.getAttribute("value") + ")";					
-					}	
+					
+					value =  
+							"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+							nodeName.replace(/</g, "&lt").replace(/>/g, "&gt") +
+							"</label>" +
+							"-(" + 
+							value.nodeName.replace(/</g, "&lt").replace(/>/g, "&gt") + 
+							" = " + 
+							value.getAttribute("value").replace(/</g, "&lt").replace(/>/g, "&gt") + 
+							")";					
+
+					if(isDisconnected)
+						value += "-" + 
+						"<label style='color:red;font-weight:bold;'>" +
+						"DISCONNECTED" +
+						"</label>";
 					
 					tableLinkName = nodes[i].children[offset+1].getAttribute("value"); //LinkConfigurationName node
 					--childrenLength; //subtract the tableLinkName name node from children length
@@ -2720,18 +2736,16 @@
 				{
 					value = nodeName;
 					tableLinkName = nodeName;
+					
+					//make value html safe
+					value = value.replace(/</g, "&lt");
+					value = value.replace(/>/g, "&gt");
 				}
 
-				//make value and tableLinkName html safe
-				value = value.replace(/</g, "&lt");
-				value = value.replace(/>/g, "&gt");
-				if(isDisconnected)
-					value += "-" + 
-						"<label style='color:red;font-weight:bold;'>" +
-						"DISCONNECTED" +
-						"</label>";
+				//make tableLinkName html safe
 				tableLinkName = tableLinkName.replace(/</g, "&lt");
 				tableLinkName = tableLinkName.replace(/>/g, "&gt");
+				
 
 				var treeNavContextMenuItems = [];
 				var treeNavContextMenuItemHandlers = [];
@@ -5554,7 +5568,8 @@
 
 						Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
 
-						str += treeEditingTargetColumn_ + "<br>";
+						str += "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+								treeEditingTargetColumn_ + "</label>" +"<br>";
 
 						str += "<table cellpadding='0' cellspacing='0' border='0' " +
 								"onmouseup='event.stopPropagation();' " +
@@ -7013,6 +7028,31 @@
 								return false;
 							};
 							
+							//modify group details
+							{
+								str = "";
+								str += "Root-Group Details:";
+								var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
+								groupComment = decodeURIComponent(groupComment);								
+								var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
+								var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
+								groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
+								
+								str += "<table border='0' style='" +
+										"border: 1px solid #9c5e5e;" +
+										"margin: 5px 0 5px 30px;" +
+										"background-color: #d2c1c1;" +
+										"'>";
+								str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
+								str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
+								str += "<tr><th>Comment:</th><td>" + 
+										groupComment.replace(/\n/g , "<br>") + "</td></tr>";
+								str += "</table>";
+
+								document.getElementById("groupDetails").innerHTML = str;
+							}
+							
+							
 							//modify the activate link
 							rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
 							rootGroupEl.onclick = function() {
@@ -7422,9 +7462,18 @@
 					var csvArr = newValue.split(',');
 					var linkTable = csvArr[0];
 					var linkId = csvArr[1];
-					newValue = treeEditingTargetColumn_ + "-(" + 
+					newValue = 							
+							"-(" + 
 							treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
+					//add as text node first in case not html safe
 					_editingCellEl.appendChild(document.createTextNode(newValue));
+					//then add html piece
+					newValue = _editingCellEl.innerHTML;
+					_editingCellEl.innerHTML = 
+							"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+							treeEditingTargetColumn_ + 
+							"</label>" +
+							newValue;
 					
 					{	//change link table name
 						var el; 
@@ -8321,11 +8370,15 @@
 
 				var csvIndex = newValue.indexOf(',');
 				var linkTable = newValue.substr(0,csvIndex);
-				var linkId = newValue.substr(csvIndex+1);
-				newValue = treeEditingTargetColumn_ + "-(" + 
-						treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
-
-				Debug.log("editTreeNodePropagateChange " + newValue);
+				//var linkId = newValue.substr(csvIndex+1);
+				//				newValue = 
+				//						"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+				//						treeEditingTargetColumn_ + 
+				//						"</label>" +
+				//						"-(" + 
+				//						treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
+				//
+				//				Debug.log("editTreeNodePropagateChange " + newValue);
 				
 				//find all Links with target table and UID and column and clear children				
 				{

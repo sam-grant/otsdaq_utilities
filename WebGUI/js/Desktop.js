@@ -675,7 +675,7 @@ Desktop.createDesktop = function(security) {
 			if(varPair[0] 		== "requestingWindowId")
 				requestingWindowId 	= varPair[1];
 			else if(varPair[0] 	== "windowPath")
-				windowPath 			= varPair[1];	
+				windowPath 			= decodeURIComponent(varPair[1]);	
 			else if(varPair[0] 	== "windowName")
 				windowName 			= varPair[1];	
 			else if(varPair[0] 	== "windowSubname")
@@ -1339,7 +1339,7 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		str += "&windowName=" + name;
 		str += "&windowSubname=" + subname;
 		str += "&windowUnique=" + unique;
-		str += "&windowPath=" + windowPath;
+		str += "&windowPath=" + encodeURIComponent(windowPath);
 		
 	//if there is no search, need to check lid=## is terminated with /
 	// check from = that there is nothing but numbers

@@ -126,9 +126,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 				++i;
 			sleep(1); //sleep one second, if timeout
 
-			if(heartbeatCount%60 == 59) //every 30 seconds print a heartbeat message
+			if(heartbeatCount%60 == 59) //every 60 seconds print a heartbeat message
 			{
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
+				if(heartbeatCount < 60*5) //ever hour after 5 minutes
+					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
+				else if(heartbeatCount%(60*60) == 59)
+					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time..." << std::endl;
 			}
 
 			++heartbeatCount;

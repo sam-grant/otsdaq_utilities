@@ -405,29 +405,88 @@
 		//init called once body has loaded
 		function init() {			
 						
-			Debug.log("CfgGUI init ");
-			DesktopContent.tooltip("Configuration GUI Introduction",
-					"Welcome to the Configuration GUI. Here you can manipulate every configuration "+
-					"parameter in your entire <i>otsdaq</i> system. \n\n" +
-					"The organization of the Configuration GUI is as follows:\n" +
-					"There are links at the top of the page to switch between the main views" +
-					" 'System View', 'Group View', and " +					
-					"'Table View'; " +
-					"then below those links is a display of the currently Active groups; " +
-					"and then below that is the view content." +
-					"\n\nIf you would like to take a look at the available online documentation, " +
-					"click the question mark at the top of the page.\n\n" +
+			Debug.log("CfgGUI_sebset init ");
+			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
+					"Welcome to the Configuration-Subset GUI. Here you can manipulate the fields "+
+					"of a subset of your <i>otsdaq</i> system. \n\n" +
+					"The organization of the Configuration-Subset GUI is in the form of two panes, a left and right.\n\n" +
 					
-					"Briefly, here is a description of the main views: " +
-					"\n\t- 'System View' is for viewing and editing the translation from System Aliases to groups." +
-					"\n\t- 'Group View' is for viewing and editing groups of tables." +
-					"\n\t- 'Table View' is for viewing and editing tables." + 
-					"\n\n" +
-					"You will see one more type view in the Configuration GUI and that is the 'Tree-view'." +
-					"Briefly, the 'Tree-view' is a way of viewing tables that are linked together - " +
-					"each group can be viewed in 'Tree-view' format."
+					"Briefly, here is a description of the two panes: " +
+					"\n\t- 'Left Pane' is for selecting one or many records to target." +
+					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
 			);
 			
+			//extract get parameters
+			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
+			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+			//		<filterFieldList> 	= CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+			
+			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");			
+			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList");			
+			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");			
+			_filterFieldList 	= DesktopContent.getParameter(0,"filterFieldList");
+			
+			if(!_subsetBasePath)
+			{
+				Debug.log("Missing required GET parameter 'subsetBasePath.'",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			if(!_groupingFieldList) _groupingFieldList = "";
+			if(!_editableFieldList) _editableFieldList = "";
+			if(!_filterFieldList) _filterFieldList = "";
+			
+			Debug.log("_subsetBasePath " + _subsetBasePath);
+			Debug.log("_groupingFieldList " + _groupingFieldList);
+			Debug.log("_editableFieldList " + _editableFieldList);
+			Debug.log("_filterFieldList " + _filterFieldList);
+			
+			
+			//get list of records that match <subsetBasePath> AND <filterFieldList>
+			
+			ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_filterFieldList,
+							function(records)
+							{
+					Debug.log("records found = " + records.length);
+
+					var str = document.body.innerHTML;
+					str += "<br>";
+					str += "<br>";
+					for(var i=0;i<records.length;++i)
+						str += records[i] + "<br>";
+					document.body.innerHTML = str;
+
+					//get grouping field values
+					//	for record list
+					ConfigurationAPI.getFieldsOfRecords(
+							_subsetBasePath,
+							records,
+							_groupingFieldList,
+							1,
+							function(recFields)
+							{
+						Debug.log("recFields found = " + recFields.length);
+
+						var str = document.body.innerHTML;
+						str += "<br>";
+//						str += "<br>";
+//						for(var i in fields)
+//							str += records[i] + "<br>";
+						document.body.innerHTML = str;
+							});
+					
+					
+							});
+			
+			
+			
+			//get list of editable fields
+			//	for record list
+			
+			return;
 			
 			window.onkeydown = bodyKeyHandler;
 			window.onmouseup = bodyMouseHandler;
@@ -2056,32 +2115,7 @@
 			Debug.log("toggleTableDetails " + _showTableDetails);
 			var el = document.getElementById("tableDetails");
 			el.style.display = _showTableDetails?"block":"none";
-		}
-		
-		//ConfigurationAPI.getDateString ~~
-		var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-		var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-		function ConfigurationAPI.getDateString(date)
-		{
-			var dateStr = "";
-
-			dateStr += dayArr_[date.getDay()];
-			dateStr += " ";
-			dateStr += monthArr_[date.getMonth()];
-			dateStr += " ";
-			dateStr += date.getDate();
-			dateStr += " ";
-			dateStr += date.getHours();
-			dateStr += ":";
-			dateStr += ((date.getMinutes()<10)?"0":"") + date.getMinutes();
-			dateStr += ":";
-			dateStr += ((date.getSeconds()<10)?"0":"") + date.getSeconds();
-			dateStr += " ";
-			dateStr += date.getFullYear();
-			dateStr += " ";
-			dateStr += date.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
-			return dateStr;
-		}
+		}		
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.

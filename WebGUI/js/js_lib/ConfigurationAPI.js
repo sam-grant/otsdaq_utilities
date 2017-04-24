@@ -47,9 +47,115 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" function list: 
 //	ConfigurationAPI.getDateString(date)
+// 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler)
 
 //"private" function list:
 
+
+//=====================================================================================
+//getSubsetRecords ~~
+//	takes as input a base path where the desired records are, 
+//	  and a filter list.
+// <filterList> is a CSV list of tree paths relative to <subsetBasePath> 
+//	 and their required value.
+//		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, it is an array of records (their UIDs) from the subset that match the filter list
+//
+ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseHandler)
+{
+	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+			"&configGroup=" +
+			"&configGroupKey=-1" +
+			"&hideStatusFalse=0" + 
+			"&depth=1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&filterList=" + filterList + 
+			"&modifiedTables=", //end post data
+			function(req)
+			{
+		var records = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(records);
+			return;
+		}
+		
+		//console.log(req);
+		
+		var tree = DesktopContent.getXMLNode(req,"tree");
+		var nodes = tree.children;
+		for(var i=0;i<nodes.length;++i)
+			records.push(nodes[i].getAttribute("value"));
+		Debug.log("Records: " + records);
+		responseHandler(records);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
+
+
+//=====================================================================================
+//getFieldsOfRecords ~~
+//	takes as input a base path where the records are, 
+//	  and an array of records.
+// <fieldList> is a CSV list of tree paths relative to <subsetBasePath> 
+//	 to the desired field.
+//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+//
+// 	maxDepth is used to force a end to search for common fields
+//	
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on succsess, it is an array of objects containing values for the corresponding field key	
+//		e.g. if 2 records 
+//			retObj = [ {
+//					"LinkToFETypeConfiguration" : "NIMPlus", "FEInterfacePluginName" : "NIMPlusPlugin"
+//					},{
+//					"LinkToFETypeConfiguration" : "CAPTAN", "FEInterfacePluginName" : "CAPTANPlugin"
+//					}]
+//
+ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
+		maxDepth,responseHandler)
+{
+	var recordsStr = "";
+	for(var i=0;i<records.length;++i)
+	{
+		if(i) recordsStr += ",";
+		recordsStr = records[i];
+	}
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
+			"&configGroup=" +
+			"&configGroupKey=-1" + 
+			"&depth=" + (maxDepth|0), //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&fieldList=" + fieldList + 
+			"&recordsStr=" + recordsStr, //end post data
+			function(req)
+			{
+		var recFields = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(recFields);
+			return;
+		}
+
+		//console.log(req);
+		
+		responseHandler(recFields);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
 
 
 //=====================================================================================

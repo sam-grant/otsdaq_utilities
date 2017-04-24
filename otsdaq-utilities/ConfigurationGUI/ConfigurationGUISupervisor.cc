@@ -132,6 +132,7 @@ throw (xgi::exception::Exception)
 	//	clearConfigurationTemporaryVersions
 	//	clearConfigurationCachedVersions
 	//	getTreeView
+	//	getTreeNodeCommonFields
 	//	activateConfigGroup
 	//	getActiveConfigGroups
 	//  copyViewToCurrentColumns
@@ -479,6 +480,7 @@ throw (xgi::exception::Exception)
 		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
 		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
 		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	filterList	 	= CgiDataUtilities::postData(cgi,"filterList");
 		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
 		bool			hideStatusFalse	= CgiDataUtilities::getDataAsInt(cgi,"hideStatusFalse");
 
@@ -488,9 +490,31 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "depth: " << depth << std::endl;
 		__MOUT__ << "hideStatusFalse: " << hideStatusFalse << std::endl;
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+		__MOUT__ << "filterList: " << filterList << std::endl;
 
 		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,depth,hideStatusFalse,modifiedTables);
+				startPath,depth,hideStatusFalse,modifiedTables,filterList);
+	}
+	else if(Command == "getTreeNodeCommonFields")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
+		std::string 	recordsStr	 	= CgiDataUtilities::postData(cgi,"recordsStr");
+		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "depth: " << depth << std::endl;
+		__MOUT__ << "fieldList: " << fieldList << std::endl;
+		__MOUT__ << "recordsStr: " << recordsStr << std::endl;
+
+		handleFillTreeNodeCommonFieldsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,depth,modifiedTables,recordsStr,fieldList);
+
 	}
 	else if(Command == "getAffectedActiveGroups")
 	{
@@ -810,65 +834,57 @@ catch(...)
 }
 
 //========================================================================================================================
-//handleFillTreeViewXML
-//	returns xml tree from path for given depth
+//handleFillTreeNodeCommonFieldsXML
+//	returns xml list of common fields among records
+//		field := relative-path
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
 //
 //parameters
 //	configGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordsStr := CSV of records to search for fields
+//	fieldList := CSV of relative-to-record-path to filter common fields
 //
-void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
-		const std::string &startPath, int depth, bool hideStatusFalse,
-		const std::string &modifiedTables)
+		const std::string &startPath, unsigned int depth,
+		const std::string &modifiedTables, const std::string &recordsStr,
+		const std::string &fieldList)
 {
-	//return xml
-	//	<groupName="groupName"/>
-	//	<tree="path">
-	//		<node="...">
-	//			<node="...">
-	//				<node="...">
-	//					<value="...">
-	//				</node>
-	//				<node="...">
-	//					<value="...">
-	//				</node>
-	//			</node>
-	//			<node="...">
-	//				<value="..">
-	//			</node>
-	//		...
-	//		</node>
-	//	</tree>
-
 	//return the startPath as root "tree" element
 	//	and then display all children if depth > 0
 	xmldoc.addTextElementToData("configGroup", groupName);
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
+	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+
 	try {
-		//if add root node, reload all tables so that partially loaded tables are not allowed
-		if(startPath == "/")
-			cfgMgr->getAllConfigurationInfo(true); //do refresh
+		//reload all tables so that partially loaded tables are not allowed
+		cfgMgr->getAllConfigurationInfo(true); //do refresh
 
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 
-		std::string groupComment, groupAuthor, configGroupCreationTime;
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-				cfgMgr->loadConfigurationGroup(groupName,groupKey,
-						0,0,0,&groupComment, &groupAuthor, &configGroupCreationTime);
-
-		if(startPath == "/") //only for root request
+		if(usingActiveGroups)
 		{
-			xmldoc.addTextElementToData("configGroupComment", groupComment);
-			xmldoc.addTextElementToData("configGroupAuthor", groupAuthor);
-			xmldoc.addTextElementToData("configGroupCreationTime", configGroupCreationTime);
+			//no need to load a target group
+			__MOUT__ << "Using active groups." << std::endl;
+		}
+		else
+		{
+			std::string groupComment, groupAuthor, configGroupCreationTime;
+			memberMap =
+					cfgMgr->loadConfigurationGroup(groupName,groupKey,
+							0,0,0,&groupComment, &groupAuthor, &configGroupCreationTime);
 		}
 
 		//extract modified tables
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
 		{
 			std::istringstream f(modifiedTables);
 			std::string table,version;
@@ -927,14 +943,234 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
 		}
 
+		DOMElement* parentEl = xmldoc.addTextElementToData("fields", startPath);
+
+		if(depth == 0) return; //already returned root node in itself
+
+
+		//do not allow traversing for common fields from root level
+		//	the tree view should be used for such a purpose
+		if(startPath == "/")
+			return;
+
+		std::vector<ConfigurationTree::RecordField> retFieldList;
+
+
+		{
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			if(startNode.isLinkNode() && startNode.isDisconnected())
+			{
+				__SS__ << "Start path was a disconnected link node!" << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				throw std::runtime_error(ss.str());
+				return; //quietly ignore disconnected links at depth
+				//note: at the root level they will be flagged for the user
+			}
+
+			std::vector<std::string /*relative-path*/> fieldFilterList;
+			if(fieldList != "")
+			{
+				//extract field filter list
+				{
+					std::istringstream f(fieldList);
+					std::string fieldPath;
+					while (getline(f, fieldPath, ','))
+					{
+						fieldFilterList.push_back(
+								ConfigurationView::decodeURIComponent(fieldPath));
+					}
+					__MOUT__ << fieldList << std::endl;
+					for(auto &field:fieldFilterList)
+						__MOUT__ << "fieldFilterList " <<
+							field << std::endl;
+				}
+			}
+			std::vector<std::string /*relative-path*/> recordList;
+			if(recordsStr != "")
+			{
+				//extract record list
+				{
+					std::istringstream f(recordsStr);
+					std::string recordStr;
+					while (getline(f, recordStr, ','))
+					{
+						recordList.push_back(
+								ConfigurationView::decodeURIComponent(recordStr));
+					}
+					__MOUT__ << recordsStr << std::endl;
+					for(auto &record:recordList)
+						__MOUT__ << "recordList " <<
+							record << std::endl;
+				}
+			}
+
+			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
+					recordList,fieldFilterList,depth);
+		}
+
+		for(const auto &fieldInfo:retFieldList)
+			xmldoc.addTextElementToParent("FieldColumnName",
+					fieldInfo.relativePath_ + "/" + fieldInfo.columnName_,
+					parentEl);
+	}
+	catch(std::runtime_error& e)
+	{
+		__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!\n\n" + std::string(e.what()));
+	}
+	catch(...)
+	{
+		__MOUT__ << "Error detected!" << std::endl;
+		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+	}
+
+}
+
+//========================================================================================================================
+//handleFillTreeViewXML
+//	returns xml tree from path for given depth
+//
+// if groupName == "" && groupKey is invalid
+//	 then return tree for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	depth from starting node path
+//	modifiedTables := CSV of table/version pairs
+//	filterList := relative-to-record-path=value(,value,...);path=value... filtering
+//		records with relative path not meeting all filter critera
+//		- can accept multiple values per field (values separated by commas) (i.e. OR)
+//		- fields/value pairs separated by ;  (i.e. AND)
+//
+void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath, unsigned int depth, bool hideStatusFalse,
+		const std::string &modifiedTables, const std::string &filterList)
+{
+	//return xml
+	//	<groupName="groupName"/>
+	//	<tree="path">
+	//		<node="...">
+	//			<node="...">
+	//				<node="...">
+	//					<value="...">
+	//				</node>
+	//				<node="...">
+	//					<value="...">
+	//				</node>
+	//			</node>
+	//			<node="...">
+	//				<value="..">
+	//			</node>
+	//		...
+	//		</node>
+	//	</tree>
+
+	//return the startPath as root "tree" element
+	//	and then display all children if depth > 0
+	xmldoc.addTextElementToData("configGroup", groupName);
+	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
+
+	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+
+	try {
+		//if add root node, reload all tables so that partially loaded tables are not allowed
+		if(usingActiveGroups || startPath == "/")
+			cfgMgr->getAllConfigurationInfo(true); //do refresh
+
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+
+		if(usingActiveGroups)
+		{
+			//no need to load a target group
+			__MOUT__ << "Using active groups." << std::endl;
+		}
+		else
+		{
+			std::string groupComment, groupAuthor, configGroupCreationTime;
+			memberMap =
+					cfgMgr->loadConfigurationGroup(groupName,groupKey,
+							0,0,0,&groupComment, &groupAuthor, &configGroupCreationTime);
+
+			if(startPath == "/") //only for root request
+			{
+				xmldoc.addTextElementToData("configGroupComment", groupComment);
+				xmldoc.addTextElementToData("configGroupAuthor", groupAuthor);
+				xmldoc.addTextElementToData("configGroupCreationTime", configGroupCreationTime);
+			}
+
+			//extract modified tables
+			{
+				std::istringstream f(modifiedTables);
+				std::string table,version;
+				while (getline(f, table, ','))
+				{
+					getline(f, version, ',');
+					modifiedTablesMap.insert(
+							std::pair<std::string /*name*/,
+							ConfigurationVersion /*version*/>(
+									table, ConfigurationVersion(version)));
+				}
+				__MOUT__ << modifiedTables << std::endl;
+				for(auto &pair:modifiedTablesMap)
+					__MOUT__ << "modified table " <<
+					pair.first << ":" <<
+					pair.second << std::endl;
+			}
+		}
+
+		//add all active configuration pairs to xmldoc
+		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+		xmldoc.addTextElementToData("DefaultNoLink", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
+		for(auto &activePair: allActivePairs)
+		{
+			xmldoc.addTextElementToData("ActiveTableName", activePair.first);
+
+			//check if name is in modifiedTables
+			//if so, activate the temporary version
+			if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
+					modifiedTablesMap.end())
+			{
+				__MOUT__ << "Found modified table " <<
+						(*modifiedTablesMapIt).first << ": trying... " <<
+						(*modifiedTablesMapIt).second << std::endl;
+
+				try
+				{
+					allCfgInfo[activePair.first].configurationPtr_->setActiveView(
+							(*modifiedTablesMapIt).second);
+				}
+				catch(...)
+				{
+					__SS__ << "Modified table version v" << (*modifiedTablesMapIt).second <<
+							" failed. Reverting to v" <<
+							allCfgInfo[activePair.first].configurationPtr_->getView().getVersion() <<
+							"." <<
+							std::endl;
+					__MOUT_WARN__ << "Warning detected!\n\n " << ss.str() << std::endl;
+					xmldoc.addTextElementToData("Warning", "Error generating XML tree!\n\n" +
+							std::string(ss.str()));
+				}
+			}
+
+			xmldoc.addTextElementToData("ActiveTableVersion",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
+			xmldoc.addTextElementToData("ActiveTableComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		}
+
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
 		if(depth == 0) return; //already returned root node in itself
 
 		std::vector<std::pair<std::string,ConfigurationTree> > rootMap;
 
-		if(startPath == "/") //then consider the configurationManager the root node
-		{
+		if(startPath == "/" && !usingActiveGroups)
+		{ 	//then consider the configurationManager the root node
 			std::string accumulateTreeErrs;
 			rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
 			__MOUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
@@ -952,7 +1188,30 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 				//note: at the root level they will be flagged for the user
 			}
 
-			rootMap = cfgMgr->getNode(startPath).getChildren();
+			std::map<std::string /*relative-path*/, std::string /*value*/> filterMap;
+			if(filterList != "")
+			{
+				//extract filter list
+				{
+					std::istringstream f(filterList);
+					std::string filterPath,filterValue;
+					while (getline(f, filterPath, '='))
+					{
+						getline(f, filterValue, ';');
+						filterMap.insert(
+								std::pair<std::string,std::string>(
+										filterPath,
+										filterValue));
+					}
+					__MOUT__ << filterList << std::endl;
+					for(auto &pair:filterMap)
+						__MOUT__ << "filterMap " <<
+							pair.first << ":" <<
+							pair.second << std::endl;
+				}
+			}
+
+			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
 		}
 
 		for(auto &treePair:rootMap)
@@ -1008,7 +1267,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 
 				//add extra fields for disconnected link
 				xmldoc.addTextElementToParent(
-						(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+						(t.isGroupLinkNode()?"Group":"U") +	std::string("ID"),
 						t.getDisconnectedLinkID(),
 						parentEl);
 				xmldoc.addTextElementToParent("LinkConfigurationName",
@@ -1028,7 +1287,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			}
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 			xmldoc.addTextElementToParent(
-					(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+					(t.isGroupLinkNode()?"Group":"U") +	std::string("ID"),
 					t.getValueAsString(), parentEl);
 
 			xmldoc.addTextElementToParent("LinkConfigurationName", t.getConfigurationName(),
