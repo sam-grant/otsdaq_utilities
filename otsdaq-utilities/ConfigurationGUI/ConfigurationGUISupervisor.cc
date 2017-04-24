@@ -1009,9 +1009,24 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 		}
 
 		for(const auto &fieldInfo:retFieldList)
-			xmldoc.addTextElementToParent("FieldColumnName",
-					fieldInfo.relativePath_ + "/" + fieldInfo.columnName_,
+		{
+			xmldoc.addTextElementToParent("FieldTableName",
+					fieldInfo.tableName_,
 					parentEl);
+			xmldoc.addTextElementToParent("FieldUID",
+					fieldInfo.uid_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnName",
+					fieldInfo.columnName_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldRelativePath",
+					fieldInfo.relativePath_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnType",
+					fieldInfo.columnInfo_->getDataType(),
+					parentEl);
+			//TODO -- if fixed choice send info
+		}
 	}
 	catch(std::runtime_error& e)
 	{

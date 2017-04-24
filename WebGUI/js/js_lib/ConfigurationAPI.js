@@ -105,7 +105,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 //	takes as input a base path where the records are, 
 //	  and an array of records.
 // <fieldList> is a CSV list of tree paths relative to <subsetBasePath> 
-//	 to the desired field.
+//	 to the allowed fields. If empty, then all available fields are allowed.
 //		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
 //
 // 	maxDepth is used to force a end to search for common fields
@@ -127,7 +127,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
 	for(var i=0;i<records.length;++i)
 	{
 		if(i) recordsStr += ",";
-		recordsStr = records[i];
+		recordsStr += records[i];
 	}
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
@@ -147,9 +147,26 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
 			responseHandler(recFields);
 			return;
 		}
-
-		//console.log(req);
 		
+		var fields = DesktopContent.getXMLNode(req,"fields");
+		
+		var FieldTableNames = fields.getElementsByTagName("FieldTableName");
+		var FieldUIDs = fields.getElementsByTagName("FieldUID");
+		var FieldColumnNames = fields.getElementsByTagName("FieldColumnName");
+		var FieldRelativePaths = fields.getElementsByTagName("FieldRelativePath");
+		var FieldColumnTypes = fields.getElementsByTagName("FieldColumnType");
+		
+		for(var i=0;i<FieldTableNames.length;++i)
+		{
+			var obj = {};
+			obj.fieldTableName = DesktopContent.getXMLValue(FieldTableNames[i]);
+			obj.fieldUID = DesktopContent.getXMLValue(FieldUIDs[i]);
+			obj.fieldColumnName = DesktopContent.getXMLValue(FieldColumnNames[i]);
+			obj.fieldRelativePath = DesktopContent.getXMLValue(FieldRelativePaths[i]);
+			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
+			recFields.push(obj);
+		}
+		Debug.log("Records: " + recFields);		
 		responseHandler(recFields);
 
 			}, //handler

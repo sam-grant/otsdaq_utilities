@@ -477,7 +477,7 @@ DesktopContent.hideLoading = function()	{
 	
 	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
 	Debug.log("DesktopContent.hideLoading");
-	DesktopContent._loadBox.style.display = "none";
+	document.getElementById(DesktopContent._loadBoxId).style.display = "none";
 }
 //=====================================================================================
 //DesktopContent.XMLHttpRequest

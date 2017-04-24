@@ -168,10 +168,12 @@
 		//	Description of Functionality/Behavior:
 		//	
 		//	GET parameters:
-		//		<baseTable> = Records from this table are the target of this GUI, e.g. “FEInterfaceConfiguration”
-		//		<subLevelGrouping> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
-		//		<fieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-		//		<forceSubLevelBase> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
+		//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+		//									- these are the fields that can be used to filter UID records by (and these will cause grouping in square-view)	
+		//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+		//		<filterFieldList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+		//									- this is like a pre-filter (filter on records UID that user can not control)	
 		//	- Requires user to have LOCK
 		//	
 		//	- Split window into two panes: Left and Right; Left is fixed width and hideable.	
@@ -464,17 +466,18 @@
 					ConfigurationAPI.getFieldsOfRecords(
 							_subsetBasePath,
 							records,
-							_groupingFieldList,
-							1,
+							_editableFieldList,
+							-1,
 							function(recFields)
 							{
 						Debug.log("recFields found = " + recFields.length);
 
 						var str = document.body.innerHTML;
 						str += "<br>";
-//						str += "<br>";
-//						for(var i in fields)
-//							str += records[i] + "<br>";
+						str += "<br>";
+						for(var i in recFields)
+							str += recFields[i].fieldRelativePath + 
+							recFields[i].fieldColumnName + "<br>";
 						document.body.innerHTML = str;
 							});
 					

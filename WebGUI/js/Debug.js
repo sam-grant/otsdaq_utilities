@@ -320,7 +320,7 @@ Debug.errorPop = function(err,severity) {
 //=====================================================================================
 //Close the error popup on the window
 Debug.closeErrorPop = function() {
-	Debug._errBox.style.display = "none";
+	document.getElementById(Debug._errBoxId).style.display = "none";
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
 }
 
