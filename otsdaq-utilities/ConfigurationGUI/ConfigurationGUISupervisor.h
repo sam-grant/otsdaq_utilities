@@ -63,16 +63,21 @@ private:
     void 			handleGetConfigurationXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool allowIllegalColumns=false);
     void 			handleCreateConfigurationXML		(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, const std::string &data, const int &dataOffset, const std::string &author, const std::string &comment, bool sourceTableAsIs);
 
+    void			setupActiveTablesXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &modifiedTables, bool refreshAll = true, bool getGroupInfo = false, std::map<std::string /*name*/, ConfigurationVersion /*version*/> *returnMemberMap = 0);
     void 			handleFillTreeViewXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, unsigned int depth, bool hideStatusFalse, const std::string &modifiedTables, const std::string &filterList);
-    void 			handleFillTreeNodeCommonFieldsXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, unsigned int depth, const std::string &modifiedTables, const std::string &recordsStr, const std::string &fieldList);
     static void		recursiveTreeToXML					(const ConfigurationTree &t, unsigned int depth, HttpXmlDocument &xmldoc, DOMElement* parentEl, bool hideStatusFalse);
+    void 			handleFillTreeNodeCommonFieldsXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, unsigned int depth, const std::string &modifiedTables, const std::string &recordList, const std::string &fieldList);
+    void 			handleFillGetTreeNodeFieldValuesXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, const std::string &modifiedTables, const std::string &recordList, const std::string &fieldList);
+    void 			handleFillSetTreeNodeFieldValuesXML	(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const ConfigurationGroupKey &groupKey, const std::string &startPath, const std::string &modifiedTables, const std::string &recordList, const std::string &fieldList, const std::string &valueList);
+
     void 			handleSaveTreeNodeEditXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, const std::string &type, const std::string &uid, const std::string &column, const std::string &newValue);
     void 			handleGetAffectedGroupsXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey, const std::string &modifiedTables);
     void			handleGetLinkToChoicesXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName, const ConfigurationVersion &linkToTableVersion, const std::string &linkIdType, const std::string &linkIndex, const std::string &linkInitId);
 
     void			saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryVersion);
 
-    void testXDAQContext();
+
+    void testXDAQContext(); //for debugging
 
     enum {
         USER_PERMISSIONS_THRESHOLD = 10,

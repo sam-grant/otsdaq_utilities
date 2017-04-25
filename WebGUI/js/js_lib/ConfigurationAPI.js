@@ -62,7 +62,8 @@ if (typeof DesktopContent == 'undefined' &&
 //
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
-//		on success, it is an array of records (their UIDs) from the subset that match the filter list
+//		on success, the array will be an array of records (their UIDs) 
+//			from the subset that match the filter list
 //
 ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseHandler)
 {
@@ -104,6 +105,8 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 //getFieldsOfRecords ~~
 //	takes as input a base path where the records are, 
 //	  and an array of records.
+// <recordArr> is an array or record UIDs (as returned from 
+//		ConfigurationAPI.getSubsetRecords)
 // <fieldList> is a CSV list of tree paths relative to <subsetBasePath> 
 //	 to the allowed fields. If empty, then all available fields are allowed.
 //		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
@@ -112,31 +115,32 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 //	
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
-//		on succsess, it is an array of objects containing values for the corresponding field key	
-//		e.g. if 2 records 
-//			retObj = [ {
-//					"LinkToFETypeConfiguration" : "NIMPlus", "FEInterfacePluginName" : "NIMPlusPlugin"
-//					},{
-//					"LinkToFETypeConfiguration" : "CAPTAN", "FEInterfacePluginName" : "CAPTANPlugin"
-//					}]
+//		on succsess, the array will be an array of Field objects	
+//		Field := {}
+//			obj.fieldTableName 
+//			obj.fieldUID 
+//			obj.fieldColumnName
+//			obj.fieldRelativePath 
+//			obj.fieldColumnType
+//			
 //
-ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
+ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldList,
 		maxDepth,responseHandler)
 {
-	var recordsStr = "";
-	for(var i=0;i<records.length;++i)
+	var recordListStr = "";
+	for(var i=0;i<recordArr.length;++i)
 	{
-		if(i) recordsStr += ",";
-		recordsStr += records[i];
+		if(i) recordListStr += ",";
+		recordListStr += recordArr[i];
 	}
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
 			"&configGroup=" +
 			"&configGroupKey=-1" + 
 			"&depth=" + (maxDepth|0), //end get data 
-			"startPath=/" + subsetBasePath +  
-			"&fieldList=" + fieldList + 
-			"&recordsStr=" + recordsStr, //end post data
+			"startPath=/" + subsetBasePath + 
+			"&recordList=" + recordListStr +  
+			"&fieldList=" + fieldList, //end post data
 			function(req)
 			{
 		var recFields = [];
@@ -151,7 +155,6 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
 		var fields = DesktopContent.getXMLNode(req,"fields");
 		
 		var FieldTableNames = fields.getElementsByTagName("FieldTableName");
-		var FieldUIDs = fields.getElementsByTagName("FieldUID");
 		var FieldColumnNames = fields.getElementsByTagName("FieldColumnName");
 		var FieldRelativePaths = fields.getElementsByTagName("FieldRelativePath");
 		var FieldColumnTypes = fields.getElementsByTagName("FieldColumnType");
@@ -160,7 +163,6 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
 		{
 			var obj = {};
 			obj.fieldTableName = DesktopContent.getXMLValue(FieldTableNames[i]);
-			obj.fieldUID = DesktopContent.getXMLValue(FieldUIDs[i]);
 			obj.fieldColumnName = DesktopContent.getXMLValue(FieldColumnNames[i]);
 			obj.fieldRelativePath = DesktopContent.getXMLValue(FieldRelativePaths[i]);
 			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
@@ -174,6 +176,143 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,records,fieldList,
 			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 }
 
+
+//=====================================================================================
+//getFieldValuesForRecord ~~
+//	takes as input a base path where the record is, 
+//	  and the record uid.
+// <recordArr> is an array or record UIDs (as returned from 
+//		ConfigurationAPI.getSubsetRecords)
+// <fieldObjArr> is an array of field objects (as returned from 
+//		ConfigurationAPI.getFieldsOfRecords). This
+//		is converted internally to a CSV list of tree paths relative to <subsetBasePath> 
+//	 	to the fields to be read.
+//	
+//	when complete, the responseHandler is called with an object parameter.
+//		on failure, the object will be empty {}.
+//		on succsess, the object contains values for the corresponding field key	
+//		e.g. if 2 fields 
+//			retObj = {
+//					"LinkToFETypeConfiguration" : "NIMPlus", 
+//					"FEInterfacePluginName" : "NIMPlusPlugin"
+//					}
+//
+ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fieldObjArr,
+		responseHandler)
+{	
+	var recordListStr = "";
+	for(var i=0;i<recordArr.length;++i)
+	{
+		if(i) recordListStr += ",";
+		recordListStr += recordArr[i];
+	}
+	
+	var fieldListStr = "";
+	for(var i=0;i<fieldObjArr.length;++i)
+	{
+		if(i) fieldListStr += ",";
+		fieldListStr += fieldObjArr[i].fieldRelativePath + 
+				fieldObjArr[i].fieldColumnName;
+	}
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeFieldValues" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath + 
+			"&recordList=" + recordListStr +
+			"&fieldList=" + fieldListStr, //end post data
+			function(req)
+			{
+		var recFieldValues = {};
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(recFieldValues);
+			return;
+		}
+		var fieldValues = DesktopContent.getXMLNode(req,"fieldValues");
+
+		var FieldPaths = fieldValues.getElementsByTagName("FieldPath");
+		var FieldValues = fieldValues.getElementsByTagName("FieldValue");
+		for(var i=0;i<FieldPaths.length;++i)
+			recFieldValues[DesktopContent.getXMLValue(FieldPaths[i])] = 
+					DesktopContent.getXMLValue(FieldValues[i]);
+		
+		responseHandler(recFieldValues);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
+
+//=====================================================================================
+//setFieldValuesForRecords ~~
+//	takes as input a base path where the records are, 
+//	  and an array of records.
+// <recordArr> is an array or record UIDs (as returned from 
+//		ConfigurationAPI.getSubsetRecords)
+// <fieldObjArr> is an array of field objects (as returned from 
+//		ConfigurationAPI.getFieldsOfRecords). This
+//		is converted internally to a CSV list of tree paths relative to <subsetBasePath> 
+//	 	to the fields to be written.
+// <valueArr> is an array of values, with index corresponding to the associated 
+//	 	field in the <fieldObjArr>.
+//
+//	
+//	when complete, the responseHandler is called with a bool parameter.
+//		on failure, the bool will be false.
+//		on succsess, the bool will be true.
+//			
+//
+ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
+		valueArr,responseHandler)
+{
+	var fieldListStr = "";
+	for(var i=0;i<fieldObjArr.length;++i)
+	{
+		if(i) fieldListStr += ",";
+		fieldListStr += fieldObjArr[i].fieldRelativePath + 
+				fieldObjArr[i].fieldColumnName;
+	}
+	
+	var valueListStr = "";
+	for(var i=0;i<valueArr.length;++i)
+	{
+		if(i) valueListStr += ",";
+		valueListStr += valueArr[i];
+	}
+	
+	var recordListStr = "";
+	for(var i=0;i<recordArr.length;++i)
+	{
+		if(i) recordListStr += ",";
+		recordListStr += recordArr[i];
+	}
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&valueList=" + valueListStr +
+			"&fieldList=" + fieldListStr, //end post data
+			function(req)
+			{
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler(false);
+			return;
+		}		
+
+		if(responseHandler) responseHandler(true);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
 
 //=====================================================================================
 //getDateString ~~

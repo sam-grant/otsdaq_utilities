@@ -444,50 +444,91 @@
 			Debug.log("_editableFieldList " + _editableFieldList);
 			Debug.log("_filterFieldList " + _filterFieldList);
 			
+			var localGetFieldValuesForRecordHandler;
+			var localRecords, localFields;
 			
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
 			
 			ConfigurationAPI.getSubsetRecords(
 					_subsetBasePath,
 					_filterFieldList,
-							function(records)
-							{
-					Debug.log("records found = " + records.length);
+					function(records)
+					{
+				localRecords = records;
+				Debug.log("records found = " + records.length);
+
+				var str = document.body.innerHTML;
+				str += "<br>GetRecords";
+				str += "<br>";
+				for(var i=0;i<records.length;++i)
+					str += records[i] + "<br>";
+				document.body.innerHTML = str;
+
+				//get grouping field values
+				//	for record list
+				ConfigurationAPI.getFieldsOfRecords(
+						_subsetBasePath,
+						records,
+						_editableFieldList,
+						-1,
+						function(recFields)
+						{
+					localFields = recFields;
+					Debug.log("recFields found = " + recFields.length);
 
 					var str = document.body.innerHTML;
+					str += "<br>GetFields";
 					str += "<br>";
-					str += "<br>";
-					for(var i=0;i<records.length;++i)
-						str += records[i] + "<br>";
+					for(var i in recFields)
+						str += recFields[i].fieldRelativePath + 
+						recFields[i].fieldColumnName + "<br>";
 					document.body.innerHTML = str;
 
-					//get grouping field values
-					//	for record list
-					ConfigurationAPI.getFieldsOfRecords(
+					ConfigurationAPI.getFieldValuesForRecord(
 							_subsetBasePath,
-							records,
-							_editableFieldList,
-							-1,
-							function(recFields)
-							{
-						Debug.log("recFields found = " + recFields.length);
+							[records[0]],
+							recFields,
+							localGetFieldValuesForRecordHandler
+					);
 
-						var str = document.body.innerHTML;
-						str += "<br>";
-						str += "<br>";
-						for(var i in recFields)
-							str += recFields[i].fieldRelativePath + 
-							recFields[i].fieldColumnName + "<br>";
-						document.body.innerHTML = str;
-							});
-					
-					
-							});
+
+						});
+
+
+					});
+
+			var setValue = true;
+			localGetFieldValuesForRecordHandler = function(recFieldValues) {
+				var str = document.body.innerHTML;
+				str += "<br>GetFieldValues " + setValue;
+				str += "<br>";
+				for(var i in recFieldValues)
+					str += i + ": " + recFieldValues[i] + "<br>";
+				document.body.innerHTML = str;
+				
+				if(setValue)				
+					ConfigurationAPI.setFieldValuesForRecords(
+							_subsetBasePath,
+							localRecords,
+							[localFields[1]], //fieldArr
+							["0"], //valueArr
+							function(success)
+							{
+
+					Debug.log("success " + success);
+					//get value again, without setting again
+					setValue = false;
+					if(0 && success)
+						ConfigurationAPI.getFieldValuesForRecord(
+							_subsetBasePath,
+							localRecords,
+							localFields,
+							localGetFieldValuesForRecordHandler
+					);	
+							}
+					);
+			}
 			
-			
-			
-			//get list of editable fields
-			//	for record list
 			
 			return;
 			
