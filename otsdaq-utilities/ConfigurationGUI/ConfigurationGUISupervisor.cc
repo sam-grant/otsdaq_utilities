@@ -896,7 +896,8 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
 		const std::string &modifiedTables,
 		bool refreshAll, bool getGroupInfo,
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> *returnMemberMap)
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> *returnMemberMap,
+		bool outputActiveTables)
 try
 {
 	xmldoc.addTextElementToData("configGroup", groupName);
@@ -967,7 +968,8 @@ try
 	xmldoc.addTextElementToData("DefaultNoLink", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
 	for(auto &activePair: allActivePairs)
 	{
-		xmldoc.addTextElementToData("ActiveTableName", activePair.first);
+		if(outputActiveTables)
+			xmldoc.addTextElementToData("ActiveTableName", activePair.first);
 
 		//check if name is in modifiedTables
 		//if so, activate the temporary version
@@ -996,10 +998,13 @@ try
 			}
 		}
 
-		xmldoc.addTextElementToData("ActiveTableVersion",
-				allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
-		xmldoc.addTextElementToData("ActiveTableComment",
-				allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		if(outputActiveTables)
+		{
+			xmldoc.addTextElementToData("ActiveTableVersion",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
+			xmldoc.addTextElementToData("ActiveTableComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		}
 	}
 
 }
@@ -1045,7 +1050,9 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 			xmldoc,
 			cfgMgr,
 			groupName, groupKey,
-			modifiedTables);
+			modifiedTables,
+			true /* refresh all */, false /* getGroupInfo */,
+			0 /* returnMemberMap */, false /* outputActiveTables */);
 
 	//for each field
 	//	return field/value pair in xml
@@ -1075,8 +1082,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 			std::string fieldValue;
 			while (getline(f, fieldValue, ','))
 			{
-				fieldValues.push_back(
-						ConfigurationView::decodeURIComponent(fieldValue));
+				fieldValues.push_back(fieldValue); //setURIEncodedValue is expected
+						//ConfigurationView::decodeURIComponent(fieldValue));
 			}
 			__MOUT__ << valueList << std::endl;
 			for(const auto &value:fieldValues)
@@ -1090,6 +1097,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 		//extract record list
 		{
 			ConfigurationBase* config;
+			ConfigurationVersion temporaryVersion;
 			std::istringstream f(recordList);
 			std::string recordUID;
 			unsigned int i;
@@ -1128,19 +1136,43 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 //							cfgMgr,
 //							targetNode.getConfigurationName(),
 //							targetNode.getConfigurationVersion(),
-//							Type is Hard,
-//							targetNode.getUIDOfNode(),
-//							targetNode.getName(),
+//							"value",
+//							targetNode.getUIDAsString(),
+//							targetNode.getValueName(), //col name
 //							fieldValues[i]
 //							);
-//
 
-//					xmldoc.addTextElementToParent("FieldPath",
-//							fieldPath,
-//							parentEl);
-//					xmldoc.addTextElementToParent("FieldValue",
-//							.getValueAsString(),
-//							parentEl);
+					//or
+					// 	(because problem is this would create a new temporary version each time)
+					// if current version is not temporary
+					//		create temporary
+					//	else re-modify temporary version
+					//	edit temporary version directly
+					//	then after all edits return active versions
+					//
+
+					config = cfgMgr->getConfigurationByName(
+							targetNode.getConfigurationName());
+					if(!(temporaryVersion =
+							targetNode.getConfigurationVersion()).isTemporaryVersion())
+					{
+						//create temporary version for editing
+						temporaryVersion = config->createTemporaryView(
+								targetNode.getConfigurationVersion());
+						cfgMgr->saveNewConfiguration(
+								targetNode.getConfigurationName(),
+								temporaryVersion, true); //proper bookkeeping for temporary versionwith the new version
+
+						__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+					}
+					else //else table is already temporary version
+						__MOUT__ << "Using temporary version " << temporaryVersion << std::endl;
+
+					//copy "value" type edit from handleSaveTreeNodeEditXML() functionality
+					config->getViewP()->setURIEncodedValue(
+							fieldValues[i],
+							targetNode.getRow(),
+							targetNode.getColumn());
 				}
 			}
 		}
@@ -1153,8 +1185,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 			xmldoc.addTextElementToData("NewActiveTableName", activePair.first);
 			xmldoc.addTextElementToData("NewActiveTableVersion",
 					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
-			xmldoc.addTextElementToData("NewActiveTableComment",
-					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+			//xmldoc.addTextElementToData("NewActiveTableComment",
+			//		allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
 		}
 
 

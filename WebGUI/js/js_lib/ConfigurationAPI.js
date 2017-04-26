@@ -56,17 +56,30 @@ if (typeof DesktopContent == 'undefined' &&
 //getSubsetRecords ~~
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
+//
 // <filterList> is a CSV list of tree paths relative to <subsetBasePath> 
 //	 and their required value.
 //		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
 //
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
 //		on success, the array will be an array of records (their UIDs) 
 //			from the subset that match the filter list
 //
-ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseHandler)
+ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
+		filterList,responseHandler,modifiedTables)
 {
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 			"&configGroup=" +
 			"&configGroupKey=-1" +
@@ -74,7 +87,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 			"&depth=1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&filterList=" + filterList + 
-			"&modifiedTables=", //end post data
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
 		var records = [];
@@ -111,11 +124,14 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 //	 to the allowed fields. If empty, then all available fields are allowed.
 //		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
 //
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
 // 	maxDepth is used to force a end to search for common fields
 //	
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
-//		on succsess, the array will be an array of Field objects	
+//		on success, the array will be an array of Field objects	
 //		Field := {}
 //			obj.fieldTableName 
 //			obj.fieldUID 
@@ -125,8 +141,16 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,filterList,responseH
 //			
 //
 ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldList,
-		maxDepth,responseHandler)
+		maxDepth,responseHandler,modifiedTables)
 {
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
 	var recordListStr = "";
 	for(var i=0;i<recordArr.length;++i)
 	{
@@ -140,7 +164,8 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			"&depth=" + (maxDepth|0), //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
-			"&fieldList=" + fieldList, //end post data
+			"&fieldList=" + fieldList +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
 		var recFields = [];
@@ -188,18 +213,28 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 //		is converted internally to a CSV list of tree paths relative to <subsetBasePath> 
 //	 	to the fields to be read.
 //	
-//	when complete, the responseHandler is called with an object parameter.
-//		on failure, the object will be empty {}.
-//		on succsess, the object contains values for the corresponding field key	
-//		e.g. if 2 fields 
-//			retObj = {
-//					"LinkToFETypeConfiguration" : "NIMPlus", 
-//					"FEInterfacePluginName" : "NIMPlusPlugin"
-//					}
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of FieldValue objects	
+//		FieldValue := {}
+//			obj.fieldUID
+//			obj.fieldPath   
+//			obj.fieldValue
 //
 ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fieldObjArr,
-		responseHandler)
+		responseHandler,modifiedTables)
 {	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+
 	var recordListStr = "";
 	for(var i=0;i<recordArr.length;++i)
 	{
@@ -220,10 +255,11 @@ ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fie
 			"&configGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +
-			"&fieldList=" + fieldListStr, //end post data
+			"&fieldList=" + fieldListStr + 
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
-		var recFieldValues = {};
+		var recFieldValues = [];
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
@@ -231,13 +267,22 @@ ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fie
 			responseHandler(recFieldValues);
 			return;
 		}
-		var fieldValues = DesktopContent.getXMLNode(req,"fieldValues");
+		
+		var fieldValues = req.responseXML.getElementsByTagName("fieldValues");
 
-		var FieldPaths = fieldValues.getElementsByTagName("FieldPath");
-		var FieldValues = fieldValues.getElementsByTagName("FieldValue");
-		for(var i=0;i<FieldPaths.length;++i)
-			recFieldValues[DesktopContent.getXMLValue(FieldPaths[i])] = 
-					DesktopContent.getXMLValue(FieldValues[i]);
+		for(var f=0;f<fieldValues.length;++f)
+		{
+			var FieldPaths = fieldValues[f].getElementsByTagName("FieldPath");
+			var FieldValues = fieldValues[f].getElementsByTagName("FieldValue");
+			for(var i=0;i<FieldPaths.length;++i)
+			{
+				var obj = {};
+				obj.fieldUID = DesktopContent.getXMLValue(fieldValues[f]);
+				obj.fieldPath = DesktopContent.getXMLValue(FieldPaths[i]);
+				obj.fieldValue = DesktopContent.getXMLValue(FieldValues[i]);
+				recFieldValues.push(obj);
+			}
+		}
 		
 		responseHandler(recFieldValues);
 
@@ -259,15 +304,28 @@ ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fie
 // <valueArr> is an array of values, with index corresponding to the associated 
 //	 	field in the <fieldObjArr>.
 //
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
 //	
-//	when complete, the responseHandler is called with a bool parameter.
-//		on failure, the bool will be false.
-//		on succsess, the bool will be true.
-//			
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//
 //
 ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
-		valueArr,responseHandler)
-{
+		valueArr,responseHandler,modifiedTables)
+{	
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
 	var fieldListStr = "";
 	for(var i=0;i<fieldObjArr.length;++i)
 	{
@@ -296,18 +354,37 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&valueList=" + valueListStr +
-			"&fieldList=" + fieldListStr, //end post data
+			"&fieldList=" + fieldListStr + 
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
+		
+		var modifiedTables = [];
+		
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler(false);
+			if(responseHandler) responseHandler(modifiedTables);
 			return;
 		}		
-
-		if(responseHandler) responseHandler(true);
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableVersion;
+		
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			modifiedTables.push(obj);
+		}
+		
+		if(responseHandler) responseHandler(modifiedTables);
 
 			}, //handler
 			0, //handler param

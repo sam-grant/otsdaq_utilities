@@ -445,7 +445,9 @@
 			Debug.log("_filterFieldList " + _filterFieldList);
 			
 			var localGetFieldValuesForRecordHandler;
-			var localRecords, localFields;
+			var localRecords, localFields, localModifiedTables;
+			
+			localModifiedTables = [];
 			
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
 			
@@ -480,7 +482,7 @@
 					str += "<br>GetFields";
 					str += "<br>";
 					for(var i in recFields)
-						str += recFields[i].fieldRelativePath + 
+						str += i + ": " + recFields[i].fieldRelativePath + 
 						recFields[i].fieldColumnName + "<br>";
 					document.body.innerHTML = str;
 
@@ -503,27 +505,30 @@
 				str += "<br>GetFieldValues " + setValue;
 				str += "<br>";
 				for(var i in recFieldValues)
-					str += i + ": " + recFieldValues[i] + "<br>";
+					str += recFieldValues[i].fieldUID + ": " +
+						recFieldValues[i].fieldPath + ": " + 
+						recFieldValues[i].fieldValue + "<br>";
 				document.body.innerHTML = str;
 				
 				if(setValue)				
 					ConfigurationAPI.setFieldValuesForRecords(
 							_subsetBasePath,
 							localRecords,
-							[localFields[1]], //fieldArr
-							["0"], //valueArr
-							function(success)
+							[localFields[1],localFields[5]], //fieldArr
+							["0","3999"], //valueArr
+							function(modifiedTables)
 							{
-
-					Debug.log("success " + success);
+					localModifiedTables = modifiedTables;
+					
 					//get value again, without setting again
 					setValue = false;
-					if(0 && success)
+					if(1 && modifiedTables.length)
 						ConfigurationAPI.getFieldValuesForRecord(
 							_subsetBasePath,
 							localRecords,
 							localFields,
-							localGetFieldValuesForRecordHandler
+							localGetFieldValuesForRecordHandler,
+							localModifiedTables
 					);	
 							}
 					);
