@@ -770,10 +770,8 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables, response
 									"-activateBumpedGroupVersions").checked;
 
 					ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,
-							true, //doNotIgnoreWarnings
-							doNotSaveAffectedGroups,
-									doNotActivateAffectedGroups,doNotSaveAliases
-							);		
+							true); //doNotIgnoreWarnings							
+							
 				}; //end submit onmouseup handler				
 			}
 			//create cancel onclick handler
@@ -931,11 +929,7 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
 //	
-//	Note: when called from popup, uses info from popup:
-//		var _affectedGroups; 
-//		var _savingGroupCheckboxes; 
-//		var _activatingGroupCheckboxes; 
-//		var _aliasingGroupCheckboxes; 
+//	Note: when called from popup, uses info from popup.
 //
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
@@ -951,7 +945,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
 	
-	if(modifiedTables.size())
+	if(!modifiedTables.length)
 	{
 		Debug.log("No tables were modified. Nothing to do.", Debug.WARN_PRIORITY);
 		return;
@@ -968,12 +962,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	//	for each alias
 	//		set alias for new group
 	
-	
-	var affectedGroups = _affectedGroups;
-	_affectedGroups = undefined; //clear for next usage
-
-	var savedTables = [];
-	
+	var savedTables = [];	
 	
 	var numberOfRequests = 0;
 	var numberOfReturns = 0;
@@ -987,6 +976,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		//check if saving groups
 		var savingGroups;
 		var activatingSavedGroups;
+		var doRequestAffectedGroups = false;
 		try
 		{
 			savingGroups =
@@ -999,6 +989,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		{
 			savingGroups = !doNotSaveAffectedGroups;
 			activatingSavedGroups = !doNotActivateAffectedGroups;
+			doRequestAffectedGroups = true; //popup doesn't exist, so need to do the work on own
 		}
 
 		if(!savingGroups) //then no need to proceed. exit!
@@ -1022,55 +1013,151 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		allRequestsSent = false; 	//re-use
 
 		var affectedGroupNames = []; //to be populated for use by alias setting
-		var affectedGroupKeys = []; //to be populated for use by alias setting
-		var affectedGroupEls = 
-				document.getElementsByClassName("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-affectedGroups");
-		var affectedGroupCommentEls = 
-				document.getElementsByClassName("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-cache");						
-
-		//	for each affected group
-		for(var i=0;i<affectedGroupEls.length;++i)
+		var affectedGroupComments = []; //to be populated for use by alias setting
+		var affectedGroupConfigMap = []; //to be populated for use by alias setting
+		
+		var affectedGroupKeys = []; //to be populated after group save for use by alias setting
+		
+		if(doRequestAffectedGroups)
 		{
-			//save member list but with tree table versions
-			Debug.log(affectedGroupEls[i].textContent);
-			Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
+			Debug.log("FIXME -- Need to replace temporary versions with new persistent versions",Debug.HIGH_PRIORITY);
+			var modifiedTablesListStr = ""; //csv table, temporay version,...
 
-			var affectedArr = affectedGroupEls[i].textContent.split(','); 
-
-			//build member config map
-			var configMap = "configList=";
-			//member map starts after group name/key (i.e. [2])
-			for(var a=2;a<affectedArr.length;a+=2)								
-				if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+			for(var j=0;j<modifiedTables.length;++j)
+				if((modifiedTables[j].tableVersion|0) < -1)
 				{
-					Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
-					//find version
-					for(var k=0;k<modifiedTables.length;++k)
-						if(affectedArr[a] == modifiedTables[k].tableName)
-						{
-							Debug.log("found " + modifiedTables[k].tableName + "-v" +
-									modifiedTables[k].tableVersion);
-							configMap += affectedArr[a] + "," + 
-									modifiedTables[k].tableVersion + ",";
-							break;
-						}
-				}
-				else //use existing version
-					configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+					if(modTblCount++)
+						modTblStr += ",";
+					modTblStr += modifiedTables[j].tableName;
 
-			affectedGroupNames.push(affectedArr[0]);		
+					if(modifiedTablesListStr.length)
+						modifiedTablesListStr += ",";
+					modifiedTablesListStr += modifiedTables[j].tableName;
+					modifiedTablesListStr += ",";
+					modifiedTablesListStr += modifiedTables[j].tableVersion;
+				}
+			
+			//get affected groups
+			//	and save member map to hidden div for Save action			
+			///////////////////////////////////////////////////////////
+			DesktopContent.XMLHttpRequest("Request?RequestType=getAffectedActiveGroups" +	
+					"&groupName=" + 
+					"&groupKey=-1", //end get params
+					"&modifiedTables=" + modifiedTablesListStr, //end post params
+					function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					el.innerHTML = str;
+					return;
+				}
+				//for each affected group
+				//	 put csv: name,key,memberName,memberVersion...
+				var groups = req.responseXML.getElementsByTagName("AffectedActiveGroup");				
+				var memberNames, memberVersions;
+				var xmlGroupName;
+				modTblStr = ""; //re-use
+				for(var i=0;i<groups.length;++i)
+				{					
+					affectedGroupNames.push( DesktopContent.getXMLValue(groups[i],"GroupName"));
+					affectedGroupComments.push(decodeURIComponent(DesktopContent.getXMLValue(groups[i],"GroupComment")));
+
+					memberNames = groups[i].getElementsByTagName("MemberName");
+					memberVersions = groups[i].getElementsByTagName("MemberVersion");
+
+					Debug.log("memberNames.length " + memberNames.length);
+
+					//build member config map
+					affectedGroupConfigMap[i] = "configList=";
+					var memberVersion, memberName;
+					for(var j=0;j<memberNames.length;++j)		
+					{
+						memberVersion = DesktopContent.getXMLValue(memberVersions[j])|0; //force integer
+						memberName = DesktopContent.getXMLValue(memberNames[j]);
+						if(memberVersion < -1) //there should be a new modified version
+						{
+							Debug.log("affectedArr " + memberName + "-v" + memberVersion);
+							//find version
+							for(var k=0;k<savedTables.length;++k)
+								if(memberName == savedTables[k].tableName)
+								{
+									Debug.log("found " + savedTables[k].tableName + "-v" +
+											savedTables[k].tableVersion);
+									affectedGroupConfigMap[i] += memberName + "," + 
+											savedTables[k].tableVersion + ",";
+									break;
+								}
+						}
+						else
+							affectedGroupConfigMap[i] += memberName + 
+								"," + memberVersion + ",";
+					}
+				}
+					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			); //end of getAffectedActiveGroups req
+		}
+		else
+		{
+			var affectedGroupEls = 
+					document.getElementsByClassName(ConfigurationAPI._POP_UP_DIALOG_ID + 
+							"-affectedGroups");
+			var affectedGroupCommentEls = 
+					document.getElementsByClassName(ConfigurationAPI._POP_UP_DIALOG_ID + 
+							"-groupComment-cache");						
+
+			//	for each affected group element
+			for(var i=0;i<affectedGroupEls.length;++i)
+			{
+				Debug.log(affectedGroupEls[i].textContent);
+				Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
+				
+				var affectedArr = affectedGroupEls[i].textContent.split(','); 
+				
+				affectedGroupComments.push(affectedGroupCommentEls[i].textContent);
+				affectedGroupNames.push(affectedArr[0]);	
+				
+				//build member config map
+				affectedGroupConfigMap[i] = "configList=";
+				//member map starts after group name/key (i.e. [2])
+				for(var a=2;a<affectedArr.length;a+=2)								
+					if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+					{
+						Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+						//find version
+						for(var k=0;k<savedTables.length;++k)
+							if(affectedArr[a] == savedTables[k].tableName)
+							{
+								Debug.log("found " + savedTables[k].tableName + "-v" +
+										savedTables[k].tableVersion);
+								affectedGroupConfigMap[i] += affectedArr[a] + "," + 
+										savedTables[k].tableVersion + ",";
+								break;
+							}
+					}
+					else //use existing version
+						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
+			}
+			
+		}
+			
+		
+		//	for each affected group
+		for(var i=0;i<affectedGroupNames.length;++i)
+		{	
 			reqStr = ""; //reuse
 			reqStr = "Request?RequestType=saveNewConfigurationGroup" +
-					"&groupName=" + affectedArr[0] +
+					"&groupName=" + affectedGroupNames[i] +
 					"&allowDuplicates=1" +
 					"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
-					"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
+					"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 			Debug.log(reqStr);
-			Debug.log(configMap);
+			Debug.log(affectedGroupConfigMap[i]);
 
 			++numberOfRequests;
 			///////////////////////////////////////////////////////////
-			DesktopContent.XMLHttpRequest(reqStr, configMap, 
+			DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
 					function(req,treeMemberIndex) 
 					{
 
@@ -1387,7 +1474,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			//	save new version
 			///////////////////////////////////////////////////////////
 			DesktopContent.XMLHttpRequest(reqStr, "", 
-					function(req) 
+					function(req,modifiedTableIndex) 
 					{
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
@@ -1411,7 +1498,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					var obj = {};
 					obj.tableName = configName;
 					obj.tableVersion = version;
-					obj.tableComment = modifiedTables[j].tableComment;
+					obj.tableComment = modifiedTables[modifiedTableIndex].tableComment;
 					savedTables.push(obj);
 				}				
 
@@ -1423,7 +1510,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					if(!doNotSaveAffectedGroups)
 						localHandleAffectedGroups();							
 				}
-					},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 			);	//end save new table request
 		}	//end modified table for loop
 
