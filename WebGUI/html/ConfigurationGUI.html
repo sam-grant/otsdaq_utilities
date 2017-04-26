@@ -198,7 +198,6 @@
 		var _CONFIG_DATA_ROW_OFFSET = 2;
 		var _CONFIG_DATA_COL_OFFSET = 1;
 
-		var _DEFAULT_COMMENT = "No comment.";
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
 		
@@ -342,8 +341,6 @@
 			//handleTreeNodeClick(depth,uid,editClick,type)			
 			//treeHasChanged(reset)
 			//saveModifiedTree(ignoreWarnings)
-			//handlePopUpHeightToggle(h,gh)
-			//handleGroupCommentToggle(groupName, setHideVal)
 			//editTreeAddNewRow(tableName)
 			//editTreeNodeOK()
 			//editTreeNodePropagateChange()
@@ -354,7 +351,6 @@
 		//end tree-view focused
 		
 			//selectThisCell(r,c,el,event)
-			//setCaretPosition(el,start,stop)
 			//editCellCancel()
 			//keyHandler(e)
 			//bodyKeyHandler(e,keyEl)
@@ -419,7 +415,12 @@
 
 		//ConfigurationAPI functions
 			//ConfigurationAPI.getDateString(date)
+			//ConfigurationAPI.setCaretPosition(el,start,stop)
 		//end ConfigurationAPI functions
+
+		//ConfigurationAPI constants
+			//ConfigurationAPI._DEFAULT_COMMENT
+		//end ConfigurationAPI constants
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -1639,7 +1640,7 @@
 
 				str += "<div id='" + configName + "-comment' " +
 						"style='font-size:14px; margin:2px 0 0 20px; float:left; white-space: nowrap;'>";
-				if(configComment != _DEFAULT_COMMENT) //do not show if default
+				if(configComment != ConfigurationAPI._DEFAULT_COMMENT) //do not show if default
 					str += "//" + configComment;
 
 				str += "</div>";
@@ -3090,7 +3091,7 @@
 				//make comment html safe
 				tableComment = tableComment.replace(/</g, "&lt");
 				tableComment = tableComment.replace(/>/g, "&gt");
-				if(tableComment == _DEFAULT_COMMENT) //do not show if default
+				if(tableComment == ConfigurationAPI._DEFAULT_COMMENT) //do not show if default
 					tableComment = "";
 				tableTitle = "Table: \t\t" + treeMemberNames_[j] + "-v" + 
 						treeMemberVersions_[j];
@@ -5236,7 +5237,7 @@
 				el.innerHTML = str;
 				
 				//select text in new input
-				setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
+				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,initVal.length);
 			}			
 			else if(type == "uid")
 			{
@@ -5278,7 +5279,7 @@
 				el.innerHTML = str;
 				
 				//select text in new input
-				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			}
 			else if(type == "value")
 			{
@@ -5420,9 +5421,9 @@
 					el.getElementsByTagName("select")[0].focus();				
 				}
 				else if(colType == "MultilineData")
-					setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);
 				else 					//select text in new input
-					setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 				
 			}	
 			else if(type == "link" || 
@@ -6070,7 +6071,7 @@
 				el.getElementsByTagName("select")[0].focus();				
 			}
 			else if(colType == "MultilineData")
-				setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
+				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
 			else if(colType == "YesNo" || 
 					colType == "TrueFalse" || 
 					colType == "OnOff")  //if column type is boolean, use dropdown
@@ -6079,17 +6080,10 @@
 				el.getElementsByTagName("select")[0].focus();				
 			}
 			else //select text box
-				setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
 			
 			return true;
-		}
-				
-		//setCaretPosition ~~
-		function setCaretPosition(elem, caretPos, endPos) 
-		{
-            elem.focus();
-            elem.setSelectionRange(caretPos, endPos);
-		}
+		}				
 		
 		//bodyMouseHandler ~~
 		function bodyMouseHandler(e)
@@ -6398,7 +6392,7 @@
 				}
 
 				var str = "<a id='" + 
-						Debug._errBoxId + 
+						"popUpDialog" + 
 						"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 						"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -6572,7 +6566,7 @@
 				}
 
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -6693,7 +6687,7 @@
 				str += "<div id='clearDiv'></div>";
 
 				str += "<textarea id='popUpDialog-groupComment' rows='4' cols='50' style='width:417px;height:68px;display:none;margin:0;'>";					 
-				str += _DEFAULT_COMMENT;
+				str += ConfigurationAPI._DEFAULT_COMMENT;
 				str += "</textarea>";
 				str += "</center>";
 
@@ -6819,7 +6813,7 @@
 
 					var onmouseupJS = "";
 					onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
-					onmouseupJS += "handleGroupCommentToggle(0,1);"; //force cache of group comment
+					onmouseupJS += "ConfigurationAPI.handleGroupCommentToggle(0,1);"; //force cache of group comment
 					onmouseupJS += "handlePopUpHeightToggle(" + h + "," + gh + ");";
 					onmouseupJS += "saveModifiedTree();";					
 
@@ -9257,7 +9251,7 @@
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -9291,7 +9285,7 @@
 			el.style.display = "block";
 
 			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-alias"),
+			ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-alias"),
 					0,defaultAlias.length);
 		}
 		
@@ -9324,7 +9318,7 @@
 			var defaultFilter = lastTreeFilter_ == ""?"*Port*":lastTreeFilter_;
 			
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -9353,7 +9347,7 @@
 			el.style.display = "block";
 
 			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-filter"),
+			ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-filter"),
 					0,defaultFilter.length);
 		}
 		
@@ -9384,7 +9378,7 @@
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -9412,7 +9406,7 @@
 			el.style.display = "block";
 
 			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-alias"),
+			ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-alias"),
 					0,defaultAlias.length);
 		}
 		
@@ -9442,7 +9436,7 @@
 
 
 			var str = "<br><a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -9535,7 +9529,7 @@
 			el.style.height = h + "px";
 			
 			var str = "<br><a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
@@ -9549,7 +9543,7 @@
 				str += "Please enter a comment describing this new version of <b>" + 
 						_currentConfigName + "</b>:<br>";
 				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;'>";
-				var comment = _cachedTableComment == ""?_DEFAULT_COMMENT:_cachedTableComment; 
+				var comment = _cachedTableComment == ""?ConfigurationAPI._DEFAULT_COMMENT:_cachedTableComment; 
 				str += comment;
 				str += "</textarea>";
 				str += "</div>";
@@ -9678,7 +9672,7 @@
 					str += "<div id='clearDiv'></div>";
 					
 					str += "<textarea id='popUpDialog-groupComment' rows='4' cols='50' style='width:417px;height:68px;display:none;margin:0;'>";					 
-					str += _DEFAULT_COMMENT;
+					str += ConfigurationAPI._DEFAULT_COMMENT;
 					str += "</textarea>";
 					str += "</center>";
 					
@@ -9823,7 +9817,7 @@
 										i).selectedIndex = groupOptionIndex[i][0];
 						
 						//select comment text
-						setCaretPosition(document.getElementById("popUpDialog-comment"),
+						ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-comment"),
 								0,comment.length);
 
 							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -9873,7 +9867,7 @@
 			el.style.height = h + "px";
 
 			var str = "<br><a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -9887,7 +9881,7 @@
 				str += "Please enter a comment describing this new key for group <b>" + 
 						groupName + "</b>:<br>";
 				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;''>";
-				var comment = _cachedGroupComment == ""?_DEFAULT_COMMENT:_cachedGroupComment; 
+				var comment = _cachedGroupComment == ""?ConfigurationAPI._DEFAULT_COMMENT:_cachedGroupComment; 
 				str += comment;
 				str += "</textarea>";
 				str += "</div>";
@@ -10050,7 +10044,7 @@
 									i).selectedIndex = groupOptionIndex[i][0];
 
 					//select comment text
-					setCaretPosition(document.getElementById("popUpDialog-comment"),
+					ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-comment"),
 							0,comment.length);
 
 						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -10093,7 +10087,7 @@
 
 			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -10162,7 +10156,7 @@
 			el.style.display = "block";
 
 			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-alias"),
+			ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-alias"),
 					0,defaultAlias.length);
 		}
 		
@@ -10193,7 +10187,7 @@
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
-					Debug._errBoxId + 
+					"popUpDialog" + 
 					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -10227,7 +10221,7 @@
 			el.style.display = "block";
 
 			//select comment text
-			setCaretPosition(document.getElementById("popUpDialog-alias"),
+			ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-alias"),
 					0,defaultAlias.length);
 		}
 		
@@ -10406,7 +10400,7 @@
 			el.style.height = h + "px";
 			
 			var str = "<a id='" + 
-					Debug._errBoxId + //clear upload string on cancel!
+					"popUpDialog" + //clear upload string on cancel!
 					"-header' href='#' onclick='javascript:_tableUploadStr = \"\"; var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
@@ -12015,7 +12009,7 @@
 						groupName);
 				el.value = cel.textContent;
 				el.style.display = "block"; //show display before set caret (for Firefox)
-				setCaretPosition(el,0,cel.textContent.length);
+				ConfigurationAPI.setCaretPosition(el,0,cel.textContent.length);
 				
 				hel.innerHTML = ("&apos;" + groupName + "&apos; group comment:");				
 			}
@@ -12039,7 +12033,7 @@
 				tel.style.width = (sel.offsetWidth-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
-				setCaretPosition(tel,0,tel.value.length);
+				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
 		}
 		
@@ -12061,7 +12055,7 @@
 				tel.style.width = (sel.offsetWidth-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
-				setCaretPosition(tel,0,tel.value.length);
+				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
 						
 		}		

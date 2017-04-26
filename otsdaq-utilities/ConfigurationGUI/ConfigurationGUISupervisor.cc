@@ -1185,8 +1185,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 			xmldoc.addTextElementToData("NewActiveTableName", activePair.first);
 			xmldoc.addTextElementToData("NewActiveTableVersion",
 					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
-			//xmldoc.addTextElementToData("NewActiveTableComment",
-			//		allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+			xmldoc.addTextElementToData("NewActiveTableComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
 		}
 
 

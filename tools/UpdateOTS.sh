@@ -101,6 +101,8 @@ if [ "x$1" == "x" ]; then
 		#echo "$UPS_FILE_NAME_FIELDS fields found"
 		if [ $UPS_FILE_NAME_FIELDS -lt 7 ]; then
 			echo "	$file skipping, (7 fields expected) too few fields in name to identify name, version, qualifier..."
+			echo "  Would like to do this command, but not sure it is necessary:"
+			echo "   tar -xf $file"
 			continue
 		fi
 		
