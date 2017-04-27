@@ -1336,6 +1336,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							if(retParams)
 							{
 								if(retParams.newBackbone)
+								{
 									Debug.log("Successfully modified the active Backbone group " +
 											" to set the System Alias '" + groupAlias + "' to " +
 											" refer to the current group '" + groupName + 
@@ -1344,6 +1345,15 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 											"Backbone group '" + retParams.groupName + " (" + 
 											retParams.groupKey + ")' was created and activated.",
 											Debug.INFO_PRIORITY);
+									
+									{
+										var obj = {};
+										obj.groupName = groupName;
+										obj.groupKey = groupKey;
+										obj.groupAlias = groupAlias;
+										savedAliases.push(obj);
+									}
+								}
 								else
 									Debug.log("Success, but no need to create a new Backbone group. " +
 											"An existing Backbone group " +

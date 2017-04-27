@@ -220,7 +220,7 @@
 				
 				if(saveAll)
 					ConfigurationAPI.popUpSaveModifiedTablesForm(localModifiedTables,
-							function(newTables)
+							function(newTables, newGroups, newAliases)
 							{
 					if(newTables.length)
 						Debug.log("Done with saving.");

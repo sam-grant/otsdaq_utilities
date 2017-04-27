@@ -706,7 +706,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	
 	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
-	Debug.log("Post " + requestURL + "\n\tData: " + data);
+	//Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	
