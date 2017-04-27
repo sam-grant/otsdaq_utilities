@@ -371,7 +371,10 @@
 			//popUpFilterTreeForm()
 			//popUpGroupViewAliasForm(groupName,groupKey)
 			//popUpGroupViewAliasFormSubmit(groupName,groupKey)
-
+		
+			//handleGroupCommentToggle(groupName,setHideVal)
+			//handlePopUpHeightToggle(h,gh)
+		
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
 			//addMemberToConfigGroup(groupName,backLinkStr) 
@@ -383,11 +386,9 @@
 			//createConfigGroup(ignoreWarnings)
 			//createConfigGroupHandler(req)
 
-			//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)
-			//setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+			//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
 			//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
-			//wizToActiveConfigGroup(groupAlias, groupType)		
-			//newWizBackboneMemberHandler(req,params)
+			//wizToActiveConfigGroup(groupAlias, groupType)
 			//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 	
 			
@@ -416,6 +417,8 @@
 		//ConfigurationAPI functions
 			//ConfigurationAPI.getDateString(date)
 			//ConfigurationAPI.setCaretPosition(el,start,stop)
+			//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+			//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 		//end ConfigurationAPI functions
 
 		//ConfigurationAPI constants
@@ -1494,7 +1497,7 @@
 							"&versionAlias=Default" + 
 							"&groupName=" + groupName +
 							"&groupKey=" + groupKey + "\", \"\"," +
-							"newWizBackboneMemberHandler," +
+							"ConfigurationAPI.newWizBackboneMemberHandler," +
 							"[\"MemberVersionAliasWizBackbone\",undefined]," +
 							"0,0,true" +  //progressHandler, callHandlerOnErr, showLoadingOverlay
 							");";
@@ -2190,7 +2193,7 @@
 					"&versionAlias=" + versionAlias +
 					"&configName=" + configName + 
 					"&version=" + version, "", 
-					newWizBackboneMemberHandler,
+					ConfigurationAPI.newWizBackboneMemberHandler,
 					[("VersionAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
 					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
 					);
@@ -3868,46 +3871,46 @@
 			}				
 		}
 		
-		//setGroupAliasInActiveBackbone ~~
-		//	Used to set a group alias.
-		//	This function will activate the resulting backbone group and 
-		//		call a done handler	
-		//
-		//      if doReturnParms
-		//          then the handler is called with an object 
-		//          describing the new backbone group object:
-		//                 retParams.newBackbone //true if successfully activated
-		//                 retParams.groupName   //backbone group name 
-		//                 retParams.groupKey    //backbone group key
-		//               
-		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
-				newBackboneNameAdd,doneHandler,doReturnParams)
-		{
-			Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
-			Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
-			Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
-			
-			if(!groupName || groupName == "" || !groupKey || groupKey == "")
-			{
-				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
-				doneHandler(); //error so call done handler
-				return;
-			}
-			
-			if(!newBackboneNameAdd || newBackboneNameAdd == "")
-				newBackboneNameAdd = "Wiz";
-			newBackboneNameAdd += "Backbone";
-			Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
-			
-			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
-					"&groupAlias=" + groupAlias + 
-					"&groupName=" + groupName +
-					"&groupKey=" + groupKey, "", 
-					newWizBackboneMemberHandler,
-					[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);					
-		}
+//		//setGroupAliasInActiveBackbone ~~
+//		//	Used to set a group alias.
+//		//	This function will activate the resulting backbone group and 
+//		//		call a done handler	
+//		//
+//		//      if doReturnParms
+//		//          then the handler is called with an object 
+//		//          describing the new backbone group object:
+//		//                 retParams.newBackbone //true if successfully activated
+//		//                 retParams.groupName   //backbone group name 
+//		//                 retParams.groupKey    //backbone group key
+//		//               
+//		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
+//				newBackboneNameAdd,doneHandler,doReturnParams)
+//		{
+//			Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
+//			Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
+//			Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
+//			
+//			if(!groupName || groupName == "" || !groupKey || groupKey == "")
+//			{
+//				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
+//				doneHandler(); //error so call done handler
+//				return;
+//			}
+//			
+//			if(!newBackboneNameAdd || newBackboneNameAdd == "")
+//				newBackboneNameAdd = "Wiz";
+//			newBackboneNameAdd += "Backbone";
+//			Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+//			
+//			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+//					"&groupAlias=" + groupAlias + 
+//					"&groupName=" + groupName +
+//					"&groupKey=" + groupKey, "", 
+//					newWizBackboneMemberHandler,
+//					[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
+//					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+//					);					
+//		}
 		
 		//wizToActiveConfigGroup ~~
 		//	groupType := 0-context, 1-backbone, 2-configuration
@@ -3945,7 +3948,7 @@
 					return;
 				}
 				
-				setGroupAliasInActiveBackbone(groupAlias,name,key,0,setupSystemViewMode);				
+				ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,name,key,0,setupSystemViewMode);				
 				
 					},
 					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -4114,7 +4117,7 @@
 					
 					//else proceeding normally
 					
-					setGroupAliasInActiveBackbone(groupAlias,name,key,0,setupSystemViewMode);
+					ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,name,key,0,setupSystemViewMode);
 
 
 						},
@@ -4201,54 +4204,54 @@
 			); //end of backbone saveNewConfigurationGroup handler
 		}
 				
-		//newWizBackboneMemberHandler
-		//	Used to handle the response from modifying a member of the backbone.
-		//	This handler will activate the resulting backbone group and
-		//		call a done handler.
-		//
-		//	params = [newBackboneGroupName, doneHandler, doReturnParams]
-		function newWizBackboneMemberHandler(req,params)
-		{
-			var err = DesktopContent.getXMLValue(req,"Error");
-			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
-
-				if(params[1])
-					params[1](); //error so call done handler
-				return;
-			}		
-
-			var groupAliasName = DesktopContent.getXMLValue(req,"savedName");
-			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
-
-			Debug.log("groupAliasName=" + groupAliasName);
-			Debug.log("groupAliasVersion=" + groupAliasVersion);
-
-			var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-			var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-
-			//make a new backbone with old versions of everything except Group Alias 
-			var configMap = "configList=";
-			var name;
-			for(var i=0;i<configNames.length;++i)
-			{		
-				name = configNames[i].getAttribute("value");
-
-				if(name == groupAliasName)
-				{
-					configMap += name + "," + 
-							groupAliasVersion + ",";
-					continue;
-				}
-				//else use old member
-				configMap += name + "," + 
-						configVersions[i].getAttribute("value") + ",";							
-			}
-
-			saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
-		}
+//		//newWizBackboneMemberHandler
+//		//	Used to handle the response from modifying a member of the backbone.
+//		//	This handler will activate the resulting backbone group and
+//		//		call a done handler.
+//		//
+//		//	params = [newBackboneGroupName, doneHandler, doReturnParams]
+//		function newWizBackboneMemberHandler(req,params)
+//		{
+//			var err = DesktopContent.getXMLValue(req,"Error");
+//			if(err) 
+//			{
+//				Debug.log(err,Debug.HIGH_PRIORITY);
+//				Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+//
+//				if(params[1])
+//					params[1](); //error so call done handler
+//				return;
+//			}		
+//
+//			var groupAliasName = DesktopContent.getXMLValue(req,"savedName");
+//			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+//
+//			Debug.log("groupAliasName=" + groupAliasName);
+//			Debug.log("groupAliasVersion=" + groupAliasVersion);
+//
+//			var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+//			var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+//
+//			//make a new backbone with old versions of everything except Group Alias 
+//			var configMap = "configList=";
+//			var name;
+//			for(var i=0;i<configNames.length;++i)
+//			{		
+//				name = configNames[i].getAttribute("value");
+//
+//				if(name == groupAliasName)
+//				{
+//					configMap += name + "," + 
+//							groupAliasVersion + ",";
+//					continue;
+//				}
+//				//else use old member
+//				configMap += name + "," + 
+//						configVersions[i].getAttribute("value") + ",";							
+//			}
+//
+//			saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
+//		}
 		
 		//setupConfigCreator ~
 		function setupConfigCreator(preSelectStr)
@@ -6480,7 +6483,7 @@
 				groupAlias = el.value;
 			}
 			Debug.log("Group view alias setting to " + groupAlias);
-			setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,0,
+			ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,0,
 					function(retParams) //done handler
 					{
 				if(retParams) 
@@ -6813,7 +6816,7 @@
 
 					var onmouseupJS = "";
 					onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
-					onmouseupJS += "ConfigurationAPI.handleGroupCommentToggle(0,1);"; //force cache of group comment
+					onmouseupJS += "handleGroupCommentToggle(0,1);"; //force cache of group comment
 					onmouseupJS += "handlePopUpHeightToggle(" + h + "," + gh + ");";
 					onmouseupJS += "saveModifiedTree();";					
 
@@ -7181,7 +7184,7 @@
 								Debug.log("groupName = " + groupName);
 								Debug.log("groupKey = " + groupKey);
 
-								setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
+								ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
 										"TreeEditWiz",
 										localNextAliasHandler,										
 										true); //request return parameters		
@@ -9268,7 +9271,7 @@
 					"document.getElementById(\"popUpDialog-alias\").value + \"" +
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey + "\", \"\"," +
-					"newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]," +
+					"ConfigurationAPI.newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]," +
 					"0,0,true" +  //progressHandler, callHandlerOnErr, showLoadingOverlay
 					");";			
 			onmouseupJS += "var el = document.getElementById(" +

@@ -49,14 +49,24 @@ if (typeof DesktopContent == 'undefined' &&
 //"public" function list: 
 //	ConfigurationAPI.getDateString(date)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler)
+//	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
+//	ConfigurationAPI.getFieldValuesForRecord(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
 
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
 ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 
 //"private" function list:
-
-
+//	ConfigurationAPI.handleGroupCommentToggle(groupName,setHideVal)
+//	ConfigurationAPI.handlePopUpHeightToggle(h,gh)
+//	ConfigurationAPI.handlePopUpAliasEditToggle(i)
+//	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings)
+//	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+//	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
+//	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 
 
 //=====================================================================================
@@ -411,12 +421,25 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
 //
-//	when complete, the responseHandler is called with an array parameter.
-//		on failure or user-cancel, the array will be empty.
-//		on success, the array will be an array of Saved Table objects	
+//	when complete, the responseHandler is called with 3 array parameters.
+//		on failure, the arrays will be empty.
+//		on success, the arrays will be an array of Saved Table objects	
 //		SavedTable := {}
 //			obj.tableName   
 //			obj.tableVersion
+//			obj.tableComment
+//
+//			...and array of Saved Group objects	
+//		SavedGroup := {}
+//			obj.groupName   
+//			obj.groupKey
+//			obj.groupComment
+//
+//			...and array of Saved Alias objects	
+//		SavedAlias := {}
+//			obj.groupName   
+//			obj.groupKey
+//			obj.groupAlias
 //	
 {	//start shared scope between popUpSaveModifiedTablesForm and saveModifiedTables
 	
@@ -426,7 +449,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 //	var _activatingGroupCheckboxes; 
 //	var _aliasingGroupCheckboxes; 
 	
-ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables, responseHandler)
+ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseHandler)
 {	
 	//mimic ConfigurationGUI::popUpSaveTreeForm()
 	
@@ -781,7 +804,7 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables, response
 					Debug.log("Cancel click");
 					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 					if(el) el.parentNode.removeChild(el); //close popup											
-					responseHandler([]); //empty array indicates nothing done
+					responseHandler([],[],[]); //empty array indicates nothing done
 					return false;
 				}; //end submit onmouseup handler				
 			}
@@ -931,12 +954,25 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 //	
 //	Note: when called from popup, uses info from popup.
 //
-//	when complete, the responseHandler is called with an array parameter.
-//		on failure, the array will be empty.
-//		on success, the array will be an array of Saved Table objects	
+//	when complete, the responseHandler is called with 3 array parameters.
+//		on failure, the arrays will be empty.
+//		on success, the arrays will be an array of Saved Table objects	
 //		SavedTable := {}
 //			obj.tableName   
 //			obj.tableVersion
+//			obj.tableComment
+//
+//			...and array of Saved Group objects	
+//		SavedGroup := {}
+//			obj.groupName   
+//			obj.groupKey
+//			obj.groupComment
+//
+//			...and array of Saved Alias objects	
+//		SavedAlias := {}
+//			obj.groupName   
+//			obj.groupKey
+//			obj.groupAlias
 //
 //
 ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
@@ -944,10 +980,15 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		doNotActivateAffectedGroups,doNotSaveAliases)
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
+
+	var savedTables = [];	
+	var savedGroups = [];	
+	var savedAliases = [];	
 	
 	if(!modifiedTables.length)
 	{
 		Debug.log("No tables were modified. Nothing to do.", Debug.WARN_PRIORITY);
+		responseHandler(savedTables,savedGroups,savedAliases);
 		return;
 	}
 	
@@ -962,7 +1003,6 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	//	for each alias
 	//		set alias for new group
 	
-	var savedTables = [];	
 	
 	var numberOfRequests = 0;
 	var numberOfReturns = 0;
@@ -997,6 +1037,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			//kill popup dialog
 			var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 			if(el) el.parentNode.removeChild(el);	
+			responseHandler(savedTables,savedGroups,savedAliases);
 			return;
 		}
 
@@ -1051,6 +1092,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				{					
 					Debug.log(err,Debug.HIGH_PRIORITY);
 					el.innerHTML = str;
+					responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}
 				//for each affected group
@@ -1158,7 +1200,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			++numberOfRequests;
 			///////////////////////////////////////////////////////////
 			DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
-					function(req,treeMemberIndex) 
+					function(req,affectedGroupIndex) 
 					{
 
 				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
@@ -1216,6 +1258,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					//kill popup dialog
 					var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 					if(el) el.parentNode.removeChild(el);	
+					responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}			
 
@@ -1223,6 +1266,14 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 				var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 				affectedGroupKeys.push(newGroupKey);
+				
+				{
+					var obj = {};
+					obj.groupName = attemptedNewGroupName;
+					obj.groupKey = newGroupKey;
+					obj.groupComment = affectedGroupComments[affectedGroupIndex];
+					savedGroups.push(obj);
+				}
 
 				//need to modify root group name if changed
 				Debug.log("Successfully created new group '" + attemptedNewGroupName + 
@@ -1230,63 +1281,9 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 				//activate if option was selected
 				if(activatingSavedGroups)
-					activateSystemConfig(attemptedNewGroupName,newGroupKey);
-
-				//if this was root group, modify
-				if(rootGroupName == attemptedNewGroupName)
-				{
-					//modify display and onlick for root group link
-					Debug.log("Modifying root group key");
-					var str = "";
-					str += "<div style='display:none'>" + rootGroupName + "</div>";
-					str += "<div style='display:none'>" + newGroupKey + "</div>";
-					str += rootGroupName + " (" + newGroupKey + ")";
-					rootGroupEl.innerHTML = str;
-					rootGroupEl.onclick = function() {
-
-						var backLinkStr = "setupConfigGroupTreeView(\"" + 
-								rootGroupName + "\",\"" +
-								newGroupKey + "\");";
-						setupSpecificConfigGroup(rootGroupName,newGroupKey,
-								backLinkStr);
-						return false;
-					};
-
-					//modify group details
-					{
-						str = "";
-						str += "Root-Group Details:";
-						var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
-						groupComment = decodeURIComponent(groupComment);								
-						var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-						var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
-						groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
-
-						str += "<table border='0' style='" +
-								"border: 1px solid #9c5e5e;" +
-								"margin: 5px 0 5px 30px;" +
-								"background-color: #d2c1c1;" +
-								"'>";
-						str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
-						str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
-						str += "<tr><th>Comment:</th><td>" + 
-								groupComment.replace(/\n/g , "<br>") + "</td></tr>";
-						str += "</table>";
-
-						document.getElementById("groupDetails").innerHTML = str;
-					}
-
-
-					//modify the activate link
-					rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
-					rootGroupEl.onclick = function() {
-						activateSystemConfig(rootGroupName,newGroupKey);
-						return false;
-					};
-
-					//edit global key value
-					treeGroupKey_ = newGroupKey;
-				}
+					ConfigurationAPI.activateGroup(attemptedNewGroupName,newGroupKey,
+							false /* ignoreWarnings */);
+				
 
 				if(allRequestsSent && 
 						numberOfReturns == numberOfRequests)
@@ -1365,6 +1362,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								//kill popup dialog
 								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 								if(el) el.parentNode.removeChild(el);	
+								responseHandler(savedTables,savedGroups,savedAliases);
 								return;
 							}	
 
@@ -1389,7 +1387,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								//kill popup dialog
 								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 								if(el) el.parentNode.removeChild(el);
-								treeHasChanged(true); // reset
+								responseHandler(savedTables,savedGroups,savedAliases);
 								return;
 							}
 
@@ -1398,7 +1396,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							//kill popup dialog
 							var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 							if(el) el.parentNode.removeChild(el);	
-							treeHasChanged(true); // reset
+							responseHandler(savedTables,savedGroups,savedAliases);
 							return;	
 						}	
 
@@ -1422,7 +1420,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						Debug.log("groupName = " + groupName);
 						Debug.log("groupKey = " + groupKey);
 
-						setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
+						ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
 								"SaveWiz",
 								localNextAliasHandler,										
 								true); //request return parameters		
@@ -1431,11 +1429,9 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					localNextAliasHandler();
 
 					Debug.log("Aliases set in motion");
-
-					return;
 				}
 
-					},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},i,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 			); //end save new group request								
 		} //end affected group for loop
 
@@ -1483,7 +1479,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					//kill popup dialog
 					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID); 
-					if(el) el.parentNode.removeChild(el);	
+					if(el) el.parentNode.removeChild(el);
+					responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}						
 
@@ -1522,6 +1519,216 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	}
 }
 } //end shared scope between popUpSaveModifiedTablesForm and saveModifiedTables
+
+
+//=====================================================================================
+//activateGroup ~~
+ConfigurationAPI.activateGroup = function(groupName, groupKey, 
+		ignoreWarnings)
+{
+	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
+			groupName + "&groupKey=" + groupKey +
+			(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
+			"",
+			function(req) 
+			{
+		
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);				
+
+			//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
+
+			//show activate with warnings link
+			var str = "";			
+
+				//add ignore warnings Activate link
+			str += " <a href='#' onclick='javascript:ConfigurationAPI.activateGroup(\"" + 
+					groupName +
+					"\",\"" + groupKey + "\",true); return false;'>"; //ignore warnings
+			str += "Activate " + 
+					groupName + "(" + groupKey + ") w/warnings ignored</a>";
+			
+			Debug.log("If you are are sure it is a good idea you can try to " +
+					"activate the group with warnings ignored: " +
+					str,Debug.HIGH_PRIORITY);
+		}
+			},
+			true, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
+			true); //showLoadingOverlay
+}
+
+//=====================================================================================
+//setGroupAliasInActiveBackbone ~~
+//	Used to set a group alias.
+//	This function will activate the resulting backbone group and 
+//		call a done handler	
+//
+//      if doReturnParms
+//          then the handler is called with an object 
+//          describing the new backbone group object:
+//                 retParams.newBackbone //true if successfully activated
+//                 retParams.groupName   //backbone group name 
+//                 retParams.groupKey    //backbone group key
+//               
+ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,groupKey,
+		newBackboneNameAdd,doneHandler,doReturnParams)
+{
+	Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
+	Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
+	Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
+
+	if(!groupName || groupName == "" || !groupKey || groupKey == "")
+	{
+		Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
+		doneHandler(); //error so call done handler
+		return;
+	}
+
+	if(!newBackboneNameAdd || newBackboneNameAdd == "")
+		newBackboneNameAdd = "Wiz";
+	newBackboneNameAdd += "Backbone";
+	Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
+			"&groupAlias=" + groupAlias + 
+			"&groupName=" + groupName +
+			"&groupKey=" + groupKey, "", 
+			ConfigurationAPI.newWizBackboneMemberHandler,
+			[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
+			0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+	);					
+}
+
+//=====================================================================================
+//newWizBackboneMemberHandler
+//	Used to handle the response from modifying a member of the backbone.
+//	This handler will activate the resulting backbone group and
+//		call a done handler.
+//
+//	params = [newBackboneGroupName, doneHandler, doReturnParams]
+ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
+{
+	var err = DesktopContent.getXMLValue(req,"Error");
+	if(err) 
+	{
+		Debug.log(err,Debug.HIGH_PRIORITY);
+		Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+		if(params[1])
+			params[1](); //error so call done handler
+		return;
+	}		
+
+	var groupAliasName = DesktopContent.getXMLValue(req,"savedName");
+	var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
+
+	Debug.log("groupAliasName=" + groupAliasName);
+	Debug.log("groupAliasVersion=" + groupAliasVersion);
+
+	var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
+	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+
+	//make a new backbone with old versions of everything except Group Alias 
+	var configMap = "configList=";
+	var name;
+	for(var i=0;i<configNames.length;++i)
+	{		
+		name = configNames[i].getAttribute("value");
+
+		if(name == groupAliasName)
+		{
+			configMap += name + "," + 
+					groupAliasVersion + ",";
+			continue;
+		}
+		//else use old member
+		configMap += name + "," + 
+				configVersions[i].getAttribute("value") + ",";							
+	}
+
+	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
+}
+
+//=====================================================================================
+//saveGroupAndActivate
+ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams)
+{
+	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+			groupName, configMap, 
+			function(req)
+			{
+		var err = DesktopContent.getXMLValue(req,"Error");
+		var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+		var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+		var newBackbone = true;
+		if(err) 
+		{
+			if(!name || !key)
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+						" Please see details below.",
+						Debug.HIGH_PRIORITY);
+
+				if(doneHandler)
+					doneHandler(); //error so call done handler
+				return;
+			}
+			else
+			{
+				Debug.log(err,Debug.WARN_PRIORITY);
+				Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+						" (Likely the currently active Backbone already represents what is being requested)\n\n" +
+						"Going on with existing backbone group, name=" + name + " & key=" + key,
+						Debug.WARN_PRIORITY);
+				newBackbone = false;
+			}					
+		}
+
+		//now activate the new backbone group
+
+		DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+				"&groupName=" + name +
+				"&groupKey=" + key, "", 
+				function(req)
+				{
+			var err = DesktopContent.getXMLValue(req,"Error");
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			try
+			{
+				activateSystemConfigHandler(req);
+			}
+			catch(err) {} //ignore error, this is only used by ConfigurationGUI (or anyone implementing this extra handler)
+
+			if(doneHandler)
+			{
+				//done so call done handler (and indicate success)
+				if(!doReturnParams)
+					doneHandler(); //done so call done handler
+				else
+				{
+					var retParams = {
+							"groupName" : name,
+							"groupKey" : key,
+							"newBackbone" : newBackbone									
+					}
+					doneHandler(retParams); 	 //(and indicate success)
+				}
+			}
+
+				},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+		);	//end of activate new backbone handler
+
+			},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+	); //end of backbone saveNewConfigurationGroup handler
+}
 
 //=====================================================================================
 //getDateString ~~
