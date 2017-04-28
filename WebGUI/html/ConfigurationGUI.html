@@ -201,6 +201,9 @@
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
 		
+		var _SCRATCH_VIEW_NAME = "Scratch-View";
+		var _MOCKUP_VIEW_NAME = "Mockup-View";
+		
 		var _OK_CANCEL_DIALOG_STR = "";
 
 		_OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
@@ -227,7 +230,25 @@
 				"function() {" + 
 				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\");" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Wiz Mode</a>.";
+				"'>Wiz Mode</a>." +
+				"<br>" +
+				"Click here to " +
+				"<a href='#' id='versionTrackingSystemLink' onclick='javascript:" +
+				"var el = this;" +
+				"if(el.textContent == \"Turn Version Tracking OFF\")" +
+				"DesktopContent.popUpVerification(" + 
+				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
+				"function() {" + 
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
+				"},0,\"#efeaea\",0,\"#770000\");" +
+				"else " +
+				"DesktopContent.popUpVerification(" + 
+				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
+				"function() {" + 
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
+				"},0,\"#efeaea\",0,\"#770000\");" +
+				"'>Turn Version Tracking OFF</a>"
+				;
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
@@ -239,6 +260,7 @@
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
 		
+		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
 		var _useTableLinkDropdown = true;		
 		var _tableViewIsTransposed = false;
@@ -310,7 +332,7 @@
 			//gotoSelectedMSGroup()
 			
 			//setupTableViewMode(anchorTarget)							//gets configuration tables
-			//configsRequestHandler(req,anchorTarget)
+			//tableViewRequestHandler(req,anchorTarget)
 			
 			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
 			//specificGroupRequestHandler(req,param)			
@@ -381,6 +403,7 @@
 		
 			//activateSystemConfig(groupName, groupKey)
 			//activateSystemConfigHandler(req)
+			//versionTrackingHandler(req)
 			//selectForCreateConfig(i)
 			//versionsForCreateConfig(i, alias)		
 			//createConfigGroup(ignoreWarnings)
@@ -463,42 +486,44 @@
 			
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
-					function (req) {				
-						var err = DesktopContent.getXMLValue(req,"Error");
-						if(err) 
-						{
-							Debug.log(err,Debug.HIGH_PRIORITY);
-							return;
-						}
-						var memberNames = req.responseXML.getElementsByTagName("ContextMember");
-						_contextMemberNames = []; //reset
-						for(var i=0;i<memberNames.length;++i)
-							_contextMemberNames[i] = memberNames[i].getAttribute("value");
-						Debug.log(_contextMemberNames);
-						if(_contextMemberNames.length == 0) 
-							Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
+					function (req) 
+					{				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				var memberNames = req.responseXML.getElementsByTagName("ContextMember");
+				_contextMemberNames = []; //reset
+				for(var i=0;i<memberNames.length;++i)
+					_contextMemberNames[i] = memberNames[i].getAttribute("value");
+				Debug.log(_contextMemberNames);
+				if(_contextMemberNames.length == 0) 
+					Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
 					},
 					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				);
+			);
+
 			DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "", 
-					function (req) {				
-						var err = DesktopContent.getXMLValue(req,"Error");
-						if(err) 
-						{
-							Debug.log(err,Debug.HIGH_PRIORITY);
-							return;
-						}
-						var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
-						_backboneMemberNames = []; //reset
-						for(var i=0;i<memberNames.length;++i)
-							_backboneMemberNames[i] = memberNames[i].getAttribute("value");
-						Debug.log(_backboneMemberNames);
-						if(_backboneMemberNames.length == 0) 
-							Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
+					function (req)
+					{				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
+				_backboneMemberNames = []; //reset
+				for(var i=0;i<memberNames.length;++i)
+					_backboneMemberNames[i] = memberNames[i].getAttribute("value");
+				Debug.log(_backboneMemberNames);
+				if(_backboneMemberNames.length == 0) 
+					Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
 					},
 					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				);
-			
+			);
 
 			//============================
 			//		for debugging
@@ -533,9 +558,7 @@
 				evaluateJS(cmdStr);	
 			}
 			else
-				setupSystemViewMode();
-			
-			
+				setupSystemViewMode();			
 
 		}	
 		
@@ -551,10 +574,16 @@
 
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
+			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
 					groupAliasesRequestHandler,anchorTarget,
 					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);		
+					);			
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
+					versionTrackingHandler,
+					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			);
 		}
 		
 		//setupGroupViewMode ~
@@ -574,7 +603,7 @@
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
-					configsRequestHandler,anchorTarget,
+					tableViewRequestHandler,anchorTarget,
 					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
 					);		
 		}
@@ -1196,7 +1225,8 @@
 						groupName + "-" + configName + "'></a>";
 				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
 						"\",\"" + configVersion + "\",\"" + backLinkStr + "\"); return false;'>";
-				str += niceName(configName) + "</a><br>" + configVersion;
+				str += niceName(configName) + "</a><br>" + 
+						((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
 				str += "</td>";
 			}
 			str += "</tr></table>";	
@@ -1221,8 +1251,8 @@
 		}
 		
 
-		//configsRequestHandler ~~
-		function configsRequestHandler(req, anchorTarget)
+		//tableViewRequestHandler ~~
+		function tableViewRequestHandler(req, anchorTarget)
 		{					
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
@@ -1252,7 +1282,7 @@
 				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
 					"\",\"\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(configName);
-				str += "</a><br><table><tr>";
+				str += "</a><br><table style='margin-left:40px'><tr>";
 
 				configVersions = configVersionHdr[i].getElementsByTagName("Version");
 				
@@ -1266,7 +1296,7 @@
 					str += "version" + "<br>";
 					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
 							"\",\"" + version + "\",\"" + backLinkStr + "\"); return false;'>";
-					str += version;
+					str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);					
 					str += "</td>";
 				}
 				str += "</tr></table><br>";
@@ -1559,7 +1589,7 @@
 						"href='javascript:" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
-				str +=	version;
+				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
 				str += "</label>";
 
 				str += ")";
@@ -1666,12 +1696,18 @@
 				for(var j=0;j<configExistingVersions.length;++j)
 				{
 					existingVersion = configExistingVersions[j].getAttribute("value");
-					if((existingVersion|0) < 0) //skip temporary versions
+					if((existingVersion|0) < 0 || //skip temporary versions and scratch version
+							(existingVersion|0) == ConfigurationAPI._SCRATCH_VERSION) //scratch version will be shown as an alias
 						continue;
-					if(existingVersion == version) //skip link
+					
+					if(existingVersion == version || //skip link for current version
+							(existingVersion == 		//including if it's the scratch alias
+									ConfigurationAPI._VERSION_ALIAS_PREPEND +
+									ConfigurationAPI._SCRATCH_ALIAS &&
+									version == ConfigurationAPI._SCRATCH_VERSION)) 
 					{
-						cfgVersionStr += version + ",";
-						str += " " + version; continue;
+						cfgVersionStr += existingVersion + ",";
+						str += " " + existingVersion; continue;
 					}
 					str += " ";
 					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
@@ -1889,7 +1925,8 @@
 			
 			//display config name and version
 			str += "<div style='float:left;'>";
-			str += "<b>" + configName + "</b> (version: " + (version==-1?"Mockup-View":version) + ")";	
+			str += "<b>" + configName + "</b> (version: " + (version==-1?_MOCKUP_VIEW_NAME:
+					(version == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version)) + ")";	
 			str += "</div>";
 						
 			//add link for wiz to default
@@ -1928,21 +1965,25 @@
 			if(-1 != version)				
 				str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
 					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
-			str += "Mockup-View";
+			str += _MOCKUP_VIEW_NAME;
 			if(-1 != version)				
 				str +=  "</a>";				
 			
 			//display all other version links
-			for(var j=0;j<configVersions.length;++j)
 			{
-				str += " ";
-				if(configVersions[j].getAttribute("value") != version)
-					str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
-						"\",\"" + configVersions[j].getAttribute("value") + 
-						"\", \"" + backLinkStr + "\"); return false;'>";
-				str += configVersions[j].getAttribute("value");
-				if(configVersions[j].getAttribute("value") != version)
-					str += "</a>";
+				var configVersion;
+				for(var j=0;j<configVersions.length;++j)
+				{
+					configVersion = configVersions[j].getAttribute("value")
+					str += " ";
+					if(configVersion != version)
+						str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+							"\",\"" + configVersion + 
+							"\", \"" + backLinkStr + "\"); return false;'>";
+					str += ((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
+					if(configVersion != version)
+						str += "</a>";
+				}
 			}
 			
 			str += "<div id='clearDiv'></div>";						
@@ -3751,6 +3792,62 @@
 					true); //showLoadingOverlay
 		}
 		
+
+		//versionTrackingHandler ~
+		function versionTrackingHandler(req) 
+		{
+			var versionTrackingSystemLink = document.getElementById("versionTrackingSystemLink");			
+			
+			//set tracking is OFF set Debug prepend message
+			var versionTracking = DesktopContent.getXMLValue(req,"versionTrackingStatus");
+			if(versionTracking == "OFF")
+			{
+				Debug.prependMessage = "Version TRACKING OFF:::";
+				if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking ON";
+				Debug.log("ALERT! ALERT! Version Tracking is OFF!!!", Debug.WARN_PRIORITY);
+				_versionTrackingIsOn = false;
+			}
+			else if(versionTracking != "ON")
+			{
+				//check ever-present message
+				//	and only give indication if there was a change
+				versionTracking = DesktopContent.getXMLValue(req,"versionTracking");
+				if(versionTracking == "OFF" &&  //identify mismatch
+						_versionTrackingIsOn)
+				{
+					Debug.prependMessage = "Version TRACKING OFF:::";
+					if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking ON";
+					Debug.log("ALERT! ALERT! Version Tracking is OFF!!!", Debug.WARN_PRIORITY);	
+					_versionTrackingIsOn = false;
+				}
+				else if(versionTracking == "ON" &&  //identify mismatch
+						!_versionTrackingIsOn)
+				{
+					Debug.prependMessage = "";
+					if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking OFF";
+					Debug.log("Note: Version Tracking is ON!!!", Debug.WARN_PRIORITY);	
+					_versionTrackingIsOn = true;
+				}
+				else if(versionTracking != "ON" &&
+						versionTracking != "OFF")
+				{				
+					Debug.prependMessage = "Version TRACKING UNKOWN:::";
+					if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking ON";
+					_versionTrackingIsOn = false;
+				}
+			}
+			else //as normal, Turn Version Tracking is ON
+			{
+				Debug.prependMessage = "";
+				if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking OFF";
+				if(!_versionTrackingIsOn)
+					Debug.log("Version Tracking is ON!!!", Debug.INFO_PRIORITY);
+				_versionTrackingIsOn = true;				
+			}
+			
+			Debug.log("_versionTrackingIsOn " + _versionTrackingIsOn);
+		}
+		
 		//activateSystemConfigHandler ~
 		function activateSystemConfigHandler(req,displayErrors)
 		{	
@@ -3767,11 +3864,11 @@
 
 					//try to find group name and key
 					//	if found, show activate with warnings button
-					var i = err.indexOf("activating group '") + ("activating group '").length;
+					var i = err.indexOf("'")+1;//("activating group '") + ("activating group '").length;
 					name = err.substr(i,err.indexOf("'",i)-i).split("(");
 					if(name.length == 2)
 					{
-						key = name[1].split(")")[0];
+						key = name[1].split(")")[0] | 0; //force integer
 						name = name[0];					
 												
 						//add ignore warnings Activate link
@@ -3783,6 +3880,9 @@
 					}
 				}
 			}
+			
+			//update version tracking
+			versionTrackingHandler(req);
 			
 			var activeConfigGroups = [
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
@@ -4542,7 +4642,7 @@
 					sel = document.getElementById("select-" + els[el].value);
 					options = sel.options;
 
-					//find ALIAS:Default or else first that is not temporary
+					//find ALIAS:Default or else first that is not temporary and not an ALIAS:
 					defaultToSel = -1;
 					for(var i=0;i<options.length;++i)
 						if(options[i].value == "ALIAS:Default")
@@ -4552,7 +4652,8 @@
 							break;
 						}
 						else if(defaultToSel == -1 && 
-								options[i].value[0] != '-') //assume leading '-' means temporary
+								options[i].value[0] != '-' &&  //assume leading '-' means temporary
+								options[i].value.indexOf("ALIAS:") != 0) //skip aliases 
 							defaultToSel = i; //found backup default, keep looking for ALIAS:Default				
 
 					if(defaultToSel >= 0)
@@ -9884,7 +9985,7 @@
 				str += "Please enter a comment describing this new key for group <b>" + 
 						groupName + "</b>:<br>";
 				str += "<textarea id='popUpDialog-comment' rows='4' cols='50' style='width:417px;height:68px;''>";
-				var comment = _cachedGroupComment == ""?ConfigurationAPI._DEFAULT_COMMENT:_cachedGroupComment; 
+				var comment = (!_cachedGroupComment || _cachedGroupComment == "")?ConfigurationAPI._DEFAULT_COMMENT:_cachedGroupComment; 
 				str += comment;
 				str += "</textarea>";
 				str += "</div>";
@@ -10983,7 +11084,10 @@
 				}		
 				
 				var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
-				Debug.log("New persistent version '" + savedVersion + "' for table '" +
+				
+				var scratchNotice = (ConfigurationAPI._SCRATCH_VERSION == (savedVersion|0))?_SCRATCH_VIEW_NAME:savedVersion;
+				Debug.log("New persistent version '" + scratchNotice +
+						"' for table '" +
 						_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
 				
 				//handle group handling based on popup options
@@ -11014,12 +11118,14 @@
 				Debug.log(err,Debug.HIGH_PRIORITY);
 				return;
 			}
+			
+			activateSystemConfigHandler(req);
 
 			var configName = DesktopContent.getXMLValue(req,"savedName");
 			var version = DesktopContent.getXMLValue(req,"savedVersion");
 
 			Debug.log("saveConfigAsNewVersionHandler requestHandler configName " + configName + " version " + version);
-			setupSpecificConfig(configName,version, backLinkStr);
+			setupSpecificConfig(configName, version, backLinkStr);
 		}
 		
 		//changeMemberVersionForConfigGroup ~~
@@ -11062,9 +11168,14 @@
 			for(var i=0;i<configNameArr.length-1;++i) //skip last ',' empty element
 			{
 				//Debug.log(configNameArr[i]);
-				if(configNameArr[i] == newVersion)  //skip link
+				//if(configNameArr[i] == newVersion)  //skip link
+				if(configNameArr[i] == newVersion || //skip link for current version
+						(configNameArr[i] == 
+								ConfigurationAPI._VERSION_ALIAS_PREPEND +
+								ConfigurationAPI._SCRATCH_ALIAS &&
+								newVersion == ConfigurationAPI._SCRATCH_VERSION)) 
 				{
-					str += " " + newVersion;
+					str += " " + configNameArr[i];
  					continue;
 				}
 				str += " ";
@@ -11117,13 +11228,13 @@
 			
 			//add Save Changes button -------------
 			el = document.getElementById("display");
-			if(el.getElementsByTagName("div")[0].childNodes[0].tagName == "INPUT")
+			if(document.getElementById("popUpSaveNewGroupForm-button"))//el.getElementsByTagName("div")[0].childNodes[0].tagName == "INPUT")
 				return; //only add button once
 			
 			var dispStr = el.innerHTML;
 			str = "";
 			str += "<br><div>";
-			str += "<input type='button' onmouseup='popUpSaveNewGroupForm(\"" +
+			str += "<input id='popUpSaveNewGroupForm-button' type='button' onmouseup='popUpSaveNewGroupForm(\"" +
 //			str += "<input type='button' onmouseup='saveConfigGroupAsNewKey(\"" +
 					groupName + "\",\"" +  groupKey + "\",0)" + //0 is sourceType
 					"' value='Save Changes as New Group'" +  

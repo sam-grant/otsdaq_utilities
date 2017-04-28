@@ -68,6 +68,10 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 
+//"private" constants:
+ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
+ConfigurationAPI._SCRATCH_VERSION = 2147483647;
+ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
 
 //=====================================================================================
 //getSubsetRecords ~~

@@ -114,7 +114,9 @@ throw (xgi::exception::Exception)
 	//Commands
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
-	// 	restartOTS
+	//	launchOTS
+	// 	launchWiz
+	// 	versionTracking
 	//	getColumnTypes
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
@@ -243,6 +245,27 @@ throw (xgi::exception::Exception)
 		{
 			fprintf(fp,"LAUNCH_WIZ");
 			fclose(fp);
+		}
+	}
+	else if(Command == "versionTracking")
+	{
+		std::string type = CgiDataUtilities::getData(cgi,"Type"); //from GET
+		__MOUT__ << "type: " << type << std::endl;
+
+		if(type == "Get")
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+		else if(type == "ON")
+		{
+			ConfigurationInterface::setVersionTrackingEnabled(true);
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+		}
+		else if(type == "OFF")
+		{
+			ConfigurationInterface::setVersionTrackingEnabled(false);
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
 		}
 	}
 	else if(Command == "getColumnTypes")
@@ -389,6 +412,7 @@ throw (xgi::exception::Exception)
 
 		ConfigurationVersion version;
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		std::string versionAlias;
 
 		if(versionStr == "" && //take latest version if no version specified
 				allCfgInfo[configName].versions_.size())
@@ -398,6 +422,14 @@ throw (xgi::exception::Exception)
 			//convert alias to version
 			std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 					cfgMgr->getActiveVersionAliases();
+
+			versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
+//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//			{
+//				version = ConfigurationVersion::SCRATCH;
+//				__MOUT__ << "version alias translated to: " << version << std::endl;
+//			}
+//			else
 			if(versionAliases.find(configName) != versionAliases.end() &&
 					versionAliases[configName].find(versionStr.substr(
 							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
@@ -628,9 +660,12 @@ throw (xgi::exception::Exception)
 		}
 		catch(std::runtime_error& e)
 		{
+			//NOTE it is critical for flimsy error parsing in JS GUI to leave
+			//	single quotes around the groupName and groupKey and have them be
+			//	the first single quotes encountered in the error mesage!
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group " +
-					groupName +	"(" + groupKey + ")" + ". Please see details below:\n\n" +
+			xmldoc.addTextElementToData("Error", "Error activating config group '" +
+					groupName +	"(" + groupKey + ")" + ".' Please see details below:\n\n" +
 					std::string(e.what()));
 			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
 					groupName << " (" << groupKey << ")" << std::endl;
@@ -640,9 +675,13 @@ throw (xgi::exception::Exception)
 		}
 		catch(cet::exception& e)
 		{
+			//NOTE it is critical for flimsy error parsing in JS GUI to leave
+			//	single quotes around the groupName and groupKey and have them be
+			//	the first single quotes encountered in the error mesage!
+
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "'!\n\n" +
+					groupName +	"(" + groupKey + ")" + "!'\n\n" +
 					std::string(e.what()));
 			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
 					groupName << " (" << groupKey << ")" << std::endl;
@@ -730,6 +769,10 @@ throw (xgi::exception::Exception)
 		xmldoc.addTextElementToData(type.first + "-ActiveGroupKey",
 				type.second.second.toString());
 	}
+
+	//always add version tracking bool
+	xmldoc.addTextElementToData("versionTracking",
+			ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
 
 	__MOUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
 
@@ -2783,10 +2826,14 @@ try
 
 	//only consider it an error if source version was persistent version
 	//	allow it if source version is temporary and we are making a persistent version now
+	//	also, allow it if version tracking is off.
 	if(retVal < 0 &&
-			(!version.isTemporaryVersion() || makeTemporary))
+			(!version.isTemporaryVersion() || makeTemporary) &&
+			ConfigurationInterface::isVersionTrackingEnabled()
+			)
 	{
-		if(!version.isInvalid()) //if source version was mockup, then consider it attempt to create a blank table
+		if(!version.isInvalid() && //if source version was mockup, then consider it attempt to create a blank table
+				!version.isScratchVersion()) //if source version was scratch, then consider it attempt to make it persistent
 		{
 			__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
 			__MOUT_ERR__ << "\n" << ss.str();
@@ -2794,13 +2841,22 @@ try
 			config->eraseView(temporaryVersion);
 			throw std::runtime_error(ss.str());
 		}
-		else
+		else if(version.isInvalid())
 			__MOUT__ << "This was interpreted as an attempt to create a blank table." << std::endl;
+		else if(version.isScratchVersion())
+			__MOUT__ << "This was interpreted as an attempt to make a persistent version of the scratch table." << std::endl;
+		else
+			throw std::runtime_error("impossible!");
 	}
 	else if(retVal < 0 &&
 			(version.isTemporaryVersion() && !makeTemporary))
 	{
 		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version." << std::endl;
+	}
+	else if(retVal < 0 &&
+			!ConfigurationInterface::isVersionTrackingEnabled())
+	{
+		__MOUT__ << "Allowing the static data because version tracking is OFF." << std::endl;
 	}
 	else if(retVal < 0)
 	{
@@ -2921,6 +2977,9 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 			cfgMgr->getActiveVersionAliases();
+	for(const auto &aliases:versionAliases)
+		for(const auto &alias:aliases.second)
+		__MOUT__ << aliases.first << " " << alias.first << " " << alias.second << std::endl;
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
 	std::string name, versionStr;
@@ -2963,7 +3022,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			{
 				__SS__ << "version alias '" << versionStr.substr(
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-								"'was not found in active version aliases!" << std::endl;
+								"' was not found in active version aliases!" << std::endl;
 				__MOUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error",
 						ss.str());
@@ -4057,16 +4116,31 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 		xmldoc.addTextElementToData("ConfigurationName", it->first);
 		parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
 
-		//include aliases for this table
+		//include aliases for this table (if the versions exist)
 		if(versionAliases.find(it->first) != versionAliases.end())
 			for (auto &aliasVersion:versionAliases[it->first])
-				xmldoc.addTextElementToParent("Version",
+				if(it->second.versions_.find(aliasVersion.second) !=
+						it->second.versions_.end())
+				//if(aliasVersion.first != ConfigurationManager::SCRATCH_VERSION_ALIAS) //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+					xmldoc.addTextElementToParent("Version",
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
 						parentEl);
+//				else //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//					__MOUT_ERR__ << "Alias for table " << it->first << " is a reserved alias '" <<
+//						ConfigurationManager::SCRATCH_VERSION_ALIAS << "' - this is illegal." << std::endl;
 
-		//get version key for the current system subconfiguration key
+//		//if scratch version exists, add an alias for it /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//		if(it->second.versions_.find(ConfigurationVersion(ConfigurationVersion::SCRATCH)) !=
+//				it->second.versions_.end())
+//			xmldoc.addTextElementToParent("Version",
+//					ConfigurationManager::ALIAS_VERSION_PREAMBLE + ConfigurationManager::SCRATCH_VERSION_ALIAS,
+//					parentEl);
+
+		//get all table versions for the current table
+		//	except skip scratch version
 		for (auto &version:it->second.versions_)
-			xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
+			if(!version.isScratchVersion())
+				xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
 
 		++it;
 	}

@@ -27,6 +27,8 @@ Debug.level = 100;		//priority level, (100 should be all, 0 only high priority)
 Debug.lastLog = "";
 Debug.lastLogger = "";
 
+Debug.prependMessage = ""; //use to have a message always show up before log messages
+
 //setup default priorities
 Debug.HIGH_PRIORITY = 0;
 Debug.WARN_PRIORITY = 1;
@@ -65,6 +67,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
+					str = Debug.prependMessage + str; //add prepend message
+					
 					var type = num < 4?
 							(num==0?"High":(num==1?"Warn":(num==2?"Info":"Tip")))
 							:(num<99?"Med":"Low");
