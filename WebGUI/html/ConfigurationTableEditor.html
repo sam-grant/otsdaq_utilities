@@ -308,9 +308,25 @@
 				tableDescription = "No description.";
 			
 			//col choices are CSV for each column and ; separated columns
+			//	if col type is BitMap extract the input values
 			var colChoicesData = "";
 			for(var i=0;i<_colChoicesArr.length;++i)
-				colChoicesData += _colChoicesArr[i] + ";";
+			{
+				if(_colTypeArr[i] == "BitMap")
+				{
+					Debug.log("BitMap saving " + i);					
+					//extract fields into col choice array
+					for(var j=0;j<11;++j) //11 fields
+					{
+						var el = document.getElementById("bitmapFieldInput-" + i + "-" + j);
+						if(j) colChoicesData += ",";
+						colChoicesData += encodeURIComponent(el.value);
+					}
+					colChoicesData += ";";	
+				}
+				else
+					colChoicesData += _colChoicesArr[i] + ";";
+			}
 			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
@@ -442,10 +458,10 @@
 				var colChoiceArr = colChoices[i].getElementsByTagName("ColumnChoice");
 				var csvStr = "";
 				for(var j=0;j<colChoiceArr.length;++j)
-					if(j)
-						csvStr += "," + colChoiceArr[j].getAttribute("value");
-					else
-						csvStr += colChoiceArr[j].getAttribute("value");
+				{
+					if(j) csvStr += ",";
+					csvStr += encodeURIComponent(colChoiceArr[j].getAttribute("value"));
+				}
 				Debug.log("csvStr col=" + i + " csvChoices=" + csvStr);
 				colChoicesArr.push(csvStr);
 			}
@@ -514,6 +530,93 @@
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
 			
+			
+			var localDisplayPixelMaskInputs = function() {
+
+				Debug.log("BitMap col=" + c + " colTypes[c]=" + colTypes[c]);
+
+				str += "<td>";
+
+				var fieldsArr = ["Number of Rows",
+								 "Number of Columns",
+								 "Cell Bit-field Size",
+								 "Min-value Allowed",
+								 "Max-value Allowed",
+								 "Display Aspect H:W",
+								 "Min-value Cell Color",
+								 "Mid-value Cell Color",
+								 "Max-value Cell Color",
+								 "Absolute Min-value Cell Color",
+								 "Absolute Max-value Cell Color"];
+
+				var colChoicesArr = colChoices[c].split(',');
+				var bitMapFieldValues = [];
+				for(var f=0;f<colChoicesArr.length;++f)
+					if(colChoicesArr[f] == "") continue; //skip empty values
+					else
+						bitMapFieldValues.push(decodeURIComponent(colChoicesArr[f]));	
+
+				str += "<table style='float:right;'>";
+				for(var i=0;i<3;++i)
+				{
+					str += "<tr>";
+					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
+					str += fieldsArr[i] + ":";
+					str += "</td>";
+					str += "<td>";
+					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
+							"' value='" + 
+							(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
+							"' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"setCaretPosition(this,0,this.value.length);' " +
+							"style='width:150px' />";
+					str += "</td>";							
+					str += "</tr>";
+				}
+				str += "</table>";
+				
+				str += "<div id='clearDiv'></div>";
+				
+				//create hidden optional fields
+				str += "<a href='#' onclick='javascript:" +
+						"if(this.textContent.indexOf(\"Show\") == 0) " +
+						"{ document.getElementById(\"bitmapFieldInput-optional\").style.display = \"block\";" +
+						"this.innerHTML = \"Hide Optional Fields\";}" +
+						"else " + 
+						"{ document.getElementById(\"bitmapFieldInput-optional\").style.display = \"none\";" +
+						"this.innerHTML = \"Show Optional Fields\";}" +
+						"' style='float:right;'>" +
+						"Show Optional Fields</a>";
+				
+				str += "<div id='clearDiv'></div>";
+				
+				str += "<table id='bitmapFieldInput-optional' style='display:none' style='float:right;'>";
+				for(var i=3;i<fieldsArr.length;++i)
+				{
+					str += "<tr>";
+					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
+					str += fieldsArr[i] + ":";
+					str += "</td>";
+					str += "<td>";
+					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
+							"' value='" + 
+							(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
+							"' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"setCaretPosition(this,0,this.value.length);' " +
+							"style='width:150px' />";
+					str += "</td>";							
+					str += "</tr>";
+				}
+				str += "</table>";
+
+				str += "</td>";
+
+			}
+			
 			if(_tableIsTransposed)
 			{
 				//for each column, make a row		
@@ -564,13 +667,19 @@
 
 					/////////////////////////////////
 					//add data choices if type = FixedChoiceData
-					if(colTypes[c] != "FixedChoiceData") 
+					//add bitmap info fields if type = BitMap
+					if(colTypes[c] != "FixedChoiceData" && 
+							colTypes[c] != "BitMap") 
 					{
 						str += "<td style='border:0; background-color:transparent;'></td>";
 					}
+					else if(colTypes[c] == "BitMap")
+					{
+						localDisplayPixelMaskInputs();
+					}
 					else
 					{
-						Debug.log("col=" + c + " colTypes[c]=" + colTypes[c]);
+						Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
 						str += "<td>";
 
 						str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
@@ -692,63 +801,70 @@
 				str += "<tr>";	
 				for(var c=0;c<colTypes.length;++c)
 				{
-					if(colTypes[c] != "FixedChoiceData") 
+					if(colTypes[c] != "FixedChoiceData" &&
+							colTypes[c] != "BitMap") 
 					{
 						str += "<td style='border:0; background-color:transparent;'></td>";
 						continue;
 					}
-					Debug.log("col=" + c + " colTypes[c]=" + colTypes[c]);
-					str += "<td>";
-					
-					str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
-					str += "<tr><td>";
-					str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
-							"onmouseup='event.stopPropagation();' " +
-							"onclick='event.stopPropagation();" +
-							"setCaretPosition(this,0,this.value.length);' " +
-							"style='width:150px' />";
-					str += "</td><td style='white-space:nowrap' >";
-					str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
-							"title='Add text as a new fixed choice option for this column.\"'" +
-							">";
-					str += "+";
-					str += "</a>";
-					str += "</td></tr>";
-					
-					
-					str += "<tr><td>";
-
-					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
-
-					//always show default first
-					str += "<option>" +
-					decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
-					"</option>";	
-					
-					var colChoicesArr = colChoices[c].split(',');
-					for(var f=0;f<colChoicesArr.length;++f)
-						if(colChoicesArr[f] == "") continue; //skip empty values
-						else
-							str += "<option>" +
-								decodeURIComponent(colChoicesArr[f]) +
-								"</option>";					
-					str += "</select>";
-					
-					str += "</td><td>";
-					str += 
-							"<div class='treeNode-deleteIcon' " + 
-							"onmouseup='event.stopPropagation();' " +
-							"onclick='event.stopPropagation();" +
-							"deleteSelectedFixedChoice(" + c + ");' " +
-							"title='Delete the currently selected choice for this column.' " +
-							"></div>";
-					
-
-					str += "</td></tr>";
-					str += "</table>";
-					
-					str += "</td>";			
+					else if(colTypes[c] == "BitMap")
+					{
+						localDisplayPixelMaskInputs();
+					}
+					else //FixedChoiceData
+					{
+						Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
+						str += "<td>";
+						
+						str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
+						str += "<tr><td>";
+						str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"setCaretPosition(this,0,this.value.length);' " +
+								"style='width:150px' />";
+						str += "</td><td style='white-space:nowrap' >";
+						str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
+								"title='Add text as a new fixed choice option for this column.\"'" +
+								">";
+						str += "+";
+						str += "</a>";
+						str += "</td></tr>";
+						
+						
+						str += "<tr><td>";
 	
+						str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+	
+						//always show default first
+						str += "<option>" +
+								decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
+								"</option>";	
+						
+						var colChoicesArr = colChoices[c].split(',');
+						for(var f=0;f<colChoicesArr.length;++f)
+							if(colChoicesArr[f] == "") continue; //skip empty values
+							else
+								str += "<option>" +
+									decodeURIComponent(colChoicesArr[f]) +
+									"</option>";					
+						str += "</select>";
+						
+						str += "</td><td>";
+						str += 
+								"<div class='treeNode-deleteIcon' " + 
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"deleteSelectedFixedChoice(" + c + ");' " +
+								"title='Delete the currently selected choice for this column.' " +
+								"></div>";
+						
+	
+						str += "</td></tr>";
+						str += "</table>";
+						
+						str += "</td>";		
+					}	
 				}
 				str += "</tr>";
 			}
@@ -1106,13 +1222,31 @@
 							if(colType == specTypeArray[i])
 								colType += "-" + document.getElementById("selectCellSpecTypeID").value;
 					}
-					
+										
 					Debug.log("CfgTBL editCellOK editing colType,colDataType:" + 
 							colType + "," + colDataType);
 					
 					_colTypeArr[c] = colType;
 					_colDataTypeArr[c] = colDataType;
-					setupTable();				
+					setupTable();
+					
+					//show tooltips
+					if(colType == "BitMap")
+						DesktopContent.tooltip("BitMapType",
+								"The BitMap type represents a 2-dimensional array of cells, " +
+								"where each cell has a bit-field. The aspect ratio is optional. " +
+								"The color fields are optional. " +
+								"Optional fields you can leave as DEFAULT. \n\n" +
+								"The aspect ratio should be entered as <Height>:<Width>; for example, " +
+								"if you have a pixel chip with pixel size 100 microns by 150 microns you " +
+								"may want your display to reflect that - you should enter &quot;100:150&quot (without the quotes)."
+								);
+					else if(colType == "FixedChoiceData")
+						DesktopContent.tooltip("FixedChoiceDataType",
+								"The FixedChoiceData type represents a list of choices that constrain " +
+								"the allowed values for a field. " +
+								"The DEFAULT value must always be one of the choices. "
+								);
 				}			
 				else //colHdr row
 				{

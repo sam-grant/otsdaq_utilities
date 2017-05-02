@@ -85,5 +85,23 @@
 		}
 		
 		
+		/* bitmap CSS */
+		
+		#ConfigurationAPI-popUpDialog-bitmap, #ConfigurationAPI-popUpDialog-bitmap-overlay {
+			image-rendering: optimizeSpeed;             /* NO SMOOTHING, GIVE ME SPEED    */
+			image-rendering: -moz-crisp-edges;          /* Firefox                        */
+			image-rendering: pixelated; 				/* Chrome (and eventually Safari) */
+			image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
+			cursor: pointer;
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		

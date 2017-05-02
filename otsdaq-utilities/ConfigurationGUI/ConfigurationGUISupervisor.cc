@@ -2585,9 +2585,9 @@ try
 		choicesParentEl =
 				xmldoc.addTextElementToParent("ColumnChoices", "", parentEl);
 		//add data choices if necessary
-		if(colInfo[i].getType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA)
+		if(colInfo[i].getType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
+				colInfo[i].getType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-
 			for(auto &choice:colInfo[i].getDataChoices())
 				xmldoc.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
 		}
@@ -3326,18 +3326,14 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		return;
 	}
 
-	__MOUT__ << std::endl;
 	fprintf(fp,"%s",outss.str().c_str());
-
-	__MOUT__ << std::endl;
 	fclose(fp);
 
-	__MOUT__ << std::endl;
 	//reload all config info with refresh AND reset to pick up possibly new config
 	// check for errors related to this configName
 	std::string accumulatedErrors = "";
 	cfgMgr->getAllConfigurationInfo(true,&accumulatedErrors,configName);
-	__MOUT__ << std::endl;
+
 	//if errors associated with this config name stop and report
 	if(accumulatedErrors != "")
 	{
@@ -3370,10 +3366,10 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		}
 		return;
 	}
-	__MOUT__ << std::endl;
+
 	//return the new configuration info
 	handleGetConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion());
-	__MOUT__ << std::endl;
+
 	//debug all table column info
 	//FIXME -- possibly remove this debug feature in future
 	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();

@@ -6,6 +6,7 @@
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
@@ -442,6 +443,7 @@
 			//ConfigurationAPI.setCaretPosition(el,start,stop)
 			//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 			//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
+			//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
 		//end ConfigurationAPI functions
 
 		//ConfigurationAPI constants
@@ -528,7 +530,7 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("DesktopIconConfiguration","4",""); return;
+			setupSpecificConfig("FEConfiguration","0",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -6111,6 +6113,26 @@
 				}				
 				str += "</select>";	
 			}
+			else if(colType == "BitMap")
+			{
+				//let API bitmap dialog handle it
+				ConfigurationAPI.bitMapDialog(
+						"Bitmap", //field name
+						_tableFixedChoiceData[c],
+						_editingCellElOldValue,
+						function()
+						{
+							Debug.log("yes");
+						},
+						function() //cancel handler
+						{							
+							//remove the editing cell selection
+							Debug.log("no");
+							_editingCell = false;
+							_editingCellEl = 0;
+						});
+				return true;
+			}
 			else if(colType == "MultilineData")
 			{
 				//onkeydown='keyHandler(event)' 
@@ -6153,7 +6175,7 @@
 			{
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
-				str += _editingCellElOldValue;
+				str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 						">";
@@ -6424,14 +6446,16 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 380;
-			var h = 215;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,380 /*w*/,215 /*h*/);
+			
+//			var w = 380;
+//			var h = 215;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			
 			//show choices of group aliases or alternatively textbox
@@ -6635,15 +6659,17 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 380;
-			var h = 330;
 			var gh = 50;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,380 /*w*/,330-gh*2 /*h*/);
+//			var w = 380;
+//			var h = 330;
+//			var gh = 50;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			//always
 			//	- save modified tables (show list of modified tables)
@@ -8977,6 +9003,14 @@
 			if(el) //tree view 
 				return editTreeNodeOK();
 			
+			//avoid doing anything while popup is open
+			el = document.getElementById("popUpDialog");
+			if(el) //config gui popup
+				return;
+			el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+			if(el) //config API popup
+				return;
+			
 			//else table view 
 			//...
 			
@@ -9346,14 +9380,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 300;
-			var h = 200;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,200 /*h*/);
+//			var w = 300;
+//			var h = 200;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
@@ -9411,14 +9446,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 300;
-			var h = 200;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,200 /*h*/);
+//			var w = 300;
+//			var h = 200;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			Debug.log("Previous filter = " + lastTreeFilter_);
 			var defaultFilter = lastTreeFilter_ == ""?"*Port*":lastTreeFilter_;
@@ -9473,14 +9509,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 300;
-			var h = 200;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,200 /*h*/);
+//			var w = 300;
+//			var h = 200;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
@@ -9531,14 +9568,15 @@
 			}
 
 			//set position and size
-			var w = 300;
-			var h = 170;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,170 /*h*/);
+//			var w = 300;
+//			var h = 170;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 
 			var str = "<br><a id='" + 
@@ -9623,16 +9661,18 @@
 			}
 			
 			//set position and size
-			var w = 500;
-			var h = 425;
 			var gh = 50;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,500 /*w*/,425-gh*2 /*h*/);
+//			var w = 500;
+//			var h = 425;
+//			var gh = 50;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 			
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
@@ -9961,16 +10001,18 @@
 			}
 
 			//set position and size
-			var w = 500;
-			var h = 335;
 			var gh = 50;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)-gh) + "px"; //allow for 1x gh growth for each affected group
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,500 /*w*/,335-gh*2 /*h*/);
+//			var w = 500;
+//			var h = 335;
+//			var gh = 50;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)-gh) + "px"; //allow for 1x gh growth for each affected group
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
@@ -10182,14 +10224,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 300;
-			var h = 220;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,220 /*h*/);
+//			var w = 300;
+//			var h = 220;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
@@ -10282,14 +10325,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 300;
-			var h = 200;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,300 /*w*/,200 /*h*/);
+//			var w = 300;
+//			var h = 200;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
@@ -10496,14 +10540,15 @@
 			el.style.display = "none";
 
 			//set position and size
-			var w = 380;
-			var h = 305;
-			var ww = DesktopContent.getWindowWidth();
-			var wh = DesktopContent.getWindowHeight();
-			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
-			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-			el.style.width = w + "px";
-			el.style.height = h + "px";
+			ConfigurationAPI.setPopUpPosition(el,380 /*w*/,305 /*h*/);
+//			var w = 380;
+//			var h = 305;
+//			var ww = DesktopContent.getWindowWidth();
+//			var wh = DesktopContent.getWindowHeight();
+//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px"; 
+//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//			el.style.width = w + "px";
+//			el.style.height = h + "px";
 			
 			var str = "<a id='" + 
 					"popUpDialog" + //clear upload string on cancel!

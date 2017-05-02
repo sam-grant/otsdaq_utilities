@@ -54,6 +54,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
 //	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
+//	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
@@ -444,15 +445,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 //			obj.groupName   
 //			obj.groupKey
 //			obj.groupAlias
-//	
-{	//start shared scope between popUpSaveModifiedTablesForm and saveModifiedTables
-	
-	//shared variables by popUpSaveModifiedTablesForm and saveModifiedTables
-//	var _affectedGroups; 
-//	var _savingGroupCheckboxes; 
-//	var _activatingGroupCheckboxes; 
-//	var _aliasingGroupCheckboxes; 
-	
+//		
 ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseHandler)
 {	
 	//mimic ConfigurationGUI::popUpSaveTreeForm()
@@ -468,17 +461,20 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 		el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
 	}
 	el.style.display = "none";
+	
+	var gh = 50;
+	ConfigurationAPI.setPopUpPosition(el,380 /*w*/,330-gh*2 /*h*/);
 
 	//set position and size
-	var w = 380;
-	var h = 330;
-	var gh = 50;
-	var ww = DesktopContent.getWindowWidth();
-	var wh = DesktopContent.getWindowHeight();
-	el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
-	el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-	el.style.width = w + "px";
-	el.style.height = h + "px";
+//	var w = 380;
+//	var h = 330;
+//	var gh = 50;
+//	var ww = DesktopContent.getWindowWidth();
+//	var wh = DesktopContent.getWindowHeight();
+//	el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)- gh*2) + "px"; //allow for 2xgh growth for each affected group
+//	el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
+//	el.style.width = w + "px";
+//	el.style.height = h + "px";
 
 	//always
 	//	- save modified tables (show list of modified tables)
@@ -781,37 +777,34 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 			el.innerHTML = str;
 			
 			//create submit onmouseup handler
-			{
-				document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
-						"-submitButton").onmouseup = function() {
-					Debug.log("Submit mouseup");
-					this.disabled = true;
-					ConfigurationAPI.handleGroupCommentToggle(0,1); //force cache of group comment
-					ConfigurationAPI.handlePopUpHeightToggle(h,gh);
+			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-submitButton").onmouseup = function() {
+				Debug.log("Submit mouseup");
+				this.disabled = true;
+				ConfigurationAPI.handleGroupCommentToggle(0,1); //force cache of group comment
+				ConfigurationAPI.handlePopUpHeightToggle(h,gh);
 
-					var savingGroups = 
-							document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
-									"-bumpGroupVersions").checked;
-					var activatingSavedGroups = 
-							document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
-									"-activateBumpedGroupVersions").checked;
+				var savingGroups = 
+						document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+								"-bumpGroupVersions").checked;
+				var activatingSavedGroups = 
+						document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+								"-activateBumpedGroupVersions").checked;
 
-					ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,
-							true); //doNotIgnoreWarnings							
-							
-				}; //end submit onmouseup handler				
-			}
+				ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,
+						true); //doNotIgnoreWarnings							
+
+			}; //end submit onmouseup handler	
+
 			//create cancel onclick handler
-			{
-				document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
-						"-cancel").onclick = function(event) {
-					Debug.log("Cancel click");
-					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
-					if(el) el.parentNode.removeChild(el); //close popup											
-					responseHandler([],[],[]); //empty array indicates nothing done
-					return false;
-				}; //end submit onmouseup handler				
-			}
+			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-cancel").onclick = function(event) {
+				Debug.log("Cancel click");
+				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+				if(el) el.parentNode.removeChild(el); //close popup											
+				responseHandler([],[],[]); //empty array indicates nothing done
+				return false;
+			}; //end submit onmouseup handler	
 
 
 			//handle default dropdown selections for group alias
@@ -840,7 +833,8 @@ ConfigurationAPI.handleGroupCommentToggle =  function(groupName,setHideVal)
 {
 	var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment");			
 	var hel = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-header");
-
+	var cel;
+	
 	var doHide = el.style.display != "none";
 	if(setHideVal !== undefined)
 		doHide = setHideVal;
@@ -852,7 +846,7 @@ ConfigurationAPI.handleGroupCommentToggle =  function(groupName,setHideVal)
 		//get current groupName so we know where to cache comment
 		var gn = hel.textContent.split("'")[1];
 		Debug.log("gn " + gn);
-		var cel = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-" + 
+		cel = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-" + 
 				gn);				
 		cel.innerHTML = "";
 		cel.appendChild(document.createTextNode(el.value));
@@ -869,7 +863,7 @@ ConfigurationAPI.handleGroupCommentToggle =  function(groupName,setHideVal)
 
 	//show groupName comment
 	{
-		var cel = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-" + 
+		cel = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-groupComment-" + 
 				groupName);
 		el.value = cel.textContent;
 		el.style.display = "block"; //show display before set caret (for Firefox)
@@ -1532,7 +1526,6 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		Debug.log("No tables were modified. Should be impossible to get here.", Debug.HIGH_PRIORITY);
 	}
 }
-} //end shared scope between popUpSaveModifiedTablesForm and saveModifiedTables
 
 
 //=====================================================================================
@@ -1745,6 +1738,271 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 }
 
 //=====================================================================================
+//bitMapDialog ~~
+//	shows bitmap dialog at full window size (minus margins)
+//	on ok, calls <okHandler> with finalBitMapValue parameter
+//
+//	<bitMapParams> is an array of size 6:
+//		rows,cols,cellFieldSize,minColor,midColor,maxColor
+ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,okHandler,cancelHandler)
+{
+	var bmpData = this.bmpData;
+	
+	Debug.log("ConfigurationAPI bitMapDialog");	
+
+	var str = "";
+
+	var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+	if(!el)
+	{
+		el = document.createElement("div");			
+		el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+	}
+	el.style.display = "none";
+
+	var padding = 10;
+	var popSz = ConfigurationAPI.setPopUpPosition(el,undefined,undefined,padding,undefined,30 /*margin*/);
+		
+	//create bit map dialog
+	// 	- header at top with field name and parameters
+	//	- bitMap, w/mouseover and click and drag (same as windows sw)
+	//		- center vertically
+	//  - OK, CANCEL buttons at top right
+	//	- also upload download buttons
+
+	//	var fieldsArr = ["Number of Rows",
+	//					 "Number of Columns",
+	//					 "Cell Bit-field Size",
+	//					 "Min-value Allowed",
+	//					 "Max-value Allowed",
+	//					 "Max-value Allowed",
+	//					 "Display Aspect H:W",
+	//					 "Min-value Cell Color",
+	//					 "Mid-value Cell Color",
+	//					 "Max-value Cell Color",
+	//					 "Absolute Min-value Cell Color",
+	//					 "Absolute Max-value Cell Color"];
+	
+	var rows = 2; //bitMapParams[0];
+	var cols = 8;
+	var bitFieldSize = 4;//bitMapParams[2];
+	var bitMask = (1<<bitFieldSize) - 1;
+		
+	var minValue = 4;//bitMapParams[3] == "DEFAULT" || bitMapParams[3] == ""?0:(bitMapParams[3]|0);
+	var maxValue = 8;//bitMapParams[4] == "DEFAULT" || bitMapParams[4] == ""?bitMask:(bitMapParams[4]|0);
+	if(maxValue < minValue)
+		maxValue = bitMask;
+				
+	var hdrX = padding; 
+	var hdrY = padding;
+	var hdrW = popSz.w;
+	var hdrH = 50;
+
+	var bmpX = padding; 
+	var bmpY = hdrY+hdrH+padding;	
+	var bmpW = popSz.w;
+	var bmpH = popSz.h - hdrH - padding;
+
+	var cellW = bmpW/cols;
+	var cellH = bmpH/rows;
+	
+	//optimize aspect ratio for viewing window
+	var localOptimizeAspectRatio = function()
+	{
+		var cellSkew = (cellW>cellH)?cellW/cellH:cellH/cellW;
+		var MAX_SKEW = 3;
+
+		var forcedAspectH = 100;
+		var forcedAspectW = 150;
+		
+		if(forcedAspectH !== undefined)
+		{
+			var offAspectH = forcedAspectH/cellH;
+			var offAspectW = forcedAspectW/cellW;
+			
+			Debug.log("Adjusting skew factor = " + forcedAspectH + "-" + forcedAspectW);
+			
+			if(offAspectH < offAspectW) //height is too big
+				bmpH = bmpW/cols*forcedAspectH/forcedAspectW*rows;
+			else //width is too big
+				bmpW = bmpH/rows*forcedAspectW/forcedAspectH*cols;
+		}
+		else if(cellSkew > MAX_SKEW) //re-adjust bitmap
+		{
+			var adj = cellSkew/MAX_SKEW;
+			//to much skew in cell shape.. so let's adjust
+			Debug.log("Adjusting skew factor = " + adj);
+			if(cellW > cellH)
+			{
+				bmpW /= adj;
+			}
+			else
+				bmpH /= adj;
+		}
+		//recalculate new cells
+		cellW = bmpW/cols;
+		cellH = bmpH/rows;
+
+		//center bitmap
+		bmpX = padding + (popSz.w-bmpW)/2; 
+		bmpY = bmpY + (popSz.h-bmpY-bmpH)/2;	
+		hdrY = bmpY - padding - hdrH;
+	};	localOptimizeAspectRatio();
+			
+	//create header
+	var localCreateHeader = function()
+	{
+		var hdr = document.createElement("div");
+		hdr.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-header");
+
+		var str = "";
+		
+		str += "<div style='float:left;'>";
+		str += fieldName;
+		str += "</div>";
+		str += "<div style='float:right;'>";
+		str += "<a id='" + 
+				ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-cancel' href='#'>Cancel</a>";
+		str += "</div>";
+		str += "<div id='clearDiv'></div>";
+		str += "<div style='float:left;'>";
+		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
+		str += "</div>";
+		
+//		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
+//		str += "<td colspan=2 align='left'>";
+//		str += fieldName;
+//		str += "</td>";
+//		
+//		str += "<td align='right'>";
+//		str += "</td>";
+//		
+//		str += "</tr>";
+//		str += "<tr>";
+//		str += "<td align='right'>";
+//		str += "Number of [Rows,Cols]:";
+//		str += "</td>";
+//		str += "<td align='left'>";
+//		str += "[" + rows + "," + cols + "]";
+//		str += "</td>";
+//		str += "<td>";
+//		str += "</td>";
+//		str += "</tr>";
+//		str += "</table>";
+						
+		
+		hdr.innerHTML = str;
+		hdr.style.overflowY = "auto";
+		hdr.style.position = "absolute";
+		hdr.style.left = hdrX + "px";
+		hdr.style.top = hdrY + "px";
+		hdr.style.width = hdrW + "px";
+		hdr.style.height = hdrH + "px";
+		
+		el.appendChild(hdr);		
+	}; localCreateHeader();
+	
+	//done with header
+	
+	var bmp =  document.createElement("img");
+	bmp.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap");
+	
+	{
+		var canvas=document.createElement("canvas");
+		canvas.width = cols;
+		canvas.height = rows;
+		var ctx = canvas.getContext("2d");		
+		
+		if(bmpData) delete bmpData;
+		bmpData = ctx.createImageData(cols,rows);
+		for(var i=0;i<rows;++i)
+			for(var j=0;j<cols;++j)
+			{
+				bmpData.data[(i*cols + j)*4+0]=(i*100)%255;
+				bmpData.data[(i*cols + j)*4+1]=(j*100)%255;
+				bmpData.data[(i*cols + j)*4+2]=0;
+				bmpData.data[(i*cols + j)*4+3]=255;
+			}
+		ctx.putImageData(bmpData,0,0);
+		bmp.src = canvas.toDataURL();
+	}	
+	
+	bmp.style.position = "absolute";
+	bmp.style.left = bmpX + "px";
+	bmp.style.top = bmpY + "px";
+	bmp.style.width = bmpW + "px";
+	bmp.style.height = bmpH + "px";
+	
+	el.appendChild(bmp);
+	document.body.appendChild(el); //add element to body
+	el.style.display = "block";
+	
+	//create cancel onclick handler
+	{
+		document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-cancel").onclick = function(event) {
+			Debug.log("Cancel click");
+			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+			if(el) el.parentNode.removeChild(el); //close popup											
+			cancelHandler(); //empty array indicates nothing done
+			return false;
+		}; //end submit onmouseup handler				
+	}
+	
+	//create mouseover handler
+	{
+
+		var bmpOverlay =  document.createElement("img");
+		bmpOverlay.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-overlay");
+		el.appendChild(bmpOverlay);
+		
+		el.onmousemove = function(event) {
+			var x = event.pageX - popSz.x - bmpX;
+			var y = event.pageY - popSz.y - bmpY;
+			var r = (y/cellH)|0;
+			var c = (x/cellW)|0;
+			if(x < 0 || y < 0 || r >= rows || c >= cols)
+			{
+				//mouse off bitmap
+				bmpOverlay.style.display = "none";
+				return;				
+			}
+			Debug.log("x,y " + x + "," + y);
+			Debug.log("r,c " + r + "," + c);
+			
+			//have mouse over bitmap
+			Debug.log("r,g,b " + bmpData.data[r*cols+c+1] + "," + 
+					bmpData.data[r*cols+c+2] + "," + bmpData.data[r*cols+c+3]);
+			
+			{
+				var canvas=document.createElement("canvas");
+				canvas.width = 1;
+				canvas.height = 1;
+				var ctx = canvas.getContext("2d");		
+
+				var bmpOverlayData = ctx.createImageData(1,1);
+				bmpOverlayData.data[0]=255;
+				bmpOverlayData.data[1]=255;
+				bmpOverlayData.data[2]=0;
+				bmpOverlayData.data[3]=255;
+				ctx.putImageData(bmpOverlayData,0,0);
+				bmpOverlay.src = canvas.toDataURL();
+				
+				bmpOverlay.style.position = "absolute";
+				bmpOverlay.style.left = (bmpX + c*cellW) + "px";
+				bmpOverlay.style.top = (bmpY + r*cellH) + "px";
+				bmpOverlay.style.width = (cellW) + "px";
+				bmpOverlay.style.height = (cellH) + "px";
+				bmpOverlay.style.display = "block";
+			}	
+			
+		}
+	}
+}
+	
+
+//=====================================================================================
 //getDateString ~~
 //	Example call from linux timestamp:
 //		groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
@@ -1784,9 +2042,44 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 }
 
 
+//=====================================================================================
+//setPopUpPosition ~~
+//	centers element based on width and height constraint
+//	
+//	Note: assumes a padding and border size if not specified
+//  Note: if w,h not specified then fills screen (minus margin)
+ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin)
+{
+	if(padding === undefined) padding = 10;
+	if(border === undefined) border = 1;	
+	if(margin === undefined) margin = 0;	
 
+	var x,y;
+	//set position and size
+	{		
+		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;
+		var wh = DesktopContent.getWindowHeight()-(padding+border)*2;
+		
+		//ww & wh are max window size at this point
+		
+		if(w === undefined || h === undefined)
+		{
+			w = ww-(margin)*2;
+			h = wh-(margin)*2;
+		}
+		//else w,h are inputs and margin is ignored
+		
+		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2));
 
-
+		el.style.left = x + "px";
+		el.style.top = y + "px"; 
+		el.style.width = w + "px";
+		el.style.height = h + "px";
+	}
+	
+	return {"w" : w, "h" : h, "x" : x, "y" : y};
+}
 
 
 
