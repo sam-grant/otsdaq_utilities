@@ -73,6 +73,18 @@
 		
 		var _mouseIsSelecting = false;	//to block switching cells when selecting text
 	
+		var _bitMapFieldsArr = ["Number of Rows",
+								"Number of Columns",
+								"Cell Bit-field Size",
+								"Min-value Allowed",
+								"Max-value Allowed",
+								"Value step-size Allowed",
+								"Display Aspect H:W",
+								"Min-value Cell Color",
+								"Mid-value Cell Color",
+								"Max-value Cell Color",
+								"Absolute Min-value Cell Color",
+								"Absolute Max-value Cell Color"];
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -535,19 +547,7 @@
 
 				Debug.log("BitMap col=" + c + " colTypes[c]=" + colTypes[c]);
 
-				str += "<td>";
-
-				var fieldsArr = ["Number of Rows",
-								 "Number of Columns",
-								 "Cell Bit-field Size",
-								 "Min-value Allowed",
-								 "Max-value Allowed",
-								 "Display Aspect H:W",
-								 "Min-value Cell Color",
-								 "Mid-value Cell Color",
-								 "Max-value Cell Color",
-								 "Absolute Min-value Cell Color",
-								 "Absolute Max-value Cell Color"];
+				str += "<td>";				
 
 				var colChoicesArr = colChoices[c].split(',');
 				var bitMapFieldValues = [];
@@ -561,7 +561,7 @@
 				{
 					str += "<tr>";
 					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
-					str += fieldsArr[i] + ":";
+					str += _bitMap_bitMapFieldsArr[i] + ":";
 					str += "</td>";
 					str += "<td>";
 					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
@@ -593,11 +593,11 @@
 				str += "<div id='clearDiv'></div>";
 				
 				str += "<table id='bitmapFieldInput-optional' style='display:none' style='float:right;'>";
-				for(var i=3;i<fieldsArr.length;++i)
+				for(var i=3;i<_bitMapFieldsArr.length;++i)
 				{
 					str += "<tr>";
 					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
-					str += fieldsArr[i] + ":";
+					str += _bitMapFieldsArr[i] + ":";
 					str += "</td>";
 					str += "<td>";
 					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 

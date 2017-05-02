@@ -1770,18 +1770,18 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	//  - OK, CANCEL buttons at top right
 	//	- also upload download buttons
 
-	//	var fieldsArr = ["Number of Rows",
-	//					 "Number of Columns",
-	//					 "Cell Bit-field Size",
-	//					 "Min-value Allowed",
-	//					 "Max-value Allowed",
-	//					 "Max-value Allowed",
-	//					 "Display Aspect H:W",
-	//					 "Min-value Cell Color",
-	//					 "Mid-value Cell Color",
-	//					 "Max-value Cell Color",
-	//					 "Absolute Min-value Cell Color",
-	//					 "Absolute Max-value Cell Color"];
+	//	var _bitMapFieldsArr = ["Number of Rows",
+	//							"Number of Columns",
+	//							"Cell Bit-field Size",
+	//							"Min-value Allowed",
+	//							"Max-value Allowed",
+	//							"Value step-size Allowed",
+	//							"Display Aspect H:W",
+	//							"Min-value Cell Color",
+	//							"Mid-value Cell Color",
+	//							"Max-value Cell Color",
+	//							"Absolute Min-value Cell Color",
+	//							"Absolute Max-value Cell Color"];
 	
 	var rows = 2; //bitMapParams[0];
 	var cols = 8;
@@ -1792,6 +1792,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	var maxValue = 8;//bitMapParams[4] == "DEFAULT" || bitMapParams[4] == ""?bitMask:(bitMapParams[4]|0);
 	if(maxValue < minValue)
 		maxValue = bitMask;
+	var stepValue = 2;//bitMapParams[5] == "DEFAULT" || bitMapParams[5] == ""?1:(bitMapParams[5]|0);
 				
 	var hdrX = padding; 
 	var hdrY = padding;
@@ -1807,7 +1808,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	var cellH = bmpH/rows;
 	
 	//optimize aspect ratio for viewing window
-	var localOptimizeAspectRatio = function()
+	function localOptimizeAspectRatio()
 	{
 		var cellSkew = (cellW>cellH)?cellW/cellH:cellH/cellW;
 		var MAX_SKEW = 3;
@@ -1847,10 +1848,10 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		bmpX = padding + (popSz.w-bmpW)/2; 
 		bmpY = bmpY + (popSz.h-bmpY-bmpH)/2;	
 		hdrY = bmpY - padding - hdrH;
-	};	localOptimizeAspectRatio();
+	}	localOptimizeAspectRatio();
 			
 	//create header
-	var localCreateHeader = function()
+	function localCreateHeader()
 	{
 		var hdr = document.createElement("div");
 		hdr.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-header");
@@ -1860,15 +1861,27 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		str += "<div style='float:left;'>";
 		str += fieldName;
 		str += "</div>";
+
+		str += "<div style='float:left;'>";
+		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
+		str += "</div>";
+		
 		str += "<div style='float:right;'>";
 		str += "<a id='" + 
 				ConfigurationAPI._POP_UP_DIALOG_ID + 
 				"-cancel' href='#'>Cancel</a>";
 		str += "</div>";
+		
 		str += "<div id='clearDiv'></div>";
+		
+
 		str += "<div style='float:left;'>";
-		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
+		str += "Left-Click Value:";
+		str += "<input type='range' min='" + minValue + 
+				"' max='" + maxValue + "' value='" + minValue + 
+				"' step='" + stepValue + "' />";
 		str += "</div>";
+		
 		
 //		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
 //		str += "<td colspan=2 align='left'>";
@@ -1900,8 +1913,14 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		hdr.style.width = hdrW + "px";
 		hdr.style.height = hdrH + "px";
 		
+
+		function localUpdateScroll(newValue)
+		{
+			document.getElementById("range").innerHTML=newValue;
+		}
+		
 		el.appendChild(hdr);		
-	}; localCreateHeader();
+	} localCreateHeader();
 	
 	//done with header
 	
