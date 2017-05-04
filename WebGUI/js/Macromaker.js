@@ -1125,11 +1125,12 @@
 				CMDHISTDIVINDEX++;
 			}
 			else
-				console.log("ERROR! Command type "+commandType+" not found");
+				Debug.log("ERROR! Command type "+commandType+" not found", Debug.HIGH_PRIORITY);
 
-			contentEl.innerHTML = finalOutPut;
-			contentEl.scrollTop = contentEl.scrollHeight;
 		}
+
+		contentEl.innerHTML = finalOutPut;
+		contentEl.scrollTop = contentEl.scrollHeight;
     }
     
     function histCmdWriteDivOnclick(addressStr, dataStr, addressFormatStr, dataFormatStr)
