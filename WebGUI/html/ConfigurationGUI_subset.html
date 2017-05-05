@@ -102,15 +102,15 @@
 			);
 			
 			//extract get parameters
-			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
-			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
+			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
 			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-			//		<filterFieldList> 	= CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+			//		<filterFieldList> 	= ;-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
 			
-			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");			
-			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList");			
-			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");			
-			_filterFieldList 	= DesktopContent.getParameter(0,"filterFieldList");
+			_subsetBasePath		= "FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
+			_groupingFieldList 	= "FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
+			_editableFieldList	= "";//DesktopContent.getParameter(0,"editableFieldList");			
+			_filterFieldList 	= "FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"filterFieldList");
 			
 			if(!_subsetBasePath)
 			{

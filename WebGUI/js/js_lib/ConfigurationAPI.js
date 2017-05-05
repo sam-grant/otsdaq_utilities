@@ -80,8 +80,8 @@ ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
 //
-// <filterList> is a CSV list of tree paths relative to <subsetBasePath> 
-//	 and their required value.
+// <filterList> is a ;=separated list of tree paths relative to <subsetBasePath> 
+//	 and their required value (CSV for multiple values).
 //		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
 //
 // <modifiedTables> is an array of Table objects (as returned from 
@@ -464,7 +464,9 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 	el.style.display = "none";
 	
 	var gh = 50;
-	ConfigurationAPI.setPopUpPosition(el,380 /*w*/,330-gh*2 /*h*/);
+	var w = 380;
+	var h = 330;
+	ConfigurationAPI.setPopUpPosition(el,w /*w*/,h-gh*2 /*h*/);
 
 	//set position and size
 //	var w = 380;
