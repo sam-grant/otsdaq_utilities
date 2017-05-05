@@ -68,6 +68,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+//	ConfigurationAPI.getOneBitPngData(r,g,b,a)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
@@ -79,8 +80,8 @@ ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
 //
-// <filterList> is a CSV list of tree paths relative to <subsetBasePath> 
-//	 and their required value.
+// <filterList> is a ;=separated list of tree paths relative to <subsetBasePath> 
+//	 and their required value (CSV for multiple values).
 //		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
 //
 // <modifiedTables> is an array of Table objects (as returned from 
@@ -463,7 +464,9 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 	el.style.display = "none";
 	
 	var gh = 50;
-	ConfigurationAPI.setPopUpPosition(el,380 /*w*/,330-gh*2 /*h*/);
+	var w = 380;
+	var h = 330;
+	ConfigurationAPI.setPopUpPosition(el,w /*w*/,h-gh*2 /*h*/);
 
 	//set position and size
 //	var w = 380;
@@ -1759,6 +1762,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
 	}
 	el.style.display = "none";
+	el.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmapDialog");
 
 	var padding = 10;
 	var popSz = ConfigurationAPI.setPopUpPosition(el,undefined,undefined,padding,undefined,30 /*margin*/);
@@ -1797,7 +1801,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	var hdrX = padding; 
 	var hdrY = padding;
 	var hdrW = popSz.w;
-	var hdrH = 50;
+	var hdrH = 150;
 
 	var bmpX = padding; 
 	var bmpY = hdrY+hdrH+padding;	
@@ -1877,11 +1881,33 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 
 		str += "<div style='float:left;'>";
 		str += "Left-Click Value:";
-		str += "<input type='range' min='" + minValue + 
+		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
 				"' max='" + maxValue + "' value='" + minValue + 
-				"' step='" + stepValue + "' />";
+				"' step='" + stepValue + 
+				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(0)' />";
+		str += "<input class='bitmap-textInput' type='text' value='" + minValue + 
+				"' />";
+		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
+				" draggable='false' style='" +	//draggable for chrome
+				"width:40px; height:40px;" +
+				"'/>";
 		str += "</div>";
 		
+		str += "<div id='clearDiv'></div>";
+
+		str += "<div style='float:left;'>";
+		str += "Left-Click Value:";
+		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
+				"' max='" + maxValue + "' value='" + maxValue + 
+				"' step='" + stepValue + 
+				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(1)' />";
+		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + 
+				"' />";
+		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
+				" draggable='false' style='" +	//draggable for chrome
+				"width:40px; height:40px;" +
+				"'/>";
+		str += "</div>";
 		
 //		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
 //		str += "<td colspan=2 align='left'>";
@@ -1913,13 +1939,21 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		hdr.style.width = hdrW + "px";
 		hdr.style.height = hdrH + "px";
 		
-
-		function localUpdateScroll(newValue)
+		var scrollEls = hdr.getElementsByClassName("bitmap-scrollbar");	
+		var textInputEls = hdr.getElementsByClassName("bitmap-textInput");	
+		var colorSampleEls = hdr.getElementsByClassName("bitmap-colorSample");
+		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
 		{
-			document.getElementById("range").innerHTML=newValue;
-		}
+			textInputEls[i].value = scrollEls[i].value;
+			colorSampleEls[i].src = ConfigurationAPI.getOneBitPngData(0,0,
+					((scrollEls[i].value|0)*100)%255,255);
+		}; 
 		
-		el.appendChild(hdr);		
+		el.appendChild(hdr);
+
+		ConfigurationAPI.bitMapDialog.localUpdateScroll(0);
+		ConfigurationAPI.bitMapDialog.localUpdateScroll(1);
+		
 	} localCreateHeader();
 	
 	//done with header
@@ -1952,12 +1986,14 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	bmp.style.top = bmpY + "px";
 	bmp.style.width = bmpW + "px";
 	bmp.style.height = bmpH + "px";
+	bmp.draggable = false; //prevent dragging
 	
 	el.appendChild(bmp);
 	document.body.appendChild(el); //add element to body
 	el.style.display = "block";
 	
 	//create cancel onclick handler
+	function localCreateCancelClickHandler()
 	{
 		document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
 				"-cancel").onclick = function(event) {
@@ -1967,20 +2003,28 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			cancelHandler(); //empty array indicates nothing done
 			return false;
 		}; //end submit onmouseup handler				
-	}
+	} localCreateCancelClickHandler();
 	
 	//create mouseover handler
+	function localCreateMouseHandler()
 	{
-
+		var stopProp = false; //used to stop contextmenu propagation
+		var rLast = -1, cLast = -1; //to stop redoing calculations in mouse over
+		var buttonDown = -1; //0 - left, 1 - middle, 2 - right
+		
 		var bmpOverlay =  document.createElement("img");
 		bmpOverlay.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-overlay");
-		el.appendChild(bmpOverlay);
+		el.appendChild(bmpOverlay);		
 		
 		el.onmousemove = function(event) {
 			var x = event.pageX - popSz.x - bmpX;
 			var y = event.pageY - popSz.y - bmpY;
 			var r = (y/cellH)|0;
 			var c = (x/cellW)|0;
+			if(rLast == r && cLast == c)
+				return; //already done for this cell, so prevent excessive work 
+			rLast = r; cLast = c;
+				
 			if(x < 0 || y < 0 || r >= rows || c >= cols)
 			{
 				//mouse off bitmap
@@ -1988,13 +2032,13 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				return;				
 			}
 			Debug.log("x,y " + x + "," + y);
-			Debug.log("r,c " + r + "," + c);
+			Debug.log("r,c " + r + "," + c);			
 			
-			//have mouse over bitmap
-			Debug.log("r,g,b " + bmpData.data[r*cols+c+1] + "," + 
-					bmpData.data[r*cols+c+2] + "," + bmpData.data[r*cols+c+3]);
-			
+			//have mouse over bitmap			
 			{
+				Debug.log("r,g,b " + bmpData.data[r*cols+c+1] + "," + 
+						bmpData.data[r*cols+c+2] + "," + bmpData.data[r*cols+c+3]);
+				
 				var canvas=document.createElement("canvas");
 				canvas.width = 1;
 				canvas.height = 1;
@@ -2014,10 +2058,78 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				bmpOverlay.style.width = (cellW) + "px";
 				bmpOverlay.style.height = (cellH) + "px";
 				bmpOverlay.style.display = "block";
+
+				bmpOverlay.draggable = false; //prevent dragging				
 			}	
 			
+			if(buttonDown >= 0)
+			{
+				stopProp = true;			
+				localSetBitMap(r,c); //set bitmap data
+			}
+			
+		} //end mouse move
+		
+		el.onmousedown = function(event) {
+			
+			var x = event.pageX - popSz.x - bmpX;
+			var y = event.pageY - popSz.y - bmpY;
+			var r = (y/cellH)|0;
+			var c = (x/cellW)|0;
+			
+			Debug.log("click which " + event.which);
+			Debug.log("click button " + event.button);
+			buttonDown = event.button;
+			
+			
+			if(x < 0 || y < 0 || r >= rows || c >= cols)
+			{
+				rLast = -1; cLast = -1; //reset for mouse move
+				stopProp = false;
+				return;				
+			}
+			
+			rLast = r; cLast = c;			
+			localSetBitMap(r,c); //set bitmap data
+
+			stopProp = true;
+			event.stopPropagation();
+			
+		} //end mouse down
+
+		el.onmouseup = function(event) {
+			Debug.log("click up ");
+			buttonDown = -1;
+		} //end mouse up
+
+		el.oncontextmenu = function(event) {
+			Debug.log("click stopProp " + stopProp);
+			
+			if(stopProp)
+			{
+				stopProp = false;
+				event.stopPropagation();			
+				return false;
+			}
+		} //end oncontextmenu
+		
+		function localSetBitMap(r,c) {
+			Debug.log("set r,c " + buttonDown + " @ " + r + "," + c );
+			
+			var leftColor = [255,255,255,255];
+			var otherColor = [0,0,0,255];
+			
+			bmpData.data[(r*cols + c)*4 + 0] = buttonDown?otherColor[0]:leftColor[0];
+			bmpData.data[(r*cols + c)*4 + 1] = buttonDown?otherColor[1]:leftColor[1];
+			bmpData.data[(r*cols + c)*4 + 2] = buttonDown?otherColor[2]:leftColor[2];
+			bmpData.data[(r*cols + c)*4 + 3] = buttonDown?otherColor[3]:leftColor[3];
+			
+			ctx.putImageData(bmpData,0,0);
+			bmp.src = canvas.toDataURL();
 		}
-	}
+		
+	} localCreateMouseHandler();
+		
 }
 	
 
@@ -2101,8 +2213,27 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin)
 }
 
 
+//=====================================================================================
+//setPopUpPosition ~~
+//	centers element based on width and height constraint
+//	
+//	Note: assumes a padding and border size if not specified
+//  Note: if w,h not specified then fills screen (minus margin)
+ConfigurationAPI.getOneBitPngData = function(r,g,b,a)
+{
+	var canvas = document.createElement("canvas");
+	canvas.width = 1;
+	canvas.height = 1;
+	var ctx = canvas.getContext("2d");		
 
-
+	var bmpOverlayData = ctx.createImageData(1,1);
+	bmpOverlayData.data[0]=r;
+	bmpOverlayData.data[1]=g;
+	bmpOverlayData.data[2]=b;
+	bmpOverlayData.data[3]=a;
+	ctx.putImageData(bmpOverlayData,0,0);
+	return canvas.toDataURL();
+}
 
 
 
