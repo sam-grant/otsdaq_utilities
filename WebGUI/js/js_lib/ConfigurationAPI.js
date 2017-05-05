@@ -48,7 +48,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" function list: 
 //	ConfigurationAPI.getDateString(date)
-// 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler)
+// 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldValuesForRecord(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
