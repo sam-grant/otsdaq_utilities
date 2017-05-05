@@ -87,14 +87,33 @@
 		
 		/* bitmap CSS */
 		
-		#ConfigurationAPI-popUpDialog-bitmap, #ConfigurationAPI-popUpDialog-bitmap-overlay {
-			image-rendering: optimizeSpeed;             /* NO SMOOTHING, GIVE ME SPEED    */
-			image-rendering: -moz-crisp-edges;          /* Firefox                        */
-			image-rendering: pixelated; 				/* Chrome (and eventually Safari) */
-			image-rendering: optimize-contrast;         /* CSS3 Proposed                  */
-			cursor: pointer;
+		.ConfigurationAPI-popUpDialog-bitmapDialog div {
+			outline: 				none; /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* prevent selection*/
+			-moz-user-select: 		none;
+			user-select:			none;
 		}
 		
+		#ConfigurationAPI-popUpDialog-bitmap, 
+		#ConfigurationAPI-popUpDialog-bitmap-overlay,
+		.bitmap-colorSample {
+			image-rendering: 		optimizeSpeed;             /* NO SMOOTHING, GIVE ME SPEED    */
+			image-rendering:		-moz-crisp-edges;          /* Firefox                        */
+			image-rendering: 		pixelated; 				/* Chrome (and eventually Safari) */
+			image-rendering: 		optimize-contrast;         /* CSS3 Proposed                  */	
+			
+			border:					0;
+			outline: 				none; /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* prevent selection*/
+			-moz-user-select: 		none;
+			user-select:			none;
+			/*pointer-events: 		none;  prevent drag by disabling ALL pointer events*/	
+		}
+
+		#ConfigurationAPI-popUpDialog-bitmap, 
+		#ConfigurationAPI-popUpDialog-bitmap-overlay {
+			cursor: pointer; 
+		}
 		
 		
 		
