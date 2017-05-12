@@ -113,8 +113,31 @@
 		#ConfigurationAPI-popUpDialog-bitmap, 
 		#ConfigurationAPI-popUpDialog-bitmap-overlay {
 			cursor: pointer; 
+			z-index:1;
 		}
 		
+		#ConfigurationAPI-popUpDialog-bitmap-grid {
+			cursor: pointer;
+		}
+		
+		.ConfigurationAPI-popUpDialog-bitmap-grid-box {
+			border: 1px solid black;
+			position: absolute;	
+			z-index:2;
+		}
+
+		.ConfigurationAPI-popUpDialog-bitmap-grid-row-dark,
+		.ConfigurationAPI-popUpDialog-bitmap-grid-col-dark {			
+			background-color: black; /* same as dialog */
+			position: absolute;
+			z-index:3;
+		}
+		.ConfigurationAPI-popUpDialog-bitmap-grid-row,
+		.ConfigurationAPI-popUpDialog-bitmap-grid-col {			
+			background-color: #efeaea; /* same as dialog */
+			position: absolute;
+			z-index:4; 
+		}
 		
 		
 		

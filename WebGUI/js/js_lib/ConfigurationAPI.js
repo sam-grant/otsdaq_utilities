@@ -1748,9 +1748,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 //	<bitMapParams> is an array of size 6:
 //		rows,cols,cellFieldSize,minColor,midColor,maxColor
 ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,okHandler,cancelHandler)
-{
-	var bmpData = this.bmpData;
-	
+{	
 	Debug.log("ConfigurationAPI bitMapDialog");	
 
 	var str = "";
@@ -1765,7 +1763,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	el.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmapDialog");
 
 	var padding = 10;
-	var popSz = ConfigurationAPI.setPopUpPosition(el,undefined,undefined,padding,undefined,30 /*margin*/);
+	var popSz;	
+	
 		
 	//create bit map dialog
 	// 	- header at top with field name and parameters
@@ -1787,211 +1786,88 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	//							"Absolute Min-value Cell Color",
 	//							"Absolute Max-value Cell Color"];
 	
+	//	Other fields = 
+	//		"Display in Rows in ascending order"
+	//		"Snake Columns"
+	
+
+	var forcedAspectH = 100;
+	var forcedAspectW = 150;
+	var doDisplayRowsAscending = true;
+	var doSnakeColumns = true;
 	var rows = 2; //bitMapParams[0];
 	var cols = 8;
 	var bitFieldSize = 4;//bitMapParams[2];
+	
+	var minValueColor = "red";
+	var midValueColor = "#ffff00";
+	var maxValueColor = "green";
+	var ceilValueColor = "black";
+	var floorValueColor = "white";
+	
+	//convert to arrays
+	minValueColor = DesktopContent.getColorAsRGBA(minValueColor).split("(")[1].split(")")[0].split(",");
+	midValueColor = DesktopContent.getColorAsRGBA(midValueColor).split("(")[1].split(")")[0].split(",");
+	maxValueColor = DesktopContent.getColorAsRGBA(maxValueColor).split("(")[1].split(")")[0].split(",");
+	ceilValueColor = DesktopContent.getColorAsRGBA(ceilValueColor).split("(")[1].split(")")[0].split(",");
+	floorValueColor = DesktopContent.getColorAsRGBA(floorValueColor).split("(")[1].split(")")[0].split(",");
+	
 	var bitMask = (1<<bitFieldSize) - 1;
 		
 	var minValue = 4;//bitMapParams[3] == "DEFAULT" || bitMapParams[3] == ""?0:(bitMapParams[3]|0);
 	var maxValue = 8;//bitMapParams[4] == "DEFAULT" || bitMapParams[4] == ""?bitMask:(bitMapParams[4]|0);
 	if(maxValue < minValue)
-		maxValue = bitMask;
+		maxValue = bitMask;	
+	var midValue = (maxValue - minValue)/2; //used for color calcs
 	var stepValue = 2;//bitMapParams[5] == "DEFAULT" || bitMapParams[5] == ""?1:(bitMapParams[5]|0);
 				
-	var hdrX = padding; 
-	var hdrY = padding;
-	var hdrW = popSz.w;
-	var hdrH = 150;
-
-	var bmpX = padding; 
-	var bmpY = hdrY+hdrH+padding;	
-	var bmpW = popSz.w;
-	var bmpH = popSz.h - hdrH - padding;
-
-	var cellW = bmpW/cols;
-	var cellH = bmpH/rows;
-	
-	//optimize aspect ratio for viewing window
-	function localOptimizeAspectRatio()
+	if(!localValidateInputs())
 	{
-		var cellSkew = (cellW>cellH)?cellW/cellH:cellH/cellW;
-		var MAX_SKEW = 3;
-
-		var forcedAspectH = 100;
-		var forcedAspectW = 150;
-		
-		if(forcedAspectH !== undefined)
-		{
-			var offAspectH = forcedAspectH/cellH;
-			var offAspectW = forcedAspectW/cellW;
-			
-			Debug.log("Adjusting skew factor = " + forcedAspectH + "-" + forcedAspectW);
-			
-			if(offAspectH < offAspectW) //height is too big
-				bmpH = bmpW/cols*forcedAspectH/forcedAspectW*rows;
-			else //width is too big
-				bmpW = bmpH/rows*forcedAspectW/forcedAspectH*cols;
-		}
-		else if(cellSkew > MAX_SKEW) //re-adjust bitmap
-		{
-			var adj = cellSkew/MAX_SKEW;
-			//to much skew in cell shape.. so let's adjust
-			Debug.log("Adjusting skew factor = " + adj);
-			if(cellW > cellH)
-			{
-				bmpW /= adj;
-			}
-			else
-				bmpH /= adj;
-		}
-		//recalculate new cells
-		cellW = bmpW/cols;
-		cellH = bmpH/rows;
-
-		//center bitmap
-		bmpX = padding + (popSz.w-bmpW)/2; 
-		bmpY = bmpY + (popSz.h-bmpY-bmpH)/2;	
-		hdrY = bmpY - padding - hdrH;
-	}	localOptimizeAspectRatio();
-			
-	//create header
-	function localCreateHeader()
-	{
-		var hdr = document.createElement("div");
-		hdr.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-header");
-
-		var str = "";
-		
-		str += "<div style='float:left;'>";
-		str += fieldName;
-		str += "</div>";
-
-		str += "<div style='float:left;'>";
-		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
-		str += "</div>";
-		
-		str += "<div style='float:right;'>";
-		str += "<a id='" + 
-				ConfigurationAPI._POP_UP_DIALOG_ID + 
-				"-cancel' href='#'>Cancel</a>";
-		str += "</div>";
-		
-		str += "<div id='clearDiv'></div>";
-		
-
-		str += "<div style='float:left;'>";
-		str += "Left-Click Value:";
-		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
-				"' max='" + maxValue + "' value='" + minValue + 
-				"' step='" + stepValue + 
-				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(0)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + minValue + 
-				"' />";
-		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
-				" draggable='false' style='" +	//draggable for chrome
-				"width:40px; height:40px;" +
-				"'/>";
-		str += "</div>";
-		
-		str += "<div id='clearDiv'></div>";
-
-		str += "<div style='float:left;'>";
-		str += "Left-Click Value:";
-		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
-				"' max='" + maxValue + "' value='" + maxValue + 
-				"' step='" + stepValue + 
-				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(1)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + 
-				"' />";
-		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
-				" draggable='false' style='" +	//draggable for chrome
-				"width:40px; height:40px;" +
-				"'/>";
-		str += "</div>";
-		
-//		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
-//		str += "<td colspan=2 align='left'>";
-//		str += fieldName;
-//		str += "</td>";
-//		
-//		str += "<td align='right'>";
-//		str += "</td>";
-//		
-//		str += "</tr>";
-//		str += "<tr>";
-//		str += "<td align='right'>";
-//		str += "Number of [Rows,Cols]:";
-//		str += "</td>";
-//		str += "<td align='left'>";
-//		str += "[" + rows + "," + cols + "]";
-//		str += "</td>";
-//		str += "<td>";
-//		str += "</td>";
-//		str += "</tr>";
-//		str += "</table>";
-						
-		
-		hdr.innerHTML = str;
-		hdr.style.overflowY = "auto";
-		hdr.style.position = "absolute";
-		hdr.style.left = hdrX + "px";
-		hdr.style.top = hdrY + "px";
-		hdr.style.width = hdrW + "px";
-		hdr.style.height = hdrH + "px";
-		
-		var scrollEls = hdr.getElementsByClassName("bitmap-scrollbar");	
-		var textInputEls = hdr.getElementsByClassName("bitmap-textInput");	
-		var colorSampleEls = hdr.getElementsByClassName("bitmap-colorSample");
-		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
-		{
-			textInputEls[i].value = scrollEls[i].value;
-			colorSampleEls[i].src = ConfigurationAPI.getOneBitPngData(0,0,
-					((scrollEls[i].value|0)*100)%255,255);
-		}; 
-		
-		el.appendChild(hdr);
-
-		ConfigurationAPI.bitMapDialog.localUpdateScroll(0);
-		ConfigurationAPI.bitMapDialog.localUpdateScroll(1);
-		
-	} localCreateHeader();
+		Debug.log("Input parameters to the Bitmap Dialog are invalid. Aborting.", Debug.HIGH_PRIORITY);
+		return cancelHandler();
+	}
 	
-	//done with header
+	//give 5 pixels extra for each digit necessary to label rows
+	var axisPaddingExtra = 0;
+	function localCalcExtraAxisPadding() {
+		var lrows = rows;
+		while((lrows /= 10) > 1) axisPaddingExtra += 8; 
+	}			
+	var axisPadding = 40 + axisPaddingExtra;
 	
-	var bmp =  document.createElement("img");
-	bmp.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap");
+	var hdr; //header element
+	var hdrX; 
+	var hdrY;
+	var hdrW;
+	var hdrH;
 	
-	{
-		var canvas=document.createElement("canvas");
-		canvas.width = cols;
-		canvas.height = rows;
-		var ctx = canvas.getContext("2d");		
+	var bmp;  //bitmap element
+	var bmpGrid; //bitmap grid element
+	var bmpCanvas, bmpContext; //used to generate 2D bitmap image src
+	var bmpData; //bitmap data shown and returned. 2D array
+	var bmpDataImage; //visual interpretation of bitmap data
+	var bmpX; 
+	var bmpY;	
+	var bmpW;
+	var bmpH;
+
+	var cellW;
+	var cellH;
+
+	localInitBitmapData(); //load bitmap data from input string
+	
+	localCreateHeader(); //create header element content	
+	localCreateBitmap(); //create bitmap element and data
+	
+	localPaint();
+	window.addEventListener("resize",localPaint);
 		
-		if(bmpData) delete bmpData;
-		bmpData = ctx.createImageData(cols,rows);
-		for(var i=0;i<rows;++i)
-			for(var j=0;j<cols;++j)
-			{
-				bmpData.data[(i*cols + j)*4+0]=(i*100)%255;
-				bmpData.data[(i*cols + j)*4+1]=(j*100)%255;
-				bmpData.data[(i*cols + j)*4+2]=0;
-				bmpData.data[(i*cols + j)*4+3]=255;
-			}
-		ctx.putImageData(bmpData,0,0);
-		bmp.src = canvas.toDataURL();
-	}	
-	
-	bmp.style.position = "absolute";
-	bmp.style.left = bmpX + "px";
-	bmp.style.top = bmpY + "px";
-	bmp.style.width = bmpW + "px";
-	bmp.style.height = bmpH + "px";
-	bmp.draggable = false; //prevent dragging
-	
-	el.appendChild(bmp);
 	document.body.appendChild(el); //add element to body
 	el.style.display = "block";
 	
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCreateCancelClickHandler ~~
 	//create cancel onclick handler
 	function localCreateCancelClickHandler()
 	{
@@ -1999,12 +1875,15 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				"-cancel").onclick = function(event) {
 			Debug.log("Cancel click");
 			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
-			if(el) el.parentNode.removeChild(el); //close popup											
+			if(el) el.parentNode.removeChild(el); //close popup
+			window.removeEventListener("resize",localpaint); //remove paint listener
 			cancelHandler(); //empty array indicates nothing done
 			return false;
 		}; //end submit onmouseup handler				
 	} localCreateCancelClickHandler();
-	
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCreateMouseHandler ~~
 	//create mouseover handler
 	function localCreateMouseHandler()
 	{
@@ -2014,6 +1893,9 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		
 		var bmpOverlay =  document.createElement("img");
 		bmpOverlay.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-overlay");
+		bmpOverlay.style.display = "none";
+		bmpOverlay.style.position = "absolute";
+		
 		el.appendChild(bmpOverlay);		
 		
 		el.onmousemove = function(event) {
@@ -2036,8 +1918,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			
 			//have mouse over bitmap			
 			{
-				Debug.log("r,g,b " + bmpData.data[r*cols+c+1] + "," + 
-						bmpData.data[r*cols+c+2] + "," + bmpData.data[r*cols+c+3]);
+				Debug.log("r,g,b " + bmpDataImage.data[r*cols+c+1] + "," + 
+						bmpDataImage.data[r*cols+c+2] + "," + bmpDataImage.data[r*cols+c+3]);
 				
 				var canvas=document.createElement("canvas");
 				canvas.width = 1;
@@ -2052,7 +1934,6 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				ctx.putImageData(bmpOverlayData,0,0);
 				bmpOverlay.src = canvas.toDataURL();
 				
-				bmpOverlay.style.position = "absolute";
 				bmpOverlay.style.left = (bmpX + c*cellW) + "px";
 				bmpOverlay.style.top = (bmpY + r*cellH) + "px";
 				bmpOverlay.style.width = (cellW) + "px";
@@ -2119,17 +2000,426 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			var leftColor = [255,255,255,255];
 			var otherColor = [0,0,0,255];
 			
-			bmpData.data[(r*cols + c)*4 + 0] = buttonDown?otherColor[0]:leftColor[0];
-			bmpData.data[(r*cols + c)*4 + 1] = buttonDown?otherColor[1]:leftColor[1];
-			bmpData.data[(r*cols + c)*4 + 2] = buttonDown?otherColor[2]:leftColor[2];
-			bmpData.data[(r*cols + c)*4 + 3] = buttonDown?otherColor[3]:leftColor[3];
+			bmpDataImage.data[(r*cols + c)*4 + 0] = buttonDown?otherColor[0]:leftColor[0];
+			bmpDataImage.data[(r*cols + c)*4 + 1] = buttonDown?otherColor[1]:leftColor[1];
+			bmpDataImage.data[(r*cols + c)*4 + 2] = buttonDown?otherColor[2]:leftColor[2];
+			bmpDataImage.data[(r*cols + c)*4 + 3] = buttonDown?otherColor[3]:leftColor[3];
 			
-			ctx.putImageData(bmpData,0,0);
-			bmp.src = canvas.toDataURL();
+			bmpContext.putImageData(bmpDataImage,0,0);
+			bmp.src = bmpCanvas.toDataURL();
 		}
 		
 	} localCreateMouseHandler();
 		
+	
+	//localValidateInputs ~~
+	//	returns false if inputs are invalid
+	//	else true.
+	function localValidateInputs() {
+		if(minValue < 0 || minValue > bitMask)
+		{
+			Debug.log("Illegal input parameters, minValue of " + minValue + " is illegal.",Debug.HIGH_PRIORITY);
+			return false;
+		}
+		if(maxValue < 0 || maxValue > bitMask)
+		{
+			Debug.log("Illegal input parameters, maxValue of " + maxValue + " is illegal.",Debug.HIGH_PRIORITY);
+			return false;
+		}
+		if(minValue > maxValue)
+		{
+			Debug.log("Illegal input parameters, minValue > maxValue is illegal.",Debug.HIGH_PRIORITY);
+			return false;
+		}
+		
+		return true;
+	}	
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localInitBitmapData ~~
+	//	load bitmap data from input string <initBitMapValue>
+	//	treat <initBitMapValue> as JSON string
+	function localInitBitmapData()
+	{
+		try
+		{
+			bmpData = JSON.parse("[0,0}");
+		}
+		catch(err)
+		{
+			Debug.log("The input initial value of the bitmap is illegal JSON format. " +					
+					"See error below: \n\n" + err,Debug.HIGH_PRIORITY);
+			Debug.log("Defaulting to initial bitmap with min-value fill.",Debug.HIGH_PRIORITY);
+			
+			//min-value fill
+			bmpData = [];
+			for(var r=0;r<rows;++r)
+			{
+				bmpData.push([]); //create empty row array
+				for(var c=0;c<cols;++c)
+					bmpData[r].push(minValue); //push min-value entry in column
+			}
+			return;
+		}
+	}
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localConvertValueToRGBA ~~
+	//	create bitmap
+	function localConvertValueToRGBA(val)
+	{
+		if(val >= maxValue)			
+			return [ceilValueColor[0],
+					ceilValueColor[1],
+					ceilValueColor[2],					  
+					  255]; //always max alpha
+
+		if(val <= minValue)			
+			return [floorValueColor[0],
+					floorValueColor[1],
+					floorValueColor[2],					  
+					  255]; //always max alpha
+
+		if(val == midValue)	//avoid dividing by 0 in blend	
+			return [midValueColor[0],
+					midValueColor[1],
+					midValueColor[2],					  
+					  255]; //always max alpha
+
+		//blend lower half
+		var t;
+		if(val <= midValue)		
+		{
+			t = (val - minValue)/(midValue - minValue); 
+			return [minValueColor[0]*(1-t) + t*midValueColor[0],
+					minValueColor[1]*(1-t) + t*midValueColor[1],
+					minValueColor[2]*(1-t) + t*midValueColor[2],					  
+					  255]; //always max alpha
+		}
+		//blend upper half
+		//if(val >= midValue)		
+		{
+			t = (val - midValue)/(maxValue - midValue); 
+			return [midValueColor[0]*(1-t) + t*maxValueColor[0],
+					midValueColor[1]*(1-t) + t*maxValueColor[1],
+					midValueColor[2]*(1-t) + t*maxValueColor[2],					  
+					  255]; //always max alpha
+		}
+	}
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCreateBitmap ~~
+	//	create bitmap
+	function localCreateBitmap()
+	{
+		bmp =  document.createElement("img");
+		bmp.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap");
+		
+		bmpGrid = document.createElement("div"); //div of row and col grid divs
+		bmpGrid.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid");
+		
+		var tmpEl;
+		 
+		{			
+			bmpCanvas=document.createElement("canvas");
+			bmpCanvas.width = cols;
+			bmpCanvas.height = rows;
+			bmpContext = bmpCanvas.getContext("2d");		
+
+			if(bmpDataImage) delete bmpDataImage;
+			bmpDataImage = bmpContext.createImageData(cols,rows);
+			
+			var color;		
+
+			//add outside box div as child 0
+			tmpEl = document.createElement("div");
+			tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid-box");
+			bmpGrid.appendChild(tmpEl);
+			
+			for(var i=0;i<rows;++i)
+			{
+				if(i < rows - 1) //add internal row divs to start
+				{
+					tmpEl = document.createElement("div");
+					tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid-row-dark");
+					bmpGrid.appendChild(tmpEl);
+					tmpEl = document.createElement("div");
+					tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid-row");
+					bmpGrid.appendChild(tmpEl);
+				}
+				
+				for(var j=0;j<cols;++j)
+				{
+					if(i == rows-1 & j < cols-1) //add internal col divs at end
+					{
+						tmpEl = document.createElement("div");
+						tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid-col-dark");
+						bmpGrid.appendChild(tmpEl);
+						tmpEl = document.createElement("div");
+						tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid-col");
+						bmpGrid.appendChild(tmpEl);
+					}
+						
+					color = localConvertValueToRGBA(bmpData[i][j]);
+					bmpDataImage.data[(i*cols + j)*4+0]=color[0];
+					bmpDataImage.data[(i*cols + j)*4+1]=color[1];
+					bmpDataImage.data[(i*cols + j)*4+2]=color[2];
+					bmpDataImage.data[(i*cols + j)*4+3]=color[3];
+				}
+			}
+			
+			bmpContext.putImageData(bmpDataImage,0,0);
+			bmp.src = bmpCanvas.toDataURL();
+		}	
+
+		bmp.style.position = "absolute";		
+		bmp.draggable = false; //prevent dragging
+		bmpGrid.style.position = "absolute";		
+		
+		el.appendChild(bmp);
+		el.appendChild(bmpGrid);
+	}
+	
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCreateHeader ~~
+	//	create header
+	function localCreateHeader()
+	{
+		hdr = document.createElement("div");
+		hdr.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-header");
+
+		var str = "";
+
+		str += "<div style='float:left;'>";
+		str += fieldName;
+		str += "</div>";
+
+		str += "<div style='float:left;'>";
+		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
+		str += "</div>";
+
+		str += "<div style='float:right;'>";
+		str += "<a id='" + 
+				ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-cancel' href='#'>Cancel</a>";
+		str += "</div>";
+
+		str += "<div id='clearDiv'></div>";
+
+
+		str += "<div style='float:left;'>";
+		str += "Left-Click Value:";
+		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
+				"' max='" + maxValue + "' value='" + minValue + 
+				"' step='" + stepValue + 
+				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(0)' />";
+		str += "<input class='bitmap-textInput' type='text' value='" + minValue + 
+				"' />";
+		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
+				" draggable='false' style='" +	//draggable for chrome
+				"width:40px; height:40px;" +
+				"'/>";
+		str += "</div>";
+
+		str += "<div id='clearDiv'></div>";
+
+		str += "<div style='float:left;'>";
+		str += "Left-Click Value:";
+		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
+				"' max='" + maxValue + "' value='" + maxValue + 
+				"' step='" + stepValue + 
+				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(1)' />";
+		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + 
+				"' />";
+		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
+				" draggable='false' style='" +	//draggable for chrome
+				"width:40px; height:40px;" +
+				"'/>";
+		str += "</div>";
+
+		//		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
+		//		str += "<td colspan=2 align='left'>";
+		//		str += fieldName;
+		//		str += "</td>";
+		//		
+		//		str += "<td align='right'>";
+		//		str += "</td>";
+		//		
+		//		str += "</tr>";
+		//		str += "<tr>";
+		//		str += "<td align='right'>";
+		//		str += "Number of [Rows,Cols]:";
+		//		str += "</td>";
+		//		str += "<td align='left'>";
+		//		str += "[" + rows + "," + cols + "]";
+		//		str += "</td>";
+		//		str += "<td>";
+		//		str += "</td>";
+		//		str += "</tr>";
+		//		str += "</table>";
+
+
+		hdr.innerHTML = str;
+		hdr.style.overflowY = "auto";
+		hdr.style.position = "absolute";
+
+		var scrollEls = hdr.getElementsByClassName("bitmap-scrollbar");	
+		var textInputEls = hdr.getElementsByClassName("bitmap-textInput");	
+		var colorSampleEls = hdr.getElementsByClassName("bitmap-colorSample");
+		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
+					{
+			textInputEls[i].value = scrollEls[i].value;
+			colorSampleEls[i].src = ConfigurationAPI.getOneBitPngData(0,0,
+					((scrollEls[i].value|0)*100)%255,255);
+					}; 
+
+		el.appendChild(hdr);
+
+		ConfigurationAPI.bitMapDialog.localUpdateScroll(0);
+		ConfigurationAPI.bitMapDialog.localUpdateScroll(1);
+
+	} //end localCreateHeader()
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localPaint ~~
+	//	called every time window is resized
+	function localPaint()
+	{
+		Debug.log("localPaint");
+		
+		popSz = ConfigurationAPI.setPopUpPosition(el,undefined,undefined,padding,undefined,30 /*margin*/);
+		
+		hdrW = popSz.w;
+		axisPadding = 40 + axisPaddingExtra; 
+		hdrX = padding; 
+		hdrY = padding;
+		hdrW = popSz.w;
+		hdrH = 150;
+		bmpX = padding; 
+		bmpY = hdrY+hdrH+padding;	
+		bmpW = popSz.w - 2*axisPadding;
+		bmpH = popSz.h - hdrH - padding - 2*axisPadding;
+
+		cellW = bmpW/cols;
+		cellH = bmpH/rows;
+		
+		localOptimizeAspectRatio();		
+		
+		//place header
+		hdr.style.left = hdrX + "px";
+		hdr.style.top = hdrY + "px";
+		hdr.style.width = hdrW + "px";
+		hdr.style.height = hdrH + "px";
+		
+		//place bitmap
+		bmp.style.left = bmpX + "px";
+		bmp.style.top = bmpY + "px";
+		bmp.style.width = bmpW + "px";
+		bmp.style.height = bmpH + "px";
+
+		//place bitmap grid
+		{
+			var bmpGridThickness = 1;
+			var bmpBorderSize = 1;
+			
+			bmpGrid.style.left = (bmpX-bmpBorderSize) + "px";
+			bmpGrid.style.top = (bmpY-bmpBorderSize) + "px";
+			bmpGrid.style.width = (bmpW) + "px";
+			bmpGrid.style.height = (bmpH) + "px";
+			
+			var bmpGridChildren = bmpGrid.childNodes;
+
+			//outer box
+			bmpGridChildren[0].style.left = 0 + "px";
+			bmpGridChildren[0].style.top = 0 + "px";
+			bmpGridChildren[0].style.width = (bmpW) + "px";
+			bmpGridChildren[0].style.height = (bmpH) + "px";
+			
+			//place rows
+			for(var i=0;i<rows-1;++i)
+			{
+				//dark
+				bmpGridChildren[1+i*2].style.left = bmpBorderSize + "px";
+				bmpGridChildren[1+i*2].style.top = ((i+1)*cellH + bmpBorderSize) + "px";
+				bmpGridChildren[1+i*2].style.width = (bmpW) + "px";
+				bmpGridChildren[1+i*2].style.height = (bmpGridThickness+bmpBorderSize*2) + "px";
+
+				//light
+				bmpGridChildren[1+i*2+1].style.left = 0 + "px";
+				bmpGridChildren[1+i*2+1].style.top = ((i+1)*cellH + bmpBorderSize*2) + "px";
+				bmpGridChildren[1+i*2+1].style.width = (bmpW + bmpBorderSize*2) + "px";
+				bmpGridChildren[1+i*2+1].style.height = (bmpGridThickness) + "px";
+			}
+			
+			//place cols
+			for(var i=0;i<cols-1;++i)
+			{
+				//dark
+				bmpGridChildren[1+(rows-1)*2+i*2].style.top = bmpBorderSize + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2].style.left = ((i+1)*cellW + bmpBorderSize) + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2].style.height = (bmpH) + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2].style.width = (bmpGridThickness+bmpBorderSize*2) + "px";
+
+				//light
+				bmpGridChildren[1+(rows-1)*2+i*2+1].style.top = 0 + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2+1].style.left = ((i+1)*cellW + bmpBorderSize*2) + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2+1].style.height = (bmpH + bmpBorderSize*2) + "px";
+				bmpGridChildren[1+(rows-1)*2+i*2+1].style.width = (bmpGridThickness) + "px";
+			}
+		}
+		
+		
+		
+		
+		
+	
+	} //end localPaint()
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localOptimizeAspectRatio ~~
+	//	loinputs are cellW/cellH, bmpW/bmpH, rows/cols
+	//	
+	//	optimize aspect ratio for viewing window
+	//	hdr and bmp positions are known after this
+	function localOptimizeAspectRatio()
+	{
+		var cellSkew = (cellW>cellH)?cellW/cellH:cellH/cellW;
+		var MAX_SKEW = 3;
+
+
+		if(forcedAspectH !== undefined)
+		{
+			var offAspectH = forcedAspectH/cellH;
+			var offAspectW = forcedAspectW/cellW;
+
+			Debug.log("Adjusting skew factor = " + forcedAspectH + "-" + forcedAspectW);
+
+			if(offAspectH < offAspectW) //height is too big
+				bmpH = bmpW/cols*forcedAspectH/forcedAspectW*rows;
+			else //width is too big
+				bmpW = bmpH/rows*forcedAspectW/forcedAspectH*cols;
+		}
+		else if(cellSkew > MAX_SKEW) //re-adjust bitmap
+		{
+			var adj = cellSkew/MAX_SKEW;
+			//to much skew in cell shape.. so let's adjust
+			Debug.log("Adjusting skew factor = " + adj);
+			if(cellW > cellH)
+			{
+				bmpW /= adj;
+			}
+			else
+				bmpH /= adj;
+		}
+		//recalculate new cells
+		cellW = bmpW/cols;
+		cellH = bmpH/rows;
+
+		//center bitmap
+		bmpX = padding + (popSz.w-bmpW)/2; 
+		bmpY = bmpY + (popSz.h-bmpY-bmpH)/2;	
+		hdrY = bmpY - padding - hdrH;
+	} //end localOptimizeAspectRatio()
 }
 	
 

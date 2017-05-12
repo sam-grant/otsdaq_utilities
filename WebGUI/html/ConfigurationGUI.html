@@ -10902,7 +10902,7 @@
 							var el = document.getElementById("popUpDialog-submitButton");
 							el.onmouseup = function() {
 								document.getElementById("popUpDialog-submitButton").disabled = true;
-								saveModifiedTree(1);								
+								saveConfigAsNewVersion(temporary,backLinkStr,1);//saveModifiedTree(1);								
 							};
 							el.value = "Save Groups with Warnings Ignored";
 							el.disabled = false;
@@ -11150,7 +11150,7 @@
 						_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
 				
 				//handle group handling based on popup options
-				localHandleAffectedGroups(savedVersion);
+				localHandleAffectedGroups(savedVersion, 0);
 				
 				//call normal handler to update main table display
 				saveConfigAsNewVersionHandler(req,backLinkStr);

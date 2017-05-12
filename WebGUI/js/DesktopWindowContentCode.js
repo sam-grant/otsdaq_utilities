@@ -1107,20 +1107,36 @@ DesktopContent.clearPopUpVerification = function(func) {
 }
 
 //=====================================================================================
-//http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
-// except the solution is broken.. unless you add element to page
+//parseColor ~~
 DesktopContent.parseColor = function(colorStr) { 
 	//used to ignore the alpha in the color when returning to user
 
 	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
-	//	var div = document.createElement('div'), m;
-	//    div.style.color = colorStr;
-	//    div.style.display = "none";
-	//    document.body.appendChild(div);
-	//    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
-	//	  document.body.removeChild(div);
 	var m = colorStr.split("(")[1].split(")")[0].split(",");
 	if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
+	else throw new Error("Color "+colorStr+" could not be parsed.");
+}
+
+//=====================================================================================
+//getColorAsRGBA ~~
+//	http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
+// 	except the solution is broken.. unless you add element to page
+DesktopContent.getColorAsRGBA = function(colorStr) { 
+	
+	//in general need to create an element.. 
+	var div = document.createElement('div');
+	var m;
+	
+	div.style.color = colorStr;
+	div.style.display = "none";
+	document.body.appendChild(div);
+	
+	m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
+	
+	document.body.removeChild(div);
+	
+	if(m && m.length == 3) return "rgba("+m[0]+","+m[1]+","+m[2]+",255)";
+	else if(m && m.length == 4) return "rgba("+m[0]+","+m[1]+","+m[2]+","+m[3]+")";
 	else throw new Error("Color "+colorStr+" could not be parsed.");
 }
 
