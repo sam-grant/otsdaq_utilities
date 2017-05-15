@@ -755,6 +755,12 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
 						"", currStateRequestHandler);
+				
+				//update alias list periodically also, since it could change
+				_parameterInitCount = 0;
+				DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
+						"&fsmName=" + _fsmName, "", 
+						initTransitionParameters);	
 			}
 			
 
