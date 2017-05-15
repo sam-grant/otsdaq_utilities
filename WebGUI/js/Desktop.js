@@ -1206,6 +1206,12 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 				{
 					Desktop.desktop.serverConnected = true;
 		        	Desktop.desktop.dashboard.displayConnectionStatus(true);
+		        	
+		        
+		        	_needToLoginMailbox.innerHTML = ""; //reset mailbox		        		
+		        	//re-start timer for checking foreground window changes due to iFrame content code
+		        	window.clearInterval(Desktop.desktop.checkMailboxTimer);
+		        	Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
 				}
 				
 				//check if failed due to cookieCode and go to login prompt
