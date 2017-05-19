@@ -10654,13 +10654,14 @@
 		// online people complain that this doesn't work for big files.
 		// Note: if files are too big, could have server create csv file
 		//	then link to <a href='/WebPath/download.csv' download></a>
+		//	Note: href must be  encodeURI(dataStr) if data not already encoded
 		function downloadTableAsCSV()
 		{
 			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI downloadTableAsCSV ");
 			
 			//create CSV data string from html table
-			var dataStr = "data:text/csv;charset=utf-8\n";
+			var dataStr = "data:text/csv;charset=utf-8,";
 			el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");				
 
@@ -10675,31 +10676,35 @@
 				//have to locate each cell individually
 				for(var r=0;r<numOfRows;++r)
 				{
+					if(r) 
+						dataStr += encodeURI("\n"); //encoded \n
+					
 					for(var c=0;c<numOfCols;++c) //skip row index column
 					{
 						cells = rows[_CONFIG_DATA_COL_OFFSET + c].getElementsByTagName("td");
 						//assume one th column so minus 1
 						if(c)
 							dataStr += ",";
-						dataStr += encodeURIComponent(encodeURIComponent(
-								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim())); //replaces all special characters				
+						dataStr += encodeURIComponent(
+								cells[_CONFIG_DATA_ROW_OFFSET-1 + r].textContent.trim()); //replaces all special characters				
 					}
-					dataStr += "\n";
 				}
 			}
 			else
 			{
 				for(var r=_CONFIG_DATA_ROW_OFFSET;r<rows.length;++r) //skip header rows
 				{
+					if(r - _CONFIG_DATA_ROW_OFFSET) 
+						dataStr += encodeURI("\n"); //encoded \n
+					
 					cells = rows[r].getElementsByTagName("td");
 
 					for(var c=_CONFIG_DATA_COL_OFFSET;c<cells.length;++c) //skip row index column
 					{
-						if(c)
+						if(c - _CONFIG_DATA_COL_OFFSET)
 							dataStr += ",";
-						dataStr += encodeURIComponent(encodeURIComponent(cells[c].textContent.trim())); //replaces all special characters
+						dataStr += encodeURIComponent(cells[c].textContent.trim()); //replaces all special characters
 					}
-					dataStr += "\n";
 				}
 			}
 			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);

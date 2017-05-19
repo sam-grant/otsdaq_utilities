@@ -1807,9 +1807,12 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	//		localCreateBitmap()
 	//		localCreateGridButtons()
 	//		localCreateHeader()
-	//			localUpdateScroll(i)
-	//			localUpdateTextInput(i)
-	//			localUpdateButtonInput(i,dir)
+	//			ConfigurationAPI.bitMapDialog.localUpdateScroll(i)
+	//			ConfigurationAPI.bitMapDialog.localUpdateTextInput(i)
+	//			ConfigurationAPI.bitMapDialog.localUpdateButtonInput(i,dir)
+	//			ConfigurationAPI.bitMapDialog.localDownloadCSV()
+	//			ConfigurationAPI.bitMapDialog.locaPopupUploadCSV()
+	//			ConfigurationAPI.bitMapDialog.locaUploadCSV()
 	//		localPaint()
 	//		localOptimizeAspectRatio()
 
@@ -1974,8 +1977,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			var cursorT = (event.pageX - popSz.x - bmpX);
 			if(cursorT < 0) cursorT = 0;
 			if(cursorT > bmpW) cursorT = bmpW;
-			Debug.log("cursorT " + cursorT);
-			Debug.log((bmpW-cursorT)/bmpW*(-cursorInfo.innerHTML.length*8-20) + cursorT/bmpW*(2));
+			
 			cursorInfo.style.left = (event.pageX - popSz.x + 
 					//(c >= cols/2?-cursorInfo.innerHTML.length*8-20:2)) + 
 					//smooth transition from left-most to right-most info position above cursor
@@ -2270,7 +2272,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localConvertValueToRGBA ~~
-	//	create bitmap
+	//	conver bitfield value to RGBA based on input parameters
 	function localConvertValueToRGBA(val)
 	{
 		if(val >= maxValue)			
@@ -2310,6 +2312,32 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 					midValueColor[2]*(1-t) + t*maxValueColor[2],					  
 					  255]; //always max alpha
 		}
+	}
+	
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCovertFullGridToRowCol ~~
+	//	convert bmpData matrix to a matrix with translated Row,Col pairs
+	function localCovertFullGridToRowCol()
+	{
+		var retArr = [];
+		var convertedRC;
+		for(var r=0;r<rows;++r)
+			for(var c=0;c<cols;++c)
+			{
+				convertedRC = localConvertGridToRowCol(r,c);
+				//if doSnakeColumns, odd columns are considered to be in even column
+				if(doSnakeColumns)
+					convertedRC[1] = (convertedRC[1]/2)|0;
+				//if doSnakeRows, odd rows are considered to be in even row
+				if(doSnakeRows) 
+					convertedRC[0] = (convertedRC[0]/2)|0;
+				
+				if(retArr[convertedRC[0]] === undefined)
+					retArr[convertedRC[0]] = []; //create row for first time
+				retArr[convertedRC[0]][convertedRC[1]] = bmpData[r][c];
+			}
+		return retArr;
 	}
 	
 	//:::::::::::::::::::::::::::::::::::::::::
@@ -2554,7 +2582,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
 				"-bitmap-btnCsv' style='float:left; margin: 0 0 0 10px;' " +			
 				"type='button' value='Upload CSV' " +
-				"onclick='ConfigurationAPI.bitMapDialog.locaUploadCSV()' " +
+				"onclick='ConfigurationAPI.bitMapDialog.locaPopupUploadCSV()' " +
 				"/> ";
 		str += "</div>";
 
@@ -2570,7 +2598,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		//::::::::::
 		//localUpdateScroll ~~
 		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
-					{
+		{
 			Debug.log("localUpdateScroll " + i);
 			
 			clickValues[i] = scrollEls[i].value|0;
@@ -2578,16 +2606,16 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			
 			textInputEls[i].value = clickValues[i];
 			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
-					};  //end localUpdateScroll
+		};  //end localUpdateScroll
 
 		//::::::::::
 		//localUpdateTextInput ~~
-		ConfigurationAPI.bitMapDialog.localUpdateTextInput = function(i,finalChange)		
-					{
+		ConfigurationAPI.bitMapDialog.localUpdateTextInput = function(i,finalChange) 
+		{
 			Debug.log("localUpdateTextInput " + textInputEls[i].value + " " + finalChange);
-			
+
 			clickValues[i] = textInputEls[i].value|0;
-			
+
 			if(finalChange)
 			{
 				if(clickValues[i] < minValue) clickValues[i] = minValue;
@@ -2604,16 +2632,16 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				Debug.log("displaying change");
 			}
 			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
-			
+
 			scrollEls[i].value = clickValues[i];
 			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
-					};  //end localUpdateTextInput
+		};  //end localUpdateTextInput
 
 		//::::::::::
 		//localUpdateButtonInput ~~
 		var mouseDownTimer = 0;
-		ConfigurationAPI.bitMapDialog.localUpdateButtonInput = function(i,dir,mouseUp,delay)		
-					{
+		ConfigurationAPI.bitMapDialog.localUpdateButtonInput = function(i,dir,mouseUp,delay) 
+		{
 			window.clearInterval(mouseDownTimer);
 			if(mouseUp) //mouse up	
 			{				
@@ -2627,22 +2655,157 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				if(delay > 50) delay -= 50;
 				ConfigurationAPI.bitMapDialog.localUpdateButtonInput(i,dir,0,50); //same as this call
 					},delay!==undefined?delay:300);
-			
+
 			Debug.log("localUpdateButtonInput " + textInputEls[i].value + " " + dir);
-			
+
 			clickValues[i] = clickValues[i] + (dir?stepValue:-stepValue);
 			if(clickValues[i] < minValue) clickValues[i] = minValue;
 			if(clickValues[i] > maxValue) clickValues[i] = maxValue;
-			
+
 			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
-			
+
 			textInputEls[i].value = clickValues[i];
 			scrollEls[i].value = clickValues[i];
 			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
-			
 
+		};  //end localUpdateButtonInput
+
+		//::::::::::
+		//localDownloadCSV ~~
+		// online people complain that this doesn't work for big files.
+		// Note: if files are too big, could have server create csv file
+		//	then link to <a href='/WebPath/download.csv' download></a>
+		//	Note: href must be  encodeURI(dataStr) if data not already encoded
+		ConfigurationAPI.bitMapDialog.localDownloadCSV = function()
+		{
+			var transGrid = localCovertFullGridToRowCol();
+			console.log(transGrid);
+
+			var dataStr = "data:text/csv;charset=utf-8,";
 			
-					};  //end localUpdateButtonInput
+			for(var r=0;r<transGrid.length;++r)
+			{
+				if(r) dataStr += encodeURI("\n"); //encoded \n
+				for(var c=0;c<transGrid[0].length;++c)
+				{
+					if(c) dataStr += ",";
+					dataStr += transGrid[r][c];
+				}
+			}
+			
+			Debug.log("ConfigurationAPI.bitMapDialog.localDownloadCSV dataStr=" + dataStr);
+						
+			var link = document.createElement("a");
+			link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+			link.setAttribute("style", "display:none");
+			link.setAttribute("download", _currentConfigName + "_" + 
+					fieldName + "_download.csv");
+			document.body.appendChild(link); // Required for FF
+
+			link.click(); // This will download the data file named "my_data.csv"
+
+			link.parentNode.removeChild(link);
+		}; //end localDownloadCSV
+		
+		
+		
+		//::::::::::
+		//locaUploadCSV ~~
+		ConfigurationAPI.bitMapDialog._csvUploadDataStr; //uploaded csv table ends up here
+		ConfigurationAPI.bitMapDialog.locaUploadCSV = function()
+		{
+			Debug.log("locaUploadCSV ConfigurationAPI.bitMapDialog._csvUploadDataStr = " + ConfigurationAPI.bitMapDialog._csvUploadDataStr);
+			var srcDataStr = ConfigurationAPI.bitMapDialog._csvUploadDataStr.split('\n');
+			var src = []; //src = [r][c]
+			for(var i=0;i<srcDataStr.length;++i)
+				src.push(srcDataStr[i].split(','));
+			console.log(src);
+			
+			var convertedRC;
+			for(var r=0;r<rows;++r)
+				for(var c=0;c<cols;++c)
+				{
+					convertedRC = localConvertGridToRowCol(r,c);
+					try
+					{
+						bmpData[r][c] = src[convertedRC[0]][convertedRC[1]];
+					}
+					catch(err)
+					{;} //ignore errors
+				}
+		}
+
+		//::::::::::
+		//locaPopupUploadCSV ~~
+		ConfigurationAPI.bitMapDialog.locaPopupUploadCSV = function()
+		{			
+			Debug.log("ConfigurationAPI.bitMapDialog.locaPopupUploadCSV");	
+			ConfigurationAPI.bitMapDialog._csvUploadDataStr = ""; //clear previous upload
+
+			var str = "";
+
+			var pel = document.getElementById("popUpDialog");
+			if(!pel)
+			{
+				pel = document.createElement("div");			
+				pel.setAttribute("id", "popUpDialog");
+			}
+			pel.style.display = "none";
+
+			//set position and size
+			var w = 380;
+			var h = 195;
+			ConfigurationAPI.setPopUpPosition(pel,w /*w*/,h /*h*/);
+			
+			var str = "<a id='" + 
+					"popUpDialog" + //clear upload string on cancel!
+					"-header' href='#' onclick='javascript:ConfigurationAPI.bitMapDialog._csvUploadDataStr = \"\"; var pel = document.getElementById(" +
+					"\"popUpDialog\"); if(pel) pel.parentNode.removeChild(pel); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";	
+
+			str += "Please choose a CSV formatted data file (i.e. commas for columns, and new lines for rows) " +
+					"to upload:<br><br>";
+
+			str += "<center>";
+
+			str += "<input type='file' id='popUpDialog-fileUpload' " + 
+					"accept='.csv' enctype='multipart/form-data' />";			
+		
+			// done with special handling
+			// continue with pop-up prompt
+			str += "</center></div><br><br>"; //close main popup div
+
+			var onmouseupJS = "";
+			onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+			onmouseupJS += "ConfigurationAPI.bitMapDialog.locaUploadCSV();";			
+
+			str += "<input id='popUpDialog-submitButton' disabled type='button' onmouseup='" + 
+					onmouseupJS + "' " +
+					"value='Upload File' title='" +
+					"Upload the chosen file to replace the row,col data in the current bitmap." +					
+					"'/>";
+
+			pel.innerHTML = str;
+			el.appendChild(pel); //add element to bitmap div
+			pel.style.display = "block";
+
+			document.getElementById('popUpDialog-fileUpload').addEventListener(
+					'change', function(evt) {
+				var files = evt.target.files;
+				var file = files[0];           
+				var reader = new FileReader();
+				reader.onload = function() {
+					//store uploaded file and enable button
+					ConfigurationAPI.bitMapDialog._csvUploadDataStr = this.result;
+					Debug.log("ConfigurationAPI.bitMapDialog._csvUploadDataStr = " + ConfigurationAPI.bitMapDialog._csvUploadDataStr);							
+					document.getElementById('popUpDialog-submitButton').disabled = false;
+				}
+				reader.readAsText(file);
+			}, false);
+		
+		}; //end locaUploadCSV
+				
 
 		el.appendChild(hdr);
 
