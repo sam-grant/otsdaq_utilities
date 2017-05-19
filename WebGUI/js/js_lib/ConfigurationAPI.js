@@ -1971,13 +1971,21 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			var cell = localGetRowCol(event.pageX,event.pageY);
 			var r = cell.r, c = cell.c;
 
+			var cursorT = (event.pageX - popSz.x - bmpX);
+			if(cursorT < 0) cursorT = 0;
+			if(cursorT > bmpW) cursorT = bmpW;
+			Debug.log("cursorT " + cursorT);
+			Debug.log((bmpW-cursorT)/bmpW*(-cursorInfo.innerHTML.length*8-20) + cursorT/bmpW*(2));
 			cursorInfo.style.left = (event.pageX - popSz.x + 
-					(c >= cols/2?-cursorInfo.innerHTML.length*8-20:2)) + "px";
+					//(c >= cols/2?-cursorInfo.innerHTML.length*8-20:2)) + 
+					//smooth transition from left-most to right-most info position above cursor
+					(cursorT)/bmpW*(-cursorInfo.innerHTML.length*8-20) + (bmpW-cursorT)/bmpW*(2))+
+							"px";
 			cursorInfo.style.top = (event.pageY - popSz.y - 35) + "px";
 
 			//center header cursor info
 			hdrCursorInfo.style.left = (bmpX + bmpW/2 +
-					(-hdrCursorInfo.innerHTML.length*8-20)/2) + "px";
+					(-332)/2) + "px"; //hdrCursorInfo.style.width = "320px"; + padding*2 + border*2
 			hdrCursorInfo.style.top = (bmpY - 45) + "px";
 			
 			
@@ -1996,7 +2004,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			}
 
 			cursorInfo.style.display = "block";
-			hdrCursorInfo.style.display = "block";
+			//hdrCursorInfo.style.display = "block"; //removed from display.. could delete if unneeded?
 
 			var transRC;
 			var infoStr;
@@ -2401,6 +2409,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		cursorInfo.style.display = "none";
 		hdrCursorInfo.style.position = "absolute";	
 		hdrCursorInfo.style.display = "none";
+		hdrCursorInfo.style.width = "320px";
 
 		rowLeftNums.style.position = "absolute";	
 		rowRightNums.style.position = "absolute";	
@@ -2466,92 +2475,104 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 
 		var str = "";
 
-		str += "<div style='float:left;'>";
-		str += fieldName;
+		str += "<div style='float:left; margin: 0 0 20px 0;'>"; //field name and info container
+		str += "<div style='float:left; '>";
+		str += "Target Field Name: " + fieldName;
 		str += "</div>";
 
-		str += "<div style='float:left;'>";
-		str += "Number of [Rows,Cols]:" + "[" + rows + "," + cols + "]";
+		str += "<div style='float:left; margin-left: 50px;'>";
+		str += "Number of [Rows,Cols]: " + "[" + rows + "," + cols + "]";
 		str += "</div>";
+		str += "</div>";//end field name and info container
 
-		str += "<div style='float:right;'>";
+		str += "<div style='float:right; '>";
 		str += "<a id='" + 
 				ConfigurationAPI._POP_UP_DIALOG_ID + 
 				"-cancel' href='#'>Cancel</a>";
 		str += "</div>";
 
 		str += "<div id='clearDiv'></div>";
-
-
-		str += "<div style='float:left;'>";
-		str += "Left-Click Value:";
-		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
-				"' max='" + maxValue + "' value='" + minValue + 
-				"' step='" + stepValue + 
-				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(0)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + minValue + "' " +
-				"onchange='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,1)' " +	
-				"onkeydown='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,0)' " +
-				"onkeyup='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,0)' " +				
-				"/>";
-		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
-				" draggable='false' style='" +	//draggable for chrome
-				"width:40px; height:40px;" +
-				"'/>";
-
-		str += "<input class='bitmap-btnInput' type='button' value='<' " +
-				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,0,0)' " +
-				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,0,1)' " +
-				"/> ";
-		str += "<input class='bitmap-btnInput' type='button' value='>' " +
-				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,1,0)' " +
-				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,1,1)' " +
-				"/> ";
-		str += "</div>";
-
-		str += "<div id='clearDiv'></div>";
-
-		str += "<div style='float:left;'>";
-		str += "Right-Click Value:";
-		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
-				"' max='" + maxValue + "' value='" + maxValue + 
-				"' step='" + stepValue + 
-				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(1)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + "' " +
-				"onchange='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,1)' " +	
-				"onkeydown='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,0)' " +
-				"onkeyup='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,0)' " +	
-				"' />";
-		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
-				" draggable='false' style='" +	//draggable for chrome
-				"width:40px; height:40px;" +
-				"'/>";
 		
-
-		str += "<input class='bitmap-btnInput' type='button' value='<' " +
-				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,0,0)' " +
-				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,0,1)' " +
-				"/> ";
-		str += "<input class='bitmap-btnInput' type='button' value='>' " +
-				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,1,0)' " +
-				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,1,1)' " +
-				"/> ";
+		str += "<div style='float:right; margin: 40px 20px -50px 0;'>";
+		str += "<a id='" + 
+				ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-ok' href='#'>OK</a>";
 		str += "</div>";
 
+		str += "<div style='float:left; margin: 0 0 0 0;'>";
+		for(var clickIndex=0;clickIndex<2;++clickIndex)
+		{
+			str += "<div style='float:left; margin: 5px 0 0 0;'>";
+			str += "<div style='float:left; width:180px; text-align:right; margin-top: 3px;'>";
+			str += (clickIndex?"Right":"Left") + "-Click Value:";
+			str += "</div>";
+			str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-bitmap-scrollbar' style='float:left;' " + 
+					"type='range' min='" + minValue + 
+					"' max='" + maxValue + "' value='" + (clickIndex?maxValue:minValue) + 
+					"' step='" + stepValue + 
+					"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(" + clickIndex + ")' />";
+			str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-bitmap-btnInput' style='float:left; margin: 0 1px 0 5px;' " +
+					"type='button' value='<' " +
+					"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(" + clickIndex + ",0,0)' " +
+					"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(" + clickIndex + ",0,1)' " +
+					"/> ";
+			str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-bitmap-btnInput' style='float:left;' " +			
+					"type='button' value='>' " +
+					"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(" + clickIndex + ",1,0)' " +
+					"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(" + clickIndex + ",1,1)' " +
+					"/> ";
+			str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-bitmap-textInput' style='float:left; margin: 0 5px 0 5px; width: 50px;' " +
+					"type='text' " + //value come from scroll update at start
+					"onchange='ConfigurationAPI.bitMapDialog.localUpdateTextInput(" + clickIndex + ",1)' " +	
+					"onkeydown='ConfigurationAPI.bitMapDialog.localUpdateTextInput(" + clickIndex + ",0)' " +
+					"onkeyup='ConfigurationAPI.bitMapDialog.localUpdateTextInput(" + clickIndex + ",0)' " +				
+					"/>";
+			str += "<img class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-bitmap-colorSample' style='float:left;width:25px; height:25px; margin: -2px 0 2px 0;' " +
+					"ondragstart='return false;' " + //ondragstart for firefox
+					"draggable='false'" +	//draggable for chrome				
+					"'/>";
+	
+			
+			str += "</div>";
+	
+			str += "<div id='clearDiv'></div>";
+		}
+		str += "</div>";
+		
+		//add download upload buttons
+		str += "<div style='float:left; margin: 5px 0 0 40px;'>";
+		str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-bitmap-btnCsv' style='float:left;' " +			
+				"type='button' value='Download as CSV' " +
+				"onclick='ConfigurationAPI.bitMapDialog.localDownloadCSV()' " +
+				"/> ";
+		str += "<input class='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+				"-bitmap-btnCsv' style='float:left; margin: 0 0 0 10px;' " +			
+				"type='button' value='Upload CSV' " +
+				"onclick='ConfigurationAPI.bitMapDialog.locaUploadCSV()' " +
+				"/> ";
+		str += "</div>";
 
 		hdr.innerHTML = str;
 		hdr.style.overflowY = "auto";
 		hdr.style.position = "absolute";
 
-		var scrollEls = hdr.getElementsByClassName("bitmap-scrollbar");	
-		var textInputEls = hdr.getElementsByClassName("bitmap-textInput");	
-		var colorSampleEls = hdr.getElementsByClassName("bitmap-colorSample");
+		var scrollEls = hdr.getElementsByClassName(ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-scrollbar");	
+		var textInputEls = hdr.getElementsByClassName(ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-textInput");	
+		var colorSampleEls = hdr.getElementsByClassName(ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-colorSample");
 			
 
 		//::::::::::
 		//localUpdateScroll ~~
 		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
 					{
+			Debug.log("localUpdateScroll " + i);
+			
 			clickValues[i] = scrollEls[i].value|0;
 			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
 			
@@ -2565,7 +2586,6 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 					{
 			Debug.log("localUpdateTextInput " + textInputEls[i].value + " " + finalChange);
 			
-			//FIXME if finalChange then be more strict on validation
 			clickValues[i] = textInputEls[i].value|0;
 			
 			if(finalChange)
@@ -2736,7 +2756,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 					bmpGridChildren[1+i*2+1].style.left = 0 + "px";
 					bmpGridChildren[1+i*2+1].style.top = ((i+1)*cellH + bmpBorderSize*2) + "px";
 					bmpGridChildren[1+i*2+1].style.width = (bmpW + bmpBorderSize*2) + "px";
-					bmpGridChildren[1+i*2+1].style.height = (bmpGridThickness) + "px";
+					bmpGridChildren[1+i*2+1].style.height = ((doSnakeRows && i%2 == 1)?0:bmpGridThickness) + "px";
 				}
 				
 				//row button
@@ -2787,17 +2807,23 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			{
 				if(i<cols-1)
 				{
+					//if snaking cols, then darken every other
+					//	by making light width = 0
+					
 					//dark
 					bmpGridChildren[1+(rows-1)*2+i*2].style.top = bmpBorderSize + "px";
 					bmpGridChildren[1+(rows-1)*2+i*2].style.left = ((i+1)*cellW + bmpBorderSize) + "px";
 					bmpGridChildren[1+(rows-1)*2+i*2].style.height = (bmpH) + "px";
 					bmpGridChildren[1+(rows-1)*2+i*2].style.width = (bmpGridThickness+bmpBorderSize*2) + "px";
-	
+										
 					//light
 					bmpGridChildren[1+(rows-1)*2+i*2+1].style.top = 0 + "px";
 					bmpGridChildren[1+(rows-1)*2+i*2+1].style.left = ((i+1)*cellW + bmpBorderSize*2) + "px";
 					bmpGridChildren[1+(rows-1)*2+i*2+1].style.height = (bmpH + bmpBorderSize*2) + "px";
-					bmpGridChildren[1+(rows-1)*2+i*2+1].style.width = (bmpGridThickness) + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2+1].style.width = ((doSnakeColumns && i%2 == 1)?0:bmpGridThickness) + "px";
+					
+//					bmpGridChildren[1+(rows-1)*2+i*2+1].style.backgroundColor = //change color if snaking
+//							(doSnakeColumns && i%2 == 0)?"rgb(100,100,100)":"#efeaea";
 				}
 				
 				//row button
