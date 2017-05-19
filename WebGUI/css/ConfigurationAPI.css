@@ -10,6 +10,12 @@
 		    padding: 10px;
 			font-size: 16px;
 			font-family: 'Inconsolata', monospace;	
+			
+
+			outline: 				none; /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* prevent selection*/
+			-moz-user-select: 		none;
+			user-select:			none;
 		}
 		
 		#ConfigurationAPI-popUpDialog #clearDiv {
@@ -113,7 +119,7 @@
 		#ConfigurationAPI-popUpDialog-bitmap, 
 		#ConfigurationAPI-popUpDialog-bitmap-overlay {
 			cursor: pointer; 
-			z-index:1;
+			z-index: 1;
 		}
 		
 		#ConfigurationAPI-popUpDialog-bitmap-grid {
@@ -123,22 +129,58 @@
 		.ConfigurationAPI-popUpDialog-bitmap-grid-box {
 			border: 1px solid black;
 			position: absolute;	
-			z-index:2;
+			z-index: 2;
 		}
 
 		.ConfigurationAPI-popUpDialog-bitmap-grid-row-dark,
 		.ConfigurationAPI-popUpDialog-bitmap-grid-col-dark {			
 			background-color: black; /* same as dialog */
 			position: absolute;
-			z-index:3;
+			z-index: 3;
 		}
 		.ConfigurationAPI-popUpDialog-bitmap-grid-row,
 		.ConfigurationAPI-popUpDialog-bitmap-grid-col {			
 			background-color: #efeaea; /* same as dialog */
 			position: absolute;
-			z-index:4; 
+			z-index: 4; 
 		}
 		
+		.ConfigurationAPI-popUpDialog-bitmap-btn-all {
+			background-color: rgb(173, 162, 162);			
+			border-top: 1px solid rgb(220, 217, 217);	
+			border-left: 1px solid rgb(220, 217, 217);
+			border-bottom: 1px solid rgb(49, 48, 48);
+			border-right: 1px solid rgb(49, 48, 48);
+			cursor: pointer;
+		}
+		
+		
+		#ConfigurationAPI-popUpDialog-bitmap-cursor-info,
+		#ConfigurationAPI-popUpDialog-bitmap-cursor-hdrInfo {
+			border: 1px solid rgb(49, 48, 48);
+			background-color: rgb(216,188,188);	
+			border-radius: 5px;
+			padding: 5px;
+			white-space: nowrap;
+			z-index: 10; 
+		}		
+		
+		.ConfigurationAPI-popUpDialog-bitmap-numbers-rowLeft div {
+			text-align: right;
+		}
+		.ConfigurationAPI-popUpDialog-bitmap-numbers-rowRight div {
+			text-align: left;
+		}
+		.ConfigurationAPI-popUpDialog-bitmap-numbers-colTop div,
+		.ConfigurationAPI-popUpDialog-bitmap-numbers-colBottom div{
+			text-align: center;
+		}
+		
+		.ConfigurationAPI-popUpDialog-bitmap-number {
+			font-size: 12px;
+			position: absolute;
+			z-index: 1;
+		}
 		
 		
 		

@@ -68,7 +68,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
-//	ConfigurationAPI.getOneBitPngData(r,g,b,a)
+//	ConfigurationAPI.getOnePixelPngData(rgba)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
@@ -1790,14 +1790,38 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	//		"Display in Rows in ascending order"
 	//		"Snake Columns"
 	
+	//	
+	//	Local functions:
+	//		localCreateCancelClickHandler()
+	//		localCreateMouseHandler()
+	//			localGetRowCol(x,y)
+	//			el.onmousemove
+	//			el.onmousedown
+	//			el.onmouseup
+	//			el.oncontextmenu 
+	//			localSetBitMap(r,c)
+	//		localValidateInputs()
+	//		localInitBitmapData()
+	//		localConvertGridToRowCol(r,c)
+	//		localConvertValueToRGBA(val)
+	//		localCreateBitmap()
+	//		localCreateGridButtons()
+	//		localCreateHeader()
+	//			localUpdateScroll(i)
+	//			localUpdateTextInput(i)
+	//			localUpdateButtonInput(i,dir)
+	//		localPaint()
+	//		localOptimizeAspectRatio()
 
 	var forcedAspectH = 100;
 	var forcedAspectW = 150;
-	var doDisplayRowsAscending = true;
+	var doDisplayRowsAscending = false;
+	var doDisplayColsAscending = true;
 	var doSnakeColumns = true;
-	var rows = 2; //bitMapParams[0];
+	var doSnakeRows = false;
+	var rows = 24; //bitMapParams[0];
 	var cols = 8;
-	var bitFieldSize = 4;//bitMapParams[2];
+	var bitFieldSize = 5;//bitMapParams[2];
 	
 	var minValueColor = "red";
 	var midValueColor = "#ffff00";
@@ -1812,13 +1836,14 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	ceilValueColor = DesktopContent.getColorAsRGBA(ceilValueColor).split("(")[1].split(")")[0].split(",");
 	floorValueColor = DesktopContent.getColorAsRGBA(floorValueColor).split("(")[1].split(")")[0].split(",");
 	
+	
 	var bitMask = (1<<bitFieldSize) - 1;
 		
 	var minValue = 4;//bitMapParams[3] == "DEFAULT" || bitMapParams[3] == ""?0:(bitMapParams[3]|0);
-	var maxValue = 8;//bitMapParams[4] == "DEFAULT" || bitMapParams[4] == ""?bitMask:(bitMapParams[4]|0);
+	var maxValue = 16;//bitMapParams[4] == "DEFAULT" || bitMapParams[4] == ""?bitMask:(bitMapParams[4]|0);
 	if(maxValue < minValue)
 		maxValue = bitMask;	
-	var midValue = (maxValue - minValue)/2; //used for color calcs
+	var midValue = (maxValue + minValue)/2; //used for color calcs
 	var stepValue = 2;//bitMapParams[5] == "DEFAULT" || bitMapParams[5] == ""?1:(bitMapParams[5]|0);
 				
 	if(!localValidateInputs())
@@ -1828,12 +1853,18 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	}
 	
 	//give 5 pixels extra for each digit necessary to label rows
-	var axisPaddingExtra = 0;
+	var numberDigitW = 8, numberDigitH = 12;
+	var axisPaddingExtra = numberDigitW;
 	function localCalcExtraAxisPadding() {
 		var lrows = rows;
-		while((lrows /= 10) > 1) axisPaddingExtra += 8; 
-	}			
-	var axisPadding = 40 + axisPaddingExtra;
+		while((lrows /= 10) > 1) axisPaddingExtra += numberDigitW; 
+	} localCalcExtraAxisPadding();			
+	var butttonSz = 20;
+	var axisPaddingMargin = 5;
+	var axisPadding = axisPaddingMargin + axisPaddingExtra + axisPaddingMargin + butttonSz + axisPaddingMargin;
+	var bmpGridThickness = 1;
+	var bmpBorderSize = 1;
+	
 	
 	var hdr; //header element
 	var hdrX; 
@@ -1843,6 +1874,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	
 	var bmp;  //bitmap element
 	var bmpGrid; //bitmap grid element
+	var allRowBtns, allColBtns, allBtn;
+	var rowLeftNums, rowRightNums, colTopNums, colBottomNums;
 	var bmpCanvas, bmpContext; //used to generate 2D bitmap image src
 	var bmpData; //bitmap data shown and returned. 2D array
 	var bmpDataImage; //visual interpretation of bitmap data
@@ -1850,14 +1883,20 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	var bmpY;	
 	var bmpW;
 	var bmpH;
+	var bmpOverlay;
+	var cursorInfo, hdrCursorInfo;
 
 	var cellW;
 	var cellH;
+	
+	var clickColors = []; //2 element array: 0=left-click, 1=right-click
+	var clickValues = []; //2 element array: 0=left-click, 1=right-click
 
 	localInitBitmapData(); //load bitmap data from input string
 	
 	localCreateHeader(); //create header element content	
 	localCreateBitmap(); //create bitmap element and data
+	localCreateGridButtons(); //create all buttons
 	
 	localPaint();
 	window.addEventListener("resize",localPaint);
@@ -1868,7 +1907,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localCreateCancelClickHandler ~~
-	//create cancel onclick handler
+	//	create cancel onclick handler
 	function localCreateCancelClickHandler()
 	{
 		document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
@@ -1876,7 +1915,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			Debug.log("Cancel click");
 			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 			if(el) el.parentNode.removeChild(el); //close popup
-			window.removeEventListener("resize",localpaint); //remove paint listener
+			window.removeEventListener("resize",localPaint); //remove paint listener
 			cancelHandler(); //empty array indicates nothing done
 			return false;
 		}; //end submit onmouseup handler				
@@ -1884,64 +1923,166 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localCreateMouseHandler ~~
-	//create mouseover handler
+	//	create mouseover handler
 	function localCreateMouseHandler()
 	{
 		var stopProp = false; //used to stop contextmenu propagation
 		var rLast = -1, cLast = -1; //to stop redoing calculations in mouse over
+				//-2 is special all buttons
 		var buttonDown = -1; //0 - left, 1 - middle, 2 - right
-		
-		var bmpOverlay =  document.createElement("img");
-		bmpOverlay.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-overlay");
-		bmpOverlay.style.display = "none";
-		bmpOverlay.style.position = "absolute";
-		
-		el.appendChild(bmpOverlay);		
-		
-		el.onmousemove = function(event) {
-			var x = event.pageX - popSz.x - bmpX;
-			var y = event.pageY - popSz.y - bmpY;
+
+		//::::::::
+		//localGetRowCol ~~
+		//	returns -1 in r and c for nothing interesting
+		//	returns -2 for special all buttons
+		//	else returns r,c of cell identified by x,y
+		function localGetRowCol(x,y) {
+			x -= popSz.x + bmpX;
+			y -= popSz.y + bmpY;
 			var r = (y/cellH)|0;
+			if(y < 0) r = -1; //handle negative fractions clipping to 0
 			var c = (x/cellW)|0;
+			if(x < 0) c = -1; //handle negative fractions clipping to 0
+			var inRowBtnsX = (x >= - axisPaddingMargin - bmpBorderSize - butttonSz) && 
+					(x <= - axisPaddingMargin - bmpBorderSize);
+			var inColBtnsY = (y >= bmpH + axisPaddingMargin) && 
+					(y <= bmpH + axisPaddingMargin + butttonSz + bmpBorderSize*2);
+
+			//Debug.log("i x,y " + x + "," + y);
+			//Debug.log("i r,c " + r + "," + c);
+			//Debug.log("inRowBtnsX " + inRowBtnsX);
+			//Debug.log("inColBtnsY " + inColBtnsY);
+			
+			//handle row buttons
+			if(inRowBtnsX && r >= 0 && r < rows)
+				return {"r":r, "c":-2};
+			else if(inColBtnsY && c >= 0 && c < cols) //handle col buttons
+				return {"r":-2, "c":c};
+			else if(inRowBtnsX && inColBtnsY) //handle all button
+				return {"r":-2, "c":-2};
+			else if(r < 0 || c < 0 || r >= rows || c >= cols)
+				return {"r":-1, "c":-1}; //is nothing
+			return {"r":r, "c":c}; //else, is a cell
+		} //end localGetRowCol()
+
+		//::::::::
+		//el.onmousemove ~~
+		el.onmousemove = function(event) {
+			var cell = localGetRowCol(event.pageX,event.pageY);
+			var r = cell.r, c = cell.c;
+
+			cursorInfo.style.left = (event.pageX - popSz.x + 
+					(c >= cols/2?-cursorInfo.innerHTML.length*8-20:2)) + "px";
+			cursorInfo.style.top = (event.pageY - popSz.y - 35) + "px";
+
+			//center header cursor info
+			hdrCursorInfo.style.left = (bmpX + bmpW/2 +
+					(-hdrCursorInfo.innerHTML.length*8-20)/2) + "px";
+			hdrCursorInfo.style.top = (bmpY - 45) + "px";
+			
+			
 			if(rLast == r && cLast == c)
 				return; //already done for this cell, so prevent excessive work 
 			rLast = r; cLast = c;
-				
-			if(x < 0 || y < 0 || r >= rows || c >= cols)
+
+			if(r == -1 || c == -1) //handle no select case
 			{
-				//mouse off bitmap
+				//mouse off interesting things
+				rLast = -1; cLast = -1;
 				bmpOverlay.style.display = "none";
+				cursorInfo.style.display = "none";
+				hdrCursorInfo.style.display = "none";
 				return;				
 			}
-			Debug.log("x,y " + x + "," + y);
-			Debug.log("r,c " + r + "," + c);			
-			
-			//have mouse over bitmap			
+
+			cursorInfo.style.display = "block";
+			hdrCursorInfo.style.display = "block";
+
+			var transRC;
+			var infoStr;
+
+			//handle row buttons
+			if(r != -2 && c == -2)
+			{			
+				transRC = localConvertGridToRowCol(r,0);
+				
+				//make mouse over bitmap			
+				{
+					bmpOverlay.src = ConfigurationAPI.getOnePixelPngData([216,188,188]);//canvas.toDataURL();
+
+					bmpOverlay.style.left = (bmpX - axisPaddingMargin - bmpBorderSize - butttonSz) + "px";
+					bmpOverlay.style.top = (bmpY + r*cellH + (r?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+					bmpOverlay.style.width = (butttonSz) + "px";
+					bmpOverlay.style.height = (cellH - (r?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+					bmpOverlay.style.display = "block";
+				}	
+
+				infoStr = "Set all pixels in row " + transRC[0] + ".";
+			}
+			else if(r == -2 && c != -2) //handle col buttons
+			{				
+				transRC = localConvertGridToRowCol(0,c);
+				
+				//make mouse over bitmap			
+				{
+					bmpOverlay.src = ConfigurationAPI.getOnePixelPngData([216,188,188]);//canvas.toDataURL();
+
+					bmpOverlay.style.left = (bmpX + c*cellW - 1 + (c?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+					bmpOverlay.style.top = (bmpY + bmpH + axisPaddingMargin - bmpBorderSize) + "px";
+					bmpOverlay.style.width = (cellW + 1 - (c?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+					bmpOverlay.style.height = (butttonSz) + "px";
+					bmpOverlay.style.display = "block";
+				}
+
+				infoStr = "Set all pixels in column " + transRC[1] + ".";
+			}
+			else if(r == -2 && c == -2) //handle all button
 			{
-				Debug.log("r,g,b " + bmpDataImage.data[r*cols+c+1] + "," + 
-						bmpDataImage.data[r*cols+c+2] + "," + bmpDataImage.data[r*cols+c+3]);
-				
-				var canvas=document.createElement("canvas");
-				canvas.width = 1;
-				canvas.height = 1;
-				var ctx = canvas.getContext("2d");		
+				//make mouse over bitmap			
+				{
+					bmpOverlay.src = ConfigurationAPI.getOnePixelPngData([216,188,188]);//canvas.toDataURL();
 
-				var bmpOverlayData = ctx.createImageData(1,1);
-				bmpOverlayData.data[0]=255;
-				bmpOverlayData.data[1]=255;
-				bmpOverlayData.data[2]=0;
-				bmpOverlayData.data[3]=255;
-				ctx.putImageData(bmpOverlayData,0,0);
-				bmpOverlay.src = canvas.toDataURL();
+					bmpOverlay.style.left = (bmpX - axisPaddingMargin - bmpBorderSize - butttonSz) + "px";
+					bmpOverlay.style.top = (bmpY + bmpH + axisPaddingMargin - bmpBorderSize) + "px";
+					bmpOverlay.style.width = (butttonSz) + "px";
+					bmpOverlay.style.height = (butttonSz) + "px";
+					bmpOverlay.style.display = "block";
+				} 
 				
-				bmpOverlay.style.left = (bmpX + c*cellW) + "px";
-				bmpOverlay.style.top = (bmpY + r*cellH) + "px";
-				bmpOverlay.style.width = (cellW) + "px";
-				bmpOverlay.style.height = (cellH) + "px";
-				bmpOverlay.style.display = "block";
-
-				bmpOverlay.draggable = false; //prevent dragging				
-			}	
+				infoStr = "Set all pixels.";
+			}
+			else //pixel case
+			{					
+				transRC = localConvertGridToRowCol(r,c);
+				
+				//have mouse over bitmap			
+				{
+					//make a partial alpha overlay that lightens or darkens
+					//	depending on pixel color
+					var overClr = (bmpDataImage.data[(r*cols+c)*4+0] +
+							bmpDataImage.data[(r*cols+c)*4+1] + 
+							bmpDataImage.data[(r*cols+c)*4+2]) < (256+128)?255:0;
+					
+					bmpOverlay.src = ConfigurationAPI.getOnePixelPngData(
+							[overClr,overClr,overClr,100]);
+					
+					bmpOverlay.style.left = (bmpX + c*cellW) + "px";
+					bmpOverlay.style.top = (bmpY + r*cellH) + "px";
+					bmpOverlay.style.width = (cellW) + "px";
+					bmpOverlay.style.height = (cellH) + "px";
+					bmpOverlay.style.display = "block";				
+				}	
+				
+				//position cursor info
+				infoStr = "Value = " + bmpData[r][c]  + " @ (Row,Col) = (" + 
+						transRC[0] + "," + transRC[1] + ")";
+			}
+			cursorInfo.innerHTML = infoStr;
+			hdrCursorInfo.innerHTML = infoStr;
+			
+			//Debug.log("r,c " + r + "," + c);
+			if(r == -2 && c == -2)
+				return;	//prevent mouse over execution of all button (assume it's accidental)
 			
 			if(buttonDown >= 0)
 			{
@@ -1951,19 +2092,18 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			
 		} //end mouse move
 		
+		//::::::::
+		//el.onmousedown ~~
 		el.onmousedown = function(event) {
+
+			var cell = localGetRowCol(event.pageX,event.pageY);
+			var r = cell.r, c = cell.c;
 			
-			var x = event.pageX - popSz.x - bmpX;
-			var y = event.pageY - popSz.y - bmpY;
-			var r = (y/cellH)|0;
-			var c = (x/cellW)|0;
-			
-			Debug.log("click which " + event.which);
-			Debug.log("click button " + event.button);
-			buttonDown = event.button;
-			
-			
-			if(x < 0 || y < 0 || r >= rows || c >= cols)
+			//Debug.log("click which " + event.which);
+			//Debug.log("click button " + event.button);
+			buttonDown = event.button;			
+
+			if(r == -1 || c == -1) //handle no select case
 			{
 				rLast = -1; cLast = -1; //reset for mouse move
 				stopProp = false;
@@ -1978,13 +2118,17 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			
 		} //end mouse down
 
+		//::::::::
+		//el.onmouseup ~~
 		el.onmouseup = function(event) {
-			Debug.log("click up ");
+			//Debug.log("click up ");
 			buttonDown = -1;
 		} //end mouse up
 
+		//::::::::
+		//el.oncontextmenu ~~
 		el.oncontextmenu = function(event) {
-			Debug.log("click stopProp " + stopProp);
+			//Debug.log("click stopProp " + stopProp);
 			
 			if(stopProp)
 			{
@@ -1993,42 +2137,71 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				return false;
 			}
 		} //end oncontextmenu
-		
-		function localSetBitMap(r,c) {
+
+		//::::::::
+		//localSetBitMap ~~
+		function localSetBitMap(r,c) {			
+			
 			Debug.log("set r,c " + buttonDown + " @ " + r + "," + c );
+			buttonDown = buttonDown?1:0; //	0=left-click, 1=right-click
 			
-			var leftColor = [255,255,255,255];
-			var otherColor = [0,0,0,255];
-			
-			bmpDataImage.data[(r*cols + c)*4 + 0] = buttonDown?otherColor[0]:leftColor[0];
-			bmpDataImage.data[(r*cols + c)*4 + 1] = buttonDown?otherColor[1]:leftColor[1];
-			bmpDataImage.data[(r*cols + c)*4 + 2] = buttonDown?otherColor[2]:leftColor[2];
-			bmpDataImage.data[(r*cols + c)*4 + 3] = buttonDown?otherColor[3]:leftColor[3];
+			var maxr = r==-2?rows-1:r;
+			var minr = r==-2?0:r;
+			var maxc = c==-2?cols-1:c;
+			var minc = c==-2?0:c;
+						
+			for(r=minr;r<=maxr;++r)
+				for(c=minc;c<=maxc;++c)
+				{
+					bmpData[r][c] = clickValues[buttonDown];
+					bmpDataImage.data[(r*cols + c)*4 + 0] = 
+							clickColors[buttonDown][0];
+					bmpDataImage.data[(r*cols + c)*4 + 1] = 
+							clickColors[buttonDown][1];
+					bmpDataImage.data[(r*cols + c)*4 + 2] =
+							clickColors[buttonDown][2];
+					bmpDataImage.data[(r*cols + c)*4 + 3] = 
+							clickColors[buttonDown][3];
+				}
 			
 			bmpContext.putImageData(bmpDataImage,0,0);
 			bmp.src = bmpCanvas.toDataURL();
-		}
+		}// end localSetBitMap
 		
 	} localCreateMouseHandler();
 		
-	
+	//:::::::::::::::::::::::::::::::::::::::::
 	//localValidateInputs ~~
 	//	returns false if inputs are invalid
 	//	else true.
 	function localValidateInputs() {
 		if(minValue < 0 || minValue > bitMask)
 		{
-			Debug.log("Illegal input parameters, minValue of " + minValue + " is illegal.",Debug.HIGH_PRIORITY);
+			Debug.log("Illegal input parameters, minValue of " + minValue + " is illegal. " +
+					"(Bit-field possible values are from 0 to " + bitMask + ".)",Debug.HIGH_PRIORITY);
 			return false;
 		}
 		if(maxValue < 0 || maxValue > bitMask)
 		{
-			Debug.log("Illegal input parameters, maxValue of " + maxValue + " is illegal.",Debug.HIGH_PRIORITY);
+			Debug.log("Illegal input parameters, maxValue of " + maxValue + " is illegal. " +
+					"(Bit-field possible values are from 0 to " + bitMask + ".)",Debug.HIGH_PRIORITY);
 			return false;
 		}
 		if(minValue > maxValue)
 		{
 			Debug.log("Illegal input parameters, minValue > maxValue is illegal.",Debug.HIGH_PRIORITY);
+			return false;
+		}
+		if(doSnakeColumns && doSnakeRows)
+		{
+			Debug.log("Can not have a bitmap that snakes both rows and columns, please choose one or the other (or neither).",Debug.HIGH_PRIORITY);
+			return false;
+		}
+		if((((maxValue-minValue)/stepValue)|0) != (maxValue-minValue)/stepValue)
+		{
+			Debug.log("Illegal input parameters, maxValue of " + maxValue + 
+					" must be an integer number of stepValue (stepValue=" + stepValue + 
+					") steps away from minValue (minValue=" + minValue + ").",Debug.HIGH_PRIORITY);
 			return false;
 		}
 		
@@ -2043,13 +2216,14 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	{
 		try
 		{
-			bmpData = JSON.parse("[0,0}");
+			bmpData = JSON.parse("[0,0]");
+			throw("Err"); //FIXME... check data for min,max,step validity
 		}
 		catch(err)
 		{
 			Debug.log("The input initial value of the bitmap is illegal JSON format. " +					
-					"See error below: \n\n" + err,Debug.HIGH_PRIORITY);
-			Debug.log("Defaulting to initial bitmap with min-value fill.",Debug.HIGH_PRIORITY);
+					"See error below: \n\n" + err);//,Debug.HIGH_PRIORITY);
+			Debug.log("Defaulting to initial bitmap with min-value fill.");//,Debug.HIGH_PRIORITY);
 			
 			//min-value fill
 			bmpData = [];
@@ -2061,8 +2235,31 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			}
 			return;
 		}
+		
 	}
 
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localConvertGridToRowCol ~~
+	//	grid row col is always 0,0 in top left
+	//	but there might be translation for user (imagine snaked columns)
+	//		inputs: doDisplayRowsAscending, doDisplayColsAscending, doSnakeColumns, doSnakeRows,  
+	//			...rows, cols
+	//	return translated row,col 
+	function localConvertGridToRowCol(r,c)
+	{
+		var retVal = [r,c];
+		if(!doDisplayRowsAscending) //reverse row order so flip row
+			retVal[0] = rows - 1 - retVal[0];
+		if(!doDisplayColsAscending) //reverse col order so flip col
+			retVal[1] = cols - 1 - retVal[1];	
+		if(doSnakeRows && retVal[0]%2 == 1) //snake row so flip col
+			retVal[1] = cols + (cols - 1 - retVal[1]);
+		if(doSnakeColumns && retVal[1]%2 == 1) //snake col so flip row
+			retVal[0] = rows + (rows - 1 - retVal[0]);		
+			
+		return retVal;
+	}
+	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localConvertValueToRGBA ~~
 	//	create bitmap
@@ -2106,6 +2303,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 					  255]; //always max alpha
 		}
 	}
+	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localCreateBitmap ~~
 	//	create bitmap
@@ -2117,8 +2315,27 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		bmpGrid = document.createElement("div"); //div of row and col grid divs
 		bmpGrid.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-grid");
 		
+		bmpOverlay =  document.createElement("img");
+		bmpOverlay.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-overlay");
+		
+		cursorInfo = document.createElement("div"); //div of row and col grid divs
+		cursorInfo.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-cursor-info");
+		hdrCursorInfo = document.createElement("div"); //div of row and col grid divs
+		hdrCursorInfo.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-cursor-hdrInfo");
+				
+		//create divs for r,c text display
+		rowLeftNums = document.createElement("div");
+		rowRightNums = document.createElement("div");	
+		colTopNums = document.createElement("div");
+		colBottomNums = document.createElement("div");
+		rowLeftNums.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-numbers-rowLeft");	
+		rowRightNums.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-numbers-rowRight");
+		colTopNums.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-numbers-colTop");	
+		colBottomNums.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-numbers-colBottom");
+		 
 		var tmpEl;
 		 
+		//group creation of row/col elements
 		{			
 			bmpCanvas=document.createElement("canvas");
 			bmpCanvas.width = cols;
@@ -2173,12 +2390,71 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 
 		bmp.style.position = "absolute";		
 		bmp.draggable = false; //prevent dragging
-		bmpGrid.style.position = "absolute";		
+		
+		bmpGrid.style.position = "absolute";	
+		
+		bmpOverlay.style.display = "none";
+		bmpOverlay.style.position = "absolute";	
+		bmpOverlay.draggable = false; //prevent dragging
+				
+		cursorInfo.style.position = "absolute";	
+		cursorInfo.style.display = "none";
+		hdrCursorInfo.style.position = "absolute";	
+		hdrCursorInfo.style.display = "none";
+
+		rowLeftNums.style.position = "absolute";	
+		rowRightNums.style.position = "absolute";	
+		colTopNums.style.position = "absolute";	
+		colBottomNums.style.position = "absolute";	
 		
 		el.appendChild(bmp);
 		el.appendChild(bmpGrid);
+		el.appendChild(bmpOverlay);
+
+		el.appendChild(hdrCursorInfo); //insert hdrInfo first so cursorInfo goes over top of it
+		el.appendChild(cursorInfo);
+		
+		el.appendChild(rowLeftNums);
+		el.appendChild(rowRightNums);
+		el.appendChild(colTopNums);
+		el.appendChild(colBottomNums);		
 	}
-	
+
+	//:::::::::::::::::::::::::::::::::::::::::
+	//localCreateGridButtons ~~
+	//	create all (row,col) buttons
+	function localCreateGridButtons()
+	{
+		allRowBtns = document.createElement("div"); //div of all row button divs
+		
+		allColBtns = document.createElement("div"); //div of all col button divs
+				
+		allBtn = document.createElement("div"); //div of all button			
+		allBtn.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-btn-all");	
+		
+		var tmpEl;
+		for(var i=0;i<rows;++i)
+		{
+			tmpEl = document.createElement("div");
+			tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-btn-all");
+			tmpEl.style.position = "absolute";
+			allRowBtns.appendChild(tmpEl);
+		}
+		for(var i=0;i<cols;++i)
+		{
+			tmpEl = document.createElement("div");
+			tmpEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-btn-all");
+			tmpEl.style.position = "absolute";
+			allColBtns.appendChild(tmpEl);
+		}
+		
+		allRowBtns.style.position = "absolute";
+		el.appendChild(allRowBtns);
+		allColBtns.style.position = "absolute";
+		el.appendChild(allColBtns);
+		allBtn.style.position = "absolute";
+		el.appendChild(allBtn);
+	}
 	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localCreateHeader ~~
@@ -2213,50 +2489,54 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 				"' max='" + maxValue + "' value='" + minValue + 
 				"' step='" + stepValue + 
 				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(0)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + minValue + 
-				"' />";
+		str += "<input class='bitmap-textInput' type='text' value='" + minValue + "' " +
+				"onchange='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,1)' " +	
+				"onkeydown='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,0)' " +
+				"onkeyup='ConfigurationAPI.bitMapDialog.localUpdateTextInput(0,0)' " +				
+				"/>";
 		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
 				" draggable='false' style='" +	//draggable for chrome
 				"width:40px; height:40px;" +
 				"'/>";
+
+		str += "<input class='bitmap-btnInput' type='button' value='<' " +
+				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,0,0)' " +
+				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,0,1)' " +
+				"/> ";
+		str += "<input class='bitmap-btnInput' type='button' value='>' " +
+				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,1,0)' " +
+				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(0,1,1)' " +
+				"/> ";
 		str += "</div>";
 
 		str += "<div id='clearDiv'></div>";
 
 		str += "<div style='float:left;'>";
-		str += "Left-Click Value:";
+		str += "Right-Click Value:";
 		str += "<input class='bitmap-scrollbar' type='range' min='" + minValue + 
 				"' max='" + maxValue + "' value='" + maxValue + 
 				"' step='" + stepValue + 
 				"' oninput='ConfigurationAPI.bitMapDialog.localUpdateScroll(1)' />";
-		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + 
+		str += "<input class='bitmap-textInput' type='text' value='" + maxValue + "' " +
+				"onchange='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,1)' " +	
+				"onkeydown='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,0)' " +
+				"onkeyup='ConfigurationAPI.bitMapDialog.localUpdateTextInput(1,0)' " +	
 				"' />";
 		str += "<img class='bitmap-colorSample' ondragstart='return false;'" + //ondragstart for firefox
 				" draggable='false' style='" +	//draggable for chrome
 				"width:40px; height:40px;" +
 				"'/>";
-		str += "</div>";
+		
 
-		//		str += "<table width='100%' cellpadding=0 cellspacing=0><tr>";
-		//		str += "<td colspan=2 align='left'>";
-		//		str += fieldName;
-		//		str += "</td>";
-		//		
-		//		str += "<td align='right'>";
-		//		str += "</td>";
-		//		
-		//		str += "</tr>";
-		//		str += "<tr>";
-		//		str += "<td align='right'>";
-		//		str += "Number of [Rows,Cols]:";
-		//		str += "</td>";
-		//		str += "<td align='left'>";
-		//		str += "[" + rows + "," + cols + "]";
-		//		str += "</td>";
-		//		str += "<td>";
-		//		str += "</td>";
-		//		str += "</tr>";
-		//		str += "</table>";
+		str += "<input class='bitmap-btnInput' type='button' value='<' " +
+				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,0,0)' " +
+				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,0,1)' " +
+				"/> ";
+		str += "<input class='bitmap-btnInput' type='button' value='>' " +
+				"onmousedown='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,1,0)' " +
+				"onmouseup='ConfigurationAPI.bitMapDialog.localUpdateButtonInput(1,1,1)' " +
+				"/> ";
+		str += "</div>";
 
 
 		hdr.innerHTML = str;
@@ -2266,12 +2546,83 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		var scrollEls = hdr.getElementsByClassName("bitmap-scrollbar");	
 		var textInputEls = hdr.getElementsByClassName("bitmap-textInput");	
 		var colorSampleEls = hdr.getElementsByClassName("bitmap-colorSample");
+			
+
+		//::::::::::
+		//localUpdateScroll ~~
 		ConfigurationAPI.bitMapDialog.localUpdateScroll = function(i)		
 					{
-			textInputEls[i].value = scrollEls[i].value;
-			colorSampleEls[i].src = ConfigurationAPI.getOneBitPngData(0,0,
-					((scrollEls[i].value|0)*100)%255,255);
-					}; 
+			clickValues[i] = scrollEls[i].value|0;
+			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
+			
+			textInputEls[i].value = clickValues[i];
+			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
+					};  //end localUpdateScroll
+
+		//::::::::::
+		//localUpdateTextInput ~~
+		ConfigurationAPI.bitMapDialog.localUpdateTextInput = function(i,finalChange)		
+					{
+			Debug.log("localUpdateTextInput " + textInputEls[i].value + " " + finalChange);
+			
+			//FIXME if finalChange then be more strict on validation
+			clickValues[i] = textInputEls[i].value|0;
+			
+			if(finalChange)
+			{
+				if(clickValues[i] < minValue) clickValues[i] = minValue;
+				if(clickValues[i] > maxValue) clickValues[i] = maxValue;
+				clickValues[i] = (((clickValues[i]-minValue)/stepValue)|0)*stepValue + minValue; //lock to step
+				textInputEls[i].value = clickValues[i]; //fix value
+			}
+			else //try to continue with change, but if invalid just return
+			{
+				if(clickValues[i] < minValue) return;
+				if(clickValues[i] > maxValue) return;
+				if((((clickValues[i]-minValue)/stepValue)|0) != (clickValues[i]-minValue)/stepValue)
+					return; //no locked to step value
+				Debug.log("displaying change");
+			}
+			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
+			
+			scrollEls[i].value = clickValues[i];
+			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
+					};  //end localUpdateTextInput
+
+		//::::::::::
+		//localUpdateButtonInput ~~
+		var mouseDownTimer = 0;
+		ConfigurationAPI.bitMapDialog.localUpdateButtonInput = function(i,dir,mouseUp,delay)		
+					{
+			window.clearInterval(mouseDownTimer);
+			if(mouseUp) //mouse up	
+			{				
+				Debug.log("cancel mouse down"); 
+				return;
+			}
+			//else mouse is down so set repeat interval
+			mouseDownTimer = window.setInterval(function()
+					{
+				//faster and faster
+				if(delay > 50) delay -= 50;
+				ConfigurationAPI.bitMapDialog.localUpdateButtonInput(i,dir,0,50); //same as this call
+					},delay!==undefined?delay:300);
+			
+			Debug.log("localUpdateButtonInput " + textInputEls[i].value + " " + dir);
+			
+			clickValues[i] = clickValues[i] + (dir?stepValue:-stepValue);
+			if(clickValues[i] < minValue) clickValues[i] = minValue;
+			if(clickValues[i] > maxValue) clickValues[i] = maxValue;
+			
+			clickColors[i] = localConvertValueToRGBA(clickValues[i]);
+			
+			textInputEls[i].value = clickValues[i];
+			scrollEls[i].value = clickValues[i];
+			colorSampleEls[i].src = ConfigurationAPI.getOnePixelPngData(clickColors[i]);
+			
+
+			
+					};  //end localUpdateButtonInput
 
 		el.appendChild(hdr);
 
@@ -2290,7 +2641,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		popSz = ConfigurationAPI.setPopUpPosition(el,undefined,undefined,padding,undefined,30 /*margin*/);
 		
 		hdrW = popSz.w;
-		axisPadding = 40 + axisPaddingExtra; 
+		//axisPadding = 40 + axisPaddingExtra; 
 		hdrX = padding; 
 		hdrY = padding;
 		hdrW = popSz.w;
@@ -2303,7 +2654,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		cellW = bmpW/cols;
 		cellH = bmpH/rows;
 		
-		localOptimizeAspectRatio();		
+		localOptimizeAspectRatio();	//sets up bmpX,Y based on aspect ratio (inputs are cellW/cellH, bmpW/bmpH, rows/cols)
 		
 		//place header
 		hdr.style.left = hdrX + "px";
@@ -2316,19 +2667,54 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 		bmp.style.top = bmpY + "px";
 		bmp.style.width = bmpW + "px";
 		bmp.style.height = bmpH + "px";
+		
 
-		//place bitmap grid
+		//place bitmap grid and buttons
 		{
-			var bmpGridThickness = 1;
-			var bmpBorderSize = 1;
 			
 			bmpGrid.style.left = (bmpX-bmpBorderSize) + "px";
 			bmpGrid.style.top = (bmpY-bmpBorderSize) + "px";
 			bmpGrid.style.width = (bmpW) + "px";
-			bmpGrid.style.height = (bmpH) + "px";
+			bmpGrid.style.height = (bmpH) + "px";			
 			
 			var bmpGridChildren = bmpGrid.childNodes;
 
+			//place all rows div 
+			allRowBtns.style.left = (bmpX - bmpBorderSize - axisPaddingMargin - bmpBorderSize - butttonSz) + "px";
+			allRowBtns.style.top = (bmpY - bmpBorderSize) + "px";
+			//place all cols div
+			allColBtns.style.left = (bmpX - bmpBorderSize) + "px";
+			allColBtns.style.top = (bmpY + bmpH + axisPaddingMargin - bmpBorderSize*2) + "px";
+			//place all div
+			allBtn.style.left = (bmpX - bmpBorderSize - axisPaddingMargin - bmpBorderSize - butttonSz) + "px";
+			allBtn.style.top = (bmpY + bmpH + axisPaddingMargin - bmpBorderSize*2) + "px";
+			allBtn.style.width = butttonSz + "px";
+			allBtn.style.height = butttonSz + "px";
+			
+			var allRowsChildren = allRowBtns.childNodes;
+			var allColsChildren = allColBtns.childNodes;
+
+			
+			//place number divs
+			rowLeftNums.style.left = (bmpX - bmpBorderSize - axisPaddingMargin - bmpBorderSize - butttonSz + (- bmpBorderSize - axisPaddingMargin - axisPaddingExtra)) + "px";
+			rowLeftNums.style.top = (bmpY - bmpBorderSize) + "px";
+			rowRightNums.style.left = (bmpX + bmpW + axisPaddingMargin + bmpBorderSize) + "px";
+			rowRightNums.style.top = (bmpY - bmpBorderSize) + "px";
+			colTopNums.style.left = (bmpX - bmpBorderSize) + "px";
+			colTopNums.style.top = (bmpY - bmpBorderSize*2 - numberDigitH) + "px";
+			colBottomNums.style.left = (bmpX - bmpBorderSize) + "px";
+			colBottomNums.style.top = (bmpY + bmpH + bmpBorderSize + axisPaddingMargin + bmpBorderSize + butttonSz + bmpBorderSize) + "px";
+			rowLeftNums.innerHTML = ""; //clear all children
+			rowRightNums.innerHTML = ""; //clear all children
+			colTopNums.innerHTML = ""; //clear all children
+			colBottomNums.innerHTML = ""; //clear all children
+			
+			var thresholdNumberSpacing = 100; //once threshold is reached another number is shown
+			var numberLoc = []; //used to keep track of spacing
+			var oldNumberLoc = [-thresholdNumberSpacing,-thresholdNumberSpacing]; //used to keep track of spacing
+			var numberEl; 
+			var translatedRC;
+			
 			//outer box
 			bmpGridChildren[0].style.left = 0 + "px";
 			bmpGridChildren[0].style.top = 0 + "px";
@@ -2336,35 +2722,124 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			bmpGridChildren[0].style.height = (bmpH) + "px";
 			
 			//place rows
-			for(var i=0;i<rows-1;++i)
+			for(var i=0;i<rows;++i)
 			{
-				//dark
-				bmpGridChildren[1+i*2].style.left = bmpBorderSize + "px";
-				bmpGridChildren[1+i*2].style.top = ((i+1)*cellH + bmpBorderSize) + "px";
-				bmpGridChildren[1+i*2].style.width = (bmpW) + "px";
-				bmpGridChildren[1+i*2].style.height = (bmpGridThickness+bmpBorderSize*2) + "px";
+				if(i<rows-1)
+				{
+					//dark
+					bmpGridChildren[1+i*2].style.left = bmpBorderSize + "px";
+					bmpGridChildren[1+i*2].style.top = ((i+1)*cellH + bmpBorderSize) + "px";
+					bmpGridChildren[1+i*2].style.width = (bmpW) + "px";
+					bmpGridChildren[1+i*2].style.height = (bmpGridThickness+bmpBorderSize*2) + "px";
+	
+					//light
+					bmpGridChildren[1+i*2+1].style.left = 0 + "px";
+					bmpGridChildren[1+i*2+1].style.top = ((i+1)*cellH + bmpBorderSize*2) + "px";
+					bmpGridChildren[1+i*2+1].style.width = (bmpW + bmpBorderSize*2) + "px";
+					bmpGridChildren[1+i*2+1].style.height = (bmpGridThickness) + "px";
+				}
+				
+				//row button
+				allRowsChildren[i].style.left = 0 + "px";
+				allRowsChildren[i].style.top = (i*cellH - 1 + (i?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+				allRowsChildren[i].style.width = (butttonSz) + "px";
+				allRowsChildren[i].style.height = (cellH + 1 - (i?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+				
+				//numbers
+				{
+					numberLoc[0] =  (i*cellH - 1 + cellH/2 - numberDigitH/2 + (i?bmpGridThickness+bmpBorderSize*2:0));
+										
+					//rowLeft numbers
+					translatedRC = localConvertGridToRowCol(i,0);
+					if(numberLoc[0] - oldNumberLoc[0] >= thresholdNumberSpacing && 
+							translatedRC[0]%5 == 0)
+					{
+						//add a number
+						numberEl = document.createElement("div");
+						numberEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-number");
+						numberEl.innerHTML = translatedRC[0];
+						numberEl.style.top = numberLoc[0] + "px";
+						numberEl.style.width = axisPaddingExtra + "px";						
+						rowLeftNums.appendChild(numberEl);
+						oldNumberLoc[0] = numberLoc[0];
+					}
 
-				//light
-				bmpGridChildren[1+i*2+1].style.left = 0 + "px";
-				bmpGridChildren[1+i*2+1].style.top = ((i+1)*cellH + bmpBorderSize*2) + "px";
-				bmpGridChildren[1+i*2+1].style.width = (bmpW + bmpBorderSize*2) + "px";
-				bmpGridChildren[1+i*2+1].style.height = (bmpGridThickness) + "px";
+					//rowRight numbers
+					translatedRC = localConvertGridToRowCol(i,cols>1?1:0);
+					if(numberLoc[0] - oldNumberLoc[1] >= thresholdNumberSpacing && 
+							translatedRC[0]%5 == 0)
+					{
+						//add a number
+						numberEl = document.createElement("div");
+						numberEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-number");
+						numberEl.innerHTML = translatedRC[0];
+						numberEl.style.top = numberLoc[0] + "px";
+						numberEl.style.width = axisPaddingExtra + "px";						
+						rowRightNums.appendChild(numberEl);
+						oldNumberLoc[1] = numberLoc[0];
+					}
+				}
 			}
 			
+			oldNumberLoc = [-thresholdNumberSpacing,-thresholdNumberSpacing]; //reset, used to keep track of spacing
 			//place cols
-			for(var i=0;i<cols-1;++i)
+			for(var i=0;i<cols;++i)
 			{
-				//dark
-				bmpGridChildren[1+(rows-1)*2+i*2].style.top = bmpBorderSize + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2].style.left = ((i+1)*cellW + bmpBorderSize) + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2].style.height = (bmpH) + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2].style.width = (bmpGridThickness+bmpBorderSize*2) + "px";
+				if(i<cols-1)
+				{
+					//dark
+					bmpGridChildren[1+(rows-1)*2+i*2].style.top = bmpBorderSize + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2].style.left = ((i+1)*cellW + bmpBorderSize) + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2].style.height = (bmpH) + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2].style.width = (bmpGridThickness+bmpBorderSize*2) + "px";
+	
+					//light
+					bmpGridChildren[1+(rows-1)*2+i*2+1].style.top = 0 + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2+1].style.left = ((i+1)*cellW + bmpBorderSize*2) + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2+1].style.height = (bmpH + bmpBorderSize*2) + "px";
+					bmpGridChildren[1+(rows-1)*2+i*2+1].style.width = (bmpGridThickness) + "px";
+				}
+				
+				//row button
+				allColsChildren[i].style.left = (i*cellW - 1 + (i?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+				allColsChildren[i].style.top = 0 + "px";
+				allColsChildren[i].style.width = (cellW + 1 - (i?bmpGridThickness+bmpBorderSize*2:0)) + "px";
+				allColsChildren[i].style.height = (butttonSz) + "px";
+				
+				//numbers
+				{
+					numberLoc[0] =  (i*cellW + cellW/2 - axisPaddingExtra/2 + (i?bmpGridThickness+bmpBorderSize*2:0));
 
-				//light
-				bmpGridChildren[1+(rows-1)*2+i*2+1].style.top = 0 + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2+1].style.left = ((i+1)*cellW + bmpBorderSize*2) + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2+1].style.height = (bmpH + bmpBorderSize*2) + "px";
-				bmpGridChildren[1+(rows-1)*2+i*2+1].style.width = (bmpGridThickness) + "px";
+					//colTop numbers
+					translatedRC = localConvertGridToRowCol(0,i);
+					if(numberLoc[0] - oldNumberLoc[0] >= thresholdNumberSpacing && 
+							translatedRC[1]%5 == 0)
+					{
+						//add a number
+						numberEl = document.createElement("div");
+						numberEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-number");
+						numberEl.innerHTML = translatedRC[1];
+						numberEl.style.left = numberLoc[0] + "px";
+						numberEl.style.width = axisPaddingExtra + "px";						
+						colTopNums.appendChild(numberEl);
+						oldNumberLoc[0] = numberLoc[0];
+					}
+
+					//colBottom numbers
+					translatedRC = localConvertGridToRowCol(rows>1?1:0,i);
+					if(numberLoc[0] - oldNumberLoc[1] >= thresholdNumberSpacing && 
+							translatedRC[1]%5 == 0)
+					{
+						//add a number
+						numberEl = document.createElement("div");
+						numberEl.setAttribute("class", ConfigurationAPI._POP_UP_DIALOG_ID + "-bitmap-number");
+						numberEl.innerHTML = translatedRC[1];
+						numberEl.style.left = numberLoc[0] + "px";
+						numberEl.style.width = axisPaddingExtra + "px";						
+						colBottomNums.appendChild(numberEl);
+						oldNumberLoc[1] = numberLoc[0];
+					}
+				}
 			}
 		}
 		
@@ -2377,7 +2852,7 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//localOptimizeAspectRatio ~~
-	//	loinputs are cellW/cellH, bmpW/bmpH, rows/cols
+	//	inputs are cellW/cellH, bmpW/bmpH, rows/cols
 	//	
 	//	optimize aspect ratio for viewing window
 	//	hdr and bmp positions are known after this
@@ -2509,20 +2984,28 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin)
 //	
 //	Note: assumes a padding and border size if not specified
 //  Note: if w,h not specified then fills screen (minus margin)
-ConfigurationAPI.getOneBitPngData = function(r,g,b,a)
+//
+//	alpha is optional, will assume full 255 alpha
+ConfigurationAPI.getOnePixelPngData = function(rgba)
 {
-	var canvas = document.createElement("canvas");
-	canvas.width = 1;
-	canvas.height = 1;
-	var ctx = canvas.getContext("2d");		
-
-	var bmpOverlayData = ctx.createImageData(1,1);
-	bmpOverlayData.data[0]=r;
-	bmpOverlayData.data[1]=g;
-	bmpOverlayData.data[2]=b;
-	bmpOverlayData.data[3]=a;
-	ctx.putImageData(bmpOverlayData,0,0);
-	return canvas.toDataURL();
+	if(ConfigurationAPI.getOnePixelPngData.canvas ===  undefined)
+	{
+		//create only first time this functino is called
+		ConfigurationAPI.getOnePixelPngData.canvas = document.createElement("canvas");
+		ConfigurationAPI.getOnePixelPngData.canvas.width = 1;
+		ConfigurationAPI.getOnePixelPngData.canvas.height = 1;
+		ConfigurationAPI.getOnePixelPngData.ctx = ConfigurationAPI.getOnePixelPngData.canvas.getContext("2d");
+		ConfigurationAPI.getOnePixelPngData.bmpOverlayData = ConfigurationAPI.getOnePixelPngData.ctx.createImageData(1,1);
+	}	
+	
+	ConfigurationAPI.getOnePixelPngData.bmpOverlayData.data[0]=rgba[0];
+	ConfigurationAPI.getOnePixelPngData.bmpOverlayData.data[1]=rgba[1];
+	ConfigurationAPI.getOnePixelPngData.bmpOverlayData.data[2]=rgba[2];
+	ConfigurationAPI.getOnePixelPngData.bmpOverlayData.data[3]=rgba[3]!==undefined?rgba[3]:255;
+	
+	ConfigurationAPI.getOnePixelPngData.ctx.putImageData(
+			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
+	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
 }
 
 

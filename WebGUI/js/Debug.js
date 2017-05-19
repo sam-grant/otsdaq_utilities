@@ -166,6 +166,11 @@ Debug.errorPop = function(err,severity) {
 			
 			//add style for error to page HEAD tag			
 			var css = "";
+
+			//give undefined things monopsace type
+			css += "#" + Debug._errBoxId + " *" +
+					"{font-family: 'Inconsolata', monospace;" +
+					"}\n\n";
 			
 			//error close link style
 			css += "#" + Debug._errBoxId + " a" +
@@ -199,11 +204,19 @@ Debug.errorPop = function(err,severity) {
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err i" +
-					",#" + Debug._errBoxId + "-err b" + 
+					//",#" + Debug._errBoxId + "-err b" + 
 					",#" + Debug._errBoxId + "-err u" + 
 					",#" + Debug._errBoxId + "-err div" + 
 					"{" +					
 					"color: rgb(255,200,100); font-size: 18px;" +
+					"font-family: 'Comfortaa', arial;" +
+					"left: 8px, top: 8px; margin-right: 8px;" +
+					"text-align: left;" +
+					"}\n\n";
+			
+			css += "#" + Debug._errBoxId + "-err b" +
+					"{" +					
+					"color: rgb(255,225,200); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
 					"left: 8px, top: 8px; margin-right: 8px;" +
 					"text-align: left;" +
@@ -219,6 +232,8 @@ Debug.errorPop = function(err,severity) {
 			}
 
 			document.getElementsByTagName('head')[0].appendChild(style);
+			
+			window.addEventListener("resize",localResize);
 		}
 		Debug._errBox = el;	
 	}	
@@ -256,6 +271,7 @@ Debug.errorPop = function(err,severity) {
 	el.innerHTML = str;
 
 	//show the error box whereever the current scroll is
+	function localResize()
 	{
 		var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
 		var offY = document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -276,7 +292,8 @@ Debug.errorPop = function(err,severity) {
 		Debug._errBox.style.width = (w) + "px";
 		Debug._errBox.style.left = (offX + 8) + "px";
 		Debug._errBox.style.top = (offY + 8) + "px";
-	}
+	} localResize(); //localResize
+	
 	
 	Debug._errBox.style.display = "block";
 	

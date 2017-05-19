@@ -561,7 +561,7 @@
 				{
 					str += "<tr>";
 					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
-					str += _bitMap_bitMapFieldsArr[i] + ":";
+					str += _bitMapFieldsArr[i] + ":";
 					str += "</td>";
 					str += "<td>";
 					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
@@ -623,7 +623,7 @@
 				for(var c=0;c<colTypes.length;++c)
 				{
 					///// open row
-					str += "<tr>";
+					str += "<tr class='SubSystemTableRow'>";
 					
 					/////////////////////////////////
 					//+/- column row
@@ -741,7 +741,7 @@
 			else
 			{
 				//+/- column row
-				str += "<tr>";					
+				str += "<tr class='SubSystemTableRow'>";					
 				for(var c=0;c<colTypes.length;++c)
 				{
 					str += "<td>"
@@ -767,7 +767,7 @@
 				str += "</tr>";
 				
 				//type and data type row
-				str += "<tr>";	
+				str += "<tr class='SubSystemTableRow'>";	
 				for(var c=0;c<colTypes.length;++c)
 				{
 					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
@@ -783,7 +783,7 @@
 	
 				}
 				str += "</tr>";
-				str += "<tr>";
+				str += "<tr class='SubSystemTableRow'>";
 				for(var c=0;c<colHdrs.length;++c)
 				{
 					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
@@ -798,7 +798,7 @@
 				
 
 				//add data choices if type = FixedChoiceData
-				str += "<tr>";	
+				str += "<tr class='SubSystemTableRow'>";	
 				for(var c=0;c<colTypes.length;++c)
 				{
 					if(colTypes[c] != "FixedChoiceData" &&
@@ -928,7 +928,7 @@
 			
 			//if column is Author or Timestamp, don't allow select
 			var tableEl = document.getElementById("SubSystemTable");
-			var rows = tableEl.getElementsByTagName("tr");
+			var rows = tableEl.getElementsByClassName("SubSystemTableRow");//getElementsByTagName("tr");
 			var typeCell; //cols = []; //just need target column info, not all columns			
 			var colType;
 			
@@ -944,9 +944,12 @@
 						
 				//}
 				typeCell = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[_CONFIG_TYPE_ROW_OFFSET];
-				el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[r];
-				if(!el) //if failed try header cells
-					el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("th")[r];
+				if(r == 2) //use header cells
+					el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("th")[0];
+				else if(r > 2) //special row
+					el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[2];
+				else //r < 2
+					el = rows[_CONFIG_DATA_COL_OFFSET+c].getElementsByTagName("td")[r];
 			}
 			else
 			{
@@ -963,7 +966,11 @@
 					colType == "Timestamp"|| 
 					colType == "Comment" )//|| 
 					//(r == _CONFIG_TYPE_ROW_OFFSET && colType == "UID"))
+			{
+				Debug.log("This cell is fixed. Users can not edit cells of type '" +
+						colType + ".'",Debug.WARN_PRIORITY)
 				return false;
+			}
 			
 			
 			_editingCell = true;
