@@ -17,10 +17,12 @@
 		
 		a {
 			color: rgb(44, 44, 187);
+			text-decoration: underline;
+			cursor: pointer;
 		}
 		
 		a:hover {
-			pointer: cursor;
+			text-decoration: underline;
 		}
 		
 		#display {

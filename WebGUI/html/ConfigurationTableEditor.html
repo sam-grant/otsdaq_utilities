@@ -5,6 +5,7 @@
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
 	
 	<style type="text/css">		
 	
@@ -42,6 +43,15 @@
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 		
+		#popUpDialog {
+			position: absolute;
+			z-index: 1000;    
+			border: 1px solid #770000;
+			background-color: #efeaea;
+			text-align: center;
+			padding: 10px;
+		}
+		
 	</style>
 	
 	
@@ -49,6 +59,7 @@
 	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 	<script>		
 		
@@ -136,6 +147,9 @@
 		
 			//addFixedChoice(c)
 			//deleteSelectedFixedChoice(c)
+			//downloadFixedChoices(c)
+			//popUpUploadFixedChoicesForm(c)
+			//uploadFixedChoices(c)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -663,6 +677,140 @@
 				str += "</td>";
 
 			}
+
+			//:::::
+			function localInsertAddDeleteCell(c)
+			{
+				str += "<td>";					
+				//show +/- columns where possible to add/delete
+				if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
+				{
+					str += " <a href='javascript:addColumn(" + c + ");'>";
+					str += "+";
+					str += "</a>";
+
+					if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
+					{
+						str += "/<a href='javascript:deleteColumn(" + c + ");'>";
+						str += "-";
+						str += "</a>";
+					}
+				}
+				str += "</td>";
+			}
+
+			//:::::
+			function localInsertTypeCell(c)
+			{
+				str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
+						c + ",this,event);' style='width:100px'>";
+				str += "<div style='font-size:12px' title='";		
+				str += colTypes[c];
+				str += " &#60;" + colDataTypes[c] + "&#62;";
+				str += "'>";
+				str += colTypes[c];
+				str += "<br>&#60;" + colDataTypes[c] + "&#62;";
+				str += "</div>";
+				str += "</td>";	
+			}
+			
+			//:::::
+			function localInsertColumnNameCell(c)
+			{
+				str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
+						c + ",this,event);'>";
+				str += colHdrs[c];
+				str += "</th>";
+			}
+			
+			//:::::
+			function localInsertTypeParameters(c)
+			{
+				//add data choices if type = FixedChoiceData
+				//add bitmap info fields if type = BitMap
+				if(colTypes[c] != "FixedChoiceData" && 
+						colTypes[c] != "BitMap") 
+				{
+					str += "<td style='border:0; background-color:transparent;'></td>";
+				}
+				else if(colTypes[c] == "BitMap")
+				{
+					localDisplayPixelMaskInputs();
+				}
+				else	//if(colTypes[c] == "FixedChoiceData")
+				{
+					Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
+					str += "<td>";
+
+					str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
+					str += "<tr><td>";
+					str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"setCaretPosition(this,0,this.value.length);' " +
+							"style='width:150px' />";
+					str += "</td><td style='white-space:nowrap' >";
+					str += "<a class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
+							"title='Add text as a new fixed choice option for this column.\"'" +
+							">";
+					str += "+";
+					str += "</a>";
+					str += "</td></tr>";
+
+
+					str += "<tr><td>";
+
+					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+					var colChoicesArr = colChoices[c].split(',');
+
+					//always show default first
+					str += "<option>" +
+							decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
+							"</option>";					
+
+					for(var f=0;f<colChoicesArr.length;++f)	
+						if(colChoicesArr[f] == "") continue; //skip empty values
+						else
+							str += "<option>" +
+							decodeURIComponent(colChoicesArr[f]) +
+							"</option>";		
+
+					str += "</select>";
+
+					str += "</td><td>";
+					str += 
+							"<div class='treeNode-deleteIcon' " + 
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();" +
+							"deleteSelectedFixedChoice(" + c + ");' " +
+							"title='Delete the currently selected choice for this column.' " +
+							"></div>";
+
+					
+
+					str += "</td></tr>";
+					str += "</table>";
+					
+					str += "<br>";
+					str += "<center>";
+					str += "<a onclick='downloadFixedChoices(" + c + "); return false;' " +
+							"title='Dowload choices as CSV data file.\"'" +
+							">";
+					str += "Download";
+					str += "</a>";
+					str += "&nbsp;&nbsp;&nbsp;";
+
+					str += "<a onclick='popUpUploadFixedChoicesForm(" + c + "); return false;' " +
+							"title='Upload choices as CSV data file.\"'" +
+							">";
+					str += "Upload";
+					str += "</a>";
+					str += "</center>";
+										
+					str += "</td>";			
+
+				}
+			}
 			
 			if(_tableIsTransposed)
 			{
@@ -673,113 +821,20 @@
 					str += "<tr class='SubSystemTableRow'>";
 					
 					/////////////////////////////////
-					//+/- column row
-					str += "<td>";					
-					//show +/- columns where possible to add/delete
-					if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
-					{
-						str += " <a href='javascript:addColumn(" + c + ");'>";
-						str += "+";
-						str += "</a>";
-
-						if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
-						{
-							str += "/<a href='javascript:deleteColumn(" + c + ");'>";
-							str += "-";
-							str += "</a>";
-						}
-					}
-					str += "</td>";	
+					//+/- column links
+					localInsertAddDeleteCell(c);
 					
 					/////////////////////////////////
 					//type and data type row
-					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
-							c + ",this,event);' style='width:100px'>";
-					str += "<div style='font-size:12px' title='";		
-					str += colTypes[c];
-					str += " &#60;" + colDataTypes[c] + "&#62;";
-					str += "'>";
-					str += colTypes[c];
-					str += "<br>&#60;" + colDataTypes[c] + "&#62;";
-					str += "</div>";
-					str += "</td>";	
-
+					localInsertTypeCell(c);
+					
 					/////////////////////////////////
 					//col name type row
-					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
-							c + ",this,event);'>";
-					str += colHdrs[c];
-					str += "</th>";
-					
+					localInsertColumnNameCell(c);
 
 					/////////////////////////////////
-					//add data choices if type = FixedChoiceData
-					//add bitmap info fields if type = BitMap
-					if(colTypes[c] != "FixedChoiceData" && 
-							colTypes[c] != "BitMap") 
-					{
-						str += "<td style='border:0; background-color:transparent;'></td>";
-					}
-					else if(colTypes[c] == "BitMap")
-					{
-						localDisplayPixelMaskInputs();
-					}
-					else
-					{
-						Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
-						str += "<td>";
-
-						str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
-						str += "<tr><td>";
-						str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
-								"onmouseup='event.stopPropagation();' " +
-								"onclick='event.stopPropagation();" +
-								"setCaretPosition(this,0,this.value.length);' " +
-								"style='width:150px' />";
-						str += "</td><td style='white-space:nowrap' >";
-						str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
-								"title='Add text as a new fixed choice option for this column.\"'" +
-								">";
-						str += "+";
-						str += "</a>";
-						str += "</td></tr>";
-
-
-						str += "<tr><td>";
-
-						str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
-						var colChoicesArr = colChoices[c].split(',');
-						
-						//always show default first
-						str += "<option>" +
-						decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
-						"</option>";					
-						
-						for(var f=0;f<colChoicesArr.length;++f)	
-							if(colChoicesArr[f] == "") continue; //skip empty values
-							else
-								str += "<option>" +
-									decodeURIComponent(colChoicesArr[f]) +
-									"</option>";		
-						
-						str += "</select>";
-
-						str += "</td><td>";
-						str += 
-								"<div class='treeNode-deleteIcon' " + 
-								"onmouseup='event.stopPropagation();' " +
-								"onclick='event.stopPropagation();" +
-								"deleteSelectedFixedChoice(" + c + ");' " +
-								"title='Delete the currently selected choice for this column.' " +
-								"></div>";
-
-
-						str += "</td></tr>";
-						str += "</table>";
-
-						str += "</td>";			
-
-					}
+					//col parameters
+					localInsertTypeParameters(c);
 					
 					///// close row
 					str += "</tr>";
@@ -791,25 +846,9 @@
 				str += "<tr class='SubSystemTableRow'>";					
 				for(var c=0;c<colTypes.length;++c)
 				{
-					str += "<td>"
-							
-					//show +/- columns where possible to add/delete
-					if(c <= colTypes.length - _CONFIG_FIXED_CELLS)					
-					{
-						str += " <a href='javascript:addColumn(" + c + ");'>";
-						str += "+";
-						str += "</a>";
-	
-						if(c < colTypes.length - _CONFIG_FIXED_CELLS && colTypes[c] != "UID")
-						{
-							str += "/<a href='javascript:deleteColumn(" + c + ");'>";
-							str += "-";
-							str += "</a>";
-						}
-					}
-	
-					str += "</td>";					
-	
+					/////////////////////////////////
+					//+/- column links
+					localInsertAddDeleteCell(c);
 				}
 				str += "</tr>";
 				
@@ -817,101 +856,28 @@
 				str += "<tr class='SubSystemTableRow'>";	
 				for(var c=0;c<colTypes.length;++c)
 				{
-					str += "<td onmouseup='selectThisCell(" + _CONFIG_TYPE_ROW_OFFSET + "," +
-							c + ",this,event);'>";
-					str += "<div style='font-size:12px' title='";		
-					str += colTypes[c];
-					str += " &#60;" + colDataTypes[c] + "&#62;";
-					str += "'>";
-					str += colTypes[c];
-					str += "<br>&#60;" + colDataTypes[c] + "&#62;";
-					str += "</div>";
-					str += "</td>";			
-	
+					/////////////////////////////////
+					//type and data type row
+					localInsertTypeCell(c)		
 				}
+				
 				str += "</tr>";
 				str += "<tr class='SubSystemTableRow'>";
 				for(var c=0;c<colHdrs.length;++c)
 				{
-					str += "<th onmouseup='selectThisCell(" + (_CONFIG_TYPE_ROW_OFFSET+1) + "," +
-							c + ",this,event);'>";
-					str += colHdrs[c];
-					str += "</th>";					
-	
+					/////////////////////////////////
+					//col name type row
+					localInsertColumnNameCell(c);	
 				}
-				str += "</tr>";
-				
-				
-				
+				str += "</tr>";							
 
 				//add data choices if type = FixedChoiceData
 				str += "<tr class='SubSystemTableRow'>";	
 				for(var c=0;c<colTypes.length;++c)
 				{
-					if(colTypes[c] != "FixedChoiceData" &&
-							colTypes[c] != "BitMap") 
-					{
-						str += "<td style='border:0; background-color:transparent;'></td>";
-						continue;
-					}
-					else if(colTypes[c] == "BitMap")
-					{
-						localDisplayPixelMaskInputs();
-					}
-					else //FixedChoiceData
-					{
-						Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
-						str += "<td>";
-						
-						str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
-						str += "<tr><td>";
-						str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
-								"onmouseup='event.stopPropagation();' " +
-								"onclick='event.stopPropagation();" +
-								"setCaretPosition(this,0,this.value.length);' " +
-								"style='width:150px' />";
-						str += "</td><td style='white-space:nowrap' >";
-						str += "<a href='#' class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
-								"title='Add text as a new fixed choice option for this column.\"'" +
-								">";
-						str += "+";
-						str += "</a>";
-						str += "</td></tr>";
-						
-						
-						str += "<tr><td>";
-	
-						str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
-	
-						//always show default first
-						str += "<option>" +
-								decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
-								"</option>";	
-						
-						var colChoicesArr = colChoices[c].split(',');
-						for(var f=0;f<colChoicesArr.length;++f)
-							if(colChoicesArr[f] == "") continue; //skip empty values
-							else
-								str += "<option>" +
-									decodeURIComponent(colChoicesArr[f]) +
-									"</option>";					
-						str += "</select>";
-						
-						str += "</td><td>";
-						str += 
-								"<div class='treeNode-deleteIcon' " + 
-								"onmouseup='event.stopPropagation();' " +
-								"onclick='event.stopPropagation();" +
-								"deleteSelectedFixedChoice(" + c + ");' " +
-								"title='Delete the currently selected choice for this column.' " +
-								"></div>";
-						
-	
-						str += "</td></tr>";
-						str += "</table>";
-						
-						str += "</td>";		
-					}	
+					/////////////////////////////////
+					//col parameters
+					localInsertTypeParameters(c);
 				}
 				str += "</tr>";
 			}
@@ -1495,7 +1461,7 @@
 						
 		}
 		
-		//addFixedChoice
+		//addFixedChoice ~~
 		//	for column c
 		function addFixedChoice(c)
 		{
@@ -1548,7 +1514,7 @@
 					Debug.INFO_PRIORITY);
 		}
 		
-		//deleteSelectedFixedChoice
+		//deleteSelectedFixedChoice ~~
 		//	for column c
 		function deleteSelectedFixedChoice(c)
 		{
@@ -1632,6 +1598,144 @@
 			Debug.log("Value '" + decodeURIComponent(val) + 
 					"' was successfully removed from the fixed choice options for column '" + 
 					_colHdrArr[c] + "'",
+					Debug.INFO_PRIORITY);
+		}
+		
+
+		//downloadFixedChoices ~~
+		//	for column c
+		//
+		// online people complain that this doesn't work for big files.
+		// Note: if files are too big, could have server create csv file
+		//	then link to <a href='/WebPath/download.csv' download></a>
+		//	Note: href must be  encodeURI(dataStr) if data not already encoded
+		function downloadFixedChoices(c)
+		{
+			editCellOK(); //editCellCancel();
+			Debug.log("TableEditor downloadFixedChoices ");
+			
+			var configName = document.getElementById("SaveAsConfigName").value;
+
+			var colChoicesArr = _colChoicesArr[c].split(',');
+			
+			//create CSV data string from html table
+			var dataStr = "data:text/csv;charset=utf-8,";
+			for(var i=0;i<colChoicesArr.length;++i)
+			{
+				if(i)
+					dataStr += encodeURI("\n"); //encoded \n //each choice is a column
+				dataStr += colChoicesArr[i];
+			}
+			
+			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
+
+			
+			var link = document.createElement("a");
+			link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+			link.setAttribute("style", "display:none");
+			link.setAttribute("download", configName + "_" + 
+					_colHdrArr[c] + "_fixedChoices_download.csv");
+			document.body.appendChild(link); // Required for FF
+
+			link.click(); // This will download the data file named "my_data.csv"
+
+			link.parentNode.removeChild(link);
+		}
+
+		//popUpUploadFixedChoicesForm ~~
+		//	for column c
+		var _dataUploadStr;
+		function popUpUploadFixedChoicesForm(c)
+		{			
+			Debug.log("ConfigurationAPI.bitMapDialog.locaPopupUploadCSV");	
+			_dataUploadStr = ""; //clear previous upload
+
+			var str = "";
+
+			var pel = document.getElementById("popUpDialog");
+			if(!pel)
+			{
+				pel = document.createElement("div");			
+				pel.setAttribute("id", "popUpDialog");
+			}
+			pel.style.display = "none";
+
+			//set position and size
+			var w = 380;
+			var h = 195;
+			ConfigurationAPI.setPopUpPosition(pel,w /*w*/,h /*h*/);
+			
+			var str = "<a id='" + 
+					"popUpDialog" + //clear upload string on cancel!
+					"-header' onclick='javascript:_dataUploadStr = \"\"; var pel = document.getElementById(" +
+					"\"popUpDialog\"); if(pel) pel.parentNode.removeChild(pel); return false;'>Cancel</a><br><br>";
+
+			str += "<div id='popUpDialog-div'>";	
+
+			str += "Please choose a properly formatted CSV data file (i.e. fixed choices, in one column, separated by new lines) " +
+					"to upload:<br><br>";
+
+			str += "<center>";
+
+			str += "<input type='file' id='popUpDialog-fileUpload' " + 
+					"accept='.csv' enctype='multipart/form-data' />";			
+		
+			// done with special handling
+			// continue with pop-up prompt
+			str += "</center></div><br><br>"; //close main popup div
+
+			var onmouseupJS = "";
+			onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+			onmouseupJS += "uploadFixedChoices(" + c + ");";			
+
+			str += "<input id='popUpDialog-submitButton' disabled type='button' onmouseup='" + 
+					onmouseupJS + "' " +
+					"value='Upload File' title='" +
+					"Upload the chosen file to replace the row,col data in the current bitmap." +					
+					"'/>";
+
+			pel.innerHTML = str;
+			document.body.appendChild(pel); //add element to body
+			pel.style.display = "block";
+
+			document.getElementById('popUpDialog-fileUpload').addEventListener(
+					'change', function(evt) {
+				var files = evt.target.files;
+				var file = files[0];           
+				var reader = new FileReader();
+				reader.onload = function() {
+					//store uploaded file and enable button
+					_dataUploadStr = this.result;
+					Debug.log("_dataUploadStr = " + _dataUploadStr);							
+					document.getElementById('popUpDialog-submitButton').disabled = false;
+				}
+				reader.readAsText(file);
+			}, false);
+		
+		}
+		
+		//uploadFixedChoices ~~
+		//	for column c
+		function uploadFixedChoices(c)
+		{
+			Debug.log("uploadFixedChoices _dataUploadStr = " + _dataUploadStr);
+			var src = _dataUploadStr.split('\n');
+			console.log(src);
+			
+			_colChoicesArr[c] = ""; //clear
+
+			for(var i=0;i<src.length;++i)
+			{				
+				if(i) _colChoicesArr[c]	+= ",";
+				_colChoicesArr[c] += encodeURIComponent(src[i]);
+			}
+			setupTable();
+
+			//on succes remove popup
+			el = document.getElementById("popUpDialog"); 
+			if(el) el.parentNode.removeChild(el);
+			
+			Debug.log("Fixed choices were successfully uploaded!",
 					Debug.INFO_PRIORITY);
 		}
 		
