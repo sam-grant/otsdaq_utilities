@@ -201,6 +201,7 @@ DesktopContent.init = function() {
 	window.onscroll = DesktopContent.handleScroll;
 	window.onblur = DesktopContent.handleBlur;	
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
+	window.focus();	//before this fix, full screen in new tab would not give window focus
 
 	DesktopContent._serverUrnLid = ((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')

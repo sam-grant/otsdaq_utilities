@@ -486,7 +486,7 @@ Desktop.createDesktop = function(security) {
 		//setForeWindow ~~~
 		//	handle bringing window to front
 	this.setForeWindow = function(win) {
-		
+		//Debug.log("setForeWindow");
 		//resort by z and renumber - windows with Z out of range of array are due to iframe onFocus solution			
         var tmp;
         for(var i=0;i<_windows.length-1;++i) {        	
@@ -710,13 +710,16 @@ Desktop.createDesktop = function(security) {
 
 			//set to fore window and full screen
 			 
-			Desktop.desktop.setForeWindow(newWin); 
-			Desktop.desktop.toggleFullScreen();
 			Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
+			
+	    	//delay the setting of the fore window and fullscreen
+			//	so that the window exists before changing it
+			setTimeout(function(){
+				Desktop.desktop.setForeWindow(newWin);
+				Desktop.desktop.toggleFullScreen();
+			}, 200);
 
-			//var str = "requestingWindowId=" + requestingWindowId;
-			//str += "&done=1";
-			//Changed by RAR.. since no window is listening for done when a new desktop begins			
+			//clear mailbox string since no window is listening for done when a new desktop begins			
 			_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
 	}

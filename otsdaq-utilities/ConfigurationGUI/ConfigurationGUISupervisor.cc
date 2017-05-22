@@ -53,7 +53,7 @@ throw (xdaq::exception::Exception)
 	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 
 
-	return;
+	//return;
 
 	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 	__MOUT__ << "To prove the concept..." << std::endl;
@@ -613,7 +613,7 @@ throw (xgi::exception::Exception)
 		std::string 	targetTableVersion 	= CgiDataUtilities::getData(cgi,"targetTableVersion");
 		std::string 	targetUID 			= CgiDataUtilities::getData(cgi,"targetUID");
 		std::string 	targetColumn 		= CgiDataUtilities::getData(cgi,"targetColumn");
-		std::string 	newValue 			= CgiDataUtilities::getData(cgi,"newValue");
+		std::string 	newValue 			= CgiDataUtilities::postData(cgi,"newValue");
 
 		__MOUT__ << "editNodeType: " << editNodeType << std::endl;
 		__MOUT__ << "targetTable: " << targetTable << std::endl;
@@ -1620,9 +1620,12 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
 		parentEl = xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
 
-		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA)
+		//fixed choice and bitmap both use fixed choices strings
+		//	so output them to xml
+		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
+				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			__MOUT__ << ViewColumnInfo::TYPE_FIXED_CHOICE_DATA << std::endl;
+			__MOUT__ << t.getValueType() << std::endl;
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto &choice:choices)
 				xmldoc.addTextElementToParent("fixedChoice", choice, parentEl);
@@ -1875,7 +1878,8 @@ try
 			type == "link-GroupID" ||
 			type == "value" ||
 			type == "value-groupid" ||
-			type == "value-bool")
+			type == "value-bool"||
+			type == "value-bitmap")
 		col = config->getView().findCol(colName);
 	else if(
 			type == "table" ||
@@ -1988,7 +1992,8 @@ try
 		else if(type == "uid" ||
 				type == "value" ||
 				type == "value-groupid" ||
-				type == "value-bool")
+				type == "value-bool" ||
+				type == "value-bitmap")
 		{
 			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
 			if(!cfgView->setURIEncodedValue(newValue,row,col))
@@ -4161,9 +4166,9 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
 	//
-	//	ConfigurationManagerRW cfgMgrInst("ExampleUser");
+		ConfigurationManagerRW cfgMgrInst("ExampleUser");
 	//	//
-	//	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+		ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
 	//	//
 	//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
@@ -4178,7 +4183,7 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//			__MOUT__ << "\t\t" << v << std::endl;
 	//		}
 	//	}
-	//	cfgMgr->testXDAQContext();
+	cfgMgr->testXDAQContext();
 
 
 

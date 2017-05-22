@@ -84,7 +84,30 @@
 								"Mid-value Cell Color",
 								"Max-value Cell Color",
 								"Absolute Min-value Cell Color",
-								"Absolute Max-value Cell Color"];
+								"Absolute Max-value Cell Color",
+								"Display Rows in Ascending Order",
+								"Display Columns in Ascending Order",
+								"Snake Double Rows",
+								"Snake Double Columns"];
+		var _bitMapFieldTypesArr = [ //types => 0:string, 1:bool (default no), 
+									 	 //2:bool (default yes), 3:color 
+									 0,//"Number of Rows",
+									 0,//"Number of Columns",
+									 0,//"Cell Bit-field Size",
+									 0,//"Min-value Allowed",
+									 0,//"Max-value Allowed",
+									 0,//"Value step-size Allowed",
+									 0,//"Display Aspect H:W",
+									 3,//"Min-value Cell Color",
+									 3,//"Mid-value Cell Color",
+									 3,//"Max-value Cell Color",
+									 3,//"Absolute Min-value Cell Color",
+									 3,//"Absolute Max-value Cell Color",
+									 1,//"Display Rows in Ascending Order",
+									 2,//"Display Columns in Ascending Order",
+									 1,//"Snake Double Rows",
+									 1];//"Snake Double Columns"];
+
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -328,7 +351,7 @@
 				{
 					Debug.log("BitMap saving " + i);					
 					//extract fields into col choice array
-					for(var j=0;j<11;++j) //11 fields
+					for(var j=0;j<_bitMapFieldsArr.length;++j) 
 					{
 						var el = document.getElementById("bitmapFieldInput-" + i + "-" + j);
 						if(j) colChoicesData += ",";
@@ -556,25 +579,65 @@
 					else
 						bitMapFieldValues.push(decodeURIComponent(colChoicesArr[f]));	
 
-				str += "<table style='float:right;'>";
-				for(var i=0;i<3;++i)
-				{
+				function localAddBitmapFieldInput(i) {
 					str += "<tr>";
 					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
 					str += _bitMapFieldsArr[i] + ":";
 					str += "</td>";
 					str += "<td>";
-					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
-							"' value='" + 
-							(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
-							"' " +
-							"onmouseup='event.stopPropagation();' " +
-							"onclick='event.stopPropagation();" +
-							"setCaretPosition(this,0,this.value.length);' " +
-							"style='width:150px' />";
+					
+					if(_bitMapFieldTypesArr[i] == 0) //string
+					{
+						str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
+								"' value='" + 
+								(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
+								"' " +
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"setCaretPosition(this,0,this.value.length);' " +
+								"style='width:150px' />";
+					}
+					else if(_bitMapFieldTypesArr[i] == 1 || 
+							_bitMapFieldTypesArr[i] == 2) //bool yes/no
+					{
+						var boolVals = ["No","Yes"];
+						str += "<select " +
+								"style='margin:0;' id='bitmapFieldInput-" + c + "-" + i + 
+								"'>";
+						for(var b=0;b<boolVals.length;++b)
+						{			
+							str += "<option value='" + boolVals[b] + "' ";
+							
+							if(boolVals[b] == 
+									(i<bitMapFieldValues.length?
+											bitMapFieldValues[i]:
+											(_bitMapFieldTypesArr[i]==2?"Yes":"No")))
+								str += "selected";									
+							str += " >";
+							str += boolVals[b];	//can display however
+							str += "</option>";					
+						}			
+						str += "</select>";
+					}
+					else if(_bitMapFieldTypesArr[i] == 3) //color, (FIXME make color selector) string for now
+					{
+						str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
+								"' value='" + 
+								(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
+								"' " +
+								"onmouseup='event.stopPropagation();' " +
+								"onclick='event.stopPropagation();" +
+								"setCaretPosition(this,0,this.value.length);' " +
+								"style='width:150px' />";
+					}
 					str += "</td>";							
 					str += "</tr>";
 				}
+				
+				str += "<table style='float:right;'>";
+				for(var i=0;i<3;++i)
+					localAddBitmapFieldInput(i);
+				
 				str += "</table>";
 				
 				str += "<div id='clearDiv'></div>";
@@ -594,23 +657,7 @@
 				
 				str += "<table id='bitmapFieldInput-optional' style='display:none' style='float:right;'>";
 				for(var i=3;i<_bitMapFieldsArr.length;++i)
-				{
-					str += "<tr>";
-					str += "<td style='white-space:nowrap; text-align:right; margin-right:5px;'>";
-					str += _bitMapFieldsArr[i] + ":";
-					str += "</td>";
-					str += "<td>";
-					str += "<input type='text' id='bitmapFieldInput-" + c + "-" + i + 
-							"' value='" + 
-							(i<bitMapFieldValues.length?bitMapFieldValues[i]:"DEFAULT") +
-							"' " +
-							"onmouseup='event.stopPropagation();' " +
-							"onclick='event.stopPropagation();" +
-							"setCaretPosition(this,0,this.value.length);' " +
-							"style='width:150px' />";
-					str += "</td>";							
-					str += "</tr>";
-				}
+					localAddBitmapFieldInput(i);
 				str += "</table>";
 
 				str += "</td>";
