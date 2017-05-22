@@ -13,13 +13,32 @@
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 	<style type="text/css">			
-	
+		
+		body {
+			overflow: hidden; /* scrolling only happens in left and right panes */
+		}
 
 		/* make buttons have a hand cursor */
 		input[type="button"], button {
 			cursor: pointer;
 		}
 		
+		.pane {
+			border: 0;
+			background-color: red;
+			position: absolute;
+		}
+
+		#topPane {
+			overflow: hidden;
+		}
+		#leftPane {
+			overflow-x: hidden;
+			overflow-y: scroll;
+		}
+		#rightPane {
+			overflow: auto;
+		}
 		
 	</style>
 	
@@ -42,8 +61,8 @@
 		//		<filterFieldList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
 		//									- this is like a pre-filter (filter on records UID that user can not control)	
 		//	- Requires user to have LOCK
-		//	
-		//	- Split window into two panes: Left and Right; Left is fixed width and hideable.	
+		//	- Top pane for header info (e.g. subsetBasePath)
+		//	- Split remaining window into two panes: Left and Right; Left is fixed width and hideable.	
 		//	
 		//	- Left Pane:
 		//		* Fixed width, vertical auto scroll, hideable.
@@ -73,6 +92,9 @@
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
 		
 		
+		var _leftPane, _rightPane, _topPane;
+		var _leftPaneHidden = false;
+		
 	
 		
 	
@@ -81,14 +103,17 @@
 	
 		//functions:			
 			//init()
-			
+			//paint() 
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 				
-		
-		//init called once body has loaded
-		function init() {			
+
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{			
 						
 			Debug.log("CfgGUI_sebset init ");
 			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
@@ -100,6 +125,11 @@
 					"\n\t- 'Left Pane' is for selecting one or many records to target." +
 					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
 			);
+
+			paint();
+			window.addEventListener("resize",paint);
+			
+			return;
 			
 			//extract get parameters
 			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
@@ -232,7 +262,68 @@
 			}
 		} //end init()
 		
-		
+		//=====================================================================================
+		//paint ~~
+		//	positiong left and right panes based on window size
+		function paint() 
+		{	
+			var w = DesktopContent.getWindowWidth();
+			var h = DesktopContent.getWindowHeight();
+			Debug.log("paint w,h=" + w + "," +h);
+			
+			if(!_leftPane && !_rightPane && !_topPane)
+			{
+				//first time create elements
+				_leftPane = document.createElement("div");
+				_leftPane.setAttribute("class", "pane");
+				_leftPane.setAttribute("id", "leftPane");
+				_rightPane = document.createElement("div");
+				_rightPane.setAttribute("class", "pane");
+				_rightPane.setAttribute("id", "rightPane");
+				_topPane = document.createElement("div");
+				_topPane.setAttribute("class", "pane");
+				_topPane.setAttribute("id", "_topPane");
+				document.body.appendChild(_leftPane);
+				document.body.appendChild(_rightPane);
+				document.body.appendChild(_topPane);
+			}
+
+			var TOP_H = 50;
+			var LEFT_W = 200;
+			var BORDER_SZ = 0;			
+			var MARGIN = 5;
+			
+			var y = MARGIN;
+			var x = MARGIN;
+			w -= 2*MARGIN;
+			h -= 2*MARGIN;
+			
+			_topPane.style.left = x + "px";
+			_topPane.style.top = y + "px";
+			_topPane.style.width = (w - 2*BORDER_SZ) + "px";
+			_topPane.style.height = (TOP_H - 2*BORDER_SZ) + "px";
+			
+			y += TOP_H + MARGIN;
+			h -= TOP_H + MARGIN;
+
+			if(!_leftPaneHidden)
+			{
+				_leftPane.style.left = MARGIN + "px";
+				_leftPane.style.top = y + "px";
+				_leftPane.style.width = (LEFT_W-2*BORDER_SZ) + "px";
+				_leftPane.style.height = (h - 2*BORDER_SZ) + "px";
+	
+				x += LEFT_W + MARGIN;
+				w -= LEFT_W + MARGIN;
+			}
+
+			_rightPane.style.left = x + "px";
+			_rightPane.style.top = y + "px";
+			_rightPane.style.width = (w - 2*BORDER_SZ) + "px";
+			_rightPane.style.height = (h - 2*BORDER_SZ) + "px";
+			
+			
+		}	//end paint()
 		
 		</script>
 </head>
@@ -240,9 +331,7 @@
 
 <body onload='Javascript:init();'>	
 		
-	<h1>Configuration GUI Subset</h1>
-		
-	
+	<!-- body content populated by javascript paint(), etc. -->
 	
 </body>
 	

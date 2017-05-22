@@ -870,7 +870,7 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", this.checked);" + "'>";
 				str += " ";
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"" +
 						"DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
 						id + "\");" +
@@ -895,7 +895,7 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", this.checked,1);" + "'>";
 				str += " ";
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"" +
 						"DesktopContent-tooltip-SetNeverShowCheckbox-hour-" +
 						id + "\");" +
@@ -933,7 +933,7 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", this.checked);" + "'>";
 				str += " ";
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"" +
 						"DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
 						id + "\");" +

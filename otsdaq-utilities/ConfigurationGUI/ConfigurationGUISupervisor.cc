@@ -53,7 +53,7 @@ throw (xdaq::exception::Exception)
 	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 
 
-	//return;
+	return;
 
 	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
 	__MOUT__ << "To prove the concept..." << std::endl;
