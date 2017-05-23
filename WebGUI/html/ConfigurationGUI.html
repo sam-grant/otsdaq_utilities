@@ -3665,7 +3665,13 @@
 				if(allNodes[i].offsetParent === null) continue;
 				
 				paramSplit = allNodes[i].id.split('-');
-				params.push([paramSplit[2],paramSplit[3]]);						
+				params.push([paramSplit[2],paramSplit[3]]);	
+				
+				//if not expanded then skip
+				if(document.getElementById("treeNode-ChildrenOf-" + paramSplit[2] +
+						"-" + paramSplit[3]).style.display != "block") continue;
+				
+				
 						//allNodes[i].onmouseup.toString().split("(")[2].split(")")[0].split(","));
 				if((params[params.length-1][0]|0) > deepestDepth)
 				{
