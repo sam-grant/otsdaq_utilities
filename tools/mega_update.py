@@ -5,7 +5,7 @@ import subprocess
 artdaqDemoVersion = "s41-e10 prof";
 
 try:
-	os.path.isdir(os.environ['Products']);
+	os.path.isdir(os.environ['ProductsDir']);
 except KeyError:
 	print "Products variable not set";
 	exit(1);
@@ -13,7 +13,7 @@ except KeyError:
 ########################################################################
 #get pull products
 ########################################################################
-cmd=os.environ['Products'];
+cmd=os.environ['ProductsDir'];
 print cmd
 os.chdir(cmd);
 
@@ -64,7 +64,7 @@ elif "el7" in operatingSystem:
 	xerces_os = "sl7"
 
 
-cmd='cd $Products';
+cmd='cd $ProductsDir';
 print cmd
 os.system(cmd)
 
