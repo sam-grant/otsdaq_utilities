@@ -1249,13 +1249,15 @@
 //														 _altStateGrid[baser+i][basec+j]]);
             				mind = d;
             				mini = i;
-            				minj = j
+            				minj = j;
             			}
             				
             			
             		}
             	            	
             	//Debug.log("MINi,j " + (baser+mini) + "," + (basec+minj));
+            	
+            	if(mini == undefined || minj == undefined) return -1;
             	
             	//search curr transitions for one pointing to that state             	
             	for(var i=0;i<_currStateTransArr.length;++i)
@@ -1553,6 +1555,7 @@
         						//determine if this transition is selected by mouse        						
         						isSelected = (_currState == _altStateGrid[r][c] &&
         								_selectedTransition != -1 &&
+										_currStateTransArr[_selectedTransition] && 
         								_transitions[i][1] == 
         										_transitions[_currStateTransArr[_selectedTransition]][1]);        						
 
