@@ -658,7 +658,12 @@ Desktop.createDesktop = function(security) {
 		
 		////if not logged in -- attempt to fix it
 		if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
+		{
 			Desktop.desktop.login.setupLogin();
+			
+			window.clearInterval(Desktop.desktop.checkMailboxTimer);
+			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		}
 		//{
 			//re-start timer for checking foreground window changes due to iFrame content code
 		
