@@ -517,7 +517,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1")		
 	{
 		errStr = "Something is still wrong.";
-		errStr += " (Try refreshing the page, or alert ots admins if problem persists.)";
+		errStr += " (Try reloading the page, or alert ots admins if problem persists.)";
 		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 		req = 0; //force to 0 to indicate error
 		var found = false;
