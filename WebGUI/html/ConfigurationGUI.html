@@ -9152,10 +9152,18 @@
 			}
 			else //normal cell
 			{
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+				var str = "";
+				try
+				{
+					Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
 						_editingCellEl.getElementsByTagName("input")[0].value);
 				
-				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+					_editingCellEl.getElementsByTagName("input")[0].value;
+				}
+				catch(err)
+				{
+					Debug.log("Error try-catch: " + err);
+				}
 				_editingCellEl.innerHTML = "";
 				_editingCellEl.appendChild(document.createTextNode(str));
 			}

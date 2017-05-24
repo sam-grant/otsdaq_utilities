@@ -1313,8 +1313,9 @@
 			_colHdrArr.splice(c,0,"DefaultColumnName");
 			_colTypeArr.splice(c,0,"Data");
 			_colDataTypeArr.splice(c,0,"VARCHAR2");
+			_colChoicesArr.splice(c,0,"");
 			
-			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr);
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);
 		}
 		
 		//deleteColumn ~~
@@ -1327,8 +1328,9 @@
 			_colHdrArr.splice(c,1);
 			_colTypeArr.splice(c,1);
 			_colDataTypeArr.splice(c,1);
+			_colChoicesArr.splice(c,1);
 			
-			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr);
+			setupTable(0,_colHdrArr,_colTypeArr,_colDataTypeArr,_colChoicesArr);
 		}
 
 		//transposeTable ~~
