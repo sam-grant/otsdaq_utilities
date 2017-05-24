@@ -50,6 +50,7 @@
 			background-color: #efeaea;
 			text-align: center;
 			padding: 10px;
+			overflow: hidden;
 		}
 		
 	</style>
@@ -760,7 +761,10 @@
 
 					str += "<tr><td>";
 
-					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' >";
+					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' " +
+							"onchange='document.getElementById(\"newChoiceInput-" + c + 
+							"\").value = this.value;'" +
+							">";
 					var colChoicesArr = colChoices[c].split(',');
 
 					//always show default first

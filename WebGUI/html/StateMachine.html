@@ -178,6 +178,17 @@
 			#parameter-setup td {
 				text-align: left;
 			}
+			
+			#blackout-reveal {
+				color : white;				
+			}
+			
+			#blackout-reveal a {
+				color: white;
+				text-decoration: underline;
+				cursor: pointer;
+			}
+			
 		</style>
 
 
@@ -957,7 +968,7 @@
                 _transitionProgress = -1; //use -1 to indicate need to check
                 _transitionFadeAlpha = 0;
                 _transitionFadeAlphaInc =  _TRANS_TRANSLATE_PERIOD/_TRANS_TRANSLATE_DURATION/1000.0;
-                _transitionTimer = setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD)
+                _transitionTimer = setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
             }
             
             //handleMouseUp ~~
@@ -1006,7 +1017,10 @@
     			    	_transitionProgress = 0;
     			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
     			    			"&fsmName=" + _fsmName, 
-    			    			"", handleCheckTransitionProgress);	
+    			    			"", handleCheckTransitionProgress,
+								0, //reqParam
+								0, //progressHandler
+								true); //callHandlerOnErr	
     			    }
 
                     //Debug.log("Physics _transitionProgress to state " + _transitionProgress);
@@ -1078,8 +1092,20 @@
             	if(!req) //error! stop checking progress..
             	{            		
             		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
+            		
+            		//show refresh link            		
+            		var str = "";
+            		str += "<div style='margin:10px'>";
+            		str += "Did the server crash? If it's back, try a "
+            		str += "<a onclick='_transitionProgress = -1; " + 
+					"window.clearInterval(_transitionTimer);" +
+					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+						">refresh</a>.";
+            		str += "</div>";
+            		document.getElementById("blackout-reveal").innerHTML = str;
             		return;
             	}
+            	document.getElementById("blackout-reveal").innerHTML = ""; //clear blackout reveal refresh
 
 			    var inTransition = DesktopContent.getXMLValue(req,"in_transition")=="1";			    
 			    var progress = DesktopContent.getXMLValue(req,"transition_progress");		    

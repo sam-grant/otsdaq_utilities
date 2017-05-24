@@ -241,8 +241,11 @@ Desktop.createDesktop = function(security) {
 	    	}
 	    }
 		
+	    //==============
 		//other things besides opening windows
-	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
+	    //....
+	    
+	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not logged in
 
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
@@ -649,12 +652,21 @@ Desktop.createDesktop = function(security) {
 	this.resetDesktop = function(permissions) {
         
 		_needToLoginMailbox.innerHTML = ""; //reset mailbox
-		//update icons based on permissions
-		Desktop.desktop.icons.resetWithPermissions(permissions);
 		
-		//re-start timer for checking foreground window changes due to iFrame content code
-		window.clearInterval(Desktop.desktop.checkMailboxTimer);
-		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		if(permissions !== undefined) //update icons based on permissions		
+			Desktop.desktop.icons.resetWithPermissions(permissions);
+		
+		////if not logged in -- attempt to fix it
+		if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
+			Desktop.desktop.login.setupLogin();
+		//{
+			//re-start timer for checking foreground window changes due to iFrame content code
+		
+		//	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
+		//				window.clearInterval(Desktop.desktop.checkMailboxTimer);
+		//				_checkMailboxes();
+		//				Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		//}
 	}
 		
 	//actOnParameterAction() ~~~
@@ -1210,11 +1222,8 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 					Desktop.desktop.serverConnected = true;
 		        	Desktop.desktop.dashboard.displayConnectionStatus(true);
 		        	
-		        
-		        	_needToLoginMailbox.innerHTML = ""; //reset mailbox		        		
-		        	//re-start timer for checking foreground window changes due to iFrame content code
-		        	window.clearInterval(Desktop.desktop.checkMailboxTimer);
-		        	Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		        	Desktop.desktop.resetDesktop(); //give no permissions, to do simple reset
+		        	// and re-start timer for checking foreground window changes due to iFrame content code		        	
 				}
 				
 				//check if failed due to cookieCode and go to login prompt

@@ -419,7 +419,8 @@ else {
        		}  	
        		else
        		{
-       			el.innerHTML = "*** Disconnected ***";
+       			el.innerHTML = "*** <a onclick='Desktop.desktop.resetDesktop();//soft reset attempt' " + 
+       					"style='cursor:pointer; color:rgb(255,150,0);'>Disconnected</a> ***";
        			el.style.display = "block";       			
        		}
         }
@@ -522,7 +523,6 @@ else {
 		tmpBtn.setAttribute("id", "DesktopDashboard-serverConnectionStatus");
 		tmpBtn.setAttribute("title", "Try refreshing the page, or if the problem persists contact the ots admins.");
 		tmpBtn.style.display = "none";
-		tmpBtn.style.cursor = "pointer";
 		tmpBtn.style.color = "rgb(255,150,0)";
 		_topBar.appendChild(tmpBtn);
         		
