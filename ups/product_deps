@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent otsdaq_utilities	v1_00_06
-defaultqual	e10:s41
+parent otsdaq_utilities	v1_01_00
+defaultqual	e10:s46
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -18,10 +18,10 @@ fcldir      -
 
 #
 product		 version	optional
-otsdaq              v1_00_06
-artdaq_mfextensions v1_01_06   	 -        optional
-cetbuildtools       v5_06_07     -        only_for_build
+otsdaq              v1_01_00
 xdaq                -
+artdaq_mfextensions v1_01_08   	 -        optional
+cetbuildtools       v5_06_07     -        only_for_build
 end_product_list
 
 # e6  - with gcc 4.9.1 and -std=c++1y
@@ -29,13 +29,13 @@ end_product_list
 # s7  - with art v1_13_01
 # -nq- here means there is no qualifier
 # a "-" here means the dependent product is not required by the parent and will not be setup
-qualifier    	   otsdaq	 xdaq	    notes
-e10:s44:prof       e10:s44:prof  e10:prof   -std=c++1y
-e10:s44:debug      e10:s44:debug e10:debug  -std=c++1y
-e10:s43:prof       e10:s43:prof  e10:prof   -std=c++1y
-e10:s43:debug      e10:s43:debug e10:debug  -std=c++1y
-e10:s41:prof       e10:s41:prof  e10:prof   -std=c++1y
-e10:s41:debug      e10:s41:debug e10:debug  -std=c++1y
+qualifier    	   otsdaq	 xdaq	    artdaq_mfextensions	       notes
+e10:s48:prof       e10:s48:prof  e10:prof   e10:s48:prof       	       -std=c++1y
+e10:s48:debug      e10:s48:debug e10:debug  e10:s48:debug      	       -std=c++1y
+e10:s47:prof       e10:s47:prof  e10:prof   e10:s47:prof       	       -std=c++1y
+e10:s47:debug      e10:s47:debug e10:debug  e10:s47:debug     	       -std=c++1y
+e10:s46:prof       e10:s46:prof  e10:prof   e10:s46:prof       	       -std=c++1y
+e10:s46:debug      e10:s46:debug e10:debug  e10:s46:debug      	       -std=c++1y
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:

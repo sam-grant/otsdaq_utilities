@@ -5,8 +5,9 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 ${XDAQ_BASIC_LIB_LIST}
 #		 CoreSupervisors
 		 ConfigurationInterface
-#		 ConfigurationDataFormats
+		 ConfigurationDataFormats
 		 SupervisorDescriptorInfo
+		 PluginMakers
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities
