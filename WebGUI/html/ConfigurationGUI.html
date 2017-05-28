@@ -260,6 +260,8 @@
 		var _dataOffset = 0;
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
+
+		var _activeConfigGroups = []; //sz 6 := holds the group name,key for active Context, Backbone, Config
 		
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
@@ -745,6 +747,48 @@
 			backLinkStr = "setupSystemViewMode();"; 
 			
 			str += _OTS_RELAUNCH_STR + "<br>";
+			
+			str += "<br>";
+			
+			//show active backbone and config
+			function showActiveBackboneAndConfig()
+			{
+				var activeConfigHeaders = ["Context","Backbone","Configuration"];
+				
+				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
+
+				for(var i=1;i == 1  && i<activeConfigHeaders.length;++i)
+				{
+					str += "<tr><td style='text-align:left'>";
+					
+					str += "Currently Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
+					
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+
+					if(!_activeConfigGroups[i*2] || _activeConfigGroups[i*2] == "")
+					{
+						str += "None";					
+					}
+					else
+					{
+						str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
+								"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
+						str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
+					}
+					//str += "<br>";
+
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+							_activeConfigGroups[i*2] + 
+							"\",\"" + 
+							_activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
+
+					str += "</td></tr>";
+				}
+				str += "</table>"; //close active groups table
+				
+			} showActiveBackboneAndConfig();
+			
 			
 			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
@@ -3912,7 +3956,7 @@
 			//update version tracking
 			versionTrackingHandler(req);
 			
-			var activeConfigGroups = [
+			_activeConfigGroups = [
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
 									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
@@ -3921,7 +3965,7 @@
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 									  
 			var activeConfigHeaders = ["Context","Backbone","Configuration"];
-			Debug.log("activeConfigGroups: " + activeConfigGroups);
+			Debug.log("activeConfigGroups: " + _activeConfigGroups);
 			
 			var oldStr = document.getElementById("activeConfig").innerHTML;
 			var str = "";
@@ -3929,7 +3973,7 @@
 			
 			str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 			
-			for(var i=0;i<activeConfigHeaders.length;++i)
+			for(var i=0;i<1 && i<activeConfigHeaders.length;++i)
 			{
 				str += "<tr><td style='text-align:left'>";
 				if(i==2)
@@ -3940,24 +3984,24 @@
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 				
-				if(!activeConfigGroups[i*2] || activeConfigGroups[i*2] == "")
+				if(!_activeConfigGroups[i*2] || _activeConfigGroups[i*2] == "")
 				{
 					str += "None";
 					thereIsAnEmpty = true;
 				}
 				else
 				{
-					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + activeConfigGroups[i*2] +
-					"\",\"" + activeConfigGroups[i*2+1] + "\"); return false;'>";
-					str += activeConfigGroups[i*2] + " (" + activeConfigGroups[i*2+1] + ")</a>";
+					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
+					"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
+					str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
 				}
 				//str += "<br>";
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 				str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
-						activeConfigGroups[i*2] + 
+						_activeConfigGroups[i*2] + 
 									"\",\"" + 
-									activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
+									_activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
 				
 				str += "</td></tr>";
 			}
@@ -3986,10 +4030,10 @@
 				if(!_firstTimeSilentActive && str != oldStr) //only popup after the first time
 				{						
 					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
-						Debug.log("Note: There was a change in the active groups (check the top of the page)!",
+						Debug.log("Note: There was a change in the active Context group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 					else //must have been an activation
-						Debug.log("Note: There was a successful activation of a group (check the top of the page)!",
+						Debug.log("Note: There was a successful activation of a Context group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 
 					//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
@@ -12044,9 +12088,10 @@
 					{
 						r = cc;
 						c = rr;
+
 						val = colsIsArray?cols[rr][cc]:cols[rr][cc].innerHTML;
-						uidVal = colsIsArray?cols[cc][uidCol]:cols[cc][uidCol].innerHTML;	
-						colHdr = colsIsArray?cols[_CONFIG_DATA_ROW_OFFSET-1][rr]:cols[_CONFIG_DATA_ROW_OFFSET-1][rr].innerHTML;
+						uidVal = colsIsArray?cols[uidCol][cc]:cols[uidCol][cc].innerHTML;	
+						colHdr = colsIsArray?cols[rr][_CONFIG_DATA_ROW_OFFSET-1]:cols[rr][_CONFIG_DATA_ROW_OFFSET-1].innerHTML;
 					}
 					else if(_tableViewIsTransposed && transposeOutput) //transposed source and normalizing
 					{
