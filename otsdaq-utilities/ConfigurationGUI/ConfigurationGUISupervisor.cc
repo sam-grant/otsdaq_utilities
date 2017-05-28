@@ -2671,15 +2671,35 @@ try
 		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
 		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char index = 'a';
+		std::string preIndexStr = "";
 		for(auto &srcColName:srcColNames)
-			ss << "\n\t" <<index++ << ". " <<  srcColName;
+		{
+			ss << "\n\t" << preIndexStr << index << ". " <<  srcColName;
+			if(index == 'z') //wrap-around
+			{
+				preIndexStr += 'a'; //keep adding index 'digits' for wrap-around
+				index = 'a';
+			}
+			else
+				++index;
+		}
 		ss << std::endl;
 
 		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
 		ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
 		index = 'a';
+		preIndexStr = "";
 		for(auto &destColName:destColNames)
-			ss << "\n\t" << index++ << ". " << destColName;
+		{
+			ss << "\n\t" << preIndexStr << index << ". " << destColName;
+			if(index == 'z') //wrap-around
+			{
+				preIndexStr += 'a'; //keep adding index 'digits' for wrap-around
+				index = 'a';
+			}
+			else
+				++index;
+		}
 		ss << std::endl;
 
 		__MOUT__ << "\n" << ss.str();

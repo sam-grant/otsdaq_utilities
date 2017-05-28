@@ -4488,7 +4488,8 @@
 				str += "<br>Choose the versions of configurations you would like to add...<br>";
 			
 			str += "<div id='createGroupInfo'></div><br>";
-			str += "<button type='button' onmouseup='javascript:" +
+			
+			var createButtonStr = "<button type='button' onmouseup='javascript:" +
 					"popUpSaveNewGroupForm(document.getElementById(\"newConfigName\").value," +
 					"-1,1);" + //sourceGroupKey, sourceType
 					//createConfigGroup()'
@@ -4496,6 +4497,7 @@
 					"Create the new persistent group and group key pair." +
 					"'>" +
 					"Create the new Group</button>";
+			str += createButtonStr;
 			str += "<br><br>";
 			str += "Group Name: <input id='newConfigName'/>";
 			str += "<br><br>";
@@ -4577,10 +4579,7 @@
 			}	
 			str += "</table>";
 
-			str += "<button type='button' onmouseup='javascript:createConfigGroup()' title='" +
-					"Create the new persistent group and group key pair." +
-					"'>" +
-					"Create the new Group</button>";
+			str += createButtonStr;
 			el.innerHTML = str;		
 			
 
@@ -9196,10 +9195,17 @@
 			}
 			else //normal cell
 			{
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
-						_editingCellEl.getElementsByTagName("input")[0].value);
-				
-				var str = _editingCellEl.getElementsByTagName("input")[0].value;
+				var str = "";
+				try
+				{				
+					str = _editingCellEl.getElementsByTagName("input")[0].value;
+					Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+						str);
+				}
+				catch(err)
+				{
+					Debug.log("Error try-catch: " + err);
+				}
 				_editingCellEl.innerHTML = "";
 				_editingCellEl.appendChild(document.createTextNode(str));
 			}
@@ -9793,7 +9799,7 @@
 			//set position and size
 			var gh = 85;
 			var w = 500;
-			var h = 385;
+			var h = 395;
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 
 //			var gh = 50;

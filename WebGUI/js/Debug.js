@@ -234,6 +234,7 @@ Debug.errorPop = function(err,severity) {
 			document.getElementsByTagName('head')[0].appendChild(style);
 			
 			window.addEventListener("resize",localResize);
+			window.addEventListener("scroll",localResize);
 		}
 		Debug._errBox = el;	
 	}	

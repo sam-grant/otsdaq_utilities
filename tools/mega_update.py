@@ -5,7 +5,7 @@ import subprocess
 artdaqDemoVersion = "s41-e10 prof";
 
 try:
-	os.path.isdir(os.environ['Products']);
+	os.path.isdir(os.environ['ProductsDir']);
 except KeyError:
 	print "Products variable not set";
 	exit(1);
@@ -13,7 +13,7 @@ except KeyError:
 ########################################################################
 #get pull products
 ########################################################################
-cmd=os.environ['Products'];
+cmd=os.environ['ProductsDir'];
 print cmd
 os.chdir(cmd);
 
@@ -64,12 +64,13 @@ elif "el7" in operatingSystem:
 	xerces_os = "sl7"
 
 
-cmd='cd $Products';
+cmd='cd $ProductsDir';
 print cmd
 os.system(cmd)
 
 for artdaq_demo_version in reversed(artdaq_demo_versions):
 	print "Fetching products for artdaq_demo_version: " + artdaq_demo_version;
+	print "This step might take longer than you wish so be patient..."
 	cmd = "./pullProducts . " + host_os + " artdaq_demo-" + artdaq_demo_version + " " + artdaqDemoVersion;
 	print cmd;
 	process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE);
@@ -77,10 +78,11 @@ for artdaq_demo_version in reversed(artdaq_demo_versions):
 	if(err != ''):
 		print "There was an error executing \"" + cmd + "\"";
 		print "Error:\n" + err;
+		if( err.find('MANIFEST') == -1):
+			break;
 		print "Trying to fetch an older artdaq_demo_version..."
 	else:
 		break;
-
 
 ########################################################################
 #_____MRB
