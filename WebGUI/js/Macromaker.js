@@ -192,7 +192,7 @@
 			 
 	function FElistHandler(req) 
 	{
-		Debug.log("FElistHandler() was called. Req: " + req.responseText);
+		Debug.log("FElistHandler() was called. ");//Req: " + req.responseText);
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
@@ -249,7 +249,7 @@
 
 	function getPermissionHandler(req)
 	{
-		Debug.log("getPermissionHandler() was called. Req: " + req.responseText);
+		Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
 		userPermission = DesktopContent.getXMLValue(req, "Permission");
 		console.log("User Permission: " + userPermission);
 	}
@@ -397,7 +397,7 @@
     
     function writeHandler(req)
 	{
-		Debug.log("writeHandler() was called. Req: " + req.responseText);
+		Debug.log("writeHandler() was called.");// Req: ");//" + req.responseText);
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
@@ -409,7 +409,7 @@
     
     function readHandler(req)
 	{
-		Debug.log("readHandler() was called. Req: " + req.responseText);
+		Debug.log("readHandler() was called.");// Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
     	
@@ -732,9 +732,12 @@
     function getOrder()
     {
     	tempString = [];
-		var order = sortable.toArray();
-		var sorting = order.slice();
-		sorting.sort();
+		var order = sortable.toArray();		
+		//copy and sort indices 
+		var sorting = order.slice(); 
+		sorting.sort(function(a,b){ return a-b;}); //to sort in numeric-increasing order
+		
+		//get the possibly-reordered index out of macro string
 		for(var i = 0; i < macroString.length; i++)
 			tempString.push(macroString[sorting.indexOf(order[i])]);
     }
@@ -792,7 +795,7 @@
     
     function clearHistoryHandler(req)
 	{
-		Debug.log("clearHistoryHandler() was called. Req: " + req.responseText);
+		Debug.log("clearHistoryHandler() was called.");// Req: " + req.responseText);
 		loadUserHistory();
 	}
     
@@ -841,7 +844,7 @@
     	else
     	{
     		var macroNotes = document.getElementById("macroNotes").value;
-			if(macroNotes.search("@") != -1 || macroNotes.search("#") != -1 || macroNotes.includes(".."))
+			if(macroNotes.indexOf("@") >= 0 || macroNotes.indexOf("#") >= 0 || macroNotes.indexOf("..") >= 0)
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;
@@ -869,7 +872,7 @@
     				loadExistingMacros();
     				hidePopupSaveMacro();   
     				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
-    				Debug.log("Your Macro was succesfully saved!",Debug.INFO_PRIORITY);
+    				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
     			};
         	}
         	else
@@ -880,14 +883,14 @@
 				loadExistingMacros();
 				hidePopupSaveMacro(); 
 				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
-				Debug.log("Your Macro was succesfully saved!",Debug.INFO_PRIORITY);
+				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
         	}
     	}
     }
     
     function createMacroHandler(req)
 	{
-		Debug.log("createMacroHandler() was called. Req: " + req.responseText);
+		Debug.log("createMacroHandler() was called.");// Req: " + req.responseText);
 	}
     
     function runMacro(stringOfCommands,macroName)
@@ -1013,7 +1016,7 @@
     
     function loadingMacrosHandler(req)
     {
-    	Debug.log("loadingMacrosHandler() was called. Req: " + req.responseText);
+    	Debug.log("loadingMacrosHandler() was called.");// Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
     	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
     	namesOfAllMacros = [];
@@ -1081,7 +1084,7 @@
     
     function loadingHistHandler(req)
     {
-    	Debug.log("loadingHistHandler() was called. Req: " + req.responseText);
+    	Debug.log("loadingHistHandler() was called.");// Req: " + req.responseText);
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
 		if ( !hugeStringOfHistory ) return; //this happens when history doesn't exist
@@ -1317,7 +1320,7 @@
     
     function exportMacroHandler(req)
    	{
-   		Debug.log("exportMacroHandler() was called. Req: " + req.responseText);   		
+   		Debug.log("exportMacroHandler() was called. ");//Req: " + req.responseText);   		
 
 		var exportFile = DesktopContent.getXMLValue(req,"ExportFile");
 		if(exportFile)
@@ -1342,7 +1345,7 @@
     
     function deleteMacroHandler(req)
 	{
-		Debug.log("deleteMacroHandler() was called. Req: " + req.responseText);
+		Debug.log("deleteMacroHandler() was called. ");//Req: " + req.responseText);
 		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
 		var reminderEl = document.getElementById('reminder');
 		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);
@@ -1392,7 +1395,7 @@
 			}
 
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
-			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
+			if(macroNotesForEdit.indexOf("@") >= 0 || macroNotesForEdit.indexOf("#") >= 0 || macroNotesForEdit.indexOf("..") >= 0)
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;

@@ -9,7 +9,8 @@
 	
 	<style type="text/css">		
 	
-		.fixedChoiceAdd	{
+		.fixedChoiceAdd,
+		.fixedChoiceAdd:hover {
 			text-decoration: none;
 			font-size: 30px;
 			font-weight: bold;
@@ -1473,7 +1474,7 @@
 		{
 			//if not already in choices, add it		
 			
-			var val = document.getElementById("newChoiceInput-" + c).value;
+			var val = document.getElementById("newChoiceInput-" + c).value.trim();
 			Debug.log("addFixedChoice Value = " + val);
 			var defaultVal = _defaultArray[_colDataTypeArr[c]][_colTypeArr[c]];
 			Debug.log("deleteSelectedFixedChoice defaultVal = " + defaultVal);
@@ -1496,8 +1497,9 @@
 				
 			var colChoicesArr = _colChoicesArr[c].split(',');
 			var found = false;
+			var encodedVal = encodeURIComponent(val);
 			for(var i=0;i<colChoicesArr.length;++i)
-				if(colChoicesArr[i] == val)
+				if(colChoicesArr[i] == encodedVal)
 				{	found = true; break; }
 			
 			if(found)
@@ -1509,9 +1511,9 @@
 			}
 
 			if(_colChoicesArr[c].length) //other values exist
-				_colChoicesArr[c] += "," + encodeURIComponent(val);
+				_colChoicesArr[c] += "," + encodedVal;
 			else						//first value
-				_colChoicesArr[c] = encodeURIComponent(val);
+				_colChoicesArr[c] = encodedVal;
 			
 			setupTable();
 			Debug.log("Value '" + val + 

@@ -532,7 +532,7 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("FEConfiguration","1",""); return;
+			setupSpecificConfig("FE2Configuration","1",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -745,6 +745,9 @@
 			var backLinkStr;
 
 			backLinkStr = "setupSystemViewMode();"; 
+			
+
+			str += "<h3><u>System View</u></h3>";
 			
 			str += _OTS_RELAUNCH_STR + "<br>";
 			
@@ -6209,15 +6212,18 @@
 											 == _editingCellElOldValue)
 					optionIndex = 0; //get starting sel index
 				
-				for(var i=0;i<_tableFixedChoiceData[c].length;++i)
-				{			
-					str += "<option>";
-					str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
-					str += "</option>";
-					if(decodeURIComponent(_tableFixedChoiceData[c][i]) 
-												 == _editingCellElOldValue)
-						optionIndex = i+1; //get starting sel index
-				}				
+				if(_tableFixedChoiceData[c] !== undefined)
+				{
+					for(var i=0;i<_tableFixedChoiceData[c].length;++i)
+					{			
+						str += "<option>";
+						str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
+						str += "</option>";
+						if(decodeURIComponent(_tableFixedChoiceData[c][i]) 
+													 == _editingCellElOldValue)
+							optionIndex = i+1; //get starting sel index
+					}
+				}
 				str += "</select>";	
 			}
 			else if(colType == "BitMap")
@@ -6226,8 +6232,8 @@
 				ConfigurationAPI.bitMapDialog(						
 						//_editingCellElOldTitle, //field name
 						"Target UID/Field: &quot;" + 
-						fieldName[0].split('\n').split(" : ")[1] + "/" + 
-						fieldName[1].split('\n').split(" : ")[0] + "&quot;",
+						_editingCellElOldTitle.split('\n')[0].split(" : ")[1] + "/" + 
+						_editingCellElOldTitle.split('\n')[1].split(" : ")[0] + "&quot;",
 						_tableFixedChoiceData[c],
 						_editingCellElOldValue,
 						function(val)
