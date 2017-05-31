@@ -553,7 +553,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 	{
 		std::string line;
 		char * returnStr;
-		unsigned long long fileSz, i = 0, MAX_HISTORY_SIZE = 100000;
+		unsigned long long fileSz, i = 0, MAX_HISTORY_SIZE = 100;
 
 
 		//get length of file to reserve the string size
@@ -578,6 +578,16 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 				{
 					i += 2; break; //skip new line character also to get to next record
 				}
+
+			//write back to file truncated history
+			FILE *fp = fopen(fileName.c_str(),"w");
+			if(!fp)
+			{
+				__SS__ << "Big problem with macromaker history file: " << fileName << std::endl;
+				throw std::runtime_error(ss.str());
+			}
+			fwrite(&returnStr[i],fileSz-i,1,fp);
+			fclose(fp);
 		}
 
 		__MOUT__<<  "Loading user history! " << std::endl;
