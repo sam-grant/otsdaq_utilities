@@ -16,7 +16,6 @@
 		//isArrayAllZero
 		//convertToHex
 		//convertFromHex
-		//toggleLSBF
 		//reverseLSB
 		//LSBchecker
 		//toggleDisplay
@@ -45,6 +44,7 @@
 		//loadingHistHandler
 		//histCmdWriteDivOnclick
 		//histCmdReadDivOnclick
+		//histCmdDelayDivOnclick
 		//macroActionOnRightClick
 		//exportMacroHandler
 		//editCommands
@@ -55,6 +55,7 @@
 		//setFieldToVariable
 		//dealWithVariables
 
+	var ADMIN_PERMISSION_THRESHOLD = 255;
     var userPermission = 10;
 	var CMDHISTDIVINDEX = 0;
 	var SEQINDEX = 0;
@@ -114,10 +115,12 @@
 		toggleMacroPublicity(0);
 	}
 	
-	function initLite()
+	//This is what refresh button and redrawWindow() calls
+	function initLite() 
 	{
 		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",
 				FElistHandler);
+		loadUserHistory();
 	}
 	
 	//Handling window resizing
@@ -127,7 +130,7 @@
 						
 		var w = window.innerWidth;
 		var h = window.innerHeight;
-		
+		if(w < 550) return;
 		//square [x,y] [w,h]
 		var _MARGIN = 5;
 		
@@ -138,7 +141,7 @@
 		var b5 = [w*2/3,_MARGIN+4*_MARGIN,w/3-_MARGIN, h-2*_MARGIN]; //right 
 		var b6 = [_MARGIN, _MARGIN+4*_MARGIN,w/3-2*_MARGIN, h-2*_MARGIN]; //left
 		var b7 = [w/3, _MARGIN+4*_MARGIN, w/3, h/2-_MARGIN];//middle
-		var b8 = [w/2-200,h/5,2*w/3,3*h/5];
+		var b8 = [w/2-200,h/5,2*w/3,3*h/5+15];//popup
 		
 		block1El.style.left = b1[0] + "px";
 		block1El.style.top =  b1[1] + "px";
@@ -189,7 +192,7 @@
 			 
 	function FElistHandler(req) 
 	{
-		Debug.log("FElistHandler() was called. Req: " + req.responseText);
+		Debug.log("FElistHandler() was called. ");//Req: " + req.responseText);
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
@@ -246,7 +249,7 @@
 
 	function getPermissionHandler(req)
 	{
-		Debug.log("getPermissionHandler() was called. Req: " + req.responseText);
+		Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
 		userPermission = DesktopContent.getXMLValue(req, "Permission");
 		console.log("User Permission: " + userPermission);
 	}
@@ -267,7 +270,12 @@
 		{ 
 			var addressFormatStr = document.getElementById("addressFormat").value;
 			var dataFormatStr = document.getElementById("dataFormat").value;
-			
+	    	if(isMacroRunning == true)
+	    	{
+	    		addressFormatStr = "hex";
+	    		dataFormatStr = "hex";
+	    	}
+	    	
 			if (typeof address === 'undefined') 
 			{ 
 				var addressStr = document.getElementById('addressInput').value.toString();
@@ -360,6 +368,7 @@
 			
 			if (theAddressStrForRead.substr(0,2)=="0x") theAddressStrForRead = theAddressStrForRead.substr(2);
 			
+			var selectionStrArray = [];
 			var supervisorIndexArray = [];
 			var interfaceIndexArray = [];
 			for (var i = 0; i < selected.length; i++) 
@@ -367,6 +376,7 @@
 				if (selected[i]!==0) 
 				{
 					var oneInterface = FEELEMENTS[i].getAttribute("value");
+					if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
 					supervisorIndexArray.push(oneInterface.split(":")[1]);
 					interfaceIndexArray.push(oneInterface.split(":")[2]);
 				}
@@ -376,11 +386,7 @@
 	    	if(runningMacroLSBF == 2) reverse = false; 
 	    	
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead),reverse);
-			var selectionStrArray = [];
-			for (var i = 0; i < selected.length; i++) 
-			{
-				if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
-			}
+
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
 					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
@@ -391,7 +397,7 @@
     
     function writeHandler(req)
 	{
-		Debug.log("writeHandler() was called. Req: " + req.responseText);
+		Debug.log("writeHandler() was called.");// Req: ");//" + req.responseText);
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
@@ -403,14 +409,23 @@
     
     function readHandler(req)
 	{
-		Debug.log("readHandler() was called. Req: " + req.responseText);
+		Debug.log("readHandler() was called.");// Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
+    	
+    	if(isMacroRunning == true)
+    	{
+    		addressFormatStr = "hex";
+    		dataFormatStr = "hex";
+    	}
+    	
     	var reminderEl = document.getElementById('reminder');
-
+    	
 		var dataOutput = DesktopContent.getXMLValue(req,"readData");
 		if(putReadResultInBoxFlag) boxOfFreshVar = dataOutput;
+		
 		var convertedOutput;
+		
     	var reverse = document.getElementById("lsbFirst").checked;
     	if(runningMacroLSBF == 1) reverse = true; 
         if(runningMacroLSBF == 2) reverse = false; 
@@ -484,30 +499,6 @@
 			str += String.fromCharCode(parseInt(target.substr(i, 2), 16));
 			return str;
 		}
-    }
-    
-    function toggleLSBF() //Only listens to addressFormat
-    {
-    	var addressFormatStr = document.getElementById("addressFormat").value;
-        var macroAddressInputEl = document.getElementById('macroAddressInput');
-
-        switch (addressFormatStr) {
-          case "hex":
-            document.getElementById("lsbFirst").checked = true;
-            document.getElementById("lsbFirst").disabled = false;
-        //    macroAddressInputEl.setAttribute("placeholder", "0x64");
-            break;
-          case "dec":
-            document.getElementById("lsbFirst").checked = false;
-            document.getElementById("lsbFirst").disabled = true;
-         //   macroAddressInputEl.setAttribute("placeholder", "1234");
-            break;
-          case "ascii":
-            document.getElementById("lsbFirst").checked = false;
-            document.getElementById("lsbFirst").disabled = false;
-      //      macroAddressInputEl.setAttribute("placeholder", "Hi");
-            break;
-        }
     }
     
     function reverseLSB(original, execute)
@@ -598,71 +589,114 @@
     	}
     }
 	
-    function addCommand(command,address,data)
+    function addCommand(command,address,data)//either has address+data, or have no address/data. # of parameters = 1 or 3
     {
 		var contentEl = document.getElementById('sequenceContent');
 		var macroReminderEl = document.getElementById('macroReminder');
 		macroReminderEl.innerHTML = "";
+		var formatMarkerHead, formatMarkerTail = "";
+		if(SEQFORMAT == "hex") formatMarkerHead = "0x";
+		else if(SEQFORMAT == "ascii")
+		{
+			formatMarkerHead = "\"";
+			formatMarkerTail = "\"";
+		}
+		else 
+		{
+			formatMarkerHead = "";
+			formatMarkerTail = "";
+		}
 		switch(command)
 		{
 		case 'w':
 	    	if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('macroAddressInput').value.toString();
-				var dataStr = document.getElementById('macroDataInput').value.toString();
-	    		if(addressStr === "") 
+				var addressStrBefore = document.getElementById('macroAddressInput').value.toString();
+				var dataStrBefore = document.getElementById('macroDataInput').value.toString();
+	    		if(addressStrBefore === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to write to";
 					return;
 				} 
-	    		else if(dataStr === "") 
+	    		else if(dataStrBefore === "") 
 	    		{
 					macroReminderEl.innerHTML = "Please enter your data";
 					return;
 				}
+				var addressFormatStr = document.getElementById("macroAddressFormat").value;
+				var dataFormatStr = document.getElementById("macroDataFormat").value;
+		    	var reverse = document.getElementById("lsbFirst").checked;
+				var addressStr = reverseLSB(convertToHex(addressFormatStr,addressStrBefore),reverse);
+				var dataStr = reverseLSB(convertToHex(dataFormatStr,dataStrBefore),reverse);
 			} 
 	    	else 
 			{
 				var addressStr = address.toString();
 				var dataStr = data.toString();
 			}
-				var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-						+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" + convertFromHex(SEQFORMAT,dataStr) + "</b> into <b>" 
-						+ convertFromHex(SEQFORMAT,addressStr) + "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
-				var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
-				macroString.push(writeMacroString);
+			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\"  class=\"seqDiv\"><p class=\"insideSEQ textSEQ\">Write <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,dataStr) + formatMarkerTail + "</b> into <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,addressStr) + formatMarkerTail 
+					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ SEQINDEX + ")\"></></div>";
+			var writeMacroString = SEQINDEX + ":w:" + addressStr + ":" + dataStr;
+			macroString.push(writeMacroString);
 			break;
 		case 'r':
 			if (typeof address === 'undefined') 
 			{ 
-				var addressStr = document.getElementById('macroAddressInput').value.toString();
-				if(addressStr === "") 
+				var addressStrBefore = document.getElementById('macroAddressInput').value.toString();
+				if(addressStrBefore === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter an address to read from";
 					return;
 				}
+				var addressFormatStr = document.getElementById("macroAddressFormat").value;
+				var reverse = document.getElementById("lsbFirst").checked;
+				var addressStr = reverseLSB(convertToHex(addressFormatStr,addressStrBefore),reverse);
 			} 
 			else var addressStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" + convertFromHex(SEQFORMAT,addressStr)
-					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Read from <b>" 
+					+ formatMarkerHead + convertFromHex(SEQFORMAT,addressStr) + formatMarkerTail 
+					+ "</b></p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" 
+					+ SEQINDEX + ")\"></></div>";
 			var readMacroString = SEQINDEX+":r:"+addressStr+":";
 			macroString.push(readMacroString);
 			break;
 		case 'd':
-			if (typeof address === 'undefined') 
+			if (typeof address === 'undefined') //adding from Sequence Maker
 			{ 
 				var delayStr = document.getElementById('delayInput').value.toString();
-				if(addressStr === "") 
+				if(delayStr === "") 
 				{
 					macroReminderEl.innerHTML = "Please enter a delay";
 					return;
 				}
+				else if (isNaN(delayStr))
+				{
+					macroReminderEl.innerHTML = "Delay has to be a numerical number";
+					return;
+				}
+				if(document.getElementById("delayUnit").value === "s") delayStr = Number(delayStr)*1000;
+
 			}
-			else var delayStr = address.toString();
+			else // adding from Command History
+				var delayStr = address.toString();
 			var update = "<div id = \"seq" + SEQINDEX + "\" data-id =" + SEQINDEX 
-					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" + SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX + ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" + delayStr
-					+ "</b> s</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" + SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX + ")\"></></div>";
+					+ " onmouseout=\"hideDeletex(" + SEQINDEX + ")\" onmouseover=\"showDeletex(" 
+					+ SEQINDEX + ")\" ondragstart=\"hideDeletex(" + SEQINDEX 
+					+ ")\" ondragend=\"getOrder()\" class=\"seqDiv\"><p class=\"insideSEQ\">Delay <b>" 
+					+ delayStr + "</b> ms</p><img src=\"/WebPath/images/windowContentImages/macromaker-delete.png\" id=\"deletex" 
+					+ SEQINDEX + "\" class=\"insideSEQ deletex\" onclick=\"removeCommand(" + SEQINDEX 
+					+ ")\"></></div>";
 			var delayMacroString = SEQINDEX+":d:"+delayStr;
 			macroString.push(delayMacroString);
 			break;
@@ -698,9 +732,12 @@
     function getOrder()
     {
     	tempString = [];
-		var order = sortable.toArray();
-		var sorting = order.slice();
-		sorting.sort();
+		var order = sortable.toArray();		
+		//copy and sort indices 
+		var sorting = order.slice(); 
+		sorting.sort(function(a,b){ return a-b;}); //to sort in numeric-increasing order
+		
+		//get the possibly-reordered index out of macro string
 		for(var i = 0; i < macroString.length; i++)
 			tempString.push(macroString[sorting.indexOf(order[i])]);
     }
@@ -758,7 +795,7 @@
     
     function clearHistoryHandler(req)
 	{
-		Debug.log("clearHistoryHandler() was called. Req: " + req.responseText);
+		Debug.log("clearHistoryHandler() was called.");// Req: " + req.responseText);
 		loadUserHistory();
 	}
     
@@ -775,7 +812,7 @@
     	else
     	{
 			document.getElementById("popupSaveMacro").style.display = "block";
-			if (userPermission == 255)
+			if (userPermission == ADMIN_PERMISSION_THRESHOLD)
 				document.getElementById("makeMacroPublic").style.display = "block";
     	}
     }
@@ -807,7 +844,7 @@
     	else
     	{
     		var macroNotes = document.getElementById("macroNotes").value;
-			if(macroNotes.search("@") != -1 || macroNotes.search("#") != -1 || macroNotes.includes(".."))
+			if(macroNotes.indexOf("@") >= 0 || macroNotes.indexOf("#") >= 0 || macroNotes.indexOf("..") >= 0)
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;
@@ -816,7 +853,6 @@
     		stringOfAllMacros[MACROINDEX] = tempString;
     		var isMacroPublic = document.getElementById("isMacroPublic").checked;
     		var isMacroLSBF = document.getElementById("isMacroLSBF").checked;
-    		console.log(isMacroLSBF);
     		
         	if(namesOfAllMacros.indexOf(macroName) !== -1) //duplicate name
         	{
@@ -836,23 +872,25 @@
     				loadExistingMacros();
     				hidePopupSaveMacro();   
     				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+    				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
     			};
         	}
         	else
         	{
 				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
 						+"&isLSBF="+isMacroLSBF+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-						+macroNotes,"",createMacroHandler);
+						+macroNotes,"",createMacroHandler);		
 				loadExistingMacros();
-				hidePopupSaveMacro();   
+				hidePopupSaveMacro(); 
 				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
+				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
         	}
     	}
     }
     
     function createMacroHandler(req)
 	{
-		Debug.log("createMacroHandler() was called. Req: " + req.responseText);
+		Debug.log("createMacroHandler() was called.");// Req: " + req.responseText);
 	}
     
     function runMacro(stringOfCommands,macroName)
@@ -933,12 +971,31 @@
 						}
 					}
 					else if(commandType=='d'){
-						var runningPercentageEl = document.getElementById('macroRunningPercentage');
-						var barEl = document.getElementById('macroRunningBar');
-						barWidth += barIncrement;
-						barEl.style.width = barWidth + '%'; 
-						runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   //Delay doesn't have a handler yet
-						console.log("delay "+Command[2]+"ms");
+						waitForCurrentCommandToComeBack = true;
+						setTimeout(function(){delay();},Number(Command[2]));
+						function delay(){
+							//delay handler here, does what read and write handlers do
+							var contentEl = document.getElementById('historyContent');
+							var innerClass = "class=\"innerClass1\"";
+							if (CMDHISTDIVINDEX%2) innerClass = "class=\"innerClass2\"";
+							var selectionStrArray = [];
+							for (var i = 0; i < selected.length; i++) 
+							{
+								if (selected[i]!==0) selectionStrArray.push(FEELEMENTS[i].getAttribute("value"));
+							}
+							var update = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " + Date().toString()
+											+ "\nSelected interface: " + selectionStrArray + "\" onclick=\"histCmdDelayDivOnclick(" + Command[2]
+											+ ")\">Delay <b>" + Command[2] + "</b> ms</div>";
+							contentEl.innerHTML += update;
+							contentEl.scrollTop = contentEl.scrollHeight;
+							CMDHISTDIVINDEX++;
+							var runningPercentageEl = document.getElementById('macroRunningPercentage');
+							var barEl = document.getElementById('macroRunningBar');
+							barWidth += barIncrement;
+							barEl.style.width = barWidth + '%'; 
+							runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';   
+							waitForCurrentCommandToComeBack = false;
+						}
 					}else
 						console.log("ERROR! Command type "+commandType+" not found");
 					i++;
@@ -959,7 +1016,7 @@
     
     function loadingMacrosHandler(req)
     {
-    	Debug.log("loadingMacrosHandler() was called. Req: " + req.responseText);
+    	Debug.log("loadingMacrosHandler() was called.");// Req: " + req.responseText);
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
     	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
     	namesOfAllMacros = [];
@@ -971,7 +1028,6 @@
 			for(var i = 0; i < macrosArray.length; i++) 
 			{
 				var arr = JSON.parse(macrosArray[i]);
-				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
@@ -990,7 +1046,6 @@
 			}
 			finalOutput = decodeURI(out);
 			document.getElementById("listOfPrivateMacros").innerHTML = finalOutput;
-			console.log(finalOutput);
     	}
     	else 
     		document.getElementById("listOfPrivateMacros").innerHTML = "";
@@ -1002,7 +1057,6 @@
 			for(var i = 0; i < publicMacrosArray.length; i++) 
 			{
 				var arr = JSON.parse(publicMacrosArray[i]);
-				console.log(arr);
 				namesOfAllMacros.push(arr.name);
 				var macroString = arr.sequence.split(",");
 				var forDisplay = []; //getting rid of the first element (macroIndex) for display
@@ -1030,7 +1084,7 @@
     
     function loadingHistHandler(req)
     {
-    	Debug.log("loadingHistHandler() was called. Req: " + req.responseText);
+    	Debug.log("loadingHistHandler() was called.");// Req: " + req.responseText);
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
 		if ( !hugeStringOfHistory ) return; //this happens when history doesn't exist
@@ -1073,14 +1127,13 @@
 				finalOutPut += decodeURI(out);
 				CMDHISTDIVINDEX++;
 			}
-			else if(commandType=='d')
-				console.log("delay "+oneCommand[1]+"ms");
 			else
-				console.log("ERROR! Command type "+commandType+" not found");
+				Debug.log("ERROR! Command type "+commandType+" not found", Debug.HIGH_PRIORITY);
 
-			contentEl.innerHTML = finalOutPut;
-			contentEl.scrollTop = contentEl.scrollHeight;
 		}
+
+		contentEl.innerHTML = finalOutPut;
+		contentEl.scrollTop = contentEl.scrollHeight;
     }
     
     function histCmdWriteDivOnclick(addressStr, dataStr, addressFormatStr, dataFormatStr)
@@ -1106,6 +1159,15 @@
 		else callRead(addressStr);
 	}
     
+    function histCmdDelayDivOnclick(delayStr)
+	{
+		if(isOnMacroMakerPage)
+		{
+			addCommand("d",delayStr);
+		}
+		else return;
+	}
+    
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
     {
     	Debug.log("macroName" + macroName+ " macroAction" +macroAction + 
@@ -1115,7 +1177,7 @@
     	switch(macroAction)
     	{
     	case "Delete":
-    		if (userPermission != 255 && isMacroPublic)
+    		if (userPermission != ADMIN_PERMISSION_THRESHOLD && isMacroPublic)
     			document.getElementById("popupNoDeletePermission").style.display = "block";
     		else
     		{
@@ -1130,7 +1192,7 @@
     		}
     		break;
     	case "Edit":
-    		if (userPermission != 255 && isMacroPublic)
+    		if (userPermission != ADMIN_PERMISSION_THRESHOLD && isMacroPublic)
 				document.getElementById("popupNoEditPermission").style.display = "block";
 			else
 			{
@@ -1166,9 +1228,9 @@
 							markColorData = "2";
 							disableData = "disabled";
 						}
-						var writeEdit = "<lable>Write 0x<textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
+						var writeEdit = "<lable>Write <textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3)'>V</div> into address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+							+ ",3)'>V</div> into address <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1186,7 +1248,7 @@
 						}
 						var readEdit = "<lable>Read <textarea disabled class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + readResult 
 							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3,1)'>V</div> from address 0x<textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
+							+ ",3,1)'>V</div> from address <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1199,7 +1261,7 @@
 						}
 						var delayEdit = "<lable>Delay <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2]
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",2)'>V</div> seconds<br/></lable>";
+							+ ",2)'>V</div> milliseconds<br/></lable>";
 						seqID++;
 						output += delayEdit;
 					}else
@@ -1223,6 +1285,7 @@
 				var time = date.getHours() + ":" + minutes + " " + date.toLocaleDateString();
 				macroNotesForEdit = "[Modified " + time + "] " + macroNotes;
 				macroNotesEl.value = macroNotesForEdit;
+				document.getElementById("editFormat").selectedIndex = 0;
 			}
     		break;
     	case "Start":
@@ -1257,7 +1320,7 @@
     
     function exportMacroHandler(req)
    	{
-   		Debug.log("exportMacroHandler() was called. Req: " + req.responseText);   		
+   		Debug.log("exportMacroHandler() was called. ");//Req: " + req.responseText);   		
 
 		var exportFile = DesktopContent.getXMLValue(req,"ExportFile");
 		if(exportFile)
@@ -1282,7 +1345,7 @@
     
     function deleteMacroHandler(req)
 	{
-		Debug.log("deleteMacroHandler() was called. Req: " + req.responseText);
+		Debug.log("deleteMacroHandler() was called. ");//Req: " + req.responseText);
 		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
 		var reminderEl = document.getElementById('reminder');
 		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);
@@ -1299,17 +1362,24 @@
 			document.getElementById("popupIllegalNaming").style.display = "block";
 		else
 		{
+			if(document.getElementById("editFormat").value == "dec")
+			{
+				var nodeListOfTextareas=document.getElementsByTagName('textarea');
+				for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+				{
+					if(!isNaN('0x'+nodeListOfTextareas[i].value))
+						nodeListOfTextareas[i].innerHTML = convertToHex("dec",nodeListOfTextareas[i].value);
+				}
+			}
 			for(var i = 0; i < arrayOfCommandsForEdit.length; i++)
 			{
 				var eachCommand = arrayOfCommandsForEdit[i].split(":");
-				console.log(eachCommand);
 				for (var j = 1; j < eachCommand.length; j++)
 				{
 					if(!Regex2.test(eachCommand[j]) && eachCommand[j] !== '')
 					{
 						document.getElementById("popupIllegalInput").style.display = "block";
 						document.getElementById("illegalInputValue").innerHTML = eachCommand[j];
-						console.log("eachCommand[j] is "+eachCommand[j]+" and j is "+j+" and i is "+i);
 					    return;
 					}
 					else if (eachCommand[j] === '') 
@@ -1318,28 +1388,19 @@
 						else
 						{
 							document.getElementById("popupEmptyInput").style.display = "block";
-							console.log(eachCommand + "index: " + j);
 							return;
 						}
 					}
 				}
 			}
-//    		var tempAllNames = namesOfAllMacros.splice(namesOfAllMacros.indexOf(macroName));
-//
-//			if(tempAllNames.indexOf(macroName) !== -1) //duplicate name
-//			{
-//				document.getElementById("popupMacroEditDuplicateName").style.display = "block";
-//				document.getElementById("duplicateNameEdit").innerHTML = newMacroNameForEdit;
-//				return;
-//			}
+
 			macroNotesForEdit = document.getElementById('macroNotesEdit').value;
-			if(macroNotesForEdit.search("@") != -1 || macroNotesForEdit.search("#") != -1 || macroNotesForEdit.includes(".."))
+			if(macroNotesForEdit.indexOf("@") >= 0 || macroNotesForEdit.indexOf("#") >= 0 || macroNotesForEdit.indexOf("..") >= 0)
 			{
 				document.getElementById("popupIllegalNotes").style.display = "block";
 				return;
 			}
 			var isMacroLSBF = document.getElementById('isMacroEditLSBF').checked;
-			console.log(isMacroLSBF);
 			var isMacroPublic = !isOnPrivateMacros;
 			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
 							+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
@@ -1370,6 +1431,36 @@
     	}
     }
 
+    function reloadEditSequence()
+	{
+    	//FIXME: this function needs to know the old value before onchange!
+		var nodeListOfTextareas=document.getElementsByTagName('textarea');
+		if(document.getElementById("editFormat").value == "dec")
+		{
+			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+			{
+				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+					nodeListOfTextareas[i].innerHTML = convertFromHex("dec",nodeListOfTextareas[i].value);
+			}
+		}
+//		else if(document.getElementById("editFormat").value == "ascii")
+//		{
+//			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+//			{
+//				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+//					nodeListOfTextareas[i].innerHTML = convertToHex("ascii",nodeListOfTextareas[i].value);
+//			}
+//		}
+		else
+		{
+			for(var i=1;i<nodeListOfTextareas.length-1;i++) //Loop through all fields in the numerical sequence
+			{
+				if(!isNaN('0x'+nodeListOfTextareas[i].value))
+					nodeListOfTextareas[i].innerHTML = convertToHex("dec",nodeListOfTextareas[i].value);
+			}
+		}
+    }
+    
     function setFieldToVariable(div, seqID, index,isReadResultField)
     {
     	var popupNameVariableEl = document.getElementById("popupNameVariable");
@@ -1457,7 +1548,6 @@
     	if (LSBF == "true") runningMacroLSBF = 1; 
     	if (LSBF == "false") runningMacroLSBF = 2;
     	
-    	console.log(runningMacroLSBF + " and " + LSBF);
     	var reminderEl = document.getElementById('reminder');
     	var waitForUserInputFlag = 0;
     	var copyOfStringOfCommands = stringOfCommands.slice();           //Needed because the variable assignments are temporary
@@ -1510,6 +1600,8 @@
 								else
 								{
 									promptEl.style.display = "block";				   //Pop-up window prompting user for value of variable
+									document.getElementById('assignValuePrompt').innerHTML 
+											= "What value would you assign to variable <span id=\"variableNameAtRunTime\" class=\"red\"></span>?</h4>"
 									document.getElementById('variableNameAtRunTime').innerHTML = variableNameAtRunTime;
 								}
 							}

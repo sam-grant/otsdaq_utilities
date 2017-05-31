@@ -100,6 +100,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	std::string buffer;
 	int i = 0;
 	int heartbeatCount = 0;
+	int selfGeneratedMessageCount = 0;
 	while(1)
 	{
 		//if receive succeeds display message
@@ -107,7 +108,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
-			i = 10; //so things are good for all time.
+			i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+
+			if(selfGeneratedMessageCount)
+				--selfGeneratedMessageCount; //decrement internal message count
+			else
+				heartbeatCount = 0; //reset heartbeat if external messages are coming through
 
 			//std::cout << buffer << std::endl;
 
@@ -121,19 +127,35 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		}
 		else
 		{
-			if(i < 5)
+			if(i < 120) //if nothing received for 120 seconds, then something is wrong with Console configuration
 				++i;
+
 			sleep(1); //sleep one second, if timeout
 
-			if(heartbeatCount%30 == 29) //every 30 seconds print a heartbeat message
+			if(heartbeatCount%60 == 59) //every 60 seconds print a heartbeat message
 			{
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
+				if(heartbeatCount < 60*5) //ever hour after 5 minutes
+				{
+					++selfGeneratedMessageCount; //increment internal message count
+					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
+				}
+				else if(heartbeatCount%(60*60) == 59)
+				{
+					++selfGeneratedMessageCount; //increment internal message count
+					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time..." << std::endl;
+				}
 			}
 
 			++heartbeatCount;
 		}
 
-		//if(i==5) break; //assume something wrong, and break loop
+		//if nothing received for 2 minutes seconds, then something is wrong with Console configuration
+		//	after 5 seconds there is a self-send. Which will at least confirm configuration.
+		if(i==120)
+		{
+			std::cout << __COUT_HDR_FL__ << "Exiting Console MFReceiverWorkLoop" << std::endl;
+			break; //assume something wrong, and break loop
+		}
 	}
 
 }

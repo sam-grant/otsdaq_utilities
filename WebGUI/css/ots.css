@@ -29,10 +29,10 @@
 		
 	/*firefox seems to put an extra pixel of letter-spacing in bold words*/
 	@-moz-document url-prefix() {  /*target firefox*/
-		b, th {
+	/*	b, th {
 			letter-spacing: -1px;
 		}
 		h1, h2, h3, h4, h5, h6 {
 			letter-spacing: -2px;
-		}
+		}  commented out by RAR 5/29/2017.. seems to be creating problems for pages not expecting it in firefox */
 	}

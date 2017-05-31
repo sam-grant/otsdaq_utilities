@@ -1,5 +1,5 @@
-#ifndef _ots_SlowControlsDashboardSupervisor_h
-#define _ots_SlowControlsDashboardSupervisor_h
+#ifndef _ots_ControlsDashboardSupervisor_h_
+#define _ots_ControlsDashboardSupervisor_h_
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
@@ -27,6 +27,7 @@
 #include <set>
 
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+//#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
 
@@ -34,43 +35,43 @@
 namespace ots
 {
 
-	class SlowControlsInterface;
+	class ControlsVInterface;
 	class ConfigurationManager;
 
-class SlowControlsDashboardSupervisor: public xdaq::Application, public SOAPMessenger
+class ControlsDashboardSupervisor: public xdaq::Application, public SOAPMessenger
 {
 
 public:
 
     XDAQ_INSTANTIATOR();
 
-    SlowControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
-    virtual ~SlowControlsDashboardSupervisor     (void                                                              );
+    ControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
+    virtual ~ControlsDashboardSupervisor     (void                                                              );
     void init                  		  	 		 (void                                                              );
     void destroy                   		 		 (void                                                              );
-	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);	
+	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);
 	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					throw (xgi::exception::Exception);
-    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception); 
+    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception);
     void GetPVSettings                           (xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) throw (xgi::exception::Exception);
-    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception); 
-    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 
-    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception); 
-    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	throw (xgi::exception::Exception); 
+    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception);
+    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
+    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
+    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	throw (xgi::exception::Exception);
     void Subscribe                               (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
     void Unsubscribe                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
- 
-    
+
+
     //Utilities, eventually to be moved
     bool isDir									 (std::string dir                    );
     void listFiles								 (std::string baseDir, bool recursive, std::vector<std::string> * pages );
-    
+
 
 private:
-	//SlowControlsInterface 
-    SupervisorConfiguration              	theSupervisorsConfiguration_;
+	//SlowControlsInterface
+    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
 	//EpicsInterface                        * interface_;
+    ControlsVInterface*                     interface_;
     ConfigurationManager*          			theConfigurationManager_;
-
     RemoteWebUsers							theRemoteWebUsers_;
 	std::string                             username;
 	std::map<int, std::set<std::string>> 	pvDependencyLookupMap_;

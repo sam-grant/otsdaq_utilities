@@ -1,6 +1,6 @@
 
 
-
+		
 
 		* {
 			font-size: 16px;
@@ -17,6 +17,16 @@
 		
 		a {
 			color: rgb(44, 44, 187);
+			text-decoration: underline;
+			cursor: pointer;
+			outline: none;  /* to stop firefox selection */	
+			-webkit-user-select: 	none; /* to stop text highlights */
+			-moz-user-select: 		none;
+			user-select: 			none;
+		}
+		
+		a:hover {
+			text-decoration: underline;
 		}
 		
 		#display {
@@ -25,7 +35,7 @@
 		
 		#activeConfig {
 			font-size: 14px;
-			margin: 10px 0 -10px 0;
+			margin: 10px 0 10px 0;
 		}
 		
 		b, h3, h1 {
@@ -39,19 +49,48 @@
 		}
 		
 		/*firefox seems to put an extra pixel of letter-spacing in bold words*/
-		@-moz-document url-prefix() {  /*target firefox*/
+		/* this seems to have been fixed by choosing the correct truetype font in font.css*/
+		/*target firefox*/
+		/*@-moz-document url-prefix() {  
 			b, th {
 				letter-spacing: -1px;
 			}
 			h1, h2, h3, h4, h5, h6 {
 				letter-spacing: -2px;
 			}
-		}
+		}*/
 		
 
 		#SubSystemTable {
 			background-color : rgb(241, 231, 231);			
 		}
 		#SubSystemTable td, #SubSystemTable th {
-			background-color : rgb(226, 216, 216);			
+			background-color : rgb(226, 216, 216);	
+			white-space: pre; /* was pre-wrap; but not sure why.. pre seems to maintain text better*/
 		}
+		
+
+		.tableView-Menu {
+			float:				left;
+		    margin: 			4px 10px 3px 0;
+		    padding: 			3px 4px 3px 4px;
+		    border-radius: 		3px;
+		    background-color: 	rgb(177, 195, 195);
+		    color: 				rgb(44, 44, 187);
+		    font-size:			14px;
+		} .tableView-Menu:hover {
+			background-color:	rgb(218, 194, 194);
+		    margin: 			3px 10px 4px 0;
+		    cursor:				pointer;
+		}
+		
+		.gotoNavDiv {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-gotoNav.png);
+			width: 				8px;
+			height: 			7px;
+		} 
+
+		
+		
+		
+		

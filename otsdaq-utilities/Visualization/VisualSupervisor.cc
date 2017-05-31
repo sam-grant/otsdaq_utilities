@@ -9,7 +9,7 @@
 //#include "otsdaq-core/DataManager/NetworkDataManager.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
-#include "otsdaq-core/RootUtilities/DQMHistos.h"
+//#include "otsdaq-core/RootUtilities/DQMHistos.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
 
@@ -317,23 +317,25 @@ throw (xgi::exception::Exception)
 		if(fp)
 		{
 			char line[100];
-			char val[100];
+			//char val[100];
+			int val;
 
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("radioSelect", val);
+			sscanf(line,"%*s %d",&val);
+			if(val < 0 || val > 3) val = 0; //FIXME.. value can get corrupt...
+			xmldoc.addTextElementToData("radioSelect", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoRefresh", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoRefresh", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoHide", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoHide", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("hardRefresh", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("hardRefresh", std::to_string(val));
 			fgets(line,100,fp);
-			sscanf(line,"%*s %s",val);
-			xmldoc.addTextElementToData("autoRefreshPeriod", val);
+			sscanf(line,"%*s %d",&val);
+			xmldoc.addTextElementToData("autoRefreshPeriod", std::to_string(val));
 			fclose(fp);
 		}
 		else
@@ -756,31 +758,44 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-//	theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
-//	theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
-//
-	std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
-			SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-									getParameters().getValue("ConfigurationGroupName"),
-						ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
-						getParameters().getValue("ConfigurationGroupKey")));
+	try
+	{
+		//theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
+		//theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
 
-	__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
-			theGroup.second << std::endl;
+		std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup(
+				SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+										getParameters().getValue("ConfigurationGroupName"),
+							ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
+							getParameters().getValue("ConfigurationGroupKey")));
 
-	theConfigurationManager_->loadConfigurationGroup(
-			theGroup.first,
-			theGroup.second, true);
+		__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
+				theGroup.second << std::endl;
 
-	theDataManager_->configure();
+		theConfigurationManager_->loadConfigurationGroup(
+				theGroup.first,
+				theGroup.second, true);
+
+		theDataManager_->configure();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
 void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
-	theDataManager_->halt();
+	try
+	{
+		theDataManager_->halt();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
@@ -788,7 +803,14 @@ void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+	try
+	{
+		theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 //========================================================================================================================
@@ -796,7 +818,14 @@ void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	theDataManager_->stop();
+	try
+	{
+		theDataManager_->stop();
+	}
+	catch(...)
+	{
+		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+	}
 }
 
 

@@ -1,0 +1,521 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+		
+		body {
+			overflow: hidden; /* scrolling only happens in left and right panes */
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: pointer;
+		}
+		
+		.pane {
+			border: 0;
+			position: absolute;
+		}
+
+		#topPane {
+			overflow: hidden;
+		}
+		#leftPane {
+			background-color : rgb(241, 231, 231);
+			overflow-x: hidden;
+			overflow-y: scroll;
+			
+		}
+		#rightPane {
+			background-color : rgb(241, 231, 231);
+			overflow: auto;
+		}
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	
+	<script>		
+		
+		//	Description of Configuration-Subset Functionality/Behavior:
+		//	
+		//	GET parameters:
+		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
+		//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
+		//									- these are the fields that can be used to filter UID records by (and these will cause grouping in square-view)	
+		//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+		//		<filterFieldList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+		//									- this is like a pre-filter (filter on records UID that user can not control)	
+		//	- Requires user to have LOCK
+		//
+		//	- Top Pane:
+		//		* for header info (e.g. subsetBasePath)
+		//
+		//	- Split remaining window into two panes: Left and Right; Left is fixed width and hideable.	
+		//	
+		//	- Left Pane:
+		//		* Fixed width, vertical auto scroll, hideable.
+		//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
+		//		* Filtering:
+		//		 	- AND/OR option if multiple sublevels
+		//			- multi-select for each <subLevelGrouping>
+		//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
+		//		* Record UID Selector:
+		//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
+		//		* Alternatively can represent the detectors as squares (with mouse over UID names)
+		//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+		//					
+		//	- Right Pane:
+		//		* Show fields that are common based on SubLevelGrouping filters
+		//			- E.g. if *,* then can only show SlowControls fields
+		//			- Challenge: show all common fields, even through links
+		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked 
+		//		
+		//	- Save functionality should be same as saving tree	
+		//		* If admin, give options to target a certain system alias.. Etc.
+		//		* Else assume saving to currently active groups
+
+		
+				
+		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
+		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
+		
+		
+		var _leftPane, _rightPane, _topPane;
+		var _leftPaneHidden = false;
+		
+		
+	
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			//paint() 
+			//extractGETParameters()
+			//createTopPaneContent()
+			//createLeftPaneContent(leftW)
+			//groupFilterSelectionHandler(el)
+			//createRightPaneContent()
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+				
+
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{			
+						
+			Debug.log("CfgGUI_sebset init ");
+			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
+					"Welcome to the Configuration-Subset GUI. Here you can manipulate the fields "+
+					"of a subset of your <i>otsdaq</i> system. \n\n" +
+					"The organization of the Configuration-Subset GUI is in the form of two panes, a left and right.\n\n" +
+					
+					"Briefly, here is a description of the two panes: " +
+					"\n\t- 'Left Pane' is for selecting one or many records to target." +
+					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
+			);
+			
+			//extract get parameters
+			if(!extractGETParameters())
+			{
+				Debug.log("Illegal GET parameters. Aborting.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+
+			paint();
+			window.addEventListener("resize",paint);
+			
+			return;
+			
+			
+			
+			var localGetFieldValuesForRecordHandler;
+			var localRecords, localFields, localModifiedTables;
+			
+			localModifiedTables = [];
+			
+			//get list of records that match <subsetBasePath> AND <filterFieldList>
+			
+			ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_filterFieldList,
+					function(records)
+					{
+				localRecords = records;
+				Debug.log("records found = " + records.length);
+
+				var str = document.body.innerHTML;
+				str += "<br>GetRecords";
+				str += "<br>";
+				for(var i=0;i<records.length;++i)
+					str += records[i] + "<br>";
+				document.body.innerHTML = str;
+
+				//get grouping field values
+				//	for record list
+				ConfigurationAPI.getFieldsOfRecords(
+						_subsetBasePath,
+						records,
+						_editableFieldList,
+						-1,
+						function(recFields)
+						{
+					localFields = recFields;
+					Debug.log("recFields found = " + recFields.length);
+
+					var str = document.body.innerHTML;
+					str += "<br>GetFields";
+					str += "<br>";
+					for(var i in recFields)
+						str += i + ": " + recFields[i].fieldRelativePath + 
+						recFields[i].fieldColumnName + "<br>";
+					document.body.innerHTML = str;
+
+					ConfigurationAPI.getFieldValuesForRecord(
+							_subsetBasePath,
+							[records[0]],
+							recFields,
+							localGetFieldValuesForRecordHandler
+					);
+
+
+						});
+
+
+					});
+
+			var setValue = true;
+			var saveAll = false;
+			localGetFieldValuesForRecordHandler = function(recFieldValues) {
+				var str = document.body.innerHTML;
+				str += "<br>GetFieldValues " + setValue;
+				str += "<br>";
+				for(var i in recFieldValues)
+					str += recFieldValues[i].fieldUID + ": " +
+						recFieldValues[i].fieldPath + ": " + 
+						recFieldValues[i].fieldValue + "<br>";
+				document.body.innerHTML = str;
+				
+				if(setValue)				
+					ConfigurationAPI.setFieldValuesForRecords(
+							_subsetBasePath,
+							localRecords,
+							[localFields[1],localFields[5]], //fieldArr
+							["0","3999"], //valueArr
+							function(modifiedTables)
+							{
+					localModifiedTables = modifiedTables;
+					
+					//get value again, without setting again
+					setValue = false;
+					saveAll = true;
+					if(1 && modifiedTables.length)
+						ConfigurationAPI.getFieldValuesForRecord(
+							_subsetBasePath,
+							localRecords,
+							localFields,
+							localGetFieldValuesForRecordHandler,
+							localModifiedTables
+					);	
+							});
+				
+				
+				if(saveAll)
+					ConfigurationAPI.popUpSaveModifiedTablesForm(localModifiedTables,
+							function(newTables, newGroups, newAliases)
+							{
+					if(newTables.length)
+						Debug.log("Done with saving.");
+					else
+						Debug.log("No saving done!");
+						
+							});
+					
+			}
+		} //end init()
+		
+		//=====================================================================================
+		//paint ~~
+		//	positiong left and right panes based on window size
+		function paint() 
+		{	
+			var w = DesktopContent.getWindowWidth();
+			var h = DesktopContent.getWindowHeight();
+			Debug.log("paint w,h=" + w + "," +h);
+
+			var TOP_H = 50;
+			var LEFT_W = 400;
+			var BORDER_SZ = 0;			
+			var MARGIN = 5;
+			
+			if(!_leftPane && !_rightPane && !_topPane)
+			{
+				//first time create elements
+				createTopPaneContent();
+				createLeftPaneContent(LEFT_W-2*BORDER_SZ);
+				createRightPaneContent();
+			}
+
+			
+			var y = MARGIN;
+			var x = MARGIN;
+			w -= 2*MARGIN;
+			h -= 2*MARGIN;
+			
+			_topPane.style.left = x + "px";
+			_topPane.style.top = y + "px";
+			_topPane.style.width = (w - 2*BORDER_SZ) + "px";
+			_topPane.style.height = (TOP_H - 2*BORDER_SZ) + "px";
+			
+			y += TOP_H + MARGIN;
+			h -= TOP_H + MARGIN;
+
+			if(!_leftPaneHidden)
+			{
+				_leftPane.style.left = MARGIN + "px";
+				_leftPane.style.top = y + "px";
+				_leftPane.style.width = (LEFT_W-2*BORDER_SZ) + "px";
+				_leftPane.style.height = (h - 2*BORDER_SZ) + "px";
+	
+				x += LEFT_W + MARGIN;
+				w -= LEFT_W + MARGIN;
+			}
+
+			_rightPane.style.left = x + "px";
+			_rightPane.style.top = y + "px";
+			_rightPane.style.width = (w - 2*BORDER_SZ) + "px";
+			_rightPane.style.height = (h - 2*BORDER_SZ) + "px";
+			
+			
+		}	//end paint()
+
+		//=====================================================================================
+		//extractGETParameters ~~
+		//	return false, if illegal params
+		function extractGETParameters() 
+		{
+			//extract get parameters
+			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
+			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+			//		<filterFieldList> 	= ;-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
+
+			_subsetBasePath		= "FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
+			_groupingFieldList 	= "LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
+			_editableFieldList	= "";//DesktopContent.getParameter(0,"editableFieldList");			
+			_filterFieldList 	= "";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"filterFieldList");
+
+			if(!_subsetBasePath)
+			{
+				Debug.log("Missing required GET parameter 'subsetBasePath.'",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+			if(!_groupingFieldList) _groupingFieldList = "";
+			if(!_editableFieldList) _editableFieldList = "";
+			if(!_filterFieldList) _filterFieldList = "";
+
+			Debug.log("_subsetBasePath " + _subsetBasePath);
+			Debug.log("_groupingFieldList " + _groupingFieldList);
+			Debug.log("_editableFieldList " + _editableFieldList);
+			Debug.log("_filterFieldList " + _filterFieldList);
+			
+			return true;
+		}	//end extractGETParameters()
+		
+		//=====================================================================================
+		//createTopPaneContent ~~
+		function createTopPaneContent() 
+		{
+			_topPane = document.createElement("div");
+			_topPane.setAttribute("class", "pane");
+			_topPane.setAttribute("id", "topPane");			
+			
+			var el;
+			var str;
+			
+			el = document.createElement("div");
+			el.setAttribute("id", "topPane-header");
+			str = "Targeting ";
+			
+			if(_filterFieldList != "")
+				str += "records, matching '" + _filterFieldList + ",' ";
+			else
+				str += "all records ";
+			
+			if(_groupingFieldList != "")
+				str += "organized by '" + _groupingFieldList + "' ";
+			else
+				str += "";
+			
+			str += "at path '/" + _subsetBasePath + ".'";
+			
+			el.innerHTML = str;
+			_topPane.appendChild(el);			
+			
+			document.body.appendChild(_topPane);			
+		}	//end createTopPaneContent()
+		
+		//=====================================================================================
+		//createLeftPaneContent ~~
+		function createLeftPaneContent(leftW) 
+		{
+			_leftPane = document.createElement("div");
+			_leftPane.setAttribute("class", "pane");
+			_leftPane.setAttribute("id", "leftPane");
+			
+			//	- Left Pane:
+			//		* Fixed width, vertical auto scroll, hideable.
+			//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
+			//		* Filtering:
+			//		 	- AND/OR option if multiple sublevels
+			//			- multi-select for each <subLevelGrouping>
+			//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
+			//		* Record UID Selector:
+			//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
+			//		* Alternatively can represent the detectors as squares (with mouse over UID names)
+			//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+			
+			var el;
+			var str;
+						
+						
+						
+			//:::::::::::::::::::::::::::::
+			//localCreateGroupingFieldFilters ~~
+			function localCreateGroupingFieldFilters()
+			{
+				var groups = _groupingFieldList.split(',');
+				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
+				
+				var filterBoxesEl = document.createElement("div");
+				var defaultShowFilters = false;
+				
+				//create toggle icon
+				el = document.createElement("a");
+				el.setAttribute("style", "float:left;");
+				el.onclick = function() {
+					if(this.textContent == "Show Filters")
+					{
+						this.innerHTML = "Hide Filters";
+						filterBoxesEl.style.display = "block";
+					}
+					else
+					{
+						this.innerHTML = "Show Filters";
+						filterBoxesEl.style.display = "none";
+					}
+				};			
+				el.innerHTML = defaultShowFilters?"Hide Filters":"Show Filters";
+				_leftPane.appendChild(el); //add toggle icon
+
+				//clear floats
+				el = document.createElement("div");
+				el.setAttribute("id", "clearDiv");
+				_leftPane.appendChild(el);
+				
+				
+				//create multi-select filter boxes
+				filterBoxesEl.setAttribute("style", "float:left;background-color:red;");
+				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
+
+				var H = 300;				
+				for(var i=0;i<groups.length;++i)
+				{
+					//get group values
+					
+					//create multiselect box
+
+					el = document.createElement("div");
+					el.setAttribute("class", "groupFilerMultiSelect");
+					el.setAttribute("id", "groupFilerMultiSelect-" + i);
+					el.setAttribute("style", "height:" + H + "px;" + 
+							"width:" + (leftW-100) + "px;");
+					filterBoxesEl.appendChild(el);			
+					
+					var noMultiSelect = false; // true or false (false for multiselect functionality) 
+					var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+
+					var vals = ["One little piggy","two little piggies","three little piggies"];
+					var keys = ["one","two","three"];
+					var types = ["number","numbers","numbers"];
+
+					//write MultiSelectBox to a particular div
+					MultiSelectBox.createSelectBox(el,
+							"box" + i,
+							"Multi-Select Box Example",
+							vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+
+					MultiSelectBox.initMySelectBoxes();
+
+					el = document.createElement("div");
+					el.setAttribute("id", "clearDiv");
+					filterBoxesEl.appendChild(el);
+				}
+				_leftPane.appendChild(filterBoxesEl);
+
+								
+			} //end localCreateGroupingFieldFilters(leftW)
+			
+			//if grouping fields given then create
+			if(_groupingFieldList != "")
+				localCreateGroupingFieldFilters(); 
+			
+			
+			document.body.appendChild(_leftPane);
+			
+		}	//end createLeftPaneContent()
+
+		//=====================================================================================
+		//groupFilterSelectionHandler ~~
+		function groupFilterSelectionHandler(el) 
+		{
+			Debug.log("multiselect for " + el.id);		
+		}	//end createRightPaneContent()
+		
+		//=====================================================================================
+		//createRightPaneContent ~~
+		function createRightPaneContent() 
+		{
+			_rightPane = document.createElement("div");
+			_rightPane.setAttribute("class", "pane");
+			_rightPane.setAttribute("id", "rightPane");
+			
+			document.body.appendChild(_rightPane);			
+		}	//end createRightPaneContent()
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<!-- body content populated by javascript paint(), etc. -->
+	
+</body>
+	
+</html>

@@ -14,6 +14,8 @@
 			
 			a {
 				color: blue;
+				cursor:pointer;
+				text-decoration: underline;
 			}
 			
 			input:not([type=submit]) {
@@ -28,7 +30,7 @@
 			}
 			
 			#colorInputs {
-				width: 380px;
+				width: 400px;
 			}		
 						
 			#colorInputs input {
@@ -42,8 +44,9 @@
 			}
 			
 			.Settings-colorName {
-				width:140px;
+				width:150px;
 				text-align: right;
+				white-space: nowrap;
 			}
 			
 			.Settings-colorBox {
@@ -131,8 +134,9 @@
 			
 		</style>
 		
-
+		<!--link href="https://fonts.googleapis.com/css?family=Comfortaa" rel="stylesheet"-->
 		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
@@ -207,6 +211,22 @@
 				_settingsLayoutMailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-settingsLayoutMailbox");	
 				
 				settingsRequest();
+				
+				DesktopContent.tooltip("User Settings Introduction",
+						"Welcome to the User Settings window. Here you can personalize " +
+						"your user experience.\n\n" +
+						"Here is what you can personalize:" +
+						"\n\t- Color Scheme: " +
+						"<div style='margin-left:40px'>" +
+						"You can change your color scheme by choosing colors for " +
+						"the desktop dashboard, the desktop background, and desktop windows." +
+						"</div>" +
+						"\n\t- Window Layouts: each user can customize their window layout presets. " +
+						"A layout preset is a set of windows (including their size and position on your " +
+						"desktop) that you can recall any time you would like by clicking 'Layouts' " +
+						"in the top left of the desktop environment and choosing a preset. This is useful" +
+						"of you find yourself always using the same few windows - you can open them all with one click! "
+						);
 			}	
 			
 			//request current settings immediately once page loads
@@ -520,7 +540,7 @@
 				if(_accountsArray[0] && _accountsArray[0].length) //If have permissions, add Jump to Link
 				{
 					htmlStr += "<a href='#ACCOUNTS_LABEL' style='color:#880000'>Jump to Accounts Section</a>";	
-					//FIXME for launching Wizard htmlStr += "<a href='javascript:launchConfigWizard()' style='color:#880000; float:right;'>Launch Config Wizard</a>";					
+					//FIXME for launching Wizard htmlStr += "<a onmouseup='Javascript:launchConfigWizard()' style='color:#880000; float:right;'>Launch Config Wizard</a>";					
 					el.innerHTML = htmlStr;					
 				}
 				else
@@ -543,17 +563,17 @@
 				
 				htmlStr += _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).<br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";
-				htmlStr += "<a href='Javascript:setAccountsPage("+ (_AccountsPageIndex-1) + ")';return false;' onmouseup='event.cancelBubble=true;'>&nbsp;Prev </a>";				
+				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex-1) + ")';return false;' onmouseup='event.cancelBubble=true;'>&nbsp;Prev </a>";				
 				
 				for(i=(_AccountsPageIndex-_AccountsPageNavWidth < 0)?0:(_AccountsPageIndex-_AccountsPageNavWidth);
 					i < _AccountsPageIndex+_AccountsPageNavWidth && i < numOfPages; ++i) 
 				{				
-					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a href='Javascript:setAccountsPage("+ i + ")';return false;' onmouseup='event.cancelBubble=true;'> " +
+					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a onmouseup='Javascript:setAccountsPage("+ i + ")';return false;' onmouseup='event.cancelBubble=true;'> " +
 						(i==_AccountsPageIndex?"<b>":"") + (i+1) + (i==_AccountsPageIndex?"</b>":"") + " </a>";					
 				}
 				
 				htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				htmlStr += "<a href='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';return false;' onmouseup='event.cancelBubble=true;'> Next&nbsp;</a>";
+				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';return false;' onmouseup='event.cancelBubble=true;'> Next&nbsp;</a>";
 				htmlStr += "</div>";
 				
 				htmlStr += "<div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User</div>"; 
@@ -564,7 +584,7 @@
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //exclude NAC column, and place at end
 					htmlStr += "<td class='accountsHeaderFld'>" + 
-						"<a href='Javascript:sortAccountsBy("+ j + ")';return false;' onmouseup='event.cancelBubble=true;'" +
+						"<a onmouseup='Javascript:sortAccountsBy("+ j + ")';return false;' onmouseup='event.cancelBubble=true;'" +
 						" title='Sort by " + _accountFields[j] + "'>" + 
 						_accountFields[j] + "<a/></td>";
 				htmlStr += "<td class='accountsHeaderFld' title='Make Account Changes'>Update</td>" +
@@ -585,9 +605,9 @@
 						_accountsArray[2][_AccountsOrderArray[i]].getAttribute('value') + "' " +
 						"onkeydown='return handleAccountsInputKeyDown(event)'" +
 						"></td>";
-					htmlStr += "<td><a href='Javascript:updateAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" + 
+					htmlStr += "<td><a onmouseup='Javascript:updateAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" + 
 						" title='Make Account Changes'>Update</a></td>";
-					htmlStr += "<td><a href='Javascript:deleteAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" +
+					htmlStr += "<td><a onmouseup='Javascript:deleteAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" +
 						" title='Delete Account'>X</a></td>";
 					htmlStr += "<td class='accountsNac' title='New Account Code'>"+
 						_accountsArray[3][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
@@ -601,7 +621,7 @@
 					else lockModeTmp = 2;
 
 					if(lockModeTmp != 2) //only output something if mode 0 or 1
-						htmlStr += "<a href='Javascript:lockToUsername("+ _AccountsOrderArray[i] + "," + 
+						htmlStr += "<a onmouseup='Javascript:lockToUsername("+ _AccountsOrderArray[i] + "," + 
 							lockModeTmp + ")';return false;' " +
 							"onmouseup='event.cancelBubble=true;' title='Lock ots to single user'>" +
 							"<img src='/WebPath/images/dashboardImages/icon-Settings-" + 
@@ -820,9 +840,9 @@
 							_sysLayoutArray:_layoutArray)[i-1].split(",");
 					var numOfFields = ((winLayArr.length-1)%8==0)?8:7; //hack to be backwards compatible with 7 fields (new way adds the 8th field for isMinimized)
 					var num = parseInt(winLayArr.length/numOfFields); //numOfFields fields per window
-					el.innerHTML += "~ " + num + " Windows ~<br>";
+					el.innerHTML += "~ Layout of " + num + " Window" + ((num==1)?"":"s") + " ~<br>";
 					for(var i=0;i<num;++i) {
-						el.innerHTML += "&nbsp;&nbsp;" + winLayArr[i*numOfFields].substr(1) + " - " + winLayArr[i*numOfFields+1] 
+						el.innerHTML += "&nbsp;&nbsp;&nbsp;&nbsp;" + winLayArr[i*numOfFields].substr(1) + " - " + winLayArr[i*numOfFields+1] 
 							+ " - ";
 						for(var j=3;j<numOfFields;++j)
 							el.innerHTML += winLayArr[i*numOfFields+j] + (j!=numOfFields-1?",":"");
@@ -903,6 +923,22 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=setUserWithLock&accounts=1",
 						data, settingsRequestHandler);				
 			}
+			
+			function resetUserTooltips() {
+				DesktopContent.popUpVerification("Are you sure you want to reset all your " +
+						"Tooltips?<br><br>This will reset the 'never show' property of your " +
+						"Tooltips. It is irreversible, and will result in you seeing all " +
+						"Tooltips again.",
+						function() {
+					Debug.log("accepted");
+					DesktopContent.XMLHttpRequest("Request?RequestType=resetUserTooltips","",
+							function() {
+						Debug.log("All of your Tooltips have been reset!",
+								Debug.INFO_PRIORITY);
+					}, 0, 0, 0, true); //show loading
+				});
+			}
+			
 		</script>
 		
 	</head>
@@ -921,35 +957,44 @@
 		<div id='colorInputs'></div>		
 		<div id='clearDiv'></div>
 		<a target='_blank' href='http://www.colorschemer.com/online.html'>RGB Generator</a> 
-		<a href='#' onmouseup='defaultColors(); return false;'>Default Colors</a>
+		<a onmouseup='defaultColors(); return false;'>Default Colors</a>
 		</td></table>
 		<h3>Desktop Window Arrangement Presets:</h3>		
 		<div id='windLayoutDiv'>
-			<a href='Javascript:setLayout(1,event)' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as User Preset-1</li></a>		
+			<a onmouseup='Javascript:setLayout(1,event)' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as User Preset-1</li></a>		
 			<div class='winLayoutText' id='winLayoutText1'></div>
 			<br>
-			<a href='Javascript:setLayout(2,event)' class='winLayoutLink' id='winLayoutLink2'><li>Set Current Window Layout as User Preset-2</li></a>		
+			<a onmouseup='Javascript:setLayout(2,event)' class='winLayoutLink' id='winLayoutLink2'><li>Set Current Window Layout as User Preset-2</li></a>		
 			<div class='winLayoutText' id='winLayoutText2'></div>
 			<br>
-			<a href='Javascript:setLayout(3,event)' class='winLayoutLink' id='winLayoutLink3'><li>Set Current Window Layout as User Preset-3</li></a>		
+			<a onmouseup='Javascript:setLayout(3,event)' class='winLayoutLink' id='winLayoutLink3'><li>Set Current Window Layout as User Preset-3</li></a>		
 			<div class='winLayoutText' id='winLayoutText3'></div>
 		
 			<div id='windSystemLayoutDiv' style='display:none'>
 					<hr width='50%'/>
-					<a href='Javascript:setLayout(4,event)' class='winLayoutLink' id='winSysLayoutLink1'><li>Set Current Window Layout as System Preset-1</li></a>		
+					<a onmouseup='Javascript:setLayout(4,event)' class='winLayoutLink' id='winSysLayoutLink1'><li>Set Current Window Layout as System Preset-1</li></a>		
 					<div class='winLayoutText' id='winSysLayoutText1'></div>
 					<br>
-					<a href='Javascript:setLayout(5,event)' class='winLayoutLink' id='winSysLayoutLink2'><li>Set Current Window Layout as System Preset-2</li></a>		
+					<a onmouseup='Javascript:setLayout(5,event)' class='winLayoutLink' id='winSysLayoutLink2'><li>Set Current Window Layout as System Preset-2</li></a>		
 					<div class='winLayoutText' id='winSysLayoutText2'></div>
 			</div>
 		</div>
 		
 		
 		<div id='clearDiv'></div>
+		
 		<br>
 		<input id='prefBtn' type='submit' value='Save Preferences' onmouseup='saveGenPreferences(event); return false;' />
+
+		<div id='clearDiv'></div>
+		<h3>Misc. Personal Customizations:</h3>
+		<ul>
+			<li>
+				<a onmouseup='Javascript:resetUserTooltips()'>Reset My Tooltips</a>
+			</li>
+		</ul>
 		
-<a name="ACCOUNTS_LABEL"></a>
+		<a name="ACCOUNTS_LABEL"></a>
 		<div id='accountsDiv'></div>
 		<div id='newAccountFeedbackDiv'></div>
 		<br><br><br><br>

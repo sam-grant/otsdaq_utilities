@@ -49,6 +49,8 @@ function $(id) {return document.getElementById(id);}
 
 MultiSelectBox.mySelects_ = {};
 MultiSelectBox.omnis_ = {}; 
+MultiSelectBox.isSingleSelect_ = {}; 
+MultiSelectBox.lastOptSelect_ = {};  //maintain last opt clicked
 
 MultiSelectBox.selInitBoxHeight_ = 0; //init with first showing of search box in showSearch()
 MultiSelectBox.SEL_INIT_PADDING = 5; 
@@ -111,18 +113,40 @@ MultiSelectBox.getSelectionElementByIndex = function(el,i)
 			"-option_" + i);
 }
 
+MultiSelectBox.setSelectionElementByIndex = function(el,i,selected)
+{    
+	var name = el.getElementsByClassName("mySelect")[0].id;
+	if(MultiSelectBox.isSingleSelect_[name] && 
+			selected) //if true, only allow one select at a time, so deselect others
+	{
+		var size = MultiSelectBox.mySelects_[name].length;
+		for (var opt=0; opt<size; opt++)
+			MultiSelectBox.mySelects_[name][opt] = 0;
+	}
+	MultiSelectBox.mySelects_[name][i] = selected?1:0;
+}
+
 //for multiple selects to behave like checkboxes
-MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
+MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 {
 	var select = option.parentElement;
 	var id = select.getAttribute("id");
 	var selectList = MultiSelectBox.mySelects_[id];
 	var size = select.childNodes.length;
 	
+	if(event)
+		MultiSelectBox.dbg("Shift click = " + event.shiftKey);
+
+	//if shift.. then select or deselect 
+	//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
+	//	MultiSelectBox.lastOptSelect_[id]
+	//	to this click
+	
 	//MultiSelectBox.dbg(selectList);
 	if (!selectList || selectList.length!=size)
 	{ //first time, populate select list
-		MultiSelectBox.mySelects_[id]=[]; 
+		MultiSelectBox.mySelects_[id] = []; 
+		MultiSelectBox.lastOptSelect_[id] = -1;
 		selectList=MultiSelectBox.mySelects_[id];	
 		for (var opt=0; opt<size; opt++)
 			selectList.push(0);
@@ -146,19 +170,52 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect)
 				selectList[cindex] = 0;
 			}
         }
+	else if(event.shiftKey && 
+			MultiSelectBox.lastOptSelect_[id] != -1)
+	{
+		//if shift.. then select or deselect 
+		//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
+		//	MultiSelectBox.lastOptSelect_[id]
+		//	to this click
+		
+		var lo = MultiSelectBox.lastOptSelect_[id] < index? 
+				MultiSelectBox.lastOptSelect_[id]:index;
+		var hi = MultiSelectBox.lastOptSelect_[id] < index? 
+				index:MultiSelectBox.lastOptSelect_[id];
+
+		MultiSelectBox.dbg("lo ",lo," hi ",hi);
+		//handle multi shift click
+		for (var opt=lo; opt<=hi; opt++)
+		{
+			MultiSelectBox.dbg(selectList[opt]," vs ",
+					selectList[MultiSelectBox.lastOptSelect_[id]]);
+			if(selectList[opt] != 
+					selectList[MultiSelectBox.lastOptSelect_[id]]) //if not matching selected value
+			{
+				MultiSelectBox.dbg("flip");
+				//toggle highlighted style and global array
+				MultiSelectBox.toggleClass(select.childNodes[opt],"optionhighlighted");
+				selectList[opt] ^= 1;
+			}
+		}
+	}
 
 	MultiSelectBox.dbg(selectList);
 	selected = selectList;
+	MultiSelectBox.lastOptSelect_[id] = index; //save selection
 }
 
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
-//		keys, types, handler, noMultiSelect 
+//		keys, types, handler, noMultiSelect, mouseOverHandler, 
+//		iconURLs, mouseDownHandler, mouseUpHandler
 // Note: handler is the string name of the function
-MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,noMultiSelect)
+MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler)
 {
 	if(!el) 
-	{ throw new Error("Invalid Element given to MultiSelectBox: " + el); return; } 
+	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
+		throw new Error("Invalid Element given to MultiSelectBox: " + el); return; } 
 	
 	el.innerHTML = ""; //delete current contents
 
@@ -166,19 +223,22 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 	MultiSelectBox.addClass(el,"multiselectbox"); //add multiselectbox class to div  
 	
 	MultiSelectBox.omnis_[name] = el; 
+	MultiSelectBox.isSingleSelect_[name] = noMultiSelect;
+	MultiSelectBox.lastOptSelect_[name] = -1; //default to nothing selected
 
 	//searchglass=28x28, margin=5, vscroll=16, border=1
 	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
 	var msH = el.offsetHeight - 40 - 2; 
 	
-	
 	el = document.createElement("div"); //create element within element
 	MultiSelectBox.omnis_[name].appendChild(el);
 
 	var str = "";
+	
 	if(title)
 	{
-		str += "<div style='margin-top:20px;width:100%'><b>"
+		str += "<div id='" + name + "header' " +
+				"style='margin-top:20px;width:100%'><b>"
 		str += title;
 		str += "</b></div>";
 	}
@@ -187,35 +247,79 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,handler,
 	if(!types) types = vals;
 	
 	//make selbox
+	str += "<table cellpadding='0' cellspacing='0'>";
+	str += "<tr><td>";
 	str += "<div class='mySelect' unselectable='on' id='" + 
 			name + "' style='float:left;" + 
 			"width: " + (msW) + "px;" + 
 			"height: " + (msH) + "px;" + 
-			"' name='" + name + "' >";
+			"' name='" + name + "' " +
+			">";
 
 	for (var i = 0; i < keys.length;++i)//cactus length
 	{
 		str += "<div  class='myOption' " +
 			"id='" + name + "-option_" + i + "' " +
-			"onmousedown = 'MultiSelectBox.myOptionSelect(this, " + i + "," +
-			noMultiSelect + "); ";
+			"onclick='MultiSelectBox.myOptionSelect(this, " + i + "," +
+			noMultiSelect + ", event); ";
 		if(handler && (typeof handler) == "string") //if handler supplied as string
-			str += handler + "(this);"; //user selection handler
+			str += handler + "(this,event);"; //user selection handler
 		else if(handler) //assume it is a function
-			str += handler.name + "(this);"; //user selection handler
+			str += handler.name + "(this,event);"; //user selection handler
 		str += "' ";
+		
+		str += "onmouseover='";
+		if(mouseOverHandler && (typeof mouseOverHandler) == "string") //if mouseOverHandler supplied as string
+			str += mouseOverHandler + "(this,event);"; //user selection mouseOverHandler
+		else if(mouseOverHandler) //assume it is a function
+			str += mouseOverHandler.name + "(this,event);"; //user selection mouseOverHandler
+		str += "' ";
+		
+		str += "onmousedown='";
+		if(mouseDownHandler && (typeof mouseDownHandler) == "string") //if mouseDownHandler supplied as string
+			str += mouseDownHandler + "(this,event);"; //user selection mouseDownHandler
+		else if(mouseDownHandler) //assume it is a function
+			str += mouseDownHandler.name + "(this,event);"; //user selection mouseDownHandler
+		str += "' ";
+		
+		str += "onmouseup='";
+		if(mouseUpHandler && (typeof mouseUpHandler) == "string") //if mouseUpHandler supplied as string
+			str += mouseUpHandler + "(this,event);"; //user selection mouseUpHandler
+		else if(mouseUpHandler) //assume it is a function
+			str += mouseUpHandler.name + "(this,event);"; //user selection mouseUpHandler
+		str += "' ";
+		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
+		if(iconURLs && iconURLs[i]) //add image if available
+		{
+			if(iconURLs[i][0] != '=')
+				str += "<img style='width:32px; height:32px; margin: 0px 5px -8px 0;' " +
+					"src='" + 
+					iconURLs[i] + "' />";
+			else //alt text
+				str += iconURLs[i].substr(1) + " - ";
+		}
+		
 		str += vals[i];
 		str += "</div>";
 	}       	
 	str += "</div>"; 
 	//close selbox
 	
+	str += "</td><td valign='top'>";
 	//append search bar
 	str += MultiSelectBox.makeSearchBar(name);
-	
-    el.innerHTML = str;
+	str += "</td></table>";
+    el.innerHTML = str;    
+    
+    if(msH > 200)
+    {	//provide a minimum width for looks (to avoid long and skinny)
+    	var el = document.getElementById(name);
+    	if(el.offsetWidth < 200)
+    		el.style.width = 200 + "px"; 
+    }
+    	
 }
 
 //for initializing the highlights if selects are made "manually" (without clicking)
@@ -227,6 +331,7 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 		
 		var id = select.getAttribute("id");
 		var options = select.childNodes;
+		MultiSelectBox.lastOptSelect_[id] = -1;
 		if (!MultiSelectBox.mySelects_[id] ||
 				MultiSelectBox.mySelects_[id].length > options.length)
 		{//if first time drawing select box OR size was reduced
@@ -275,12 +380,16 @@ MultiSelectBox.showSearch = function(boxid)
 	{
 		MultiSelectBox.selInitBoxHeight_ = $(boxid).clientHeight; //as soon as hidden is toggled H changes
 	}
+		 
+	//RAR decided on 2/2/2017 to not show er
+	//MultiSelectBox.toggleClass($(boxid+"searchErr"),"hidden");
+	$(boxid+"searchErr").innerHTML = "";
 	
-	MultiSelectBox.toggleClass($(boxid+"searchErr"),"hidden")
 	if (MultiSelectBox.toggleClass(textinput,"hidden")){
 		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_-47) + "px";
 		$(boxid).style.paddingTop = "42px";
 		//$(boxid).childNodes[0].style.marginTop="42px";
+		//textinput.style.left = ($(boxid).offsetLeft-8) + "px"
 		textinput.focus();
 		MultiSelectBox.searchSelect(boxid,textinput);
 	}
@@ -335,7 +444,7 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 		//MultiSelectBox.dbg("opt: " + opt);
 		
 		if (option.tagName == 'INPUT') { continue; }
-		var text = option.innerHTML;
+		var html = option.innerHTML;
 		
 		//MultiSelectBox.dbg("tagName: " + option.tagName);
 		
@@ -343,19 +452,24 @@ MultiSelectBox.performSearchSelect = function(id,el,altstr)
 		if (MultiSelectBox.hasClass(option,"hidden"))
 			MultiSelectBox.removeClass(option,"hidden");
 		else
-			option.innerHTML = text = text.replace("<b><u>","").replace("</u></b>","");
+			option.innerHTML = html = html.replace("<b><u>","").replace("</u></b>","");
 	
+		if(searchstr == "") continue; //show all if no search str
 		
-		var index=text.search(re);
-		var len=(text.match(re) || [[]])[0].length; //returns the matched string within an array or null (when null take [[]]), so we want length of element 0
+		var text = option.textContent; //search only the text (assume that is val
+		var endOfImgIndex = html.indexOf(">");
+		var index = text.search(re);
+		var matchedText = (text.match(re) || [[]])[0]; //returns the matched string within an array or null (when null take [[]])
+		var len = matchedText.length; // so we want length of element 0
 		//MultiSelectBox.dbg(text+' '+index);
+		index = html.indexOf(matchedText,endOfImgIndex);	//try to find in html text 
 		
-		if(index == -1)		//if searchstr not in option innerHTML
+		if(!len) 		//if searchstr not in option innerHTML
 			MultiSelectBox.addClass(option,"hidden");		
-		else if(len)		//make searched string bold
-			option.innerHTML = text.slice(0,index) + "<b><u>" + 
-				text.slice(index,index+len) + 
-				"</u></b>" + text.slice(index+len);
+		else if(index != -1)		//make searched string bold (if possible - must be contiguous)
+			option.innerHTML = html.slice(0,index) + "<b><u>" + 
+				html.slice(index,index+len) + 
+				"</u></b>" + html.slice(index+len);
 	}
 }
 
@@ -393,7 +507,8 @@ MultiSelectBox.makeSearchBar = function(id)
 				MultiSelectBox.mySelects_[id] = []; //initialize to empty the selected items
 			
 			var selRect = select.getBoundingClientRect(),
-				omniRect = select.offsetParent.getBoundingClientRect();//MultiSelectBox.omnis_[id].getBoundingClientRect();
+				omniRect = MultiSelectBox.omnis_[id].getBoundingClientRect();
+				//select.offsetParent.getBoundingClientRect();
 			
 			var offsetx = selRect.left - omniRect.left,
 				offsety = selRect.top - omniRect.top;
@@ -409,6 +524,7 @@ MultiSelectBox.makeSearchBar = function(id)
 			searchErrBox.style.left=(offsetx + 0)+"px";
 			
 			MultiSelectBox.omnis_[id].appendChild(searchBox);
+			
 			MultiSelectBox.omnis_[id].appendChild(searchErrBox);
 			
 			clearInterval(interval);

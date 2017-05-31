@@ -241,8 +241,11 @@ Desktop.createDesktop = function(security) {
 	    	}
 	    }
 		
+	    //==============
 		//other things besides opening windows
-	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not through login
+	    //....
+	    
+	    if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true)) return; //don't do things if not logged in
 
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
@@ -424,7 +427,9 @@ Desktop.createDesktop = function(security) {
 			return;
 		}
 				
+		//KEEP..
         //subname += _winId; //for visual window debugging (but destroys uniqueness)
+		//end KEEP.
 		var newWin = Desktop.createWindow(_winId++,_windows.length + _defaultWindowMinZindex,name,subname,url,
 			_defaultWidth,_defaultHeight,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
 
@@ -484,7 +489,7 @@ Desktop.createDesktop = function(security) {
 		//setForeWindow ~~~
 		//	handle bringing window to front
 	this.setForeWindow = function(win) {
-		
+		//Debug.log("setForeWindow");
 		//resort by z and renumber - windows with Z out of range of array are due to iframe onFocus solution			
         var tmp;
         for(var i=0;i<_windows.length-1;++i) {        	
@@ -647,12 +652,26 @@ Desktop.createDesktop = function(security) {
 	this.resetDesktop = function(permissions) {
         
 		_needToLoginMailbox.innerHTML = ""; //reset mailbox
-		//update icons based on permissions
-		Desktop.desktop.icons.resetWithPermissions(permissions);
 		
-		//re-start timer for checking foreground window changes due to iFrame content code
-		window.clearInterval(Desktop.desktop.checkMailboxTimer);
-		Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		if(permissions !== undefined) //update icons based on permissions		
+			Desktop.desktop.icons.resetWithPermissions(permissions);
+		
+		////if not logged in -- attempt to fix it
+		if(!Desktop.desktop.login || !Desktop.desktop.login.getCookieCode(true))
+		{
+			Desktop.desktop.login.setupLogin();
+			
+			window.clearInterval(Desktop.desktop.checkMailboxTimer);
+			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		}
+		//{
+			//re-start timer for checking foreground window changes due to iFrame content code
+		
+		//	this.login = _login = new Desktop.login(!(this.security == Desktop.SECURITY_TYPE_NONE)); //pass true to enable login
+		//				window.clearInterval(Desktop.desktop.checkMailboxTimer);
+		//				_checkMailboxes();
+		//				Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+		//}
 	}
 		
 	//actOnParameterAction() ~~~
@@ -673,7 +692,7 @@ Desktop.createDesktop = function(security) {
 			if(varPair[0] 		== "requestingWindowId")
 				requestingWindowId 	= varPair[1];
 			else if(varPair[0] 	== "windowPath")
-				windowPath 			= varPair[1];	
+				windowPath 			= decodeURIComponent(varPair[1]);	
 			else if(varPair[0] 	== "windowName")
 				windowName 			= varPair[1];	
 			else if(varPair[0] 	== "windowSubname")
@@ -708,13 +727,17 @@ Desktop.createDesktop = function(security) {
 
 			//set to fore window and full screen
 			 
-			Desktop.desktop.setForeWindow(newWin); 
-			Desktop.desktop.toggleFullScreen();
 			Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
+			
+	    	//delay the setting of the fore window and fullscreen
+			//	so that the window exists before changing it
+			setTimeout(function(){
+				Desktop.desktop.setForeWindow(newWin);
+				Desktop.desktop.toggleFullScreen();
+			}, 200);
 
-			var str = "requestingWindowId=" + requestingWindowId;
-			str += "&done=1";	
-			_openWindowMailbox.innerHTML = str; //indicate done
+			//clear mailbox string since no window is listening for done when a new desktop begins			
+			_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
 	}
 	
@@ -814,7 +837,6 @@ Desktop.createDesktop = function(security) {
 	
 	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
 	this.actOnParameterAction();    
-
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -948,6 +970,7 @@ Desktop.handleWindowMouseUp = function(mouseEvent) {
 		
 		//Debug.log("Mouse was released! which=" + mouseEvent.which);
 	}
+	Desktop.desktop.icons.closeFolder();
 	return false;
 }
 
@@ -1159,7 +1182,7 @@ Desktop.handleWindowManipulation = function(delta) {
 }
 
 Desktop.handleWindowButtonDown = function(mouseEvent) {
-	mouseEvent.cancelBubble=true; //do nothing but eat event away from window so window doesn't move
+	mouseEvent.cancelBubble=true; //do nothing but eat event away from window so window doesn't move	
 	return false;
 }
 
@@ -1203,6 +1226,9 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 				{
 					Desktop.desktop.serverConnected = true;
 		        	Desktop.desktop.dashboard.displayConnectionStatus(true);
+		        	
+		        	Desktop.desktop.resetDesktop(); //give no permissions, to do simple reset
+		        	// and re-start timer for checking foreground window changes due to iFrame content code		        	
 				}
 				
 				//check if failed due to cookieCode and go to login prompt
@@ -1336,7 +1362,7 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		str += "&windowName=" + name;
 		str += "&windowSubname=" + subname;
 		str += "&windowUnique=" + unique;
-		str += "&windowPath=" + windowPath;
+		str += "&windowPath=" + encodeURIComponent(windowPath);
 		
 	//if there is no search, need to check lid=## is terminated with /
 	// check from = that there is nothing but numbers

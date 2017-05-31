@@ -1,19 +1,21 @@
 
 include_directories($ENV{XERCES_C_INC})
-cet_make(LIBRARY_NAME SlowControlsDashboard
+cet_make(LIBRARY_NAME ControlsDashboard
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
+#		 CoreSupervisors
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 SupervisorDescriptorInfo
+		 PluginMakers
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
          MessageFacility
-	 ${MF_MESSAGELOGGER}
-	 ${MF_UTILITIES}
+	     ${MF_MESSAGELOGGER}
+	     ${MF_UTILITIES}
 )
 
 install_headers()

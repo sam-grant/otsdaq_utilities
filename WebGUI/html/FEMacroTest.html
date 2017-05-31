@@ -1,0 +1,403 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>FE Macros</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+
+		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
+		.multiselectbox input, textarea {
+			margin: 			14px 5px 5px 12px;
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button, a {
+			cursor: pointer;
+		}
+	
+		#popUpDialog {
+			position: absolute;
+			z-index: 1000;    
+			border: 1px solid #770000;
+		    background-color: #efeaea;
+		    text-align: center;
+		    padding: 10px;
+		}
+		
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	
+	<script>		
+		
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()	
+			//callFEMacro(feSupervisorType, supervisorLID, feUID, macroName, inputArgs)
+			//callPublicMacro()
+			//callUserMacro()
+			//getDateString(date)
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		
+		//init called once body has loaded
+		function init() {			
+	
+			Debug.log("CfgGUI init ");
+	
+	
+			//get context and backbone member list 
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getFEMacroList", "", 
+					function (req) {				
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				var str = "";
+				
+				var user = DesktopContent.getXMLValue(req,"UserDisplayName");
+				Debug.log("user = " + user);
+				
+				var macroVar;
+				var macroInArgs, macroOutArgs;
+				var FEMACROS_HEADER_FIELDS = 4;
+				
+				/////////////////////
+				//FE Macros				
+				var feMacros = req.responseXML.getElementsByTagName("FEMacros");
+				Debug.log("feMacros.length = " + feMacros.length);	
+				if(!feMacros.length)
+					str += "No FE Macros found.";
+				for(var i=0;i<feMacros.length;++i)
+				{
+					macroVar = feMacros[i].getAttribute("value");
+					Debug.log(macroVar);
+					macroVar = macroVar.split(":");
+					
+					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so display name
+						str += "<b>Type:" + macroVar[1] + 
+						" Supervisor(" + macroVar[0] + ":" + macroVar[2] + 
+						") UID:" + macroVar[3] + "</b><br>" + 
+						"<div style='margin-left:30px;'>";
+
+					var c = FEMACROS_HEADER_FIELDS;
+					while(c < macroVar.length)
+					{					
+						var macroName = macroVar[c];
+						str += macroName + " Permissions Req=" + 
+								macroVar[c+1] + "<br>" +
+								"&nbsp;&nbsp;&nbsp; Inputs:" +
+								"<div style='margin-left:60px;'>";
+						c += 2;
+						var inputArgs = [];
+						for(var j=0;j<macroVar[c];++j)
+						{
+							inputArgs.push(macroVar[c+1+j]);
+							str += macroVar[c+1+j] + 
+								" = <input type='text' id='" + 
+								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
+								"' class='" + 
+								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-in" +
+								"'value='Default'>" +
+								"<br>";
+						}
+						str += "</div>";	
+
+						c += 1 + (macroVar[c]|0);
+						
+						str += "&nbsp;&nbsp;&nbsp; Outputs:" +
+								"<div id='" +
+								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-out" +								
+								"' style='margin-left:60px;'>";
+						for(var j=0;j<macroVar[c];++j)
+							str += macroVar[c+1+j] + "<br>";
+						str += "</div>";
+
+						str += "<a onclick='callFEMacro(\"" +
+								macroVar[0] + "\",\"" +
+								macroVar[2] + "\",\"" +
+								macroVar[3] + "\",\"" + 
+								macroName + "\",[";
+						//give array of input args
+
+						for(var j=0;j<inputArgs.length;++j)
+						{
+							if(j) str += ",";
+							str += "\"" + inputArgs[j] + "\"";
+						}
+						str += "])'>Run</a>";
+								
+						str += "<br><br>";
+						c += 1 + (macroVar[c]|0);
+					}
+					
+					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so close div
+						str += "</div>"; 
+				}
+				str += "<br><br>";
+				
+				
+				/////////////////////
+				//Public Macros
+				str += "<b>Public Macros</b>";	
+				str += "<br><br>";	
+				
+				var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
+				var namesOfAllMacros = [];
+				if (hugeStringOfPublicMacros && hugeStringOfPublicMacros.length > 0)
+				{
+					var publicMacrosArray = hugeStringOfPublicMacros.split("@");
+					//each macro is separated by an "@"
+					//	and given as a JSON string
+					//					{
+					//						name:
+					//						sequence:
+					//						time:
+					//						notes:
+					//						LSBF:
+					//					}
+					for(var i = 0; i < publicMacrosArray.length; i++) 
+					{						
+						var arr = JSON.parse(publicMacrosArray[i]);
+						console.log(arr);
+						namesOfAllMacros.push(arr.name);
+						str += arr.name + "<br>";
+
+						arr = arr.sequence.split(",");
+						var macroVariableNames = []; //holds unique names for the variable names in macro
+						//for each command get variable names
+						for(var j=0;j<arr.length;++j)
+						{
+							var splitArr = arr[j].split(":");
+							if(splitArr[2].length && //check if variable name
+									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
+								macroVariableNames[splitArr[2]] = 1;
+							if(splitArr[3].length && //check if variable name
+									(splitArr[3][0] == '$' || isNaN("0x"+splitArr[3])))
+								macroVariableNames[splitArr[3]] = 1;
+						}
+						
+						str += "<div style='margin-left:30px;'>";
+						for(var varName in macroVariableNames)
+						{
+							str += varName + 
+									" = <input type='text' id='" + 
+									"user-" + arr.name + "-" + varName +
+									"' class='" + 
+									"user-" + arr.name + "-in" +
+									"'value='Default'>" +
+									"<br>";
+						}
+						str += "</div><br><br>";
+					}
+				}
+				else 
+					str += "No Public Macros found.";
+				
+				
+				
+				
+				
+				/////////////////////
+				//User Macros
+				str += "<b>User Macros</b>";	
+				str += "<br><br>";	
+				var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
+				
+				if (hugeStringOfMacros && hugeStringOfMacros.length > 0)
+				{
+					var macrosArray = hugeStringOfMacros.split("@");
+					//var out = "";
+					//var finalOutput = "";
+					for(var i = 0; i < macrosArray.length; i++) 
+					{
+						var arr = JSON.parse(macrosArray[i]);
+						console.log(arr);
+						namesOfAllMacros.push(arr.name);
+						str += arr.name + "<br>";
+						
+						arr = arr.sequence.split(",");
+						var macroVariableNames = []; //holds unique names for the variable names in macro
+						//for each command get variable names
+						for(var j=0;j<arr.length;++j)
+						{
+							var splitArr = arr[j].split(":");
+							if(splitArr[2].length && //check if variable name
+									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
+								macroVariableNames[splitArr[2]] = 1;
+							if(splitArr[3].length && //check if variable name
+									(splitArr[3][0] == '$' || isNaN("0x"+splitArr[3])))
+								macroVariableNames[splitArr[3]] = 1;
+						}
+						
+						str += "<div style='margin-left:30px;'>";
+						for(var varName in macroVariableNames)
+						{
+							str += varName + 
+									" = <input type='text' id='" + 
+									"user-" + arr.name + "-" + varName +
+									"' class='" + 
+									"user-" + arr.name + "-in" +
+									"'value='Default'>" +
+									"<br>";
+						}
+						str += "</div><br><br>";
+						
+						//						var macroString = arr.sequence.split(",");
+						//						var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
+						//						for (var j = 0; j < macroString.length; j++) //because users don't need to see that
+						//							forDisplay.push(macroString[j].split(":").slice(1).filter(Boolean).join(":")); 
+						//
+						//						stringOfAllMacros[MACROINDEX] = macroString;
+						//						out += "<div title='Sequence: " + forDisplay.join(",") + "\nNotes: "
+						//								+ arr.notes + "\nCreated: " + arr.time + "\nLSBF: " + arr.LSBF
+						//								+ "\' class='macroDiv' data-id=\"" + arr.name + "\" data-sequence=\"" 
+						//								+ macroString + "\" data-notes=\"" + arr.notes + "\" data-time=\"" 
+						//								+ arr.time + "\" data-LSBF=\"" + arr.LSBF
+						//								+ "\" onclick='dealWithVariables(stringOfAllMacros[" 
+						//								+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
+						//						MACROINDEX++;
+					}
+					//finalOutput = decodeURI(out);
+					//document.getElementById("listOfPrivateMacros").innerHTML = finalOutput;
+				}
+				else 
+					str += "No User Macros found.";	
+
+				Debug.log(namesOfAllMacros);
+				
+				// done, finish up
+				
+				var el = document.getElementById("display");
+				el.innerHTML = str;
+						
+			}
+			);
+		}
+	
+		//callFEMacro ~~
+		function callFEMacro(feSupervisorType,supervisorLID, feUID, macroName, inputArgs)
+		{
+			Debug.log("supervisorLID " + supervisorLID);
+			Debug.log("feUID " + feUID);
+			Debug.log("macroName " + macroName);
+			Debug.log(inputArgs);
+
+			var inEls = document.getElementsByClassName(
+					supervisorLID + "-" + feUID + "-" + macroName + "-in"
+			);
+			var outEl = document.getElementById(
+					supervisorLID + "-" + feUID + "-" + macroName + "-out"
+			);
+			var postData = "";
+			
+			postData += "inputArgs=";
+			for(var i=0;i<inEls.length;++i)
+			{
+				Debug.log("inputArgs " + inEls[i].id);
+				Debug.log("inputArgs.value " + inEls[i].value);
+				if(i) postData += ";";
+				postData += inEls[i].id.split("-")[3] + "," + inEls[i].value;
+			}
+			
+			postData += "&outputArgs=";
+			var outEls = outEl.innerHTML.split("<br>"); 
+			for(var i=0;i<outEls.length;++i)
+			{
+				Debug.log("outputArgs " + outEls[i]);
+				if(i) postData += ",";
+				postData += outEls[i];
+			}
+			
+			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=runFEMacro" +
+					"&feSupervisorType=" + feSupervisorType + 
+					"&supervisorLID=" + supervisorLID +
+					"&feUID=" + feUID +
+					"&macroName=" + macroName
+					, postData, 
+					function (req) {	
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+				
+				var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
+				var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");
+				Debug.log("outputArgNames.length = " + outputArgNames.length);	
+				
+				var str = "";
+				str += "Last ran... " + getDateString(new Date);
+				str += "<br>";
+				for(var i=0;i<outputArgNames.length;++i)
+					str += outputArgNames[i].getAttribute("value") + " = " + 
+					outputArgValues[i].getAttribute("value") + "<br>";
+				var el = document.getElementById(
+						supervisorLID + "-" + feUID + "-" + macroName + "-out");
+				el.innerHTML = str;
+			});
+		}
+
+		//getDateString ~~
+		var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+		var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+		function getDateString(date)
+		{
+			var dateStr = "";
+
+			dateStr += dayArr_[date.getDay()];
+			dateStr += " ";
+			dateStr += monthArr_[date.getMonth()];
+			dateStr += " ";
+			dateStr += date.getDate();
+			dateStr += " ";
+			dateStr += date.getHours();
+			dateStr += ":";
+			dateStr += ((date.getMinutes()<10)?"0":"") + date.getMinutes();
+			dateStr += ":";
+			dateStr += ((date.getSeconds()<10)?"0":"") + date.getSeconds();
+			dateStr += " ";
+			dateStr += date.getFullYear();
+			dateStr += " ";
+			dateStr += date.toLocaleTimeString([],{timeZoneName: "short"}).split(" ")[2];
+			return dateStr;
+		}
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<h1>FE Macros</h1>
+		<div style='width:550px'>		
+
+	<a onclick='init();'>Refresh</a>
+		<br>
+	<div id='display'></div>
+	
+</body>
+	
+</html>

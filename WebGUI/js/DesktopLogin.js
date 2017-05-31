@@ -675,18 +675,23 @@ else {
 				//user and jumbled password sent to server for login
 			//if login successful, loginDiv is removed from desktop and cookieCode used by client
 
-		_uid = _getUniqueUserId();
-		if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
+		this.setupLogin = function()
 		{
-			this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
-			Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
-						"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+			_uid = _getUniqueUserId();
+			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
+			{
+				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
+							"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
+			}
+			else if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	 //straight to login attempt for no security
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
+			//else //no login prompt at all
+			
+			Debug.log("UUID: " + _uid);
 		}
-		else if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	 //straight to login attempt for no security
-       		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
-		//else //no login prompt at all
 		
-		Debug.log("UUID: " + _uid);
+		this.setupLogin();
         Debug.log("Desktop Login created",Debug.LOW_PRIORITY);
 	}	
 }

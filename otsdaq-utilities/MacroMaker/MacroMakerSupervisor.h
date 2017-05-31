@@ -6,6 +6,7 @@
 #include "otsdaq-core/CoreSupervisors/FESupervisor.h"
 #include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
+
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -31,7 +32,6 @@ namespace ots
 class ConfigurationManager;
 class HttpXmlDocument;
 
-
 class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
 {
 
@@ -55,45 +55,31 @@ private:
     SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
     FESupervisor*			 				theFESupervisor_;
-//	void printStatus();
-	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void getFElist(HttpXmlDocument& xmldoc);
 
-	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void loadMacros(HttpXmlDocument& xmldoc);
-	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces);
-	void loadHistory(HttpXmlDocument& xmldoc);
-	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi);
-	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	void clearHistory();
-	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
-	std::vector<std::string> interfaceList;
-	std::string username;
-	uint8_t userPermissions;
+    //	void printStatus();
+
+	void handleRequest(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username, const uint8_t userPermissions);
+	void getFElist(HttpXmlDocument& xmldoc);
+	void getFEMacroList(HttpXmlDocument& xmldoc, const std::string &username);
+
+	void writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void loadMacros(HttpXmlDocument& xmldoc, const std::string &username);
+	void appendCommandToHistory(std::string command, std::string Format, std::string time, std::string interfaces, const std::string &username);
+	void loadHistory(HttpXmlDocument& xmldoc, const std::string &username);
+	void deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi, const std::string &username);
+	void editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void clearHistory(const std::string &username);
+	void exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+
 
 	std::string generateHexArray(const std::string& sourceHexString,int &numOfBytes);
 
-
-	//generateInterfaceCodeFromMacro
-	// 	input
-		// macro name
-		// user
-	//  from
-		// out c++ to the ..../MacroCodeGen/<user>/<macro>.cc
-				//  //comment generated from macro user/macro on this date
-				// universalread(0xff,0xfa);
-//
-//
-//	SupervisorConfiguration* superConfiguration_;
-//	SupervisorsInfo* 		 superInfo_;
-//	FEWInterfacesManager*    theFEWInterfacesManager_;
 	ConfigurationManager*    theConfigurationManager_;
 
-//
-//
-
+	std::map<std::string /*FESupervisorType*/, const SupervisorDescriptors&> FESupervisorLists_;
 
 };
 

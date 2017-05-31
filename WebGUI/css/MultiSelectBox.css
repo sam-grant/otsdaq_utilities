@@ -20,13 +20,15 @@
     .multiselectbox .mySelect .myOption
     {
         padding:2px;
+        white-space: nowrap;
         cursor:pointer;
     }
     .multiselectbox .hidden
     {
         display:none;
     }
-    .multiselectbox .mySelect .optionhighlighted
+    .multiselectbox .mySelect .optionhighlighted,
+	.multiselectbox .mySelect .optionhighlighted u
     {
         background:rgb(0,111,255);
         color:white;
@@ -40,7 +42,7 @@
         padding:3px 0px 3px 0px;
     }
 
-    .multiselectbox .selectSearchBar img
+    .multiselectbox .selectSearchBar img, .multiselectbox a
     {
         cursor:pointer;
     }
@@ -73,11 +75,13 @@
     }
     
     /*firefox seems to put an extra pixel of letter-spacing in bold words*/
-    @-moz-document url-prefix() {  /*target firefox*/
+    /* this seems to have been fixed by choosing the correct truetype font in font.css*/
+    /*target firefox*/
+    /*@-moz-document url-prefix() {  
     	b, th {
     		letter-spacing: -1px;
     	}
     	h1, h2, h3, h4, h5, h6 {
     		letter-spacing: -2px;
     	}
-    }
+    }*/

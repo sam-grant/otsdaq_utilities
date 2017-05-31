@@ -73,10 +73,11 @@ private:
 
     		//init fields to position -1 (for unknown)
     		//NOTE: must be in order of appearance in buffer
-    		fields[LEVEL].set	("Level",4,-1);
-    		fields[LABEL].set	("Label",5,-1);
-    		fields[SOURCE].set	("Source",10,-1); //6 or 10?
-    		fields[MSG].set		("Msg",11,-1);
+    		fields[SEQID].set	("SequenceID",0,-1);
+    		fields[LEVEL].set	("Level",5,-1);
+    		fields[LABEL].set	("Label",6,-1);
+    		fields[SOURCE].set	("Source",11,-1); //6 or 10?
+    		fields[MSG].set		("Msg",12,-1);
     	}
 
     	void set(const std::string &msg, const time_t count)
@@ -115,6 +116,7 @@ private:
     	const char *  getLevel() 	 {return  (char *)&buffer[fields[LEVEL].posInString];}
     	const char *  getSource()	 {return  (char *)&buffer[fields[SOURCE].posInString];}
     	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
+    	const char *  getSequenceID(){return  (char *)&buffer[fields[SEQID].posInString];}
     	const time_t  getTime()	 	 {return  timeStamp;}
     	const time_t  getCount() 	 {return  countStamp;}
 
@@ -132,6 +134,7 @@ private:
 
     	//define field index enum alias
     	enum {		//must be in order of appearance in buffer
+    		SEQID,
     		LEVEL,	//aka SEVERITY
     		LABEL,
     		SOURCE,
@@ -139,7 +142,7 @@ private:
     	};
 
     	const int BUFFER_SZ = 5000;
-    	std::array<FieldStruct,4> 	fields;
+    	std::array<FieldStruct,5> 	fields;
     private:
     	std::string					buffer;
     	time_t 						timeStamp;

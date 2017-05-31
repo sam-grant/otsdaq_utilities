@@ -2,7 +2,6 @@
 #include "otsdaq-core/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq-core/DataManager/DataManager.h"
 #include "otsdaq-core/DataManager/DataProcessor.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
 #include "otsdaq-core/ConfigurationPluginDataFormats/DataBufferConfiguration.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
@@ -34,14 +33,14 @@ void VisualDataManager::configure(void)
 	DataManager::configure();
 
 	//FIXME SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!" << std::endl;
+	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
+	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
+	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
+	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
 		__MOUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
-		if(buffer.second.getNode("DataBufferStatus").getValue<bool>())
+		if(buffer.second.getNode("Status").getValue<bool>())
 		{
 			std::vector<std::string> producers;
 			std::vector<std::string> consumers;
@@ -49,7 +48,7 @@ void VisualDataManager::configure(void)
 			for(const auto& bufferConfiguration: bufferConfigurationMap)
 			{
 				__MOUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
-				if(bufferConfiguration.second.getNode("ProcessorStatus").getValue<bool>()
+				if(bufferConfiguration.second.getNode("Status").getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
 						//&& (bufferConfiguration.second.getNode("ProcessorPluginName").getValue<std::string>() == "OTDQMHistosConsumer")
 				)

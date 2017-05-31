@@ -29,11 +29,11 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqIndex <optional>, progressHandler <optional>, callHandlerOnErr <optional>)
-//			... to make server request, returnHandler is called with response in req and reqIndex if user defined
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, showLoadingOverlay <optional>, targetSupervisor <optional>)
+//			... to make server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
-//					function returnHandler(req,reqIndex,errStr)
+//					function returnHandler(req,reqParam,errStr)
 //					{
 //						if(errStr != "") return; //error occured!
 //
@@ -44,9 +44,9 @@
 //							return;
 //						}
 //
-//						if(reqIndex = 0)
+//						if(reqParam = 0)
 //						{ //... do something }
-//						else if(reqIndex = 1)
+//						else if(reqParam = 1)
 //						{ //... do something else}
 //						else
 //						{ //... do something else}
@@ -65,9 +65,12 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional])
+//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
+//		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
+//		DesktopContent.getWindowScrollLeft()
+//		DesktopContent.getWindowScrollTop()
 //		DesktopContent.getMouseX()
 //		DesktopContent.getMouseY()
 //		DesktopContent.getDefaultWindowColor() 	 // returns "rgb(#,#,#)"
@@ -88,14 +91,19 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqIndex, progressHandler, sequence)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
-//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor)
+//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor)
+//	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
+//	DesktopContent.getWindowScrollLeft()
+//	DesktopContent.getWindowScrollTop()
+//	DesktopContent.getBodyWidth()
+//	DesktopContent.getBodyHeight()
 //	DesktopContent.getMouseX()
 //	DesktopContent.getMouseY()
 //	DesktopContent.getDefaultWindowColor()
@@ -105,11 +113,12 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.openNewWindow(name,subname,windowPath,unique,completeHandler)
 //	DesktopContent.mouseMoveSubscriber(newHandler) 
 //	DesktopContent.openNewBrowserTab(name,subname,windowPath,unique,completeHandler)
+//	DesktopContent.getParameter(index, name)
+//	DesktopContent.getDesktopParameter(index, name)
+//	DesktopContent.getDesktopWindowTitle()
 
 //"private" function list:
 //	DesktopContent.init()
-//	DesktopContent.getParameter(index)
-//	DesktopContent.getDesktopParameter(index)
 //	DesktopContent.handleFocus(e)
 //	DesktopContent.handleBlur(e)
 //	DesktopContent.handleScroll(e)
@@ -117,7 +126,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
-
+//	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,alwaysShow)
+//	DesktopContent.tooltipConditionString(str);
 
 DesktopContent._isFocused = false;
 DesktopContent._theWindow = 0;
@@ -128,6 +138,8 @@ DesktopContent._mouseOverYmailbox = 0;
 DesktopContent._windowMouseX = -1;
 DesktopContent._windowMouseY = -1;
 
+DesktopContent._serverOrigin = "";
+DesktopContent._localOrigin = "";
 DesktopContent._serverUrnLid = 0;
 DesktopContent._localUrnLid = 0;
 
@@ -158,7 +170,9 @@ DesktopContent._mouseMoveSubscribers = [];
 //  desktop window can be at different levels depending on page depth (page may be inside frame)
 // use instead DesktopContent._theWindow
 DesktopContent.init = function() {
-
+	
+	if(typeof Desktop !== 'undefined') return; //skip if Desktop exists (only using for tooltip
+	
 	var tmpCnt = 0;
 	DesktopContent._theWindow = self;
 	while(tmpCnt++ < 5 && DesktopContent._theWindow &&  //while can not find the top window frame in the desktop
@@ -187,15 +201,21 @@ DesktopContent.init = function() {
 	window.onscroll = DesktopContent.handleScroll;
 	window.onblur = DesktopContent.handleBlur;	
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
+	window.focus();	//before this fix, full screen in new tab would not give window focus
 
 	DesktopContent._serverUrnLid = ((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
+	DesktopContent._serverOrigin = DesktopContent._theWindow.parent.window.location.origin;
+	Debug.log("Supervisor Application Origin = " + DesktopContent._serverOrigin);
+		
 	DesktopContent._localUrnLid = DesktopContent.getParameter(0,"urn");
 	if(typeof DesktopContent._localUrnLid == 'undefined')
 		DesktopContent._localUrnLid = 0;
 	Debug.log("Local Application URN-LID #" + DesktopContent._localUrnLid);
+	DesktopContent._localOrigin = window.location.origin;
+	Debug.log("Local Application Origin = " + DesktopContent._localOrigin);
 
 	//get Wizard sequence (if in Wizard mode)
 	DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
@@ -211,26 +231,28 @@ DesktopContent.init = function() {
 DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
-	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
 	if(name)
 	{
-		for(var i=0;i<params.length;++i)
+		for(index=0;index<params.length;++index)
 		{
 			spliti = params[index].indexOf('=');
 			if(spliti < 0) continue; //poorly formed parameter?	
 			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 			if(vs[0] == name)
-				return vs[1];
+				return decodeURIComponent(vs[1]);
 		}
 		return; //return undefined .. name not found
 	}
+
+	//using index 
+	if(index >= params.length) return; //return undefined
 	
 	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
-	return vs[1]; //return value
+	return decodeURIComponent(vs[1]); //return value
 }
 
 //DesktopContent.getDesktopParameter ~
@@ -238,19 +260,25 @@ DesktopContent.getParameter = function(index,name) {
 //	if using name, then (mostly) ignore index
 DesktopContent.getDesktopParameter = function(index, name) {	
 	// Debug.log(window.location)
-	var params = (DesktopContent._theWindow.parent.parent.window.location.search.substr(1)).split('&');
+	
+	var win = DesktopContent._theWindow;
+	if(!win)	//for parameter directly from desktop code
+		win = window.parent.window;
+	else 
+		win = win.parent.parent.window;
+	var params = (win.location.search.substr(1)).split('&');
 	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
 	if(name)
 	{
-		for(var i=0;i<params.length;++i)
+		for(var index=0;index<params.length;++index)
 		{
 			spliti = params[index].indexOf('=');
 			if(spliti < 0) continue; //poorly formed parameter?	
 			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
 			if(vs[0] == name)
-				return vs[1];
+				return decodeURIComponent(vs[1]);
 		}
 		return; //return undefined .. name not found
 	}
@@ -258,7 +286,7 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	spliti = params[index].indexOf('=');
 	if(spliti < 0) return; //return undefined	
 	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
-	return vs[1]; //return value
+	return decodeURIComponent(vs[1]); //return value
 }
 
 //DesktopContent.handleFocus ~
@@ -277,7 +305,7 @@ DesktopContent.handleBlur = function(e) {
 	DesktopContent._isFocused = false;
 }
 DesktopContent.handleScroll = function(e) {			
-	window.focus();
+	window.focus();	
 }
 DesktopContent.mouseMove = function(mouseEvent) {	
 	//call each subscriber
@@ -312,7 +340,146 @@ DesktopContent.init(); //initialize handlers
 //(this is a result of bad error handling in the desktop window page.. so this is meant to inform the developer to fix the issue)
 DesktopContent._arrayOfFailedHandlers = new Array();
 
+//=====================================================================================
+//=====================================================================================
+//Loading pop up helpers
+DesktopContent._loadBox = 0;
+DesktopContent._loadBoxId = "DesktopContent-load-box";
+DesktopContent._loadBoxTimer = 0;
+DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to 0
 
+//=====================================================================================
+DesktopContent.showLoading = function()	{
+	
+	Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+	
+	if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
+		return;
+	
+	//check if DesktopContent._loadBox has been set
+	if(!DesktopContent._loadBox)
+	{	
+		//check if there is already an error box with same id and share
+		var el = document.getElementById(DesktopContent._loadBoxId);
+		if(!el) //element doesn't already exist, so we need to create the element
+		{
+			var body = document.getElementsByTagName("BODY")[0];
+			if(!body) //maybe page not loaded yet.. so wait to report
+			{
+				//try again in 1 second
+				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+				return;
+			}
+
+			//create the element
+			el = document.createElement("div");			
+			el.setAttribute("id", DesktopContent._loadBoxId);
+			el.style.display = "none";
+			var str = "";
+			
+			str += "<table height='100%' width='100%'><td id='" + 
+					DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
+			el.innerHTML = str;
+			body.appendChild(el); //add element to body of page
+
+
+			//add style for loading to page HEAD tag			
+			var css = "";
+
+			
+			//load box style
+			css += "#" + DesktopContent._loadBoxId +
+					"{" +
+					"position: absolute; display: none; border: 2px solid gray;" +
+					"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
+					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
+					"-webkit-border-radius: 2px;	border-radius: 2px;" +
+					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
+					"color: white; " +
+					"font-family: 'Comfortaa', arial; text-align: left;" +
+					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
+					"}\n\n";	
+			css += "#" + DesktopContent._loadBoxId + " table" +		
+					"{" +
+					"background-color: rgba(0,0,0,0.8);" +
+					"border: 0;" +
+					"}\n\n";
+
+			//load box text style
+			//			css += "#" + DesktopContent._loadBoxId + "-td" +
+			//					"{" +					
+			//					"color: white; font-size: 18px;" +
+			//					"font-family: 'Comfortaa', arial;" +
+			//					"text-align: center;" +
+			//					"}\n\n";
+
+			//add style element to HEAD tag
+			var style = document.createElement('style');
+
+			if (style.styleSheet) {
+				style.styleSheet.cssText = css;
+			} else {
+				style.appendChild(document.createTextNode(css));
+			}
+
+			document.getElementsByTagName('head')[0].appendChild(style);
+		}
+		DesktopContent._loadBox = el;	
+	}	
+	
+	//have load popup element now, so display it at center of page
+	
+	var W = 100;
+	var H = 60;
+	
+	var WW,WH; //window width and height
+	//get width and height properly 
+	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+	{
+		WW = DesktopContent.getWindowWidth();
+		WH = DesktopContent.getWindowHeight();
+	}
+	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+	{
+		WW = DesktopContent.getDesktopWidth();
+		WH = DesktopContent.getDesktopHeight();
+	}
+	
+	var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
+	var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
+	
+	//show the load box whereever the current scroll is	
+	DesktopContent._loadBox.style.left = (X) + "px";	
+	DesktopContent._loadBox.style.top = (Y) + "px";
+	DesktopContent._loadBox.style.width = (W) + "px";
+	DesktopContent._loadBox.style.height = (H) + "px";
+
+	DesktopContent._loadBox.style.display = "block";
+	
+	//===================
+	//setup Loading.. animation
+	var loadBoxStr = "..";
+	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
+	var loadBoxAnimationFunction = function() {
+		if(loadBoxStr.length > 3) loadBoxStr = "";
+		else
+			loadBoxStr += ".";
+		el.innerHTML = "Loading" + loadBoxStr;
+	}; 
+	
+	window.clearInterval(DesktopContent._loadBoxTimer);
+	DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
+}
+//=====================================================================================
+DesktopContent.hideLoading = function()	{
+	
+	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+		return;
+	
+	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+	Debug.log("DesktopContent.hideLoading");
+	document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+}
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data
@@ -330,24 +497,27 @@ DesktopContent._arrayOfFailedHandlers = new Array();
 //
 // Where CookieCode and DisplayName can change upon every server response
 //
-// reqIndex is used to give the returnHandler an index to route responses to.
+// reqParam is used to give the returnHandler an index to route responses to.
 // progressHandler can be given to receive progress updates (e.g. for file uploads)
 // callHandlerOnErr can be set to true to have handler called with errStr parameter
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqIndex, progressHandler, callHandlerOnErr) {
+		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
 	var errStr = "";
 	var req;
+	
+	if(showLoadingOverlay)
+		DesktopContent.showLoading();
 
 	//check if already marked the mailbox.. and do nothing because we know something is wrong
 	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1")		
 	{
 		errStr = "Something is still wrong.";
-		errStr += " (Try refreshing the page, or alert ots admins if problem persists.)";
+		errStr += " (Try reloading the page, or alert ots admins if problem persists.)";
 		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 		req = 0; //force to 0 to indicate error
 		var found = false;
@@ -371,7 +541,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 
 		//only call return handler once
-		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqIndex, errStr); 
+		if(returnHandler && !found && callHandlerOnErr) returnHandler(req, reqParam, errStr); 
 		return;
 	}
 
@@ -383,13 +553,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var timeoutTimer;	
 	var timeoutFunction = function() 
 					{
-						Debug.log("It has been 10 seconds.. still waiting for a response. " +
+						Debug.log("It has been 60 seconds.. still waiting for a response. " +
 							"Is there an infinite loop occuring at the server? " +
 							"Or is this just a really long request..",
 							Debug.HIGH_PRIORITY);
-						timeoutTimer = window.setTimeout(timeoutFunction, 10000); 
+						timeoutTimer = window.setTimeout(timeoutFunction, 60000); 
 					}
-	timeoutTimer = window.setTimeout(timeoutFunction, 10000);
+	timeoutTimer = window.setTimeout(timeoutFunction, 60000);
 	
 	//setup response handler
 	req.onreadystatechange = function() {
@@ -397,6 +567,10 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		if (req.readyState==4) 
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
+			
+			if(showLoadingOverlay)
+				DesktopContent.hideLoading();
+			
 			if(req.status==200)
 			{				
 				//Debug.log("Request Response Text " + req.responseText + " ---\nXML " + req.responseXML,Debug.LOW_PRIORITY);
@@ -463,9 +637,13 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			}
 			else if(req.status == 0)  //request was interrupted (probably window was closed)
 			{
-				Debug.log("Status=0. Likely this means a window was closed, or the server crashed, in the middle of a request. " +
-						"\n(It also could mean 'potential security risk' like a cross-domain request) ",Debug.HIGH_PRIORITY);
-				return;
+//				Debug.log("Status=0. Likely this means a window was closed, or the server crashed, in the middle of a request. " +
+//						"\n(It also could mean 'potential security risk' like a cross-domain request) ",Debug.HIGH_PRIORITY);
+				errStr = "Request was interrupted (Status=0). " + 
+						"Likely this means the server crashed (or the desktop window making the request was closed), " +
+						" in the middle of a request. " +
+						"\n(It also could mean 'potential security risk' like a cross-domain request) ";
+				//return;
 			}
 			else //bad address response
 			{
@@ -508,7 +686,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
-				returnHandler(req, reqIndex, errStr);
+				returnHandler(req, reqParam, errStr);
 		}
 	}
 
@@ -521,10 +699,19 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	{   	
 		data = "sequence="+sequence+"&"+((data===undefined)?"":("&"+data));
 	}
-	var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
-
-	requestURL = "/urn:xdaq-application:lid="+urn+"/"+requestURL;
-	Debug.log("Post " + requestURL + "\n\tData: " + data);
+	
+	
+	var urn = DesktopContent._localUrnLid;
+	var origin = DesktopContent._localOrigin;
+	
+	if(!urn || targetSupervisor) //desktop supervisor, instead of local application
+	{
+		urn = DesktopContent._serverUrnLid;
+		origin = DesktopContent._serverOrigin;
+	}
+	
+	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
+	//Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
 	req.send(data);	
@@ -558,25 +745,31 @@ DesktopContent.getXMLAttributeValue = function(req, name, attribute) {
 
 //=====================================================================================
 //returns xml entry value for attribue 'value'
+//	if !name assume req is xml node already
 DesktopContent.getXMLValue = function(req, name) {
+	if(!name)
+		return req.getAttribute("value");	
 	return DesktopContent.getXMLAttributeValue(req,name,"value");
 }
 
 //=====================================================================================
 //returns xml entry node (first node with name)
-//	go only to depth 1 in DATA
-//	...former way was els = req.responseXML.getElementsByTagName(name)
+//	Note: could be any depth (not just depth 1)
+//	...uses getElementsByTagName(name)
 DesktopContent.getXMLNode = function(req, name) {
 	var els;
-	if(req && req.responseXML)
+	if(req && req.responseXML) //to allow for arbitrary starting xml node
+		req = req.responseXML;
+	if(req)
 	{
 		//find DATA
 		var i;
-		els = req.responseXML.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
+		els = req.getElementsByTagName(name);//req.responseXML.childNodes[0].childNodes;
 		if(els.length)
 			return els[0];
 		//reverted to former way
 
+		//for depth 1 sometime?
 		//		for(var i=0;i<els.length;++i)
 		//			if(els[i].nodeName == "DATA")
 		//			{
@@ -599,6 +792,199 @@ DesktopContent.getXMLDataNode = function(req, name) {
 }
 
 //=====================================================================================
+//tooltip ~~
+//	use uid to determine if tip should still be displayed
+//		- ask server about user/file/function/id combo
+//		- if shouldShow:
+//			then show 
+//			add checkbox to never show again
+// id of "ALWAYS".. disables never show handling (no checkboxes)
+
+DesktopContent.tooltipConditionString = function(str) {
+	return str.replace(/<INDENT>/g,
+			"<div style='margin-left:60px;'>").replace(/<\/INDENT>/g,
+					"</div>");
+}
+
+DesktopContent.tooltip = function(id,tip) {
+
+	if(typeof Desktop !== 'undefined') //This call is from Desktop page.. so can use it
+	{
+		DesktopContent._serverUrnLid = urnLid;
+		DesktopContent._serverOrigin = "";
+		
+		DesktopContent._sequence = DesktopContent.getDesktopParameter(0,"code");
+		if(!DesktopContent._sequence || DesktopContent._sequence == "")
+			DesktopContent._sequence = 0; //normal desktop mode
+		else
+			Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
+	}
+	
+	var srcStackString,srcFunc,srcFile;
+	
+	if(Debug.BROWSER_TYPE == 1) //chrome
+	{
+		srcStackString = (new Error).stack.split("\n")[2];						
+		srcFunc = srcStackString.trim().split(' ')[1];
+	}
+	else if(Debug.BROWSER_TYPE == 2) //firefox
+	{
+		srcStackString = (new Error).stack.split("\n")[1];						
+		srcFunc = srcStackString.trim().split('@')[0];	
+	}
+	srcFile = srcStackString.substr(srcStackString.lastIndexOf('/')+1);	
+	if(srcFile.indexOf('?') >= 0)
+		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
+	if(srcFile.indexOf(':') >= 0)
+		srcFile.substr(0,srcFile.indexOf(':'));
+	
+	var oldId = id;
+	//remove all special characters from ID
+	id = "";
+	for(var i=0;i<oldId.length;++i)
+		if((oldId[i] >= 'a' && oldId[i] <= 'z') || 
+				(oldId[i] >= 'A' && oldId[i] <= 'Z') ||
+				(oldId[i] >= '0' && oldId[i] <= '9'))
+			id += oldId[i];
+
+	DesktopContent.XMLHttpRequest(
+			"TooltipRequest?RequestType=check" + 
+			"&srcFunc=" + srcFunc +
+			"&srcFile=" + srcFile +
+			"&srcId=" + id
+			,""
+			, function(req) {
+
+		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
+		Debug.log("showTooltip: " + showTooltip);
+		
+		if(showTooltip|0)
+		{			
+			var str = "";
+
+			//add checkbox
+			if(id != "ALWAYS")
+			{
+				str += "<input checked type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked);" + "'>";
+				str += " ";
+				str += "<a onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked);" +
+						"'>";
+				str += "Always show the Tooltip below, or...";
+				str += "</a>";
+				str +="</input>";
+				
+				//snooze button
+				str += "<br>"
+				str += "<input type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-hour-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked,1);" + "'>";
+				str += " ";
+				str += "<a onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-hour-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked,1);" +
+						"'>";
+				str += "Silence this Tooltip for an hour:";
+				str += "</a>";
+				str +="</input>";
+			}
+			
+			//add title
+			if(id != "ALWAYS")
+			{
+				str += "<br><br>";
+				str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
+			}
+			
+			str += DesktopContent.tooltipConditionString(tip);
+			
+			str += "<br><br>";
+
+			//add checkbox
+			if(id != "ALWAYS")
+			{
+				str += "<input checked type='checkbox' " +
+						"id='DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+						id + "' " +
+						"onclick='" + 					
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", this.checked);" + "'>";
+				str += " ";
+				str += "<a onclick='" +
+						"var el = document.getElementById(\"" +
+						"DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+						id + "\");" +
+						"el.checked = !el.checked;" +
+						"DesktopContent.tooltipSetAlwaysShow(\"" + 
+						srcFunc + "\",\"" +
+						srcFile + "\",\"" +
+						id + "\", el.checked);" +
+						"'>";
+				str += "Always show the Tooltip above.";
+				str += "</a>";
+				str +="</input>";
+			}
+					
+			Debug.log(str,Debug.TIP_PRIORITY);
+		}
+	},0,0,0,true,true); //show loading, and target supervisor
+	
+}
+
+//=====================================================================================
+//tooltipSetNeverShow ~~
+//	set value of never show for target tip to 1/0 based on alwaysShow
+DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,temporarySilence) {
+	Debug.log("alwaysShow = " + alwaysShow);
+	if(temporarySilence)
+		alwaysShow = 1; //force temporary to have priority
+	DesktopContent.XMLHttpRequest(
+			"TooltipRequest?RequestType=setNeverShow" + 
+			"&srcFunc=" + srcFunc +
+			"&srcFile=" + srcFile +
+			"&srcId=" + id + 
+			"&doNeverShow=" + (alwaysShow?0:1) + 
+			"&temporarySilence=" + (temporarySilence?1:0) 
+			,""
+			,0,0,0,0,true,true); //show loading, and target supervisor
+	
+	if(temporarySilence) return;
+	
+	//make sure all checkboxes mirror choice
+	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
+			id).checked = alwaysShow;
+	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
+			id).checked = alwaysShow;
+}
+		
+//=====================================================================================
 //popUpVerification ~~
 //	asks user if sure
 //	replace REPLACE in prompt with value passed as val (e.g. pass document.getElementById("myElementId").value)
@@ -606,7 +992,7 @@ DesktopContent.getXMLDataNode = function(req, name) {
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -629,12 +1015,15 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//setup style first
 	if(!bgColor) bgColor = "rgb(255,241,189)";	//set default
 	if(!textColor) textColor = "black";	//set default
+	if(!borderColor) borderColor = "black";
+	
 	var css = "";
 	//pop up div style
+	//note: z-index of 2000 is above config gui treeview
 	css += "#" + DesktopContent._verifyPopUpId + " " +
-			"{position: absolute; border-radius: 5px; padding: 10px;" +			
-			"background-color: " + bgColor + "; border: 2px solid rgb(0,0,0);" +
-			"color: " + textColor + ";text-align: center;" +
+			"{position: absolute; z-index: 2000; border-radius: 5px; padding: 10px;" +			
+			"background-color: " + bgColor + "; border: 2px solid " + borderColor + ";" +
+			"color: " + textColor + ";text-align: center; overflow: auto;" +
 			"}\n\n";
 	//pop up text style 
 	css += "#" + DesktopContent._verifyPopUpId + "-text " +
@@ -665,14 +1054,20 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	el.setAttribute("id", DesktopContent._verifyPopUpId);				
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "</div>" +
-			"<input type='submit' value='Yes'> " + //onmouseup added below so func can be a function object (and not a string)
+			"<input type='submit' value='Yes' " +
+			"onclick='event.stopPropagation();' " + 
+			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
-			"<input type='submit' onmouseup='DesktopContent.clearPopUpVerification();' value='Cancel'>";
+			"<input type='submit' " +
+			"onmouseup='event.stopPropagation();" +
+			"DesktopContent.clearPopUpVerification();' " +
+			"onclick='event.stopPropagation();' " +
+			"value='Cancel'>";
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
 	el.getElementsByTagName('input')[0].onmouseup = 
-			function(){DesktopContent.clearPopUpVerification(func);};
+			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
 
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;
@@ -703,8 +1098,8 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			" W: " + w + 
 			" H: " + h);		
 	//var 
-	el.style.left = x + "px";
-	el.style.top = y + "px";
+	el.style.left = (DesktopContent.getWindowScrollLeft() + x) + "px";
+	el.style.top = (DesktopContent.getWindowScrollTop() + y) + "px";
 }
 //=====================================================================================
 //clearPopUpVerification ~~
@@ -717,20 +1112,36 @@ DesktopContent.clearPopUpVerification = function(func) {
 }
 
 //=====================================================================================
-//http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
-// except the solution is broken.. unless you add element to page
+//parseColor ~~
 DesktopContent.parseColor = function(colorStr) { 
 	//used to ignore the alpha in the color when returning to user
 
 	//in general need to create an element.. but since all the color strings are rgb or rgba from settings, can simplify
-	//	var div = document.createElement('div'), m;
-	//    div.style.color = colorStr;
-	//    div.style.display = "none";
-	//    document.body.appendChild(div);
-	//    m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
-	//	  document.body.removeChild(div);
 	var m = colorStr.split("(")[1].split(")")[0].split(",");
 	if( m) return "rgb("+m[0]+","+m[1]+","+m[2]+")";    
+	else throw new Error("Color "+colorStr+" could not be parsed.");
+}
+
+//=====================================================================================
+//getColorAsRGBA ~~
+//	http://stackoverflow.com/questions/11068240/what-is-the-most-efficient-way-to-parse-a-css-color-in-javascript
+// 	except the solution is broken.. unless you add element to page
+DesktopContent.getColorAsRGBA = function(colorStr) { 
+	
+	//in general need to create an element.. 
+	var div = document.createElement('div');
+	var m;
+	
+	div.style.color = colorStr;
+	div.style.display = "none";
+	document.body.appendChild(div);
+	
+	m = getComputedStyle(div).color.split("(")[1].split(")")[0].split(",");
+	
+	document.body.removeChild(div);
+	
+	if(m && m.length == 3) return "rgba("+m[0]+","+m[1]+","+m[2]+",255)";
+	else if(m && m.length == 4) return "rgba("+m[0]+","+m[1]+","+m[2]+","+m[3]+")";
 	else throw new Error("Color "+colorStr+" could not be parsed.");
 }
 
@@ -739,6 +1150,10 @@ DesktopContent.parseColor = function(colorStr) {
 //get window and mouse info ~~
 DesktopContent.getWindowWidth = function() { return window.innerWidth; }
 DesktopContent.getWindowHeight = function() { return window.innerHeight; }
+DesktopContent.getBodyWidth = function() { return document.body.offsetWidth; }
+DesktopContent.getBodyHeight = function() { return document.body.offsetHeight; }
+DesktopContent.getWindowScrollLeft = function() { return document.documentElement.scrollLeft || document.body.scrollLeft || 0; }
+DesktopContent.getWindowScrollTop = function() { return document.documentElement.scrollTop || document.body.scrollTop || 0; }
 DesktopContent.getMouseX = function() { return DesktopContent._windowMouseX | 0; } //force to int
 DesktopContent.getMouseY = function() { return DesktopContent._windowMouseY | 0; } //force to int
 DesktopContent.getDefaultWindowColor = function() {
@@ -922,8 +1337,13 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 }
 
-
-
+//getDesktopWindowTitle ~~
+//	returns the text in header of the current desktop window
+DesktopContent.getDesktopWindowTitle = function() {
+	return DesktopContent._theWindow.parent.document.getElementById(
+			"DesktopWindowHeader-" + 
+			DesktopContent._theWindow.name.split('-')[1]).innerHTML;
+}
 
 
 

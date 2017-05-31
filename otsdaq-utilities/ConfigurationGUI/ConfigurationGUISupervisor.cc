@@ -50,7 +50,7 @@ throw (xdaq::exception::Exception)
 	init();
 
 	//new user gets a config mgr assigned
-	//user can fill any of the sub-configs (fill from version or init empty), which becomes the active view for that sub-config
+	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 
 
 	return;
@@ -114,6 +114,10 @@ throw (xgi::exception::Exception)
 	//Commands
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
+	//	launchOTS
+	// 	launchWiz
+	// 	versionTracking
+	//	getColumnTypes
 	//	getGroupAliases
 	//	setGroupAliasInActiveBackbone
 	//	setVersionAliasInActiveBackbone
@@ -128,10 +132,21 @@ throw (xgi::exception::Exception)
 	//	getSpecificConfiguration
 	//	saveSpecificConfiguration
 	//	clearConfigurationTemporaryVersions
+	//	clearConfigurationCachedVersions
+	//
+	//		---- associated with Javascript Config API
 	//	getTreeView
+	//	getTreeNodeCommonFields
+	//	getTreeNodeFieldValues
+	//	setTreeNodeFieldValues
+	//		---- end associated with Javascript Config API
+	//
 	//	activateConfigGroup
 	//	getActiveConfigGroups
 	//  copyViewToCurrentColumns
+	//	saveTreeNodeEdit
+	//	getAffectedActiveGroups
+	// 	getLinkToChoices
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -181,9 +196,16 @@ throw (xgi::exception::Exception)
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
 		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
+		std::string tableDescription = CgiDataUtilities::postData(cgi,"tableDescription"); //from POST
+		std::string columnChoicesCSV = CgiDataUtilities::postData(cgi,"columnChoicesCSV"); //from POST
+
+		//columnCSV = CgiDataUtilities::decodeURIComponent(columnCSV);
+		//tableDescription = CgiDataUtilities::decodeURIComponent(tableDescription);
 
 		__MOUT__ << "configName: " << configName << std::endl;
 		__MOUT__ << "columnCSV: " << columnCSV << std::endl;
+		__MOUT__ << "tableDescription: " << tableDescription << std::endl;
+		__MOUT__ << "columnChoicesCSV: " << columnChoicesCSV << std::endl;
 		__MOUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
 		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
@@ -192,13 +214,84 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", ss.str());
 		}
 		else
-			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,allowOverwrite=="1");
+			handleSaveConfigurationInfoXML(xmldoc,cfgMgr,configName,columnCSV,tableDescription,
+					columnChoicesCSV,allowOverwrite=="1");
 	}
 	else if(Command == "deleteConfigurationInfo")
 	{
 		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
 		__MOUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
+	}
+	else if(Command == "launchOTS")
+	{
+		__MOUT_WARN__ << "launchOTS command received! Launching... " << std::endl;
+
+		FILE *fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+				"/StartOTS_action.cmd").c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"LAUNCH_OTS");
+			fclose(fp);
+		}
+	}
+	else if(Command == "launchWiz")
+	{
+		__MOUT_WARN__ << "launchWiz command received! Launching... " << std::endl;
+
+		FILE *fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+				"/StartOTS_action.cmd").c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"LAUNCH_WIZ");
+			fclose(fp);
+		}
+	}
+	else if(Command == "versionTracking")
+	{
+		std::string type = CgiDataUtilities::getData(cgi,"Type"); //from GET
+		__MOUT__ << "type: " << type << std::endl;
+
+		if(type == "Get")
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+		else if(type == "ON")
+		{
+			ConfigurationInterface::setVersionTrackingEnabled(true);
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+		}
+		else if(type == "OFF")
+		{
+			ConfigurationInterface::setVersionTrackingEnabled(false);
+			xmldoc.addTextElementToData("versionTrackingStatus",
+					ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+		}
+	}
+	else if(Command == "getColumnTypes")
+	{
+		//return the possible column types and their defaults
+		std::vector<std::string> allTypes = ViewColumnInfo::getAllTypesForGUI();
+		std::vector<std::string> allDataTypes = ViewColumnInfo::getAllDataTypesForGUI();
+		std::map<std::pair<std::string,std::string>,std::string> allDefaults =
+				ViewColumnInfo::getAllDefaultsForGUI();
+
+		for(const auto &type:allTypes)
+			xmldoc.addTextElementToData("columnTypeForGUI",
+					type);
+		for(const auto &dataType:allDataTypes)
+			xmldoc.addTextElementToData("columnDataTypeForGUI",
+					dataType);
+
+		for(const auto &colDefault:allDefaults)
+		{
+			xmldoc.addTextElementToData("columnDefaultDataType",
+					colDefault.first.first);
+			xmldoc.addTextElementToData("columnDefaultTypeFilter",
+					colDefault.first.second);
+			xmldoc.addTextElementToData("columnDefaultValue",
+					colDefault.second);
+		}
 	}
 	else if(Command == "getGroupAliases")
 	{
@@ -278,7 +371,7 @@ throw (xgi::exception::Exception)
 	else if(Command == "getSpecificConfigurationGroup")
 	{
 		std::string 	groupName = CgiDataUtilities::getData(cgi,"groupName"); 	//from GET
-		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData(cgi,"groupKey"); 		//from GET
 
 		__MOUT__ << "groupName: " << groupName << std::endl;
 		__MOUT__ << "groupKey: " << groupKey << std::endl;
@@ -287,22 +380,29 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "saveNewConfigurationGroup")
 	{
-		std::string groupName = CgiDataUtilities::getData(cgi,"groupName"); //from GET
-		std::string ignoreWarnings = CgiDataUtilities::getData(cgi,"ignoreWarnings"); //from GET
-		std::string configList = CgiDataUtilities::postData(cgi,"configList"); //from POST
+		std::string groupName 		= CgiDataUtilities::getData (cgi,"groupName"); 		//from GET
+		std::string ignoreWarnings 	= CgiDataUtilities::getData (cgi,"ignoreWarnings"); //from GET
+		std::string allowDuplicates = CgiDataUtilities::getData (cgi,"allowDuplicates");//from GET
+		std::string configList 		= CgiDataUtilities::postData(cgi,"configList"); 	//from POST
+		std::string	comment 		= CgiDataUtilities::getData	(cgi,"groupComment");	//from GET
+
 		__MOUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__MOUT__ << "configList: " << configList << std::endl;
 		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
+		__MOUT__ << "allowDuplicates: " << allowDuplicates << std::endl;
+		__MOUT__ << "comment: " << comment << std::endl;
 
-		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList, false,
-				(ignoreWarnings == "1"));
+		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList,
+				(allowDuplicates == "1"),
+				(ignoreWarnings == "1"),
+				comment);
 	}
 	else if(Command == "getSpecificConfiguration")
 	{
-		std::string		configName = CgiDataUtilities::getData(cgi,		"configName"); 	//from GET
-		std::string  	versionStr = CgiDataUtilities::getData(cgi,		"version");		//from GET
-		int				dataOffset = CgiDataUtilities::getDataAsInt(cgi,"dataOffset");	//from GET
-		int				chunkSize  = CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		std::string		configName = CgiDataUtilities::getData		(cgi,"configName"); //from GET
+		std::string  	versionStr = CgiDataUtilities::getData		(cgi,"version");	//from GET
+		int				dataOffset = CgiDataUtilities::getDataAsInt	(cgi,"dataOffset");	//from GET
+		int				chunkSize  = CgiDataUtilities::getDataAsInt	(cgi,"chunkSize");	//from GET
 
 		std::string 	allowIllegalColumns = CgiDataUtilities::getData(cgi,"allowIllegalColumns"); //from GET
 		__MOUT__ << "allowIllegalColumns: " << (allowIllegalColumns=="1") << std::endl;
@@ -312,6 +412,7 @@ throw (xgi::exception::Exception)
 
 		ConfigurationVersion version;
 		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		std::string versionAlias;
 
 		if(versionStr == "" && //take latest version if no version specified
 				allCfgInfo[configName].versions_.size())
@@ -321,6 +422,14 @@ throw (xgi::exception::Exception)
 			//convert alias to version
 			std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 					cfgMgr->getActiveVersionAliases();
+
+			versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
+//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//			{
+//				version = ConfigurationVersion::SCRATCH;
+//				__MOUT__ << "version alias translated to: " << version << std::endl;
+//			}
+//			else
 			if(versionAliases.find(configName) != versionAliases.end() &&
 					versionAliases[configName].find(versionStr.substr(
 							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
@@ -333,7 +442,7 @@ throw (xgi::exception::Exception)
 			else
 				__MOUT_WARN__ << "version alias '" << versionStr.substr(
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-				"'was not found in active version aliases!" << std::endl;
+						"'was not found in active version aliases!" << std::endl;
 		}
 		else					//else take specified version
 			version = atoi(versionStr.c_str());
@@ -350,7 +459,7 @@ throw (xgi::exception::Exception)
 		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
 		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
 		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");		//from GET
-		//int				chunkSize 	= CgiDataUtilities::getDataAsInt(cgi,"chunkSize");	//from GET
+		bool			sourceTableAsIs	= CgiDataUtilities::getDataAsInt(cgi,"sourceTableAsIs");	//from GET
 		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");		//from GET
 		std::string		comment 	= CgiDataUtilities::getData		(cgi,"tableComment");	//from GET
 
@@ -362,9 +471,10 @@ throw (xgi::exception::Exception)
 				<< " temporary: " << temporary << " dataOffset: " << dataOffset << std::endl;
 		__MOUT__ << "comment: " << comment << std::endl;
 		__MOUT__ << "data: " << data << std::endl;
+		__MOUT__ << "sourceTableAsIs: " << sourceTableAsIs << std::endl;
 
 		handleCreateConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
-				temporary,data,dataOffset,userName, comment);
+				temporary,data,dataOffset,userName,comment,sourceTableAsIs);
 	}
 	else if(Command == "clearConfigurationTemporaryVersions")
 	{
@@ -384,11 +494,31 @@ throw (xgi::exception::Exception)
 			xmldoc.addTextElementToData("Error", "Error clearing temporary views! ");
 		}
 	}
+	else if(Command == "clearConfigurationCachedVersions")
+	{
+		std::string 	configName 	= CgiDataUtilities::getData	    (cgi,"configName"); 	//from GET
+		__MOUT__ << "configName: " << configName << std::endl;
+
+		try { cfgMgr->clearCachedVersions(configName);}
+		catch(std::runtime_error &e)
+		{
+			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing cached views!\n " +
+					std::string(e.what()));
+		}
+		catch(...)
+		{
+			__MOUT__ << "Error detected!\n\n "<< std::endl;
+			xmldoc.addTextElementToData("Error", "Error clearing cached views! ");
+		}
+	}
 	else if(Command == "getTreeView")
 	{
 		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
 		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
 		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	filterList	 	= CgiDataUtilities::postData(cgi,"filterList");
 		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
 		bool			hideStatusFalse	= CgiDataUtilities::getDataAsInt(cgi,"hideStatusFalse");
 
@@ -397,9 +527,120 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "startPath: " << startPath << std::endl;
 		__MOUT__ << "depth: " << depth << std::endl;
 		__MOUT__ << "hideStatusFalse: " << hideStatusFalse << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+		__MOUT__ << "filterList: " << filterList << std::endl;
 
 		handleFillTreeViewXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,depth,hideStatusFalse);
+				startPath,depth,hideStatusFalse,modifiedTables,filterList);
+	}
+	else if(Command == "getTreeNodeCommonFields")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "depth: " << depth << std::endl;
+		__MOUT__ << "fieldList: " << fieldList << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillTreeNodeCommonFieldsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,depth,modifiedTables,recordList,fieldList);
+
+	}
+	else if(Command == "getTreeNodeFieldValues")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "fieldList: " << fieldList << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillGetTreeNodeFieldValuesXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,modifiedTables,recordList,fieldList);
+	}
+	else if(Command == "setTreeNodeFieldValues")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+		std::string 	valueList	 	= CgiDataUtilities::postData(cgi,"valueList");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "fieldList: " << fieldList << std::endl;
+		__MOUT__ << "valueList: " << valueList << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillSetTreeNodeFieldValuesXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,modifiedTables,recordList,fieldList,valueList);
+
+	}
+	else if(Command == "getAffectedActiveGroups")
+	{
+		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
+		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleGetAffectedGroupsXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
+				modifiedTables);
+	}
+	else if(Command == "saveTreeNodeEdit")
+	{
+		std::string 	editNodeType 		= CgiDataUtilities::getData(cgi,"editNodeType");
+		std::string 	targetTable 		= CgiDataUtilities::getData(cgi,"targetTable");
+		std::string 	targetTableVersion 	= CgiDataUtilities::getData(cgi,"targetTableVersion");
+		std::string 	targetUID 			= CgiDataUtilities::getData(cgi,"targetUID");
+		std::string 	targetColumn 		= CgiDataUtilities::getData(cgi,"targetColumn");
+		std::string 	newValue 			= CgiDataUtilities::postData(cgi,"newValue");
+
+		__MOUT__ << "editNodeType: " << editNodeType << std::endl;
+		__MOUT__ << "targetTable: " << targetTable << std::endl;
+		__MOUT__ << "targetTableVersion: " << targetTableVersion << std::endl;
+		__MOUT__ << "targetUID: " << targetUID << std::endl;
+		__MOUT__ << "targetColumn: " << targetColumn << std::endl;
+		__MOUT__ << "newValue: " << newValue << std::endl;
+
+		handleSaveTreeNodeEditXML(xmldoc,cfgMgr,targetTable,ConfigurationVersion(targetTableVersion),
+				editNodeType,targetUID,targetColumn,newValue);
+	}
+	else if(Command == "getLinkToChoices")
+	{
+		std::string 	linkToTableName 	= CgiDataUtilities::getData(cgi,"linkToTableName");
+		std::string 	linkToTableVersion 	= CgiDataUtilities::getData(cgi,"linkToTableVersion");
+		std::string 	linkIdType 			= CgiDataUtilities::getData(cgi,"linkIdType");
+		std::string 	linkIndex 			= CgiDataUtilities::getData(cgi,"linkIndex");
+		std::string 	linkInitId 			= CgiDataUtilities::getData(cgi,"linkInitId");
+
+		__MOUT__ << "linkToTableName: " << linkToTableName << std::endl;
+		__MOUT__ << "linkToTableVersion: " << linkToTableVersion << std::endl;
+		__MOUT__ << "linkIdType: " << linkIdType << std::endl;
+		__MOUT__ << "linkIndex: " << linkIndex << std::endl;
+		__MOUT__ << "linkInitId: " << linkInitId << std::endl;
+
+		handleGetLinkToChoicesXML(xmldoc,cfgMgr,linkToTableName,
+				ConfigurationVersion(linkToTableVersion),linkIdType,linkIndex,linkInitId);
 	}
 	else if(Command == "activateConfigGroup")
 	{
@@ -419,9 +660,12 @@ throw (xgi::exception::Exception)
 		}
 		catch(std::runtime_error& e)
 		{
+			//NOTE it is critical for flimsy error parsing in JS GUI to leave
+			//	single quotes around the groupName and groupKey and have them be
+			//	the first single quotes encountered in the error mesage!
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
-			xmldoc.addTextElementToData("Error", "Error activating config group " +
-					groupName +	"(" + groupKey + ")" + ". Please see details below:\n\n" +
+			xmldoc.addTextElementToData("Error", "Error activating config group '" +
+					groupName +	"(" + groupKey + ")" + ".' Please see details below:\n\n" +
 					std::string(e.what()));
 			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
 					groupName << " (" << groupKey << ")" << std::endl;
@@ -431,9 +675,13 @@ throw (xgi::exception::Exception)
 		}
 		catch(cet::exception& e)
 		{
+			//NOTE it is critical for flimsy error parsing in JS GUI to leave
+			//	single quotes around the groupName and groupKey and have them be
+			//	the first single quotes encountered in the error mesage!
+
 			__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
 			xmldoc.addTextElementToData("Error", "Error activating config group '" +
-					groupName +	"(" + groupKey + ")" + "'!\n\n" +
+					groupName +	"(" + groupKey + ")" + "!'\n\n" +
 					std::string(e.what()));
 			__MOUT_ERR__ << "Errors detected so de-activating group: " <<
 					groupName << " (" << groupKey << ")" << std::endl;
@@ -468,18 +716,18 @@ throw (xgi::exception::Exception)
 		{
 			//force emptying of cache for this configuration
 			newTemporaryVersion = cfgMgr->copyViewToCurrentColumns(configName,
-							ConfigurationVersion(sourceVersion));
-//
-//			getConfigurationByName(configName)->reset();
-//
-//			//make sure source version is loaded
-//			//need to load with loose column rules!
-//			config = cfgMgr->getVersionedConfigurationByName(configName,
-//					ConfigurationVersion(sourceVersion), true);
-//
-//			//copy from source version to a new temporary version
-//			newTemporaryVersion = config->copyView(config->getView(),
-//							ConfigurationVersion(),userName);
+					ConfigurationVersion(sourceVersion));
+			//
+			//			getConfigurationByName(configName)->reset();
+			//
+			//			//make sure source version is loaded
+			//			//need to load with loose column rules!
+			//			config = cfgMgr->getVersionedConfigurationByName(configName,
+			//					ConfigurationVersion(sourceVersion), true);
+			//
+			//			//copy from source version to a new temporary version
+			//			newTemporaryVersion = config->copyView(config->getView(),
+			//							ConfigurationVersion(),userName);
 
 			__MOUT__ << "New temporary version = " << newTemporaryVersion << std::endl;
 		}
@@ -500,7 +748,11 @@ throw (xgi::exception::Exception)
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,newTemporaryVersion);
 	}
 	else
-		__MOUT__ << "Command request not recognized." << std::endl;
+	{
+		__SS__ << "Command request not recognized." << std::endl;
+		__MOUT__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
 
 	__MOUT__ << "Wrapping up..." << std::endl;
 
@@ -518,24 +770,725 @@ throw (xgi::exception::Exception)
 				type.second.second.toString());
 	}
 
+	//always add version tracking bool
+	xmldoc.addTextElementToData("versionTracking",
+			ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+
 	__MOUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true); //true for debug printout
 }
 
+
 //========================================================================================================================
-//handleFillTreeViewXML
-//	returns xml tree from path for given depth
+//handleGetAffectedGroupsXML
+//	checks which of the active groups are affected
+//		by the tables changing in the modified tables list.
+//
+//	returns for each group affected:
+//		the group name/key affected
+//			and modified member map
+void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey,
+		const std::string &modifiedTables)
+try
+{
+
+	//determine type of rootGroup
+	//replace the matching type in considered groups
+	//for each considered configuration group
+	//
+	//	check if there is a modified table that is also a member of that group
+	//	if so,
+	//		make xml entry pair
+
+
+	std::map<std::string, std::pair<std::string, ConfigurationGroupKey>> consideredGroups =
+			cfgMgr->getActiveConfigurationGroups();
+
+
+	//determine the type of configuration group
+	try
+	{
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap =
+				cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
+						0,0,0,0,0,0, //defaults
+						true); //doNotLoadMember
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//								ConfigurationGroupKey::getFullGroupString(
+		//										rootGroupName,
+		//										rootGroupKey));
+		const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
+				cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
+
+		consideredGroups[groupType] = std::pair<std::string, ConfigurationGroupKey>(
+				rootGroupName,rootGroupKey);
+	}
+	catch(...)
+	{
+		//if actual group name was attempted re-throw
+		if(rootGroupName.size()) throw;
+
+		//else assume it was the intention to just consider the active groups
+		__MOUT__ << "Failed modifying considered groups due to empty group name. Assuming this was intentional." << std::endl;
+	}
+
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
+	{
+		std::istringstream f(modifiedTables);
+		std::string table,version;
+		while (getline(f, table, ','))
+		{
+			getline(f, version, ',');
+			modifiedTablesMap.insert(
+					std::pair<std::string /*name*/,
+					ConfigurationVersion /*version*/>(
+							table, ConfigurationVersion(version)));
+		}
+		__MOUT__ << modifiedTables << std::endl;
+		for(auto &pair:modifiedTablesMap)
+			__MOUT__ << "modified table " <<
+			pair.first << ":" <<
+			pair.second << std::endl;
+	}
+
+	bool affected;
+	DOMElement *parentEl;
+	std::string groupComment;
+	for(auto group : consideredGroups)
+	{
+		if(group.second.second.isInvalid()) continue; //skip invalid
+
+		__MOUT__ << "Considering " << group.first << " group " <<
+				group.second.first << " (" << group.second.second << ")" << std::endl;
+
+		affected = false;
+
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
+				//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+				//						ConfigurationGroupKey::getFullGroupString(
+				//								group.second.first,
+				//								group.second.second),
+				//								true); //include meta data table
+				cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
+						0,0,0,&groupComment,0,0, //mostly defaults
+						true); //doNotLoadMember
+
+		__MOUT__ << "groupComment = " << groupComment << std::endl;
+
+		for(auto &table: memberMap)
+		{
+			if((modifiedTablesMapIt = modifiedTablesMap.find(table.first)) !=
+					modifiedTablesMap.end() && //check if version is different for member table
+					table.second != (*modifiedTablesMapIt).second)
+			{
+				__MOUT__ << "Affected by " <<
+						(*modifiedTablesMapIt).first << ":" <<
+						(*modifiedTablesMapIt).second << std::endl;
+				affected = true;
+				memberMap[table.first] = (*modifiedTablesMapIt).second;
+			}
+		}
+
+		if(affected)
+		{
+
+			parentEl = xmldoc.addTextElementToData("AffectedActiveGroup", "");
+			xmldoc.addTextElementToParent("GroupName", group.second.first, parentEl);
+			xmldoc.addTextElementToParent("GroupKey",
+					group.second.second.toString(), parentEl);
+			xmldoc.addTextElementToParent("GroupComment", groupComment, parentEl);
+
+
+			for(auto &table: memberMap)
+			{
+				xmldoc.addTextElementToParent("MemberName",
+						table.first, parentEl);
+				xmldoc.addTextElementToParent("MemberVersion",
+						table.second.toString(), parentEl);
+			}
+		}
+	}
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting affected groups! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error getting affected groups! ");
+}
+
+
+//========================================================================================================================
+//setupActiveTables
+//	setup active tables based on input group and modified tables
+//
+//	if groupName == "" && groupKey is invalid
+//		then do for active groups
+//	if valid, then replace appropriate active group with specified group
+//	Also replace active versions of modified tables with the specified version
+void ConfigurationGUISupervisor::setupActiveTablesXML(
+		HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &modifiedTables,
+		bool refreshAll, bool getGroupInfo,
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> *returnMemberMap,
+		bool outputActiveTables)
+try
+{
+	xmldoc.addTextElementToData("configGroup", groupName);
+	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
+
+	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+
+	//reload all tables so that partially loaded tables are not allowed
+	if(usingActiveGroups || refreshAll)
+		cfgMgr->getAllConfigurationInfo(true); //do refresh
+
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
+
+	if(usingActiveGroups)
+	{
+		//no need to load a target group
+		__MOUT__ << "Using active groups." << std::endl;
+	}
+	else
+	{
+		std::string groupComment, groupAuthor, configGroupCreationTime;
+
+		//only same member map if object pointer was passed
+		if(returnMemberMap)
+			*returnMemberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+						0,0,0,
+						getGroupInfo?&groupComment:0,
+						getGroupInfo?&groupAuthor:0,
+						getGroupInfo?&configGroupCreationTime:0);
+		else
+			cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				0,0,0,
+				getGroupInfo?&groupComment:0,
+				getGroupInfo?&groupAuthor:0,
+				getGroupInfo?&configGroupCreationTime:0);
+
+		if(getGroupInfo)
+		{
+			xmldoc.addTextElementToData("configGroupComment", groupComment);
+			xmldoc.addTextElementToData("configGroupAuthor", groupAuthor);
+			xmldoc.addTextElementToData("configGroupCreationTime", configGroupCreationTime);
+		}
+	}
+
+	//extract modified tables
+	{
+		std::istringstream f(modifiedTables);
+		std::string table,version;
+		while (getline(f, table, ','))
+		{
+			getline(f, version, ',');
+			modifiedTablesMap.insert(
+					std::pair<std::string /*name*/,
+					ConfigurationVersion /*version*/>(
+							table, ConfigurationVersion(version)));
+		}
+		__MOUT__ << modifiedTables << std::endl;
+		for(auto &pair:modifiedTablesMap)
+			__MOUT__ << "modified table " <<
+				pair.first << ":" <<
+				pair.second << std::endl;
+	}
+
+	//add all active configuration pairs to xmldoc
+	std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+	xmldoc.addTextElementToData("DefaultNoLink", ViewColumnInfo::DATATYPE_LINK_DEFAULT);
+	for(auto &activePair: allActivePairs)
+	{
+		if(outputActiveTables)
+			xmldoc.addTextElementToData("ActiveTableName", activePair.first);
+
+		//check if name is in modifiedTables
+		//if so, activate the temporary version
+		if((modifiedTablesMapIt = modifiedTablesMap.find(activePair.first)) !=
+				modifiedTablesMap.end())
+		{
+			__MOUT__ << "Found modified table " <<
+					(*modifiedTablesMapIt).first << ": trying... " <<
+					(*modifiedTablesMapIt).second << std::endl;
+
+			try
+			{
+				allCfgInfo[activePair.first].configurationPtr_->setActiveView(
+						(*modifiedTablesMapIt).second);
+			}
+			catch(...)
+			{
+				__SS__ << "Modified table version v" << (*modifiedTablesMapIt).second <<
+						" failed. Reverting to v" <<
+						allCfgInfo[activePair.first].configurationPtr_->getView().getVersion() <<
+						"." <<
+						std::endl;
+				__MOUT_WARN__ << "Warning detected!\n\n " << ss.str() << std::endl;
+				xmldoc.addTextElementToData("Warning", "Error setting up active tables!\n\n" +
+						std::string(ss.str()));
+			}
+		}
+
+		if(outputActiveTables)
+		{
+			xmldoc.addTextElementToData("ActiveTableVersion",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
+			xmldoc.addTextElementToData("ActiveTableComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		}
+	}
+
+}
+catch(std::runtime_error& e)
+{
+	__SS__ << ("Error generating setting up active tables!\n\n" + std::string(e.what())) << std::endl;
+	__MOUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SS__ << ("Error generating setting up active tables!\n\n") << std::endl;
+	__MOUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
+}
+
+
+//========================================================================================================================
+//handleFillSetTreeNodeFieldValuesXML
+//	writes for each record, the field/value pairs to the appropriate table
+//		and creates a temporary version.
+//	the modified-<modified tables> list is returned in xml
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordStr := CSV list of records for which to lookup values for fields
+//	fieldList := CSV of relative-to-record-path to fields to write
+//	valueList := CSV of values corresponding to fields
+//
+void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath,
+		const std::string &modifiedTables, const std::string &recordList,
+		const std::string &fieldList, const std::string &valueList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables,
+			true /* refresh all */, false /* getGroupInfo */,
+			0 /* returnMemberMap */, false /* outputActiveTables */);
+
+	//for each field
+	//	return field/value pair in xml
+
+	try
+	{
+		std::vector<std::string /*relative-path*/> fieldPaths;
+		//extract field list
+		{
+			std::istringstream f(fieldList);
+			std::string fieldPath;
+			while (getline(f, fieldPath, ','))
+			{
+				fieldPaths.push_back(
+						ConfigurationView::decodeURIComponent(fieldPath));
+			}
+			__MOUT__ << fieldList << std::endl;
+			for(const auto &field:fieldPaths)
+				__MOUT__ << "fieldPath " <<
+					field << std::endl;
+		}
+
+		std::vector<std::string /*relative-path*/> fieldValues;
+		//extract value list
+		{
+			std::istringstream f(valueList);
+			std::string fieldValue;
+			while (getline(f, fieldValue, ','))
+			{
+				fieldValues.push_back(fieldValue); //setURIEncodedValue is expected
+						//ConfigurationView::decodeURIComponent(fieldValue));
+			}
+			__MOUT__ << valueList << std::endl;
+			for(const auto &value:fieldValues)
+				__MOUT__ << "fieldValue " <<
+					value << std::endl;
+		}
+
+		if(fieldPaths.size() != fieldValues.size())
+			throw std::runtime_error("Mismatch in fields and values array size!");
+
+		//extract record list
+		{
+			ConfigurationBase* config;
+			ConfigurationVersion temporaryVersion;
+			std::istringstream f(recordList);
+			std::string recordUID;
+			unsigned int i;
+
+			while (getline(f, recordUID, ',')) //for each record
+			{
+				recordUID = ConfigurationView::decodeURIComponent(recordUID);
+
+				__MOUT__ << "recordUID " <<
+						recordUID << std::endl;
+
+				DOMElement* parentEl = xmldoc.addTextElementToData("fieldValues", recordUID);
+
+				//for each field, set value
+				for(i=0;i<fieldPaths.size();++i)
+				{
+					__MOUT__ << "fieldPath " << fieldPaths[i] << std::endl;
+					__MOUT__ << "fieldValue " << fieldValues[i] << std::endl;
+
+					auto targetNode =
+							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPaths[i]);
+
+					//need table, uid, columnName to set a value
+
+					//assume correct table version is loaded by setupActiveTablesXML()
+					//config = cfgMgr->getConfigurationByName(
+					//							targetNode.getConfigurationName());
+					//
+					//__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+					//mimic handleSaveTreeNodeEditXML L 1750
+//					Actually call it! ..
+//					with a modifier?
+//					or
+//					handleSaveTreeNodeEditXML(xmldoc,
+//							cfgMgr,
+//							targetNode.getConfigurationName(),
+//							targetNode.getConfigurationVersion(),
+//							"value",
+//							targetNode.getUIDAsString(),
+//							targetNode.getValueName(), //col name
+//							fieldValues[i]
+//							);
+
+					//or
+					// 	(because problem is this would create a new temporary version each time)
+					// if current version is not temporary
+					//		create temporary
+					//	else re-modify temporary version
+					//	edit temporary version directly
+					//	then after all edits return active versions
+					//
+
+					config = cfgMgr->getConfigurationByName(
+							targetNode.getConfigurationName());
+					if(!(temporaryVersion =
+							targetNode.getConfigurationVersion()).isTemporaryVersion())
+					{
+						//create temporary version for editing
+						temporaryVersion = config->createTemporaryView(
+								targetNode.getConfigurationVersion());
+						cfgMgr->saveNewConfiguration(
+								targetNode.getConfigurationName(),
+								temporaryVersion, true); //proper bookkeeping for temporary versionwith the new version
+
+						__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+					}
+					else //else table is already temporary version
+						__MOUT__ << "Using temporary version " << temporaryVersion << std::endl;
+
+					//copy "value" type edit from handleSaveTreeNodeEditXML() functionality
+					config->getViewP()->setURIEncodedValue(
+							fieldValues[i],
+							targetNode.getRow(),
+							targetNode.getColumn());
+				}
+			}
+		}
+
+		//return modified <modified tables>
+		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+		for(auto &activePair: allActivePairs)
+		{
+			xmldoc.addTextElementToData("NewActiveTableName", activePair.first);
+			xmldoc.addTextElementToData("NewActiveTableVersion",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getVersion().toString());
+			xmldoc.addTextElementToData("NewActiveTableComment",
+					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
+		}
+
+
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error getting field values!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error getting field values!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+}
+
+//========================================================================================================================
+//handleFillGetTreeNodeFieldValuesXML
+//	returns for each record, xml list of field/value pairs
+//		field := relative-path
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordStr := CSV list of records for which to lookup values for fields
+//	fieldList := CSV of relative-to-record-path to filter common fields
+//
+void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath,
+		const std::string &modifiedTables, const std::string &recordList,
+		const std::string &fieldList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables);
+
+	//for each field
+	//	return field/value pair in xml
+
+	try
+	{
+		std::vector<std::string /*relative-path*/> fieldPaths;
+		//extract field list
+		{
+			std::istringstream f(fieldList);
+			std::string fieldPath;
+			while (getline(f, fieldPath, ','))
+			{
+				fieldPaths.push_back(
+						ConfigurationView::decodeURIComponent(fieldPath));
+			}
+			__MOUT__ << fieldList << std::endl;
+			for(auto &field:fieldPaths)
+				__MOUT__ << "fieldPath " <<
+				field << std::endl;
+		}
+
+		//extract record list
+		{
+			std::istringstream f(recordList);
+			std::string recordUID;
+			while (getline(f, recordUID, ',')) //for each record
+			{
+				recordUID = ConfigurationView::decodeURIComponent(recordUID);
+
+				__MOUT__ << "recordUID " <<
+						recordUID << std::endl;
+
+				DOMElement* parentEl = xmldoc.addTextElementToData("fieldValues", recordUID);
+
+				//for each field, get value
+				for(const auto &fieldPath:fieldPaths)
+				{
+					__MOUT__ << "fieldPath " << fieldPath << std::endl;
+
+					xmldoc.addTextElementToParent("FieldPath",
+							fieldPath,
+							parentEl);
+					xmldoc.addTextElementToParent("FieldValue",
+							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath).getValueAsString(),
+							parentEl);
+				}
+			}
+		}
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error getting field values!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error getting field values!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+}
+
+//========================================================================================================================
+//handleFillTreeNodeCommonFieldsXML
+//	returns xml list of common fields among records
+//		field := relative-path
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
 //
 //parameters
 //	configGroupName (full name with key)
 //	starting node path
 //	depth from starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV of records to search for fields
+//	fieldList := CSV of relative-to-record-path to filter common fields
+//
+void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath, unsigned int depth,
+		const std::string &modifiedTables, const std::string &recordList,
+		const std::string &fieldList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables);
+
+
+	try
+	{
+		DOMElement* parentEl = xmldoc.addTextElementToData("fields", startPath);
+
+		if(depth == 0) return; //done if 0 depth, no fields
+
+		//do not allow traversing for common fields from root level
+		//	the tree view should be used for such a purpose
+		if(startPath == "/")
+			return;
+
+		std::vector<ConfigurationTree::RecordField> retFieldList;
+
+
+		{
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			if(startNode.isLinkNode() && startNode.isDisconnected())
+			{
+				__SS__ << "Start path was a disconnected link node!" << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				throw std::runtime_error(ss.str());
+				return; //quietly ignore disconnected links at depth
+				//note: at the root level they will be flagged for the user
+			}
+
+			std::vector<std::string /*relative-path*/> fieldFilterList;
+			if(fieldList != "")
+			{
+				//extract field filter list
+				{
+					std::istringstream f(fieldList);
+					std::string fieldPath;
+					while (getline(f, fieldPath, ','))
+					{
+						fieldFilterList.push_back(
+								ConfigurationView::decodeURIComponent(fieldPath));
+					}
+					__MOUT__ << fieldList << std::endl;
+					for(auto &field:fieldFilterList)
+						__MOUT__ << "fieldFilterList " <<
+							field << std::endl;
+				}
+			}
+			std::vector<std::string /*relative-path*/> records;
+			if(recordList != "")
+			{
+				//extract record list
+				{
+					std::istringstream f(recordList);
+					std::string recordStr;
+					while (getline(f, recordStr, ','))
+					{
+						records.push_back(
+								ConfigurationView::decodeURIComponent(recordStr));
+					}
+					__MOUT__ << recordList << std::endl;
+					for(auto &record:records)
+						__MOUT__ << "recordList " <<
+							record << std::endl;
+				}
+			}
+
+			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
+					records,fieldFilterList,depth);
+		}
+
+		for(const auto &fieldInfo:retFieldList)
+		{
+			xmldoc.addTextElementToParent("FieldTableName",
+					fieldInfo.tableName_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnName",
+					fieldInfo.columnName_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldRelativePath",
+					fieldInfo.relativePath_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnType",
+					fieldInfo.columnInfo_->getDataType(),
+					parentEl);
+			//TODO -- if fixed choice send info
+		}
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error getting common fields!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error getting common fields!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+
+}
+
+//========================================================================================================================
+//handleFillTreeViewXML
+//	returns xml tree from path for given depth
+//
+// if groupName == "" && groupKey is invalid
+//	 then return tree for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	depth from starting node path
+//	modifiedTables := CSV of table/version pairs
+//	filterList := relative-to-record-path=value(,value,...);path=value... filtering
+//		records with relative path not meeting all filter critera
+//		- can accept multiple values per field (values separated by commas) (i.e. OR)
+//		- fields/value pairs separated by ;  (i.e. AND)
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
-		const std::string &startPath, int depth, bool hideStatusFalse)
+		const std::string &startPath, unsigned int depth, bool hideStatusFalse,
+		const std::string &modifiedTables, const std::string &filterList)
 {
 	//return xml
 	//	<groupName="groupName"/>
@@ -556,39 +1509,43 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	//		</node>
 	//	</tree>
 
+
 	//return the startPath as root "tree" element
 	//	and then display all children if depth > 0
-	xmldoc.addTextElementToData("configGroup", groupName);
-	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
-	try {
-		//if add root node, reload all tables so that partially loaded tables are not allowed
-		if(startPath == "/")
-			cfgMgr->getAllConfigurationInfo(true); //do refresh
 
-		std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
 
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
-				cfgMgr->loadConfigurationGroup(groupName,groupKey);
+	//Think about using this in the future to clean up the code
+	//	But may not work well since there is some special functionality used below
+	//	like getting group comments, and not reloading everything except for at root level /
+	// ....
+	//	//	setup active tables based on input group and modified tables
 
-		//add all active configuration pairs to xmldoc
-		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
-		for(auto &activePair: allActivePairs)
-		{
-			xmldoc.addTextElementToData("MemberName", activePair.first);
-			xmldoc.addTextElementToData("MemberVersion", activePair.second.toString());
-			xmldoc.addTextElementToData("MemberComment",
-					allCfgInfo[activePair.first].configurationPtr_->getView().getComment());
-		}
 
+	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables,
+			(startPath == "/"), //refreshAll, if at root node, reload all tables so that partially loaded tables are not allowed
+			(startPath == "/"), //get group info
+			&memberMap			//get group member map
+			);
+
+
+	try
+	{
 		DOMElement* parentEl = xmldoc.addTextElementToData("tree", startPath);
 
 		if(depth == 0) return; //already returned root node in itself
 
 		std::vector<std::pair<std::string,ConfigurationTree> > rootMap;
 
-		if(startPath == "/") //then consider the configurationManager the root node
-		{
+		if(startPath == "/" && !usingActiveGroups)
+		{ 	//then consider the configurationManager the root node
 			std::string accumulateTreeErrs;
 			rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
 			__MOUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
@@ -597,7 +1554,40 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 						accumulateTreeErrs);
 		}
 		else
-			rootMap = cfgMgr->getNode(startPath).getChildren();
+		{
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			if(startNode.isLinkNode() && startNode.isDisconnected())
+			{
+				xmldoc.addTextElementToData("DisconnectedStartNode","1");
+				return; //quietly ignore disconnected links at depth
+				//note: at the root level they will be flagged for the user
+			}
+
+			std::map<std::string /*relative-path*/, std::string /*value*/> filterMap;
+			if(filterList != "")
+			{
+				//extract filter list
+				{
+					std::istringstream f(filterList);
+					std::string filterPath,filterValue;
+					while (getline(f, filterPath, '='))
+					{
+						getline(f, filterValue, ';');
+						filterMap.insert(
+								std::pair<std::string,std::string>(
+										filterPath,
+										filterValue));
+					}
+					__MOUT__ << filterList << std::endl;
+					for(auto &pair:filterMap)
+						__MOUT__ << "filterMap " <<
+						pair.first << ":" <<
+						pair.second << std::endl;
+				}
+			}
+
+			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
+		}
 
 		for(auto &treePair:rootMap)
 			recursiveTreeToXML(treePair.second,depth-1,xmldoc,parentEl,hideStatusFalse);
@@ -628,7 +1618,18 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 		xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
-		xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+		parentEl = xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+
+		//fixed choice and bitmap both use fixed choices strings
+		//	so output them to xml
+		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
+				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
+		{
+			__MOUT__ << t.getValueType() << std::endl;
+			std::vector<std::string> choices = t.getFixedChoices();
+			for(const auto &choice:choices)
+				xmldoc.addTextElementToParent("fixedChoice", choice, parentEl);
+		}
 	}
 	else
 	{
@@ -637,19 +1638,43 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 			if(t.isDisconnected())
 			{
 				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
-				xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				//xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
+				//xmldoc.addTextElementToParent("DisconnectedLink", t.getValueAsString(), parentEl);
+
 				xmldoc.addTextElementToParent("valueType", t.getValueType(), parentEl);
+
+				//add extra fields for disconnected link
+				xmldoc.addTextElementToParent(
+						(t.isGroupLinkNode()?"Group":"U") +	std::string("ID"),
+						t.getDisconnectedLinkID(),
+						parentEl);
+				xmldoc.addTextElementToParent("LinkConfigurationName",
+						t.getDisconnectedTableName(),
+						parentEl);
+				xmldoc.addTextElementToParent("LinkIndex",
+						t.getChildLinkIndex(),
+						parentEl);
+
+
+
+				//				xmldoc.addTextElementToParent("LinkID",
+				//						t.getDisconnectedLinkID(),
+				//						parentEl);
+
 				return;
 			}
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 			xmldoc.addTextElementToParent(
-					(t.isGroupLink()?"Group":"U") +	std::string("ID"),
+					(t.isGroupLinkNode()?"Group":"U") +	std::string("ID"),
 					t.getValueAsString(), parentEl);
 
 			xmldoc.addTextElementToParent("LinkConfigurationName", t.getConfigurationName(),
 					parentEl);
+
+			xmldoc.addTextElementToParent("LinkIndex", t.getChildLinkIndex(),
+					parentEl);
 		}
-		else
+		else //uid node
 		{
 			bool returnNode = true; //default to shown
 
@@ -676,6 +1701,584 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree &t, 
 				recursiveTreeToXML(c.second,depth-1,xmldoc,parentEl,hideStatusFalse);
 		}
 	}
+}
+
+
+
+//========================================================================================================================
+//handleGetLinkToChoicesXML
+//	return all possible choices for link
+//		linkIdType = "UID" or "GroupID"
+//
+//	as xml:
+//	<linkToChoice = xxx>
+void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName,
+		const ConfigurationVersion &linkToTableVersion,
+		const std::string &linkIdType, const std::string &linkIndex,
+		const std::string &linkInitId)
+try
+{
+	//get table
+	//	if uid link
+	//		return all uids
+	//	if groupid link
+	//		find target column
+	//		create the set of values (unique values only)
+	//			note: insert group unions individually (i.e. groups | separated)
+
+
+	//get table and activate target version
+	//	rename to re-use code template
+	const std::string &configName = linkToTableName;
+	const ConfigurationVersion &version = linkToTableVersion;
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	try
+	{
+		config->setActiveView(version);
+	}
+	catch(...)
+	{
+		__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
+				version << std::endl;
+		cfgMgr->getVersionedConfigurationByName(
+				configName, version);
+	}
+
+	if(version != config->getViewVersion())
+	{
+		__SS__ << "Target table version (" << version <<
+				") is not the currently active version (" << config->getViewVersion()
+				<< ". Try refreshing the tree." << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+	__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+	if(linkIdType == "UID")
+	{
+		//give all UIDs
+		unsigned int col = config->getView().getColUID();
+		for(unsigned int row = 0; row < config->getView().getNumberOfRows(); ++row)
+			xmldoc.addTextElementToData("linkToChoice",
+					config->getView().getDataView()[row][col]);
+	}
+	else if(linkIdType == "GroupID")
+	{
+		//		find target column
+		//		create the set of values (unique values only)
+		//			note: insert group unions individually (i.e. groups | separated)
+
+		std::set<std::string> setOfGroupIDs =
+				config->getView().getSetOfGroupIDs(linkIndex);
+
+		//build list of groupids
+		//	always include initial link group id in choices
+		//	(even if not in set of group ids)
+		bool foundInitId = false;
+		for(const auto &groupID : setOfGroupIDs)
+		{
+			if(!foundInitId &&
+					linkInitId == groupID)
+				foundInitId = true; //mark init id found
+
+			xmldoc.addTextElementToData("linkToChoice",
+					groupID);
+		}
+		//if init id was not found, add to list
+		if(!foundInitId)
+			xmldoc.addTextElementToData("linkToChoice",
+					linkInitId);
+
+		//give all UIDs
+		unsigned int col = config->getView().getColUID();
+		for(unsigned int row = 0; row < config->getView().getNumberOfRows(); ++row)
+		{
+			xmldoc.addTextElementToData("groupChoice",
+					config->getView().getDataView()[row][col]);
+			if(config->getView().isEntryInGroup(row,linkIndex,linkInitId))
+				xmldoc.addTextElementToData("groupMember",
+						config->getView().getDataView()[row][col]);
+		}
+	}
+	else
+	{
+		__SS__ << "Unrecognized linkIdType '" << linkIdType
+				<< ".'" << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! ");
+}
+
+//========================================================================================================================
+//handleSaveTreeNodeEditXML
+//	Changes the value specified by UID/Column
+//	 in the specified version of the table.
+//
+//	Error, if the specified version is not the active one.
+//	If the version is not temporary make a new temporary version
+//
+//	return this information on success
+//	<resultingTargetTableVersion = xxx>
+void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr, const std::string &configName,
+		ConfigurationVersion version, const std::string &type,
+		const std::string &uid, const std::string &colName, const std::string &newValue)
+try
+{
+	__MOUT__ << "table " <<
+			configName << "(" << version << ")" << std::endl;
+
+
+	//get the current table/version
+	//check if the value is new
+	//if new edit value (in a temporary version only)
+
+
+	//get table and activate target version
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	try
+	{
+		config->setActiveView(version);
+	}
+	catch(...)
+	{
+		__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
+				version << std::endl;
+		cfgMgr->getVersionedConfigurationByName(
+				configName, version);
+	}
+
+	__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+	if(version != config->getViewVersion())
+	{
+		__SS__ << "Target table version (" << version <<
+				") is not the currently active version (" << config->getViewVersion()
+				<< ". Try refreshing the tree." << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+	unsigned int col = -1;
+	if(type == "uid" || type == "delete-uid")
+		col = config->getView().getColUID();
+	else if(
+			type == "link-UID" ||
+			type == "link-GroupID" ||
+			type == "value" ||
+			type == "value-groupid" ||
+			type == "value-bool"||
+			type == "value-bitmap")
+		col = config->getView().findCol(colName);
+	else if(
+			type == "table" ||
+			type == "table-newGroupRow" ||
+			type == "table-newUIDRow" ||
+			type == "table-newRow"); // column N/A
+	else
+	{
+		__SS__ << "Impossible! Unrecognized edit type: " << type << std::endl;
+		throw std::runtime_error(ss.str());
+	}
+
+	//check if the comment value is new before making temporary version
+	if(type == "table")
+	{
+		//editing comment, so check if comment is different
+		if(config->getView().isURIEncodedCommentTheSame(newValue))
+		{
+			__SS__ << "Comment '" << newValue <<
+					"' is the same as the current comment. No need to save change." <<
+					std::endl;
+			throw std::runtime_error(ss.str());
+		}
+
+	}
+
+
+	//version handling:
+	//	always make a new temporary-version from source-version
+	//	edit temporary-version
+	//		if edit fails
+	//			delete temporary-version
+	//		else
+	//			return new temporary-version
+	//			if source-version was temporary
+	//				then delete source-version
+
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
+
+	__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+
+	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
+
+	//edit/verify new table (throws runtime_errors)
+	try
+	{
+		//have view so edit it
+		if(type == "table")
+		{
+			//edit comment
+			cfgView->setURIEncodedComment(newValue);
+		}
+		//		else if(type == "table-newRow")
+		//		{
+		//			//add row
+		//			cfgView->addRow();
+		//		}
+		else if(type == "table-newRow" ||
+				type == "table-newUIDRow")
+		{
+			//add row
+			unsigned int row = cfgView->addRow();
+
+			//if "Status" exists, set it to true
+			try
+			{
+				col = cfgView->findCol("Status");
+				cfgView->setURIEncodedValue("1",row,col);
+			}
+			catch(...) {} //if not, ignore
+
+			if(type == "table-newUIDRow") //set UID value
+				cfgView->setURIEncodedValue(newValue,row,cfgView->getColUID());
+		}
+		else if(type == "table-newGroupRow")
+		{
+			//add row
+			unsigned int row = cfgView->addRow();
+
+			//get index value and group id value
+			unsigned int csvIndex = newValue.find(',');
+
+			std::string linkIndex = newValue.substr(0,csvIndex);
+			std::string groupId = newValue.substr(csvIndex+1);
+
+			__MOUT__ << "newValue " << linkIndex << "," <<
+					groupId << std::endl;
+
+			//find groupId column from link index
+			col = cfgView->getColLinkGroupID(linkIndex);
+
+			//set group id
+			cfgView->setURIEncodedValue(groupId,row,col);
+
+			//if "Status" exists, set it to true
+			try
+			{
+				col = cfgView->findCol("Status");
+				cfgView->setURIEncodedValue("1",row,col);
+			}
+			catch(...) {} //if not, ignore
+
+		}
+		else if(type == "delete-uid")
+		{
+			//delete row
+			unsigned int row = cfgView->findRow(col,uid);
+			cfgView->deleteRow(row);
+		}
+		else if(type == "uid" ||
+				type == "value" ||
+				type == "value-groupid" ||
+				type == "value-bool" ||
+				type == "value-bitmap")
+		{
+			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
+			if(!cfgView->setURIEncodedValue(newValue,row,col))
+			{
+				//no change! so discard
+				__SS__ << "Value '" << newValue <<
+						"' is the same as the current value. No need to save change to tree node." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+		}
+		else if(type == "link-UID" || type == "link-GroupID")
+		{
+			bool isGroup;
+			std::pair<unsigned int /*link col*/, unsigned int /*link id col*/> linkPair;
+			if(!cfgView->getChildLink(col,&isGroup,&linkPair))
+			{
+				//not a link ?!
+				__SS__ << "Col '" << colName <<
+						"' is not a link column." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+
+			__MOUT__ << "linkPair " << linkPair.first << "," <<
+					linkPair.second << std::endl;
+
+			std::string linkIndex = cfgView->getColumnInfo(col).getChildLinkIndex();
+
+			__MOUT__ << "linkIndex " << linkIndex << std::endl;
+
+			//find table value and id value
+			unsigned int csvIndexStart = 0,csvIndex = newValue.find(',');
+
+			std::string newTable = newValue.substr(csvIndexStart,csvIndex);
+			csvIndexStart = csvIndex + 1;
+			csvIndex = newValue.find(',',csvIndexStart);
+			std::string newLinkId =
+					newValue.substr(csvIndexStart,csvIndex-csvIndexStart); //if no more commas will take the rest of string
+
+			__MOUT__ << "newValue " << newTable << "," <<
+					newLinkId << std::endl;
+
+			//change target table in two parts
+			unsigned int row = cfgView->findRow(cfgView->getColUID(),uid);
+			bool changed = false;
+			if(!cfgView->setURIEncodedValue(newTable,row,
+					linkPair.first))
+			{
+				//no change
+				__MOUT__ << "Value '" << newTable <<
+						"' is the same as the current value." <<
+						std::endl;
+			}
+			else
+				changed = true;
+
+			if(!cfgView->setURIEncodedValue(newLinkId,row,
+					linkPair.second))
+			{
+				//no change
+				__MOUT__ << "Value '" << newLinkId <<
+						"' is the same as the current value." <<
+						std::endl;
+			}
+			else
+				changed = true;
+
+
+
+			//handle groupID links slightly differently
+			//	have to look at changing link table too!
+			//if group ID set all in member list to be members of group
+			if(type == "link-GroupID")
+			{
+				bool secondaryChanged = false;
+
+				//first close out main target table
+				if(!changed) //if no changes throw out new version
+				{
+					__MOUT__ << "No changes to primary view. Erasing temporary table." << std::endl;
+					config->eraseView(temporaryVersion);
+				}
+				else	//if changes, save it
+				{
+					try
+					{
+						cfgView->init(); //verify new table (throws runtime_errors)
+
+						saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
+								config,temporaryVersion); //save temporary version properly
+					}
+					catch(std::runtime_error &e) //erase temporary view before re-throwing error
+					{
+						__MOUT__ << "Caught error while editing main table. Erasing temporary version." << std::endl;
+						config->eraseView(temporaryVersion);
+						changed = false; //undo changed bool
+
+						//send warning so that, secondary table can still be changed
+						xmldoc.addTextElementToData("Warning", "Error saving primary tree node! " + std::string(e.what()));
+					}
+				}
+
+				//now, onto linked table
+
+				//get the current linked table/version
+				//check if the value is new
+				//if new edit value (in a temporary version only)
+
+				csvIndexStart = csvIndex + 1;
+				csvIndex = newValue.find(',',csvIndexStart);
+				version = ConfigurationVersion(
+						newValue.substr(csvIndexStart,csvIndex-csvIndexStart)); //if no more commas will take the rest of string
+
+
+
+				//get table and activate target version
+				config = cfgMgr->getConfigurationByName(newTable);
+				try
+				{
+					config->setActiveView(version);
+				}
+				catch(...)
+				{
+					__MOUT__ << "Failed to find stored version, so attempting to load version: " <<
+							version << std::endl;
+					cfgMgr->getVersionedConfigurationByName(
+							newTable, version);
+				}
+
+				__MOUT__ << "Active version is " << config->getViewVersion() << std::endl;
+
+				if(version != config->getViewVersion())
+				{
+					__SS__ << "Target table version (" << version <<
+							") is not the currently active version (" << config->getViewVersion()
+							<< ". Try refreshing the tree." << std::endl;
+					throw std::runtime_error(ss.str());
+				}
+
+
+				//create temporary version for editing
+				temporaryVersion = config->createTemporaryView(version);
+
+				__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+
+				cfgView = config->getTemporaryView(temporaryVersion);
+
+				col = cfgView->getColLinkGroupID(linkIndex);
+
+				__MOUT__ << "target col " << col << std::endl;
+
+
+				//extract vector of members to be
+				std::vector<std::string> memberUIDs;
+				do
+				{
+					csvIndexStart = csvIndex + 1;
+					csvIndex = newValue.find(',',csvIndexStart);
+					memberUIDs.push_back(newValue.substr(csvIndexStart,csvIndex-csvIndexStart));
+					__MOUT__ << "memberUIDs: " << memberUIDs.back() << std::endl;
+				} while(csvIndex != (unsigned int)std::string::npos); //no more commas
+
+
+				//for each row,
+				//	check if should be in group
+				//		if should be but is not
+				//			add to group, CHANGE
+				//		if should not be but is
+				//			remove from group, CHANGE
+				//
+
+				std::string targetUID;
+				bool shouldBeInGroup;
+				auto defaultRowValues = cfgView->getDefaultRowValues();
+
+				for(unsigned int row=0;row<cfgView->getNumberOfRows();++row)
+				{
+					targetUID = cfgView->getDataView()[row][cfgView->getColUID()];
+					__MOUT__ << "targetUID: " << targetUID << std::endl;
+
+					shouldBeInGroup = false;
+					for(unsigned int i=0;i<memberUIDs.size();++i)
+						if(targetUID == memberUIDs[i])
+						{
+							//found in member uid list
+							shouldBeInGroup = true;
+							break;
+						}
+
+					//if should be but is not
+					if(shouldBeInGroup &&
+							!cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					{
+
+						__MOUT__ << "Changed YES: " << row << std::endl;
+						secondaryChanged = true;
+
+						cfgView->addRowToGroup(row,col,newLinkId,defaultRowValues[col]);
+
+					}//if should not be but is
+					else if(!shouldBeInGroup &&
+							cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					{
+
+						__MOUT__ << "Changed NO: " << row << std::endl;
+						secondaryChanged = true;
+
+						cfgView->removeRowFromGroup(row,col,newLinkId);
+					}
+				}
+
+
+				//first close out main target table
+				if(!secondaryChanged) //if no changes throw out new version
+				{
+					__MOUT__ << "No changes to secondary view. Erasing temporary table." << std::endl;
+					config->eraseView(temporaryVersion);
+				}
+				else	//if changes, save it
+				{
+					try
+					{
+						cfgView->init(); //verify new table (throws runtime_errors)
+
+						saveModifiedVersionXML(xmldoc,cfgMgr,newTable,version,true /*make temporary*/,
+								config,temporaryVersion); //save temporary version properly
+					}
+					catch(std::runtime_error &e) //erase temporary view before re-throwing error
+					{
+						__MOUT__ << "Caught error while editing secondary table. Erasing temporary version." << std::endl;
+						config->eraseView(temporaryVersion);
+						secondaryChanged = false; //undo changed bool
+
+						//send warning so that, secondary table can still be changed
+						xmldoc.addTextElementToData("Warning", "Error saving secondary tree node! " + std::string(e.what()));
+					}
+				}
+
+				if(!changed && !secondaryChanged)
+				{
+					__SS__ << "Link to table '" << newTable <<
+							"', linkID '" << newLinkId <<
+							"', and selected group members are the same as the current value. " <<
+							"No need to save changes to tree." <<
+							std::endl;
+					throw std::runtime_error(ss.str());
+				}
+
+				return;	//exit since table inits were already tested
+			}
+			else if(!changed)
+			{
+				__SS__ << "Link to table '" << newTable <<
+						"' and linkID '" << newLinkId <<
+						"' are the same as the current values. No need to save change to tree node." <<
+						std::endl;
+				throw std::runtime_error(ss.str());
+			}
+
+
+
+		}
+
+		cfgView->init(); //verify new table (throws runtime_errors)
+	}
+	catch(...) //erase temporary view before re-throwing error
+	{
+		__MOUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
+		config->eraseView(temporaryVersion);
+		throw;
+	}
+
+	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
+			config,temporaryVersion); //save temporary version properly
+}
+catch(std::runtime_error &e)
+{
+	__MOUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! " + std::string(e.what()));
+}
+catch(...)
+{
+	__MOUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving tree node! ");
 }
 
 //========================================================================================================================
@@ -717,16 +2320,17 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 
 
 	std::set<std::string /*name+version*/> allGroups =
-			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames();
+			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames(groupName);
 	std::string name;
 	ConfigurationGroupKey key;
 	//put them in a set to sort them as ConfigurationGroupKey defines for operator<
 	std::set<ConfigurationGroupKey> sortedKeys;
 	for(auto &group: allGroups)
 	{
+		//now uses database filter
 		ConfigurationGroupKey::getGroupNameAndKey(group,name,key);
-		if(name == groupName)
-			sortedKeys.emplace(key);
+		//if(name == groupName)
+		sortedKeys.emplace(key);
 	}
 	if(groupKey.isInvalid() || //if invalid or not found, get latest
 			sortedKeys.find(groupKey) == sortedKeys.end())
@@ -747,8 +2351,11 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 	try
 	{
-		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				0,0,0,0,0,0, //defaults
+				true); //doNotLoadMember
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
@@ -766,11 +2373,19 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 	std::map<std::string, ConfigurationInfo>::const_iterator it;
 
 	//load group so comments can be had
+	//	and also group metadata (author, comment, createTime)
 	bool commentsLoaded = false;
 	try
 	{
-		cfgMgr->loadConfigurationGroup(groupName,groupKey);
+		std::string groupAuthor, groupComment, groupCreationTime;
+		cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				false,0,0,
+				&groupComment, &groupAuthor, &groupCreationTime);
 		commentsLoaded = true;
+
+		xmldoc.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
+		xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
+		xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
 	}
 	catch(...) {
 		__MOUT__ << "Error occurred loading group, so giving up on comments." <<
@@ -876,9 +2491,13 @@ try
 	DOMElement* parentEl;
 
 	std::string accumulatedErrors = "";
-	std::map<std::string, ConfigurationInfo> allCfgInfo = //if allowIllegalColumns, then also refresh
+
+	std::map<std::string, ConfigurationInfo> allCfgInfo;
+	allCfgInfo = //if allowIllegalColumns, then also refresh
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
 					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
+
+	ConfigurationBase *config = cfgMgr->getConfigurationByName(configName);
 
 	//send all config names along with
 	//	and check for specific version
@@ -897,6 +2516,8 @@ try
 	}
 
 	xmldoc.addTextElementToData("ConfigurationName", configName);	//table name
+	xmldoc.addTextElementToData("ConfigurationDescription",
+			config->getConfigurationDescription());	//table name
 
 	//existing table versions
 	parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
@@ -910,7 +2531,7 @@ try
 	ConfigurationView* cfgViewPtr;
 	if(version.isInvalid()) //use mock-up
 	{
-		cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+		cfgViewPtr = config->getMockupViewP();
 	}
 	else					//use view version
 	{
@@ -928,7 +2549,7 @@ try
 
 			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
-			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+			cfgViewPtr = config->getMockupViewP();
 
 			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -945,7 +2566,7 @@ try
 
 			__MOUT_ERR__ << "\n" << ss.str();
 			version = ConfigurationVersion();
-			cfgViewPtr = cfgMgr->getConfigurationByName(configName)->getMockupViewP();
+			cfgViewPtr = config->getMockupViewP();
 
 			xmldoc.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -953,6 +2574,7 @@ try
 	xmldoc.addTextElementToData("ConfigurationVersion", version.toString());	//table version
 
 	//get 'columns' of view
+	DOMElement* choicesParentEl;
 	parentEl = xmldoc.addTextElementToData("CurrentVersionColumnHeaders", "");
 	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
@@ -964,11 +2586,33 @@ try
 		xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
 		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
 		xmldoc.addTextElementToParent("ColumnDataType", colInfo[i].getDataType(), parentEl);
+
+		choicesParentEl =
+				xmldoc.addTextElementToParent("ColumnChoices", "", parentEl);
+		//add data choices if necessary
+		if(colInfo[i].getType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
+				colInfo[i].getType() == ViewColumnInfo::TYPE_BITMAP_DATA)
+		{
+			for(auto &choice:colInfo[i].getDataChoices())
+				xmldoc.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
+		}
 	}
 
 	//verify mockup columns after columns are posted to xmldoc
-	if(version.isInvalid())
-		cfgViewPtr->init();
+	try
+	{
+		if(version.isInvalid())
+			cfgViewPtr->init();
+	}
+	catch(std::runtime_error &e)
+	{
+		//append accumulated errors, because they may be most useful
+		throw std::runtime_error(e.what() + std::string("\n\n") + accumulatedErrors);
+	}
+	catch(...)
+	{
+		throw;
+	}
 
 	parentEl = xmldoc.addTextElementToData("CurrentVersionRows", "");
 
@@ -981,7 +2625,6 @@ try
 
 		for(int c=0;c<(int)cfgViewPtr->getNumberOfColumns();++c)
 		{
-
 			if(colInfo[c].getDataType() == ViewColumnInfo::DATATYPE_TIME)
 			{
 				std::string timeAsString;
@@ -1026,21 +2669,41 @@ try
 
 
 		const std::set<std::string> srcColNames = cfgViewPtr->getSourceColumnNames();
-		ss << "\n\nSource column names were as follows:\n";
+		ss << "\n\nSource column names in ALPHABETICAL order were as follows:\n";
 		char index = 'a';
+		std::string preIndexStr = "";
 		for(auto &srcColName:srcColNames)
-			ss << "\n\t" <<index++ << ". " <<  srcColName;
+		{
+			ss << "\n\t" << preIndexStr << index << ". " <<  srcColName;
+			if(index == 'z') //wrap-around
+			{
+				preIndexStr += 'a'; //keep adding index 'digits' for wrap-around
+				index = 'a';
+			}
+			else
+				++index;
+		}
 		ss << std::endl;
 
 		std::set<std::string> destColNames = cfgViewPtr->getColumnStorageNames();
-		ss << "\n\nCurrent table column names are as follows:\n";
+		ss << "\n\nCurrent table column names in ALPHABETICAL order are as follows:\n";
 		index = 'a';
+		preIndexStr = "";
 		for(auto &destColName:destColNames)
-			ss << "\n\t" << index++ << ". " << destColName;
+		{
+			ss << "\n\t" << preIndexStr << index << ". " << destColName;
+			if(index == 'z') //wrap-around
+			{
+				preIndexStr += 'a'; //keep adding index 'digits' for wrap-around
+				index = 'a';
+			}
+			else
+				++index;
+		}
 		ss << std::endl;
 
 		__MOUT__ << "\n" << ss.str();
- 		xmldoc.addTextElementToData("TableWarnings",ss.str());
+		xmldoc.addTextElementToData("TableWarnings",ss.str());
 	}
 }
 catch(std::runtime_error &e)
@@ -1089,9 +2752,9 @@ void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
 
 
 	if(makeTemporary)
-		__MOUT__ << "\t\t**************************** Save as temporary sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as temporary table version" << std::endl;
 	else
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 
 
@@ -1101,7 +2764,7 @@ void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
 	if(needToEraseTemporarySource)
 		cfgMgr->eraseTemporaryVersion(configName,version);
 
-	xmldoc.addTextElementToData("savedAlias", configName);
+	xmldoc.addTextElementToData("savedName", configName);
 	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 
 	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
@@ -1113,14 +2776,15 @@ void ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlDocument &xmldoc,
 //
 //save the detail of specific Sub-System Configuration specified
 //	by configName and version
-
+//
 //starting from dataOffset
 //
 //	if starting version is -1 start from mock-up
 void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version,
 		bool makeTemporary, const std::string &data, const int &dataOffset,
-		const std::string &author, const std::string &comment)
+		const std::string &author, const std::string &comment,
+		bool sourceTableAsIs)
 try
 {
 	//__MOUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
@@ -1143,31 +2807,81 @@ try
 	}
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+
+	//check that the source version has the right number of columns
+	//	if there is a mismatch, start from mockup
+	if(!version.isInvalid()) //if not using mock-up, then the starting version is the active one
+	{
+		//compare active to mockup column counts
+		if(config->getViewP()->getSourceColumnSize() !=
+				config->getMockupViewP()->getNumberOfColumns() ||
+				config->getViewP()->getSourceColumnMismatch() != 0)
+		{
+			__MOUT_INFO__ << "Source view has a mismatch in the number of columns, so using mockup as source." << std::endl;
+			version = ConfigurationVersion(); //invalid = mockup
+		}
+	}
+
+	//create a temporary version from the source version
 	ConfigurationVersion temporaryVersion = config->createTemporaryView(version);
 
 	__MOUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
 	//returns -1 on error that data was unchanged
 	ConfigurationView* cfgView = config->getTemporaryView(temporaryVersion);
-	int retVal = cfgView->fillFromCSV(data,dataOffset,author);
 
-	cfgView->setURIEncodedComment(comment);
-	__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
+	int retVal;
 
+	try
+	{
+		retVal = sourceTableAsIs?0:cfgView->fillFromCSV(data,dataOffset,author);
+		cfgView->setURIEncodedComment(comment);
+		__MOUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
+
+	}
+	catch(...) //erase temporary view before re-throwing error
+	{
+		__MOUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
+		config->eraseView(temporaryVersion);
+		throw;
+	}
+
+	//Note: be careful with any further table operations at this point..
+	//	must catch errors and erase temporary version on failure.
 
 	//only consider it an error if source version was persistent version
 	//	allow it if source version is temporary and we are making a persistent version now
-	if(retVal < 0 && (!version.isTemporaryVersion() || makeTemporary))
+	//	also, allow it if version tracking is off.
+	if(retVal < 0 &&
+			(!version.isTemporaryVersion() || makeTemporary) &&
+			ConfigurationInterface::isVersionTrackingEnabled()
+			)
 	{
-		__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
-		__MOUT_ERR__ << "\n" << ss.str();
-		//delete temporaryVersion
-		config->eraseView(temporaryVersion);
-		throw std::runtime_error(ss.str());
+		if(!version.isInvalid() && //if source version was mockup, then consider it attempt to create a blank table
+				!version.isScratchVersion()) //if source version was scratch, then consider it attempt to make it persistent
+		{
+			__SS__ << "No rows were modified! No reason to fill a view with same content." << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			//delete temporaryVersion
+			config->eraseView(temporaryVersion);
+			throw std::runtime_error(ss.str());
+		}
+		else if(version.isInvalid())
+			__MOUT__ << "This was interpreted as an attempt to create a blank table." << std::endl;
+		else if(version.isScratchVersion())
+			__MOUT__ << "This was interpreted as an attempt to make a persistent version of the scratch table." << std::endl;
+		else
+			throw std::runtime_error("impossible!");
 	}
-	else if(retVal < 0 && version.isTemporaryVersion() && !makeTemporary)
+	else if(retVal < 0 &&
+			(version.isTemporaryVersion() && !makeTemporary))
 	{
-		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version" << std::endl;
+		__MOUT__ << "Allowing the static data because this is converting from temporary to persistent version." << std::endl;
+	}
+	else if(retVal < 0 &&
+			!ConfigurationInterface::isVersionTrackingEnabled())
+	{
+		__MOUT__ << "Allowing the static data because version tracking is OFF." << std::endl;
 	}
 	else if(retVal < 0)
 	{
@@ -1230,7 +2944,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 		__MOUT_ERR__ << "Fatal error managing userLastUseTime_!" << std::endl;
 		throw std::runtime_error("Fatal error managing userLastUseTime_!");
 	}
-	else if(refresh || now - userLastUseTime_[mapKey] >
+	else if(refresh || (now - userLastUseTime_[mapKey]) >
 	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
 	{
 		__MOUT_INFO__ << "Refreshing all configuration info." << std::endl;
@@ -1275,7 +2989,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr, const std::string &groupName,
-		const std::string &configList, bool allowDuplicates, bool ignoreWarnings)
+		const std::string &configList, bool allowDuplicates, bool ignoreWarnings,
+		const std::string &groupComment)
 {
 
 	xmldoc.addTextElementToData("AttemptedNewGroupName",groupName);
@@ -1287,6 +3002,9 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
 			cfgMgr->getActiveVersionAliases();
+	for(const auto &aliases:versionAliases)
+		for(const auto &alias:aliases.second)
+		__MOUT__ << aliases.first << " " << alias.first << " " << alias.second << std::endl;
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
 	std::string name, versionStr;
@@ -1329,7 +3047,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			{
 				__SS__ << "version alias '" << versionStr.substr(
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-						"'was not found in active version aliases!" << std::endl;
+								"' was not found in active version aliases!" << std::endl;
 				__MOUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error",
 						ss.str());
@@ -1339,6 +3057,14 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		else
 			version = ConfigurationVersion(versionStr);
 
+		if(version.isTemporaryVersion())
+		{
+			__SS__ << "Groups can not be created using temporary member tables. " <<
+					"Table member '" << name << "' with temporary version '" << version <<
+					"' is illegal." << std::endl;
+			xmldoc.addTextElementToData("Error", ss.str());
+			return;
+		}
 		__MOUT__ << "version: " << version << std::endl;
 		groupMembers[name] = version;
 	}
@@ -1440,7 +3166,8 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 	ConfigurationGroupKey newKey;
 	try
 	{
-		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers);
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,
+				ConfigurationGroupKey(),groupComment);
 	}
 	catch(std::runtime_error &e)
 	{
@@ -1481,7 +3208,7 @@ void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocumen
 
 		xmldoc.addTextElementToData("Error",
 				( "Error renaming Table Info File to " +
-								(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
+						(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
 		return;
 	}
 
@@ -1498,7 +3225,8 @@ void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(HttpXmlDocumen
 //
 void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr,
-		std::string& configName, const std::string& data,
+		std::string &configName, const std::string &data,
+		const std::string &tableDescription, const std::string &columnChoicesCSV,
 		bool allowOverwrite)
 {
 	//create all caps name and validate
@@ -1534,19 +3262,19 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 
 	__MOUT__ << "capsName=" << capsName << std::endl;
 	__MOUT__ << "configName=" << configName << std::endl;
+	__MOUT__ << "tableDescription=" << tableDescription << std::endl;
+	__MOUT__ << "columnChoicesCSV=" << columnChoicesCSV << std::endl;
 
 	//create preview string to validate column info before write to file
 	std::stringstream outss;
-	char tmp[300];
 
-	sprintf(tmp,"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-	outss << tmp;
-	sprintf(tmp,"\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ConfigurationInfo.xsd\">\n");
-	outss << tmp;
-	sprintf(tmp,"\t\t<CONFIGURATION Name=\"%s\">\n",configName.c_str());
-	outss << tmp;
-	sprintf(tmp,"\t\t\t<VIEW Name=\"%s\" Type=\"File,Database,DatabaseTest\">\n",capsName.c_str());
-	outss << tmp;
+	outss << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n";
+	outss << "\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"ConfigurationInfo.xsd\">\n";
+	outss << "\t\t<CONFIGURATION Name=\"" <<
+			configName	<< "\">\n";
+	outss << "\t\t\t<VIEW Name=\"" << capsName <<
+			"\" Type=\"File,Database,DatabaseTest\" Description=\"" <<
+			tableDescription << "\">\n";
 
 	//each column is represented by 3 fields
 	//	- type, name, dataType
@@ -1554,11 +3282,17 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	int j = data.find(',',i); //find next field delimiter
 	int k = data.find(';',i); //find next col delimiter
 
+
+	std::istringstream columnChoicesISS(columnChoicesCSV);
+	std::string columnChoicesString;
+	std::string columnType;
+
 	while(k != (int)(std::string::npos))
 	{
 		//type
+		columnType = data.substr(i,j-i);
 		outss << "\t\t\t\t<COLUMN Type=\"";
-		outss << data.substr(i,j-i);
+		outss << columnType;
 
 		i=j+1;
 		j = data.find(',',i); //find next field delimiter
@@ -1586,6 +3320,16 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		//data type
 		outss << "\" \t	DataType=\"";
 		outss << data.substr(i,k-i);
+
+
+		//fixed data choices for ViewColumnInfo::TYPE_FIXED_CHOICE_DATA
+		getline(columnChoicesISS, columnChoicesString, ';');
+		//__MOUT__ << "columnChoicesString = " << columnChoicesString << std::endl;
+		outss << "\" \t	DataChoices=\"";
+		outss << columnChoicesString;
+
+
+		//end column info
 		outss << "\"/>\n";
 
 		i = k+1;
@@ -1593,13 +3337,11 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 		k = data.find(';',i); //find new col delimiter
 	}
 
-	sprintf(tmp,"\t\t\t</VIEW>\n");
-	outss << tmp;
-	sprintf(tmp,"\t\t</CONFIGURATION>\n");
-	outss << tmp;
-	sprintf(tmp,"\t</ROOT>\n");
-	outss << tmp;
+	outss << "\t\t\t</VIEW>\n";
+	outss << "\t\t</CONFIGURATION>\n";
+	outss << "\t</ROOT>\n";
 
+	__MOUT__ << outss.str() << std::endl;
 
 	FILE *fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "w");
 	if(!fp)
@@ -1608,7 +3350,8 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 				(CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT));
 		return;
 	}
-	fprintf(fp,outss.str().c_str());
+
+	fprintf(fp,"%s",outss.str().c_str());
 	fclose(fp);
 
 	//reload all config info with refresh AND reset to pick up possibly new config
@@ -1770,21 +3513,21 @@ try
 		configView->setValue(author, row, configView->findCol("Author"));
 		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
 
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion =
 				cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[groupAliasesTableName];
 	}
 
-	xmldoc.addTextElementToData("savedAlias", groupAliasesTableName);
+	xmldoc.addTextElementToData("savedName", groupAliasesTableName);
 	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	__MOUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 }
@@ -1904,14 +3647,14 @@ try
 		configView->setValue(author, row, configView->findCol("Author"));
 		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
 
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion  =
 				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
@@ -1977,7 +3720,7 @@ try
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
 	ConfigurationVersion temporaryVersion = config->
-					createTemporaryView(activeVersions[versionAliasesTableName]);
+			createTemporaryView(activeVersions[versionAliasesTableName]);
 
 	__MOUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
@@ -1991,8 +3734,11 @@ try
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 	try
 	{
-		memberMap = cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				0,0,0,0,0,0, //defaults
+				true); //doNotLoadMember
+		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
+		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
 	}
 	catch(...)
 	{
@@ -2075,14 +3821,14 @@ try
 	ConfigurationVersion newAssignedVersion;
 	if(isDifferent)	//make new version if different
 	{
-		__MOUT__ << "\t\t**************************** Save as new sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
 		newAssignedVersion =
 				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
 	}
 	else	//use existing version
 	{
-		__MOUT__ << "\t\t**************************** Using existing sub-config version" << std::endl;
+		__MOUT__ << "\t\t**************************** Using existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
@@ -2141,15 +3887,32 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument &xmldoc,
 	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
 			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
 
+	std::string groupName, groupKey, groupComment;
 	for(auto& aliasNodePair:aliasNodePairs)
 	{
+		groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
+		groupKey = aliasNodePair.second.getNode("GroupKey").getValueAsString();
+
 		xmldoc.addTextElementToData("GroupAlias", aliasNodePair.first);
-		xmldoc.addTextElementToData("GroupName",
-				aliasNodePair.second.getNode("GroupName").getValueAsString());
-		xmldoc.addTextElementToData("GroupKey",
-				aliasNodePair.second.getNode("GroupKey").getValueAsString());
-		xmldoc.addTextElementToData("GroupComment",
+		xmldoc.addTextElementToData("GroupName", groupName);				
+		xmldoc.addTextElementToData("GroupKey", groupKey);
+		xmldoc.addTextElementToData("AliasComment",
 				aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+
+		//get group comment
+		groupComment = ""; //clear just in case failure
+		try
+		{
+			cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
+					0,0,0,&groupComment,0,0, //mostly defaults
+					true); //doNotLoadMembers
+		}
+		catch(...)
+		{
+			__MOUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey <<
+					")' to extract group comment." << std::endl;
+		}
+		xmldoc.addTextElementToData("GroupComment", groupComment);
 	}
 }
 
@@ -2284,9 +4047,11 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 			//determine the type configuration group
 			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
 			groupTypeString =
-					groupType==ConfigurationManager::CONTEXT_TYPE?"Context":
+					groupType==ConfigurationManager::CONTEXT_TYPE?
+							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT:
 							(groupType==ConfigurationManager::BACKBONE_TYPE?
-									"Backbone":"Configuration");
+									ConfigurationManager::ACTIVE_GROUP_NAME_BACKBONE:
+									ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION);
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
 		catch(std::runtime_error &e)
@@ -2372,16 +4137,31 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 		xmldoc.addTextElementToData("ConfigurationName", it->first);
 		parentEl = xmldoc.addTextElementToData("ConfigurationVersions", "");
 
-		//include aliases for this table
+		//include aliases for this table (if the versions exist)
 		if(versionAliases.find(it->first) != versionAliases.end())
 			for (auto &aliasVersion:versionAliases[it->first])
-				xmldoc.addTextElementToParent("Version",
+				if(it->second.versions_.find(aliasVersion.second) !=
+						it->second.versions_.end())
+				//if(aliasVersion.first != ConfigurationManager::SCRATCH_VERSION_ALIAS) //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+					xmldoc.addTextElementToParent("Version",
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
 						parentEl);
+//				else //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//					__MOUT_ERR__ << "Alias for table " << it->first << " is a reserved alias '" <<
+//						ConfigurationManager::SCRATCH_VERSION_ALIAS << "' - this is illegal." << std::endl;
 
-		//get version key for the current system subconfiguration key
+//		//if scratch version exists, add an alias for it /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+//		if(it->second.versions_.find(ConfigurationVersion(ConfigurationVersion::SCRATCH)) !=
+//				it->second.versions_.end())
+//			xmldoc.addTextElementToParent("Version",
+//					ConfigurationManager::ALIAS_VERSION_PREAMBLE + ConfigurationManager::SCRATCH_VERSION_ALIAS,
+//					parentEl);
+
+		//get all table versions for the current table
+		//	except skip scratch version
 		for (auto &version:it->second.versions_)
-			xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
+			if(!version.isScratchVersion())
+				xmldoc.addTextElementToParent("Version", version.toString(), parentEl);
 
 		++it;
 	}
@@ -2405,24 +4185,24 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
-
-	ConfigurationManagerRW cfgMgrInst("ExampleUser");
 	//
-	ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+		ConfigurationManagerRW cfgMgrInst("ExampleUser");
+	//	//
+		ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+	//	//
+	//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
+	//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
+	//	for(auto& mapIt : allCfgInfo)
+	//	{
+	//		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
+	//		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
 	//
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
-	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
-	for(auto& mapIt : allCfgInfo)
-	{
-		__MOUT__ << "Config Name: " << mapIt.first << std::endl;
-		__MOUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() << std::endl;
-
-		//get version key for the current system subconfiguration key
-		for (auto &v:mapIt.second.versions_)
-		{
-			__MOUT__ << "\t\t" << v << std::endl;
-		}
-	}
+	//		//get version key for the current system subconfiguration key
+	//		for (auto &v:mapIt.second.versions_)
+	//		{
+	//			__MOUT__ << "\t\t" << v << std::endl;
+	//		}
+	//	}
 	cfgMgr->testXDAQContext();
 
 

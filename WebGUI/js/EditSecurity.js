@@ -1,5 +1,5 @@
 var selectedSecurityChoice_ = "";
-var IDs_ = ['NoSecurity', 'DigestAccessAuthentication', 'ResetSecurityUserData'];//'Kerberos','ResetSecurityUserData'];
+var IDs_ = ['NoSecurity', 'DigestAccessAuthentication'];//, 'ResetSecurityUserData'];//'Kerberos','ResetSecurityUserData'];
 var selection_ = [];
 INTERVAL_ = 10;
 state_ = document.getElementById("state");
@@ -82,7 +82,7 @@ function colorFade(secondColor, which){
 		}
 	}    
 	
-	console.log(selectedRed, selectedGreen, selectedBlue, nonSelectedRed, nonSelectedGreen, nonSelectedBlue);
+	//console.log(selectedRed, selectedGreen, selectedBlue, nonSelectedRed, nonSelectedGreen, nonSelectedBlue);
 	
 	var colorChanger=setTimeout(decreaseColor, INTERVAL_);
 

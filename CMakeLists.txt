@@ -57,17 +57,6 @@ find_ups_boost( v1_50_0 filesystem
 find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
 find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
 
-# Include at the top level to make sure include directory is visible
-# everywhere.
-#include(ProcessSmc)
-
-# Needed if using old art with new cetbuildtools / CMake.
-check_ups_version(art "$ENV{ART_VERSION}" v1_11_00 PRODUCT_OLDER_VAR have_old_art)
-if (have_old_art)
-  cmake_policy(SET CMP0046 OLD)
-endif()
-unset(have_old_art)
-
 find_package(MPI QUIET)
 
 # macros for art_dictionary and simple_plugin
@@ -78,6 +67,9 @@ include(CetTest)
 
 # Extra parts for the XDAQ GUI
 add_subdirectory(otsdaq-utilities)
+
+# Scripts
+add_subdirectory(tools)
 
 # UPS Version files
 add_subdirectory(ups)
