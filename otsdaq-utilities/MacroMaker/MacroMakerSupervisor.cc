@@ -560,7 +560,6 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 		//	and to cap history size
 		read.seekg(0, std::ios::end);
 		fileSz = read.tellg();
-		//returnStr.reserve(fileSz);
 		returnStr = new char[fileSz];
 		read.seekg(0, std::ios::beg);
 
@@ -581,11 +580,13 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 				}
 		}
 
-		//	std::string returnHistStr = returnStr.substr(0, returnStr.size()-1);
-		returnStr[fileSz-1] = '\0'; //remove final newline
-
 		__MOUT__<<  "Loading user history! " << std::endl;
+
+		if(fileSz > 1)
+			returnStr[fileSz-2] = '\0'; //remove final newline and last #
+
 		xmldoc.addTextElementToData("returnHistStr",&returnStr[i]);
+
 
 		delete[] returnStr;
 	}
