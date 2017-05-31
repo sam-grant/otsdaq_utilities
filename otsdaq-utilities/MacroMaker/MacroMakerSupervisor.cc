@@ -553,14 +553,15 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 	{
 		std::string line;
 		char * returnStr;
-		unsigned long long fileSz, i = 0, MAX_HISTORY_SIZE = 100;
+		unsigned long long fileSz, i = 0, MAX_HISTORY_SIZE = 100000;
 
 
 		//get length of file to reserve the string size
 		//	and to cap history size
 		read.seekg(0, std::ios::end);
 		fileSz = read.tellg();
-		returnStr = new char[fileSz];
+		returnStr = new char[fileSz+1];
+		returnStr[fileSz] = '\0';
 		read.seekg(0, std::ios::beg);
 
 
@@ -578,6 +579,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 				{
 					i += 2; break; //skip new line character also to get to next record
 				}
+			if(i > fileSz) i = fileSz;
 
 			//write back to file truncated history
 			FILE *fp = fopen(fileName.c_str(),"w");
