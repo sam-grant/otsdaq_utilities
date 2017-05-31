@@ -19,6 +19,10 @@
 			color: rgb(44, 44, 187);
 			text-decoration: underline;
 			cursor: pointer;
+			outline: none;  /* to stop firefox selection */	
+			-webkit-user-select: 	none; /* to stop text highlights */
+			-moz-user-select: 		none;
+			user-select: 			none;
 		}
 		
 		a:hover {
@@ -62,7 +66,7 @@
 		}
 		#SubSystemTable td, #SubSystemTable th {
 			background-color : rgb(226, 216, 216);	
-			white-space: pre; /*pre-wrap; was but not sure why.. pre seems to maintain text better*/
+			white-space: pre; /* was pre-wrap; but not sure why.. pre seems to maintain text better*/
 		}
 		
 

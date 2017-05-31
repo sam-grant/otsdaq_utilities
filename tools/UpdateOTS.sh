@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # This script is expected to be in otsdaq utilities repository in a specific directory
 # but it can be executed from any path (do not source it, execute with ./ )
 #
@@ -6,7 +8,7 @@
 # If no comment is given, the script will only pull updates - it will not checkin.
 #
 
-#/bin/bash
+
 
 CURRENT_AWESOME_BASE=$PWD
 

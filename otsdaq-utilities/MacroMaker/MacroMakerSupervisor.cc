@@ -544,28 +544,50 @@ void MacroMakerSupervisor::appendCommandToHistory(std::string Command,
 //========================================================================================================================
 void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::string &username)
 {
-	std::string line;
-	std::string returnStr = "";
-	std::string fileName = "history.hist";
+	std::string fileName = MACROS_HIST_PATH + username + "/" + "history.hist";
 
-	std::ifstream read ((MACROS_HIST_PATH + username + "/" + fileName).c_str());//reading a file
-	__MOUT__<< MACROS_HIST_PATH + username + "/" + fileName << std::endl;
+	std::ifstream read (fileName.c_str());//reading a file
+	__MOUT__<<  fileName << std::endl;
+
 	if (read.is_open())
 	{
-		std::stringstream buffer;
-		while (! read.eof() )
-		{
-			getline (read,line);
-			buffer << line;
-		}
-		returnStr += buffer.str();
+		std::string line;
+		char * returnStr;
+		unsigned long long fileSz, i = 0, MAX_HISTORY_SIZE = 100000;
+
+
+		//get length of file to reserve the string size
+		//	and to cap history size
+		read.seekg(0, std::ios::end);
+		fileSz = read.tellg();
+		//returnStr.reserve(fileSz);
+		returnStr = new char[fileSz];
+		read.seekg(0, std::ios::beg);
+
+
+	    // read data as a block:
+	    read.read(returnStr,fileSz);
 		read.close();
-		if (returnStr.size() != 0)
+
+
+		//find i such that new string size is less than
+		if(fileSz > MAX_HISTORY_SIZE)
 		{
-			std::string returnHistStr = returnStr.substr(0, returnStr.size()-1);
-			__MOUT__<<  "Loading user history! " << std::endl;
-			xmldoc.addTextElementToData("returnHistStr",returnHistStr);
+			i = fileSz - MAX_HISTORY_SIZE;
+			for(;i<fileSz;++i)
+				if(returnStr[i] == '#')
+				{
+					i += 2; break; //skip new line character also to get to next record
+				}
 		}
+
+		//	std::string returnHistStr = returnStr.substr(0, returnStr.size()-1);
+		returnStr[fileSz-1] = '\0'; //remove final newline
+
+		__MOUT__<<  "Loading user history! " << std::endl;
+		xmldoc.addTextElementToData("returnHistStr",&returnStr[i]);
+
+		delete[] returnStr;
 	}
 	else
 
