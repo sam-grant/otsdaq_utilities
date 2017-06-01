@@ -532,7 +532,7 @@
 			//============================
 			//		for debugging
 			
-			setupSpecificConfig("FE2Configuration","1",""); return;
+			//setupSpecificConfig("FE2Configuration","1",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -760,7 +760,7 @@
 				
 				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
-				for(var i=1;i == 1  && i<activeConfigHeaders.length;++i)
+				for(var i=1;i >= 1  && i<activeConfigHeaders.length;++i)
 				{
 					str += "<tr><td style='text-align:left'>";
 					
