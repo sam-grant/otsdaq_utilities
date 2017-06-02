@@ -78,5 +78,9 @@ add_subdirectory(ups)
 FILE(COPY WebGUI DESTINATION .)
 INSTALL(DIRECTORY WebGUI DESTINATION ${product}/${version})
 
+# tools
+FILE(COPY tools DESTINATION .)
+INSTALL(DIRECTORY tools DESTINATION ${product}/${version})
+
 # packaging utility
 include(UseCPack)

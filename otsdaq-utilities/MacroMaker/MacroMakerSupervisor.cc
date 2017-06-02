@@ -269,7 +269,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 //========================================================================================================================
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
-	__MOUT__<< "Â¡Â¡Â¡Â¡Â¡Â¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
+	__MOUT__<< "¡¡¡¡¡¡MacroMaker wants to write data!!!!!!!!!" << std::endl;
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string Data = CgiDataUtilities::getData(cgi, "Data");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
