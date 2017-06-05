@@ -21,7 +21,7 @@
 #include <string>
 #include <map>
 
-#include "../../../otsdaq/otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
 namespace ots
 {
