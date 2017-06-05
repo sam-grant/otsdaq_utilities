@@ -96,7 +96,7 @@ chmod +x pullProducts
 # source code tarballs MUST be pulled first
 ./pullProducts ${blddir} source otsdaq-${version} || \
       { cat 1>&2 <<EOF
-ERROR: pull of artdaq_demo-${version} failed
+ERROR: pull of otsdaq-${version} failed
 EOF
         exit 1
       }
