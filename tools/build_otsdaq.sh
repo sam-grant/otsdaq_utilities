@@ -129,6 +129,7 @@ fi
 echo
 echo "begin build"
 echo
+cp ${working_dir}/otsdaq-utilities/tools/buildFW .
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} otsdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
