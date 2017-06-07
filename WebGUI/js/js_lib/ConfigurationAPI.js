@@ -2307,8 +2307,8 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 			return false;
 		}
 		
-		if(bitMapParams != "" && 
-				bitMapParams != DEFAULT)
+		if(bitMapParams[6] != "" && 
+				bitMapParams[6] != DEFAULT)
 		{
 			forcedAspectH = bitMapParams[6].split(':');
 			if(forcedAspectH.length != 2)
