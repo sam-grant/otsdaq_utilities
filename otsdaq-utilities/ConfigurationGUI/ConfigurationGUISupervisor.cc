@@ -53,11 +53,8 @@ throw (xdaq::exception::Exception)
 	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 
 
-	return;
-
-	__MOUT__ << "comment/uncomment here for debugging Configuration!" << std::endl;
-	__MOUT__ << "To prove the concept..." << std::endl;
-	testXDAQContext(); //test new config
+	__MOUT__ << "Activating saved context, which may prepare for normal mode..." << std::endl;
+	testXDAQContext(); //test context group activation
 }
 
 //========================================================================================================================
@@ -4173,9 +4170,24 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument &xmldoc
 
 //========================================================================================================================
 //	testXDAQContext
-//testXDAQContext just a test bed for navigating the new config tree
+//		test activation of context group
 void ConfigurationGUISupervisor::testXDAQContext()
 {
+
+	try
+	{
+		__MOUT__ << "Attempting test activation of the context group." << std::endl;
+		ConfigurationManager cfgMgr; //create instance to activate saved groups
+	}
+	catch(...)
+	{
+		__MOUT_WARN__ << "The test activation of the context group failed. Ignoring." << std::endl;
+	}
+	return;
+
+	/////////////////////////////////
+	//below has been used for debugging.
+
 
 	//behave like a user
 	//start with top level xdaq context
@@ -4186,9 +4198,9 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
 	//
-		ConfigurationManagerRW cfgMgrInst("ExampleUser");
+	//ConfigurationManagerRW cfgMgrInst("ExampleUser");
 	//	//
-		ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
+	//ConfigurationManagerRW *cfgMgr = &cfgMgrInst;
 	//	//
 	//	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	//	__MOUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
@@ -4203,7 +4215,9 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//			__MOUT__ << "\t\t" << v << std::endl;
 	//		}
 	//	}
-	cfgMgr->testXDAQContext();
+
+	//testXDAQContext just a test bed for navigating the new config tree
+	//cfgMgr->testXDAQContext();
 
 
 

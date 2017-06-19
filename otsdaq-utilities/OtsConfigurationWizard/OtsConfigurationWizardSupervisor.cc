@@ -85,9 +85,13 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		sscanf(line,"%d",&length);
 		fclose(fp);
 		if(length < 4) length = 4; //don't allow shorter than 4
+		srand(time(0)); //randomize differently each "time"
 	}
 	else
-		__MOUT_INFO__ <<  "Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+	{
+		__MOUT_INFO__ <<  "(Reverting to default wiz security) Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+		srand(0);	//use same seed for convenience if file not found
+	}
 
 	__MOUT__ << "Sequence length = " << length << std::endl;
 
@@ -98,7 +102,6 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(0);//time(0));
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
