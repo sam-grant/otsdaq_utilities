@@ -100,6 +100,7 @@
 		var _leftPane, _rightPane, _topPane;
 		var _leftPaneHidden = false;
 		
+		//TODO ?? declare globals for records and multiselects
 		
 	
 		
@@ -124,8 +125,7 @@
 		//init ~~
 		//	init called once body has loaded
 		function init() 
-		{			
-						
+		{									
 			Debug.log("CfgGUI_sebset init ");
 			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
 					"Welcome to the Configuration-Subset GUI. Here you can manipulate the fields "+
@@ -363,16 +363,22 @@
 			str = "Targeting ";
 			
 			if(_filterFieldList != "")
-				str += "records, matching '" + _filterFieldList + ",' ";
+				str += "records ";
 			else
 				str += "all records ";
+		
+			str += "at path '/" + _subsetBasePath + ",' ";
+			
+			if(_filterFieldList != "")
+				str += "matching '" + _filterFieldList + ",' ";
+			else
+				str += "";
 			
 			if(_groupingFieldList != "")
 				str += "organized by '" + _groupingFieldList + "' ";
 			else
 				str += "";
 			
-			str += "at path '/" + _subsetBasePath + ".'";
 			
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
@@ -390,11 +396,11 @@
 			
 			//	- Left Pane:
 			//		* Fixed width, vertical auto scroll, hideable.
-			//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
+			//		* Filter link that toggles display of multi-select boxes for each <subLevelGrouping>. 
 			//		* Filtering:
 			//		 	- AND/OR option if multiple sublevels
 			//			- multi-select for each <subLevelGrouping>
-			//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
+			//		* Link to toggle record representation (Multi-select or Square Grid groupings)
 			//		* Record UID Selector:
 			//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
 			//		* Alternatively can represent the detectors as squares (with mouse over UID names)
@@ -440,10 +446,11 @@
 				
 				
 				//create multi-select filter boxes
-				filterBoxesEl.setAttribute("style", "float:left;background-color:red;");
-				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
+				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
+				filterBoxesEl.style.display = 1||  //1 || for debugging
+						defaultShowFilters?"block":"none";
 
-				var H = 300;				
+				var H = 150;				
 				for(var i=0;i<groups.length;++i)
 				{
 					//get group values
@@ -453,8 +460,12 @@
 					el = document.createElement("div");
 					el.setAttribute("class", "groupFilerMultiSelect");
 					el.setAttribute("id", "groupFilerMultiSelect-" + i);
-					el.setAttribute("style", "height:" + H + "px;" + 
-							"width:" + (leftW-100) + "px;");
+					el.setAttribute("style", //"height:200px; width:250px;" +
+							//);
+									//"margin-bottom: 0px;" +
+							"margin: -15px 0 -10px 0;" +
+							"height:" + H + "px;" + 
+							"width:" + (leftW-25) + "px;");
 					filterBoxesEl.appendChild(el);			
 					
 					var noMultiSelect = false; // true or false (false for multiselect functionality) 

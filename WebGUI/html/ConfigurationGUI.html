@@ -15,9 +15,9 @@
 	<style type="text/css">			
 
 		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
-		#groupSearchDiv input, textarea { 
+		/*#groupSearchDiv input, textarea { 
 			margin: 			19px 5px 5px 12px;
-		}
+		}*/
 
 		/* make buttons have a hand cursor */
 		input[type="button"], button {
@@ -265,6 +265,7 @@
 		
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
+		var _lastSuccessfulActivateTime = 0;
 		var _useTableLinkDropdown = true;		
 		var _tableViewIsTransposed = false;
 		var _showTableDetails = true;
@@ -575,7 +576,7 @@
 
 		//setupSystemViewMode ~
 		function setupSystemViewMode(anchorTarget) {
-
+						
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			
@@ -592,7 +593,7 @@
 		
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) {
-
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
@@ -4030,19 +4031,24 @@
 				el.innerHTML = str;
 				str = el.innerHTML;				
 				
-				if(!_firstTimeSilentActive && str != oldStr) //only popup after the first time
+				var getTimeVal = (new Date()).getTime();
+				if(!_firstTimeSilentActive && //only popup after the first time
+						(str != oldStr ||  //if change
+								0))//RAR -- doesn't work FIXME... need to add flag from server that an activation was attempted.. getTimeVal - _lastSuccessfulActivateTime > 2*1000)) //or has been a long time (e.g. 2 seconds) 
 				{						
 					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
-						Debug.log("Note: There was a change in the active Context group (check the top of the page)!",
+						Debug.log("Note: There was a change to the active Context group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 					else //must have been an activation
-						Debug.log("Note: There was a successful activation of a Context group (check the top of the page)!",
+						Debug.log("Note: There was a successful activation of a group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 
 					//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				}
 				else
 					_firstTimeSilentActive = false;
+				
+				_lastSuccessfulActivateTime = getTimeVal;
 			}				
 		}
 		
