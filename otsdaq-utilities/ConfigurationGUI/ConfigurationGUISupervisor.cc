@@ -134,6 +134,7 @@ throw (xgi::exception::Exception)
 	//		---- associated with Javascript Config API
 	//	getTreeView
 	//	getTreeNodeCommonFields
+	//	getUniqueFieldValuesForRecords
 	//	getTreeNodeFieldValues
 	//	setTreeNodeFieldValues
 	//		---- end associated with Javascript Config API
@@ -549,6 +550,28 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
 
 		handleFillTreeNodeCommonFieldsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,depth,modifiedTables,recordList,fieldList);
+
+	}
+	else if(Command == "getUniqueFieldValuesForRecords")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "depth: " << depth << std::endl;
+		__MOUT__ << "fieldList: " << fieldList << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillUniqueFieldValuesForRecordsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
 				startPath,depth,modifiedTables,recordList,fieldList);
 
 	}
@@ -1359,6 +1382,147 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 		const std::string &modifiedTables, const std::string &recordList,
 		const std::string &fieldList)
 {
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables);
+
+
+	try
+	{
+		DOMElement* parentEl = xmldoc.addTextElementToData("fields", startPath);
+
+		if(depth == 0) return; //done if 0 depth, no fields
+
+		//do not allow traversing for common fields from root level
+		//	the tree view should be used for such a purpose
+		if(startPath == "/")
+			return;
+
+		std::vector<ConfigurationTree::RecordField> retFieldList;
+
+
+		{
+			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			if(startNode.isLinkNode() && startNode.isDisconnected())
+			{
+				__SS__ << "Start path was a disconnected link node!" << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				throw std::runtime_error(ss.str());
+				return; //quietly ignore disconnected links at depth
+				//note: at the root level they will be flagged for the user
+			}
+
+			std::vector<std::string /*relative-path*/> fieldFilterList;
+			if(fieldList != "")
+			{
+				//extract field filter list
+				{
+					std::istringstream f(fieldList);
+					std::string fieldPath;
+					while (getline(f, fieldPath, ','))
+					{
+						fieldFilterList.push_back(
+								ConfigurationView::decodeURIComponent(fieldPath));
+					}
+					__MOUT__ << fieldList << std::endl;
+					for(auto &field:fieldFilterList)
+						__MOUT__ << "fieldFilterList " <<
+							field << std::endl;
+				}
+			}
+			std::vector<std::string /*relative-path*/> records;
+			if(recordList != "")
+			{
+				//extract record list
+				{
+					std::istringstream f(recordList);
+					std::string recordStr;
+					while (getline(f, recordStr, ','))
+					{
+						records.push_back(
+								ConfigurationView::decodeURIComponent(recordStr));
+					}
+					__MOUT__ << recordList << std::endl;
+					for(auto &record:records)
+						__MOUT__ << "recordList " <<
+							record << std::endl;
+				}
+			}
+
+			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
+					records,fieldFilterList,depth);
+		}
+
+		for(const auto &fieldInfo:retFieldList)
+		{
+			xmldoc.addTextElementToParent("FieldTableName",
+					fieldInfo.tableName_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnName",
+					fieldInfo.columnName_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldRelativePath",
+					fieldInfo.relativePath_,
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnType",
+					fieldInfo.columnInfo_->getDataType(),
+					parentEl);
+			//TODO -- if fixed choice send info
+		}
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error getting common fields!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error getting common fields!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+
+}
+
+//========================================================================================================================
+//handleFillUniqueFieldValuesForRecordsXML
+//	returns xml list of unique values for each fields among records
+//		field := relative-path
+//
+//	return xml
+//		<xml>
+//			<field val=relative-path>
+//				<unique_val val=uval0>
+//				<unique_val val=uval1>
+//				.. next unique value
+//			</field>
+//			... next field
+//		</xml>
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	depth from starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV of records to search for unique values
+//	fieldList := CSV of fields relative-to-record-path for which to get list of unique values
+//
+void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string &groupName, const ConfigurationGroupKey &groupKey,
+		const std::string &startPath, unsigned int depth,
+		const std::string &modifiedTables, const std::string &recordList,
+		const std::string &fieldList)
+{
+	//FIXME !!! this is the wrong implementation.. it is from handleFillTreeNodeCommonFieldsXML
+
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(
 			xmldoc,

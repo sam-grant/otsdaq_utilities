@@ -100,9 +100,15 @@
 		var _leftPane, _rightPane, _topPane;
 		var _leftPaneHidden = false;
 		
-		//TODO ?? declare globals for records and multiselects
+		//global vars for GET params
+		var _subsetBasePath;			
+		var _groupingFieldList;			
+		var _editableFieldList;			
+		var _filterFieldList;
 		
-	
+		//global vars for multiselects		
+		var _subsetUIDs; //array of UIDs defined by the subset (based on _subsetBasePath and _filterFieldList)
+		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -112,6 +118,8 @@
 			//init()
 			//paint() 
 			//extractGETParameters()
+			//initSubsetGlobalData()
+		
 			//createTopPaneContent()
 			//createLeftPaneContent(leftW)
 			//groupFilterSelectionHandler(el)
@@ -145,8 +153,14 @@
 				return;
 			}
 			
+			_initCompleteCount = 2; //keep track of init requests; responses decrement, when 0, call paint
+			
+			//get subsetUIDs
+			getSubsetUIDs();
+			
+			//get filter values for all possible grouping fields
 
-			paint();
+			//paint();
 			window.addEventListener("resize",paint);
 			
 			return;
@@ -158,8 +172,7 @@
 			
 			localModifiedTables = [];
 			
-			//get list of records that match <subsetBasePath> AND <filterFieldList>
-			
+			//get list of records that match <subsetBasePath> AND <filterFieldList>			
 			ConfigurationAPI.getSubsetRecords(
 					_subsetBasePath,
 					_filterFieldList,
@@ -348,6 +361,53 @@
 		}	//end extractGETParameters()
 		
 		//=====================================================================================
+		//initSubsetGlobalData ~~
+		//	fills _subsetUIDs
+		//		array of UIDs defined by the subset (based on _subsetBasePath and _filterFieldList)
+		//	fills _filterValsObj
+		//		for each filter MultiSelect (one for each grouping field), an array of filter values
+		function getSubsetUIDs() 
+		{
+			//get list of records that match <subsetBasePath> AND <filterFieldList>
+			ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					_filterFieldList,
+					function(records)
+					{
+				_subsetUIDs = records;
+				Debug.log("records found = " + records.length);
+				console.log(records);
+				
+				var groups = _groupingFieldList.split(',');
+				Debug.log("_groupingFieldList " + _groupingFieldList);
+				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
+				
+				for(var i=0;i<groups.length;++i)
+				{
+					Debug.log("groups " + i + " : " + groups[i]);
+					
+					//get grouping field values
+					//	for record list
+					ConfigurationAPI.getFieldsOfRecords(
+							_subsetBasePath,
+							records,
+							_groupingFieldList,
+							-1,
+							function(recFields)
+							{
+						localFields = recFields;
+						Debug.log("recFields found = " + recFields.length);
+
+						if(i == groups.length-1)
+							paint();
+							});
+				}
+				
+					});
+			
+		}	//end getSubsetUIDs()
+		
+		//=====================================================================================
 		//createTopPaneContent ~~
 		function createTopPaneContent() 
 		{
@@ -416,10 +476,11 @@
 			function localCreateGroupingFieldFilters()
 			{
 				var groups = _groupingFieldList.split(',');
+				Debug.log("_groupingFieldList " + _groupingFieldList);
 				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
 				
 				var filterBoxesEl = document.createElement("div");
-				var defaultShowFilters = false;
+				var defaultShowFilters = true;
 				
 				//create toggle icon
 				el = document.createElement("a");
@@ -447,8 +508,7 @@
 				
 				//create multi-select filter boxes
 				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
-				filterBoxesEl.style.display = 1||  //1 || for debugging
-						defaultShowFilters?"block":"none";
+				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
 
 				var H = 150;				
 				for(var i=0;i<groups.length;++i)
