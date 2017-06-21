@@ -51,6 +51,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldValuesForRecord(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+// 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
 //	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
@@ -155,7 +156,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
 //
-// 	maxDepth is used to force a end to search for common fields
+// 	maxDepth is used to force an end to search for common fields
 //	
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
@@ -221,14 +222,13 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
 			recFields.push(obj);
 		}
-		Debug.log("Records: " + recFields);		
+		Debug.log("Records length: " + recFields.length);		
 		responseHandler(recFields);
 
 			}, //handler
 			0, //handler param
 			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 }
-
 
 //=====================================================================================
 //getFieldValuesForRecord ~~
@@ -313,6 +313,87 @@ ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fie
 		}
 		
 		responseHandler(recFieldValues);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
+
+
+//=====================================================================================
+//getUniqueFieldValuesForRecords ~~
+//	takes as input a base path where the records are, 
+//	  and an array of records.
+// <recordArr> is an array or record UIDs (as returned from 
+//		ConfigurationAPI.getSubsetRecords)
+// <fieldList> is a CSV list of tree paths relative to <subsetBasePath>/<recordUID>/ 
+//	 to the fields for which to get the set of unique values. 
+//	If empty, then expect an empty array.
+//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of UniqueValues objects	
+//		UniqueValues := {}
+//			obj.fieldName 
+//			obj.fieldUniqueValueArray
+//			
+//
+ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,recordArr,fieldList,
+		responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	for(var i=0;i<recordArr.length;++i)
+	{
+		if(i) recordListStr += ",";
+		recordListStr += recordArr[i];
+	}
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1" + 
+			"startPath=/" + subsetBasePath + 
+			"&recordList=" + recordListStr +  
+			"&fieldList=" + fieldList +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+		var fieldUniqueValues = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(fieldUniqueValues);
+			return;
+		}
+		
+		var fields = req.responseXML.getElementsByTagName("field");
+
+		for(var i=0;i<fields.length;++i)
+		{
+			
+			var uniqueValues = fields[i].getElementsByTagName("uniqueValue");
+			
+			var obj = {};
+			obj.fieldName = DesktopContent.getXMLValue(fields[i]);
+			obj.fieldUniqueValueArray = [];
+			for(var j=0;j<uniqueValues.length;++j)					
+				obj.fieldUniqueValueArray.push(DesktopContent.getXMLValue(uniqueValues[j]));
+			fieldUniqueValues.push(obj);
+		}
+		Debug.log("fieldUniqueValues length: " + fieldUniqueValues.length);		
+		responseHandler(fieldUniqueValues);
 
 			}, //handler
 			0, //handler param

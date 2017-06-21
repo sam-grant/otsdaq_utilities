@@ -152,16 +152,15 @@
 						Debug.HIGH_PRIORITY);
 				return;
 			}
-			
-			_initCompleteCount = 2; //keep track of init requests; responses decrement, when 0, call paint
-			
-			//get subsetUIDs
-			getSubsetUIDs();
-			
-			//get filter values for all possible grouping fields
 
-			//paint();
-			window.addEventListener("resize",paint);
+			//get subset record uids and 
+			//	filter values for all possible grouping fields
+			//	calls paint() and adds resize listener when done
+			initSubsetGlobalData();
+				//paint();
+				//window.addEventListener("resize",paint);
+			
+
 			
 			return;
 			
@@ -366,7 +365,7 @@
 		//		array of UIDs defined by the subset (based on _subsetBasePath and _filterFieldList)
 		//	fills _filterValsObj
 		//		for each filter MultiSelect (one for each grouping field), an array of filter values
-		function getSubsetUIDs() 
+		function initSubsetGlobalData() 
 		{
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
 			ConfigurationAPI.getSubsetRecords(

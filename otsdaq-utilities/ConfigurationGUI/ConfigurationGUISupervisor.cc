@@ -561,18 +561,16 @@ throw (xgi::exception::Exception)
 		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
 		std::string 	fieldList	 	= CgiDataUtilities::postData(cgi,"fieldList");
 		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
-		int				depth	 		= CgiDataUtilities::getDataAsInt(cgi,"depth");
 
 		__MOUT__ << "configGroup: " << configGroup << std::endl;
 		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
 		__MOUT__ << "startPath: " << startPath << std::endl;
-		__MOUT__ << "depth: " << depth << std::endl;
 		__MOUT__ << "fieldList: " << fieldList << std::endl;
 		__MOUT__ << "recordList: " << recordList << std::endl;
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
 
 		handleFillUniqueFieldValuesForRecordsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,depth,modifiedTables,recordList,fieldList);
+				startPath,modifiedTables,recordList,fieldList);
 
 	}
 	else if(Command == "getTreeNodeFieldValues")
@@ -1470,7 +1468,13 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 			xmldoc.addTextElementToParent("FieldColumnType",
 					fieldInfo.columnInfo_->getDataType(),
 					parentEl);
-			//TODO -- if fixed choice send info
+
+			//if there are associated data choices, send info
+			auto dataChoices = fieldInfo.columnInfo_->getDataChoices();
+			for(const auto &dataChoice : dataChoices)
+				xmldoc.addTextElementToParent("FieldColumnDataChoice",
+						dataChoice,
+						parentEl);
 		}
 	}
 	catch(std::runtime_error& e)
@@ -1509,7 +1513,6 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 //parameters
 //	configGroupName (full name with key)
 //	starting node path
-//	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV of records to search for unique values
 //	fieldList := CSV of fields relative-to-record-path for which to get list of unique values
@@ -1517,12 +1520,10 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr,
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
-		const std::string &startPath, unsigned int depth,
+		const std::string &startPath,
 		const std::string &modifiedTables, const std::string &recordList,
 		const std::string &fieldList)
 {
-	//FIXME !!! this is the wrong implementation.. it is from handleFillTreeNodeCommonFieldsXML
-
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(
 			xmldoc,
@@ -1533,85 +1534,81 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 
 	try
 	{
-		DOMElement* parentEl = xmldoc.addTextElementToData("fields", startPath);
-
-		if(depth == 0) return; //done if 0 depth, no fields
-
 		//do not allow traversing for common fields from root level
 		//	the tree view should be used for such a purpose
 		if(startPath == "/")
 			return;
 
-		std::vector<ConfigurationTree::RecordField> retFieldList;
-
-
+		std::vector<std::string /*relative-path*/> fieldsToGet;
+		if(fieldList != "")
 		{
-			ConfigurationTree startNode = cfgMgr->getNode(startPath);
-			if(startNode.isLinkNode() && startNode.isDisconnected())
+			//extract field filter list
 			{
-				__SS__ << "Start path was a disconnected link node!" << std::endl;
-				__MOUT_ERR__ << "\n" << ss.str();
-				throw std::runtime_error(ss.str());
-				return; //quietly ignore disconnected links at depth
-				//note: at the root level they will be flagged for the user
-			}
-
-			std::vector<std::string /*relative-path*/> fieldFilterList;
-			if(fieldList != "")
-			{
-				//extract field filter list
+				std::istringstream f(fieldList);
+				std::string fieldPath;
+				while (getline(f, fieldPath, ','))
 				{
-					std::istringstream f(fieldList);
-					std::string fieldPath;
-					while (getline(f, fieldPath, ','))
-					{
-						fieldFilterList.push_back(
-								ConfigurationView::decodeURIComponent(fieldPath));
-					}
-					__MOUT__ << fieldList << std::endl;
-					for(auto &field:fieldFilterList)
-						__MOUT__ << "fieldFilterList " <<
-							field << std::endl;
+					fieldsToGet.push_back(
+							ConfigurationView::decodeURIComponent(fieldPath));
 				}
+				__MOUT__ << fieldList << std::endl;
+				for(auto &field:fieldsToGet)
+					__MOUT__ << "fieldsToGet " <<
+						field << std::endl;
 			}
-			std::vector<std::string /*relative-path*/> records;
-			if(recordList != "")
-			{
-				//extract record list
-				{
-					std::istringstream f(recordList);
-					std::string recordStr;
-					while (getline(f, recordStr, ','))
-					{
-						records.push_back(
-								ConfigurationView::decodeURIComponent(recordStr));
-					}
-					__MOUT__ << recordList << std::endl;
-					for(auto &record:records)
-						__MOUT__ << "recordList " <<
-							record << std::endl;
-				}
-			}
-
-			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
-					records,fieldFilterList,depth);
 		}
 
-		for(const auto &fieldInfo:retFieldList)
+		std::vector<std::string /*relative-path*/> records;
+		if(recordList != "")
 		{
-			xmldoc.addTextElementToParent("FieldTableName",
-					fieldInfo.tableName_,
-					parentEl);
-			xmldoc.addTextElementToParent("FieldColumnName",
-					fieldInfo.columnName_,
-					parentEl);
-			xmldoc.addTextElementToParent("FieldRelativePath",
-					fieldInfo.relativePath_,
-					parentEl);
-			xmldoc.addTextElementToParent("FieldColumnType",
-					fieldInfo.columnInfo_->getDataType(),
-					parentEl);
-			//TODO -- if fixed choice send info
+			//extract record list
+			{
+				std::istringstream f(recordList);
+				std::string recordStr;
+				while (getline(f, recordStr, ','))
+				{
+					records.push_back(
+							ConfigurationView::decodeURIComponent(recordStr));
+				}
+				__MOUT__ << recordList << std::endl;
+				for(auto &record:records)
+					__MOUT__ << "recordList " <<
+					record << std::endl;
+			}
+		}
+
+		ConfigurationTree startNode = cfgMgr->getNode(startPath);
+		if(startNode.isLinkNode() && startNode.isDisconnected())
+		{
+			__SS__ << "Start path was a disconnected link node!" << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			throw std::runtime_error(ss.str());
+		}
+
+		//loop through each field and get unique values among records
+		for(auto &field:fieldsToGet)
+		{
+			__MOUT__ << "fieldsToGet " <<
+				field << std::endl;
+
+			DOMElement* parentEl = xmldoc.addTextElementToData("field", field);
+
+
+			//use set to force sorted unique values
+			std::set<std::string /*unique-values*/> uniqueValues;
+
+			uniqueValues = cfgMgr->getNode(startPath).getUniqueValuesForField(
+					records,field);
+
+			for(auto &uniqueValue:uniqueValues)
+			{
+				__MOUT__ << "uniqueValue " <<
+						uniqueValue << std::endl;
+
+				xmldoc.addTextElementToParent("uniqueValue",
+						uniqueValue,
+						parentEl);
+			}
 		}
 	}
 	catch(std::runtime_error& e)
