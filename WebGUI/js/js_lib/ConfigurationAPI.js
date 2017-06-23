@@ -362,7 +362,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
 			"&configGroup=" +
-			"&configGroupKey=-1" + 
+			"&configGroupKey=-1", //end get data
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
 			"&fieldList=" + fieldList +

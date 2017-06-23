@@ -1084,13 +1084,13 @@ try
 }
 catch(std::runtime_error& e)
 {
-	__SS__ << ("Error generating setting up active tables!\n\n" + std::string(e.what())) << std::endl;
+	__SS__ << ("Error setting up active tables!\n\n" + std::string(e.what())) << std::endl;
 	__MOUT_ERR__ << "\n" << ss.str();
 	xmldoc.addTextElementToData("Error", ss.str());
 }
 catch(...)
 {
-	__SS__ << ("Error generating setting up active tables!\n\n") << std::endl;
+	__SS__ << ("Error setting up active tables!\n\n") << std::endl;
 	__MOUT_ERR__ << "\n" << ss.str();
 	xmldoc.addTextElementToData("Error", ss.str());
 }
