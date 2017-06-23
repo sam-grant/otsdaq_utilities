@@ -32,14 +32,23 @@
 			overflow: hidden;
 		}
 		#leftPane {
-			background-color : rgb(241, 231, 231);
+			/*background-color : rgb(241, 231, 231);*/
 			overflow-x: hidden;
 			overflow-y: scroll;
 			
+		    border-top: 1px solid rgb(224, 196, 196);
+						
 		}
 		#rightPane {
 			background-color : rgb(241, 231, 231);
 			overflow: auto;
+
+			box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgba(200, 200, 200,0.6) 0 .1em 3px,
+					rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+					rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+			border-radius: 3px;	
 		}
 		
 	</style>
@@ -368,6 +377,9 @@
 		function initSubsetGlobalData() 
 		{
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
+			_subsetUIDs = []; //reset
+			_filterValsObj = {};//reset
+			
 			ConfigurationAPI.getSubsetRecords(
 					_subsetBasePath,
 					_filterFieldList,
@@ -384,11 +396,12 @@
 						_groupingFieldList,
 						function(uniqueValues)
 						{
-
+					_filterValsObj = uniqueValues;
 					Debug.log("uniqueValues found = " + uniqueValues.length);
 					console.log(uniqueValues);
 					
-					//paint();
+					paint();
+					window.addEventListener("resize",paint);
 						});			
 				
 					});
@@ -511,7 +524,7 @@
 					el.setAttribute("style", //"height:200px; width:250px;" +
 							//);
 									//"margin-bottom: 0px;" +
-							"margin: -15px 0 -10px 0;" +
+							"margin: -15px 0 0 0;" +
 							"height:" + H + "px;" + 
 							"width:" + (leftW-25) + "px;");
 					filterBoxesEl.appendChild(el);			
@@ -519,22 +532,28 @@
 					var noMultiSelect = false; // true or false (false for multiselect functionality) 
 					var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
 
-					var vals = ["One little piggy","two little piggies","three little piggies"];
-					var keys = ["one","two","three"];
-					var types = ["number","numbers","numbers"];
+					var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
+					var keys = [];
+					var types = [];
+					for(var j=0;j<vals.length;++j)
+					{
+						keys.push(j);
+						types.push(groups[i]);								
+					}				
 
 					//write MultiSelectBox to a particular div
 					MultiSelectBox.createSelectBox(el,
-							"box" + i,
-							"Multi-Select Box Example",
+							"FilterGroupBox" + i,
+							"'" + groups[i] + "' Filter:",
 							vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
 
 					MultiSelectBox.initMySelectBoxes();
 
 					el = document.createElement("div");
-					el.setAttribute("id", "clearDiv");
+					el.setAttribute("id", "clearDiv");					
 					filterBoxesEl.appendChild(el);
 				}
+				
 				_leftPane.appendChild(filterBoxesEl);
 
 								
@@ -543,6 +562,50 @@
 			//if grouping fields given then create
 			if(_groupingFieldList != "")
 				localCreateGroupingFieldFilters(); 
+			
+			
+			//add records
+			function localCreateRecordsSelector()
+			{
+				var H = 300;
+				//create multiselect box
+				el = document.createElement("div");
+				el.setAttribute("class", "recordMultiSelect");
+				el.setAttribute("id", "recordMultiSelect");
+				el.setAttribute("style", //"height:200px; width:250px;" +
+						//);
+						//"margin-bottom: 0px;" +
+						"margin: -15px 0 -10px 0;" +
+						"height:" + H + "px;" + 
+						"width:" + (leftW-25) + "px;");
+
+				_leftPane.appendChild(el);
+
+				var noMultiSelect = false; // true or false (false for multiselect functionality) 
+				var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+
+				var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
+				var keys = [];
+				var types = [];
+				for(var j=0;j<vals.length;++j)
+				{
+					keys.push(j);
+					types.push("record");								
+				}				
+
+				//write MultiSelectBox to a particular div
+				MultiSelectBox.createSelectBox(el,
+						"RecordsGroupBox",
+						"Records:",
+						vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+
+				MultiSelectBox.initMySelectBoxes();
+
+				el = document.createElement("div");
+				el.setAttribute("id", "clearDiv");
+				_leftPane.appendChild(el);
+				
+			} localCreateRecordsSelector ();
 			
 			
 			document.body.appendChild(_leftPane);
