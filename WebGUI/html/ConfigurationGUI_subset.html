@@ -377,30 +377,19 @@
 				Debug.log("records found = " + records.length);
 				console.log(records);
 				
-				var groups = _groupingFieldList.split(',');
-				Debug.log("_groupingFieldList " + _groupingFieldList);
-				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
 				
-				for(var i=0;i<groups.length;++i)
-				{
-					Debug.log("groups " + i + " : " + groups[i]);
-					
-					//get grouping field values
-					//	for record list
-					ConfigurationAPI.getFieldsOfRecords(
-							_subsetBasePath,
-							records,
-							_groupingFieldList,
-							-1,
-							function(recFields)
-							{
-						localFields = recFields;
-						Debug.log("recFields found = " + recFields.length);
+				ConfigurationAPI.getUniqueFieldValuesForRecords(
+						_subsetBasePath,
+						records,
+						_groupingFieldList,
+						function(uniqueValues)
+						{
 
-						if(i == groups.length-1)
-							paint();
-							});
-				}
+					Debug.log("uniqueValues found = " + uniqueValues.length);
+					console.log(uniqueValues);
+					
+					//paint();
+						});			
 				
 					});
 			

@@ -293,6 +293,14 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getGroupAliases")
 	{
+		//Since this is called from setting up System View in the config GUI
+		//	give option for reloading "persistent" active configurations
+		bool reloadActive = 1 == CgiDataUtilities::getDataAsInt(cgi,"reloadActiveGroups"); //from GET
+
+		__MOUT__ << "reloadActive: " << reloadActive << std::endl;
+		if(reloadActive)
+			cfgMgr->restoreActiveConfigurationGroups();
+
 		handleGroupAliasesXML(xmldoc,cfgMgr);
 	}
 	else if(Command == "setGroupAliasInActiveBackbone")
@@ -669,6 +677,11 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "Activating config: " << groupName <<
 				"(" << groupKey << ")" << std::endl;
 		__MOUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
+
+		//add flag for GUI handling
+		xmldoc.addTextElementToData("AttemptedGroupActivation","1");
+		xmldoc.addTextElementToData("AttemptedGroupActivationName",groupName);
+		xmldoc.addTextElementToData("AttemptedGroupActivationKey",groupKey);
 
 		std::string accumulatedTreeErrors;
 		try
