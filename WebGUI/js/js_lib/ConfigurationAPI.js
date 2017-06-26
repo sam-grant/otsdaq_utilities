@@ -86,9 +86,13 @@ ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
 //
-// <filterList> is a ;=separated list of tree paths relative to <subsetBasePath> 
-//	 and their required value (CSV for multiple values).
-//		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+// <filterList> 
+//	filterList := relative-to-record-path=value(,value,...);path=value... filtering
+//		records with relative path not meeting all filter criteria
+//		- can accept multiple values per field (values separated by commas) (i.e. OR)
+//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
+//		- fields/value pairs separated by ; for AND
+//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -167,6 +171,8 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 //			obj.fieldColumnName
 //			obj.fieldRelativePath 
 //			obj.fieldColumnType
+//			obj.fieldColumnDataType
+//			obj.fieldColumnDataChoicesArr[]
 //			
 //
 ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldList,
@@ -212,6 +218,10 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		var FieldColumnNames = fields.getElementsByTagName("FieldColumnName");
 		var FieldRelativePaths = fields.getElementsByTagName("FieldRelativePath");
 		var FieldColumnTypes = fields.getElementsByTagName("FieldColumnType");
+		var FieldColumnDataTypes = fields.getElementsByTagName("FieldColumnDataType");
+		var FieldColumnDataChoices = fields.getElementsByTagName("FieldColumnDataChoices");
+		//			obj.fieldColumnDataType
+		//			obj.fieldColumnDataChoicesArr
 		
 		for(var i=0;i<FieldTableNames.length;++i)
 		{
@@ -220,6 +230,11 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			obj.fieldColumnName = DesktopContent.getXMLValue(FieldColumnNames[i]);
 			obj.fieldRelativePath = DesktopContent.getXMLValue(FieldRelativePaths[i]);
 			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
+			obj.fieldColumnDataType = DesktopContent.getXMLValue(FieldColumnDataTypes[i]);
+			var FieldColumnDataChoicesArr = FieldColumnDataChoices[i].getElementsByTagName("FieldColumnDataChoice");
+			obj.fieldColumnDataChoicesArr = [];
+			for(var j=0; j<FieldColumnDataChoicesArr.length;++j)
+				obj.fieldColumnDataChoicesArr.push(DesktopContent.getXMLValue(FieldColumnDataChoicesArr[i]));
 			recFields.push(obj);
 		}
 		Debug.log("Records length: " + recFields.length);		

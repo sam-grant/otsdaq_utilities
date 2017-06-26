@@ -15,7 +15,7 @@
 	<style type="text/css">			
 		
 		body {
-			overflow: hidden; /* scrolling only happens in left and right panes */
+			/*overflow: hidden; /* scrolling only happens in left and right panes */			
 		}
 
 		/* make buttons have a hand cursor */
@@ -91,10 +91,16 @@
 		//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
 		//					
 		//	- Right Pane:
+		//		* Show toggle Left Pane link
 		//		* Show fields that are common based on SubLevelGrouping filters
 		//			- E.g. if *,* then can only show SlowControls fields
 		//			- Challenge: show all common fields, even through links
-		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked 
+		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
+		//			- A field becomes the "selected" field when clicked
+		//				= the selected field should survive resizing, and get reset on filtering
+		//			- A field enters edit mode when pencil is clicked
+		//			- TAB and SHIFT+TAB should jump to next field for editing
+		//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
 		//		
 		//	- Save functionality should be same as saving tree	
 		//		* If admin, give options to target a certain system alias.. Etc.
@@ -109,17 +115,22 @@
 		var _leftPane, _rightPane, _topPane;
 		var _leftPaneHidden = false;
 		
+		var _rightPaneFields;
+		
 		//global vars for GET params
 		var _subsetBasePath;			
 		var _groupingFieldList;			
 		var _editableFieldList;			
 		var _filterFieldList;
 		
-		//global vars for multiselects		
-		var _subsetUIDs; //array of UIDs defined by the subset (based on _subsetBasePath and _filterFieldList)
+		//global vars for multiselects				
 		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
+		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _filterFieldList)
+		var _filterTimer;
 		
-	
+		//global vars for fields
+		var _selectedFieldIndex = -1;
+		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -128,11 +139,16 @@
 			//paint() 
 			//extractGETParameters()
 			//initSubsetGlobalData()
+			//runFilter()
+			//updateRecordsAndFields()
 		
 			//createTopPaneContent()
 			//createLeftPaneContent(leftW)
+			//		localCreateGroupingFieldFilters()
+			//		localCreateRecordsSelector()
 			//groupFilterSelectionHandler(el)
 			//createRightPaneContent()
+			//		localAddReadWriteButtons(cel)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -286,6 +302,15 @@
 		{	
 			var w = DesktopContent.getWindowWidth();
 			var h = DesktopContent.getWindowHeight();
+			//Debug.log("paint w,h=" + w + "," +h);
+
+			var MIN_H = 280;
+			var MIN_W = 580;
+			if(w < MIN_W)
+				w = MIN_W;
+			if(h < MIN_H)
+				h = MIN_H;
+			
 			Debug.log("paint w,h=" + w + "," +h);
 
 			var TOP_H = 50;
@@ -299,6 +324,8 @@
 				createTopPaneContent();
 				createLeftPaneContent(LEFT_W-2*BORDER_SZ);
 				createRightPaneContent();
+				
+				updateRecordsAndFields();
 			}
 
 			
@@ -315,6 +342,7 @@
 			y += TOP_H + MARGIN;
 			h -= TOP_H + MARGIN;
 
+			//set left pane sizes
 			if(!_leftPaneHidden)
 			{
 				_leftPane.style.left = MARGIN + "px";
@@ -326,14 +354,114 @@
 				w -= LEFT_W + MARGIN;
 			}
 
+			//set right pane sizes
+			h -= 2*BORDER_SZ + MARGIN;
+			w -= 2*BORDER_SZ;
 			_rightPane.style.left = x + "px";
 			_rightPane.style.top = y + "px";
-			_rightPane.style.width = (w - 2*BORDER_SZ) + "px";
-			_rightPane.style.height = (h - 2*BORDER_SZ) + "px";
-			
-			
+			_rightPane.style.width = w + "px";
+			_rightPane.style.height = h + "px";
+
+			_rightPaneFields.style.height = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
+			_rightPaneFields.style.height = (h - 20 - //for left pane hide
+					60 - //for top/bottom read/write buttons
+					2*BORDER_SZ - 2*MARGIN) + "px";
+						
 		}	//end paint()
 
+		//=====================================================================================
+		//updateRecordsAndFields ~~
+		//	update records selector display
+		//		based on _subsetUIDs
+		function updateRecordsAndFields() 
+		{
+			var el = document.getElementById("recordMultiSelect");
+			if(!el) {Debug.log("Error: updateRecordsSelector null"); return; } 
+			
+			var str;
+			
+			var noMultiSelect = false; // true or false (false for multiselect functionality) 
+			var maintainPreviousSelections = true; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+
+			var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
+			var keys = [];
+			var types = [];
+			for(var j=0;j<vals.length;++j)
+			{
+				keys.push(j);
+				types.push("record");								
+			}				
+
+			//write MultiSelectBox to a particular div
+			MultiSelectBox.createSelectBox(
+					el,
+					"RecordsGroupBox",
+					"Records:",
+					vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+
+			MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
+			
+			
+			//get grouping field values
+			//	for record list
+			_rightPaneFields.innerHTML = ""; //clear any existing fields
+			ConfigurationAPI.getFieldsOfRecords(
+					_subsetBasePath,
+					_subsetUIDs,
+					_editableFieldList,
+					-1,
+					function(recordFields)
+					{
+				Debug.log("recordFields found = " + recordFields.length);
+				console.log(recordFields);
+
+				if(!recordFields.length)
+				{
+					Debug.log("No common fields found among current set of records! " +
+							"Something is wrong - check. the window input parameters.",
+							Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				//		on success, the array will be an array of Field objects	
+				//		Field := {}
+				//			obj.fieldTableName 
+				//			obj.fieldUID 
+				//			obj.fieldColumnName
+				//			obj.fieldRelativePath 
+				//			obj.fieldColumnType
+				//			obj.fieldColumnDataType
+				//			obj.fieldColumnDataChoicesArr[]
+
+				//for each record,
+				//	make an element that is "editable" and "selectable" (_selectedFieldIndex)
+				//		- when clicked becomes selected element
+				//	 	- when pencil is clicked is edit mode
+				//		- tab should move from edit field to edit field
+				for(var i=0;i<recordFields.length;++i)
+				{
+					//create field
+					el = document.createElement("div");
+					el.setAttribute("style", "white-space:nowrap;" +
+							"margin: 5px;");
+					_rightPaneFields.appendChild(el); //add field container link
+
+					str = "";
+					str += recordFields[i].fieldRelativePath +
+							recordFields[i].fieldColumnName + " : ";
+					str += recordFields[i].fieldColumnType;
+					el.innerHTML = str;
+
+					//add clear div
+					el = document.createElement("div");
+					el.setAttribute("id", "clearDiv");
+					_rightPaneFields.appendChild(el);
+				}
+
+
+					});
+		}
+		
 		//=====================================================================================
 		//extractGETParameters ~~
 		//	return false, if illegal params
@@ -581,43 +709,108 @@
 
 				_leftPane.appendChild(el);
 
-				var noMultiSelect = false; // true or false (false for multiselect functionality) 
-				var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-
-				var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
-				var keys = [];
-				var types = [];
-				for(var j=0;j<vals.length;++j)
-				{
-					keys.push(j);
-					types.push("record");								
-				}				
-
-				//write MultiSelectBox to a particular div
-				MultiSelectBox.createSelectBox(el,
-						"RecordsGroupBox",
-						"Records:",
-						vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
-
-				MultiSelectBox.initMySelectBoxes();
+//				var noMultiSelect = false; // true or false (false for multiselect functionality) 
+//				var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+//
+//				var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
+//				var keys = [];
+//				var types = [];
+//				for(var j=0;j<vals.length;++j)
+//				{
+//					keys.push(j);
+//					types.push("record");								
+//				}				
+//
+//				//write MultiSelectBox to a particular div
+//				MultiSelectBox.createSelectBox(el,
+//						"RecordsGroupBox",
+//						"Records:",
+//						vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+//
+//				MultiSelectBox.initMySelectBoxes();
 
 				el = document.createElement("div");
 				el.setAttribute("id", "clearDiv");
 				_leftPane.appendChild(el);
 				
 			} localCreateRecordsSelector ();
-			
-			
+						
 			document.body.appendChild(_leftPane);
-			
+						
 		}	//end createLeftPaneContent()
 
 		//=====================================================================================
 		//groupFilterSelectionHandler ~~
 		function groupFilterSelectionHandler(el) 
 		{
-			Debug.log("multiselect for " + el.id);		
-		}	//end createRightPaneContent()
+			Debug.log("multiselect for " + el.id);
+			
+			//if multi select target was a Filter
+			//	then change filter
+			if(el.id.indexOf("selbox-Filter") == 0)
+			{
+				window.clearTimeout(_filterTimer);
+				_filterTimer = window.setTimeout(runFilter,1000);
+			}
+			
+		}	//end groupFilterSelectionHandler(el)
+
+		//=====================================================================================
+		//runFilter ~~
+		function runFilter(el) 
+		{
+			Debug.log("Run Filter");
+			
+			var groups = _groupingFieldList.split(',');
+			Debug.log("groups length " + groups.length);
+			
+			var selArr;
+			
+			var filterStr = "";
+			var subFilterStr;
+			for(var i=0;i<groups.length;++i)
+			{
+				subFilterStr = "";
+				
+				selArr = MultiSelectBox.getSelectionArray(
+						document.getElementById("groupFilerMultiSelect-" + i));
+				for(var s in selArr)
+				{
+					MultiSelectBox.dbg("filter " + i + 
+							" selected [" + s + "]: ",
+							selArr[s], 
+							_filterValsObj[i].fieldUniqueValueArray[s|0]);
+					
+					//if selected, add value to filter string
+					if(selArr[s])
+						subFilterStr += (subFilterStr.length?",":"") +
+							encodeURIComponent(_filterValsObj[i].fieldUniqueValueArray[s|0])
+				}
+				
+				//if any values selected then add to filter string				
+				if(subFilterStr.length)
+					filterStr += encodeURIComponent(groups[i]) + 
+						"=" + subFilterStr + ";";
+			}
+			
+			//append global filters 
+			filterStr += _filterFieldList;
+			Debug.log("filterStr " + filterStr);
+			
+			ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					filterStr,
+					function(records)
+					{
+				_subsetUIDs = records;
+				Debug.log("records found = " + records.length);
+				console.log(records);
+				
+				updateRecordsAndFields();
+					});
+			
+			
+		}
 		
 		//=====================================================================================
 		//createRightPaneContent ~~
@@ -626,6 +819,97 @@
 			_rightPane = document.createElement("div");
 			_rightPane.setAttribute("class", "pane");
 			_rightPane.setAttribute("id", "rightPane");
+			
+			//	- Right Pane:
+			//		* Show toggle Left Pane link
+			//		* Show fields that are common based on SubLevelGrouping filters
+			//			- E.g. if *,* then can only show SlowControls fields
+			//			- Challenge: show all common fields, even through links
+			//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
+			//			- A field becomes the "selected" field when clicked
+			//				= the selected field should survive resizing, and get reset on filtering
+			//			- A field enters edit mode when pencil is clicked
+			//			- TAB and SHIFT+TAB should jump to next field for editing
+			//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
+			//		
+			
+			var el;
+			var str;
+			
+			//create toggle left pane link
+			el = document.createElement("a");
+			el.setAttribute("style", "float:left;" +
+					"margin-left: 5px;");
+			el.onclick = function() {
+				_leftPaneHidden = !_leftPaneHidden;
+				paint();
+			};			
+			el.innerHTML = (_leftPaneHidden?"Show":"Hide") +
+					" Left Pane";
+			_rightPane.appendChild(el); //add toggle link
+			
+			//add clear div
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_rightPane.appendChild(el);
+
+
+			//create TOP read/write buttons			
+			el = document.createElement("div");
+			var readWriteContainerStyle = "height:30px;" + 
+					"overflow-x:auto; " +
+					"white-space:nowrap;";
+			el.setAttribute("style", readWriteContainerStyle);
+			_rightPane.appendChild(el); //add field container link
+
+			//:::::::::::::::::::::::::::::
+			//localAddReadWriteButtons ~~
+			//	add four buttons to container element
+			function localAddReadWriteButtons(cel)
+			{
+				var btnText = ["Read All Fields","Write All Fields",
+							   "Read Selected Field", "Write Selected Field"];
+
+				var btnHelp = ["Read all fields for selected record in Left Pane.",
+							   "Write all fields for selected record(s) in Left Pane.",							   
+							   "Read selected field for selected record in Left Pane.",
+							   "Write Selected field for selected record(s) in Left Pane."];
+				
+				for(var i=0;i<btnText.length;++i)
+				{
+					el = document.createElement("input");
+					el.setAttribute("style", "height:20px;" + 
+							"margin:5px; ");
+					el.setAttribute("type", "button");
+					el.value = btnText[i];
+					el.title = btnHelp[i];
+					cel.appendChild(el); //add field container link
+				}
+			} // end localAddReadWriteButtons(cel)
+			
+			localAddReadWriteButtons(el);
+			
+
+			//add clear div
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_rightPane.appendChild(el);
+			
+			//create field container with auto scroll
+			el = document.createElement("div");
+			el.setAttribute("style", "overflow:auto;" + 
+					"border: 1px solid rgb(224, 196, 196);" +
+					"margin: 5px;"
+					);
+			_rightPane.appendChild(el); //add field container link
+			_rightPaneFields = el;
+				
+			//create BOTTOM read/write buttons			
+			el = document.createElement("div");
+			el.setAttribute("style", readWriteContainerStyle);
+			_rightPane.appendChild(el); //add bottom buttons
+			localAddReadWriteButtons(el);
+			
 			
 			document.body.appendChild(_rightPane);			
 		}	//end createRightPaneContent()

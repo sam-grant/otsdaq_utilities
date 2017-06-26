@@ -1467,6 +1467,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 					records,fieldFilterList,depth);
 		}
 
+		DOMElement* parentTypeEl;
 		for(const auto &fieldInfo:retFieldList)
 		{
 			xmldoc.addTextElementToParent("FieldTableName",
@@ -1479,15 +1480,20 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 					fieldInfo.relativePath_,
 					parentEl);
 			xmldoc.addTextElementToParent("FieldColumnType",
+					fieldInfo.columnInfo_->getType(),
+					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnDataType",
 					fieldInfo.columnInfo_->getDataType(),
 					parentEl);
 
+			parentTypeEl = xmldoc.addTextElementToParent("FieldColumnDataChoices",
+					"",	parentEl);
 			//if there are associated data choices, send info
 			auto dataChoices = fieldInfo.columnInfo_->getDataChoices();
 			for(const auto &dataChoice : dataChoices)
 				xmldoc.addTextElementToParent("FieldColumnDataChoice",
 						dataChoice,
-						parentEl);
+						parentTypeEl);
 		}
 	}
 	catch(std::runtime_error& e)
@@ -1652,9 +1658,10 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
 //	filterList := relative-to-record-path=value(,value,...);path=value... filtering
-//		records with relative path not meeting all filter critera
+//		records with relative path not meeting all filter criteria
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
-//		- fields/value pairs separated by ;  (i.e. AND)
+//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
+//		- fields/value pairs separated by ; for AND
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr,
 		const std::string &groupName, const ConfigurationGroupKey &groupKey,
@@ -1752,7 +1759,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 					__MOUT__ << filterList << std::endl;
 					for(auto &pair:filterMap)
 						__MOUT__ << "filterMap " <<
-						pair.first << ":" <<
+						pair.first << "=" <<
 						pair.second << std::endl;
 				}
 			}
