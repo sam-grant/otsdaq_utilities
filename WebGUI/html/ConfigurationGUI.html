@@ -208,7 +208,7 @@
 		var _OK_CANCEL_DIALOG_STR = "";
 
 		_OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
-				"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap; text-align:center;'>";
+				"width:95px;height:20px;margin:0 -122px -64px 10px; font-size: 16px; white-space:nowrap; text-align:center;'>";
 		_OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='javascript:editCellOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
 				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
 				"<a class='popUpOkCancel' onclick='javascript:editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
@@ -5419,7 +5419,7 @@
 				//add input into element
 				var str = "";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 				str += initVal;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
@@ -5445,7 +5445,7 @@
 				str += "<table cellpadding='0' cellspacing='0' border='0'><tr>";
 				str += "<td>";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 				str += _editingCellElOldValue;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
@@ -5628,7 +5628,7 @@
 					if(ow < 150) //force a minimum input width
 						ow = 150;
 					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-							(ow) + "px; height:" + (el.offsetHeight) + "px' value='";
+							(ow) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 					str += _editingCellElOldValue;
 					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
@@ -6539,7 +6539,7 @@
 				return false;
 			}
 			else if((e.keyCode >= 48 && e.keyCode <= 57) || 
-					(e.keyCode >= 96 && e.keyCode <= 105))// number
+					(e.keyCode >= 96 && e.keyCode <= 105))// number 0-9
 			{
 				//if child link cell or boolean cell			
 				var sel;
@@ -12415,8 +12415,8 @@
 				if(vel)
 					vel.style.backgroundColor = "transparent";
 			}
-
 		}
+		
 		//handleTreeNodeMouseMove ~~
 		function handleTreeNodeMouseMove(depth,uid,event)
 		{

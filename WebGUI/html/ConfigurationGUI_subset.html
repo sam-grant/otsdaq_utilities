@@ -70,7 +70,9 @@
 		//									- these are the fields that can be used to filter UID records by (and these will cause grouping in square-view)	
 		//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
 		//		<filterFieldList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
-		//									- this is like a pre-filter (filter on records UID that user can not control)	
+		//									- this is like a pre-filter (filter on records UID that user can not control)
+		//		<recordsAlias> = Records display name, e.g. "Front-ends"
+		//
 		//	- Requires user to have LOCK
 		//
 		//	- Top Pane:
@@ -116,12 +118,14 @@
 		var _leftPaneHidden = false;
 		
 		var _rightPaneFields;
+		var _RIGHT_PANE_RW_BTN_HEIGHT = 48;
 		
 		//global vars for GET params
 		var _subsetBasePath;			
 		var _groupingFieldList;			
 		var _editableFieldList;			
 		var _filterFieldList;
+		var _recordsAlias;
 		
 		//global vars for multiselects				
 		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
@@ -130,6 +134,8 @@
 		
 		//global vars for fields
 		var _selectedFieldIndex = -1;
+		var _editFieldIndex = -1;	
+		var _fields;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -149,6 +155,8 @@
 			//groupFilterSelectionHandler(el)
 			//createRightPaneContent()
 			//		localAddReadWriteButtons(cel)
+		
+			//btnActionReadAllFields()
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -364,7 +372,7 @@
 
 			_rightPaneFields.style.height = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
 			_rightPaneFields.style.height = (h - 20 - //for left pane hide
-					60 - //for top/bottom read/write buttons
+					(_RIGHT_PANE_RW_BTN_HEIGHT*2) - //for top/bottom read/write buttons
 					2*BORDER_SZ - 2*MARGIN) + "px";
 						
 		}	//end paint()
@@ -396,7 +404,7 @@
 			MultiSelectBox.createSelectBox(
 					el,
 					"RecordsGroupBox",
-					"Records:",
+					_recordsAlias + ":",
 					vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
 
 			MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
@@ -411,7 +419,8 @@
 					_editableFieldList,
 					-1,
 					function(recordFields)
-					{
+					{				
+				_fields = recordFields;
 				Debug.log("recordFields found = " + recordFields.length);
 				console.log(recordFields);
 
@@ -442,15 +451,20 @@
 				{
 					//create field
 					el = document.createElement("div");
+					el.setAttribute("id", "cfg_subset_field-" + i);
 					el.setAttribute("style", "white-space:nowrap;" +
 							"margin: 5px;");
-					_rightPaneFields.appendChild(el); //add field container link
-
-					str = "";
-					str += recordFields[i].fieldRelativePath +
-							recordFields[i].fieldColumnName + " : ";
-					str += recordFields[i].fieldColumnType;
-					el.innerHTML = str;
+					_rightPaneFields.appendChild(el); //add field to field container
+					
+					
+					el.appendChild(ConfigurationAPI.createEditableFieldElement(
+							recordFields[i],i));
+					
+//					str = "";
+//					str += recordFields[i].fieldRelativePath +
+//							recordFields[i].fieldColumnName + " : ";
+//					str += recordFields[i].fieldColumnType;
+//					el.innerHTML = str;
 
 					//add clear div
 					el = document.createElement("div");
@@ -471,13 +485,15 @@
 			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
 			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
 			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-			//		<filterFieldList> 	= ;-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
-
+			//		<filterFieldList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
+			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
+			
 			_subsetBasePath		= "FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
 			_groupingFieldList 	= "LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
 			_editableFieldList	= "";//DesktopContent.getParameter(0,"editableFieldList");			
 			_filterFieldList 	= "";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"filterFieldList");
-
+			_recordsAlias		= "Front-ends"; //default to records
+					
 			if(!_subsetBasePath)
 			{
 				Debug.log("Missing required GET parameter 'subsetBasePath.'",
@@ -487,11 +503,13 @@
 			if(!_groupingFieldList) _groupingFieldList = "";
 			if(!_editableFieldList) _editableFieldList = "";
 			if(!_filterFieldList) _filterFieldList = "";
+			if(!_recordsAlias) _recordsAlias = "Records";
 
 			Debug.log("_subsetBasePath " + _subsetBasePath);
 			Debug.log("_groupingFieldList " + _groupingFieldList);
 			Debug.log("_editableFieldList " + _editableFieldList);
 			Debug.log("_filterFieldList " + _filterFieldList);
+			Debug.log("_recordsAlias " + _recordsAlias);
 			
 			return true;
 		}	//end extractGETParameters()
@@ -506,7 +524,13 @@
 		{
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
 			_subsetUIDs = []; //reset
-			_filterValsObj = {};//reset
+			_filterValsObj = {}; //reset
+						
+			window.clearTimeout(_filterTimer); 
+			_selectedFieldIndex = -1;
+			_editFieldIndex = -1;
+			
+			
 			
 			ConfigurationAPI.getSubsetRecords(
 					_subsetBasePath,
@@ -552,9 +576,9 @@
 			str = "Targeting ";
 			
 			if(_filterFieldList != "")
-				str += "records ";
+				str += _recordsAlias + " ";
 			else
-				str += "all records ";
+				str += "all " + _recordsAlias + " ";
 		
 			str += "at path '/" + _subsetBasePath + ",' ";
 			
@@ -709,26 +733,6 @@
 
 				_leftPane.appendChild(el);
 
-//				var noMultiSelect = false; // true or false (false for multiselect functionality) 
-//				var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-//
-//				var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
-//				var keys = [];
-//				var types = [];
-//				for(var j=0;j<vals.length;++j)
-//				{
-//					keys.push(j);
-//					types.push("record");								
-//				}				
-//
-//				//write MultiSelectBox to a particular div
-//				MultiSelectBox.createSelectBox(el,
-//						"RecordsGroupBox",
-//						"Records:",
-//						vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
-//
-//				MultiSelectBox.initMySelectBoxes();
-
 				el = document.createElement("div");
 				el.setAttribute("id", "clearDiv");
 				_leftPane.appendChild(el);
@@ -856,7 +860,7 @@
 
 			//create TOP read/write buttons			
 			el = document.createElement("div");
-			var readWriteContainerStyle = "height:30px;" + 
+			var readWriteContainerStyle = "height:" + _RIGHT_PANE_RW_BTN_HEIGHT + "px;" + 
 					"overflow-x:auto; " +
 					"white-space:nowrap;";
 			el.setAttribute("style", readWriteContainerStyle);
@@ -875,6 +879,11 @@
 							   "Read selected field for selected record in Left Pane.",
 							   "Write Selected field for selected record(s) in Left Pane."];
 				
+				var btnAction = [btnActionReadAllFields,
+								 btnActionReadAllFields,							   
+								 btnActionReadAllFields,
+								 btnActionReadAllFields];
+				
 				for(var i=0;i<btnText.length;++i)
 				{
 					el = document.createElement("input");
@@ -883,6 +892,7 @@
 					el.setAttribute("type", "button");
 					el.value = btnText[i];
 					el.title = btnHelp[i];
+					el.onclick = btnAction[i];
 					cel.appendChild(el); //add field container link
 				}
 			} // end localAddReadWriteButtons(cel)
@@ -913,6 +923,57 @@
 			
 			document.body.appendChild(_rightPane);			
 		}	//end createRightPaneContent()
+
+		//=====================================================================================
+		//btnActionReadAllFields ~~
+		function btnActionReadAllFields() 
+		{
+			var selArr = 
+					MultiSelectBox.getSelectionArray(
+						document.getElementById("recordMultiSelect"));
+			var cntSelected = 0;
+			var selectedIndex = [];
+			for(var s in selArr)
+			{
+				MultiSelectBox.dbg("record selected [" + s + "]: ",
+						selArr[s], 
+						_subsetUIDs[s|0]);
+				
+				if(selArr[s]) 
+				{
+					++cntSelected;
+					selectedIndex.push(s|0);
+
+					if((s|0) < 0 || (s|0) >= _subsetUIDs.length)
+					{
+						Debug.log("Invalid record index '" + (s|0) + 
+								"' should be impossible. Please notify developers as to how you got here!", Debug.HIGH_PRIORITY);						
+						return;
+					}
+				}
+			}
+			
+			if(cntSelected != 1)
+			{
+				Debug.log("To Read All Fields, please choose one and only one target from the list of " +
+						_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
+				return;
+			}
+			
+				
+			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex[0]]);
+			
+			ConfigurationAPI.getFieldValuesForRecord(
+					_subsetBasePath,
+					_subsetUIDs[selectedIndex[0]],
+					_fields,
+					function(recFieldValues)
+					{
+				
+					} //end getFieldValuesForRecord handler
+			);
+		}	//end btnActionReadAllFields()
+		
 		
 		</script>
 </head>

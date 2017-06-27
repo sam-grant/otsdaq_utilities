@@ -56,10 +56,16 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
 //	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
+//	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
+//	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
+//	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize)
+//	ConfigurationAPI.addClass(elem,class)
+//	ConfigurationAPI.removeClass(elem,class)
+//	ConfigurationAPI.hasClass(elem,class)
 
 
 //"public" constants:
@@ -75,11 +81,28 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
+//
+//		for Editable Fields
+//	ConfigurationAPI.handleEditableFieldClick(depth,uid,editClick,type)
+//	ConfigurationAPI.handleEditableFieldHover(depth,uid,event)
+//	ConfigurationAPI.handleEditableFieldBodyMouseMove(event)
+//	ConfigurationAPI.handleEditableFieldEditOK()
+//	ConfigurationAPI.handleEditableFieldEditCancel()
+//	ConfigurationAPI.handleEditableFieldKeyDown(event,keyEl)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
 ConfigurationAPI._SCRATCH_VERSION = 2147483647;
 ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
+
+ConfigurationAPI._OK_CANCEL_DIALOG_STR = "";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
+				"width:95px;height:20px;margin:0 -122px -64px 10px; font-size: 16px; white-space:nowrap; text-align:center;'>";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='javascript:ConfigurationAPI.handleEditableFieldEditOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
+				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+				"<a class='popUpOkCancel' onclick='javascript:ConfigurationAPI.handleEditableFieldEditCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
+				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";	
 
 //=====================================================================================
 //getSubsetRecords ~~
@@ -3541,6 +3564,871 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
 	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
 }
+
+
+
+
+//=====================================================================================
+//createEditableFieldElement ~~
+//
+//	Creates div element with editable and highlight features
+//
+//	Input field must be a value node.
+//	Input object is single field as returned from ConfigurationAPI.getFieldsOfRecords
+//
+//	fieldIndex is unique integer for the field 
+//	depthIndex (optional) is indicator of depth, e.g. for tree display
+//	
+//	Field := {}
+//			obj.fieldTableName 
+//			obj.fieldUID 
+//			obj.fieldColumnName
+//			obj.fieldRelativePath 
+//			obj.fieldColumnType
+//			obj.fieldColumnDataType
+//			obj.fieldColumnDataChoicesArr[]
+//
+ConfigurationAPI.editableFieldEditingCell_ = 0;
+ConfigurationAPI.editableFieldEditingIdString_;
+ConfigurationAPI.editableFieldEditingNodeType_;
+ConfigurationAPI.editableFieldEditingOldValue_;
+ConfigurationAPI.editableFieldEditingInitValue_;
+ConfigurationAPI.editableFieldHoveringCell_ = 0;
+ConfigurationAPI.editableFieldSelectedCell_ = 0;
+ConfigurationAPI.editableFieldSelectedIdString_;
+ConfigurationAPI.editableFieldHandlersSubscribed_ = false;
+ConfigurationAPI.editableFieldMouseIsSelecting_ = false;
+ConfigurationAPI.editableField_SELECTED_COLOR_ = "rgb(251, 245, 53)";
+ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+{
+	var str = "";
+	var depth = depthIndex|0;
+	var uid = fieldIndex|0;
+	
+	if(!ConfigurationAPI.editableFieldHandlersSubscribed_)
+	{
+		ConfigurationAPI.editableFieldHandlersSubscribed_ = true;		
+		
+		//be careful to not override the window.onmousemove DesktopContent action
+		DesktopContent.mouseMoveSubscriber(ConfigurationAPI.handleEditableFieldBodyMouseMove); 
+	}
+	
+	var fieldEl = document.createElement("div");
+	fieldEl.setAttribute("class", "ConfigurationAPI-EditableField");
+	fieldEl.setAttribute("id", "ConfigurationAPI-EditableField-" + 
+			( depth + "-" + uid ));
+	
+	Debug.log("Field type " + fieldObj.fieldColumnType);
+	console.log(fieldObj);
+	
+	var valueType = fieldObj.fieldColumnType;
+	var choices = fieldObj.fieldColumnDataChoicesArr;
+	var value = "";
+	var path = fieldObj.fieldRelativePath;
+	var nodeName = fieldObj.fieldColumnName;
+
+	var pathHTML = path;
+	//make path html safe
+	pathHTML = pathHTML.replace(/</g, "&lt");
+	pathHTML = pathHTML.replace(/>/g, "&gt");	
+	
+	str += "<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
+			( depth + "-" + uid ) + "'>" + // end path id
+			pathHTML + //save path for future use.. and a central place to edit when changes occur
+			"</div>";
+								
+	
+	if(valueType == "FixedChoiceData")
+	{
+		//add CSV choices div
+		str += 
+				"<div class='treeNode-FixedChoice-CSV' style='display:none' " + 
+				"id='treeNode-FixedChoice-CSV-" +
+				( depth + "-" + uid ) + "'>";
+
+		for(var j=0;j<choices.length;++j)
+		{
+			if(j) str += ",";
+			str += choices[j];
+		}
+		str += "</div>";
+	}
+	else if(valueType == "BitMap")
+	{
+		//add bitmap params div
+		str += 
+				"<div class='treeNode-BitMap-Params' style='display:none' " + 
+				"id='treeNode-BitMap-Params-" +
+				( depth + "-" + uid ) + "'>";
+
+		for(var j=1;j<choices.length;++j) //skip the first DEFAULT param
+		{
+			if(j-1) str += ";"; //assume no ';' in fields, so likely no issue to replace ; with ,
+			str += choices[j].replace(/;/g,","); //change all ; to , for split safety
+		}
+		str += "</div>";
+	}
+
+	//normal value node and edit icon
+	{
+		//start value node
+		str += 
+				"<div class='treeNode-Value treeNode-ValueType-" + valueType +
+				"' " +
+				"id='treeNode-Value-" +
+				(depth + "-" + uid) + "' " +
+
+				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							
+				depth + "," + uid + "," + 	
+				"0,\"value\")' " +
+
+				"onmousemove='ConfigurationAPI.handleEditableFieldHover(" +							
+				depth + "," + uid + "," + 	
+				"event)' " +
+
+				">";	
+
+		titleStr = "~ Leaf Value Node ~\n";
+		titleStr +=	"Path: \t" + path + nodeName + "\n";
+
+		//left side of value
+		str += 
+				"<div style='float:left' title='" + titleStr + "'>" +
+				"<b class='treeNode-Value-leafNode-fieldName bold-header'>" + 
+				nodeName + "</b>" + 
+				"</div><div style='float:left'>&nbsp;:</div>";
+
+		//normal edit icon
+		str += 
+				"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+				(depth + "-" + uid) + "' " +
+				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							 
+				depth + "," + uid + "," + 	
+				"1,\"value\"); event.stopPropagation();' " +
+				"title='Edit the value of this node.' " +
+				"></div>";						
+	}
+
+	str += "<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
+			(depth + "-" + uid) +			
+			"' class='" +
+			"treeNode-Value-leafNode-ColumnName-" + nodeName +
+			"' " +
+			">";
+
+	if(valueType == "OnOff" || 
+			valueType == "YesNo" || 
+			valueType == "TrueFalse")
+	{
+		//colorize true false														
+		str += "<div style='float:left'>";										
+		str += value;											
+		str += "</div>";
+
+		var color = (value == "On" || value == "Yes" || value == "True")?
+				"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+		str += "<div style='width:10px;height:10px;" +
+				"background-color:" + color + ";" +
+				"float: left;" +
+				"border-radius: 7px;" +
+				"border: 2px solid white;" +
+				"margin: 2px 0 0 6px;" +								
+				"'></div>";								
+	}
+	else if(valueType == "Timestamp")				
+		str += ConfigurationAPI.getDateString(new Date((value|0)*1000));						
+	else					
+		str += value;
+
+	
+	Debug.log(str);
+	
+	fieldEl.innerHTML = str;
+	
+	return fieldEl;
+}
+
+//=====================================================================================
+//getEditableFieldValue ~~
+//	return value is the string value
+ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+{
+	//TODO copy from tree save
+}
+
+//=====================================================================================
+//setEditableFieldValue ~~
+//	input value is expected to be the string value
+ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,depthIndex /*optional*/)
+{
+	//TODO copy from elem create
+}
+
+
+
+//=====================================================================================
+//handleEditableFieldClick ~~
+//	handler for click event for editable field elements
+//
+//	copied from ConfigurationGUI.html handleTreeNodeClick() ..but only 
+//		defines functionality for value nodes.
+ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
+{
+	var idString = depth + "-" + uid;
+	ConfigurationAPI.editableFieldEditingIdString_ = idString;
+
+	Debug.log("handleEditableFieldClick editClick " + editClick);
+	Debug.log("handleEditableFieldClick idString " + idString);
+	
+	var el = document.getElementById("treeNode-Value-" + idString);
+	
+	if(!el)
+	{
+		Debug.log("Invalid element pointed to by idString. Ignoring and exiting.");
+		return;
+	}
+
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("handleTreeNodeClick editClick clearing ");
+		ConfigurationAPI.handleEditableFieldBodyMouseMove();
+	}
+
+	if(ConfigurationAPI.editableFieldEditingCell_) //already have the edit box open, cancel it
+	{
+		if(ConfigurationAPI.editableFieldEditingCell_ == el) //if same cell do nothing
+			return true;
+		ConfigurationAPI.handleEditableFieldEditOK(); //if new cell, click ok on old cell before continuing
+	}
+
+	var path = document.getElementById("treeNode-path-" + idString).textContent;
+
+	//			Debug.log("handleEditableFieldClick el       " + el.innerHTML);
+	//Debug.log("handleEditableFieldClick idString    " + idString);
+	//Debug.log("handleEditableFieldClick uid      " + uid);
+	//			Debug.log("handleEditableFieldClick nodeName " + nodeName);
+	Debug.log("handleEditableFieldClick path     " + path);
+	//Debug.log("handleEditableFieldClick editClick " + editClick);
+	Debug.log("handleEditableFieldClick type     " + type);
+	
+	//determine type clicked:
+	//	- value
+	//
+	//allow different behavior for each	depending on single or edit(2x) click	
+	//	- value		 	
+	//		1x = select node 
+	//		2x = edit record Value mode (up/down tab/shtab enter esc active)
+	//
+	//on tree node edit OK	
+	//	- value
+	//		save value back to field element
+	//
+	//on tree node edit cancel
+	//	return previous value back to field element
+
+
+	//==================
+	//take action based on editClick and type string:
+	//	- value
+	//
+	//params:
+	//	(el,depth,uid,path,editClick,type,delayed)
+
+	if(editClick)	//2x click
+	{
+		
+		if(type == "value")
+		{
+			//edit ID (no keys active)
+			Debug.log("edit value mode");
+
+			selectThisTreeNode(idString,type);
+			function selectThisTreeNode(idString,type)
+			{				
+				//edit column entry in record
+				//	data type matters here, also don't edit author, timestamp
+				var el = document.getElementById("treeNode-Value-leafNode-" + idString);
+				var vel = document.getElementById("treeNode-Value-" + idString);
+				
+				//if value node, dataType is in element class name
+				var colType = vel.className.split(' ')[1].split('-');
+				if(colType[1] == "ValueType")
+					colType = colType[2];
+
+				var fieldName = el.className.substr(("treeNode-Value-leafNode-ColumnName-").length);
+				
+				Debug.log("fieldName=" + fieldName);
+				Debug.log("colType=" + colType);
+				
+				if(colType == "Author" || 
+						colType == "Timestamp")
+				{
+					Debug.log("Can not edit Author or Timestamp fields.",
+							Debug.WARN_PRIORITY);
+					return false;
+				}
+				
+				
+				var str = "";		
+				var optionIndex = -1;
+				
+				
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{
+					type += "-bool";
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.innerHTML;
+					
+					var initVal = el.childNodes[0].textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = initVal;
+					
+					var boolVals = [];
+					if(colType == "YesNo")
+						boolVals = ["No","Yes"];
+					else if(colType == "TrueFalse")
+						boolVals = ["False","True"];
+					else if(colType == "OnOff")
+						boolVals = ["Off","On"];
+
+
+					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_); event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							"style='margin:-8px -2px -2px -1px; height:" + (el.offsetHeight+6) + "px'>";
+					for(var i=0;i<boolVals.length;++i)
+					{			
+						str += "<option value='" + boolVals[i] + "'>";
+						str += boolVals[i];	//can display however
+						str += "</option>";
+						if(boolVals[i] == initVal)
+							optionIndex = i; //get starting sel index					
+					}			
+					str += "</select>";
+					if(optionIndex == -1) optionIndex = 0; //use False option by default					
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+					
+					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='margin:-8px -2px -2px -1px; height:" + (el.offsetHeight+6) + "px'>";
+
+					//default value is assumed in list
+
+					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
+							idString);
+					var choices = vel.textContent.split(',');
+					
+					for(var i=0;i<choices.length;++i)
+					{			
+						str += "<option>";
+						str += decodeURIComponent(choices[i]);	//can display however
+						str += "</option>";
+						if(decodeURIComponent(choices[i]) 
+								== ConfigurationAPI.editableFieldEditingOldValue_)
+							optionIndex = i; //get starting sel index
+					}				
+					str += "</select>";	
+				}
+				else if(colType == "BitMap")
+				{
+					Debug.log("Handling bitmap select");
+					
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+										
+					//let API bitmap dialog handle it
+					ConfigurationAPI.bitMapDialog(
+							//_editingCellElOldTitle, //field name
+							"Target Field: &quot;" + 
+							fieldName_ + "&quot;",
+							document.getElementById("treeNode-BitMap-Params-" +
+														idString).textContent.split(';'), 
+							ConfigurationAPI.editableFieldEditingOldValue_,
+							function(val)
+							{
+						Debug.log("yes " + val);
+						el.innerHTML = "";
+						el.appendChild(document.createTextNode(val));
+						ConfigurationAPI.editableFieldEditingCell_ = el;
+						
+						type += "-bitmap";
+						editTreeNodeOK();
+							
+							},
+							function() //cancel handler
+							{							
+								//remove the editing cell selection
+								Debug.log("cancel bitmap");
+								ConfigurationAPI.editableFieldEditingCell_ = 0;
+							});
+					return true;
+				}
+				else if(colType == "MultilineData")
+				{
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+					
+					str += "<textarea rows='4' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' cols='50' style='font-size: 14px; " +
+							"margin:-8px -2px -2px -1px;width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
+					str += " onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							">";
+					str += ConfigurationAPI.editableFieldEditingOldValue_;
+					str += "</textarea>";				
+				}
+				else // normal cells, with text input
+				{
+					if(colType == "GroupID") //track type if it is groupid field
+						type += "-groupid";
+					
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+					
+					var ow = el.offsetWidth+6;
+					if(ow < 150) //force a minimum input width
+						ow = 150;
+					str += "<input type='text' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' style='margin:-8px -2px -2px -1px;width:" + 
+							(ow) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
+					str += ConfigurationAPI.editableFieldEditingOldValue_;
+					str += "' onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							">";					
+				}
+
+
+				str += ConfigurationAPI._OK_CANCEL_DIALOG_STR;	
+
+				el.innerHTML = str;
+				
+				//handle default selection
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{					//select initial value
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else if(colType == "MultilineData")
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+				else 					//select text in new input
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+
+				
+				//wrapping up
+				ConfigurationAPI.editableFieldEditingCell_ = el;
+				ConfigurationAPI.editableFieldEditingNodeType_ = type;
+			}
+		}
+		else
+		{
+			Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+			return;
+		}
+	}
+	else		//1x click
+	{
+		if(type == "value")
+		{
+			//Mark selected
+			Debug.log("Selecting field");
+			
+			//add previously selected 
+			if(ConfigurationAPI.editableFieldSelectedCell_)
+				ConfigurationAPI.editableFieldSelectedCell_.style.backgroundColor = "transparent";
+			
+			//add newly selected 
+			var vel = document.getElementById("treeNode-Value-" + 
+					idString);
+			vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
+			ConfigurationAPI.editableFieldSelectedCell_ = vel;
+		}
+		else
+		{
+			Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+			return;
+		}
+	}
+
+
+}
+
+//=====================================================================================
+//handleEditableFieldHover ~~
+//	handler for mousemove event for editable field elements
+ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
+{
+	var idString = depth + "-" + uid;
+
+	//Debug.log("handleEditableFieldHover idString " + idString);
+	
+	event.stopPropagation();
+	DesktopContent.mouseMove(event); //keep desktop content happy
+
+	
+	if(ConfigurationAPI.editableFieldEditingCell_) return; //no setting while editing
+
+	var el = document.getElementById("treeNode-Value-editIcon-" + idString);
+	if(ConfigurationAPI.editableFieldHoveringCell_ == el) return;
+
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("bodyMouseMoveHandler clearing ");
+		bodyMouseMoveHandler();
+	}
+
+	//Debug.log("handleTreeNodeMouseMove setting ");
+	ConfigurationAPI.editableFieldHoveringIdString_ = idString;
+	ConfigurationAPI.editableFieldHoveringCell_ = el;
+	ConfigurationAPI.editableFieldHoveringCell_.style.display = "block";	
+	var vel = document.getElementById("treeNode-Value-" + 
+			ConfigurationAPI.editableFieldHoveringIdString_);
+	vel.style.backgroundColor = "rgb(218, 194, 194)";
+}
+
+//=====================================================================================
+//handleEditableFieldBodyMouseMove ~~
+ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
+{
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("bodyMouseMoveHandler clearing ");
+		ConfigurationAPI.editableFieldHoveringCell_.style.display = "none";
+		ConfigurationAPI.editableFieldHoveringCell_ = 0;
+
+		var vel = document.getElementById("treeNode-Value-" + 
+				ConfigurationAPI.editableFieldHoveringIdString_);
+		if(vel)
+		{
+			if(vel == ConfigurationAPI.editableFieldSelectedCell_)
+				vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
+			else				
+				vel.style.backgroundColor = "transparent";
+		}
+	}
+}
+
+//=====================================================================================
+//handleEditableFieldKeyDown ~~
+//	copied from ConfigurationGUI keyHandler but modified for only value cells
+ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
+{
+	var TABKEY = 9;
+	var ENTERKEY = 13;
+	var UPKEY = 38;
+	var DNKEY = 40;
+	var ESCKEY = 27;
+	//Debug.log("key " + e.keyCode);
+	
+	var shiftIsDown;
+	if (window.event) 
+	{
+		key = window.event.keyCode;
+		shiftIsDown = !!window.event.shiftKey; // typecast to boolean
+	} 
+	else
+	{
+		key = e.which;
+		shiftIsDown = !!e.shiftKey;	// typecast to boolean
+	}
+	//Debug.log("shift=" + shiftIsDown);
+	
+		
+	//handle text area specially
+	if(!shiftIsDown)
+	{
+		var tel;
+		if(ConfigurationAPI.editableFieldEditingCell_ && 
+				(tel = ConfigurationAPI.editableFieldEditingCell_.getElementsByTagName("textarea")).length)
+		{
+			tel = tel[0];
+			//handle special keys for text area
+			if(e.keyCode == TABKEY)
+			{
+				Debug.log("tab.");
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				var i = tel.selectionStart;
+				var j = tel.selectionEnd;
+				tel.value =  tel.value.substr(0,i) + 
+						'\t' + tel.value.substr(j);
+				tel.selectionStart = tel.selectionEnd = j+1;
+			}
+			return false; //done if text area was identified
+		}
+	}
+	
+	//tab key jumps to next cell with a CANCEL
+	//	(enter key does same except saves/OKs value)
+	//	shift is reverse jump
+	if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
+			e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+	{
+		//this.value += "    ";
+		if(e.preventDefault) 
+			e.preventDefault();
+
+		//save idString
+		var idString = ConfigurationAPI.editableFieldEditingIdString_;
+		 
+		ConfigurationAPI.handleEditableFieldEditOK();
+		
+		
+		//enter key := done
+		//tab/shift+tab := move to next field at depth
+		//down/up	:= move to next field at depth
+		
+		
+		if(e.keyCode == ENTERKEY) //dont move to new cell
+			return false;
+
+		var depth = idString.split('-')[0];
+		var uid = idString.split('-')[1];
+				
+		if((!shiftIsDown && e.keyCode == TABKEY) || e.keyCode == DNKEY) //move to next field
+			++uid;
+		else if((shiftIsDown && e.keyCode == TABKEY) || e.keyCode == UPKEY) //move to prev field
+			--uid;
+		if(uid < 0) return false; //no more fields, do nothing
+		
+		//assume handleEditableFieldClick handles invalid uids on high side gracefully
+		ConfigurationAPI.handleEditableFieldClick(depth,uid,1,"value");
+		Debug.log("new uid=" + uid);
+		
+		return false;
+	}
+	else if(e.keyCode == ESCKEY) 
+	{				
+		if(e.preventDefault) 
+			e.preventDefault();
+		ConfigurationAPI.handleEditableFieldEditCancel();
+		return false;
+	}
+	else if((e.keyCode >= 48 && e.keyCode <= 57) || 
+			(e.keyCode >= 96 && e.keyCode <= 105))// number 0-9
+	{
+		//if child link cell or boolean cell			
+		var sel;
+		if((sel = ConfigurationAPI.editableFieldEditingCell_.getElementsByTagName("select")).length)
+		{
+			if(keyEl) //if input element, use it
+				sel = keyEl;
+			else
+				sel = sel[sel.length-1]; //assume the last select in the cell is the select
+			
+			//select based on number
+			var selNum;
+			if(e.keyCode >= 96)
+				selNum = e.keyCode - 96;
+			else
+				selNum = e.keyCode - 48;
+			
+			sel.selectedIndex = selNum % (sel.options.length);
+			sel.focus();	
+			
+			Debug.log("number select =" + sel.selectedIndex);
+			if(sel.onchange) //if onchange implemented call it
+				sel.onchange();
+		}
+	}
+}
+
+//=====================================================================================
+//handleEditableFieldEditCancel ~~
+//	copied from ConfigurationGUI editCellCancel but modified for only value cells
+ConfigurationAPI.handleEditableFieldEditCancel = function()
+{	
+	if(!ConfigurationAPI.editableFieldEditingCell_) return;
+	Debug.log("handleEditableFieldEditCancel type " + ConfigurationAPI.editableFieldEditingNodeType_);
+
+	if(ConfigurationAPI.editableFieldEditingNodeType_ == "value-bool") 
+	{
+		//take old value as HTML for bool values
+		ConfigurationAPI.editableFieldEditingCell_.innerHTML = ConfigurationAPI.editableFieldEditingOldValue_;		
+	}
+	else
+	{
+		ConfigurationAPI.editableFieldEditingCell_.innerHTML = "";
+		ConfigurationAPI.editableFieldEditingCell_.appendChild(
+				document.createTextNode(ConfigurationAPI.editableFieldEditingOldValue_));
+	}
+
+	ConfigurationAPI.editableFieldEditingCell_ = 0;
+}
+
+//=====================================================================================
+//handleEditableFieldEditOK ~~
+//	copied from ConfigurationGUI editCellOK but modified for only value cells
+ConfigurationAPI.handleEditableFieldEditOK = function()
+{							
+	if(!ConfigurationAPI.editableFieldEditingCell_) return;
+	Debug.log("handleEditableFieldEditOK type " + ConfigurationAPI.editableFieldEditingNodeType_);
+		
+
+	var el = ConfigurationAPI.editableFieldEditingCell_;
+	var type = ConfigurationAPI.editableFieldEditingNodeType_;
+	
+	///////////////////////////////////////////////
+	//localEditTreeNodeOKRequestsComplete
+	function localEditTreeNodeOKRequestsComplete(newValue)
+	{				
+		// all value types, clear the cell first		
+		el.innerHTML = "";
+		
+		
+		if(type == "value" || 
+				type == "value-bitmap")
+		{
+			//if(type == "MultilineData")
+			//MultilineData and normal
+			//normal data
+			//bitmap data (do nothing would be ok, value already set)
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
+			
+		}
+		else if(type == "value-bool")
+		{
+			var str = "";
+			
+			//colorize true false														
+			str += "<div style='float:left'>";										
+			str += newValue;											
+			str += "</div>";
+
+			var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
+					"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+			str += "<div style='width:10px;height:10px;" +
+					"background-color:" + color + ";" +
+					"float: left;" +
+					"border-radius: 7px;" +
+					"border: 2px solid white;" +
+					"margin: 2px 0 0 6px;" +								
+					"'></div>"; 
+			el.innerHTML = str;
+		}			
+		else if(type == "value-groupid")
+		{					
+			el.appendChild(document.createTextNode(newValue));
+		}
+		else	//unrecognized type!?
+		{
+			Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+			ConfigurationAPI.handleEditableFieldEditCancel(); return;
+		}
+		
+		//requests are done, so end editing
+		ConfigurationAPI.editableFieldEditingCell_ = 0;
+	} //end localEditTreeNodeOKRequestsComplete
+	///////////////////////////////////////////////
+
+
+	if(		
+			type == "value" ||
+			type == "value-bool" || 
+			type == "value-bitmap" || 
+			type == "value-groupid")
+						
+	{
+		var newValue;
+		
+		if(type == "value-bool")
+		{
+			var sel = el.getElementsByTagName("select")[0];
+			newValue = sel.options[sel.selectedIndex].value;
+		}
+		else if(type == "value-bitmap")
+		{
+			newValue = encodeURIComponent(el.textContent);
+		}		
+		else	//value (normal or multiline data)
+		{
+			var sel;
+			if((sel = el.getElementsByTagName("textarea")).length) //for MultilineData					
+				newValue = sel[0].value; //assume the first textarea in the cell is the textarea
+			else if((sel = el.getElementsByTagName("select")).length) //for FixedChoiceData					
+				newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+			else
+				newValue = el.getElementsByTagName("input")[0].value;
+			
+			newValue = encodeURIComponent(newValue.trim());
+		}
+		
+		Debug.log("CfgGUI editTreeNodeOK editing " + type + " node = " +
+				newValue);
+		
+		if(ConfigurationAPI.editableFieldEditingInitValue_ == newValue)
+		{
+			Debug.log("No change. Do nothing.");
+			ConfigurationAPI.handleEditableFieldEditCancel();
+			return;
+		}
+		
+		
+		//		if saved successfully
+		//			update value in field			
+
+		localEditTreeNodeOKRequestsComplete(newValue);				
+		
+	}
+	else	//unrecognized type!?
+	{
+		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+		editCellCancel(); return;
+	}
+}
+
+
+//=====================================================================================
+//hasClass ~~
+ConfigurationAPI.hasClass = function(ele,cls) 
+{
+    return !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
+}
+
+//=====================================================================================
+//addClass ~~
+ConfigurationAPI.addClass = function(ele,cls) 
+{
+    if (!ConfigurationAPI.hasClass(ele,cls)) ele.className += " "+cls;
+}
+
+//=====================================================================================
+//removeClass ~~
+ConfigurationAPI.removeClass = function(ele,cls) 
+{
+    if (ConfigurationAPI.hasClass(ele,cls)) 
+    {
+    	var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
+    	ele.className=ele.className.replace(reg,'');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
