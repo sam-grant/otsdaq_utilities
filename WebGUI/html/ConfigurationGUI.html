@@ -3371,9 +3371,20 @@
 						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
 					else //accessing through link so need to get from parent
 					{
-						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" + 
-								treeEditingNodeParentIdString_).textContent;	
+						//needs to get from parent OR parent-of-parent
+						//	if parent is uid link.. then one level back
+						//	if parent is groupid link.. then two levels back
+
+						var pel = document.getElementById("treeNode-linkTableName-" +
+								treeEditingNodeParentIdString_);
+						if(!pel)
+							pel = document.getElementById("treeNode-linkTableName-" +
+									(document.getElementById("treeNode-ParentId-" + 
+											treeEditingNodeParentIdString_).textContent));
+						
+						treeEditingTargetTable_ = pel.textContent;
 					}
+					
 					treeEditingTargetUID_ = el.textContent;
 					treeEditingTargetColumn_ = "UID";
 					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
@@ -8484,9 +8495,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											idString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												(document.getElementById("treeNode-ParentId-" + 
+														parentIdString).textContent))));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}					
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
@@ -8599,9 +8630,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											idString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												(document.getElementById("treeNode-ParentId-" + 
+														parentIdString).textContent))));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}						
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
@@ -8854,9 +8905,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+							
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent))));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							
+							table = pel.textContent;
+						}
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
@@ -8938,9 +9009,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												(document.getElementById("treeNode-ParentId-" + 
+														parentIdString).textContent))));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}					
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
@@ -8981,8 +9072,22 @@
 						//need table to verify match.. must get from parent link	
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
 								idString).textContent;
-						table = document.getElementById("treeNode-linkTableName-" + 
-								parentIdString).textContent;						
+						
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+	
+							var pel = document.getElementById("treeNode-linkTableName-" +
+									parentIdString);
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" +
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent));
+							
+							table = pel.textContent;
+						}
+						
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
