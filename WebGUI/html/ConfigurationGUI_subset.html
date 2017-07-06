@@ -120,6 +120,8 @@
 		var _rightPaneFields;
 		var _RIGHT_PANE_RW_BTN_HEIGHT = 48;
 		
+		var eventListenersCreated = false;
+		
 		//global vars for GET params
 		var _subsetBasePath;			
 		var _groupingFieldList;			
@@ -136,6 +138,9 @@
 		var _selectedFieldIndex = -1;
 		var _editFieldIndex = -1;	
 		var _fields;
+		
+		//global vars saving tables
+		var _modifiedTables;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +161,12 @@
 			//createRightPaneContent()
 			//		localAddReadWriteButtons(cel)
 		
+			//		getSelectedRecords(forceOne)
 			//btnActionReadAllFields()
+			//btnActionReadOneField()
+			//btnActionWriteAllFields()
+			//btnActionWriteOneField()
+		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -455,17 +465,10 @@
 					el.setAttribute("style", "white-space:nowrap;" +
 							"margin: 5px;");
 					_rightPaneFields.appendChild(el); //add field to field container
-					
-					
+										
 					el.appendChild(ConfigurationAPI.createEditableFieldElement(
 							recordFields[i],i));
 					
-//					str = "";
-//					str += recordFields[i].fieldRelativePath +
-//							recordFields[i].fieldColumnName + " : ";
-//					str += recordFields[i].fieldColumnType;
-//					el.innerHTML = str;
-
 					//add clear div
 					el = document.createElement("div");
 					el.setAttribute("id", "clearDiv");
@@ -473,7 +476,8 @@
 				}
 
 
-					});
+					}, //end getFieldsOfRecords handler
+					 _modifiedTables);
 		}
 		
 		//=====================================================================================
@@ -525,6 +529,23 @@
 			//get list of records that match <subsetBasePath> AND <filterFieldList>
 			_subsetUIDs = []; //reset
 			_filterValsObj = {}; //reset
+			_fields = undefined; //reset
+			_modifiedTables = undefined; //reset
+			
+
+			if(_leftPane && _rightPane && _topPane)
+			{
+				_topPane.innerHTML = ""; //clear
+				_rightPane.innerHTML = ""; //clear
+				_leftPane.innerHTML = ""; //clear
+				_topPane.parentNode.removeChild(_topPane); //remove element
+				_rightPane.parentNode.removeChild(_rightPane); //remove element
+				_leftPane.parentNode.removeChild(_leftPane); //remove element
+				
+			}
+			_topPane = undefined; //reset
+			_rightPane = undefined; //reset
+			_leftPane = undefined; //reset
 						
 			window.clearTimeout(_filterTimer); 
 			_selectedFieldIndex = -1;
@@ -553,8 +574,14 @@
 					console.log(uniqueValues);
 					
 					paint();
-					window.addEventListener("resize",paint);
-						});			
+					if(!eventListenersCreated)
+					{
+						window.addEventListener("resize",paint);
+						eventListenersCreated = true; //prevent multiple event creation
+					}
+						
+						}, //end getUniqueFieldValuesForRecords handler
+						 _modifiedTables);
 				
 					});
 			
@@ -570,6 +597,16 @@
 			
 			var el;
 			var str;
+			
+			el = document.createElement("div");
+			str = "";
+			str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
+			el.innerHTML = str;
+			_topPane.appendChild(el);			
+
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_topPane.appendChild(el);
 			
 			el = document.createElement("div");
 			el.setAttribute("id", "topPane-header");
@@ -811,7 +848,8 @@
 				console.log(records);
 				
 				updateRecordsAndFields();
-					});
+					}, //end getSubsetRecords handler
+					 _modifiedTables);
 			
 			
 		}
@@ -871,8 +909,10 @@
 			//	add four buttons to container element
 			function localAddReadWriteButtons(cel)
 			{
-				var btnText = ["Read All Fields","Write All Fields",
-							   "Read Selected Field", "Write Selected Field"];
+				var btnText = ["Read All Fields",
+							   "Write All Fields",
+							   "Read Selected Field", 
+							   "Write Selected Field"];
 
 				var btnHelp = ["Read all fields for selected record in Left Pane.",
 							   "Write all fields for selected record(s) in Left Pane.",							   
@@ -880,9 +920,9 @@
 							   "Write Selected field for selected record(s) in Left Pane."];
 				
 				var btnAction = [btnActionReadAllFields,
-								 btnActionReadAllFields,							   
-								 btnActionReadAllFields,
-								 btnActionReadAllFields];
+								 btnActionWriteAllFields,							   
+								 btnActionReadOneField,
+								 btnActionWriteOneField];
 				
 				for(var i=0;i<btnText.length;++i)
 				{
@@ -925,55 +965,216 @@
 		}	//end createRightPaneContent()
 
 		//=====================================================================================
-		//btnActionReadAllFields ~~
-		function btnActionReadAllFields() 
+		//getSelectedRecords ~~
+		//	returns index of selected records
+		//	if forceOne
+		//		only allow one selected record
+		//		else -1 on error
+		//	else if not forceOne
+		//		return array of selected records
+		//		else return empty array
+		function getSelectedRecords(forceOne) 
 		{
 			var selArr = 
 					MultiSelectBox.getSelectionArray(
-						document.getElementById("recordMultiSelect"));
+							document.getElementById("recordMultiSelect"));
 			var cntSelected = 0;
-			var selectedIndex = [];
+			var selectedIndices = [];
 			for(var s in selArr)
 			{
-				MultiSelectBox.dbg("record selected [" + s + "]: ",
-						selArr[s], 
-						_subsetUIDs[s|0]);
-				
+				//MultiSelectBox.dbg("record selected [" + s + "]: ",
+				//		selArr[s], 
+				//		_subsetUIDs[s|0]);
+
 				if(selArr[s]) 
 				{
 					++cntSelected;
-					selectedIndex.push(s|0);
+					selectedIndices.push(s|0);
 
 					if((s|0) < 0 || (s|0) >= _subsetUIDs.length)
 					{
 						Debug.log("Invalid record index '" + (s|0) + 
-								"' should be impossible. Please notify developers as to how you got here!", Debug.HIGH_PRIORITY);						
-						return;
+								"' should be impossible. Please notify developers " +
+								"as to how you got here!", Debug.HIGH_PRIORITY);						
+						return forceOne?-1:[];
 					}
 				}
 			}
-			
-			if(cntSelected != 1)
+
+			if(forceOne)
 			{
-				Debug.log("To Read All Fields, please choose one and only one target from the list of " +
-						_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
-				return;
+				if(cntSelected != 1)
+				{
+					Debug.log("Error! Please choose one and only one target from the list of " +
+							_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
+					return -1;
+				}
+				return selectedIndices[0];
 			}
+			else
+				return selectedIndices;
 			
-				
-			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex[0]]);
+		}	//end getSelectedRecords()
+
+		//=====================================================================================
+		//btnActionReadAllFields ~~
+		//	read all fields for one record
+		function btnActionReadAllFields() 
+		{
+			var selectedIndex = getSelectedRecords(true);
+			if(selectedIndex < 0) return;
+							
+			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex]);
 			
-			ConfigurationAPI.getFieldValuesForRecord(
+			ConfigurationAPI.getFieldValuesForRecords(
 					_subsetBasePath,
-					_subsetUIDs[selectedIndex[0]],
+					[_subsetUIDs[selectedIndex]], //array of size 1
 					_fields,
 					function(recFieldValues)
 					{
+				console.log(recFieldValues);
 				
-					} //end getFieldValuesForRecord handler
-			);
+				//for each field, set value
+				for(var i=0;i<recFieldValues.length;++i)
+				{
+					ConfigurationAPI.setEditableFieldValue(
+							_fields[i],
+							recFieldValues[i].fieldValue,
+							i);
+				}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+			
 		}	//end btnActionReadAllFields()
+
 		
+		//=====================================================================================
+		//btnActionReadOneField ~~
+		// read one field from one record
+		function btnActionReadOneField() 
+		{
+			var selectedIndex = getSelectedRecords(true);
+			if(selectedIndex < 0) return;
+			
+			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
+			if(selectedFieldIndex < 0) 
+			{
+				Debug.log("Error! There is no selected field. In order to read " +
+						"a field please toggle selection of the target field by " +
+						"clicking on the name of the " +
+						"field in the Right Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("btnActionReadOneField target record = " + 
+					_subsetUIDs[selectedIndex]);
+
+			ConfigurationAPI.getFieldValuesForRecords(
+					_subsetBasePath,
+					[_subsetUIDs[selectedIndex]], //array of size 1
+					[_fields[selectedFieldIndex]], //array of size 1
+					function(recFieldValues)
+					{
+				console.log(recFieldValues);
+
+				//for each field, set value
+				for(var i=0;i<recFieldValues.length;++i)
+				{
+					ConfigurationAPI.setEditableFieldValue(
+							_fields[selectedFieldIndex],
+							recFieldValues[i].fieldValue,
+							selectedFieldIndex);
+				}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+			
+		}	//end btnActionReadOneField()
+		
+		//=====================================================================================
+		//btnActionWriteAllFields ~~
+		//	write all fields for all selected records
+		function btnActionWriteAllFields() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to write " +
+						"the fields to one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			Debug.log("btnActionWriteAllFields target record length = " + 
+					selectedIndices.length);
+			
+			//make array of all field values
+			var valueArr = [];
+			
+			//for each field, set value
+			for(var i=0;i<_fields.length;++i)			
+				valueArr.push(ConfigurationAPI.getEditableFieldValue(
+						_fields[i],
+						i));
+
+			Debug.log("btnActionWriteAllFields values length = " + 
+					valueArr.length);
+			Debug.log("btnActionWriteAllFields fields length = " + 
+					_fields.length);
+			
+			//make array of target records
+			var recordArr = [];
+			for(var i=0;i<selectedIndices.length;++i)	
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+						
+			ConfigurationAPI.setFieldValuesForRecords(
+					_subsetBasePath,
+					recordArr, 	//recordArr
+					_fields, 	//fieldArr
+					valueArr, 	//valueArr
+					function(modifiedTables)
+					{
+				console.log(modifiedTables);
+				
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while writing the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+									
+				_modifiedTables = modifiedTables;
+				
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while saving the values.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+					
+					Debug.log("The values for each field were successfully written to the targeted " +
+							_recordsAlias + "!",
+							Debug.INFO_PRIORITY);
+					
+					_modifiedTables = undefined; //clear after save
+					
+						}); //end saveModifiedTables handler
+				
+					}, //end setFieldValuesForRecords handler
+					 _modifiedTables);			
+
+		}	//end btnActionWriteAllFields()
+		
+		//=====================================================================================
+		//btnActionWriteOneField ~~
+		function btnActionWriteOneField() 
+		{
+
+		}	//end btnActionWriteOneField()
 		
 		</script>
 </head>

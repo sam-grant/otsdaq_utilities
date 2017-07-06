@@ -628,6 +628,8 @@ throw (xgi::exception::Exception)
 		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
 		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+		__MOUT__ << "groupName: " << groupName << std::endl;
+		__MOUT__ << "groupKey: " << groupKey << std::endl;
 
 		handleGetAffectedGroupsXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
 				modifiedTables);
@@ -863,8 +865,9 @@ try
 		if(rootGroupName.size()) throw;
 
 		//else assume it was the intention to just consider the active groups
-		__MOUT__ << "Failed modifying considered groups due to empty group name. Assuming this was intentional." << std::endl;
+		__MOUT__ << "Did not modify considered active groups due to empty root group name - assuming this was intentional." << std::endl;
 	}
+
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
@@ -1159,6 +1162,12 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 				fieldValues.push_back(fieldValue); //setURIEncodedValue is expected
 						//ConfigurationView::decodeURIComponent(fieldValue));
 			}
+
+			//if last value is "" then push empty value
+			if(valueList.size() &&
+					valueList[valueList.size()-1] == ',')
+				fieldValues.push_back("");
+
 			__MOUT__ << valueList << std::endl;
 			for(const auto &value:fieldValues)
 				__MOUT__ << "fieldValue " <<
@@ -1247,6 +1256,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 							fieldValues[i],
 							targetNode.getRow(),
 							targetNode.getColumn());
+
+					config->getViewP()->init(); //verify new table (throws runtime_errors)
 				}
 			}
 		}
@@ -1267,13 +1278,13 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 	}
 	catch(std::runtime_error& e)
 	{
-		__SS__ << ("Error getting field values!\n\n" + std::string(e.what())) << std::endl;
+		__SS__ << ("Error setting field values!\n\n" + std::string(e.what())) << std::endl;
 		__MOUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error", ss.str());
 	}
 	catch(...)
 	{
-		__SS__ << ("Error getting field values!\n\n") << std::endl;
+		__SS__ << ("Error setting field values!\n\n") << std::endl;
 		__MOUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error", ss.str());
 	}

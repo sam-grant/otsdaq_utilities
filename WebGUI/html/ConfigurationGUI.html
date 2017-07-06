@@ -4067,7 +4067,18 @@
 				}
 				
 				_firstTimeSilentActive = false;				
-			}				
+			}		
+			
+			//if system view, refresh it to show active
+			try
+			{
+				if(document.getElementById("display").children[0].textContent == 
+					"System View")
+					setupSystemViewMode();
+			}
+			catch(e)
+			{;}
+			
 		}
 		
 //		//setGroupAliasInActiveBackbone ~~
