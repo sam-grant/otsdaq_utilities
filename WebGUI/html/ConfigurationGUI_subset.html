@@ -492,11 +492,11 @@
 			//		<filterFieldList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
 			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
 			
-			_subsetBasePath		= "FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
-			_groupingFieldList 	= "LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
-			_editableFieldList	= "";//DesktopContent.getParameter(0,"editableFieldList");			
-			_filterFieldList 	= "";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"filterFieldList");
-			_recordsAlias		= "Front-ends"; //default to records
+			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
+			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList"); //"LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
+			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");//"";//DesktopContent.getParameter(0,"editableFieldList");			
+			_filterFieldList 	= DesktopContent.getParameter(0,"filterFieldList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"filterFieldList");
+			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
 					
 			if(!_subsetBasePath)
 			{
