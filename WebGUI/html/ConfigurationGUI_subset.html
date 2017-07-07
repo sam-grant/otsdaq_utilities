@@ -51,6 +51,18 @@
 			border-radius: 3px;	
 		}
 		
+
+    	/* for mouse over highlighting */
+		.myOption:hover 
+		{
+            background-color : rgb(241, 231, 231);
+		}    
+		#recordMultiSelect .optionhighlighted:hover,
+		.groupFilerMultiSelect .optionhighlighted:hover
+		{
+			background-color : rgb(11, 66, 138);
+		}
+		
 	</style>
 	
 	
@@ -133,6 +145,7 @@
 		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
 		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
 		var _filterTimer;
+		MultiSelectBox.REQUIRE_CTRL_MULTI_CLICK = true; //require control
 		
 		//global vars for fields
 		var _selectedFieldIndex = -1;
@@ -415,7 +428,12 @@
 					el,
 					"RecordsGroupBox",
 					_recordsAlias + ":",
-					vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+					vals,keys,types,groupFilterSelectionHandler,noMultiSelect,
+					0 /* mouseOverHandler */,
+					0 /* iconURLs */,
+					0 /* mouseDownHandler */,
+					0 /* mouseUpHandler */,
+					true /* requireCtrlMultiClick */);
 
 			MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
 			

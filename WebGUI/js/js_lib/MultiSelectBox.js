@@ -55,6 +55,8 @@ MultiSelectBox.lastOptSelect_ = {};  //maintain last opt clicked
 MultiSelectBox.selInitBoxHeight_ = {}; //init with first showing of search box in showSearch()
 MultiSelectBox.SEL_INIT_PADDING = 5;
 
+MultiSelectBox.requireCtrlMultiClick_ = {};
+
 /////////////////////////////////////////////////////////////////////////
 //function definitions
 
@@ -137,6 +139,9 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	
 	if(event)
 		MultiSelectBox.dbg("Shift click = " + event.shiftKey);
+	
+	if(event)
+		MultiSelectBox.dbg("Control click = " + event.ctrlKey);
 
 	//if shift.. then select or deselect 
 	//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
@@ -157,7 +162,8 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	MultiSelectBox.toggleClass(option,"optionhighlighted");
 	selectList[index] ^= 1;
 	
-	if(isSingleSelect) //if true, only allow one select at a time, so deselect others
+	if(isSingleSelect ||   //if true, only allow one select at a time, so deselect others
+			(MultiSelectBox.requireCtrlMultiClick_[id] && !event.ctrlKey))
 		for (var opt=0; opt<size; opt++)
         {
             //fixed, now works for any order option IDs. Goes by index only.
@@ -209,10 +215,12 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
 //		keys, types, handler, noMultiSelect, mouseOverHandler, 
-//		iconURLs, mouseDownHandler, mouseUpHandler
+//		iconURLs, mouseDownHandler, mouseUpHandler,
+//		requireCtrlMultiClick
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler)
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler,
+		requireCtrlMultiClick)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -226,7 +234,8 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	MultiSelectBox.omnis_[name] = el; 
 	MultiSelectBox.isSingleSelect_[name] = noMultiSelect;
 	MultiSelectBox.lastOptSelect_[name] = -1; //default to nothing selected
-	MultiSelectBox.selInitBoxHeight_[name] = 0; //init with first showing of search box in showSearch()
+	MultiSelectBox.selInitBoxHeight_[name] = 0; //init with first showing of search box in showSearch()	
+	MultiSelectBox.requireCtrlMultiClick_[name] = requireCtrlMultiClick;
 
 	//searchglass=28x28, margin=5, vscroll=16, border=1
 	var msW = (!el.offsetWidth?el.style.width.split('p')[0]:el.offsetWidth) - 28 - 5 - 16 - 2; 
