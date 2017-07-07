@@ -3722,7 +3722,7 @@ ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depth
 			( depth + "-" + uid ));
 	
 	Debug.log("Field type " + fieldObj.fieldColumnType);
-	console.log(fieldObj);
+	//console.log(fieldObj);
 	
 	var valueType = fieldObj.fieldColumnType;
 	var choices = fieldObj.fieldColumnDataChoicesArr;

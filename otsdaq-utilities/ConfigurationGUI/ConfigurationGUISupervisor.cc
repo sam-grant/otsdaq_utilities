@@ -1395,7 +1395,9 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(HttpXmlDocu
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV of records to search for fields
-//	fieldList := CSV of relative-to-record-path to filter common fields (accept or reject [use ! as first character to reject])
+//	fieldList := CSV of relative-to-record-path to filter common fields
+//		(accept or reject [use ! as first character to reject])
+//		[use leading * to ignore relative path - note that only leading wildcard works]
 //
 void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr,
