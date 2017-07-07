@@ -1395,7 +1395,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(HttpXmlDocu
 //	depth from starting node path
 //	modifiedTables := CSV of table/version pairs
 //	recordList := CSV of records to search for fields
-//	fieldList := CSV of relative-to-record-path to filter common fields
+//	fieldList := CSV of relative-to-record-path to filter common fields (accept or reject [use ! as first character to reject])
 //
 void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocument &xmldoc,
 		ConfigurationManagerRW *cfgMgr,
@@ -1437,21 +1437,28 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 				//note: at the root level they will be flagged for the user
 			}
 
-			std::vector<std::string /*relative-path*/> fieldFilterList;
+			std::vector<std::string /*relative-path*/> fieldAcceptList, fieldRejectList;
 			if(fieldList != "")
 			{
 				//extract field filter list
 				{
 					std::istringstream f(fieldList);
-					std::string fieldPath;
+					std::string fieldPath, decodedFieldPath;
 					while (getline(f, fieldPath, ','))
 					{
-						fieldFilterList.push_back(
-								ConfigurationView::decodeURIComponent(fieldPath));
+						decodedFieldPath = ConfigurationView::decodeURIComponent(fieldPath);
+
+						if(decodedFieldPath[0] == '!') //reject field
+							fieldRejectList.push_back(decodedFieldPath.substr(1));
+						else
+							fieldAcceptList.push_back(decodedFieldPath);
 					}
 					__MOUT__ << fieldList << std::endl;
-					for(auto &field:fieldFilterList)
-						__MOUT__ << "fieldFilterList " <<
+					for(auto &field:fieldAcceptList)
+						__MOUT__ << "fieldAcceptList " <<
+							field << std::endl;
+					for(auto &field:fieldRejectList)
+						__MOUT__ << "fieldRejectList " <<
 							field << std::endl;
 				}
 			}
@@ -1475,7 +1482,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 			}
 
 			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
-					records,fieldFilterList,depth);
+					records,fieldAcceptList,fieldRejectList,depth);
 		}
 
 		DOMElement* parentTypeEl;
@@ -3216,8 +3223,8 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		i = c+1;
 		c = configList.find(',',i);
 
-		__MOUT__ << "name: " << name << std::endl;
-		__MOUT__ << "versionStr: " << versionStr << std::endl;
+		//__MOUT__ << "name: " << name << std::endl;
+		//__MOUT__ << "versionStr: " << versionStr << std::endl;
 
 		//check if version is an alias and convert
 		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
@@ -3254,7 +3261,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			xmldoc.addTextElementToData("Error", ss.str());
 			return;
 		}
-		__MOUT__ << "version: " << version << std::endl;
+		//__MOUT__ << "version: " << version << std::endl;
 		groupMembers[name] = version;
 	}
 
