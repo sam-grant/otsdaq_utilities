@@ -198,6 +198,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 //			obj.fieldColumnType
 //			obj.fieldColumnDataType
 //			obj.fieldColumnDataChoicesArr[]
+//			obj.fieldColumnDefaultValue
 //			
 //
 ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldList,
@@ -245,8 +246,8 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		var FieldColumnTypes = fields.getElementsByTagName("FieldColumnType");
 		var FieldColumnDataTypes = fields.getElementsByTagName("FieldColumnDataType");
 		var FieldColumnDataChoices = fields.getElementsByTagName("FieldColumnDataChoices");
-		//			obj.fieldColumnDataType
-		//			obj.fieldColumnDataChoicesArr
+		var FieldColumnDefaultValues = fields.getElementsByTagName("FieldColumnDefaultValue");
+		
 		
 		for(var i=0;i<FieldTableNames.length;++i)
 		{
@@ -256,10 +257,13 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			obj.fieldRelativePath = DesktopContent.getXMLValue(FieldRelativePaths[i]);
 			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
 			obj.fieldColumnDataType = DesktopContent.getXMLValue(FieldColumnDataTypes[i]);
+			obj.fieldColumnDefaultValue = DesktopContent.getXMLValue(FieldColumnDefaultValues[i]);
+			
 			var FieldColumnDataChoicesArr = FieldColumnDataChoices[i].getElementsByTagName("FieldColumnDataChoice");
 			obj.fieldColumnDataChoicesArr = [];
 			for(var j=0; j<FieldColumnDataChoicesArr.length;++j)
 				obj.fieldColumnDataChoicesArr.push(DesktopContent.getXMLValue(FieldColumnDataChoicesArr[i]));
+									
 			recFields.push(obj);
 		}
 		Debug.log("Records length: " + recFields.length);		
@@ -3691,6 +3695,7 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 //			obj.fieldColumnType
 //			obj.fieldColumnDataType
 //			obj.fieldColumnDataChoicesArr[]
+//			obj.fieldColumnDefaultValue
 //
 ConfigurationAPI.editableFieldEditingCell_ = 0;
 ConfigurationAPI.editableFieldEditingIdString_;
@@ -3726,7 +3731,7 @@ ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depth
 	
 	var valueType = fieldObj.fieldColumnType;
 	var choices = fieldObj.fieldColumnDataChoicesArr;
-	var value = "";
+	var value = fieldObj.fieldColumnDefaultValue;
 	var path = fieldObj.fieldRelativePath;
 	var nodeName = fieldObj.fieldColumnName;
 

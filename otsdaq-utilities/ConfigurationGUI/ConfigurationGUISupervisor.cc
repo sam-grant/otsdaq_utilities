@@ -1505,6 +1505,9 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 			xmldoc.addTextElementToParent("FieldColumnDataType",
 					fieldInfo.columnInfo_->getDataType(),
 					parentEl);
+			xmldoc.addTextElementToParent("FieldColumnDefaultValue",
+					fieldInfo.columnInfo_->getDefaultValue(),
+					parentEl);
 
 			parentTypeEl = xmldoc.addTextElementToParent("FieldColumnDataChoices",
 					"",	parentEl);
