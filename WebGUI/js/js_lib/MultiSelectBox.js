@@ -163,7 +163,7 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	selectList[index] ^= 1;
 	
 	if(isSingleSelect ||   //if true, only allow one select at a time, so deselect others
-			(MultiSelectBox.requireCtrlMultiClick_[id] && !event.ctrlKey))
+			(MultiSelectBox.requireCtrlMultiClick_[id] && !event.ctrlKey && !event.shiftKey))
 		for (var opt=0; opt<size; opt++)
         {
             //fixed, now works for any order option IDs. Goes by index only.
@@ -190,16 +190,16 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 		var hi = MultiSelectBox.lastOptSelect_[id] < index? 
 				index:MultiSelectBox.lastOptSelect_[id];
 
-		MultiSelectBox.dbg("lo ",lo," hi ",hi);
+		//MultiSelectBox.dbg("lo ",lo," hi ",hi);
 		//handle multi shift click
 		for (var opt=lo; opt<=hi; opt++)
 		{
-			MultiSelectBox.dbg(selectList[opt]," vs ",
-					selectList[MultiSelectBox.lastOptSelect_[id]]);
+			//MultiSelectBox.dbg(selectList[opt]," vs ",
+			//		selectList[MultiSelectBox.lastOptSelect_[id]]);
 			if(selectList[opt] != 
 					selectList[MultiSelectBox.lastOptSelect_[id]]) //if not matching selected value
 			{
-				MultiSelectBox.dbg("flip");
+				//MultiSelectBox.dbg("flip");
 				//toggle highlighted style and global array
 				MultiSelectBox.toggleClass(select.childNodes[opt],"optionhighlighted");
 				selectList[opt] ^= 1;

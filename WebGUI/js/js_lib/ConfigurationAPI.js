@@ -1821,7 +1821,14 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 	Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
 	Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
 
-	if(!groupName || groupName == "" || !groupKey || groupKey == "")
+	if(!groupAlias || groupAlias.trim() == "")
+	{
+		Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);
+		doneHandler(); //error so call done handler
+		return;
+	}
+	
+	if(!groupName || groupName.trim() == "" || !groupKey || groupKey.trim() == "")
 	{
 		Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
 		doneHandler(); //error so call done handler
@@ -3703,7 +3710,8 @@ ConfigurationAPI.editableFieldEditingNodeType_;
 ConfigurationAPI.editableFieldEditingOldValue_;
 ConfigurationAPI.editableFieldEditingInitValue_;
 ConfigurationAPI.editableFieldHoveringCell_ = 0;
-ConfigurationAPI.editableFieldSelectedCell_ = 0;
+ConfigurationAPI.editableFieldHoveringIdString_;
+ConfigurationAPI.editableFieldSelectedIdString_ = 0;
 ConfigurationAPI.editableFieldHandlersSubscribed_ = false;
 ConfigurationAPI.editableFieldMouseIsSelecting_ = false;
 ConfigurationAPI.editableField_SELECTED_COLOR_ = "rgb(251, 245, 53)";
@@ -3921,6 +3929,13 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	//Debug.log(str);
 
 	fieldEl.innerHTML = str;
+	
+	//check if this field is currently the selected field
+	//	if so, setup select color	
+	if(ConfigurationAPI.editableFieldSelectedIdString_ == (depth + "-" + uid))	
+		fieldEl.getElementsByClassName("treeNode-Value")[0].style.backgroundColor = 
+							ConfigurationAPI.editableField_SELECTED_COLOR_;
+	
 	return fieldEl;
 }
 
@@ -4203,22 +4218,25 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			//Mark selected
 			Debug.log("Toggling selection of target field " + idString);
 			
-			//add previously selected 
-			if(ConfigurationAPI.editableFieldSelectedCell_)
-				ConfigurationAPI.editableFieldSelectedCell_.style.backgroundColor = "transparent";
+			//remove previously selected
+			var vel;
+			if(ConfigurationAPI.editableFieldSelectedIdString_ && 
+					(vel = document.getElementById("treeNode-Value-" + 
+										ConfigurationAPI.editableFieldSelectedIdString_)))
+				vel.style.backgroundColor = "transparent";
 			
 			//add newly selected 
-			var vel = document.getElementById("treeNode-Value-" + 
+			vel = document.getElementById("treeNode-Value-" + 
 					idString);
-			if(ConfigurationAPI.editableFieldSelectedCell_ == vel)
+			if(ConfigurationAPI.editableFieldSelectedIdString_ == idString)
 			{
 				//same field was clicked
 				//	so toggle (deselect) the previously selected field
-				ConfigurationAPI.editableFieldSelectedCell_ = 0;
+				ConfigurationAPI.editableFieldSelectedIdString_ = undefined;
 				return;
 			}
 			vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
-			ConfigurationAPI.editableFieldSelectedCell_ = vel;
+			ConfigurationAPI.editableFieldSelectedIdString_ = idString;
 		}
 		else
 		{
@@ -4235,11 +4253,11 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 //		returns -1
 ConfigurationAPI.getSelectedEditableFieldIndex = function()
 {
-	if(!ConfigurationAPI.editableFieldSelectedCell_)
+	if(!ConfigurationAPI.editableFieldSelectedIdString_)
 		return -1;
 	
-	var idStr = ConfigurationAPI.editableFieldSelectedCell_.id;
-	return idStr.split('-')[3]; // "treeNode-Value-" + depth + "-" + fieldId
+	var idStr = ConfigurationAPI.editableFieldSelectedIdString_;
+	return idStr.split('-')[1]; // depth + "-" + fieldId
 }
 
 //=====================================================================================
@@ -4289,7 +4307,8 @@ ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
 				ConfigurationAPI.editableFieldHoveringIdString_);
 		if(vel)
 		{
-			if(vel == ConfigurationAPI.editableFieldSelectedCell_)
+			if(ConfigurationAPI.editableFieldHoveringIdString_ == 
+					ConfigurationAPI.editableFieldSelectedIdString_)
 				vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
 			else				
 				vel.style.backgroundColor = "transparent";

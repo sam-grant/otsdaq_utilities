@@ -6794,11 +6794,17 @@
 								"Backbone group '" + retParams.groupName + " (" + 
 								retParams.groupKey + ")' was activated.",
 								Debug.INFO_PRIORITY);
+					
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);
+				}
+				else
+				{
+					//else error, leave popup there and re-enable button
+					document.getElementById("popUpDialog-submitButton").disabled = false;
 				}
 				
-				//kill popup dialog
-				var el = document.getElementById("popUpDialog"); 
-				if(el) el.parentNode.removeChild(el);
 				
 					}, true); //request return parameters
 		}
@@ -11361,6 +11367,17 @@
 								Debug.log("groupAlias = " + groupAlias);
 								Debug.log("groupName = " + groupName);
 								Debug.log("groupKey = " + groupKey);
+								
+								if(!groupAlias || groupAlias.trim() == "")
+								{
+									Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);									
+									
+									//kill popup dialog
+									var el = document.getElementById("popUpDialog"); 
+									if(el) el.parentNode.removeChild(el);
+									
+									return;
+								}
 
 								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 										"&groupAlias=" + groupAlias + 
@@ -11920,6 +11937,17 @@
 								Debug.log("groupAlias = " + groupAlias);
 								Debug.log("groupName = " + groupName);
 								Debug.log("groupKey = " + groupKey);
+								
+								if(!groupAlias || groupAlias.trim() == "")
+								{
+									Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);									
+
+									//kill popup dialog
+									var el = document.getElementById("popUpDialog"); 
+									if(el) el.parentNode.removeChild(el);
+
+									return;
+								}
 
 								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 										"&groupAlias=" + groupAlias + 
