@@ -2314,9 +2314,7 @@
 				Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
 				Debug.log(warn,Debug.WARN_PRIORITY);	
 			}
-			
-			//removed this because it should be controlled by the handlers properly
-			//editCellCancel();
+						
 			
 			//draw tree		
 			
@@ -2614,6 +2612,8 @@
 			
 			applyTreeFilter("",1); //reapplyFilter
 			toggleGroupDetails(_showGroupDetails);
+
+			activateSystemConfigHandler(req); //display active config groups	
 		}
 
 		//recursiveDrawTree ~		

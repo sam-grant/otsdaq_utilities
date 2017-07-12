@@ -719,48 +719,56 @@
 				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
 				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
 
-				var H = 150;				
-				for(var i=0;i<groups.length;++i)
-				{
-					//get group values
-					
-					//create multiselect box
-
-					el = document.createElement("div");
-					el.setAttribute("class", "groupFilerMultiSelect");
-					el.setAttribute("id", "groupFilerMultiSelect-" + i);
-					el.setAttribute("style", //"height:200px; width:250px;" +
-							//);
-									//"margin-bottom: 0px;" +
-							"margin: -15px 0 0 0;" +
-							"height:" + H + "px;" + 
-							"width:" + (leftW-25) + "px;");
-					filterBoxesEl.appendChild(el);			
-					
-					var noMultiSelect = false; // true or false (false for multiselect functionality) 
-					var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-
-					var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
-					var keys = [];
-					var types = [];
-					for(var j=0;j<vals.length;++j)
+				var H = 150;
+				try //catch errors due to undefined _filterValsObj[i]
+				{					
+					for(var i=0;i<groups.length;++i)
 					{
-						keys.push(j);
-						types.push(groups[i]);								
-					}				
-
-					//write MultiSelectBox to a particular div
-					MultiSelectBox.createSelectBox(el,
-							"FilterGroupBox" + i,
-							"'" + groups[i] + "' Filter:",
-							vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
-
-					MultiSelectBox.initMySelectBoxes();
-
-					el = document.createElement("div");
-					el.setAttribute("id", "clearDiv");					
-					filterBoxesEl.appendChild(el);
+						//get group values
+						
+						//create multiselect box
+	
+						el = document.createElement("div");
+						el.setAttribute("class", "groupFilerMultiSelect");
+						el.setAttribute("id", "groupFilerMultiSelect-" + i);
+						el.setAttribute("style", //"height:200px; width:250px;" +
+								//);
+										//"margin-bottom: 0px;" +
+								"margin: -15px 0 0 0;" +
+								"height:" + H + "px;" + 
+								"width:" + (leftW-25) + "px;");
+						filterBoxesEl.appendChild(el);			
+						
+						var noMultiSelect = false; // true or false (false for multiselect functionality) 
+						var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+	
+						var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
+						var keys = [];
+						var types = [];
+						for(var j=0;j<vals.length;++j)
+						{
+							keys.push(j);
+							types.push(groups[i]);								
+						}				
+	
+						//write MultiSelectBox to a particular div
+						MultiSelectBox.createSelectBox(el,
+								"FilterGroupBox" + i,
+								"'" + groups[i] + "' Filter:",
+								vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+	
+						MultiSelectBox.initMySelectBoxes();
+	
+						el = document.createElement("div");
+						el.setAttribute("id", "clearDiv");					
+						filterBoxesEl.appendChild(el);
+					}
 				}
+				catch(err)
+				{
+					//likely this error is due to undefined _filterValsObj[i]
+					Debug.log("Error creating group filters.", Debug.HIGH_PRIORITY);
+				} 
 				
 				_leftPane.appendChild(filterBoxesEl);
 

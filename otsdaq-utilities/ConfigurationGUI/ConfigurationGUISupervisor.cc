@@ -298,10 +298,32 @@ throw (xgi::exception::Exception)
 		bool reloadActive = 1 == CgiDataUtilities::getDataAsInt(cgi,"reloadActiveGroups"); //from GET
 
 		__MOUT__ << "reloadActive: " << reloadActive << std::endl;
+		bool wasError = false;
 		if(reloadActive)
-			cfgMgr->restoreActiveConfigurationGroups();
+		{
+			try
+			{
+				cfgMgr->restoreActiveConfigurationGroups(true);
+			}
+			catch(std::runtime_error& e)
+			{
+				__SS__ << ("Error reloading active groups!\n\n" + std::string(e.what())) << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error", ss.str());
+				wasError = true;
+			}
+			catch(...)
+			{
+				__SS__ << ("Error reloading active groups!\n\n") << std::endl;
+				__MOUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error", ss.str());
+				wasError = true;
+			}
 
-		handleGroupAliasesXML(xmldoc,cfgMgr);
+		}
+
+		if(!wasError)
+			handleGroupAliasesXML(xmldoc,cfgMgr);
 	}
 	else if(Command == "setGroupAliasInActiveBackbone")
 	{
