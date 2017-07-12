@@ -322,8 +322,8 @@ throw (xgi::exception::Exception)
 
 		}
 
-		if(!wasError)
-			handleGroupAliasesXML(xmldoc,cfgMgr);
+
+		handleGroupAliasesXML(xmldoc,cfgMgr);
 	}
 	else if(Command == "setGroupAliasInActiveBackbone")
 	{

@@ -2304,8 +2304,11 @@
 			if(err) 
 			{
 				Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page",Debug.HIGH_PRIORITY);
-				Debug.log(err,Debug.HIGH_PRIORITY);				
-				return;
+				Debug.log(err,Debug.HIGH_PRIORITY);			
+				
+				if(parentId)
+					return;
+				// else try to power through 
 			}
 			
 			var warn = DesktopContent.getXMLValue(req,"Warning");
@@ -2537,7 +2540,7 @@
 				}
 				
 
-				if(treeErr) 
+				if(treeErr || err || warn) 
 				{
 					treeViewHandlerStr_ += "<div style='color:red; cursor:pointer' title='" + 
 							//treeErr.replace(/'/g , "&apos;") + "' ";
@@ -2549,7 +2552,9 @@
 					treeViewHandlerStr_ += "<u>Warning: Errors were detected in this tree!</u>";
 					treeViewHandlerStr_ += "</div>";
 					treeViewHandlerStr_ += "<div id='treeViewErrors' style='display:none'>" + 
-							treeErr.replace(/\n/g , "<br>") + "</div>";
+							(err?err.replace(/\n/g , "<br>"):"") +
+							(warn?warn.replace(/\n/g , "<br>"):"") +
+							(treeErr?treeErr.replace(/\n/g , "<br>"):"") + "</div>";
 					treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
 				}
 				
