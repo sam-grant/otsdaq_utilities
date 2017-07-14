@@ -9298,7 +9298,9 @@
 			if((sel = _editingCellEl.getElementsByTagName("select")).length)
 			{
 				sel = sel[0]; //assume the first select in the cell is the select
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);				
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);	
+				if(sel.selectedIndex == -1)
+					sel.selectedIndex = 0; //default to 0 if nothing selected
 				var selVal = sel.options[sel.selectedIndex].value;
 
 				Debug.log("CfgGUI editCellOK = " + 
