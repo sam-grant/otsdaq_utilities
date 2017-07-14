@@ -262,7 +262,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			var FieldColumnDataChoicesArr = FieldColumnDataChoices[i].getElementsByTagName("FieldColumnDataChoice");
 			obj.fieldColumnDataChoicesArr = [];
 			for(var j=0; j<FieldColumnDataChoicesArr.length;++j)
-				obj.fieldColumnDataChoicesArr.push(DesktopContent.getXMLValue(FieldColumnDataChoicesArr[i]));
+				obj.fieldColumnDataChoicesArr.push(DesktopContent.getXMLValue(FieldColumnDataChoicesArr[j]));
 									
 			recFields.push(obj);
 		}
