@@ -303,18 +303,19 @@ throw (xgi::exception::Exception)
 		{
 			try
 			{
+				cfgMgr->clearAllCachedVersions();
 				cfgMgr->restoreActiveConfigurationGroups(true);
 			}
 			catch(std::runtime_error& e)
 			{
-				__SS__ << ("Error reloading active groups!\n\n" + std::string(e.what())) << std::endl;
+				__SS__ << ("Error loading active groups!\n\n" + std::string(e.what())) << std::endl;
 				__MOUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error", ss.str());
 				wasError = true;
 			}
 			catch(...)
 			{
-				__SS__ << ("Error reloading active groups!\n\n") << std::endl;
+				__SS__ << ("Error loading active groups!\n\n") << std::endl;
 				__MOUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error", ss.str());
 				wasError = true;
@@ -2623,8 +2624,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 
 	for(auto &memberPair:memberMap)
 	{
-		__MOUT__ << "\tMember config " << memberPair.first << ":" <<
-				memberPair.second << std::endl;
+		//__MOUT__ << "\tMember config " << memberPair.first << ":" <<
+		//		memberPair.second << std::endl;
 
 		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
 		if(commentsLoaded)
@@ -2633,6 +2634,11 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument 
 					parentEl);
 		else
 			xmldoc.addTextElementToParent("MemberComment", "", parentEl);
+
+
+		__MOUT__ << "\tMember config " << memberPair.first << ":" <<
+				memberPair.second << std::endl;
+
 		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 
 		it = allCfgInfo.find(memberPair.first);
@@ -3155,6 +3161,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	//create new config mgr if not one for active session index
 	if(userConfigurationManagers_.find(mapKey) == userConfigurationManagers_.end())
 	{
+		__MOUT_INFO__ << "Creating new Configuration Manager." << std::endl;
 		userConfigurationManagers_[mapKey] = new ConfigurationManagerRW(username);
 
 		//update configuration info for each new configuration manager
