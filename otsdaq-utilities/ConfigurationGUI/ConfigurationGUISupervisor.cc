@@ -997,9 +997,12 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		const std::string &modifiedTables,
 		bool refreshAll, bool getGroupInfo,
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> *returnMemberMap,
-		bool outputActiveTables)
+		bool outputActiveTables,
+		std::string *accumulatedErrors)
 try
 {
+	if(accumulatedErrors) *accumulatedErrors = "";
+
 	xmldoc.addTextElementToData("configGroup", groupName);
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
@@ -1007,9 +1010,9 @@ try
 
 	//reload all tables so that partially loaded tables are not allowed
 	if(usingActiveGroups || refreshAll)
-		cfgMgr->getAllConfigurationInfo(true); //do refresh
+		cfgMgr->getAllConfigurationInfo(true,accumulatedErrors); //do refresh
 
-	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::map<std::string, ConfigurationInfo> allCfgInfo = cfgMgr->getAllConfigurationInfo(false);
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
 
@@ -1749,6 +1752,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 
+	std::string accumulatedErrors;
 	setupActiveTablesXML(
 			xmldoc,
 			cfgMgr,
@@ -1756,9 +1760,13 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 			modifiedTables,
 			(startPath == "/"), //refreshAll, if at root node, reload all tables so that partially loaded tables are not allowed
 			(startPath == "/"), //get group info
-			&memberMap			//get group member map
+			&memberMap,			//get group member map
+			true,				//output active tables (default)
+			&accumulatedErrors	//accumulate errors
 			);
-
+	if(accumulatedErrors != "")
+		xmldoc.addTextElementToData("Warning",
+				accumulatedErrors);
 
 	try
 	{

@@ -3877,6 +3877,8 @@
 		//activateSystemConfig ~
 		function activateSystemConfig(groupName, groupKey, ignoreWarnings)
 		{
+			document.getElementById("activateConfigWithWarnings").innerHTML = "";
+			
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
 					groupName + "&groupKey=" + groupKey +
 					(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
@@ -4028,9 +4030,11 @@
 			}
 			str += "</table>"; //close active groups table
 			
-			document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;			
+						
 			if(withWarningsStr != "")
 			{
+				document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;
+				
 				Debug.log("Group " + name + "(" + key + ") was not activated.\n\n" +
 						"Please see detailed Warnings and Errors below. " +
 						"You can try to activate " + 
