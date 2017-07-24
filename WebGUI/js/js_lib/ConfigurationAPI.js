@@ -4090,7 +4090,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					var optionCount = -1;
 					optionIndex = 0; //default to default
 					
-					str += "<div onkeydown='keyHandler(event)' " +
+					str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();' " +
 							"style='" +
@@ -4099,11 +4099,12 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							"height:" + (el.offsetHeight+6) + "px'>";
 
 					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"id='fixedChoice-editSelectBox' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();' " +
 							"style='" +
 							"float:left;" +
-							"margin:-8px -2px -2px -1px; height:" + 
+							"margin:-2px -2px -2px -1px; height:" + 
 							(el.offsetHeight+6) + "px'>";
 
 					//default value is assumed in list
@@ -4164,7 +4165,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 								"' " + 
 								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
 								"' " +
-								"onclick='handleFixedChoiceEditToggle();' " +
+								"onclick='ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle();' " +
 								"title='Toggle free-form editing' " +
 								"></div>";
 					}
@@ -4353,6 +4354,30 @@ ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
 	var vel = document.getElementById("treeNode-Value-" + 
 			ConfigurationAPI.editableFieldHoveringIdString_);
 	vel.style.backgroundColor = "rgb(218, 194, 194)";
+}
+
+//=====================================================================================
+//handleEditableFieldFixedChoiceEditToggle ~~
+ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle = function()
+{
+	Debug.log("handleEditableFieldFixedChoiceEditToggle");
+
+	var sel = document.getElementById("fixedChoice-editSelectBox");
+	var tel = document.getElementById("fixedChoice-editTextBox");
+
+	Debug.log("sel.style.display  " + sel.style.display);
+	if(sel.style.display == "none")
+	{
+		sel.style.display = "block";
+		tel.style.display = "none";
+	}
+	else
+	{
+		tel.style.width = (sel.offsetWidth-2) + "px";
+		sel.style.display = "none";
+		tel.style.display = "block";
+		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
+	}
 }
 
 //=====================================================================================
@@ -4616,8 +4641,18 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 			var sel;
 			if((sel = el.getElementsByTagName("textarea")).length) //for MultilineData					
 				newValue = sel[0].value; //assume the first textarea in the cell is the textarea
-			else if((sel = el.getElementsByTagName("select")).length) //for FixedChoiceData					
-				newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+			else if((sel = el.getElementsByTagName("select")).length) //for FixedChoiceData		
+			{
+				//check if displayed
+				if(sel[0].style.display == "none")
+				{
+					//if not displayed assume first input field is ours!
+					//take "normal cell" approach from below
+					newValue = el.getElementsByTagName("input")[0].value;					
+				}						
+				else
+					newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one				
+			}
 			else
 				newValue = el.getElementsByTagName("input")[0].value;
 			
