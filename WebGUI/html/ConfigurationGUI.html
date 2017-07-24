@@ -400,6 +400,8 @@
 			//handleGroupCommentToggle(groupName,setHideVal)
 			//handlePopUpHeightToggle(h,gh)
 		
+			//handleFixedChoiceEditToggle()
+		
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
 			//addMemberToConfigGroup(groupName,backLinkStr) 
@@ -532,7 +534,7 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("FE2Configuration","1",""); return;
+			//setupSpecificConfig("DataBufferConfiguration","3",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -541,7 +543,7 @@
 			//setupConfigCreator(); return
 			
 			//setupConfigGroupTreeView("FETest","0"); return; //"46"); return;
-			//setupConfigGroupTreeView("artdaqFclTest","4"); return;
+			setupConfigGroupTreeView("defaultConfig","3"); return;
 			
 			//setupGroupViewMode(); return;
 			
@@ -4614,6 +4616,7 @@
 				str += "<td>";
 				str += "<a href='#' onclick='" +
 						"var sel = document.getElementById(\"select-" + name + "\");" +
+						"if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default" +
 						"setupSpecificConfig(\"" + name + "\"," +
 						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
 						",\"" + backLinkStr + "\"); return false;'" +
@@ -4813,35 +4816,6 @@
 			}
 		}
 		
-//		//createConfigGroup ~
-//		function createConfigGroup(ignoreWarnings)
-//		{
-//			var config = document.getElementById("newConfigName").value;
-//			Debug.log("config " + config);
-//			
-//			var configMap = "configList=";
-//			var els = document.getElementsByClassName("memberConfigCheckbox");
-//			var sel;
-//			for(var el=0;el<els.length;++el)
-//				if(els[el].checked)
-//				{
-//					sel = document.getElementById("select-" + els[el].value);
-//					if(sel.options.length)
-//					{
-//						Debug.log("subconfig=" + els[el].value + " version=" + 
-//							sel.options[sel.selectedIndex].value);
-//						configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
-//					}
-//				}			
-//			
-//			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
-//					"&groupName=" +	config +
-//					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
-//					configMap, createConfigGroupHandler,
-//					0, 0, 0, //reqIndex, progressHandler, callHandlerOnErr
-//					true); //showLoadingOverlay
-//		}
-
 		//createConfigGroupHandler ~
 		function createConfigGroupHandler(req)
 		{
@@ -5573,10 +5547,26 @@
 					_editingCellElOldValue = el.textContent;
 					treeEditingNodeInitValue_ = _editingCellElOldValue;
 					
-					str += "<select  onkeydown='keyHandler(event)' " +
+					var allowFixedChoiceArbitraryEdit = false;
+					var optionCount = -1;
+					optionIndex = 0; //default to default
+					
+					str += "<div onkeydown='keyHandler(event)' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();' " +
-							"style='margin:-4px -2px -4px -1px; height:" + (el.offsetHeight+6) + "px'>";
+							"style='" +
+							"white-space:nowrap;" +
+							"margin:-3px -2px -2px -1px;" +
+							"height:" + (el.offsetHeight+6) + "px'>";
+					
+					str += "<select  onkeydown='keyHandler(event)' " +
+							"id='fixedChoice-editSelectBox' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='" + 
+							"float:left;" +
+							"margin: -2px 1px 0px 0px; " +
+							"height:" + (el.offsetHeight+6) + "px'>";
 
 					//default value is assumed in list
 
@@ -5585,15 +5575,61 @@
 					var choices = vel.textContent.split(',');
 					
 					for(var i=0;i<choices.length;++i)
-					{			
+					{		
+						if(i==1)//check for arbitraryBool flag
+						{
+							if(choices[i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = 
+										choices[i][("arbitraryBool=").length] == "1"?
+												true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
 						str += "<option>";
 						str += decodeURIComponent(choices[i]);	//can display however
 						str += "</option>";
 						if(decodeURIComponent(choices[i]) 
 								== _editingCellElOldValue)
-							optionIndex = i; //get starting sel index
+							optionIndex = optionCount; //save selected index
 					}				
 					str += "</select>";	
+					
+					if(allowFixedChoiceArbitraryEdit)
+					{
+						var ww = (el.offsetWidth-6);
+						if(ww < 150) ww = 150; 
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+								"width:" + 
+								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: -2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='handleFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+					str += "</div>";
 				}
 				else if(colType == "BitMap")
 				{
@@ -6172,6 +6208,7 @@
 						
 			return true;
 		}
+
 		
 		//selectThisCell ~~
 		function selectThisCell(r,c,el,event) 
@@ -6246,32 +6283,98 @@
 				str += "</select>";				
 			}
 			else if(colType == "FixedChoiceData")
-			{
-				str += "<select  onkeydown='keyHandler(event)' " +
-						"style='margin:-4px -2px -4px 1px;width:" + 
-						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
-				
-				//default value is assumed in list
-				str += "<option>";
-				str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
-				str += "</option>";
-				if(decodeURIComponent(_tableDefaultRowValues[c])
-											 == _editingCellElOldValue)
-					optionIndex = 0; //get starting sel index
+			{		
+				optionIndex = 0; //default to default
+
+				var allowFixedChoiceArbitraryEdit = false;				
 				
 				if(_tableFixedChoiceData[c] !== undefined)
 				{
+					var optionCount = 0;
 					for(var i=0;i<_tableFixedChoiceData[c].length;++i)
 					{			
+						if(!i)//check for arbitraryBool flag
+						{
+							if(_tableFixedChoiceData[c][i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = _tableFixedChoiceData[c][i][
+											("arbitraryBool=").length] == "1"?true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
+						
+						if(optionCount == 1) //before the first option is added, add preamble and default
+						{
+							str += "<div style='" +
+									"white-space:nowrap;" +
+									"margin:-4px -2px -4px 1px;width:" + 						
+									(el.offsetWidth-6+50) + "px; height:" + (el.offsetHeight-8) + "px'>";
+
+							str += "<select  onkeydown='keyHandler(event)' " +
+									"id='fixedChoice-editSelectBox' " +
+									"style='" + 
+									"float:left;" +
+									//"margin:-4px -2px -4px 1px;" +
+									"width:" + 
+									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
+									"'>";
+
+							//default value is assumed in list
+							str += "<option>";
+							str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
+							str += "</option>";
+						}
+						
+						
+						
 						str += "<option>";
 						str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
 						str += "</option>";
+						
+						//check for currently selected value
 						if(decodeURIComponent(_tableFixedChoiceData[c][i]) 
 													 == _editingCellElOldValue)
-							optionIndex = i+1; //get starting sel index
+							optionIndex = optionCount; //+1 in advance to account for default option
 					}
 				}
+
 				str += "</select>";	
+				
+
+				if(allowFixedChoiceArbitraryEdit)
+				{
+					str += "<input type='text' " +
+							"id='fixedChoice-editTextBox' " +
+							"style='display:none;" + 
+							"float:left;" +
+							"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+							"width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+							"'>";					
+					str += "";
+					str += "</input>";	
+
+					str += "<div style='display:block;" +
+							"margin: 2px 0 -7px 14px;" +
+							"' " + 
+							"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+							"' " +
+							"onclick='handleFixedChoiceEditToggle();' " +
+							"title='Toggle free-form editing' " +
+							"></div>";
+				}
+				str += "</div>";
+				
 			}
 			else if(colType == "BitMap")
 			{
@@ -8021,6 +8124,7 @@
 				if(treeEditingNodeType_ == "value-bool")
 				{
 					var sel = _editingCellEl.getElementsByTagName("select")[0];
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					newValue = sel.options[sel.selectedIndex].value;
 				}
 				else if(treeEditingNodeType_ == "value-bitmap")
@@ -8030,7 +8134,8 @@
 				else if(treeEditingNodeType_.indexOf("link-") == 0)
 				{
 					//make csv newValue := linkTable,linkInitId
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];	
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					newValue = sel.options[sel.selectedIndex].value;
 					newValue += ",";					
 					sel = _editingCellEl.getElementsByTagName("select")[1];
@@ -8089,7 +8194,8 @@
 				else if(treeEditingNodeType_ == "table-newGroupRow")
 				{
 					//coming from edit setup of group link "link-GroupID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];		
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
 					//make csv newValue := linkIndex,linkID
@@ -8104,7 +8210,8 @@
 				else if(treeEditingNodeType_ == "table-newUIDRow")
 				{
 					//coming from edit setup of group link "link-UID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];	
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
 					
 					//make new value the new UID 
@@ -8119,8 +8226,18 @@
 					var sel;
 					if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData					
 						newValue = sel[0].value; //assume the first textarea in the cell is the textarea
-					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData					
-						newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData
+					{						
+						//check if displayed
+						if(sel[0].style.display == "none")
+						{
+							//if not displayed assume first input field is ours!
+							//take "normal cell" approach from below
+							newValue = _editingCellEl.getElementsByTagName("input")[0].value;					
+						}						
+						else
+							newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+					}
 					else
 						newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 					
@@ -9302,40 +9419,63 @@
 			if((sel = _editingCellEl.getElementsByTagName("select")).length)
 			{
 				sel = sel[0]; //assume the first select in the cell is the select
+
 				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);	
-				if(sel.selectedIndex == -1)
-					sel.selectedIndex = 0; //default to 0 if nothing selected
-				var selVal = sel.options[sel.selectedIndex].value;
-
-				Debug.log("CfgGUI editCellOK = " + 
-						selVal);
-
-				str = "";
-				str += selVal;
-				_editingCellEl.innerHTML = str;		
 				
-				//assume no child link will be named a boolean word
-				var boolTypeTrues =  ["On","True","Yes"];
-				var statusTypeFalses =  ["Off","False","No"];
-				
-				//determine if true value
-				var isTrue = false;
-				var isFalse = false;
-				for(var i=0;i<boolTypeTrues.length;++i)
-					if(boolTypeTrues[i] == selVal)
-					{
-						isTrue = true; break;
+				//check if displayed
+				if(sel.style.display == "none")
+				{
+					//if not displayed assume first input field is ours!
+					//take "normal cell" approach from below
+					var str = "";
+					try
+					{				
+						str = _editingCellEl.getElementsByTagName("input")[0].value;
+						Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+								str);
 					}
-				for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
-					if(statusTypeFalses[i] == selVal)
+					catch(err)
 					{
-						isFalse = true; break;
+						Debug.log("Error try-catch: " + err);
 					}
-				
-				if(isTrue)
-					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
-				else if(isFalse)
-					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+					_editingCellEl.innerHTML = "";
+					_editingCellEl.appendChild(document.createTextNode(str));					
+				}
+				else
+				{		
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+					var selVal = sel.options[sel.selectedIndex].value;
+	
+					Debug.log("CfgGUI editCellOK = " + 
+							selVal);
+	
+					str = "";
+					str += selVal;
+					_editingCellEl.innerHTML = str;		
+					
+					//assume no child link will be named a boolean word
+					var boolTypeTrues =  ["On","True","Yes"];
+					var statusTypeFalses =  ["Off","False","No"];
+					
+					//determine if true value
+					var isTrue = false;
+					var isFalse = false;
+					for(var i=0;i<boolTypeTrues.length;++i)
+						if(boolTypeTrues[i] == selVal)
+						{
+							isTrue = true; break;
+						}
+					for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+						if(statusTypeFalses[i] == selVal)
+						{
+							isFalse = true; break;
+						}
+					
+					if(isTrue)
+						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+					else if(isFalse)
+						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+				}
 			}
 			else if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData
 			{
@@ -11682,9 +11822,10 @@
 				for(var el=0;el<els.length;++el)
 					if(els[el].checked)
 					{
-						sel = document.getElementById("select-" + els[el].value);
+						sel = document.getElementById("select-" + els[el].value);						
 						if(sel.options.length)
 						{
+							if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 							Debug.log("subconfig=" + els[el].value + " version=" + 
 									sel.options[sel.selectedIndex].value);
 							configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
@@ -12533,6 +12674,32 @@
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
 		}
+		
+
+		//handleFixedChoiceEditToggle ~~
+		//	toggle select box to text field edit
+		function handleFixedChoiceEditToggle() 
+		{	
+			Debug.log("handleFixedChoiceEditToggle");
+		
+			var sel = document.getElementById("fixedChoice-editSelectBox");
+			var tel = document.getElementById("fixedChoice-editTextBox");
+			
+			Debug.log("sel.style.display  " + sel.style.display);
+			if(sel.style.display == "none")
+			{
+				sel.style.display = "block";
+				tel.style.display = "none";
+			}
+			else
+			{
+				tel.style.width = (sel.offsetWidth-2) + "px";
+				sel.style.display = "none";
+				tel.style.display = "block";
+				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
+			}
+		}
+		
 		
 		//handleEditTreeAliasEditToggle ~~
 		function handleEditTreeAliasEditToggle(i)

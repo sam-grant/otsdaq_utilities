@@ -4085,28 +4085,90 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 				{
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
 					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+
+					var allowFixedChoiceArbitraryEdit = false;
+					var optionCount = -1;
+					optionIndex = 0; //default to default
 					
+					str += "<div onkeydown='keyHandler(event)' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='" +
+							"white-space:nowrap;" +
+							"margin:-3px -2px -2px -1px;" +
+							"height:" + (el.offsetHeight+6) + "px'>";
+
 					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();' " +
-							"style='margin:-8px -2px -2px -1px; height:" + (el.offsetHeight+6) + "px'>";
+							"style='" +
+							"float:left;" +
+							"margin:-8px -2px -2px -1px; height:" + 
+							(el.offsetHeight+6) + "px'>";
 
 					//default value is assumed in list
 
 					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
 							idString);
-					var choices = vel.textContent.split(',');
+					var choices = vel.textContent.split(',');					
 					
 					for(var i=0;i<choices.length;++i)
 					{			
+						if(i==1)//check for arbitraryBool flag
+						{
+							if(choices[i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = 
+										choices[i][("arbitraryBool=").length] == "1"?
+												true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
+						
 						str += "<option>";
 						str += decodeURIComponent(choices[i]);	//can display however
 						str += "</option>";
 						if(decodeURIComponent(choices[i]) 
 								== ConfigurationAPI.editableFieldEditingOldValue_)
-							optionIndex = i; //get starting sel index
+							optionIndex = optionCount; //save selected index
 					}				
 					str += "</select>";	
+					
+					if(allowFixedChoiceArbitraryEdit)
+					{
+						var ww = (el.offsetWidth-6);
+						if(ww < 150) ww = 150; 
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+								"width:" + 
+								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: -2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='handleFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+					str += "</div>";
 				}
 				else if(colType == "BitMap")
 				{

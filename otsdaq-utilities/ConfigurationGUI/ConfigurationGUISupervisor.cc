@@ -1537,8 +1537,12 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 
 			parentTypeEl = xmldoc.addTextElementToParent("FieldColumnDataChoices",
 					"",	parentEl);
+
 			//if there are associated data choices, send info
 			auto dataChoices = fieldInfo.columnInfo_->getDataChoices();
+			xmldoc.addTextElementToParent("FieldColumnDataChoice", //add default to list to mimic tree handling
+					fieldInfo.columnInfo_->getDefaultValue(),
+					parentTypeEl);
 			for(const auto &dataChoice : dataChoices)
 				xmldoc.addTextElementToParent("FieldColumnDataChoice",
 						dataChoice,
