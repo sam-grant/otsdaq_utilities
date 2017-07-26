@@ -1,5 +1,5 @@
-#ifndef _ots_ConfigurationGUISupervisor_h
-#define _ots_ConfigurationGUISupervisor_h
+#ifndef _ots_ConfigurationGUISupervisor_h_
+#define _ots_ConfigurationGUISupervisor_h_
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 

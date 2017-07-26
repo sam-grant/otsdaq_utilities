@@ -475,7 +475,7 @@ throw (xgi::exception::Exception)
 		else
 			rootFile = TFile::Open(rootFileName.c_str());
 
-		__MOUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
+		//__MOUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
 
 		if(!rootFile || !rootFile->IsOpen())
 		{
@@ -488,18 +488,18 @@ throw (xgi::exception::Exception)
 			TDirectory* directory;
 			if((directory = rootFile->GetDirectory(rootDirectoryName.c_str())) == 0)
 			{
-				__MOUT__ << "This is not a directory!" << std::endl;
+				//__MOUT__ << "This is not a directory!" << std::endl;
 				directory = rootFile;
 
 				//failed directory so assume it's file
-				__MOUT__ << "Getting object name: " << rootDirectoryName << std::endl;
+				//__MOUT__ << "Getting object name: " << rootDirectoryName << std::endl;
 				TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
 				if(!histo)
 					__MOUT__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
 				else //turns out was a root object path
 				{
-					__MOUT__ << "Converting histo to json: " << histo->GetName() << std::endl;
+					//__MOUT__ << "Converting histo to json: " << histo->GetName() << std::endl;
 					TString json = TBufferJSON::ConvertToJSON(histo);
 					//__MOUT__ << "json " << json << std::endl;
 
@@ -527,7 +527,7 @@ throw (xgi::exception::Exception)
 			}
 			else
 			{
-				__MOUT__ << "directory found getting the content!" << std::endl;
+				//__MOUT__ << "directory found getting the content!" << std::endl;
 				TRegexp re("*", kTRUE);
 				if (LDQM_pos == 0)
 				{
@@ -784,7 +784,7 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
 
-	try
+	//try
 	{
 		//theConfigurationGroupKey_ = theConfigurationManager_->makeTheConfigurationGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("ConfigurationGroupKey").c_str()));
 		//theConfigurationManager_->activateConfigurationGroupKey(theConfigurationGroupKey_,0);
@@ -804,10 +804,10 @@ throw (toolbox::fsm::exception::Exception)
 
 		theDataManager_->configure();
 	}
-	catch(...)
-	{
-		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
-	}
+	//catch(...)
+	//{
+	//	throw std::runtime_error("Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");
+	//}
 }
 
 //========================================================================================================================
@@ -820,7 +820,7 @@ throw (toolbox::fsm::exception::Exception)
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+		__MOUT_INFO__ << "ERROR! Couldn't Halt the VisualSupervisor" << std::endl;
 	}
 }
 
@@ -835,7 +835,7 @@ throw (toolbox::fsm::exception::Exception)
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+		__MOUT_INFO__ << "ERROR! Couldn't Start the VisualSupervisor" << std::endl;
 	}
 }
 
@@ -850,7 +850,7 @@ throw (toolbox::fsm::exception::Exception)
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "Configuration problem.. hopefully only the filesystem is being used!" << std::endl;
+		__MOUT_INFO__ << "ERROR! Couldn't Stop the VisualSupervisor" << std::endl;
 	}
 }
 

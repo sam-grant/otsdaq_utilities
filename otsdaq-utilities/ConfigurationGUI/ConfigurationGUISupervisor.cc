@@ -5,16 +5,6 @@
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 
-//#include "otsdaq-core/ConfigurationPluginDataFormats/ConfigurationAliases.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/Configurations.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/DetectorConfiguration.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/DataManagerConfiguration.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/DefaultConfigurations.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/VersionAliases.h"
-
-//#include "otsdaq-core/ConfigurationDataFormats/ROCDACs.h"
-
-
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
@@ -191,9 +181,9 @@ throw (xgi::exception::Exception)
 
 	if(Command == "saveConfigurationInfo")
 	{
-		std::string configName = CgiDataUtilities::getData(cgi,"configName"); //from GET
-		std::string columnCSV = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
-		std::string allowOverwrite = CgiDataUtilities::getData(cgi,"allowOverwrite"); //from GET
+		std::string configName       = CgiDataUtilities::getData (cgi,"configName"); //from GET
+		std::string columnCSV        = CgiDataUtilities::postData(cgi,"columnCSV"); //from POST
+		std::string allowOverwrite   = CgiDataUtilities::getData (cgi,"allowOverwrite"); //from GET
 		std::string tableDescription = CgiDataUtilities::postData(cgi,"tableDescription"); //from POST
 		std::string columnChoicesCSV = CgiDataUtilities::postData(cgi,"columnChoicesCSV"); //from POST
 
@@ -4287,13 +4277,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		try
 		{
 			//determine the type configuration group
-			int groupType = cfgMgr->getTypeOfGroup(groupName,groupKey,memberMap);
-			groupTypeString =
-					groupType==ConfigurationManager::CONTEXT_TYPE?
-							ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT:
-							(groupType==ConfigurationManager::BACKBONE_TYPE?
-									ConfigurationManager::ACTIVE_GROUP_NAME_BACKBONE:
-									ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION);
+			groupTypeString =cfgMgr->getTypeNameOfGroup(groupName,groupKey,memberMap);
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
 		catch(std::runtime_error &e)
