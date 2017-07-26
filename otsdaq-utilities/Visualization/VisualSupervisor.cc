@@ -372,6 +372,7 @@ throw (xgi::exception::Exception)
 		DIR *pDIR;
 		struct dirent *entry;
 		bool isNotRtCfg;
+		bool isDir;
 		if( (pDIR=opendir(dirpath.c_str())) )
 		{
 			xmldoc.addTextElementToData("path", path);
@@ -406,15 +407,37 @@ throw (xgi::exception::Exception)
 
 			while((entry = readdir(pDIR)))
 			{
-				__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
-				if( entry->d_name[0] != '.' && (entry->d_type == 4 || entry->d_type == 8))
+				//__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
+				if( entry->d_name[0] != '.' && (entry->d_type == 0 || //0 == UNKNOWN (which can happen - seen in SL7 VM)
+						entry->d_type == 4 || entry->d_type == 8))
 				{
 					//__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
 					isNotRtCfg = std::string(entry->d_name).find(".rcfg") == std::string::npos;
-					if(entry->d_type == 8 && std::string(entry->d_name).find(".root") == std::string::npos
+					isDir = false;
+
+					if(entry->d_type == 0)
+					{
+						//unknown type .. determine if directory
+						DIR *pTmpDIR = opendir((dirpath + entry->d_name).c_str());
+						if(pTmpDIR)
+						{
+							isDir = true;
+							closedir(pTmpDIR);
+						}
+						//else //assume file
+					}
+
+					if((entry->d_type == 8 || (!isDir && entry->d_type == 0)) //file type
+							&& std::string(entry->d_name).find(".root") == std::string::npos
 							&& isNotRtCfg)
-						continue;
-					xmldoc.addTextElementToData(entry->d_type==4?"dir":(isNotRtCfg?"dir":"file"), entry->d_name);
+						continue; //skip if not a root file or a config file
+					else if(entry->d_type == 4)
+						isDir = true; //flag directory types
+
+
+					xmldoc.addTextElementToData(isDir?"dir":
+							(isNotRtCfg?"dir":"file"),
+							entry->d_name);
 				}
 			}
 			closedir(pDIR);
