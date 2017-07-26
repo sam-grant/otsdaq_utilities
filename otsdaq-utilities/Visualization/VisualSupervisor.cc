@@ -406,6 +406,7 @@ throw (xgi::exception::Exception)
 
 			while((entry = readdir(pDIR)))
 			{
+				__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
 				if( entry->d_name[0] != '.' && (entry->d_type == 4 || entry->d_type == 8))
 				{
 					//__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
