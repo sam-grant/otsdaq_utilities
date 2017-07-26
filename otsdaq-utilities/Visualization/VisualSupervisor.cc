@@ -367,6 +367,8 @@ throw (xgi::exception::Exception)
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") == 0) //ROOT config path must start the path
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" + path.substr(PRE_MADE_ROOT_CFG_DIR.length()+2);
 
+		__MOUT__ << "full path: " << dirpath << std::endl;
+
 		DIR *pDIR;
 		struct dirent *entry;
 		bool isNotRtCfg;
