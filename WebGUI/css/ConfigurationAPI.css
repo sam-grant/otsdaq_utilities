@@ -194,6 +194,8 @@
 		
 		.ConfigurationAPI-EditableField {
 			cursor: pointer;
+			white-space: nowrap;
+			width: 10000px; /* big number so that nowrap works even for small spaces */
 		}
 		
 		.ConfigurationAPI-EditableField .treeNode {
