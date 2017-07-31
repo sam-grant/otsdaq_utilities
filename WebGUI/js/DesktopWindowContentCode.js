@@ -832,6 +832,7 @@ DesktopContent.tooltip = function(id,tip) {
 		srcStackString = (new Error).stack.split("\n")[1];						
 		srcFunc = srcStackString.trim().split('@')[0];	
 	}
+	
 	srcFile = srcStackString.substr(srcStackString.lastIndexOf('/')+1);	
 	if(srcFile.indexOf('?') >= 0)
 		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
@@ -951,7 +952,8 @@ DesktopContent.tooltip = function(id,tip) {
 				str += "</a>";
 				str +="</input>";
 			}
-					
+
+			Debug.log("srcStackString " + srcStackString);
 			Debug.log(str,Debug.TIP_PRIORITY);
 		}
 	},0,0,0,true,true); //show loading, and target supervisor

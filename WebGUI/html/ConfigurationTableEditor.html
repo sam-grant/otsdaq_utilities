@@ -799,9 +799,7 @@
 							"</option>";					
 
 					for(var f=1;f<colChoicesArr.length;++f)	
-						if(colChoicesArr[f] == "") continue; //skip empty values
-						else
-							str += "<option>" +
+						str += "<option>" +
 							decodeURIComponent(colChoicesArr[f]) +
 							"</option>";		
 
@@ -1316,7 +1314,9 @@
 						DesktopContent.tooltip("FixedChoiceDataType",
 								"The FixedChoiceData type represents a list of choices that constrain " +
 								"the allowed values for a field. " +
-								"The DEFAULT value must always be one of the choices. "
+								"The DEFAULT value must always be one of the choices. \n\n" +
+								"If you check the box to allow arbitrary user entry, users will " +
+								"have the option to enter values that do not necessarily match choices in the list."
 								);
 				}			
 				else //colHdr row
@@ -1560,7 +1560,7 @@
 			if(_colChoicesArr[c].length) //other values exist
 				_colChoicesArr[c] += "," + encodedVal;
 			else						//first value
-				_colChoicesArr[c] = encodedVal;
+				_colChoicesArr[c] = "arbitraryBool=0," + encodedVal;
 			
 			setupTable();
 			Debug.log("Value '" + val + 
@@ -1799,13 +1799,17 @@
 		{
 			Debug.log("uploadFixedChoices _dataUploadStr = " + _dataUploadStr);
 			var src = _dataUploadStr.split('\n');
-			console.log(src);
+			//console.log(src);
 			
+			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
+			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
+						
 			_colChoicesArr[c] = ""; //clear
 
 			for(var i=0;i<src.length;++i)
 			{				
 				if(i) _colChoicesArr[c]	+= ",";
+				else _colChoicesArr[c]	+= "arbitraryBool=" + val + ",";
 				_colChoicesArr[c] += encodeURIComponent(src[i]);
 			}
 			setupTable();
