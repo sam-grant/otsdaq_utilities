@@ -261,7 +261,8 @@
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
 
-		var _activeConfigGroups = []; //sz 6 := holds the group name,key for active Context, Backbone, Config
+		var _activeConfigGroups = []; //sz 6 (each 2) := holds the group name,key for active Context, Backbone, Config
+		var _lastConfigGroups = []; //sz 6 (each 3):= holds the group name,key,TIME for last Configured, Started
 		
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
@@ -581,16 +582,38 @@
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
-					"reloadActiveGroups=1", //reload persistent active groups (persistent active config group will be modified when state machine configures) 
-					"", 
-					groupAliasesRequestHandler,anchorTarget,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getLastConfigGroups",  
+								"", 
+								function(req)
+								{
+				
+				//extract last config groups
+				_lastConfigGroups = [
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName"),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey"),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupName"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupKey"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupTime")
+									   ];
+				//console.log(_lastConfigGroups);
+				
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
+						"reloadActiveGroups=1", //reload persistent active groups (persistent active config group will be modified when state machine configures) 
+						"", 
+						groupAliasesRequestHandler,anchorTarget,
+						0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+				);	
+								},
+								0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+								);	
+			
+					
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
 					versionTrackingHandler,
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					
 			);
 		}
 		
@@ -768,7 +791,10 @@
 				{
 					str += "<tr><td style='text-align:left'>";
 					
-					str += "Currently Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
+					if(i == 1) //for backbone
+						str += "Currently Active " + activeConfigHeaders[i] + ": ";
+					else	//for last configured 
+						str += "Last Activated " + activeConfigHeaders[i] + ": ";
 					
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -782,7 +808,6 @@
 								"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
 						str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
 					}
-					//str += "<br>";
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
@@ -792,6 +817,59 @@
 
 					str += "</td></tr>";
 				}
+				
+				//last config groups for "Configured" and "Started:
+				for(var i=0; i<_lastConfigGroups.length; i += 3)
+				{
+					str += "<tr><td style='text-align:left'>";
+
+					
+					if(!_lastConfigGroups[i] || _lastConfigGroups[i] == "")
+					{
+						//no last group
+						
+						if(i == 0) //for "Configured"
+							str += "Last Configured: ";
+						else	//for "Started"
+							str += "Last Started: ";
+					}
+					else
+					{
+						//there is a last group, so show time
+						
+						if(i == 0) //for "Configured"
+							str += "Last Configured "; 
+						else	//for "Started"
+							str += "Last Started ";
+						
+						str += "<label style='font-size:10px;white-space:nowrap;'>[" + 
+								_lastConfigGroups[i+2] + "]</label>: ";
+					}
+
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+
+					if(!_lastConfigGroups[i] || _lastConfigGroups[i] == "")
+					{
+						str += "None";					
+					}
+					else
+					{
+						str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
+								"\",\"" + _lastConfigGroups[i+1] + "\"); return false;'>";
+						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i+1] + ")</a>";
+					}
+
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+							_lastConfigGroups[i] + 
+							"\",\"" + 
+							_lastConfigGroups[i+1] + "\"); return false;'>Tree-view</a>";								
+
+					str += "</td></tr>";
+				}
+				
+				
+				
 				str += "</table>"; //close active groups table
 				
 			} showActiveBackboneAndConfig();
@@ -6318,7 +6396,8 @@
 							str += "<div style='" +
 									"white-space:nowrap;" +
 									"margin:-4px -2px -4px 1px;width:" + 						
-									(el.offsetWidth-6+50) + "px; height:" + (el.offsetHeight-8) + "px'>";
+									(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
+									"px; height:" + (el.offsetHeight-8) + "px'>";
 
 							str += "<select  onkeydown='keyHandler(event)' " +
 									"id='fixedChoice-editSelectBox' " +

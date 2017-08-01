@@ -121,13 +121,13 @@ throw (xgi::exception::Exception)
 	//	clearConfigurationTemporaryVersions
 	//	clearConfigurationCachedVersions
 	//
-	//		---- associated with Javascript Config API
+	//		---- associated with JavaScript Config API
 	//	getTreeView
 	//	getTreeNodeCommonFields
 	//	getUniqueFieldValuesForRecords
 	//	getTreeNodeFieldValues
 	//	setTreeNodeFieldValues
-	//		---- end associated with Javascript Config API
+	//		---- end associated with JavaScript Config API
 	//
 	//	activateConfigGroup
 	//	getActiveConfigGroups
@@ -135,6 +135,7 @@ throw (xgi::exception::Exception)
 	//	saveTreeNodeEdit
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
+	//	getLastConfigGroups
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -792,6 +793,26 @@ throw (xgi::exception::Exception)
 		}
 
 		handleGetConfigurationXML(xmldoc,cfgMgr,configName,newTemporaryVersion);
+	}
+	else if(Command == "getLastConfigGroups")
+	{
+		const xdaq::ApplicationDescriptor* gatewaySupervisor =
+				theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_)?
+						theSupervisorDescriptorInfo_.getWizardDescriptor():
+						theSupervisorDescriptorInfo_.getSupervisorDescriptor();
+
+		std::string timeString;
+		std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup =
+				theRemoteWebUsers_.getLastConfigGroup(gatewaySupervisor,
+						"Configured",timeString);
+		xmldoc.addTextElementToData("LastConfiguredGroupName",theGroup.first);
+		xmldoc.addTextElementToData("LastConfiguredGroupKey",theGroup.second.toString());
+		xmldoc.addTextElementToData("LastConfiguredGroupTime",timeString);
+		theGroup = theRemoteWebUsers_.getLastConfigGroup(gatewaySupervisor,
+						"Started",timeString);
+		xmldoc.addTextElementToData("LastStartedGroupName",theGroup.first);
+		xmldoc.addTextElementToData("LastStartedGroupKey",theGroup.second.toString());
+		xmldoc.addTextElementToData("LastStartedGroupTime",timeString);
 	}
 	else
 	{

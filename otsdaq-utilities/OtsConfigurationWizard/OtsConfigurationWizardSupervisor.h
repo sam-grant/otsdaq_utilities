@@ -34,25 +34,26 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    OtsConfigurationWizardSupervisor         				(xdaq::ApplicationStub *) throw (xdaq::exception::Exception);
-    virtual ~OtsConfigurationWizardSupervisor				(void);
+    OtsConfigurationWizardSupervisor         						(xdaq::ApplicationStub *) throw (xdaq::exception::Exception);
+    virtual ~OtsConfigurationWizardSupervisor						(void);
 
 
-    void 						init                  		(void);
-    void 						destroy                     (void);
+    void 						init                  				(void);
+    void 						destroy                     		(void);
 
-    void 						Default                     (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void 						verification                (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void 						generateURL            		(void                                                                  );
-    static void 				printURL					(OtsConfigurationWizardSupervisor *ptr, std::string securityCode);
-    void						requestIcons                (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 						generateURL            				(void);
+    static void 				printURL							(OtsConfigurationWizardSupervisor *ptr, std::string securityCode);
 
-    void 						editSecurity                (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void 						tooltipRequest                (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 						Default                    			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 						verification               		 	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void						requestIcons                		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+
+    void 						editSecurity                		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 						tooltipRequest                		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
     //External Supervisor XOAP handlers
-    xoap::MessageReference 		supervisorSequenceCheck 	(xoap::MessageReference msg) throw (xoap::exception::Exception);
-
+    xoap::MessageReference 		supervisorSequenceCheck 			(xoap::MessageReference msg) throw (xoap::exception::Exception);
+    xoap::MessageReference 		supervisorLastConfigGroupRequest	(xoap::MessageReference msg) throw (xoap::exception::Exception);
 
 private:
     std::string					securityCode_;

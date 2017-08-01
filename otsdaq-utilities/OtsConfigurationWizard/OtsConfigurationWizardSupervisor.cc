@@ -1,5 +1,7 @@
 #include "OtsConfigurationWizardSupervisor.h"
 
+#include "otsdaq-core/Supervisor/Supervisor.h"
+
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutHeaderMacros.h"
 
@@ -54,8 +56,8 @@ SOAPMessenger  (this)
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	"editSecurity"		);
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,         "TooltipRequest"	);
 
-	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,"SupervisorSequenceCheck",        XDAQ_NS_URI);
-
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,			"SupervisorSequenceCheck",        	XDAQ_NS_URI);
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest,	"SupervisorLastConfigGroupRequest", XDAQ_NS_URI);
 	init();
 
 }
@@ -238,6 +240,22 @@ throw (xoap::exception::Exception)
 
 	return SOAPUtilities::makeSOAPMessageReference("SequenceResponse",
 			retParameters);
+}
+
+//===================================================================================================================
+//xoap::supervisorLastConfigGroupRequest
+//	return the group name and key for the last state machine activity
+//
+//	Note: same as Supervisor::supervisorLastConfigGroupRequest
+xoap::MessageReference OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest(
+		xoap::MessageReference message)
+throw (xoap::exception::Exception)
+{
+	SOAPParameters parameters;
+	parameters.addParameter("ActionOfLastGroup");
+	receive(message, parameters);
+
+	return Supervisor::lastConfigGroupRequestHandler(parameters);
 }
 
 //========================================================================================================================
