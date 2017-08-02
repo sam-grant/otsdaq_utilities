@@ -15,9 +15,9 @@
 	<style type="text/css">			
 
 		/*fix margin for this page in Multi-Select (must have changed because of font/font-size)*/ 
-		#groupSearchDiv input, textarea { 
+		/*#groupSearchDiv input, textarea { 
 			margin: 			19px 5px 5px 12px;
-		}
+		}*/
 
 		/* make buttons have a hand cursor */
 		input[type="button"], button {
@@ -261,7 +261,8 @@
 		var _lastFindRow, _lastFindCol;
 		var _cachedTableComment, _cachedGroupComment;
 
-		var _activeConfigGroups = []; //sz 6 := holds the group name,key for active Context, Backbone, Config
+		var _activeConfigGroups = []; //sz 6 (each 2) := holds the group name,key for active Context, Backbone, Config
+		var _lastConfigGroups = []; //sz 6 (each 3):= holds the group name,key,TIME for last Configured, Started
 		
 		var _versionTrackingIsOn = true;
 		var _firstTimeSilentActive = true;
@@ -400,6 +401,8 @@
 			//handleGroupCommentToggle(groupName,setHideVal)
 			//handlePopUpHeightToggle(h,gh)
 		
+			//handleFixedChoiceEditToggle()
+		
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
 			//addMemberToConfigGroup(groupName,backLinkStr) 
@@ -532,16 +535,16 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("FE2Configuration","1",""); return;
+			//setupSpecificConfig("DataBufferConfiguration","3",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
-			//setupSpecificConfigGroup("testContext","5"); return;
+			//setupSpecificConfigGroup("defaultConfig","1"); return;
 			
 			//setupConfigCreator(); return
 			
 			//setupConfigGroupTreeView("FETest","0"); return; //"46"); return;
-			//setupConfigGroupTreeView("artdaqFclTest","4"); return;
+			//setupConfigGroupTreeView("defaultConfig","3"); return;
 			
 			//setupGroupViewMode(); return;
 			
@@ -575,24 +578,48 @@
 
 		//setupSystemViewMode ~
 		function setupSystemViewMode(anchorTarget) {
-
+						
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases", "", 
-					groupAliasesRequestHandler,anchorTarget,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getLastConfigGroups",  
+								"", 
+								function(req)
+								{
+				
+				//extract last config groups
+				_lastConfigGroups = [
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName"),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey"),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupName"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupKey"),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupTime")
+									   ];
+				//console.log(_lastConfigGroups);
+				
+
+				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
+						"reloadActiveGroups=1", //reload persistent active groups (persistent active config group will be modified when state machine configures) 
+						"", 
+						groupAliasesRequestHandler,anchorTarget,
+						0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+				);	
+								},
+								0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+								);	
+			
+					
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
 					versionTrackingHandler,
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					
 			);
 		}
 		
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) {
-
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
@@ -764,7 +791,10 @@
 				{
 					str += "<tr><td style='text-align:left'>";
 					
-					str += "Currently Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
+					if(i == 1) //for backbone
+						str += "Currently Active " + activeConfigHeaders[i] + ": ";
+					else	//for last configured 
+						str += "Last Activated " + activeConfigHeaders[i] + ": ";
 					
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -778,7 +808,6 @@
 								"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
 						str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
 					}
-					//str += "<br>";
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
@@ -788,6 +817,59 @@
 
 					str += "</td></tr>";
 				}
+				
+				//last config groups for "Configured" and "Started:
+				for(var i=0; i<_lastConfigGroups.length; i += 3)
+				{
+					str += "<tr><td style='text-align:left'>";
+
+					
+					if(!_lastConfigGroups[i] || _lastConfigGroups[i] == "")
+					{
+						//no last group
+						
+						if(i == 0) //for "Configured"
+							str += "Last Configured: ";
+						else	//for "Started"
+							str += "Last Started: ";
+					}
+					else
+					{
+						//there is a last group, so show time
+						
+						if(i == 0) //for "Configured"
+							str += "Last Configured "; 
+						else	//for "Started"
+							str += "Last Started ";
+						
+						str += "<label style='font-size:10px;white-space:nowrap;'>[" + 
+								_lastConfigGroups[i+2] + "]</label>: ";
+					}
+
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+
+					if(!_lastConfigGroups[i] || _lastConfigGroups[i] == "")
+					{
+						str += "None";					
+					}
+					else
+					{
+						str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
+								"\",\"" + _lastConfigGroups[i+1] + "\"); return false;'>";
+						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i+1] + ")</a>";
+					}
+
+					str += "</td><td style='text-align:left; padding-left:20px;'>";
+					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+							_lastConfigGroups[i] + 
+							"\",\"" + 
+							_lastConfigGroups[i+1] + "\"); return false;'>Tree-view</a>";								
+
+					str += "</td></tr>";
+				}
+				
+				
+				
 				str += "</table>"; //close active groups table
 				
 			} showActiveBackboneAndConfig();
@@ -2302,8 +2384,11 @@
 			if(err) 
 			{
 				Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page",Debug.HIGH_PRIORITY);
-				Debug.log(err,Debug.HIGH_PRIORITY);				
-				return;
+				Debug.log(err,Debug.HIGH_PRIORITY);			
+				
+				if(parentId)
+					return;
+				// else try to power through 
 			}
 			
 			var warn = DesktopContent.getXMLValue(req,"Warning");
@@ -2312,9 +2397,7 @@
 				Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
 				Debug.log(warn,Debug.WARN_PRIORITY);	
 			}
-			
-			//removed this because it should be controlled by the handlers properly
-			//editCellCancel();
+						
 			
 			//draw tree		
 			
@@ -2537,7 +2620,7 @@
 				}
 				
 
-				if(treeErr) 
+				if(treeErr || err || warn) 
 				{
 					treeViewHandlerStr_ += "<div style='color:red; cursor:pointer' title='" + 
 							//treeErr.replace(/'/g , "&apos;") + "' ";
@@ -2549,7 +2632,9 @@
 					treeViewHandlerStr_ += "<u>Warning: Errors were detected in this tree!</u>";
 					treeViewHandlerStr_ += "</div>";
 					treeViewHandlerStr_ += "<div id='treeViewErrors' style='display:none'>" + 
-							treeErr.replace(/\n/g , "<br>") + "</div>";
+							(err?err.replace(/\n/g , "<br>"):"") +
+							(warn?warn.replace(/\n/g , "<br>"):"") +
+							(treeErr?treeErr.replace(/\n/g , "<br>"):"") + "</div>";
 					treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
 				}
 				
@@ -2612,6 +2697,8 @@
 			
 			applyTreeFilter("",1); //reapplyFilter
 			toggleGroupDetails(_showGroupDetails);
+
+			activateSystemConfigHandler(req); //display active config groups	
 		}
 
 		//recursiveDrawTree ~		
@@ -3369,9 +3456,20 @@
 						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
 					else //accessing through link so need to get from parent
 					{
-						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" + 
-								treeEditingNodeParentIdString_).textContent;	
+						//needs to get from parent OR parent-of-parent
+						//	if parent is uid link.. then one level back
+						//	if parent is groupid link.. then two levels back
+
+						var pel = document.getElementById("treeNode-linkTableName-" +
+								treeEditingNodeParentIdString_);
+						if(!pel)
+							pel = document.getElementById("treeNode-linkTableName-" +
+									(document.getElementById("treeNode-ParentId-" + 
+											treeEditingNodeParentIdString_).textContent));
+						
+						treeEditingTargetTable_ = pel.textContent;
 					}
+					
 					treeEditingTargetUID_ = el.textContent;
 					treeEditingTargetColumn_ = "UID";
 					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
@@ -3859,6 +3957,8 @@
 		//activateSystemConfig ~
 		function activateSystemConfig(groupName, groupKey, ignoreWarnings)
 		{
+			document.getElementById("activateConfigWithWarnings").innerHTML = "";
+			
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
 					groupName + "&groupKey=" + groupKey +
 					(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
@@ -4010,9 +4110,11 @@
 			}
 			str += "</table>"; //close active groups table
 			
-			document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;			
+						
 			if(withWarningsStr != "")
 			{
+				document.getElementById("activateConfigWithWarnings").innerHTML = withWarningsStr;
+				
 				Debug.log("Group " + name + "(" + key + ") was not activated.\n\n" +
 						"Please see detailed Warnings and Errors below. " +
 						"You can try to activate " + 
@@ -4027,23 +4129,45 @@
 			else 
 			{
 				var el = document.getElementById("activeConfig");
-				el.innerHTML = str;
+				el.innerHTML = str;		
 				str = el.innerHTML;				
 				
-				if(!_firstTimeSilentActive && str != oldStr) //only popup after the first time
+				//if flag from server that an activation was attempted..)
+				if(DesktopContent.getXMLValue(req,"AttemptedGroupActivation") == "1")
+				{
+					Debug.log("Note: There was a successful activation of the group '" +
+							DesktopContent.getXMLValue(req,"AttemptedGroupActivationName") + 
+							" (" + 
+							DesktopContent.getXMLValue(req,"AttemptedGroupActivationKey") + 
+							").'",
+							Debug.INFO_PRIORITY);
+				}				
+				else if(!_firstTimeSilentActive && //only popup after the first time
+						str != oldStr)  //if change							  
 				{						
 					if(thereIsAnEmpty) //may have been a deactivationg (due to error?)
-						Debug.log("Note: There was a change in the active Context group (check the top of the page)!",
+						Debug.log("Note: There was a change to the active Context group (check the top of the page)!",
 								Debug.INFO_PRIORITY);
 					else //must have been an activation
-						Debug.log("Note: There was a successful activation of a Context group (check the top of the page)!",
+						Debug.log("Note: There was a successful activation of a group (likely from a different GUI, check the System View for changes)!",
 								Debug.INFO_PRIORITY);
 
 					//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				}
-				else
-					_firstTimeSilentActive = false;
-			}				
+				
+				_firstTimeSilentActive = false;				
+			}		
+			
+			//if system view, refresh it to show active
+			try
+			{
+				if(document.getElementById("display").children[0].textContent == 
+					"System View")
+					setupSystemViewMode();
+			}
+			catch(e)
+			{;}
+			
 		}
 		
 //		//setGroupAliasInActiveBackbone ~~
@@ -4570,6 +4694,7 @@
 				str += "<td>";
 				str += "<a href='#' onclick='" +
 						"var sel = document.getElementById(\"select-" + name + "\");" +
+						"if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default" +
 						"setupSpecificConfig(\"" + name + "\"," +
 						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
 						",\"" + backLinkStr + "\"); return false;'" +
@@ -4769,35 +4894,6 @@
 			}
 		}
 		
-//		//createConfigGroup ~
-//		function createConfigGroup(ignoreWarnings)
-//		{
-//			var config = document.getElementById("newConfigName").value;
-//			Debug.log("config " + config);
-//			
-//			var configMap = "configList=";
-//			var els = document.getElementsByClassName("memberConfigCheckbox");
-//			var sel;
-//			for(var el=0;el<els.length;++el)
-//				if(els[el].checked)
-//				{
-//					sel = document.getElementById("select-" + els[el].value);
-//					if(sel.options.length)
-//					{
-//						Debug.log("subconfig=" + els[el].value + " version=" + 
-//							sel.options[sel.selectedIndex].value);
-//						configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
-//					}
-//				}			
-//			
-//			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
-//					"&groupName=" +	config +
-//					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
-//					configMap, createConfigGroupHandler,
-//					0, 0, 0, //reqIndex, progressHandler, callHandlerOnErr
-//					true); //showLoadingOverlay
-//		}
-
 		//createConfigGroupHandler ~
 		function createConfigGroupHandler(req)
 		{
@@ -5406,7 +5502,7 @@
 				//add input into element
 				var str = "";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 				str += initVal;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
@@ -5432,7 +5528,7 @@
 				str += "<table cellpadding='0' cellspacing='0' border='0'><tr>";
 				str += "<td>";
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight) + "px' value='";
+						(el.offsetWidth>150?el.offsetWidth:150) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 				str += _editingCellElOldValue;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting); event.stopPropagation();' " +
@@ -5529,10 +5625,26 @@
 					_editingCellElOldValue = el.textContent;
 					treeEditingNodeInitValue_ = _editingCellElOldValue;
 					
-					str += "<select  onkeydown='keyHandler(event)' " +
+					var allowFixedChoiceArbitraryEdit = false;
+					var optionCount = -1;
+					optionIndex = 0; //default to default
+					
+					str += "<div onkeydown='keyHandler(event)' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();' " +
-							"style='margin:-4px -2px -4px -1px; height:" + (el.offsetHeight+6) + "px'>";
+							"style='" +
+							"white-space:nowrap;" +
+							"margin:-3px -2px -2px -1px;" +
+							"height:" + (el.offsetHeight+6) + "px'>";
+					
+					str += "<select  onkeydown='keyHandler(event)' " +
+							"id='fixedChoice-editSelectBox' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='" + 
+							"float:left;" +
+							"margin: -2px 1px 0px 0px; " +
+							"height:" + (el.offsetHeight+6) + "px'>";
 
 					//default value is assumed in list
 
@@ -5541,15 +5653,61 @@
 					var choices = vel.textContent.split(',');
 					
 					for(var i=0;i<choices.length;++i)
-					{			
+					{		
+						if(i==1)//check for arbitraryBool flag
+						{
+							if(choices[i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = 
+										choices[i][("arbitraryBool=").length] == "1"?
+												true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
 						str += "<option>";
 						str += decodeURIComponent(choices[i]);	//can display however
 						str += "</option>";
 						if(decodeURIComponent(choices[i]) 
 								== _editingCellElOldValue)
-							optionIndex = i; //get starting sel index
+							optionIndex = optionCount; //save selected index
 					}				
 					str += "</select>";	
+					
+					if(allowFixedChoiceArbitraryEdit)
+					{
+						var ww = (el.offsetWidth-6);
+						if(ww < 150) ww = 150; 
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+								"width:" + 
+								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: -2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='handleFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+					str += "</div>";
 				}
 				else if(colType == "BitMap")
 				{
@@ -5611,8 +5769,11 @@
 					_editingCellElOldValue = el.textContent;
 					treeEditingNodeInitValue_ = _editingCellElOldValue;
 					
+					var ow = el.offsetWidth+6;
+					if(ow < 150) //force a minimum input width
+						ow = 150;
 					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-							(el.offsetWidth+6) + "px; height:" + (el.offsetHeight) + "px' value='";
+							(ow) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
 					str += _editingCellElOldValue;
 					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
@@ -6125,6 +6286,7 @@
 						
 			return true;
 		}
+
 		
 		//selectThisCell ~~
 		function selectThisCell(r,c,el,event) 
@@ -6199,32 +6361,99 @@
 				str += "</select>";				
 			}
 			else if(colType == "FixedChoiceData")
-			{
-				str += "<select  onkeydown='keyHandler(event)' " +
-						"style='margin:-4px -2px -4px 1px;width:" + 
-						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
-				
-				//default value is assumed in list
-				str += "<option>";
-				str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
-				str += "</option>";
-				if(decodeURIComponent(_tableDefaultRowValues[c])
-											 == _editingCellElOldValue)
-					optionIndex = 0; //get starting sel index
+			{		
+				optionIndex = 0; //default to default
+
+				var allowFixedChoiceArbitraryEdit = false;				
 				
 				if(_tableFixedChoiceData[c] !== undefined)
 				{
+					var optionCount = 0;
 					for(var i=0;i<_tableFixedChoiceData[c].length;++i)
 					{			
+						if(!i)//check for arbitraryBool flag
+						{
+							if(_tableFixedChoiceData[c][i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = _tableFixedChoiceData[c][i][
+											("arbitraryBool=").length] == "1"?true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
+						
+						if(optionCount == 1) //before the first option is added, add preamble and default
+						{
+							str += "<div style='" +
+									"white-space:nowrap;" +
+									"margin:-4px -2px -4px 1px;width:" + 						
+									(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
+									"px; height:" + (el.offsetHeight-8) + "px'>";
+
+							str += "<select  onkeydown='keyHandler(event)' " +
+									"id='fixedChoice-editSelectBox' " +
+									"style='" + 
+									"float:left;" +
+									//"margin:-4px -2px -4px 1px;" +
+									"width:" + 
+									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
+									"'>";
+
+							//default value is assumed in list
+							str += "<option>";
+							str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
+							str += "</option>";
+						}
+						
+						
+						
 						str += "<option>";
 						str += decodeURIComponent(_tableFixedChoiceData[c][i]);	//can display however
 						str += "</option>";
+						
+						//check for currently selected value
 						if(decodeURIComponent(_tableFixedChoiceData[c][i]) 
 													 == _editingCellElOldValue)
-							optionIndex = i+1; //get starting sel index
+							optionIndex = optionCount; //+1 in advance to account for default option
 					}
 				}
+
 				str += "</select>";	
+				
+
+				if(allowFixedChoiceArbitraryEdit)
+				{
+					str += "<input type='text' " +
+							"id='fixedChoice-editTextBox' " +
+							"style='display:none;" + 
+							"float:left;" +
+							"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+							"width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+							"'>";					
+					str += "";
+					str += "</input>";	
+
+					str += "<div style='display:block;" +
+							"margin: 2px 0 -7px 14px;" +
+							"' " + 
+							"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+							"' " +
+							"onclick='handleFixedChoiceEditToggle();' " +
+							"title='Toggle free-form editing' " +
+							"></div>";
+				}
+				str += "</div>";
+				
 			}
 			else if(colType == "BitMap")
 			{
@@ -6523,7 +6752,7 @@
 				return false;
 			}
 			else if((e.keyCode >= 48 && e.keyCode <= 57) || 
-					(e.keyCode >= 96 && e.keyCode <= 105))// number
+					(e.keyCode >= 96 && e.keyCode <= 105))// number 0-9
 			{
 				//if child link cell or boolean cell			
 				var sel;
@@ -6756,11 +6985,17 @@
 								"Backbone group '" + retParams.groupName + " (" + 
 								retParams.groupKey + ")' was activated.",
 								Debug.INFO_PRIORITY);
+					
+					//kill popup dialog
+					var el = document.getElementById("popUpDialog"); 
+					if(el) el.parentNode.removeChild(el);
+				}
+				else
+				{
+					//else error, leave popup there and re-enable button
+					document.getElementById("popUpDialog-submitButton").disabled = false;
 				}
 				
-				//kill popup dialog
-				var el = document.getElementById("popUpDialog"); 
-				if(el) el.parentNode.removeChild(el);
 				
 					}, true); //request return parameters
 		}
@@ -7968,6 +8203,7 @@
 				if(treeEditingNodeType_ == "value-bool")
 				{
 					var sel = _editingCellEl.getElementsByTagName("select")[0];
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					newValue = sel.options[sel.selectedIndex].value;
 				}
 				else if(treeEditingNodeType_ == "value-bitmap")
@@ -7977,7 +8213,8 @@
 				else if(treeEditingNodeType_.indexOf("link-") == 0)
 				{
 					//make csv newValue := linkTable,linkInitId
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];	
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					newValue = sel.options[sel.selectedIndex].value;
 					newValue += ",";					
 					sel = _editingCellEl.getElementsByTagName("select")[1];
@@ -8036,7 +8273,8 @@
 				else if(treeEditingNodeType_ == "table-newGroupRow")
 				{
 					//coming from edit setup of group link "link-GroupID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];		
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
 					//make csv newValue := linkIndex,linkID
@@ -8051,7 +8289,8 @@
 				else if(treeEditingNodeType_ == "table-newUIDRow")
 				{
 					//coming from edit setup of group link "link-UID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];					
+					var sel = _editingCellEl.getElementsByTagName("select")[0];	
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
 					
 					//make new value the new UID 
@@ -8066,8 +8305,18 @@
 					var sel;
 					if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData					
 						newValue = sel[0].value; //assume the first textarea in the cell is the textarea
-					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData					
-						newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData
+					{						
+						//check if displayed
+						if(sel[0].style.display == "none")
+						{
+							//if not displayed assume first input field is ours!
+							//take "normal cell" approach from below
+							newValue = _editingCellEl.getElementsByTagName("input")[0].value;					
+						}						
+						else
+							newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+					}
 					else
 						newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 					
@@ -8468,9 +8717,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											idString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent)).textContent));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}					
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
@@ -8583,9 +8852,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											idString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											idString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent)).textContent));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}						
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
@@ -8838,9 +9127,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+							
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent)).textContent));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							
+							table = pel.textContent;
+						}
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
@@ -8922,9 +9231,29 @@
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent)).textContent;
 						else 
-							table = document.getElementById("treeNode-linkTableName-" + 
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent)).textContent;						
+											parentIdString).textContent));
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent)).textContent));
+							if(!pel)
+							{
+								Debug.log("Big problem with locating table name through ancestry! " +
+										"Please notify developers as to how you got here.",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+
+							table = pel.textContent;
+						}					
 
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
@@ -8965,8 +9294,22 @@
 						//need table to verify match.. must get from parent link	
 						parentIdString = document.getElementById("treeNode-ParentId-" + 
 								idString).textContent;
-						table = document.getElementById("treeNode-linkTableName-" + 
-								parentIdString).textContent;						
+						
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+	
+							var pel = document.getElementById("treeNode-linkTableName-" +
+									parentIdString);
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" +
+										(document.getElementById("treeNode-ParentId-" + 
+												parentIdString).textContent));
+							
+							table = pel.textContent;
+						}
+						
 
 						//Debug.log("uid-table " + table);
 						uid = els[i].textContent;
@@ -9155,38 +9498,63 @@
 			if((sel = _editingCellEl.getElementsByTagName("select")).length)
 			{
 				sel = sel[0]; //assume the first select in the cell is the select
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);				
-				var selVal = sel.options[sel.selectedIndex].value;
 
-				Debug.log("CfgGUI editCellOK = " + 
-						selVal);
-
-				str = "";
-				str += selVal;
-				_editingCellEl.innerHTML = str;		
+				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);	
 				
-				//assume no child link will be named a boolean word
-				var boolTypeTrues =  ["On","True","Yes"];
-				var statusTypeFalses =  ["Off","False","No"];
-				
-				//determine if true value
-				var isTrue = false;
-				var isFalse = false;
-				for(var i=0;i<boolTypeTrues.length;++i)
-					if(boolTypeTrues[i] == selVal)
-					{
-						isTrue = true; break;
+				//check if displayed
+				if(sel.style.display == "none")
+				{
+					//if not displayed assume first input field is ours!
+					//take "normal cell" approach from below
+					var str = "";
+					try
+					{				
+						str = _editingCellEl.getElementsByTagName("input")[0].value;
+						Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+								str);
 					}
-				for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
-					if(statusTypeFalses[i] == selVal)
+					catch(err)
 					{
-						isFalse = true; break;
+						Debug.log("Error try-catch: " + err);
 					}
-				
-				if(isTrue)
-					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
-				else if(isFalse)
-					_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+					_editingCellEl.innerHTML = "";
+					_editingCellEl.appendChild(document.createTextNode(str));					
+				}
+				else
+				{		
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+					var selVal = sel.options[sel.selectedIndex].value;
+	
+					Debug.log("CfgGUI editCellOK = " + 
+							selVal);
+	
+					str = "";
+					str += selVal;
+					_editingCellEl.innerHTML = str;		
+					
+					//assume no child link will be named a boolean word
+					var boolTypeTrues =  ["On","True","Yes"];
+					var statusTypeFalses =  ["Off","False","No"];
+					
+					//determine if true value
+					var isTrue = false;
+					var isFalse = false;
+					for(var i=0;i<boolTypeTrues.length;++i)
+						if(boolTypeTrues[i] == selVal)
+						{
+							isTrue = true; break;
+						}
+					for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+						if(statusTypeFalses[i] == selVal)
+						{
+							isFalse = true; break;
+						}
+					
+					if(isTrue)
+						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+					else if(isFalse)
+						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+				}
 			}
 			else if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData
 			{
@@ -11186,7 +11554,7 @@
 									}
 									Debug.log(configMap);
 
-									saveGroupAndActivate("TableEditWizBackone",configMap,
+									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
 										Debug.log("Save and activate is done.");
@@ -11229,6 +11597,17 @@
 								Debug.log("groupAlias = " + groupAlias);
 								Debug.log("groupName = " + groupName);
 								Debug.log("groupKey = " + groupKey);
+								
+								if(!groupAlias || groupAlias.trim() == "")
+								{
+									Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);									
+									
+									//kill popup dialog
+									var el = document.getElementById("popUpDialog"); 
+									if(el) el.parentNode.removeChild(el);
+									
+									return;
+								}
 
 								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 										"&groupAlias=" + groupAlias + 
@@ -11522,9 +11901,10 @@
 				for(var el=0;el<els.length;++el)
 					if(els[el].checked)
 					{
-						sel = document.getElementById("select-" + els[el].value);
+						sel = document.getElementById("select-" + els[el].value);						
 						if(sel.options.length)
 						{
+							if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 							Debug.log("subconfig=" + els[el].value + " version=" + 
 									sel.options[sel.selectedIndex].value);
 							configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
@@ -11745,7 +12125,7 @@
 									}
 									Debug.log(configMap);
 
-									saveGroupAndActivate("TableEditWizBackone",configMap,
+									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
 										Debug.log("Save and activate is done.");
@@ -11788,6 +12168,17 @@
 								Debug.log("groupAlias = " + groupAlias);
 								Debug.log("groupName = " + groupName);
 								Debug.log("groupKey = " + groupKey);
+								
+								if(!groupAlias || groupAlias.trim() == "")
+								{
+									Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);									
+
+									//kill popup dialog
+									var el = document.getElementById("popUpDialog"); 
+									if(el) el.parentNode.removeChild(el);
+
+									return;
+								}
 
 								DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
 										"&groupAlias=" + groupAlias + 
@@ -12363,6 +12754,32 @@
 			}
 		}
 		
+
+		//handleFixedChoiceEditToggle ~~
+		//	toggle select box to text field edit
+		function handleFixedChoiceEditToggle() 
+		{	
+			Debug.log("handleFixedChoiceEditToggle");
+		
+			var sel = document.getElementById("fixedChoice-editSelectBox");
+			var tel = document.getElementById("fixedChoice-editTextBox");
+			
+			Debug.log("sel.style.display  " + sel.style.display);
+			if(sel.style.display == "none")
+			{
+				sel.style.display = "block";
+				tel.style.display = "none";
+			}
+			else
+			{
+				tel.style.width = (sel.offsetWidth-2) + "px";
+				sel.style.display = "none";
+				tel.style.display = "block";
+				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
+			}
+		}
+		
+		
 		//handleEditTreeAliasEditToggle ~~
 		function handleEditTreeAliasEditToggle(i)
 		{	
@@ -12399,8 +12816,8 @@
 				if(vel)
 					vel.style.backgroundColor = "transparent";
 			}
-
 		}
+		
 		//handleTreeNodeMouseMove ~~
 		function handleTreeNodeMouseMove(depth,uid,event)
 		{

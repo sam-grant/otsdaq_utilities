@@ -181,7 +181,7 @@ ViewerRoot.createHud = function() {
 		hardRefresh = hardRefresh|0; //force to integer
 		if(!hardRefresh && hardRefresh !== "")
 		{
-			Debug.log("setting hardRefresh=" + chk.checked);
+			Debug.log("setting hardRefresh=" + hardRefresh);
 			ViewerRoot.hardRefresh = hardRefresh; 	//hard refresh
 		}
 		var autoRefreshPeriod = DesktopContent.getXMLValue(req,'autoRefreshPeriod');

@@ -5,6 +5,7 @@ cet_make(LIBRARY_NAME OtsConfigurationWizard
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 SupervisorDescriptorInfo
+		 Supervisor
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities

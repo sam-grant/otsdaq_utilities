@@ -1,5 +1,7 @@
 #include "OtsConfigurationWizardSupervisor.h"
 
+#include "otsdaq-core/Supervisor/Supervisor.h"
+
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutHeaderMacros.h"
 
@@ -54,8 +56,8 @@ SOAPMessenger  (this)
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	"editSecurity"		);
 	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,         "TooltipRequest"	);
 
-	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,"SupervisorSequenceCheck",        XDAQ_NS_URI);
-
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,			"SupervisorSequenceCheck",        	XDAQ_NS_URI);
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest,	"SupervisorLastConfigGroupRequest", XDAQ_NS_URI);
 	init();
 
 }
@@ -85,9 +87,13 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		sscanf(line,"%d",&length);
 		fclose(fp);
 		if(length < 4) length = 4; //don't allow shorter than 4
+		srand(time(0)); //randomize differently each "time"
 	}
 	else
-		__MOUT_INFO__ <<  "Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+	{
+		__MOUT_INFO__ <<  "(Reverting to default wiz security) Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+		srand(0);	//use same seed for convenience if file not found
+	}
 
 	__MOUT__ << "Sequence length = " << length << std::endl;
 
@@ -98,7 +104,6 @@ void OtsConfigurationWizardSupervisor::generateURL()
 			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 			"abcdefghijklmnopqrstuvwxyz";
 
-	srand(0);//time(0));
 
 	for (int i = 0; i < length; ++i) {
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
@@ -235,6 +240,22 @@ throw (xoap::exception::Exception)
 
 	return SOAPUtilities::makeSOAPMessageReference("SequenceResponse",
 			retParameters);
+}
+
+//===================================================================================================================
+//xoap::supervisorLastConfigGroupRequest
+//	return the group name and key for the last state machine activity
+//
+//	Note: same as Supervisor::supervisorLastConfigGroupRequest
+xoap::MessageReference OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest(
+		xoap::MessageReference message)
+throw (xoap::exception::Exception)
+{
+	SOAPParameters parameters;
+	parameters.addParameter("ActionOfLastGroup");
+	receive(message, parameters);
+
+	return Supervisor::lastConfigGroupRequestHandler(parameters);
 }
 
 //========================================================================================================================

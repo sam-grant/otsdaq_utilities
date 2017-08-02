@@ -50,15 +50,23 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getDateString(date)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
-//	ConfigurationAPI.getFieldValuesForRecord(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
+// 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
 //	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
+//	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
+//	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
+//	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
+//	ConfigurationAPI.getSelectedEditableFieldIndex()
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize)
+//	ConfigurationAPI.addClass(elem,class)
+//	ConfigurationAPI.removeClass(elem,class)
+//	ConfigurationAPI.hasClass(elem,class)
 
 
 //"public" constants:
@@ -74,20 +82,42 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
+//
+//		for Editable Fields
+//	ConfigurationAPI.handleEditableFieldClick(depth,uid,editClick,type)
+//	ConfigurationAPI.handleEditableFieldHover(depth,uid,event)
+//	ConfigurationAPI.handleEditableFieldBodyMouseMove(event)
+//	ConfigurationAPI.handleEditableFieldEditOK()
+//	ConfigurationAPI.handleEditableFieldEditCancel()
+//	ConfigurationAPI.handleEditableFieldKeyDown(event,keyEl)
+//	ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,depth,nodeName,value,valueType,choices,path)
 
 //"private" constants:
 ConfigurationAPI._VERSION_ALIAS_PREPEND = "ALIAS:";
 ConfigurationAPI._SCRATCH_VERSION = 2147483647;
 ConfigurationAPI._SCRATCH_ALIAS = "Scratch";
 
+ConfigurationAPI._OK_CANCEL_DIALOG_STR = "";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
+				"width:95px;height:20px;margin:0 -122px -64px 10px; font-size: 16px; white-space:nowrap; text-align:center;'>";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='javascript:ConfigurationAPI.handleEditableFieldEditOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
+				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+				"<a class='popUpOkCancel' onclick='javascript:ConfigurationAPI.handleEditableFieldEditCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
+				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
+ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";	
+
 //=====================================================================================
 //getSubsetRecords ~~
 //	takes as input a base path where the desired records are, 
 //	  and a filter list.
 //
-// <filterList> is a ;=separated list of tree paths relative to <subsetBasePath> 
-//	 and their required value (CSV for multiple values).
-//		e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
+// <filterList> 
+//	filterList := relative-to-record-path=value(,value,...);path=value... filtering
+//		records with relative path not meeting all filter criteria
+//		- can accept multiple values per field (values separated by commas) (i.e. OR)
+//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
+//		- fields/value pairs separated by ; for AND
+//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -155,7 +185,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
 //
-// 	maxDepth is used to force a end to search for common fields
+// 	maxDepth is used to force an end to search for common fields
 //	
 //	when complete, the responseHandler is called with an array parameter.
 //		on failure, the array will be empty.
@@ -166,6 +196,9 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 //			obj.fieldColumnName
 //			obj.fieldRelativePath 
 //			obj.fieldColumnType
+//			obj.fieldColumnDataType
+//			obj.fieldColumnDataChoicesArr[]
+//			obj.fieldColumnDefaultValue
 //			
 //
 ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldList,
@@ -211,6 +244,10 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		var FieldColumnNames = fields.getElementsByTagName("FieldColumnName");
 		var FieldRelativePaths = fields.getElementsByTagName("FieldRelativePath");
 		var FieldColumnTypes = fields.getElementsByTagName("FieldColumnType");
+		var FieldColumnDataTypes = fields.getElementsByTagName("FieldColumnDataType");
+		var FieldColumnDataChoices = fields.getElementsByTagName("FieldColumnDataChoices");
+		var FieldColumnDefaultValues = fields.getElementsByTagName("FieldColumnDefaultValue");
+		
 		
 		for(var i=0;i<FieldTableNames.length;++i)
 		{
@@ -219,9 +256,17 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			obj.fieldColumnName = DesktopContent.getXMLValue(FieldColumnNames[i]);
 			obj.fieldRelativePath = DesktopContent.getXMLValue(FieldRelativePaths[i]);
 			obj.fieldColumnType = DesktopContent.getXMLValue(FieldColumnTypes[i]);
+			obj.fieldColumnDataType = DesktopContent.getXMLValue(FieldColumnDataTypes[i]);
+			obj.fieldColumnDefaultValue = DesktopContent.getXMLValue(FieldColumnDefaultValues[i]);
+			
+			var FieldColumnDataChoicesArr = FieldColumnDataChoices[i].getElementsByTagName("FieldColumnDataChoice");
+			obj.fieldColumnDataChoicesArr = [];
+			for(var j=0; j<FieldColumnDataChoicesArr.length;++j)
+				obj.fieldColumnDataChoicesArr.push(DesktopContent.getXMLValue(FieldColumnDataChoicesArr[j]));
+									
 			recFields.push(obj);
 		}
-		Debug.log("Records: " + recFields);		
+		Debug.log("Records length: " + recFields.length);		
 		responseHandler(recFields);
 
 			}, //handler
@@ -229,9 +274,8 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 }
 
-
 //=====================================================================================
-//getFieldValuesForRecord ~~
+//getFieldValuesForRecords ~~
 //	takes as input a base path where the record is, 
 //	  and the record uid.
 // <recordArr> is an array or record UIDs (as returned from 
@@ -252,7 +296,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 //			obj.fieldPath   
 //			obj.fieldValue
 //
-ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fieldObjArr,
+ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
 		responseHandler,modifiedTables)
 {	
 	var modifiedTablesListStr = "";
@@ -313,6 +357,87 @@ ConfigurationAPI.getFieldValuesForRecord = function(subsetBasePath,recordArr,fie
 		}
 		
 		responseHandler(recFieldValues);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+}
+
+
+//=====================================================================================
+//getUniqueFieldValuesForRecords ~~
+//	takes as input a base path where the records are, 
+//	  and an array of records.
+// <recordArr> is an array or record UIDs (as returned from 
+//		ConfigurationAPI.getSubsetRecords)
+// <fieldList> is a CSV list of tree paths relative to <subsetBasePath>/<recordUID>/ 
+//	 to the fields for which to get the set of unique values. 
+//	If empty, then expect an empty array.
+//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of UniqueValues objects	
+//		UniqueValues := {}
+//			obj.fieldName 
+//			obj.fieldUniqueValueArray
+//			
+//
+ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,recordArr,fieldList,
+		responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	for(var i=0;i<recordArr.length;++i)
+	{
+		if(i) recordListStr += ",";
+		recordListStr += recordArr[i];
+	}
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data
+			"startPath=/" + subsetBasePath + 
+			"&recordList=" + recordListStr +  
+			"&fieldList=" + fieldList +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+		var fieldUniqueValues = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(fieldUniqueValues);
+			return;
+		}
+		
+		var fields = req.responseXML.getElementsByTagName("field");
+
+		for(var i=0;i<fields.length;++i)
+		{
+			
+			var uniqueValues = fields[i].getElementsByTagName("uniqueValue");
+			
+			var obj = {};
+			obj.fieldName = DesktopContent.getXMLValue(fields[i]);
+			obj.fieldUniqueValueArray = [];
+			for(var j=0;j<uniqueValues.length;++j)					
+				obj.fieldUniqueValueArray.push(DesktopContent.getXMLValue(uniqueValues[j]));
+			fieldUniqueValues.push(obj);
+		}
+		Debug.log("fieldUniqueValues length: " + fieldUniqueValues.length);		
+		responseHandler(fieldUniqueValues);
 
 			}, //handler
 			0, //handler param
@@ -1014,6 +1139,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	var numberOfReturns = 0;
 	var allRequestsSent = false;		
 
+	//::::::::::::::::::::::::::::::::::::::::::
 	//localHandleAffectedGroups ~~
 	function localHandleAffectedGroups()
 	{
@@ -1067,9 +1193,10 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		
 		if(doRequestAffectedGroups)
 		{
-			Debug.log("FIXME -- Need to replace temporary versions with new persistent versions",Debug.HIGH_PRIORITY);
+			//replace temporary versions with new persistent versions
 			var modifiedTablesListStr = ""; //csv table, temporay version,...
-
+			var modTblCount = 0;
+			var modTblStr = "";
 			for(var j=0;j<modifiedTables.length;++j)
 				if((modifiedTables[j].tableVersion|0) < -1)
 				{
@@ -1143,6 +1270,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								"," + memberVersion + ",";
 					}
 				}
+				
+				localHandleSavingAffectedGroups();
 					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 			); //end of getAffectedActiveGroups req
 		}
@@ -1188,279 +1317,377 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
 			}
 			
+			localHandleSavingAffectedGroups();			
 		}
-			
-		
-		//	for each affected group
-		for(var i=0;i<affectedGroupNames.length;++i)
-		{	
-			reqStr = ""; //reuse
-			reqStr = "Request?RequestType=saveNewConfigurationGroup" +
-					"&groupName=" + affectedGroupNames[i] +
-					"&allowDuplicates=1" +
-					"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
-					"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
-			Debug.log(reqStr);
-			Debug.log(affectedGroupConfigMap[i]);
 
-			++numberOfRequests;
-			///////////////////////////////////////////////////////////
-			DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
-					function(req,affectedGroupIndex) 
-					{
+		//::::::::::::::::::::::::::::::::::::::::::
+		//localHandleSavingAffectedGroups ~~
+		function localHandleSavingAffectedGroups()
+		{
+			//	for each affected group
+			for(var i=0;i<affectedGroupNames.length;++i)
+			{	
+				reqStr = ""; //reuse
+				reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+						"&groupName=" + affectedGroupNames[i] +
+						"&allowDuplicates=1" +
+						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
+						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
+				Debug.log(reqStr);
+				Debug.log(affectedGroupConfigMap[i]);
 
-				var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
-				var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
-				if(treeErr) 
-				{	
-					Debug.log(treeErr,Debug.HIGH_PRIORITY);
-					Debug.log("There were problems identified in the tree view of the " +
-							"attempted new group '" +
-							attemptedNewGroupName +
-							"'.\nThe new group was not created.\n" +
-							"(Note: Other tables and groups may have been successfully created, " +
-							"and would have success indications below this error info)\n\n" +
-							"You can save the group anyway (if you think it is a good idea) by clicking " +
-							"the button in the pop-up dialog " +
-							"'<u>Save Groups with Warnings Ignored</u>.' " +
-							"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
-							"Below you will find the description of the problem:",																		
-							Debug.HIGH_PRIORITY);
+				++numberOfRequests;
+				///////////////////////////////////////////////////////////
+				DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
+						function(req,affectedGroupIndex) 
+						{
 
-					//change dialog save button
-					var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-submitButton");
-					if(el)
-					{
-						el.onmouseup = function() {
-							Debug.log("Submit mouseup");
-							this.disabled = true;
-							ConfigurationAPI.handleGroupCommentToggle(0,1); //force cache of group comment
-							ConfigurationAPI.handlePopUpHeightToggle(h,gh);
+					var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+					var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+					if(treeErr) 
+					{	
+						Debug.log(treeErr,Debug.HIGH_PRIORITY);
+						Debug.log("There were problems identified in the tree view of the " +
+								"attempted new group '" +
+								attemptedNewGroupName +
+								"'.\nThe new group was not created.\n" +
+								"(Note: Other tables and groups may have been successfully created, " +
+								"and would have success indications below this error info)\n\n" +
+								"You can save the group anyway (if you think it is a good idea) by clicking " +
+								"the button in the pop-up dialog " +
+								"'<u>Save Groups with Warnings Ignored</u>.' " +
+								"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+								"Below you will find the description of the problem:",																		
+								Debug.HIGH_PRIORITY);
 
-							var savingGroups = 
-									document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
-											"-bumpGroupVersions").checked;
-							var activatingSavedGroups = 
-									document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
-											"-activateBumpedGroupVersions").checked;
+						//change dialog save button
+						var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-submitButton");
+						if(el)
+						{
+							el.onmouseup = function() {
+								Debug.log("Submit mouseup");
+								this.disabled = true;
+								ConfigurationAPI.handleGroupCommentToggle(0,1); //force cache of group comment
+								ConfigurationAPI.handlePopUpHeightToggle(h,gh);
 
-							ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,
-									false, //doNotIgnoreWarnings
-									doNotSaveAffectedGroups,
-									doNotActivateAffectedGroups,doNotSaveAliases
-							);							
-						};
-						el.value = "Save Groups with Warnings Ignored";
-						el.disabled = false;
-					}
-					return;
-				}
+								var savingGroups = 
+										document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+												"-bumpGroupVersions").checked;
+								var activatingSavedGroups = 
+										document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+												"-activateBumpedGroupVersions").checked;
 
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{					
-					Debug.log(err,Debug.HIGH_PRIORITY);
-
-					//kill popup dialog
-					var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-					if(el) el.parentNode.removeChild(el);	
-					responseHandler(savedTables,savedGroups,savedAliases);
-					return;
-				}			
-
-				++numberOfReturns;
-
-				var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
-				affectedGroupKeys.push(newGroupKey);
-				
-				{
-					var obj = {};
-					obj.groupName = attemptedNewGroupName;
-					obj.groupKey = newGroupKey;
-					obj.groupComment = affectedGroupComments[affectedGroupIndex];
-					savedGroups.push(obj);
-				}
-
-				//need to modify root group name if changed
-				Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-						" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
-
-				//activate if option was selected
-				if(activatingSavedGroups)
-					ConfigurationAPI.activateGroup(attemptedNewGroupName,newGroupKey,
-							false /* ignoreWarnings */);
-				
-
-				if(allRequestsSent && 
-						numberOfReturns == numberOfRequests)
-				{
-					Debug.log("Done with group saving.");
-
-					Debug.log("Moving on to Alias creation...");										
-
-					//check each alias checkbox
-					//	for each alias that is checked
-					//		set alias for new group
-					//if any aliases modified, save and activate backbone
-
-					//get checkboxes
-					var setAliasCheckboxes;
-					try
-					{
-						setAliasCheckboxes = 
-							document.getElementsByClassName("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-setGroupAlias");
-					}
-					catch(err)
-					{
-						//no popup, so take from input and set for all affected groups
-						setAliasCheckboxes = [];
-						for(var i in affectedGroupNames)
-							setAliasCheckboxes.push({"checked" : ((!doNotSaveAliases)?1:0) });
+								ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,
+										false, //doNotIgnoreWarnings
+										doNotSaveAffectedGroups,
+										doNotActivateAffectedGroups,doNotSaveAliases
+								);							
+							};
+							el.value = "Save Groups with Warnings Ignored";
+							el.disabled = false;
+						}
+						return;
 					}
 
-					var groupAlias, groupName, groupKey;
-					var setAliasCheckboxIndex = -1;
-					var groupAliasName, groupAliasVersion;
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{					
+						Debug.log(err,Debug.HIGH_PRIORITY);
 
-					//in order to set alias, we need:
-					//	groupAlias
-					//	groupName
-					//	groupKey				
+						//kill popup dialog
+						var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
+						if(el) el.parentNode.removeChild(el);	
+						responseHandler(savedTables,savedGroups,savedAliases);
+						return;
+					}			
 
-					//for each set alias checkbox that is checked
-					//	modify the active group alias table one after the other
+					++numberOfReturns;
 
-					//localNextAliasHandler
-					//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
-					//	and send the next request to modify the activegroupAlias table
-					//	sequentially
-					function localNextAliasHandler(retParams) 
+					var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+					affectedGroupKeys.push(newGroupKey);
+
 					{
-						//first time there is no setAliasCheckboxIndex == -1
-						if(setAliasCheckboxIndex >= 0) 
-						{	
-							if(retParams)
-							{
-								if(retParams.newBackbone)
-								{
-									Debug.log("Successfully modified the active Backbone group " +
-											" to set the System Alias '" + groupAlias + "' to " +
-											" refer to the current group '" + groupName + 
-											" (" + groupKey + ").'" +
-											"\n\n" +
-											"Backbone group '" + retParams.groupName + " (" + 
-											retParams.groupKey + ")' was created and activated.",
-											Debug.INFO_PRIORITY);
-									
+						var obj = {};
+						obj.groupName = attemptedNewGroupName;
+						obj.groupKey = newGroupKey;
+						obj.groupComment = affectedGroupComments[affectedGroupIndex];
+						savedGroups.push(obj);
+					}
+
+					//need to modify root group name if changed
+					Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+							" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
+					//activate if option was selected
+					if(activatingSavedGroups)
+						ConfigurationAPI.activateGroup(attemptedNewGroupName,newGroupKey,
+								false /* ignoreWarnings */);
+
+
+					if(allRequestsSent && 
+							numberOfReturns == numberOfRequests)
+					{
+						Debug.log("Done with group saving.");
+
+						Debug.log("Moving on to Alias creation...");										
+
+						//check each alias checkbox
+						//	for each alias that is checked
+						//		set alias for new group
+						//if any aliases modified, save and activate backbone
+
+						//get checkboxes
+						var setAliasCheckboxes;
+
+						var groupAlias, groupName, groupKey;
+						var setAliasCheckboxIndex = -1;
+						var groupAliasName, groupAliasVersion;
+						
+						var affectedGroupAliases = [];
+						
+						//in order to set alias, we need:
+						//	groupAlias
+						//	groupName
+						//	groupKey				
+
+						//for each set alias checkbox that is checked
+						//	modify the active group alias table one after the other
+						//if no checkboxes, then take queue from input parameters
+						//	(and request group aliases)
+						try
+						{
+							setAliasCheckboxes = 
+									document.getElementsByClassName("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-setGroupAlias");
+							//Not sure if the above may throw under certain cicumstances with popup, 
+							//	so keeping above and below for now 
+							if(!document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""))
+								throw("no popup"); //if no popup, throw
+							
+
+							localNextAliasHandler();
+							Debug.log("Aliases set in motion");
+						}
+						catch(err)
+						{
+							//no popup, so take from input and set for all affected groups
+							setAliasCheckboxes = [];
+							for(var i in affectedGroupNames)
+								setAliasCheckboxes.push({"checked" : ((!doNotSaveAliases)?1:0) });
+
+							//get group aliases and then set alias setting in motion
+							//	-- i.e. build affectedGroupAliases 
+							//	-- (already have affectedGroupNames and affectedGroupKeys)
+							//	-- also, modify setAliasCheckboxes as unchecked if no default alias can be found
+							
+							
+							//get existing group aliases	
+							///////////////////////////////////////////////////////////
+							DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" +	
+									"",
+									"",
+									function(req) 
 									{
-										var obj = {};
-										obj.groupName = groupName;
-										obj.groupKey = groupKey;
-										obj.groupAlias = groupAlias;
-										savedAliases.push(obj);
+								var err = DesktopContent.getXMLValue(req,"Error");
+								if(err) 
+								{					
+									Debug.log(err,Debug.HIGH_PRIORITY);									
+									responseHandler(savedTables,savedGroups,savedAliases);
+									return;
+								}
+
+								var aliases = req.responseXML.getElementsByTagName("GroupAlias");
+								var aliasGroupNames = req.responseXML.getElementsByTagName("GroupName");
+								var aliasGroupKeys = req.responseXML.getElementsByTagName("GroupKey");
+
+								//for each affected group
+								//	identify if already aliased and choose that as default option
+								
+								var alias, aliasGroupName, aliasGroupKey;
+								var groupName, groupKey;					
+								var groupOptionIndex = []; //keep distance and index of option for each group, or -1 if none
+								for(var i=0;i<affectedGroupNames.length;++i)
+								{				
+									groupOptionIndex.push([-1,0]); //index and distance
+
+									groupName = affectedGroupNames[i];
+									groupKey = affectedGroupKeys[i];
+
+									//find alias
+									for(var j=0;j<aliasGroupNames.length;++j)
+									{
+										alias = DesktopContent.getXMLValue(aliases[j]);
+										aliasGroupName = DesktopContent.getXMLValue(aliasGroupNames[j]);
+										aliasGroupKey = DesktopContent.getXMLValue(aliasGroupKeys[j]);	
+
+										//Debug.log("compare " + aliasGroupName + ":" +
+										//		aliasGroupKey);									
+
+										//consider any alias with same groupName
+										if(aliasGroupName == groupName)
+										{
+											if(groupOptionIndex[i][0] == -1 ||	//take best match
+													Math.abs(groupKey - aliasGroupKey) < groupOptionIndex[i][1])
+											{
+												Debug.log("found alias");
+												groupOptionIndex[i][0] = j; //index
+												groupOptionIndex[i][1] = Math.abs(groupKey - aliasGroupKey); //distance
+											}
+										}
 									}
+
+									//modify setAliasCheckboxes as unchecked if no default alias can be found
+									setAliasCheckboxes[i].checked = (groupOptionIndex[i][0] >= 0?1:0);
+									
+									affectedGroupAliases.push(groupOptionIndex[i][0] >= 0?alias:"");
+								} //end affected groups loop, choosing alias match
+								
+
+								localNextAliasHandler();
+								Debug.log("Aliases set in motion");
+
+									},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							); //end of getGroupAliases handler
+						
+						} //end of catch scope
+
+												
+
+						//localNextAliasHandler
+						//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
+						//	and send the next request to modify the activegroupAlias table
+						//	sequentially
+						function localNextAliasHandler(retParams) 
+						{
+							//first time there is no setAliasCheckboxIndex == -1
+							if(setAliasCheckboxIndex >= 0) 
+							{	
+								if(retParams)
+								{
+									if(retParams.newBackbone)
+									{
+										Debug.log("Successfully modified the active Backbone group " +
+												" to set the System Alias '" + groupAlias + "' to " +
+												" refer to the current group '" + groupName + 
+												" (" + groupKey + ").'" +
+												"\n\n" +
+												"Backbone group '" + retParams.groupName + " (" + 
+												retParams.groupKey + ")' was created and activated.",
+												Debug.INFO_PRIORITY);
+
+										{
+											var obj = {};
+											obj.groupName = groupName;
+											obj.groupKey = groupKey;
+											obj.groupAlias = groupAlias;
+											savedAliases.push(obj);
+										}
+									}
+									else
+										Debug.log("Success, but no need to create a new Backbone group. " +
+												"An existing Backbone group " +
+												" already has the System Alias '" + groupAlias + "' " +
+												" referring to the current group '" + groupName + 
+												" (" + groupKey + ").'" +
+												"\n\n" +
+												"Backbone group '" + retParams.groupName + " (" + 
+												retParams.groupKey + ")' was activated.",
+												Debug.INFO_PRIORITY);
 								}
 								else
-									Debug.log("Success, but no need to create a new Backbone group. " +
-											"An existing Backbone group " +
-											" already has the System Alias '" + groupAlias + "' " +
-											" referring to the current group '" + groupName + 
-											" (" + groupKey + ").'" +
-											"\n\n" +
-											"Backbone group '" + retParams.groupName + " (" + 
-											retParams.groupKey + ")' was activated.",
-											Debug.INFO_PRIORITY);
+								{										
+									Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+
+									//kill popup dialog
+									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
+									if(el) el.parentNode.removeChild(el);	
+									responseHandler(savedTables,savedGroups,savedAliases);
+									return;
+								}	
+
+								++setAliasCheckboxIndex; //req back, so ready for next index
 							}
 							else
-							{										
-								Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+								setAliasCheckboxIndex = 0; //ready for first checkbox
+
+							//get next affected group index			
+							while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
+									!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+								Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+
+							if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
+							{
+								Debug.log("Done with alias checkboxes ");
+
+								if(!retParams)//req) 
+								{
+									Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
+
+									//kill popup dialog
+									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
+									if(el) el.parentNode.removeChild(el);
+									responseHandler(savedTables,savedGroups,savedAliases);
+									return;
+								}
+
+								Debug.log("Saving and activating Backbone done.");
 
 								//kill popup dialog
 								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 								if(el) el.parentNode.removeChild(el);	
 								responseHandler(savedTables,savedGroups,savedAliases);
-								return;
+								return;	
 							}	
 
-							++setAliasCheckboxIndex; //req back, so ready for next index
-						}
-						else
-							setAliasCheckboxIndex = 0; //ready for first checkbox
-
-						//get next affected group index			
-						while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
-								!setAliasCheckboxes[setAliasCheckboxIndex].checked)
-							Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
-
-						if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
-						{
-							Debug.log("Done with alias checkboxes ");
-
-							if(!retParams)//req) 
+							//get next alias
+							try
 							{
-								Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
-
-								//kill popup dialog
-								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-								if(el) el.parentNode.removeChild(el);
-								responseHandler(savedTables,savedGroups,savedAliases);
-								return;
+								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-editAliasSelect-" +
+										setAliasCheckboxIndex);
+								if(el.style.display == "none")
+								{
+									//get value from text box
+									el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-editAliasTextBox-" + 
+											setAliasCheckboxIndex);					
+								}
+								groupAlias = el.value;
+							}
+							catch(err)
+							{
+								//if exception, then no popup, and get alias from 
+								//	affectedGroupAliases
+								groupAlias = affectedGroupAliases[setAliasCheckboxIndex];								
 							}
 
-							Debug.log("Saving and activating Backbone done.");
+							groupName = affectedGroupNames[setAliasCheckboxIndex];
+							groupKey = affectedGroupKeys[setAliasCheckboxIndex];
 
-							//kill popup dialog
-							var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-							if(el) el.parentNode.removeChild(el);	
-							responseHandler(savedTables,savedGroups,savedAliases);
-							return;	
-						}	
+							Debug.log("groupAlias = " + groupAlias);
+							Debug.log("groupName = " + groupName);
+							Debug.log("groupKey = " + groupKey);
 
-						//get next alias
-						{
-							var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-editAliasSelect-" +
-									setAliasCheckboxIndex);
-							if(el.style.display == "none")
-							{
-								//get value from text box
-								el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-editAliasTextBox-" + 
-										setAliasCheckboxIndex);					
-							}
-							groupAlias = el.value;
+							ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
+									"SaveWiz",
+									localNextAliasHandler,										
+									true); //request return parameters		
 						}
+						
+					} // end of if statement to check if done with group saving
 
-						groupName = affectedGroupNames[setAliasCheckboxIndex];
-						groupKey = affectedGroupKeys[setAliasCheckboxIndex];
+						},i,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				); //end save new group request								
+			} //end affected group for loop
 
-						Debug.log("groupAlias = " + groupAlias);
-						Debug.log("groupName = " + groupName);
-						Debug.log("groupKey = " + groupKey);
+			allRequestsSent = true;
+			if(numberOfRequests == 0) //no groups to save
+			{
+				//this could happen if editing tables with no current active groups
+				Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
 
-						ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
-								"SaveWiz",
-								localNextAliasHandler,										
-								true); //request return parameters		
-					}
-
-					localNextAliasHandler();
-
-					Debug.log("Aliases set in motion");
-				}
-
-					},i,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-			); //end save new group request								
-		} //end affected group for loop
-
-		allRequestsSent = true;
-		if(numberOfRequests == 0) //no groups to save
-		{
-			//this could happen if editing tables with no current active groups
-			Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
-
-			//kill popup dialog
-			var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-			if(el) el.parentNode.removeChild(el);
-		}
+				//kill popup dialog
+				var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
+				if(el) el.parentNode.removeChild(el);
+			}
+		} //end localHandleSavingAffectedGroups
 	}	//end localHandleAffectedGroups
 
 
@@ -1594,7 +1821,14 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 	Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
 	Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
 
-	if(!groupName || groupName == "" || !groupKey || groupKey == "")
+	if(!groupAlias || groupAlias.trim() == "")
+	{
+		Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);
+		doneHandler(); //error so call done handler
+		return;
+	}
+	
+	if(!groupName || groupName.trim() == "" || !groupKey || groupKey.trim() == "")
 	{
 		Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
 		doneHandler(); //error so call done handler
@@ -3445,6 +3679,1049 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
 	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
 }
+
+
+
+
+//=====================================================================================
+//createEditableFieldElement ~~
+//
+//	Creates div element with editable and highlight features
+//
+//	Input field must be a value node.
+//	Input object is single field as returned from ConfigurationAPI.getFieldsOfRecords
+//
+//	fieldIndex is unique integer for the field 
+//	depthIndex (optional) is indicator of depth, e.g. for tree display
+//	
+//	Field := {}
+//			obj.fieldTableName 
+//			obj.fieldUID 
+//			obj.fieldColumnName
+//			obj.fieldRelativePath 
+//			obj.fieldColumnType
+//			obj.fieldColumnDataType
+//			obj.fieldColumnDataChoicesArr[]
+//			obj.fieldColumnDefaultValue
+//
+ConfigurationAPI.editableFieldEditingCell_ = 0;
+ConfigurationAPI.editableFieldEditingIdString_;
+ConfigurationAPI.editableFieldEditingNodeType_;
+ConfigurationAPI.editableFieldEditingOldValue_;
+ConfigurationAPI.editableFieldEditingInitValue_;
+ConfigurationAPI.editableFieldHoveringCell_ = 0;
+ConfigurationAPI.editableFieldHoveringIdString_;
+ConfigurationAPI.editableFieldSelectedIdString_ = 0;
+ConfigurationAPI.editableFieldHandlersSubscribed_ = false;
+ConfigurationAPI.editableFieldMouseIsSelecting_ = false;
+ConfigurationAPI.editableField_SELECTED_COLOR_ = "rgb(251, 245, 53)";
+ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+{
+	var str = "";
+	var depth = depthIndex|0;
+	var uid = fieldIndex|0;
+	
+	if(!ConfigurationAPI.editableFieldHandlersSubscribed_)
+	{
+		ConfigurationAPI.editableFieldHandlersSubscribed_ = true;		
+		
+		//be careful to not override the window.onmousemove DesktopContent action
+		DesktopContent.mouseMoveSubscriber(ConfigurationAPI.handleEditableFieldBodyMouseMove); 
+	}
+	
+	var fieldEl = document.createElement("div");
+	fieldEl.setAttribute("class", "ConfigurationAPI-EditableField");
+	fieldEl.setAttribute("id", "ConfigurationAPI-EditableField-" + 
+			( depth + "-" + uid ));
+	
+	Debug.log("Field type " + fieldObj.fieldColumnType);
+	//console.log(fieldObj);
+	
+	var valueType = fieldObj.fieldColumnType;
+	var choices = fieldObj.fieldColumnDataChoicesArr;
+	var value = fieldObj.fieldColumnDefaultValue;
+	var path = fieldObj.fieldRelativePath;
+	var nodeName = fieldObj.fieldColumnName;
+
+	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
+			depth,nodeName,value,valueType,choices,path);
+}
+
+//=====================================================================================
+//getEditableFieldValue ~~
+//	return value is the string value
+//		loosely based ConfigurationGUI editTreeNodeOK()
+ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+{
+	//Debug.log("getEditableFieldValue " + fieldObj.fieldColumnName + " of type " + 
+	//		fieldObj.fieldColumnType);
+
+	var depth = depthIndex|0;
+	var uid = fieldIndex|0;
+	var fieldEl = document.getElementById("treeNode-Value-leafNode-" + 
+			( depth + "-" + uid ));
+	if(!fieldEl)
+	{
+		Debug.log("getEditableFieldValue Error! Invalid target field element '" + 
+				( depth + "-" + uid ), Debug.HIGH_PRIORITY);
+		return;
+	}
+	
+	var valueType = fieldObj.fieldColumnType; 
+	var value = encodeURIComponent(fieldEl.textContent);
+	
+	//Debug.log("get Value " + value);
+	return value;
+}
+
+//=====================================================================================
+//setEditableFieldValue ~~
+//	set value of a single field element as specified by:
+//		fieldObj (as returned from ConfigurationAPI.getFieldsOfRecords)
+//		fieldIndex is unique integer for the field 
+//		depthIndex (optional) is indicator of depth, e.g. for tree display
+//
+//	input value is expected to be a string value
+ConfigurationAPI.setEditableFieldValue = function(fieldObj,value,fieldIndex,depthIndex /*optional*/)
+{
+	//Debug.log("setEditableFieldValue " + fieldObj.fieldColumnName + " = " + value);
+
+	var depth = depthIndex|0;
+	var uid = fieldIndex|0;
+	var fieldEl = document.getElementById("ConfigurationAPI-EditableField-" + 
+			( depth + "-" + uid ));
+	if(!fieldEl)
+	{
+		Debug.log("setEditableFieldValue Error! Invalid target field element '" + 
+				( depth + "-" + uid ), Debug.HIGH_PRIORITY);
+		return;
+	}
+	var valueType = fieldObj.fieldColumnType;
+	var choices = fieldObj.fieldColumnDataChoicesArr;	
+	var path = fieldObj.fieldRelativePath;
+	var nodeName = fieldObj.fieldColumnName;
+	
+	return ConfigurationAPI.fillEditableFieldElement(fieldEl,uid,
+			depth,nodeName,value,valueType,choices,path);
+}
+
+//=====================================================================================
+//fillEditableFieldElement ~~
+//	helper to fill element used by setEditableFieldValue and createEditableFieldElement
+ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
+		depth,nodeName,value,valueType,choices,path)
+{
+	var str = "";
+	
+	var pathHTML = path;
+	//make path html safe
+	pathHTML = pathHTML.replace(/</g, "&lt");
+	pathHTML = pathHTML.replace(/>/g, "&gt");	
+
+	str += "<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
+			( depth + "-" + uid ) + "'>" + // end path id
+			pathHTML + //save path for future use.. and a central place to edit when changes occur
+			"</div>";
+
+	if(valueType == "FixedChoiceData")
+	{
+		//add CSV choices div
+		str += 
+				"<div class='treeNode-FixedChoice-CSV' style='display:none' " + 
+				"id='treeNode-FixedChoice-CSV-" +
+				( depth + "-" + uid ) + "'>";
+
+		for(var j=0;j<choices.length;++j)
+		{
+			if(j) str += ",";
+			str += choices[j];
+		}
+		str += "</div>";
+	}
+	else if(valueType == "BitMap")
+	{
+		//add bitmap params div
+		str += 
+				"<div class='treeNode-BitMap-Params' style='display:none' " + 
+				"id='treeNode-BitMap-Params-" +
+				( depth + "-" + uid ) + "'>";
+
+		for(var j=1;j<choices.length;++j) //skip the first DEFAULT param
+		{
+			if(j-1) str += ";"; //assume no ';' in fields, so likely no issue to replace ; with ,
+			str += choices[j].replace(/;/g,","); //change all ; to , for split safety
+		}
+		str += "</div>";
+	}
+
+	//normal value node and edit icon
+	{
+		//start value node
+		str += 
+				"<div class='treeNode-Value treeNode-ValueType-" + valueType +
+				"' " +
+				"id='treeNode-Value-" +
+				(depth + "-" + uid) + "' " +
+
+				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							
+				depth + "," + uid + "," + 	
+				"0,\"value\")' " +
+
+				"onmousemove='ConfigurationAPI.handleEditableFieldHover(" +							
+				depth + "," + uid + "," + 	
+				"event)' " +
+
+				">";	
+
+		titleStr = "~ Leaf Value Node ~\n";
+		titleStr +=	"Path: \t" + path + nodeName + "\n";
+
+		//left side of value
+		str += 
+				"<div style='float:left' title='" + titleStr + "'>" +
+				"<b class='treeNode-Value-leafNode-fieldName bold-header'>" + 
+				nodeName + "</b>" + 
+				"</div><div style='float:left'>&nbsp;:</div>";
+
+		//normal edit icon
+		str += 
+				"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+				(depth + "-" + uid) + "' " +
+				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							 
+				depth + "," + uid + "," + 	
+				"1,\"value\"); event.stopPropagation();' " +
+				"title='Edit the value of this node.' " +
+				"></div>";						
+	}
+
+	str += "<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
+			(depth + "-" + uid) +			
+			"' class='" +
+			"treeNode-Value-leafNode-ColumnName-" + nodeName +
+			"' " +
+			">";
+
+	if(valueType == "OnOff" || 
+			valueType == "YesNo" || 
+			valueType == "TrueFalse")
+	{
+		//colorize true false														
+		str += "<div style='float:left'>";										
+		str += value;											
+		str += "</div>";
+
+		var color = (value == "On" || value == "Yes" || value == "True")?
+				"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+		str += "<div style='width:10px;height:10px;" +
+				"background-color:" + color + ";" +
+				"float: left;" +
+				"border-radius: 7px;" +
+				"border: 2px solid white;" +
+				"margin: 2px 0 0 6px;" +								
+				"'></div>";								
+	}
+	else if(valueType == "Timestamp")				
+		str += ConfigurationAPI.getDateString(new Date((value|0)*1000));						
+	else					
+		str += value;
+
+
+	//Debug.log(str);
+
+	fieldEl.innerHTML = str;
+	
+	//check if this field is currently the selected field
+	//	if so, setup select color	
+	if(ConfigurationAPI.editableFieldSelectedIdString_ == (depth + "-" + uid))	
+		fieldEl.getElementsByClassName("treeNode-Value")[0].style.backgroundColor = 
+							ConfigurationAPI.editableField_SELECTED_COLOR_;
+	
+	return fieldEl;
+}
+
+//=====================================================================================
+//handleEditableFieldClick ~~
+//	handler for click event for editable field elements
+//
+//	copied from ConfigurationGUI.html handleTreeNodeClick() ..but only 
+//		defines functionality for value nodes.
+ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
+{
+	var idString = depth + "-" + uid;
+	ConfigurationAPI.editableFieldEditingIdString_ = idString;
+
+	Debug.log("handleEditableFieldClick editClick " + editClick);
+	Debug.log("handleEditableFieldClick idString " + idString);
+	
+	var el = document.getElementById("treeNode-Value-" + idString);
+	
+	if(!el)
+	{
+		Debug.log("Invalid element pointed to by idString. Ignoring and exiting.");
+		return;
+	}
+
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("handleTreeNodeClick editClick clearing ");
+		ConfigurationAPI.handleEditableFieldBodyMouseMove();
+	}
+
+	if(ConfigurationAPI.editableFieldEditingCell_) //already have the edit box open, cancel it
+	{
+		if(ConfigurationAPI.editableFieldEditingCell_ == el) //if same cell do nothing
+			return true;
+		ConfigurationAPI.handleEditableFieldEditOK(); //if new cell, click ok on old cell before continuing
+	}
+
+	var path = document.getElementById("treeNode-path-" + idString).textContent;
+
+	//			Debug.log("handleEditableFieldClick el       " + el.innerHTML);
+	//Debug.log("handleEditableFieldClick idString    " + idString);
+	//Debug.log("handleEditableFieldClick uid      " + uid);
+	//			Debug.log("handleEditableFieldClick nodeName " + nodeName);
+	Debug.log("handleEditableFieldClick path     " + path);
+	//Debug.log("handleEditableFieldClick editClick " + editClick);
+	Debug.log("handleEditableFieldClick type     " + type);
+	
+	//determine type clicked:
+	//	- value
+	//
+	//allow different behavior for each	depending on single or edit(2x) click	
+	//	- value		 	
+	//		1x = select node 
+	//		2x = edit record Value mode (up/down tab/shtab enter esc active)
+	//
+	//on tree node edit OK	
+	//	- value
+	//		save value back to field element
+	//
+	//on tree node edit cancel
+	//	return previous value back to field element
+
+
+	//==================
+	//take action based on editClick and type string:
+	//	- value
+	//
+	//params:
+	//	(el,depth,uid,path,editClick,type,delayed)
+
+	if(editClick)	//2x click
+	{
+		
+		if(type == "value")
+		{
+			//edit ID (no keys active)
+			Debug.log("edit value mode");
+
+			selectThisTreeNode(idString,type);
+			function selectThisTreeNode(idString,type)
+			{				
+				//edit column entry in record
+				//	data type matters here, also don't edit author, timestamp
+				var el = document.getElementById("treeNode-Value-leafNode-" + idString);
+				var vel = document.getElementById("treeNode-Value-" + idString);
+				
+				//if value node, dataType is in element class name
+				var colType = vel.className.split(' ')[1].split('-');
+				if(colType[1] == "ValueType")
+					colType = colType[2];
+
+				var fieldName = el.className.substr(("treeNode-Value-leafNode-ColumnName-").length);
+				
+				Debug.log("fieldName=" + fieldName);
+				Debug.log("colType=" + colType);
+				
+				if(colType == "Author" || 
+						colType == "Timestamp")
+				{
+					Debug.log("Can not edit Author or Timestamp fields.",
+							Debug.WARN_PRIORITY);
+					return false;
+				}
+				
+				
+				var str = "";		
+				var optionIndex = -1;
+				
+				
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{
+					type += "-bool";
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.innerHTML;
+					
+					var initVal = el.childNodes[0].textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = initVal;
+					
+					var boolVals = [];
+					if(colType == "YesNo")
+						boolVals = ["No","Yes"];
+					else if(colType == "TrueFalse")
+						boolVals = ["False","True"];
+					else if(colType == "OnOff")
+						boolVals = ["Off","On"];
+
+
+					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_); event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							"style='margin:-8px -2px -2px -1px; height:" + (el.offsetHeight+6) + "px'>";
+					for(var i=0;i<boolVals.length;++i)
+					{			
+						str += "<option value='" + boolVals[i] + "'>";
+						str += boolVals[i];	//can display however
+						str += "</option>";
+						if(boolVals[i] == initVal)
+							optionIndex = i; //get starting sel index					
+					}			
+					str += "</select>";
+					if(optionIndex == -1) optionIndex = 0; //use False option by default					
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+
+					var allowFixedChoiceArbitraryEdit = false;
+					var optionCount = -1;
+					optionIndex = 0; //default to default
+					
+					str += "<div onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='" +
+							"white-space:nowrap;" +
+							"margin:-3px -2px -2px -1px;" +
+							"height:" + (el.offsetHeight+6) + "px'>";
+
+					str += "<select  onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' " +
+							"id='fixedChoice-editSelectBox' " +
+							"onmouseup='event.stopPropagation();' " +
+							"onclick='event.stopPropagation();' " +
+							"style='" +
+							"float:left;" +
+							"margin:-2px -2px -2px -1px; height:" + 
+							(el.offsetHeight+6) + "px'>";
+
+					//default value is assumed in list
+
+					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
+							idString);
+					var choices = vel.textContent.split(',');					
+					
+					for(var i=0;i<choices.length;++i)
+					{			
+						if(i==1)//check for arbitraryBool flag
+						{
+							if(choices[i].indexOf("arbitraryBool=") == 0)
+							{
+								//found arbitraryBool flag								
+								allowFixedChoiceArbitraryEdit = 
+										choices[i][("arbitraryBool=").length] == "1"?
+												true:false;
+								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								continue;
+							}
+							else
+							{
+								//else no flag found, so treat as fixed choice option
+								++optionCount; //count as an option in dropdown
+							}
+						}		
+						else
+							++optionCount; //count as an option in dropdown
+						
+						
+						str += "<option>";
+						str += decodeURIComponent(choices[i]);	//can display however
+						str += "</option>";
+						if(decodeURIComponent(choices[i]) 
+								== ConfigurationAPI.editableFieldEditingOldValue_)
+							optionIndex = optionCount; //save selected index
+					}				
+					str += "</select>";	
+					
+					if(allowFixedChoiceArbitraryEdit)
+					{
+						var ww = (el.offsetWidth-6);
+						if(ww < 150) ww = 150; 
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
+								"width:" + 
+								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: -2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+					str += "</div>";
+				}
+				else if(colType == "BitMap")
+				{
+					Debug.log("Handling bitmap select");
+					
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+										
+					//let API bitmap dialog handle it
+					ConfigurationAPI.bitMapDialog(
+							//_editingCellElOldTitle, //field name
+							"Target Field: &quot;" + 
+							fieldName_ + "&quot;",
+							document.getElementById("treeNode-BitMap-Params-" +
+														idString).textContent.split(';'), 
+							ConfigurationAPI.editableFieldEditingOldValue_,
+							function(val)
+							{
+						Debug.log("yes " + val);
+						el.innerHTML = "";
+						el.appendChild(document.createTextNode(val));
+						ConfigurationAPI.editableFieldEditingCell_ = el;
+						
+						type += "-bitmap";
+						editTreeNodeOK();
+							
+							},
+							function() //cancel handler
+							{							
+								//remove the editing cell selection
+								Debug.log("cancel bitmap");
+								ConfigurationAPI.editableFieldEditingCell_ = 0;
+							});
+					return true;
+				}
+				else if(colType == "MultilineData")
+				{
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+					
+					str += "<textarea rows='4' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' cols='50' style='font-size: 14px; " +
+							"margin:-8px -2px -2px -1px;width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
+					str += " onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							">";
+					str += ConfigurationAPI.editableFieldEditingOldValue_;
+					str += "</textarea>";				
+				}
+				else // normal cells, with text input
+				{
+					if(colType == "GroupID") //track type if it is groupid field
+						type += "-groupid";
+					
+					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
+					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
+					
+					var ow = el.offsetWidth+6;
+					if(ow < 150) //force a minimum input width
+						ow = 150;
+					str += "<input type='text' onkeydown='ConfigurationAPI.handleEditableFieldKeyDown(event)' style='margin:-8px -2px -2px -1px;width:" + 
+							(ow) + "px; height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
+					str += ConfigurationAPI.editableFieldEditingOldValue_;
+					str += "' onmousedown='ConfigurationAPI.editableFieldMouseIsSelecting_ = true; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);' " +
+							"onmouseup='ConfigurationAPI.editableFieldMouseIsSelecting_ = false; Debug.log(ConfigurationAPI.editableFieldMouseIsSelecting_);event.stopPropagation();' " +
+							"onclick='event.stopPropagation();'" +
+							">";					
+				}
+
+
+				str += ConfigurationAPI._OK_CANCEL_DIALOG_STR;	
+
+				el.innerHTML = str;
+				
+				//handle default selection
+				if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{					//select initial value
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else if(colType == "MultilineData")
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+				else 					//select text in new input
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
+
+				
+				//wrapping up
+				ConfigurationAPI.editableFieldEditingCell_ = el;
+				ConfigurationAPI.editableFieldEditingNodeType_ = type;
+			}
+		}
+		else
+		{
+			Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+			return;
+		}
+	}
+	else		//1x click
+	{
+		if(type == "value")
+		{
+			//Mark selected
+			Debug.log("Toggling selection of target field " + idString);
+			
+			//remove previously selected
+			var vel;
+			if(ConfigurationAPI.editableFieldSelectedIdString_ && 
+					(vel = document.getElementById("treeNode-Value-" + 
+										ConfigurationAPI.editableFieldSelectedIdString_)))
+				vel.style.backgroundColor = "transparent";
+			
+			//add newly selected 
+			vel = document.getElementById("treeNode-Value-" + 
+					idString);
+			if(ConfigurationAPI.editableFieldSelectedIdString_ == idString)
+			{
+				//same field was clicked
+				//	so toggle (deselect) the previously selected field
+				ConfigurationAPI.editableFieldSelectedIdString_ = undefined;
+				return;
+			}
+			vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
+			ConfigurationAPI.editableFieldSelectedIdString_ = idString;
+		}
+		else
+		{
+			Debug.log("This should be impossible - tell a developer how you got here!", Debug.HIGH_PRIORITY);
+			return;
+		}
+	}
+}
+
+//=====================================================================================
+//getSelectedEditableFieldIndex ~~
+//	returns the unique field index value for the selected field
+//	if no selected field
+//		returns -1
+ConfigurationAPI.getSelectedEditableFieldIndex = function()
+{
+	if(!ConfigurationAPI.editableFieldSelectedIdString_)
+		return -1;
+	
+	var idStr = ConfigurationAPI.editableFieldSelectedIdString_;
+	return idStr.split('-')[1]; // depth + "-" + fieldId
+}
+
+//=====================================================================================
+//handleEditableFieldHover ~~
+//	handler for mousemove event for editable field elements
+ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
+{
+	var idString = depth + "-" + uid;
+
+	//Debug.log("handleEditableFieldHover idString " + idString);
+	
+	event.stopPropagation();
+	DesktopContent.mouseMove(event); //keep desktop content happy
+
+	
+	if(ConfigurationAPI.editableFieldEditingCell_) return; //no setting while editing
+
+	var el = document.getElementById("treeNode-Value-editIcon-" + idString);
+	if(ConfigurationAPI.editableFieldHoveringCell_ == el) return;
+
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("bodyMouseMoveHandler clearing ");
+		bodyMouseMoveHandler();
+	}
+
+	//Debug.log("handleTreeNodeMouseMove setting ");
+	ConfigurationAPI.editableFieldHoveringIdString_ = idString;
+	ConfigurationAPI.editableFieldHoveringCell_ = el;
+	ConfigurationAPI.editableFieldHoveringCell_.style.display = "block";	
+	var vel = document.getElementById("treeNode-Value-" + 
+			ConfigurationAPI.editableFieldHoveringIdString_);
+	vel.style.backgroundColor = "rgb(218, 194, 194)";
+}
+
+//=====================================================================================
+//handleEditableFieldFixedChoiceEditToggle ~~
+ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle = function()
+{
+	Debug.log("handleEditableFieldFixedChoiceEditToggle");
+
+	var sel = document.getElementById("fixedChoice-editSelectBox");
+	var tel = document.getElementById("fixedChoice-editTextBox");
+
+	Debug.log("sel.style.display  " + sel.style.display);
+	if(sel.style.display == "none")
+	{
+		sel.style.display = "block";
+		tel.style.display = "none";
+	}
+	else
+	{
+		tel.style.width = (sel.offsetWidth-2) + "px";
+		sel.style.display = "none";
+		tel.style.display = "block";
+		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
+	}
+}
+
+//=====================================================================================
+//handleEditableFieldBodyMouseMove ~~
+ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
+{
+	if(ConfigurationAPI.editableFieldHoveringCell_)
+	{
+		//Debug.log("bodyMouseMoveHandler clearing ");
+		ConfigurationAPI.editableFieldHoveringCell_.style.display = "none";
+		ConfigurationAPI.editableFieldHoveringCell_ = 0;
+
+		var vel = document.getElementById("treeNode-Value-" + 
+				ConfigurationAPI.editableFieldHoveringIdString_);
+		if(vel)
+		{
+			if(ConfigurationAPI.editableFieldHoveringIdString_ == 
+					ConfigurationAPI.editableFieldSelectedIdString_)
+				vel.style.backgroundColor = ConfigurationAPI.editableField_SELECTED_COLOR_;
+			else				
+				vel.style.backgroundColor = "transparent";
+		}
+	}
+}
+
+//=====================================================================================
+//handleEditableFieldKeyDown ~~
+//	copied from ConfigurationGUI keyHandler but modified for only value cells
+ConfigurationAPI.handleEditableFieldKeyDown = function(e,keyEl)
+{
+	var TABKEY = 9;
+	var ENTERKEY = 13;
+	var UPKEY = 38;
+	var DNKEY = 40;
+	var ESCKEY = 27;
+	//Debug.log("key " + e.keyCode);
+	
+	var shiftIsDown;
+	if (window.event) 
+	{
+		key = window.event.keyCode;
+		shiftIsDown = !!window.event.shiftKey; // typecast to boolean
+	} 
+	else
+	{
+		key = e.which;
+		shiftIsDown = !!e.shiftKey;	// typecast to boolean
+	}
+	//Debug.log("shift=" + shiftIsDown);
+	
+		
+	//handle text area specially
+	if(!shiftIsDown)
+	{
+		var tel;
+		if(ConfigurationAPI.editableFieldEditingCell_ && 
+				(tel = ConfigurationAPI.editableFieldEditingCell_.getElementsByTagName("textarea")).length)
+		{
+			tel = tel[0];
+			//handle special keys for text area
+			if(e.keyCode == TABKEY)
+			{
+				Debug.log("tab.");
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				var i = tel.selectionStart;
+				var j = tel.selectionEnd;
+				tel.value =  tel.value.substr(0,i) + 
+						'\t' + tel.value.substr(j);
+				tel.selectionStart = tel.selectionEnd = j+1;
+			}
+			return false; //done if text area was identified
+		}
+	}
+	
+	//tab key jumps to next cell with a CANCEL
+	//	(enter key does same except saves/OKs value)
+	//	shift is reverse jump
+	if(e.keyCode == TABKEY || e.keyCode == ENTERKEY || 
+			e.keyCode == UPKEY || e.keyCode == DNKEY) 				
+	{
+		//this.value += "    ";
+		if(e.preventDefault) 
+			e.preventDefault();
+
+		//save idString
+		var idString = ConfigurationAPI.editableFieldEditingIdString_;
+		 
+		ConfigurationAPI.handleEditableFieldEditOK();
+		
+		
+		//enter key := done
+		//tab/shift+tab := move to next field at depth
+		//down/up	:= move to next field at depth
+		
+		
+		if(e.keyCode == ENTERKEY) //dont move to new cell
+			return false;
+
+		var depth = idString.split('-')[0];
+		var uid = idString.split('-')[1];
+				
+		if((!shiftIsDown && e.keyCode == TABKEY) || e.keyCode == DNKEY) //move to next field
+			++uid;
+		else if((shiftIsDown && e.keyCode == TABKEY) || e.keyCode == UPKEY) //move to prev field
+			--uid;
+		if(uid < 0) return false; //no more fields, do nothing
+		
+		//assume handleEditableFieldClick handles invalid uids on high side gracefully
+		ConfigurationAPI.handleEditableFieldClick(depth,uid,1,"value");
+		Debug.log("new uid=" + uid);
+		
+		return false;
+	}
+	else if(e.keyCode == ESCKEY) 
+	{				
+		if(e.preventDefault) 
+			e.preventDefault();
+		ConfigurationAPI.handleEditableFieldEditCancel();
+		return false;
+	}
+	else if((e.keyCode >= 48 && e.keyCode <= 57) || 
+			(e.keyCode >= 96 && e.keyCode <= 105))// number 0-9
+	{
+		//if child link cell or boolean cell			
+		var sel;
+		if((sel = ConfigurationAPI.editableFieldEditingCell_.getElementsByTagName("select")).length)
+		{
+			if(keyEl) //if input element, use it
+				sel = keyEl;
+			else
+				sel = sel[sel.length-1]; //assume the last select in the cell is the select
+			
+			//select based on number
+			var selNum;
+			if(e.keyCode >= 96)
+				selNum = e.keyCode - 96;
+			else
+				selNum = e.keyCode - 48;
+			
+			sel.selectedIndex = selNum % (sel.options.length);
+			sel.focus();	
+			
+			Debug.log("number select =" + sel.selectedIndex);
+			if(sel.onchange) //if onchange implemented call it
+				sel.onchange();
+		}
+	}
+}
+
+//=====================================================================================
+//handleEditableFieldEditCancel ~~
+//	copied from ConfigurationGUI editCellCancel but modified for only value cells
+ConfigurationAPI.handleEditableFieldEditCancel = function()
+{	
+	if(!ConfigurationAPI.editableFieldEditingCell_) return;
+	Debug.log("handleEditableFieldEditCancel type " + ConfigurationAPI.editableFieldEditingNodeType_);
+
+	if(ConfigurationAPI.editableFieldEditingNodeType_ == "value-bool") 
+	{
+		//take old value as HTML for bool values
+		ConfigurationAPI.editableFieldEditingCell_.innerHTML = ConfigurationAPI.editableFieldEditingOldValue_;		
+	}
+	else
+	{
+		ConfigurationAPI.editableFieldEditingCell_.innerHTML = "";
+		ConfigurationAPI.editableFieldEditingCell_.appendChild(
+				document.createTextNode(ConfigurationAPI.editableFieldEditingOldValue_));
+	}
+
+	ConfigurationAPI.editableFieldEditingCell_ = 0;
+}
+
+//=====================================================================================
+//handleEditableFieldEditOK ~~
+//	copied from ConfigurationGUI editCellOK but modified for only value cells
+ConfigurationAPI.handleEditableFieldEditOK = function()
+{							
+	if(!ConfigurationAPI.editableFieldEditingCell_) return;
+	Debug.log("handleEditableFieldEditOK type " + ConfigurationAPI.editableFieldEditingNodeType_);
+		
+
+	var el = ConfigurationAPI.editableFieldEditingCell_;
+	var type = ConfigurationAPI.editableFieldEditingNodeType_;
+	
+	///////////////////////////////////////////////
+	//localEditTreeNodeOKRequestsComplete
+	function localEditTreeNodeOKRequestsComplete(newValue)
+	{				
+		// all value types, clear the cell first		
+		el.innerHTML = "";
+		
+		
+		if(type == "value" || 
+				type == "value-bitmap")
+		{
+			//if(type == "MultilineData")
+			//MultilineData and normal
+			//normal data
+			//bitmap data (do nothing would be ok, value already set)
+			el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
+			
+		}
+		else if(type == "value-bool")
+		{
+			var str = "";
+			
+			//colorize true false														
+			str += "<div style='float:left'>";										
+			str += newValue;											
+			str += "</div>";
+
+			var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
+					"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+			str += "<div style='width:10px;height:10px;" +
+					"background-color:" + color + ";" +
+					"float: left;" +
+					"border-radius: 7px;" +
+					"border: 2px solid white;" +
+					"margin: 2px 0 0 6px;" +								
+					"'></div>"; 
+			el.innerHTML = str;
+		}			
+		else if(type == "value-groupid")
+		{					
+			el.appendChild(document.createTextNode(newValue));
+		}
+		else	//unrecognized type!?
+		{
+			Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+			ConfigurationAPI.handleEditableFieldEditCancel(); return;
+		}
+		
+		//requests are done, so end editing
+		ConfigurationAPI.editableFieldEditingCell_ = 0;
+	} //end localEditTreeNodeOKRequestsComplete
+	///////////////////////////////////////////////
+
+
+	if(		
+			type == "value" ||
+			type == "value-bool" || 
+			type == "value-bitmap" || 
+			type == "value-groupid")
+						
+	{
+		var newValue;
+		
+		if(type == "value-bool")
+		{
+			var sel = el.getElementsByTagName("select")[0];
+			newValue = sel.options[sel.selectedIndex].value;
+		}
+		else if(type == "value-bitmap")
+		{
+			newValue = encodeURIComponent(el.textContent);
+		}		
+		else	//value (normal or multiline data)
+		{
+			var sel;
+			if((sel = el.getElementsByTagName("textarea")).length) //for MultilineData					
+				newValue = sel[0].value; //assume the first textarea in the cell is the textarea
+			else if((sel = el.getElementsByTagName("select")).length) //for FixedChoiceData		
+			{
+				//check if displayed
+				if(sel[0].style.display == "none")
+				{
+					//if not displayed assume first input field is ours!
+					//take "normal cell" approach from below
+					newValue = el.getElementsByTagName("input")[0].value;					
+				}						
+				else
+					newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one				
+			}
+			else
+				newValue = el.getElementsByTagName("input")[0].value;
+			
+			newValue = encodeURIComponent(newValue.trim());
+		}
+		
+		Debug.log("CfgGUI editTreeNodeOK editing " + type + " node = " +
+				newValue);
+		
+		if(ConfigurationAPI.editableFieldEditingInitValue_ == newValue)
+		{
+			Debug.log("No change. Do nothing.");
+			ConfigurationAPI.handleEditableFieldEditCancel();
+			return;
+		}
+		
+		
+		//		if saved successfully
+		//			update value in field			
+
+		localEditTreeNodeOKRequestsComplete(newValue);				
+		
+	}
+	else	//unrecognized type!?
+	{
+		Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+		editCellCancel(); return;
+	}
+}
+
+
+//=====================================================================================
+//hasClass ~~
+ConfigurationAPI.hasClass = function(ele,cls) 
+{
+    return !!ele.className.match(new RegExp('(\\s|^)'+cls+'(\\s|$)'));
+}
+
+//=====================================================================================
+//addClass ~~
+ConfigurationAPI.addClass = function(ele,cls) 
+{
+    if (!ConfigurationAPI.hasClass(ele,cls)) ele.className += " "+cls;
+}
+
+//=====================================================================================
+//removeClass ~~
+ConfigurationAPI.removeClass = function(ele,cls) 
+{
+    if (ConfigurationAPI.hasClass(ele,cls)) 
+    {
+    	var reg = new RegExp('(\\s|^)'+cls+'(\\s|$)');
+    	ele.className=ele.className.replace(reg,'');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

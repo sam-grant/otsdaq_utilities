@@ -52,8 +52,11 @@ MultiSelectBox.omnis_ = {};
 MultiSelectBox.isSingleSelect_ = {}; 
 MultiSelectBox.lastOptSelect_ = {};  //maintain last opt clicked
 
-MultiSelectBox.selInitBoxHeight_ = 0; //init with first showing of search box in showSearch()
-MultiSelectBox.SEL_INIT_PADDING = 5; 
+MultiSelectBox.selInitBoxHeight_ = {}; //init with first showing of search box in showSearch()
+MultiSelectBox.SEL_INIT_PADDING = 5;
+
+MultiSelectBox.requireCtrlMultiClick_ = {};
+
 /////////////////////////////////////////////////////////////////////////
 //function definitions
 
@@ -100,7 +103,7 @@ MultiSelectBox.getSelectedIndex = function(el)
 
 MultiSelectBox.getSelectionArray = function(el)
 {    
-	console.log(el.id);
+	//console.log(el.id);
 	if(el.parentElement.id.indexOf("selbox-") == 0)
 		return MultiSelectBox.mySelects_[el.parentElement.id];
 	else
@@ -136,6 +139,9 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	
 	if(event)
 		MultiSelectBox.dbg("Shift click = " + event.shiftKey);
+	
+	if(event)
+		MultiSelectBox.dbg("Control click = " + event.ctrlKey);
 
 	//if shift.. then select or deselect 
 	//	(based on value at MultiSelectBox.lastOptSelect_[id]) from
@@ -156,7 +162,8 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 	MultiSelectBox.toggleClass(option,"optionhighlighted");
 	selectList[index] ^= 1;
 	
-	if(isSingleSelect) //if true, only allow one select at a time, so deselect others
+	if(isSingleSelect ||   //if true, only allow one select at a time, so deselect others
+			(MultiSelectBox.requireCtrlMultiClick_[id] && !event.ctrlKey && !event.shiftKey))
 		for (var opt=0; opt<size; opt++)
         {
             //fixed, now works for any order option IDs. Goes by index only.
@@ -183,16 +190,16 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 		var hi = MultiSelectBox.lastOptSelect_[id] < index? 
 				index:MultiSelectBox.lastOptSelect_[id];
 
-		MultiSelectBox.dbg("lo ",lo," hi ",hi);
+		//MultiSelectBox.dbg("lo ",lo," hi ",hi);
 		//handle multi shift click
 		for (var opt=lo; opt<=hi; opt++)
 		{
-			MultiSelectBox.dbg(selectList[opt]," vs ",
-					selectList[MultiSelectBox.lastOptSelect_[id]]);
+			//MultiSelectBox.dbg(selectList[opt]," vs ",
+			//		selectList[MultiSelectBox.lastOptSelect_[id]]);
 			if(selectList[opt] != 
 					selectList[MultiSelectBox.lastOptSelect_[id]]) //if not matching selected value
 			{
-				MultiSelectBox.dbg("flip");
+				//MultiSelectBox.dbg("flip");
 				//toggle highlighted style and global array
 				MultiSelectBox.toggleClass(select.childNodes[opt],"optionhighlighted");
 				selectList[opt] ^= 1;
@@ -208,10 +215,12 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 //This function is called by user to actually create the multi select box
 // These parameters are optional and can be omitted or set to 0: 
 //		keys, types, handler, noMultiSelect, mouseOverHandler, 
-//		iconURLs, mouseDownHandler, mouseUpHandler
+//		iconURLs, mouseDownHandler, mouseUpHandler,
+//		requireCtrlMultiClick
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler)
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler,
+		requireCtrlMultiClick)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -225,10 +234,12 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 	MultiSelectBox.omnis_[name] = el; 
 	MultiSelectBox.isSingleSelect_[name] = noMultiSelect;
 	MultiSelectBox.lastOptSelect_[name] = -1; //default to nothing selected
+	MultiSelectBox.selInitBoxHeight_[name] = 0; //init with first showing of search box in showSearch()	
+	MultiSelectBox.requireCtrlMultiClick_[name] = requireCtrlMultiClick;
 
 	//searchglass=28x28, margin=5, vscroll=16, border=1
-	var msW = el.offsetWidth - 28 - 5 - 16 - 2; 
-	var msH = el.offsetHeight - 40 - 2; 
+	var msW = (!el.offsetWidth?el.style.width.split('p')[0]:el.offsetWidth) - 28 - 5 - 16 - 2; 
+	var msH = (!el.offsetHeight?el.style.height.split('p')[0]:el.offsetHeight) - 40 - 2; 
 	
 	el = document.createElement("div"); //create element within element
 	MultiSelectBox.omnis_[name].appendChild(el);
@@ -316,7 +327,7 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
     if(msH > 200)
     {	//provide a minimum width for looks (to avoid long and skinny)
     	var el = document.getElementById(name);
-    	if(el.offsetWidth < 200)
+    	if(msW < 200)
     		el.style.width = 200 + "px"; 
     }
     	
@@ -374,29 +385,71 @@ MultiSelectBox.initMySelectBoxes = function(clearPreviousSelections)
 //for searching selectboxes (works for standard "selects" and "mySelects")
 MultiSelectBox.showSearch = function(boxid)
 {
-	var textinput=$(boxid+"search");
+	var searchBox=$(boxid+"search");
 	
-	if(!MultiSelectBox.selInitBoxHeight_)	//init if not yet defined
+	function localPlaceSearchBox()
 	{
-		MultiSelectBox.selInitBoxHeight_ = $(boxid).clientHeight; //as soon as hidden is toggled H changes
+		//Goal: place searchBox search input correctly in table content
+		//	irregardless of user div having style.position = normal/static, absolute, relative
+
+		//finding the search input's offset parent is not so straight forward
+		//	since it is initially hidden.
+		//	Use the offset parent of the content table
+		//		sibling[0] := div (of content)
+		//			withing div, child[0] := header, child[1] := table (of content) 
+
+		var selRect = $(boxid).getBoundingClientRect();
+		var searchOffsetParent = searchBox.parentElement.children[0].children[1].offsetParent;
+		//check if there is no offset parent (the body is the offset parent)
+		//	it seems to be the case that body returns a crazy bounding client rect (left = 8 and top = 13?) .. don't understand why
+		var searchOffsetParentIsBody = searchOffsetParent == document.body;
+
+		var offsetRect = 
+		{"left": searchOffsetParentIsBody?0:
+				searchOffsetParent.getBoundingClientRect().left,	//offsetLeft is different
+				"top": searchOffsetParentIsBody?0:
+						searchOffsetParent.getBoundingClientRect().top
+		};
+		//previous attempts to place search input (all fail to solve all cases): 
+		//MultiSelectBox.omnis_[id].getBoundingClientRect();
+		//select.offsetParent.getBoundingClientRect();
+
+		var offsetx = selRect.left - offsetRect.left,
+				offsety = selRect.top - offsetRect.top;
+		var margin = 5;
+
+		searchBox.style.position="absolute";
+		searchBox.style.top=(offsety)+"px";
+		searchBox.style.left=(offsetx)+"px";
+		searchBox.style.width=(selRect.width-margin*2-30)+"px";
+		//searchBox.style.display = "block"; //for debugging position
+	} //end localPlaceSearchBox()
+	
+	if(!MultiSelectBox.selInitBoxHeight_[boxid])	//init if not yet defined
+	{
+		MultiSelectBox.selInitBoxHeight_[boxid] = $(boxid).clientHeight; //as soon as hidden is toggled H changes
+
+		localPlaceSearchBox();	
 	}
-		 
+	
+	
+	
 	//RAR decided on 2/2/2017 to not show er
 	//MultiSelectBox.toggleClass($(boxid+"searchErr"),"hidden");
 	$(boxid+"searchErr").innerHTML = "";
 	
-	if (MultiSelectBox.toggleClass(textinput,"hidden")){
-		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_-47) + "px";
+	if (MultiSelectBox.toggleClass(searchBox,"hidden")){
+		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_[boxid]-47) + "px";
 		$(boxid).style.paddingTop = "42px";
 		//$(boxid).childNodes[0].style.marginTop="42px";
-		//textinput.style.left = ($(boxid).offsetLeft-8) + "px"
-		textinput.focus();
-		MultiSelectBox.searchSelect(boxid,textinput);
+		//searchBox.style.left = ($(boxid).offsetLeft-8) + "px"
+		searchBox.focus();
+		MultiSelectBox.searchSelect(boxid,searchBox);
 	}
 	else{
 		MultiSelectBox.searchSelect(boxid,null, '');
 		$(boxid).style.paddingTop = MultiSelectBox.SEL_INIT_PADDING + "px";
-		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_-10) + "px";
+		$(boxid).style.height = (MultiSelectBox.selInitBoxHeight_[boxid]-10) + "px";
 		//$(boxid).childNodes[0].style.marginTop="initial";
 	}
 }
@@ -506,26 +559,16 @@ MultiSelectBox.makeSearchBar = function(id)
 			if(!MultiSelectBox.mySelects_[id])
 				MultiSelectBox.mySelects_[id] = []; //initialize to empty the selected items
 			
-			var selRect = select.getBoundingClientRect(),
-				omniRect = MultiSelectBox.omnis_[id].getBoundingClientRect();
-				//select.offsetParent.getBoundingClientRect();
 			
-			var offsetx = selRect.left - omniRect.left,
-				offsety = selRect.top - omniRect.top;
-			var margin = 5;
 			
-			searchBox.style.position="absolute";
-			searchBox.style.top=(offsety)+"px";
-			searchBox.style.left=(offsetx)+"px";
-			searchBox.style.width=(selRect.width-margin*2-30)+"px";
+			//err box no longer displayed...
+			//			searchErrBox.style.position="absolute"; //place above title
+			//			searchErrBox.style.top=(offsety - 37)+"px";
+			//			searchErrBox.style.left=(offsetx + 0)+"px";
 			
-			searchErrBox.style.position="absolute"; //place above title
-			searchErrBox.style.top=(offsety - 37)+"px";
-			searchErrBox.style.left=(offsetx + 0)+"px";
-			
-			MultiSelectBox.omnis_[id].appendChild(searchBox);
-			
+			MultiSelectBox.omnis_[id].appendChild(searchBox);			
 			MultiSelectBox.omnis_[id].appendChild(searchErrBox);
+			
 			
 			clearInterval(interval);
 		}

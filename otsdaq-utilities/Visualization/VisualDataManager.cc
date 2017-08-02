@@ -28,15 +28,20 @@ VisualDataManager::~VisualDataManager(void)
 //========================================================================================================================
 void VisualDataManager::configure(void)
 {
-	theLiveDQMHistos_ = 0;
-
 	DataManager::configure();
+}
 
-	//FIXME SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!!
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
-	__MOUT__ << "SUPER FIXME THIS WORKS ONLY WITH THE OTDQM CONSUMER!!!!!!! ACTUALLY IS NOT TRUE BUT NEED TO MAKE SURE!" << std::endl;
+//========================================================================================================================
+void VisualDataManager::halt(void)
+{
+	theLiveDQMHistos_ = 0;
+	DataManager::halt();
+}
+
+//========================================================================================================================
+void VisualDataManager::start(std::string runNumber)
+{
+	DataManager::start(runNumber);
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
 		__MOUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
@@ -50,10 +55,8 @@ void VisualDataManager::configure(void)
 				__MOUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
 				if(bufferConfiguration.second.getNode("Status").getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
-						//&& (bufferConfiguration.second.getNode("ProcessorPluginName").getValue<std::string>() == "OTDQMHistosConsumer")
 				)
 				{
-						__MOUT__ << "FOUND DQM: OTDQMHistosConsumer!" << std::endl;
 						for(const auto& itConsumer: buffers_[buffer.first].consumers_)
 						{
 							std::cout << __PRETTY_FUNCTION__ << "CONSUMER PROCESSOR: " << itConsumer->getProcessorID() << std::endl;
@@ -61,13 +64,20 @@ void VisualDataManager::configure(void)
 							{
 								std::cout << __PRETTY_FUNCTION__ << "CONSUMER: " << itConsumer->getProcessorID() << std::endl;
 								theLiveDQMHistos_ = static_cast<DQMHistosConsumerBase*>(itConsumer.get());
-								//theLiveDQMHistos_->setConfigurationManager(theConfigurationManager_);
 							}
 						}
 					}
 			}
 		}
 	}
+
+}
+
+//========================================================================================================================
+void VisualDataManager::stop(void)
+{
+	theLiveDQMHistos_ = 0;
+	DataManager::stop();
 }
 
 //========================================================================================================================

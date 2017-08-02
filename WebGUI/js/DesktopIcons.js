@@ -597,7 +597,7 @@ else {
 
       	//this.closeFolder ~~
       	this.closeFolder = function() {
-      		Debug.log("Close folder");
+      		//Debug.log("Close folder");
       		if(_openFolderElement)
       			_openFolderElement.parentNode.parentNode.removeChild(_openFolderElement.parentNode);
       		_openFolderElement = 0;

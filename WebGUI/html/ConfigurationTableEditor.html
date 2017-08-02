@@ -81,6 +81,8 @@
 		var _editingCellPos = [-1,-1];	
 		var _srcName;
 		var _colHdrArr, _colTypeArr, _colDataTypeArr, _colChoicesArr;
+		//_colChoicesArr is CSV where first entry is always arbitraryBool=0/1 for fixed choice columns
+		
 		var _tableDescription;
 		var _tableIsTransposed = false;
 		
@@ -309,6 +311,7 @@
 		function handleTypeSelect()
 		{
 			var sel = document.getElementById("selectCellTypeSelect");
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 			var selVal = sel.options[sel.selectedIndex].value;
 			Debug.log("CfgTableEditor handleTypeSelect = " + selVal);
 
@@ -328,6 +331,7 @@
 		function loadTable()
 		{
 			var sel = document.getElementById("loadFromConfigName");
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 			var configName = sel.options[sel.selectedIndex].value;
 			
 			Debug.log("CfgTableEditor loadTable from " + configName);
@@ -376,7 +380,9 @@
 					colChoicesData += ";";	
 				}
 				else
+				{					
 					colChoicesData += _colChoicesArr[i] + ";";
+				}
 			}
 			
 			
@@ -393,6 +399,7 @@
 		function verifyDeleteTable()
 		{
 			var sel = document.getElementById("loadFromConfigName");
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 			var configName = sel.options[sel.selectedIndex].value;
 			
 			Debug.log("CfgTableEditor verifyDeleteTable from " + configName);
@@ -408,6 +415,7 @@
 		function deleteTable()
 		{
 			var sel = document.getElementById("loadFromConfigName");
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 			var configName = sel.options[sel.selectedIndex].value;			
 			Debug.log("CfgTableEditor deleteTable from " + configName);
 
@@ -437,8 +445,12 @@
 			var v = "";
 			if(version) v = "&version="+version;
 			document.getElementById("SaveAsConfigName").value = configName;
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration&allowIllegalColumns=1" + "&dataOffset=0&chunkSize=0" +  
-				"&configName=" + configName + v, "", specificConfigRequestHandler);		
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration&allowIllegalColumns=1" + 
+					"&dataOffset=0&chunkSize=0" +  
+					"&configName=" + configName + 
+					v, 
+					"", 
+					specificConfigRequestHandler);		
 		}		
 		
 		//setupEmptyTable
@@ -447,8 +459,9 @@
 			var colTypes = ["UID","Comment","Author","Timestamp"];
 			var colDataTypes = ["VARCHAR2","VARCHAR2","VARCHAR2","TIMESTAMP WITH TIMEZONE"];
 			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
-			
-			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes,0,"No description.");
+			var colHdrs = ["UID","CommentDescription","Author","RecordInsertionTime"];
+			var colChoices = ["","","",""];
+			setupTable("Empty Table Template",colHdrs,colTypes,colDataTypes,colChoices,"No description.");
 		}
 
 		//specificConfigRequestHandler
@@ -510,8 +523,18 @@
 				var csvStr = "";
 				for(var j=0;j<colChoiceArr.length;++j)
 				{
-					if(j) csvStr += ",";
-					csvStr += encodeURIComponent(colChoiceArr[j].getAttribute("value"));
+					if(csvStr.length) csvStr += ",";
+					
+					if(!j)//force first to be arbitraryBool flag 
+							
+					{
+						if(colChoiceArr[j].getAttribute("value").indexOf("arbitraryBool=") != 0)
+							csvStr += "arbitraryBool=0";
+						else
+							csvStr += colChoiceArr[j].getAttribute("value");
+					}
+					else						
+						csvStr += encodeURIComponent(colChoiceArr[j].getAttribute("value"));
 				}
 				Debug.log("csvStr col=" + i + " csvChoices=" + csvStr);
 				colChoicesArr.push(csvStr);
@@ -527,6 +550,8 @@
 		//setupTable ~
 		function setupTable(srcName,colHdrs,colTypes,colDataTypes,colChoices,tableDescription)
 		{
+			Debug.log("colChoices " + colChoices);
+			
 			//handle use of cached _srcName
 			if(!srcName)
 				srcName = _srcName;
@@ -750,7 +775,7 @@
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();" +
 							"setCaretPosition(this,0,this.value.length);' " +
-							"style='width:150px' />";
+							"style='width:220px' />";
 					str += "</td><td style='white-space:nowrap' >";
 					str += "<a class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
 							"title='Add text as a new fixed choice option for this column.\"'" +
@@ -762,7 +787,7 @@
 
 					str += "<tr><td>";
 
-					str += "<select style='width:150px' id='fixedChoicesSelect-" + c + "' " +
+					str += "<select style='width:220px' id='fixedChoicesSelect-" + c + "' " +
 							"onchange='document.getElementById(\"newChoiceInput-" + c + 
 							"\").value = this.value;'" +
 							">";
@@ -773,10 +798,8 @@
 							decodeURIComponent(_defaultArray[colDataTypes[c]][colTypes[c]]) +
 							"</option>";					
 
-					for(var f=0;f<colChoicesArr.length;++f)	
-						if(colChoicesArr[f] == "") continue; //skip empty values
-						else
-							str += "<option>" +
+					for(var f=1;f<colChoicesArr.length;++f)	
+						str += "<option>" +
 							decodeURIComponent(colChoicesArr[f]) +
 							"</option>";		
 
@@ -812,6 +835,25 @@
 					str += "</a>";
 					str += "</center>";
 										
+					str += "<br><br>";
+					
+					//add checkbox
+					Debug.log(colChoicesArr[0]);
+					str += "<input type='checkbox' id='fixedChoiceArbitraryCheckbox-" + c +
+							"' onclick='handlefixedChoiceArbitraryCheckbox(" + c + ")' " +
+							(colChoicesArr[0] == "arbitraryBool=1"?"checked":"") +
+							">";
+					//add link so text toggles checkbox
+					str += "<a style='text-decoration:none;color:black;' href='#' onclick='javascript:" +
+							"var el = document.getElementById(\"fixedChoiceArbitraryCheckbox-" + c + "\");" +
+							"var forFirefox = (el.checked = !el.checked);" +
+							"handlefixedChoiceArbitraryCheckbox(" + c + ");" +
+							" return false;'>";
+					str += "Also allow arbitrary user entry"; //can display however
+					str += "</a>";
+					str += "</input>";
+					
+					
 					str += "</td>";			
 
 				}
@@ -1232,10 +1274,12 @@
 				{
 					Debug.log("CfgTBL editCellOK editing r,c:" + r + "," + c);
 					//get type and data type from select boxes (and input field for link ID)
-					var sel = document.getElementById("selectCellTypeSelect");				
+					var sel = document.getElementById("selectCellTypeSelect");		
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					var colType = sel.selectedIndex?sel.options[sel.selectedIndex].value:
 							sel.value; //the else is case should be UID
 					sel = document.getElementById("selectCellDataTypeSelect");
+					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 					var colDataType = sel.options[sel.selectedIndex].value;
 					
 					if(colType != "UID")
@@ -1270,7 +1314,9 @@
 						DesktopContent.tooltip("FixedChoiceDataType",
 								"The FixedChoiceData type represents a list of choices that constrain " +
 								"the allowed values for a field. " +
-								"The DEFAULT value must always be one of the choices. "
+								"The DEFAULT value must always be one of the choices. \n\n" +
+								"If you check the box to allow arbitrary user entry, users will " +
+								"have the option to enter values that do not necessarily match choices in the list."
 								);
 				}			
 				else //colHdr row
@@ -1474,10 +1520,11 @@
 		{
 			//if not already in choices, add it		
 			
-			var val = document.getElementById("newChoiceInput-" + c).value.trim();
+			var val = document.getElementById("newChoiceInput-" + c).value.trim();			
 			Debug.log("addFixedChoice Value = " + val);
 			var defaultVal = _defaultArray[_colDataTypeArr[c]][_colTypeArr[c]];
 			Debug.log("deleteSelectedFixedChoice defaultVal = " + defaultVal);
+					
 
 			if(encodeURIComponent(val) == defaultVal)
 			{
@@ -1498,7 +1545,7 @@
 			var colChoicesArr = _colChoicesArr[c].split(',');
 			var found = false;
 			var encodedVal = encodeURIComponent(val);
-			for(var i=0;i<colChoicesArr.length;++i)
+			for(var i=1 ;i<colChoicesArr.length;++i) //start at 1 because of arbitraryBool
 				if(colChoicesArr[i] == encodedVal)
 				{	found = true; break; }
 			
@@ -1513,13 +1560,37 @@
 			if(_colChoicesArr[c].length) //other values exist
 				_colChoicesArr[c] += "," + encodedVal;
 			else						//first value
-				_colChoicesArr[c] = encodedVal;
+				_colChoicesArr[c] = "arbitraryBool=0," + encodedVal;
 			
 			setupTable();
 			Debug.log("Value '" + val + 
 					"' was successfully added as a fixed choice option for column '" + 
 					_colHdrArr[c] + "'",
-					Debug.INFO_PRIORITY);
+					Debug.INFO_PRIORITY);			
+		}
+		
+		//handlefixedChoiceArbitraryCheckbox ~~
+		//	set the value in fixed choice array
+		function handlefixedChoiceArbitraryCheckbox(c)
+		{
+			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
+			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
+			
+			var colChoicesArr = _colChoicesArr[c].split(',');
+			_colChoicesArr[c] = "";
+			if(!colChoicesArr.length || 
+					colChoicesArr[0].indexOf("arbitraryBool=") != 0)
+				_colChoicesArr[c] += "arbitraryBool=" + val; //insert missing value
+			else
+				colChoicesArr[0] = "arbitraryBool=" + val; //set value
+			
+			for(var i=0;i<colChoicesArr.length;++i)
+			{
+				if(_colChoicesArr[c].length) //already something, so add comma
+					_colChoicesArr[c] += ",";
+				_colChoicesArr[c] += colChoicesArr[i];
+			}
+			Debug.log("_colChoicesArr[c] " + _colChoicesArr[c]);
 		}
 		
 		//deleteSelectedFixedChoice ~~
@@ -1728,13 +1799,17 @@
 		{
 			Debug.log("uploadFixedChoices _dataUploadStr = " + _dataUploadStr);
 			var src = _dataUploadStr.split('\n');
-			console.log(src);
+			//console.log(src);
 			
+			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
+			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
+						
 			_colChoicesArr[c] = ""; //clear
 
 			for(var i=0;i<src.length;++i)
 			{				
 				if(i) _colChoicesArr[c]	+= ",";
+				else _colChoicesArr[c]	+= "arbitraryBool=" + val + ",";
 				_colChoicesArr[c] += encodeURIComponent(src[i]);
 			}
 			setupTable();

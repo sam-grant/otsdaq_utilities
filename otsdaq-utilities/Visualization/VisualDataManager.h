@@ -24,7 +24,10 @@ public:
     virtual ~VisualDataManager(void);
 
 
-    void configure(void);
+    void configure(void)                  override;
+    void halt     (void)                  override;
+    void start    (std::string runNumber) override;
+    void stop     (void)                  override;
 
 
     void load(std::string fileName, std::string type);

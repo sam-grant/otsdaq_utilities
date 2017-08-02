@@ -124,19 +124,28 @@ Desktop.createDesktop = function(security) {
 	}
 	
 	//return current window layout in string with parameters separated by commas
+	//	Note: represent position in terms of 0-10000 for the entire Desktop Content area
+	//		- this should allow for translation to any size Desktop Content area when loaded
 	var _getWindowLayoutStr = function() {		
+		var dw = Desktop.desktop.getDesktopContentWidth()/10000.0; //to calc int % 0-10000
+		var dh = Desktop.desktop.getDesktopContentHeight()/10000.0;//to calc int % 0-10000
+		var dx = Desktop.desktop.getDesktopContentX();
+		var dy = Desktop.desktop.getDesktopContentY();
+		
 		var layout = "[";				
-		for(var i=0;i<_windows.length;++i) {		
-			if(_windows[i].getWindowName() == "Settings") continue; //skip settings
+		for(var i=0;i<_windows.length;++i) 
+		{		
+			if(_windows[i].getWindowName() == "Settings") continue; //skip settings window
+						
 			layout += _windows[i].getWindowName() 
 										+ "," + _windows[i].getWindowSubName() 
 										+ "," + _windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
-										+ "," + _windows[i].getWindowX()
-										+ "," + _windows[i].getWindowY()
-										+ "," + _windows[i].getWindowWidth()
-										+ "," + _windows[i].getWindowHeight()
+										+ "," + (((_windows[i].getWindowX()-dx)/dw)|0)
+										+ "," + (((_windows[i].getWindowY()-dy)/dh)|0)
+										+ "," + ((_windows[i].getWindowWidth()/dw)|0)
+										+ "," + ((_windows[i].getWindowHeight()/dh)|0)
 										+ "," + (_windows[i].isMinimized()?"0":"1")
-										+ ", "; //last comma (with space for settings display)
+										+ ", "; //last comma (with space for settings display)					
 		}
 		layout += "]";
 		return layout;
@@ -620,8 +629,25 @@ Desktop.createDesktop = function(security) {
 		//clear all current windows
 		Desktop.desktop.closeAllWindows();
 		
-		//open default layout
-		for(i=0;i<numOfWins;++i) {		
+		//open chosen default layout
+		//	Note: represent position in terms of 0-10000 for the entire Desktop Content area
+		//		- this should allow for translation to any size Desktop Content area when loaded
+		//
+		//	layout window fields:
+		//		0: _windows[i].getWindowName() 
+		//		1: _windows[i].getWindowSubName() 
+		//		2: _windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
+		//		3: (((_windows[i].getWindowX()-dx)/dw)|0)
+		//		4: (((_windows[i].getWindowY()-dy)/dh)|0)
+		//		5: ((_windows[i].getWindowWidth()/dw)|0)
+		//		6: ((_windows[i].getWindowHeight()/dh)|0)
+		//		7: (_windows[i].isMinimized()?"0":"1")
+		var dw = Desktop.desktop.getDesktopContentWidth()/10000.0; //to calc int % 0-10000
+		var dh = Desktop.desktop.getDesktopContentHeight()/10000.0;//to calc int % 0-10000
+		var dx = Desktop.desktop.getDesktopContentX();
+		var dy = Desktop.desktop.getDesktopContentY();
+		for(i=0;i<numOfWins;++i) 
+		{		
 			Debug.log("adding " + layoutArr[i*numOfFields].substr(1) + "-" + layoutArr[i*numOfFields+1],Debug.LOW_PRIORITY);	
 			this.addWindow(	//(name,subname,url,unique)
 				layoutArr[i*numOfFields].substr(1), 
@@ -629,10 +655,10 @@ Desktop.createDesktop = function(security) {
 				layoutArr[i*numOfFields+2].replace(/%38/g,"&").replace(/%61/g,"="), //replace back = and &
 				false);				
 			_windows[_windows.length-1].setWindowSizeAndPosition(		//(x,y,w,h)		
-				layoutArr[i*numOfFields+3],
-				layoutArr[i*numOfFields+4],
-				layoutArr[i*numOfFields+5],
-				layoutArr[i*numOfFields+6]);
+				layoutArr[i*numOfFields+3]*dw + dx,
+				layoutArr[i*numOfFields+4]*dh + dy,
+				layoutArr[i*numOfFields+5]*dw,
+				layoutArr[i*numOfFields+6]*dh);
 			if(numOfFields == 8 && 
 					!(layoutArr[i*numOfFields+7]|0)) //convert to integer, if 0 then minimize
 				_windows[_windows.length-1].minimize();
