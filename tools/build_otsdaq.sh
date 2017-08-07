@@ -43,12 +43,15 @@ case ${qual_set} in
 esac
 
 case ${version} in
-    v1_01_01)
-        artdaq_ver=v2_03_00
-        ;;
-  v1_01_00)
-    artdaq_ver=v2_02_03
-    ;;
+	v1_01_02)
+	artdaq_ver=v2_03_00
+	;;
+	v1_01_01)
+	artdaq_ver=v2_03_00
+	;;
+	v1_01_00)
+	artdaq_ver=v2_02_03
+	;;
   *)
     echo "Unexpected otsdaq version ${version}"
     exit 1
