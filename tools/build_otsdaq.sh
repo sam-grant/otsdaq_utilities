@@ -142,10 +142,10 @@ cp ${working_dir}/otsdaq-utilities/tools/buildFW .
  }
 
 echo "Fix Manifests"
-cat art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >> otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+cat ${blddir}/art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
