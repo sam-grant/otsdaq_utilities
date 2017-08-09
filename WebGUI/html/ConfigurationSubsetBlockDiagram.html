@@ -1,0 +1,101 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>System Block Diagram</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+
+	
+	<style type="text/css">			
+		
+		body {	
+			padding:0;
+			margin:0;
+		}
+
+		/* make links have a hand cursor */
+		a {
+			cursor: pointer;
+		}
+		
+		.linkDiv {
+			border: 1px solid red;
+			border-radius: 10px;
+		}
+		
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	
+	<script>		
+		
+		//	Description of System Block Diagram Functionality/Behavior:
+		//	
+		//		- Block diagram is overlayed with link-divs
+		//		- When user puts mouse over a subset component, the link-div appears
+		//			as a red rounded outline
+		//		- When user clicks the associated subset configuration window is opened on the desktop
+		//			-- When user 'deep' clicks the popup menu for new tab, or full screen or tile is shown
+
+		
+		
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+				
+
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{									
+			Debug.log("System Block Diagram init ");
+			DesktopContent.tooltip("System Block Diagram",
+					"Welcome to the System Block Diagram. "+
+					"The high-level data flow possibilities of your DAQ system are " +
+					"represented in this diagram. The dark arrows represent primary data flow " +
+					"through the software, the lighter arrows represent control/monitoring data flow " +
+					"through the software. The dashed arrows represent front-end specific communication " +
+					"protocols used to interface to your front-end devices.\n\n" +
+					
+					"The diagram is interactive, in the sense that you can click " +
+					"a component of interest and the associated Configuration Subset window will be opened. " +
+					"In the Configuration Subset window, you can modify the active configuration values and " +
+					"save your changes."
+			);
+			
+		} //end init()
+		
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+
+	<!-- body content is just the clickable block diagram -->
+
+	<table width='100%' height='100%' cellspacing='0' cellpadding='0'>
+	<td width='100%' height='100%' valign='middle' align='center'>
+		<img src='/WebPath/images/windowContentImages/subset-components.png' width='100%' />
+	</td>
+	</table>
+</body>
+	
+</html>
