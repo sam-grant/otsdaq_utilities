@@ -405,6 +405,7 @@
 		
 			//setupConfigCreator(preSelectStr)
 			//setupConfigCreatorHandler(req,preSelectStr)
+			//handleGroupMemberGoto(name,backLinkStr)
 			//addMemberToConfigGroup(groupName,backLinkStr) 
 		
 			//activateSystemConfig(groupName, groupKey)
@@ -4692,12 +4693,13 @@
 				backLinkStr = "setupConfigCreator(\\\"" + preSelectStr + "\\\");";
 				
 				str += "<td>";
-				str += "<a href='#' onclick='" +
-						"var sel = document.getElementById(\"select-" + name + "\");" +
-						"if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default" +
-						"setupSpecificConfig(\"" + name + "\"," +
-						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
-						",\"" + backLinkStr + "\"); return false;'" +
+				str += "<a onclick='" +
+						"return handleGroupMemberGoto(\"" + name + "\",\"" + backLinkStr + "\");'" +
+//						"var sel = document.getElementById(\"select-" + name + "\");" +
+//						"if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default" +
+//						"setupSpecificConfig(\"" + name + "\"," +
+//						"sel.options[sel.selectedIndex]?sel.options[sel.selectedIndex].value:-1" +
+//						",\"" + backLinkStr + "\"); return false;'" +
 						" title='Go to " + name + "&apos;s selected version'" +
 						">";
 				str += "goto</a>";
@@ -4808,6 +4810,22 @@
 				for(var el=0;el<els.length;++el)
 					els[el].checked = false;
 			}
+		}
+
+		//handleGroupMemberGoto ~
+		function handleGroupMemberGoto(name,backLinkStr)
+		{
+			Debug.log("tmpF " + name);
+			
+			var sel = document.getElementById("select-" + name);
+					
+			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+			
+			setupSpecificConfig(name,
+					sel.options[sel.selectedIndex]?
+							sel.options[sel.selectedIndex].value:-1,
+							backLinkStr);
+			return false;
 		}
 		
 		//versionsForCreateConfig ~
