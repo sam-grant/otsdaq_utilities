@@ -67,14 +67,21 @@ if [ "x$1" == "x" ]; then
 	echo
 	
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
+		echo "cp $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd.bk"
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
+		cp $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd.bk
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
 		while read line; do    
+			echo "cp $USER_DATA/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/${line}Info.xml.bk"
 			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"
+			cp $USER_DATA/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/${line}Info.xml.bk
 			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 	else
+		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
+		rm -rf $USER_DATA/ConfigurationInfo_update_bk
+		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/
 		# undo c++ style comment for Eclipse viewing*/
 	fi

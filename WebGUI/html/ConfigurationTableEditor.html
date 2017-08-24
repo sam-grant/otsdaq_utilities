@@ -140,7 +140,6 @@
 			//selectThisCell(r,c,el)
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
-			//keyHandler(e)
 			//editCellOK()
 			//addColumn(c)
 			//deleteColumn(c)
@@ -148,6 +147,9 @@
 			//createEditTableMenu(event)
 			//setupFindAndReplace()
 			//configReplace()
+		
+			//keyHandler(e)
+			//descriptionKeyHandler(e)
 		
 			//addFixedChoice(c)
 			//deleteSelectedFixedChoice(c)
@@ -575,7 +577,8 @@
 				colChoices = _colChoicesArr;
 			else
 				_colChoicesArr = colChoices;	
-			if(!tableDescription)
+			
+			if(tableDescription === undefined)
 				tableDescription = _tableDescription;
 			else
 				_tableDescription = tableDescription;			
@@ -938,11 +941,12 @@
 			str += "<br><br>";
 			str += "Table Description (Changes will be saved with the column info.";
 			
-			str += " <a href='#' id='table-description-preview-link',Debug.INFO_PRIORITY);'>" +
+			str += " <a style='text-decoration:underline;' " +
+					"id='table-description-preview-link',Debug.INFO_PRIORITY);'>" +
 					"Preview</a>):";
 			
 			str += "<br>";
-			str += "<textarea id='table-description' rows='6' cols='60'>";			 
+			str += "<textarea id='table-description' onkeydown='descriptionKeyHandler(event,this)' rows='6' cols='60'>";			 
 			str += tableDescription;
 			str += "</textarea>";
 			
@@ -950,9 +954,10 @@
 			el.innerHTML = str;	
 			el = document.getElementById("table-description-preview-link");
 			el.onclick = function(){
+				var tip = document.getElementById("table-description").value;
 				DesktopContent.tooltip("ALWAYS",
 						"<center>Preview of " + srcName + " Tooltip</center><br>" +
-						tableDescription);
+						tip);
 			}
 		}
 		
@@ -1144,6 +1149,27 @@
 		function setCaretPosition(elem, caretPos, endPos) {
             elem.focus();
             elem.setSelectionRange(caretPos, endPos);
+		}
+
+		//descriptionKeyHandler
+		//	add tab character to textareal element value
+		function descriptionKeyHandler(e,tel) 
+		{
+			var TABKEY = 9;
+			//handle special keys for text area
+			if(e.keyCode == TABKEY)
+			{
+				Debug.log("tab.");
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				var i = tel.selectionStart;
+				var j = tel.selectionEnd;
+				tel.value =  tel.value.substr(0,i) + 
+						'\t' + tel.value.substr(j);
+				tel.selectionStart = tel.selectionEnd = j+1;
+			}
+			return false; //done if text area was identified
 		}
 		
 		//keyHandler
@@ -1699,11 +1725,15 @@
 			
 			//create CSV data string from html table
 			var dataStr = "data:text/csv;charset=utf-8,";
+			var cnt = 0;
 			for(var i=0;i<colChoicesArr.length;++i)
 			{
-				if(i)
+				if(colChoicesArr[i].indexOf("arbitraryBool=") == 0)
+					continue; //skip the checkbox value
+				if(cnt) //after the first time
 					dataStr += encodeURI("\n"); //encoded \n //each choice is a column
 				dataStr += colChoicesArr[i];
+				++cnt;
 			}
 			
 			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);

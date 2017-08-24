@@ -8344,7 +8344,7 @@
 				Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
 						newValue);
 				
-				if(treeEditingNodeInitValue_ == newValue)
+				if(encodeURIComponent(treeEditingNodeInitValue_) == newValue)
 				{
 					//some types allow no change
 					if(treeEditingNodeType_ != "delete-uid" &&
@@ -9151,13 +9151,20 @@
 							//	if parent is groupid link.. then two levels back
 							
 							var pel = document.getElementById("treeNode-linkTableName-" + 
-									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent));
+									parentIdString);
 							if(!pel)
 								pel = document.getElementById("treeNode-linkTableName-" + 
 										(document.getElementById("treeNode-ParentId-" + 
-										(document.getElementById("treeNode-ParentId-" + 
-												parentIdString).textContent)).textContent));
+												parentIdString).textContent));
+							
+//							var pel = document.getElementById("treeNode-linkTableName-" + 
+//									(document.getElementById("treeNode-ParentId-" + 
+//											parentIdString).textContent));
+//							if(!pel)
+//								pel = document.getElementById("treeNode-linkTableName-" + 
+//										(document.getElementById("treeNode-ParentId-" + 
+//										(document.getElementById("treeNode-ParentId-" + 
+//												parentIdString).textContent)).textContent));
 							if(!pel)
 							{
 								Debug.log("Big problem with locating table name through ancestry! " +
@@ -9241,38 +9248,12 @@
 
 						Debug.log("value-idString " + idString + " " + els[i].textContent);
 
-						//need table to verify match.. must get from parent of parent
-						parentIdString = document.getElementById("treeNode-ParentId-" + 
-								idString).textContent;
-						if(depth == 2)
-							table = document.getElementById("treeNode-Value-" + 
+						//depth is forced to 2 by here
+						//need table to verify match.. must get from parent of parent						
+						table = document.getElementById("treeNode-Value-" + 
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent)).textContent;
-						else 
-						{
-							//needs to get from parent OR parent-of-parent
-							//	if parent is uid link.. then one level back
-							//	if parent is groupid link.. then two levels back
-
-							var pel = document.getElementById("treeNode-linkTableName-" + 
-									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent));
-							if(!pel)
-								pel = document.getElementById("treeNode-linkTableName-" + 
-										(document.getElementById("treeNode-ParentId-" + 
-										(document.getElementById("treeNode-ParentId-" + 
-												parentIdString).textContent)).textContent));
-							if(!pel)
-							{
-								Debug.log("Big problem with locating table name through ancestry! " +
-										"Please notify developers as to how you got here.",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-
-							table = pel.textContent;
-						}					
-
+						
 						Debug.log("value-table " + table);
 						uid = document.getElementById("treeNode-Value-" + 
 								parentIdString).textContent;
@@ -9615,7 +9596,10 @@
 			
 			if(_editingCellEl) //return old value, convert from text to html
 			{
-				if(treeEditingNodeType_.indexOf("link") == 0)
+				var isTreeView = document.getElementById("treeView-ConfigGroupLink")?true:false;
+							
+								
+				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0)
 				{
 					//if canceling from link edit, show tooltip
 
@@ -9628,8 +9612,8 @@
 					
 				}
 				
-				if(treeEditingNodeType_ == "value-bool" ||
-						treeEditingNodeType_.indexOf("link") == 0) 
+				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
+						treeEditingNodeType_.indexOf("link") == 0)) 
 				{
 					//take old value as HTML for bool values
 					_editingCellEl.innerHTML = _editingCellElOldValue;
