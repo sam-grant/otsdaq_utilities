@@ -477,9 +477,9 @@
 					"click the question mark at the top of the Configuration GUI window.\n\n" +
 					
 					"Briefly, here is a description of the main views: " +
-					"\n\t- 'System View' is for viewing and editing the translation from System Aliases to groups." +
-					"\n\t- 'Group View' is for viewing and editing groups of tables." +
-					"\n\t- 'Table View' is for viewing and editing tables." + 
+					"\n\t- <b>System View:</b>\n<INDENT>This view is for viewing and editing the translation from System Aliases to groups.</INDENT>" +
+					"\n\t- <b>Group View:</b>\n<INDENT>This view is for viewing and editing groups of tables.</INDENT>" +
+					"\n\t- <b>Table View:</b>\n<INDENT>This view is for viewing and editing tables.</INDENT>" + 
 					"\n\n" +
 					"You will see one more type view in the Configuration GUI and that is the 'Tree-view'." +
 					"Briefly, the 'Tree-view' is a way of viewing tables that are linked together - " +
@@ -705,14 +705,14 @@
 			}
 
 			DesktopContent.tooltip("System View",
-					"You are looking at your configuration through the 'System View' now. " +
+					"You are currently looking at your configuration through the 'System View.' " +
 					"From this view you can see existing System Aliases, edit them, " +
 					"and create new ones." +
 					"\n\n" +				
 					"It is important to note that the Backbone group has a table called " +
 					"'GroupAliases' and this is the table that defines your " +
 					"System Aliases (Clicking <i>Edit System Aliases</i> at the top of " +
-					"this view will take you to the 'GroupAliases' table)." +
+					"this view will take you to the 'GroupAliases' table). " +
 					"The System Aliases defined in the Active Backbone group are what you " +
 					"are seeing now!\n\n" +
 					"You can edit and create System Aliases from this view. All of the links " +
@@ -726,7 +726,7 @@
 					"'Active'; here is a brief " +
 					"description of each: " +
 					"<INDENT>" +
-					"- 'Wiz-to-Latest':" +
+					"- <b>Wiz-to-Latest:</b>" +
 					"<INDENT>" + 
 					"This will setup a System Alias to refer to a group comprised " +
 					"of the latest/newest versions of each table in the group. When you select this route, you will " +
@@ -739,7 +739,7 @@
 					"</INDENT>" +
 					"</INDENT>" +
 					"<INDENT>" +
-					"- 'Wiz-to-Active':" +
+					"- <b>Wiz-to-Active:</b>" +
 					"<INDENT>" +
 					"This will setup a System Alias to refer to one of the Active groups. " +
 					"When you select this route, you will " +
@@ -2919,9 +2919,9 @@
 
 					if(isDisconnected)
 						value += "-" + 
-						"<label style='color:red;font-weight:bold;'>" +
-						"DISCONNECTED" +
-						"</label>";
+							"<label style='color:red;font-weight:bold;'>" +
+							"DISCONNECTED" +
+							"</label>";
 					
 					tableLinkName = nodes[i].children[offset+1].getAttribute("value"); //LinkConfigurationName node
 					--childrenLength; //subtract the tableLinkName name node from children length
@@ -7834,683 +7834,700 @@
 		
 		//editTreeNodeOK
 		function editTreeNodeOK() 
-		{							
-			if(!_editingCellEl) return;
-			Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
-			
-			//local initial variables can be used by continuation edit types 
-			//	if globals are temporarily modified
-			var initTargetTable = treeEditingTargetTable_;
-			
-			///////////////////////////////////////////////
-			//localEditTreeNodeOKRequestsComplete
-			function localEditTreeNodeOKRequestsComplete(tableIndex,newValue)
-			{			
+		{
+			try
+			{							
+				if(!_editingCellEl) return;
+				Debug.log("editTreeNodeOK type " + treeEditingNodeType_);
 
-				//some types should be handled before cell is cleared
-				//	e.g. for continuation of editing, like "table-newGroupRow"
-				//	and "table-newUIDRow"
-				if(treeEditingNodeType_ == "table-newGroupRow") //spawns from group link edit)
-				{					
-					//clear children and re-toggle if shown	
-					//then 
-					//reselect target edit node
-					
-					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-							treeEditingNodeIdString_);
-					var wasDisplayed = elChildrenNode.style.display != "none" && 
-							elChildrenNode.innerHTML != "";
+				//local initial variables can be used by continuation edit types 
+				//	if globals are temporarily modified
+				var initTargetTable = treeEditingTargetTable_;
 
-					toggleTreeChildren(
-							treeEditingNodeIdString_.split('-')[0],
-							treeEditingNodeIdString_.split('-')[1],false);
-					elChildrenNode.innerHTML = "";
+				///////////////////////////////////////////////
+				//localEditTreeNodeOKRequestsComplete
+				function localEditTreeNodeOKRequestsComplete(tableIndex,newValue)
+				{			
 
-					if(wasDisplayed)
+					//some types should be handled before cell is cleared
+					//	e.g. for continuation of editing, like "table-newGroupRow"
+					//	and "table-newUIDRow"
+					if(treeEditingNodeType_ == "table-newGroupRow") //spawns from group link edit)
+					{					
+						//clear children and re-toggle if shown	
+						//then 
+						//reselect target edit node
+
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_);
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
+
 						toggleTreeChildren(
 								treeEditingNodeIdString_.split('-')[0],
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
+
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeIdString_.split('-')[0],
+									treeEditingNodeIdString_.split('-')[1],true);
+
+						//reload members in multiselect
+						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						return;
+					}
+					else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
+					{	
+						//reload members uid dropdown
+						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						return;					
+					}
+
+
+					// all other types are clearing the cell
+
+					_editingCellEl.innerHTML = "";
+
+
+					if(treeEditingNodeType_ == "table")
+					{
+						treeMemberComments_[tableIndex] = newValue;
+						_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
+					}						
+					else if(treeEditingNodeType_ == "table-newRow")
+					{
+						//replace the value that was erased with table name
+						_editingCellEl.appendChild(document.createTextNode(treeEditingTargetTable_));
+
+						//reset children
+						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
+								treeEditingNodeIdString_.split('-')[1],false);
+						document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_).innerHTML = "";
+						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
 								treeEditingNodeIdString_.split('-')[1],true);
-					
-					//reload members in multiselect
-					_editingCellEl.getElementsByTagName("select")[0].onchange();										
-					return;
-				}
-				else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
-				{	
-					//reload members uid dropdown
-					_editingCellEl.getElementsByTagName("select")[0].onchange();										
-					return;					
-				}
-				
-				
-				// all other types are clearing the cell
-				
-				_editingCellEl.innerHTML = "";
-				
-				
-				if(treeEditingNodeType_ == "table")
-				{
-					treeMemberComments_[tableIndex] = newValue;
-					_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
-				}						
-				else if(treeEditingNodeType_ == "table-newRow")
-				{
-					//replace the value that was erased with table name
-					_editingCellEl.appendChild(document.createTextNode(treeEditingTargetTable_));
-					
-					//reset children
-					toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
-							treeEditingNodeIdString_.split('-')[1],false);
-					document.getElementById("treeNode-ChildrenOf-" + 
-							treeEditingNodeIdString_).innerHTML = "";
-					toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
-							treeEditingNodeIdString_.split('-')[1],true);
-				}
-				else if(treeEditingNodeType_ == "uid")
-				{
-					//modify display and nodename with new value
-					_editingCellEl.appendChild(document.createTextNode(newValue)); 
-					
-					var el = document.getElementById("treeNode-nodeName-" + 
-							treeEditingNodeIdString_);
-					el.innerHTML = "";
-					el.appendChild(document.createTextNode(newValue));
-					
-					//clear children,
-					//and if children were displayed
-					//		then toggle/show new children 
-					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-							treeEditingNodeIdString_);
-					var wasDisplayed = elChildrenNode.style.display != "none" && 
-							elChildrenNode.innerHTML != "";
+					}
+					else if(treeEditingNodeType_ == "uid")
+					{
+						//modify display and nodename with new value
+						_editingCellEl.appendChild(document.createTextNode(newValue)); 
 
-					toggleTreeChildren(
-							treeEditingNodeDepth_,
-							treeEditingNodeIdString_.split('-')[1],false);
-					elChildrenNode.innerHTML = "";
+						var el = document.getElementById("treeNode-nodeName-" + 
+								treeEditingNodeIdString_);
+						el.innerHTML = "";
+						el.appendChild(document.createTextNode(newValue));
 
-					if(wasDisplayed)
+						//clear children,
+						//and if children were displayed
+						//		then toggle/show new children 
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_);
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
+
 						toggleTreeChildren(
 								treeEditingNodeDepth_,
-								treeEditingNodeIdString_.split('-')[1],true);
-				}
-				else if(treeEditingNodeType_ == "delete-uid")
-				{
-					//reset parent children is enough
-					//	correct response should come from server
-					
-					
-					
-					//var el = document.getElementById("treeNode-" + treeEditingNodeIdString_);
-					var pel = document.getElementById("treeNode-ChildrenOf-" + 
-							treeEditingNodeParentIdString_);
-					
-					//pel.removeChild(el);
-					
-					//reset parent children
-					toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
-							treeEditingNodeParentIdString_.split('-')[1],false);
-					pel.innerHTML = "";
-					toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
-							treeEditingNodeParentIdString_.split('-')[1],true);
-					
-				}
-				else if(treeEditingNodeType_.indexOf("link-") == 0)
-				{
-					//change link table/id and clear children
-					//and edit peripheral link info
-					
-					var csvArr = newValue.split(',');
-					var linkTable = csvArr[0];
-					var linkId = csvArr[1];
-					newValue = 							
-							"-(" + 
-							treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
-					//add as text node first in case not html safe
-					_editingCellEl.appendChild(document.createTextNode(newValue));
-					//then add html piece
-					newValue = _editingCellEl.innerHTML;
-					_editingCellEl.innerHTML = 
-							"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
-							treeEditingTargetColumn_ + 
-							"</label>" +
-							newValue;
-					
-					{	//change link table name
-						var el; 
-						el = document.getElementById("treeNode-linkTableName-" + 
-								treeEditingNodeIdString_);
-						el.innerHTML = "";
-						el.appendChild(document.createTextNode(linkTable)); 
-					}
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
 
-					var retVal = getTreeViewTableStrings(linkTable);
-					var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
-					var tableComment = retVal.tableComment;
-					var tableTitle = retVal.tableTitle;
-
-					//change element title
-					_editingCellEl.title = tableTitle;
-										
-					{	//change link table comment
-						var el; 
-						el = document.getElementById("treeNode-TableComment-" + 
-								treeEditingNodeIdString_);
-						el.innerHTML = "";
-						if(tableComment != "")
-							el.appendChild(document.createTextNode("//" + tableComment)); 
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeDepth_,
+									treeEditingNodeIdString_.split('-')[1],true);
 					}
-					
-					{ 	//change context menu for table link
-						
+					else if(treeEditingNodeType_ == "delete-uid")
+					{
+						//reset parent children is enough
+						//	correct response should come from server
+
+
+
+						//var el = document.getElementById("treeNode-" + treeEditingNodeIdString_);
+						var pel = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeParentIdString_);
+
+						//pel.removeChild(el);
+
+						//reset parent children
+						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+								treeEditingNodeParentIdString_.split('-')[1],false);
+						pel.innerHTML = "";
+						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+								treeEditingNodeParentIdString_.split('-')[1],true);
+
+					}
+					else if(treeEditingNodeType_.indexOf("link-") == 0)
+					{
+						//change link table/id and clear children
+						//and edit peripheral link info
+
+						var csvArr = newValue.split(',');
+						var linkTable = csvArr[0];
+						var linkId = csvArr[1];
+						newValue = 							
+								"-(" + 
+								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
+						//add as text node first in case not html safe
+						_editingCellEl.appendChild(document.createTextNode(newValue));
+						//then add html piece
+						newValue = _editingCellEl.innerHTML;
+						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+								treeEditingTargetColumn_ + 
+								"</label>" +
+								newValue;
+						_editingCellEl.innerHTML = newValue;
+
+						{	//change link table name
+							var el; 
+							el = document.getElementById("treeNode-linkTableName-" + 
+									treeEditingNodeIdString_);
+							el.innerHTML = "";
+							el.appendChild(document.createTextNode(linkTable)); 
+						}
+
+						var retVal = getTreeViewTableStrings(linkTable);
+						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
+						var tableComment = retVal.tableComment;
+						var tableTitle = retVal.tableTitle;
+
+						//change element title
+						_editingCellEl.title = tableTitle;
+
+						{	//change link table comment
+							var el; 
+							el = document.getElementById("treeNode-TableComment-" + 
+									treeEditingNodeIdString_);
+							el.innerHTML = "";
+							if(tableComment != "")
+								el.appendChild(document.createTextNode("//" + tableComment)); 
+						}
+
 						if(treeNavContextMenuItemHandlers.length == 0)
 						{
-							Debug.log("There is a treeNavContextMenuItemHandlers problem! Alert admins.",
-									Debug.HIGH_PRIORITY);
-							return;
+							//no context menu items found
+							//assume DISCONNECTED!
+
+							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
+
+							newValue += "-" + 
+									"<label style='color:red;font-weight:bold;'>" +
+									"DISCONNECTED" +
+									"</label>";
+							_editingCellEl.innerHTML = newValue;
 						}
-						
-						var el; 
-						el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+						else
+						{ 	//change context menu for table link							
+
+							var el; 
+							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+									treeEditingNodeIdString_);
+							var str = "";
+							str += 
+									"<div class='treeNode-Link' " + //start treeNode Link div
+									"onmousedown='" + // start link onmousedown	
+									"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+									"[";
+
+							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+							{
+								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+								//need to escape all quotes by one more level
+								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+								if(j != treeNavContextMenuItemHandlers.length-1)
+									str += ",";
+							}
+							str += "]" + //end treeNavContextMenuItemHandlers array
+									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+									"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+							str += 
+									"' " + // end link onmousedown
+									//"onmouseup='" + onmouseupJS + "' " +
+									">" +	
+									"<div class='gotoNavDiv'></div>" +			
+									"</div>"; //end treeNode Link div
+
+							el.innerHTML = str;
+						}
+
+						//clear children,
+						//and if children were displayed
+						//		then toggle/show new children 
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
 								treeEditingNodeIdString_);
-						var str = "";
-						str += 
-								"<div class='treeNode-Link' " + //start treeNode Link div
-								"onmousedown='" + // start link onmousedown	
-								"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
-								"[";
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
 
-						for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-						{
-							//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-							//need to escape all quotes by one more level
-							treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-									treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-							treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-							//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-							//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-							//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-							str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-							if(j != treeNavContextMenuItemHandlers.length-1)
-								str += ",";
-						}
-						str += "]" + //end treeNavContextMenuItemHandlers array
-								",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-								"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
-						str += 
-								"' " + // end link onmousedown
-								//"onmouseup='" + onmouseupJS + "' " +
-								">" +	
-								"<div class='gotoNavDiv'></div>" +			
-								"</div>"; //end treeNode Link div
-						
-						el.innerHTML = str;
-					}
-					
-					//clear children,
-					//and if children were displayed
-					//		then toggle/show new children 
-					var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-							treeEditingNodeIdString_);
-					var wasDisplayed = elChildrenNode.style.display != "none" && 
-							elChildrenNode.innerHTML != "";
-
-					toggleTreeChildren(
-							treeEditingNodeDepth_,
-							treeEditingNodeIdString_.split('-')[1],false);
-					elChildrenNode.innerHTML = "";
-
-					if(wasDisplayed)
 						toggleTreeChildren(
 								treeEditingNodeDepth_,
-								treeEditingNodeIdString_.split('-')[1],true);
-				}
-				else if(treeEditingNodeType_ == "value" || 
-						treeEditingNodeType_ == "value-bitmap")
-				{
-					//if(treeEditingNodeType_ == "MultilineData")
-					//MultilineData and normal
-					//normal data
-					//bitmap data (do nothing would be ok, value already set)
-					_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
-					
-				}
-				else if(treeEditingNodeType_ == "value-bool")
-				{
-					var str = "";
-					
-					//colorize true false														
-					str += "<div style='float:left'>";										
-					str += newValue;											
-					str += "</div>";
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
 
-					var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
-							"rgb(16, 204, 16)":"rgb(255, 0, 0);";
-					str += "<div style='width:10px;height:10px;" +
-							"background-color:" + color + ";" +
-							"float: left;" +
-							"border-radius: 7px;" +
-							"border: 2px solid white;" +
-							"margin: 2px 0 0 6px;" +								
-							"'></div>"; 
-					_editingCellEl.innerHTML = str;
-				}			
-				else if(treeEditingNodeType_ == "value-groupid")
-				{					
-					//if parent is a link (depth != 2)
-					//	then if no longer in group
-					//		then delete from group
-					//		if no more children, say no children
-					//	else just change value
-					//else
-					//	change value 
-					
-					if(treeEditingNodeDepth_ != 2)
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeDepth_,
+									treeEditingNodeIdString_.split('-')[1],true);
+					}
+					else if(treeEditingNodeType_ == "value" || 
+							treeEditingNodeType_ == "value-bitmap")
 					{
-						//check if in group still:
-						//	get LINKID of groupid
-						//	get LINKID of parent group link
-						//	if not matching link
-						//		just change value (still in group) and done						
-						//	if matching LINKIDs
-						//		check if still in group .. 
-						//		(could be separated by | and stil in group)
-						
-						var parentLinkIndex = 
-								document.getElementById("treeNode-childLinkIndex-" + 
-								(document.getElementById("treeNode-ParentId-" + 
-										treeEditingNodeParentIdString_).textContent)).textContent;
-								
-						var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
+						//if(treeEditingNodeType_ == "MultilineData")
+						//MultilineData and normal
+						//normal data
+						//bitmap data (do nothing would be ok, value already set)
+						_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 
-						//if value-groupid node, link index is last in element class name
-						var colType = vel.className.split(' ')[1];
-						var selfLinkIndex = colType.substr(
-								("treeNode-ValueType-GroupID").length);
-						
-						var groupId = document.getElementById("treeNode-Value-" + 
-								((document.getElementById("treeNode-ParentId-" + 
-										treeEditingNodeParentIdString_).textContent))).textContent;
-						groupId = groupId.split('=')[1].substr(1); //get after =
-						groupId = groupId.substr(0,groupId.length-1); //remove ending )
-						
-						Debug.log("parentLinkIndex = " + parentLinkIndex);
-						Debug.log("selfLinkIndex = " + selfLinkIndex);
-						Debug.log("groupId = " + groupId);
-						
-						if(parentLinkIndex != selfLinkIndex) //no match
+					}
+					else if(treeEditingNodeType_ == "value-bool")
+					{
+						var str = "";
+
+						//colorize true false														
+						str += "<div style='float:left'>";										
+						str += newValue;											
+						str += "</div>";
+
+						var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
+								"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+						str += "<div style='width:10px;height:10px;" +
+								"background-color:" + color + ";" +
+								"float: left;" +
+								"border-radius: 7px;" +
+								"border: 2px solid white;" +
+								"margin: 2px 0 0 6px;" +								
+								"'></div>"; 
+						_editingCellEl.innerHTML = str;
+					}			
+					else if(treeEditingNodeType_ == "value-groupid")
+					{					
+						//if parent is a link (depth != 2)
+						//	then if no longer in group
+						//		then delete from group
+						//		if no more children, say no children
+						//	else just change value
+						//else
+						//	change value 
+
+						if(treeEditingNodeDepth_ != 2)
 						{
-							//just change value (still in group) and done	
-							_editingCellEl.appendChild(document.createTextNode(newValue));
-						}
-						else //matching link ids
-						{
-							var groupIds = newValue.split('|');
-							var stillInGroup = false;
-							for(var i=0;i<groupIds.length;++i)								
-								if(groupIds[i].trim() == groupId)
+							//check if in group still:
+							//	get LINKID of groupid
+							//	get LINKID of parent group link
+							//	if not matching link
+							//		just change value (still in group) and done						
+							//	if matching LINKIDs
+							//		check if still in group .. 
+							//		(could be separated by | and stil in group)
+
+							var parentLinkIndex = 
+									document.getElementById("treeNode-childLinkIndex-" + 
+											(document.getElementById("treeNode-ParentId-" + 
+													treeEditingNodeParentIdString_).textContent)).textContent;
+
+							var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
+
+							//if value-groupid node, link index is last in element class name
+							var colType = vel.className.split(' ')[1];
+							var selfLinkIndex = colType.substr(
+									("treeNode-ValueType-GroupID").length);
+
+							var groupId = document.getElementById("treeNode-Value-" + 
+									((document.getElementById("treeNode-ParentId-" + 
+											treeEditingNodeParentIdString_).textContent))).textContent;
+							groupId = groupId.split('=')[1].substr(1); //get after =
+							groupId = groupId.substr(0,groupId.length-1); //remove ending )
+
+							Debug.log("parentLinkIndex = " + parentLinkIndex);
+							Debug.log("selfLinkIndex = " + selfLinkIndex);
+							Debug.log("groupId = " + groupId);
+
+							if(parentLinkIndex != selfLinkIndex) //no match
+							{
+								//just change value (still in group) and done	
+								_editingCellEl.appendChild(document.createTextNode(newValue));
+							}
+							else //matching link ids
+							{
+								var groupIds = newValue.split('|');
+								var stillInGroup = false;
+								for(var i=0;i<groupIds.length;++i)								
+									if(groupIds[i].trim() == groupId)
+									{
+										Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
+										stillInGroup = true;
+										break;
+									}
+
+								if(stillInGroup)
+									_editingCellEl.appendChild(document.createTextNode(newValue));
+								else // remove from group
 								{
-									Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
-									stillInGroup = true;
+									//need to remove parent 'treeNode' from 
+									//	parent-of-parent childrenNode: 
+									var parentTreeNode = document.getElementById("treeNode-" + 
+											treeEditingNodeParentIdString_);
+									var popChildrenNode = parentTreeNode.parentNode;
+									popChildrenNode.removeChild(parentTreeNode);
+
+									//if no more children, say so
+									var popChildren = popChildrenNode.getElementsByClassName("treeNode");
+									if(popChildren.length == 0)
+									{
+										var str = "";
+										str += 
+												"<div class='treeNode'> " +
+												"<div class='treeNode-Connection'></div>" +
+												"<div class='treeNode-Value'>";
+
+										str += "No Children Nodes Found.";
+
+										str += "</div>" + //end treeNode Value div		
+												"</div>" + //end treeNode div							
+												"<div id='clearDiv'></div>"; 
+										popChildrenNode.innerHTML = str;
+									}
+								}
+							}						
+						}
+						else
+							_editingCellEl.appendChild(document.createTextNode(newValue));
+					}
+					else	//unrecognized type!?
+					{
+						Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+						editCellCancel(); return;
+					}
+
+					//requests are done, so end editing
+					_editingCell = false;
+					_editingCellEl = 0;
+				} //end localEditTreeNodeOKRequestsComplete
+				///////////////////////////////////////////////
+
+
+				if(
+						treeEditingNodeType_ == "table" || 
+						treeEditingNodeType_ == "table-newRow" || 
+						treeEditingNodeType_ == "uid" ||
+						treeEditingNodeType_ == "delete-uid" ||
+						treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
+						treeEditingNodeType_ == "table-newGroupRow" || //spawns from group link edit
+						treeEditingNodeType_ == "table-newUIDRow" || //spawns from uid link edit
+						treeEditingNodeType_ == "value" ||
+						treeEditingNodeType_ == "value-bool" || 
+						treeEditingNodeType_ == "value-bitmap" || 
+						treeEditingNodeType_ == "value-groupid")
+
+				{
+					var newValue;
+
+					if(treeEditingNodeType_ == "value-bool")
+					{
+						var sel = _editingCellEl.getElementsByTagName("select")[0];
+						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						newValue = sel.options[sel.selectedIndex].value;
+					}
+					else if(treeEditingNodeType_ == "value-bitmap")
+					{
+						newValue = encodeURIComponent(_editingCellEl.textContent);
+					}
+					else if(treeEditingNodeType_.indexOf("link-") == 0)
+					{
+						//make csv newValue := linkTable,linkInitId
+						var sel = _editingCellEl.getElementsByTagName("select")[0];	
+						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						newValue = sel.options[sel.selectedIndex].value;
+						newValue += ",";					
+						sel = _editingCellEl.getElementsByTagName("select")[1];
+						if(sel.style.display == "none")
+						{
+							//get value from text box if not displayed 
+							newValue += 
+									encodeURIComponent(
+											_editingCellEl.getElementsByTagName("input")[0].value.trim());
+						}
+						else
+						{
+							if(sel.selectedIndex >= 0) //if valid
+								newValue += sel.options[sel.selectedIndex].value;
+						}
+
+						if(treeEditingNodeType_ == "link-GroupID")
+						{
+							//make csv newValue := linkTable,linkGroupID,linkTableVersion,groupMemberUID,...
+
+							//add link target table version and chosen group members						
+							var linkTargetTable = _editingCellEl.getElementsByTagName("select")[0].value;
+							var tableVersion = -1;
+							var tableIndex = -1;
+							for(var j=0;j<treeMemberNames_.length;++j)
+								if(linkTargetTable == treeMemberNames_[j])
+								{
+									tableVersion = treeMemberVersions_[j];
+									tableIndex = j;
 									break;
 								}
+							//allow broken links, for example "NO_LINK"
+//							if(tableIndex == -1)
+//							{
+//								Debug.log("Invalid linked tree member table!",Debug.HIGH_PRIORITY);
+//								return;					
+//							}
+							newValue += "," + tableVersion;
 
-							if(stillInGroup)
-								_editingCellEl.appendChild(document.createTextNode(newValue));
-							else // remove from group
+							//save new group members 
+							// if different from treeEditingInitGroupMembers_
+
+							var el = document.getElementById("treeView-groupMemberEditDiv");
+							var selArr = MultiSelectBox.getSelectionArray(el);
+
+							for(var s in selArr)
 							{
-								//need to remove parent 'treeNode' from 
-								//	parent-of-parent childrenNode: 
-								var parentTreeNode = document.getElementById("treeNode-" + 
-										treeEditingNodeParentIdString_);
-								var popChildrenNode = parentTreeNode.parentNode;
-								popChildrenNode.removeChild(parentTreeNode);
-								
-								//if no more children, say so
-								var popChildren = popChildrenNode.getElementsByClassName("treeNode");
-								if(popChildren.length == 0)
-								{
-									var str = "";
-									str += 
-											"<div class='treeNode'> " +
-											"<div class='treeNode-Connection'></div>" +
-											"<div class='treeNode-Value'>";
-
-									str += "No Children Nodes Found.";
-
-									str += "</div>" + //end treeNode Value div		
-											"</div>" + //end treeNode div							
-											"<div id='clearDiv'></div>"; 
-									popChildrenNode.innerHTML = str;
-								}
+								Debug.log("ms selected [" + s + "]: " +
+										selArr[s]);
+								if(!selArr[s]) continue;
+								Debug.log(MultiSelectBox.getSelectionElementByIndex(el,s).textContent);
+								newValue += "," + 
+										MultiSelectBox.getSelectionElementByIndex(el,s).textContent;
 							}
-						}						
+						}
 					}
-					else
-						_editingCellEl.appendChild(document.createTextNode(newValue));
+					else if(treeEditingNodeType_ == "table-newGroupRow")
+					{
+						//coming from edit setup of group link "link-GroupID"
+						var sel = _editingCellEl.getElementsByTagName("select")[0];		
+						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
+
+						//make csv newValue := linkIndex,linkID
+
+						newValue = document.getElementById("treeNode-childLinkIndex-" + 
+								treeEditingNodeIdString_).textContent;
+						newValue += ",";		
+						sel = _editingCellEl.getElementsByTagName("select")[1];
+						if(sel.selectedIndex >= 0) //if valid
+							newValue += sel.options[sel.selectedIndex].value;
+					}
+					else if(treeEditingNodeType_ == "table-newUIDRow")
+					{
+						//coming from edit setup of group link "link-UID"
+						var sel = _editingCellEl.getElementsByTagName("select")[0];	
+						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
+
+						//make new value the new UID 
+						newValue = prompt("Please enter the UID for the new record:");
+						if(newValue)
+							newValue = encodeURIComponent(newValue.trim());
+					}
+					else if(treeEditingNodeType_ == "table-newRow")
+						newValue = ""; //no value needed
+					else	//value (normal or multiline data)
+					{
+						var sel;
+						if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData					
+							newValue = sel[0].value; //assume the first textarea in the cell is the textarea
+						else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData
+						{						
+							//check if displayed
+							if(sel[0].style.display == "none")
+							{
+								//if not displayed assume first input field is ours!
+								//take "normal cell" approach from below
+								newValue = _editingCellEl.getElementsByTagName("input")[0].value;					
+							}						
+							else
+								newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
+						}
+						else
+							newValue = _editingCellEl.getElementsByTagName("input")[0].value;
+
+						newValue = encodeURIComponent(newValue.trim());
+					}
+
+					Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
+							newValue);
+
+					if(encodeURIComponent(treeEditingNodeInitValue_) == newValue)
+					{
+						//some types allow no change
+						if(treeEditingNodeType_ != "delete-uid" &&
+								treeEditingNodeType_ != "table-newGroupRow" &&  
+								treeEditingNodeType_ != "table-newUIDRow")
+						{
+							Debug.log("No change. Do nothing.");
+							editCellCancel();
+							return;
+						}
+						else
+							Debug.log("No change. OK for operation.");
+					}
+					else if(	//some types REQUIRE no change
+							treeEditingNodeType_ == "delete-uid" ) 
+					{
+						Debug.log("The UID you are trying to delete has not been " +
+								"saved yet. You can not delete a locally modified UID.",
+								Debug.HIGH_PRIORITY);
+						editCellCancel();
+						return;
+					}
+
+					//save affected table as temporary version (re-use active temporary version at server)
+					//		if saved successfully
+					//			update value in tree-view and scan for other needed changes				
+
+					var tableVersion = -1;
+					var tableIndex = -1;
+					for(var j=0;j<treeMemberNames_.length;++j)
+						if(treeEditingTargetTable_ == treeMemberNames_[j])
+						{
+							tableVersion = treeMemberVersions_[j];
+							tableIndex = j;
+							break;
+						}
+					if(tableIndex == -1)
+					{
+						Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					//send edit to server
+					DesktopContent.XMLHttpRequest("Request?RequestType=saveTreeNodeEdit" +	
+							"&editNodeType=" + treeEditingNodeType_ +						
+							"&targetTable=" + treeEditingTargetTable_ +
+							"&targetTableVersion=" + tableVersion +
+							"&targetUID=" + treeEditingTargetUID_ +
+							"&targetColumn=" + treeEditingTargetColumn_
+							,
+							"newValue=" + newValue, //newValue post in case the value is large 
+							function(req) 
+							{
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{
+							var warnings = req.responseXML.getElementsByTagName("Warning");
+							for(var i=0;i<warnings.length;++i)
+								Debug.log(DesktopContent.getXMLValue(warnings[i]),
+										Debug.WARN_PRIORITY);
+
+							//suppress same value error
+							if(err.indexOf("is the same as the current value. No need to save node.") > 0)
+							{
+								Debug.log(err);
+								return;
+							}
+							Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page",Debug.HIGH_PRIORITY);
+							Debug.log(err,Debug.HIGH_PRIORITY);
+
+							editCellCancel();
+							return;
+						}
+
+						//maintain tree member versions
+						// (Note: more than one table may have changed!)
+						var resultingTableNames = req.responseXML.getElementsByTagName("savedName");
+						var resultingTableVersions = req.responseXML.getElementsByTagName("savedVersion");
+
+						var resultingTableIndex;
+						var resultingTableName;
+						for(var i=0;i<resultingTableNames.length;++i)
+						{
+							resultingTableIndex = -1;
+							resultingTableName = DesktopContent.getXMLValue(resultingTableNames[i]);
+
+							for(var j=0;j<treeMemberNames_.length;++j)
+								if(resultingTableName == treeMemberNames_[j])
+								{
+									treeMemberVersions_[j] = 
+											DesktopContent.getXMLValue(resultingTableVersions[i]);
+									resultingTableIndex = j;
+									break;
+								}
+							if(resultingTableIndex == -1)
+							{
+								Debug.log("Invalid tree member '" + resultingTableName +
+										"' was changed! Should be impossible. If repeatable, alert admins.",
+										Debug.HIGH_PRIORITY);
+								return;					
+							}		
+							Debug.log("New table version for " + resultingTableName + " = " +
+									treeMemberVersions_[resultingTableIndex]);					
+						}
+
+						//change target edit tree node 
+						localEditTreeNodeOKRequestsComplete(tableIndex,newValue);
+
+						//now need to propagate changes throughout tree
+						//	note: arguments can vary by edit type
+						editTreeNodePropagateChange(newValue);
+
+						//add tree save buttons
+						treeHasChanged();						
+
+						//finish special handling of new row					
+						if(treeEditingNodeType_ == "table-newRow")
+						{						
+							//if hiding status, switch and refresh
+							if(treeViewHideStatus_)
+							{
+								//treeViewHideStatus_ = false;
+								//refreshTreeView();
+								Debug.log("Note: The tree-view menu option 'Hide Status=False' " +
+										" is currently hiding records with Status fields evaluating to " +
+										" false. If you do not see your new record, this may be why; click the tree-view menu " + 
+										"in the top-left and select '" +
+										"<a href='#' onclick='treeViewHideStatus_=false;refreshTreeView();'>" +
+										"Show Status=False" +
+										"</a>" +									
+										".'",
+										Debug.INFO_PRIORITY);
+							}
+
+							Debug.log("Successfully added a new record to temporary version '" +
+									treeMemberVersions_[resultingTableIndex] + "' of table '" + 
+									treeEditingTargetTable_ + ".'",
+									Debug.INFO_PRIORITY);						
+						}		
+						else if(treeEditingNodeType_ == "table-newGroupRow")
+						{
+							//revert edit type back to link-GroupID
+							treeEditingNodeType_ = "link-GroupID";
+						}	
+						else if(treeEditingNodeType_ == "table-newUIDRow")
+						{
+							//revert edit type back to link-GroupID
+							treeEditingNodeType_ = "link-UID";
+						}
+
+						//recover (possibly) modified target table
+						treeEditingTargetTable_ = initTargetTable;
+
+							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					); //end of getActiveConfigGroups handler
 				}
 				else	//unrecognized type!?
 				{
 					Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
 					editCellCancel(); return;
 				}
-				
-				//requests are done, so end editing
-				_editingCell = false;
-				_editingCellEl = 0;
-			} //end localEditTreeNodeOKRequestsComplete
-			///////////////////////////////////////////////
 
 
-			if(
-					treeEditingNodeType_ == "table" || 
-					treeEditingNodeType_ == "table-newRow" || 
-					treeEditingNodeType_ == "uid" ||
-					treeEditingNodeType_ == "delete-uid" ||
-					treeEditingNodeType_.indexOf("link-") == 0 || //UID or GroupID
-					treeEditingNodeType_ == "table-newGroupRow" || //spawns from group link edit
-					treeEditingNodeType_ == "table-newUIDRow" || //spawns from uid link edit
-					treeEditingNodeType_ == "value" ||
-					treeEditingNodeType_ == "value-bool" || 
-					treeEditingNodeType_ == "value-bitmap" || 
-					treeEditingNodeType_ == "value-groupid")
-								
-			{
-				var newValue;
-				
-				if(treeEditingNodeType_ == "value-bool")
-				{
-					var sel = _editingCellEl.getElementsByTagName("select")[0];
-					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-					newValue = sel.options[sel.selectedIndex].value;
-				}
-				else if(treeEditingNodeType_ == "value-bitmap")
-				{
-					newValue = encodeURIComponent(_editingCellEl.textContent);
-				}
-				else if(treeEditingNodeType_.indexOf("link-") == 0)
-				{
-					//make csv newValue := linkTable,linkInitId
-					var sel = _editingCellEl.getElementsByTagName("select")[0];	
-					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-					newValue = sel.options[sel.selectedIndex].value;
-					newValue += ",";					
-					sel = _editingCellEl.getElementsByTagName("select")[1];
-					if(sel.style.display == "none")
-					{
-						//get value from text box if not displayed 
-						newValue += 
-								encodeURIComponent(
-										_editingCellEl.getElementsByTagName("input")[0].value.trim());
-					}
-					else
-					{
-						if(sel.selectedIndex >= 0) //if valid
-							newValue += sel.options[sel.selectedIndex].value;
-					}
-					
-					if(treeEditingNodeType_ == "link-GroupID")
-					{
-						//make csv newValue := linkTable,linkGroupID,linkTableVersion,groupMemberUID,...
-						
-						//add link target table version and chosen group members						
-						var linkTargetTable = _editingCellEl.getElementsByTagName("select")[0].value;
-						var tableVersion = -1;
-						var tableIndex = -1;
-						for(var j=0;j<treeMemberNames_.length;++j)
-							if(linkTargetTable == treeMemberNames_[j])
-							{
-								tableVersion = treeMemberVersions_[j];
-								tableIndex = j;
-								break;
-							}
-						if(tableIndex == -1)
-						{
-							Debug.log("Invalid linked tree member table!",Debug.HIGH_PRIORITY);
-							return;					
-						}
-						newValue += "," + tableVersion;
-								
-						//save new group members 
-						// if different from treeEditingInitGroupMembers_
+				//withhold ending edit until after request completes
+				//			_editingCell = false;
+				//			_editingCellEl = 0;	
 
-						var el = document.getElementById("treeView-groupMemberEditDiv");
-						var selArr = MultiSelectBox.getSelectionArray(el);
-
-						for(var s in selArr)
-						{
-							Debug.log("ms selected [" + s + "]: " +
-									selArr[s]);
-							if(!selArr[s]) continue;
-							Debug.log(MultiSelectBox.getSelectionElementByIndex(el,s).textContent);
-							newValue += "," + 
-									MultiSelectBox.getSelectionElementByIndex(el,s).textContent;
-						}
-					}
-				}
-				else if(treeEditingNodeType_ == "table-newGroupRow")
-				{
-					//coming from edit setup of group link "link-GroupID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];		
-					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
-
-					//make csv newValue := linkIndex,linkID
-
-					newValue = document.getElementById("treeNode-childLinkIndex-" + 
-							treeEditingNodeIdString_).textContent;
-					newValue += ",";		
-					sel = _editingCellEl.getElementsByTagName("select")[1];
-					if(sel.selectedIndex >= 0) //if valid
-						newValue += sel.options[sel.selectedIndex].value;
-				}
-				else if(treeEditingNodeType_ == "table-newUIDRow")
-				{
-					//coming from edit setup of group link "link-UID"
-					var sel = _editingCellEl.getElementsByTagName("select")[0];	
-					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-					treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;
-					
-					//make new value the new UID 
-					newValue = prompt("Please enter the UID for the new record:");
-					if(newValue)
-						newValue = encodeURIComponent(newValue.trim());
-				}
-				else if(treeEditingNodeType_ == "table-newRow")
-					newValue = ""; //no value needed
-				else	//value (normal or multiline data)
-				{
-					var sel;
-					if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData					
-						newValue = sel[0].value; //assume the first textarea in the cell is the textarea
-					else if((sel = _editingCellEl.getElementsByTagName("select")).length) //for FixedChoiceData
-					{						
-						//check if displayed
-						if(sel[0].style.display == "none")
-						{
-							//if not displayed assume first input field is ours!
-							//take "normal cell" approach from below
-							newValue = _editingCellEl.getElementsByTagName("input")[0].value;					
-						}						
-						else
-							newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
-					}
-					else
-						newValue = _editingCellEl.getElementsByTagName("input")[0].value;
-					
-					newValue = encodeURIComponent(newValue.trim());
-				}
-				
-				Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
-						newValue);
-				
-				if(encodeURIComponent(treeEditingNodeInitValue_) == newValue)
-				{
-					//some types allow no change
-					if(treeEditingNodeType_ != "delete-uid" &&
-							treeEditingNodeType_ != "table-newGroupRow" &&  
-							treeEditingNodeType_ != "table-newUIDRow")
-					{
-						Debug.log("No change. Do nothing.");
-						editCellCancel();
-						return;
-					}
-					else
-						Debug.log("No change. OK for operation.");
-				}
-				else if(	//some types REQUIRE no change
-						treeEditingNodeType_ == "delete-uid" ) 
-				{
-					Debug.log("The UID you are trying to delete has not been " +
-							"saved yet. You can not delete a locally modified UID.",
-							Debug.HIGH_PRIORITY);
-					editCellCancel();
-					return;
-				}
-				
-				//save affected table as temporary version (re-use active temporary version at server)
-				//		if saved successfully
-				//			update value in tree-view and scan for other needed changes				
-				
-				var tableVersion = -1;
-				var tableIndex = -1;
-				for(var j=0;j<treeMemberNames_.length;++j)
-					if(treeEditingTargetTable_ == treeMemberNames_[j])
-					{
-						tableVersion = treeMemberVersions_[j];
-						tableIndex = j;
-						break;
-					}
-				if(tableIndex == -1)
-				{
-					Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
-					return;					
-				}
-				
-				//send edit to server
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveTreeNodeEdit" +	
-						"&editNodeType=" + treeEditingNodeType_ +						
-						"&targetTable=" + treeEditingTargetTable_ +
-						"&targetTableVersion=" + tableVersion +
-						"&targetUID=" + treeEditingTargetUID_ +
-						"&targetColumn=" + treeEditingTargetColumn_
-						,
-						"newValue=" + newValue, //newValue post in case the value is large 
-						function(req) 
-						{
-					var err = DesktopContent.getXMLValue(req,"Error");
-					if(err) 
-					{
-						var warnings = req.responseXML.getElementsByTagName("Warning");
-						for(var i=0;i<warnings.length;++i)
-							Debug.log(DesktopContent.getXMLValue(warnings[i]),
-									Debug.WARN_PRIORITY);
-						
-						//suppress same value error
-						if(err.indexOf("is the same as the current value. No need to save node.") > 0)
-						{
-							Debug.log(err);
-							return;
-						}
-						Debug.log("If you do not understand the error, try refreshing the tree from the '>>' menu in the top left of the page",Debug.HIGH_PRIORITY);
-						Debug.log(err,Debug.HIGH_PRIORITY);
-
-						editCellCancel();
-						return;
-					}
-
-					//maintain tree member versions
-					// (Note: more than one table may have changed!)
-					var resultingTableNames = req.responseXML.getElementsByTagName("savedName");
-					var resultingTableVersions = req.responseXML.getElementsByTagName("savedVersion");
-
-					var resultingTableIndex;
-					var resultingTableName;
-					for(var i=0;i<resultingTableNames.length;++i)
-					{
-						resultingTableIndex = -1;
-						resultingTableName = DesktopContent.getXMLValue(resultingTableNames[i]);
-						
-						for(var j=0;j<treeMemberNames_.length;++j)
-							if(resultingTableName == treeMemberNames_[j])
-							{
-								treeMemberVersions_[j] = 
-										DesktopContent.getXMLValue(resultingTableVersions[i]);
-								resultingTableIndex = j;
-								break;
-							}
-						if(resultingTableIndex == -1)
-						{
-							Debug.log("Invalid tree member '" + resultingTableName +
-									"' was changed! Should be impossible. If repeatable, alert admins.",
-									Debug.HIGH_PRIORITY);
-							return;					
-						}		
-						Debug.log("New table version for " + resultingTableName + " = " +
-								treeMemberVersions_[resultingTableIndex]);					
-					}
-					
-					//change target edit tree node 
-					localEditTreeNodeOKRequestsComplete(tableIndex,newValue);
-
-					//now need to propagate changes throughout tree
-					//	note: arguments can vary by edit type
-					editTreeNodePropagateChange(newValue);
-
-					//add tree save buttons
-					treeHasChanged();						
-					
-					//finish special handling of new row					
-					if(treeEditingNodeType_ == "table-newRow")
-					{						
-						//if hiding status, switch and refresh
-						if(treeViewHideStatus_)
-						{
-							//treeViewHideStatus_ = false;
-							//refreshTreeView();
-							Debug.log("Note: The tree-view menu option 'Hide Status=False' " +
-									" is currently hiding records with Status fields evaluating to " +
-									" false. If you do not see your new record, this may be why; click the tree-view menu " + 
-									"in the top-left and select '" +
-									"<a href='#' onclick='treeViewHideStatus_=false;refreshTreeView();'>" +
-									"Show Status=False" +
-									"</a>" +									
-									".'",
-									Debug.INFO_PRIORITY);
-						}
-						
-						Debug.log("Successfully added a new record to temporary version '" +
-								treeMemberVersions_[resultingTableIndex] + "' of table '" + 
-								treeEditingTargetTable_ + ".'",
-								Debug.INFO_PRIORITY);						
-					}		
-					else if(treeEditingNodeType_ == "table-newGroupRow")
-					{
-						//revert edit type back to link-GroupID
-						treeEditingNodeType_ = "link-GroupID";
-					}	
-					else if(treeEditingNodeType_ == "table-newUIDRow")
-					{
-						//revert edit type back to link-GroupID
-						treeEditingNodeType_ = "link-UID";
-					}
-
-					//recover (possibly) modified target table
-					treeEditingTargetTable_ = initTargetTable;
-
-						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				); //end of getActiveConfigGroups handler
 			}
-			else	//unrecognized type!?
-			{
-				Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
-				editCellCancel(); return;
+			catch(e)
+			{	
+				Debug.log("Error occured during editCellOK - attempting to recover.");
+				editCellCancel();
 			}
-
-			
-			//withhold ending edit until after request completes
-			//			_editingCell = false;
-			//			_editingCellEl = 0;	
 		}
 
 		//hardRefreshTreeView ~~
@@ -8742,12 +8759,12 @@
 
 							var pel = document.getElementById("treeNode-linkTableName-" + 
 									(document.getElementById("treeNode-ParentId-" + 
-											parentIdString).textContent));
+											idString).textContent));
 							if(!pel)
 								pel = document.getElementById("treeNode-linkTableName-" + 
 										(document.getElementById("treeNode-ParentId-" + 
 										(document.getElementById("treeNode-ParentId-" + 
-												parentIdString).textContent)).textContent));
+												idString).textContent)).textContent));
 							if(!pel)
 							{
 								Debug.log("Big problem with locating table name through ancestry! " +
@@ -9613,7 +9630,9 @@
 				}
 				
 				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
-						treeEditingNodeType_.indexOf("link") == 0)) 
+						treeEditingNodeType_.indexOf("link") == 0 ||
+						treeEditingNodeType_ == "table-newGroupRow" || 
+						treeEditingNodeType_ == "table-newUIDRow")) 
 				{
 					//take old value as HTML for bool values
 					_editingCellEl.innerHTML = _editingCellElOldValue;

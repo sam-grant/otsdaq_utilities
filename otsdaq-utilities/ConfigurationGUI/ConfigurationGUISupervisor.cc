@@ -2356,6 +2356,12 @@ try
 						newValue.substr(csvIndexStart,csvIndex-csvIndexStart)); //if no more commas will take the rest of string
 
 
+				if(newTable == ViewColumnInfo::DATATYPE_LINK_DEFAULT)
+				{
+					//done, since init was already tested
+					// the result should be purposely DISCONNECTED link
+					return;
+				}
 
 				//get table and activate target version
 				config = cfgMgr->getConfigurationByName(newTable);
@@ -2416,6 +2422,8 @@ try
 				std::string targetUID;
 				bool shouldBeInGroup;
 				auto defaultRowValues = cfgView->getDefaultRowValues();
+				bool defaultIsInGroup = false; //use to indicate if a recent new member was created
+				bool isInGroup;
 
 				for(unsigned int row=0;row<cfgView->getNumberOfRows();++row)
 				{
@@ -2431,9 +2439,10 @@ try
 							break;
 						}
 
+					isInGroup = cfgView->isEntryInGroup(row,linkIndex,newLinkId);
+
 					//if should be but is not
-					if(shouldBeInGroup &&
-							!cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					if(shouldBeInGroup && !isInGroup)
 					{
 
 						__MOUT__ << "Changed YES: " << row << std::endl;
@@ -2442,14 +2451,20 @@ try
 						cfgView->addRowToGroup(row,col,newLinkId,defaultRowValues[col]);
 
 					}//if should not be but is
-					else if(!shouldBeInGroup &&
-							cfgView->isEntryInGroup(row,linkIndex,newLinkId))
+					else if(!shouldBeInGroup &&	isInGroup)
 					{
 
 						__MOUT__ << "Changed NO: " << row << std::endl;
 						secondaryChanged = true;
 
 						cfgView->removeRowFromGroup(row,col,newLinkId);
+					}
+					else if(targetUID ==
+							cfgView->getDefaultRowValues()[cfgView->getColUID()]  &&
+							isInGroup)
+					{
+						//use to indicate if a recent new member was created
+						defaultIsInGroup = true;
 					}
 				}
 
@@ -2480,7 +2495,8 @@ try
 					}
 				}
 
-				if(!changed && !secondaryChanged)
+				//block error message if default is in group, assume new member was just created
+				if(!changed && !secondaryChanged && !defaultIsInGroup)
 				{
 					__SS__ << "Link to table '" << newTable <<
 							"', linkID '" << newLinkId <<

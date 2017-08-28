@@ -206,7 +206,17 @@ Debug.errorPop = function(err,severity) {
 			css += "#" + Debug._errBoxId + "-err i" +
 					//",#" + Debug._errBoxId + "-err b" + 
 					",#" + Debug._errBoxId + "-err u" + 
-					",#" + Debug._errBoxId + "-err div" + 
+					//",#" + Debug._errBoxId + "-err div" + 
+					"{" +					
+					"color: rgb(255,200,100); font-size: 18px;" +
+					"font-family: 'Comfortaa', arial;" +				
+					"text-align: left;" +
+					"}\n\n";
+
+			css += //"#" + Debug._errBoxId + "-err i" +
+					//",#" + Debug._errBoxId + "-err b" + 
+					//",#" + Debug._errBoxId + "-err u" + 
+					"#" + Debug._errBoxId + "-err div" + 
 					"{" +					
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
@@ -218,7 +228,6 @@ Debug.errorPop = function(err,severity) {
 					"{" +					
 					"color: rgb(255,225,200); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
-					"left: 8px, top: 8px; margin-right: 8px;" +
 					"text-align: left;" +
 					"}\n\n";
 

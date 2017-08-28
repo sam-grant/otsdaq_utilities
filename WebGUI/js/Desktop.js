@@ -50,8 +50,79 @@ Desktop.createDesktop = function(security) {
 	//------------------------------------------------------------------
 	//list of members functions ----------------------
 	//------------------------------------------------------------------
-	//private:
+	//
 	//public:
+	//	Desktop.desktopTooltip()
+	//	this.getDesktopWidth = function() { return _desktopElement.clientWidth;}
+	//	this.getDesktopHeight = function() { return _desktopElement.clientHeight;}
+	//	this.getDesktopX = function() { return _desktopElement.offsetLeft;}
+	//	this.getDesktopY = function() { return _desktopElement.offsetTop;}
+	//	this.getDesktopContentX = function() { return _desktopElement.offsetLeft+_dashboard.getDashboardWidth();}
+	//	this.getDesktopContentY = function() { return _desktopElement.offsetTop+_dashboard.getDashboardHeight();}
+	//	this.getDesktopContentWidth = function() { return _desktopElement.clientWidth-_dashboard.getDashboardWidth();}
+	//	this.getDesktopContentHeight = function() { return _desktopElement.clientHeight-_dashboard.getDashboardHeight();}
+	//	this.getNumberOfWindows = function() { return _windows.length;}
+	//	this.getWindowNameByIndex = function(i) { return _windows[i].getWindowName();}
+	//	this.getWindowSubNameByIndex = function(i) { return _windows[i].getWindowSubName();}
+	//	this.getWindowByIndex = function(i) { return _windows[i];}      
+	//	this.getForeWindow = _getForeWindow;
+	//	this.redrawDesktop = _handleDesktopResize;
+	//	this.getLastFrameMouseX = function() { return parseInt(_mouseOverXmailbox.innerHTML);} 
+	//	this.getLastFrameMouseY = function() { return parseInt(_mouseOverYmailbox.innerHTML);} 
+	//	this.resetFrameMouse = function() { _mouseOverXmailbox.innerHTML = -1;_mouseOverYmailbox.innerHTML = -1;} 
+	//	this.getWindowLayoutStr = _getWindowLayoutStr;
+	//	this.addWindow(name,subname,url,unique,extraStep)
+	//	this.getWindowById(id)
+	//	this.setForeWindow(win)
+	//	this.closeWindowById(id)
+	//	this.maximizeWindowById(id)
+	//	this.toggleFullScreen(e)
+	//	this.minimizeWindowById(id)
+	//	this.toggleMinimize(e)
+	//	this.clickedWindowDashboard(id)
+	//	this.setDefaultWindowColor(color)
+	//	this.defaultLayoutSelect(i)
+	//	this.closeAllWindows()
+	//	this.resetDesktop(permissions)
+	//	this.actOnParameterAction()
+	//	Desktop.XMLHttpRequest(requestURL, data, returnHandler, reqIndex) 
+	//	Desktop.getXMLAttributeValue(req, name, attribute)
+	//	Desktop.getXMLValue(req, name)
+	//	Desktop.logout()
+	//	Desktop.formatTime(t)
+	//	Desktop.closeSystemMessage(id)
+	//	Desktop.isWizardMode()
+	//	Desktop.openNewBrowserTab(name,subname,windowPath,unique)
+	//	Desktop.desktopTooltip
+	
+	//"public" handlers:
+	//	Desktop.mouseMoveSubscriber(newHandler)
+	
+	//private:
+	//	_handleDesktopResize(event)
+	//	_getWindowLayoutStr()
+	//	_getForeWindow()
+	//	_closeWindow(win)
+	//	_checkMailboxes(win)
+	//	_handleSystemMessages(req)
+	
+	//"private" handlers:
+	// 	Desktop.handleTouchStart(touchEvent)
+	//	Desktop.handleBodyTouchEnd(touchEvent)
+	//	Desktop.handleTouchEnd(touchEvent)
+	//	Desktop.handleBodyTouchMove(touchEvent)
+	//	Desktop.handleTouchMove(touchEvent)
+	//	Desktop.handleWindowMouseDown(mouseEvent)
+	//	Desktop.handleWindowMouseUp(mouseEvent)
+	//	Desktop.handleWindowMouseMove(mouseEvent)
+	//	Desktop.handleBodyMouseMove(mouseEvent)
+	//	Desktop.handleWindowManipulation(delta)
+	//	Desktop.handleWindowButtonDown(mouseEvent)
+	//	Desktop.handleWindowMinimize(mouseEvent)
+	//	Desktop.handleWindowMaximize(mouseEvent)
+	//	Desktop.handleWindowClose(mouseEvent)
+	
+	
 	
 	//------------------------------------------------------------------
 	//create private members variables ----------------------
@@ -1419,7 +1490,83 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	window.open(url,'_blank');	
 }
 
+//call to show desktop tooltip
+//	shown for wiz mode and normal mode, e.g.
+Desktop.desktopTooltip = function()	{
+	
+	DesktopContent.tooltip("Desktop Introduction",
+			"Welcome to the <i>otsdaq</i> Desktop environment. This is your portal " +
+			"to all of the possibilities of <i>otsdaq</i>.\n\n" +
+			"Briefly, here are the features:" +
 
+			"\n\t- <b>Desktop Window Icons:</b> " +
+			"<INDENT>" +
+			"Click the rounded-square icons on your Desktop to open " +
+			"a particular window. If you hold down your click (for a second), you " +
+			"can open the window in fullscreen, or in a new tab, or even open the window " +
+			"then tile it on the screen with all other open windows!" +
+			"</INDENT>" +
+
+			"\n\t- <b>Desktop Dashboard (top pane):</b> " +
+			"<INDENT>" +
+			"Along the top and left margins of the Desktop, you will find the Desktop " +
+			"Dashboard - this section is an introduction to the top pane of the Dashboard. " +
+			"The top pane of the Dashboard " +
+			"is made of buttons and icons going from left to right:" +
+
+			"\n\t- <b>Left Pane Toggler:</b> " +
+			"<INDENT>" +
+			"The first button you will encounter in the top pane looks like a horizontal double-arrow " +
+			"icon. This button toggles the display of the left pane of the Dashboard. Note when you " +
+			"refresh the page, the state of the left pane persists!" +
+			"</INDENT>" +
+
+			"\n\t- <b>Layouts Menu:</b> " +
+			"<INDENT>" +
+			"The next button you will encounter in the top pane reads 'Layouts.' " +
+			"This button gives you access to your Window Layout Presets. You will see 2 'System' presets there " +
+			"which can be setup by uesrs with admin privileges. There are also 3 'User' presets which you can setup for " +
+			"yourself in the User Settings window (get there with " +
+			"the cog wheel icon in the upper-right of the Desktop)." +
+			"</INDENT>" +
+
+			"\n\t- <b>Tile Desktop Windows:</b> " +
+			"<INDENT>" +
+			"The next button you will encounter in the top pane reads 'Tile.' " +
+			"This button will automatically tile all open Desktop Windows to fit in your browser window." +
+			"</INDENT>" +
+
+			"\n\t- <b>Show Desktop:</b> " +
+			"<INDENT>" +
+			"The next button you will encounter in the top pane reads 'Show Desktop.' " +
+			"This button will minimize all open Desktop Windows which is nice " +
+			"when you want to see all of your Desktop Icons again." +
+			"</INDENT>" +
+
+			"\n\t- <b>Full Screen:</b> " +
+			"<INDENT>" +
+			"The next button you will encounter in the top pane reads 'Full Screen.' " +
+			"This button will maximize to full screen the Desktop Window that was last used (i.e. the window that has the focus)." +
+			"</INDENT>" +
+			"</INDENT>" +
+
+			"\n\t- <b>Desktop Dashboard (left pane):</b> " +
+			"<INDENT>" +
+			"Along the top and left margins of the Desktop, you will find the Desktop " +
+			"Dashboard - this section is an introduction to the left pane of the Dashboard. " +
+			"The left pane of the Dashboard " +
+			"is a listing of all open Desktop Windows. If you click one of the buttons in the list, " +
+			"the associated window " +
+			"will be minimized or restored. If you hold down your click (for one second) you can choose " +
+			"to minimize, maximize, or close the window!" +
+			"</INDENT>" +
+
+
+
+			"\n\nRemember, if you would like to take a look at the available online documentation, " +
+			"click the question mark at the top-right of the Desktop."
+	);	
+}
 
 
 

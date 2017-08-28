@@ -579,7 +579,16 @@
 				_colChoicesArr = colChoices;	
 			
 			if(tableDescription === undefined)
+			{
+				try
+				{
+					//If possible, save and recover table description edits
+					_tableDescription = document.getElementById("table-description").value;
+				}
+				catch(e)
+				{}
 				tableDescription = _tableDescription;
+			}
 			else
 				_tableDescription = tableDescription;			
 
@@ -1327,7 +1336,7 @@
 					
 					//show tooltips
 					if(colType == "BitMap")
-						DesktopContent.tooltip("BitMapType",
+						DesktopContent.tooltip("BitMap Field Type",
 								"The BitMap type represents a 2-dimensional array of cells, " +
 								"where each cell has a bit-field. The aspect ratio is optional. " +
 								"The color fields are optional. " +
@@ -1337,10 +1346,11 @@
 								"may want your display to reflect that - you should enter &quot;100:150&quot (without the quotes)."
 								);
 					else if(colType == "FixedChoiceData")
-						DesktopContent.tooltip("FixedChoiceDataType",
+						DesktopContent.tooltip("FixedChoiceData Field Type",
 								"The FixedChoiceData type represents a list of choices that constrain " +
 								"the allowed values for a field. " +
 								"The DEFAULT value must always be one of the choices. \n\n" +
+								"You can download and upload CSV lists of the fixed choices. \n\n" +
 								"If you check the box to allow arbitrary user entry, users will " +
 								"have the option to enter values that do not necessarily match choices in the list."
 								);
@@ -1831,6 +1841,7 @@
 			var src = _dataUploadStr.split('\n');
 			//console.log(src);
 			
+			//save and recover arbitrary checkbox choice
 			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
 			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
 						

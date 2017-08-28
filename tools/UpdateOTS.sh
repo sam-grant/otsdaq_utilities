@@ -49,6 +49,48 @@ done
 
 
 
+ 
+#######################################################################################################################
+
+echo
+echo "=================="
+
+echo "Git comment '$1'"
+echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+
+
+echo
+echo "=================="
+
+echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+	echo "Checking in $p"
+	cd $p
+	git pull
+	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
+	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
+	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	
+	if [ "x$1" != "x" ]; then
+		#add space for user
+	    git commit -m "$1 " .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	    git push   
+	fi
+
+	cd $CURRENT_AWESOME_BASE
+	echo
+	echo "=================="
+
+    fi	   
+done
+
+
+
+echo
+echo "=================="
+
+
 #######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
 if [ "x$1" == "x" ]; then
@@ -152,46 +194,6 @@ if [ "x$1" == "x" ]; then
 
 fi
 
- 
-#######################################################################################################################
-
-echo
-echo "=================="
-
-echo "Git comment '$1'"
-echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-
-
-echo
-echo "=================="
-
-echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
-for p in ${REPO_DIR[@]}; do
-    if [ -d $p ]; then
-	echo "Checking in $p"
-	cd $p
-	git pull
-	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
-	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
-	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
-	
-	if [ "x$1" != "x" ]; then
-		#add space for user
-	    git commit -m "$1 " .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
-	    git push   
-	fi
-
-	cd $CURRENT_AWESOME_BASE
-	echo
-	echo "=================="
-
-    fi	   
-done
-
-
-
-echo
-echo "=================="
 
 echo "Git comment '$1'"
 echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"

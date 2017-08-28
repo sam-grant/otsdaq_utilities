@@ -90,6 +90,11 @@ private:
     		//find fields
     		int i=0, m=0;
     		size_t p;
+
+    		//if first field is position 0, mark it complete
+    		if(fields[i].markerCount == 0)
+    			fields[i++].posInString = 0;
+
     		//loop until no more markers
     		while( (p = buffer.find('|',p))
     				!= std::string::npos)
@@ -104,11 +109,11 @@ private:
     		}
 
     		//debug
-			//    		for(auto &f: fields)
-			//    		{
-			//    			std::cout << f.fieldName << ": " ;
-			//    			std::cout << (char *)&buffer[f.posInString] << std::endl;
-			//    		}
+			//for(auto &f: fields)
+			//{
+			//	std::cout << f.fieldName << ": " ;
+			//	std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//}
     	}
 
     	const char *  getMsg() 	 	 {return  (char *)&buffer[fields[MSG].posInString];}

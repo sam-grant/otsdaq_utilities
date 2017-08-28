@@ -82,9 +82,9 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	FILE *fp = fopen(configFile.c_str(),"r");
 	if(!fp)
 	{
-		std::stringstream ss;
-		ss << __COUT_HDR_FL__ << "File with port info could not be loaded: " <<
+		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
+		std::cout << __COUT_HDR_FL__ << ss.str();
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
@@ -108,14 +108,18 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
-			i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+			if(i != 200)
+			{
+				std::cout << __COUT_HDR_FL__ << "Console has first message." << std::endl;
+				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+			}
 
 			if(selfGeneratedMessageCount)
 				--selfGeneratedMessageCount; //decrement internal message count
 			else
 				heartbeatCount = 0; //reset heartbeat if external messages are coming through
 
-			//std::cout << buffer << std::endl;
+			//std::cout << __COUT_HDR_FL__ << buffer << std::endl;
 
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
@@ -129,6 +133,9 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		{
 			if(i < 120) //if nothing received for 120 seconds, then something is wrong with Console configuration
 				++i;
+
+			if(i != 200) //show first message, if not already a message
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
 
 			sleep(1); //sleep one second, if timeout
 
@@ -396,7 +403,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 			__MOUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
 					messages_[refreshReadPointer_].getCount() << " < " <<
 					lastUpdateCount << std::endl;
-			continue;
+			//assume these messages are new (due to a system restart)
+			//continue;
 		}
 
 		//for all fields, give value
