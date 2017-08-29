@@ -363,11 +363,11 @@
 			    getConsoleUpdates(); //get initial update			    
 			    	
 			    _compactViewCheckbox.disabled = false; 	//enable compact view checkbox selection
-			    _compactViewCheckbox.checked = false; 	//inverse if default value
+			    _compactViewCheckbox.checked = true; 	//inverse of default value
 			    _noWrapCheckbox.disabled = false; 		//enable checkbox selection
-			    _noWrapCheckbox.checked = false;		//inverse if default value
+			    _noWrapCheckbox.checked = false;		//inverse of default value
 			    _hideLineNumbersCheckbox.disabled = false; 		//enable checkbox selection
-			    _hideLineNumbersCheckbox.checked = true;		//inverse if default value
+			    _hideLineNumbersCheckbox.checked = true;		//inverse of default value
 			    
 			    toggleCompactView(); 		//call to setup compact view first time
 			    toggleNoWrap(); 			//call to setup no wrap first time
@@ -519,17 +519,17 @@
 			    if(_displaySidePane) 
 			    {
 			    	_usersContainerEl.style.display = "block";
-			    	_usersContainerEl.style.left = w - _MARGIN - _USERS_WIDTH  + "px";
-			    	_usersContainerEl.style.top = _MARGIN + _OFFSET_Y + "px";
+			    	_usersContainerEl.style.left = (w - _MARGIN - _USERS_WIDTH)  + "px";
+			    	_usersContainerEl.style.top = (_MARGIN + _OFFSET_Y) + "px";
 			    	_usersEl.style.width = (_USERS_WIDTH - 2 - 2 - 17) + "px";
 			    	_usersEl.style.height = (h - _MARGIN - _MARGIN - _MARGIN - _INPUT_HEIGHT - 30 - _OFFSET_Y) + "px";
 			    	
 
 			    	_controlsContainerEl.style.display = "block";
-			    	_controlsContainerEl.style.left = w - _MARGIN - _USERS_WIDTH  + "px";
+			    	_controlsContainerEl.style.left = (w - _MARGIN - _USERS_WIDTH)  + "px";
 			    	_controlsContainerEl.style.top = (h - _MARGIN - _INPUT_HEIGHT) + "px";
 			    	_controlsEl.style.width = (_USERS_WIDTH - 2 - 2 - 17) + "px";
-			    	_controlsEl.style.height = _INPUT_HEIGHT - 30 - 4 + "px";
+			    	_controlsEl.style.height = (_INPUT_HEIGHT - 30 - 4) + "px";
 			    	
 			    	w -= _USERS_WIDTH + _MARGIN + _MARGIN; //alter w for remaining elements
 			    	
@@ -671,7 +671,7 @@
 						"title='Toggle Pause and Resume Updates' >Pause</a>";
 
 				str += "<div id='filterContainer'>";
-				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
+				for(var f in _FIELDS_TO_OBSERVE) //create filter divs for each field's multiselect box
 				{
 					str += "<div id='" + _FIELDS_TO_OBSERVE[f] + 
 							"sFilterSelect' style='display:none'></div>";
@@ -700,12 +700,27 @@
 				var el = document.getElementById('consoleCounts');
 
 				var str = "";
+				var fieldStr = "", countStr = "";
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
 				{
 					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
 							"s: counts</u><br>";
-					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])					
-						str += i + ": " + _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";					
+					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])		
+					{
+						fieldStr += i + ": <br>";
+						countStr += _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";
+						//						str += "<tr><td>";
+						//						str += i + ": ";
+						//						str += "</td><td>";
+						//						str += _observed[_FIELDS_TO_OBSERVE[f]][i];
+						//						str += "</td></tr>";
+					}
+
+					str += "<table class='countsTable' style='width:" + 
+							(w - _MARGIN - _USERS_WIDTH - _MARGIN)  + "px" + ";'">";
+					str += "<tr><td style='font-size: 12px; overflow-x:auto'>" + fieldStr + "</td><td style='width:100px;overflow-x:auto'>" + 
+							countStr + "</td></tr>";
+					str += "</table>"			
 				}			
 				el.innerHTML = str;
 			}
@@ -909,7 +924,7 @@
 			//getColorForLevel ~
 			//	generate color based on user index in user list
 			function getColorForLevel(lvl) {
-				return lvl=="Error"?"rgb(255,150,50)":"auto";		
+				return lvl=="Error"?"rgb(255,150,50)":(lvl=="Info"?"rgb(50, 186, 255)":"auto");		
 			}
 
 			//toggleColorScheme ~
@@ -1045,7 +1060,7 @@
 						</div>
 				</div>
 
-				<div class='controlsCheckbox'>
+				<div class='controlsCheckbox' style='display:block'> <!-- seems that line numbers are not in the default messages anymore? just set display to 'block' to bring this back -->
 					<input type="checkbox" id="hideLineNumbersCheckbox" />
 						<div id='hideLineNumbersCheckboxText'>
 							<a class="consoleLink"
