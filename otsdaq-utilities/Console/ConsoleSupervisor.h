@@ -133,9 +133,11 @@ private:
     	const char *  getSequenceID(){return  (char *)&buffer[fields[SEQID].posInString];}
     	const unsigned int getSequenceIDAsNumber()
     	{
-    		unsigned int seqid;
-    		sscanf((char *)&buffer[fields[SEQID].posInString],"%u",&seqid); //unsigned int
-    		return seqid;
+    		unsigned long long longSeqid;
+    		sscanf((char *)&buffer[fields[SEQID].posInString],"%llu",&longSeqid); //unsigned long long
+    		//Eric says this field is a "C++ int" which can change based on OS from 32 to 64?...
+    		//then convert to unsigned int for our sanity
+    		return (unsigned int)longSeqid;
     	}
 
     	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
