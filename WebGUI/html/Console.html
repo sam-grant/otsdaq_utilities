@@ -207,6 +207,9 @@
 				margin-left: 40px;
 			}
 			
+			.countsTable {
+				font-size: 12px;
+			}
 		</style>
 				
 
@@ -700,11 +703,12 @@
 				var el = document.getElementById('consoleCounts');
 
 				var str = "";
-				var fieldStr = "", countStr = "";
+				var fieldStr, countStr;
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
 				{
 					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
 							"s: counts</u><br>";
+					fieldStr = ""; countStr = "";
 					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])		
 					{
 						fieldStr += i + ": <br>";
@@ -717,8 +721,9 @@
 					}
 
 					str += "<table class='countsTable' style='width:" + 
-							(w - _MARGIN - _USERS_WIDTH - _MARGIN)  + "px" + ";'">";
-					str += "<tr><td style='font-size: 12px; overflow-x:auto'>" + fieldStr + "</td><td style='width:100px;overflow-x:auto'>" + 
+							(_USERS_WIDTH - 2 - 2 - 17) + "px" + ";'>";
+					str += "<tr><td style='overflow-x:auto'>" + fieldStr + 
+							"</td><td style='width:50px;overflow-x:auto'>" + 
 							countStr + "</td></tr>";
 					str += "</table>"			
 				}			
@@ -860,11 +865,30 @@
 					
 					firstMsg = "";
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					secondMsgIndex = secondMsg.indexOf('\t'); //find end of line number display
+					secondMsgIndex = secondMsg.indexOf(']\t'); //find end of line number display
 					if(secondMsgIndex != -1)
 					{
-						firstMsg = secondMsg.slice(0,secondMsgIndex+1);
-						secondMsg = secondMsg.slice(secondMsgIndex+1);
+						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
+						secondMsg = secondMsg.slice(secondMsgIndex+2);
+					}
+					else
+					{
+						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
+						if(secondMsgIndex > 0 && secondMsgIndex+2 < secondMsg.length &&
+								secondMsg[secondMsgIndex+1] >= '0' &&
+								secondMsg[secondMsgIndex+1] <= '9')
+						{
+							//get space after ':##'
+							while(++secondMsgIndex < secondMsg.length &&
+									secondMsg[secondMsgIndex] >= '0' &&
+									secondMsg[secondMsgIndex] <= '9');
+							if(secondMsgIndex != -1)
+							{
+								firstMsg = secondMsg.slice(0,secondMsgIndex+1);
+								secondMsg = secondMsg.slice(secondMsgIndex+1);
+							}
+						}
+											
 					}
 					firstMsg = convertForClient(firstMsg);
 					secondMsg = convertForClient(secondMsg);
@@ -874,11 +898,11 @@
 						getColorForLevel(tmp.Level) + "'>" +
 						"<span class='" + tmp.Label + "_LabelEntry'>" + 
 						"<span class='" + tmp.Level + "_LevelEntry'>" + //open label level span (for filtering)
-						"<span class='lineNumberEntry'><span class='elaboratedEntry'><b>" +
+						"<span class='elaboratedEntry'><b>" +
 						tmp.Level + " " +
 						"(" + formatTime(_consoleMessageArray[_MESSAGE_FIELD_TIME][i].getAttribute('value')) + ") ";					 
 					str += tmp.Label + ":</b> " +
-							"</span>" +
+							"</span><span class='lineNumberEntry'>" +
 						firstMsg + "</span>" + secondMsg + 
 						"</span></span>" + //close label level span (for filtering)
 						"</div>"; //important to only have one /div> per entry for truncate
@@ -924,7 +948,37 @@
 			//getColorForLevel ~
 			//	generate color based on user index in user list
 			function getColorForLevel(lvl) {
-				return lvl=="Error"?"rgb(255,150,50)":(lvl=="Info"?"rgb(50, 186, 255)":"auto");		
+				switch(_chosenColorScheme)
+				{
+				default:
+				case 0: //black and green
+					if(lvl == "Error")
+						return "rgb(255,51,51)";
+					if(lvl == "Warning")
+						return "rgb(255,150,50)";
+					if(lvl == "Info")
+						return "rgb(50, 186, 255)";
+					
+					return "auto";	
+				case 1: //white and black
+					if(lvl == "Error")
+						return "rgb(255,51,51)";
+					if(lvl == "Warning")
+						return "rgb(214, 128, 46)";
+					if(lvl == "Info")
+						return "rgb(50, 110, 255)";
+					
+					return "auto";	
+				case 2: //transparent blue
+					if(lvl == "Error")
+						return "rgb(255,51,51)";
+					if(lvl == "Warning")
+						return "rgb(214, 128, 46)";
+					if(lvl == "Info")
+						return "rgb(50, 110, 255)";
+					
+					return "auto";	
+				}	
 			}
 
 			//toggleColorScheme ~

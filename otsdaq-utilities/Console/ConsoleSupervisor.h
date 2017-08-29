@@ -73,11 +73,14 @@ private:
 
     		//init fields to position -1 (for unknown)
     		//NOTE: must be in order of appearance in buffer
-    		fields[SEQID].set	("SequenceID",0,-1);
+    		fields[SEQID].set	("SequenceID",2,-1);
     		fields[LEVEL].set	("Level",5,-1);
     		fields[LABEL].set	("Label",6,-1);
-    		fields[SOURCE].set	("Source",11,-1); //6 or 10?
     		fields[MSG].set		("Msg",12,-1);
+
+    		//fields not given to
+    		fields[SOURCEID].set("SourceID",9,-1); //6 or 10?
+    		fields[SOURCE].set	("Source",11,-1); //7 or 11?
     	}
 
     	void set(const std::string &msg, const time_t count)
@@ -119,9 +122,23 @@ private:
     	const char *  getMsg() 	 	 {return  (char *)&buffer[fields[MSG].posInString];}
     	const char *  getLabel() 	 {return  (char *)&buffer[fields[LABEL].posInString];}
     	const char *  getLevel() 	 {return  (char *)&buffer[fields[LEVEL].posInString];}
+    	const char *  getSourceID()  {return  (char *)&buffer[fields[SOURCEID].posInString];}
+    	const unsigned int  getSourceIDAsNumber()
+    	{
+    		unsigned int srcid;
+    		sscanf((char *)&buffer[fields[SOURCEID].posInString],"%u",&srcid); //unsigned int
+    		return srcid;
+    	}
     	const char *  getSource()	 {return  (char *)&buffer[fields[SOURCE].posInString];}
-    	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
     	const char *  getSequenceID(){return  (char *)&buffer[fields[SEQID].posInString];}
+    	const unsigned int getSequenceIDAsNumber()
+    	{
+    		unsigned int seqid;
+    		sscanf((char *)&buffer[fields[SEQID].posInString],"%u",&seqid); //unsigned int
+    		return seqid;
+    	}
+
+    	const char *  getField(int i){return  (char *)&buffer[fields[i].posInString];}
     	const time_t  getTime()	 	 {return  timeStamp;}
     	const time_t  getCount() 	 {return  countStamp;}
 
@@ -142,12 +159,13 @@ private:
     		SEQID,
     		LEVEL,	//aka SEVERITY
     		LABEL,
+    		MSG,
+			SOURCEID,
     		SOURCE,
-    		MSG
     	};
 
     	const int BUFFER_SZ = 5000;
-    	std::array<FieldStruct,5> 	fields;
+    	std::array<FieldStruct,6> 	fields;
     private:
     	std::string					buffer;
     	time_t 						timeStamp;

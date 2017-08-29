@@ -61,6 +61,7 @@ void ConsoleSupervisor::init(void)
 
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
+
 }
 
 //========================================================================================================================
@@ -101,6 +102,11 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	int i = 0;
 	int heartbeatCount = 0;
 	int selfGeneratedMessageCount = 0;
+
+	std::map<unsigned int, unsigned int> sourceLastSequenceID; //map from sourceID to lastSequenceID to identify missed messages
+	unsigned int newSourceId;
+	unsigned int newSequenceId;
+
 	while(1)
 	{
 		//if receive succeeds display message
@@ -112,6 +118,11 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			{
 				std::cout << __COUT_HDR_FL__ << "Console has first message." << std::endl;
 				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+
+				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "Normal debug messages look like this." << std::endl;
+				mf::LogInfo (__MF_SUBJECT__) << __COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
+				mf::LogWarning (__MF_SUBJECT__) << __COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
+				mf::LogError (__MF_SUBJECT__) << __COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
 			}
 
 			if(selfGeneratedMessageCount)
@@ -125,9 +136,42 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			//this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
-			cs->messages_[cs->writePointer_++].set(buffer,cs->messageCount_++);
-			if(cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+			cs->messages_[cs->writePointer_].set(buffer,cs->messageCount_++);
+
+
+			//check if sequence ID is out of order
+			newSourceId = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
+			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
+
+
+			if(sourceLastSequenceID.find(newSourceId) !=
+					sourceLastSequenceID.end() && //ensure not first packet received
+					((newSequenceId == 0 &&
+							sourceLastSequenceID[newSourceId] != (unsigned int)-1) ||  //wrap around case
+						newSequenceId != sourceLastSequenceID[newSourceId] + 1)) //normal sequence case
+			{
+				//missed some messages!
+				__SS__ << "Missed packets from " <<
+						cs->messages_[cs->writePointer_].getSource() << "! Sequence IDs " <<
+						sourceLastSequenceID[newSourceId] <<
+						" to " << newSequenceId << "." << std::endl;
+				std::cout << ss.str();
+
+				if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+					cs->writePointer_ = 0;
+
+				//generate special message to indicate missed packets
+				cs->messages_[cs->writePointer_].set("||0|||Warning|Console|||||ConsoleSupervisor|" +
+						ss.str(),
+						cs->messageCount_++);
+			}
+
+			//save the new last sequence ID
+			sourceLastSequenceID[newSourceId] = newSequenceId;
+
+			if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
 				cs->writePointer_ = 0;
+
 		}
 		else
 		{
