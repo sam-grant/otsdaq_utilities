@@ -21,16 +21,21 @@
 				clear: both;
 			}
 			
-			#consoleInstructions {
+			#consoleInstructions, #consoleConnectionStatus {
 				float: left;
 				margin: 6px 0 0 6px;
 				font-size: 12px;
 				color: #4D2600;
 			}
 			
-			#userLink {
+			#consoleConnectionStatus a {
+				color: rgb(255,51,51);
+			}
+			
+			
+			#userLink, #clearConsoleLink {
 				float: right;
-				margin: 2px;
+				margin: 2px 2px 2px 20px;
 			}
 			
 			a {
@@ -224,19 +229,21 @@
 			
 			//functions:		
 				//init()	
-				//redrawConsoleWindow()
+				//redrawConsoleWindow(showSideBar)
 				//getConsoleUpdates()
 				//handleRefreshConsole(req)
 				//updateConsoleHistory()
 				//getColorForLevel()
 				//formatTime(time_t)
 				//convertForClient(str)
-				//toggleHideLineNumber(e)
-				//toggleNoWrap(e)
-				//toggleCompactView(e)
+				//toggleHideLineNumber(e, setVal, doNotSave)
+				//toggleNoWrap(e, setVal, doNotSave)
+				//toggleCompactView(e, setVal, doNotSave)
 				//toggleColorScheme()
 				//setupColorScheme(i)
-				//handleLoadColorChoice(req)
+				//setupCompactView()
+				//saveUserPreferences(colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers)
+				//handleLoadUserPreferences(req)
 				//toggleFilterControls()
 				//filterSelectionHandler(el)
 				//initSideBar()
@@ -248,6 +255,7 @@
 				//handleMouseMoveScroll(mouseEvent) 
 				//clearFilterControls(field)
 				//togglePauseControls()
+				//clearConsoleMessages()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl;
@@ -371,31 +379,39 @@
 			    _noWrapCheckbox.checked = false;		//inverse of default value
 			    _hideLineNumbersCheckbox.disabled = false; 		//enable checkbox selection
 			    _hideLineNumbersCheckbox.checked = true;		//inverse of default value
-			    
-			    toggleCompactView(); 		//call to setup compact view first time
-			    toggleNoWrap(); 			//call to setup no wrap first time
-			    toggleHideLineNumber(); 	//call to setup hide line numbers first time
+
+			    toggleNoWrap(undefined,undefined,true /*doNotSave*/); 			//call to setup no wrap first time
+			    toggleCompactView(undefined,undefined,true /*doNotSave*/); 		//call to setup compact view first time
+			    toggleHideLineNumber(undefined,undefined,true /*doNotSave*/); 	//call to setup hide line numbers first time
 			    toggleFilterControls();		//call to initially setup
 			    
 			    //call to setup colorScheme first time
-				DesktopContent.XMLHttpRequest("Console?RequestType=LoadColorChoice", "",
-						handleLoadColorChoice);
+				DesktopContent.XMLHttpRequest("Console?RequestType=LoadUserPreferences", "",
+						handleLoadUserPreferences);
 			}
 
 			//toggleNoWrap ~
 			// 	toggle no wrap on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleNoWrap(e) {	
+			function toggleNoWrap(e, setVal, doNotSave) {	
 				
 				if(_noWrapCheckbox.disabled) return; //do nothing if disabled
 
 				if(!e) _noWrapCheckbox.checked = !_noWrapCheckbox.checked; //do action if from link
 			
 				//	Note: when from checkbox, event gives stale value.
-				var chk = e?!_noWrapCheckbox.checked:_noWrapCheckbox.checked;						
-				Debug.log("Console _noWrapCheckbox.checked: " + chk);
-
-			
+				var chk = e?!_noWrapCheckbox.checked:_noWrapCheckbox.checked;	
+				
+				if(setVal !== undefined)
+				{
+					//override 
+					chk = setVal?true:false;
+					_noWrapCheckbox.checked = chk;
+				}
+				else if(!doNotSave)
+					saveUserPreferences(undefined,undefined,chk);
+				
+				Debug.log("Console _noWrapCheckbox.checked: " + chk);			
 
 				
 				//remove _noWrapStyleEl
@@ -429,14 +445,24 @@
 			//toggleHideLineNumber ~
 			// 	toggle hide line numbers on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleHideLineNumber(e) {	
+			function toggleHideLineNumber(e, setVal, doNotSave) {	
 				
 				if(_hideLineNumbersCheckbox.disabled) return; //do nothing if disabled
 
 				if(!e) _hideLineNumbersCheckbox.checked = !_hideLineNumbersCheckbox.checked; //do action if from link
 
 				//	Note: when from checkbox, event gives stale value.
-				var chk = e?!_hideLineNumbersCheckbox.checked:_hideLineNumbersCheckbox.checked;						
+				var chk = e?!_hideLineNumbersCheckbox.checked:_hideLineNumbersCheckbox.checked;	
+
+				if(setVal !== undefined)
+				{
+					//override 
+					chk = setVal?true:false;
+					_hideLineNumbersCheckbox.checked = chk;
+				}
+				else if(!doNotSave)
+					saveUserPreferences(undefined,undefined,undefined,undefined,chk);
+				
 				Debug.log("Console _hideLineNumbersCheckbox.checked: " + chk);
 
 				//remove _hideLineStyleEl
@@ -470,14 +496,24 @@
 			//toggleCompactView ~
 			// 	toggle compact view on/off. Use e to determine if function call came from checkbox or link	
 			//	Note: when from checkbox, event gives stale value.
-			function toggleCompactView(e) {			
+			function toggleCompactView(e, setVal, doNotSave) {			
 				if(_compactViewCheckbox.disabled) return; //do nothing if disabled
 								
 				if(!e) _compactViewCheckbox.checked = !_compactViewCheckbox.checked; //do action if from link
 				
 
 				//	Note: when from checkbox, event gives stale value.
-				var chk = e?!_compactViewCheckbox.checked:_compactViewCheckbox.checked;						
+				var chk = e?!_compactViewCheckbox.checked:_compactViewCheckbox.checked;	
+				
+				if(setVal !== undefined)
+				{
+					//override 
+					chk = setVal?true:false;
+					_compactViewCheckbox.checked = chk;
+				}
+				else if(!doNotSave)
+					saveUserPreferences(undefined,undefined,undefined,chk);
+				
 				Debug.log("Console _compactViewCheckbox.checked: " + chk);				
 					
 
@@ -512,13 +548,15 @@
 			
 			//redrawConsoleWindow ~
 			// 	refreshes chat window, called when window is resized
-			function redrawConsoleWindow() {			
+			function redrawConsoleWindow(showSideBar) {			
 
 			    Debug.log("Chat redrawChat to " + window.innerWidth + " - " + window.innerHeight);
 			    
 			    var w = window.innerWidth;
 			    var h = window.innerHeight;
 			    			     
+			    if(showSideBar !== undefined) //take input setting if one
+			    	_displaySidePane = showSideBar;
 			    if(_displaySidePane) 
 			    {
 			    	_usersContainerEl.style.display = "block";
@@ -589,29 +627,37 @@
 			
 			//toggleSideBar ~
 			// 	send chat to server
-			function toggleSideBar() {							
-				_displaySidePane = !_displaySidePane;
+			function toggleSideBar() {	
+			    redrawConsoleWindow(!_displaySidePane);
 			    Debug.log("Chat toggleSideBar now is " + _displaySidePane);	
-			    redrawConsoleWindow();
+				saveUserPreferences(undefined,_displaySidePane);
 			}
 			
 			//getConsoleUpdates ~
 			// 	get chat updates from server
 			//	if _lastUpdateIndex doesn't match server, server will give all new info since
 			//	initially _lastUpdateIndex = 0
-			function getConsoleUpdates() {			
+			function getConsoleUpdates() {		
+				
+			    if(_consoleUpdateTimer) //only allow one timer for updates at a time
+			    	clearTimeout(_consoleUpdateTimer);	
+			    
 				DesktopContent.XMLHttpRequest("Console?RequestType=GetConsoleMsgs", 
 										"lcount="+_lastUpdateCount+"&lindex="+_lastUpdateIndex,
-										handleRefreshConsole);
+										handleRefreshConsole,
+										0, //reqParam
+										0, //progressHandler
+										true); //callHandlerOnErr);
 			}			
 			
 			//handleRefreshConsole ~
-			// 	handle server response
+			// 	handle server response, even on error
 			function handleRefreshConsole(req) {
 				
 				if(!req) 
 				{
 					Debug.log("Console handleRefreshConsole req=0!");// + req.responseText);
+					document.getElementById("consoleConnectionStatus").style.display = "block"; //show DISCONNECTED
 					return;
 				}
 				
@@ -619,6 +665,7 @@
 				if(err)
 				{
 					Debug.log(err,Debug.HIGH_PRIORITY);
+					document.getElementById("consoleConnectionStatus").style.display = "block"; //show DISCONNECTED
 					return; //this stops refershing, because no future refresh is schedule
 				}
 
@@ -646,6 +693,7 @@
 						else if(lengthVerify !=  _consoleMessageArray[_consoleMessageArray.length-1].length)
 						{
 							Debug.log("Message fields received are incomplete!",Debug.HIGH_PRIORITY);
+							document.getElementById("consoleConnectionStatus").style.display = "block"; //show DISCONNECTED
 							return; //this stops refershing, because no future refresh is schedule
 						}
 					}
@@ -654,8 +702,7 @@
 					updateSideBarCounts(); //must be called after console history update
 			    }
 			    
-			    if(_consoleUpdateTimer)
-			    	clearTimeout(_consoleUpdateTimer);
+			    document.getElementById("consoleConnectionStatus").style.display = "none"; //hide DISCONNECTED
 			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_REFRESH_INTERVAL); //schedule next update			    
 			}
 
@@ -873,8 +920,11 @@
 					}
 					else
 					{
+						//artdaq does one space, then <source>:<line number> then new line (ascii-10)
 						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
-						if(secondMsgIndex > 0 && secondMsgIndex+2 < secondMsg.length &&
+						if(secondMsgIndex > 0 && // : found
+								secondMsgIndex < secondMsg.indexOf(' ',1) && //before any spaces
+								secondMsgIndex+2 < secondMsg.length && //there is at least the number at the space/newline after
 								secondMsg[secondMsgIndex+1] >= '0' &&
 								secondMsg[secondMsgIndex+1] <= '9')
 						{
@@ -936,6 +986,12 @@
 				if(_scrollWithNewChats)
 					_historyEl.scrollTop = _historyEl.scrollHeight;
 			}
+			
+			//clearConsoleMessages ~
+			function clearConsoleMessages() {
+				_consoleEl.innerHTML = "";
+			}
+			
 		
 			//formatTime ~
 			function formatTime(t) {
@@ -985,24 +1041,63 @@
 			//	cycle through an array of [background,foreground] schemes
 			function toggleColorScheme() {
 				setupColorScheme(_chosenColorScheme + 1);
-			    DesktopContent.XMLHttpRequest("Console?RequestType=SaveColorChoice", 
-			    										"cindex="+_chosenColorScheme);
+				saveUserPreferences(_chosenColorScheme);
 			}
-			
-			//handleLoadColorChoice(req) ~
-			function handleLoadColorChoice(req) {
+
+			//saveUserPreferences ~
+			//	save user preferences to server
+			function saveUserPreferences(colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers) {
+				
+				//take new values from inputs if given, otherwise determine current value
+				if(colorIndex === undefined)
+					colorIndex = _chosenColorScheme;
+				if(showSideBar === undefined)
+					showSideBar = _displaySidePane;
+				if(noWrap === undefined)
+					noWrap = noWrapCheckbox.checked;
+				if(messageOnly === undefined)
+					messageOnly = _compactViewCheckbox.checked;
+				if(hideLineNumers === undefined)
+					hideLineNumers = _hideLineNumbersCheckbox.checked;
+				
+				//force only integer values in request
+			    DesktopContent.XMLHttpRequest("Console?RequestType=SaveUserPreferences", 
+			    										"colorIndex=" + (colorIndex|0) +
+														"&showSideBar=" + (showSideBar?1:0) +
+														"&noWrap=" + (noWrap?1:0) +
+														"&messageOnly=" + (messageOnly?1:0) +
+														"&hideLineNumers=" + (hideLineNumers?1:0));
+			}
+						
+			//handleLoadUserPreferences(req) ~
+			function handleLoadUserPreferences(req) {
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err)
 				{
 					Debug.log(err,Debug.HIGH_PRIORITY);
-					return; //this stops refershing, because no future refresh is schedule
+					return;
 				}
-				setupColorScheme(DesktopContent.getXMLValue(req,"color_index"));			    
+				
+				Debug.log("handleLoadUserPreferences");
+				if(!DesktopContent.getXMLValue(req,"colorIndex") || 
+						DesktopContent.getXMLValue(req,"colorIndex") == "")
+				{
+					Debug.log("handleLoadUserPreferences problem, so ignoring.");
+					return;					
+				}
+				//else trust values
+				setupColorScheme(DesktopContent.getXMLValue(req,"colorIndex")|0);				
+				redrawConsoleWindow((DesktopContent.getXMLValue(req,"showSideBar")|0)?true:false); //input is showSideBar
+				toggleNoWrap(0,(DesktopContent.getXMLValue(req,"noWrap")|0)?true:false);
+				toggleCompactView(0,(DesktopContent.getXMLValue(req,"messageOnly")|0)?true:false);
+				toggleHideLineNumber(0,(DesktopContent.getXMLValue(req,"hideLineNumers")|0)?true:false);
 			}
+			
 			
 			//setupColorScheme(i) ~
 			function setupColorScheme(i) {
 				_chosenColorScheme = (i|0) % _colorSchemes.length;
+				if(_chosenColorScheme < 0) _chosenColorScheme = 0; //mod allows negative.. prevent
 
 			    _historyContainerEl.style.backgroundColor = _colorSchemes[_chosenColorScheme][0];
 			    _historyContainerEl.style.color = _colorSchemes[_chosenColorScheme][1];				
@@ -1077,8 +1172,16 @@
 			<a href='Javascript:toggleColorScheme();' title='Toggle Color Scheme' class='consoleLink' id='userLinkColor'>Toggle Color Scheme</a>
 		</div>
 		
+		<div id='consoleConnectionStatus'>
+			<a href='Javascript:getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
+		</div>
+		
 		<div id='userLink'>
 			<a href='Javascript:toggleSideBar();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
+		</div>
+
+		<div id='clearConsoleLink'>
+			<a href='Javascript:clearConsoleMessages();' title='Clear Console Messages' class='consoleLink' id='userLinkText'>Clear Console</a>		 
 		</div>
 						
 		<div id='consoleHistoryContainer'>
@@ -1101,7 +1204,7 @@
 						<div id='compactViewText'>
 							<a class="consoleLink"
 								href='Javascript:toggleCompactView();' 
-								title='Toggle Compact View' >Compact View</a>
+								title='Toggle Compact View' >Message Only</a>
 						</div>
 				</div>
 		

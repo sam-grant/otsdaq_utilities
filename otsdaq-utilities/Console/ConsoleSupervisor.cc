@@ -19,7 +19,7 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
-#define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
+#define USER_CONSOLE_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
 #define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarderGen.cfg"
 
@@ -39,7 +39,7 @@ throw (xdaq::exception::Exception)
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
-	mkdir(((std::string)USER_CONSOLE_COLOR_PREF_PATH).c_str(), 0755);
+	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
 	xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
 	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
@@ -236,8 +236,8 @@ throw (xgi::exception::Exception)
 
 	//Commands:
 		//GetConsoleMsgs
-		//SaveColorChoice
-		//LoadColorChoice
+		//SaveUserPreferences
+		//LoadUserPreferences
 
 	HttpXmlDocument xmldoc;
 	uint64_t activeSessionIndex;
@@ -247,7 +247,7 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
-		bool getUser = (Command == "SaveColorChoice") || (Command == "LoadColorChoice");
+		bool getUser = (Command == "SaveUserPreferences") || (Command == "LoadUserPreferences");
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
@@ -300,11 +300,20 @@ throw (xgi::exception::Exception)
 
 		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
 	}
-	else if(Command == "SaveColorChoice")
+	else if(Command == "SaveUserPreferences")
 	{
-        std::string colorIndex = CgiDataUtilities::postData(cgi,"cindex");
+        int colorIndex = CgiDataUtilities::postDataAsInt(cgi,"colorIndex");
+        int showSideBar = CgiDataUtilities::postDataAsInt(cgi,"showSideBar");
+        int noWrap = CgiDataUtilities::postDataAsInt(cgi,"noWrap");
+        int messageOnly = CgiDataUtilities::postDataAsInt(cgi,"messageOnly");
+        int hideLineNumers = CgiDataUtilities::postDataAsInt(cgi,"hideLineNumers");
+
 		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
+		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
+		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
+		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		if(user == "") //should never happen?
 		{
@@ -313,20 +322,24 @@ throw (xgi::exception::Exception)
 			goto CLEANUP;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
 		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			throw std::runtime_error("Could not open file: " + fn);
-		fprintf(fp,"color_index %s",colorIndex.c_str());
+		fprintf(fp,"colorIndex %d\n",colorIndex);
+		fprintf(fp,"showSideBar %d\n",showSideBar);
+		fprintf(fp,"noWrap %d\n",noWrap);
+		fprintf(fp,"messageOnly %d\n",messageOnly);
+		fprintf(fp,"hideLineNumers %d\n",hideLineNumers);
 		fclose(fp);
 	}
-	else if(Command == "LoadColorChoice")
+	else if(Command == "LoadUserPreferences")
 	{
 		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 
-		unsigned int colorIndex;
+		unsigned int colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers;
 
 		if(user == "") //should never happen?
 		{
@@ -335,23 +348,45 @@ throw (xgi::exception::Exception)
 			goto CLEANUP;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
 		std::cout << __COUT_HDR_FL__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
 		{
-			xmldoc.addTextElementToData("color_index","0");
+			//return defaults
+			std::cout << __COUT_HDR_FL__ << "Returning defaults." << std::endl;
+			xmldoc.addTextElementToData("colorIndex","0");
+			xmldoc.addTextElementToData("showSideBar","0");
+			xmldoc.addTextElementToData("noWrap","1");
+			xmldoc.addTextElementToData("messageOnly","0");
+			xmldoc.addTextElementToData("hideLineNumers","1");
 			goto CLEANUP;
 		}
 		fscanf(fp,"%*s %u",&colorIndex);
+		fscanf(fp,"%*s %u",&showSideBar);
+		fscanf(fp,"%*s %u",&noWrap);
+		fscanf(fp,"%*s %u",&messageOnly);
+		fscanf(fp,"%*s %u",&hideLineNumers);
 		fclose(fp);
 		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
+		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
+		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
+		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		char tmpStr[20];
-		sprintf(tmpStr,"%d",colorIndex);
-		xmldoc.addTextElementToData("color_index",tmpStr);
+		sprintf(tmpStr,"%u",colorIndex);
+		xmldoc.addTextElementToData("colorIndex",tmpStr);
+		sprintf(tmpStr,"%u",showSideBar);
+		xmldoc.addTextElementToData("showSideBar",tmpStr);
+		sprintf(tmpStr,"%u",noWrap);
+		xmldoc.addTextElementToData("noWrap",tmpStr);
+		sprintf(tmpStr,"%u",messageOnly);
+		xmldoc.addTextElementToData("messageOnly",tmpStr);
+		sprintf(tmpStr,"%u",hideLineNumers);
+		xmldoc.addTextElementToData("hideLineNumers",tmpStr);
 	}
 
 
