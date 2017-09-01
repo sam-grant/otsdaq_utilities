@@ -443,6 +443,8 @@
 			//evaluateJS(str)			
 			//createEditTableMenu(event)
 		
+			//tableLinkTooltip()
+		
 
 		//ConfigurationAPI functions
 			//ConfigurationAPI.getDateString(date)
@@ -544,10 +546,12 @@
 			
 			//setupConfigCreator(); return
 			
-			//setupConfigGroupTreeView("FETest","0"); return; //"46"); return;
+			//setupConfigGroupTreeView("test","10"); return; //"46"); return;
 			//setupConfigGroupTreeView("defaultConfig","3"); return;
 			
 			//setupGroupViewMode(); return;
+			
+			//setupConfigCreator(); return;
 			
 			//============================
 
@@ -580,6 +584,8 @@
 		//setupSystemViewMode ~
 		function setupSystemViewMode(anchorTarget) {
 						
+			editCellCancel();
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			
@@ -621,6 +627,8 @@
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) {
 			
+			editCellCancel();
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
@@ -632,6 +640,8 @@
 		//setupTableViewMode ~
 		function setupTableViewMode(anchorTarget) {
 
+			editCellCancel();
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
@@ -5769,9 +5779,12 @@
 				{
 					_editingCellElOldValue = el.textContent;
 					treeEditingNodeInitValue_ = _editingCellElOldValue;
-					
+
+					var ow = el.offsetWidth-6;
+					if(ow < 150) //force a minimum input width
+						ow = 150;
 					str += "<textarea rows='4' onkeydown='keyHandler(event)' cols='50' style='font-size: 14px; margin:-4px -2px -4px -1px;width:" + 
-							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
+							(ow) + "px; height:" + (el.offsetHeight-8) + "px' ";
 					str += " onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);event.stopPropagation();' " +
 							"onclick='event.stopPropagation();'" +
@@ -6456,7 +6469,7 @@
 							"float:left;" +
 							"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
 							"width:" + 
-							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+							((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
 							"'>";					
 					str += "";
 					str += "</input>";	
@@ -6506,7 +6519,7 @@
 			{
 				//onkeydown='keyHandler(event)' 
 				str += "<textarea rows='4' onkeydown='keyHandler(event)' cols='50' style='font-size: 14px; margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
+						((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-8) + "px' ";
 				str += " onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 						">";
@@ -6543,7 +6556,7 @@
 			else // normal cells, with text input
 			{
 				str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
-						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+						((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
 				str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
@@ -7137,7 +7150,9 @@
 
 					modTblStr += "<a style='color:black' href='#' onclick='javascript:" +								
 							"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
-							" handlePopUpHeightToggle(" + h + "," + gh + ");'>";
+							" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
+							"title='Click to edit the comment for this group' " +
+							">";
 					modTblStr += xmlGroupName;
 					modTblStr += "</a>";
 
@@ -7411,7 +7426,46 @@
 				var affectedGroupCommentEls = 
 						document.getElementsByClassName("popUpDialog-groupComment-cache");						
 				
+//				// first organize by group type: config, context, backbone
+//				for(var i=0;i<affectedGroupEls.length;++i)
+//				{
+//					//save member list but with tree table versions
+//					Debug.log(affectedGroupEls[i].textContent);
+//					Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
+//
+//					var affectedArr = affectedGroupEls[i].textContent.split(','); 
+//
+//					//build member config map
+//					var configMap = "configList=";
+//					//member map starts after group name/key (i.e. [2])
+//					for(var a=2;a<affectedArr.length;a+=2)								
+//						if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+//						{
+//							Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+//							//find version
+//							for(var k=0;k<treeMemberNames_.length;++k)
+//								if(affectedArr[a] == treeMemberNames_[k])
+//								{
+//									Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
+//									configMap += affectedArr[a] + "," + 
+//											treeMemberVersions_[k] + ",";
+//									break;
+//								}
+//						}
+//						else //use existing version
+//							configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+//
+//					affectedGroupNames.push(affectedArr[0]);
+//				}
+				
+
+				numberOfRequests = 0;		//re-use
+				numberOfReturns = 0;		//re-use
+				allRequestsSent = false; 	//re-use
+				
 				//	for each affected group
+				//		save and activate group..
+				//		do not allow next save/activate until previous is done
 				for(var i=0;i<affectedGroupEls.length;++i)
 				{
 					//save member list but with tree table versions
@@ -8015,6 +8069,9 @@
 									"DISCONNECTED" +
 									"</label>";
 							_editingCellEl.innerHTML = newValue;
+							
+							//if disconnected from edit, show tooltip
+							tableLinkTooltip();
 						}
 						else
 						{ 	//change context menu for table link							
@@ -8305,14 +8362,26 @@
 						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
 						treeEditingTargetTable_ = sel.options[sel.selectedIndex].value;						
 
-						//make csv newValue := linkIndex,linkID
+						//make csv newValue := linkIndex,linkID,newRowUID
 
 						newValue = document.getElementById("treeNode-childLinkIndex-" + 
 								treeEditingNodeIdString_).textContent;
+						
+						//add linkID
 						newValue += ",";		
 						sel = _editingCellEl.getElementsByTagName("select")[1];
 						if(sel.selectedIndex >= 0) //if valid
 							newValue += sel.options[sel.selectedIndex].value;
+
+						//add newRowUID
+						newValue += ",";	
+						var newRowUID = prompt("Please enter the UID for the new record:");
+						if(newRowUID)
+							newValue += encodeURIComponent(newRowUID.trim());
+						else 
+							return;
+						
+							
 					}
 					else if(treeEditingNodeType_ == "table-newUIDRow")
 					{
@@ -8325,6 +8394,8 @@
 						newValue = prompt("Please enter the UID for the new record:");
 						if(newValue)
 							newValue = encodeURIComponent(newValue.trim());
+						else 
+							return;
 					}
 					else if(treeEditingNodeType_ == "table-newRow")
 						newValue = ""; //no value needed
@@ -9606,6 +9677,18 @@
 			versionHasChanged();
 		}
 		
+		//tableLinkTooltip
+		function tableLinkTooltip()
+		{
+			DesktopContent.tooltip("FAQ: Where is the Table I want to link to?!",
+					"Were you looking for a table name that was NOT in the drop-down list?\n\n" +
+					"It is important to note that, when editing links, only currently active " +
+					"tables are available to be linked to. If you do not see the table " +
+					"name you are looking for, it is probably because that table is not a member " +
+					"of the currently active group. To resolve this issue, you must go to the group view and edit " +
+					"the group to include the new table as a member.");
+		}
+		
 		//editCellCancel
 		function editCellCancel() 
 		{	
@@ -9619,14 +9702,7 @@
 				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0)
 				{
 					//if canceling from link edit, show tooltip
-
-					DesktopContent.tooltip("Tables Available in Link Editing",
-							"It is important to note that, when editing links, only currently active " +
-							"tables are available to be linked to. If you do not see the table " +
-							"name you are looking for, it is probably because that table is not a member " +
-							"of the currently active group. To resolve this issue, you must go to the group view and edit " +
-							"the group to include the new table as a member.");
-					
+					tableLinkTooltip();
 				}
 				
 				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
@@ -10292,7 +10368,9 @@
 												
 						modTblStr += "<a style='color:black' href='#' onclick='javascript:" +								
 								"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
-								" handlePopUpHeightToggle(" + h + "," + gh + ");'>";
+								" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
+								"title='Click to edit the comment for this group' " +
+								">";
 						modTblStr += xmlGroupName;
 						modTblStr += "</a>";
 						
@@ -10537,16 +10615,6 @@
 			var w = 500;
 			var h = 335;
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h-gh*2 /*h*/);
-//			var w = 500;
-//			var h = 335;
-//			var gh = 50;
-//			var ww = DesktopContent.getWindowWidth();
-//			var wh = DesktopContent.getWindowHeight();
-//			//el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)) + "px";
-//			el.style.top = (DesktopContent.getWindowScrollTop() + ((wh-h-2)/2)-gh) + "px"; //allow for 1x gh growth for each affected group
-//			el.style.left = (DesktopContent.getWindowScrollLeft() + ((ww-w-2)/2)) + "px";
-//			el.style.width = w + "px";
-//			el.style.height = h + "px";
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
@@ -11866,31 +11934,6 @@
 		//		0 := from specific group view	 (formerly saveConfigGroupAsNewKey())
 		//		1 := from add/remove member view (formerly createConfigGroup()) 
 		function saveConfigGroupAsNewKey(groupName, sourceType, ignoreWarnings) 
-//		{
-//			Debug.log("CfgGUI saveConfigGroupAsNewKey");	
-//			
-//			var memberArr = document.getElementById("GroupMember-names").innerHTML.split(",");
-//			Debug.log("memberArr " + memberArr);
-//			
-//			var configMap = "configList=";
-//			var version;
-//			for(var i=0;i<memberArr.length-1;++i)
-//			{
-//				version = document.getElementById(memberArr[i] + 
-//						"-currentVersion").innerHTML;
-//				Debug.log("subconfig=" + memberArr[i] + 
-//						" version=" + version);
-//				configMap += memberArr[i] + "," + version + ",";
-//			}			
-//			
-//			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
-//					"&groupName=" + groupName +
-//					"&ignoreWarnings=" + (ignoreWarnings?1:0), 
-//					configMap, specificGroupRequestHandler,
-//					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-//			);
-//			
-//		}
 		{	
 			Debug.log("CfgGUI saveConfigGroupAsNewKey ignoreWarnings=" + ignoreWarnings);
 
@@ -11929,6 +11972,12 @@
 							Debug.log("subconfig=" + els[el].value + " version=" + 
 									sel.options[sel.selectedIndex].value);
 							configMap += els[el].value + "," + sel.options[sel.selectedIndex].value + ",";
+						}
+						else //if no options, choose mockup version, -1
+						{
+							Debug.log("subconfig=" + els[el].value + " version=" + 
+								(-1));
+							configMap += els[el].value + "," + (-1) + ",";
 						}
 					}
 			}	
@@ -12768,7 +12817,7 @@
 			}
 			else
 			{
-				tel.style.width = (sel.offsetWidth-2) + "px";
+				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
@@ -12793,7 +12842,7 @@
 			}
 			else
 			{
-				tel.style.width = (sel.offsetWidth-2) + "px";
+				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
@@ -12816,7 +12865,7 @@
 			}
 			else
 			{
-				tel.style.width = (sel.offsetWidth-2) + "px";
+				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);

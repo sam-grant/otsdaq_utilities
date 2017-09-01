@@ -74,7 +74,7 @@ private:
     void 			handleGetAffectedGroupsXML					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey, const std::string &modifiedTables);
     void			handleGetLinkToChoicesXML					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName, const ConfigurationVersion &linkToTableVersion, const std::string &linkIdType, const std::string &linkIndex, const std::string &linkInitId);
 
-    void			saveModifiedVersionXML						(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion version, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryVersion);
+    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryModifiedVersion);
 
 
     void testXDAQContext(); //for debugging

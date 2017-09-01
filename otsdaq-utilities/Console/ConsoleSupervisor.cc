@@ -119,7 +119,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 				std::cout << __COUT_HDR_FL__ << "Console has first message." << std::endl;
 				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
 
-				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "Normal debug messages look like this." << std::endl;
+				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
 				mf::LogInfo (__MF_SUBJECT__) << __COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
 				mf::LogWarning (__MF_SUBJECT__) << __COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
 				mf::LogError (__MF_SUBJECT__) << __COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
@@ -178,23 +178,19 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			if(i < 120) //if nothing received for 120 seconds, then something is wrong with Console configuration
 				++i;
 
-			if(i != 200) //show first message, if not already a message
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
-
 			sleep(1); //sleep one second, if timeout
 
-			if(heartbeatCount%60 == 59) //every 60 seconds print a heartbeat message
+			//every 60 heartbeatCount (2 seconds each = 1 sleep and 1 timeout) print a heartbeat message
+			if(i != 200 ||  //show first message, if not already a message
+					(heartbeatCount < 60*5 && heartbeatCount%60 == 59)) //every ~2 min for first 5 messages
 			{
-				if(heartbeatCount < 60*5) //ever hour after 5 minutes
-				{
-					++selfGeneratedMessageCount; //increment internal message count
-					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
-				}
-				else if(heartbeatCount%(60*60) == 59)
-				{
-					++selfGeneratedMessageCount; //increment internal message count
-					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time..." << std::endl;
-				}
+				++selfGeneratedMessageCount; //increment internal message count
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting... (if no messages, next heartbeat in approximately two minutes)" << std::endl;
+			}
+			else if(heartbeatCount%(60*30) == 59) //approx every hour
+			{
+				++selfGeneratedMessageCount; //increment internal message count
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time... (if no messages, next heartbeat in approximately one hour)" << std::endl;
 			}
 
 			++heartbeatCount;
