@@ -111,6 +111,7 @@ throw (xgi::exception::Exception)
 	//	setAliasOfGroupMembers
 	//	getVersionAliases
 	//	getConfigurationGroups
+	//	getConfigurationGroupType
 	//	getConfigurations
 	//	getContextMemberNames
 	//	getBackboneMemberNames
@@ -365,6 +366,13 @@ throw (xgi::exception::Exception)
 	else if(Command == "getConfigurationGroups")
 	{
 		handleConfigurationGroupsXML(xmldoc,cfgMgr);
+	}
+	else if(Command == "getConfigurationGroupType")
+	{
+		std::string configList 		= CgiDataUtilities::postData(cgi,"configList"); 	//from POST
+		__MOUT__ << "configList: " << configList << std::endl;
+
+		handleGetConfigurationGroupTypeXML(xmldoc,cfgMgr,configList);
 	}
 	else if(Command == "getConfigurations")
 	{
@@ -883,20 +891,36 @@ try
 				cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
 						0,0,0,0,0,0, //defaults
 						true); //doNotLoadMember
-		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-		//								ConfigurationGroupKey::getFullGroupString(
-		//										rootGroupName,
-		//										rootGroupKey));
-		const std::string &groupType = cfgMgr->convertGroupTypeIdToName(
-				cfgMgr->getTypeOfGroup(rootGroupName,rootGroupKey,rootGroupMemberMap));
+
+		const std::string &groupType = cfgMgr->getTypeNameOfGroup(rootGroupMemberMap);
 
 		consideredGroups[groupType] = std::pair<std::string, ConfigurationGroupKey>(
 				rootGroupName,rootGroupKey);
 	}
+	catch(const std::runtime_error& e)
+	{
+		//if actual group name was attempted re-throw
+		if(rootGroupName.size())
+		{
+
+			__SS__ << "Failed to determine type of configuration group for " << rootGroupName << "(" <<
+					rootGroupKey << ")! " << e.what() << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			throw std::runtime_error(ss.str());
+		}
+
+		//else assume it was the intention to just consider the active groups
+		__MOUT__ << "Did not modify considered active groups due to empty root group name - assuming this was intentional." << std::endl;
+	}
 	catch(...)
 	{
 		//if actual group name was attempted re-throw
-		if(rootGroupName.size()) throw;
+		if(rootGroupName.size())
+		{
+			__MOUT_ERR__ << "Failed to determine type of configuration group for " << rootGroupName << "(" <<
+					rootGroupKey << ")!" << std::endl;
+			throw;
+		}
 
 		//else assume it was the intention to just consider the active groups
 		__MOUT__ << "Did not modify considered active groups due to empty root group name - assuming this was intentional." << std::endl;
@@ -2340,7 +2364,7 @@ try
 						cfgView->init(); //verify new table (throws runtime_errors)
 
 						saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
-								config,temporaryVersion); //save temporary version properly
+								config,temporaryVersion, true /*ignoreDuplicates*/); //save temporary version properly
 					}
 					catch(std::runtime_error &e) //erase temporary view before re-throwing error
 					{
@@ -2491,7 +2515,7 @@ try
 						cfgView->init(); //verify new table (throws runtime_errors)
 
 						saveModifiedVersionXML(xmldoc,cfgMgr,newTable,version,true /*make temporary*/,
-								config,temporaryVersion); //save temporary version properly
+								config,temporaryVersion,true /*ignoreDuplicates*/); //save temporary version properly
 					}
 					catch(std::runtime_error &e) //erase temporary view before re-throwing error
 					{
@@ -2505,7 +2529,8 @@ try
 				}
 
 				//block error message if default is in group, assume new member was just created
-				if(!changed && !secondaryChanged && !defaultIsInGroup)
+				//	RAR: block because its hard to detect if changes were recently made (one idea: to check if all other values are defaults, to assume it was just created)
+				if(0 && !changed && !secondaryChanged && !defaultIsInGroup)
 				{
 					__SS__ << "Link to table '" << newTable <<
 							"', linkID '" << newLinkId <<
@@ -2540,18 +2565,18 @@ try
 	}
 
 	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
-			config,temporaryVersion); //save temporary version properly
+			config,temporaryVersion,true /*ignoreDuplicates*/); //save temporary version properly
 }
 catch(std::runtime_error &e)
 {
 	__SS__ << "Error saving tree node! " << std::string(e.what()) << std::endl;
-	__MOUT_ERR__ << ss.str() << std::endl;
+	__MOUT_ERR__ << "\n" << ss.str() << std::endl;
 	xmldoc.addTextElementToData("Error", ss.str());
 }
 catch(...)
 {
 	__SS__ << "Error saving tree node! " << std::endl;
-	__MOUT_ERR__ << ss.str() << std::endl;
+	__MOUT_ERR__ << "\n" << ss.str() << std::endl;
 	xmldoc.addTextElementToData("Error", ss.str());
 }
 
@@ -3008,12 +3033,14 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 		ConfigurationVersion originalVersion,
 		bool makeTemporary,
 		ConfigurationBase * config,
-		ConfigurationVersion temporaryModifiedVersion)
+		ConfigurationVersion temporaryModifiedVersion,
+		bool ignoreDuplicates)
 {
 	bool needToEraseTemporarySource = (originalVersion.isTemporaryVersion() && !makeTemporary);
 
 
 	//check for duplicate tables already in cache
+	if(!ignoreDuplicates)
 	{
 		ConfigurationVersion duplicateVersion;
 
@@ -3305,7 +3332,9 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		c = configList.find(',',i);
 		if(c == std::string::npos) //missing version list entry?!
 		{
-			xmldoc.addTextElementToData("Error", "Incomplete Configuration-Version pair!");
+			__SS__ << "Incomplete Configuration-Version pair!" << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			xmldoc.addTextElementToData("Error", ss.str());
 			return;
 		}
 
@@ -4284,6 +4313,65 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument &xmldoc
 	}
 }
 
+//========================================================================================================================
+//	handleGetConfigurationGroupTypeXML
+//
+//		return this information based on member table list
+//		<ConfigurationGroupType value=xxx>
+//
+void ConfigurationGUISupervisor::handleGetConfigurationGroupTypeXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr,
+		const std::string& configList)
+{
+
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
+	std::string name, versionStr;
+	auto c = configList.find(',',0);
+	auto i = c; i = 0; //auto used to get proper index/length type
+	while(c < configList.length())
+	{
+		//add the configuration and version pair to the map
+		name = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+		if(c == std::string::npos) //missing version list entry?!
+		{
+			__SS__ << "Incomplete Configuration-Version pair!" << std::endl;
+			__MOUT_ERR__ << "\n" << ss.str();
+			xmldoc.addTextElementToData("Error", ss.str());
+			return;
+		}
+
+		versionStr = configList.substr(i,c-i);
+		i = c+1;
+		c = configList.find(',',i);
+
+		memberMap[name] = ConfigurationVersion(versionStr);
+	}
+
+	std::string groupTypeString = "";
+	//try to determine type, dont report errors, just mark "Invalid"
+	try
+	{
+		//determine the type configuration group
+		groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
+		xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+	}
+	catch(std::runtime_error &e)
+	{
+		__SS__ << "Configuration group has invalid type! " << e.what() << std::endl;
+		__MOUT__ << "\n" << ss.str();
+		groupTypeString = "Invalid";
+		xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+	}
+	catch(...)
+	{
+		__SS__ << "Configuration group has invalid type! " << std::endl;
+		__MOUT__ << "\n" << ss.str();
+		groupTypeString = "Invalid";
+		xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+	}
+}
 
 //========================================================================================================================
 //	handleConfigurationGroupsXML
@@ -4297,7 +4385,8 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument &xmldoc
 //		<group name=xxx key=xxx>...</group>
 //		...
 //
-void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr)
+void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &xmldoc,
+		ConfigurationManagerRW *cfgMgr)
 {
 	DOMElement* parentEl;
 
@@ -4346,7 +4435,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		{
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has been corrupted! " + e.what() << std::endl;
-			__MOUT__ << ss.str();
+			__MOUT__ << "\n" << ss.str();
 			xmldoc.addTextElementToData("Error",ss.str());
 			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
 			continue;
@@ -4355,7 +4444,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		{
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has been corrupted! " << std::endl;
-			__MOUT__ << ss.str();
+			__MOUT__ << "\n" << ss.str();
 			xmldoc.addTextElementToData("Error",ss.str());
 			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
 			continue;
@@ -4365,14 +4454,14 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		try
 		{
 			//determine the type configuration group
-			groupTypeString = cfgMgr->getTypeNameOfGroup(groupName,groupKey,memberMap);
+			groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 		}
 		catch(std::runtime_error &e)
 		{
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has invalid type! " + e.what() << std::endl;
-			__MOUT__ << ss.str();
+			__MOUT__ << "\n" << ss.str();
 			groupTypeString = "Invalid";
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 			continue;
@@ -4381,7 +4470,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument &x
 		{
 			__SS__ << "Configuration group \"" + groupString +
 					"\" has invalid type! " << std::endl;
-			__MOUT__ << ss.str();
+			__MOUT__ << "\n" << ss.str();
 			groupTypeString = "Invalid";
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 			continue;

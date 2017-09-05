@@ -85,7 +85,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	{
 		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
-		std::cout << __COUT_HDR_FL__ << ss.str();
+		std::cout << __COUT_HDR_FL__ << "\n" << ss.str();
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];

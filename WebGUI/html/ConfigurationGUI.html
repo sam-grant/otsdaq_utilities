@@ -408,7 +408,7 @@
 			//handleGroupMemberGoto(name,backLinkStr)
 			//addMemberToConfigGroup(groupName,backLinkStr) 
 		
-			//activateSystemConfig(groupName, groupKey)
+			//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
 			//activateSystemConfigHandler(req)
 			//versionTrackingHandler(req)
 			//selectForCreateConfig(i)
@@ -1548,6 +1548,7 @@
 			
 			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
 			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
 			var configNames = req.responseXML.getElementsByTagName("MemberName");
@@ -1627,7 +1628,8 @@
 						"border: 1px solid #9c5e5e;" +
 						"margin: 5px 0 5px 30px;" +
 						"background-color: #d2c1c1;" +
-						"'>";
+						"'>";				
+				str += "<tr><th>Type:</th><td class='underlineRow'>" + groupType + " Group</td></tr>";
 				str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
 				str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
 				str += "<tr><th>Comment:</th><td>" + 
@@ -3966,15 +3968,21 @@
 		}
 		
 		//activateSystemConfig ~
-		function activateSystemConfig(groupName, groupKey, ignoreWarnings)
+		function activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
 		{
 			document.getElementById("activateConfigWithWarnings").innerHTML = "";
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
 					groupName + "&groupKey=" + groupKey +
 					(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
-					"",activateSystemConfigHandler,
-					true, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
+					"",
+					function(req)
+					{
+				//call normal handler and return handler
+				activateSystemConfigHandler(req,true /*display errors*/);
+				if(doneHandler !== undefined) doneHandler(req);
+					},
+					0, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
 					true); //showLoadingOverlay
 		}
 		
@@ -6073,7 +6081,7 @@
 									"' " + //end style
 									"onclick='event.stopPropagation(); " +
 									"treeEditingNodeType_ = \"table-newGroupRow\";" +
-									"editTreeNodeOK();" +									
+									"editTreeNodeOK();" +
 									"'" +
 									">";
 							str += "Create a new Default Record in Group";
@@ -6145,6 +6153,7 @@
 						//select initial value
 						var sel = el.getElementsByTagName("select")[0];
 						var selId = el.getElementsByTagName("select")[1];
+						var telId = el.getElementsByTagName("input")[0];
 						sel.selectedIndex = optionIndex;	
 						if(linkToChoices.length)
 						{
@@ -6159,7 +6168,11 @@
 						//	handle change of dropdowns
 						function localLinkEditSelectOnChangeHandler() {
 							selectLinkTableName = sel.value;
-							selectLinkId = selId.value;
+							if(selId.style.display != "none")
+								selectLinkId = selId.value;
+							else //take from text edit input, this happens after a save when forced change is propagated
+								selectLinkId = telId.value;
+							
 							Debug.log("Select table changed: " + selectLinkTableName + 
 									" - " + selectLinkId);
 							localGetLinkToChoices(); //re-request the linkToChoices
@@ -7374,9 +7387,11 @@
 			//	save new version
 			//	update tree member table version based on result
 			//if saving groups
-			//	for each affected group
-			//		save member list but with tree table versions
-			//		modify root group name if changed
+			//	figure out group type and save/activate in this order:
+			//		config, context, backbone
+			//		for each affected group
+			//			save member list but with tree table versions
+			//			modify root group name if changed
 			//if saving aliases
 			//	for each alias
 			//		set alias for new group
@@ -7386,9 +7401,70 @@
 
 			var numberOfRequests = 0;
 			var numberOfReturns = 0;
-			var allRequestsSent = false;		
+			var allRequestsSent = false;
 			
-			//localHandleAffectedGroups ~~
+			//go through each tree member
+			//	if modified table
+			//		save new version
+			//		update tree member table version based on result
+			for(var j=0;j<treeMemberNames_.length;++j)
+				if((treeMemberVersions_[j]|0) < -1) //for each modified table
+				{
+					var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+							"&dataOffset=0&chunkSize=0" +  
+							"&configName=" + treeMemberNames_[j] + 
+							"&version="+treeMemberVersions_[j] +	
+							"&temporary=0" +
+							"&tableComment=" + treeMemberComments_[j] +
+							"&sourceTableAsIs=1"; 
+					Debug.log(reqStr);
+
+					++numberOfRequests;
+
+					//	save new version
+					///////////////////////////////////////////////////////////
+					DesktopContent.XMLHttpRequest(reqStr, "", 
+							function(req,treeMemberIndex) 
+							{
+						var err = DesktopContent.getXMLValue(req,"Error");
+						if(err) 
+						{					
+							Debug.log(err,Debug.HIGH_PRIORITY);
+
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);	
+							return;
+						}						
+
+						var configName = DesktopContent.getXMLValue(req,"savedName");
+						var version = DesktopContent.getXMLValue(req,"savedVersion");
+
+						Debug.log("Successfully created new table '" + configName + "-v" + 
+								version + "'",Debug.INFO_PRIORITY);
+
+						//update tree member table version based on result
+						treeMemberVersions_[treeMemberIndex] = version;					
+
+						++numberOfReturns;
+
+						//check if done saving tables
+						if(allRequestsSent && 
+								numberOfReturns == numberOfRequests)
+						{
+							localHandleAffectedGroups();							
+						}
+							},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					);	//end save new table request
+				}	//end modified table for loop
+			
+			allRequestsSent = true; //indicate last request was sent
+			
+			if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
+				localHandleAffectedGroups();
+
+			//=========================================
+			//localHandleAffectedGroups ~~ /////////////////////////////
 			function localHandleAffectedGroups()
 			{
 				Debug.log("Done with table saving.");
@@ -7424,48 +7500,16 @@
 				var affectedGroupEls = 
 						document.getElementsByClassName("popUpDialog-affectedGroups");
 				var affectedGroupCommentEls = 
-						document.getElementsByClassName("popUpDialog-groupComment-cache");						
+						document.getElementsByClassName("popUpDialog-groupComment-cache");	
 				
-//				// first organize by group type: config, context, backbone
-//				for(var i=0;i<affectedGroupEls.length;++i)
-//				{
-//					//save member list but with tree table versions
-//					Debug.log(affectedGroupEls[i].textContent);
-//					Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
-//
-//					var affectedArr = affectedGroupEls[i].textContent.split(','); 
-//
-//					//build member config map
-//					var configMap = "configList=";
-//					//member map starts after group name/key (i.e. [2])
-//					for(var a=2;a<affectedArr.length;a+=2)								
-//						if((affectedArr[a+1]|0) < -1) //there should be a new modified version
-//						{
-//							Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
-//							//find version
-//							for(var k=0;k<treeMemberNames_.length;++k)
-//								if(affectedArr[a] == treeMemberNames_[k])
-//								{
-//									Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
-//									configMap += affectedArr[a] + "," + 
-//											treeMemberVersions_[k] + ",";
-//									break;
-//								}
-//						}
-//						else //use existing version
-//							configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
-//
-//					affectedGroupNames.push(affectedArr[0]);
-//				}
+				var affectedGroupMemberMaps = []; //to be populated by initial group type loop, and used by save/activate loop
 				
-
-				numberOfRequests = 0;		//re-use
-				numberOfReturns = 0;		//re-use
-				allRequestsSent = false; 	//re-use
+				//organize by group type
+				var affectedConfigGroups = [];
+				var affectedContextGroups = [];
+				var affectedBackboneGroups = [];
 				
-				//	for each affected group
-				//		save and activate group..
-				//		do not allow next save/activate until previous is done
+				// first organize and order by group type: config, context, backbone
 				for(var i=0;i<affectedGroupEls.length;++i)
 				{
 					//save member list but with tree table versions
@@ -7494,51 +7538,20 @@
 						else //use existing version
 							configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
 
-					affectedGroupNames.push(affectedArr[0]);		
+					affectedGroupNames.push(affectedArr[0]);
+					affectedGroupMemberMaps.push(configMap);
+					
 					reqStr = ""; //reuse
-					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
-							"&groupName=" + affectedArr[0] +
-							"&allowDuplicates=1" +
-							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
-							"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
+					reqStr = "Request?RequestType=getConfigurationGroupType";
+							
 					Debug.log(reqStr);
 					Debug.log(configMap);
-
+					
 					++numberOfRequests;
 					///////////////////////////////////////////////////////////
 					DesktopContent.XMLHttpRequest(reqStr, configMap, 
-							function(req,treeMemberIndex) 
+							function(req,groupIndex) 
 							{
-
-						var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
-						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
-						if(treeErr) 
-						{	
-							Debug.log(treeErr,Debug.HIGH_PRIORITY);
-							Debug.log("There were problems identified in the tree view of the " +
-									"attempted new group '" +
-									attemptedNewGroupName +
-									"'.\nThe new group was not created.\n" +
-									"(Note: Other tables and groups may have been successfully created, " +
-									"and would have success indications below this error info)\n\n" +
-									"You can save the group anyway (if you think it is a good idea) by clicking " +
-									"the button in the pop-up dialog " +
-									"'<u>Save Groups with Warnings Ignored</u>.' " +
-									"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
-									"Below you will find the description of the problem:",																		
-									Debug.HIGH_PRIORITY);
-
-							//change dialog save button
-							var el = document.getElementById("popUpDialog-submitButton");
-							el.onmouseup = function() {
-								document.getElementById("popUpDialog-submitButton").disabled = true;
-								saveModifiedTree(1);								
-							};
-							el.value = "Save Groups with Warnings Ignored";
-							el.disabled = false;
-							return;
-						}
-
 						var err = DesktopContent.getXMLValue(req,"Error");
 						if(err) 
 						{					
@@ -7551,79 +7564,130 @@
 						}			
 
 						++numberOfReturns;
-
-						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
-						affectedGroupKeys.push(newGroupKey);
-
-						//need to modify root group name if changed
-						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 						
-						//activate if option was selected
-						if(activatingSavedGroups)
-							activateSystemConfig(attemptedNewGroupName,newGroupKey);
+						var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
+						Debug.log("groupType = " + groupType);
 						
-						//if this was root group, modify
-						if(rootGroupName == attemptedNewGroupName)
+						if(groupType == "Configuration")
+							affectedConfigGroups.push(groupIndex);
+						else if(groupType == "Context")
+							affectedContextGroups.push(groupIndex);
+						else if(groupType == "Backbone")
+							affectedBackboneGroups.push(groupIndex);
+						else
+						{	
+							Debug.log("Invalid Group Type determined '" + groupType +
+									".' This should not be possible - notify developers.",
+									Debug.HIGH_PRIORITY);
+
+							//kill popup dialog
+							var el = document.getElementById("popUpDialog"); 
+							if(el) el.parentNode.removeChild(el);	
+							return;
+						}	
+						
+						//check if done organizing groups
+						if(allRequestsSent && 
+								numberOfRequests == numberOfReturns)
 						{
-							//modify display and onlick for root group link
-							Debug.log("Modifying root group key");
-							var str = "";
-							str += "<div style='display:none'>" + rootGroupName + "</div>";
-							str += "<div style='display:none'>" + newGroupKey + "</div>";
-							str += rootGroupName + " (" + newGroupKey + ")";
-							rootGroupEl.innerHTML = str;
-							rootGroupEl.onclick = function() {
-								
-								var backLinkStr = "setupConfigGroupTreeView(\"" + 
-										rootGroupName + "\",\"" +
-										newGroupKey + "\");";
-								setupSpecificConfigGroup(rootGroupName,newGroupKey,
-										backLinkStr);
-								return false;
-							};
+							localSaveAndActivateGroups();
+						}
 							
-							//modify group details
+							},
+							i, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
+							true); //showLoadingOverlay
+					
+				}
+				
+				allRequestsSent = true; //indicate last request was sent
+				
+				//=========================================
+				//localSaveAndActivateGroups ~~ /////////////////////////////
+				function localSaveAndActivateGroups()
+				{
+					Debug.log("Done organizing groups by type.");
+					
+					//at this point we have all of the member maps
+					//	and groups organized by type
+					// 
+					// 	input arrays:
+					//		var affectedGroupMemberMaps					
+					//		//organize by group type
+					//		var affectedConfigGroups = [];
+					//		var affectedContextGroups = [];
+					//		var affectedBackboneGroups = [];
+					
+					numberOfRequests = 0;		//re-use
+					numberOfReturns = 0;		//re-use
+					allRequestsSent = false; 	//re-use
+					
+					// in order of config, context, backbone
+					//	for each affected group
+					//		save and activate group..
+					//		do not allow next save/activate until previous is done
+										
+					localSaveAndActivateGroup(0); //launch first save and activate
+					
+					//=========================================
+					//localSaveAndActivateGroups ~~ /////////////////////////////
+					//	orderedGroupListIndex is sequential index spanning
+					//		these arrays:
+					//		var affectedConfigGroups = [];
+					//		var affectedContextGroups = [];
+					//		var affectedBackboneGroups = [];					
+					function localSaveAndActivateGroup(orderedGroupListIndex)
+					{
+						//complete save and activate for group specified by 
+						//	orderedGroupListIndex
+						//	then launch next
+						
+						//find group index into affected group elements						
+						var offsetIndex = 0;
+						var i = -1;
+						
+						if(orderedGroupListIndex - offsetIndex < 
+								affectedConfigGroups.length)
+							i = affectedConfigGroups[orderedGroupListIndex - offsetIndex];
+						
+						if(i == -1)
+						{
+							offsetIndex += affectedConfigGroups.length;
+							
+							if(orderedGroupListIndex - offsetIndex < 
+									affectedContextGroups.length)
+								i = affectedContextGroups[orderedGroupListIndex - offsetIndex]
+						}
+						
+						if(i == -1)
+						{
+							offsetIndex += affectedContextGroups.length;
+							
+							if(orderedGroupListIndex - offsetIndex < 
+									affectedBackboneGroups.length)
+								i = affectedBackboneGroups[orderedGroupListIndex - offsetIndex]
+						}
+						
+						Debug.log("affectedGroupIndex " + i);
+						
+						//at this point i is the affectedGroupIndex						
+						
+						if(i == -1) //done, no more groups
+						{
+							Debug.log("Done with group saving. " + numberOfRequests + " saved.");
+							
+							allRequestsSent = true;
+							if(numberOfRequests == 0) //no groups to save
 							{
-								str = "";
-								str += "Root-Group Details:";
-								var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
-								groupComment = decodeURIComponent(groupComment);								
-								var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-								var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
-								groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
-								
-								str += "<table border='0' style='" +
-										"border: 1px solid #9c5e5e;" +
-										"margin: 5px 0 5px 30px;" +
-										"background-color: #d2c1c1;" +
-										"'>";
-								str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
-								str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
-								str += "<tr><th>Comment:</th><td>" + 
-										groupComment.replace(/\n/g , "<br>") + "</td></tr>";
-								str += "</table>";
-
-								document.getElementById("groupDetails").innerHTML = str;
+								//this could happen if editing tables with no current active groups
+								Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
+			
+								//kill popup dialog
+								var el = document.getElementById("popUpDialog"); 
+								if(el) el.parentNode.removeChild(el);
+								treeHasChanged(true); // reset
+								return;
 							}
 							
-							
-							//modify the activate link
-							rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
-							rootGroupEl.onclick = function() {
-								activateSystemConfig(rootGroupName,newGroupKey);
-								return false;
-							};
-							
-							//edit global key value
-							treeGroupKey_ = newGroupKey;
-						}
-
-						if(allRequestsSent && 
-								numberOfReturns == numberOfRequests)
-						{
-							Debug.log("Done with group saving.");
-
 							Debug.log("Moving on to Alias creation...");										
 
 							//check each alias checkbox
@@ -7647,13 +7711,17 @@
 							//for each set alias checkbox that is checked
 							//	modify the active group alias table one after the other
 
-							//localNextAliasHandler
+
+							localNextAliasHandler(); //set in motion
+							
+							//=============================
+							//localNextAliasHandler ~ //////////////////////////////////
 							//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
 							//	and send the next request to modify the activegroupAlias table
 							//	sequentially
 							function localNextAliasHandler(retParams) 
 							{
-								//first time there is no setAliasCheckboxIndex == -1
+								//first time there is no setAliasCheckboxIndex, it is -1
 								if(setAliasCheckboxIndex >= 0) 
 								{	
 									if(retParams)
@@ -7687,12 +7755,12 @@
 										if(el) el.parentNode.removeChild(el);	
 										return;
 									}	
-									
+
 									++setAliasCheckboxIndex; //req back, so ready for next index
 								}
 								else
 									setAliasCheckboxIndex = 0; //ready for first checkbox
-							
+
 								//get next affected group index			
 								while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
 										!setAliasCheckboxes[setAliasCheckboxIndex].checked)
@@ -7712,9 +7780,9 @@
 										treeHasChanged(true); // reset
 										return;
 									}
-									
+
 									Debug.log("Saving and activating Backbone done.");
-									
+
 									//kill popup dialog
 									var el = document.getElementById("popUpDialog"); 
 									if(el) el.parentNode.removeChild(el);	
@@ -7748,89 +7816,465 @@
 										true); //request return parameters		
 							}
 
-							localNextAliasHandler();
-
-							Debug.log("Aliases set in motion");
-
+							Debug.log("Aliases set in motion"); //so done with this thread						
 							return;
 						}
-
-							},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-					); //end save new group request								
-				} //end affected group for loop
-
-				allRequestsSent = true;
-				if(numberOfRequests == 0) //no groups to save
-				{
-					//this could happen if editing tables with no current active groups
-					Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
-
-					//kill popup dialog
-					var el = document.getElementById("popUpDialog"); 
-					if(el) el.parentNode.removeChild(el);
-					treeHasChanged(true); // reset
-				}
-			}	//end localHandleAffectedGroups
-			
-			
-			//go through each tree member
-			//	if modified table
-			//		save new version
-			//		update tree member table version based on result
-			for(var j=0;j<treeMemberNames_.length;++j)
-				if((treeMemberVersions_[j]|0) < -1) //for each modified table
-				{
-					var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
-							"&dataOffset=0&chunkSize=0" +  
-							"&configName=" + treeMemberNames_[j] + 
-							"&version="+treeMemberVersions_[j] +	
-							"&temporary=0" +
-							"&tableComment=" + treeMemberComments_[j] +
-							"&sourceTableAsIs=1"; 
-					Debug.log(reqStr);
-					
-					++numberOfRequests;
-					
-					//	save new version
-					///////////////////////////////////////////////////////////
-					DesktopContent.XMLHttpRequest(reqStr, "", 
-							function(req,treeMemberIndex) 
-							{
-						var err = DesktopContent.getXMLValue(req,"Error");
-						if(err) 
-						{					
-							Debug.log(err,Debug.HIGH_PRIORITY);
-							
-							//kill popup dialog
-							var el = document.getElementById("popUpDialog"); 
-							if(el) el.parentNode.removeChild(el);	
-							return;
-						}						
-
-						var configName = DesktopContent.getXMLValue(req,"savedName");
-						var version = DesktopContent.getXMLValue(req,"savedVersion");
-						
-						Debug.log("Successfully created new table '" + configName + "-v" + 
-								version + "'",Debug.INFO_PRIORITY);
-
-						//update tree member table version based on result
-						treeMemberVersions_[treeMemberIndex] = version;					
-						
-						++numberOfReturns;
-
-						if(allRequestsSent && 
-								numberOfReturns == numberOfRequests)
+						else
 						{
-							localHandleAffectedGroups();							
-						}
-							},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-					);	//end save new table request
-				}	//end modified table for loop
-			
-			allRequestsSent = true;
-			if(numberOfRequests == 0) //no requests were sent, so go on to affected groups
-				localHandleAffectedGroups();
-		}
+							//save/activate group i
+
+							//save member list but with tree table versions
+							Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
+
+							var configMap = affectedGroupMemberMaps[i];
+	
+							reqStr = ""; //reuse
+							reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+									"&groupName=" + affectedGroupNames[i] +
+									"&allowDuplicates=1" +
+									"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
+									"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
+							Debug.log("reqStr = " + reqStr);
+							Debug.log("configMap = " + configMap);
+
+							++numberOfRequests;
+							///////////////////////////////////////////////////////////
+							DesktopContent.XMLHttpRequest(reqStr, configMap, 
+									function(req) 
+									{
+
+								var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+								var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+								if(treeErr) 
+								{	
+									Debug.log(treeErr,Debug.HIGH_PRIORITY);
+									Debug.log("There were problems identified in the tree view of the " +
+											"attempted new group '" +
+											attemptedNewGroupName +
+											"'.\nThe new group was not created.\n" +
+											"(Note: Other tables and groups may have been successfully created, " +
+											"and would have success indications below this error info)\n\n" +
+											"You can save the group anyway (if you think it is a good idea) by clicking " +
+											"the button in the pop-up dialog " +
+											"'<u>Save Groups with Warnings Ignored</u>.' " +
+											"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+											"Below you will find the description of the problem:",																		
+											Debug.HIGH_PRIORITY);
+
+									//change dialog save button
+									var el = document.getElementById("popUpDialog-submitButton");
+									el.onmouseup = function() {
+										document.getElementById("popUpDialog-submitButton").disabled = true;
+										saveModifiedTree(1);								
+									};
+									el.value = "Save Groups with Warnings Ignored";
+									el.disabled = false;
+									return;
+								}
+
+								var err = DesktopContent.getXMLValue(req,"Error");
+								if(err) 
+								{					
+									Debug.log(err,Debug.HIGH_PRIORITY);
+
+									//kill popup dialog
+									var el = document.getElementById("popUpDialog"); 
+									if(el) el.parentNode.removeChild(el);	
+									return;
+								}			
+
+								++numberOfReturns;
+
+								var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+								affectedGroupKeys.push(newGroupKey);
+
+								//need to modify root group name if changed
+								Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+										" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
+								//activate if option was selected
+								if(activatingSavedGroups)
+									activateSystemConfig(attemptedNewGroupName,newGroupKey,false /*false to not ignore warnings*/,
+											function() //done handler
+											{
+									//save/activate is now done.. so proceed to next group
+									localSaveAndActivateGroup(orderedGroupListIndex+1);
+											});
+								else //save/activate is now done.. so proceed to next group									
+									localSaveAndActivateGroup(orderedGroupListIndex+1);
+
+								//last step:
+								//if this was root group in tree, modify tree display/links
+								if(rootGroupName == attemptedNewGroupName)
+								{
+									//modify display and onlick for root group link
+									Debug.log("Modifying root group key");
+									var str = "";
+									str += "<div style='display:none'>" + rootGroupName + "</div>";
+									str += "<div style='display:none'>" + newGroupKey + "</div>";
+									str += rootGroupName + " (" + newGroupKey + ")";
+									rootGroupEl.innerHTML = str;
+									rootGroupEl.onclick = function() {
+
+										var backLinkStr = "setupConfigGroupTreeView(\"" + 
+												rootGroupName + "\",\"" +
+												newGroupKey + "\");";
+										setupSpecificConfigGroup(rootGroupName,newGroupKey,
+												backLinkStr);
+										return false;
+									};
+
+									//modify group details
+									{
+										str = "";
+										str += "Root-Group Details:";
+										var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
+										groupComment = decodeURIComponent(groupComment);								
+										var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
+										var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
+										groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
+
+										str += "<table border='0' style='" +
+												"border: 1px solid #9c5e5e;" +
+												"margin: 5px 0 5px 30px;" +
+												"background-color: #d2c1c1;" +
+												"'>";
+										str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
+										str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
+										str += "<tr><th>Comment:</th><td>" + 
+												groupComment.replace(/\n/g , "<br>") + "</td></tr>";
+										str += "</table>";
+
+										document.getElementById("groupDetails").innerHTML = str;
+									}
+
+
+									//modify the activate link
+									rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
+									rootGroupEl.onclick = function() {
+										activateSystemConfig(rootGroupName,newGroupKey);
+										return false;
+									};
+
+									//edit global key value
+									treeGroupKey_ = newGroupKey;
+								}
+																
+
+									},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							); //end save new group request
+						} //end else case for saving group i 
+					} //localSaveAndActivateGroup()
+					
+					
+					
+					//for(var i=0;i<affectedGroupEls.length;++i)
+//					{
+//						//save member list but with tree table versions
+//						Debug.log(affectedGroupEls[i].textContent);
+//						Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
+//	
+//						var affectedArr = affectedGroupEls[i].textContent.split(','); 
+//	
+//						//build member config map
+//						var configMap = "configList=";
+//						//member map starts after group name/key (i.e. [2])
+//						for(var a=2;a<affectedArr.length;a+=2)								
+//							if((affectedArr[a+1]|0) < -1) //there should be a new modified version
+//							{
+//								Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
+//								//find version
+//								for(var k=0;k<treeMemberNames_.length;++k)
+//									if(affectedArr[a] == treeMemberNames_[k])
+//									{
+//										Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
+//										configMap += affectedArr[a] + "," + 
+//												treeMemberVersions_[k] + ",";
+//										break;
+//									}
+//							}
+//							else //use existing version
+//								configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
+//	
+//						affectedGroupNames.push(affectedArr[0]);		
+//						reqStr = ""; //reuse
+//						reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+//								"&groupName=" + affectedArr[0] +
+//								"&allowDuplicates=1" +
+//								"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
+//								"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
+//						Debug.log(reqStr);
+//						Debug.log(configMap);
+//	
+//						++numberOfRequests;
+//						///////////////////////////////////////////////////////////
+//						DesktopContent.XMLHttpRequest(reqStr, configMap, 
+//								function(req) 
+//								{
+//	
+//							var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+//							var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+//							if(treeErr) 
+//							{	
+//								Debug.log(treeErr,Debug.HIGH_PRIORITY);
+//								Debug.log("There were problems identified in the tree view of the " +
+//										"attempted new group '" +
+//										attemptedNewGroupName +
+//										"'.\nThe new group was not created.\n" +
+//										"(Note: Other tables and groups may have been successfully created, " +
+//										"and would have success indications below this error info)\n\n" +
+//										"You can save the group anyway (if you think it is a good idea) by clicking " +
+//										"the button in the pop-up dialog " +
+//										"'<u>Save Groups with Warnings Ignored</u>.' " +
+//										"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
+//										"Below you will find the description of the problem:",																		
+//										Debug.HIGH_PRIORITY);
+//	
+//								//change dialog save button
+//								var el = document.getElementById("popUpDialog-submitButton");
+//								el.onmouseup = function() {
+//									document.getElementById("popUpDialog-submitButton").disabled = true;
+//									saveModifiedTree(1);								
+//								};
+//								el.value = "Save Groups with Warnings Ignored";
+//								el.disabled = false;
+//								return;
+//							}
+//	
+//							var err = DesktopContent.getXMLValue(req,"Error");
+//							if(err) 
+//							{					
+//								Debug.log(err,Debug.HIGH_PRIORITY);
+//	
+//								//kill popup dialog
+//								var el = document.getElementById("popUpDialog"); 
+//								if(el) el.parentNode.removeChild(el);	
+//								return;
+//							}			
+//	
+//							++numberOfReturns;
+//	
+//							var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+//							affectedGroupKeys.push(newGroupKey);
+//	
+//							//need to modify root group name if changed
+//							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+//									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+//							
+//							//activate if option was selected
+//							if(activatingSavedGroups)
+//								activateSystemConfig(attemptedNewGroupName,newGroupKey);
+//							
+//							//if this was root group, modify
+//							if(rootGroupName == attemptedNewGroupName)
+//							{
+//								//modify display and onlick for root group link
+//								Debug.log("Modifying root group key");
+//								var str = "";
+//								str += "<div style='display:none'>" + rootGroupName + "</div>";
+//								str += "<div style='display:none'>" + newGroupKey + "</div>";
+//								str += rootGroupName + " (" + newGroupKey + ")";
+//								rootGroupEl.innerHTML = str;
+//								rootGroupEl.onclick = function() {
+//									
+//									var backLinkStr = "setupConfigGroupTreeView(\"" + 
+//											rootGroupName + "\",\"" +
+//											newGroupKey + "\");";
+//									setupSpecificConfigGroup(rootGroupName,newGroupKey,
+//											backLinkStr);
+//									return false;
+//								};
+//								
+//								//modify group details
+//								{
+//									str = "";
+//									str += "Root-Group Details:";
+//									var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
+//									groupComment = decodeURIComponent(groupComment);								
+//									var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
+//									var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
+//									groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
+//									
+//									str += "<table border='0' style='" +
+//											"border: 1px solid #9c5e5e;" +
+//											"margin: 5px 0 5px 30px;" +
+//											"background-color: #d2c1c1;" +
+//											"'>";
+//									str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
+//									str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
+//									str += "<tr><th>Comment:</th><td>" + 
+//											groupComment.replace(/\n/g , "<br>") + "</td></tr>";
+//									str += "</table>";
+//	
+//									document.getElementById("groupDetails").innerHTML = str;
+//								}
+//								
+//								
+//								//modify the activate link
+//								rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
+//								rootGroupEl.onclick = function() {
+//									activateSystemConfig(rootGroupName,newGroupKey);
+//									return false;
+//								};
+//								
+//								//edit global key value
+//								treeGroupKey_ = newGroupKey;
+//							}
+//	
+//							if(allRequestsSent && 
+//									numberOfReturns == numberOfRequests)
+//							{
+//								Debug.log("Done with group saving.");
+//	
+//								Debug.log("Moving on to Alias creation...");										
+//	
+//								//check each alias checkbox
+//								//	for each alias that is checked
+//								//		set alias for new group
+//								//if any aliases modified, save and activate backbone
+//	
+//								//get checkboxes
+//								var setAliasCheckboxes = 
+//										document.getElementsByClassName("popUpDialog-setGroupAlias");
+//	
+//								var groupAlias, groupName, groupKey;
+//								var setAliasCheckboxIndex = -1;
+//								var groupAliasName, groupAliasVersion;
+//	
+//								//in order to set alias, we need:
+//								//	groupAlias
+//								//	groupName
+//								//	groupKey				
+//	
+//								//for each set alias checkbox that is checked
+//								//	modify the active group alias table one after the other
+//	
+//								//localNextAliasHandler
+//								//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
+//								//	and send the next request to modify the activegroupAlias table
+//								//	sequentially
+//								function localNextAliasHandler(retParams) 
+//								{
+//									//first time there is no setAliasCheckboxIndex == -1
+//									if(setAliasCheckboxIndex >= 0) 
+//									{	
+//										if(retParams)
+//										{
+//											if(retParams.newBackbone)
+//												Debug.log("Successfully modified the active Backbone group " +
+//														" to set the System Alias '" + groupAlias + "' to " +
+//														" refer to the current group '" + groupName + 
+//														" (" + groupKey + ").'" +
+//														"\n\n" +
+//														"Backbone group '" + retParams.groupName + " (" + 
+//														retParams.groupKey + ")' was created and activated.",
+//														Debug.INFO_PRIORITY);
+//											else
+//												Debug.log("Success, but no need to create a new Backbone group. " +
+//														"An existing Backbone group " +
+//														" already has the System Alias '" + groupAlias + "' " +
+//														" referring to the current group '" + groupName + 
+//														" (" + groupKey + ").'" +
+//														"\n\n" +
+//														"Backbone group '" + retParams.groupName + " (" + 
+//														retParams.groupKey + ")' was activated.",
+//														Debug.INFO_PRIORITY);
+//										}
+//										else
+//										{										
+//											Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
+//	
+//											//kill popup dialog
+//											var el = document.getElementById("popUpDialog"); 
+//											if(el) el.parentNode.removeChild(el);	
+//											return;
+//										}	
+//										
+//										++setAliasCheckboxIndex; //req back, so ready for next index
+//									}
+//									else
+//										setAliasCheckboxIndex = 0; //ready for first checkbox
+//								
+//									//get next affected group index			
+//									while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
+//											!setAliasCheckboxes[setAliasCheckboxIndex].checked)
+//										Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
+//	
+//									if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
+//									{
+//										Debug.log("Done with alias checkboxes ");
+//	
+//										if(!retParams)//req) 
+//										{
+//											Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
+//	
+//											//kill popup dialog
+//											var el = document.getElementById("popUpDialog"); 
+//											if(el) el.parentNode.removeChild(el);
+//											treeHasChanged(true); // reset
+//											return;
+//										}
+//										
+//										Debug.log("Saving and activating Backbone done.");
+//										
+//										//kill popup dialog
+//										var el = document.getElementById("popUpDialog"); 
+//										if(el) el.parentNode.removeChild(el);	
+//										treeHasChanged(true); // reset
+//										return;	
+//									}	
+//	
+//									//get next alias
+//									{
+//										var el = document.getElementById("popUpDialog-editAliasSelect-" +
+//												setAliasCheckboxIndex);
+//										if(el.style.display == "none")
+//										{
+//											//get value from text box
+//											el = document.getElementById("popUpDialog-editAliasTextBox-" + 
+//													setAliasCheckboxIndex);					
+//										}
+//										groupAlias = el.value;
+//									}
+//	
+//									groupName = affectedGroupNames[setAliasCheckboxIndex];
+//									groupKey = affectedGroupKeys[setAliasCheckboxIndex];
+//	
+//									Debug.log("groupAlias = " + groupAlias);
+//									Debug.log("groupName = " + groupName);
+//									Debug.log("groupKey = " + groupKey);
+//	
+//									ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
+//											"TreeEditWiz",
+//											localNextAliasHandler,										
+//											true); //request return parameters		
+//								}
+//	
+//								localNextAliasHandler();
+//	
+//								Debug.log("Aliases set in motion");
+//	
+//								return;
+//							}
+//	
+//								},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+//						); //end save new group request								
+//					} //end affected group for loop
+//	
+//					allRequestsSent = true;
+//					if(numberOfRequests == 0) //no groups to save
+//					{
+//						//this could happen if editing tables with no current active groups
+//						Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
+//	
+//						//kill popup dialog
+//						var el = document.getElementById("popUpDialog"); 
+//						if(el) el.parentNode.removeChild(el);
+//						treeHasChanged(true); // reset
+//					}
+				} //end localSaveAndActivateGroups()
+			} //end localHandleAffectedGroups()			
+		} //end saveModifiedTree()
 		
 		//treeHasChanged ~~
 		function treeHasChanged(reset)
@@ -7897,376 +8341,6 @@
 				//local initial variables can be used by continuation edit types 
 				//	if globals are temporarily modified
 				var initTargetTable = treeEditingTargetTable_;
-
-				///////////////////////////////////////////////
-				//localEditTreeNodeOKRequestsComplete
-				function localEditTreeNodeOKRequestsComplete(tableIndex,newValue)
-				{			
-
-					//some types should be handled before cell is cleared
-					//	e.g. for continuation of editing, like "table-newGroupRow"
-					//	and "table-newUIDRow"
-					if(treeEditingNodeType_ == "table-newGroupRow") //spawns from group link edit)
-					{					
-						//clear children and re-toggle if shown	
-						//then 
-						//reselect target edit node
-
-						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeIdString_);
-						var wasDisplayed = elChildrenNode.style.display != "none" && 
-								elChildrenNode.innerHTML != "";
-
-						toggleTreeChildren(
-								treeEditingNodeIdString_.split('-')[0],
-								treeEditingNodeIdString_.split('-')[1],false);
-						elChildrenNode.innerHTML = "";
-
-						if(wasDisplayed)
-							toggleTreeChildren(
-									treeEditingNodeIdString_.split('-')[0],
-									treeEditingNodeIdString_.split('-')[1],true);
-
-						//reload members in multiselect
-						_editingCellEl.getElementsByTagName("select")[0].onchange();										
-						return;
-					}
-					else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
-					{	
-						//reload members uid dropdown
-						_editingCellEl.getElementsByTagName("select")[0].onchange();										
-						return;					
-					}
-
-
-					// all other types are clearing the cell
-
-					_editingCellEl.innerHTML = "";
-
-
-					if(treeEditingNodeType_ == "table")
-					{
-						treeMemberComments_[tableIndex] = newValue;
-						_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
-					}						
-					else if(treeEditingNodeType_ == "table-newRow")
-					{
-						//replace the value that was erased with table name
-						_editingCellEl.appendChild(document.createTextNode(treeEditingTargetTable_));
-
-						//reset children
-						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
-								treeEditingNodeIdString_.split('-')[1],false);
-						document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeIdString_).innerHTML = "";
-						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
-								treeEditingNodeIdString_.split('-')[1],true);
-					}
-					else if(treeEditingNodeType_ == "uid")
-					{
-						//modify display and nodename with new value
-						_editingCellEl.appendChild(document.createTextNode(newValue)); 
-
-						var el = document.getElementById("treeNode-nodeName-" + 
-								treeEditingNodeIdString_);
-						el.innerHTML = "";
-						el.appendChild(document.createTextNode(newValue));
-
-						//clear children,
-						//and if children were displayed
-						//		then toggle/show new children 
-						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeIdString_);
-						var wasDisplayed = elChildrenNode.style.display != "none" && 
-								elChildrenNode.innerHTML != "";
-
-						toggleTreeChildren(
-								treeEditingNodeDepth_,
-								treeEditingNodeIdString_.split('-')[1],false);
-						elChildrenNode.innerHTML = "";
-
-						if(wasDisplayed)
-							toggleTreeChildren(
-									treeEditingNodeDepth_,
-									treeEditingNodeIdString_.split('-')[1],true);
-					}
-					else if(treeEditingNodeType_ == "delete-uid")
-					{
-						//reset parent children is enough
-						//	correct response should come from server
-
-
-
-						//var el = document.getElementById("treeNode-" + treeEditingNodeIdString_);
-						var pel = document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeParentIdString_);
-
-						//pel.removeChild(el);
-
-						//reset parent children
-						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
-								treeEditingNodeParentIdString_.split('-')[1],false);
-						pel.innerHTML = "";
-						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
-								treeEditingNodeParentIdString_.split('-')[1],true);
-
-					}
-					else if(treeEditingNodeType_.indexOf("link-") == 0)
-					{
-						//change link table/id and clear children
-						//and edit peripheral link info
-
-						var csvArr = newValue.split(',');
-						var linkTable = csvArr[0];
-						var linkId = csvArr[1];
-						newValue = 							
-								"-(" + 
-								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
-						//add as text node first in case not html safe
-						_editingCellEl.appendChild(document.createTextNode(newValue));
-						//then add html piece
-						newValue = _editingCellEl.innerHTML;
-						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
-								treeEditingTargetColumn_ + 
-								"</label>" +
-								newValue;
-						_editingCellEl.innerHTML = newValue;
-
-						{	//change link table name
-							var el; 
-							el = document.getElementById("treeNode-linkTableName-" + 
-									treeEditingNodeIdString_);
-							el.innerHTML = "";
-							el.appendChild(document.createTextNode(linkTable)); 
-						}
-
-						var retVal = getTreeViewTableStrings(linkTable);
-						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
-						var tableComment = retVal.tableComment;
-						var tableTitle = retVal.tableTitle;
-
-						//change element title
-						_editingCellEl.title = tableTitle;
-
-						{	//change link table comment
-							var el; 
-							el = document.getElementById("treeNode-TableComment-" + 
-									treeEditingNodeIdString_);
-							el.innerHTML = "";
-							if(tableComment != "")
-								el.appendChild(document.createTextNode("//" + tableComment)); 
-						}
-
-						if(treeNavContextMenuItemHandlers.length == 0)
-						{
-							//no context menu items found
-							//assume DISCONNECTED!
-
-							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
-
-							newValue += "-" + 
-									"<label style='color:red;font-weight:bold;'>" +
-									"DISCONNECTED" +
-									"</label>";
-							_editingCellEl.innerHTML = newValue;
-							
-							//if disconnected from edit, show tooltip
-							tableLinkTooltip();
-						}
-						else
-						{ 	//change context menu for table link							
-
-							var el; 
-							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-									treeEditingNodeIdString_);
-							var str = "";
-							str += 
-									"<div class='treeNode-Link' " + //start treeNode Link div
-									"onmousedown='" + // start link onmousedown	
-									"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
-									"[";
-
-							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-							{
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//need to escape all quotes by one more level
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-								if(j != treeNavContextMenuItemHandlers.length-1)
-									str += ",";
-							}
-							str += "]" + //end treeNavContextMenuItemHandlers array
-									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-									"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
-							str += 
-									"' " + // end link onmousedown
-									//"onmouseup='" + onmouseupJS + "' " +
-									">" +	
-									"<div class='gotoNavDiv'></div>" +			
-									"</div>"; //end treeNode Link div
-
-							el.innerHTML = str;
-						}
-
-						//clear children,
-						//and if children were displayed
-						//		then toggle/show new children 
-						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeIdString_);
-						var wasDisplayed = elChildrenNode.style.display != "none" && 
-								elChildrenNode.innerHTML != "";
-
-						toggleTreeChildren(
-								treeEditingNodeDepth_,
-								treeEditingNodeIdString_.split('-')[1],false);
-						elChildrenNode.innerHTML = "";
-
-						if(wasDisplayed)
-							toggleTreeChildren(
-									treeEditingNodeDepth_,
-									treeEditingNodeIdString_.split('-')[1],true);
-					}
-					else if(treeEditingNodeType_ == "value" || 
-							treeEditingNodeType_ == "value-bitmap")
-					{
-						//if(treeEditingNodeType_ == "MultilineData")
-						//MultilineData and normal
-						//normal data
-						//bitmap data (do nothing would be ok, value already set)
-						_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
-
-					}
-					else if(treeEditingNodeType_ == "value-bool")
-					{
-						var str = "";
-
-						//colorize true false														
-						str += "<div style='float:left'>";										
-						str += newValue;											
-						str += "</div>";
-
-						var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
-								"rgb(16, 204, 16)":"rgb(255, 0, 0);";
-						str += "<div style='width:10px;height:10px;" +
-								"background-color:" + color + ";" +
-								"float: left;" +
-								"border-radius: 7px;" +
-								"border: 2px solid white;" +
-								"margin: 2px 0 0 6px;" +								
-								"'></div>"; 
-						_editingCellEl.innerHTML = str;
-					}			
-					else if(treeEditingNodeType_ == "value-groupid")
-					{					
-						//if parent is a link (depth != 2)
-						//	then if no longer in group
-						//		then delete from group
-						//		if no more children, say no children
-						//	else just change value
-						//else
-						//	change value 
-
-						if(treeEditingNodeDepth_ != 2)
-						{
-							//check if in group still:
-							//	get LINKID of groupid
-							//	get LINKID of parent group link
-							//	if not matching link
-							//		just change value (still in group) and done						
-							//	if matching LINKIDs
-							//		check if still in group .. 
-							//		(could be separated by | and stil in group)
-
-							var parentLinkIndex = 
-									document.getElementById("treeNode-childLinkIndex-" + 
-											(document.getElementById("treeNode-ParentId-" + 
-													treeEditingNodeParentIdString_).textContent)).textContent;
-
-							var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
-
-							//if value-groupid node, link index is last in element class name
-							var colType = vel.className.split(' ')[1];
-							var selfLinkIndex = colType.substr(
-									("treeNode-ValueType-GroupID").length);
-
-							var groupId = document.getElementById("treeNode-Value-" + 
-									((document.getElementById("treeNode-ParentId-" + 
-											treeEditingNodeParentIdString_).textContent))).textContent;
-							groupId = groupId.split('=')[1].substr(1); //get after =
-							groupId = groupId.substr(0,groupId.length-1); //remove ending )
-
-							Debug.log("parentLinkIndex = " + parentLinkIndex);
-							Debug.log("selfLinkIndex = " + selfLinkIndex);
-							Debug.log("groupId = " + groupId);
-
-							if(parentLinkIndex != selfLinkIndex) //no match
-							{
-								//just change value (still in group) and done	
-								_editingCellEl.appendChild(document.createTextNode(newValue));
-							}
-							else //matching link ids
-							{
-								var groupIds = newValue.split('|');
-								var stillInGroup = false;
-								for(var i=0;i<groupIds.length;++i)								
-									if(groupIds[i].trim() == groupId)
-									{
-										Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
-										stillInGroup = true;
-										break;
-									}
-
-								if(stillInGroup)
-									_editingCellEl.appendChild(document.createTextNode(newValue));
-								else // remove from group
-								{
-									//need to remove parent 'treeNode' from 
-									//	parent-of-parent childrenNode: 
-									var parentTreeNode = document.getElementById("treeNode-" + 
-											treeEditingNodeParentIdString_);
-									var popChildrenNode = parentTreeNode.parentNode;
-									popChildrenNode.removeChild(parentTreeNode);
-
-									//if no more children, say so
-									var popChildren = popChildrenNode.getElementsByClassName("treeNode");
-									if(popChildren.length == 0)
-									{
-										var str = "";
-										str += 
-												"<div class='treeNode'> " +
-												"<div class='treeNode-Connection'></div>" +
-												"<div class='treeNode-Value'>";
-
-										str += "No Children Nodes Found.";
-
-										str += "</div>" + //end treeNode Value div		
-												"</div>" + //end treeNode div							
-												"<div id='clearDiv'></div>"; 
-										popChildrenNode.innerHTML = str;
-									}
-								}
-							}						
-						}
-						else
-							_editingCellEl.appendChild(document.createTextNode(newValue));
-					}
-					else	//unrecognized type!?
-					{
-						Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
-						editCellCancel(); return;
-					}
-
-					//requests are done, so end editing
-					_editingCell = false;
-					_editingCellEl = 0;
-				} //end localEditTreeNodeOKRequestsComplete
-				///////////////////////////////////////////////
-
 
 				if(
 						treeEditingNodeType_ == "table" || 
@@ -8364,14 +8438,23 @@
 
 						//make csv newValue := linkIndex,linkID,newRowUID
 
+						//start with linkIndex
 						newValue = document.getElementById("treeNode-childLinkIndex-" + 
 								treeEditingNodeIdString_).textContent;
 						
 						//add linkID
 						newValue += ",";		
 						sel = _editingCellEl.getElementsByTagName("select")[1];
-						if(sel.selectedIndex >= 0) //if valid
-							newValue += sel.options[sel.selectedIndex].value;
+						if(sel.style.display != "none") //if select box is visible 
+						{							
+							if(sel.selectedIndex >= 0) //if valid
+								newValue += sel.options[sel.selectedIndex].value;
+						}
+						else //take linkId from text edit box
+						{
+							sel = _editingCellEl.getElementsByTagName("input")[0];
+							newValue += encodeURIComponent(sel.value.trim());							
+						}
 
 						//add newRowUID
 						newValue += ",";	
@@ -8592,6 +8675,378 @@
 				//withhold ending edit until after request completes
 				//			_editingCell = false;
 				//			_editingCellEl = 0;	
+				
+				
+				///////////////////////////////////////////////
+				//localEditTreeNodeOKRequestsComplete
+				//	called after successful edit req return
+				function localEditTreeNodeOKRequestsComplete(tableIndex,newValue)
+				{			
+
+					//some types should be handled before cell is cleared
+					//	e.g. for continuation of editing, like "table-newGroupRow"
+					//	and "table-newUIDRow"
+					if(treeEditingNodeType_ == "table-newGroupRow") //spawns from group link edit)
+					{					
+						//clear children and re-toggle if shown	
+						//then 
+						//reselect target edit node
+
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_);
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
+
+						toggleTreeChildren(
+								treeEditingNodeIdString_.split('-')[0],
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
+
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeIdString_.split('-')[0],
+									treeEditingNodeIdString_.split('-')[1],true);
+
+						//reload members in multiselect
+						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						return;
+					}
+					else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
+					{	
+						//reload members uid dropdown
+						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						return;					
+					}
+
+
+					// all other types are clearing the cell
+
+					_editingCellEl.innerHTML = "";
+
+
+					if(treeEditingNodeType_ == "table")
+					{
+						treeMemberComments_[tableIndex] = newValue;
+						_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
+					}						
+					else if(treeEditingNodeType_ == "table-newRow")
+					{
+						//replace the value that was erased with table name
+						_editingCellEl.appendChild(document.createTextNode(treeEditingTargetTable_));
+
+						//reset children
+						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
+								treeEditingNodeIdString_.split('-')[1],false);
+						document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_).innerHTML = "";
+						toggleTreeChildren(treeEditingNodeIdString_.split('-')[0],
+								treeEditingNodeIdString_.split('-')[1],true);
+					}
+					else if(treeEditingNodeType_ == "uid")
+					{
+						//modify display and nodename with new value
+						_editingCellEl.appendChild(document.createTextNode(newValue)); 
+
+						var el = document.getElementById("treeNode-nodeName-" + 
+								treeEditingNodeIdString_);
+						el.innerHTML = "";
+						el.appendChild(document.createTextNode(newValue));
+
+						//clear children,
+						//and if children were displayed
+						//		then toggle/show new children 
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_);
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
+
+						toggleTreeChildren(
+								treeEditingNodeDepth_,
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
+
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeDepth_,
+									treeEditingNodeIdString_.split('-')[1],true);
+					}
+					else if(treeEditingNodeType_ == "delete-uid")
+					{
+						//reset parent children is enough
+						//	correct response should come from server
+
+
+
+						//var el = document.getElementById("treeNode-" + treeEditingNodeIdString_);
+						var pel = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeParentIdString_);
+
+						//pel.removeChild(el);
+
+						//reset parent children
+						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+								treeEditingNodeParentIdString_.split('-')[1],false);
+						pel.innerHTML = "";
+						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
+								treeEditingNodeParentIdString_.split('-')[1],true);
+
+					}
+					else if(treeEditingNodeType_.indexOf("link-") == 0)
+					{
+						//change link table/id and clear children
+						//and edit peripheral link info
+
+						var csvArr = newValue.split(',');
+						var linkTable = csvArr[0];
+						var linkId = csvArr[1];
+						newValue = 							
+								"-(" + 
+								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
+						//add as text node first in case not html safe
+						_editingCellEl.appendChild(document.createTextNode(newValue));
+						//then add html piece
+						newValue = _editingCellEl.innerHTML;
+						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+								treeEditingTargetColumn_ + 
+								"</label>" +
+								newValue;
+						_editingCellEl.innerHTML = newValue;
+
+						{	//change link table name
+							var el; 
+							el = document.getElementById("treeNode-linkTableName-" + 
+									treeEditingNodeIdString_);
+							el.innerHTML = "";
+							el.appendChild(document.createTextNode(linkTable)); 
+						}
+
+						var retVal = getTreeViewTableStrings(linkTable);
+						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
+						var tableComment = retVal.tableComment;
+						var tableTitle = retVal.tableTitle;
+
+						//change element title
+						_editingCellEl.title = tableTitle;
+
+						{	//change link table comment
+							var el; 
+							el = document.getElementById("treeNode-TableComment-" + 
+									treeEditingNodeIdString_);
+							el.innerHTML = "";
+							if(tableComment != "")
+								el.appendChild(document.createTextNode("//" + tableComment)); 
+						}
+
+						if(treeNavContextMenuItemHandlers.length == 0)
+						{
+							//no context menu items found
+							//assume DISCONNECTED!
+
+							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
+
+							newValue += "-" + 
+									"<label style='color:red;font-weight:bold;'>" +
+									"DISCONNECTED" +
+									"</label>";
+							_editingCellEl.innerHTML = newValue;
+
+							//if disconnected from edit, show tooltip
+							tableLinkTooltip();
+						}
+						else
+						{ 	//change context menu for table link							
+
+							var el; 
+							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+									treeEditingNodeIdString_);
+							var str = "";
+							str += 
+									"<div class='treeNode-Link' " + //start treeNode Link div
+									"onmousedown='" + // start link onmousedown	
+									"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+									"[";
+
+							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+							{
+								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+								//need to escape all quotes by one more level
+								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+								if(j != treeNavContextMenuItemHandlers.length-1)
+									str += ",";
+							}
+							str += "]" + //end treeNavContextMenuItemHandlers array
+									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+									"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+							str += 
+									"' " + // end link onmousedown
+									//"onmouseup='" + onmouseupJS + "' " +
+									">" +	
+									"<div class='gotoNavDiv'></div>" +			
+									"</div>"; //end treeNode Link div
+
+							el.innerHTML = str;
+						}
+
+						//clear children,
+						//and if children were displayed
+						//		then toggle/show new children 
+						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+								treeEditingNodeIdString_);
+						var wasDisplayed = elChildrenNode.style.display != "none" && 
+								elChildrenNode.innerHTML != "";
+
+						toggleTreeChildren(
+								treeEditingNodeDepth_,
+								treeEditingNodeIdString_.split('-')[1],false);
+						elChildrenNode.innerHTML = "";
+
+						if(wasDisplayed)
+							toggleTreeChildren(
+									treeEditingNodeDepth_,
+									treeEditingNodeIdString_.split('-')[1],true);
+					}
+					else if(treeEditingNodeType_ == "value" || 
+							treeEditingNodeType_ == "value-bitmap")
+					{
+						//if(treeEditingNodeType_ == "MultilineData")
+						//MultilineData and normal
+						//normal data
+						//bitmap data (do nothing would be ok, value already set)
+						_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue)));
+
+					}
+					else if(treeEditingNodeType_ == "value-bool")
+					{
+						var str = "";
+
+						//colorize true false														
+						str += "<div style='float:left'>";										
+						str += newValue;											
+						str += "</div>";
+
+						var color = (newValue == "On" || newValue == "Yes" || newValue == "True")?
+								"rgb(16, 204, 16)":"rgb(255, 0, 0);";
+						str += "<div style='width:10px;height:10px;" +
+								"background-color:" + color + ";" +
+								"float: left;" +
+								"border-radius: 7px;" +
+								"border: 2px solid white;" +
+								"margin: 2px 0 0 6px;" +								
+								"'></div>"; 
+						_editingCellEl.innerHTML = str;
+					}			
+					else if(treeEditingNodeType_ == "value-groupid")
+					{					
+						//if parent is a link (depth != 2)
+						//	then if no longer in group
+						//		then delete from group
+						//		if no more children, say no children
+						//	else just change value
+						//else
+						//	change value 
+
+						if(treeEditingNodeDepth_ != 2)
+						{
+							//check if in group still:
+							//	get LINKID of groupid
+							//	get LINKID of parent group link
+							//	if not matching link
+							//		just change value (still in group) and done						
+							//	if matching LINKIDs
+							//		check if still in group .. 
+							//		(could be separated by | and stil in group)
+
+							var parentLinkIndex = 
+									document.getElementById("treeNode-childLinkIndex-" + 
+											(document.getElementById("treeNode-ParentId-" + 
+													treeEditingNodeParentIdString_).textContent)).textContent;
+
+							var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
+
+							//if value-groupid node, link index is last in element class name
+							var colType = vel.className.split(' ')[1];
+							var selfLinkIndex = colType.substr(
+									("treeNode-ValueType-GroupID").length);
+
+							var groupId = document.getElementById("treeNode-Value-" + 
+									((document.getElementById("treeNode-ParentId-" + 
+											treeEditingNodeParentIdString_).textContent))).textContent;
+							groupId = groupId.split('=')[1].substr(1); //get after =
+							groupId = groupId.substr(0,groupId.length-1); //remove ending )
+
+							Debug.log("parentLinkIndex = " + parentLinkIndex);
+							Debug.log("selfLinkIndex = " + selfLinkIndex);
+							Debug.log("groupId = " + groupId);
+
+							if(parentLinkIndex != selfLinkIndex) //no match
+							{
+								//just change value (still in group) and done	
+								_editingCellEl.appendChild(document.createTextNode(newValue));
+							}
+							else //matching link ids
+							{
+								var groupIds = newValue.split('|');
+								var stillInGroup = false;
+								for(var i=0;i<groupIds.length;++i)								
+									if(groupIds[i].trim() == groupId)
+									{
+										Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
+										stillInGroup = true;
+										break;
+									}
+
+								if(stillInGroup)
+									_editingCellEl.appendChild(document.createTextNode(newValue));
+								else // remove from group
+								{
+									//need to remove parent 'treeNode' from 
+									//	parent-of-parent childrenNode: 
+									var parentTreeNode = document.getElementById("treeNode-" + 
+											treeEditingNodeParentIdString_);
+									var popChildrenNode = parentTreeNode.parentNode;
+									popChildrenNode.removeChild(parentTreeNode);
+
+									//if no more children, say so
+									var popChildren = popChildrenNode.getElementsByClassName("treeNode");
+									if(popChildren.length == 0)
+									{
+										var str = "";
+										str += 
+												"<div class='treeNode'> " +
+												"<div class='treeNode-Connection'></div>" +
+												"<div class='treeNode-Value'>";
+
+										str += "No Children Nodes Found.";
+
+										str += "</div>" + //end treeNode Value div		
+												"</div>" + //end treeNode div							
+												"<div id='clearDiv'></div>"; 
+										popChildrenNode.innerHTML = str;
+									}
+								}
+							}						
+						}
+						else
+							_editingCellEl.appendChild(document.createTextNode(newValue));
+					}
+					else	//unrecognized type!?
+					{
+						Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
+						editCellCancel(); return;
+					}
+
+					//requests are done, so end editing
+					_editingCell = false;
+					_editingCellEl = 0;
+				} //end localEditTreeNodeOKRequestsComplete
+				///////////////////////////////////////////////
+				
 
 			}
 			catch(e)

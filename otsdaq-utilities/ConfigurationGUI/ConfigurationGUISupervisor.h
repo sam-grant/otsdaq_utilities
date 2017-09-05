@@ -56,6 +56,7 @@ private:
     void 			handleVersionAliasesXML						(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleConfigurationGroupsXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr);
     void 			handleGetConfigurationGroupXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, ConfigurationGroupKey groupKey);
+    void 			handleGetConfigurationGroupTypeXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configList);
     void			handleCreateConfigurationGroupXML			(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &groupName, const std::string &configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string &groupComment = "");
 
     void 			handleConfigurationsXML						(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, bool allowIllegalColumns);
@@ -74,7 +75,7 @@ private:
     void 			handleGetAffectedGroupsXML					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &rootGroupName, const ConfigurationGroupKey &rootGroupKey, const std::string &modifiedTables);
     void			handleGetLinkToChoicesXML					(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &linkToTableName, const ConfigurationVersion &linkToTableVersion, const std::string &linkIdType, const std::string &linkIndex, const std::string &linkInitId);
 
-    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryModifiedVersion);
+    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument &xmldoc, ConfigurationManagerRW *cfgMgr, const std::string &configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase * config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false);
 
 
     void testXDAQContext(); //for debugging
