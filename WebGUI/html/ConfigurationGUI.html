@@ -124,6 +124,16 @@
 			border-left: 		1px solid rgb(181, 170, 210);
 		}
 		
+		.treeNode-LinkColumnNameLabel {
+			color:rgb(65, 86, 146);
+			font-weight:bold;
+		}
+		
+		.treeNode-LinkDisconnectedLabel {
+			color:red;
+			font-weight:bold;
+		}
+		
 		#activateConfigWithWarnings {
 			margin-top: 10px;
 		    font-size: 14px;
@@ -201,6 +211,8 @@
 
 		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
 		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
+		var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
+		var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
 		
 		var _SCRATCH_VIEW_NAME = "Scratch-View";
 		var _MOCKUP_VIEW_NAME = "Mockup-View";
@@ -375,7 +387,7 @@
 			//treeViewGroupMemberEditMultiSelectHandler(sel) 
 			//handleEditTreeGroupIDEditFreeformToggle()
 		
-			//changeLinkTableName(targetEl,idString,linkTableName,linkId,tableComment,menuItems,menuItemHandlers)
+			//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)			
 		//end tree-view focused
 		
 			//selectThisCell(r,c,el,event)
@@ -445,7 +457,7 @@
 			//evaluateJS(str)			
 			//createEditTableMenu(event)
 		
-			//tableLinkTooltip()
+			//tableLinkTooltip(prependString)
 		
 
 		//ConfigurationAPI functions
@@ -1771,39 +1783,46 @@
 
 					str += //start member Link div
 							"<div class='treeNode-Link' style='float:left;'  " + 
-							"onmousedown='" + // start link onmousedown	
-							"SimpleContextMenu.createMenu(["; //open array for items
+							"onmousedown='" + // start link onmousedown
+							SimpleContextMenu.createMenuCallAsString(
+									DEFAULT_groupNavContextMenuItems,
+									groupMemberNavContextMenuItemHandlers,
+									"groupMemberNavContextMenu",
+									_CONTEXT_MENU_PRIMARY_COLOR,
+									_CONTEXT_MENU_SECONDARY_COLOR) + "' ";// end link onmousedown
+//					
+//							"onmousedown='" + // start link onmousedown	
+//							"SimpleContextMenu.createMenu(["; //open array for items
 
-					//output item strings
-					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
-					{
-						if(j)
-							str += ",";
-						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
-					}
-					str += //end items and open array for item handlers
-							"]," +
-							"[";
-
-					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
-					{
-						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-						//need to escape all quotes by one more level
-						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
-						if(j != groupMemberNavContextMenuItemHandlers.length-1)
-							str += ",";
-					}
-					str += "]" + //end treeNavContextMenuItemHandlers array
-							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
-							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+//					//output item strings
+//					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
+//					{
+//						if(j)
+//							str += ",";
+//						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
+//					}
+//					str += //end items and open array for item handlers
+//							"]," +
+//							"[";
+//
+//					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
+//					{
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//need to escape all quotes by one more level
+//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
+//						if(j != groupMemberNavContextMenuItemHandlers.length-1)
+//							str += ",";
+//					}
+//					str += "]" + //end treeNavContextMenuItemHandlers array
+//							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//							"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
 					str += 
-							"' " + // end link onmousedown
 							//"onmouseup='" + onmouseupJS + "' " +
 							">" +	
 							"<div class='gotoNavDiv'></div>" +			
@@ -3105,42 +3124,51 @@
 						treeViewHandlerStr_ += "style='display:none' ";
 					
 					treeViewHandlerStr_ += 
-						"onmousedown='" + // start link onmousedown	
-						"SimpleContextMenu.createMenu(["; //open array for items
-					
-					//output item strings
-					for(j=0;j<treeNavContextMenuItems.length;++j)
-					{
-						if(j)
-							treeViewHandlerStr_ += ",";
-						treeViewHandlerStr_ += "\"" + treeNavContextMenuItems[j] + "\"";
-					}
-					
-					treeViewHandlerStr_ += //end items and open array for item handlers
-							"]," +
-							"[";
-					
-					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-					{
-						if(j)
-							treeViewHandlerStr_ += ",";
-						
-						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-						//need to escape all quotes by one more level
-						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-					}
-					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
-							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-							"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
-					treeViewHandlerStr_ += 
-						"' " + // end link onmousedown
+						"onmousedown='" + // start link onmousedown
+						SimpleContextMenu.createMenuCallAsString(
+								treeNavContextMenuItems,
+								treeNavContextMenuItemHandlers,
+								"treeNavContextMenu",
+								_CONTEXT_MENU_PRIMARY_COLOR,
+								_CONTEXT_MENU_SECONDARY_COLOR) + "' ";
+//					
+//						"SimpleContextMenu.createMenu(["; //open array for items
+//					
+//					//output item strings
+//					for(j=0;j<treeNavContextMenuItems.length;++j)
+//					{
+//						if(j)
+//							treeViewHandlerStr_ += ",";
+//						treeViewHandlerStr_ += "\"" + treeNavContextMenuItems[j] + "\"";
+//					}
+//					
+//					treeViewHandlerStr_ += //end items and open array for item handlers
+//							"]," +
+//							"[";
+//					
+//					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+//					{
+//						if(j)
+//							treeViewHandlerStr_ += ",";
+//						
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//need to escape all quotes by one more level
+//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+//					}
+//					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
+//							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//							"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
+//					treeViewHandlerStr_ += 
+//						"' " + // end link onmousedown
 						//"onmouseup='" + onmouseupJS + "' " +
+					
+					treeViewHandlerStr_ +=
 						">" +	
 						"<div class='gotoNavDiv'></div>" +			
 						"</div>"; //end treeNode Link div
@@ -8797,132 +8825,148 @@
 					{
 						//change link table/id and clear children
 						//and edit peripheral link info
-
+						
 						var csvArr = newValue.split(',');
-						var linkTable = csvArr[0];
-						var linkId = csvArr[1];
-						newValue = 							
-								"-(" + 
-								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
-						//add as text node first in case not html safe
-						_editingCellEl.appendChild(document.createTextNode(newValue));
-						//then add html piece
-						newValue = _editingCellEl.innerHTML;
-						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
-								treeEditingTargetColumn_ + 
-								"</label>" +
-								newValue;
-						_editingCellEl.innerHTML = newValue;
-
-						{	//change link table name
-							var el; 
-							el = document.getElementById("treeNode-linkTableName-" + 
-									treeEditingNodeIdString_);
-							el.innerHTML = "";
-							el.appendChild(document.createTextNode(linkTable)); 
-						}
-
-						var retVal = getTreeViewTableStrings(linkTable);
-						var treeNavContextMenuItems = retVal.treeNavContextMenuItems;
-						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
-						var tableComment = retVal.tableComment;
-						var tableTitle = retVal.tableTitle;
-
-						//change element title
-						_editingCellEl.title = tableTitle;
-
-						{	//change link table comment
-							var el; 
-							el = document.getElementById("treeNode-TableComment-" + 
-									treeEditingNodeIdString_);
-							el.innerHTML = "";
-							if(tableComment != "")
-								el.appendChild(document.createTextNode("//" + tableComment)); 
-						}
-
-						if(treeNavContextMenuItemHandlers.length == 0)
+						
+						if(!refreshLinkTreeNode(
+								_editingCellEl,//targetEl,
+								treeEditingNodeIdString_,//idString
+								treeEditingTargetColumn_,//LinkColumnNameLabel
+								treeEditingNodeType_.split('-')[1],//linkType
+								csvArr[0],//linkTable
+								csvArr[1]))//linkId
+								//,tableComment,tableTitle,menuItems,menuItemHandlers);
 						{
-							//no context menu items found
-							//assume DISCONNECTED!
-
-							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
-
-							newValue += "-" + 
-									"<label style='color:red;font-weight:bold;'>" +
-									"DISCONNECTED" +
-									"</label>";
-							_editingCellEl.innerHTML = newValue;
-
 							//if disconnected from edit, show tooltip
-							tableLinkTooltip();
+							tableLinkTooltip("We noticed you have a disconnected link.");
 						}
-						else
-						{ 	//change context menu for table link							
-							
-							var el; 
-							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-									treeEditingNodeIdString_);
-							var str = "";
-							str += 
-									"<div class='treeNode-Link' " + //start treeNode Link div
-									"onmousedown='" + // start link onmousedown	
-									"SimpleContextMenu.createMenu([";
-							
-							//output item strings
-							for(j=0;j<treeNavContextMenuItems.length;++j)
-							{
-								if(j)
-									str += ",";
-								str += "\"" + treeNavContextMenuItems[j] + "\"";
-							}
-
-							str += "]," +//end items and open array for item handlers
-									"[";
-
-							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-							{
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//need to escape all quotes by one more level
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-								if(j != treeNavContextMenuItemHandlers.length-1)
-									str += ",";
-							}
-							str += "]" + //end treeNavContextMenuItemHandlers array
-									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-									"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
-							str += 
-									"' " + // end link onmousedown
-									//"onmouseup='" + onmouseupJS + "' " +
-									">" +	
-									"<div class='gotoNavDiv'></div>" +			
-									"</div>"; //end treeNode Link div
-
-							el.innerHTML = str;
-						}
-
-						//clear children,
-						//and if children were displayed
-						//		then toggle/show new children 
-						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-								treeEditingNodeIdString_);
-						var wasDisplayed = elChildrenNode.style.display != "none" && 
-								elChildrenNode.innerHTML != "";
-
-						toggleTreeChildren(
-								treeEditingNodeDepth_,
-								treeEditingNodeIdString_.split('-')[1],false);
-						elChildrenNode.innerHTML = "";
-
-						if(wasDisplayed)
-							toggleTreeChildren(
-									treeEditingNodeDepth_,
-									treeEditingNodeIdString_.split('-')[1],true);
+						
+//						
+//						var csvArr = newValue.split(',');
+//						var linkTable = csvArr[0];
+//						var linkId = csvArr[1];
+//						newValue = 							
+//								"-(" + 
+//								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
+//						//add as text node first in case not html safe
+//						_editingCellEl.appendChild(document.createTextNode(newValue));
+//						//then add html piece
+//						newValue = _editingCellEl.innerHTML;
+//						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
+//								treeEditingTargetColumn_ + 
+//								"</label>" +
+//								newValue;
+//						_editingCellEl.innerHTML = newValue;
+//
+//						{	//change link table name
+//							var el; 
+//							el = document.getElementById("treeNode-linkTableName-" + 
+//									treeEditingNodeIdString_);
+//							el.innerHTML = "";
+//							el.appendChild(document.createTextNode(linkTable)); 
+//						}
+//
+//						var retVal = getTreeViewTableStrings(linkTable);
+//						var treeNavContextMenuItems = retVal.treeNavContextMenuItems;
+//						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
+//						var tableComment = retVal.tableComment;
+//						var tableTitle = retVal.tableTitle;
+//
+//						//change element title
+//						_editingCellEl.title = tableTitle;
+//
+//						{	//change link table comment
+//							var el; 
+//							el = document.getElementById("treeNode-TableComment-" + 
+//									treeEditingNodeIdString_);
+//							el.innerHTML = "";
+//							if(tableComment != "")
+//								el.appendChild(document.createTextNode("//" + tableComment)); 
+//						}
+//
+//						if(treeNavContextMenuItemHandlers.length == 0)
+//						{
+//							//no context menu items found
+//							//assume DISCONNECTED!
+//
+//							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
+//
+//							newValue += "-" + 
+//									"<label style='color:red;font-weight:bold;'>" +
+//									"DISCONNECTED" +
+//									"</label>";
+//							_editingCellEl.innerHTML = newValue;
+//
+//							//if disconnected from edit, show tooltip
+//							tableLinkTooltip();
+//						}
+//						else
+//						{ 	//change context menu for table link							
+//							
+//							var el; 
+//							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+//									treeEditingNodeIdString_);
+//							var str = "";
+//							str += 
+//									"<div class='treeNode-Link' " + //start treeNode Link div
+//									"onmousedown='" + // start link onmousedown	
+//									"SimpleContextMenu.createMenu([";
+//							
+//							//output item strings
+//							for(j=0;j<treeNavContextMenuItems.length;++j)
+//							{
+//								if(j)
+//									str += ",";
+//								str += "\"" + treeNavContextMenuItems[j] + "\"";
+//							}
+//
+//							str += "]," +//end items and open array for item handlers
+//									"[";
+//
+//							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+//							{
+//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//								//need to escape all quotes by one more level
+//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+//								if(j != treeNavContextMenuItemHandlers.length-1)
+//									str += ",";
+//							}
+//							str += "]" + //end treeNavContextMenuItemHandlers array
+//									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//									"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
+//							str += 
+//									"' " + // end link onmousedown
+//									//"onmouseup='" + onmouseupJS + "' " +
+//									">" +	
+//									"<div class='gotoNavDiv'></div>" +			
+//									"</div>"; //end treeNode Link div
+//
+//							el.innerHTML = str;
+//						}
+//
+//						//clear children,
+//						//and if children were displayed
+//						//		then toggle/show new children 
+//						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+//								treeEditingNodeIdString_);
+//						var wasDisplayed = elChildrenNode.style.display != "none" && 
+//								elChildrenNode.innerHTML != "";
+//
+//						toggleTreeChildren(
+//								treeEditingNodeDepth_,
+//								treeEditingNodeIdString_.split('-')[1],false);
+//						elChildrenNode.innerHTML = "";
+//
+//						if(wasDisplayed)
+//							toggleTreeChildren(
+//									treeEditingNodeDepth_,
+//									treeEditingNodeIdString_.split('-')[1],true);
 					}
 					else if(treeEditingNodeType_ == "value" || 
 							treeEditingNodeType_ == "value-bitmap")
@@ -9066,94 +9110,156 @@
 			{	
 				Debug.log("Error occured during editCellOK - attempting to recover.");
 				editCellCancel();
-			}
+			}		
 		}
 
-
-		//changeLinkTableName ~~
+		//refreshLinkTreeNode ~~
 		//	updates link context menu
-		//		inputs are generated by getTreeViewTableStrings(tableLinkName)
-		function changeLinkTableName(targetEl,idString,linkTableName,linkId,tableComment,menuItems,menuItemHandlers)
+		//		last 4 commented inputs are generated by getTreeViewTableStrings(tableLinkName)
+		//		linkType is "GroupID" or "UID"
+		//
+		//	return false for DISCONNECTED else true
+		function refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId)
+			//tableComment,tableTitle,menuItems,menuItemHandlers)
 		{
+			//clear target element
+			targetEl.innerHTML = "";
+			
+			var retVal = getTreeViewTableStrings(linkTable);
+			var treeNavContextMenuItems = retVal.treeNavContextMenuItems;
+			var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
+			var tableComment = retVal.tableComment;
+			var tableTitle = retVal.tableTitle;
+			var el; 
+			
+			///////////////////////////////
 			//change element title
 			targetEl.title = tableTitle;
+
+			///////////////////////////////			
+			//add type/ID as text node first in case not html safe
+			var newValue = "-(" + linkType + " = " + linkId + ")";
+			targetEl.appendChild(document.createTextNode(newValue));
 			
+			//then add html piece to tartget node (acquire html version of type/ID
+			newValue = targetEl.innerHTML;
+			newValue = "<label class='treeNode-LinkColumnNameLabel'>" +
+					LinkColumnNameLabel + 
+					"</label>" +
+					newValue;
+			targetEl.innerHTML = newValue;
+
+
+			///////////////////////////////
+			//change link table name			
+			el = document.getElementById("treeNode-linkTableName-" + 
+					idString);
+			el.innerHTML = "";
+			el.appendChild(document.createTextNode(linkTable)); 
+
+			///////////////////////////////
 			//change link table comment
-			{
-				var el; 
-				el = document.getElementById("treeNode-TableComment-" + 
-						idString);
-				el.innerHTML = "";
-				if(tableComment != "")
-					el.appendChild(document.createTextNode("//" + tableComment)); 
-			}
+			el = document.getElementById("treeNode-TableComment-" + 
+					idString);
+			el.innerHTML = "";
+			if(tableComment != "")
+				el.appendChild(document.createTextNode("//" + tableComment)); 
 			
-			var newValue = "";
-			if(menuItemHandlers.length == 0)
+
+			///////////////////////////////			
+			if(treeNavContextMenuItemHandlers.length == 0)
 			{
 				//no context menu items found
 				//assume DISCONNECTED!
 
-				Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
+				Debug.log("Empty treeNavContextMenuItemHandlers array! Assuming disconnected link.");
 
+				//append disconnected to value
 				newValue += "-" + 
-						"<label style='color:red;font-weight:bold;'>" +
+						"<label class='treeNode-LinkDisconnectedLabel'>" +
 						"DISCONNECTED" +
 						"</label>";
 				targetEl.innerHTML = newValue;
-
-				//if disconnected from edit, show tooltip
-				tableLinkTooltip();
 			}
 			else
-			{ 	//change context menu for table link							
+			{ 	
+				//change context menu for table link							
 
-				var el; 
 				el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-						treeEditingNodeIdString_);
+						idString);
 				var str = "";
 				str += 
 						"<div class='treeNode-Link' " + //start treeNode Link div
-						"onmousedown='" + // start link onmousedown	
-						"SimpleContextMenu.createMenu([";
+						"onmousedown='" + // start link onmousedown
+						SimpleContextMenu.createMenuCallAsString(
+								treeNavContextMenuItems,
+								treeNavContextMenuItemHandlers,
+								"treeNavContextMenu",
+								_CONTEXT_MENU_PRIMARY_COLOR,
+								_CONTEXT_MENU_SECONDARY_COLOR) + "' "; // end link onmousedown
 
-				//output item strings
-				for(j=0;j<treeNavContextMenuItems.length;++j)
-				{
-					if(j)
-						str += ",";
-					str += "\"" + treeNavContextMenuItems[j] + "\"";
-				}
-
-				str += "]," +//end items and open array for item handlers
-						"[";
-
-				for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-				{
-					//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-					//need to escape all quotes by one more level
-					treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-							treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-					treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-					//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-					//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-					//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-					str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-					if(j != treeNavContextMenuItemHandlers.length-1)
-						str += ",";
-				}
-				str += "]" + //end treeNavContextMenuItemHandlers array
-						",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-						"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
+//				//output item strings
+//				for(j=0;j<treeNavContextMenuItems.length;++j)
+//				{
+//					if(j)
+//						str += ",";
+//					str += "\"" + treeNavContextMenuItems[j] + "\"";
+//				}
+//
+//				str += "]," +//end items and open array for item handlers
+//						"[";
+//
+//				for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+//				{
+//					//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//					//need to escape all quotes by one more level
+//					treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//							treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//					treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//					//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//					//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//					//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//					str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+//					if(j != treeNavContextMenuItemHandlers.length-1)
+//						str += ",";
+//				}
+//				str += "]" + //end treeNavContextMenuItemHandlers array
+//						",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//						"\"" + _CONTEXT_MENU_PRIMARY_COLOR + 
+//						"\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
 				str += 
-						"' " + // end link onmousedown
-						//"onmouseup='" + onmouseupJS + "' " +
 						">" +	
 						"<div class='gotoNavDiv'></div>" +			
 						"</div>"; //end treeNode Link div
 
 				el.innerHTML = str;
 			}
+
+
+			///////////////////////////////
+			//clear children,
+			//and if children were displayed
+			//		then toggle/show new children 
+			var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+					idString);
+			var wasDisplayed = elChildrenNode.style.display != "none" && 
+					elChildrenNode.innerHTML != "";
+
+			toggleTreeChildren(
+					idString.split('-')[0],
+					idString.split('-')[1],false);
+			elChildrenNode.innerHTML = "";
+
+			if(wasDisplayed)
+				toggleTreeChildren(
+						idString.split('-')[0],
+						idString.split('-')[1],true);
+
+			///////////////////////////////
+			//if disconnected, return false
+			if(treeNavContextMenuItemHandlers.length == 0)
+				return false;
+			return true; //true for link is NOT disconnected
 		}
 		
 		//hardRefreshTreeView ~~
@@ -9576,7 +9682,7 @@
 
 				var csvIndex = newValue.indexOf(',');
 				var linkTable = newValue.substr(0,csvIndex);
-				//var linkId = newValue.substr(csvIndex+1);
+				var linkId = newValue.substr(csvIndex+1);
 				//				newValue = 
 				//						"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
 				//						treeEditingTargetColumn_ + 
@@ -9593,10 +9699,10 @@
 					var table, uid, col;
 					var depth;
 					
-					var retVal = getTreeViewTableStrings(linkTable);
-					var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
-					var tableComment = retVal.tableComment;
-					var tableTitle = retVal.tableTitle;
+					//					var retVal = getTreeViewTableStrings(linkTable);
+					//					var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
+					//					var tableComment = retVal.tableComment;
+					//					var tableTitle = retVal.tableTitle;
 
 					for(var i=0;i<els.length;++i)
 					{	
@@ -9659,90 +9765,103 @@
 								uid != treeEditingTargetUID_)
 							continue; //skip if table/uid does not match
 						
-						
-						{	//change link table name
-							var el; 
-							el = document.getElementById("treeNode-linkTableName-" + 
-									idString);
-							el.innerHTML = "";
-							el.appendChild(document.createTextNode(linkTable)); 
-						}						
+						//change link table/id and clear children
+												//and edit peripheral link info
+						refreshLinkTreeNode(
+								els[i],//targetEl,
+								idString,//idString
+								treeEditingTargetColumn_,//LinkColumnNameLabel
+								"UID",//linkType
+								linkTable,//linkTable
+								linkId);//linkId
+						//,tableComment,tableTitle,menuItems,menuItemHandlers);
 
-						//change element title
-						els[i].title = tableTitle;
-						
-						{	//change link table comment
-							var el; 
-							el = document.getElementById("treeNode-TableComment-" + 
-									idString);
-							el.innerHTML = "";
-							if(tableComment != "")
-								el.appendChild(document.createTextNode("//" + tableComment)); 
-						}
-
-						{ 	//change context menu for table link
-
-							if(treeNavContextMenuItemHandlers.length == 0)
-							{
-								Debug.log("There is a treeNavContextMenuItemHandlers problem! Alert admins.",
-										Debug.HIGH_PRIORITY);
-								return;
-							}
-
-							var el; 
-							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-									idString);
-							var str = "";
-							str += 
-									"<div class='treeNode-Link' " + //start treeNode Link div
-									"onmousedown='" + // start link onmousedown	
-									"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
-									"[";
-
-							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-							{
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//need to escape all quotes by one more level
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-								if(j != treeNavContextMenuItemHandlers.length-1)
-									str += ",";
-							}
-							str += "]" + //end treeNavContextMenuItemHandlers array
-									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-									"\"rgb(220, 187, 165)\", \"rgb(130, 51, 51)\");";					
-							str += 
-									"' " + // end link onmousedown
-									//"onmouseup='" + onmouseupJS + "' " +
-									">" +	
-									"<div class='gotoNavDiv'></div>" +			
-									"</div>"; //end treeNode Link div
-
-							el.innerHTML = str;
-						}
-
-						//clear children,
-						//and if children were displayed
-						//		then toggle/show new children 
-						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-								idString);
-						var wasDisplayed = elChildrenNode.style.display != "none" && 
-								elChildrenNode.innerHTML != "";
-
-						toggleTreeChildren(
-								idString.split('-')[0],
-								idString.split('-')[1],false);
-						elChildrenNode.innerHTML = "";
-
-						if(wasDisplayed)
-							toggleTreeChildren(
-									idString.split('-')[0],
-									idString.split('-')[1],true);													
+//						
+//						
+//						
+//						{	//change link table name
+//							var el; 
+//							el = document.getElementById("treeNode-linkTableName-" + 
+//									idString);
+//							el.innerHTML = "";
+//							el.appendChild(document.createTextNode(linkTable)); 
+//						}						
+//
+//						//change element title
+//						els[i].title = tableTitle;
+//						
+//						{	//change link table comment
+//							var el; 
+//							el = document.getElementById("treeNode-TableComment-" + 
+//									idString);
+//							el.innerHTML = "";
+//							if(tableComment != "")
+//								el.appendChild(document.createTextNode("//" + tableComment)); 
+//						}
+//
+//						{ 	//change context menu for table link
+//
+//							if(treeNavContextMenuItemHandlers.length == 0)
+//							{
+//								Debug.log("There is a treeNavContextMenuItemHandlers problem! Alert admins.",
+//										Debug.HIGH_PRIORITY);
+//								return;
+//							}
+//
+//							var el; 
+//							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+//									idString);
+//							var str = "";
+//							str += 
+//									"<div class='treeNode-Link' " + //start treeNode Link div
+//									"onmousedown='" + // start link onmousedown	
+//									"SimpleContextMenu.createMenu(_treeNavContextMenuItems," +
+//									"[";
+//
+//							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
+//							{
+//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//								//need to escape all quotes by one more level
+//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+//										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
+//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
+//								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+//								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+//								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
+//								if(j != treeNavContextMenuItemHandlers.length-1)
+//									str += ",";
+//							}
+//							str += "]" + //end treeNavContextMenuItemHandlers array
+//									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
+//									"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
+//							str += 
+//									"' " + // end link onmousedown
+//									//"onmouseup='" + onmouseupJS + "' " +
+//									">" +	
+//									"<div class='gotoNavDiv'></div>" +			
+//									"</div>"; //end treeNode Link div
+//
+//							el.innerHTML = str;
+//						}
+//
+//						//clear children,
+//						//and if children were displayed
+//						//		then toggle/show new children 
+//						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
+//								idString);
+//						var wasDisplayed = elChildrenNode.style.display != "none" && 
+//								elChildrenNode.innerHTML != "";
+//
+//						toggleTreeChildren(
+//								idString.split('-')[0],
+//								idString.split('-')[1],false);
+//						elChildrenNode.innerHTML = "";
+//
+//						if(wasDisplayed)
+//							toggleTreeChildren(
+//									idString.split('-')[0],
+//									idString.split('-')[1],true);													
 					}  //end for loop
 				}
 			}
@@ -10233,9 +10352,10 @@
 		}
 		
 		//tableLinkTooltip
-		function tableLinkTooltip()
+		function tableLinkTooltip(prependString)
 		{
 			DesktopContent.tooltip("FAQ: Where is the Table I want to link to?!",
+					prependString + " " +
 					"Were you looking for a table name that was NOT in the drop-down list?\n\n" +
 					"It is important to note that, when editing links, only currently active " +
 					"tables are available to be linked to. If you do not see the table " +
@@ -10257,7 +10377,7 @@
 				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0)
 				{
 					//if canceling from link edit, show tooltip
-					tableLinkTooltip();
+					tableLinkTooltip("We noticed you canceled your link edit.");
 				}
 				
 				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
@@ -12916,9 +13036,9 @@
 					menuItems,
 					menuItemHandlers,
 					"editTableMenu",					//element ID
-					event.pageX-1,event.pageY-1, 	//top left position
-					"rgb(220, 187, 165)", 			//primary color
-					"rgb(130, 51, 51)"				//secondary color
+					event.pageX-1,event.pageY-1, 		//top left position
+					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 			);
 		}
 		
@@ -12968,8 +13088,8 @@
 					menuItemHandlers,
 					"editTableMenu",				//element ID
 					event.pageX-1,event.pageY-1, 	//top left position
-					"rgb(220, 187, 165)", 			//primary color
-					"rgb(130, 51, 51)"				//secondary color
+					_CONTEXT_MENU_PRIMARY_COLOR, 	//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR	//secondary color
 			);
 		}
 

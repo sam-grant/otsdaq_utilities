@@ -109,16 +109,25 @@ if [ "x$1" == "x" ]; then
 	echo
 	
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
-		echo "cp $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd.bk"
+		echo "CoreTableInfoNames.dat exists!"
+		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		echo
+		
+		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk"
+		rm -rf $USER_DATA/ConfigurationInfo.updateots.bk
+		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk		
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-		cp $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/ConfigurationInfo.xsd.bk
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
-		while read line; do    
-			echo "cp $USER_DATA/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/${line}Info.xml.bk"
-			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"
-			cp $USER_DATA/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/${line}Info.xml.bk
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
+		
+		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
+		while read line; do
+			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		
+		#do one more time after loop to make sure last line is read (even if user did not put new line) 
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
 	else
 		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"

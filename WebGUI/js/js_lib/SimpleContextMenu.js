@@ -45,7 +45,8 @@ if (typeof DesktopContent == 'undefined' &&
 
 
 //"public" function list: 
-//	SimpleContextMenu.createMenu(menuItems)
+//	SimpleContextMenu.createMenu(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor)
+//	SimpleContextMenu.createMenuCallAsString(menuItems,menuItemHandlers,popupID,topLeftX,topLeftY, primaryColor, secondaryColor)
 
 //"private" function list:
 //	SimpleContextMenu.mouseMoveHandler(event)
@@ -163,6 +164,50 @@ SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 	el.style.display = "block";
 	
 	SimpleContextMenu._popUpEl = el;	
+}
+
+//=====================================================================================
+//SimpleContextMenu.createMenuCallAsString
+//	create string version of call to SimpleContextMenu.createMenu(...)
+//	this string can be put into an event handler string
+//	  e.g. "onmousedown='" + createTreeLinkContextMenuString(...) + "'"
+SimpleContextMenu.createMenuCallAsString = function(menuItems,menuItemHandlers,
+		popupID, primaryColor, secondaryColor)	{
+
+	var str = "";
+	str += "SimpleContextMenu.createMenu([";
+
+	//output item strings
+	for(j=0;j<menuItems.length;++j)
+	{
+		if(j)
+			str += ",";
+		str += "\"" + menuItems[j] + "\"";
+	}
+
+	str += "]," +//end items and open array for item handlers
+			"[";
+
+	for(j=0;j<menuItemHandlers.length;++j)
+	{
+		//Debug.log("menuItemHandlers[j]= " + menuItemHandlers[j]);
+		//need to escape all quotes by one more level
+		menuItemHandlers[j] = menuItemHandlers[j].replace(/\\\"/g, "AAAAA");
+				menuItemHandlers[j] = menuItemHandlers[j].replace(/"/g, "\\\"");
+		menuItemHandlers[j] = menuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
+		//Debug.log("menuItemHandlers[j]= " + menuItemHandlers[j]);
+		//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
+		//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
+		str += "\"" + menuItemHandlers[j] + "\"";
+		if(j != menuItemHandlers.length-1)
+			str += ",";
+	}
+	str += "]" + //end menuItemHandlers array
+			",\"" + popupID + "\",event.pageX-1,event.pageY-1, " +
+			"\"" + primaryColor + 
+			"\", \"" + secondaryColor + "\");";					
+	
+	return str;
 }
 
 //=====================================================================================
