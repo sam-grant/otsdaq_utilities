@@ -6647,7 +6647,12 @@
 				//detect proper views
 				var el = document.getElementById("treeView-ConfigGroupLink");
 				if(el) //tree view ok handler
-					editTreeNodeOK();
+				{
+					if(treeEditingNodeType_.indexOf("link-") == 0)
+						return false; //ignore click saving when editing links (too difficult for users to be confident in their clicks)
+					else
+						editTreeNodeOK();
+				}
 				else
 					editCellOK();
 			}
