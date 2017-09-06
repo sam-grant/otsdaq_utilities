@@ -9680,9 +9680,12 @@
 
 				var newValue = arguments[0];
 
-				var csvIndex = newValue.indexOf(',');
-				var linkTable = newValue.substr(0,csvIndex);
-				var linkId = newValue.substr(csvIndex+1);
+
+				var csvArr = newValue.split(',');				
+				var linkTable = csvArr[0];
+				var linkId = csvArr[1];
+				var linkType = treeEditingNodeType_.split('-')[1]; //GroupID or UID
+				
 				//				newValue = 
 				//						"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
 				//						treeEditingTargetColumn_ + 
@@ -9771,7 +9774,7 @@
 								els[i],//targetEl,
 								idString,//idString
 								treeEditingTargetColumn_,//LinkColumnNameLabel
-								"UID",//linkType
+								linkType,//linkType
 								linkTable,//linkTable
 								linkId);//linkId
 						//,tableComment,tableTitle,menuItems,menuItemHandlers);
