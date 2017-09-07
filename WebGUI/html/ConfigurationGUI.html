@@ -9169,7 +9169,10 @@
 			el.innerHTML = "";
 			if(tableComment != "")
 				el.appendChild(document.createTextNode("//" + tableComment)); 
-			
+
+			//get context menu element
+			el = document.getElementById("treeNode-LinkContextMenuTD-" + 
+					idString);
 
 			///////////////////////////////			
 			if(treeNavContextMenuItemHandlers.length == 0)
@@ -9177,6 +9180,8 @@
 				//no context menu items found
 				//assume DISCONNECTED!
 
+				el.style.display = "none"; //hide context menu element
+				
 				Debug.log("Empty treeNavContextMenuItemHandlers array! Assuming disconnected link.");
 
 				//append disconnected to value
@@ -9185,13 +9190,14 @@
 						"DISCONNECTED" +
 						"</label>";
 				targetEl.innerHTML = newValue;
+
 			}
 			else
 			{ 	
 				//change context menu for table link							
 
-				el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-						idString);
+				el.style.display = "block"; //show context menu element
+				
 				var str = "";
 				str += 
 						"<div class='treeNode-Link' " + //start treeNode Link div

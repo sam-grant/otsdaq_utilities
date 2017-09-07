@@ -2955,8 +2955,12 @@ try
 		xmldoc.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
-		xmldoc.addTextElementToData("Error", std::string("Column errors were allowed for this request, ") +
-				"but please note the following errors:\n" + accumulatedErrors);
+	{
+		__SS__ << (std::string("Column errors were allowed for this request, so maybe you can ignore this, ") +
+				"but please note the following errors:\n" + accumulatedErrors) << std::endl;
+		__MOUT_ERR__ << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
 	else if(!version.isTemporaryVersion() && //not temporary (these are not filled from interface source)
 			(cfgViewPtr->getDataColumnSize() !=
 					cfgViewPtr->getNumberOfColumns() ||
@@ -3711,10 +3715,12 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument 
 	//if errors associated with this config name stop and report
 	if(accumulatedErrors != "")
 	{
-		__MOUT_ERR__ << accumulatedErrors << std::endl;
-		xmldoc.addTextElementToData("Error", "Error detected reading back the configuration '" +
+		__SS__ << ("The new version of the '" + configName + "' table column info was saved, however errors were detected reading back the configuration '" +
 				configName +
-				"' after the attempt to save new column info:\n\n" + accumulatedErrors);
+				"' after the save attempt:\n\n" + accumulatedErrors) << std::endl;
+
+		__MOUT_ERR__ << ss.str() << std::endl;
+		xmldoc.addTextElementToData("Error", ss.str());
 
 		//if error detected reading back then move the saved configuration info to .unused
 		// // This was disabled by RAR on 11/4/2016.. (just keep broken info files)
