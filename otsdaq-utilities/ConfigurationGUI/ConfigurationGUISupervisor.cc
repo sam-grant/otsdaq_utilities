@@ -103,6 +103,7 @@ throw (xgi::exception::Exception)
 	//	deleteConfigurationInfo
 	//	launchOTS
 	// 	launchWiz
+	// 	flattenToSystemAliases
 	// 	versionTracking
 	//	getColumnTypes
 	//	getGroupAliases
@@ -224,6 +225,9 @@ throw (xgi::exception::Exception)
 			fprintf(fp,"LAUNCH_OTS");
 			fclose(fp);
 		}
+		else
+			__MOUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+					"/StartOTS_action.cmd") << std::endl;
 	}
 	else if(Command == "launchWiz")
 	{
@@ -236,6 +240,24 @@ throw (xgi::exception::Exception)
 			fprintf(fp,"LAUNCH_WIZ");
 			fclose(fp);
 		}
+		else
+			__MOUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+					"/StartOTS_action.cmd") << std::endl;
+	}
+	else if(Command == "flattenToSystemAliases")
+	{
+		__MOUT_WARN__ << "flattenToSystemAliases command received! Launching... " << std::endl;
+
+		FILE *fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+				"/StartOTS_action.cmd").c_str(),"w");
+		if(fp)
+		{
+			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
+			fclose(fp);
+		}
+		else
+			__MOUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+					"/StartOTS_action.cmd") << std::endl;
 	}
 	else if(Command == "versionTracking")
 	{

@@ -228,6 +228,7 @@
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 		
 		var _OTS_RELAUNCH_STR = 
+				//Normal mode
 				"Click here to relaunch ots in " +
 				"<a href='#' onclick='javascript:" +
 				"DesktopContent.popUpVerification(" + 
@@ -237,6 +238,7 @@
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Normal Mode</a>" +
 				" or " +
+				//Wiz Mode
 				"<a href='#' onclick='javascript:" +
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
@@ -245,6 +247,7 @@
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Wiz Mode</a>." +
 				"<br>" +
+				//Toggle Version Tracking
 				"Click here to " +
 				"<a href='#' id='versionTrackingSystemLink' onclick='javascript:" +
 				"var el = this;" +
@@ -260,7 +263,17 @@
 				"function() {" + 
 				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Turn Version Tracking OFF</a>"
+				"'>Turn Version Tracking OFF</a>." +
+				//Flatten Versions
+				"<br>" +
+				"Click here to " +
+				"<a href='#' onclick='javascript:" +
+				"DesktopContent.popUpVerification(" + 
+				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
+				"function() {" + 
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\");" +
+				"},0,\"#efeaea\",0,\"#770000\");" +
+				"'>Flatten to System Aliases</a>."
 				;
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
@@ -8491,15 +8504,17 @@
 							newValue += encodeURIComponent(sel.value.trim());							
 						}
 
-						//add newRowUID
+						//add newRowUID to new value
 						newValue += ",";	
 						var newRowUID = prompt("Please enter the UID for the new record:");
 						if(newRowUID)
 							newValue += encodeURIComponent(newRowUID.trim());
-						else 
+						else //prompt was cancelled
+						{
+							//revert edit type back to link-GroupID
+							treeEditingNodeType_ = "link-GroupID";
 							return;
-						
-							
+						}	
 					}
 					else if(treeEditingNodeType_ == "table-newUIDRow")
 					{
@@ -8512,8 +8527,12 @@
 						newValue = prompt("Please enter the UID for the new record:");
 						if(newValue)
 							newValue = encodeURIComponent(newValue.trim());
-						else 
+						else //prompt was cancelled
+						{
+							//revert edit type back to link-UID
+							treeEditingNodeType_ = "link-UID";
 							return;
+						}
 					}
 					else if(treeEditingNodeType_ == "table-newRow")
 						newValue = ""; //no value needed
@@ -8649,6 +8668,11 @@
 									treeMemberVersions_[resultingTableIndex]);					
 						}
 
+						if(!_editingCellEl)
+						{
+							Debug.log("Mid request _editingCellEl became invalid. Assuming there was a cancel?");
+							return;
+						}
 						//change target edit tree node 
 						localEditTreeNodeOKRequestsComplete(tableIndex,newValue);
 
@@ -8690,7 +8714,7 @@
 						}	
 						else if(treeEditingNodeType_ == "table-newUIDRow")
 						{
-							//revert edit type back to link-GroupID
+							//revert edit type back to link-UID
 							treeEditingNodeType_ = "link-UID";
 						}
 
@@ -9635,9 +9659,21 @@
 							//	if parent is uid link.. then one level back
 							//	if parent is groupid link.. then two levels back
 
-							var pel = document.getElementById("treeNode-linkTableName-" + 
+							var pel;
+							
+							try
+							{
+								pel = document.getElementById("treeNode-linkTableName-" +
 									(document.getElementById("treeNode-ParentId-" + 
 											parentIdString).textContent));
+							}
+							catch(e)
+							{
+								Debug.log("Problem with ancestry! Hopefully this was remnants from an edit already completed (like double clicking?). " +
+										"Error: " + e);
+								return;
+							}
+							
 							if(!pel)
 								pel = document.getElementById("treeNode-linkTableName-" + 
 										(document.getElementById("treeNode-ParentId-" + 
