@@ -63,7 +63,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
-//	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize)
+//	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
 //	ConfigurationAPI.hasClass(elem,class)
@@ -3588,7 +3588,8 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 //	
 //	Note: assumes a padding and border size if not specified
 //  Note: if w,h not specified then fills screen (minus margin)
-ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotResize)
+//	Note: offsetUp and can be used to position the popup vertically (for example if the dialog is expected to grow, then give positive offsetUp to compensate)
+ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotResize,offsetUp)
 {
 	if(padding === undefined) padding = 10;
 	if(border === undefined) border = 1;	
@@ -3629,7 +3630,8 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		//else w,h are inputs and margin is ignored
 
 		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
-		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2));
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		if(y<margin+padding) y = margin+padding; //don't let it bottom out though
 
 		el.style.left = x + "px";
 		el.style.top = y + "px"; 
