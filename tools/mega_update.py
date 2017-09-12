@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+#THIS IS DEPRECATED (according to me, RAR -- sept 2017.. Parilla made this a while ago)
+
 import os
 import subprocess
 

@@ -140,6 +140,16 @@ if [ "x$1" == "x" ]; then
 	echo "cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 
+	#copy tutorial launching scripts
+	echo
+	echo "updating tutorial launch scripts..."
+	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"	
+	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"	
+	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	
 	echo
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
