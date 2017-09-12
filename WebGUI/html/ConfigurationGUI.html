@@ -8774,7 +8774,7 @@
 					if(treeEditingNodeType_ == "table")
 					{
 						treeMemberComments_[tableIndex] = newValue;
-						_editingCellEl.appendChild(document.createTextNode("//" + newValue)); 
+						_editingCellEl.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
 					}						
 					else if(treeEditingNodeType_ == "table-newRow")
 					{
