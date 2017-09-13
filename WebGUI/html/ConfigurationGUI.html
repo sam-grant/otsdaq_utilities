@@ -9034,77 +9034,91 @@
 							//		just change value (still in group) and done						
 							//	if matching LINKIDs
 							//		check if still in group .. 
-							//		(could be separated by | and stil in group)
+							//		(could be separated by | and still in group)
 
-							var parentLinkIndex = 
-									document.getElementById("treeNode-childLinkIndex-" + 
-											(document.getElementById("treeNode-ParentId-" + 
-													treeEditingNodeParentIdString_).textContent)).textContent;
-
-							var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
-
-							//if value-groupid node, link index is last in element class name
-							var colType = vel.className.split(' ')[1];
-							var selfLinkIndex = colType.substr(
-									("treeNode-ValueType-GroupID").length);
-
-							var groupId = document.getElementById("treeNode-Value-" + 
-									((document.getElementById("treeNode-ParentId-" + 
-											treeEditingNodeParentIdString_).textContent))).textContent;
-							groupId = groupId.split('=')[1].substr(1); //get after =
-							groupId = groupId.substr(0,groupId.length-1); //remove ending )
-
-							Debug.log("parentLinkIndex = " + parentLinkIndex);
-							Debug.log("selfLinkIndex = " + selfLinkIndex);
-							Debug.log("groupId = " + groupId);
-
-							if(parentLinkIndex != selfLinkIndex) //no match
+							
+							//try: if failure to find parentLinkIndex, 
+							//	then likely editing the groupID locally where groupID value is not relevant to position in tree
+							try  
 							{
-								//just change value (still in group) and done	
-								_editingCellEl.appendChild(document.createTextNode(newValue));
-							}
-							else //matching link ids
-							{
-								var groupIds = newValue.split('|');
-								var stillInGroup = false;
-								for(var i=0;i<groupIds.length;++i)								
-									if(groupIds[i].trim() == groupId)
-									{
-										Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
-										stillInGroup = true;
-										break;
-									}
+								var parentLinkIndex;
+								parentLinkIndex = 
+										document.getElementById("treeNode-childLinkIndex-" + 
+												(document.getElementById("treeNode-ParentId-" + 
+														treeEditingNodeParentIdString_).textContent)).textContent;
 
-								if(stillInGroup)
-									_editingCellEl.appendChild(document.createTextNode(newValue));
-								else // remove from group
+								var vel = document.getElementById("treeNode-Value-" + treeEditingNodeIdString_);
+	
+								//if value-groupid node, link index is last in element class name
+								var colType = vel.className.split(' ')[1];
+								var selfLinkIndex = colType.substr(
+										("treeNode-ValueType-GroupID").length);
+	
+								var groupId = document.getElementById("treeNode-Value-" + 
+										((document.getElementById("treeNode-ParentId-" + 
+												treeEditingNodeParentIdString_).textContent))).textContent;
+								groupId = groupId.split('=')[1].substr(1); //get after =
+								groupId = groupId.substr(0,groupId.length-1); //remove ending )
+	
+								Debug.log("parentLinkIndex = " + parentLinkIndex);
+								Debug.log("selfLinkIndex = " + selfLinkIndex);
+								Debug.log("groupId = " + groupId);
+	
+								if(parentLinkIndex != selfLinkIndex) //no match
 								{
-									//need to remove parent 'treeNode' from 
-									//	parent-of-parent childrenNode: 
-									var parentTreeNode = document.getElementById("treeNode-" + 
-											treeEditingNodeParentIdString_);
-									var popChildrenNode = parentTreeNode.parentNode;
-									popChildrenNode.removeChild(parentTreeNode);
-
-									//if no more children, say so
-									var popChildren = popChildrenNode.getElementsByClassName("treeNode");
-									if(popChildren.length == 0)
+									//just change value (still in group) and done	
+									_editingCellEl.appendChild(document.createTextNode(newValue));
+								}
+								else //matching link ids
+								{
+									var groupIds = newValue.split('|');
+									var stillInGroup = false;
+									for(var i=0;i<groupIds.length;++i)								
+										if(groupIds[i].trim() == groupId)
+										{
+											Debug.log("found groupIds[" + i + "] = " + groupIds[i]);
+											stillInGroup = true;
+											break;
+										}
+	
+									if(stillInGroup)
+										_editingCellEl.appendChild(document.createTextNode(newValue));
+									else // remove from group
 									{
-										var str = "";
-										str += 
-												"<div class='treeNode'> " +
-												"<div class='treeNode-Connection'></div>" +
-												"<div class='treeNode-Value'>";
-
-										str += "No Children Nodes Found.";
-
-										str += "</div>" + //end treeNode Value div		
-												"</div>" + //end treeNode div							
-												"<div id='clearDiv'></div>"; 
-										popChildrenNode.innerHTML = str;
+										//need to remove parent 'treeNode' from 
+										//	parent-of-parent childrenNode: 
+										var parentTreeNode = document.getElementById("treeNode-" + 
+												treeEditingNodeParentIdString_);
+										var popChildrenNode = parentTreeNode.parentNode;
+										popChildrenNode.removeChild(parentTreeNode);
+	
+										//if no more children, say so
+										var popChildren = popChildrenNode.getElementsByClassName("treeNode");
+										if(popChildren.length == 0)
+										{
+											var str = "";
+											str += 
+													"<div class='treeNode'> " +
+													"<div class='treeNode-Connection'></div>" +
+													"<div class='treeNode-Value'>";
+	
+											str += "No Children Nodes Found.";
+	
+											str += "</div>" + //end treeNode Value div		
+													"</div>" + //end treeNode div							
+													"<div id='clearDiv'></div>"; 
+											popChildrenNode.innerHTML = str;
+										}
 									}
 								}
-							}						
+							}	
+							catch(e)
+							{
+								//assume new value is not relevant to position in tree
+								//finish edit
+								Debug.log("Assuming new value is not relevant to position in tree - here is the error: " + e);
+								_editingCellEl.appendChild(document.createTextNode(newValue));									
+							}					
 						}
 						else
 							_editingCellEl.appendChild(document.createTextNode(newValue));

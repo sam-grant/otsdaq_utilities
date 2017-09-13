@@ -14,6 +14,7 @@
 		body {	
 			padding:0;
 			margin:0;
+			background-color:white;
 		}
 
 		/* make links have a hand cursor */
@@ -24,6 +25,11 @@
 		.linkDiv {
 			border: 1px solid red;
 			border-radius: 10px;
+		}
+		
+		#img {
+			position: absolute;
+			border: 0;
 		}
 		
 		
@@ -54,6 +60,11 @@
 	
 		//functions:			
 			//init()
+			//handleWindowResize()
+		
+		var img; 
+		var IMG_W = 1866;
+		var IMG_H = 606;
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -80,8 +91,32 @@
 					"save your changes."
 			);
 			
+			img = document.getElementById("img");
+
+			window.addEventListener("resize",handleWindowResize);
+						
+			handleWindowResize();
+			
 		} //end init()
-		
+
+		//=====================================================================================
+		//handleWindowResize ~~
+		//	called when page is resized
+		function handleWindowResize()
+		{
+			//adjust link divs to proper size
+			//	use ratio of new-size/original-size to determine proper size
+			
+		    var w = window.innerWidth;
+		    var h = window.innerHeight;	    
+		    
+		    Debug.log("handleWindowResize to " + w + " - " + h);	
+		    
+		    img.style.left = 0 + "px";
+		    img.style.top = 0 + "px;
+		    
+		    
+		}
 		
 		</script>
 </head>
@@ -89,13 +124,10 @@
 
 <body onload='Javascript:init();'>	
 
-	<!-- body content is just the clickable block diagram -->
-
-	<table width='100%' height='100%' cellspacing='0' cellpadding='0'>
-	<td width='100%' height='100%' valign='middle' align='center'>
-		<img src='/WebPath/images/windowContentImages/subset-components.png' width='100%' />
-	</td>
-	</table>
+	<!-- body content is just the clickable block diagram that stretches with window-->
+	
+	<img id='img' src='/WebPath/images/windowContentImages/subset-components.png' />
+	
 </body>
 	
 </html>
