@@ -1848,7 +1848,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument &xmldoc, 
 		}
 		else
 		{
-			ConfigurationTree startNode = cfgMgr->getNode(startPath);
+			ConfigurationTree startNode = cfgMgr->getNode(startPath,true /*doNotThrowOnBrokenUIDLinks*/);
 			if(startNode.isLinkNode() && startNode.isDisconnected())
 			{
 				xmldoc.addTextElementToData("DisconnectedStartNode","1");

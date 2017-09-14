@@ -64,6 +64,12 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				//make num optional and default to lowest priority
 				if(num === undefined) num = Debug.LOW_PRIORITY;
 				
+				//add call out labels to file [line] text blobs
+				var returnStr = localCallOutDebugLocales(str);
+				if(returnStr)
+					str = returnStr;
+				
+				
 				if(Debug.level < 0) Debug.level = 0; //check for crazies, 0 is min level
 				if(Debug.mode && num <= Debug.level)
 				{				
@@ -97,6 +103,79 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 					
 					if(num < 4) //show all high priorities as popup!
 						Debug.errorPop(str,num);
+				}
+				
+				/////////////////////////////////
+				//localCallOutDebugLocales ~~
+				//	add call out labels to file [line] text blobs
+				//	returns undefined if no change
+				function localCallOutDebugLocales(str)
+				{
+					var i = 0;
+					var j,k,l;
+					var returnStr;
+					try
+					{
+						while((j = str.indexOf('[',i)) > 0 && (k = str.indexOf(']',i)) > 0)
+						{
+							if(j < 4)
+							{
+								i = k+1;
+								continue; //skip, too soon to be valid
+							}
+							
+							//found new possible call out 
+							//console.log(str.substr(j,k-j+1));
+							
+							//look for .cc and .h 
+							if((str[j-3] == '.' && str[j-2] == 'h') || 
+									(str[j-4] == '.' && str[j-3] == 'c' && str[j-2] == 'c'))
+							{
+								//find beginning of blob (first non-file/c++ character)
+								for(l = j-3; l >= i; --l)
+									if(!((str[l] >= 'a' && str[l] <= 'z') ||  
+											(str[l] >= 'A' && str[l] <= 'Z') ||
+											(str[l] >= '0' && str[l] <= '9') ||
+											(str[l] >= '.') ||
+											(str[l] >= '_') ||
+											(str[l] >= '-') ||
+											(str[l] >= '/') ||
+											(str[l] >= ':')))								
+										break; //found beginning (-1)
+								
+								++l; //increment to first character of blob
+											
+								if(!returnStr) //check if need to define for the first time
+									returnStr = "";
+								
+								//previous chunk
+								returnStr += str.substr(i,l-i);
+								
+								//add label
+								returnStr += "<label class='" + 
+										Debug._errBoxId + "-localCallOut'>";
+								
+								//add callout
+								returnStr += str.substr(l,k+1-l);
+								
+								//add end label
+								returnStr += "</label>";
+								
+							}
+							i = k+1;						
+						}
+					}
+					catch(e)
+					{
+						return undefined; //give up on errors
+					}
+					
+					
+					if(returnStr) //finish last chunk
+						returnStr += str.substr(i);	
+					
+					
+					return returnStr; //if untouched, undefined return
 				}
 			}
 	}
@@ -230,6 +309,9 @@ Debug.errorPop = function(err,severity) {
 					"font-family: 'Comfortaa', arial;" +
 					"text-align: left;" +
 					"}\n\n";
+			
+			css += "." + Debug._errBoxId + "-localCallOut" + 
+					"{font-size: 15px;color: rgb(191, 185, 193);}\n\n";
 
 			//add style element to HEAD tag
 			var style = document.createElement('style');
