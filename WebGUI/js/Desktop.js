@@ -257,10 +257,10 @@ Desktop.createDesktop = function(security) {
 	    //		innerHTML = requestingWindowId=<window uid>&done=1
 	    if(_openWindowMailbox.innerHTML != "")
 	    {
-	    	Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
+	    	Debug.log("_openWindowMailbox.textContent=" + _openWindowMailbox.textContent);
 	    	
 	    	//get parameters
-	    	var paramsStr = _openWindowMailbox.innerHTML;
+	    	var paramsStr = _openWindowMailbox.textContent;
 	    	var params = [];
 	    	var paramCnt = 5;
 	    	var spliti, splitiOld = 0; 
@@ -272,9 +272,9 @@ Desktop.createDesktop = function(security) {
 	    			break;
 	    		}
 	    		//for others, handle like normal get param
-	    		spliti = paramsStr.indexOf('&amp;', splitiOld);	    		
+	    		spliti = paramsStr.indexOf('&', splitiOld);	    		
 	    		params.push(paramsStr.substr(splitiOld,spliti-splitiOld))
-				splitiOld = spliti+5;
+				splitiOld = spliti+1;
 	    	}
 	    	
 	    	var varPair;
@@ -774,18 +774,39 @@ Desktop.createDesktop = function(security) {
 	//actOnParameterAction() ~~~
 	//	called during create desktop to handle any shortcuts to windows being maximized
 	this.actOnParameterAction = function() {
-		var params = window.parent.window.location.search.substr(1).split("&");
-		var pair,spliti;
+//		var params = window.parent.window.location.search.substr(1).split("&");
+//		var pair,spliti;
+//		
+//		var requestingWindowId = "", windowPath = "";
+//		var windowName, windowSubname, windowUnique, newWindowOps;
+//    	var varPair;
+			    	
+    	
+    	//get parameters
+		var paramsStr = window.parent.window.location.search.substr(1); //skip the '?'
+		var params = [];
+		var paramCnt = 5;
+		var spliti, splitiOld = 0; 
+		for(var i=0;i<paramCnt;++i)
+		{
+			if(i == paramCnt-1) //last one take the whole thing (this is path, and could have &'s in it)
+			{
+				params.push(paramsStr.substr(splitiOld));
+				break;
+			}
+			//for others, handle like normal get param
+			spliti = paramsStr.indexOf('&', splitiOld);	    		
+			params.push(paramsStr.substr(splitiOld,spliti-splitiOld))
+			splitiOld = spliti+1;
+		}
 		
+		var varPair;
 		var requestingWindowId = "", windowPath = "";
 		var windowName, windowSubname, windowUnique, newWindowOps;
-    	var varPair;
-			    	
 		for(var i=0;i<params.length;++i)
 		{
-    		spliti = params[i].indexOf('=');
-    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	
-			Debug.log(i + ": " + varPair[0] + "=" + varPair[1]);
+			spliti = params[i].indexOf('=');
+			varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	    		
 			if(varPair[0] 		== "requestingWindowId")
 				requestingWindowId 	= varPair[1];
 			else if(varPair[0] 	== "windowPath")
@@ -795,10 +816,34 @@ Desktop.createDesktop = function(security) {
 			else if(varPair[0] 	== "windowSubname")
 				windowSubname		= varPair[1];	
 			else if(varPair[0] 	== "windowUnique")
-				windowUnique 		= varPair[1];	
-			else if(varPair[0] 	== "newWindowOps")
-				newWindowOps 		= varPair[1];	
+				windowUnique 		= varPair[1];	 
 		}
+		
+		if(windowPath.indexOf("newWindowOps") >= 0)
+		{
+			//extract newWindowOps
+			newWindowOps = windowPath.split('&')[1].split('=')[1];
+			windowPath = windowPath.split('&')[0];
+		}
+    		    	
+//		for(var i=0;i<params.length;++i)
+//		{
+//    		spliti = params[i].indexOf('=');
+//    		varPair = [params[i].substr(0,spliti),params[i].substr(spliti+1)];	
+//			Debug.log(i + ": " + varPair[0] + "=" + varPair[1]);
+//			if(varPair[0] 		== "requestingWindowId")
+//				requestingWindowId 	= varPair[1];
+//			else if(varPair[0] 	== "windowPath")
+//				windowPath 			= decodeURIComponent(varPair[1]);	
+//			else if(varPair[0] 	== "windowName")
+//				windowName 			= varPair[1];	
+//			else if(varPair[0] 	== "windowSubname")
+//				windowSubname		= varPair[1];	
+//			else if(varPair[0] 	== "windowUnique")
+//				windowUnique 		= varPair[1];	
+//			else if(varPair[0] 	== "newWindowOps")
+//				newWindowOps 		= varPair[1];	
+//		}
 		
 		if(requestingWindowId != "" && windowPath != "")
 		{

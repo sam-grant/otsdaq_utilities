@@ -21,16 +21,22 @@
 		a {
 			cursor: pointer;
 		}
-		
+
 		.linkDiv {
+			border: 0;
+			border-radius: 20px;
+			position: absolute;
+		}
+
+		a:hover .linkDiv {
 			border: 1px solid red;
-			border-radius: 10px;
 		}
 		
-		#img {
+		
+		#img, #links {
 			position: absolute;
 			border: 0;
-		}
+		}		
 		
 		
 	</style>
@@ -62,12 +68,18 @@
 			//init()
 			//handleWindowResize()
 			//placeLinks()
+			//handleClick(event,i)
 		
-		var img; 
-		var IMG_W = 1866;
-		var IMG_H = 606;
-		var IMG_M = 10; //margin
-		
+		var _img, _links; 
+		var _il, _it, _iw, _ih; 
+		var _IMG_W = 1866;
+		var _IMG_H = 606;
+		var _IMG_M = 10; //margin
+		var _LINK_M = 14; //link margin
+		var _urn;
+
+		var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
+		var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -93,11 +105,31 @@
 					"save your changes."
 			);
 			
-			img = document.getElementById("img");
+			_img = document.getElementById("img");
+			_links = document.getElementById("links");
+
+			_urn = DesktopContent._localUrnLid; //get config GUI urn
+			
+			//push name, link and rectangles: left, top, bottom, right
+			_linkLoc.push(["Front-ends",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=FEInterfaceConfiguration" +
+						   "&groupingFieldList=Status,FEInterfacePluginName" +
+						   "&recordAlias=Front-ends" +
+						   "&editableFieldList=!*CommentDescription,!SlowControls*"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,2,225,57,287]); 
+			
+			
+			
+			
+			
+			
 
 			window.addEventListener("resize",handleWindowResize);
 						
 			handleWindowResize();
+			
 			
 		} //end init()
 
@@ -114,27 +146,31 @@
 		    
 		    Debug.log("handleWindowResize to " + w + " - " + h);	
 		    
-		    var l = IMG_M;
-		    var t = IMG_M;
+		    var l = _IMG_M;
+		    var t = _IMG_M;
 		    
 		    //try full width, calculate img height, if too tall shrink width 
-		    var iw = w - 2*IMG_M;		    
-		    var ih = ((1.0*IMG_H*w/IMG_W) | 0) ;
-		    if(ih > h - 2*IMG_M)
+		    var iw = w - 2*_IMG_M;		    
+		    var ih = ((1.0*_IMG_H*w/_IMG_W) | 0) ;
+		    if(ih > h - 2*_IMG_M)
 		    {
 		    	//too tall so shrink width, and adjust left
-		    	ih = h - 2*IMG_M;
-		    	iw = ((1.0*IMG_W*ih/IMG_H) | 0);		
+		    	ih = h - 2*_IMG_M;
+		    	iw = ((1.0*_IMG_W*ih/_IMG_H) | 0);		
 		    	l = ((w-iw)/2) | 0; 
 		    }
 		    else //adjust top
 		    	t = ((h-ih)/2) | 0;		    	
 		    
 
-			img.style.left = l + "px";
-			img.style.top = t + "px";
-		    img.style.width = iw + "px";
-		    img.style.height = ih + "px";
+			_img.style.left = l + "px";
+			_img.style.top = t + "px";
+		    _img.style.width = iw + "px";
+		    _img.style.height = ih + "px";
+		    _il = l;
+		    _it = t;
+		    _iw = iw;
+		    _ih = ih;
 		    
 		    placeLinks();
 		}
@@ -143,8 +179,119 @@
 		//=====================================================================================
 		//placeLinks ~~
 		//	called when page is resized
+		//
+		//	location of links:
+		var _linkLoc = [];
+		//push name, link and rectangles: left, top, bottom, right			
+		var _linkClickIndex = -1;
+		
+		//placeLinks ~~
+		//=====================================================================================
 		function placeLinks()
 		{
+			Debug.log("placing links");
+			var a,div;
+			var l,t,w,h;
+
+			var clickContextMenuItems = [
+					   "Open in new Desktop Window",
+					   "Open in new Browser Tab"];
+			var clickContextMenuItemHandlers;
+			
+			_links.innerHTML = ""; //clear all previous links
+			
+			for(var i=0;i<_linkLoc.length;++i)
+			{
+				Debug.log(_linkLoc[i][0] + ": \n\n" + _linkLoc[i][1] + 
+						"\n\n" + encodeURIComponent(_linkLoc[i][1]) + 
+						"\n\n" + decodeURIComponent(_linkLoc[i][1])  );
+
+				l = ((1.0* _linkLoc[i][2]*_iw/_IMG_W) | 0);
+				t = ((1.0* _linkLoc[i][3]*_ih/_IMG_H) | 0);
+				w = ((1.0* _linkLoc[i][4]*_iw/_IMG_W) | 0);
+				h = ((1.0* _linkLoc[i][5]*_ih/_IMG_H) | 0);
+
+				Debug.log(l + ": \n\n" + t + 
+						"\n\n" + w + 
+						"\n\n" + h  );
+				
+				w += -l + 2*_LINK_M;
+				h += -t + 2*_LINK_M;
+				l += _il - _LINK_M;
+				t += _it - _LINK_M;
+				
+				Debug.log(l + ": \n\n" + t + 
+						"\n\n" + w + 
+						"\n\n" + h  );
+				
+				a = document.createElement("a");
+				a.setAttribute("id","link-" + i);
+				div = document.createElement("div");
+				div.setAttribute("class","linkDiv");
+				div.style.left = l + "px";
+				div.style.top = t + "px";
+				div.style.width = w + "px";
+				div.style.height = h + "px";
+				
+				a.appendChild(div);
+				_links.appendChild(a);
+
+				a.href = '#';
+				a.onclick = //addEventListener("onclick",
+						function()
+						{
+					var i = (this.id.split('-')[1]) | 0;
+					_linkClickIndex = i; //save for handler
+					
+					Debug.log("name: " + _linkLoc[i][0]);
+					clickContextMenuItemHandlers = [];
+					clickContextMenuItemHandlers.push(handleClick);
+					clickContextMenuItemHandlers.push(handleClick);
+					
+					SimpleContextMenu.createMenu(//CallAsString(
+							clickContextMenuItems,
+							clickContextMenuItemHandlers,
+							"treeNavContextMenu",
+							event.pageX-1,
+							event.pageY-1,
+							_CONTEXT_MENU_PRIMARY_COLOR,
+							_CONTEXT_MENU_SECONDARY_COLOR); 
+						};
+				//);// end onmousedown	
+				
+				
+			}
+			
+		}
+
+		//=====================================================================================
+		//placeLinks ~~
+		//	use _linkClickIndex
+		function handleClick(event,menuIndex)
+		{
+			var i = _linkClickIndex | 0;
+			if(i < 0 || i >= _linkLoc.length || menuIndex < 0 || menuIndex > 1)
+			{
+				Debug.log("Out-of-range " + i + ":" + menuIndex);
+				return;
+			}
+			
+			Debug.log("handleClick name: " + _linkLoc[i][0]);
+			
+			//WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A
+			if(menuIndex == 0) //open new window
+			{
+				DesktopContent.openNewWindow(_linkLoc[i][0],"",
+						"/WebPath/html/ConfigurationGUI_subset.html?" +
+						encodeURIComponent(_linkLoc[i][1]).replace(/%3D/g, "=").replace(/%26/g, "&"),false);				
+			}
+			else
+			{
+
+				DesktopContent.openNewBrowserTab(_linkLoc[i][0],"",
+						"/WebPath/html/ConfigurationGUI_subset.html?" +
+						encodeURIComponent(_linkLoc[i][1]).replace(/%3D/g, "=").replace(/%26/g, "&"),false);
+			}
 			
 		}
 		
@@ -157,7 +304,7 @@
 	<!-- body content is just the clickable block diagram that stretches with window-->
 	
 	<img id='img' src='/WebPath/images/windowContentImages/subset-components.png' />
-	
+	<div id='links'></div>
 </body>
 	
 </html>

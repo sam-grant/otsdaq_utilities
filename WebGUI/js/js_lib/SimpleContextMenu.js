@@ -60,6 +60,8 @@ SimpleContextMenu._primaryColor = "";
 SimpleContextMenu._secondaryColor = "";
 
 //=====================================================================================
+//SimpleContextMenu.createMenu
+// 	if from event, for left and top use, e.g event.pageX-1,event.pageY-1
 SimpleContextMenu.createMenu = function(menuItems,menuItemHandlers,
 		popupID,topLeftX,topLeftY, primaryColor, secondaryColor)	{
 
@@ -242,7 +244,7 @@ SimpleContextMenu.callMenuItemHandler = function(event,index) {
 	event.cancelBubble = true;
 	event.preventDefault();
 	
-	Debug.log("SimpleContextMenu.callMenuItemHandler " + handler);
+	//Debug.log("SimpleContextMenu.callMenuItemHandler " + handler);
 	if(handler && (typeof handler) == "string") //if handler supplied as string
 	{
 		Debug.log("evaluateJS = " + handler);
