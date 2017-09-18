@@ -823,12 +823,15 @@
 							{
 								_prevState = -1; //invalidate previous state
 
-							    Debug.log("State was changed unexpectedly from " + 
-										_stateNames[_currState] + " to " + _stateNames[i] +
-										". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
-								//								alert("State was changed unexpectedly from " + 
-								//										_stateNames[_currState] + " to " + _stateNames[i] +
-								//										". (Likely another user changed the state)");
+								if(_stateNames[i] == "Failed")
+									Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+								else
+									Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+
 							    
 							    if(_states[i] == "F") //Failed state occured, so get error message
 							    {
@@ -1096,16 +1099,16 @@
             		//show refresh link            		
             		var str = "";
             		str += "<div style='margin:10px'>";
-            		str += "Did the server crash? If it's back, try a "
+            		str += "Did the server crash? If it's back, try a ";
             		str += "<a onclick='_transitionProgress = -1; " + 
 					"window.clearInterval(_transitionTimer);" +
 					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-						">refresh</a>.";
+						">Refresh</a>.";
             		str += "</div>";
-            		document.getElementById("blackout-reveal").innerHTML = str;
+            		_blackoutReveal.innerHTML = str;
             		return;
             	}
-            	document.getElementById("blackout-reveal").innerHTML = ""; //clear blackout reveal refresh
+            	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
 
 			    var inTransition = DesktopContent.getXMLValue(req,"in_transition")=="1";			    
 			    var progress = DesktopContent.getXMLValue(req,"transition_progress");		    
@@ -1135,6 +1138,17 @@
 			    	if(progress != _transitionProgress)
 			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
 			    	_transitionProgress = progress;
+			    	
+			    	//show refresh link            		
+			    	var str = "";
+			    	str += "<div style='margin:10px'>";
+
+			    	str += "<a onclick='_transitionProgress = -1; " + 
+			    			"window.clearInterval(_transitionTimer);" +
+							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+							">Refresh</a>";
+			    	str += "</div>";
+			    	_blackoutReveal.innerHTML = str;
 			    }
 
 		    	_progressBar.style.width = _transitionProgress + "%";
