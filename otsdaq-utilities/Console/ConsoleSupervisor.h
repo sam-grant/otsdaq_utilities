@@ -76,11 +76,9 @@ private:
     		fields[SEQID].set	("SequenceID",2,-1);
     		fields[LEVEL].set	("Level",5,-1);
     		fields[LABEL].set	("Label",6,-1);
+    		fields[SOURCEID].set("SourceID",9,-1); //number
+    		fields[SOURCE].set	("Source",11,-1); //number
     		fields[MSG].set		("Msg",12,-1);
-
-    		//fields not given to
-    		fields[SOURCEID].set("SourceID",9,-1); //6 or 10?
-    		fields[SOURCE].set	("Source",11,-1); //7 or 11?
     	}
 
     	void set(const std::string &msg, const time_t count)
@@ -161,9 +159,9 @@ private:
     		SEQID,
     		LEVEL,	//aka SEVERITY
     		LABEL,
-    		MSG,
 			SOURCEID,
     		SOURCE,
+    		MSG,
     	};
 
     	const int BUFFER_SZ = 5000;

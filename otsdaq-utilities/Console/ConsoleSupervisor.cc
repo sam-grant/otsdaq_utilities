@@ -143,6 +143,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			newSourceId = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
 			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
 
+			//std::cout << __COUT_HDR_FL__ << "newSourceId: " << newSourceId << std::endl;
+			//std::cout << __COUT_HDR_FL__ << "newSequenceId: " << newSequenceId << std::endl;
 
 			if(sourceLastSequenceID.find(newSourceId) !=
 					sourceLastSequenceID.end() && //ensure not first packet received

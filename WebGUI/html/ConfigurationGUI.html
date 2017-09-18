@@ -234,7 +234,8 @@
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchOTS\");" +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchOTS\"," +
+				"\"\",handleOtsRelaunchResponse,0);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Normal Mode</a>" +
 				" or " +
@@ -243,7 +244,8 @@
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\");" +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\"," +
+				"\"\",handleOtsRelaunchResponse,1);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Wiz Mode</a>." +
 				"<br>" +
@@ -271,7 +273,8 @@
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\");" +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
+				"\"\",handleFlattenSystemAliasesResponse);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Flatten to System Aliases</a>."
 				;
@@ -472,6 +475,8 @@
 			//createEditTableMenu(event)
 		
 			//tableLinkTooltip(prependString)
+		
+			//handleFlattenSystemAliasesResponse
 		
 
 		//ConfigurationAPI functions
@@ -676,6 +681,25 @@
 					tableViewRequestHandler,anchorTarget,
 					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
 					);		
+		}
+		
+		//handleFlattenSystemAliasesResponse ~
+		function handleFlattenSystemAliasesResponse(req) {
+			Debug.log("Attempt to Flatten System Aliases was successfully launched... " +
+					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					Debug.INFO_PRIORITY);
+		}
+		
+		//handleFlattenSystemAliasesResponse ~
+		function handleOtsRelaunchResponse(req,isWiz) {
+			if(isWiz)
+				Debug.log("Attempt to restart your system in Wiz Mode was successfully launched... " +
+					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					Debug.INFO_PRIORITY);
+			else
+				Debug.log("Attempt to restart your system in Normal Mode was successfully launched... " +
+					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					Debug.INFO_PRIORITY);
 		}
 
 		//setupSpecificConfigGroup ~		

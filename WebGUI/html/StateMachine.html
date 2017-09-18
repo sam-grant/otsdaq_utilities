@@ -936,9 +936,14 @@
                 	var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
                 	if(err)
                 		Debug.log(err,Debug.HIGH_PRIORITY);
-                	Debug.log("Server indicated failure to attempt state transition.",Debug.HIGH_PRIORITY);
-                	//alert("Server indicated failure to attempt state transition.");
+                	Debug.log("Server indicated failure to attempt state transition. Attempting to refresh state machine...",Debug.HIGH_PRIORITY);
+                	//alert("Server indicated failure to attempt state transition.");                	
                 	_inAnimation = false;
+                	
+                	//refresh FSM
+                	_transitionProgress = -1; 
+                	window.clearInterval(_transitionTimer);
+                	_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
                 	return;
                 }
                 
