@@ -61,10 +61,12 @@
 		//functions:			
 			//init()
 			//handleWindowResize()
+			//placeLinks()
 		
 		var img; 
 		var IMG_W = 1866;
 		var IMG_H = 606;
+		var IMG_M = 10; //margin
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -107,15 +109,43 @@
 			//adjust link divs to proper size
 			//	use ratio of new-size/original-size to determine proper size
 			
-		    var w = window.innerWidth;
-		    var h = window.innerHeight;	    
+		    var w = window.innerWidth | 0;
+		    var h = window.innerHeight | 0;	    
 		    
 		    Debug.log("handleWindowResize to " + w + " - " + h);	
 		    
-		    img.style.left = 0 + "px";
-		    img.style.top = 0 + "px;
+		    var l = IMG_M;
+		    var t = IMG_M;
 		    
+		    //try full width, calculate img height, if too tall shrink width 
+		    var iw = w - 2*IMG_M;		    
+		    var ih = ((1.0*IMG_H*w/IMG_W) | 0) ;
+		    if(ih > h - 2*IMG_M)
+		    {
+		    	//too tall so shrink width, and adjust left
+		    	ih = h - 2*IMG_M;
+		    	iw = ((1.0*IMG_W*ih/IMG_H) | 0);		
+		    	l = ((w-iw)/2) | 0; 
+		    }
+		    else //adjust top
+		    	t = ((h-ih)/2) | 0;		    	
 		    
+
+			img.style.left = l + "px";
+			img.style.top = t + "px";
+		    img.style.width = iw + "px";
+		    img.style.height = ih + "px";
+		    
+		    placeLinks();
+		}
+		
+
+		//=====================================================================================
+		//placeLinks ~~
+		//	called when page is resized
+		function placeLinks()
+		{
+			
 		}
 		
 		</script>
