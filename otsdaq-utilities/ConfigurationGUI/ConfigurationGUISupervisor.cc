@@ -2178,6 +2178,7 @@ try
 		col = config->getView().findCol(colName);
 	else if(
 			type == "table" ||
+			type == "link-comment" ||
 			type == "table-newGroupRow" ||
 			type == "table-newUIDRow" ||
 			type == "table-newRow"); // column N/A
@@ -2188,7 +2189,8 @@ try
 	}
 
 	//check if the comment value is new before making temporary version
-	if(type == "table")
+	if(type == "table" ||
+			type == "link-comment")
 	{
 		//editing comment, so check if comment is different
 		if(config->getView().isURIEncodedCommentTheSame(newValue))
@@ -2222,7 +2224,8 @@ try
 	try
 	{
 		//have view so edit it
-		if(type == "table")
+		if(type == "table" ||
+				type == "link-comment")
 		{
 			//edit comment
 			cfgView->setURIEncodedComment(newValue);

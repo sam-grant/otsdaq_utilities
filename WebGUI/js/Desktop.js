@@ -262,7 +262,7 @@ Desktop.createDesktop = function(security) {
 	    	//get parameters
 	    	var paramsStr = _openWindowMailbox.textContent;
 	    	var params = [];
-	    	var paramCnt = 5;
+	    	var paramCnt = 5 ;
 	    	var spliti, splitiOld = 0; 
 	    	for(var i=0;i<paramCnt;++i)
 	    	{
@@ -785,7 +785,7 @@ Desktop.createDesktop = function(security) {
     	//get parameters
 		var paramsStr = window.parent.window.location.search.substr(1); //skip the '?'
 		var params = [];
-		var paramCnt = 5;
+		var paramCnt = 5 + (Desktop.isWizardMode()?1:0); //1 extra param in wiz mode
 		var spliti, splitiOld = 0; 
 		for(var i=0;i<paramCnt;++i)
 		{
@@ -1528,7 +1528,7 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-		url += search + "&" + str;
+		url += search.split('&')[0] + "&" + str; //take first parameter (for wiz mode)
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	

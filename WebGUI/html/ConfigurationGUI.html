@@ -3248,6 +3248,20 @@
 							"></div>" +
 							"</div></td>";
 				
+				if(nodeEditType == "link")
+					treeViewHandlerStr_ += 
+							"<td><div style='margin-top:-4px; float:left;'>" + //to account for not being in value node
+							"<div class='treeNode-Value-editIcon' id='treeNode-Value-editCommentIcon-" +
+							(depth + "-" + uid) + "' " +
+							"onclick='handleTreeNodeClick(" +							 
+							depth + "," + uid + "," + 	
+							"1,\"" +
+							"link-comment" +
+							"\"); event.stopPropagation();' " +
+							"title='Edit the comment for this table.' " +
+							"></div>" +
+							"</div></td>";
+				
 				
 				//add comment if applicable
 				treeViewHandlerStr_ += "<td style='font-size:14px; white-space: nowrap;' id='" +
@@ -3512,10 +3526,13 @@
 			
 			if(editClick)	//2x click
 			{
-				if(type == "table")
+				if(type == "table" || type == "link-comment")
 				{
 					//edit table comment
-					treeEditingTargetTable_ = el.textContent;
+					if(type == "table")
+						treeEditingTargetTable_ = el.textContent;
+					else //type == "link-comment"
+						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" + idString).textContent;
 					
 					//other globals are unused
 					treeEditingNodeParentIdString_ = "";
@@ -5593,7 +5610,7 @@
 			
 			var el = 0;
 						
-			if(type == "table")
+			if(type == "table" || type == "link-comment")
 			{
 				treeEditingNodeType_ = type;
 				
@@ -8432,7 +8449,8 @@
 					{
 						newValue = encodeURIComponent(_editingCellEl.textContent);
 					}
-					else if(treeEditingNodeType_.indexOf("link-") == 0)
+					else if(treeEditingNodeType_.indexOf("link-") == 0 &&
+							treeEditingNodeType_ != "link-comment")
 					{
 						//make csv newValue := linkTable,linkInitId
 						var sel = _editingCellEl.getElementsByTagName("select")[0];	
@@ -8806,7 +8824,14 @@
 					{
 						treeMemberComments_[tableIndex] = newValue;
 						_editingCellEl.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
-					}						
+					}		
+					else if(treeEditingNodeType_ == "link-comment")
+					{
+						treeMemberComments_[tableIndex] = newValue;
+						var el = el = document.getElementById("treeNode-TableComment-" + treeEditingNodeIdString_);
+						el.innerHTML = "";
+						el.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
+					}
 					else if(treeEditingNodeType_ == "table-newRow")
 					{
 						//replace the value that was erased with table name
@@ -8887,134 +8912,7 @@
 						{
 							//if disconnected from edit, show tooltip
 							tableLinkTooltip("We noticed you have a disconnected link.");
-						}
-						
-//						
-//						var csvArr = newValue.split(',');
-//						var linkTable = csvArr[0];
-//						var linkId = csvArr[1];
-//						newValue = 							
-//								"-(" + 
-//								treeEditingNodeType_.split('-')[1] + " = " + linkId + ")";
-//						//add as text node first in case not html safe
-//						_editingCellEl.appendChild(document.createTextNode(newValue));
-//						//then add html piece
-//						newValue = _editingCellEl.innerHTML;
-//						newValue = "<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
-//								treeEditingTargetColumn_ + 
-//								"</label>" +
-//								newValue;
-//						_editingCellEl.innerHTML = newValue;
-//
-//						{	//change link table name
-//							var el; 
-//							el = document.getElementById("treeNode-linkTableName-" + 
-//									treeEditingNodeIdString_);
-//							el.innerHTML = "";
-//							el.appendChild(document.createTextNode(linkTable)); 
-//						}
-//
-//						var retVal = getTreeViewTableStrings(linkTable);
-//						var treeNavContextMenuItems = retVal.treeNavContextMenuItems;
-//						var treeNavContextMenuItemHandlers = retVal.treeNavContextMenuItemHandlers;
-//						var tableComment = retVal.tableComment;
-//						var tableTitle = retVal.tableTitle;
-//
-//						//change element title
-//						_editingCellEl.title = tableTitle;
-//
-//						{	//change link table comment
-//							var el; 
-//							el = document.getElementById("treeNode-TableComment-" + 
-//									treeEditingNodeIdString_);
-//							el.innerHTML = "";
-//							if(tableComment != "")
-//								el.appendChild(document.createTextNode("//" + tableComment)); 
-//						}
-//
-//						if(treeNavContextMenuItemHandlers.length == 0)
-//						{
-//							//no context menu items found
-//							//assume DISCONNECTED!
-//
-//							Debug.log("There is a treeNavContextMenuItemHandlers problem! Assuming disconnected link.");
-//
-//							newValue += "-" + 
-//									"<label style='color:red;font-weight:bold;'>" +
-//									"DISCONNECTED" +
-//									"</label>";
-//							_editingCellEl.innerHTML = newValue;
-//
-//							//if disconnected from edit, show tooltip
-//							tableLinkTooltip();
-//						}
-//						else
-//						{ 	//change context menu for table link							
-//							
-//							var el; 
-//							el = document.getElementById("treeNode-LinkContextMenuTD-" + 
-//									treeEditingNodeIdString_);
-//							var str = "";
-//							str += 
-//									"<div class='treeNode-Link' " + //start treeNode Link div
-//									"onmousedown='" + // start link onmousedown	
-//									"SimpleContextMenu.createMenu([";
-//							
-//							//output item strings
-//							for(j=0;j<treeNavContextMenuItems.length;++j)
-//							{
-//								if(j)
-//									str += ",";
-//								str += "\"" + treeNavContextMenuItems[j] + "\"";
-//							}
-//
-//							str += "]," +//end items and open array for item handlers
-//									"[";
-//
-//							for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-//							{
-//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//								//need to escape all quotes by one more level
-//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-//										treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-//								treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-//								//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//								//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-//								//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-//								str += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-//								if(j != treeNavContextMenuItemHandlers.length-1)
-//									str += ",";
-//							}
-//							str += "]" + //end treeNavContextMenuItemHandlers array
-//									",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-//									"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
-//							str += 
-//									"' " + // end link onmousedown
-//									//"onmouseup='" + onmouseupJS + "' " +
-//									">" +	
-//									"<div class='gotoNavDiv'></div>" +			
-//									"</div>"; //end treeNode Link div
-//
-//							el.innerHTML = str;
-//						}
-//
-//						//clear children,
-//						//and if children were displayed
-//						//		then toggle/show new children 
-//						var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
-//								treeEditingNodeIdString_);
-//						var wasDisplayed = elChildrenNode.style.display != "none" && 
-//								elChildrenNode.innerHTML != "";
-//
-//						toggleTreeChildren(
-//								treeEditingNodeDepth_,
-//								treeEditingNodeIdString_.split('-')[1],false);
-//						elChildrenNode.innerHTML = "";
-//
-//						if(wasDisplayed)
-//							toggleTreeChildren(
-//									treeEditingNodeDepth_,
-//									treeEditingNodeIdString_.split('-')[1],true);
+						}						
 					}
 					else if(treeEditingNodeType_ == "value" || 
 							treeEditingNodeType_ == "value-bitmap")
@@ -9170,7 +9068,7 @@
 			}
 			catch(e)
 			{	
-				Debug.log("Error occured during editCellOK - attempting to recover.");
+				Debug.log("Error occured during editCellOK - attempting to recover. Error: " + e);
 				editCellCancel();
 			}		
 		}
@@ -9196,6 +9094,7 @@
 				var treeNavContextMenuItemHandlers = tableStringsObj.treeNavContextMenuItemHandlers;
 				//var tableComment = tableStringsObj.tableComment;
 				var tableTitle = tableStringsObj.tableTitle;
+				var idString = targetEl.id.substr(("treeNode-Value-").length);
 				
 				///////////////////////////////
 				//change element title
@@ -9472,10 +9371,59 @@
 						{
 							el = document.getElementById("treeNode-TableComment-" + idString);
 							el.innerHTML = "";
-							el.appendChild(document.createTextNode("//" + newValue));
+							el.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
 						}
 					}
 				}
+			}
+			else if(treeEditingNodeType_ == "link-comment")
+			{	
+				//parameters:
+				// 	treeEditingTargetTable_
+				//	newValue -- arg0
+				
+				var newValue = arguments[0];
+				Debug.log("editTreeNodePropagateChange " + newValue);				
+
+				//find all Links with target table and change comment				
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-link");
+					var idString;
+					var table;
+					var el;
+					for(var i=0;i<els.length;++i)
+					{
+						idString = els[i].id.substr(("treeNode-Value-").length);
+						table = document.getElementById("treeNode-linkTableName-" + idString).textContent;
+						if(table == treeEditingTargetTable_)
+						{
+							el = document.getElementById("treeNode-TableComment-" + idString);
+							el.innerHTML = "";
+							el.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
+						}
+					}
+				}
+				
+				//find all tables with target table and change comment				
+				{
+					var els = document.getElementsByClassName("treeNode-Value-nodeEditType-table");
+					var idString;
+					var table;
+					var el;
+					for(var i=0;i<els.length;++i)
+					{
+						idString = els[i].id.substr(("treeNode-Value-").length);
+						table = els[i].textContent;
+						if(table == treeEditingTargetTable_)
+						{
+							el = document.getElementById("treeNode-TableComment-" + idString);
+							el.innerHTML = "";
+							el.appendChild(document.createTextNode("//" + decodeURIComponent(newValue)));
+						}
+					}
+				}
+
+
 			}
 			else if(treeEditingNodeType_ == "table-newRow" || 
 					treeEditingNodeType_ == "table-newGroupRow" || 
@@ -10445,7 +10393,8 @@
 				var isTreeView = document.getElementById("treeView-ConfigGroupLink")?true:false;
 							
 								
-				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0)
+				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0 
+						 && treeEditingNodeType_ != "link-comment")
 				{
 					//if canceling from link edit, show tooltip
 					tableLinkTooltip("We noticed you canceled your link edit.");
@@ -13587,6 +13536,15 @@
 				//Debug.log("bodyMouseMoveHandler clearing ");
 				treeEditingEditIconShownEl_.style.display = "none";
 				treeEditingEditIconShownEl_ = 0;
+				
+
+				//try bringing along the comment edit icon, and ignore fails
+				try
+				{
+					document.getElementById("treeNode-Value-editCommentIcon-" + 
+							treeEditingEditIconShownIdString_).style.display = "none";
+				}
+				catch(e){}
 
 				var vel = document.getElementById("treeNode-Value-" + treeEditingEditIconShownIdString_);
 				if(vel)
@@ -13618,6 +13576,15 @@
 			treeEditingEditIconShownEl_.style.display = "block";	
 			var vel = document.getElementById("treeNode-Value-" + treeEditingEditIconShownIdString_);
 			vel.style.backgroundColor = "rgb(218, 194, 194)";
+			
+			//try bringing along the comment edit icon, and ignore fails
+			try
+			{
+				document.getElementById("treeNode-Value-editCommentIcon-" + 
+						treeEditingEditIconShownIdString_).style.display = "block";
+			}
+			catch(e){}
+			
 		}
 		
 		</script>
