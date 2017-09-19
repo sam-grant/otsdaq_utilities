@@ -30,7 +30,7 @@
 	}
 	
 	#Desktop input {	
-		-webkit-user-select: 	auto;
+		-webkit-user-select: 	auto; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
 		-moz-user-select: 		auto;
 		user-select: 			auto;
 	}

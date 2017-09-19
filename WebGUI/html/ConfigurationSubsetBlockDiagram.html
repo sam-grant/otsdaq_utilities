@@ -29,14 +29,20 @@
 		}
 
 		a:hover .linkDiv {
-			border: 1px solid red;
+			border: 3px solid rgb(63, 63, 234);
 		}
 		
 		
 		#img, #links {
 			position: absolute;
 			border: 0;
+			-webkit-user-select: 	auto; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
+			-moz-user-select: 		none;
+			user-select:			none;
+			outline: none;  /* to stop firefox selection*/	
 		}		
+		
+		
 		
 		
 	</style>
@@ -74,9 +80,12 @@
 		var _il, _it, _iw, _ih; 
 		var _IMG_W = 1866;
 		var _IMG_H = 606;
-		var _IMG_M = 10; //margin
+		var _IMG_M = 20; //margin
 		var _LINK_M = 14; //link margin
+		var _LINK_B = 3; //link border
 		var _urn;
+		
+		var _deepClickTimer = 0;
 
 		var _CONTEXT_MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
 		var _CONTEXT_MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
@@ -106,22 +115,118 @@
 			);
 			
 			_img = document.getElementById("img");
+			_img.ondragstart = function() { return false; }; //prevent drag of ghost image
 			_links = document.getElementById("links");
 
 			_urn = DesktopContent._localUrnLid; //get config GUI urn
 			
 			//push name, link and rectangles: left, top, bottom, right
-			_linkLoc.push(["Front-ends",
+//			_linkLoc.push(["Front-ends",
+//						   "urn=" + _urn + 
+//						   "&subsetBasePath=FEInterfaceConfiguration" +
+//						   "&groupingFieldList=Status,FEInterfacePluginName" +
+//						   "&recordAlias=Front-ends" +
+//						   "&editableFieldList=!*CommentDescription,!SlowControls*"
+//						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+//						   ,2,225,57,287]); 
+			
+			_linkLoc.push(["Front-end Plugins",
 						   "urn=" + _urn + 
 						   "&subsetBasePath=FEInterfaceConfiguration" +
 						   "&groupingFieldList=Status,FEInterfacePluginName" +
 						   "&recordAlias=Front-ends" +
 						   "&editableFieldList=!*CommentDescription,!SlowControls*"
 						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
-						   ,2,225,57,287]); 
+						   ,429,1,807,95]); 
 			
+			_linkLoc.push(["Front-end Supervisors",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"XDAQApplicationConfiguration" +
+						   "&groupingFieldList=" + 		"Status,LinkToSupervisorConfiguration" +
+						   "&recordAlias=" + 			"FE Supervisors" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"Class=ots::FESupervisor"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,852,1,1232,95]); 
 			
+			_linkLoc.push(["Producer Plugins",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=DataBufferConfiguration" +
+						   "&groupingFieldList=Status,ProcessorPluginName" +
+						   "&recordAlias=Producers" +
+						   "&editableFieldList=!*CommentDescription" +
+						   "&recordPreFilterList=" + "ProcessorType=Producer"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,156,500,537,595]);
 			
+			_linkLoc.push(["Data Buffers",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=DataManagerConfiguration" +
+						   "&groupingFieldList=Status" +
+						   "&recordAlias=Data Buffers" +
+						   "&editableFieldList=!*CommentDescription" 						   
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,580,500,962,595]);
+			
+			_linkLoc.push(["Consumer Plugins",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"DataBufferConfiguration" +
+						   "&groupingFieldList=" + 		"Status,ProcessorPluginName" +
+						   "&recordAlias=" + 			"Consumers" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"ProcessorType=Consumer"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,1003,500,1384,595]);
+			
+			_linkLoc.push(["Visualizer Supervisors",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"XDAQApplicationConfiguration" +
+						   "&groupingFieldList=" + 		"Status,LinkToSupervisorConfiguration" +
+						   "&recordAlias=" + 			"Visualizer Supervisors" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"Class=ots::VisualSupervisor"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,976,363,1358,460]); 
+			
+			_linkLoc.push(["Controls Plugins",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"XDAQApplicationConfiguration" +
+						   "&groupingFieldList=" + 		"Status,LinkToSupervisorConfiguration" +
+						   "&recordAlias=" + 			"Controls Supervisors" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"Class=ots::ControlsDashboardSupervisor"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,553,205,936,302]); 
+
+			_linkLoc.push(["Controls Supervisors",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"XDAQApplicationConfiguration" +
+						   "&groupingFieldList=" + 		"Status,LinkToSupervisorConfiguration" +
+						   "&recordAlias=" + 			"Controls Supervisors" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"Class=ots::ControlsDashboardSupervisor"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,976,205,1358,302]); 
+			
+			_linkLoc.push(["Desktop Icons",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"DesktopIconConfiguration" +
+						   "&groupingFieldList=" + 		"Status,FolderPath" +
+						   "&recordAlias=" + 			"Desktop Icons" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	""
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,1462,18,1885,215]); 
+			
+			_linkLoc.push(["Visualizer Web-apps",
+						   "urn=" + _urn + 
+						   "&subsetBasePath=" + 		"DesktopIconConfiguration" +
+						   "&groupingFieldList=" + 		"Status,FolderPath" +
+						   "&recordAlias=" + 			"Visualizer Web-apps" +
+						   "&editableFieldList=" + 		"!*CommentDescription" +
+						   "&recordPreFilterList=" + 	"WindowContentURL=*Visualization*"
+						   //"/WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A"
+						   ,1462,254,1885,450]); 
 			
 			
 			
@@ -193,10 +298,11 @@
 			var a,div;
 			var l,t,w,h;
 
-			var clickContextMenuItems = [
-					   "Open in new Desktop Window",
-					   "Open in new Browser Tab"];
+			var clickContextMenuItems;
 			var clickContextMenuItemHandlers;
+			clickContextMenuItemHandlers = [];
+			clickContextMenuItemHandlers.push(handleClick);
+			clickContextMenuItemHandlers.push(handleClick);
 			
 			_links.innerHTML = ""; //clear all previous links
 			
@@ -217,8 +323,8 @@
 				
 				w += -l + 2*_LINK_M;
 				h += -t + 2*_LINK_M;
-				l += _il - _LINK_M;
-				t += _it - _LINK_M;
+				l += _il - _LINK_M - _LINK_B;
+				t += _it - _LINK_M - _LINK_B;
 				
 				Debug.log(l + ": \n\n" + t + 
 						"\n\n" + w + 
@@ -226,6 +332,8 @@
 				
 				a = document.createElement("a");
 				a.setAttribute("id","link-" + i);
+				a.title = "Open " + _linkLoc[i][0] + " configuration subset"; 
+				
 				div = document.createElement("div");
 				div.setAttribute("class","linkDiv");
 				div.style.left = l + "px";
@@ -235,29 +343,66 @@
 				
 				a.appendChild(div);
 				_links.appendChild(a);
+				
+				
+				
 
-				a.href = '#';
-				a.onclick = //addEventListener("onclick",
-						function()
+				//add context click menu handlers
+				//	mouseup and contextMenu to stop default right-click behavior
+				//	and mousedown to start the menu (so "deep clicks" work)
+				a.addEventListener("click",
+						function(event)
 						{
+					Debug.log("click");
 					var i = (this.id.split('-')[1]) | 0;
 					_linkClickIndex = i; //save for handler
 					
 					Debug.log("name: " + _linkLoc[i][0]);
-					clickContextMenuItemHandlers = [];
-					clickContextMenuItemHandlers.push(handleClick);
-					clickContextMenuItemHandlers.push(handleClick);
+					handleClick(event,0);
 					
-					SimpleContextMenu.createMenu(//CallAsString(
-							clickContextMenuItems,
-							clickContextMenuItemHandlers,
-							"treeNavContextMenu",
-							event.pageX-1,
-							event.pageY-1,
-							_CONTEXT_MENU_PRIMARY_COLOR,
-							_CONTEXT_MENU_SECONDARY_COLOR); 
-						};
-				//);// end onmousedown	
+						}
+				);// end onclick	
+				
+				a.addEventListener("mouseup", function(event) {
+					Debug.log("mouseup");
+					if(_deepClickTimer)
+					{
+						window.clearTimeout(_deepClickTimer);
+						_deepClickTimer = 0;
+					}
+				}); //end onmouseup event
+
+				function localDeepClickHandler(event) {	
+					Debug.log("mousedown");			
+					event.cancelBubble = true; //prevent default behavior 
+					event.preventDefault();
+					var i = (this.id.split('-')[1]) | 0;
+					
+					_deepClickTimer = window.setTimeout(function() {
+
+						Debug.log("deepclick");						
+						_linkClickIndex = i; //save for handler
+
+						Debug.log("name: " + _linkLoc[i][0]);
+
+						clickContextMenuItems = [
+												 "Open " + _linkLoc[i][0] + " in new Desktop Window",
+												 "Open " + _linkLoc[i][0] + " in new Browser Tab"];
+
+						SimpleContextMenu.createMenu(//CallAsString(
+								clickContextMenuItems,
+								clickContextMenuItemHandlers,
+								"linkClickContextMenu",
+								event.pageX-1,
+								event.pageY-1,
+								_CONTEXT_MENU_PRIMARY_COLOR,
+								_CONTEXT_MENU_SECONDARY_COLOR);
+
+					},500); //end deepClick timeout handler
+
+				}; //end deepClickHandler event
+
+				a.addEventListener("mousedown",	localDeepClickHandler);
 				
 				
 			}
@@ -281,14 +426,14 @@
 			//WebPath/html/ConfigurationGUI_subset.html?urn=281&subsetBasePath=FEInterfaceConfiguration&groupingFieldList=Status%2CFEInterfacePluginName&recordAlias=Front%2Dends&editableFieldList=%21%2ACommentDescription%2C%21SlowControls%2A
 			if(menuIndex == 0) //open new window
 			{
-				DesktopContent.openNewWindow(_linkLoc[i][0],"",
+				DesktopContent.openNewWindow(_linkLoc[i][0],"Subset",
 						"/WebPath/html/ConfigurationGUI_subset.html?" +
 						encodeURIComponent(_linkLoc[i][1]).replace(/%3D/g, "=").replace(/%26/g, "&"),false);				
 			}
 			else
 			{
 
-				DesktopContent.openNewBrowserTab(_linkLoc[i][0],"",
+				DesktopContent.openNewBrowserTab(_linkLoc[i][0],"Subset",
 						"/WebPath/html/ConfigurationGUI_subset.html?" +
 						encodeURIComponent(_linkLoc[i][1]).replace(/%3D/g, "=").replace(/%26/g, "&"),false);
 			}

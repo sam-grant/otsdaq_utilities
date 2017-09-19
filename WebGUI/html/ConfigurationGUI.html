@@ -13540,12 +13540,16 @@
 			if(sel.style.display == "none")
 			{
 				sel.style.display = "block";
-				tel.style.display = "none";
+				tel.style.display = "none";				
 			}
 			else
 			{
 				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
+				
+				if(tel.value == "") //fill with oldvalue for user convenience, if blank
+					tel.value = _editingCellElOldValue;
+				
 				tel.style.display = "block";
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
