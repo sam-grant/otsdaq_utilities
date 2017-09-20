@@ -2790,7 +2790,8 @@
 			var backLinkStr;
 			var titleStr;
 			var nodeEditType, nodeEditTypeDisplay;
-			var isLink,isDisconnected, isGroupLink;
+			var isLink,isDisconnected, isGroupLink;	
+			var choices; 
 			
 			var pathHTML = path;
 			//make path html safe
@@ -2845,7 +2846,7 @@
 								"id='treeNode-FixedChoice-CSV-" +
 								( depth + "-" + uid ) + "'>";
 						
-						var choices = nodes[i].children[1].children; //xml elements
+						choices = nodes[i].children[1].children; //xml elements
 						for(var j=0;j<choices.length;++j)
 						{
 							if(j) treeViewHandlerStr_ += ",";
@@ -2966,13 +2967,14 @@
 					--childrenLength; //subtract the link ID node from children length
 				
 					//this is a link node!	
-					var offset = 0;
+					var offset = 1;
+	
+					
 					if(value.getAttribute("value") == "Disconnected")
 					{
-						//this is a disconnected link node!
-						++offset;
+						//this is a disconnected link node!						
 						value = nodes[i].children[offset]; //get link ID node
-						--childrenLength;
+						--childrenLength; //subtract the link ID node from children length
 						isGroupLink = value.nodeName == "GroupID";					
 						isDisconnected = true;
 
@@ -2994,12 +2996,19 @@
 							"DISCONNECTED" +
 							"</label>";
 					
-					tableLinkName = nodes[i].children[offset+1].getAttribute("value"); //LinkConfigurationName node
+					tableLinkName = nodes[i].children[offset++].getAttribute("value"); //LinkConfigurationName node
 					--childrenLength; //subtract the tableLinkName name node from children length
-					childLinkIndex = nodes[i].children[offset+2].getAttribute("value"); //LinkIndex node					
+					childLinkIndex = nodes[i].children[offset++].getAttribute("value"); //LinkIndex node					
 					--childrenLength; //subtract the childLinkIndex node from children length
+
+					//get fixed choices
+					choices = nodes[i].children[offset++].children; //xml elements		
+					--childrenLength; //subtract the fixed choice node from children length		
+					
+
 					
 					isLink = true;
+					
 				}
 				else
 				{
@@ -3047,7 +3056,24 @@
 					;		
 				
 				treeViewHandlerStr_ += ">"; //end treeNode div open
-											
+										
+
+				//add CSV choices div	
+				if(choices)
+				{
+					treeViewHandlerStr_ += 
+							"<div class='treeNode-FixedChoice-CSV' style='display:none' " + 
+							"id='treeNode-FixedChoice-CSV-" +
+							( depth + "-" + uid ) + "'>";
+					for(var j=0;j<choices.length;++j)
+					{
+						if(j) treeViewHandlerStr_ += ",";
+						treeViewHandlerStr_ += choices[j].getAttribute("value");
+					}
+					treeViewHandlerStr_ += "</div>";
+				}
+				
+				
 				treeViewHandlerStr_ += 
 						"<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
 						( depth + "-" + uid ) + "'>" + // end path id
@@ -3169,42 +3195,6 @@
 								"treeNavContextMenu",
 								_CONTEXT_MENU_PRIMARY_COLOR,
 								_CONTEXT_MENU_SECONDARY_COLOR) + "' ";
-//					
-//						"SimpleContextMenu.createMenu(["; //open array for items
-//					
-//					//output item strings
-//					for(j=0;j<treeNavContextMenuItems.length;++j)
-//					{
-//						if(j)
-//							treeViewHandlerStr_ += ",";
-//						treeViewHandlerStr_ += "\"" + treeNavContextMenuItems[j] + "\"";
-//					}
-//					
-//					treeViewHandlerStr_ += //end items and open array for item handlers
-//							"]," +
-//							"[";
-//					
-//					for(j=0;j<treeNavContextMenuItemHandlers.length;++j)
-//					{
-//						if(j)
-//							treeViewHandlerStr_ += ",";
-//						
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//need to escape all quotes by one more level
-//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-//						treeNavContextMenuItemHandlers[j] = treeNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-//						treeViewHandlerStr_ += "\"" + treeNavContextMenuItemHandlers[j] + "\"";
-//					}
-//					treeViewHandlerStr_ += "]" + //end treeNavContextMenuItemHandlers array
-//							",\"treeNavContextMenu\",event.pageX-1,event.pageY-1, " +
-//							"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
-//					treeViewHandlerStr_ += 
-//						"' " + // end link onmousedown
-						//"onmouseup='" + onmouseupJS + "' " +
 					
 					treeViewHandlerStr_ +=
 						">" +	
@@ -6085,15 +6075,34 @@
 								"onclick='event.stopPropagation();'" +
 								"style='" + 
 								"height:" + (29) + "px'>";
-						for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+						
+						//check if there are choices
+						//	if so, use only those provided
+						var choicesEl = document.getElementById("treeNode-FixedChoice-CSV-" +
+								treeEditingNodeIdString_);
+						var choices;
+						var useAllTables = true;
+						if(choicesEl)
+						{
+							choices = choicesEl.textContent.split(',');
+							if(choices[0] != "arbitraryBool=0") //make sure arbitrary is disabled
+								useAllTables = true;
+							else 
+								useAllTables = false;
+						}
+						
+						if(useAllTables)
+							choices = _tableLinkDropdownChoices;
+						
+						//if not using all tables, skip the arbitraryBool
+						for(var i=useAllTables?0:1;i<choices.length;++i)
 						{			
-							str += "<option value='" + _tableLinkDropdownChoices[i] 
+							str += "<option value='" + choices[i] 
 																				 + "'>";
-							str += _tableLinkDropdownChoices[i];	//can display however
+							str += choices[i];	//can display however
 							str += "</option>";
-							if(_tableLinkDropdownChoices[i] 
-														 == selectLinkTableName)
-								optionIndex = i; //get starting sel index
+							if(choices[i] == selectLinkTableName)
+								optionIndex = i - (useAllTables?0:1); //get starting sel index
 						}				
 						str += "</select>";
 						str += "</td></tr><tr>";
@@ -6477,16 +6486,36 @@
 				str += "<select  onkeydown='keyHandler(event)' " +
 						"style='margin:-4px -2px -4px 1px;width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
-				for(var i=0;i<_tableLinkDropdownChoices.length;++i)
+				
+
+				var choices;
+				var useAllTables = true;
+
+				if(_tableFixedChoiceData[c] !== undefined &&
+						_tableFixedChoiceData[c].length)
+				{
+					if(_tableFixedChoiceData[c][0] != "arbitraryBool=0") //make sure arbitrary is disabled
+						useAllTables = true;
+					else 
+						useAllTables = false;
+				}
+				
+				if(useAllTables)
+					choices = _tableLinkDropdownChoices;
+				else
+					choices = _tableFixedChoiceData[c];
+					
+				for(var i=useAllTables?0:1;i<choices.length;++i)
 				{			
-					str += "<option value='" + _tableLinkDropdownChoices[i]//.getAttribute("value")
+					str += "<option value='" + choices[i]
 							+ "'>";
-					str += _tableLinkDropdownChoices[i];//.getAttribute("value");	//can display however
+					str += choices[i]; //can display however
 					str += "</option>";
-					if(_tableLinkDropdownChoices[i]//getAttribute("value") 
+					if(choices[i] 
 							== _editingCellElOldValue)
-						optionIndex = i; //get starting sel index
-				}				
+						optionIndex = i - (useAllTables?0:1); //get starting sel index
+				}	
+				
 				str += "</select>";				
 			}
 			else if(colType == "FixedChoiceData")

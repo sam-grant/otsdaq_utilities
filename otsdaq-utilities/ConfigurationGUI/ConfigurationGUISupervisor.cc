@@ -1929,9 +1929,11 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 	{
 		if(t.isLinkNode())
 		{
+			//Note: The order of xml fields is required by JavaScript, so do NOT change order.
+			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+
 			if(t.isDisconnected())
 			{
-				parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 				//xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
 				//xmldoc.addTextElementToParent("DisconnectedLink", t.getValueAsString(), parentEl);
 
@@ -1950,14 +1952,19 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 						parentEl);
 
 
-
-				//				xmldoc.addTextElementToParent("LinkID",
-				//						t.getDisconnectedLinkID(),
-				//						parentEl);
+				//add fixed choices (in case link has them)
+				{
+					DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
+					std::vector<std::string> choices = t.getFixedChoices();
+					for(const auto& choice:choices)
+						xmldoc.addTextElementToParent("fixedChoice", choice, choicesParentEl);
+				}
 
 				return;
 			}
-			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
+
+			//handle connected links
+
 			xmldoc.addTextElementToParent(
 					(t.isGroupLinkNode()?"Group":"U") +	std::string("ID"),
 					t.getValueAsString(), parentEl);
@@ -1967,6 +1974,14 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 
 			xmldoc.addTextElementToParent("LinkIndex", t.getChildLinkIndex(),
 					parentEl);
+
+			//add fixed choices (in case link has them)
+			{
+				DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
+				std::vector<std::string> choices = t.getFixedChoices();
+				for(const auto& choice:choices)
+					xmldoc.addTextElementToParent("fixedChoice", choice, choicesParentEl);
+			}
 		}
 		else //uid node
 		{
@@ -2311,7 +2326,7 @@ try
 		{
 			bool isGroup;
 			std::pair<unsigned int /*link col*/, unsigned int /*link id col*/> linkPair;
-			if(!cfgView->getChildLink(col,&isGroup,&linkPair))
+			if(!cfgView->getChildLink(col,isGroup,linkPair))
 			{
 				//not a link ?!
 				__SS__ << "Col '" << colName <<
@@ -2906,9 +2921,9 @@ try
 	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
 	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 	{
-		__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
-				colInfo[i].getName() << " "
-				<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
+		//		__MOUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
+		//				colInfo[i].getName() << " "
+		//				<< colInfo[i].getStorageName() << " " << colInfo[i].getDataType() << std::endl;
 
 		xmldoc.addTextElementToParent("ColumnHeader", colInfo[i].getName(), parentEl);
 		xmldoc.addTextElementToParent("ColumnType", colInfo[i].getType(), parentEl);
@@ -2918,7 +2933,8 @@ try
 				xmldoc.addTextElementToParent("ColumnChoices", "", parentEl);
 		//add data choices if necessary
 		if(colInfo[i].getType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
-				colInfo[i].getType() == ViewColumnInfo::TYPE_BITMAP_DATA)
+				colInfo[i].getType() == ViewColumnInfo::TYPE_BITMAP_DATA ||
+				colInfo[i].isChildLink())
 		{
 			for(auto& choice:colInfo[i].getDataChoices())
 				xmldoc.addTextElementToParent("ColumnChoice", choice, choicesParentEl);
