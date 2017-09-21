@@ -60,6 +60,8 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
+// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
+// 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
@@ -213,11 +215,14 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 	}
 	
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
 			"&configGroup=" +
@@ -308,11 +313,14 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}
 
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
 	
 	var fieldListStr = "";
 	for(var i=0;i<fieldObjArr.length;++i)
@@ -398,11 +406,14 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 	}
 	
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
 			"&configGroup=" +
@@ -496,11 +507,14 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}
 	
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
 			"&configGroup=" +
@@ -4712,8 +4726,170 @@ ConfigurationAPI.removeClass = function(ele,cls)
 }
 
 
+//=====================================================================================
+//addSubsetRecords ~~
+//	takes as input a base path where the desired records should be created.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
+		recordArr,responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=addTreeNodeRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var modifiedTables = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+	
+} // end ConfigurationAPI.addSubsetRecords()
 
 
+//=====================================================================================
+//deleteSubsetRecords ~~
+//	takes as input a base path where the desired records should be deleted.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
+		recordArr,responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += recordArr[i];
+		}
+	else //handle single record case
+		recordListStr = recordArr;
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=deleteTreeNodeRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var modifiedTables = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+	
+} // end ConfigurationAPI.deleteSubsetRecords()
+
+	
 
 
 

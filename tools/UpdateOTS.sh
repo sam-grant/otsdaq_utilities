@@ -103,11 +103,14 @@ if [ "x$1" == "x" ]; then
 	echo "#######################################################################################################################" 
 	echo "Updating USER_DATA path $USER_DATA,"
 	echo "based on the list in $USER_DATA/ServiceData/CoreTableInfoNames.dat."
-	echo "If CoreTableInfoNames.dat doesn't exists the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
+	echo "If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
 	echo
 	
+	echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
+	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
+			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
 		echo "$USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
 		echo "Loading updated info for core tables..."
@@ -117,8 +120,6 @@ if [ "x$1" == "x" ]; then
 		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk"
 		rm -rf $USER_DATA/ConfigurationInfo.updateots.bk
 		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk		
-		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
 		
 		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
 		while read line; do
@@ -139,10 +140,16 @@ if [ "x$1" == "x" ]; then
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
 	else
 		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
-		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
 		rm -rf $USER_DATA/ConfigurationInfo_update_bk
-		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/
+		cp -r $USER_DATA/ConfigurationInfo/ $USER_DATA/ConfigurationInfo_update_bk
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/
+		# undo c++ style comment for Eclipse viewing*/
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/
+		# undo c++ style comment for Eclipse viewing*/
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/
 		# undo c++ style comment for Eclipse viewing*/
 	fi
 	
@@ -162,7 +169,59 @@ if [ "x$1" == "x" ]; then
 	echo
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
+	#end copy tables
+	
+	
+	
+	
+
+	echo
+	echo "#######################################################################################################################" 
+	echo "#######################################################################################################################" 
+	echo "Updating installed Repositories,"
+	echo "based on the list in $USER_DATA/ServiceData/InstalledRepoNames.dat."
+	echo "If InstalledRepoNames.dat doesn't exist, then nothing happens"
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+	echo
+	
+	if [ -e "$USER_DATA/ServiceData/InstalledRepoNames.dat" ]; then
+		echo "$USER_DATA/ServiceData/InstalledRepoNames.dat exists!"
+		echo "Loading list of repos to update..."
+		cat $USER_DATA/ServiceData/InstalledRepoNames.dat
+		echo
+			
+	
+		#NOTE: relative paths are allowed from otsdaq/../
+		while read line; do
+			echo
+			echo "updating ${line} repository...."
+			echo "running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
+			$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+		done < $USER_DATA/ServiceData/InstalledRepoNames.dat
+	
+		#do one more time after loop to make sure last line is read (even if user did not put new line)
+		echo
+		echo "updating ${line} repository...."		
+		echo "running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
+		$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+			
+	fi
+	
+	echo
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
 		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	echo
 	echo "Updating ups products based on .bz2 files in $MRB_SOURCE/otsdaq/tarballs/"
 	echo "PRODUCTS path found as: $PRODUCTS"

@@ -129,6 +129,8 @@ throw (xgi::exception::Exception)
 	//	getUniqueFieldValuesForRecords
 	//	getTreeNodeFieldValues
 	//	setTreeNodeFieldValues
+	//	addTreeNodeRecords
+	//	deleteTreeNodeRecords
 	//		---- end associated with JavaScript Config API
 	//
 	//	activateConfigGroup
@@ -666,6 +668,40 @@ throw (xgi::exception::Exception)
 				startPath,modifiedTables,recordList,fieldList,valueList);
 
 	}
+	else if(Command == "addTreeNodeRecords")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillCreateTreeNodeRecordsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,modifiedTables,recordList);
+	}
+	else if(Command == "deleteTreeNodeRecords")
+	{
+		std::string 	configGroup 	= CgiDataUtilities::getData(cgi,"configGroup");
+		std::string 	configGroupKey 	= CgiDataUtilities::getData(cgi,"configGroupKey");
+		std::string 	startPath 		= CgiDataUtilities::postData(cgi,"startPath");
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	recordList	 	= CgiDataUtilities::postData(cgi,"recordList");
+
+		__MOUT__ << "configGroup: " << configGroup << std::endl;
+		__MOUT__ << "configGroupKey: " << configGroupKey << std::endl;
+		__MOUT__ << "startPath: " << startPath << std::endl;
+		__MOUT__ << "recordList: " << recordList << std::endl;
+		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
+
+		handleFillDeleteTreeNodeRecordsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
+				startPath,modifiedTables,recordList);
+	}
 	else if(Command == "getAffectedActiveGroups")
 	{
 		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
@@ -1186,6 +1222,105 @@ catch(...)
 
 
 //========================================================================================================================
+//handleFillCreateTreeNodeRecordsXML
+//	Creates the records in the appropriate table
+//		and creates a temporary version.
+//	the modified-<modified tables> list is returned in xml
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to create
+//
+void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocument& xmldoc,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string& groupName, const ConfigurationGroupKey& groupKey,
+		const std::string& startPath,
+		const std::string& modifiedTables, const std::string& recordList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables,
+			true /* refresh all */, false /* getGroupInfo */,
+			0 /* returnMemberMap */, false /* outputActiveTables */);
+
+	//extract record list
+	{
+		ConfigurationBase* config;
+		ConfigurationVersion temporaryVersion;
+		std::istringstream f(recordList);
+		std::string recordUID;
+		unsigned int i;
+
+		while (getline(f, recordUID, ',')) //for each record
+		{
+			recordUID = ConfigurationView::decodeURIComponent(recordUID);
+
+			__MOUT__ << "recordUID " <<
+					recordUID << std::endl;
+
+		}
+	}
+}
+
+//========================================================================================================================
+//handleFillDeleteTreeNodeRecordsXML
+//	Deletes the records in the appropriate table
+//		and creates a temporary version.
+//	the modified-<modified tables> list is returned in xml
+//
+// if groupName == "" && groupKey is invalid
+//	 then do for active groups
+//
+//parameters
+//	configGroupName (full name with key)
+//	starting node path
+//	modifiedTables := CSV of table/version pairs
+//	recordList := CSV list of records to create
+//
+void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(HttpXmlDocument& xmldoc,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string& groupName, const ConfigurationGroupKey& groupKey,
+		const std::string& startPath,
+		const std::string& modifiedTables, const std::string& recordList)
+{
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables,
+			true /* refresh all */, false /* getGroupInfo */,
+			0 /* returnMemberMap */, false /* outputActiveTables */);
+
+	//extract record list
+	{
+		ConfigurationBase* config;
+		ConfigurationVersion temporaryVersion;
+		std::istringstream f(recordList);
+		std::string recordUID;
+		unsigned int i;
+
+		while (getline(f, recordUID, ',')) //for each record
+		{
+			recordUID = ConfigurationView::decodeURIComponent(recordUID);
+
+			__MOUT__ << "recordUID " <<
+					recordUID << std::endl;
+
+		}
+	}
+}
+
+
+//========================================================================================================================
 //handleFillSetTreeNodeFieldValuesXML
 //	writes for each record, the field/value pairs to the appropriate table
 //		and creates a temporary version.
@@ -1198,7 +1333,7 @@ catch(...)
 //	configGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
-//	recordStr := CSV list of records for which to lookup values for fields
+//	recordList := CSV list of records for which to lookup values for fields
 //	fieldList := CSV of relative-to-record-path to fields to write
 //	valueList := CSV of values corresponding to fields
 //
