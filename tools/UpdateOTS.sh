@@ -109,7 +109,8 @@ if [ "x$1" == "x" ]; then
 	echo
 	
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
-		echo "CoreTableInfoNames.dat exists!"
+		echo "$USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
+		echo "Loading updated info for core tables..."
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
 		
@@ -121,13 +122,21 @@ if [ "x$1" == "x" ]; then
 		
 		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
 		while read line; do
-			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/		
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/	&>/dev/null #hide output	
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
 		#do one more time after loop to make sure last line is read (even if user did not put new line) 
-		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
 	else
 		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
 		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
