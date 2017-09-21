@@ -695,7 +695,10 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "newValue: " << newValue << std::endl;
 
 		handleSaveTreeNodeEditXML(xmldoc,cfgMgr,targetTable,ConfigurationVersion(targetTableVersion),
-				editNodeType,targetUID,targetColumn,newValue,userName);
+				editNodeType,
+				CgiDataUtilities::decodeURIComponent(targetUID),
+				CgiDataUtilities::decodeURIComponent(targetColumn),
+				newValue,userName);
 	}
 	else if(Command == "getLinkToChoices")
 	{
@@ -2259,8 +2262,8 @@ try
 			}
 			catch(...) {} //if not, ignore
 
-			if(type == "table-newUIDRow") //set UID value
-				cfgView->setURIEncodedValue(newValue,row,cfgView->getColUID());
+			//set UID value
+			cfgView->setURIEncodedValue(newValue,row,cfgView->getColUID());
 		}
 		else if(type == "table-newGroupRow")
 		{

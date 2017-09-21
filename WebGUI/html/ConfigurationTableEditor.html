@@ -752,6 +752,11 @@
 
 				str += "<select id='newChoiceInput-" + c + "' " +							
 						">";
+				
+				//always include default first in selection list				
+				str += "<option>" +
+						"NO_LINK" +
+						"</option>";		
 				for(var i=0;i<_tableName.length;++i)
 				{
 					str += "<option>" +
@@ -776,7 +781,7 @@
 						"onchange='document.getElementById(\"newChoiceInput-" + c + 
 						"\").value = this.value;'" +
 						">";
-
+				
 				//show fixed choices first		
 				for(var f=1;f<colChoicesArr.length;++f)	
 					str += "<option>" +
@@ -1462,7 +1467,8 @@
 								"If the other field in the pair is of type ChildLinkGroupID, then you have created a group-of-records table link (i.e. a link to one or many child table records, which share the same Group ID).\n\n" +
 								
 								"Note that you can force users to link to fixed list of tables by checking the box in the field parameters. " +
-								"Users will then be forced to choose from the tables in list of choices."
+								"Users will then be forced to choose from the tables in list of choices.\n\n " +
+								"It is important to remember to include 'NO_LINK' as a choice if you want users to be able to leave your link disconnected."
 								);
 					else if(colType.indexOf("ChildLinkUID-") == 0)
 						DesktopContent.tooltip("ChildLinkUID Field Type",

@@ -822,6 +822,7 @@ DesktopContent.tooltip = function(id,tip) {
 			Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
 	}
 	
+	
 	var srcStackString,srcFunc,srcFile;
 	
 	if(Debug.BROWSER_TYPE == 1) //chrome
@@ -840,6 +841,15 @@ DesktopContent.tooltip = function(id,tip) {
 		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
 	if(srcFile.indexOf(':') >= 0)
 		srcFile.substr(0,srcFile.indexOf(':'));
+	
+
+	if(tip === undefined)
+	{
+		Debug.log("Undefined tooltip string at " + srcStackString + "\n" + 
+				srcFunc + "\n" + srcFile +".\n\n Tooltip Usage: <id> <tip>", Debug.HIGH_PRIORITY);
+		return;
+	}
+	
 	
 	var oldId = id;
 	//remove all special characters from ID

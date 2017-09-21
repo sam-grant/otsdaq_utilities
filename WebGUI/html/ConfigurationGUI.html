@@ -2341,7 +2341,12 @@
 			str += "</td><td valign='top'>"; //four corners continued
 
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink1' style='display:none' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += " <a id='lastAddRowLink1' "; 
+			if(_tableViewIsTransposed) 
+				str += "";
+			else
+				str += "style='display:none' ";							
+			str += "href='#' onclick='javascript:addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2349,7 +2354,12 @@
 			str += "<tr><td valign='top'>"; //four corners continued
 			
 			//add + row controls for new last row
-			str += " <a id='lastAddRowLink0' href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += " <a id='lastAddRowLink0' ";
+			if(!_tableViewIsTransposed) 
+				str += "";
+			else
+				str += "style='display:none' ";							
+			str += "href='#' onclick='javascript:addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -5137,91 +5147,267 @@
 			var src = document.getElementById("copyAndMoveRowsSrc").value | 0;
 			var dest = document.getElementById("copyAndMoveRowsDest").value | 0;
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
-			
+					
 			
 			Debug.log("configCopyRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);
 
+			if(srcCount < 1)
+			{
+				Debug.log("Error: Illegal Number of Rows '" + (srcCount) + 
+						"' given. Number of Rows must be greater than or equal to 1.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+
 			var el = document.getElementById("SubSystemTable");
-			var rows = el.getElementsByTagName("tr");
-			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-			{
-				Debug.log("Error: Illegal source row of '" + src + 
-						"' given. Row must be less than " + 
-						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-				return;
-			}
-			if(src+srcCount-1 < 0 || src+srcCount-1 >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-			{
-				Debug.log("Error: Illegal last source row of '" + (src+srcCount-1) + 
-						"' given. Row must be less than " + 
-						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-				return;
-			}
-			if(dest < -1 || dest >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-			{
-				Debug.log("Error: Illegal destination row of '" + dest + 
-						"' given. Use '-1' for a new row, otherwise row must be less than " + 
-						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-				return;
-			}
+			var rows = el.getElementsByTagName("tr");				
+			var str = "";
+			var cols = [];
+			var newCols = [];
 
-			//steps:
-			//	- add destination row
-			//	- for each src col 
-			//		- dest[col] = src[col]
-
-			//if(deleteSrc) --dest;	//when move, add before target row
-			
-			//get col types for bool coloring
 			var colIsBoolType = getTableViewColIsBoolType(rows);
-			var boolTypeTrues = ["On","True","Yes"];
+			var val;
 			
-			var inputDest = dest;
-			for(var r=0;r<srcCount;++r,++src,++dest)
-			{
-				if(inputDest == -1) //new row, so point to last row for addRow use
-					dest = rows.length - _CONFIG_DATA_ROW_OFFSET;				
-	
-				//get source row before adding row
-				var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
+			if(!_tableViewIsTransposed) //reading from normal view
+			{	
+				if(dest == -1)
+					dest = rows.length-_CONFIG_DATA_ROW_OFFSET; //add to end
 				
-				addRow(dest); 	
-				Debug.log("src=" + src + " dest=" + dest);
-				
-				//get destination row after add
-				el = document.getElementById("SubSystemTable");
-				rows = el.getElementsByTagName("tr");
-				
-				var val;
-				var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
-				for(var c=1;c<srcCols.length;++c)
+				//get all cols
+				//	and add new empty rows
+				for(var r=0,newr=0;r<rows.length+1;++r) //+1 to account for block of rows to add
 				{
-					Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
-					val = srcCols[c].innerHTML;
-					destCols[c].innerHTML = val;
-					if(colIsBoolType[c]) //colorize bool types
-					{
-						//determine if true value
-						var isTrue = false;
-						for(var i=0;i<boolTypeTrues.length;++i)
-							if(boolTypeTrues[i] == val)
-							{
-								isTrue = true; break;
-							}
+					
+					//handle adding new rows
+					if(newr-_CONFIG_DATA_ROW_OFFSET >=  dest &&
+							newr-_CONFIG_DATA_ROW_OFFSET <  dest + srcCount)
+					{	
+						//add new empty TD row
+						var newRowArr = [];	
+						for(var c=0;c<rows[0].childNodes.length;++c)
+							newRowArr.push(document.createElement("td"));
 						
-						destCols[c].style.backgroundColor =
-								(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
+						cols[newr] = newRowArr; //add new row
+						++newr;
+
+						//if this is not last row added, continue adding
+						if(newr-_CONFIG_DATA_ROW_OFFSET <  dest + srcCount)
+						{
+							--r;
+							continue;
+						}
+						//else last row in new block, so proceed with data
 					}
+					
+					//handle adding existing rows
+					
+					if(r >= rows.length) continue; //gone through all data already
+					
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[newr] = rows[r].getElementsByTagName("th");
+					else
+						cols[newr] = rows[r].getElementsByTagName("td");
+					
+					++newr
 				}
 				
-				if(dest < src) ++src; //to account for added row
+				//copy source values to dest values
+				if(src >= dest) //account for source index being pushed back
+					src += srcCount;
+				for(var r=0;r<srcCount;++r) 
+				{
+					for(var c=0;c<rows[0].childNodes.length;++c)
+					{
+						val = cols[_CONFIG_DATA_ROW_OFFSET+src+r][c].innerHTML;
+						cols[_CONFIG_DATA_ROW_OFFSET+dest+r][c].innerHTML = val;
+					}					
+				}
 				
+				//if move, delete source values
 				if(deleteSrc)
-				{					
-					deleteRow(src);
-					--src;	//to account for deleted row
+					cols.splice(_CONFIG_DATA_ROW_OFFSET+src,srcCount); //remove srcCount elements at src index
+				
+			} // end normal view handling
+			else 					//reading from transposed view
+			{				
+				//get all cols (transposed)
+				var tmpCols;
+				var numOfNewRows = -1;
+				for(var c=0;c<rows.length;++c) 
+				{								 
+					cols.push([]); //push empty column, for each 
+
+					//assume there is 1 th cell
+					tmpCols = rows[c].getElementsByTagName("td");	
+					
+					if(dest == -1)
+						dest = tmpCols.length+1 -_CONFIG_DATA_ROW_OFFSET; //add to end	
+					
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+1+1;++r) //+1 for th, and +1 for new block of rows
+					{			
+						if(newr-_CONFIG_DATA_ROW_OFFSET >=  dest &&
+								newr-_CONFIG_DATA_ROW_OFFSET <  dest + srcCount)
+						{				
+							//create default col cell to new row
+							cols[c][newr] = document.createElement("td");
+							++newr;
+
+							//if this is not last row added, continue adding
+							if(newr-_CONFIG_DATA_ROW_OFFSET <  dest + srcCount)
+							{
+								--r;
+								continue;
+							}
+							//else last row in new block, so proceed with data
+						}
+						
+						if(r >= tmpCols.length+1) continue; //gone through all data already
+
+						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
+						else //take from the td cels
+							cols[c][newr] = tmpCols[tmpColsIndex++];
+						++newr;		
+					}
+				}			
+				
+				//copy source values to dest values
+				if(src >= dest) //account for source index being pushed back
+					src += srcCount;
+				for(var r=0;r<srcCount;++r) 
+				{
+					for(var c=0;c<rows.length;++c)
+					{
+						val = cols[c][_CONFIG_DATA_ROW_OFFSET+src+r].innerHTML;
+						cols[c][_CONFIG_DATA_ROW_OFFSET+dest+r].innerHTML = val;
+					}					
 				}
+
+				//if move, delete source values
+				if(deleteSrc)
+					for(var c=0;c<rows.length;++c)
+						cols[c].splice(_CONFIG_DATA_ROW_OFFSET+src,srcCount); //remove srcCount elements at src index
+				
+			} //end transpose view handling
+			
+
+			//create output string based on cols
+			str += createTableViewOutputStr(cols,colIsBoolType);
+			el.innerHTML = str;		
+			versionHasChanged();
+			
+			//update last add row link
+			if(_tableViewIsTransposed)
+			{
+				document.getElementById("lastAddRowLink0").onclick = 
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+				document.getElementById("lastAddRowLink1").onclick =
+						function() {											
+					addRow(cols[0].length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
 			}
+			else
+			{
+				document.getElementById("lastAddRowLink0").onclick =
+						function() {											
+					addRow(cols.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};					
+				document.getElementById("lastAddRowLink1").onclick = 
+						function() {											
+					addRow(cols.length-_CONFIG_DATA_ROW_OFFSET); 
+					return false;
+				};
+			}
+			
+			////////////done 
+			
+			
+//			var el = document.getElementById("SubSystemTable");
+//			var rows = el.getElementsByTagName("tr");
+//			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+//			{
+//				Debug.log("Error: Illegal source row of '" + src + 
+//						"' given. Row must be less than " + 
+//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+//				return;
+//			}
+//			if(src+srcCount-1 < 0 || src+srcCount-1 >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+//			{
+//				Debug.log("Error: Illegal last source row of '" + (src+srcCount-1) + 
+//						"' given. Row must be less than " + 
+//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+//				return;
+//			}
+//			if(dest < -1 || dest >= rows.length - _CONFIG_DATA_ROW_OFFSET)
+//			{
+//				Debug.log("Error: Illegal destination row of '" + dest + 
+//						"' given. Use '-1' for a new row, otherwise row must be less than " + 
+//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
+//				return;
+//			}
+//
+//			//steps:
+//			//	- add destination row
+//			//	- for each src col 
+//			//		- dest[col] = src[col]
+//
+//			//if(deleteSrc) --dest;	//when move, add before target row
+//			
+//			//get col types for bool coloring
+//			var colIsBoolType = getTableViewColIsBoolType(rows);
+//			var boolTypeTrues = ["On","True","Yes"];
+//			
+//			var inputDest = dest;
+//			for(var r=0;r<srcCount;++r,++src,++dest)
+//			{
+//				if(inputDest == -1) //new row, so point to last row for addRow use
+//					dest = rows.length - _CONFIG_DATA_ROW_OFFSET;				
+//	
+//				//get source row before adding row
+//				var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
+//				
+//				addRow(dest); 	
+//				Debug.log("src=" + src + " dest=" + dest);
+//				
+//				//get destination row after add
+//				el = document.getElementById("SubSystemTable");
+//				rows = el.getElementsByTagName("tr");
+//				
+//				var val;
+//				var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
+//				for(var c=1;c<srcCols.length;++c)
+//				{
+//					Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
+//					val = srcCols[c].innerHTML;
+//					destCols[c].innerHTML = val;
+//					if(colIsBoolType[c]) //colorize bool types
+//					{
+//						//determine if true value
+//						var isTrue = false;
+//						for(var i=0;i<boolTypeTrues.length;++i)
+//							if(boolTypeTrues[i] == val)
+//							{
+//								isTrue = true; break;
+//							}
+//						
+//						destCols[c].style.backgroundColor =
+//								(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
+//					}
+//				}
+//				
+//				if(dest < src) ++src; //to account for added row
+//				
+//				if(deleteSrc)
+//				{					
+//					deleteRow(src);
+//					--src;	//to account for deleted row
+//				}
+//			}
 		}	
 		
 		//setupFindAndReplace
@@ -6881,13 +7067,25 @@
 				}
 				
 				do
-				{					
-					if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
-						newCol += (shiftIsDown?-1:1);
-					else if(e.keyCode == UPKEY)
-						--newRow;
-					else if(e.keyCode == DNKEY)
-						++newRow;
+				{				
+					if(!_tableViewIsTransposed)
+					{
+						if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+							newCol += (shiftIsDown?-1:1);
+						else if(e.keyCode == UPKEY)
+							--newRow;
+						else if(e.keyCode == DNKEY)
+							++newRow;
+					}
+					else
+					{
+						if(e.keyCode == TABKEY || e.keyCode == ENTERKEY)
+							newRow += (shiftIsDown?-1:1);
+						else if(e.keyCode == UPKEY)
+							--newCol;
+						else if(e.keyCode == DNKEY)
+							++newCol;						
+					}
 					
 					//new position is chosen! now make it happen (in a clean way)	
 									
@@ -8598,7 +8796,14 @@
 						}
 					}
 					else if(treeEditingNodeType_ == "table-newRow")
-						newValue = ""; //no value needed
+					{
+						//make new value the new UID 
+						newValue = prompt("Please enter the UID for the new record:");
+						if(newValue)
+							newValue = encodeURIComponent(newValue.trim());
+						else //prompt was cancelled
+							return;
+					}
 					else	//value (normal or multiline data)
 					{
 						var sel;
@@ -8757,15 +8962,14 @@
 							{
 								//treeViewHideStatus_ = false;
 								//refreshTreeView();
-								Debug.log("Note: The tree-view menu option 'Hide Status=False' " +
+								DesktopContent.tooltip("Tree View Hide Status=False","The tree-view menu option 'Hide Status=False' " +
 										" is currently hiding records with Status fields evaluating to " +
 										" false. If you do not see your new record, this may be why; click the tree-view menu " + 
 										"in the top-left and select '" +
 										"<a href='#' onclick='treeViewHideStatus_=false;refreshTreeView();'>" +
 										"Show Status=False" +
 										"</a>" +									
-										".'",
-										Debug.INFO_PRIORITY);
+										".'");
 							}
 
 							Debug.log("Successfully added a new record to temporary version '" +
@@ -8807,6 +9011,7 @@
 				//	called after successful edit req return
 				function localEditTreeNodeOKRequestsComplete(tableIndex,newValue)
 				{			
+					Debug.log("localEditTreeNodeOKRequestsComplete " + newValue);
 
 					//some types should be handled before cell is cleared
 					//	e.g. for continuation of editing, like "table-newGroupRow"
@@ -8877,12 +9082,12 @@
 					else if(treeEditingNodeType_ == "uid")
 					{
 						//modify display and nodename with new value
-						_editingCellEl.appendChild(document.createTextNode(newValue)); 
+						_editingCellEl.appendChild(document.createTextNode(decodeURIComponent(newValue))); 
 
 						var el = document.getElementById("treeNode-nodeName-" + 
 								treeEditingNodeIdString_);
 						el.innerHTML = "";
-						el.appendChild(document.createTextNode(newValue));
+						el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 
 						//clear children,
 						//and if children were displayed
@@ -9366,7 +9571,7 @@
 			//reset editing cell, since it was destroyed
 			_editingCell = false;
 			_editingCellEl = 0;
-		}
+		} //end refreshTreeView()
 		
 		//editTreeNodePropagateChange ~~
 		//	arguments are different depending on treeEditingNodeType_.
@@ -9643,11 +9848,11 @@
 							Debug.log("uid-idString CHANGE to " + newValue);
 
 							els[i].innerHTML = "";
-							els[i].appendChild(document.createTextNode(newValue)); 
+							els[i].appendChild(document.createTextNode(decodeURIComponent(newValue))); 
 
 							var el = document.getElementById("treeNode-nodeName-" + idString);
 							el.innerHTML = "";
-							el.appendChild(document.createTextNode(newValue));
+							el.appendChild(document.createTextNode(decodeURIComponent(newValue)));
 							
 							//reset children
 							var elChildrenNode = document.getElementById("treeNode-ChildrenOf-" + 
@@ -10597,37 +10802,51 @@
 			
 			var el = document.getElementById("SubSystemTable");
 			var rows = el.getElementsByTagName("tr");
+			var str = "";
 			var cols = [];
+			
+			var colIsBoolType = getTableViewColIsBoolType(rows);
 			
 			if(!_tableViewIsTransposed) //reading from normal view
 			{
-				var r = rowToDelete;
-				//make sure el references the container of rows ("TR")
-				while(el.childNodes[0].tagName != "TR")
-					el = el.childNodes[0];
-				el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
-				
-				//update all row numbers after row added
-				for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
+				//get all 
+				for(var r=0,newr=0;r<rows.length;++r) 
 				{
-					if(i < r) continue;
+					if(r-_CONFIG_DATA_ROW_OFFSET == rowToDelete)
+						continue; //skip row to delete
 					
-					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-					
-					//add +/- row controls
-					str += "<br><a href='#' onclick='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-					str += "+";
-					str += "</a>";
-					str += "/<a href='#' onclick='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-					str += "-";
-					str += "</a>";							
-					rows[i].childNodes[0].innerHTML = str;
-				}
-			}
-			else
-			{
-				var colIsBoolType = getTableViewColIsBoolType(rows);
+					if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
+						cols[newr] = rows[r].getElementsByTagName("th");
+					else
+						cols[newr] = rows[r].getElementsByTagName("td");
+					++newr;
+				}				
 				
+//				var r = rowToDelete;
+//				//make sure el references the container of rows ("TR")
+//				while(el.childNodes[0].tagName != "TR")
+//					el = el.childNodes[0];
+//				el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
+//				
+//				//update all row numbers after row added
+//				for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
+//				{
+//					if(i < r) continue;
+//					
+//					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
+//					
+//					//add +/- row controls
+//					str += "<br><a href='#' onclick='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+//					str += "+";
+//					str += "</a>";
+//					str += "/<a href='#' onclick='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+//					str += "-";
+//					str += "</a>";							
+//					rows[i].childNodes[0].innerHTML = str;
+//				}
+			} // end normal view handling
+			else 					//reading from transposed view
+			{				
 				//get all cols (transposed)
 				var tmpCols;
 				var numOfNewRows = -1;
@@ -10637,13 +10856,11 @@
 
 					//assume there is 1 th cell
 					tmpCols = rows[c].getElementsByTagName("td");					
-					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+2;++r) //+1 for th, and +1 for new row
+					for(var r=0, newr = 0, tmpColsIndex = 0;r<tmpCols.length+1;++r) //+1 for th
 					{			
 						if(r-_CONFIG_DATA_ROW_OFFSET == rowToDelete) 
 						{ ++tmpColsIndex; continue; }//skip row to delete
 						
-						if(r >= tmpCols.length+1) continue; //gone through all data already
-
 						if(r == _CONFIG_DATA_ROW_OFFSET-1) //col names are headers
 							cols[c][newr] = rows[c].getElementsByTagName("th")[0];
 						else //take from the td cels
@@ -10653,13 +10870,11 @@
 						}				
 						++newr;		
 					}
-				}	
-				
-				var str = createTableViewOutputStr(cols,colIsBoolType);
-				
-				document.getElementById("SubSystemTable").innerHTML = str;
-			}
-
+				}					
+			} // end transpose view handling
+			
+			str = createTableViewOutputStr(cols,colIsBoolType);			
+			el.innerHTML = str;
 			versionHasChanged();
 			
 			//update last add row link
@@ -10689,7 +10904,7 @@
 					return false;
 				};
 			}
-		}
+		} //end deleteRow()
 		
 		//popUpVersionAliasSpecificGroupForm
 		function popUpVersionAliasSpecificGroupForm(groupName,groupKey)
