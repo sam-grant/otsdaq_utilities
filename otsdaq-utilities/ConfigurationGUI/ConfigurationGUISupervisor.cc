@@ -665,7 +665,7 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
 
 		handleFillSetTreeNodeFieldValuesXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,modifiedTables,recordList,fieldList,valueList);
+				startPath,modifiedTables,recordList,fieldList,valueList,userName);
 
 	}
 	else if(Command == "addTreeNodeRecords")
@@ -683,7 +683,7 @@ throw (xgi::exception::Exception)
 		__MOUT__ << "modifiedTables: " << modifiedTables << std::endl;
 
 		handleFillCreateTreeNodeRecordsXML(xmldoc,cfgMgr,configGroup,ConfigurationGroupKey(configGroupKey),
-				startPath,modifiedTables,recordList);
+				startPath,modifiedTables,recordList,userName);
 	}
 	else if(Command == "deleteTreeNodeRecords")
 	{
@@ -1240,7 +1240,8 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 		ConfigurationManagerRW* cfgMgr,
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,
 		const std::string& startPath,
-		const std::string& modifiedTables, const std::string& recordList)
+		const std::string& modifiedTables, const std::string& recordList,
+		const std::string& author)
 {
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(
@@ -1251,22 +1252,117 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 			true /* refresh all */, false /* getGroupInfo */,
 			0 /* returnMemberMap */, false /* outputActiveTables */);
 
-	//extract record list
+	try
 	{
-		ConfigurationBase* config;
+
+		ConfigurationTree targetNode =
+				cfgMgr->getNode(startPath);
+		ConfigurationBase* config = cfgMgr->getConfigurationByName(
+									targetNode.getConfigurationName());
+
+		__MOUT__ << config->getConfigurationName() << std::endl;
 		ConfigurationVersion temporaryVersion;
-		std::istringstream f(recordList);
-		std::string recordUID;
-		unsigned int i;
 
-		while (getline(f, recordUID, ',')) //for each record
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		bool firstSave = true;
+
+
+
+		//extract record list
 		{
-			recordUID = ConfigurationView::decodeURIComponent(recordUID);
+			std::istringstream f(recordList);
+			std::string recordUID;
+			unsigned int i;
 
-			__MOUT__ << "recordUID " <<
-					recordUID << std::endl;
+			while (getline(f, recordUID, ',')) //for each record
+			{
+				recordUID = ConfigurationView::decodeURIComponent(recordUID);
 
+				__MOUT__ << "recordUID " <<
+						recordUID << std::endl;
+
+				if(firstSave) //handle version bookkeeping
+				{
+					if(!(temporaryVersion =
+							targetNode.getConfigurationVersion()).isTemporaryVersion())
+					{
+						__MOUT__ << "Start version " << temporaryVersion << std::endl;
+						//create temporary version for editing
+						temporaryVersion = config->createTemporaryView(temporaryVersion);
+						cfgMgr->saveNewConfiguration(
+								targetNode.getConfigurationName(),
+								temporaryVersion, true); //proper bookkeeping for temporary version with the new version
+
+						__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+					}
+					else //else table is already temporary version
+						__MOUT__ << "Using temporary version " << temporaryVersion << std::endl;
+
+					firstSave = false;
+				}
+
+				//at this point have valid temporary version to edit
+
+				//copy "table-newRow" type edit from handleSaveTreeNodeEditXML() functionality
+
+				//add row
+				unsigned int row = config->getViewP()->addRow(author);
+
+				//if "Status" exists, set it to true
+				try
+				{
+					unsigned int col = config->getViewP()->findCol("Status");
+					config->getViewP()->setURIEncodedValue("1",row,col);
+				}
+				catch(...) {} //if not, ignore
+
+				//set UID value
+				config->getViewP()->setURIEncodedValue(recordUID,row,config->getViewP()->getColUID());
+
+			}
 		}
+
+		if(!firstSave) //only test table if there was a change
+			config->getViewP()->init(); //verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmldoc,cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error creating new record!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error creating new record!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+}
+
+//========================================================================================================================
+//handleFillModifiedTablesXML
+//	fills <modified tables> as used by ConfigurationAPI
+void ConfigurationGUISupervisor::handleFillModifiedTablesXML(HttpXmlDocument& xmldoc,
+		ConfigurationManagerRW* cfgMgr)
+{
+	//return modified <modified tables>
+	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo();
+	std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
+	for(auto& activePair: allActivePairs)
+	{
+		xmldoc.addTextElementToData("NewActiveTableName", activePair.first);
+		xmldoc.addTextElementToData("NewActiveTableVersion",
+				allCfgInfo.at(activePair.first).configurationPtr_->getView().getVersion().toString());
+		xmldoc.addTextElementToData("NewActiveTableComment",
+				allCfgInfo.at(activePair.first).configurationPtr_->getView().getComment());
 	}
 }
 
@@ -1342,7 +1438,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,
 		const std::string& startPath,
 		const std::string& modifiedTables, const std::string& recordList,
-		const std::string& fieldList, const std::string& valueList)
+		const std::string& fieldList, const std::string& valueList,
+		const std::string& author)
 {
 	//	setup active tables based on input group and modified tables
 	setupActiveTablesXML(
@@ -1422,7 +1519,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 					__MOUT__ << "fieldPath " << fieldPaths[i] << std::endl;
 					__MOUT__ << "fieldValue " << fieldValues[i] << std::endl;
 
-					auto targetNode =
+					ConfigurationTree targetNode =
 							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPaths[i]);
 
 					//need table, uid, columnName to set a value
@@ -1466,7 +1563,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 								targetNode.getConfigurationVersion());
 						cfgMgr->saveNewConfiguration(
 								targetNode.getConfigurationName(),
-								temporaryVersion, true); //proper bookkeeping for temporary versionwith the new version
+								temporaryVersion, true); //proper bookkeeping for temporary version with the new version
 
 						__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
 					}
@@ -1477,25 +1574,15 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 					config->getViewP()->setURIEncodedValue(
 							fieldValues[i],
 							targetNode.getRow(),
-							targetNode.getColumn());
+							targetNode.getColumn(),
+							author);
 
 					config->getViewP()->init(); //verify new table (throws runtime_errors)
 				}
 			}
 		}
 
-		//return modified <modified tables>
-		const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo();
-		std::map<std::string, ConfigurationVersion> allActivePairs = cfgMgr->getActiveVersions();
-		for(auto& activePair: allActivePairs)
-		{
-			xmldoc.addTextElementToData("NewActiveTableName", activePair.first);
-			xmldoc.addTextElementToData("NewActiveTableVersion",
-					allCfgInfo.at(activePair.first).configurationPtr_->getView().getVersion().toString());
-			xmldoc.addTextElementToData("NewActiveTableComment",
-					allCfgInfo.at(activePair.first).configurationPtr_->getView().getComment());
-		}
-
+		handleFillModifiedTablesXML(xmldoc,cfgMgr);
 
 	}
 	catch(std::runtime_error& e)
