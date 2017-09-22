@@ -786,7 +786,7 @@
 
 		//=====================================================================================
 		//runFilter ~~
-		function runFilter(el) 
+		function runFilter() 
 		{
 			Debug.log("Run Filter");
 			
@@ -840,7 +840,7 @@
 					 _modifiedTables);
 			
 			
-		}
+		} // end runFilter()
 		
 		//=====================================================================================
 		//createRightPaneContent ~~
@@ -1211,6 +1211,7 @@
 					recordArr, 	//recordArr
 					[_fields[selectedFieldIndex]], 	//fieldArr of size 1
 					valueArr, 	//valueArr of size 1
+					/////////////////////
 					function(modifiedTables)
 					{
 				Debug.log("modifiedTables length " + modifiedTables.length);
@@ -1226,6 +1227,7 @@
 
 				//proceed to save (quietly) tables, groups, aliases
 				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
 						function(savedTables, savedGroups, savedAliases)
 						{
 					if(!savedTables.length)
@@ -1250,6 +1252,92 @@
 		
 
 		//=====================================================================================
+		//deleteRecords ~~
+		//	delete the selected records
+		function deleteRecords() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to delete " +
+						"one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("deleteRecords target record length = " + 
+					selectedIndices.length);	
+
+
+			//make array of target records
+			var recordArr = [];
+			var recordStr = "";
+			for(var i=0;i<selectedIndices.length;++i)	
+			{
+				if(i) recordStr += ", ";
+				recordStr += decodeURIComponent(_subsetUIDs[selectedIndices[i]]);
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+			}			
+
+			DesktopContent.popUpVerification(
+					"Are you sure you want to remove the following " + _recordsAlias + 
+					" records from the configuration?<br><br>" +
+					"Here are the records (count = " + recordArr.length + 
+					") that will be deleted:<br> <b>" + recordStr + "</b>",
+					localProceedWithDelete							
+					,0,"#efeaea",0,"#770000");
+			
+			/////////////////////
+			function localProceedWithDelete()
+			{
+
+				ConfigurationAPI.deleteSubsetRecords(_subsetBasePath,recordArr,
+						/////////////////////
+						function(modifiedTables) //start addSubsetRecords handler
+						{
+					Debug.log("modifiedTables length " + modifiedTables.length);
+
+					if(!modifiedTables.length)
+					{
+						Debug.log("There was an error while removing the record(s).",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					_modifiedTables = modifiedTables;
+
+					//proceed to save (quietly) tables, groups, aliases
+					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+							/////////////////////
+							function(savedTables, savedGroups, savedAliases)
+							{
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while removing the record(s).",
+									Debug.HIGH_PRIORITY);
+							return;					
+						}
+
+						Debug.log("The following " +
+								_recordsAlias + " records (count = " +
+								selectedIndices.length + ") "+ 
+								"were successfully removed: " + recordStr + ".",
+								Debug.INFO_PRIORITY);
+
+						_modifiedTables = undefined; //clear after save
+
+						runFilter(); //updates records and fields, and applies filter
+
+							}); //end saveModifiedTables handler
+
+
+						}, //end addSubsetRecords handler
+						_modifiedTables);	
+			} //end localProceedWithDelete()
+		} //end deleteRecords()
+		
+		//=====================================================================================
 		//addRecord ~~
 		//	create new record
 		function addRecord() 
@@ -1257,18 +1345,55 @@
 			var newRowUID = prompt("Please enter the UID for the new " + 
 					_recordsAlias + " record:");
 			if(newRowUID)
-				newRowUID = encodeURIComponent(newRowUID.trim());
+				newRowUID = newRowUID.trim();
 			else //prompt was cancelled
 				return;
 
 			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
-					function(success)
+					/////////////////////
+					function(modifiedTables) //start addSubsetRecords handler
 					{
-				Debug.log("success found = " + success);
-				//updateRecordsAndFields();
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while creating the record.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while creating the record.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					Debug.log("The new " +
+							_recordsAlias + " record '" + 
+							decodeURIComponent(newRowUID) + 
+							"' was successfully created!",
+							Debug.INFO_PRIORITY);
+
+					_modifiedTables = undefined; //clear after save
+					
+					runFilter(); //updates records and fields, and applies filter
+
+						}); //end saveModifiedTables handler
+
+
 					}, //end addSubsetRecords handler
 					_modifiedTables);			
 		} //end addRecord()
+		
+		
 		</script>
 </head>
 	

@@ -219,10 +219,10 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
 			"&configGroup=" +
@@ -317,12 +317,12 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
-	var fieldListStr = "";
+	var fieldListStr = ""; //assume field object already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
 	for(var i=0;i<fieldObjArr.length;++i)
 	{
 		if(i) fieldListStr += ",";
@@ -404,16 +404,16 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		modifiedTablesListStr += modifiedTables[i].tableName + "," +
 				modifiedTables[i].tableVersion;
 	}
-	
+
 	var recordListStr = "";
 	if(Array.isArray(recordArr))
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
 			"&configGroup=" +
@@ -491,7 +491,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 				modifiedTables[i].tableVersion;
 	}
 	
-	var fieldListStr = "";
+	var fieldListStr = ""; //assume fieldObj already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
 	for(var i=0;i<fieldObjArr.length;++i)
 	{
 		if(i) fieldListStr += ",";
@@ -503,7 +503,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	for(var i=0;i<valueArr.length;++i)
 	{
 		if(i) valueListStr += ",";
-		valueListStr += valueArr[i];
+		valueListStr += encodeURIComponent(valueArr[i]);
 	}
 	
 	var recordListStr = "";
@@ -511,10 +511,10 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
 			"&configGroup=" +
@@ -3784,7 +3784,7 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	}
 	
 	var valueType = fieldObj.fieldColumnType; 
-	var value = encodeURIComponent(fieldEl.textContent);
+	var value = fieldEl.textContent;
 	
 	//Debug.log("get Value " + value);
 	return value;
@@ -4757,10 +4757,10 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=addTreeNodeRecords" + 
 			"&configGroup=" +
@@ -4839,10 +4839,10 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
-			recordListStr += recordArr[i];
+			recordListStr += encodeURIComponent(recordArr[i]);
 		}
 	else //handle single record case
-		recordListStr = recordArr;
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=deleteTreeNodeRecords" + 
 			"&configGroup=" +

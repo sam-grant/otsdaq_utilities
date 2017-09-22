@@ -1335,13 +1335,13 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 	}
 	catch(std::runtime_error& e)
 	{
-		__SS__ << ("Error creating new record!\n\n" + std::string(e.what())) << std::endl;
+		__SS__ << ("Error creating new record(s)!\n\n" + std::string(e.what())) << std::endl;
 		__MOUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error", ss.str());
 	}
 	catch(...)
 	{
-		__SS__ << ("Error creating new record!\n\n") << std::endl;
+		__SS__ << ("Error creating new record(s)!\n\n") << std::endl;
 		__MOUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error", ss.str());
 	}
@@ -1396,22 +1396,88 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(HttpXmlDocum
 			true /* refresh all */, false /* getGroupInfo */,
 			0 /* returnMemberMap */, false /* outputActiveTables */);
 
-	//extract record list
+	try
 	{
-		ConfigurationBase* config;
+
+		ConfigurationTree targetNode =
+				cfgMgr->getNode(startPath);
+		ConfigurationBase* config = cfgMgr->getConfigurationByName(
+				targetNode.getConfigurationName());
+
+		__MOUT__ << config->getConfigurationName() << std::endl;
 		ConfigurationVersion temporaryVersion;
-		std::istringstream f(recordList);
-		std::string recordUID;
-		unsigned int i;
 
-		while (getline(f, recordUID, ',')) //for each record
+		// if current version is not temporary
+		//		create temporary
+		//	else re-modify temporary version
+		//	edit temporary version directly
+		//	then after all edits return active versions
+		//
+
+		bool firstSave = true;
+
+
+
+		//extract record list
 		{
-			recordUID = ConfigurationView::decodeURIComponent(recordUID);
+			std::istringstream f(recordList);
+			std::string recordUID;
+			unsigned int i;
 
-			__MOUT__ << "recordUID " <<
-					recordUID << std::endl;
+			while (getline(f, recordUID, ',')) //for each record
+			{
+				recordUID = ConfigurationView::decodeURIComponent(recordUID);
 
+				__MOUT__ << "recordUID " <<
+						recordUID << std::endl;
+
+				if(firstSave) //handle version bookkeeping
+				{
+					if(!(temporaryVersion =
+							targetNode.getConfigurationVersion()).isTemporaryVersion())
+					{
+						__MOUT__ << "Start version " << temporaryVersion << std::endl;
+						//create temporary version for editing
+						temporaryVersion = config->createTemporaryView(temporaryVersion);
+						cfgMgr->saveNewConfiguration(
+								targetNode.getConfigurationName(),
+								temporaryVersion, true); //proper bookkeeping for temporary version with the new version
+
+						__MOUT__ << "Created temporary version " << temporaryVersion << std::endl;
+					}
+					else //else table is already temporary version
+						__MOUT__ << "Using temporary version " << temporaryVersion << std::endl;
+
+					firstSave = false;
+				}
+
+				//at this point have valid temporary version to edit
+
+				//copy "delete-uid" type edit from handleSaveTreeNodeEditXML() functionality
+				unsigned int row = config->getViewP()->findRow(
+						config->getViewP()->getColUID(),
+						recordUID
+					);
+				config->getViewP()->deleteRow(row);
+			}
 		}
+
+		if(!firstSave) //only test table if there was a change
+			config->getViewP()->init(); //verify new table (throws runtime_errors)
+
+		handleFillModifiedTablesXML(xmldoc,cfgMgr);
+	}
+	catch(std::runtime_error& e)
+	{
+		__SS__ << ("Error removing record(s)!\n\n" + std::string(e.what())) << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << ("Error removing record(s)!\n\n") << std::endl;
+		__MOUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
 	}
 }
 
