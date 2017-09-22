@@ -3562,15 +3562,15 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 //		groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
 ConfigurationAPI.getDateString;
 {
-var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+ConfigurationAPI.getDateStringDayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+ConfigurationAPI.getDateStringMonthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 ConfigurationAPI.getDateString = function(date)
 {
 	var dateStr = "";
 
-	dateStr += dayArr_[date.getDay()];
+	dateStr += ConfigurationAPI.getDateStringDayArr_[date.getDay()];
 	dateStr += " ";
-	dateStr += monthArr_[date.getMonth()];
+	dateStr += ConfigurationAPI.getDateStringMonthArr_[date.getMonth()];
 	dateStr += " ";
 	dateStr += date.getDate();
 	dateStr += " ";

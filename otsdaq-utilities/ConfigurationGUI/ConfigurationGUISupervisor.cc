@@ -3007,7 +3007,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument&
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
 				false,0,0,
-				&groupComment, &groupAuthor, &groupCreationTime, false /*false to load member map*/, &groupTypeString);
+				&groupComment, &groupAuthor, &groupCreationTime, false /*false to not load member map*/, &groupTypeString);
 
 		commentsLoaded = true;
 

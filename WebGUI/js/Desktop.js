@@ -1509,7 +1509,7 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	//if there is no search, need to check lid=## is terminated with /
 	// check from = that there is nothing but numbers
 	
-	if(search == "") 
+	if(!Desktop.isWizardMode()) 
 	{
 		var i = url.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
 		var isAllNumbers = true;
@@ -1527,7 +1527,7 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 			url += "/";
 		url += "?" + str;
 	}
-	else
+	else// if(Desktop.isWizardMode())
 		url += search.split('&')[0] + "&" + str; //take first parameter (for wiz mode)
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
