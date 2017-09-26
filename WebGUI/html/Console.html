@@ -919,11 +919,14 @@
 						secondMsg = secondMsg.slice(secondMsgIndex+2);
 					}
 					else
-					{
+					{						
 						//artdaq does one space, then <source>:<line number> then new line (ascii-10)
 						secondMsgIndex = secondMsg.indexOf(':'); //find end of line number display (artdaq style)
 						if(secondMsgIndex > 0 && // : found
-								secondMsgIndex < secondMsg.indexOf(' ',1) && //before any spaces
+								( 		//before any spaces
+										secondMsgIndex < secondMsg.indexOf(' ',1) ||
+										secondMsgIndex < secondMsg.indexOf('\n',1) ||
+										secondMsgIndex < secondMsg.indexOf('\t',1)) && 
 								secondMsgIndex+2 < secondMsg.length && //there is at least the number at the space/newline after
 								secondMsg[secondMsgIndex+1] >= '0' &&
 								secondMsg[secondMsgIndex+1] <= '9')

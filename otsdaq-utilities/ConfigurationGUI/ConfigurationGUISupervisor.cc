@@ -2210,7 +2210,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
 				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			__MOUT__ << t.getValueType() << std::endl;
+			//__MOUT__ << t.getValueType() << std::endl;
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto& choice:choices)
 				xmldoc.addTextElementToParent("fixedChoice", choice, parentEl);
@@ -2244,12 +2244,16 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 
 
 				//add fixed choices (in case link has them)
+				DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
+				try
 				{
-					DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
+
 					std::vector<std::string> choices = t.getFixedChoices();
 					for(const auto& choice:choices)
 						xmldoc.addTextElementToParent("fixedChoice", choice, choicesParentEl);
 				}
+				catch(...)
+				{} //ignore no fixed choices for disconnected
 
 				return;
 			}

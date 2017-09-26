@@ -96,7 +96,32 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	fclose(fp);
 
 	ReceiverSocket rsock("127.0.0.1",myport); //Take Port from Configuration
-	rsock.initialize();
+	try
+	{
+		rsock.initialize();
+	}
+	catch(...)
+	{
+		//lockout the messages array for the remainder of the scope
+		//this guarantees the reading thread can safely access the messages
+		std::lock_guard<std::mutex> lock(cs->messageMutex_);
+
+		//generate special message to indicate failed socket
+		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
+				myport << ". Perhaps it is already in use? Exiting Console receive loop." << std::endl;
+		std::cout << __COUT_HDR_FL__ << ss.str();
+
+
+		cs->messages_[cs->writePointer_].set("||0|||Error|Console|||0||ConsoleSupervisor|" +
+				ss.str(),
+				cs->messageCount_++);
+
+
+		if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+			cs->writePointer_ = 0;
+
+		return;
+	}
 
 	std::string buffer;
 	int i = 0;
@@ -163,7 +188,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 					cs->writePointer_ = 0;
 
 				//generate special message to indicate missed packets
-				cs->messages_[cs->writePointer_].set("||0|||Warning|Console|||||ConsoleSupervisor|" +
+				cs->messages_[cs->writePointer_].set("||0|||Warning|Console|||0||ConsoleSupervisor|" +
 						ss.str(),
 						cs->messageCount_++);
 			}
@@ -187,12 +212,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 					(heartbeatCount < 60*5 && heartbeatCount%60 == 59)) //every ~2 min for first 5 messages
 			{
 				++selfGeneratedMessageCount; //increment internal message count
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting... (if no messages, next heartbeat in approximately two minutes)" << std::endl;
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting... (if no messages, next heartbeat is in approximately two minutes)" << std::endl;
 			}
 			else if(heartbeatCount%(60*30) == 59) //approx every hour
 			{
 				++selfGeneratedMessageCount; //increment internal message count
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time... (if no messages, next heartbeat in approximately one hour)" << std::endl;
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time... (if no messages, next heartbeat is in approximately one hour)" << std::endl;
 			}
 
 			++heartbeatCount;

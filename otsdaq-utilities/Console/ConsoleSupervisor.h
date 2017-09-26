@@ -101,6 +101,7 @@ private:
     				!= std::string::npos)
     		{
     			++m; //found next marker
+
     			if(i < (int)fields.size() &&
     					m == fields[i].markerCount) //found marker for field
     				fields[i++].posInString = p+1; //set position in string and move on to next field
@@ -110,11 +111,12 @@ private:
     		}
 
     		//debug
-			//for(auto &f: fields)
-			//{
-			//	std::cout << f.fieldName << ": " ;
-			//	std::cout << (char *)&buffer[f.posInString] << std::endl;
-			//}
+			//			std::cout << buffer << "\n";
+			//			for(auto &f: fields)
+			//			{
+			//				std::cout << f.fieldName << ": ";
+			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//			}
     	}
 
     	const char *  getMsg() 	 	 {return  (char *)&buffer[fields[MSG].posInString];}
