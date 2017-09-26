@@ -113,7 +113,7 @@ if [ "x$1" == "x" ]; then
 			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
 		echo "$USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
-		echo "Loading updated info for core tables..."
+		echo "Loading updated info for core tables from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
 		
