@@ -69,7 +69,7 @@
 		var _CONFIG_TYPE_ROW_OFFSET = 1;
 		var _CONFIG_DATA_COL_OFFSET = 0;
 		var _CONFIG_FIXED_CELLS = 3;
-	
+		
 
 		var _typeArray = ["Data","UniqueData","FixedChoiceData", //"MultilineData", FIXME when multiline data is functional
 						  "OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
@@ -123,6 +123,7 @@
 									 1,//"Snake Double Rows",
 									 1];//"Snake Double Columns"];
 
+		var _tableName;
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -140,7 +141,6 @@
 			//selectThisCell(r,c,el)
 			//setCaretPosition(el,start,stop)
 			//editCellCancel()
-			//keyHandler(e)
 			//editCellOK()
 			//addColumn(c)
 			//deleteColumn(c)
@@ -149,11 +149,16 @@
 			//setupFindAndReplace()
 			//configReplace()
 		
+			//keyHandler(e)
+			//descriptionKeyHandler(e)
+		
+			//handlefixedChoiceArbitraryCheckbox(c,inverted)
 			//addFixedChoice(c)
 			//deleteSelectedFixedChoice(c)
 			//downloadFixedChoices(c)
 			//popUpUploadFixedChoicesForm(c)
 			//uploadFixedChoices(c)
+			
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -280,6 +285,8 @@
 
 			var configName;
 
+			_tableName = [];
+			
 			Debug.log("CfgTableEditor requestHandler configNames.length " + configNames.length);
 			for(var i=0;i<configNames.length;++i)
 			{			
@@ -288,6 +295,8 @@
 				str += "<option value='" + configName + "'>";
 				str += configName;	//can display however
 				str += "</option>";
+				
+				_tableName.push(configName); //keep list of table names for forcing link names
 			}				
 			str += "</select>";
 
@@ -575,8 +584,18 @@
 				colChoices = _colChoicesArr;
 			else
 				_colChoicesArr = colChoices;	
-			if(!tableDescription)
+			
+			if(tableDescription === undefined)
+			{
+				try
+				{
+					//If possible, save and recover table description edits
+					_tableDescription = document.getElementById("table-description").value;
+				}
+				catch(e)
+				{}
 				tableDescription = _tableDescription;
+			}
 			else
 				_tableDescription = tableDescription;			
 
@@ -606,8 +625,9 @@
 			//display table
 			str += "<table id='SubSystemTable' border='1' cellspacing='5' cellpadding='1'>";
 			
-			
-			var localDisplayPixelMaskInputs = function() {
+			//==============================
+			function localDisplayPixelMaskInputs() 
+			{
 
 				Debug.log("BitMap col=" + c + " colTypes[c]=" + colTypes[c]);
 
@@ -703,7 +723,92 @@
 
 				str += "</td>";
 
-			}
+			} //end localDisplayPixelMaskInputs()
+			
+			//==============================
+			function localDisplayChildLinkInputs() 
+			{
+				Debug.log("ChildLink col=" + c + " colTypes[c]=" + colTypes[c]);
+				str += "<td>"; //start primary cell
+
+				var colChoicesArr = colChoices[c].split(',');
+
+				//add checkbox
+				Debug.log("colChoicesArr[0] = " + colChoicesArr[0]);
+				str += "<input type='checkbox' id='fixedChoiceArbitraryCheckbox-" + c +
+						"' onclick='handlefixedChoiceArbitraryCheckbox(" + c + ",true)' " +
+						(colChoicesArr[0] == "arbitraryBool=0"?"checked":"") + //note arbitrary check is inverted compared to fixedChoice field
+						">";
+				str += "Force table link to one or many table(s)<br>(Include 'NO_LINK' to allow disconnected links):";
+				str += "</input>";
+
+				str += "<br>";
+
+
+
+				str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
+				str += "<tr><td>";
+				
+
+				str += "<select id='newChoiceInput-" + c + "' " +							
+						">";
+				
+				//always include default first in selection list				
+				str += "<option>" +
+						"NO_LINK" +
+						"</option>";		
+				for(var i=0;i<_tableName.length;++i)
+				{
+					str += "<option>" +
+							_tableName[i] +
+							"</option>";						
+				}					
+				str += "</select>";
+				
+			
+				str += "</td><td style='white-space:nowrap' >";
+				str += "<a class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
+						"title='Add table as a new fixed choice option for this column.\"'" +
+						">";
+				str += "+";
+				str += "</a>";
+				str += "</td></tr>";
+
+
+				str += "<tr><td>";
+
+				str += "<select id='fixedChoicesSelect-" + c + "' " +
+						"onchange='document.getElementById(\"newChoiceInput-" + c + 
+						"\").value = this.value;'" +
+						">";
+				
+				//show fixed choices first		
+				for(var f=1;f<colChoicesArr.length;++f)	
+					str += "<option>" +
+					decodeURIComponent(colChoicesArr[f]) +
+					"</option>";		
+
+				str += "</select>";
+
+				str += "</td><td>";
+				str += 
+						"<div class='treeNode-deleteIcon' " + 
+						"onmouseup='event.stopPropagation();' " +
+						"onclick='event.stopPropagation();" +
+						"deleteSelectedFixedChoice(" + c + ");' " +
+						"title='Remove the currently selected choice for this column.' " +
+						"></div>";
+
+
+
+				str += "</td></tr>";
+				str += "</table>";
+				
+				
+
+				str += "</td>"; //end primary cell
+				
+			} //end localDisplayChildLinkInputs()
 
 			//:::::
 			function localInsertAddDeleteCell(c)
@@ -755,16 +860,17 @@
 			{
 				//add data choices if type = FixedChoiceData
 				//add bitmap info fields if type = BitMap
-				if(colTypes[c] != "FixedChoiceData" && 
-						colTypes[c] != "BitMap") 
-				{
-					str += "<td style='border:0; background-color:transparent;'></td>";
-				}
-				else if(colTypes[c] == "BitMap")
+				//add link table options if type = ChildLink
+				
+				if(colTypes[c] == "BitMap")
 				{
 					localDisplayPixelMaskInputs();
 				}
-				else	//if(colTypes[c] == "FixedChoiceData")
+				else if(colTypes[c].indexOf("ChildLink-") == 0)
+				{
+					localDisplayChildLinkInputs();		
+				}
+				else if(colTypes[c] == "FixedChoiceData")
 				{
 					Debug.log("FixedChoiceData col=" + c + " colTypes[c]=" + colTypes[c]);
 					str += "<td>";
@@ -811,7 +917,7 @@
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();" +
 							"deleteSelectedFixedChoice(" + c + ");' " +
-							"title='Delete the currently selected choice for this column.' " +
+							"title='Remove the currently selected choice for this column.' " +
 							"></div>";
 
 					
@@ -838,7 +944,7 @@
 					str += "<br><br>";
 					
 					//add checkbox
-					Debug.log(colChoicesArr[0]);
+					Debug.log("colChoicesArr[0] = " + colChoicesArr[0]);
 					str += "<input type='checkbox' id='fixedChoiceArbitraryCheckbox-" + c +
 							"' onclick='handlefixedChoiceArbitraryCheckbox(" + c + ")' " +
 							(colChoicesArr[0] == "arbitraryBool=1"?"checked":"") +
@@ -856,6 +962,10 @@
 					
 					str += "</td>";			
 
+				} //end fixed choice case
+				else //all other fields: transparent/empty parameter cell
+				{
+					str += "<td style='border:0; background-color:transparent;'></td>";
 				}
 			}
 			
@@ -938,11 +1048,12 @@
 			str += "<br><br>";
 			str += "Table Description (Changes will be saved with the column info.";
 			
-			str += " <a href='#' id='table-description-preview-link',Debug.INFO_PRIORITY);'>" +
+			str += " <a style='text-decoration:underline;' " +
+					"id='table-description-preview-link',Debug.INFO_PRIORITY);'>" +
 					"Preview</a>):";
 			
 			str += "<br>";
-			str += "<textarea id='table-description' rows='6' cols='60'>";			 
+			str += "<textarea id='table-description' onkeydown='descriptionKeyHandler(event,this)' rows='6' cols='60'>";			 
 			str += tableDescription;
 			str += "</textarea>";
 			
@@ -950,9 +1061,10 @@
 			el.innerHTML = str;	
 			el = document.getElementById("table-description-preview-link");
 			el.onclick = function(){
+				var tip = document.getElementById("table-description").value;
 				DesktopContent.tooltip("ALWAYS",
 						"<center>Preview of " + srcName + " Tooltip</center><br>" +
-						tableDescription);
+						tip);
 			}
 		}
 		
@@ -1145,6 +1257,27 @@
             elem.focus();
             elem.setSelectionRange(caretPos, endPos);
 		}
+
+		//descriptionKeyHandler
+		//	add tab character to textareal element value
+		function descriptionKeyHandler(e,tel) 
+		{
+			var TABKEY = 9;
+			//handle special keys for text area
+			if(e.keyCode == TABKEY)
+			{
+				Debug.log("tab.");
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				var i = tel.selectionStart;
+				var j = tel.selectionEnd;
+				tel.value =  tel.value.substr(0,i) + 
+						'\t' + tel.value.substr(j);
+				tel.selectionStart = tel.selectionEnd = j+1;
+			}
+			return false; //done if text area was identified
+		}
 		
 		//keyHandler
 		function keyHandler(e) 
@@ -1301,22 +1434,75 @@
 					
 					//show tooltips
 					if(colType == "BitMap")
-						DesktopContent.tooltip("BitMapType",
+						DesktopContent.tooltip("BitMap Field Type",
 								"The BitMap type represents a 2-dimensional array of cells, " +
 								"where each cell has a bit-field. The aspect ratio is optional. " +
 								"The color fields are optional. " +
 								"Optional fields you can leave as DEFAULT. \n\n" +
+								
 								"The aspect ratio should be entered as &lt;Height&gt;:&lt;Width&gt;; for example, " +
 								"if you have a pixel chip with pixel size 100 microns by 150 microns you " +
 								"may want your display to reflect that - you should enter &quot;100:150&quot (without the quotes)."
 								);
 					else if(colType == "FixedChoiceData")
-						DesktopContent.tooltip("FixedChoiceDataType",
+						DesktopContent.tooltip("FixedChoiceData Field Type",
 								"The FixedChoiceData type represents a list of choices that constrain " +
 								"the allowed values for a field. " +
 								"The DEFAULT value must always be one of the choices. \n\n" +
+								
+								"You can download and upload CSV lists of the fixed choices. \n\n" +								
+								
 								"If you check the box to allow arbitrary user entry, users will " +
 								"have the option to enter values that do not necessarily match choices in the list."
+								);
+					else if(colType.indexOf("ChildLink-") == 0)
+						DesktopContent.tooltip("ChildLink Field Type",
+								"The ChildLink type represents one field of a table link (a pair of two fields are required to complete a table link). " +
+								"The other field completing the pair must be of type ChildLinkUID or ChildLinkGroupID. " +
+								"The two fields are defined as being in the same pair by having the same Link ID. " +
+								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
+								"the Link ID can be a number or a string. \n\n" +
+								
+								"If the other field in the pair is of type ChildLinkUID, then you have created a unique-record table link (i.e. a link to one particular record in the target table).\n\n" +
+								"If the other field in the pair is of type ChildLinkGroupID, then you have created a group-of-records table link (i.e. a link to one or many child table records, which share the same Group ID).\n\n" +
+								
+								"Note that you can force users to link to fixed list of tables by checking the box in the field parameters. " +
+								"Users will then be forced to choose from the tables in list of choices.\n\n " +
+								"It is important to remember to include 'NO_LINK' as a choice if you want users to be able to leave your link disconnected."
+								);
+					else if(colType.indexOf("ChildLinkUID-") == 0)
+						DesktopContent.tooltip("ChildLinkUID Field Type",
+								"The ChildLinkUID type represents one field of a unique-record table link (a pair of two fields are required to complete a table link). " +
+								"The other field completing the pair in this table must be of type ChildLink. " +
+								"The two fields are defined as being in the same pair by having the same Link ID. " +
+								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
+								"the Link ID can be a number or a string. \n\n" +
+								
+								"A unique-record table link is a link to one particular record in the target table. " +
+								"Note that no special fields are required in the target table for a valid unique-record table link."
+								);
+					else if(colType.indexOf("ChildLinkGroupID-") == 0)
+						DesktopContent.tooltip("ChildLinkGroupID Field Type",
+								"The ChildLinkGroupID type represents one field of a group-of-records table link (a pair of two fields are required to complete a table link). " +
+								"The other field completing the pair in this table must be of type ChildLink. " +
+								"The two fields are defined as being in the same pair by having the same Link ID. " +
+								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
+								"the Link ID can be a number or a string. \n\n" +
+								
+								"A group-of-records table link is a link to one or many child table records, which share the same Group ID. " +
+								"Note that a field of type GroupID is required in the target table for a valid group-of-records table link. " +
+								"The GroupID field in the child table must have a Link ID which matches the Link ID of the pair of fields in the parent table."								
+								);
+					else if(colType.indexOf("GroupID-") == 0)
+						DesktopContent.tooltip("GroupID Field Type",
+								"The GroupID type represents a target field in the child table for a group-of-records table link in a parent table. " +
+								"A group-of-records table link is a link to one or many child table records, which share the same Group ID. " +
+								"The GroupID field has no special functionality unless there is a parent table targeting this child table with a link that has a corresponding Link ID. " +
+								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
+								"the Link ID can be a number or a string. \n\n" +
+								
+								"Note that a field of type GroupID is required in the target table for a valid group-of-records table link. " +
+								"The GroupID field in the child table must have a Link ID which matches the Link ID of the pair of fields in the parent table."								
 								);
 				}			
 				else //colHdr row
@@ -1542,7 +1728,12 @@
 				return;
 			}
 				
-			var colChoicesArr = _colChoicesArr[c].split(',');
+			var colChoicesArr = [];
+
+			var colChoicesArr = [];
+			if(_colChoicesArr[c] != "") 
+				colChoicesArr = _colChoicesArr[c].split(',');
+						
 			var found = false;
 			var encodedVal = encodeURIComponent(val);
 			for(var i=1 ;i<colChoicesArr.length;++i) //start at 1 because of arbitraryBool
@@ -1571,12 +1762,20 @@
 		
 		//handlefixedChoiceArbitraryCheckbox ~~
 		//	set the value in fixed choice array
-		function handlefixedChoiceArbitraryCheckbox(c)
+		//	if setSelectValue, then take the select box value as entry 1 in the array
+		function handlefixedChoiceArbitraryCheckbox(c,inverted)
 		{
-			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
+			var val;
+			if(inverted)
+				val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"0":"1";
+			else
+				val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";
 			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
 			
-			var colChoicesArr = _colChoicesArr[c].split(',');
+			var colChoicesArr = [];
+			if(_colChoicesArr[c] != "") 
+				colChoicesArr = _colChoicesArr[c].split(',');
+			
 			_colChoicesArr[c] = "";
 			if(!colChoicesArr.length || 
 					colChoicesArr[0].indexOf("arbitraryBool=") != 0)
@@ -1584,6 +1783,7 @@
 			else
 				colChoicesArr[0] = "arbitraryBool=" + val; //set value
 			
+				
 			for(var i=0;i<colChoicesArr.length;++i)
 			{
 				if(_colChoicesArr[c].length) //already something, so add comma
@@ -1699,11 +1899,15 @@
 			
 			//create CSV data string from html table
 			var dataStr = "data:text/csv;charset=utf-8,";
+			var cnt = 0;
 			for(var i=0;i<colChoicesArr.length;++i)
 			{
-				if(i)
+				if(colChoicesArr[i].indexOf("arbitraryBool=") == 0)
+					continue; //skip the checkbox value
+				if(cnt) //after the first time
 					dataStr += encodeURI("\n"); //encoded \n //each choice is a column
 				dataStr += colChoicesArr[i];
+				++cnt;
 			}
 			
 			Debug.log("CfgGUI downloadTableAsCSV dataStr=" + dataStr);
@@ -1801,6 +2005,7 @@
 			var src = _dataUploadStr.split('\n');
 			//console.log(src);
 			
+			//save and recover arbitrary checkbox choice
 			var val = document.getElementById("fixedChoiceArbitraryCheckbox-" + c).checked?"1":"0";			
 			Debug.log("fixedChoiceArbitraryCheckbox Value = " + val);
 						

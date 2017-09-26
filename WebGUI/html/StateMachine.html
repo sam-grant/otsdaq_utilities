@@ -194,8 +194,8 @@
 
 <script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
 <script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
-<script type="text/JavaScript"
-	src="/WebPath/js/DesktopWindowContentCode.js"></script>
+<script type="text/JavaScript"src="/WebPath/js/DesktopWindowContentCode.js"></script>
+<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 
 <script>		
 
@@ -289,6 +289,8 @@
             //NOTE: Wildcards for transitions from every state.. -1 allows transition to self, -2 does not
     
 			var _aliasTranslationMap = []; //e.g. _aliasTranslationMap["Physics"] => config_v2
+			var _aliasTranslationMetaDataMap = []; //e.g. _aliasTranslationMap["Physics"] => [comment,author,createTime]
+			
 						
 			var _currState, _prevState;
 			var _canvas, _context, _blackout, _blackoutReveal, 
@@ -471,6 +473,10 @@
                     	//get all system aliases and put in drop-down
                         var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
                         var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
+                        var aliasCommentArr = req.responseXML.getElementsByTagName("config_comment");
+                        var aliasAuthorArr = req.responseXML.getElementsByTagName("config_author");
+                        var aliasCreateTimeArr = req.responseXML.getElementsByTagName("config_create_time");
+                        
             			var userLastConfigAlias = 
             					DesktopContent.getXMLValue(req,"UserLastConfigAlias");
             			if(!userLastConfigAlias) userLastConfigAlias = "";
@@ -484,7 +490,12 @@
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
                         	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
-                        	
+                        	_aliasTranslationMetaDataMap[alias] = [
+																   aliasCommentArr[i].getAttribute('value'),
+																   aliasAuthorArr[i].getAttribute('value'),
+																   aliasCreateTimeArr[i].getAttribute('value')
+																   ];
+														 
                             //choose the first system alias by default
                             if(!i) _transitionParameterValues[_parameterInitCount] = alias;
                             _transParamsHtmlStr += "<option value='" + alias + "' ";
@@ -823,12 +834,15 @@
 							{
 								_prevState = -1; //invalidate previous state
 
-							    Debug.log("State was changed unexpectedly from " + 
-										_stateNames[_currState] + " to " + _stateNames[i] +
-										". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
-								//								alert("State was changed unexpectedly from " + 
-								//										_stateNames[_currState] + " to " + _stateNames[i] +
-								//										". (Likely another user changed the state)");
+								if(_stateNames[i] == "Failed")
+									Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+								else
+									Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". (Likely the server was restarted or another user changed the state)",Debug.HIGH_PRIORITY);
+
 							    
 							    if(_states[i] == "F") //Failed state occured, so get error message
 							    {
@@ -933,9 +947,14 @@
                 	var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
                 	if(err)
                 		Debug.log(err,Debug.HIGH_PRIORITY);
-                	Debug.log("Server indicated failure to attempt state transition.",Debug.HIGH_PRIORITY);
-                	//alert("Server indicated failure to attempt state transition.");
+                	Debug.log("Server indicated failure to attempt state transition. Attempting to refresh state machine...",Debug.HIGH_PRIORITY);
+                	//alert("Server indicated failure to attempt state transition.");                	
                 	_inAnimation = false;
+                	
+                	//refresh FSM
+                	_transitionProgress = -1; 
+                	window.clearInterval(_transitionTimer);
+                	_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
                 	return;
                 }
                 
@@ -1096,16 +1115,16 @@
             		//show refresh link            		
             		var str = "";
             		str += "<div style='margin:10px'>";
-            		str += "Did the server crash? If it's back, try a "
+            		str += "Did the server crash? If it's back, try a ";
             		str += "<a onclick='_transitionProgress = -1; " + 
 					"window.clearInterval(_transitionTimer);" +
 					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-						">refresh</a>.";
+						">Refresh</a>.";
             		str += "</div>";
-            		document.getElementById("blackout-reveal").innerHTML = str;
+            		_blackoutReveal.innerHTML = str;
             		return;
             	}
-            	document.getElementById("blackout-reveal").innerHTML = ""; //clear blackout reveal refresh
+            	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
 
 			    var inTransition = DesktopContent.getXMLValue(req,"in_transition")=="1";			    
 			    var progress = DesktopContent.getXMLValue(req,"transition_progress");		    
@@ -1135,6 +1154,17 @@
 			    	if(progress != _transitionProgress)
 			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
 			    	_transitionProgress = progress;
+			    	
+			    	//show refresh link            		
+			    	var str = "";
+			    	str += "<div style='margin:10px'>";
+
+			    	str += "<a onclick='_transitionProgress = -1; " + 
+			    			"window.clearInterval(_transitionTimer);" +
+							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+							">Refresh</a>";
+			    	str += "</div>";
+			    	_blackoutReveal.innerHTML = str;
 			    }
 
 		    	_progressBar.style.width = _transitionProgress + "%";
@@ -1473,11 +1503,42 @@
 						var transitionParameterName = transitionParameterData[0];
 						var transitionParameterValue = transitionParameterData[1];
 						y += 2*f;
-						_context.fillText(transitionParameterName + 
-								" = '" + transitionParameterValue + "'", x, y);
-						y += f;
-						_context.fillText("              	          " + 
-								"<" + _aliasTranslationMap[transitionParameterValue] + ">", x, y);
+						
+						if(transitionParameterName == "ConfigurationAlias") //handle special
+						{
+							_context.fillText("Chosen System Alias: " + 
+									" '" + transitionParameterValue + "'", x, y);
+							
+							_context.font = '10pt Donegal One';
+							y += f;
+							_context.fillText("      " + 
+									"Aliased Group: '" + _aliasTranslationMap[transitionParameterValue] + "'",
+									x, y);
+	
+							y += f-4;
+							var metaValue;
+							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
+							_context.fillText("      " + 
+									"Author: '" + metaValue + "'", 
+											x, y);
+							y += f-4;
+							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
+							metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
+							_context.fillText("      " + 
+									"Creation Time: '" + metaValue + "'", 
+											x, y);
+							y += f-4;
+							metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
+							_context.fillText("      " + 
+									"Comment: '" + metaValue.substr(0,30) + 
+											(metaValue.length > 30?"...":"") + "'", 
+											x, y);
+	
+							_context.font = '14pt Donegal One';
+						}
+						else //just show parameter
+							_context.fillText(transitionParameterName + 
+									" = '" + transitionParameterValue + "'", x, y);
 	                }
                 }
                 else

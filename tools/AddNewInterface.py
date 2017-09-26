@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 #____________________________________________________________
 #
-#  addNewInterface.py --help
+#  addNewFrontEndInterface.py --help
 #
 #____________________________________________________________
 #
 
-#//./addnewFEWInterface.py  -n MyInterface
-#//-- copy FrontEndGenericInterface.cc  MyInterface.cc
-#//-- replace sed /FrontEndGenericInterface/MyInterface/g
+#//For example:
+#//		./addNewFrontEndInterface.py  -n MyInterface
+#//			-- copy FrontEndGenericInterface.cc  MyInterface.cc
+#//			-- replace sed /FrontEndGenericInterface/MyInterface/g
 
 import argparse
 import os #for isdir abspath dirname
+
+#//Steps:
+#// - copy source to destination
+#// - swap in new name
+#// - Add entry in destination  CMakeLists.txt
+
 
 print
 print "***********************\n"
@@ -22,6 +29,8 @@ print
 
 parser = argparse.ArgumentParser(description='Setup Firmware Component')
 
+parser.add_argument('-s','--src',
+		help='Source path for new Interface')
 parser.add_argument('-d','--dest',
 		help='Destination path for new Interface')
 parser.add_argument('-n','--name',
@@ -49,6 +58,27 @@ print 'Script directory is:'
 print scriptDir
 print
 
+##################################
+print 'Validating source path...'
+
+source = scriptDir + "/../../otsdaq_demo/" #default destination path
+if (args.dest): #if option used, then use args.dest
+    dest = args.dest
+
+print 'Destination directory is:'
+print  dest
+print
+print
+
+#validate destination directory
+if ((not os.path.isdir(dest + "/"))):
+    print "Error!\n Check usage. "
+    parser.print_help()
+    print
+    print "****************"
+    exit("Error: Invalid destination path '" + (args.dest) + "')\n\n")
+
+##################################
 dest = scriptDir + "/" #default destination path
 if (args.dest): #if option used, then use args.dest
     dest = args.dest

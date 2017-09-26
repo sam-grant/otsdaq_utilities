@@ -510,14 +510,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var errStr = "";
 	var req;
 	
-	if(showLoadingOverlay)
-		DesktopContent.showLoading();
-
 	//check if already marked the mailbox.. and do nothing because we know something is wrong
 	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1")		
 	{
 		errStr = "Something is still wrong.";
-		errStr += " (Try reloading the page, or alert ots admins if problem persists.)";
+		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
 		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 		req = 0; //force to 0 to indicate error
 		var found = false;
@@ -526,14 +523,14 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			for(var rh in DesktopContent._arrayOfFailedHandlers)
 				if(DesktopContent._arrayOfFailedHandlers[rh] == returnHandler) 
 				{
-					errStr = "Blocking multiple error responses to same handler. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+					errStr = "Blocking multiple error responses to same handler. \nRecurring error should be handled by returnHandler: " + returnHandler;
 					Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 					found = true; break;
 				}
 		}
 		else 
 		{
-			errStr = "Quiet Mode. Blocking multiple error responses to ALL handlers. \nPoor error handling (Developer should fix) by returnHandler: " + returnHandler;
+			errStr = "Quiet Mode. Blocking multiple error responses to ALL handlers. \nRecurring error should be handled by returnHandler:" + returnHandler;
 			Debug.log(errStr.substr(0,200) + "...",Debug.HIGH_PRIORITY);
 			found = true;
 		}
@@ -710,10 +707,15 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		origin = DesktopContent._serverOrigin;
 	}
 	
+
+	if(showLoadingOverlay)
+		DesktopContent.showLoading();
+	
+	
 	requestURL = origin+"/urn:xdaq-application:lid="+urn+"/"+requestURL;
 	//Debug.log("Post " + requestURL + "\n\tData: " + data);
 	req.open("POST",requestURL,true);
-	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");		
 	req.send(data);	
 }
 
@@ -820,6 +822,7 @@ DesktopContent.tooltip = function(id,tip) {
 			Debug.log("In Wizard Mode with Sequence=" + DesktopContent._sequence);
 	}
 	
+	
 	var srcStackString,srcFunc,srcFile;
 	
 	if(Debug.BROWSER_TYPE == 1) //chrome
@@ -838,6 +841,15 @@ DesktopContent.tooltip = function(id,tip) {
 		srcFile = srcFile.substr(0,srcFile.indexOf('?'));
 	if(srcFile.indexOf(':') >= 0)
 		srcFile.substr(0,srcFile.indexOf(':'));
+	
+
+	if(tip === undefined)
+	{
+		Debug.log("Undefined tooltip string at " + srcStackString + "\n" + 
+				srcFunc + "\n" + srcFile +".\n\n Tooltip Usage: <id> <tip>", Debug.HIGH_PRIORITY);
+		return;
+	}
+	
 	
 	var oldId = id;
 	//remove all special characters from ID
@@ -994,7 +1006,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1053,9 +1065,15 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var body = document.getElementsByTagName("BODY")[0];
 
 	var el = document.createElement("div");
-	el.setAttribute("id", DesktopContent._verifyPopUpId);				
+	el.setAttribute("id", DesktopContent._verifyPopUpId);
+	
+	var userInputStr = "";
+	if(getUserInput)
+		userInputStr +=
+				"<input type='text' id='DesktopContent_popUpUserInput'> "; 
+							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
-			prompt + "</div>" +
+			prompt + "<br>" + userInputStr + "</div>" +
 			"<input type='submit' value='Yes' " +
 			"onclick='event.stopPropagation();' " + 
 			"> " + //onmouseup added below so func can be a function object (and not a string)
@@ -1110,7 +1128,11 @@ DesktopContent.clearPopUpVerification = function(func) {
 	//remove pop up if already exist
 	if(DesktopContent._verifyPopUp) DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
 	DesktopContent._verifyPopUp = 0;
-	if(func) func();
+	if(func) 
+	{
+		var userEl = document.getElementById("DesktopContent_popUpUserInput");
+		func(userEl?userEl.value:undefined); //return user input value if present
+	}
 }
 
 //=====================================================================================

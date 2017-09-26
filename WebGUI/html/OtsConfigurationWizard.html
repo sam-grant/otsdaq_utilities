@@ -81,78 +81,31 @@
 						"click the question mark at the top-right of the Desktop."
 				);
 				
-				//copied from Supervisor.html
-				DesktopContent.tooltip("Desktop Introduction",
-						"Welcome to the otsdaq Desktop environment. This is your portal " +
-						"to all of the possibilities of otsdaq.\n\n" +
-						"Briefly, here are the features:" +
-
-						"\n\t- Desktop Window Icons: " +
-						"<div style='margin-left:60px'>" +
-						"Click the rounded-square icons on your Desktop to open " +
-						"a particular window. If you hold down your click (for a second), you " +
-						"can open the window in fullscreen mode, or in a new tab, or even open the window " +
-						"then tile it on the screen with all other open windows!" +
-						"</div>" +
-
-						"\n\t- Desktop Dashboard (top pane): " +
-						"<div style='margin-left:60px'>" +
-						"Along the top and left margins of the Desktop, you will find the Desktop" +
-						"Dashboard.  The top pane of the Dashboard " +
-						"is made of buttons and icons going from left to right:" +
-
-							"\n\t- Left Pane Toggler: " +
-							"<div style='margin-left:60px'>" +
-							"The first button you will encounter in the top pane looks like a horizontal double-arrow " +
-							"icon. This button toggles the display of the left pane of the Dashboard. Note when you" +
-							"refresh the page, the state of the left pane persists!" +
-							"</div>" +
-		
-							"\n\t- Layouts Menu: " +
-							"<div style='margin-left:60px'>" +
-							"The next button you will encounter in the top pane reads 'Layouts'. " +
-							"This button gives you access to your Window Layout Presets. You will see 2 'System' presets there " +
-							"which can be setup by uesrs with admin privileges, and 3 'User' presets which you can setup for " +
-							"yourself in the User Settings window (the cog wheel icon)." +
-							"</div>" +
-		
-							"\n\t- Tile Desktop Windows: " +
-							"<div style='margin-left:60px'>" +
-							"The next button you will encounter in the top pane reads 'Tile'. " +
-							"This button will automatically tile all open Desktop Windows to fit in your browser window." +
-							"</div>" +
-		
-							"\n\t- Show Desktop: " +
-							"<div style='margin-left:60px'>" +
-							"The next button you will encounter in the top pane reads 'Show Desktop'. " +
-							"This button will minimize all open Desktop Windows which is nice when you want to see all the Desktop Icons again." +
-							"</div>" +
-		
-							"\n\t- Full Screen: " +
-							"<div style='margin-left:60px'>" +
-							"The next button you will encounter in the top pane reads 'Full Screen'. " +
-							"This button will maximize to full screen the Desktop Window that was last used (i.e. the window that has the focus)." +
-							"</div>" +
-						"</div>" +
-						
-						"\n\t- Desktop Dashboard (left pane): " +
-						"<div style='margin-left:60px'>" +
-						"Along the top and left margins of the Desktop, you will find the Desktop" +
-						"Dashboard.  The left pane of the Dashboard " +
-						"is a listing of open Desktop Windows. If you click one of the buttons in the list, " +
-						"the associated window " +
-						"will be minimized or restored. If you hold down your click (for one second) you can choose " +
-						"to minimize, maximize, or close the window!" +
-						"</div>" +
-								
-								
-								
-						"\n\nRemember, if you would like to take a look at the available online documentation, " +
-						"click the question mark at the top-right of the Desktop."
-				);
+				Desktop.desktopTooltip();
 			}			            
         </script>
 		
+
+        <!-- Note: usually this page is in frame and ots icon is shown by C++ -->
+        <!-- start ots icon handling -->
+        <link rel="apple-touch-icon" sizes="57x57" href="/WebPath/images/otsdaqIcons/apple-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/WebPath/images/otsdaqIcons/apple-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/WebPath/images/otsdaqIcons/apple-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/WebPath/images/otsdaqIcons/apple-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/WebPath/images/otsdaqIcons/apple-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/WebPath/images/otsdaqIcons/apple-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/WebPath/images/otsdaqIcons/apple-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/WebPath/images/otsdaqIcons/apple-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/WebPath/images/otsdaqIcons/apple-icon-180x180.png">
+        <link rel="icon" type="image/png" sizes="192x192"  href="/WebPath/images/otsdaqIcons/android-icon-192x192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/WebPath/images/otsdaqIcons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/WebPath/images/otsdaqIcons/favicon-96x96.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/WebPath/images/otsdaqIcons/favicon-16x16.png">
+        <link rel="manifest" href="/WebPath/images/otsdaqIcons/manifest.json">
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+        <meta name="theme-color" content="#ffffff">
+        <!-- end ots icon handling -->
 	</head>	
 	
 	<body onload='init();'>

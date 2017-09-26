@@ -118,22 +118,33 @@
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	
 	<script>		
+	
+		//Iterate desktop icon from:
+		//	http://clipart-library.com/purple-spider-cliparts.html
+	
 		
-		//	Description of Configuration-Subset Functionality/Behavior:
+		//	Description of Iterate Functionality/Behavior:
 		//	
 		//	GET parameters:
-		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
-		//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. “LinkToFETypeConfiguration,FEInterfacePluginName”
-		//									- these are the fields that can be used to filter UID records by (and these will cause grouping in square-view)	
-		//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-		//		<recordPreFilterList> = CSV list (of forced filter) of tree paths relative to <baseTable> and = value, e.g. "LinkToFETypeConfiguration=NIMPlus,FEInterfacePluginName=NIMPlusPlugin"
-		//									- this is like a pre-filter (filter on records UID that user can not control)
-		//		<recordsAlias> = Records display name, e.g. "Front-ends"
+		//		<forceSavingModifiedGroups> = Do not provide user with option to use the temporary group for modified groups
+		//		<forceUseOfAliases> = Do not provide user with option to use an arbitrary group
+		//		<forceGroupsOnly> = Do not provide user with option to use Macros
+		//		
 		//
 		//	- Requires user to have LOCK
 		//
 		//	- Top Pane:
-		//		* for header info (e.g. subsetBasePath)
+		//		* > || |_|  controls and "Status: Inactive"
+		//
+		//	- Bottom Pane:
+		//		* Similar functionality to GUI subset.. in that it edits the 
+		//			the currently active Iteration group. (If a user wants to change the active
+		//			Iteration group, they must do so in the Config GUI)
+		//
+		//		* Very top of "tree-view" choose the Iteration name
+		//			
+		//		
+		//		* Create Rows in table 
 		//
 		//	- Split remaining window into two panes: Left and Right; Left is fixed width and hideable.	
 		//	

@@ -49,6 +49,48 @@ done
 
 
 
+ 
+#######################################################################################################################
+
+echo
+echo "=================="
+
+echo "Git comment '$1'"
+echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+
+
+echo
+echo "=================="
+
+echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+	echo "Checking in $p"
+	cd $p
+	git pull
+	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
+	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
+	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	
+	if [ "x$1" != "x" ]; then
+		#add space for user
+	    git commit -m "$1 " .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	    git push   
+	fi
+
+	cd $CURRENT_AWESOME_BASE
+	echo
+	echo "=================="
+
+    fi	   
+done
+
+
+
+echo
+echo "=================="
+
+
 #######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
 if [ "x$1" == "x" ]; then
@@ -61,31 +103,125 @@ if [ "x$1" == "x" ]; then
 	echo "#######################################################################################################################" 
 	echo "Updating USER_DATA path $USER_DATA,"
 	echo "based on the list in $USER_DATA/ServiceData/CoreTableInfoNames.dat."
-	echo "If CoreTableInfoNames.dat doesn't exists the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
+	echo "If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
 	echo
 	
+	echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
+	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
+			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
-		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
-		while read line; do    
-			echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/
+		echo "$USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
+		echo "Loading updated info for core tables from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
+		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		echo
+		
+		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk"
+		rm -rf $USER_DATA/ConfigurationInfo.updateots.bk
+		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk		
+		
+		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
+		while read line; do
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/	&>/dev/null #hide output	
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+			#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		
+		#do one more time after loop to make sure last line is read (even if user did not put new line) 
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+		#echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
 	else
-		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/* $USER_DATA/ConfigurationInfo/
+		echo "cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
+		rm -rf $USER_DATA/ConfigurationInfo_update_bk
+		cp -r $USER_DATA/ConfigurationInfo/ $USER_DATA/ConfigurationInfo_update_bk
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/
+		# undo c++ style comment for Eclipse viewing*/
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/
+		# undo c++ style comment for Eclipse viewing*/
+		echo "cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/
 		# undo c++ style comment for Eclipse viewing*/
 	fi
 	
 	echo "cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 
+	#copy tutorial launching scripts
+	echo
+	echo "updating tutorial launch scripts..."
+	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"	
+	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"	
+	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	
+	echo
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+	#end copy tables
+	
+	
+	
+	
+
+	echo
+	echo "#######################################################################################################################" 
+	echo "#######################################################################################################################" 
+	echo "Updating installed Repositories,"
+	echo "based on the list in $USER_DATA/ServiceData/InstalledRepoNames.dat."
+	echo "If InstalledRepoNames.dat doesn't exist, then nothing happens"
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+	echo
+	
+	if [ -e "$USER_DATA/ServiceData/InstalledRepoNames.dat" ]; then
+		echo "$USER_DATA/ServiceData/InstalledRepoNames.dat exists!"
+		echo "Loading list of repos to update..."
+		cat $USER_DATA/ServiceData/InstalledRepoNames.dat
+		echo
+			
+	
+		#NOTE: relative paths are allowed from otsdaq/../
+		while read line; do
+			echo
+			echo "updating ${line} repository...."
+			echo "running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
+			$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+		done < $USER_DATA/ServiceData/InstalledRepoNames.dat
+	
+		#do one more time after loop to make sure last line is read (even if user did not put new line)
+		echo
+		echo "updating ${line} repository...."		
+		echo "running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
+		$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+			
+	fi
+	
 	echo
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
 		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	echo
 	echo "Updating ups products based on .bz2 files in $MRB_SOURCE/otsdaq/tarballs/"
 	echo "PRODUCTS path found as: $PRODUCTS"
@@ -145,46 +281,6 @@ if [ "x$1" == "x" ]; then
 
 fi
 
- 
-#######################################################################################################################
-
-echo
-echo "=================="
-
-echo "Git comment '$1'"
-echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-
-
-echo
-echo "=================="
-
-echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
-for p in ${REPO_DIR[@]}; do
-    if [ -d $p ]; then
-	echo "Checking in $p"
-	cd $p
-	git pull
-	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
-	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
-	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
-	
-	if [ "x$1" != "x" ]; then
-		#add space for user
-	    git commit -m "$1 " .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
-	    git push   
-	fi
-
-	cd $CURRENT_AWESOME_BASE
-	echo
-	echo "=================="
-
-    fi	   
-done
-
-
-
-echo
-echo "=================="
 
 echo "Git comment '$1'"
 echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"

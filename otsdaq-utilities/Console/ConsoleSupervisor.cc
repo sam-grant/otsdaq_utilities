@@ -19,7 +19,7 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
-#define USER_CONSOLE_COLOR_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
+#define USER_CONSOLE_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
 #define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarderGen.cfg"
 
@@ -39,7 +39,7 @@ throw (xdaq::exception::Exception)
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
-	mkdir(((std::string)USER_CONSOLE_COLOR_PREF_PATH).c_str(), 0755);
+	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
 	xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
 	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
@@ -61,6 +61,7 @@ void ConsoleSupervisor::init(void)
 
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
+
 }
 
 //========================================================================================================================
@@ -82,9 +83,9 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	FILE *fp = fopen(configFile.c_str(),"r");
 	if(!fp)
 	{
-		std::stringstream ss;
-		ss << __COUT_HDR_FL__ << "File with port info could not be loaded: " <<
+		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
+		std::cout << __COUT_HDR_FL__ << "\n" << ss.str();
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
@@ -95,12 +96,42 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	fclose(fp);
 
 	ReceiverSocket rsock("127.0.0.1",myport); //Take Port from Configuration
-	rsock.initialize();
+	try
+	{
+		rsock.initialize();
+	}
+	catch(...)
+	{
+		//lockout the messages array for the remainder of the scope
+		//this guarantees the reading thread can safely access the messages
+		std::lock_guard<std::mutex> lock(cs->messageMutex_);
+
+		//generate special message to indicate failed socket
+		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
+				myport << ". Perhaps it is already in use? Exiting Console receive loop." << std::endl;
+		std::cout << __COUT_HDR_FL__ << ss.str();
+
+
+		cs->messages_[cs->writePointer_].set("||0|||Error|Console|||0||ConsoleSupervisor|" +
+				ss.str(),
+				cs->messageCount_++);
+
+
+		if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+			cs->writePointer_ = 0;
+
+		return;
+	}
 
 	std::string buffer;
 	int i = 0;
 	int heartbeatCount = 0;
 	int selfGeneratedMessageCount = 0;
+
+	std::map<unsigned int, unsigned int> sourceLastSequenceID; //map from sourceID to lastSequenceID to identify missed messages
+	unsigned int newSourceId;
+	unsigned int newSequenceId;
+
 	while(1)
 	{
 		//if receive succeeds display message
@@ -108,22 +139,66 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
 		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
 		{
-			i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+			if(i != 200)
+			{
+				std::cout << __COUT_HDR_FL__ << "Console has first message." << std::endl;
+				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
+
+				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
+				mf::LogInfo (__MF_SUBJECT__) << __COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
+				mf::LogWarning (__MF_SUBJECT__) << __COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
+				mf::LogError (__MF_SUBJECT__) << __COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
+			}
 
 			if(selfGeneratedMessageCount)
 				--selfGeneratedMessageCount; //decrement internal message count
 			else
 				heartbeatCount = 0; //reset heartbeat if external messages are coming through
 
-			//std::cout << buffer << std::endl;
+			//std::cout << __COUT_HDR_FL__ << buffer << std::endl;
 
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
 			std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
-			cs->messages_[cs->writePointer_++].set(buffer,cs->messageCount_++);
-			if(cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+			cs->messages_[cs->writePointer_].set(buffer,cs->messageCount_++);
+
+
+			//check if sequence ID is out of order
+			newSourceId = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
+			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
+
+			//std::cout << __COUT_HDR_FL__ << "newSourceId: " << newSourceId << std::endl;
+			//std::cout << __COUT_HDR_FL__ << "newSequenceId: " << newSequenceId << std::endl;
+
+			if(sourceLastSequenceID.find(newSourceId) !=
+					sourceLastSequenceID.end() && //ensure not first packet received
+					((newSequenceId == 0 &&
+							sourceLastSequenceID[newSourceId] != (unsigned int)-1) ||  //wrap around case
+						newSequenceId != sourceLastSequenceID[newSourceId] + 1)) //normal sequence case
+			{
+				//missed some messages!
+				__SS__ << "Missed packets from " <<
+						cs->messages_[cs->writePointer_].getSource() << "! Sequence IDs " <<
+						sourceLastSequenceID[newSourceId] <<
+						" to " << newSequenceId << "." << std::endl;
+				std::cout << ss.str();
+
+				if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+					cs->writePointer_ = 0;
+
+				//generate special message to indicate missed packets
+				cs->messages_[cs->writePointer_].set("||0|||Warning|Console|||0||ConsoleSupervisor|" +
+						ss.str(),
+						cs->messageCount_++);
+			}
+
+			//save the new last sequence ID
+			sourceLastSequenceID[newSourceId] = newSequenceId;
+
+			if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
 				cs->writePointer_ = 0;
+
 		}
 		else
 		{
@@ -132,18 +207,17 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 			sleep(1); //sleep one second, if timeout
 
-			if(heartbeatCount%60 == 59) //every 60 seconds print a heartbeat message
+			//every 60 heartbeatCount (2 seconds each = 1 sleep and 1 timeout) print a heartbeat message
+			if(i != 200 ||  //show first message, if not already a message
+					(heartbeatCount < 60*5 && heartbeatCount%60 == 59)) //every ~2 min for first 5 messages
 			{
-				if(heartbeatCount < 60*5) //ever hour after 5 minutes
-				{
-					++selfGeneratedMessageCount; //increment internal message count
-					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting..." << std::endl;
-				}
-				else if(heartbeatCount%(60*60) == 59)
-				{
-					++selfGeneratedMessageCount; //increment internal message count
-					mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time..." << std::endl;
-				}
+				++selfGeneratedMessageCount; //increment internal message count
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting... (if no messages, next heartbeat is in approximately two minutes)" << std::endl;
+			}
+			else if(heartbeatCount%(60*30) == 59) //approx every hour
+			{
+				++selfGeneratedMessageCount; //increment internal message count
+				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time... (if no messages, next heartbeat is in approximately one hour)" << std::endl;
 			}
 
 			++heartbeatCount;
@@ -185,8 +259,8 @@ throw (xgi::exception::Exception)
 
 	//Commands:
 		//GetConsoleMsgs
-		//SaveColorChoice
-		//LoadColorChoice
+		//SaveUserPreferences
+		//LoadUserPreferences
 
 	HttpXmlDocument xmldoc;
 	uint64_t activeSessionIndex;
@@ -196,7 +270,7 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
-		bool getUser = (Command == "SaveColorChoice") || (Command == "LoadColorChoice");
+		bool getUser = (Command == "SaveUserPreferences") || (Command == "LoadUserPreferences");
 		bool requireLock = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
@@ -249,11 +323,20 @@ throw (xgi::exception::Exception)
 
 		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
 	}
-	else if(Command == "SaveColorChoice")
+	else if(Command == "SaveUserPreferences")
 	{
-        std::string colorIndex = CgiDataUtilities::postData(cgi,"cindex");
+        int colorIndex = CgiDataUtilities::postDataAsInt(cgi,"colorIndex");
+        int showSideBar = CgiDataUtilities::postDataAsInt(cgi,"showSideBar");
+        int noWrap = CgiDataUtilities::postDataAsInt(cgi,"noWrap");
+        int messageOnly = CgiDataUtilities::postDataAsInt(cgi,"messageOnly");
+        int hideLineNumers = CgiDataUtilities::postDataAsInt(cgi,"hideLineNumers");
+
 		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
+		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
+		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
+		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		if(user == "") //should never happen?
 		{
@@ -262,20 +345,24 @@ throw (xgi::exception::Exception)
 			goto CLEANUP;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
 		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			throw std::runtime_error("Could not open file: " + fn);
-		fprintf(fp,"color_index %s",colorIndex.c_str());
+		fprintf(fp,"colorIndex %d\n",colorIndex);
+		fprintf(fp,"showSideBar %d\n",showSideBar);
+		fprintf(fp,"noWrap %d\n",noWrap);
+		fprintf(fp,"messageOnly %d\n",messageOnly);
+		fprintf(fp,"hideLineNumers %d\n",hideLineNumers);
 		fclose(fp);
 	}
-	else if(Command == "LoadColorChoice")
+	else if(Command == "LoadUserPreferences")
 	{
 		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
 
-		unsigned int colorIndex;
+		unsigned int colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers;
 
 		if(user == "") //should never happen?
 		{
@@ -284,23 +371,45 @@ throw (xgi::exception::Exception)
 			goto CLEANUP;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_COLOR_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
 		std::cout << __COUT_HDR_FL__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
 		{
-			xmldoc.addTextElementToData("color_index","0");
+			//return defaults
+			std::cout << __COUT_HDR_FL__ << "Returning defaults." << std::endl;
+			xmldoc.addTextElementToData("colorIndex","0");
+			xmldoc.addTextElementToData("showSideBar","0");
+			xmldoc.addTextElementToData("noWrap","1");
+			xmldoc.addTextElementToData("messageOnly","0");
+			xmldoc.addTextElementToData("hideLineNumers","1");
 			goto CLEANUP;
 		}
 		fscanf(fp,"%*s %u",&colorIndex);
+		fscanf(fp,"%*s %u",&showSideBar);
+		fscanf(fp,"%*s %u",&noWrap);
+		fscanf(fp,"%*s %u",&messageOnly);
+		fscanf(fp,"%*s %u",&hideLineNumers);
 		fclose(fp);
 		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
+		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
+		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
+		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
+		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		char tmpStr[20];
-		sprintf(tmpStr,"%d",colorIndex);
-		xmldoc.addTextElementToData("color_index",tmpStr);
+		sprintf(tmpStr,"%u",colorIndex);
+		xmldoc.addTextElementToData("colorIndex",tmpStr);
+		sprintf(tmpStr,"%u",showSideBar);
+		xmldoc.addTextElementToData("showSideBar",tmpStr);
+		sprintf(tmpStr,"%u",noWrap);
+		xmldoc.addTextElementToData("noWrap",tmpStr);
+		sprintf(tmpStr,"%u",messageOnly);
+		xmldoc.addTextElementToData("messageOnly",tmpStr);
+		sprintf(tmpStr,"%u",hideLineNumers);
+		xmldoc.addTextElementToData("hideLineNumers",tmpStr);
 	}
 
 
@@ -396,7 +505,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 			__MOUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
 					messages_[refreshReadPointer_].getCount() << " < " <<
 					lastUpdateCount << std::endl;
-			continue;
+			//assume these messages are new (due to a system restart)
+			//continue;
 		}
 
 		//for all fields, give value
