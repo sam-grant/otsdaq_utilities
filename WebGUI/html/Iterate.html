@@ -134,80 +134,74 @@
 		//	- Requires user to have LOCK
 		//
 		//	- Top Pane:
-		//		* > || |_|  controls and "Status: Inactive"
+		//		* Refresh
+		//		* Iteration Plan: <name> and  > || |_|  controls and "Status: Inactive"
+		//		* when modified, do not show > || |_| controls.. 
+		//			instead show Save and Discard Changes buttons
 		//
 		//	- Bottom Pane:
 		//		* Similar functionality to GUI subset.. in that it edits the 
 		//			the currently active Iteration group. (If a user wants to change the active
 		//			Iteration group, they must do so in the Config GUI)
 		//
-		//		* Very top of "tree-view" choose the Iteration name
-		//			
-		//		
-		//		* Create Rows in table 
-		//
-		//	- Split remaining window into two panes: Left and Right; Left is fixed width and hideable.	
-		//	
-		//	- Left Pane:
-		//		* Fixed width, vertical auto scroll, hideable.
-		//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
-		//		* Filtering:
-		//		 	- AND/OR option if multiple sublevels
-		//			- multi-select for each <subLevelGrouping>
-		//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
-		//		* Record UID Selector:
-		//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
-		//		* Alternatively can represent the detectors as squares (with mouse over UID names)
-		//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+		//		* Very top of "tree-view" choose the Iteration Plan name
+		//			* Then default to
+		//				- START LOOP 0 (hide index from user - show by indent)
+		//				- Configure Configuration Group/System Alias
+		//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+		//				- In GUI, show END (no representation in table)
 		//					
-		//	- Right Pane:
-		//		* Show toggle Left Pane link
-		//		* Show fields that are common based on SubLevelGrouping filters
-		//			- E.g. if *,* then can only show SlowControls fields
-		//			- Challenge: show all common fields, even through links
-		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
-		//			- A field becomes the "selected" field when clicked
-		//				= the selected field should survive resizing, and get reset on filtering
-		//			- A field enters edit mode when pencil is clicked
-		//			- TAB and SHIFT+TAB should jump to next field for editing
-		//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
+		//		* Create Rows in table that match sequence
+		//
+		//		* Row Types
+		//			- BEGIN_LABEL <number label>
+		//			- REPEAT_LABEL <number label> <number of times to repeat 0-to-N>
+		//				#note: must have a matching BEGIN_LOOP
+		//			- CONFIGURE_ALIAS <alias name>
+		//			- CONFIGURE_GROUP <group name> <group key>
+		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
+		//				<relative path from FE> <start value> <iteration step size>
+		//				<target FE Group #which can span multiple FE-Managers> 
+		//				#note: always must (so that macro things work) have a CONFIGURE_GROUP after a MODIFY_ACTIVE_GROUP
+		//				#	but can group modifies together and do one CONFIGURE_GROUP.		
+		//			- EXEC_MACRO <macro name> <target FE Group #which can span multiple FE-Managers>
+		//				<parameter group of name, value, iteration step size to adjust in macro> 
+		//				#note: must be a public macro
+		//			- EXEC_FRONT_END_MACRO <FE macro name> <target FE Group #which can span multiple FE-Managers>
+		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
+		//			- START	<dump type> <bool: wait for all FEs to complete running thread else use time> 
+		//				<seconds for run>		
+		//
 		//		
 		//	- Save functionality should be same as saving tree	
-		//		* If admin, give options to target a certain system alias.. Etc.
+		//		* If admin, could give options to target a certain system alias.. Etc.
 		//		* Else assume saving to currently active groups
+		//
+		//
+		//	- Interactions with Server
+		//		* App must have access to Configuration GUI Supervisor, Gateway Supervisor,
+		//				MacroMaker Supervisor, and FE Supervisors (how do FE Macros work?) 
+		//			-- this means primary urn to GUI Supervisor, secondary to Gateway Supervisor,
+		//				and special handshaking (from Gateway Supervisor) with MacroMaker and FE Supervisors
 
 		
-				
-		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
-		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
 		
-		
-		var _leftPane, _rightPane, _topPane;
-		var _leftPaneHidden = false;
-		
-		var _rightPaneFields;
-		var _RIGHT_PANE_RW_BTN_HEIGHT = 48;
+		var _topPane, _bottomPane;
 		
 		var eventListenersCreated = false;
 		
 		//global vars for GET params
-		var _subsetBasePath;			
-		var _groupingFieldList;			
-		var _editableFieldList;			
-		var _recordPreFilterList;
-		var _recordsAlias;
+		var _forceSavingModifiedGroups;// = Do not provide user with option to use the temporary group for modified groups
+		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
+		var _forceGroupsOnly;//= Do not provide user with option to use Macros
+		
+		var _SUBSET_BASE_PATH = "/IterateConfigurationInfo";	
+		var _recordsAlias = "Iteration Plan";
 		
 		//global vars for multiselects				
 		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
 		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
-		var _filterTimer;
-		MultiSelectBox.REQUIRE_CTRL_MULTI_CLICK = true; //require control
-		
-		//global vars for fields
-		var _selectedFieldIndex = -1;
-		var _editFieldIndex = -1;	
-		var _fields;
-		
+				
 		//global vars saving tables
 		var _modifiedTables;
 		
@@ -218,26 +212,11 @@
 			//init()
 			//paint() 
 			//extractGETParameters()
-			//initSubsetGlobalData()
-			//runFilter()
-			//updateRecordsAndFields()
+			//initSubsetGlobalData()	
 		
 			//createTopPaneContent()
-			//createLeftPaneContent(leftW)
-			//		localCreateGroupingFieldFilters()
-			//		localCreateRecordsSelector()
-			//groupFilterSelectionHandler(el)
-			//createRightPaneContent()
-			//		localAddReadWriteButtons(cel)
+			//createBottomPaneContent()
 		
-			//		getSelectedRecords(forceOne)
-			//btnActionReadAllFields()
-			//btnActionReadOneField()
-			//btnActionWriteAllFields()
-			//btnActionWriteOneField()
-		
-			//deleteRecords()
-			//addRecord()
 		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -249,15 +228,32 @@
 		//	init called once body has loaded
 		function init() 
 		{									
-			Debug.log("CfgGUI_sebset init ");
-			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
-					"Welcome to the Configuration-Subset GUI. Here you can manipulate the fields "+
-					"of a subset of your <i>otsdaq</i> system. \n\n" +
-					"The organization of the Configuration-Subset GUI is in the form of two panes, a left and right.\n\n" +
+			Debug.log("Iterate init ");
+			DesktopContent.tooltip("Iterate Introduction",
+					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
+					"calibrations or complex run plans. \n\n" +
+					
+					"For an example calibration case, you might create an Iteration Plan to step through " +
+					"a register value from 0 to 50, counting by 10.\n\n" +
+					
+					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+					"10 minutes each.\n\n" +
+					
+					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
 					
 					"Briefly, here is a description of the two panes: " +
-					"\n\t- 'Left Pane' is for selecting one or many records to target." +
-					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
+					"<INDENT> " +
+					"- <b>Top Pane</b>\n" +
+					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+					"you can Save or Discard them." +
+					"</INDENT>" +
+					"</INDENT>" + 
+					"<INDENT> " +
+					"- <b>Bottom Pane</b>\n" +
+					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+					"</INDENT>" +
+					"</INDENT>"
 			);
 			
 			//extract get parameters
@@ -269,11 +265,8 @@
 			}
 
 			//get subset record uids and 
-			//	filter values for all possible grouping fields
 			//	calls paint() and adds resize listener when done
 			initSubsetGlobalData();
-				//paint();
-				//window.addEventListener("resize",paint);
 						
 		} //end init()
 		
@@ -296,18 +289,14 @@
 			Debug.log("paint w,h=" + w + "," +h);
 
 			var TOP_H = 56;
-			var LEFT_W = 400;
 			var BORDER_SZ = 0;			
 			var MARGIN = 5;
 			
-			if(!_leftPane && !_rightPane && !_topPane)
+			if(!_bottomPane && !_topPane)
 			{
 				//first time create elements
 				createTopPaneContent();
-				createLeftPaneContent(LEFT_W-2*BORDER_SZ);
-				createRightPaneContent();
-				
-				updateRecordsAndFields();
+				createBottomPaneContent();
 			}
 
 			
@@ -324,187 +313,36 @@
 			y += TOP_H + MARGIN;
 			h -= TOP_H + MARGIN;
 
-			//set left pane sizes
-			if(!_leftPaneHidden)
-			{
-				_leftPane.style.left = MARGIN + "px";
-				_leftPane.style.top = y + "px";
-				_leftPane.style.width = (LEFT_W-2*BORDER_SZ) + "px";
-				_leftPane.style.height = (h - 2*BORDER_SZ) + "px";
-	
-				x += LEFT_W + MARGIN;
-				w -= LEFT_W + MARGIN;
-			}
-
-			//set right pane sizes
+			//set bottom pane sizes
 			h -= 2*BORDER_SZ + MARGIN;
-			w -= 2*BORDER_SZ;
-			_rightPane.style.left = x + "px";
-			_rightPane.style.top = y + "px";
-			_rightPane.style.width = w + "px";
-			_rightPane.style.height = h + "px";
-
-			_rightPaneFields.style.height = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
-			_rightPaneFields.style.height = (h - 20 - //for left pane hide
-					(_RIGHT_PANE_RW_BTN_HEIGHT*2) - //for top/bottom read/write buttons
-					2*BORDER_SZ - 2*MARGIN) + "px";
+			
+			_bottomPane.style.left = x + "px";
+			_bottomPane.style.top = y + "px";
+			_bottomPane.style.width = w + "px";
+			_bottomPane.style.height = h + "px";
 						
 		}	//end paint()
 
-		//=====================================================================================
-		//updateRecordsAndFields ~~
-		//	update records selector display
-		//		based on _subsetUIDs
-		function updateRecordsAndFields() 
-		{
-			var el = document.getElementById("recordMultiSelect");
-			if(!el) {Debug.log("Error: updateRecordsSelector null"); return; } 
-			
-			var str;
-			
-			var noMultiSelect = false; // true or false (false for multiselect functionality) 
-			var maintainPreviousSelections = true; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-
-			var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
-			var keys = [];
-			var types = [];
-			for(var j=0;j<vals.length;++j)
-			{
-				keys.push(j);
-				types.push("record");								
-			}				
-
-			str = "";
-
-			str += "<div id='recordsNameDiv'>";
-			str += _recordsAlias + ":";
-			str += "</div>";
-
-			
-			str += "<div id='recordDeleteDiv' class='treeNode-deleteIcon' ";
-			str += "onclick='deleteRecords(); return false;' " +
-					"title='Delete the selected one or many " + _recordsAlias + " records.\"'" +					
-					">";
-			str += "</div>";
-			
-			str += "<div id='recordAddDiv'>";
-			str += "<a class='recordAdd' onclick='addRecord(); return false;' " +
-					"title='Create a new " + _recordsAlias + " record.\"'" +
-					">";
-			str += "+";
-			str += "</a>";
-			str += "</div>";
-			
-			//write MultiSelectBox to a particular div
-			MultiSelectBox.createSelectBox(
-					el,
-					"RecordsGroupBox",
-					str,
-					vals,keys,types,groupFilterSelectionHandler,noMultiSelect,
-					0 /* mouseOverHandler */,
-					0 /* iconURLs */,
-					0 /* mouseDownHandler */,
-					0 /* mouseUpHandler */,
-					true /* requireCtrlMultiClick */);
-
-			MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
-			
-			
-			//get grouping field values
-			//	for record list
-			_rightPaneFields.innerHTML = ""; //clear any existing fields
-			ConfigurationAPI.getFieldsOfRecords(
-					_subsetBasePath,
-					_subsetUIDs,
-					_editableFieldList,
-					-1,
-					function(recordFields)
-					{				
-				_fields = recordFields;
-				Debug.log("recordFields found = " + recordFields.length);
-				console.log(recordFields);
-
-				if(!recordFields.length)
-				{
-					Debug.log("No common fields found among current set of records! " +
-							"Something is wrong - check. the window input parameters.",
-							Debug.HIGH_PRIORITY);
-					return;
-				}
-
-				//		on success, the array will be an array of Field objects	
-				//		Field := {}
-				//			obj.fieldTableName 
-				//			obj.fieldUID 
-				//			obj.fieldColumnName
-				//			obj.fieldRelativePath 
-				//			obj.fieldColumnType
-				//			obj.fieldColumnDataType
-				//			obj.fieldColumnDataChoicesArr[]
-				//			obj.fieldColumnDefaultValue
-
-				//for each record,
-				//	make an element that is "editable" and "selectable" (_selectedFieldIndex)
-				//		- when clicked becomes selected element
-				//	 	- when pencil is clicked is edit mode
-				//		- tab should move from edit field to edit field
-				for(var i=0;i<recordFields.length;++i)
-				{
-					//create field
-					el = document.createElement("div");
-					el.setAttribute("id", "cfg_subset_field-" + i);
-					el.setAttribute("style", "white-space:nowrap;" +
-							"margin: 5px;");
-					_rightPaneFields.appendChild(el); //add field to field container
-										
-					el.appendChild(ConfigurationAPI.createEditableFieldElement(
-							recordFields[i],i));
-					
-					//add clear div
-					el = document.createElement("div");
-					el.setAttribute("id", "clearDiv");
-					_rightPaneFields.appendChild(el);
-				}
-
-
-					}, //end getFieldsOfRecords handler
-					 _modifiedTables);
-		} //end updateRecordsAndFields()
-		
+				
 		//=====================================================================================
 		//extractGETParameters ~~
 		//	return false, if illegal params
 		function extractGETParameters() 
 		{
 			//extract get parameters
-			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
-			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
-			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-			//		<recordPreFilterList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
-			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
 			
-			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
-			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList"); //"LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
-			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");//"";//DesktopContent.getParameter(0,"editableFieldList");			
-			_recordPreFilterList 	= DesktopContent.getParameter(0,"recordPreFilterList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"recordPreFilterList");
-			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
-					
-			if(!_subsetBasePath)
-			{
-				Debug.log("Missing required GET parameter 'subsetBasePath.'",
-						Debug.HIGH_PRIORITY);
-				return false;
-			}
-			if(!_groupingFieldList) _groupingFieldList = "";
-			if(!_editableFieldList) _editableFieldList = "";
-			if(!_recordPreFilterList) _recordPreFilterList = "";
-			if(!_recordsAlias) _recordsAlias = "Records";
-
-			Debug.log("_subsetBasePath " + _subsetBasePath);
-			Debug.log("_groupingFieldList " + _groupingFieldList);
-			Debug.log("_editableFieldList " + _editableFieldList);
-			Debug.log("_recordPreFilterList " + _recordPreFilterList);
-			Debug.log("_recordsAlias " + _recordsAlias);
+			_forceSavingModifiedGroups	= DesktopContent.getParameter(0,"forceSavingModifiedGroups");			
+			_forceUseOfAliases		 	= DesktopContent.getParameter(0,"forceUseOfAliases");			
+			_forceGroupsOnly			= DesktopContent.getParameter(0,"forceGroupsOnly");			
+			
+			//setup defaults
+			if(_forceSavingModifiedGroups === undefined) 	_forceSavingModifiedGroups = false;
+			if(_forceUseOfAliases === undefined) 			_forceUseOfAliases = false;
+			if(_forceGroupsOnly === undefined) 				_forceGroupsOnly = false;
+			
+			Debug.log("_forceSavingModifiedGroups " + _forceSavingModifiedGroups);
+			Debug.log("_forceUseOfAliases " + _forceUseOfAliases);
+			Debug.log("_forceGroupsOnly " + _forceGroupsOnly);
 			
 			return true;
 		}	//end extractGETParameters()
@@ -524,57 +362,37 @@
 			_modifiedTables = undefined; //reset
 			
 
-			if(_leftPane && _rightPane && _topPane)
+			if(_bottomPane && _topPane)
 			{
 				_topPane.innerHTML = ""; //clear
-				_rightPane.innerHTML = ""; //clear
-				_leftPane.innerHTML = ""; //clear
+				_bottomPane.innerHTML = ""; //clear
 				_topPane.parentNode.removeChild(_topPane); //remove element
-				_rightPane.parentNode.removeChild(_rightPane); //remove element
-				_leftPane.parentNode.removeChild(_leftPane); //remove element
+				_bottomPane.parentNode.removeChild(_bottomPane); //remove element
 				
 			}
 			_topPane = undefined; //reset
-			_rightPane = undefined; //reset
-			_leftPane = undefined; //reset
+			_bottomPane = undefined; //reset
 						
-			window.clearTimeout(_filterTimer); 
-			_selectedFieldIndex = -1;
-			_editFieldIndex = -1;
 			
-			
-			
+
+
 			ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
+					_SUBSET_BASE_PATH,
+					"",
 					function(records)
 					{
 				_subsetUIDs = records;
 				Debug.log("records found = " + records.length);
 				console.log(records);
-				
-				
-				ConfigurationAPI.getUniqueFieldValuesForRecords(
-						_subsetBasePath,
-						records,
-						_groupingFieldList,
-						function(uniqueValues)
-						{
-					_filterValsObj = uniqueValues;
-					Debug.log("uniqueValues found = " + uniqueValues.length);
-					console.log(uniqueValues);
-					
-					paint();
-					if(!eventListenersCreated)
-					{
-						window.addEventListener("resize",paint);
-						eventListenersCreated = true; //prevent multiple event creation
-					}
-						
-						}, //end getUniqueFieldValuesForRecords handler
-						 _modifiedTables);
-				
-					});
+
+				paint();
+				if(!eventListenersCreated)
+				{
+					window.addEventListener("resize",paint);
+					eventListenersCreated = true; //prevent multiple event creation
+				}						
+
+					});	//end getSubsetRecords handler
 			
 		}	//end getSubsetUIDs()
 		
@@ -601,25 +419,7 @@
 			
 			el = document.createElement("div");
 			el.setAttribute("id", "topPane-header");
-			str = "Targeting ";
-			
-			if(_recordPreFilterList != "")
-				str += _recordsAlias + " ";
-			else
-				str += "all " + _recordsAlias + " ";
-		
-			str += "at path '/" + _subsetBasePath + ",' ";
-			
-			if(_recordPreFilterList != "")
-				str += "matching '" + _recordPreFilterList + ",' ";
-			else
-				str += "";
-			
-			if(_groupingFieldList != "")
-				str += "organized by '" + _groupingFieldList + "' ";
-			else
-				str += "";
-			
+			str = "Active Iteration Plan: None";			
 			
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
@@ -628,24 +428,27 @@
 		}	//end createTopPaneContent()
 		
 		//=====================================================================================
-		//createLeftPaneContent ~~
-		function createLeftPaneContent(leftW) 
+		//createBottomPaneContent ~~
+		function createBottomPaneContent(leftW) 
 		{
-			_leftPane = document.createElement("div");
-			_leftPane.setAttribute("class", "pane");
-			_leftPane.setAttribute("id", "leftPane");
+			_bottomPane = document.createElement("div");
+			_bottomPane.setAttribute("class", "pane");
+			_bottomPane.setAttribute("id", "bottomPane");
 			
-			//	- Left Pane:
-			//		* Fixed width, vertical auto scroll, hideable.
-			//		* Filter link that toggles display of multi-select boxes for each <subLevelGrouping>. 
-			//		* Filtering:
-			//		 	- AND/OR option if multiple sublevels
-			//			- multi-select for each <subLevelGrouping>
-			//		* Link to toggle record representation (Multi-select or Square Grid groupings)
-			//		* Record UID Selector:
-			//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
-			//		* Alternatively can represent the detectors as squares (with mouse over UID names)
-			//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+
+			//	- Bottom Pane:
+			//		* Similar functionality to GUI subset.. in that it edits the 
+			//			the currently active Iteration group. (If a user wants to change the active
+			//			Iteration group, they must do so in the Config GUI)
+			//
+			//		* Very top of "tree-view" choose the Iteration Plan name
+			//			* Then default to
+			//				- START LOOP 0 (hide index from user - show by indent)
+			//				- Configure Configuration Group/System Alias
+			//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+			//				- In GUI, show END (no representation in table)
+			//					
+			//		* Create Rows in table that match sequence
 			
 			var el;
 			var str;
@@ -655,104 +458,12 @@
 			//:::::::::::::::::::::::::::::
 			//localCreateGroupingFieldFilters ~~
 			function localCreateGroupingFieldFilters()
-			{
-				var groups = _groupingFieldList.split(',');
-				Debug.log("_groupingFieldList " + _groupingFieldList);
-				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
-				
-				var filterBoxesEl = document.createElement("div");
-				var defaultShowFilters = false;
-				
-				//create toggle icon
-				el = document.createElement("a");
-				el.setAttribute("style", "float:left;");
-				el.onclick = function() {
-					if(this.textContent == "Show Filters")
-					{
-						this.innerHTML = "Hide Filters";
-						filterBoxesEl.style.display = "block";
-					}
-					else
-					{
-						this.innerHTML = "Show Filters";
-						filterBoxesEl.style.display = "none";
-					}
-				};			
-				el.innerHTML = defaultShowFilters?"Hide Filters":"Show Filters";
-				_leftPane.appendChild(el); //add toggle icon
-
-				//clear floats
-				el = document.createElement("div");
-				el.setAttribute("id", "clearDiv");
-				_leftPane.appendChild(el);
-				
-				
-				//create multi-select filter boxes
-				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
-				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
-
-				var H = 150;
-				try //catch errors due to undefined _filterValsObj[i]
-				{					
-					for(var i=0;i<groups.length;++i)
-					{
-						//get group values
-						
-						//create multiselect box
-	
-						el = document.createElement("div");
-						el.setAttribute("class", "groupFilerMultiSelect");
-						el.setAttribute("id", "groupFilerMultiSelect-" + i);
-						el.setAttribute("style", //"height:200px; width:250px;" +
-								//);
-										//"margin-bottom: 0px;" +
-								"margin: -15px 0 0 0;" +
-								"height:" + H + "px;" + 
-								"width:" + (leftW-25) + "px;");
-						filterBoxesEl.appendChild(el);			
-						
-						var noMultiSelect = false; // true or false (false for multiselect functionality) 
-						var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-	
-						var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
-						var keys = [];
-						var types = [];
-						for(var j=0;j<vals.length;++j)
-						{
-							keys.push(j);
-							types.push(groups[i]);								
-						}				
-	
-						//write MultiSelectBox to a particular div
-						MultiSelectBox.createSelectBox(el,
-								"FilterGroupBox" + i,
-								"'" + groups[i] + "' Filter:",
-								vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
-	
-						MultiSelectBox.initMySelectBoxes();
-	
-						el = document.createElement("div");
-						el.setAttribute("id", "clearDiv");					
-						filterBoxesEl.appendChild(el);
-					}
-				}
-				catch(err)
-				{
-					//likely this error is due to undefined _filterValsObj[i]
-					Debug.log("Error creating group filters.", Debug.HIGH_PRIORITY);
-				} 
-				
-				_leftPane.appendChild(filterBoxesEl);
-
-								
-			} //end localCreateGroupingFieldFilters(leftW)
-			
-			//if grouping fields given then create
-			if(_groupingFieldList != "")
-				localCreateGroupingFieldFilters(); 
+			{} //end localCreateGroupingFieldFilters(leftW)
 			
 			
-			//add records
+
+			//:::::::::::::::::::::::::::::
+			//localCreateRecordsSelector
 			function localCreateRecordsSelector()
 			{
 				var H = 300;
@@ -767,642 +478,19 @@
 						"height:" + H + "px;" + 
 						"width:" + (leftW-25) + "px;");
 
-				_leftPane.appendChild(el);
+				_bottomPane.appendChild(el);
 
 				el = document.createElement("div");
 				el.setAttribute("id", "clearDiv");
-				_leftPane.appendChild(el);
+				_bottomPane.appendChild(el);
 				
-			} localCreateRecordsSelector ();
+			} localCreateRecordsSelector();
 						
-			document.body.appendChild(_leftPane);
+			document.body.appendChild(_bottomPane);
 						
-		}	//end createLeftPaneContent()
-
-		//=====================================================================================
-		//groupFilterSelectionHandler ~~
-		function groupFilterSelectionHandler(el) 
-		{
-			Debug.log("multiselect for " + el.id);
-			
-			//if multi select target was a Filter
-			//	then change filter
-			if(el.id.indexOf("selbox-Filter") == 0)
-			{
-				window.clearTimeout(_filterTimer);
-				_filterTimer = window.setTimeout(runFilter,1000);
-			}
-			
-		}	//end groupFilterSelectionHandler(el)
-
-		//=====================================================================================
-		//runFilter ~~
-		function runFilter() 
-		{
-			Debug.log("Run Filter");
-			
-			var groups = _groupingFieldList.split(',');
-			Debug.log("groups length " + groups.length);
-			
-			var selArr;
-			
-			var filterStr = "";
-			var subFilterStr;
-			for(var i=0;i<groups.length;++i)
-			{
-				subFilterStr = "";
-				
-				selArr = MultiSelectBox.getSelectionArray(
-						document.getElementById("groupFilerMultiSelect-" + i));
-				for(var s in selArr)
-				{
-					MultiSelectBox.dbg("filter " + i + 
-							" selected [" + s + "]: ",
-							selArr[s], 
-							_filterValsObj[i].fieldUniqueValueArray[s|0]);
-					
-					//if selected, add value to filter string
-					if(selArr[s])
-						subFilterStr += (subFilterStr.length?",":"") +
-							encodeURIComponent(_filterValsObj[i].fieldUniqueValueArray[s|0])
-				}
-				
-				//if any values selected then add to filter string				
-				if(subFilterStr.length)
-					filterStr += encodeURIComponent(groups[i]) + 
-						"=" + subFilterStr + ";";
-			}
-			
-			//append global filters 
-			filterStr += _recordPreFilterList;
-			Debug.log("filterStr " + filterStr);
-			
-			ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					filterStr,
-					function(records)
-					{
-				_subsetUIDs = records;
-				Debug.log("records found = " + records.length);
-				console.log(records);
-				
-				updateRecordsAndFields();
-					}, //end getSubsetRecords handler
-					 _modifiedTables);
-			
-			
-		} // end runFilter()
-		
-		//=====================================================================================
-		//createRightPaneContent ~~
-		function createRightPaneContent() 
-		{
-			_rightPane = document.createElement("div");
-			_rightPane.setAttribute("class", "pane");
-			_rightPane.setAttribute("id", "rightPane");
-			
-			//	- Right Pane:
-			//		* Show toggle Left Pane link
-			//		* Show fields that are common based on SubLevelGrouping filters
-			//			- E.g. if *,* then can only show SlowControls fields
-			//			- Challenge: show all common fields, even through links
-			//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
-			//			- A field becomes the "selected" field when clicked
-			//				= the selected field should survive resizing, and get reset on filtering
-			//			- A field enters edit mode when pencil is clicked
-			//			- TAB and SHIFT+TAB should jump to next field for editing
-			//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
-			//		
-			
-			var el;
-			var str;
-			
-			//create toggle left pane link
-			el = document.createElement("a");
-			el.setAttribute("style", "float:left;" +
-					"margin-left: 5px;");
-			el.onclick = function() {
-				_leftPaneHidden = !_leftPaneHidden;
-				this.innerHTML = (_leftPaneHidden?"Show":"Hide") +
-									" Left Pane";
-				paint();
-			};			
-			el.innerHTML = (_leftPaneHidden?"Show":"Hide") +
-					" Left Pane";
-			_rightPane.appendChild(el); //add toggle link
-			
-			//add clear div
-			el = document.createElement("div");
-			el.setAttribute("id", "clearDiv");
-			_rightPane.appendChild(el);
+		}	//end createBottomPaneContent()
 
 
-			//create TOP read/write buttons			
-			el = document.createElement("div");
-			var readWriteContainerStyle = "height:" + _RIGHT_PANE_RW_BTN_HEIGHT + "px;" + 
-					"overflow-x:auto; " +
-					"white-space:nowrap;";
-			el.setAttribute("style", readWriteContainerStyle);
-			_rightPane.appendChild(el); //add field container link
-
-			//:::::::::::::::::::::::::::::
-			//localAddReadWriteButtons ~~
-			//	add four buttons to container element
-			function localAddReadWriteButtons(cel)
-			{
-				var btnText = ["Read All Fields",
-							   "Write All Fields",
-							   "Read Selected Field", 
-							   "Write Selected Field"];
-
-				var btnHelp = ["Read all fields for selected record in Left Pane.",
-							   "Write all fields for selected record(s) in Left Pane.",							   
-							   "Read selected field for selected record in Left Pane.",
-							   "Write Selected field for selected record(s) in Left Pane."];
-				
-				var btnAction = [btnActionReadAllFields,
-								 btnActionWriteAllFields,							   
-								 btnActionReadOneField,
-								 btnActionWriteOneField];
-				
-				for(var i=0;i<btnText.length;++i)
-				{
-					el = document.createElement("input");
-					el.setAttribute("style", "height:22px;" + 
-							"margin:5px; ");
-					el.setAttribute("type", "button");
-					el.value = btnText[i];
-					el.title = btnHelp[i];
-					el.onclick = btnAction[i];
-					cel.appendChild(el); //add field container link
-				}
-			} // end localAddReadWriteButtons(cel)
-			
-			localAddReadWriteButtons(el);
-			
-
-			//add clear div
-			el = document.createElement("div");
-			el.setAttribute("id", "clearDiv");
-			_rightPane.appendChild(el);
-			
-			//create field container with auto scroll
-			el = document.createElement("div");
-			el.setAttribute("style", "overflow:auto;" + 
-					"border: 1px solid rgb(224, 196, 196);" +
-					"margin: 5px;"
-					);
-			_rightPane.appendChild(el); //add field container link
-			_rightPaneFields = el;
-				
-			//create BOTTOM read/write buttons			
-			el = document.createElement("div");
-			el.setAttribute("style", readWriteContainerStyle);
-			_rightPane.appendChild(el); //add bottom buttons
-			localAddReadWriteButtons(el);
-			
-			
-			document.body.appendChild(_rightPane);			
-		}	//end createRightPaneContent()
-
-		//=====================================================================================
-		//getSelectedRecords ~~
-		//	returns index of selected records
-		//	if forceOne
-		//		only allow one selected record
-		//		else -1 on error
-		//	else if not forceOne
-		//		return array of selected records
-		//		else return empty array
-		function getSelectedRecords(forceOne) 
-		{
-			var selArr = 
-					MultiSelectBox.getSelectionArray(
-							document.getElementById("recordMultiSelect"));
-			var cntSelected = 0;
-			var selectedIndices = [];
-			for(var s in selArr)
-			{
-				//MultiSelectBox.dbg("record selected [" + s + "]: ",
-				//		selArr[s], 
-				//		_subsetUIDs[s|0]);
-
-				if(selArr[s]) 
-				{
-					++cntSelected;
-					selectedIndices.push(s|0);
-
-					if((s|0) < 0 || (s|0) >= _subsetUIDs.length)
-					{
-						Debug.log("Invalid record index '" + (s|0) + 
-								"' should be impossible. Please notify developers " +
-								"as to how you got here!", Debug.HIGH_PRIORITY);						
-						return forceOne?-1:[];
-					}
-				}
-			}
-
-			if(forceOne)
-			{
-				if(cntSelected != 1)
-				{
-					Debug.log("Error! Please choose one and only one target from the list of " +
-							_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
-					return -1;
-				}
-				return selectedIndices[0];
-			}
-			else
-				return selectedIndices;
-			
-		}	//end getSelectedRecords()
-
-		//=====================================================================================
-		//btnActionReadAllFields ~~
-		//	read all fields for one record
-		function btnActionReadAllFields() 
-		{
-			var selectedIndex = getSelectedRecords(true);
-			if(selectedIndex < 0) return;
-							
-			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex]);
-			
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					[_subsetUIDs[selectedIndex]], //array of size 1
-					_fields,
-					function(recFieldValues)
-					{
-				console.log(recFieldValues);
-				
-				//for each field, set value
-				for(var i=0;i<recFieldValues.length;++i)
-				{
-					ConfigurationAPI.setEditableFieldValue(
-							_fields[i],
-							recFieldValues[i].fieldValue,
-							i);
-				}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-			
-		}	//end btnActionReadAllFields()
-
-		
-		//=====================================================================================
-		//btnActionReadOneField ~~
-		// read one field from one record
-		function btnActionReadOneField() 
-		{
-			var selectedIndex = getSelectedRecords(true);
-			if(selectedIndex < 0) return;
-			
-			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
-			if(selectedFieldIndex < 0) 
-			{
-				Debug.log("Error! There is no selected field. In order to read " +
-						"a field please toggle selection of the target field by " +
-						"clicking on the name of the " +
-						"field in the Right Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("btnActionReadOneField target record = " + 
-					_subsetUIDs[selectedIndex]);
-
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					[_subsetUIDs[selectedIndex]], //array of size 1
-					[_fields[selectedFieldIndex]], //array of size 1
-					function(recFieldValues)
-					{
-				console.log(recFieldValues);
-
-				//for each field, set value
-				//	SHOULD only be one field value returned
-				for(var i=0;i<recFieldValues.length;++i)
-				{
-					ConfigurationAPI.setEditableFieldValue(
-							_fields[selectedFieldIndex],
-							recFieldValues[i].fieldValue,
-							selectedFieldIndex);
-				}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-			
-		}	//end btnActionReadOneField()
-		
-		//=====================================================================================
-		//btnActionWriteAllFields ~~
-		//	write all fields for all selected records
-		function btnActionWriteAllFields() 
-		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to write " +
-						"the fields to one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-			
-			Debug.log("btnActionWriteAllFields target record length = " + 
-					selectedIndices.length);
-			
-			//make array of all field values
-			var valueArr = [];
-			
-			//for each field, set value
-			for(var i=0;i<_fields.length;++i)			
-				valueArr.push(ConfigurationAPI.getEditableFieldValue(
-						_fields[i],
-						i));
-
-			Debug.log("btnActionWriteAllFields values length = " + 
-					valueArr.length);
-			Debug.log("btnActionWriteAllFields fields length = " + 
-					_fields.length);
-			
-			//make array of target records
-			var recordArr = [];
-			for(var i=0;i<selectedIndices.length;++i)	
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-						
-			ConfigurationAPI.setFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 	//recordArr
-					_fields, 	//fieldArr
-					valueArr, 	//valueArr
-					function(modifiedTables)
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-								
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while writing the values.",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-									
-				_modifiedTables = modifiedTables;
-				
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
-						function(savedTables, savedGroups, savedAliases)
-						{
-					if(!savedTables.length)
-					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-					
-					Debug.log("The values for each field were successfully written to the targeted " +
-							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
-							Debug.INFO_PRIORITY);
-					
-					_modifiedTables = undefined; //clear after save
-					
-						}); //end saveModifiedTables handler
-				
-					}, //end setFieldValuesForRecords handler
-					 _modifiedTables);			
-
-		}	//end btnActionWriteAllFields()
-		
-		//=====================================================================================
-		//btnActionWriteOneField ~~
-		//	write the selected field for all selected records
-		function btnActionWriteOneField() 
-		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to write " +
-						"the fields to one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("btnActionWriteOneField target record length = " + 
-					selectedIndices.length);
-			
-			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
-			if(selectedFieldIndex < 0) 
-			{
-				Debug.log("Error! There is no selected field. In order to read " +
-						"a field please toggle selection of the target field by " +
-						"clicking on the name of the " +
-						"field in the Right Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			//make array of all field values
-			var valueArr = [];
-
-			//for each field, set value
-			valueArr.push(ConfigurationAPI.getEditableFieldValue(
-					_fields[selectedFieldIndex],
-					selectedFieldIndex));
-
-			Debug.log("btnActionWriteOneField values length = " + 
-					valueArr.length);
-			
-			//make array of target records
-			var recordArr = [];
-			for(var i=0;i<selectedIndices.length;++i)	
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-			
-			//
-			
-			ConfigurationAPI.setFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 	//recordArr
-					[_fields[selectedFieldIndex]], 	//fieldArr of size 1
-					valueArr, 	//valueArr of size 1
-					/////////////////////
-					function(modifiedTables)
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while writing the values.",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-
-				_modifiedTables = modifiedTables;
-
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
-						/////////////////////
-						function(savedTables, savedGroups, savedAliases)
-						{
-					if(!savedTables.length)
-					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-
-					Debug.log("The value for the selected field was successfully written to the targeted " +
-							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
-							Debug.INFO_PRIORITY);
-
-					_modifiedTables = undefined; //clear after save
-
-						}); //end saveModifiedTables handler
-
-					}, //end setFieldValuesForRecords handler
-					_modifiedTables);	
-			
-		}	//end btnActionWriteOneField()
-		
-
-		//=====================================================================================
-		//deleteRecords ~~
-		//	delete the selected records
-		function deleteRecords() 
-		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to delete " +
-						"one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("deleteRecords target record length = " + 
-					selectedIndices.length);	
-
-
-			//make array of target records
-			var recordArr = [];
-			var recordStr = "";
-			for(var i=0;i<selectedIndices.length;++i)	
-			{
-				if(i) recordStr += ", ";
-				recordStr += decodeURIComponent(_subsetUIDs[selectedIndices[i]]);
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-			}			
-
-			DesktopContent.popUpVerification(
-					"Are you sure you want to remove the following " + _recordsAlias + 
-					" records from the configuration?<br><br>" +
-					"Here are the records (count = " + recordArr.length + 
-					") that will be deleted:<br> <b>" + recordStr + "</b>",
-					localProceedWithDelete							
-					,0,"#efeaea",0,"#770000");
-			
-			/////////////////////
-			function localProceedWithDelete()
-			{
-
-				ConfigurationAPI.deleteSubsetRecords(_subsetBasePath,recordArr,
-						/////////////////////
-						function(modifiedTables) //start addSubsetRecords handler
-						{
-					Debug.log("modifiedTables length " + modifiedTables.length);
-
-					if(!modifiedTables.length)
-					{
-						Debug.log("There was an error while removing the record(s).",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-
-					_modifiedTables = modifiedTables;
-
-					//proceed to save (quietly) tables, groups, aliases
-					ConfigurationAPI.saveModifiedTables(_modifiedTables,
-							/////////////////////
-							function(savedTables, savedGroups, savedAliases)
-							{
-						if(!savedTables.length)
-						{
-							Debug.log("There was an error while removing the record(s).",
-									Debug.HIGH_PRIORITY);
-							return;					
-						}
-
-						Debug.log("The following " +
-								_recordsAlias + " records (count = " +
-								selectedIndices.length + ") "+ 
-								"were successfully removed: " + recordStr + ".",
-								Debug.INFO_PRIORITY);
-
-						_modifiedTables = undefined; //clear after save
-
-						runFilter(); //updates records and fields, and applies filter
-
-							}); //end saveModifiedTables handler
-
-
-						}, //end addSubsetRecords handler
-						_modifiedTables);	
-			} //end localProceedWithDelete()
-		} //end deleteRecords()
-		
-		//=====================================================================================
-		//addRecord ~~
-		//	create new record
-		function addRecord() 
-		{
-			var newRowUID = prompt("Please enter the UID for the new " + 
-					_recordsAlias + " record:");
-			if(newRowUID)
-				newRowUID = newRowUID.trim();
-			else //prompt was cancelled
-				return;
-
-			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
-					/////////////////////
-					function(modifiedTables) //start addSubsetRecords handler
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while creating the record.",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-
-				_modifiedTables = modifiedTables;
-
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
-						/////////////////////
-						function(savedTables, savedGroups, savedAliases)
-						{
-					if(!savedTables.length)
-					{
-						Debug.log("There was an error while creating the record.",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-
-					Debug.log("The new " +
-							_recordsAlias + " record '" + 
-							decodeURIComponent(newRowUID) + 
-							"' was successfully created!",
-							Debug.INFO_PRIORITY);
-
-					_modifiedTables = undefined; //clear after save
-					
-					runFilter(); //updates records and fields, and applies filter
-
-						}); //end saveModifiedTables handler
-
-
-					}, //end addSubsetRecords handler
-					_modifiedTables);			
-		} //end addRecord()
 		
 		
 		</script>
