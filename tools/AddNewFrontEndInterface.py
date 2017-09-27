@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # Author: Daniel Parilla
 # September 26, 2017
+# Version: 1.00
 
 import sys, getopt, os
 
