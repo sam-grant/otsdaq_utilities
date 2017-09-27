@@ -2184,13 +2184,15 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmldoc, 
 	}
 	catch(std::runtime_error& e)
 	{
-		__COUT__ << "Error detected!\n\n " << e.what() << std::endl;
-		xmldoc.addTextElementToData("Error", "Error generating XML tree!\n\n" + std::string(e.what()));
+		__SS__ << "Error detected generating XML tree!\n\n " << e.what() << std::endl;
+		__COUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
 	}
 	catch(...)
 	{
-		__COUT__ << "Error detected!" << std::endl;
-		xmldoc.addTextElementToData("Error", "Error generating XML tree!");
+		__SS__ << "Error detected generating XML tree!" << std::endl;
+		__COUT_ERR__ << "\n" << ss.str();
+		xmldoc.addTextElementToData("Error", ss.str());
 	}
 }
 
@@ -2422,13 +2424,15 @@ try
 }
 catch(std::runtime_error& e)
 {
-	__COUT__ << "Error detected!\n\n " << e.what() << std::endl;
-	xmldoc.addTextElementToData("Error", "Error saving tree node! " + std::string(e.what()));
+	__SS__ << "Error detected saving tree node!\n\n " << e.what() << std::endl;
+	__COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmldoc.addTextElementToData("Error", ss.str());
 }
 catch(...)
 {
-	__COUT__ << "Error detected!\n\n "<< std::endl;
-	xmldoc.addTextElementToData("Error", "Error saving tree node! ");
+	__SS__ << "Error detected saving tree node!\n\n "<< std::endl;
+	__COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmldoc.addTextElementToData("Error", ss.str());
 }
 
 //========================================================================================================================
