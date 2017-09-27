@@ -29,7 +29,8 @@
 		}
 
 		#topPane {
-			overflow: hidden;
+			overflow-y: auto;
+			overflow-x: hidden;
 		}
 		#leftPane {
 			/*background-color : rgb(241, 231, 231);*/
@@ -61,6 +62,50 @@
 		.groupFilerMultiSelect .optionhighlighted:hover
 		{
 			background-color : rgb(11, 66, 138);
+		}
+		
+		.recordAdd,
+		.recordAdd:hover {
+			text-decoration: none;
+			font-size: 30px;
+			font-weight: bold;
+			color: rgb(15, 152, 76);
+		}
+		
+		#recordsNameDiv {
+			float: left;
+			font-size: 20px;
+		}
+		#recordAddDiv {
+	    	margin: -7px 16px -10px 0;
+			float: right;
+		}
+		#recordDeleteDiv {
+			margin: -1px 60px 0 0;
+			float: right;
+		}
+		
+		.treeNode-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 10px;
+		}
+		.treeNode-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+
+		.preloadImage {			
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100px;
+			top: 				0;
+		}
+		#preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 		
 	</style>
@@ -117,7 +162,7 @@
 		//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
 		//		
 		//	- Save functionality should be same as saving tree	
-		//		* If admin, give options to target a certain system alias.. Etc.
+		//		* TODO:: If admin, could give options to target a certain system alias.. Etc.
 		//		* Else assume saving to currently active groups
 
 		
@@ -180,6 +225,9 @@
 			//btnActionWriteAllFields()
 			//btnActionWriteOneField()
 		
+			//deleteRecords()
+			//addRecord()
+		
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -215,115 +263,7 @@
 			initSubsetGlobalData();
 				//paint();
 				//window.addEventListener("resize",paint);
-			
-
-			
-			return;
-			
-			
-			
-			var localGetFieldValuesForRecordHandler;
-			var localRecords, localFields, localModifiedTables;
-			
-			localModifiedTables = [];
-			
-			//get list of records that match <subsetBasePath> AND <recordPreFilterList>			
-			ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
-					function(records)
-					{
-				localRecords = records;
-				Debug.log("records found = " + records.length);
-
-				var str = document.body.innerHTML;
-				str += "<br>GetRecords";
-				str += "<br>";
-				for(var i=0;i<records.length;++i)
-					str += records[i] + "<br>";
-				document.body.innerHTML = str;
-
-				//get grouping field values
-				//	for record list
-				ConfigurationAPI.getFieldsOfRecords(
-						_subsetBasePath,
-						records,
-						_editableFieldList,
-						-1,
-						function(recFields)
-						{
-					localFields = recFields;
-					Debug.log("recFields found = " + recFields.length);
-
-					var str = document.body.innerHTML;
-					str += "<br>GetFields";
-					str += "<br>";
-					for(var i in recFields)
-						str += i + ": " + recFields[i].fieldRelativePath + 
-						recFields[i].fieldColumnName + "<br>";
-					document.body.innerHTML = str;
-
-					ConfigurationAPI.getFieldValuesForRecord(
-							_subsetBasePath,
-							[records[0]],
-							recFields,
-							localGetFieldValuesForRecordHandler
-					);
-
-
-						});
-
-
-					});
-
-			var setValue = true;
-			var saveAll = false;
-			localGetFieldValuesForRecordHandler = function(recFieldValues) {
-				var str = document.body.innerHTML;
-				str += "<br>GetFieldValues " + setValue;
-				str += "<br>";
-				for(var i in recFieldValues)
-					str += recFieldValues[i].fieldUID + ": " +
-						recFieldValues[i].fieldPath + ": " + 
-						recFieldValues[i].fieldValue + "<br>";
-				document.body.innerHTML = str;
-				
-				if(setValue)				
-					ConfigurationAPI.setFieldValuesForRecords(
-							_subsetBasePath,
-							localRecords,
-							[localFields[1],localFields[5]], //fieldArr
-							["0","3999"], //valueArr
-							function(modifiedTables)
-							{
-					localModifiedTables = modifiedTables;
-					
-					//get value again, without setting again
-					setValue = false;
-					saveAll = true;
-					if(1 && modifiedTables.length)
-						ConfigurationAPI.getFieldValuesForRecord(
-							_subsetBasePath,
-							localRecords,
-							localFields,
-							localGetFieldValuesForRecordHandler,
-							localModifiedTables
-					);	
-							});
-				
-				
-				if(saveAll)
-					ConfigurationAPI.popUpSaveModifiedTablesForm(localModifiedTables,
-							function(newTables, newGroups, newAliases)
-							{
-					if(newTables.length)
-						Debug.log("Done with saving.");
-					else
-						Debug.log("No saving done!");
 						
-							});
-					
-			}
 		} //end init()
 		
 		//=====================================================================================
@@ -344,7 +284,7 @@
 			
 			Debug.log("paint w,h=" + w + "," +h);
 
-			var TOP_H = 50;
+			var TOP_H = 56;
 			var LEFT_W = 400;
 			var BORDER_SZ = 0;			
 			var MARGIN = 5;
@@ -423,11 +363,32 @@
 				types.push("record");								
 			}				
 
+			str = "";
+
+			str += "<div id='recordsNameDiv'>";
+			str += _recordsAlias + ":";
+			str += "</div>";
+
+			
+			str += "<div id='recordDeleteDiv' class='treeNode-deleteIcon' ";
+			str += "onclick='deleteRecords(); return false;' " +
+					"title='Delete the selected one or many " + _recordsAlias + " records.\"'" +					
+					">";
+			str += "</div>";
+			
+			str += "<div id='recordAddDiv'>";
+			str += "<a class='recordAdd' onclick='addRecord(); return false;' " +
+					"title='Create a new " + _recordsAlias + " record.\"'" +
+					">";
+			str += "+";
+			str += "</a>";
+			str += "</div>";
+			
 			//write MultiSelectBox to a particular div
 			MultiSelectBox.createSelectBox(
 					el,
 					"RecordsGroupBox",
-					_recordsAlias + ":",
+					str,
 					vals,keys,types,groupFilterSelectionHandler,noMultiSelect,
 					0 /* mouseOverHandler */,
 					0 /* iconURLs */,
@@ -497,7 +458,7 @@
 
 					}, //end getFieldsOfRecords handler
 					 _modifiedTables);
-		}
+		} //end updateRecordsAndFields()
 		
 		//=====================================================================================
 		//extractGETParameters ~~
@@ -825,7 +786,7 @@
 
 		//=====================================================================================
 		//runFilter ~~
-		function runFilter(el) 
+		function runFilter() 
 		{
 			Debug.log("Run Filter");
 			
@@ -879,7 +840,7 @@
 					 _modifiedTables);
 			
 			
-		}
+		} // end runFilter()
 		
 		//=====================================================================================
 		//createRightPaneContent ~~
@@ -1250,6 +1211,7 @@
 					recordArr, 	//recordArr
 					[_fields[selectedFieldIndex]], 	//fieldArr of size 1
 					valueArr, 	//valueArr of size 1
+					/////////////////////
 					function(modifiedTables)
 					{
 				Debug.log("modifiedTables length " + modifiedTables.length);
@@ -1265,6 +1227,7 @@
 
 				//proceed to save (quietly) tables, groups, aliases
 				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
 						function(savedTables, savedGroups, savedAliases)
 						{
 					if(!savedTables.length)
@@ -1287,6 +1250,150 @@
 			
 		}	//end btnActionWriteOneField()
 		
+
+		//=====================================================================================
+		//deleteRecords ~~
+		//	delete the selected records
+		function deleteRecords() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to delete " +
+						"one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("deleteRecords target record length = " + 
+					selectedIndices.length);	
+
+
+			//make array of target records
+			var recordArr = [];
+			var recordStr = "";
+			for(var i=0;i<selectedIndices.length;++i)	
+			{
+				if(i) recordStr += ", ";
+				recordStr += decodeURIComponent(_subsetUIDs[selectedIndices[i]]);
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+			}			
+
+			DesktopContent.popUpVerification(
+					"Are you sure you want to remove the following " + _recordsAlias + 
+					" records from the configuration?<br><br>" +
+					"Here are the records (count = " + recordArr.length + 
+					") that will be deleted:<br> <b>" + recordStr + "</b>",
+					localProceedWithDelete							
+					,0,"#efeaea",0,"#770000");
+			
+			/////////////////////
+			function localProceedWithDelete()
+			{
+
+				ConfigurationAPI.deleteSubsetRecords(_subsetBasePath,recordArr,
+						/////////////////////
+						function(modifiedTables) //start addSubsetRecords handler
+						{
+					Debug.log("modifiedTables length " + modifiedTables.length);
+
+					if(!modifiedTables.length)
+					{
+						Debug.log("There was an error while removing the record(s).",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					_modifiedTables = modifiedTables;
+
+					//proceed to save (quietly) tables, groups, aliases
+					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+							/////////////////////
+							function(savedTables, savedGroups, savedAliases)
+							{
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while removing the record(s).",
+									Debug.HIGH_PRIORITY);
+							return;					
+						}
+
+						Debug.log("The following " +
+								_recordsAlias + " records (count = " +
+								selectedIndices.length + ") "+ 
+								"were successfully removed: " + recordStr + ".",
+								Debug.INFO_PRIORITY);
+
+						_modifiedTables = undefined; //clear after save
+
+						runFilter(); //updates records and fields, and applies filter
+
+							}); //end saveModifiedTables handler
+
+
+						}, //end addSubsetRecords handler
+						_modifiedTables);	
+			} //end localProceedWithDelete()
+		} //end deleteRecords()
+		
+		//=====================================================================================
+		//addRecord ~~
+		//	create new record
+		function addRecord() 
+		{
+			var newRowUID = prompt("Please enter the UID for the new " + 
+					_recordsAlias + " record:");
+			if(newRowUID)
+				newRowUID = newRowUID.trim();
+			else //prompt was cancelled
+				return;
+
+			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
+					/////////////////////
+					function(modifiedTables) //start addSubsetRecords handler
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while creating the record.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while creating the record.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					Debug.log("The new " +
+							_recordsAlias + " record '" + 
+							decodeURIComponent(newRowUID) + 
+							"' was successfully created!",
+							Debug.INFO_PRIORITY);
+
+					_modifiedTables = undefined; //clear after save
+					
+					runFilter(); //updates records and fields, and applies filter
+
+						}); //end saveModifiedTables handler
+
+
+					}, //end addSubsetRecords handler
+					_modifiedTables);			
+		} //end addRecord()
+		
+		
 		</script>
 </head>
 	
@@ -1294,7 +1401,8 @@
 <body onload='Javascript:init();'>	
 		
 	<!-- body content populated by javascript paint(), etc. -->
-	
+
+	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
 </body>
 	
 </html>

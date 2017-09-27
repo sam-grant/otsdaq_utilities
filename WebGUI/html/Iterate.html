@@ -1,0 +1,507 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+		
+		body {
+			/*overflow: hidden; /* scrolling only happens in left and right panes */			
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: pointer;
+		}
+		
+		.pane {
+			border: 0;
+			position: absolute;
+		}
+
+		#topPane {
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+		#leftPane {
+			/*background-color : rgb(241, 231, 231);*/
+			overflow-x: hidden;
+			overflow-y: scroll;
+			
+		    border-top: 1px solid rgb(224, 196, 196);
+						
+		}
+		#rightPane {
+			background-color : rgb(241, 231, 231);
+			overflow: auto;
+
+			box-shadow: 		inset rgba(255,254,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgba(200, 200, 200,0.6) 0 .1em 3px,
+					rgba(200, 200, 200,0.6) 0 .1em 1px,  /* color border */
+					rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+			border-radius: 3px;	
+		}
+		
+
+    	/* for mouse over highlighting */
+		.myOption:hover 
+		{
+            background-color : rgb(241, 231, 231);
+		}    
+		#recordMultiSelect .optionhighlighted:hover,
+		.groupFilerMultiSelect .optionhighlighted:hover
+		{
+			background-color : rgb(11, 66, 138);
+		}
+		
+		.recordAdd,
+		.recordAdd:hover {
+			text-decoration: none;
+			font-size: 30px;
+			font-weight: bold;
+			color: rgb(15, 152, 76);
+		}
+		
+		#recordsNameDiv {
+			float: left;
+			font-size: 20px;
+		}
+		#recordAddDiv {
+	    	margin: -7px 16px -10px 0;
+			float: right;
+		}
+		#recordDeleteDiv {
+			margin: -1px 60px 0 0;
+			float: right;
+		}
+		
+		.treeNode-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 10px;
+		}
+		.treeNode-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+
+		.preloadImage {			
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100px;
+			top: 				0;
+		}
+		#preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+		}
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	
+	<script>		
+	
+		//Iterate desktop icon from:
+		//	http://clipart-library.com/purple-spider-cliparts.html
+	
+		
+		//	Description of Iterate Functionality/Behavior:
+		//	
+		//	GET parameters:
+		//		<forceSavingModifiedGroups> = Do not provide user with option to use the temporary group for modified groups
+		//		<forceUseOfAliases> = Do not provide user with option to use an arbitrary group
+		//		<forceGroupsOnly> = Do not provide user with option to use Macros
+		//		
+		//
+		//	- Requires user to have LOCK
+		//
+		//	- Top Pane:
+		//		* Refresh
+		//		* Iteration Plan: <name> and  > || |_|  controls and "Status: Inactive"
+		//		* when modified, do not show > || |_| controls.. 
+		//			instead show Save and Discard Changes buttons
+		//
+		//	- Bottom Pane:
+		//		* Similar functionality to GUI subset.. in that it edits the 
+		//			the currently active Iteration group. (If a user wants to change the active
+		//			Iteration group, they must do so in the Config GUI)
+		//
+		//		* Very top of "tree-view" choose the Iteration Plan name
+		//			* Then default to
+		//				- START LOOP 0 (hide index from user - show by indent)
+		//				- Configure Configuration Group/System Alias
+		//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+		//				- In GUI, show END (no representation in table)
+		//					
+		//		* Create Rows in table that match sequence
+		//
+		//		* Row Types
+		//			- BEGIN_LABEL <number label>
+		//			- REPEAT_LABEL <number label> <number of times to repeat 0-to-N>
+		//				#note: must have a matching BEGIN_LOOP
+		//			- CONFIGURE_ALIAS <alias name>
+		//			- CONFIGURE_GROUP <group name> <group key>
+		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
+		//				<relative path from FE> <start value> <iteration step size>
+		//				<target FE Group #which can span multiple FE-Managers> 
+		//				#note: always must (so that macro things work) have a CONFIGURE_GROUP after a MODIFY_ACTIVE_GROUP
+		//				#	but can group modifies together and do one CONFIGURE_GROUP.		
+		//			- EXEC_MACRO <macro name> <target FE Group #which can span multiple FE-Managers>
+		//				<parameter group of name, value, iteration step size to adjust in macro> 
+		//				#note: must be a public macro
+		//			- EXEC_FRONT_END_MACRO <FE macro name> <target FE Group #which can span multiple FE-Managers>
+		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
+		//			- START	<dump type> <bool: wait for all FEs to complete running thread else use time> 
+		//				<seconds for run>		
+		//
+		//		
+		//	- Save functionality should be same as saving tree	
+		//		* If admin, could give options to target a certain system alias.. Etc.
+		//		* Else assume saving to currently active groups
+		//
+		//
+		//	- Interactions with Server
+		//		* App must have access to Configuration GUI Supervisor, Gateway Supervisor,
+		//				MacroMaker Supervisor, and FE Supervisors (how do FE Macros work?) 
+		//			-- this means primary urn to GUI Supervisor, secondary to Gateway Supervisor,
+		//				and special handshaking (from Gateway Supervisor) with MacroMaker and FE Supervisors
+
+		
+		
+		var _topPane, _bottomPane;
+		
+		var eventListenersCreated = false;
+		
+		//global vars for GET params
+		var _forceSavingModifiedGroups;// = Do not provide user with option to use the temporary group for modified groups
+		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
+		var _forceGroupsOnly;//= Do not provide user with option to use Macros
+		
+		var _SUBSET_BASE_PATH = "/IterateConfigurationInfo";	
+		var _recordsAlias = "Iteration Plan";
+		
+		//global vars for multiselects				
+		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
+		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
+				
+		//global vars saving tables
+		var _modifiedTables;
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	
+		//functions:			
+			//init()
+			//paint() 
+			//extractGETParameters()
+			//initSubsetGlobalData()	
+		
+			//createTopPaneContent()
+			//createBottomPaneContent()
+		
+		
+	
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+				
+
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{									
+			Debug.log("Iterate init ");
+			DesktopContent.tooltip("Iterate Introduction",
+					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
+					"calibrations or complex run plans. \n\n" +
+					
+					"For an example calibration case, you might create an Iteration Plan to step through " +
+					"a register value from 0 to 50, counting by 10.\n\n" +
+					
+					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+					"10 minutes each.\n\n" +
+					
+					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
+					
+					"Briefly, here is a description of the two panes: " +
+					"<INDENT> " +
+					"- <b>Top Pane</b>\n" +
+					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+					"you can Save or Discard them." +
+					"</INDENT>" +
+					"</INDENT>" + 
+					"<INDENT> " +
+					"- <b>Bottom Pane</b>\n" +
+					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+					"</INDENT>" +
+					"</INDENT>"
+			);
+			
+			//extract get parameters
+			if(!extractGETParameters())
+			{
+				Debug.log("Illegal GET parameters. Aborting.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			//get subset record uids and 
+			//	calls paint() and adds resize listener when done
+			initSubsetGlobalData();
+						
+		} //end init()
+		
+		//=====================================================================================
+		//paint ~~
+		//	positiong left and right panes based on window size
+		function paint() 
+		{	
+			var w = DesktopContent.getWindowWidth();
+			var h = DesktopContent.getWindowHeight();
+			//Debug.log("paint w,h=" + w + "," +h);
+
+			var MIN_H = 280;
+			var MIN_W = 580;
+			if(w < MIN_W)
+				w = MIN_W;
+			if(h < MIN_H)
+				h = MIN_H;
+			
+			Debug.log("paint w,h=" + w + "," +h);
+
+			var TOP_H = 56;
+			var BORDER_SZ = 0;			
+			var MARGIN = 5;
+			
+			if(!_bottomPane && !_topPane)
+			{
+				//first time create elements
+				createTopPaneContent();
+				createBottomPaneContent();
+			}
+
+			
+			var y = MARGIN;
+			var x = MARGIN;
+			w -= 2*MARGIN;
+			h -= 2*MARGIN;
+			
+			_topPane.style.left = x + "px";
+			_topPane.style.top = y + "px";
+			_topPane.style.width = (w - 2*BORDER_SZ) + "px";
+			_topPane.style.height = (TOP_H - 2*BORDER_SZ) + "px";
+			
+			y += TOP_H + MARGIN;
+			h -= TOP_H + MARGIN;
+
+			//set bottom pane sizes
+			h -= 2*BORDER_SZ + MARGIN;
+			
+			_bottomPane.style.left = x + "px";
+			_bottomPane.style.top = y + "px";
+			_bottomPane.style.width = w + "px";
+			_bottomPane.style.height = h + "px";
+						
+		}	//end paint()
+
+				
+		//=====================================================================================
+		//extractGETParameters ~~
+		//	return false, if illegal params
+		function extractGETParameters() 
+		{
+			//extract get parameters
+			
+			_forceSavingModifiedGroups	= DesktopContent.getParameter(0,"forceSavingModifiedGroups");			
+			_forceUseOfAliases		 	= DesktopContent.getParameter(0,"forceUseOfAliases");			
+			_forceGroupsOnly			= DesktopContent.getParameter(0,"forceGroupsOnly");			
+			
+			//setup defaults
+			if(_forceSavingModifiedGroups === undefined) 	_forceSavingModifiedGroups = false;
+			if(_forceUseOfAliases === undefined) 			_forceUseOfAliases = false;
+			if(_forceGroupsOnly === undefined) 				_forceGroupsOnly = false;
+			
+			Debug.log("_forceSavingModifiedGroups " + _forceSavingModifiedGroups);
+			Debug.log("_forceUseOfAliases " + _forceUseOfAliases);
+			Debug.log("_forceGroupsOnly " + _forceGroupsOnly);
+			
+			return true;
+		}	//end extractGETParameters()
+		
+		//=====================================================================================
+		//initSubsetGlobalData ~~
+		//	fills _subsetUIDs
+		//		array of UIDs defined by the subset (based on _subsetBasePath and _recordPreFilterList)
+		//	fills _filterValsObj
+		//		for each filter MultiSelect (one for each grouping field), an array of filter values
+		function initSubsetGlobalData() 
+		{
+			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
+			_subsetUIDs = []; //reset
+			_filterValsObj = {}; //reset
+			_fields = undefined; //reset
+			_modifiedTables = undefined; //reset
+			
+
+			if(_bottomPane && _topPane)
+			{
+				_topPane.innerHTML = ""; //clear
+				_bottomPane.innerHTML = ""; //clear
+				_topPane.parentNode.removeChild(_topPane); //remove element
+				_bottomPane.parentNode.removeChild(_bottomPane); //remove element
+				
+			}
+			_topPane = undefined; //reset
+			_bottomPane = undefined; //reset
+						
+			
+
+
+			ConfigurationAPI.getSubsetRecords(
+					_SUBSET_BASE_PATH,
+					"",
+					function(records)
+					{
+				_subsetUIDs = records;
+				Debug.log("records found = " + records.length);
+				console.log(records);
+
+				paint();
+				if(!eventListenersCreated)
+				{
+					window.addEventListener("resize",paint);
+					eventListenersCreated = true; //prevent multiple event creation
+				}						
+
+					});	//end getSubsetRecords handler
+			
+		}	//end getSubsetUIDs()
+		
+		//=====================================================================================
+		//createTopPaneContent ~~
+		function createTopPaneContent() 
+		{
+			_topPane = document.createElement("div");
+			_topPane.setAttribute("class", "pane");
+			_topPane.setAttribute("id", "topPane");			
+			
+			var el;
+			var str;
+			
+			el = document.createElement("div");
+			str = "";
+			str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
+			el.innerHTML = str;
+			_topPane.appendChild(el);			
+
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_topPane.appendChild(el);
+			
+			el = document.createElement("div");
+			el.setAttribute("id", "topPane-header");
+			str = "Active Iteration Plan: None";			
+			
+			el.innerHTML = str;
+			_topPane.appendChild(el);			
+			
+			document.body.appendChild(_topPane);			
+		}	//end createTopPaneContent()
+		
+		//=====================================================================================
+		//createBottomPaneContent ~~
+		function createBottomPaneContent(leftW) 
+		{
+			_bottomPane = document.createElement("div");
+			_bottomPane.setAttribute("class", "pane");
+			_bottomPane.setAttribute("id", "bottomPane");
+			
+
+			//	- Bottom Pane:
+			//		* Similar functionality to GUI subset.. in that it edits the 
+			//			the currently active Iteration group. (If a user wants to change the active
+			//			Iteration group, they must do so in the Config GUI)
+			//
+			//		* Very top of "tree-view" choose the Iteration Plan name
+			//			* Then default to
+			//				- START LOOP 0 (hide index from user - show by indent)
+			//				- Configure Configuration Group/System Alias
+			//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+			//				- In GUI, show END (no representation in table)
+			//					
+			//		* Create Rows in table that match sequence
+			
+			var el;
+			var str;
+						
+						
+						
+			//:::::::::::::::::::::::::::::
+			//localCreateGroupingFieldFilters ~~
+			function localCreateGroupingFieldFilters()
+			{} //end localCreateGroupingFieldFilters(leftW)
+			
+			
+
+			//:::::::::::::::::::::::::::::
+			//localCreateRecordsSelector
+			function localCreateRecordsSelector()
+			{
+				var H = 300;
+				//create multiselect box
+				el = document.createElement("div");
+				el.setAttribute("class", "recordMultiSelect");
+				el.setAttribute("id", "recordMultiSelect");
+				el.setAttribute("style", //"height:200px; width:250px;" +
+						//);
+						//"margin-bottom: 0px;" +
+						"margin: -15px 0 -10px 0;" +
+						"height:" + H + "px;" + 
+						"width:" + (leftW-25) + "px;");
+
+				_bottomPane.appendChild(el);
+
+				el = document.createElement("div");
+				el.setAttribute("id", "clearDiv");
+				_bottomPane.appendChild(el);
+				
+			} localCreateRecordsSelector();
+						
+			document.body.appendChild(_bottomPane);
+						
+		}	//end createBottomPaneContent()
+
+
+		
+		
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<!-- body content populated by javascript paint(), etc. -->
+
+	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+</body>
+	
+</html>

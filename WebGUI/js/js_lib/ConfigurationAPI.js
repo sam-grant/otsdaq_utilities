@@ -60,10 +60,12 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
+// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
+// 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
 
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
-//	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize)
+//	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
 //	ConfigurationAPI.hasClass(elem,class)
@@ -213,11 +215,14 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 	}
 	
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
 			"&configGroup=" +
@@ -308,13 +313,16 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}
 
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
 	
-	var fieldListStr = "";
+	var fieldListStr = ""; //assume field object already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
 	for(var i=0;i<fieldObjArr.length;++i)
 	{
 		if(i) fieldListStr += ",";
@@ -396,13 +404,16 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		modifiedTablesListStr += modifiedTables[i].tableName + "," +
 				modifiedTables[i].tableVersion;
 	}
-	
+
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
 			"&configGroup=" +
@@ -480,7 +491,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 				modifiedTables[i].tableVersion;
 	}
 	
-	var fieldListStr = "";
+	var fieldListStr = ""; //assume fieldObj already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
 	for(var i=0;i<fieldObjArr.length;++i)
 	{
 		if(i) fieldListStr += ",";
@@ -492,15 +503,18 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	for(var i=0;i<valueArr.length;++i)
 	{
 		if(i) valueListStr += ",";
-		valueListStr += valueArr[i];
+		valueListStr += encodeURIComponent(valueArr[i]);
 	}
 	
 	var recordListStr = "";
-	for(var i=0;i<recordArr.length;++i)
-	{
-		if(i) recordListStr += ",";
-		recordListStr += recordArr[i];
-	}
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
 			"&configGroup=" +
@@ -3548,15 +3562,15 @@ ConfigurationAPI.bitMapDialog = function(fieldName,bitMapParams,initBitMapValue,
 //		groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
 ConfigurationAPI.getDateString;
 {
-var dayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-var monthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+ConfigurationAPI.getDateStringDayArr_ = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+ConfigurationAPI.getDateStringMonthArr_ = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 ConfigurationAPI.getDateString = function(date)
 {
 	var dateStr = "";
 
-	dateStr += dayArr_[date.getDay()];
+	dateStr += ConfigurationAPI.getDateStringDayArr_[date.getDay()];
 	dateStr += " ";
-	dateStr += monthArr_[date.getMonth()];
+	dateStr += ConfigurationAPI.getDateStringMonthArr_[date.getMonth()];
 	dateStr += " ";
 	dateStr += date.getDate();
 	dateStr += " ";
@@ -3588,7 +3602,8 @@ ConfigurationAPI.setCaretPosition = function(elem, caretPos, endPos)
 //	
 //	Note: assumes a padding and border size if not specified
 //  Note: if w,h not specified then fills screen (minus margin)
-ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotResize)
+//	Note: offsetUp and can be used to position the popup vertically (for example if the dialog is expected to grow, then give positive offsetUp to compensate)
+ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotResize,offsetUp)
 {
 	if(padding === undefined) padding = 10;
 	if(border === undefined) border = 1;	
@@ -3613,7 +3628,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		catch(err) {return;} //do nothing on errors
 		
 		//else resize el
-		Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
+		//Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
 
 
 		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;
@@ -3629,7 +3644,8 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		//else w,h are inputs and margin is ignored
 
 		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
-		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2));
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		if(y<margin+padding) y = margin+padding; //don't let it bottom out though
 
 		el.style.left = x + "px";
 		el.style.top = y + "px"; 
@@ -3768,7 +3784,7 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	}
 	
 	var valueType = fieldObj.fieldColumnType; 
-	var value = encodeURIComponent(fieldEl.textContent);
+	var value = fieldEl.textContent;
 	
 	//Debug.log("get Value " + value);
 	return value;
@@ -4710,8 +4726,170 @@ ConfigurationAPI.removeClass = function(ele,cls)
 }
 
 
+//=====================================================================================
+//addSubsetRecords ~~
+//	takes as input a base path where the desired records should be created.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
+		recordArr,responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=addTreeNodeRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var modifiedTables = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+	
+} // end ConfigurationAPI.addSubsetRecords()
 
 
+//=====================================================================================
+//deleteSubsetRecords ~~
+//	takes as input a base path where the desired records should be deleted.
+//
+// <modifiedTables> is an array of Table objects (as returned from 
+//		ConfigurationAPI.setFieldValuesForRecords)
+//
+//	when complete, the responseHandler is called with an array parameter.
+//		on failure, the array will be empty.
+//		on success, the array will be an array of Table objects	
+//		Table := {}
+//			obj.tableName   
+//			obj.tableVersion
+//			obj.tableComment
+//
+ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
+		recordArr,responseHandler,modifiedTables)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+	
+	var recordListStr = "";
+	if(Array.isArray(recordArr))
+		for(var i=0;i<recordArr.length;++i)
+		{
+			if(i) recordListStr += ",";
+			recordListStr += encodeURIComponent(recordArr[i]);
+		}
+	else //handle single record case
+		recordListStr = encodeURIComponent(recordArr);
+	
+	DesktopContent.XMLHttpRequest("Request?RequestType=deleteTreeNodeRecords" + 
+			"&configGroup=" +
+			"&configGroupKey=-1", //end get data 
+			"startPath=/" + subsetBasePath +  
+			"&recordList=" + recordListStr +
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+
+		var modifiedTables = [];
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables);
+			return;
+		}
+
+		//console.log(req);
+
+		//modifiedTables
+		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+		var tableVersion;
+
+		//add only temporary version
+		for(var i=0;i<tableNames.length;++i)
+		{
+			tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+			if(tableVersion >= -1) continue; //skip unless temporary
+			var obj = {};
+			obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+			obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+			modifiedTables.push(obj);
+		}
+		responseHandler(modifiedTables);
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+	
+} // end ConfigurationAPI.deleteSubsetRecords()
+
+	
 
 
 

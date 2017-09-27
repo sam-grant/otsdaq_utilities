@@ -128,7 +128,7 @@ else {
       	var iconRequestHandler = function(req) {
 
       		//clear folder object
-      		_folders = {};
+      		Desktop.desktop.icons.folders = [{},[]];
       		
       		var iconArray;
 
@@ -172,7 +172,8 @@ else {
 				//			}
 				//			Desktop.desktop.icons.openFolder(100,100,"folder-0");
 				//			return;
-			
+
+      		   
 			
       		var numberOfIconFields = 7;
      		for(var i=0;i<(iconArray.length);i+=numberOfIconFields) //add icons
