@@ -307,7 +307,7 @@ throw (xgi::exception::Exception)
 
         if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
         {
-    		__MOUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
+    		__COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
     				", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
     		xmldoc.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
     		goto CLEANUP;
@@ -340,7 +340,7 @@ throw (xgi::exception::Exception)
 
 		if(user == "") //should never happen?
 		{
-			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
 			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
 			goto CLEANUP;
 		}
@@ -350,7 +350,7 @@ throw (xgi::exception::Exception)
 		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
-			throw std::runtime_error("Could not open file: " + fn);
+			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
 		fprintf(fp,"colorIndex %d\n",colorIndex);
 		fprintf(fp,"showSideBar %d\n",showSideBar);
 		fprintf(fp,"noWrap %d\n",noWrap);
@@ -366,7 +366,7 @@ throw (xgi::exception::Exception)
 
 		if(user == "") //should never happen?
 		{
-			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
 			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
 			goto CLEANUP;
 		}
@@ -502,7 +502,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	{
 		if(messages_[refreshReadPointer_].getCount() < lastUpdateCount)
 		{
-			__MOUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
+			__COUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
 					messages_[refreshReadPointer_].getCount() << " < " <<
 					lastUpdateCount << std::endl;
 			//assume these messages are new (due to a system restart)

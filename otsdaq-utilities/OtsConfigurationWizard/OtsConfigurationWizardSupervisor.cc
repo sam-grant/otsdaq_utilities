@@ -81,7 +81,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 	FILE *fp = fopen((SEQUENCE_FILE_NAME).c_str(),"r");
 	if(fp)
 	{
-		__MOUT_INFO__ <<  "Sequence length file found: " << SEQUENCE_FILE_NAME << std::endl;
+		__COUT_INFO__ <<  "Sequence length file found: " << SEQUENCE_FILE_NAME << std::endl;
 		char line[100];
 		fgets(line,100,fp);
 		sscanf(line,"%d",&length);
@@ -91,11 +91,11 @@ void OtsConfigurationWizardSupervisor::generateURL()
 	}
 	else
 	{
-		__MOUT_INFO__ <<  "(Reverting to default wiz security) Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
+		__COUT_INFO__ <<  "(Reverting to default wiz security) Sequence length file NOT found: " << SEQUENCE_FILE_NAME << std::endl;
 		srand(0);	//use same seed for convenience if file not found
 	}
 
-	__MOUT__ << "Sequence length = " << length << std::endl;
+	__COUT__ << "Sequence length = " << length << std::endl;
 
 	securityCode_ = "";
 
@@ -125,7 +125,7 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		fclose(fp);
 	}
 	else
-		__MOUT_ERR__ <<  "Sequence output file NOT found: " << SEQUENCE_OUT_FILE_NAME << std::endl;
+		__COUT_ERR__ <<  "Sequence output file NOT found: " << SEQUENCE_OUT_FILE_NAME << std::endl;
 
 
 	return;
@@ -162,19 +162,19 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	__MOUT__ << "Command = " << Command <<  std::endl;
+	__COUT__ << "Command = " << Command <<  std::endl;
 
 	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
 
 	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 		return;
 	}
 	else
 	{
-		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
+		__COUT__ << "***Successfully authenticated security sequence." << std::endl;
 	}
 	//SECURITY CHECK END ****
 
@@ -202,7 +202,7 @@ throw (xgi::exception::Exception)
 
 	}
 	else
-		__MOUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
+		__COUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
 
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true);
 }
@@ -229,7 +229,7 @@ throw (xoap::exception::Exception)
 	if(securityCode_ == submittedSequence)
 		userPermissions = 255;
 	else
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 
 	//fill return parameters
 	SOAPParameters retParameters;
@@ -262,7 +262,7 @@ throw (xoap::exception::Exception)
 void OtsConfigurationWizardSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+	__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 	*out << "Unauthorized Request.";
 }
 
@@ -272,18 +272,18 @@ throw (xgi::exception::Exception)
 {
 	cgicc::Cgicc cgi(in);
 	std::string submittedSequence = CgiDataUtilities::getData(cgi, "code");
-	__MOUT__ << "submittedSequence=" << submittedSequence <<
+	__COUT__ << "submittedSequence=" << submittedSequence <<
 			" " << time(0) << std::endl;
 
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 		*out << "Invalid code.";
 		return;
 	}
 	else
 	{
-		__MOUT__ << "***Successfully authenticated security sequence. " <<
+		__COUT__ << "***Successfully authenticated security sequence. " <<
 				time(0) << std::endl;
 	}
 
@@ -325,13 +325,13 @@ throw (xgi::exception::Exception)
 	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match! " <<
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match! " <<
 				time(0) << std::endl;
 		return;
 	}
 	else
 	{
-		__MOUT__ << "***Successfully authenticated security sequence. " <<
+		__COUT__ << "***Successfully authenticated security sequence. " <<
 				time(0) << std::endl;
 	}
 	//SECURITY CHECK END ****
@@ -349,7 +349,9 @@ throw (xgi::exception::Exception)
 	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html,/" <<
 			",Edit User Data,USER,1,1,icon-Chat.png,/WebPath/html/EditUserData.html,/" <<
 			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/" <<
-			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?tableEditor=1,/" <<
+			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?configWindowName=tableEditor,/" <<
+			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/" <<
+			",Iterate,IT,0,1,icon-Iterate.png,/urn:xdaq-application:lid=280/?configWindowName=iterate,/" <<
 			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,myFolder" <<
 			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/myFolder/mySub.folder" <<
 			//",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,myFolder/" <<
@@ -374,12 +376,12 @@ throw (xgi::exception::Exception)
 	//SECURITY CHECK START ****
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
-		__MOUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
 		return;
 	}
 	else
 	{
-		__MOUT__ << "***Successfully authenticated security sequence." << std::endl;
+		__COUT__ << "***Successfully authenticated security sequence." << std::endl;
 	}
 	//SECURITY CHECK END ****
 
@@ -387,8 +389,8 @@ throw (xgi::exception::Exception)
 
 	if(submittedSecurity != "")
 	{
-		__MOUT__ << "Selection exists!" << std::endl;
-		__MOUT__ <<  submittedSecurity << std::endl;
+		__COUT__ << "Selection exists!" << std::endl;
+		__COUT__ <<  submittedSecurity << std::endl;
 
 		if(submittedSecurity == "ResetSecurityUserData")
 		{
@@ -409,13 +411,13 @@ throw (xgi::exception::Exception)
 			if(writeSecurityFile.is_open())
 				writeSecurityFile << submittedSecurity;
 			else
-				__MOUT__ << "Error writing file!" << std::endl;
+				__COUT__ << "Error writing file!" << std::endl;
 
 			writeSecurityFile.close();
 		}
 		else
 		{
-			__MOUT_ERR__ << "Invalid submittedSecurity string: " <<
+			__COUT_ERR__ << "Invalid submittedSecurity string: " <<
 					submittedSecurity << std::endl;
 			*out << "Error";
 			return;
@@ -434,20 +436,20 @@ throw (xgi::exception::Exception)
 	if(!securityFile)
 	{
 		__SS__ << "Error opening file: "<< securityFileName << std::endl;
-		__MOUT_ERR__ << "\n" << ss.str();
+		__COUT_ERR__ << "\n" << ss.str();
 		//throw std::runtime_error(ss.str());
 		//return;
 		security = "DigestAccessAuthentication"; //default security when no file exists
 	}
 	if(securityFile.is_open())
 	{
-		//__MOUT__ << "Opened File: " << securityFileName << std::endl;
+		//__COUT__ << "Opened File: " << securityFileName << std::endl;
 		while(std::getline(securityFile, line))
 		{
 			security += line;
 			lineNumber++;
 		}
-		//__MOUT__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
+		//__COUT__ << std::to_string(lineNumber) << ":" << iconList << std::endl;
 
 		//Close file
 		securityFile.close();

@@ -69,7 +69,7 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 
 	std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
-	__MOUT__ << "Command: " << Command << std::endl;
+	__COUT__ << "Command: " << Command << std::endl;
 
 	//Commands
 	//RefreshChat
@@ -101,7 +101,7 @@ throw (xgi::exception::Exception)
 				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
 		))
 		{	//failure
-			__MOUT__  << "Failed Login Gateway: " <<
+			__COUT__  << "Failed Login Gateway: " <<
 					out->str() << std::endl; //print out return string on failure
 			return;
 		}
@@ -138,13 +138,13 @@ throw (xgi::exception::Exception)
 		std::string topage = CgiDataUtilities::postData(cgi,"topage");
 		std::string user = CgiDataUtilities::postData(cgi,"user");
 
-		__MOUT__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+		__COUT__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
 
 		theRemoteWebUsers_.sendSystemMessage(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),
 				topage, user + " is paging you to come chat.");
 	}
 	else
-		__MOUT__ << "Command request not recognized." << std::endl;
+		__COUT__ << "Command request not recognized." << std::endl;
 
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*)out);
@@ -223,7 +223,7 @@ void ChatSupervisor::newUser(std::string user)
 			return; //do not add new if found
 		}
 
-	__MOUT__ << "New user: " << user << std::endl;
+	__COUT__ << "New user: " << user << std::endl;
 	//add and increment
 	ChatUsers_.push_back(user);
 	ChatUsersTime_.push_back(time(0));

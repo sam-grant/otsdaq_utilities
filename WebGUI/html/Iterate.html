@@ -180,10 +180,29 @@
 		//
 		//	- Interactions with Server
 		//		* App must have access to Configuration GUI Supervisor, Gateway Supervisor,
-		//				MacroMaker Supervisor, and FE Supervisors (how do FE Macros work?) 
+		//				MacroMaker Supervisor (Macro Maker can run FE Macros) 
 		//			-- this means primary urn to GUI Supervisor, secondary to Gateway Supervisor,
-		//				and special handshaking (from Gateway Supervisor) with MacroMaker and FE Supervisors
-
+		//				and special handshaking (from Gateway Supervisor) with MacroMaker Supervisors
+		//		
+		//		* Requests:
+		//				= from Configuration GUI Supervisor =
+		//			-- Get Iteration Plan Names
+		//			-- Load Iteration Plan
+		//			-- Save Iteration Plan
+		//
+		//				= from Gateway Supervisor =
+		//			-- Play/Resume Iteration Plan (implications for MacroMaker, coordinated by Gateway)
+		//			-- Pause Iteration Plan
+		//			-- Stop/Reset Iteration Plan
+		//			-- Get Active Iteration Plan Status
+		//
+		//	- Iteration Plan Configuration Tree
+		//		* Iterate
+		//			- records of 'Iteration Plans'
+		//		|* Iteration Plans
+		//			- group of 'Iteration Plan Commands' defining an 'Iteration Plan Sequence' 
+		//		||* Specific Command-Type (a table for each type)
+		//			- definition of parameters associated with the command type
 		
 		
 		var _topPane, _bottomPane;

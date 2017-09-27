@@ -2,7 +2,6 @@
 #include "otsdaq-core/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq-core/DataManager/DataManager.h"
 #include "otsdaq-core/DataManager/DataProcessor.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DataBufferConfiguration.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
 #include <iostream>
@@ -44,7 +43,7 @@ void VisualDataManager::start(std::string runNumber)
 	DataManager::start(runNumber);
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
-		__MOUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
+		__COUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
 		if(buffer.second.getNode("Status").getValue<bool>())
 		{
 			std::vector<std::string> producers;
@@ -52,7 +51,7 @@ void VisualDataManager::start(std::string runNumber)
 			auto bufferConfigurationMap = buffer.second.getNode("LinkToDataBufferConfiguration").getChildren();
 			for(const auto& bufferConfiguration: bufferConfigurationMap)
 			{
-				__MOUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
+				__COUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
 				if(bufferConfiguration.second.getNode("Status").getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
 				)
