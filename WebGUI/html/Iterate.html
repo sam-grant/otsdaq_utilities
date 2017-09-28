@@ -231,12 +231,13 @@
 			//init()
 			//paint() 
 			//extractGETParameters()
-			//initSubsetGlobalData()	
+			//initIterateData()	
 		
 			//createTopPaneContent()
 			//createBottomPaneContent()
 		
-		
+			//createEmptyIterateGroup()
+			//getIterationPlans()
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -392,28 +393,97 @@
 			_topPane = undefined; //reset
 			_bottomPane = undefined; //reset
 						
+			ConfigurationAPI.getActiveGroups(
+					function(groups)
+					{
+				if(!groups || !groups.Iterate || 
+						groups.Iterate.groupKey === undefined ||
+						(groups.Iterate.groupKey|0) == -1)
+				{
+					Debug.log("No active Iterate group.");
+					
+					//create an empty active group
+					createEmptyIterateGroup(
+							function()
+							{
+						getIterationPlans(localCompleteInit);
+							});
+					return;
+				}
+				
+				Debug.log("Active Iterate group is " +
+						groups.Iterate.groupName + " (" +
+						groups.Iterate.groupKey + ").");
+
+				getIterationPlans(localCompleteInit);
+				
+
+					}); //end getActiveGroups handler
+
+			//::::::::::::::::::::::::::::::::::::
+			function localCompleteInit()
+			{
+				Debug.log("Wrapping up init.");
+				paint();
+				if(!eventListenersCreated)
+				{
+					window.addEventListener("resize",paint);
+					eventListenersCreated = true; //prevent multiple event creation
+				}				
+			}
+
 			
+		}	//end initIterateData()
 
+		//=====================================================================================
+		//createEmptyIterateGroup ~~
+		function createEmptyIterateGroup(responseHandler) 
+		{
+			Debug.log("createEmptyIterateGroup");
+			
+			//create a group with each table in group key -1 (to use empty mockup table)
+			//  on failure, give up and assume there are existing groups that admin could activate
+					
+			ConfigurationAPI.getGroupTypeMemberNames("Iterate",
+					function(members)
+					{
+				Debug.log("getGroupTypeMemberNames handler");
+				var memberMap = [];
+				var configMapStr = "";
+				for(var i=0;i<memberMap.length;++i)
+					configMapStr += memberMap[i] + ",-1,";
+				ConfigurationAPI.saveGroupAndActivate(
+						"iterateDefaultGroup",
+						memberMap,
+						responseHandler //pass handler to be called
+						)			
+					}); // end getGroupTypeMemberNames handler
+	
 
+		}	//end createEmptyIterateGroup()
+		
+		//=====================================================================================
+		//getIterationPlans ~~
+		function getIterationPlans(responseHandler) 
+		{
+			Debug.log("getIterationPlans");
+			
+			//get existing iteration plans
 			ConfigurationAPI.getSubsetRecords(
 					_SUBSET_BASE_PATH,
 					"",
 					function(records)
 					{
 				_subsetUIDs = records;
-				Debug.log("records found = " + records.length);
+				Debug.log("iteration plans found = " + records.length);
 				console.log(records);
 
-				paint();
-				if(!eventListenersCreated)
-				{
-					window.addEventListener("resize",paint);
-					eventListenersCreated = true; //prevent multiple event creation
-				}						
-
-					});	//end getSubsetRecords handler
+				responseHandler();
+				
+					});	//end getSubsetRecords handler	
 			
-		}	//end getSubsetUIDs()
+		}	//end getIterationPlans()
+
 		
 		//=====================================================================================
 		//createTopPaneContent ~~

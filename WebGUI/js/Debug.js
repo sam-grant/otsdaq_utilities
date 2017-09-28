@@ -153,13 +153,17 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 								
 								//add label
 								returnStr += "<br><label class='" + 
-										Debug._errBoxId + "-localCallOut'>";
+										Debug._errBoxId + "-localCallOut'>";								
 								
 								//add callout
 								returnStr += str.substr(l,k+1-l);
 								
 								//add end label
 								returnStr += "</label><br>";
+								
+								//skip any tabs and new lines (so that the next content is right below line #)
+								while(k+1 < str.length && 
+										(str[k+1] == '\n' || str[k+1] == '\t')) ++k;								
 								
 							}
 							i = k+1;						

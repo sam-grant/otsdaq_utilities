@@ -119,6 +119,7 @@ throw (xgi::exception::Exception)
 	//	getConfigurations
 	//	getContextMemberNames
 	//	getBackboneMemberNames
+	//	getIterateMemberNames
 	//	getSpecificConfigurationGroup
 	//	saveNewConfigurationGroup
 	//	getSpecificConfiguration
@@ -422,6 +423,13 @@ throw (xgi::exception::Exception)
 
 		for(auto& member:members)
 			xmldoc.addTextElementToData("BackboneMember", member);
+	}
+	else if(Command == "getIterateMemberNames")
+	{
+		std::set<std::string> members = cfgMgr->getIterateMemberNames();
+
+		for(auto& member:members)
+			xmldoc.addTextElementToData("IterateMember", member);
 	}
 	else if(Command == "getSpecificConfigurationGroup")
 	{
@@ -888,7 +896,7 @@ throw (xgi::exception::Exception)
 	}
 	else
 	{
-		__SS__ << "Command request not recognized." << std::endl;
+		__SS__ << "Command '" << Command << "' request not recognized." << std::endl;
 		__COUT__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error", ss.str());
 	}
@@ -3766,7 +3774,6 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		//__COUT__ << "version: " << version << std::endl;
 		groupMembers[name] = version;
 	}
-
 
 	if(!allowDuplicates)
 	{

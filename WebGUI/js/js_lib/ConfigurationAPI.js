@@ -48,6 +48,7 @@ if (typeof DesktopContent == 'undefined' &&
 
 //"public" function list: 
 //	ConfigurationAPI.getDateString(date)
+//	ConfigurationAPI.getActiveGroups(responseHandler)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
@@ -84,6 +85,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
+//	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //
 //		for Editable Fields
 //	ConfigurationAPI.handleEditableFieldClick(depth,uid,editClick,type)
@@ -107,6 +109,56 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='jav
 				"<a class='popUpOkCancel' onclick='javascript:ConfigurationAPI.handleEditableFieldEditCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";	
+
+//=====================================================================================
+//getActiveGroups ~~
+//	get currently active groups
+//
+//	when complete, the responseHandler is called with an object parameter.
+//		on failure, the object will be empty.
+//		on success, the object of Active Groups
+//		Group := {}
+//			obj.groupType = {}
+//			obj.groupType.groupName
+//			obj.groupType.groupKey
+//
+ConfigurationAPI.getActiveGroups = function(responseHandler)
+{	
+	//get active configuration group
+	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
+			"", function(req) 
+			{
+
+		var activeConfigGroups = [
+							   DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+							   DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey"),
+							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey")];
+		var i=0;
+		var retObj = {};		
+		retObj.Context = {};
+		retObj.Context.groupName = activeConfigGroups[i++];
+		retObj.Context.groupKey = activeConfigGroups[i++];
+		retObj.Backbone = {};
+		retObj.Backbone.groupName = activeConfigGroups[i++];
+		retObj.Backbone.groupKey = activeConfigGroups[i++];
+		retObj.Configuration = {};
+		retObj.Configuration.groupName = activeConfigGroups[i++];
+		retObj.Configuration.groupKey = activeConfigGroups[i++];
+		retObj.Iterate = {};
+		retObj.Iterate.groupName = activeConfigGroups[i++];
+		retObj.Iterate.groupKey = activeConfigGroups[i++];
+		
+		if(responseHandler) responseHandler(retObj);		
+			},
+			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+	); //end of getActiveConfigGroups handler
+}
+
 
 //=====================================================================================
 //getSubsetRecords ~~
@@ -155,7 +207,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(records);
+			if(responseHandler) responseHandler(records);
 			return;
 		}
 		
@@ -166,7 +218,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 		for(var i=0;i<nodes.length;++i)
 			records.push(nodes[i].getAttribute("value"));
 		Debug.log("Records: " + records);
-		responseHandler(records);
+		if(responseHandler) responseHandler(records);
 
 			}, //handler
 			0, //handler param
@@ -239,7 +291,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(recFields);
+			if(responseHandler) responseHandler(recFields);
 			return;
 		}
 		
@@ -272,7 +324,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 			recFields.push(obj);
 		}
 		Debug.log("Records length: " + recFields.length);		
-		responseHandler(recFields);
+		if(responseHandler) responseHandler(recFields);
 
 			}, //handler
 			0, //handler param
@@ -344,7 +396,7 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(recFieldValues);
+			if(responseHandler) responseHandler(recFieldValues);
 			return;
 		}
 		
@@ -364,7 +416,7 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			}
 		}
 		
-		responseHandler(recFieldValues);
+		if(responseHandler) responseHandler(recFieldValues);
 
 			}, //handler
 			0, //handler param
@@ -429,7 +481,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(fieldUniqueValues);
+			if(responseHandler) responseHandler(fieldUniqueValues);
 			return;
 		}
 		
@@ -448,7 +500,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 			fieldUniqueValues.push(obj);
 		}
 		Debug.log("fieldUniqueValues length: " + fieldUniqueValues.length);		
-		responseHandler(fieldUniqueValues);
+		if(responseHandler) responseHandler(fieldUniqueValues);
 
 			}, //handler
 			0, //handler param
@@ -949,7 +1001,7 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 				Debug.log("Cancel click");
 				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 				if(el) el.parentNode.removeChild(el); //close popup											
-				responseHandler([],[],[]); //empty array indicates nothing done
+				if(responseHandler) responseHandler([],[],[]); //empty array indicates nothing done
 				return false;
 			}; //end submit onmouseup handler	
 
@@ -1133,7 +1185,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	if(!modifiedTables.length)
 	{
 		Debug.log("No tables were modified. Nothing to do.", Debug.WARN_PRIORITY);
-		responseHandler(savedTables,savedGroups,savedAliases);
+		if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 		return;
 	}
 	
@@ -1183,7 +1235,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			//kill popup dialog
 			var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 			if(el) el.parentNode.removeChild(el);	
-			responseHandler(savedTables,savedGroups,savedAliases);
+			if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 			return;
 		}
 
@@ -1239,7 +1291,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				{					
 					Debug.log(err,Debug.HIGH_PRIORITY);
 					el.innerHTML = str;
-					responseHandler(savedTables,savedGroups,savedAliases);
+					if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}
 				//for each affected group
@@ -1411,7 +1463,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						//kill popup dialog
 						var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 						if(el) el.parentNode.removeChild(el);	
-						responseHandler(savedTables,savedGroups,savedAliases);
+						if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 						return;
 					}			
 
@@ -1505,7 +1557,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								if(err) 
 								{					
 									Debug.log(err,Debug.HIGH_PRIORITY);									
-									responseHandler(savedTables,savedGroups,savedAliases);
+									if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 									return;
 								}
 
@@ -1577,7 +1629,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							{	
 								if(retParams)
 								{
-									if(retParams.newBackbone)
+									if(retParams.newGroupCreated)
 									{
 										Debug.log("Successfully modified the active Backbone group " +
 												" to set the System Alias '" + groupAlias + "' to " +
@@ -1614,7 +1666,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 									//kill popup dialog
 									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 									if(el) el.parentNode.removeChild(el);	
-									responseHandler(savedTables,savedGroups,savedAliases);
+									if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 									return;
 								}	
 
@@ -1639,7 +1691,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 									//kill popup dialog
 									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 									if(el) el.parentNode.removeChild(el);
-									responseHandler(savedTables,savedGroups,savedAliases);
+									if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 									return;
 								}
 
@@ -1648,7 +1700,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								//kill popup dialog
 								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
 								if(el) el.parentNode.removeChild(el);	
-								responseHandler(savedTables,savedGroups,savedAliases);
+								if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 								return;	
 							}	
 
@@ -1737,7 +1789,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					//kill popup dialog
 					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID); 
 					if(el) el.parentNode.removeChild(el);
-					responseHandler(savedTables,savedGroups,savedAliases);
+					if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}						
 
@@ -1824,7 +1876,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 //      if doReturnParms
 //          then the handler is called with an object 
 //          describing the new backbone group object:
-//                 retParams.newBackbone //true if successfully activated
+//                 retParams.newGroupCreated //true if successfully created
 //                 retParams.groupName   //backbone group name 
 //                 retParams.groupKey    //backbone group key
 //               
@@ -1838,14 +1890,14 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 	if(!groupAlias || groupAlias.trim() == "")
 	{
 		Debug.log("Process interrupted. Invalid empty alias given!",Debug.HIGH_PRIORITY);
-		doneHandler(); //error so call done handler
+		if(doneHandler) doneHandler(); //error so call done handler
 		return;
 	}
 	
 	if(!groupName || groupName.trim() == "" || !groupKey || groupKey.trim() == "")
 	{
 		Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
-		doneHandler(); //error so call done handler
+		if(doneHandler) doneHandler(); //error so call done handler
 		return;
 	}
 
@@ -1925,32 +1977,31 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 		var err = DesktopContent.getXMLValue(req,"Error");
 		var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
 		var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-		var newBackbone = true;
+		var newGroupCreated = true;
 		if(err) 
 		{
 			if(!name || !key)
 			{
 				Debug.log(err,Debug.HIGH_PRIORITY);
-				Debug.log("Process interrupted. Failed to create a new Backbone group!" +
+				Debug.log("Process interrupted. Failed to create a new group!" +
 						" Please see details below.",
 						Debug.HIGH_PRIORITY);
 
-				if(doneHandler)
-					doneHandler(); //error so call done handler
+				if(doneHandler)	doneHandler(); //error so call done handler
 				return;
 			}
 			else
 			{
 				Debug.log(err,Debug.WARN_PRIORITY);
-				Debug.log("Process interrupted. Failed to create a new Backbone group!" +
-						" (Likely the currently active Backbone already represents what is being requested)\n\n" +
+				Debug.log("Process interrupted. Failed to create a new group!" +
+						" (Likely the currently active group already represents what is being requested)\n\n" +
 						"Going on with existing backbone group, name=" + name + " & key=" + key,
 						Debug.WARN_PRIORITY);
-				newBackbone = false;
+				newGroupCreated = false;
 			}					
 		}
 
-		//now activate the new backbone group
+		//now activate the new group
 
 		DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
 				"&groupName=" + name +
@@ -1980,7 +2031,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 					var retParams = {
 							"groupName" : name,
 							"groupKey" : key,
-							"newBackbone" : newBackbone									
+							"newGroupCreated" : newGroupCreated									
 					}
 					doneHandler(retParams); 	 //(and indicate success)
 				}
@@ -1992,6 +2043,44 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 			},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 	); //end of backbone saveNewConfigurationGroup handler
 }
+
+//=====================================================================================
+//getGroupTypeMemberNames
+//	groupType can be 
+//		Backbone
+//		Context
+//		Iterate
+//	
+//	on failure, return empty array
+//	on success, return array of members
+ConfigurationAPI.getGroupTypeMemberNames = function(groupType,responseHandler)
+{
+	DesktopContent.XMLHttpRequest("Request?RequestType=get" + groupType + "MemberNames", "", 
+			function (req)
+			{	
+		var retArr = [];
+		
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler)	responseHandler(retArr);
+			return;
+		}
+		var memberNames = req.responseXML.getElementsByTagName(groupType + "Member");
+		
+		for(var i=0;i<memberNames.length;++i)
+			retArr[i] = memberNames[i].getAttribute("value");
+
+		Debug.log("Members found for group type " + groupType + " = " + retArr.length);
+		if(responseHandler)	responseHandler(retArr);
+		
+			}, //end request handler
+			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+	); //end request
+	
+}
+
 
 //=====================================================================================
 //bitMapDialog ~~
