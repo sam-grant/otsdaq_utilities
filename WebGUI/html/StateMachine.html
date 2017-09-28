@@ -1502,7 +1502,7 @@
 						transitionParameterData = transitionParameterData.split('=');	                
 						var transitionParameterName = transitionParameterData[0];
 						var transitionParameterValue = transitionParameterData[1];
-						y += 2*f;
+						y += f;
 						
 						if(transitionParameterName == "ConfigurationAlias") //handle special
 						{
@@ -1511,25 +1511,25 @@
 							
 							_context.font = '10pt Donegal One';
 							y += f;
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Aliased Group: '" + _aliasTranslationMap[transitionParameterValue] + "'",
 									x, y);
 	
 							y += f-4;
 							var metaValue;
 							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Author: '" + metaValue + "'", 
 											x, y);
 							y += f-4;
 							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
 							metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Creation Time: '" + metaValue + "'", 
 											x, y);
 							y += f-4;
 							metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Comment: '" + metaValue.substr(0,30) + 
 											(metaValue.length > 30?"...":"") + "'", 
 											x, y);
