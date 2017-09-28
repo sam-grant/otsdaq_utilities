@@ -169,11 +169,13 @@ if [ "x$1" == "x" ]; then
 	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $OTSDAQ_DIR/../../
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	chmod 755 $OTSDAQ_DIR/../../reset_ots_tutorial.sh
 	
 	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo
 	echo "#######################################################################################################################"
