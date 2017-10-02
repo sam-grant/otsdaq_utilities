@@ -64,6 +64,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
 // 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
 
+
 //"public" helpers:
 //	ConfigurationAPI.setCaretPosition(elem, caretPos, endPos)
 //	ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
@@ -86,6 +87,8 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
+//	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler)
+
 //
 //		for Editable Fields
 //	ConfigurationAPI.handleEditableFieldClick(depth,uid,editClick,type)
@@ -134,10 +137,10 @@ ConfigurationAPI.getActiveGroups = function(responseHandler)
 							   DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
 							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
 							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
-							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey"),
 							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey")];
+							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
+							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 		var i=0;
 		var retObj = {};		
 		retObj.Context = {};
@@ -146,12 +149,12 @@ ConfigurationAPI.getActiveGroups = function(responseHandler)
 		retObj.Backbone = {};
 		retObj.Backbone.groupName = activeConfigGroups[i++];
 		retObj.Backbone.groupKey = activeConfigGroups[i++];
-		retObj.Configuration = {};
-		retObj.Configuration.groupName = activeConfigGroups[i++];
-		retObj.Configuration.groupKey = activeConfigGroups[i++];
 		retObj.Iterate = {};
 		retObj.Iterate.groupName = activeConfigGroups[i++];
 		retObj.Iterate.groupKey = activeConfigGroups[i++];
+		retObj.Configuration = {};
+		retObj.Configuration.groupName = activeConfigGroups[i++];
+		retObj.Configuration.groupKey = activeConfigGroups[i++];
 		
 		if(responseHandler) responseHandler(retObj);		
 			},
@@ -225,6 +228,52 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 }
 
+//=====================================================================================
+//getTree ~~
+//	returns the currently active xml tree object specified by treeBasePath and depth
+//		considering the modifiedTables.
+//	
+//	on failure, calls response handler with undefined parameter
+ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,responseHandler)
+{
+	var modifiedTablesListStr = "";
+	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	{
+		if(i) modifiedTablesListStr += ",";
+		modifiedTablesListStr += modifiedTables[i].tableName + "," +
+				modifiedTables[i].tableVersion;
+	}
+
+	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+			"&configGroup=" +
+			"&configGroupKey=-1" +
+			"&hideStatusFalse=0" + 
+			"&depth=" + depth, //end get data 
+			"startPath=/" + treeBasePath +
+			"&filterList=" + "" + 
+			"&modifiedTables=" + modifiedTablesListStr, //end post data
+			function(req)
+			{
+		var err = DesktopContent.getXMLValue(req,"Error");
+		if(err) 
+		{
+			Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler();
+			return;
+		}
+
+		//console.log(req);
+
+		//					var nodes = tree.children;
+		//					for(var i=0;i<nodes.length;++i)
+		//						records.push(nodes[i].getAttribute("value"));
+		//					Debug.log("Records: " + records);
+		if(responseHandler) responseHandler(DesktopContent.getXMLNode(req,"tree"));
+
+			}, //handler
+			0, //handler param
+			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+} 
 
 //=====================================================================================
 //getFieldsOfRecords ~~
@@ -517,6 +566,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 //		ConfigurationAPI.getFieldsOfRecords). This
 //		is converted internally to a CSV list of tree paths relative to <subsetBasePath> 
 //	 	to the fields to be written.
+//		ALTERNATIVELY: the user can pass an array of full path strings.
 // <valueArr> is an array of values, with index corresponding to the associated 
 //	 	field in the <fieldObjArr>.
 //
@@ -543,12 +593,27 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 				modifiedTables[i].tableVersion;
 	}
 	
-	var fieldListStr = ""; //assume fieldObj already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
-	for(var i=0;i<fieldObjArr.length;++i)
+	var fieldListStr = ""; 
+	if(Array.isArray(recordArr))
 	{
-		if(i) fieldListStr += ",";
-		fieldListStr += fieldObjArr[i].fieldRelativePath + 
-				fieldObjArr[i].fieldColumnName;
+		//assume fieldObjArr is a user generated array and not URI encoded
+		
+		for(var i=0;i<fieldObjArr.length;++i)
+		{
+			if(i) fieldListStr += ",";
+			fieldListStr += encodeURIComponent(fieldObjArr[i]);
+		}
+	}
+	else		
+	{
+		//assume fieldObjArr already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
+	
+		for(var i=0;i<fieldObjArr.length;++i)
+		{
+			if(i) fieldListStr += ",";
+			fieldListStr += fieldObjArr[i].fieldRelativePath + 
+					fieldObjArr[i].fieldColumnName;
+		}
 	}
 	
 	var valueListStr = "";
@@ -1964,7 +2029,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	}
 
 	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
-}
+} // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
@@ -2042,7 +2107,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 
 			},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 	); //end of backbone saveNewConfigurationGroup handler
-}
+} //end ConfigurationAPI.saveGroupAndActivate
 
 //=====================================================================================
 //getGroupTypeMemberNames

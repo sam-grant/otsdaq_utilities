@@ -477,38 +477,41 @@ throw (xgi::exception::Exception)
 		const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo();
 		std::string versionAlias;
 
-		if(versionStr == "" && //take latest version if no version specified
-				allCfgInfo.at(configName).versions_.size())
-			version =* (allCfgInfo.at(configName).versions_.rbegin());
-		else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
+		if(allCfgInfo.find(configName) != allCfgInfo.end())
 		{
-			//convert alias to version
-			std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-					cfgMgr->getActiveVersionAliases();
-
-			versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
-//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
-//			{
-//				version = ConfigurationVersion::SCRATCH;
-//				__COUT__ << "version alias translated to: " << version << std::endl;
-//			}
-//			else
-			if(versionAliases.find(configName) != versionAliases.end() &&
-					versionAliases[configName].find(versionStr.substr(
-							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
-									versionAliases[configName].end())
+			if(versionStr == "" && //take latest version if no version specified
+					allCfgInfo.at(configName).versions_.size())
+				version =* (allCfgInfo.at(configName).versions_.rbegin());
+			else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
 			{
-				version = versionAliases[configName][versionStr.substr(
-						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
-				__COUT__ << "version alias translated to: " << version << std::endl;
+				//convert alias to version
+				std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+						cfgMgr->getActiveVersionAliases();
+
+				versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
+	//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+	//			{
+	//				version = ConfigurationVersion::SCRATCH;
+	//				__COUT__ << "version alias translated to: " << version << std::endl;
+	//			}
+	//			else
+				if(versionAliases.find(configName) != versionAliases.end() &&
+						versionAliases[configName].find(versionStr.substr(
+								ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
+										versionAliases[configName].end())
+				{
+					version = versionAliases[configName][versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
+					__COUT__ << "version alias translated to: " << version << std::endl;
+				}
+				else
+					__COUT_WARN__ << "version alias '" << versionStr.substr(
+							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
+							"'was not found in active version aliases!" << std::endl;
 			}
-			else
-				__COUT_WARN__ << "version alias '" << versionStr.substr(
-						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size()) <<
-						"'was not found in active version aliases!" << std::endl;
+			else					//else take specified version
+				version = atoi(versionStr.c_str());
 		}
-		else					//else take specified version
-			version = atoi(versionStr.c_str());
 
 		__COUT__ << "version: " << version << std::endl;
 
@@ -1363,6 +1366,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 //	fills <modified tables> as used by ConfigurationAPI
 void ConfigurationGUISupervisor::handleFillModifiedTablesXML(HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr)
+try
 {
 	//return modified <modified tables>
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo();
@@ -1375,6 +1379,18 @@ void ConfigurationGUISupervisor::handleFillModifiedTablesXML(HttpXmlDocument& xm
 		xmldoc.addTextElementToData("NewActiveTableComment",
 				allCfgInfo.at(activePair.first).configurationPtr_->getView().getComment());
 	}
+}
+catch(std::runtime_error& e)
+{
+	__SS__ << ("Error!\n\n" + std::string(e.what())) << std::endl;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SS__ << ("Error!\n\n") << std::endl;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
 }
 
 //========================================================================================================================
@@ -1630,28 +1646,31 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 					//	then after all edits return active versions
 					//
 
+					//if link must get parent config name
 					config = cfgMgr->getConfigurationByName(
-							targetNode.getConfigurationName());
+							targetNode.getFieldConfigurationName()); //NOT getConfigurationName!
 					if(!(temporaryVersion =
-							targetNode.getConfigurationVersion()).isTemporaryVersion())
+							config->getViewP()->getVersion()).isTemporaryVersion())
 					{
 						//create temporary version for editing
 						temporaryVersion = config->createTemporaryView(
-								targetNode.getConfigurationVersion());
+								config->getViewP()->getVersion());
 						cfgMgr->saveNewConfiguration(
-								targetNode.getConfigurationName(),
+								config->getConfigurationName(),
 								temporaryVersion, true); //proper bookkeeping for temporary version with the new version
 
-						__COUT__ << "Created temporary version " << temporaryVersion << std::endl;
+						__COUT__ << "Created temporary version " <<
+								config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 					}
 					else //else table is already temporary version
-						__COUT__ << "Using temporary version " << temporaryVersion << std::endl;
+						__COUT__ << "Using temporary version " <<
+						config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 
 					//copy "value" type edit from handleSaveTreeNodeEditXML() functionality
 					config->getViewP()->setURIEncodedValue(
 							fieldValues[i],
-							targetNode.getRow(),
-							targetNode.getColumn(),
+							targetNode.getFieldRow(),
+							targetNode.getFieldColumn(),
 							author);
 
 					config->getViewP()->init(); //verify new table (throws runtime_errors)
@@ -2956,6 +2975,7 @@ catch(...)
 void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
 		ConfigurationGroupKey groupKey)
+try
 {
 	char tmpIntStr[100];
 	DOMElement* parentEl,* configEl;
@@ -3096,6 +3116,18 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(HttpXmlDocument&
 		xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", keyInOrder.toString());
 
 	return;
+}
+catch(std::runtime_error& e)
+{
+	__SS__ << ("Error!\n\n" + std::string(e.what())) << std::endl;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SS__ << ("Error!\n\n") << std::endl;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
 }
 
 //========================================================================================================================
@@ -3662,6 +3694,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 		const std::string& configList, bool allowDuplicates, bool ignoreWarnings,
 		const std::string& groupComment)
 {
+	__COUT__ << "handleCreateConfigurationGroupXML \n";
 
 	xmldoc.addTextElementToData("AttemptedNewGroupName",groupName);
 
@@ -3737,38 +3770,63 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocum
 			xmldoc.addTextElementToData("Error", ss.str());
 			return;
 		}
-		else if(version.isMockupVersion())
+
+		// enforce that table exists
+		if(allCfgInfo.find(name) == allCfgInfo.end())
+		{
+			__SS__ << "Groups can not be created using mock-up member tables of undefined tables. " <<
+					"Table member '" << name << "' is not defined." << std::endl;
+			xmldoc.addTextElementToData("Error", ss.str());
+			return;
+		}
+
+
+
+		if(version.isMockupVersion())
 		{
 			//if mockup, then generate a new persistent version to use based on mockup
-
-			// enforce that this will be the first table version ever
-			if(allCfgInfo.at(name).versions_.size())
-			{
-				__SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
-						"Table member '" << name << "' with mock-up version '" << version <<
-						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
-						" other valid versions." << std::endl;
-				xmldoc.addTextElementToData("Error", ss.str());
-				return;
-			}
-
-			__COUT__ << "Creating version from mock-up for name: " << name <<
-					" inputVersionStr: " << versionStr << std::endl;
-
 			ConfigurationBase* config =	cfgMgr->getConfigurationByName(name);
 			//create a temporary version from the mockup as source version
 			ConfigurationVersion temporaryVersion = config->createTemporaryView();
 			__COUT__ << "\t\ttemporaryVersion: " << temporaryVersion << std::endl;
 
-			//set table comment
-			config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
 
-			//finish off the version creation
-			version = saveModifiedVersionXML(xmldoc,cfgMgr,name,
-					ConfigurationVersion() /*original source is mockup*/,
-					false /*make persistent*/,
-					config,
-					temporaryVersion /*temporary modified version*/);
+			//if other versions exist check for another mockup, and use that instead
+			if(allCfgInfo.at(name).versions_.size())
+			{
+				//half-hearted check of cache (not checking DB)
+				ConfigurationVersion duplicateVersion =
+						config->checkForDuplicate(temporaryVersion);
+				if(!duplicateVersion.isInvalid())
+					version = duplicateVersion;
+
+				//RAR -- now allow if no mockup in cache
+					//				__SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
+					//						"Table member '" << name << "' with mock-up version '" << version <<
+					//						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
+					//						" other valid versions." << std::endl;
+					//				xmldoc.addTextElementToData("Error", ss.str());
+					//	return;
+			}
+
+			//if version is still the mockup, save a new persistent version based on mockup
+			if(version.isMockupVersion())
+			{
+				__COUT__ << "Creating version from mock-up for name: " << name <<
+						" inputVersionStr: " << versionStr << std::endl;
+
+				//set table comment
+				config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
+
+				//finish off the version creation
+				version = saveModifiedVersionXML(xmldoc,cfgMgr,name,
+						ConfigurationVersion() /*original source is mockup*/,
+						false /*make persistent*/,
+						config,
+						temporaryVersion /*temporary modified version*/);
+			}
+			else
+				__COUT__ << "Found already existing mockup version: " << version << std::endl;
 		}
 
 		//__COUT__ << "version: " << version << std::endl;
