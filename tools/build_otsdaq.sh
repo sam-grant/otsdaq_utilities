@@ -43,6 +43,9 @@ case ${qual_set} in
 esac
 
 case ${version} in
+    v1_01_03)
+        artdaq_ver=v2_03_00
+        ;;
 	v1_01_02)
 	artdaq_ver=v2_03_00
 	;;
