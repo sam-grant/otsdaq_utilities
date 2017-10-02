@@ -225,9 +225,10 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 		//if nothing received for 2 minutes seconds, then something is wrong with Console configuration
 		//	after 5 seconds there is a self-send. Which will at least confirm configuration.
-		if(i==120)
+		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
+		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			std::cout << __COUT_HDR_FL__ << "Exiting Console MFReceiverWorkLoop" << std::endl;
+			std::cout << __COUT_HDR_FL__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}

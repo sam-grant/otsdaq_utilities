@@ -753,7 +753,7 @@
 			_displayTargetEl = document.getElementById("display-right");
 			setupSpecificConfig(configName,version,"special display target");
 		}
-		
+				
 		//groupAliasesRequestHandler ~
 		function groupAliasesRequestHandler(req, anchorTarget) {
 			
@@ -844,9 +844,9 @@
 			str += "<br>";
 			
 			//show active backbone and config
-			function showActiveBackboneAndConfig()
+			function localShowActiveBackboneAndConfig()
 			{
-				var activeConfigHeaders = ["Context","Backbone","Configuration"];
+				var activeConfigHeaders = ["Context","Backbone","Iterate","Configuration"];
 				
 				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
@@ -854,10 +854,10 @@
 				{
 					str += "<tr><td style='text-align:left'>";
 					
-					if(i == 1) //for backbone
-						str += "Currently Active " + activeConfigHeaders[i] + ": ";
-					else	//for last configured 
+					if(i == activeConfigHeaders.length-1) //for last configured 
 						str += "Last Activated " + activeConfigHeaders[i] + ": ";
+					else	//for backbone, iterate
+						str += "Currently Active " + activeConfigHeaders[i] + ": ";
 					
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -935,7 +935,7 @@
 				
 				str += "</table>"; //close active groups table
 				
-			} showActiveBackboneAndConfig();
+			} localShowActiveBackboneAndConfig();
 			
 			
 			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
@@ -4170,10 +4170,12 @@
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
 									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 									  
-			var activeConfigHeaders = ["Context","Backbone","Configuration"];
+			var activeConfigHeaders = ["Context","Backbone","Iterate","Configuration"];
 			Debug.log("activeConfigGroups: " + _activeConfigGroups);
 			
 			var oldStr = document.getElementById("activeConfig").innerHTML;
@@ -4185,11 +4187,8 @@
 			for(var i=0;i<1 && i<activeConfigHeaders.length;++i)
 			{
 				str += "<tr><td style='text-align:left'>";
-				if(i==2)
-					str += "Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
-				else
-					str += "Active " + activeConfigHeaders[i] + ": ";
 				
+				str += "Active " + activeConfigHeaders[i] + ": ";				
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 				

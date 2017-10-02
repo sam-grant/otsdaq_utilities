@@ -744,12 +744,11 @@
 
 				str += "<br>";
 
-
+				str += "<br>Choose from these tables...<br>";
 
 				str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
 				str += "<tr><td>";
 				
-
 				str += "<select id='newChoiceInput-" + c + "' " +							
 						">";
 				
@@ -773,10 +772,15 @@
 				str += "+";
 				str += "</a>";
 				str += "</td></tr>";
+				str += "</table>";
 
 
+
+				str += "<br>...to build the list of allowed tables:<br>";
+				
+				str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
 				str += "<tr><td>";
-
+				
 				str += "<select id='fixedChoicesSelect-" + c + "' " +
 						"onchange='document.getElementById(\"newChoiceInput-" + c + 
 						"\").value = this.value;'" +

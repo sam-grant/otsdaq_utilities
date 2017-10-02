@@ -32,15 +32,8 @@
 			overflow-y: auto;
 			overflow-x: hidden;
 		}
-		#leftPane {
-			/*background-color : rgb(241, 231, 231);*/
-			overflow-x: hidden;
-			overflow-y: scroll;
-			
-		    border-top: 1px solid rgb(224, 196, 196);
-						
-		}
-		#rightPane {
+		
+		#bottomPane {
 			background-color : rgb(241, 231, 231);
 			overflow: auto;
 
@@ -53,17 +46,7 @@
 		}
 		
 
-    	/* for mouse over highlighting */
-		.myOption:hover 
-		{
-            background-color : rgb(241, 231, 231);
-		}    
-		#recordMultiSelect .optionhighlighted:hover,
-		.groupFilerMultiSelect .optionhighlighted:hover
-		{
-			background-color : rgb(11, 66, 138);
-		}
-		
+		/* =============== plan selector ================ */
 		.recordAdd,
 		.recordAdd:hover {
 			text-decoration: none;
@@ -72,17 +55,13 @@
 			color: rgb(15, 152, 76);
 		}
 		
-		#recordsNameDiv {
-			float: left;
-			font-size: 20px;
-		}
 		#recordAddDiv {
-	    	margin: -7px 16px -10px 0;
-			float: right;
+	    	margin: -2px 16px -10px 0;
+			float: left;
 		}
 		#recordDeleteDiv {
-			margin: -1px 60px 0 0;
-			float: right;
+			margin: 4px 0 0 0;
+			float: left;
 		}
 		
 		.treeNode-deleteIcon {			
@@ -107,6 +86,23 @@
 		#preloadImage-treeEditTrashIconHover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
+
+		#planSelector {
+			margin: 20px 0 0 20px;
+		}
+				
+		#planSelectDiv {
+			float: left;
+			margin-right: 20px;
+		}
+		
+		#planSelect {
+			height: 30px;
+			width: 210px;
+		}
+		/* =============== end plan selector ================ */
+		
+		
 		
 	</style>
 	
@@ -126,9 +122,9 @@
 		//	Description of Iterate Functionality/Behavior:
 		//	
 		//	GET parameters:
-		//		<forceSavingModifiedGroups> = Do not provide user with option to use the temporary group for modified groups
-		//		<forceUseOfAliases> = Do not provide user with option to use an arbitrary group
-		//		<forceGroupsOnly> = Do not provide user with option to use Macros
+		//		<forceSavingModifiedGroups> = Do not provide user with option in command sequence to use the temporary group for modified groups
+		//		<forceUseOfAliases> = Do not provide user with option in command sequence to use an arbitrary group
+		//		<forceGroupsOnly> = Do not provide user with option in command sequence to use Macros
 		//		
 		//
 		//	- Requires user to have LOCK
@@ -214,14 +210,15 @@
 		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
 		var _forceGroupsOnly;//= Do not provide user with option to use Macros
 		
-		var _SUBSET_BASE_PATH = "/IterateConfigurationInfo";	
+		var _ITERATE_BASE_PATH = "/IterateConfiguration";	
+		var _PLAN_BASE_PATH = "/IterationPlanConfiguration";	
 		var _recordsAlias = "Iteration Plan";
 		
-		//global vars for multiselects				
-		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
-		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
+		//global vars for records
+		var _planUIDs; //array of UIDs in the currently active Iterate group
+		var _targetPlan = "";
 				
-		//global vars saving tables
+		//global vars for saving tables
 		var _modifiedTables;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -232,12 +229,18 @@
 			//paint() 
 			//extractGETParameters()
 			//initIterateData()	
+			//getIterationPlans(responseHandler)
 		
 			//createTopPaneContent()
 			//createBottomPaneContent()
+			//updateIterationPlanContent()
 		
 			//createEmptyIterateGroup()
 			//getIterationPlans()
+			//addIterationPlan()
+			//deleteIterationPlan()
+		
+			//loadIterationPlan(plan)
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -286,7 +289,7 @@
 
 			//get subset record uids and 
 			//	calls paint() and adds resize listener when done
-			initSubsetGlobalData();
+			initIterateData();
 						
 		} //end init()
 		
@@ -317,6 +320,8 @@
 				//first time create elements
 				createTopPaneContent();
 				createBottomPaneContent();
+				
+				updateIterationPlanContent();
 			}
 
 			
@@ -343,7 +348,140 @@
 						
 		}	//end paint()
 
+		//=====================================================================================
+		//updateIterationPlanContent ~~
+		function updateIterationPlanContent() 
+		{	
+			var el = document.getElementById("planSelector");
+			if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; } 
+			
+			str = "";
+
+			str += "<div id='planSelectDiv'>";
+			str += "<b>Choose your Iteration Plan: </b>";
+			if(_planUIDs.length == 0)
+			{
+				str += "No existing plans found. Create one here ==> ";
+			}
+			else
+			{
+				str += "<select id='planSelect'>";
+				for(var i=0;i<_planUIDs.length;++i)
+				{
+					str += "<option value='" + i + "'>";
+					str += _planUIDs[i];	//can display however
+					str += "</option>";
+				}
+				str += "</select>";
+			}
+			str += "</div>"; //end planSelectDiv
+
+			str += "<div id='recordAddDiv' ";
+			if(_planUIDs.length == 0)
+				str += "style='margin: -4px 16px -10px 0;' ";
+			else 
+				str += "style='margin: -2px 16px -10px 0;' ";
+			str += "'>";			
+			str += "<a class='recordAdd' onclick='addIterationPlan(); return false;' ";			
+			str += "title='Create a new " + _recordsAlias + ".'" +
+					">";
+			str += "+";
+			str += "</a>";
+			str += "</div>";
+
+			str += "<div id='recordDeleteDiv' class='treeNode-deleteIcon' ";
+			if(_planUIDs.length == 0) str += "style='display:none' ";
+			str += "onclick='deleteIterationPlan(); return false;' " +
+					"title='Delete the selected " + _recordsAlias + ".'" +					
+					">";
+			str += "</div>";
+
+			el.innerHTML = str;
+			
+			//if no target plan and plans exist, load the first one
+			if(_targetPlan == "" && _planUIDs.length)	
+				loadIterationPlan(_planUIDs[0]);
+			else
+				loadIterationPlan();
+			
+		} //end updateIterationPlanContent()
+		
+
+		//=====================================================================================
+		//loadIterationPlan ~~
+		function loadIterationPlan(plan) 
+		{
+			if(plan !== undefined)
+				_targetPlan = plan;
+			else
+				plan = _targetPlan;
+			
+			Debug.log("loadIterationPlan " + plan);
+			
+			//load plan and display detail
+			//	get command sequence
+			
+			ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,// + "/" + "LinkToIterationPlanConfiguration",
+					2,_modifiedTables,function(tree)
+					{
+				if(!tree)
+				{
+					Debug.log("Invalid tree xml object.");
+					return;
+				}
 				
+				var el = document.getElementById("planDetail");
+				if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; } 
+				
+				el.innerHTML = ""; //clear
+				
+				var str = "";
+				
+				str += "Plan: " + plan;
+				str += "<br>";str += "<br>";
+				
+				var nodes = tree.children;
+				var nodeChildren;
+				var countCommands = 0;
+				for(var i=0;i<nodes.length;++i)
+				{
+					str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
+					
+					//ConfigurationAPI.getDateString(date)
+					nodeChildren = nodes[i].children;
+					if(nodeChildren[0].nodeName == "value") //value node
+						str += nodeChildren[0].getAttribute("value");
+					else
+					{
+
+						for(var j=0;j<nodeChildren.length;++j)
+						{
+							if(nodeChildren[j].nodeName == "node")
+							{
+								//found child node
+
+								str += "<br>";
+								str += "<b>" + nodes[i].getAttribute("value") + "/" +
+										nodeChildren[j].getAttribute("value") + "</b>";
+								++countCommands;
+							}
+						}
+						
+						Debug.log("countCommands = " + countCommands);
+
+						str += "<br>";
+						str += "Number of Commands = " + countCommands;
+					}
+					str += "<br>";
+				}
+				
+				el.innerHTML = str;
+				
+					});
+			
+			
+		} //end loadIterationPlan()
+		
 		//=====================================================================================
 		//extractGETParameters ~~
 		//	return false, if illegal params
@@ -368,15 +506,15 @@
 		}	//end extractGETParameters()
 		
 		//=====================================================================================
-		//initSubsetGlobalData ~~
-		//	fills _subsetUIDs
+		//initIterateData ~~
+		//	fills _planUIDs
 		//		array of UIDs defined by the subset (based on _subsetBasePath and _recordPreFilterList)
 		//	fills _filterValsObj
 		//		for each filter MultiSelect (one for each grouping field), an array of filter values
-		function initSubsetGlobalData() 
+		function initIterateData() 
 		{
 			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
-			_subsetUIDs = []; //reset
+			_planUIDs = []; //reset
 			_filterValsObj = {}; //reset
 			_fields = undefined; //reset
 			_modifiedTables = undefined; //reset
@@ -404,8 +542,14 @@
 					
 					//create an empty active group
 					createEmptyIterateGroup(
-							function()
+							function(params)
 							{
+						if(params === undefined)
+						{
+							Debug.log("Creation of empty Iterate Group failed. Giving up. Call a system admin.",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
 						getIterationPlans(localCompleteInit);
 							});
 					return;
@@ -447,15 +591,15 @@
 			ConfigurationAPI.getGroupTypeMemberNames("Iterate",
 					function(members)
 					{
-				Debug.log("getGroupTypeMemberNames handler");
-				var memberMap = [];
-				var configMapStr = "";
-				for(var i=0;i<memberMap.length;++i)
-					configMapStr += memberMap[i] + ",-1,";
+				Debug.log("getGroupTypeMemberNames handler");				
+				var configMapStr = "configList=";
+				for(var i=0;i<members.length;++i)
+					configMapStr += members[i] + ",-1,";
 				ConfigurationAPI.saveGroupAndActivate(
 						"iterateDefaultGroup",
-						memberMap,
-						responseHandler //pass handler to be called
+						configMapStr,
+						responseHandler, //pass handler to be called
+						true /*doReturnParams*/						
 						)			
 					}); // end getGroupTypeMemberNames handler
 	
@@ -470,15 +614,15 @@
 			
 			//get existing iteration plans
 			ConfigurationAPI.getSubsetRecords(
-					_SUBSET_BASE_PATH,
+					_ITERATE_BASE_PATH,
 					"",
 					function(records)
 					{
-				_subsetUIDs = records;
+				_planUIDs = records;
 				Debug.log("iteration plans found = " + records.length);
 				console.log(records);
 
-				responseHandler();
+				if(responseHandler) responseHandler();
 				
 					});	//end getSubsetRecords handler	
 			
@@ -508,7 +652,7 @@
 			
 			el = document.createElement("div");
 			el.setAttribute("id", "topPane-header");
-			str = "Active Iteration Plan: None";			
+			str = "Target Iteration Plan: None";			
 			
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
@@ -544,42 +688,137 @@
 						
 						
 						
-			//:::::::::::::::::::::::::::::
-			//localCreateGroupingFieldFilters ~~
-			function localCreateGroupingFieldFilters()
-			{} //end localCreateGroupingFieldFilters(leftW)
+			//create target plan selector div: dropdown with + / TRASH
+			el = document.createElement("div");
+			el.setAttribute("id", "planSelector");			
+			_bottomPane.appendChild(el);	
 			
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_bottomPane.appendChild(el);
 			
+			//create plan detail div
+			el = document.createElement("div");
+			el.setAttribute("id", "planDetail");			
+			_bottomPane.appendChild(el);	
 
-			//:::::::::::::::::::::::::::::
-			//localCreateRecordsSelector
-			function localCreateRecordsSelector()
-			{
-				var H = 300;
-				//create multiselect box
-				el = document.createElement("div");
-				el.setAttribute("class", "recordMultiSelect");
-				el.setAttribute("id", "recordMultiSelect");
-				el.setAttribute("style", //"height:200px; width:250px;" +
-						//);
-						//"margin-bottom: 0px;" +
-						"margin: -15px 0 -10px 0;" +
-						"height:" + H + "px;" + 
-						"width:" + (leftW-25) + "px;");
-
-				_bottomPane.appendChild(el);
-
-				el = document.createElement("div");
-				el.setAttribute("id", "clearDiv");
-				_bottomPane.appendChild(el);
-				
-			} localCreateRecordsSelector();
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_bottomPane.appendChild(el);		
 						
 			document.body.appendChild(_bottomPane);
 						
 		}	//end createBottomPaneContent()
 
 
+		//=====================================================================================
+		//addIterationPlan ~~
+		function addIterationPlan()
+		{
+			Debug.log("addIterationPlan");
+			
+			var newRowUID = prompt("Please enter a name for the new " + 
+					_recordsAlias + ":");
+			if(newRowUID)
+				newRowUID = newRowUID.trim();
+			else //prompt was cancelled
+				return;
+			
+			//new iteration plan consists of...
+			//	link to empty command sequence group
+
+			//steps:
+			//	create new record
+			//	edit record (status=On, groupLinkId=uid + "plan)
+			//	save
+			//	refresh
+			
+			ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
+					/////////////////////
+					function(modifiedTables) //start addSubsetRecords handler
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+							newRowUID  + ".'",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+				
+				var fieldArr = ["Status",
+								"LinkToIterationPlanConfiguration",
+								"LinkToIterationPlanGroupID",
+								"CommentDescription"
+								];
+
+				var valueArr = ["1",//"Status",
+								"IterationPlanConfiguration",//"LinkToIterationPlanConfiguration",
+								newRowUID+"-Plan",//"LinkToIterationPlanGroupID",
+								"Generated by Iterate app"//"CommentDescription"
+								];
+
+				ConfigurationAPI.setFieldValuesForRecords(
+						_ITERATE_BASE_PATH,
+						[newRowUID], 	//recordArr
+						fieldArr, 	//fieldArr
+						valueArr, 	//valueArr
+						function(modifiedTables)
+						{
+					Debug.log("modifiedTables length " + modifiedTables.length);
+
+					if(!modifiedTables.length)
+					{
+						Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+								newRowUID  + ".'",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					_modifiedTables = modifiedTables;
+
+					//proceed to save (quietly) tables, groups, aliases
+					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+							/////////////////////
+							function(savedTables, savedGroups, savedAliases)
+							{
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+									newRowUID  + ".'",
+									Debug.HIGH_PRIORITY);
+							return;					
+						}
+
+						Debug.log("The new " +
+								_recordsAlias + " '" + 
+								decodeURIComponent(newRowUID) +
+								"' was successfully created!",
+								Debug.INFO_PRIORITY);
+
+						_modifiedTables = undefined; //clear after save
+
+						getIterationPlans(updateIterationPlanContent); //updates plans display
+
+							}); //end saveModifiedTables handler
+
+						}, //end setFieldValuesForRecords handler
+						_modifiedTables);	
+
+					}, //end addSubsetRecords handler
+					_modifiedTables);	
+			
+		}	//end addIterationPlan()
+		
+		//=====================================================================================
+		//deleteIterationPlan ~~
+		function deleteIterationPlan()
+		{
+			Debug.log("deleteIterationPlan");
+		}	//end deleteIterationPlan()
 		
 		
 		</script>
