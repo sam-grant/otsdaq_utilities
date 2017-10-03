@@ -54,7 +54,7 @@ private:
     void 			handleSetVersionAliasInBackboneXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& versionAlias, const std::string& configName, ConfigurationVersion version, const std::string& author);
     void			handleAliasGroupMembersInBackboneXML		(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& versionAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string& author);
     void 			handleVersionAliasesXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
-    void 			handleConfigurationGroupsXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
+    void 			handleConfigurationGroupsXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool returnMembers);
     void 			handleGetConfigurationGroupXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, ConfigurationGroupKey groupKey);
     void 			handleGetConfigurationGroupTypeXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configList);
     void			handleCreateConfigurationGroupXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const std::string& configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string& groupComment = "");

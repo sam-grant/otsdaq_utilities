@@ -142,17 +142,17 @@
 		//
 		//		* Very top of "tree-view" choose the Iteration Plan name
 		//			* Then default to
-		//				- START LOOP 0 (hide index from user - show by indent)
+		//				- BEGIN_LABEL 0 (hide index from user - show by indent)
 		//				- Configure Configuration Group/System Alias
-		//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+		//				- REPEAT_LABEL 0 ( 0 times - when 0 show as END LOOP)
 		//				- In GUI, show END (no representation in table)
 		//					
 		//		* Create Rows in table that match sequence
 		//
 		//		* Row Types
-		//			- BEGIN_LABEL <number label>
-		//			- REPEAT_LABEL <number label> <number of times to repeat 0-to-N>
-		//				#note: must have a matching BEGIN_LOOP
+		//			- BEGIN_LABEL <label>
+		//			- REPEAT_LABEL <label> <number of times to repeat 0-to-N>
+		//				#note: must have a matching BEGIN_LABEL
 		//			- CONFIGURE_ALIAS <alias name>
 		//			- CONFIGURE_GROUP <group name> <group key>
 		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
@@ -160,12 +160,12 @@
 		//				<target FE Group #which can span multiple FE-Managers> 
 		//				#note: always must (so that macro things work) have a CONFIGURE_GROUP after a MODIFY_ACTIVE_GROUP
 		//				#	but can group modifies together and do one CONFIGURE_GROUP.		
-		//			- EXEC_MACRO <macro name> <target FE Group #which can span multiple FE-Managers>
+		//			- EXECUTE_MACRO <macro name> <target FE Group #which can span multiple FE-Managers>
 		//				<parameter group of name, value, iteration step size to adjust in macro> 
 		//				#note: must be a public macro
-		//			- EXEC_FRONT_END_MACRO <FE macro name> <target FE Group #which can span multiple FE-Managers>
+		//			- EXECUTE_FE_MACRO <FE macro name> <target FE Group #which can span multiple FE-Managers>
 		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
-		//			- START	<dump type> <bool: wait for all FEs to complete running thread else use time> 
+		//			- RUN	<dump type> <bool: wait for all FEs to complete running thread else use time> 
 		//				<seconds for run>		
 		//
 		//		
@@ -190,7 +190,7 @@
 		//			-- Play/Resume Iteration Plan (implications for MacroMaker, coordinated by Gateway)
 		//			-- Pause Iteration Plan
 		//			-- Stop/Reset Iteration Plan
-		//			-- Get Active Iteration Plan Status
+		//			-- Get Active Iteration Plan Status (status could be: inactive, running, paused)
 		//
 		//	- Iteration Plan Configuration Tree
 		//		* Iterate
@@ -210,16 +210,29 @@
 		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
 		var _forceGroupsOnly;//= Do not provide user with option to use Macros
 		
-		var _ITERATE_BASE_PATH = "/IterateConfiguration";	
-		var _PLAN_BASE_PATH = "/IterationPlanConfiguration";	
+		var _ITERATE_BASE_PATH = "IterateConfiguration";	
+		var _PLAN_BASE_PATH = "IterationPlanConfiguration";	
 		var _recordsAlias = "Iteration Plan";
 		
-		//global vars for records
+		//global vars for iteration plan records
 		var _planUIDs; //array of UIDs in the currently active Iterate group
 		var _targetPlan = "";
 				
 		//global vars for saving tables
 		var _modifiedTables;
+		
+		//global vars for editing plans
+		var _configGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups 
+		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
+		var _COMMAND_TYPES = {};
+		_COMMAND_TYPES.BEGIN_LABEL 			= "BEGIN_LABEL";
+		_COMMAND_TYPES.REPEAT_LABEL 		= "REPEAT_LABEL";
+		_COMMAND_TYPES.CONFIGURE_ALIAS 		= "CONFIGURE_ALIAS";
+		_COMMAND_TYPES.CONFIGURE_GROUP 		= "CONFIGURE_GROUP";
+		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 	= "MODIFY_ACTIVE_GROUP";
+		_COMMAND_TYPES.EXECUTE_MACRO 		= "EXECUTE_MACRO";
+		_COMMAND_TYPES.EXECUTE_FE_MACRO 	= "EXECUTE_FE_MACRO";
+		_COMMAND_TYPES.RUN 					= "RUN";
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -230,17 +243,35 @@
 			//extractGETParameters()
 			//initIterateData()	
 			//getIterationPlans(responseHandler)
+			//updateIterateStatus()
 		
 			//createTopPaneContent()
 			//createBottomPaneContent()
 			//updateIterationPlanContent()
 		
+				//Plan Editing:
 			//createEmptyIterateGroup()
 			//getIterationPlans()
 			//addIterationPlan()
 			//deleteIterationPlan()
+			//addCommand(type,params)
+			//deleteCommand()
+			//savePlanCommandSequence(plan,commands)
 		
-			//loadIterationPlan(plan)
+				//Plan Control:
+			//TODO -- start
+			//TODO -- stop
+			//TODO -- pause
+			
+				//Helpers:
+			//saveModifiedTables(successMsg)			
+		
+				//Display:
+			//drawIterationPlan(plan)
+		
+				//Input Handlers:
+			//handleMouseOver(type,id) 
+			//handleEndMouseOver() 
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -400,23 +431,23 @@
 			
 			//if no target plan and plans exist, load the first one
 			if(_targetPlan == "" && _planUIDs.length)	
-				loadIterationPlan(_planUIDs[0]);
+				drawIterationPlan(_planUIDs[0]);
 			else
-				loadIterationPlan();
+				drawIterationPlan();
 			
 		} //end updateIterationPlanContent()
 		
 
 		//=====================================================================================
-		//loadIterationPlan ~~
-		function loadIterationPlan(plan) 
+		//drawIterationPlan ~~
+		function drawIterationPlan(plan) 
 		{
 			if(plan !== undefined)
 				_targetPlan = plan;
 			else
 				plan = _targetPlan;
 			
-			Debug.log("loadIterationPlan " + plan);
+			Debug.log("drawIterationPlan " + plan);
 			
 			//load plan and display detail
 			//	get command sequence
@@ -480,7 +511,7 @@
 					});
 			
 			
-		} //end loadIterationPlan()
+		} //end drawIterationPlan()
 		
 		//=====================================================================================
 		//extractGETParameters ~~
@@ -567,7 +598,7 @@
 			//::::::::::::::::::::::::::::::::::::
 			function localCompleteInit()
 			{
-				Debug.log("Wrapping up init.");
+				Debug.log("localCompleteInit -- Wrapping up init.");
 				paint();
 				if(!eventListenersCreated)
 				{
@@ -576,6 +607,79 @@
 				}				
 			}
 
+						
+
+			//::::::::::::::::::::::::::::::::::::
+			//localGetGroups ~
+			//	get groups and aliases
+			function localGetGroups() 
+			{
+				Debug.log("localGetGroups");
+				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" 
+						, //end get data 
+						"", //end post data
+						function(req)
+						{
+	
+					//system aliases conversion map
+					Debug.log("getGroupAliases handler");
+	
+					var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
+					var groupNames = req.responseXML.getElementsByTagName("GroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("GroupKey");
+					var groupComments = req.responseXML.getElementsByTagName("GroupComment");
+					var groupTypes = req.responseXML.getElementsByTagName("GroupType");
+					var aliasComments = req.responseXML.getElementsByTagName("AliasComment");
+	
+					_configGroupAliases = [];
+					for(var i=0;i<groupAliases.length;++i) 
+						if(groupTypes[i].getAttribute('value') == "Configuration")
+							_configGroupAliases.push({
+									"alias" : groupAliases[i].getAttribute('value'),
+									"name" : groupNames[i].getAttribute('value'),
+									"key" : groupKeys[i].getAttribute('value'),
+									"groupComment" : groupComments[i].getAttribute('value'),
+									"aliasComment" : aliasComments[i].getAttribute('value')
+						});
+	
+					console.log("_configGroupAliases",_configGroupAliases);
+	
+	
+						}, //handler
+						0, //handler param
+						0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						false /*targetSupervisor*/);
+				
+				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+						+"&doNotReturnMembers=1", //end get data 
+						"", //end post data
+						function(req)
+						{
+					Debug.log("getConfigurationGroups handler");
+					
+					var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+					var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+					var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+					
+					_configGroups = [];
+					for(var i=0;i<groupNames.length;++i) 
+						if(groupTypes[i].getAttribute('value') == "Configuration")
+							_configGroups.push({								
+									"name" : groupNames[i].getAttribute('value'),
+									"key" : groupKeys[i].getAttribute('value'),
+									"groupComment" : groupComments[i].getAttribute('value')
+						});
+					
+					console.log("_configGroups",_configGroups);
+					
+						}, //handler
+						0, //handler param
+						0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						false /*targetSupervisor*/);
+			} //end localGetGroups()
+			localGetGroups();
 			
 		}	//end initIterateData()
 
@@ -628,6 +732,32 @@
 			
 		}	//end getIterationPlans()
 
+
+		//=====================================================================================
+		//updateIterateStatus ~~
+		function updateIterateStatus() 
+		{
+			Debug.log("updateIterateStatus");
+			
+			//get iterate status from Gateway Supervisor
+			//	status could be: inactive, running, paused
+			
+			//
+			//			DesktopContent.XMLHttpRequest("Request?RequestType=updateIterateStatus" 
+			//					, //end get data 
+			//					"", //end post data
+			//					function(req)
+			//					{
+			//				
+			//				var iterateStatus = DesktopContent.getXMLValue(req,"iterateStatus");
+			//				Debug.log("iterateStatus = " + iterateStatus);
+			//
+			//					}, //handler
+			//					0, //handler param
+			//					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+			//					true /*targetSupervisor*/);			
+			
+		} //end updateIterateStatus()
 		
 		//=====================================================================================
 		//createTopPaneContent ~~
@@ -723,50 +853,28 @@
 				newRowUID = newRowUID.trim();
 			else //prompt was cancelled
 				return;
+
+
+			// ignore starting config to start.. just put a place holder command
+			//	and treat as invalid until user specifies the group
 			
-			//new iteration plan consists of...
-			//	link to empty command sequence group
+			//::::::::::::::::::::::::::::::::::::::::::
+			//localCreateIterationPlan ~
+			function localCreateIterationPlan()
+			{
+				//new iteration plan consists of...
+				//	link to empty command sequence group
 
-			//steps:
-			//	create new record
-			//	edit record (status=On, groupLinkId=uid + "plan)
-			//	save
-			//	refresh
-			
-			ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
-					/////////////////////
-					function(modifiedTables) //start addSubsetRecords handler
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
+				//steps:
+				//	create new record
+				//	edit record (status=On, groupLinkId=uid + "plan)
+				//	save
+				//	refresh
 
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
-							newRowUID  + ".'",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-
-				_modifiedTables = modifiedTables;
-				
-				var fieldArr = ["Status",
-								"LinkToIterationPlanConfiguration",
-								"LinkToIterationPlanGroupID",
-								"CommentDescription"
-								];
-
-				var valueArr = ["1",//"Status",
-								"IterationPlanConfiguration",//"LinkToIterationPlanConfiguration",
-								newRowUID+"-Plan",//"LinkToIterationPlanGroupID",
-								"Generated by Iterate app"//"CommentDescription"
-								];
-
-				ConfigurationAPI.setFieldValuesForRecords(
-						_ITERATE_BASE_PATH,
-						[newRowUID], 	//recordArr
-						fieldArr, 	//fieldArr
-						valueArr, 	//valueArr
-						function(modifiedTables)
+				/////////////////////
+				ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
+						/////////////////////
+						function(modifiedTables) //start addSubsetRecords handler
 						{
 					Debug.log("modifiedTables length " + modifiedTables.length);
 
@@ -780,12 +888,30 @@
 
 					_modifiedTables = modifiedTables;
 
-					//proceed to save (quietly) tables, groups, aliases
-					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+					var fieldArr = ["Status",
+									"LinkToIterationPlanConfiguration",
+									"LinkToIterationPlanGroupID",
+									"CommentDescription"
+									];
+
+					var valueArr = ["1",//"Status",
+									_PLAN_BASE_PATH,//"LinkToIterationPlanConfiguration",
+									newRowUID+"-Plan",//"LinkToIterationPlanGroupID",
+									"Generated by Iterate app"//"CommentDescription"
+									];
+
+					/////////////////////
+					ConfigurationAPI.setFieldValuesForRecords(
+							_ITERATE_BASE_PATH,
+							[newRowUID], 	//recordArr
+							fieldArr, 	//fieldArr
+							valueArr, 	//valueArr
 							/////////////////////
-							function(savedTables, savedGroups, savedAliases)
+							function(modifiedTables)
 							{
-						if(!savedTables.length)
+						Debug.log("modifiedTables length " + modifiedTables.length);
+
+						if(!modifiedTables.length)
 						{
 							Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
 									newRowUID  + ".'",
@@ -793,25 +919,98 @@
 							return;					
 						}
 
-						Debug.log("The new " +
-								_recordsAlias + " '" + 
-								decodeURIComponent(newRowUID) +
-								"' was successfully created!",
-								Debug.INFO_PRIORITY);
+						_modifiedTables = modifiedTables;
 
-						_modifiedTables = undefined; //clear after save
+						//create DEFAULT commands:
+						//	BEGIN_LABEL						
+						//	CONFIGURE_ALIAS aliasMap[0]
+						//	RUN 5 minutes
+						// 	REPEAT_LABEL
+						
+						var commands = [];
+						commands.push({ 	//BEGIN_LABEL
+							"type" : _COMMAND_TYPES.BEGIN_LABEL,
+							"param" : {"label":"Main"},							
+						});
+						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
+							"type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
+							"param" : {"alias":(_configGroupAliases.length? //use first alias, if any exist
+									_configGroupAliases[0].alias
+									:"")},							
+						});
+						commands.push({		//RUN 5 minutes
+							"type" : _COMMAND_TYPES.RUN,
+							"param" : {"seconds": 5*60},							
+						});
+						
+						savePlanCommandSequence(plan,commands);
+						
+						/////////////////////
+						ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
+								/////////////////////
+								function(modifiedTables) //start addSubsetRecords handler
+								{
+							Debug.log("modifiedTables length " + modifiedTables.length);
 
-						getIterationPlans(updateIterationPlanContent); //updates plans display
+							if(!modifiedTables.length)
+							{
+								Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+										newRowUID  + ".'",
+										Debug.HIGH_PRIORITY);
+								return;					
+							}
 
-							}); //end saveModifiedTables handler
+							_modifiedTables = modifiedTables;
 
-						}, //end setFieldValuesForRecords handler
+
+							saveModifiedTables("The new " +
+									_recordsAlias + " '" + 
+									decodeURIComponent(newRowUID) +
+									"' was successfully created!");
+
+
+								}, //end addSubsetRecords for Commands handler
+								_modifiedTables);	
+						
+						
+						
+
+
+							}, //end setFieldValuesForRecords handler
+							_modifiedTables); 
+
+						}, //end addSubsetRecords handler
 						_modifiedTables);	
-
-					}, //end addSubsetRecords handler
-					_modifiedTables);	
+			} //end localCreateIterationPlan()
 			
 		}	//end addIterationPlan()
+
+		//=====================================================================================
+		//saveModifiedTables ~~
+		function saveModifiedTables(successMsg)
+		{
+			//proceed to save (quietly) tables, groups, aliases
+			ConfigurationAPI.saveModifiedTables(_modifiedTables,
+					/////////////////////
+					function(savedTables, savedGroups, savedAliases)
+					{
+				if(!savedTables.length)
+				{
+					Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+							newRowUID  + ".'",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				Debug.log(successMsg, Debug.INFO_PRIORITY);
+
+				_modifiedTables = undefined; //clear after save
+
+				getIterationPlans(updateIterationPlanContent); //updates plans display
+
+					}); //end saveModifiedTables handler
+			
+		} 	//end saveModifiedTables()
 		
 		//=====================================================================================
 		//deleteIterationPlan ~~
@@ -819,7 +1018,41 @@
 		{
 			Debug.log("deleteIterationPlan");
 		}	//end deleteIterationPlan()
-		
+
+		//=====================================================================================
+		//addCommand ~~
+		function addCommand(type,params)
+		{
+			Debug.log("addCommand");
+		}	//end addCommand()
+
+		//=====================================================================================
+		//deleteCommand ~~
+		function deleteCommand()
+		{
+			Debug.log("deleteCommand");
+		}	//end deleteCommand()
+
+		//=====================================================================================
+		//handleMouseOver ~~
+		//	based on type and id, handle what should happen during mouseover
+		//	
+		//	e.g.:
+		//		* when over iteration plan, show author, time, etc.
+		//		* when over a command, show edit icon and any parameters
+		//		* when between commands, show add command icon
+		function handleMouseOver(type,id)
+		{
+			Debug.log("handleMouseOver type=" + type + " id=" + id);
+		} // end handleMouseOver()
+
+		//=====================================================================================
+		//handleEndMouseOver ~~
+		// end mouse over visible things
+		function handleEndMouseOver()
+		{
+			Debug.log("handleEndMouseOver");
+		}	//end handleEndMouseOver()
 		
 		</script>
 </head>

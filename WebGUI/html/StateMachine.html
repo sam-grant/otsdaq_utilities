@@ -1593,6 +1593,8 @@
         		for(var r=0;r<_altStateGrid.length;++r)
         			for(var c=0;c<_ALT_GRID_WIDTH;++c)
         			{        		
+        				if(_altStateGrid[r][c] == -1) continue; //skip empty grid locales
+        				
         				sx = x + c*_perimeterRadius;
         				sy = y + r*_perimeterRadius;
         				

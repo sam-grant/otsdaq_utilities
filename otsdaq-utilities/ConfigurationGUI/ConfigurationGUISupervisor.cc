@@ -393,7 +393,8 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getConfigurationGroups")
 	{
-		handleConfigurationGroupsXML(xmldoc,cfgMgr);
+		bool doNotReturnMembers = CgiDataUtilities::getDataAsInt(cgi,"doNotReturnMembers") == 1?true:false; //from GET
+		handleConfigurationGroupsXML(xmldoc,cfgMgr,!doNotReturnMembers);
 	}
 	else if(Command == "getConfigurationGroupType")
 	{
@@ -4652,7 +4653,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument& xmldoc,
 	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
 			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
 
-	std::string groupName, groupKey, groupComment;
+	std::string groupName, groupKey, groupComment, groupType;
 	for(auto& aliasNodePair:aliasNodePairs)
 	{
 		groupName = aliasNodePair.second.getNode("GroupName").getValueAsString();
@@ -4666,18 +4667,20 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument& xmldoc,
 
 		//get group comment
 		groupComment = ""; //clear just in case failure
+		groupType = "Invalid";
 		try
 		{
 			cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
 					0,0,0,&groupComment,0,0, //mostly defaults
-					true); //doNotLoadMembers
+					true /*doNotLoadMembers*/,&groupType);
 		}
 		catch(...)
 		{
 			__COUT_WARN__ << "Failed to load group '" << groupName << "(" << groupKey <<
-					")' to extract group comment." << std::endl;
+					")' to extract group comment and type." << std::endl;
 		}
 		xmldoc.addTextElementToData("GroupComment", groupComment);
+		xmldoc.addTextElementToData("GroupType", groupType);
 	}
 }
 
@@ -4802,7 +4805,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupTypeXML(HttpXmlDocum
 //		...
 //
 void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& xmldoc,
-		ConfigurationManagerRW* cfgMgr)
+		ConfigurationManagerRW* cfgMgr, bool returnMembers)
 {
 	DOMElement* parentEl;
 
@@ -4822,13 +4825,13 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 		//__COUT__ << "Config group " << groupString << " := " << groupName <<
 		//"(" << groupKey << ")" << std::endl;
 	}
-	std::string groupString;
+	std::string groupString, groupTypeString, groupComment;
 	for(auto& groupWithKeys:allGroupsWithKeys)
 	{
 		groupName = groupWithKeys.first;
 		groupKey =* (groupWithKeys.second.rbegin());
-
-
+		groupTypeString = "Invalid";
+		groupComment = ""; //clear just in case failure
 
 		groupString = ConfigurationGroupKey::getFullGroupString(groupName,groupKey);
 		__COUT__ << "Latest Config group " << groupString << " := " << groupName <<
@@ -4853,7 +4856,8 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 					"\" has been corrupted! " + e.what() << std::endl;
 			__COUT__ << "\n" << ss.str();
 			xmldoc.addTextElementToData("Error",ss.str());
-			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 			continue;
 		}
 		catch(...)
@@ -4862,16 +4866,21 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 					"\" has been corrupted! " << std::endl;
 			__COUT__ << "\n" << ss.str();
 			xmldoc.addTextElementToData("Error",ss.str());
-			xmldoc.addTextElementToData("ConfigurationGroupType", "Invalid");
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 			continue;
 		}
-		std::string groupTypeString = "";
+
 		//try to determine type, dont report errors, just mark "Invalid"
 		try
 		{
 			//determine the type configuration group
-			groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
+			cfgMgr->loadConfigurationGroup(groupName,groupKey,
+					0,0,0,&groupComment,0,0, //mostly defaults
+					true /*doNotLoadMembers*/,&groupTypeString);
+			//groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -4880,6 +4889,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 			__COUT__ << "\n" << ss.str();
 			groupTypeString = "Invalid";
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 			continue;
 		}
 		catch(...)
@@ -4889,15 +4899,17 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 			__COUT__ << "\n" << ss.str();
 			groupTypeString = "Invalid";
 			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 			continue;
 		}
 
-		for(auto& memberPair:memberMap)
-		{
-			//__COUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
-			xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
-			xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
-		}
+		if(returnMembers)
+			for(auto& memberPair:memberMap)
+			{
+				//__COUT__ << "\tMember config " << memberPair.first << ":" << memberPair.second << std::endl;
+				xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+				xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+			}
 
 
 		//add other group keys to xml for this group name
@@ -4907,8 +4919,24 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 			if(keyInSet == groupKey) continue; //skip the lastest
 			xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
 			xmldoc.addTextElementToData("ConfigurationGroupKey", keyInSet.toString());
-			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 			xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+
+			groupComment = ""; //clear just in case failure
+			try
+			{
+				cfgMgr->loadConfigurationGroup(groupName,keyInSet,
+						0,0,0,&groupComment,0,0, //mostly defaults
+						true /*doNotLoadMembers*/,&groupTypeString);
+			}
+			catch(...)
+			{
+				groupTypeString = "Invalid";
+				__COUT_WARN__ << "Failed to load group '" << groupName << "(" << keyInSet <<
+						")' to extract group comment and type." << std::endl;
+			}
+
+			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
 		}
 	}
 
