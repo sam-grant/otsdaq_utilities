@@ -78,6 +78,9 @@ private:
     void 			handleGetAffectedGroupsXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& rootGroupName, const ConfigurationGroupKey& rootGroupKey, const std::string& modifiedTables);
     void			handleGetLinkToChoicesXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& linkToTableName, const ConfigurationVersion& linkToTableVersion, const std::string& linkIdType, const std::string& linkIndex, const std::string& linkInitId);
 
+    void			handleSavePlanCommandSequenceXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, const std::string& author, const std::string& planName, const std::string& commandString);
+
+
     ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false);
 
 

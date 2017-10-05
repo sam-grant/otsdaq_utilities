@@ -144,6 +144,10 @@ throw (xgi::exception::Exception)
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
 	//	getLastConfigGroups
+	//
+	//		---- associated with JavaScript Iterate App
+	//	savePlanCommandSequence
+	//		---- end associated with JavaScript Iterate App
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -898,6 +902,23 @@ throw (xgi::exception::Exception)
 		xmldoc.addTextElementToData("LastStartedGroupKey",theGroup.second.toString());
 		xmldoc.addTextElementToData("LastStartedGroupTime",timeString);
 	}
+	else if(Command == "savePlanCommandSequence")
+	{
+		std::string 	planName 		= CgiDataUtilities::getData(cgi,"planName"); //from GET
+		std::string 	commands 		= CgiDataUtilities::postData(cgi,"commands"); //from POST
+		std::string 	modifiedTables 	= CgiDataUtilities::postData(cgi,"modifiedTables");
+		std::string 	groupName 		= CgiDataUtilities::getData(cgi,"groupName");
+		std::string 	groupKey 		= CgiDataUtilities::getData(cgi,"groupKey");
+
+		__COUT__ << "modifiedTables: " << modifiedTables << std::endl;
+		__COUT__ << "planName: " << planName << std::endl;
+		__COUT__ << "commands: " << commands << std::endl;
+		__COUT__ << "groupName: " << groupName << std::endl;
+		__COUT__ << "groupKey: " << groupKey << std::endl;
+
+		handleSavePlanCommandSequenceXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
+				modifiedTables,userName,planName,commands);
+	}
 	else
 	{
 		__SS__ << "Command '" << Command << "' request not recognized." << std::endl;
@@ -909,9 +930,10 @@ throw (xgi::exception::Exception)
 
 	//always add active config groups to xml response
 	std::map<std::string /*type*/,
-	std::pair<std::string /*groupName*/,
-	ConfigurationGroupKey>> activeGroupMap =
-			cfgMgr->getActiveConfigurationGroups();
+		std::pair<
+			std::string /*groupName*/,
+			ConfigurationGroupKey> > activeGroupMap =
+					cfgMgr->getActiveConfigurationGroups();
 
 	for(auto& type:activeGroupMap)
 	{
@@ -2464,6 +2486,210 @@ catch(...)
 }
 
 //========================================================================================================================
+//handleSavePlanCommandSequenceXML
+void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(HttpXmlDocument& xmldoc,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string& groupName, const ConfigurationGroupKey& groupKey,
+		const std::string& modifiedTables, const std::string& author,
+		const std::string& planName,
+		const std::string& commandString)
+try
+{
+	__MOUT__ << "handleSavePlanCommandSequenceXML" << std::endl;
+
+	//	setup active tables based on input group and modified tables
+	setupActiveTablesXML(
+			xmldoc,
+			cfgMgr,
+			groupName, groupKey,
+			modifiedTables,
+			true /* refresh all */, false /* getGroupInfo */,
+			0 /* returnMemberMap */, false /* outputActiveTables */);
+
+
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(
+			"IterationPlanConfiguration");
+
+	__COUT__ << config->getConfigurationName() << std::endl;
+
+	ConfigurationVersion temporaryVersion;
+	bool createdTemporaryVersion = false; //use to decide if version should be deleted
+
+	if(!(temporaryVersion =
+			config->getView().getVersion()).isTemporaryVersion())
+	{
+		__COUT__ << "Start version " << temporaryVersion << std::endl;
+		//create temporary version for editing
+		temporaryVersion = config->createTemporaryView(temporaryVersion);
+		cfgMgr->saveNewConfiguration(
+				config->getConfigurationName(),
+				temporaryVersion, true); //proper bookkeeping for temporary version with the new version
+
+		__COUT__ << "Created temporary version " << temporaryVersion << std::endl;
+		createdTemporaryVersion = true;
+	}
+	else //else table is already temporary version
+		__COUT__ << "Using temporary version " << temporaryVersion << std::endl;
+
+
+	// Table ready for editing!
+	//		config->getViewP()
+	//
+
+	//try to catch any errors while editing..
+	//	if errors delete temporary view (if created here)
+	try
+	{
+		ConfigurationView *cfgView = config->getViewP();
+
+		//	Steps:
+		//		Reset plan commands
+		// 			Remove all commands in group "<plan>-Plan"
+		//				If no group remaining, then delete row.
+		//		Save plan commands
+		//			Create rows and add them to group "<plan>-Plan"
+
+		std::string groupName = planName + "-Plan";
+		__COUT__ << "Handling commands for group " << groupName << std::endl;
+
+		unsigned int col = cfgView->findCol("IterationPlanGroupID");
+		std::string linkIndex = cfgView->getColumnInfo(col).getChildLinkIndex();
+		__COUT__ << "linkIndex: " <<
+				linkIndex << std::endl;
+
+		//Reset existing plan commands
+		{
+			std::string targetUID;
+			for(unsigned int row=0;row<cfgView->getNumberOfRows();++row)
+			{
+				targetUID = cfgView->getDataView()[row][cfgView->getColUID()];
+				__COUT__ << "targetUID: " << targetUID << std::endl;
+
+				if(cfgView->isEntryInGroup(row,
+						linkIndex,groupName))
+				{
+					__COUT__ << "Removing." << std::endl;
+					cfgView->removeRowFromGroup(row,col,groupName,true /*deleteRowIfNoGroup*/);
+				}
+			}
+		}
+
+
+
+		struct Command {
+			std::string type;
+			std::vector< std::pair<
+			std::string /*param name*/,
+			std::string /*param value*/> > params;
+		};
+		std::vector<Command> commands;
+
+		//extract command sequence and add to table
+		//	into vector with type, and params
+		{
+			std::istringstream f(commandString);
+			std::string commandSubString, paramSubString, paramValue;
+			int i;
+			while (getline(f, commandSubString, ';'))
+			{
+				//__COUT__ << "commandSubString " << commandSubString << std::endl;
+				std::istringstream g(commandSubString);
+
+				i = 0;
+				while (getline(g, paramSubString, ','))
+				{
+					//__COUT__ << "paramSubString " << paramSubString << std::endl;
+					if(i == 0) //type
+					{
+						if(paramSubString != "type")
+						{
+							__SS__ << "Invalid command sequence" << std::endl;
+							throw std::runtime_error(ss.str());
+						}
+						//create command object
+						commands.push_back(Command());
+
+						getline(g, paramValue, ','); ++i;
+						//__COUT__ << "paramValue " << paramValue << std::endl;
+						commands.back().type = paramValue;
+					}
+					else // params
+					{
+						getline(g, paramValue, ','); ++i;
+						//__COUT__ << "paramValue " << paramValue << std::endl;
+
+						commands.back().params.push_back(
+								std::pair<
+								std::string /*param name*/,
+								std::string /*param value*/> (
+										paramSubString,
+										ConfigurationView::decodeURIComponent(paramValue)
+								));
+					}
+
+					++i;
+				}
+			}
+
+
+		} //end extract command sequence
+
+		__COUT__ << "commands size " << commands.size() << std::endl;
+
+		//now save commands to plan group
+		//	group should be "<plan>-Plan"
+		{
+			unsigned int row;
+			for(auto& command:commands)
+			{
+				__COUT__ << "command " <<
+						command.type << std::endl;
+
+				for(auto& param:command.params)
+				{
+					__COUT__ << "\t param " <<
+							param.first << " : " <<
+							param.second << std::endl;
+				}
+
+				row = cfgView->addRow(author);
+
+				cfgView->addRowToGroup(row,col,groupName);
+			}
+		}
+		cfgView->print();
+
+		cfgView->init(); //verify new table (throws runtime_errors)
+	}
+	catch(...)
+	{
+		if(createdTemporaryVersion)
+		{
+			__COUT__ << "Caught error while editing. Erasing temporary version." << std::endl;
+			//erase with proper version management
+			cfgMgr->eraseTemporaryVersion(config->getConfigurationName(),temporaryVersion);
+		}
+		throw;
+	}
+
+//
+//	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,true /*make temporary*/,
+//			config,temporaryVersion,true /*ignoreDuplicates*/); //save temporary version properly
+}
+catch(std::runtime_error& e)
+{
+	__SS__ << "Error detected saving Iteration Plan!\n\n " << e.what() << std::endl;
+	__COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmldoc.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SS__ << "Error detected saving Iteration Plan!\n\n "<< std::endl;
+	__COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmldoc.addTextElementToData("Error", ss.str());
+}  //end handleSavePlanCommandSequenceXML
+
+//========================================================================================================================
 //handleSaveTreeNodeEditXML
 //	Changes the value specified by UID/Column
 //	 in the specified version of the table.
@@ -2824,7 +3050,6 @@ try
 
 				std::string targetUID;
 				bool shouldBeInGroup;
-				auto defaultRowValues = cfgView->getDefaultRowValues();
 				bool defaultIsInGroup = false; //use to indicate if a recent new member was created
 				bool isInGroup;
 
@@ -2851,7 +3076,7 @@ try
 						__COUT__ << "Changed YES: " << row << std::endl;
 						secondaryChanged = true;
 
-						cfgView->addRowToGroup(row,col,newLinkId,defaultRowValues[col]);
+						cfgView->addRowToGroup(row,col,newLinkId);
 
 					}//if should not be but is
 					else if(!shouldBeInGroup &&	isInGroup)
