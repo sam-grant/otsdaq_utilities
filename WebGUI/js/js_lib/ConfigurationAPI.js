@@ -423,13 +423,29 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	else //handle single record case
 		recordListStr = encodeURIComponent(recordArr);
 	
-	var fieldListStr = ""; //assume field object already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
-	for(var i=0;i<fieldObjArr.length;++i)
+
+	var fieldListStr = "";
+	if(fieldObjArr.length && (typeof fieldObjArr[0] === "string"))
 	{
-		if(i) fieldListStr += ",";
-		fieldListStr += fieldObjArr[i].fieldRelativePath + 
-				fieldObjArr[i].fieldColumnName;
+		//assume fieldObjArr is a user generated array and not URI encoded
+		
+		for(var i=0;i<fieldObjArr.length;++i)
+		{
+			if(i) fieldListStr += ",";
+			fieldListStr += encodeURIComponent(fieldObjArr[i]);
+		}
 	}
+	else		
+	{
+		//assume fieldObjArr already URI encoded (as returned by ConfigurationAPI.getFieldsOfRecords())
+	
+		for(var i=0;i<fieldObjArr.length;++i)
+		{
+			if(i) fieldListStr += ",";
+			fieldListStr += fieldObjArr[i].fieldRelativePath + 
+					fieldObjArr[i].fieldColumnName;
+		}
+	}	
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeFieldValues" + 
 			"&configGroup=" +
@@ -594,7 +610,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}
 	
 	var fieldListStr = ""; 
-	if(Array.isArray(recordArr))
+	if(fieldObjArr.length && (typeof fieldObjArr[0] === "string"))
 	{
 		//assume fieldObjArr is a user generated array and not URI encoded
 		

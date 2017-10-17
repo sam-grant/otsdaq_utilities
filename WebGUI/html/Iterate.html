@@ -3,14 +3,14 @@
 <head>
 	<title>ConfigurationGUI</title>
 
-	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+	<link href='..//css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
-	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
-	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+	<link rel="stylesheet" type="text/css" href="..//css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="..//css/ConfigurationAPI.css">
 
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
-	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+	<link rel="stylesheet" type="text/css" href="..//css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="..//js/js_lib/MultiSelectBox.js"></script>
 
 	<style type="text/css">			
 		
@@ -65,14 +65,14 @@
 		}
 		
 		.treeNode-deleteIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCan.png);
 			width: 				16px;
 			height: 			20px;
 			border: 			0;
 			margin: 			-9px 0 -10px 10px;
 		}
 		.treeNode-deleteIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 			cursor: 			pointer;
 		}
 
@@ -84,7 +84,7 @@
 			top: 				0;
 		}
 		#preloadImage-treeEditTrashIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 
 		#planSelector {
@@ -107,11 +107,11 @@
 	</style>
 	
 	
-	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="..//js/Globals.js"></script>	
+	<script type="text/JavaScript" src="..//js/Debug.js"></script>	
+	<script type="text/JavaScript" src="..//js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="..//js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="..//js/js_lib/ConfigurationAPI.js"></script>
 	
 	<script>		
 	
@@ -225,6 +225,8 @@
 		//global vars for editing plans
 		var _configGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups 
 		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
+        var _commands = [];
+        
 		var _COMMAND_TYPES = {};
 		_COMMAND_TYPES.BEGIN_LABEL 				= "BEGIN_LABEL";
 		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
@@ -235,6 +237,9 @@
 		_COMMAND_TYPES.EXECUTE_MACRO 			= "EXECUTE_MACRO";
 		_COMMAND_TYPES.EXECUTE_FE_MACRO 		= "EXECUTE_FE_MACRO";
 		_COMMAND_TYPES.RUN 						= "RUN";
+        
+        
+        var _DEBUG_WOUT_SERVER = 1;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +274,9 @@
 			//saveModifiedTables(successMsg)			
 		
 				//Display:
-			//drawIterationPlan(plan)
+            //drawIterationPlan(plan)
+            //  localExtractTree(tree)
+            //  localDrawIterationPlan()
 		
 				//Input Handlers:
 			//handleMouseOver(type,id) 
@@ -320,6 +327,7 @@
 						Debug.HIGH_PRIORITY);
 				return;
 			}
+
 
 			//get subset record uids and 
 			//	calls paint() and adds resize listener when done
@@ -443,10 +451,19 @@
 
 		//=====================================================================================
 		//drawIterationPlan ~~
+        //  if plan then request commands from server, otherwise use current _targetPlan and
+        //      existing _commands.
 		function drawIterationPlan(plan) 
 		{
 			if(plan !== undefined)
+            {
 				_targetPlan = plan;
+                
+                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,// + "/" + "LinkToIterationPlanConfiguration",
+                                         2,_modifiedTables,
+                                         localExtractTree
+                                         );
+            }
 			else
 				plan = _targetPlan;
 			
@@ -455,62 +472,195 @@
 			//load plan and display detail
 			//	get command sequence
 			
-			ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,// + "/" + "LinkToIterationPlanConfiguration",
-					2,_modifiedTables,function(tree)
-					{
-				if(!tree)
-				{
-					Debug.log("Invalid tree xml object.");
-					return;
-				}
-				
-				var el = document.getElementById("planDetail");
-				if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; } 
-				
-				el.innerHTML = ""; //clear
-				
-				var str = "";
-				
-				str += "Plan: " + plan;
-				str += "<br>";str += "<br>";
-				
-				var nodes = tree.children;
-				var nodeChildren;
-				var countCommands = 0;
-				for(var i=0;i<nodes.length;++i)
-				{
-					str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
-					
-					//ConfigurationAPI.getDateString(date)
-					nodeChildren = nodes[i].children;
-					if(nodeChildren[0].nodeName == "value") //value node
-						str += nodeChildren[0].getAttribute("value");
-					else //asssume group link to commands
-					{
-						for(var j=0;j<nodeChildren.length;++j)
-						{
-							if(nodeChildren[j].nodeName == "node")
-							{
-								//found child node
-
-								str += "<br>";
-								str += "<b>" + nodes[i].getAttribute("value") + "/" +
-										nodeChildren[j].getAttribute("value") + "</b>";
-								++countCommands;
-							}
-						}
-						
-						Debug.log("countCommands = " + countCommands);
-
-						str += "<br>";
-						str += "Number of Commands = " + countCommands;
-					}
-					str += "<br>";
-				}
-				
-				el.innerHTML = str;
-				
-					});
+            if(_DEBUG_WOUT_SERVER)
+            {
+                //by pass server request and fake data
+                var children = document.createElement("div");
+                var commands = [];
+                commands.push({ 	//BEGIN_LABEL
+                "type" : _COMMAND_TYPES.BEGIN_LABEL,
+                "param" : {"Label":"Main"},
+                });
+                commands.push({		//CONFIGURE_ALIAS aliasMap[0]
+                "type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
+                "param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
+                _configGroupAliases[0].alias
+                :"")},
+                });
+                commands.push({		//RUN 5 minutes
+                "type" : _COMMAND_TYPES.RUN,
+                "param" : {"DurationInSeconds": 5*60},
+                });
+                commands.push({ 	//REPEAT_LABEL
+                "type" : _COMMAND_TYPES.REPEAT_LABEL,
+                "param" : {"Label":"Main", "NumberOfRepetitions" : 0},
+                });
+                
+                _commands = commands;
+                
+                localDrawIterationPlan();
+                return;
+            }
+            
+            
+            //::::::::::::::::::::::::::::::::::::
+            function localExtractTree(tree)
+            {
+                if(!tree && !_DEBUG_WOUT_SERVER)
+                {
+                    Debug.log("Invalid tree xml object.");
+                    return;
+                }
+                
+                _commands = []; //clear
+                
+                var nodes = tree.children;
+                var nodeChildren;
+                var commandChildren;
+                var countCommands = 0;
+                
+                for(var i=0;i<nodes.length;++i)
+                {
+                    
+                    nodeChildren = nodes[i].children;
+                    
+                    
+                    
+                    if(nodeChildren[0].nodeName != "value")    //asssume group link to commands
+                    {
+                        for(var j=0;j<nodeChildren.length;++j)
+                        {
+                            if(nodeChildren[j].nodeName == "node")
+                            {
+                                //found child node
+                                _commands.push({});
+                                
+                                _commands.type = nodeChildren[j].getAttribute("value");
+                                
+                                Debug.log(_commands.type);
+                                if(_commands.type == _COMMAND_TYPES.BEGIN_LABEL )
+                                {
+                                    
+                                }
+                                else
+                                {
+                                    Debug.log("Fatal error. Unknown commands", Debug.HIGH_PRIORITY);
+                                    return;
+                                }
+                                
+                                ++countCommands;
+                            }
+                        }
+                        
+                        Debug.log("countCommands = " + countCommands);
+                    }
+                    
+                    /*
+                    str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
+                    
+                    //ConfigurationAPI.getDateString(date)
+                    nodeChildren = nodes[i].children;
+                    if(nodeChildren[0].nodeName == "value") //value node
+                    str += nodeChildren[0].getAttribute("value");
+                    else //asssume group link to commands
+                    {
+                        for(var j=0;j<nodeChildren.length;++j)
+                        {
+                            if(nodeChildren[j].nodeName == "node")
+                            {
+                                //found child node
+                                
+                                str += "<br>";
+                                str += "<b>" + nodes[i].getAttribute("value") + "/" +
+                                nodeChildren[j].getAttribute("value") + "</b>";
+                                ++countCommands;
+                            }
+                        }
+                        
+                        Debug.log("countCommands = " + countCommands);
+                        
+                        str += "<br>";
+                        str += "Number of Commands = " + countCommands;
+                    }
+                    str += "<br>";*/
+                }
+                
+                
+            } // end localExtractTree()
+            
+            //::::::::::::::::::::::::::::::::::::
+            //draw based on _commands
+            function localDrawIterationPlan()
+            {
+                if(!_commands)
+                {
+                    Debug.log("Invalid commands object.");
+                    return;
+                }
+                
+                var el = document.getElementById("planDetail");
+                if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; }
+                
+                el.innerHTML = ""; //clear
+                
+                var str = "";
+                
+                //Display Concept:
+                //  Plan name at top left
+                //      Blue vertical bar extending down inset off left edge of name
+                //      Each Loop
+                //          New vertical bar extending down inset off BEGIN_LABEL command
+                
+                
+                
+                str += "Plan: " + plan;
+                str += "<br>";str += "<br>";
+                
+                var commands = _commands;
+                var depth = 0;
+                
+                //make first vertical bar
+                str += "<div id='clearDiv'></div>";
+                str += "<div class='depthBar' id='depthBar-" + depth + "'>";
+                
+                for(var i=0;i<commands.length;++i)
+                {
+                    str += "<div id='clearDiv'></div>";
+                    
+                    str += "<div class='command' id='command-" + i + "'>";
+                    
+                    str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
+                    
+                    //ConfigurationAPI.getDateString(date)
+                    nodeChildren = nodes[i].children;
+                    if(nodeChildren[0].nodeName == "value") //value node
+                    str += nodeChildren[0].getAttribute("value");
+                    else //asssume group link to commands
+                    {
+                        for(var j=0;j<nodeChildren.length;++j)
+                        {
+                            if(nodeChildren[j].nodeName == "node")
+                            {
+                                //found child node
+                                
+                                str += "<br>";
+                                str += "<b>" + nodes[i].getAttribute("value") + "/" +
+                                nodeChildren[j].getAttribute("value") + "</b>";
+                                ++countCommands;
+                            }
+                        }
+                        
+                        Debug.log("countCommands = " + countCommands);
+                        
+                        str += "<br>";
+                        str += "Number of Commands = " + countCommands;
+                    }
+                    str += "<br>";
+                }
+                
+                el.innerHTML = str;
+                
+            } //end localDrawIterationPlan()
 			
 			
 		} //end drawIterationPlan()
@@ -551,6 +701,9 @@
 			_filterValsObj = {}; //reset
 			_fields = undefined; //reset
 			_modifiedTables = undefined; //reset
+            
+            _targetPlan = ""; //reset
+            _commands = []; //reset
 			
 
 			if(_bottomPane && _topPane)
@@ -563,6 +716,18 @@
 			}
 			_topPane = undefined; //reset
 			_bottomPane = undefined; //reset
+            
+            
+            if(_DEBUG_WOUT_SERVER)
+            {
+                //bypass server and give example iterate plan
+                
+                _planUIDs = ["test 1", "testB"];
+                
+                localCompleteInit();
+                return;
+            }
+
 						
 			ConfigurationAPI.getActiveGroups(
 					function(groups)
