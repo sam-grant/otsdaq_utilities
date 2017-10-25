@@ -239,7 +239,7 @@
 		_COMMAND_TYPES.RUN 						= "RUN";
         
         
-        var _DEBUG_WOUT_SERVER = 1;
+        var _DEBUG_WOUT_SERVER = 0;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -400,10 +400,10 @@
 			str = "";
 
 			str += "<div id='planSelectDiv'>";
-			str += "<b>Choose your Iteration Plan: </b>";
+			str += "<b>Choose an Iteration Plan: </b>";
 			if(_planUIDs.length == 0)
 			{
-				str += "No existing plans found. Create one here ==> ";
+				str += "No plans found. Create one here ==> ";
 			}
 			else
 			{
@@ -459,6 +459,7 @@
             {
 				_targetPlan = plan;
                 
+				if(!_DEBUG_WOUT_SERVER)
                 ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,// + "/" + "LinkToIterationPlanConfiguration",
                                          2,_modifiedTables,
                                          localExtractTree
@@ -493,7 +494,7 @@
                 });
                 commands.push({ 	//REPEAT_LABEL
                 "type" : _COMMAND_TYPES.REPEAT_LABEL,
-                "param" : {"Label":"Main", "NumberOfRepetitions" : 0},
+                "param" : {"Label":"Main", "NumberOfRepetitions":0},
                 });
                 
                 _commands = commands;
@@ -585,6 +586,7 @@
                     str += "<br>";*/
                 }
                 
+                localDrawIterationPlan();
                 
             } // end localExtractTree()
             
@@ -618,6 +620,7 @@
                 
                 var commands = _commands;
                 var depth = 0;
+                var paramKeys;
                 
                 //make first vertical bar
                 str += "<div id='clearDiv'></div>";
@@ -629,32 +632,18 @@
                     
                     str += "<div class='command' id='command-" + i + "'>";
                     
-                    str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
+                    str += "<b>" + commands[i].type + ":</b> ";
+                    
+                    //show properties
+                    paramKeys = Object.keys(commands[i].param);
+
+                    for(var j=0;j<paramKeys.length;++j)
+                    	str += " " + paramKeys[j] + "=" + 
+							commands[i].param[paramKeys[j]];
+                                        
                     
                     //ConfigurationAPI.getDateString(date)
-                    nodeChildren = nodes[i].children;
-                    if(nodeChildren[0].nodeName == "value") //value node
-                    str += nodeChildren[0].getAttribute("value");
-                    else //asssume group link to commands
-                    {
-                        for(var j=0;j<nodeChildren.length;++j)
-                        {
-                            if(nodeChildren[j].nodeName == "node")
-                            {
-                                //found child node
-                                
-                                str += "<br>";
-                                str += "<b>" + nodes[i].getAttribute("value") + "/" +
-                                nodeChildren[j].getAttribute("value") + "</b>";
-                                ++countCommands;
-                            }
-                        }
-                        
-                        Debug.log("countCommands = " + countCommands);
-                        
-                        str += "<br>";
-                        str += "Number of Commands = " + countCommands;
-                    }
+                                        
                     str += "<br>";
                 }
                 
@@ -1105,7 +1094,9 @@
 						});
 						commands.push({		//RUN 5 minutes
 							"type" : _COMMAND_TYPES.RUN,
-							"param" : {"DurationInSeconds": 5*60},							
+							"param" : {"WaitForAllFrontEndsRunningThread":0,
+								"DurationInSeconds": 5*60,
+								"ConfigurationDumpType":"All"},							
 						});
 						commands.push({ 	//REPEAT_LABEL
 							"type" : _COMMAND_TYPES.REPEAT_LABEL,

@@ -1,4 +1,5 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
+#include "otsdaq-utilities/ConfigurationGUI/Iterate.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutHeaderMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
@@ -918,6 +919,8 @@ throw (xgi::exception::Exception)
 
 		handleSavePlanCommandSequenceXML(xmldoc,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
 				modifiedTables,userName,planName,commands);
+
+		__COUT__ << "Error field=" << xmldoc.getMatchingValue("Error") << std::endl;
 	}
 	else
 	{
@@ -1119,7 +1122,7 @@ catch(...)
 //setupActiveTables
 //	setup active tables based on input group and modified tables
 //
-//	if groupName == "" && groupKey is invalid
+//	if groupName == "" || groupKey is invalid
 //		then do for active groups
 //	if valid, then replace appropriate active group with specified group
 //	Also replace active versions of modified tables with the specified version
@@ -1139,13 +1142,14 @@ try
 	xmldoc.addTextElementToData("configGroup", groupName);
 	xmldoc.addTextElementToData("configGroupKey", groupKey.toString());
 
-	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 
 	//reload all tables so that partially loaded tables are not allowed
 	if(usingActiveGroups || refreshAll)
 		cfgMgr->getAllConfigurationInfo(true,accumulatedErrors); //do refresh
 
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(false);
+
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> modifiedTablesMap;
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/>::iterator modifiedTablesMapIt;
 
@@ -1241,6 +1245,10 @@ try
 			xmldoc.addTextElementToData("ActiveTableComment",
 					allCfgInfo.at(activePair.first).configurationPtr_->getView().getComment());
 		}
+
+		//		__COUT__ << "Active table = " <<
+		//				activePair.first << "-v" <<
+		//				allCfgInfo.at(activePair.first).configurationPtr_->getView().getVersion() << std::endl;
 	}
 
 }
@@ -1264,7 +1272,7 @@ catch(...)
 //		and creates a temporary version.
 //	the modified-<modified tables> list is returned in xml
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -1422,7 +1430,7 @@ catch(...)
 //		and creates a temporary version.
 //	the modified-<modified tables> list is returned in xml
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -1538,7 +1546,7 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(HttpXmlDocum
 //		and creates a temporary version.
 //	the modified-<modified tables> list is returned in xml
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -1723,7 +1731,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 //	returns for each record, xml list of field/value pairs
 //		field := relative-path
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -1814,7 +1822,7 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(HttpXmlDocu
 //	returns xml list of common fields among records
 //		field := relative-path
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -1981,7 +1989,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 //			... next field
 //		</xml>
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then do for active groups
 //
 //parameters
@@ -2104,7 +2112,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //handleFillTreeViewXML
 //	returns xml tree from path for given depth
 //
-// if groupName == "" && groupKey is invalid
+// if groupName == "" || groupKey is invalid
 //	 then return tree for active groups
 //
 //parameters
@@ -2155,7 +2163,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmldoc, 
 	//	//	setup active tables based on input group and modified tables
 
 
-	bool usingActiveGroups = (groupName == "" && groupKey.isInvalid());
+	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 
 	std::string accumulatedErrors;
@@ -2574,6 +2582,8 @@ try
 			}
 		}
 
+		//Done resetting existing plan
+		//Now save new commands
 
 
 		struct Command {
@@ -2631,33 +2641,136 @@ try
 				}
 			}
 
-
 		} //end extract command sequence
 
 		__COUT__ << "commands size " << commands.size() << std::endl;
 
+		//at this point, have extracted commands
+
+		std::map<std::string,
+		std::pair<ConfigurationBase*,	//config
+		std::pair<ConfigurationVersion,bool> > > //temporaryVersion, createdTemporaryVersion
+			commandTypeToModifiedConfigMap;
+
 		//now save commands to plan group
 		//	group should be "<plan>-Plan"
+		try
 		{
-			unsigned int row;
+			unsigned int row, cmdRow;
+			unsigned int cmdCol;
+
+			std::pair<unsigned int /*link col*/, unsigned int /*link id col*/> cmdUidLink;
+			bool isGroup;
+			cfgView->getChildLink(cfgView->findCol(Iterate::PLAN_TABLE_COMMAND_LINK_FIELD),
+					isGroup,cmdUidLink);
+
 			for(auto& command:commands)
 			{
+
 				__COUT__ << "command " <<
 						command.type << std::endl;
+				__COUT__ << "table " <<
+						Iterate::commandToTableMap.at(command.type) << std::endl;
 
+				//get table in which to create parameter group
+				if(commandTypeToModifiedConfigMap.find(command.type) ==
+						commandTypeToModifiedConfigMap.end())
+				{
+					//have to create temporary version
+					__COUT__ << "Creating temporary version..." << std::endl;
+
+					commandTypeToModifiedConfigMap[command.type].first = cfgMgr->getConfigurationByName(
+							Iterate::commandToTableMap.at(command.type));
+					commandTypeToModifiedConfigMap[command.type].second.second = false; //init to temporary version not created here
+				}
+
+				ConfigurationBase* cmdConfig = commandTypeToModifiedConfigMap[command.type].first;
+
+				__COUT__ << "table " << cmdConfig->getConfigurationName() << std::endl;
+
+				ConfigurationVersion& cmdTemporaryVersion = commandTypeToModifiedConfigMap[command.type].second.first;
+				bool& cmdCreatedTemporaryVersion = commandTypeToModifiedConfigMap[command.type].second.second;
+
+				if(!(cmdTemporaryVersion =
+						cmdConfig->getView().getVersion()).isTemporaryVersion())
+				{
+					__COUT__ << "Start version " << cmdTemporaryVersion << std::endl;
+					//create temporary version for editing
+					cmdTemporaryVersion = cmdConfig->createTemporaryView(cmdTemporaryVersion);
+					cfgMgr->saveNewConfiguration(
+							cmdConfig->getConfigurationName(),
+							cmdTemporaryVersion, true); //proper bookkeeping for temporary version with the new version
+
+					__COUT__ << "Created temporary version " << cmdTemporaryVersion << std::endl;
+					cmdCreatedTemporaryVersion = true; //mark that temporary version was created here, so it can be deleted on error
+				}
+				else //else table is already temporary version
+					__COUT__ << "Using temporary version " << cmdTemporaryVersion << std::endl;
+
+
+				//at this point have config, tempVersion, and createdFlag
+
+				//create command parameter entry at command level
+				cmdRow = cmdConfig->getViewP()->addRow(author,command.type + "_COMMAND_");
+
+				//parameters are linked
 				for(auto& param:command.params)
 				{
 					__COUT__ << "\t param " <<
 							param.first << " : " <<
 							param.second << std::endl;
+
+					cmdCol = cmdConfig->getViewP()->findCol(param.first);
+
+					__COUT__ << "col " << cmdCol << std::endl;
+
+					cmdConfig->getViewP()->setURIEncodedValue(param.second,cmdRow,cmdCol);
 				}
 
-				row = cfgView->addRow(author);
-
+				//create command entry at plan level
+				row = cfgView->addRow(author,"itPlan");
 				cfgView->addRowToGroup(row,col,groupName);
-			}
+
+				//and link to created UID
+				cfgView->setURIEncodedValue(cmdConfig->getConfigurationName(),
+						row,cmdUidLink.first);
+				cfgView->setValueAsString(
+						cmdConfig->getViewP()->getDataView()[cmdRow][
+							cmdConfig->getViewP()->getColUID()],
+						row,cmdUidLink.second);
+
+				__COUT__ << "linked to uid = " <<
+						cmdConfig->getViewP()->getDataView()[cmdRow][
+							cmdConfig->getViewP()->getColUID()] << std::endl;
+
+			} //end command loop
+
 		}
+		catch(...)
+		{
+			__COUT__ << "Handling command table errors while saving. Erasing all newly created versions." << std::endl;
+
+			//loop through map and erase if created here
+			for(auto& modifiedConfig : commandTypeToModifiedConfigMap)
+			{
+				if(modifiedConfig.second.second.second) //if temporary version created here
+				{
+					__COUT__ << "Erasing " << modifiedConfig.second.first->getConfigurationName() <<
+							"-v" << modifiedConfig.second.second.first << std::endl;
+					//erase with proper version management
+					cfgMgr->eraseTemporaryVersion(modifiedConfig.second.first->getConfigurationName(),
+							modifiedConfig.second.second.first);
+				}
+			}
+			throw;
+		}
+
 		cfgView->print();
+
+		__COUT__ << "Command tables:" << std::endl;
+
+		for(auto& modifiedConfig : commandTypeToModifiedConfigMap)
+			modifiedConfig.second.first->getViewP()->print();
 
 		cfgView->init(); //verify new table (throws runtime_errors)
 	}
