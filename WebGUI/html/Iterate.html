@@ -229,13 +229,13 @@
         
 		var _COMMAND_TYPES = {};
 		_COMMAND_TYPES.BEGIN_LABEL 				= "BEGIN_LABEL";
-		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
+		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_ACTIVE_GROUP";
 		_COMMAND_TYPES.CONFIGURE_ALIAS 			= "CONFIGURE_ALIAS";
 		_COMMAND_TYPES.CONFIGURE_GROUP 			= "CONFIGURE_GROUP";
-		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
-		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_GROUP";
-		_COMMAND_TYPES.EXECUTE_MACRO 			= "EXECUTE_MACRO";
 		_COMMAND_TYPES.EXECUTE_FE_MACRO 		= "EXECUTE_FE_MACRO";
+		_COMMAND_TYPES.EXECUTE_MACRO 			= "EXECUTE_MACRO";
+		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
+		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
 		_COMMAND_TYPES.RUN 						= "RUN";
         
         
@@ -271,7 +271,7 @@
 			//TODO -- pause
 			
 				//Helpers:
-			//saveModifiedTables(successMsg)			
+			//saveModifiedTables(successMsg,failureMsg)        	
 		
 				//Display:
             //drawIterationPlan(plan)
@@ -460,8 +460,9 @@
 				_targetPlan = plan;
                 
 				if(!_DEBUG_WOUT_SERVER)
-                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,// + "/" + "LinkToIterationPlanConfiguration",
-                                         2,_modifiedTables,
+                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
+                                         4, //down through command parameters
+										 _modifiedTables,
                                          localExtractTree
                                          );
             }
@@ -505,6 +506,8 @@
             
             
             //::::::::::::::::::::::::::::::::::::
+            //localExtractTree ~
+            //	extract tree into the _commands object
             function localExtractTree(tree)
             {
                 if(!tree && !_DEBUG_WOUT_SERVER)
@@ -518,42 +521,75 @@
                 var nodes = tree.children;
                 var nodeChildren;
                 var commandChildren;
+                var commandFieldsChildren;
+                var parameterChildren;
                 var countCommands = 0;
                 
+                var type,params; //to make command
+                
+                //for each plan field
+                //	find link to command group
+                //		for each command
+                //			fill command type
+                //			find link to parameters
+                //				fill parameters
                 for(var i=0;i<nodes.length;++i)
-                {
-                    
+                {                    
                     nodeChildren = nodes[i].children;
                     
-                    
-                    
-                    if(nodeChildren[0].nodeName != "value")    //asssume group link to commands
+                    if(nodeChildren[0].nodeName != "value")    //asssume this is group link to commands
                     {
                         for(var j=0;j<nodeChildren.length;++j)
                         {
                             if(nodeChildren[j].nodeName == "node")
                             {
-                                //found child node
-                                _commands.push({});
-                                
-                                _commands.type = nodeChildren[j].getAttribute("value");
-                                
-                                Debug.log(_commands.type);
-                                if(_commands.type == _COMMAND_TYPES.BEGIN_LABEL )
-                                {
-                                    
+                                //found child node -- command UID level                            	
+                            	commandChildren = nodeChildren[j].children;
+
+                                for(var k=0;k<commandChildren.length;++k)
+                                {   	
+                                    if(commandChildren[k].nodeName == "node")
+                                    {
+                                    	//found child node -- command field
+                                    	if(commandChildren[k].getAttribute("value") == "CommandType")
+                                    	{
+                                    		type = commandChildren[k].children[0].getAttribute("value");
+                                    		params = [];
+                                    	}
+                                    	else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
+                                    	{
+                                    		parameterChildren = commandChildren[k].children;
+
+                                            for(var l=0;l<parameterChildren.length;++l)
+                                            {   	
+                                                if(parameterChildren[l].nodeName == "node")
+                                                {
+                                                	//found child node -- parameter field
+                                                	// take as parameter until the comment field is reached
+                                                	
+                                                	if(parameterChildren[l].getAttribute("value") == "CommentDescription")
+                                                		break;
+                                                	
+                                                	Debug.log("parameter name = " + parameterChildren[l].getAttribute("value"));
+                                                	                                                	
+                                                	params.push(parameterChildren[l].children[0].getAttribute("value"));
+                                                	
+                                                	Debug.log("parameter value = " + params[params.length-1]);                                                	
+                                                }
+                                            }
+                                    	}
+                                    }
+
                                 }
-                                else
-                                {
-                                    Debug.log("Fatal error. Unknown commands", Debug.HIGH_PRIORITY);
-                                    return;
-                                }
-                                
-                                ++countCommands;
+
+                                //at this point, have command type and params
+                                console.log(type);	
+                                console.log(params); 
+                                addCommand(type,params);
                             }
                         }
                         
-                        Debug.log("countCommands = " + countCommands);
+                        Debug.log("countCommands = " + _commands.length);
                     }
                     
                     /*
@@ -1108,7 +1144,15 @@
 								function()
 								{
 							//only arrive here on success
-							saveModifiedTables(newRowUID);
+							
+							saveModifiedTables(									
+									"The new " +
+									_recordsAlias + " '" + 
+									newRowUID +
+									"' was successfully created!",
+
+									"There was an error while creating the " + _recordsAlias + " '" + 
+									newRowUID  + ".'");
 							
 								}); //end savePlanCommandSequence handler
 						
@@ -1126,7 +1170,8 @@
 		//=====================================================================================
 		//saveModifiedTables ~~
 		//	parameter newRowUID is just used for success/error messages
-		function saveModifiedTables(newRowUID)
+		//	e.g. actionWord = "the creation"
+		function saveModifiedTables(successMsg,failureMsg)
 		{
 			//proceed to save (quietly) tables, groups, aliases
 			ConfigurationAPI.saveModifiedTables(_modifiedTables,
@@ -1135,16 +1180,12 @@
 					{
 				if(!savedTables.length)
 				{
-					Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
-							newRowUID  + ".'",
+					Debug.log(failureMsg,
 							Debug.HIGH_PRIORITY);
 					return;					
 				}
 
-				Debug.log("The new " +
-						_recordsAlias + " '" + 
-						newRowUID +
-						"' was successfully created!", Debug.INFO_PRIORITY);
+				Debug.log(successMsg, Debug.INFO_PRIORITY);
 
 				_modifiedTables = undefined; //clear after save
 
@@ -1155,21 +1196,168 @@
 		} 	//end saveModifiedTables()
 		
 		//=====================================================================================
-		//deleteIterationPlan ~~
+		//deleteIterationPlan ~~		
 		function deleteIterationPlan()
 		{
-			Debug.log("deleteIterationPlan");
+			var uid = document.getElementById("planSelect").value;
+			uid = _planUIDs[uid];
+			Debug.log("deleteIterationPlan " + uid);
+			
+			//Steps:
+			//	delete plan
+			//	delete command sequence
+			
+
+			/////////////////////
+			//addSubsetRecords opposite is deleteSubsetRecords
+			ConfigurationAPI.deleteSubsetRecords(_ITERATE_BASE_PATH,uid,
+					/////////////////////
+					function(modifiedTables) //start deleteSubsetRecords handler
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while deleted the " + _recordsAlias + " '" + 
+							uid  + ".'",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+				
+				//delete command sequence
+				//	by saving empty sequence	
+				savePlanCommandSequence(uid,[],
+						function()
+						{
+					Debug.log("Done deleting command sequence.");
+
+					//only arrive here on success
+					saveModifiedTables(
+							"The " +
+							_recordsAlias + " '" + 
+							uid +
+							"' was successfully deleted!",
+							
+							"There was an error while deleting the " + _recordsAlias + " '" + 
+							uid  + ".'");
+					
+						});
+
+					}, //end deleteSubsetRecords handler
+					_modifiedTables);
+			
+			
+			
+			
+			
+			
 		}	//end deleteIterationPlan()
 
 		//=====================================================================================
 		//addCommand ~~
+		//	push to _commands object
 		function addCommand(type,params)
 		{
-			Debug.log("addCommand");
+			Debug.log("addCommand type = " + type);
+			
+			if(type == _COMMAND_TYPES.BEGIN_LABEL)
+			{
+				_commands.push({
+					"param": {
+						"Label":params[0]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
+			{
+				_commands.push({
+					"param": {},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_ALIAS)
+			{
+				_commands.push({
+					"param": {
+						"SystemAlias":params[0]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_GROUP)
+			{
+				_commands.push({
+					"param": {
+						"GroupName":params[0], 
+						"GroupKey":params[1]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.EXECUTE_FE_MACRO)
+			{
+				_commands.push({
+					"param": {
+						"LinkToTargetFrontEnds":params[0], 
+						"LinkToTargetFrontEndsGroupID":params[1],
+						"FEMacroName":params[2],
+						"LinkToFEMacroParameterGroup":params[3],
+						"LinkToFEMacroParameterGroupID":params[4]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.EXECUTE_MACRO)
+			{
+				_commands.push({
+					"param": {
+						"LinkToTargetFrontEnds":params[0], 
+						"LinkToTargetFrontEndsGroupID":params[1],
+						"MacroName":params[2],
+						"LinkToMacroParameterGroup":params[3],
+						"LinkToMacroParameterGroupID":params[4]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.MODIFY_ACTIVE_GROUP)
+			{
+				_commands.push({
+					"param": {
+						"DoTrackGroupChanges":params[0], 
+						"LinkToTargetFrontEnds":params[1],
+						"LinkToTargetFrontEndsGroupID":params[2],
+						"RelativePathToField":params[3],
+						"FieldStartValue":params[4],
+						"FieldIterationStepSize":params[5]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.REPEAT_LABEL)
+			{
+				_commands.push({
+					"param": {
+						"Label":params[0], 
+						"NumberOfRepetitions":params[1]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.RUN)
+			{
+				_commands.push({
+					"param": {
+						"WaitForAllFrontEndsRunningThread":params[0], 
+						"DurationInSeconds":params[1],
+						"ConfigurationDumpType":params[2]
+					},
+				});
+			}
+			else
+			{
+				Debug.log("Fatal error. Unknown command attempted!", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			_commands[_commands.length-1].type = type;
+			
 		}	//end addCommand()
 
 		//=====================================================================================
 		//deleteCommand ~~
+		//	TODO
 		function deleteCommand()
 		{
 			Debug.log("deleteCommand");
