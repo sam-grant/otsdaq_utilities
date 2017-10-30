@@ -2577,6 +2577,11 @@ try
 				{
 					__COUT__ << "Removing." << std::endl;
 
+					//remove command entry in plan table
+					if(planTable.cfgView_->removeRowFromGroup(row,groupIdCol,
+							groupName,true /*deleteRowIfNoGroup*/))
+						--row; //since row was deleted, go back!
+
 					//delete linked command
 					//	find linked UID in table (mapped by type)
 					cmdType = planTable.cfgView_->getDataView()[row][cmdTypeCol];
@@ -2589,10 +2594,6 @@ try
 							planTable.cfgView_->getDataView()[row][commandUidLink.second]);
 					commandTypeToCommandTableMap[cmdType].cfgView_->deleteRow(cmdRow);
 
-					//remove command entry in plan table
-					if(planTable.cfgView_->removeRowFromGroup(row,groupIdCol,
-							groupName,true /*deleteRowIfNoGroup*/))
-						--row; //since row was deleted, go back!
 
 					commandTypeToCommandTableMap[cmdType].modified_ = true;
 				}

@@ -10488,6 +10488,7 @@
 					{
 						Debug.log("Error try-catch: " + err);
 					}
+					
 					_editingCellEl.innerHTML = "";
 
 					if(_editingCellType.indexOf("ChildLink-") == 0)
@@ -10512,6 +10513,8 @@
 					str = "";
 					str += selVal;
 
+					_editingCellEl.innerHTML = "";
+					
 					if(_editingCellType.indexOf("ChildLink-") == 0)
 					{
 						let astr = "";
@@ -10571,6 +10574,7 @@
 				{
 					Debug.log("Error try-catch: " + err);
 				}
+				
 				_editingCellEl.innerHTML = "";
 
 				if(_editingCellType.indexOf("ChildLink-") == 0)

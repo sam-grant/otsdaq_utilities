@@ -503,6 +503,9 @@
                 localDrawIterationPlan();
                 return;
             }
+            else
+                localDrawIterationPlan();
+            	
             
             
             //::::::::::::::::::::::::::::::::::::
@@ -641,6 +644,9 @@
                 
                 el.innerHTML = ""; //clear
                 
+                if(!plan || plan == "")
+                	return;
+                 
                 var str = "";
                 
                 //Display Concept:
@@ -1198,57 +1204,73 @@
 		//=====================================================================================
 		//deleteIterationPlan ~~		
 		function deleteIterationPlan()
-		{
+		{	
 			var uid = document.getElementById("planSelect").value;
 			uid = _planUIDs[uid];
+			
 			Debug.log("deleteIterationPlan " + uid);
+
+			if(_targetPlan == uid)
+				_targetPlan = ""; //clear target plan if being deleted
 			
-			//Steps:
-			//	delete plan
-			//	delete command sequence
-			
+			DesktopContent.popUpVerification( 
+					"Are you sure you want to delete the iteration plan named '" +
+					uid, localHandleDeleteIterationPlan,
+					0,"#efeaea",0,"#770000");
+			return;
+						
 
 			/////////////////////
-			//addSubsetRecords opposite is deleteSubsetRecords
-			ConfigurationAPI.deleteSubsetRecords(_ITERATE_BASE_PATH,uid,
-					/////////////////////
-					function(modifiedTables) //start deleteSubsetRecords handler
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
+			//localHandleDeleteIterationPlan ~~
+			function localHandleDeleteIterationPlan()
+			{
 
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while deleted the " + _recordsAlias + " '" + 
-							uid  + ".'",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
+				//Steps:
+				//	delete plan
+				//	delete command sequence
 
-				_modifiedTables = modifiedTables;
-				
-				//delete command sequence
-				//	by saving empty sequence	
-				savePlanCommandSequence(uid,[],
-						function()
+				/////////////////////
+				//addSubsetRecords opposite is deleteSubsetRecords
+				ConfigurationAPI.deleteSubsetRecords(_ITERATE_BASE_PATH,uid,
+						/////////////////////
+						function(modifiedTables) //start deleteSubsetRecords handler
 						{
-					Debug.log("Done deleting command sequence.");
+					Debug.log("modifiedTables length " + modifiedTables.length);
 
-					//only arrive here on success
-					saveModifiedTables(
-							"The " +
-							_recordsAlias + " '" + 
-							uid +
-							"' was successfully deleted!",
-							
-							"There was an error while deleting the " + _recordsAlias + " '" + 
-							uid  + ".'");
-					
-						});
+					if(!modifiedTables.length)
+					{
+						Debug.log("There was an error while deleted the " + _recordsAlias + " '" + 
+								uid  + ".'",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
 
-					}, //end deleteSubsetRecords handler
-					_modifiedTables);
-			
-			
+					_modifiedTables = modifiedTables;
+
+					//delete command sequence
+					//	by saving empty sequence	
+					savePlanCommandSequence(uid,[],
+							function()
+							{
+						Debug.log("Done deleting command sequence.");
+
+						//only arrive here on success
+						saveModifiedTables(
+								"The " +
+								_recordsAlias + " '" + 
+								uid +
+								"' was successfully deleted!",
+
+								"There was an error while deleting the " + _recordsAlias + " '" + 
+								uid  + ".'");
+
+							});
+
+						}, //end deleteSubsetRecords handler
+						_modifiedTables);
+
+
+			} //end localHandleDeleteIterationPlan
 			
 			
 			
