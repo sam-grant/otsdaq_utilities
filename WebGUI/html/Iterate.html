@@ -192,6 +192,26 @@
 		//			-- Pause Iteration Plan
 		//			-- Stop/Reset Iteration Plan
 		//			-- Get Active Iteration Plan Status (status could be: inactive, running, paused)
+		
+		//	Gateway Server Iterator 
+		//		- Iterator to manage iterating -- separate thread
+		//		- Commands:
+		//			- stateMachineXgiHandler/PlayIterationPlan:
+		//				- if not running, launches thread (if all state machines are halted)
+		//					and starts playing iteration plan.
+		//			- stateMachineXgiHandler/PauseIterationPlan:
+		//				- if running, pauses iteration plan.
+		//			- stateMachineXgiHandler/HaltIterationPlan:
+		//				- if running, halts/resets iteration plan. Lose progress. Halts FSM.
+		//			- stateMachineXgiHandler/getIterationPlanStatus:
+		//				- returns status (status could be: inactive, running, paused)
+		//					and FSM state and isTransitioning,
+		//					and which iteration plan command.
+		//		
+		
+	
+	
+	
 		//
 		//	- Iteration Plan Configuration Tree
 		//		* Iterate
@@ -691,6 +711,20 @@
                 
                 el.innerHTML = str;
                 
+                //========================================
+                //hack top controls
+                
+                {
+                	let str = "";
+                	
+                	str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
+                	str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
+                	str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
+                	
+                	document.getElementById('topPane-header').innerHTML = str;
+                }
+                
+                
             } //end localDrawIterationPlan()
 			
 			
@@ -969,7 +1003,7 @@
 			
 			el = document.createElement("div");
 			str = "";
-			str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
+			str += "<a href='#' onclick='initIterateData()'>Refresh</a>";
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
 
@@ -1498,6 +1532,31 @@
 			drawIterationPlan(_planUIDs[sel.value|0]);
 			
 		}	//end handlePlanSelect()
+		
+		
+		//=====================================================================================
+		//startTargetIterationPlan ~~
+		function startTargetIterationPlan() 
+		{
+			Debug.log("startTargetIterationPlan " + _targetPlan);
+
+		}
+		
+		//=====================================================================================
+		//pauseTargetIterationPlan ~~
+		function pauseTargetIterationPlan() 
+		{
+			Debug.log("pauseTargetIterationPlan " + _targetPlan);
+
+		}
+		
+		//=====================================================================================
+		//haltTargetIterationPlan ~~
+		function haltTargetIterationPlan() 
+		{
+			Debug.log("haltTargetIterationPlan " + _targetPlan);
+
+		}
 		
 		</script>
 </head>
