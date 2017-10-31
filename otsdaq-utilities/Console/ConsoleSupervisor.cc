@@ -270,7 +270,7 @@ throw (xgi::exception::Exception)
 	//**** start LOGIN GATEWAY CODE ***//
 	{
 		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
+		bool checkLock = false;
 		bool getUser = (Command == "SaveUserPreferences") || (Command == "LoadUserPreferences");
 		bool requireLock = false;
 
@@ -281,7 +281,7 @@ throw (xgi::exception::Exception)
 				theSupervisorDescriptorInfo_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				CONSOLE_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
