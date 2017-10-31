@@ -10619,29 +10619,36 @@
 			if(_editingCellEl) //return old value, convert from text to html
 			{
 				var isTreeView = document.getElementById("treeView-ConfigGroupLink")?true:false;
-							
 								
-				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0 
-						 && treeEditingNodeType_ != "link-comment")
+				if(isTreeView)
 				{
-					//if canceling from link edit, show tooltip
-					tableLinkTooltip("We noticed you canceled your link edit.");
+					if(treeEditingNodeType_.indexOf("link") == 0 
+							&& treeEditingNodeType_ != "link-comment")
+					{
+						//if canceling from link edit, show tooltip
+						tableLinkTooltip("We noticed you canceled your link edit.");
+					}
+
+					if(treeEditingNodeType_ == "value-bool" ||
+							treeEditingNodeType_.indexOf("link") == 0 ||
+							treeEditingNodeType_ == "table-newGroupRow" || 
+							treeEditingNodeType_ == "table-newUIDRow") 
+					{
+						//take old value as HTML for bool values
+						_editingCellEl.innerHTML = _editingCellElOldValue;
+
+						//show again nav context menu
+						if(treeEditingNodeType_.indexOf("link") == 0)
+							document.getElementById("treeNode-LinkContextMenuTD-" + 
+									treeEditingNodeIdString_).style.display = "block";
+					}
+					else
+					{
+						_editingCellEl.innerHTML = "";
+						_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+					}
 				}
-				
-				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
-						treeEditingNodeType_.indexOf("link") == 0 ||
-						treeEditingNodeType_ == "table-newGroupRow" || 
-						treeEditingNodeType_ == "table-newUIDRow")) 
-				{
-					//take old value as HTML for bool values
-					_editingCellEl.innerHTML = _editingCellElOldValue;
-					
-					//show again nav context menu
-					if(treeEditingNodeType_.indexOf("link") == 0)
-						 document.getElementById("treeNode-LinkContextMenuTD-" + 
-								 treeEditingNodeIdString_).style.display = "block";
-				}
-				else
+				else //!isTreeView
 				{
 					_editingCellEl.innerHTML = "";
 					

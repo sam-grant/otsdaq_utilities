@@ -286,9 +286,9 @@
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
 		
 				//Plan Control:
-			//TODO -- start
-			//TODO -- stop
-			//TODO -- pause
+			//startTargetIterationPlan
+			//haltTargetIterationPlan
+			//pauseTargetIterationPlan
 			
 				//Helpers:
 			//saveModifiedTables(successMsg,failureMsg)        	
@@ -1540,6 +1540,17 @@
 		{
 			Debug.log("startTargetIterationPlan " + _targetPlan);
 
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"&StateMachine=iteratePlay" +
+					"&fsmWindowName=" + encodeURIComponent(_targetPlan), //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("startTargetIterationPlan handler ");
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
 		}
 		
 		//=====================================================================================
@@ -1548,6 +1559,16 @@
 		{
 			Debug.log("pauseTargetIterationPlan " + _targetPlan);
 
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"&StateMachine=iteratePause", //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("pauseTargetIterationPlan handler ");
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
 		}
 		
 		//=====================================================================================
@@ -1556,6 +1577,16 @@
 		{
 			Debug.log("haltTargetIterationPlan " + _targetPlan);
 
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"&StateMachine=iterateHalt", //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("haltTargetIterationPlan handler ");
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
 		}
 		
 		</script>

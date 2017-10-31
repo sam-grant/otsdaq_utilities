@@ -2604,13 +2604,13 @@ try
 		//Now save new commands
 
 
-		struct Command {
-			std::string type;
-			std::vector< std::pair<
-			std::string /*param name*/,
-			std::string /*param value*/> > params;
-		};
-		std::vector<Command> commands;
+//		struct Command {
+//			std::string type;
+//			std::vector< std::pair<
+//			std::string /*param name*/,
+//			std::string /*param value*/> > params;
+//		};
+		std::vector<IterateConfiguration::Command> commands;
 
 		//extract command sequence and add to table
 		//	into vector with type, and params
@@ -2635,7 +2635,7 @@ try
 							throw std::runtime_error(ss.str());
 						}
 						//create command object
-						commands.push_back(Command());
+						commands.push_back(IterateConfiguration::Command());
 
 						getline(g, paramValue, ','); ++i;
 						//__COUT__ << "paramValue " << paramValue << std::endl;
