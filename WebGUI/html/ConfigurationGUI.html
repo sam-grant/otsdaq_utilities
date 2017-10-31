@@ -13317,12 +13317,11 @@
 						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
 						isStatusType = false;
 						for(var i=0;i<boolTypes.length;++i)
-							if(boolTypes[i] == 
-									colType)
+							if(boolTypes[i] == colType)
 							{
 								isStatusType = true; break;
 							}
-						colTypes.push(isStatusType?"Bool":colDataType);
+						colTypes.push(isStatusType?"Bool":colType);
 					}
 				}
 				else						//table is currently normal view, type is at row 0
@@ -13333,12 +13332,11 @@
 						colType = firstRowEls[c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
 						isStatusType = false;
 						for(var i=0;i<boolTypes.length;++i)
-							if(boolTypes[i] == 
-									colType)
+							if(boolTypes[i] == colType)
 							{
 								isStatusType = true; break;
 							}
-						colTypes.push(isStatusType?"Bool":colDataType);
+						colTypes.push(isStatusType?"Bool":colType);
 					}
 				}		
 			}
