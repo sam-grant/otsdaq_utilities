@@ -3703,7 +3703,12 @@ try
 			cfgViewPtr->getDefaultRowValues();
 	//don't give author and time.. force default author, let JS fill time
 	for(unsigned int c = 0; c<defaultRowValues.size()-2; ++c)
+	{
+//		__COUT__ << "Default for c" << c << "=" <<
+//				cfgViewPtr->getColumnInfo(c).getName() << " is " <<
+//				defaultRowValues[c] << std::endl;
 		xmldoc.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
+	}
 
 	if(accumulatedErrors != "") //add accumulated errors to xmldoc
 	{

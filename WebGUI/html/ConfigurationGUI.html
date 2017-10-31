@@ -6803,7 +6803,7 @@
 			{
 				let controlString;  
 				
-				if(colType.indexOf("ChildLink") == 0)
+				if(colType.indexOf("ChildLink") == 0 && _editingCellElOldValue != "NO_LINK")
 				{
 					let backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
 							_version + "\\\");";
@@ -13507,7 +13507,8 @@
 					}
 					else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
 						str += "Row";
-					else if(r >= _CONFIG_DATA_ROW_OFFSET && colTypes[c].indexOf("ChildLink-") == 0)
+					else if(r >= _CONFIG_DATA_ROW_OFFSET && colTypes[c].indexOf("ChildLink-") == 0 && 
+							val != "NO_LINK")
 					{
 						//apply link 
 						str += "<a href='#'>"; //show link just for show ... goto is in Edit selectThisCell
