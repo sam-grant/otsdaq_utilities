@@ -2523,7 +2523,8 @@ try
 	//create table-edit struct for each iterate command type
 	std::map<std::string, TableEditStruct> commandTypeToCommandTableMap;
 	for(const auto& commandPair : IterateConfiguration::commandToTableMap_)
-		commandTypeToCommandTableMap.emplace(std::pair<std::string,TableEditStruct>(
+		if(commandPair.second != "") //skip tables with no parameters
+			commandTypeToCommandTableMap.emplace(std::pair<std::string,TableEditStruct>(
 				commandPair.first,
 				TableEditStruct(commandPair.second,cfgMgr)));
 
@@ -2672,50 +2673,10 @@ try
 					command.type << std::endl;
 			__COUT__ << "table " <<
 					IterateConfiguration::commandToTableMap_.at(command.type) << std::endl;
-			__COUT__ << "table " << commandTypeToCommandTableMap[command.type].configName_ << std::endl;
-
-			//at this point have config, tempVersion, and createdFlag
-
-			//create command parameter entry at command level
-			cmdRow = commandTypeToCommandTableMap[command.type].cfgView_->addRow(
-					author,command.type + "_COMMAND_");
-
-			//parameters are linked
-			//now set value of all parameters
-			//	find parameter column, and set value
-			for(auto& param:command.params)
-			{
-				__COUT__ << "\t param " <<
-						param.first << " : " <<
-						param.second << std::endl;
-
-				cmdCol = commandTypeToCommandTableMap[command.type].cfgView_->findCol(
-						param.first);
-
-				__COUT__ << "param col " << cmdCol << std::endl;
-
-				commandTypeToCommandTableMap[command.type].cfgView_->setURIEncodedValue(
-						param.second,cmdRow,cmdCol);
-			}
 
 			//create command entry at plan level
 			row = planTable.cfgView_->addRow(author,"planCommand");
 			planTable.cfgView_->addRowToGroup(row,groupIdCol,groupName);
-
-			//and link to created UID
-			planTable.cfgView_->setValueAsString(
-					commandTypeToCommandTableMap[command.type].configName_,
-					row,
-					commandUidLink.first);
-			planTable.cfgView_->setValueAsString(
-					commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
-					)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()],
-					row,
-					commandUidLink.second);
-
-			__COUT__ << "linked to uid = " <<
-					commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
-							)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()] << std::endl;
 
 			//set command type
 			planTable.cfgView_->setURIEncodedValue(
@@ -2729,7 +2690,53 @@ try
 					row,
 					planTable.cfgView_->getColStatus());
 
-			commandTypeToCommandTableMap[command.type].modified_ = true;
+			//create command specifics
+			if(commandTypeToCommandTableMap.find(command.type) !=
+					commandTypeToCommandTableMap.end()) //if table exists in map! (some commands may have no parameters)
+			{
+				__COUT__ << "table " << commandTypeToCommandTableMap[command.type].configName_ << std::endl;
+
+				//at this point have config, tempVersion, and createdFlag
+
+				//create command parameter entry at command level
+				cmdRow = commandTypeToCommandTableMap[command.type].cfgView_->addRow(
+						author,command.type + "_COMMAND_");
+
+				//parameters are linked
+				//now set value of all parameters
+				//	find parameter column, and set value
+				for(auto& param:command.params)
+				{
+					__COUT__ << "\t param " <<
+							param.first << " : " <<
+							param.second << std::endl;
+
+					cmdCol = commandTypeToCommandTableMap[command.type].cfgView_->findCol(
+							param.first);
+
+					__COUT__ << "param col " << cmdCol << std::endl;
+
+					commandTypeToCommandTableMap[command.type].cfgView_->setURIEncodedValue(
+							param.second,cmdRow,cmdCol);
+				}
+
+				//and link at plan level to created UID
+				planTable.cfgView_->setValueAsString(
+						commandTypeToCommandTableMap[command.type].configName_,
+						row,
+						commandUidLink.first);
+				planTable.cfgView_->setValueAsString(
+						commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
+						)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()],
+						row,
+						commandUidLink.second);
+
+				__COUT__ << "linked to uid = " <<
+						commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
+								)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()] << std::endl;
+
+				commandTypeToCommandTableMap[command.type].modified_ = true;
+			}
 
 		} //end command loop
 
