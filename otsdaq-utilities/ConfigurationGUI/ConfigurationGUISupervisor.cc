@@ -2603,12 +2603,6 @@ try
 		//Now save new commands
 
 
-//		struct Command {
-//			std::string type;
-//			std::vector< std::pair<
-//			std::string /*param name*/,
-//			std::string /*param value*/> > params;
-//		};
 		std::vector<IterateConfiguration::Command> commands;
 
 		//extract command sequence and add to table
@@ -2645,7 +2639,7 @@ try
 						getline(g, paramValue, ','); ++i;
 						//__COUT__ << "paramValue " << paramValue << std::endl;
 
-						commands.back().params.push_back(
+						commands.back().params.emplace(
 								std::pair<
 								std::string /*param name*/,
 								std::string /*param value*/> (

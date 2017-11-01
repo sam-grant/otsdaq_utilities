@@ -7770,6 +7770,7 @@
 				var affectedConfigGroups = [];
 				var affectedContextGroups = [];
 				var affectedBackboneGroups = [];
+				var affectedIterateGroups = [];
 				
 				// first organize and order by group type: config, context, backbone
 				for(var i=0;i<affectedGroupEls.length;++i)
@@ -7836,6 +7837,8 @@
 							affectedContextGroups.push(groupIndex);
 						else if(groupType == "Backbone")
 							affectedBackboneGroups.push(groupIndex);
+						else if(groupType == "Iterate")
+							affectedIterateGroups.push(groupIndex);
 						else
 						{	
 							Debug.log("Invalid Group Type determined '" + groupType +
@@ -7878,6 +7881,7 @@
 					//		var affectedConfigGroups = [];
 					//		var affectedContextGroups = [];
 					//		var affectedBackboneGroups = [];
+					//		var affectedIterateGroups = [];
 					
 					numberOfRequests = 0;		//re-use
 					numberOfReturns = 0;		//re-use
@@ -7896,7 +7900,8 @@
 					//		these arrays:
 					//		var affectedConfigGroups = [];
 					//		var affectedContextGroups = [];
-					//		var affectedBackboneGroups = [];					
+					//		var affectedBackboneGroups = [];
+					//		var affectedIterateGroups = [];					
 					function localSaveAndActivateGroup(orderedGroupListIndex)
 					{
 						//complete save and activate for group specified by 
@@ -7927,6 +7932,15 @@
 							if(orderedGroupListIndex - offsetIndex < 
 									affectedBackboneGroups.length)
 								i = affectedBackboneGroups[orderedGroupListIndex - offsetIndex]
+						}
+						
+						if(i == -1)
+						{
+							offsetIndex += affectedBackboneGroups.length;
+							
+							if(orderedGroupListIndex - offsetIndex < 
+									affectedIterateGroups.length)
+								i = affectedIterateGroups[orderedGroupListIndex - offsetIndex]
 						}
 						
 						Debug.log("affectedGroupIndex " + i);
