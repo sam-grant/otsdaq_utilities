@@ -5346,7 +5346,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument& xmldoc
 		//for each subconfiguration name
 		//get existing version keys
 
-		__COUT__ << "Name: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
+		//__COUT__ << "Name: " << it->first << " - #ofVersions: " << it->second.versions_.size() << std::endl;
 
 		//add system subconfiguration name
 		xmldoc.addTextElementToData("ConfigurationName", it->first);

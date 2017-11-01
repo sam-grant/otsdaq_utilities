@@ -153,6 +153,7 @@
 		//			- BEGIN_LABEL <label>
 		//			- REPEAT_LABEL <label> <number of times to repeat 0-to-N>
 		//				#note: must have a matching BEGIN_LABEL
+		//			- CHOOSE_STATE_MACHINE <fsm name>
 		//			- CONFIGURE_ALIAS <alias name>
 		//			- CONFIGURE_GROUP <group name> <group key>
 		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
@@ -223,8 +224,10 @@
 		
 		
 		var _topPane, _bottomPane;
+		var _updateTimer = 0;
+		var _UPDATE_TIMER_PERIOD = 1000; //ms
 		
-		var eventListenersCreated = false;
+		var _eventListenersCreated = false;
 		
 		//global vars for GET params
 		var _forceSavingModifiedGroups;// = Do not provide user with option to use the temporary group for modified groups
@@ -249,6 +252,7 @@
         
 		var _COMMAND_TYPES = {};
 		_COMMAND_TYPES.BEGIN_LABEL 				= "BEGIN_LABEL";
+		_COMMAND_TYPES.CHOOSE_FSM 				= "CHOOSE_FSM";
 		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_ACTIVE_GROUP";
 		_COMMAND_TYPES.CONFIGURE_ALIAS 			= "CONFIGURE_ALIAS";
 		_COMMAND_TYPES.CONFIGURE_GROUP 			= "CONFIGURE_GROUP";
@@ -270,7 +274,6 @@
 			//extractGETParameters()
 			//initIterateData()	
 			//getIterationPlans(responseHandler)
-			//updateIterateStatus()
 		
 			//createTopPaneContent()
 			//createBottomPaneContent()
@@ -297,6 +300,7 @@
             //drawIterationPlan(plan)
             //  localExtractTree(tree)
             //  localDrawIterationPlan()
+        	//updateIterateStatus()	
 		
 				//Input Handlers:
 			//handleMouseOver(type,id) 
@@ -373,7 +377,7 @@
 			
 			Debug.log("paint w,h=" + w + "," +h);
 
-			var TOP_H = 56;
+			var TOP_H = 85;//56;
 			var BORDER_SZ = 0;			
 			var MARGIN = 5;
 			
@@ -710,20 +714,7 @@
                 }
                 
                 el.innerHTML = str;
-                
-                //========================================
-                //hack top controls
-                
-                {
-                	let str = "";
-                	
-                	str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
-                	str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
-                	str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
-                	
-                	document.getElementById('topPane-header').innerHTML = str;
-                }
-                
+                              
                 
             } //end localDrawIterationPlan()
 			
@@ -761,6 +752,8 @@
 		//		for each filter MultiSelect (one for each grouping field), an array of filter values
 		function initIterateData() 
 		{
+			window.clearTimeout(_updateTimer);
+					
 			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
 			_planUIDs = []; //reset
 			_filterValsObj = {}; //reset
@@ -832,11 +825,13 @@
 			{
 				Debug.log("localCompleteInit -- Wrapping up init.");
 				paint();
-				if(!eventListenersCreated)
+				if(!_eventListenersCreated)
 				{
 					window.addEventListener("resize",paint);
-					eventListenersCreated = true; //prevent multiple event creation
-				}				
+					_eventListenersCreated = true; //prevent multiple event creation
+				}	
+				
+				updateIterateStatus();
 			}
 
 						
@@ -961,34 +956,7 @@
 				
 					});	//end getSubsetRecords handler	
 			
-		}	//end getIterationPlans()
-
-
-		//=====================================================================================
-		//updateIterateStatus ~~
-		function updateIterateStatus() 
-		{
-			Debug.log("updateIterateStatus");
-			
-			//get iterate status from Gateway Supervisor
-			//	status could be: inactive, running, paused
-			
-			//
-			//			DesktopContent.XMLHttpRequest("Request?RequestType=updateIterateStatus" 
-			//					, //end get data 
-			//					"", //end post data
-			//					function(req)
-			//					{
-			//				
-			//				var iterateStatus = DesktopContent.getXMLValue(req,"iterateStatus");
-			//				Debug.log("iterateStatus = " + iterateStatus);
-			//
-			//					}, //handler
-			//					0, //handler param
-			//					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-			//					true /*targetSupervisor*/);			
-			
-		} //end updateIterateStatus()
+		}	//end getIterationPlans()	
 		
 		//=====================================================================================
 		//createTopPaneContent ~~
@@ -1013,9 +981,6 @@
 			
 			el = document.createElement("div");
 			el.setAttribute("id", "topPane-header");
-			str = "Target Iteration Plan: None";			
-			
-			el.innerHTML = str;
 			_topPane.appendChild(el);			
 			
 			document.body.appendChild(_topPane);			
@@ -1551,7 +1516,7 @@
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
 					true /*targetSupervisor*/);
-		}
+		} //end startTargetIterationPlan
 		
 		//=====================================================================================
 		//pauseTargetIterationPlan ~~
@@ -1569,7 +1534,7 @@
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
 					true /*targetSupervisor*/);
-		}
+		} //end pauseTargetIterationPlan
 		
 		//=====================================================================================
 		//haltTargetIterationPlan ~~
@@ -1587,7 +1552,89 @@
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
 					true /*targetSupervisor*/);
-		}
+		} //end haltTargetIterationPlan
+
+		//=====================================================================================
+		//updateIterateStatus ~~
+		function updateIterateStatus() 
+		{
+			Debug.log("updateIterateStatus");
+
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"&StateMachine=getIterationPlanStatus", //end get data 
+					"", //end post data
+					function(req,ignoreParam,errStr) //start handler
+					{
+				
+				if(errStr)
+				{
+					Debug.log("getIterationPlanStatus ERROR handler ");
+					let str = "";
+					str += "Disconnected. Click Refresh to attempt to reconnect.";
+					document.getElementById('topPane-header').innerHTML = str;
+					return;
+				} //end error case handler
+				
+				Debug.log("getIterationPlanStatus handler ");
+				
+
+				var current_state 		= DesktopContent.getXMLValue(req,"current_state");
+				var in_transition 		= DesktopContent.getXMLValue(req,"in_transition");
+				var transition_progress = DesktopContent.getXMLValue(req,"transition_progress");
+				var time_in_state 		= DesktopContent.getXMLValue(req,"time_in_state");
+				
+				var command_duration 	= DesktopContent.getXMLValue(req,"current_command_duration");
+				var command_index		= DesktopContent.getXMLValue(req,"current_command_index");
+				var active_plan_status	= DesktopContent.getXMLValue(req,"active_plan_status");
+				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
+				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
+				var last_finished_plan	= DesktopContent.getXMLValue(req,"last_finished_plan");
+				
+				// "Running""Paused""Inactive"
+				//Debug.log("_targetPlan = " + _targetPlan);
+				//Debug.log("active_plan = " + active_plan);
+				//Debug.log("active_plan_status = " + active_plan_status);
+				
+				
+				//========================================
+				//top controls and status
+
+				{
+					let str = "";
+
+					str += "Target Iteration Plan: ";
+					if(active_plan_status == "Inactive")
+						str += _targetPlan;
+					else
+						str += active_plan;
+					str += " | ";
+					str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
+					str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
+					str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
+					
+					str += "<br>";
+					str += "| active_plan_status = " + active_plan_status;
+					str += "| current_command_index = " + command_index;
+					str += "| current_command_duration = " + command_duration;
+					str += "| current_state = " + current_state;
+					str += "| in_transition = " + in_transition;
+					str += "| transition_progress = " + transition_progress;
+					str += "| time_in_state = " + time_in_state;
+					str += "|";
+
+					document.getElementById('topPane-header').innerHTML = str;
+				}
+				
+				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
+				
+				
+					}, //end handler
+					0, //handler param
+					0,true,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+		} //end updateIterateStatus
+		
+		
 		
 		</script>
 </head>
