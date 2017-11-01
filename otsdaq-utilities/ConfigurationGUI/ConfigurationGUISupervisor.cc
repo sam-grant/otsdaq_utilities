@@ -1359,10 +1359,10 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 				//add row
 				unsigned int row = config->getViewP()->addRow(author);
 
-				//if "Status" exists, set it to true
+				//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 				try
 				{
-					unsigned int col = config->getViewP()->findCol("Status");
+					unsigned int col = config->getViewP()->getColStatus();
 					config->getViewP()->setURIEncodedValue("1",row,col);
 				}
 				catch(...) {} //if not, ignore
@@ -2351,7 +2351,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 			{
 				try //try to get Status child as boolean..
 				{	//if Status bool doesn't exist exception will be thrown
-					t.getNode("Status").getValue(returnNode);
+					t.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue(returnNode);
 				} catch(...) {}
 			}
 
@@ -2577,25 +2577,24 @@ try
 				{
 					__COUT__ << "Removing." << std::endl;
 
+					//delete linked command
+					//	find linked UID in table (mapped by type)
+					cmdType = planTable.cfgView_->getDataView()[row][cmdTypeCol];
+					if(commandTypeToCommandTableMap.find(cmdType) !=
+							commandTypeToCommandTableMap.end()) //skip if invalid command type
+					{
+						cmdRow = commandTypeToCommandTableMap[cmdType].cfgView_->findRow(
+								commandTypeToCommandTableMap[cmdType].cfgView_->getColUID(),
+								planTable.cfgView_->getDataView()[row][commandUidLink.second]);
+						commandTypeToCommandTableMap[cmdType].cfgView_->deleteRow(cmdRow);
+
+						commandTypeToCommandTableMap[cmdType].modified_ = true;
+					}
+
 					//remove command entry in plan table
 					if(planTable.cfgView_->removeRowFromGroup(row,groupIdCol,
 							groupName,true /*deleteRowIfNoGroup*/))
 						--row; //since row was deleted, go back!
-
-					//delete linked command
-					//	find linked UID in table (mapped by type)
-					cmdType = planTable.cfgView_->getDataView()[row][cmdTypeCol];
-					if(commandTypeToCommandTableMap.find(cmdType) ==
-							commandTypeToCommandTableMap.end())
-						continue; //skip if invalid command type
-
-					cmdRow = commandTypeToCommandTableMap[cmdType].cfgView_->findRow(
-							commandTypeToCommandTableMap[cmdType].cfgView_->getColUID(),
-							planTable.cfgView_->getDataView()[row][commandUidLink.second]);
-					commandTypeToCommandTableMap[cmdType].cfgView_->deleteRow(cmdRow);
-
-
-					commandTypeToCommandTableMap[cmdType].modified_ = true;
 				}
 			}
 		}
@@ -2729,6 +2728,12 @@ try
 					command.type,
 					row,
 					cmdTypeCol);
+
+			//set command status true
+			planTable.cfgView_->setValueAsString(
+					"1",
+					row,
+					planTable.cfgView_->getColStatus());
 
 			commandTypeToCommandTableMap[command.type].modified_ = true;
 
@@ -2952,11 +2957,11 @@ try
 			//add row
 			unsigned int row = cfgView->addRow(author);
 
-			//if "Status" exists, set it to true
+			//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 			try
 			{
-				col = cfgView->findCol("Status");
-				cfgView->setURIEncodedValue("1",row,col);
+				col = cfgView->getColStatus();
+				cfgView->setValueAsString("1",row,col);
 			}
 			catch(...) {} //if not, ignore
 
@@ -2992,11 +2997,11 @@ try
 			//set group id
 			cfgView->setURIEncodedValue(groupId,row,col);
 
-			//if "Status" exists, set it to true
+			//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 			try
 			{
-				col = cfgView->findCol("Status");
-				cfgView->setURIEncodedValue("1",row,col);
+				col = cfgView->getColStatus();
+				cfgView->setValueAsString("1",row,col);
 			}
 			catch(...) {} //if not, ignore
 
@@ -3287,9 +3292,6 @@ try
 						std::endl;
 				throw std::runtime_error(ss.str());
 			}
-
-
-
 		}
 
 		cfgView->init(); //verify new table (throws runtime_errors)

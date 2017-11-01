@@ -44,7 +44,7 @@ void VisualDataManager::start(std::string runNumber)
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
 		__COUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
-		if(buffer.second.getNode("Status").getValue<bool>())
+		if(buffer.second.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue<bool>())
 		{
 			std::vector<std::string> producers;
 			std::vector<std::string> consumers;
@@ -52,7 +52,7 @@ void VisualDataManager::start(std::string runNumber)
 			for(const auto& bufferConfiguration: bufferConfigurationMap)
 			{
 				__COUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
-				if(bufferConfiguration.second.getNode("Status").getValue<bool>()
+				if(bufferConfiguration.second.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
 				)
 				{
