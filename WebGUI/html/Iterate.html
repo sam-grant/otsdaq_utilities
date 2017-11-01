@@ -425,6 +425,8 @@
 			var el = document.getElementById("planSelector");
 			if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; } 
 			
+			var optionIndex = -1;
+			
 			str = "";
 
 			str += "<div id='planSelectDiv'>";
@@ -441,6 +443,9 @@
 					str += "<option value='" + i + "'>";
 					str += _planUIDs[i];	//can display however
 					str += "</option>";
+					
+					if(_planUIDs[i] == _targetPlan)
+						optionIndex = i;
 				}
 				str += "</select>";
 			}
@@ -469,10 +474,25 @@
 			el.innerHTML = str;
 			
 			//if no target plan and plans exist, load the first one
-			if(_targetPlan == "" && _planUIDs.length)	
-				drawIterationPlan(_planUIDs[0]);
+			if(_targetPlan == "")
+			{
+				if(_planUIDs.length)
+					drawIterationPlan(_planUIDs[0]);
+				else
+					drawIterationPlan();					
+			}
 			else
-				drawIterationPlan();
+			{
+				var sel = document.getElementById("planSelect");				
+
+				if(optionIndex >= 0)
+				{
+					sel.selectedIndex = optionIndex;
+					sel.focus();
+				}
+				
+				drawIterationPlan(_targetPlan);
+			}
 			
 		} //end updateIterationPlanContent()
 		
@@ -944,7 +964,7 @@
 						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
 						true /*targetSupervisor*/);
 			} //end localGetNamesOfFSMs()
-
+			localGetNamesOfFSMs(); 
 			
 			
 		}	//end initIterateData()
@@ -1196,6 +1216,8 @@
 								{
 							//only arrive here on success
 							
+							_targetPlan = newRowUID;														
+							
 							saveModifiedTables(									
 									"The new " +
 									_recordsAlias + " '" + 
@@ -1334,6 +1356,13 @@
 				_commands.push({
 					"param": {
 						"Label":params[0]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CHOOSE_FSM)
+			{
+				_commands.push({
+					"param": {
+						"NameOfStateMachine":params[0]},		
 				});
 			}
 			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
@@ -1604,7 +1633,7 @@
 		//updateIterateStatus ~~
 		function updateIterateStatus() 
 		{
-			Debug.log("updateIterateStatus");
+			//Debug.log("updateIterateStatus");
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
 					"&StateMachine=getIterationPlanStatus", //end get data 
@@ -1621,7 +1650,7 @@
 					return;
 				} //end error case handler
 				
-				Debug.log("getIterationPlanStatus handler ");
+				//Debug.log("getIterationPlanStatus handler ");
 				
 
 				var current_state 		= DesktopContent.getXMLValue(req,"current_state");
