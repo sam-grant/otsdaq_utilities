@@ -2081,7 +2081,9 @@
 				
 				var backLinkStrSplit = backLinkStr.split('"');
 				
-				if(backLinkStr.indexOf("setupTableViewMode") < 0 && 
+				//take a clue from backlink about associated group 
+				if(backLinkStr.indexOf("setupTableViewMode") < 0 && //attempt to identify a group source
+						backLinkStr.indexOf("setupSpecificConfig") < 0 && 
 						backLinkStrSplit.length > 3)
 				{
 					_associatedGroupName = backLinkStrSplit[1].split('\\')[0];
