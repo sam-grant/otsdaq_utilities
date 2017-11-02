@@ -1782,7 +1782,7 @@
 				
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + configName + "-currentVersionLink' " +
-						"href='" + replaceScreenJS + "'>";
+						"href='#' onclick='" + replaceScreenJS + "'>";
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
