@@ -353,6 +353,8 @@ else {
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
 					_keptFeedbackText = "Sorry, your session has expired. Try again.";
+				else if(req && document.getElementById('loginInput3').value != "")	
+					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
 				else if(req)
 					_keptFeedbackText = "Username/Password not correct.";
 				else

@@ -198,7 +198,7 @@
 				//updateAccount(i)
 				//deleteAccount(i)
 				//createNewAccount(event)
-				//reallyDelete()			//really delete the user accout
+				//reallyDelete(event)			//really delete the user accout
 				//lockToUsername(i, lock)
 				
 			/////////////////////////////////////////////////////////////////////////////////////////
@@ -563,17 +563,17 @@
 				
 				htmlStr += _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).<br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";
-				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex-1) + ")';return false;' onmouseup='event.cancelBubble=true;'>&nbsp;Prev </a>";				
+				htmlStr += "<a onmouseup='setAccountsPage("+ (_AccountsPageIndex-1) + ")';event.cancelBubble=true; return false;'>&nbsp;Prev </a>";				
 				
 				for(i=(_AccountsPageIndex-_AccountsPageNavWidth < 0)?0:(_AccountsPageIndex-_AccountsPageNavWidth);
 					i < _AccountsPageIndex+_AccountsPageNavWidth && i < numOfPages; ++i) 
 				{				
-					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a onmouseup='Javascript:setAccountsPage("+ i + ")';return false;' onmouseup='event.cancelBubble=true;'> " +
+					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a onmouseup='Javascript:setAccountsPage("+ i + ")';event.cancelBubble=true; return false;'> " +
 						(i==_AccountsPageIndex?"<b>":"") + (i+1) + (i==_AccountsPageIndex?"</b>":"") + " </a>";					
 				}
 				
 				htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';return false;' onmouseup='event.cancelBubble=true;'> Next&nbsp;</a>";
+				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';event.cancelBubble=true; return false;'> Next&nbsp;</a>";
 				htmlStr += "</div>";
 				
 				htmlStr += "<div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User</div>"; 
@@ -584,7 +584,7 @@
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //exclude NAC column, and place at end
 					htmlStr += "<td class='accountsHeaderFld'>" + 
-						"<a onmouseup='Javascript:sortAccountsBy("+ j + ")';return false;' onmouseup='event.cancelBubble=true;'" +
+						"<a onmouseup='sortAccountsBy("+ j + ")';event.cancelBubble=true; return false;'" +
 						" title='Sort by " + _accountFields[j] + "'>" + 
 						_accountFields[j] + "<a/></td>";
 				htmlStr += "<td class='accountsHeaderFld' title='Make Account Changes'>Update</td>" +
@@ -605,9 +605,9 @@
 						_accountsArray[2][_AccountsOrderArray[i]].getAttribute('value') + "' " +
 						"onkeydown='return handleAccountsInputKeyDown(event)'" +
 						"></td>";
-					htmlStr += "<td><a onmouseup='Javascript:updateAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" + 
+					htmlStr += "<td><a onmouseup='updateAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" + 
 						" title='Make Account Changes'>Update</a></td>";
-					htmlStr += "<td><a onmouseup='Javascript:deleteAccount("+ _AccountsOrderArray[i] + ")';return false;' onmouseup='event.cancelBubble=true;'" +
+					htmlStr += "<td><a onmouseup='deleteAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" +
 						" title='Delete Account'>X</a></td>";
 					htmlStr += "<td class='accountsNac' title='New Account Code'>"+
 						_accountsArray[3][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
@@ -621,9 +621,8 @@
 					else lockModeTmp = 2;
 
 					if(lockModeTmp != 2) //only output something if mode 0 or 1
-						htmlStr += "<a onmouseup='Javascript:lockToUsername("+ _AccountsOrderArray[i] + "," + 
-							lockModeTmp + ")';return false;' " +
-							"onmouseup='event.cancelBubble=true;' title='Lock ots to single user'>" +
+						htmlStr += "<a onmouseup='lockToUsername("+ _AccountsOrderArray[i] + "," + 
+							lockModeTmp + ")'; event.cancelBubble=true; return false;' title='Lock ots to single user'>" +
 							"<img src='/WebPath/images/dashboardImages/icon-Settings-" + 
 							(lockModeTmp?"Unl":"L") + "ock.png'></a>";
 					
@@ -915,7 +914,7 @@
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 				
 			}
-			function reallyDelete() {	
+			function reallyDelete(event) {	
 				if(event) event.cancelBubble=true;	
 				Debug.log("Settings Really Deleted! Delete Index: " + _theDeleteIndex);
 				

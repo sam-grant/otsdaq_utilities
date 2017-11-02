@@ -6640,46 +6640,52 @@
 					{			
 						if(!i)//check for arbitraryBool flag
 						{
+							let needToContinue = false;
+
 							if(_tableFixedChoiceData[c][i].indexOf("arbitraryBool=") == 0)
 							{
 								//found arbitraryBool flag								
 								allowFixedChoiceArbitraryEdit = _tableFixedChoiceData[c][i][
 											("arbitraryBool=").length] == "1"?true:false;
 								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
-								continue;
+								needToContinue = true;
 							}
 							else
 							{
 								//else no flag found, so treat as fixed choice option
 								++optionCount; //count as an option in dropdown
 							}
+							
+							//before the first option is added, add preamble and default
+							{
+								str += "<div style='" +
+										"white-space:nowrap;" +
+										"margin:-4px -2px -4px 1px;width:" + 						
+										(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
+										"px; height:" + (el.offsetHeight-8) + "px'>";
+
+								str += "<select  onkeydown='keyHandler(event)' " +
+										"id='fixedChoice-editSelectBox' " +
+										"style='" + 
+										"float:left;" +
+										//"margin:-4px -2px -4px 1px;" +
+										"width:" + 
+										(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
+										"'>";
+
+								//default value is assumed in list
+								str += "<option>";
+								str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
+								str += "</option>";
+							}
+							
+							if(needToContinue) continue;
 						}		
 						else
 							++optionCount; //count as an option in dropdown
 						
 						
-						if(optionCount == 1) //before the first option is added, add preamble and default
-						{
-							str += "<div style='" +
-									"white-space:nowrap;" +
-									"margin:-4px -2px -4px 1px;width:" + 						
-									(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
-									"px; height:" + (el.offsetHeight-8) + "px'>";
-
-							str += "<select  onkeydown='keyHandler(event)' " +
-									"id='fixedChoice-editSelectBox' " +
-									"style='" + 
-									"float:left;" +
-									//"margin:-4px -2px -4px 1px;" +
-									"width:" + 
-									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
-									"'>";
-
-							//default value is assumed in list
-							str += "<option>";
-							str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
-							str += "</option>";
-						}
+						
 						
 						
 						
@@ -6805,7 +6811,7 @@
 			{
 				let controlString;  
 				
-				if(colType.indexOf("ChildLink") == 0 && _editingCellElOldValue != "NO_LINK")
+				if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
 				{
 					let backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
 							_version + "\\\");";

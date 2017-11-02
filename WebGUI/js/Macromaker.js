@@ -130,7 +130,10 @@
 						
 		var w = window.innerWidth;
 		var h = window.innerHeight;
-		if(w < 550) return;
+		if(w < 550){
+			w = 550;
+		}
+		
 		//square [x,y] [w,h]
 		var _MARGIN = 5;
 		

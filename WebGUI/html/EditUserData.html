@@ -150,15 +150,25 @@
 		
 			for(var index = 0; index < (selection_.length); index++)
 			{
-				var div = document.getElementById(selection_[index]);
-				if(index < (selection_.length-1)){
-					div.style.boxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-					div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-					div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-				}else{
-					div.style.boxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
-					div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
-					div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";	
+				try
+				{
+					var div = document.getElementById(selection_[index]);
+					if(index < (selection_.length-1))
+					{
+						div.style.boxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+						div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+						div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+					}
+					else
+					{
+						div.style.boxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
+						div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
+						div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";	
+					}
+				}
+				catch(e)
+				{
+					//ignore
 				}
 			}
 		
@@ -244,7 +254,7 @@
 		
 		var editSecurityHandler = function(req){
 		
-			if(!req || !req.responseText.length)
+			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
 			{
 				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
 				selectedSecurityChoice_ = "";
@@ -309,11 +319,10 @@
 	<div class="glow" id="ResetAllUserData">
 	<a href="#"  class="overlay round"></a>
 	<div class="details">
-		<span class="heading">Reset User Data</span>
+		<span class="heading">Reset<br>User Data</span>
 		<hr />
 		<p>Click this button to reset ALL user data back to 'factory settings'
 		(i.e. delete accounts, passwords, preferences, logbook entries, etc.). This is irreversible.
-		<br>
 		<br>
   		<b>Make sure this is really what you want to do!!</b></p>		
 		<a href="#" onclick="confirm()" class="button">Select</a>		

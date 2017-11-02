@@ -10,6 +10,7 @@
 <style>
 	a {
 		color:white;
+		cursor:pointer;
 	}
 </style>
 </head>
@@ -30,7 +31,7 @@
   		<hr />
   		<p>Users do not have to provide any authentication to access the OTS software and server.
 		<br><br><b>Anybody with the address of the server can access it.</b></p>		
-  		<a href="#" onclick="setSecurity('NoSecurity')" class="button">Select</a>
+  		<a onclick="setSecurity('NoSecurity')" class="button">Select</a>
   	</div>
   	
   	<div class="bg"></div>
@@ -52,7 +53,7 @@
   		<span class="heading">Digest Access Authentication</span>
   		<hr />
   		<p>This method of security uses a traditional username and password, but hashes them prior to sending them over the network. Read more <a href="https://en.wikipedia.org/wiki/Digest_access_authentication" target="_blank">here</a>.</p>		
-  		<a href="#" onclick="setSecurity('DigestAccessAuthentication')" class="button">Select</a>		
+  		<a onclick="setSecurity('DigestAccessAuthentication')" class="button">Select</a>		
   	</div>
   	<div class="bg"></div>	<div class="base">
   		<img src="/WebPath/images/windowContentImages/editSecurity-Digest.png" alt="" />
