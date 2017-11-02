@@ -391,7 +391,7 @@ throw (xgi::exception::Exception)
 		__COUT__ << "Selection exists!" << std::endl;
 		__COUT__ <<  submittedSecurity << std::endl;
 
-		if(submittedSecurity == "ResetSecurityUserData")
+		if(submittedSecurity == "ResetAllUserData")
 		{
 			WebUsers::deleteUserData();
 		}
