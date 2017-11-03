@@ -846,7 +846,7 @@
 			//show active backbone and config
 			function localShowActiveBackboneAndConfig()
 			{
-				var activeConfigHeaders = ["Context","Backbone","Iterate","Configuration"];
+				var activeConfigHeaders = ["Context","Backbone","Iterate Group","Configuration"];
 				
 				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
@@ -4179,7 +4179,7 @@
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 									  
-			var activeConfigHeaders = ["Context","Backbone","Iterate","Configuration"];
+			var activeConfigHeaders = ["Context","Backbone","Iterate Group","Configuration"];
 			Debug.log("activeConfigGroups: " + _activeConfigGroups);
 			
 			var oldStr = document.getElementById("activeConfig").innerHTML;
@@ -11897,6 +11897,36 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 			
+			//clean up [[ ]] from bitmap
+			// may only be necessary for backwards compatibility?
+			{
+				let x = 0;
+				let y = 0;
+				let c = 0;
+				let tmpStr = "";
+				for(let i=0;i<_tableUploadStr.length;++i)
+				{
+					if(_tableUploadStr[i] == '[')
+						++c; //increase number of closing brackets necessary 
+					else if(_tableUploadStr[i] == ']')
+						--c; //decrease number of closing brackets necessary 
+					
+					if(c) // if looking for a closing bracket.. block \n and ,
+					{
+						if(_tableUploadStr[i] == '\n')
+							tmpStr += "NNNEWLINNE";
+						else if(_tableUploadStr[i] == ',')
+							tmpStr += "CCCOMMACCC";
+						else
+							tmpStr += _tableUploadStr[i];
+					}
+					else
+						tmpStr += _tableUploadStr[i];
+				}
+				console.log(tmpStr);
+				_tableUploadStr = tmpStr;
+			}
+			
 			var srcRows = _tableUploadStr.split('\n');
 			var src = []; //src = [r][c]
 			for(var i=0;i<srcRows.length;++i)
@@ -11924,7 +11954,7 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c]);
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -11936,7 +11966,7 @@
 						for(var c=0;c<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c]);
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -12033,6 +12063,8 @@
 			//on succes remove popup
 			el = document.getElementById("popUpDialog"); 
 			if(el) el.parentNode.removeChild(el);	
+			
+			versionHasChanged();
 		}
 		
 		//popUpUploadCSVTableForm ~~
@@ -13757,6 +13789,7 @@
 			else
 			{
 				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
+				tel.parentNode.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)+50) + "px"; //div may need to expand to accomodate pencil is display				
 				sel.style.display = "none";
 				
 				if(tel.value == "") //fill with oldvalue for user convenience, if blank
