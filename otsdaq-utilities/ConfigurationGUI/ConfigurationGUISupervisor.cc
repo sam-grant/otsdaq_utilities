@@ -1553,8 +1553,8 @@ void ConfigurationGUISupervisor::handleFillDeleteTreeNodeRecordsXML(HttpXmlDocum
 //	configGroupName (full name with key)
 //	starting node path
 //	modifiedTables := CSV of table/version pairs
-//	recordList := CSV list of records for which to lookup values for fields
-//	fieldList := CSV of relative-to-record-path to fields to write
+//	recordList := CSV list of records for which to write values for fields
+//	fieldList := CSV of relative-to-record-path to fields to write to each record
 //	valueList := CSV of values corresponding to fields
 //
 void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocument& xmldoc,
@@ -1632,16 +1632,15 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 			{
 				recordUID = ConfigurationView::decodeURIComponent(recordUID);
 
-				__COUT__ << "recordUID " <<
-						recordUID << std::endl;
+				//__COUT__ << "recordUID " <<	recordUID << std::endl;
 
 				DOMElement* parentEl = xmldoc.addTextElementToData("fieldValues", recordUID);
 
 				//for each field, set value
 				for(i=0;i<fieldPaths.size();++i)
 				{
-					__COUT__ << "fieldPath " << fieldPaths[i] << std::endl;
-					__COUT__ << "fieldValue " << fieldValues[i] << std::endl;
+					//__COUT__ << "fieldPath " << fieldPaths[i] << std::endl;
+					//__COUT__ << "fieldValue " << fieldValues[i] << std::endl;
 
 					ConfigurationTree targetNode =
 							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPaths[i]);
@@ -1655,18 +1654,18 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 					//__COUT__ << "Active version is " << config->getViewVersion() << std::endl;
 
 					//mimic handleSaveTreeNodeEditXML L 1750
-//					Actually call it! ..
-//					with a modifier?
-//					or
-//					handleSaveTreeNodeEditXML(xmldoc,
-//							cfgMgr,
-//							targetNode.getConfigurationName(),
-//							targetNode.getConfigurationVersion(),
-//							"value",
-//							targetNode.getUIDAsString(),
-//							targetNode.getValueName(), //col name
-//							fieldValues[i]
-//							);
+					//					Actually call it! ..
+					//					with a modifier?
+					//					or
+					//					handleSaveTreeNodeEditXML(xmldoc,
+					//							cfgMgr,
+					//							targetNode.getConfigurationName(),
+					//							targetNode.getConfigurationVersion(),
+					//							"value",
+					//							targetNode.getUIDAsString(),
+					//							targetNode.getValueName(), //col name
+					//							fieldValues[i]
+					//							);
 
 					//or
 					// 	(because problem is this would create a new temporary version each time)
@@ -1693,9 +1692,9 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 						__COUT__ << "Created temporary version " <<
 								config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 					}
-					else //else table is already temporary version
-						__COUT__ << "Using temporary version " <<
-						config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
+					//else //else table is already temporary version
+					//	__COUT__ << "Using temporary version " <<
+					//	config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 
 					//copy "value" type edit from handleSaveTreeNodeEditXML() functionality
 					config->getViewP()->setURIEncodedValue(

@@ -4140,29 +4140,38 @@
 			var name,key; //only filled in if withWarningsStr != ""
 			if(displayErrors)
 			{
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
+				try
 				{
-					Debug.log(err,Debug.HIGH_PRIORITY);				
-					
-					Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
-
-					//try to find group name and key
-					//	if found, show activate with warnings button
-					var i = err.indexOf("'")+1;//("activating group '") + ("activating group '").length;
-					name = err.substr(i,err.indexOf("'",i)-i).split("(");
-					if(name.length == 2)
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
 					{
-						key = name[1].split(")")[0] | 0; //force integer
-						name = name[0];					
-												
-						//add ignore warnings Activate link
-						withWarningsStr += " <a href='#' onclick='activateSystemConfig(\"" + 
-								name +
-								"\",\"" + key + "\",1); return false;'>"; //ignore warnings
-						withWarningsStr += "Activate " + 
-								name + "(" + key + ") w/warnings ignored</a>";
+						Debug.log(err,Debug.HIGH_PRIORITY);				
+						
+						Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
+	
+						//try to find group name and key
+						//	if found, show activate with warnings button
+						var i = err.indexOf("'")+1;//("activating group '") + ("activating group '").length;
+						name = err.substr(i,err.indexOf("'",i)-i).split("(");
+						if(name.length == 2)
+						{
+							key = name[1].split(")")[0] | 0; //force integer
+							name = name[0];					
+													
+							//add ignore warnings Activate link
+							withWarningsStr += " <a href='#' onclick='activateSystemConfig(\"" + 
+									name +
+									"\",\"" + key + "\",1); return false;'>"; //ignore warnings
+							withWarningsStr += "Activate " + 
+									name + "(" + key + ") w/warnings ignored</a>";
+						}
 					}
+				}
+				catch(e)
+				{
+					Debug.log("Missing request response. " +
+							"Something is very wrong. Did the server crash?",Debug.HIGH_PRIORITY);
+					return;
 				}
 			}
 			

@@ -144,7 +144,7 @@ Desktop.createDesktop = function(security) {
 	var _windows = new Array(); //windows are initialized to empty, array represents z-depth also
 	var _desktopElement;
     var _dashboard, _icons, _windowZmailbox, _mouseOverXmailbox, _mouseOverYmailbox;
-    var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox, _openWindowMailbox;
+    var _needToLoginMailbox, _updateTimeMailbox, _updateSettingsMailbox, _settingsLayoutMailbox, _openWindowMailbox, _blockSystemCheckMailbox;
     var _windowColorPostbox;
     var _MAILBOX_TIMER_PERIOD = 500; //timer period for checking mailbox and system messages: 500 ms
     var _sysMsgId = 0; //running counter to identify system message pop-ups
@@ -376,7 +376,14 @@ Desktop.createDesktop = function(security) {
 	    ++_sysMsgCounter;
 		if(_sysMsgCounter == _SYS_MSG_MAX_COUNT)
 		{  		
-			Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
+			//windows can request a blackout, to avoid logging out 
+			if(_blockSystemCheckMailbox.innerHTML == "1")
+			{
+				Debug.log("System blackout (likely rebooting)...");
+				_sysMsgCounter = 0; // reset since no going to handler
+			}
+			else
+				Desktop.XMLHttpRequest("Request?RequestType=getSystemMessages","",_handleSystemMessages);
 		}
 	}
 	
@@ -749,6 +756,8 @@ Desktop.createDesktop = function(security) {
 	this.resetDesktop = function(permissions) {
         
 		_needToLoginMailbox.innerHTML = ""; //reset mailbox
+		_blockSystemCheckMailbox.innerHTML = ""; //reset mailbox
+		_sysMsgCounter = 0; //reset system message counter
 		
 		if(permissions !== undefined) //update icons based on permissions		
 			Desktop.desktop.icons.resetWithPermissions(permissions);
@@ -930,7 +939,14 @@ Desktop.createDesktop = function(security) {
     _needToLoginMailbox = document.createElement("div");
     _needToLoginMailbox.setAttribute("id", "DesktopContent-needToLoginMailbox");
     _needToLoginMailbox.style.display = "none";
-    _desktopElement.appendChild(_needToLoginMailbox);   
+    _desktopElement.appendChild(_needToLoginMailbox); 
+
+    _blockSystemCheckMailbox = document.createElement("div");
+    _blockSystemCheckMailbox.setAttribute("id", "DesktopContent-blockSystemCheckMailbox");
+    _blockSystemCheckMailbox.style.display = "none";
+    _desktopElement.appendChild(_blockSystemCheckMailbox); 
+    
+    
     
     //create mailbox for opening windows from Desktop Windows    
     _openWindowMailbox = document.createElement("div");

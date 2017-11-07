@@ -428,12 +428,15 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	if(fieldObjArr.length && (typeof fieldObjArr[0] === "string"))
 	{
 		//assume fieldObjArr is a user generated array and not URI encoded
-		
-		for(var i=0;i<fieldObjArr.length;++i)
-		{
-			if(i) fieldListStr += ",";
-			fieldListStr += encodeURIComponent(fieldObjArr[i]);
-		}
+
+		if(Array.isArray(fieldObjArr))
+			for(var i=0;i<fieldObjArr.length;++i)
+			{
+				if(i) fieldListStr += ",";
+				fieldListStr += encodeURIComponent(fieldObjArr[i]);
+			}
+		else
+			fieldListStr = encodeURIComponent(fieldObjArr);
 	}
 	else		
 	{
@@ -614,11 +617,14 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	{
 		//assume fieldObjArr is a user generated array and not URI encoded
 		
-		for(var i=0;i<fieldObjArr.length;++i)
-		{
-			if(i) fieldListStr += ",";
-			fieldListStr += encodeURIComponent(fieldObjArr[i]);
-		}
+		if(Array.isArray(fieldObjArr))
+			for(var i=0;i<fieldObjArr.length;++i)
+			{
+				if(i) fieldListStr += ",";
+				fieldListStr += encodeURIComponent(fieldObjArr[i]);
+			}
+		else
+			fieldListStr = encodeURIComponent(fieldObjArr);
 	}
 	else		
 	{
@@ -632,12 +638,17 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		}
 	}
 	
+	
 	var valueListStr = "";
-	for(var i=0;i<valueArr.length;++i)
-	{
-		if(i) valueListStr += ",";
-		valueListStr += encodeURIComponent(valueArr[i]);
-	}
+	if(Array.isArray(valueArr))
+		for(var i=0;i<valueArr.length;++i)
+		{
+			if(i) valueListStr += ",";
+			valueListStr += encodeURIComponent(valueArr[i]);
+		}
+	else //handle single record case
+		valueListStr = encodeURIComponent(valueArr);
+
 	
 	var recordListStr = "";
 	if(Array.isArray(recordArr))
@@ -1685,7 +1696,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 									//modify setAliasCheckboxes as unchecked if no default alias can be found
 									setAliasCheckboxes[i].checked = (groupOptionIndex[i][0] >= 0?1:0);
 									
-									affectedGroupAliases.push(groupOptionIndex[i][0] >= 0?alias:"");
+									affectedGroupAliases.push(groupOptionIndex[i][0] >= 0?
+											DesktopContent.getXMLValue(aliases[groupOptionIndex[i][0]]):"");
 								} //end affected groups loop, choosing alias match
 								
 

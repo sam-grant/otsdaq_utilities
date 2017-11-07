@@ -1,5 +1,7 @@
 
-
+		#clearDiv {
+			clear: both;
+		}
 		
 		#ConfigurationAPI-popUpDialog {
 			position: absolute;

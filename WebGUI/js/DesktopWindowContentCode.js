@@ -147,6 +147,7 @@ DesktopContent._cookieCodeMailbox = 0;
 DesktopContent._updateTimeMailbox = 0;
 DesktopContent._needToLoginMailbox = 0;
 DesktopContent._openWindowMailbox = 0;
+DesktopContent._blockSystemCheckMailbox = 0;
 
 DesktopContent._lastCookieCode = 0;
 DesktopContent._lastCookieTime = 0;
@@ -189,7 +190,8 @@ DesktopContent.init = function() {
 	DesktopContent._updateTimeMailbox     = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateTimeMailbox");
 	DesktopContent._needToLoginMailbox    = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-needToLoginMailbox");
 	DesktopContent._openWindowMailbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-openWindowMailbox");
-
+	DesktopContent._blockSystemCheckMailbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-blockSystemCheckMailbox");
+	
 	DesktopContent._windowColorPostbox	  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-windowColorPostbox");
 	DesktopContent._dashboardColorPostbox = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-dashboardColorPostbox");
 	
