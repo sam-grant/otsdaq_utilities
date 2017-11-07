@@ -543,7 +543,9 @@ else {
 				Debug.log("UUID: " + _uid)
 			}
 			
-         	_killLogoutInfiniteLoop = true; //prevent infinite logout requests, on server failure
+         	_killLogoutInfiniteLoop = 
+         			document.getElementById("Desktop-loginContent")?
+         					false:true; //prevent infinite logout requests, on server failure
 		}
 		
 		//getCookieCode --

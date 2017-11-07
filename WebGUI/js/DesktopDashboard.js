@@ -403,7 +403,9 @@ else {
 			if(serverAlert) Debug.log("Message from Server: " + serverAlert, Debug.HIGH_PRIORITY);
 
         	Desktop.desktop.dashboard.displayUserLock(
-        			Desktop.getXMLValue(req,"username_with_lock"));
+        			Desktop.getXMLValue(req,"username_with_lock"));        	
+
+        	Desktop.desktop.resetDesktop(); //soft reset attempt
         }
         
 
