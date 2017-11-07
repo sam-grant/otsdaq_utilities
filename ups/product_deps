@@ -20,7 +20,7 @@ fcldir      -
 product		 version	optional
 otsdaq              v1_01_03
 xdaq                -
-artdaq_mfextensions v1_01_08   	 -        optional
+artdaq_mfextensions v1_01_12   	 -        optional
 cetbuildtools       v5_08_01     -        only_for_build
 end_product_list
 
