@@ -336,7 +336,10 @@ else {
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie					
-				_applyUserPreferences(req);
+                _applyUserPreferences(req);
+
+                // Set user name if logged in using cert
+                if (_user == "" || _user === null && Desktop.getXMLValue(req, "pref_username")) _user = Desktop.getXMLValue(req, "UserName");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
 				if(activeSessionCount && _loginDiv) //only if the login div exists
@@ -613,7 +616,35 @@ else {
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
        			+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),_handleLoginAttempt);        		
 		}
-			
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        this.attemptLoginWithCert = function () {
+            Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
+
+            var email = getParameterByName("httpsUser");
+            
+            document.getElementById('loginFeedbackDiv').innerHTML = ""; //clear feedback text
+            document.getElementById('loginFeedbackDiv').style.color = ""; //reset color to default inherited style
+            
+            _user = x[0]; //set local user		
+
+            //if remember me checked, refresh cookie.. else delete whatever is there
+            if (document.getElementById('loginInputRememberMe').checked) _saveUsernameCookie();
+            else _deleteUsernameCookie();
+
+            Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid +
+                + "&ju=" + _jumble(email, _sessionId), _handleLoginAttempt);
+        }
+
 		//_applyUserPreferences
 		//	apply user preferences based on req if provided
 		//		window color should always have alpha of 0.9
