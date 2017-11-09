@@ -308,7 +308,8 @@ else {
 			if(_sessionId.length != _DEFAULT_SESSION_STRING_LEN) return; //if no session id, fail			
 	
 			var code = _getCookie(_cookieCodeStr);
-			_user = _getCookie(_cookieUserStr);
+            _user = _getCookie(_cookieUserStr);
+            
 			if ((code != null && code != "") &&
 				(_user != null && _user != "")) {
 				//if cookie found, submit cookieCode and jumbled user to server to check if valid					
@@ -336,7 +337,10 @@ else {
 			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
 				Debug.log("Login Successful",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie					
-				_applyUserPreferences(req);
+                _applyUserPreferences(req);
+
+                // Set user name if logged in using cert
+                if (_user == "" || _user === null && Desktop.getXMLValue(req, "pref_username")) _user = Desktop.getXMLValue(req, "UserName");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
 				if(activeSessionCount && _loginDiv) //only if the login div exists
@@ -615,7 +619,23 @@ else {
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
        			+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),_handleLoginAttempt);        		
 		}
-			
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        this.attemptLoginWithCert = function () {
+            Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
+            
+            Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid, _handleLoginAttempt);
+        }
+
 		//_applyUserPreferences
 		//	apply user preferences based on req if provided
 		//		window color should always have alpha of 0.9
@@ -692,7 +712,8 @@ else {
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
 			//else //no login prompt at all
 			
-			Debug.log("UUID: " + _uid);
+            Debug.log("UUID: " + _uid);
+            this.attemptLoginWithCert();
 		}
 		
 		this.setupLogin();
