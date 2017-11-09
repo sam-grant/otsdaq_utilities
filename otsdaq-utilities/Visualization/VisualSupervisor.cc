@@ -199,7 +199,7 @@ throw (xgi::exception::Exception)
 	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
 	{
 		bool automaticCommand = Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
+		bool checkLock = false;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
 

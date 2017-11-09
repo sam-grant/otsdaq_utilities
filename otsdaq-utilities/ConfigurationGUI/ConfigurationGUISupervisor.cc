@@ -6,6 +6,8 @@
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 
+#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h" //for context relaunch
+
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
@@ -225,51 +227,113 @@ throw (xgi::exception::Exception)
 		__COUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
 	}
-	else if(Command == "launchOTS")
+	else if(Command == "launchOTS" || Command == "launchWiz" || Command == "flattenToSystemAliases")
 	{
-		__COUT_WARN__ << "launchOTS command received! Launching... " << std::endl;
+		//NOTE: similar to Supervisor version but does not keep active sessions
+		__COUT_WARN__ << Command << " command received! " << std::endl;
+		__MOUT_WARN__ << Command << " command received! " << std::endl;
 
-		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
-				"/StartOTS_action.cmd").c_str(),"w");
-		if(fp)
-		{
-			fprintf(fp,"LAUNCH_OTS");
-			fclose(fp);
-		}
-		else
-			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
-					"/StartOTS_action.cmd") << std::endl;
-	}
-	else if(Command == "launchWiz")
-	{
-		__COUT_WARN__ << "launchWiz command received! Launching... " << std::endl;
+		//now launch
+		__COUT_INFO__ << "Launching... " << std::endl;
 
-		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
-				"/StartOTS_action.cmd").c_str(),"w");
-		if(fp)
+		__COUT__ << "Extracting target context hostnames... " << std::endl;
+		std::vector<std::string> hostnames;
+		try
 		{
-			fprintf(fp,"LAUNCH_WIZ");
-			fclose(fp);
-		}
-		else
-			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
-					"/StartOTS_action.cmd") << std::endl;
-	}
-	else if(Command == "flattenToSystemAliases")
-	{
-		__COUT_WARN__ << "flattenToSystemAliases command received! Launching... " << std::endl;
+			cfgMgr->init(); //completely reset to re-align with any changes
 
-		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
-				"/StartOTS_action.cmd").c_str(),"w");
-		if(fp)
-		{
-			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
-			fclose(fp);
+			const XDAQContextConfiguration* contextConfiguration = cfgMgr->__GET_CONFIG__(XDAQContextConfiguration);
+
+			auto contexts = contextConfiguration->getContexts();
+			unsigned int i,j;
+			for(const auto& context: contexts)
+			{
+				if(!context.status_) continue;
+
+				//find last slash
+				j=0; //default to whole string
+				for(i=0;i<context.address_.size();++i)
+					if(context.address_[i] == '/')
+						j = i+1;
+				hostnames.push_back(context.address_.substr(j));
+				__COUT__ << "hostname = " << hostnames.back() << std::endl;
+			}
 		}
-		else
-			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
-					"/StartOTS_action.cmd") << std::endl;
+		catch(...)
+		{
+			__SS__ << "\nTransition to Configuring interrupted! " <<
+					"The Configuration Manager could not be initialized." << std::endl;
+
+			__COUT_ERR__ << "\n" << ss.str();
+			return;
+		}
+
+		for(const auto& hostname: hostnames)
+		{
+			std::string fn = (std::string(getenv("SERVICE_DATA_PATH")) +
+					"/StartOTS_action_" + hostname + ".cmd");
+			FILE* fp = fopen(fn.c_str(),"w");
+			if(fp)
+			{
+				if(Command == "gatewayLaunchOTS")
+					fprintf(fp,"LAUNCH_OTS");
+				else if(Command == "gatewayLaunchWiz")
+					fprintf(fp,"LAUNCH_WIZ");
+				else if(Command == "flattenToSystemAliases")
+					fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
+
+				fclose(fp);
+			}
+			else
+				__COUT_ERR__ << "Unable to open command file: " << fn << std::endl;
+		}
+
 	}
+//	else if(Command == "launchOTS")
+//	{
+//		__COUT_WARN__ << "launchOTS command received! Launching... " << std::endl;
+//
+//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+//				"/StartOTS_action.cmd").c_str(),"w");
+//		if(fp)
+//		{
+//			fprintf(fp,"LAUNCH_OTS");
+//			fclose(fp);
+//		}
+//		else
+//			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+//					"/StartOTS_action.cmd") << std::endl;
+//	}
+//	else if(Command == "launchWiz")
+//	{
+//		__COUT_WARN__ << "launchWiz command received! Launching... " << std::endl;
+//
+//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+//				"/StartOTS_action.cmd").c_str(),"w");
+//		if(fp)
+//		{
+//			fprintf(fp,"LAUNCH_WIZ");
+//			fclose(fp);
+//		}
+//		else
+//			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+//					"/StartOTS_action.cmd") << std::endl;
+//	}
+//	else if(Command == "flattenToSystemAliases")
+//	{
+//		__COUT_WARN__ << "flattenToSystemAliases command received! Launching... " << std::endl;
+//
+//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+//				"/StartOTS_action.cmd").c_str(),"w");
+//		if(fp)
+//		{
+//			fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
+//			fclose(fp);
+//		}
+//		else
+//			__COUT_ERR__ << "Unable to open command file: " << (std::string(getenv("SERVICE_DATA_PATH")) +
+//					"/StartOTS_action.cmd") << std::endl;
+//	}
 	else if(Command == "versionTracking")
 	{
 		std::string type = CgiDataUtilities::getData(cgi,"Type"); //from GET
@@ -4064,7 +4128,8 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //		Note: if version of -1 (INVALID/MOCKUP) is given and there are no other existing table versions...
 //			a new table version is generated using the mockup table.
 //
-void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML	(HttpXmlDocument& xmldoc,
+void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
+		HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
 		const std::string& configList, bool allowDuplicates, bool ignoreWarnings,
 		const std::string& groupComment)

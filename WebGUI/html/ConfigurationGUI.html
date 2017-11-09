@@ -227,14 +227,14 @@
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 		
-		var _OTS_RELAUNCH_STR = 
+		var _OTS_RELAUNCH_STR =  
 				//Normal mode
 				"Click here to relaunch ots in " +
 				"<a href='#' onclick='" +
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchOTS\"," +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
 				"\"\",handleOtsRelaunchResponse,0);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Normal Mode</a>" +
@@ -244,7 +244,7 @@
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\"," +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
 				"\"\",handleOtsRelaunchResponse,1);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Wiz Mode</a>." +
@@ -694,12 +694,35 @@
 		function handleOtsRelaunchResponse(req,isWiz) {
 			if(isWiz)
 				Debug.log("Attempt to restart your system in Wiz Mode was successfully launched... " +
-					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
 				Debug.log("Attempt to restart your system in Normal Mode was successfully launched... " +
-					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
+			
+			localCountDown();
+			//=================
+			function localCountDown()
+			{
+				Debug.log("Waiting " + countDown + " seconds for startup sequence...",
+						Debug.INFO_PRIORITY);
+
+				window.setTimeout(function() {
+					Debug.log("localCountDown handler ");
+					--countDown;
+					if(countDown == 0)
+					{
+						//end blackout
+						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
+						Debug.log("And we are back!",Debug.INFO_PRIORITY);
+						setupSystemViewMode();
+						return;
+					}
+					localCountDown();
+				}, //end blackout-end handler 
+				1000/*ms*/);
+			}// end localCountDown
 		}
 
 		//setupSpecificConfigGroup ~		

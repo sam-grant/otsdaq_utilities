@@ -379,7 +379,7 @@ else {
 
        		var str = "";       			
        		if(usernameWithLock != user) //not user so cant unlock
-       			el.innerHTML = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
+       			str = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
        					"title='User " + 
        					usernameWithLock + " has the ots Lock'>"; 
        		else //this is user so can unlock

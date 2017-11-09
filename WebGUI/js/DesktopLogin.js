@@ -124,8 +124,20 @@ else {
 		var _loginPrompt = function() {
 		
 			Debug.log("loginPrompt " + _keepFeedbackText,Debug.LOW_PRIORITY);
-		
+					
 			_deleteCookies(); //local logout
+			
+			//if login screen already displayed then do nothing more
+			if(document.getElementById("Desktop-loginDiv"))
+			{
+				Debug.log("Login screen already up.");
+				if(_keepFeedbackText)
+				{
+					document.getElementById("loginFeedbackDiv").innerHTML = _keptFeedbackText;
+					_keepFeedbackText = false;
+				}
+				return;
+			}
 			
 			//refresh screen to nothing and then draw login
 			_closeLoginPrompt();
@@ -143,11 +155,20 @@ else {
 			str += "<b><u>Welcome to ots!</u></b><br /><br />";
 			str += "<table><td align='right'><div id='Desktop-loginContent'></div></td></table></td></table>";
 			ldiv.innerHTML = str;
-			if(_loginDiv) _loginDiv.appendChild(ldiv); //add centering elements to page
-			else return; //abandon, no login element being displayed
+			
+			//reset pointer (seems to get lost somehow)
+			Desktop.desktop.login.loginDiv = _loginDiv = document.getElementById("DesktopLoginDiv");
+			
+			_loginDiv.appendChild(ldiv); //add centering elements to page
+			//else return; //abandon, no login element being displayed
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
+			if(!ldiv) //should never happen?
+			{
+				Debug.log("ldiv has no parent!");
+				return;
+			}
 
 			str = "";
 			var rememberMeName = _getCookie(_cookieRememberMeStr); //if remember me cookie exists, then use saved name assume remember me checked
@@ -247,6 +268,8 @@ else {
 		//		sets 2 cookies, cookieCode to code and userName to _user
 		var _setCookie = function(code) {
 			if(_user == "" || !code.length || code.length < 2) return; //only refresh/set cookies if valid user and cookie code
+			if(_cookieCode == code) return; //unchanged
+			
 			_cookieCode = code;	//set local cookie code values
 			var exdate = new Date();
 			exdate.setDate(exdate.getDate() + _DEFAULT_COOKIE_DURATION_DAYS);
@@ -356,8 +379,9 @@ else {
 					
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
-					_keptFeedbackText = "Sorry, your session has expired. Try again.";
-				else if(req && document.getElementById('loginInput3').value != "")	
+					_keptFeedbackText = "Sorry, your login session was invalid. A new session has been started - try again.";
+				else if(req && document.getElementById('loginInput3') && 
+						document.getElementById('loginInput3').value != "")	
 					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
 				else if(req)
 					_keptFeedbackText = "Username/Password not correct.";
@@ -404,6 +428,7 @@ else {
                 if(!req) 
                 {
                 	_loginPrompt();
+                	_killLogoutInfiniteLoop = true;
                 	return; //do nothing, because server failed
                 }
 				//try again
@@ -547,9 +572,9 @@ else {
 				Debug.log("UUID: " + _uid)
 			}
 			
-         	_killLogoutInfiniteLoop = 
-         			document.getElementById("Desktop-loginContent")?
-         					false:true; //prevent infinite logout requests, on server failure
+         	_killLogoutInfiniteLoop = false;  //prevent infinite logout requests, on server failure
+         			//document.getElementById("Desktop-loginContent")?
+         			//		false:true; //prevent infinite logout requests, on server failure
 		}
 		
 		//getCookieCode --
@@ -704,7 +729,8 @@ else {
 			_uid = _getUniqueUserId();
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
 			{
-				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
+				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login
+				_loginDiv.setAttribute("id", "DesktopLoginDiv");
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 							"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 			}

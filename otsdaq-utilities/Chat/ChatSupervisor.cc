@@ -81,7 +81,7 @@ throw (xgi::exception::Exception)
 	//**** start LOGIN GATEWAY CODE ***//
 	{
 		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
+		bool checkLock = false;
 		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
 				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
 

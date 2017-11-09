@@ -89,13 +89,17 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
-	fgets(tmp,100,fp);
-	fgets(tmp,100,fp);
+	fgets(tmp,100,fp); //receive port (ignore)
+	fgets(tmp,100,fp); //destination port *** used here ***
 	int myport;
 	sscanf(tmp,"%*s %d",&myport);
+
+	fgets(tmp,100,fp); //destination ip *** used here ***
+	char myip[100];
+	sscanf(tmp,"%*s %s",myip);
 	fclose(fp);
 
-	ReceiverSocket rsock("127.0.0.1",myport); //Take Port from Configuration
+	ReceiverSocket rsock(myip,myport); //Take Port from Configuration
 	try
 	{
 		rsock.initialize();

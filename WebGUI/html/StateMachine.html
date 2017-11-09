@@ -28,6 +28,16 @@
 				height: 100%;
 			}
 			
+			#refresh-box {
+				position: absolute;
+				margin: 3px 0 0 270px;
+				color: white;
+			}
+			#refresh-box a:hover {
+				cursor: pointer;
+				text-decoration: underline;
+			}
+			
 			#error-box {
 				position: absolute;
 				display: none;
@@ -2180,7 +2190,16 @@
 				_errorBox.style.display = "none";
 				document.getElementById("error-box-err").innerHTML = ""; //clear string
 			}
-			
+
+			//closeErrorBox() ~~
+			function refreshFSM()
+			{
+				Debug.log("refreshFSM");
+				//init();?
+				_transitionProgress = -1; 
+				window.clearInterval(_transitionTimer);
+				_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+			}
 		</script>
 </head>
 
@@ -2193,6 +2212,11 @@
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
 </div>
+<!--	FIXME comeback to defining a proper refresh...	
+<div id='refresh-box'>
+	<a onclick='refreshFSM()'>Refresh</a>
+</div>
+		-->
 
 <div id='extras-box'>
 	<div id='run-number'></div>

@@ -313,6 +313,13 @@
 		top: 0;
 		background-color: rgba(0,0,0,1);
 	}
+	#Desktop #Desktop-loginDiv:hover {
+		cursor: -webkit-grab; /*so cursor can be seen on black background*/
+		cursor: grab;
+	}
+	#Desktop #Desktop-loginDiv input[type=checkbox] {
+		cursor: pointer;
+	}
 	
 	#Desktop #Desktop-loginDiv input {
 		background-color: black;
