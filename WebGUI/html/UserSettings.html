@@ -149,7 +149,7 @@
 			var _layoutArray,_sysLayoutArray,_accountsArray;
 			var _NUM_USER_LAYOUTS = 3; //has to match the explicit html in body (Changing this number alone will not work,.. there is a lot of hardcoding)
 			var _NUM_SYS_LAYOUTS = 2;  //has to match the explicit html in body	(Changing this number alone will not work,.. there is a lot of hardcoding)		
-			var _accountFields = ["username","display_name","permissions","nac"];
+			var _accountFields = ["username","useremail","display_name","permissions","nac"];
 			var _theDeleteIndex = -1;
 			
 			//for accounts display
@@ -596,13 +596,17 @@
 				var lockModeTmp;
 				for(i=_AccountsPageIndex*_AccountsPageSize;i<_AccountsOrderArray.length && i < _AccountsPageIndex*_AccountsPageSize+_AccountsPageSize;++i) 
 				{								
-					htmlStr += "<tr><td class='accountsUsername'>"+_accountsArray[0][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
+                    htmlStr += "<tr><td class='accountsUsername'>" + _accountsArray[0][_AccountsOrderArray[i]].getAttribute('value') + "</td>";
+                    htmlStr += "<td><input type='text' class='actEmailInput' id='accountsEmail" + _AccountsOrderArray[i] + "' value='" +
+                        _accountsArray[1][_AccountsOrderArray[i]].getAttribute('value') + "' " +
+                        "onkeydown='return handleEmailInputKeyDown(event);'" +
+                        "></td>";
 					htmlStr += "<td><input type='text' class='actDispNameInput' id='accountsDisplayName"+_AccountsOrderArray[i]+"' value='" + 
-						_accountsArray[1][_AccountsOrderArray[i]].getAttribute('value') + "' " + 
+						_accountsArray[2][_AccountsOrderArray[i]].getAttribute('value') + "' " + 
 						"onkeydown='return handleAccountsInputKeyDown(event);'" +
 						"></td>";
 					htmlStr += "<td><input type='text' class='actPermInput' id='accountsPermissions"+_AccountsOrderArray[i]+"' value='" + 
-						_accountsArray[2][_AccountsOrderArray[i]].getAttribute('value') + "' " +
+						_accountsArray[3][_AccountsOrderArray[i]].getAttribute('value') + "' " +
 						"onkeydown='return handleAccountsInputKeyDown(event)'" +
 						"></td>";
 					htmlStr += "<td><a onmouseup='updateAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" + 
@@ -610,7 +614,7 @@
 					htmlStr += "<td><a onmouseup='deleteAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" +
 						" title='Delete Account'>X</a></td>";
 					htmlStr += "<td class='accountsNac' title='New Account Code'>"+
-						_accountsArray[3][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
+						_accountsArray[4][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
 					htmlStr += "<td>";
 					
 					//for user lock
@@ -640,7 +644,8 @@
 				for(j=0;j<_accountFields.length-1;++j) //omit nac field
 					htmlStr += "<td class='accountsHeaderFld'>" + _accountFields[j] + "</td>";
 				htmlStr += "</tr><tr>";
-				htmlStr += "<td><input type='text' id='accountsUsernameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
+                htmlStr += "<td><input type='text' id='accountsUsernameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
+                htmlStr += "<td><input type='text' id='accountsEmailNew' value='' onkeydown='return handleEmailInputKeyDown(event)'></td> ";
 				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
 				htmlStr += "<td>0</td> ";
 				htmlStr += "</tr></table>";
@@ -661,17 +666,33 @@
 			//	allow alphanumeric character only
 			function handleAccountsInputKeyDown(e) {	
 				//Debug.log("Settings handleAccountsInputKeyDown " + e.keyCode);
-				if(e.keyCode == 9) return true;		//if tab focus on next box
-				else if((!e.shiftKey && (e.keyCode >= 48 && e.keyCode <= 57)) || //accept numbers but not shifted numbers
-					(e.keyCode >= 96 && e.keyCode <= 105) ||	//accept keypad numbers
-					(e.keyCode >= 65 && e.keyCode <= 90) || //accept letters and shifted letters
-					e.keyCode == 46 || e.keyCode == 8 || //delete, backspace
-					e.keyCode == 35 || e.keyCode == 36 ||  //home and end
-					(e.keyCode >= 37 && e.keyCode <= 40))  //arrows are accepted 
+                if (e.keyCode == 9) return true;		//if tab focus on next box
+                else if ((!e.shiftKey && (e.keyCode >= 48 && e.keyCode <= 57)) || //accept numbers but not shifted numbers
+                    (e.keyCode >= 96 && e.keyCode <= 105) ||	//accept keypad numbers
+                    (e.keyCode >= 65 && e.keyCode <= 90) || //accept letters and shifted letters
+                    e.keyCode == 46 || e.keyCode == 8 || //delete, backspace
+                    e.keyCode == 35 || e.keyCode == 36 ||  //home and end
+                    (e.keyCode >= 37 && e.keyCode <= 40))  //arrows are accepted 
 					return true;
 				
 				return false; //to stop tab and enter (and unaccepted chars) from propagating to window
-			}
+            }
+
+            function handleEmailInputKeyDown(e) {
+                //Debug.log("Settings handleAccountsInputKeyDown " + e.keyCode);
+                if (e.keyCode == 9) return true;		//if tab focus on next box
+                else if ((e.keyCode >= 48 && e.keyCode <= 57) || //accept numbers and shifted numbers
+                    (e.keyCode >= 96 && e.keyCode <= 105) ||	//accept keypad numbers
+                    (e.keyCode >= 65 && e.keyCode <= 90) || //accept letters and shifted letters
+                    e.keyCode == 46 || e.keyCode == 8 || //delete, backspace
+                    e.keyCode == 35 || e.keyCode == 36 ||  //home and end
+                    (e.keyCode >= 37 && e.keyCode <= 40) ||   //arrows are accepted 
+                    e.keyCode == 188 || e.keyCode == 190) // Comma and dot
+                    return true;
+                
+
+                return false; //to stop tab and enter (and unaccepted chars) from propagating to window
+            }
 			
 			function handleBodyMouseUp() {	
 				setLayout(-1); //clear selected layout
@@ -868,14 +889,16 @@
 				Debug.log("Settings updateAccount-" + i);	
 				
 				var dnEl = document.getElementById("accountsDisplayName"+i);	
-				var pEl = document.getElementById("accountsPermissions"+i);	
+                var pEl = document.getElementById("accountsPermissions" + i);	
+                var emEl = document.getElementById("accountsEmail" + i);
 				
-				Debug.log("Settings updateAccount-" + _accountsArray[0][i].getAttribute('value') + 
+                Debug.log("Settings updateAccount-" + _accountsArray[0][i].getAttribute('value') + ":" + emEl.value +
 					":" + dnEl.value + ":" + pEl.value );	
 					
 				var data = "";
 				data += "type=updateAccount&";
-				data += "username=" + _accountsArray[0][i].getAttribute('value') + "&";
+                data += "username=" + _accountsArray[0][i].getAttribute('value') + "&";
+                data += "useremail=" + emEl.value + "&";
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
@@ -896,8 +919,8 @@
 				if(event) event.cancelBubble=true;	
 				Debug.log("Settings createNewAccount");
 				
-				var elField = ["username","displayname"];
-				var elIds = ["accountsUsernameNew","accountsDisplayNameNew"];
+				var elField = ["username","useremail","displayname"];
+				var elIds = ["accountsUsernameNew","accountsEmailNew","accountsDisplayNameNew"];
 				var el;
 				
 				var data = "";
@@ -921,7 +944,7 @@
 				var data = "";
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
-				data += "displayname=" + _accountsArray[1][_theDeleteIndex].getAttribute('value') + "&";
+				data += "displayname=" + _accountsArray[2][_theDeleteIndex].getAttribute('value') + "&";
 				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
 			}
 			

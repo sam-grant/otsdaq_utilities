@@ -308,7 +308,8 @@ else {
 			if(_sessionId.length != _DEFAULT_SESSION_STRING_LEN) return; //if no session id, fail			
 	
 			var code = _getCookie(_cookieCodeStr);
-			_user = _getCookie(_cookieUserStr);
+            _user = _getCookie(_cookieUserStr);
+            
 			if ((code != null && code != "") &&
 				(_user != null && _user != "")) {
 				//if cookie found, submit cookieCode and jumbled user to server to check if valid					
@@ -631,20 +632,8 @@ else {
 
         this.attemptLoginWithCert = function () {
             Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
-
-            var email = getParameterByName("httpsUser");
             
-            document.getElementById('loginFeedbackDiv').innerHTML = ""; //clear feedback text
-            document.getElementById('loginFeedbackDiv').style.color = ""; //reset color to default inherited style
-            
-            _user = x[0]; //set local user		
-
-            //if remember me checked, refresh cookie.. else delete whatever is there
-            if (document.getElementById('loginInputRememberMe').checked) _saveUsernameCookie();
-            else _deleteUsernameCookie();
-
-            Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid +
-                + "&ju=" + _jumble(email, _sessionId), _handleLoginAttempt);
+            Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid, _handleLoginAttempt);
         }
 
 		//_applyUserPreferences
@@ -723,7 +712,8 @@ else {
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
 			//else //no login prompt at all
 			
-			Debug.log("UUID: " + _uid);
+            Debug.log("UUID: " + _uid);
+            this.attemptLoginWithCert();
 		}
 		
 		this.setupLogin();
