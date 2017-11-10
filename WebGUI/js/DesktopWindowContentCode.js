@@ -29,7 +29,9 @@
 //  is clicked or scrolled.
 //
 //	This code also handles server requests and response handlers for the content code:
-//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, showLoadingOverlay <optional>, targetSupervisor <optional>)
+//		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
+//			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
+//			showLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
 //			... to make server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
@@ -91,7 +93,7 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor, ignoreSystemBlock)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
@@ -505,17 +507,23 @@ DesktopContent.hideLoading = function()	{
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor) {
+		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay,
+		targetSupervisor, ignoreSystemBlock) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
 	var sequence = DesktopContent._sequence;
 	var errStr = "";
 	var req;
 	
-	//check if already marked the mailbox.. and do nothing because we know something is wrong
-	if(DesktopContent._needToLoginMailbox && DesktopContent._needToLoginMailbox.innerHTML == "1")		
+	
+	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
+			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
+			(DesktopContent._needToLoginMailbox &&
+					DesktopContent._needToLoginMailbox.innerHTML == "1"))		
 	{
-		errStr = "Something is still wrong.";
+		//check if already marked the mailbox.. and do nothing because we know something is wrong
+		
+		errStr = "The system appears to be down.";
 		errStr += " (Try reconnecting/reloading the page, or alert ots admins if problem persists.)";
 		Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 		req = 0; //force to 0 to indicate error
@@ -591,7 +599,9 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				{
 					errStr = "Login has expired.";
 
-					if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
+					if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
+							DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
+							DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 						DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 					//return;
 				}
@@ -615,7 +625,9 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 						{ //clear req, server failed
 							errStr = "Request Failed - Missing Cookie in Response.";
 
-							if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
+							if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
+									DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
+									DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 								DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 
 						}
@@ -649,7 +661,9 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 				errStr = "Request Failed (code: " + req.status + ") - Bad Address:\n" + requestURL;
 
-				if(DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
+				if((ignoreSystemBlock || (DesktopContent._blockSystemCheckMailbox && 
+						DesktopContent._blockSystemCheckMailbox.innerHTML == "")) && //make sure system is alive
+						DesktopContent._needToLoginMailbox) //if login mailbox is valid, force login
 					DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure
 
 				//handle multiple failed handlers

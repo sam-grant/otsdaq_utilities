@@ -500,6 +500,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 
 	refreshParent_ = xmldoc->addTextElementToData("messages","");
 
+	bool requestOutOfSync = false;
+	std::string requestOutOfSyncMsg;
 	//output oldest to new (from refreshReadPointer_ to writePointer_-1, inclusive)
 	for(/*refreshReadPointer_=<first index to read>*/;
 			refreshReadPointer_ != writePointer_;
@@ -507,9 +509,14 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	{
 		if(messages_[refreshReadPointer_].getCount() < lastUpdateCount)
 		{
-			__COUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
-					messages_[refreshReadPointer_].getCount() << " < " <<
-					lastUpdateCount << std::endl;
+			if(!requestOutOfSync) //record out of sync message once only
+			{
+				requestOutOfSync = true;
+				__SS__ << "Request is out of sync! Message count should be more recent than update clock! " <<
+						messages_[refreshReadPointer_].getCount() << " < " <<
+						lastUpdateCount << std::endl;
+				requestOutOfSyncMsg = ss.str();
+			}
 			//assume these messages are new (due to a system restart)
 			//continue;
 		}
@@ -529,6 +536,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 		xmldoc->addTextElementToParent("message_Count",
 				refreshTempStr_, refreshParent_);
 	}
+
+	if(requestOutOfSync) //if request was out of sync, show message
+		__COUT__ << requestOutOfSyncMsg;
 }
 
 
