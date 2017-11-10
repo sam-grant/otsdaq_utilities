@@ -334,13 +334,27 @@ else {
             _user = _getCookie(_cookieUserStr);
             
 			if ((code != null && code != "") &&
-				(_user != null && _user != "")) {
+				(_user != null && _user != "")) 
+			{
+				Debug.log("Attempting browser cookie login.");
+				
 				//if cookie found, submit cookieCode and jumbled user to server to check if valid					
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=checkCookie","uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,_handleCookieCheck);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=checkCookie",
+						"uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,
+						_handleCookieCheck);
 			}
-			else {					
+			else
+			{					
 				Debug.log("No cookie found",Debug.LOW_PRIORITY);
-				_loginPrompt();		//no cookie, so prompt user  
+
+				//attempt CERT login
+				if(!_attemptedLoginWithCert)
+				{
+					Debug.log("Attempting CERT login.");
+					_attemptLoginWithCert();
+				}
+				else
+					_loginPrompt();		//no cookie, so prompt user 
 			}
 		}
 		
@@ -357,13 +371,16 @@ else {
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
 				_user = Desktop.getXMLValue(req,"pref_username");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
-			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
-				Debug.log("Login Successful",Debug.LOW_PRIORITY);
+			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) 
+			{ 	
+				//success!
+				Debug.log("Login Successful!",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie					
                 _applyUserPreferences(req);
 
                 // Set user name if logged in using cert
-                if (_user == "" || _user === null && Desktop.getXMLValue(req, "pref_username")) _user = Desktop.getXMLValue(req, "UserName");
+                if (_user == "" || _user === null && Desktop.getXMLValue(req, "pref_username")) 
+                	_user = Desktop.getXMLValue(req, "UserName");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
 				if(activeSessionCount && _loginDiv) //only if the login div exists
@@ -373,9 +390,22 @@ else {
 				}
 				else				
 					_closeLoginPrompt(1); //clear login prompt
+				
+				//success!
+				
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()
+				Desktop.desktopTooltip();
+				_attemptedCookieCheck = false;
+				return;
 			}
-			else { //login failed
-				Debug.log("Login failed " + cookieCode + " - " + _displayName,Debug.LOW_PRIORITY);				
+			else 
+			{ 
+				//login failed
+				
+				Debug.log("Login failed.");
+				//Debug.log("Debug failure... " + cookieCode + " - " +
+					//	_displayName + " - _attemptedLoginWithCert " + 
+						//_attemptedLoginWithCert,Debug.LOW_PRIORITY);				
 					
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
@@ -388,11 +418,18 @@ else {
 				else
 					_keptFeedbackText = "ots Server failed.";
 				_keepFeedbackText = true;
+				
+				if(_attemptedLoginWithCert)
+				{
+					Debug.log("Hiding feedback after CERT attempt.");
+					_keepFeedbackText = false;
+				}
+				
 	      		for(var i=1;i<3;++i) if(document.getElementById('loginInput'+i)) document.getElementById('loginInput'+i).value = ""; //clear input boxes
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);				
 	      	}
 		}
 		
@@ -400,19 +437,35 @@ else {
 			// handler for cookie check request from server
 			// current cookie code and display name is returned on success
 			// on failure, go to loginPrompt
+		var _attemptedCookieCheck = false;
 		var _handleCookieCheck = function(req) {			
+			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
-			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
-				Debug.log("Cookie is good",Debug.LOW_PRIORITY);
+			
+			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) 
+			{ 	
+				//success!
+				
+				Debug.log("Cookie is good!",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie	
 				_applyUserPreferences(req);
 				_closeLoginPrompt(1); //clear login prompt
+				
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()
+				Desktop.desktopTooltip();
+				_attemptedCookieCheck = false;
+				return;
 			}
-			else {
+			else 
+			{
 				Debug.log("Cookie is bad " + cookieCode.length + _displayName,Debug.LOW_PRIORITY);
-				_loginPrompt();		//no cookie, so prompt user 
+				
+				//attempt CERT login
+				Debug.log("Attempting CERT login.");
+				_attemptLoginWithCert();
+				//_loginPrompt();		//no cookie, so prompt user 
 			}
 		}
 		
@@ -439,14 +492,24 @@ else {
 				if (_badSessionIdCount < 10)
 	                Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 				else
-					alert("Cannot establish session ID - failed 10 times");
+					Desktop.log("Cannot establish session ID - failed 10 times",Desktop.HIGH_PRIORITY);
 				
 				return;
 			} 
 			_badSessionIdCount = 0;
 
 			//successfully received session ID			
-			_sessionId = req.responseText;			
+			_sessionId = req.responseText;		
+			
+			if(_attemptedCookieCheck)
+			{
+				Debug.log("Already tried browser cookie login. Giving up.");
+				_loginPrompt();
+				return;
+			}
+			_attemptedCookieCheck = true;
+			
+			Debug.log("Attempting browser cookie login with new session ID.");
 			_checkCookieLogin();
 			_killLogoutInfiniteLoop = false;
 		}
@@ -654,10 +717,12 @@ else {
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-
-        this.attemptLoginWithCert = function () {
+        
+        var _attemptedLoginWithCert = false;
+        var _attemptLoginWithCert = function () {        	
             Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
             
+            _attemptedLoginWithCert = true; //mark flag so that now error is displayed in login prompt for CERT failure
             Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid, _handleLoginAttempt);
         }
 
@@ -739,7 +804,6 @@ else {
 			//else //no login prompt at all
 			
             Debug.log("UUID: " + _uid);
-            this.attemptLoginWithCert();
 		}
 		
 		this.setupLogin();
