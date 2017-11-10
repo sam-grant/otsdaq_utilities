@@ -708,6 +708,8 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 	if(!sequence)
 	{        
+		if(!DesktopContent._cookieCodeMailbox) //attempt to fix (e.g. for Desktop)
+			DesktopContent._cookieCodeMailbox = document.getElementById("DesktopContent-cookieCodeMailbox");
 		var cc = DesktopContent._cookieCodeMailbox?DesktopContent._cookieCodeMailbox.innerHTML:""; //get cookie code from mailbox if available
 		data = "CookieCode="+cc+((data===undefined)?"":("&"+data));
 	}

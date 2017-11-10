@@ -279,6 +279,7 @@ else {
 			c_value = escape(_user) + ((_DEFAULT_COOKIE_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
 			document.cookie= _cookieUserStr + "=" + c_value;
             
+			Debug.log("set cookie");
 			var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
             ccdiv.innerHTML = _cookieCode; //place in mailbox for desktop content
 			ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");
@@ -393,7 +394,7 @@ else {
 				
 				//success!
 				
-				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
 				Desktop.desktopTooltip();
 				_attemptedCookieCheck = false;
 				return;
@@ -453,7 +454,7 @@ else {
 				_applyUserPreferences(req);
 				_closeLoginPrompt(1); //clear login prompt
 				
-				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
 				Desktop.desktopTooltip();
 				_attemptedCookieCheck = false;
 				return;
