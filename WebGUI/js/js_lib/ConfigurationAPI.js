@@ -1864,7 +1864,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					"&temporary=0" +
 					"&tableComment=" + 
 					encodeURIComponent(modifiedTables[j].tableComment?modifiedTables[j].tableComment:"") +
-					"&sourceTableAsIs=1"; 
+					"&sourceTableAsIs=1" +
+					"&lookForEquivalent=1"; //accept equivalent tables! (ignoring author and timestamp)
 			Debug.log(reqStr);
 
 			++numberOfRequests;
@@ -1888,8 +1889,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 				var configName = DesktopContent.getXMLValue(req,"savedName");
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
+				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion") | 0;
 
-				Debug.log("Successfully created new table '" + configName + "-v" + 
+				if(foundEquivalentVersion)
+					Debug.log("Using existing table '" + configName + "-v" + 
+							version + "'",Debug.INFO_PRIORITY);
+				else
+					Debug.log("Successfully created new table '" + configName + "-v" + 
 						version + "'",Debug.INFO_PRIORITY);
 				
 				//update saved table version based on result

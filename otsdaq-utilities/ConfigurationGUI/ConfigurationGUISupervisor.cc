@@ -3873,7 +3873,26 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 	{
 		ConfigurationVersion duplicateVersion;
 
-		duplicateVersion = config->checkForDuplicate(temporaryModifiedVersion, originalVersion);
+		duplicateVersion = config->checkForDuplicate(temporaryModifiedVersion,
+				originalVersion);
+
+		if(lookForEquivalent && !duplicateVersion.isInvalid())
+		{
+			//found an equivalent!
+			__COUT__ << "Equivalent table found in version v" << duplicateVersion << std::endl;
+
+			//erase and return equivalent version
+
+			if(needToEraseTemporarySource)
+				cfgMgr->eraseTemporaryVersion(configName,originalVersion);
+
+			xmldoc.addTextElementToData("savedName", configName);
+			xmldoc.addTextElementToData("savedVersion", duplicateVersion.toString());
+			xmldoc.addTextElementToData("foundEquivalentVersion", "1");
+
+			__COUT__ << "\t\t equivalent AssignedVersion: " << duplicateVersion << std::endl;
+			return duplicateVersion;
+		}
 
 		if(!duplicateVersion.isInvalid())
 		{
