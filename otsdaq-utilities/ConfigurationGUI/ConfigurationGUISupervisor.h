@@ -61,7 +61,7 @@ private:
 
     void 			handleConfigurationsXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool allowIllegalColumns=false);
-    void 			handleCreateConfigurationXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool makeTemporary, const std::string& data, const int& dataOffset, const std::string& author, const std::string& comment, bool sourceTableAsIs);
+    void 			handleCreateConfigurationXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool makeTemporary, const std::string& data, const int& dataOffset, const std::string& author, const std::string& comment, bool sourceTableAsIs, bool lookForEquivalent);
 
     void			setupActiveTablesXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, bool refreshAll = true, bool getGroupInfo = false, std::map<std::string /*name*/, ConfigurationVersion /*version*/>* returnMemberMap = 0, bool outputActiveTables = true, std::string* accumulatedErrors = 0);
     void 			handleFillTreeViewXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& startPath, unsigned int depth, bool hideStatusFalse, const std::string& modifiedTables, const std::string& filterList);
@@ -81,7 +81,7 @@ private:
     void			handleSavePlanCommandSequenceXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, const std::string& author, const std::string& planName, const std::string& commandString);
 
 
-    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false);
+    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false, bool lookForEquivalent = false);
 
 
     void testXDAQContext(); //for debugging

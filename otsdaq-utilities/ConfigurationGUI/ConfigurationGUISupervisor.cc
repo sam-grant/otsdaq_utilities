@@ -596,6 +596,7 @@ throw (xgi::exception::Exception)
 		int				version 	= CgiDataUtilities::getDataAsInt(cgi,"version");		//from GET
 		int				dataOffset 	= CgiDataUtilities::getDataAsInt(cgi,"dataOffset");		//from GET
 		bool			sourceTableAsIs	= CgiDataUtilities::getDataAsInt(cgi,"sourceTableAsIs");	//from GET
+		bool			lookForEquivalent = CgiDataUtilities::getDataAsInt(cgi,"lookForEquivalent");	//from GET
 		int				temporary 	= CgiDataUtilities::getDataAsInt(cgi,"temporary");		//from GET
 		std::string		comment 	= CgiDataUtilities::getData		(cgi,"tableComment");	//from GET
 
@@ -603,14 +604,15 @@ throw (xgi::exception::Exception)
 		//data format: commas and semi-colons indicate new row
 		//r0c0,r0c1,...,r0cN,;r1c0,...
 
-		__COUT__ << "getSpecificConfiguration: " << configName << " version: " << version
+		__COUT__ << "configName: " << configName << " version: " << version
 				<< " temporary: " << temporary << " dataOffset: " << dataOffset << std::endl;
 		__COUT__ << "comment: " << comment << std::endl;
 		__COUT__ << "data: " << data << std::endl;
 		__COUT__ << "sourceTableAsIs: " << sourceTableAsIs << std::endl;
+		__COUT__ << "lookForEquivalent: " << lookForEquivalent << std::endl;
 
 		handleCreateConfigurationXML(xmldoc,cfgMgr,configName,ConfigurationVersion(version),
-				temporary,data,dataOffset,userName,comment,sourceTableAsIs);
+				temporary,data,dataOffset,userName,comment,sourceTableAsIs,lookForEquivalent);
 	}
 	else if(Command == "clearConfigurationTemporaryVersions")
 	{
@@ -3860,7 +3862,8 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 		bool makeTemporary,
 		ConfigurationBase*  config,
 		ConfigurationVersion temporaryModifiedVersion,
-		bool ignoreDuplicates)
+		bool ignoreDuplicates,
+		bool lookForEquivalent)
 {
 	bool needToEraseTemporarySource = (originalVersion.isTemporaryVersion() && !makeTemporary);
 
@@ -3916,7 +3919,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(HttpXmlDocument& x
 		ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version,
 		bool makeTemporary, const std::string& data, const int& dataOffset,
 		const std::string& author, const std::string& comment,
-		bool sourceTableAsIs)
+		bool sourceTableAsIs, bool lookForEquivalent)
 try
 {
 	//__COUT__ << "handleCreateConfigurationXML: " << configName << " version: " << version
@@ -4027,7 +4030,7 @@ try
 	}
 
 	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,makeTemporary,
-			config,temporaryVersion);
+			config,temporaryVersion,false /*ignoreDuplicates*/,lookForEquivalent);
 }
 catch(std::runtime_error& e)
 {
