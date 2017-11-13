@@ -970,7 +970,7 @@ Desktop.createDesktop = function(security) {
     _windowColorPostbox = document.createElement("div");
     _windowColorPostbox.setAttribute("id", "DesktopContent-windowColorPostbox");
     _windowColorPostbox.style.display = "none";
-    _windowColorPostbox.innerHTML = this.defaultWindowFrameColor; //init to color string
+    _windowColorPostbox.innerHTML = this.defaultWindowsFrameColor; //init to color string
     _desktopElement.appendChild(_windowColorPostbox);
     
     
