@@ -410,7 +410,8 @@ else {
 					
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
-					_keptFeedbackText = "Sorry, your login session was invalid. A new session has been started - try again.";
+					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+						"A new session has been started - please try again.";
 				else if(req && document.getElementById('loginInput3') && 
 						document.getElementById('loginInput3').value != "")	
 					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
@@ -684,7 +685,8 @@ else {
 		}
 		
 		this.attemptLogin = function() {
-       		Debug.log("Desktop Login Prompt Attempt Login ",Debug.LOW_PRIORITY);    	
+       		Debug.log("Desktop Login Prompt Attempt Login ",Debug.LOW_PRIORITY); 
+       		_attemptedLoginWithCert = false;
        		    			       		
 			var x = [];
 			for(var i=0;i<3;++i) x[i] = document.getElementById('loginInput'+i).value;
