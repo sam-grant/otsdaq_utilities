@@ -1488,7 +1488,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				reqStr = ""; //reuse
 				reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 						"&groupName=" + affectedGroupNames[i] +
-						"&allowDuplicates=1" +
+						"&allowDuplicates=0" +
+						"&lookForEquivalent=1" + 
 						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
 						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 				Debug.log(reqStr);
@@ -1571,13 +1572,20 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						obj.groupComment = affectedGroupComments[affectedGroupIndex];
 						savedGroups.push(obj);
 					}
+					
 
-					//need to modify root group name if changed
-					Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+					var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey");	
+					if(foundEquivalentKey)
+						Debug.log("Using existing group '" + attemptedNewGroupName + 
 							" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+					else
+						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+							" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+					
+					//need to modify root group name if changed					
 
 					//activate if option was selected
-					if(activatingSavedGroups)
+					if(activatingSavedGroups) //allow to happen in parallel
 						ConfigurationAPI.activateGroup(attemptedNewGroupName,newGroupKey,
 								false /* ignoreWarnings */);
 
@@ -2062,15 +2070,21 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 				configVersions[i].getAttribute("value") + ",";							
 	}
 
-	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
+	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2],
+			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams)
+ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
+		lookForEquivalent)
 {
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-			groupName, configMap, 
+			groupName + 
+			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
+			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
+			"", //end get data
+			configMap, //end post data
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");

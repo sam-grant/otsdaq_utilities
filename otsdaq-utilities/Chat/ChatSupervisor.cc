@@ -69,7 +69,7 @@ throw (xgi::exception::Exception)
 	cgicc::Cgicc cgi(in);
 
 	std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
-	__COUT__ << "Command: " << Command << std::endl;
+	//__COUT__ << "Command: " << Command << std::endl;
 
 	//Commands
 	//RefreshChat
@@ -80,10 +80,9 @@ throw (xgi::exception::Exception)
 
 	//**** start LOGIN GATEWAY CODE ***//
 	{
-		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool automaticCommand = Command == "RefreshChat"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = false;
-		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
-				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
+		bool getUser = false;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,
@@ -138,7 +137,7 @@ throw (xgi::exception::Exception)
 		std::string topage = CgiDataUtilities::postData(cgi,"topage");
 		std::string user = CgiDataUtilities::postData(cgi,"user");
 
-		__COUT__ << "topage = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+		__COUT__ << "Paging = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
 
 		theRemoteWebUsers_.sendSystemMessage(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),
 				topage, user + " is paging you to come chat.");

@@ -514,8 +514,9 @@ throw (xgi::exception::Exception)
 	else if(Command == "saveNewConfigurationGroup")
 	{
 		std::string groupName 		= CgiDataUtilities::getData (cgi,"groupName"); 		//from GET
-		std::string ignoreWarnings 	= CgiDataUtilities::getData (cgi,"ignoreWarnings"); //from GET
-		std::string allowDuplicates = CgiDataUtilities::getData (cgi,"allowDuplicates");//from GET
+		bool			ignoreWarnings = CgiDataUtilities::getDataAsInt(cgi,"ignoreWarnings");	//from GET
+		bool			allowDuplicates = CgiDataUtilities::getDataAsInt(cgi,"allowDuplicates");	//from GET
+		bool			lookForEquivalent = CgiDataUtilities::getDataAsInt(cgi,"lookForEquivalent");	//from GET
 		std::string configList 		= CgiDataUtilities::postData(cgi,"configList"); 	//from POST
 		std::string	comment 		= CgiDataUtilities::getData	(cgi,"groupComment");	//from GET
 
@@ -523,12 +524,11 @@ throw (xgi::exception::Exception)
 		__COUT__ << "configList: " << configList << std::endl;
 		__COUT__ << "ignoreWarnings: " << ignoreWarnings << std::endl;
 		__COUT__ << "allowDuplicates: " << allowDuplicates << std::endl;
+		__COUT__ << "lookForEquivalent: " << lookForEquivalent << std::endl;
 		__COUT__ << "comment: " << comment << std::endl;
 
 		handleCreateConfigurationGroupXML(xmldoc,cfgMgr,groupName,configList,
-				(allowDuplicates == "1"),
-				(ignoreWarnings == "1"),
-				comment);
+				allowDuplicates,ignoreWarnings,comment,lookForEquivalent);
 	}
 	else if(Command == "getSpecificConfiguration")
 	{
@@ -4154,7 +4154,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
 		const std::string& configList, bool allowDuplicates, bool ignoreWarnings,
-		const std::string& groupComment)
+		const std::string& groupComment, bool lookForEquivalent)
 {
 	__COUT__ << "handleCreateConfigurationGroupXML \n";
 
@@ -4299,15 +4299,30 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 	{
 		ConfigurationGroupKey foundKey =
 				cfgMgr->findConfigurationGroup(groupName,groupMembers);
+
 		if(!foundKey.isInvalid())
 		{
-			//return old keys
+			//return found equivalent key
 			xmldoc.addTextElementToData("ConfigurationGroupName",groupName);
 			xmldoc.addTextElementToData("ConfigurationGroupKey",foundKey.toString());
-			xmldoc.addTextElementToData("Error",
-					"Failed to create configuration group: " + groupName +
-					". It is a duplicate of an existing group key (" + foundKey.toString() + ")");
-			return;
+
+			if(lookForEquivalent)
+			{
+				__COUT__ << "Found equivalent group key (" << foundKey << ") for " <<
+						groupName << "." << std::endl;
+				//allow this equivalent group to be the response without an error
+				xmldoc.addTextElementToData("foundEquivalentKey","1"); //indicator
+				return;
+			}
+			else //treat as error, if not looking for equivalent
+			{
+				__COUT__ << "Treating duplicate group as error." << std::endl;
+				__SS__ << ("Failed to create configuration group: " + groupName +
+						". It is a duplicate of an existing group key (" + foundKey.toString() + ")");
+				__COUT_ERR__ << ss.str() << std::endl;
+				xmldoc.addTextElementToData("Error",ss.str());
+				return;
+			}
 		}
 	}
 
@@ -4650,9 +4665,12 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(HttpXmlDocument&
 //		modify GroupAliases
 //		save as new version of groupAliases
 //		return new version of groupAliases
+//
+//Note: very similar to ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML
 void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupAlias,
-		const std::string& groupName, ConfigurationGroupKey groupKey, const std::string& author)
+		const std::string& groupName, ConfigurationGroupKey groupKey,
+		const std::string& author)
 try
 {
 	cfgMgr->loadConfigurationBackbone();
@@ -4684,89 +4702,115 @@ try
 	//save as new version
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(groupAliasesTableName);
-	ConfigurationVersion temporaryVersion = config->
-			createTemporaryView(activeVersions[groupAliasesTableName]);
+	ConfigurationVersion originalVersion = activeVersions[groupAliasesTableName];
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(originalVersion);
 
 	__COUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
-
-	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
-
-	unsigned int col = configView->findCol("GroupKeyAlias");
-
-	//only make a new version if we are changing compared to active backbone
 	bool isDifferent = false;
 
-	unsigned int row = -1;
-	//find groupAlias row
-	try	{ row = configView->findRow(col,groupAlias); }
-	catch (...) {}
-	if(row == (unsigned int)-1) //if row not found then add a row
+	try
 	{
-		isDifferent = true;
-		row = configView->addRow();
+		ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
 
-		//set all columns in new row
-		col = configView->findCol("CommentDescription");
-		configView->setValue("This Group Alias was automatically setup by the server." ,
-				row, col);
-		col = configView->findCol("GroupKeyAlias");
-		configView->setValue(groupAlias, row, col);
+		unsigned int col = configView->findCol("GroupKeyAlias");
+
+		//only make a new version if we are changing compared to active backbone
+
+
+		unsigned int row = -1;
+		//find groupAlias row
+		try	{ row = configView->findRow(col,groupAlias); }
+		catch (...) {}
+		if(row == (unsigned int)-1) //if row not found then add a row
+		{
+			isDifferent = true;
+			row = configView->addRow();
+
+			//set all columns in new row
+			col = configView->findCol("CommentDescription");
+			configView->setValue("This Group Alias was automatically setup by the server." ,
+					row, col);
+			col = configView->findCol("GroupKeyAlias");
+			configView->setValue(groupAlias, row, col);
+		}
+
+		__COUT__ << "\t\t row: " << row << std::endl;
+
+		col = configView->findCol("GroupName");
+
+		__COUT__ << "\t\t groupName: " << groupName << " vs " <<
+				configView->getDataView()[row][col] << std::endl;
+		if(groupName != configView->getDataView()[row][col])
+		{
+			configView->setValue(groupName, row, col);
+			isDifferent = true;
+		}
+
+		col = configView->findCol("GroupKey");
+		__COUT__ << "\t\t groupKey: " << groupKey << " vs " <<
+				configView->getDataView()[row][col] << std::endl;
+		if(groupKey.toString() != configView->getDataView()[row][col])
+		{
+			configView->setValue(groupKey.toString(), row, col);
+			isDifferent = true;
+		}
+
+		if(isDifferent)	//set author/time of new version if different
+		{
+			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+		}
+	}
+	catch(...)
+	{
+		__COUT_ERR__ << "Error editing Group Alias view!" << std::endl;
+
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		throw;
 	}
 
-	__COUT__ << "\t\t row: " << row << std::endl;
-
-	col = configView->findCol("GroupName");
-
-	__COUT__ << "\t\t groupName: " << groupName << " vs " <<
-			configView->getDataView()[row][col] << std::endl;
-	if(groupName != configView->getDataView()[row][col])
-	{
-		configView->setValue(groupName, row, col);
-		isDifferent = true;
-	}
-
-	col = configView->findCol("GroupKey");
-	__COUT__ << "\t\t groupKey: " << groupKey << " vs " <<
-			configView->getDataView()[row][col] << std::endl;
-	if(groupKey.toString() != configView->getDataView()[row][col])
-	{
-		configView->setValue(groupKey.toString(), row, col);
-		isDifferent = true;
-	}
 
 	ConfigurationVersion newAssignedVersion;
 	if(isDifferent)	//make new version if different
 	{
-		configView->setValue(author, row, configView->findCol("Author"));
-		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
-
 		__COUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
-		newAssignedVersion =
-				cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
+		//newAssignedVersion =
+		//		cfgMgr->saveNewConfiguration(groupAliasesTableName,temporaryVersion);
+
+		//save or find equivalent
+
+		newAssignedVersion = saveModifiedVersionXML(xmldoc,cfgMgr,
+				config->getConfigurationName(),originalVersion, false /*makeTemporary*/,
+				config,temporaryVersion,false /*ignoreDuplicates*/,true /*lookForEquivalent*/);
+
 	}
 	else	//use existing version
 	{
-		__COUT__ << "\t\t**************************** Using existing table version" << std::endl;
+		__COUT__ << "\t\t**************************** Using the existing table version" << std::endl;
 
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[groupAliasesTableName];
+
+		xmldoc.addTextElementToData("savedName", groupAliasesTableName);
+		xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	}
 
-	xmldoc.addTextElementToData("savedName", groupAliasesTableName);
-	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	__COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
+
+
 }
 catch(std::runtime_error& e)
 {
-	__COUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	__COUT_ERR__ << "Error detected!\n\n " << e.what() << std::endl;
 	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view!\n " +
 			std::string(e.what()));
 }
 catch(...)
 {
-	__COUT__ << "Error detected!\n\n "<< std::endl;
+	__COUT_ERR__ << "Error detected!\n\n "<< std::endl;
 	xmldoc.addTextElementToData("Error", "Error saving new Group Alias view! ");
 }
 
@@ -4776,6 +4820,8 @@ catch(...)
 //		modify VersionAliases
 //		save as new version of VersionAliases
 //		return new version of VersionAliases
+//
+//Note: very similar to ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML
 void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(HttpXmlDocument& xmldoc,
 		ConfigurationManagerRW* cfgMgr,
 		const std::string& versionAlias,
@@ -4811,73 +4857,93 @@ try
 	//save as new version
 
 	ConfigurationBase* config = cfgMgr->getConfigurationByName(versionAliasesTableName);
-	ConfigurationVersion temporaryVersion = config->createTemporaryView(
-			activeVersions[versionAliasesTableName]);
+	ConfigurationVersion originalVersion = activeVersions[versionAliasesTableName];
+	ConfigurationVersion temporaryVersion = config->createTemporaryView(originalVersion);
 
 	__COUT__ << "\t\t temporaryVersion: " << temporaryVersion << std::endl;
 
-	ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
-
-	unsigned int col;
-	unsigned int col2 = configView->findCol("VersionAlias");
-	unsigned int col3 = configView->findCol("ConfigurationName");
-
-	//only make a new version if we are changing compared to active backbone
 	bool isDifferent = false;
 
-	unsigned int row = -1;
-	//find configName, versionAlias pair
-	//	NOTE: only accept the first pair, repeats are ignored.
-	try	{
-		unsigned int tmpRow = -1;
-		do
-		{	//start looking from beyond last find
-			tmpRow = configView->findRow(col3,configName,tmpRow+1);
-		} while (configView->getDataView()[tmpRow][col2] != versionAlias);
-		//at this point the first pair was found! (else exception was thrown)
-		row = tmpRow;
-	}
-	catch (...) {}
-	if(row == (unsigned int)-1) //if row not found then add a row
+	try
 	{
-		isDifferent = true;
-		row = configView->addRow();
+		ConfigurationView* configView = config->getTemporaryView(temporaryVersion);
 
-		//set all columns in new row
-		col = configView->findCol("CommentDescription");
-		configView->setValue(std::string("Entry was added by server in ") +
-				"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
-				row, col);
+		unsigned int col;
+		unsigned int col2 = configView->findCol("VersionAlias");
+		unsigned int col3 = configView->findCol("ConfigurationName");
 
-		col = configView->findCol("VersionAliasId");
-		configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
-				versionAlias, row, col);
+		//only make a new version if we are changing compared to active backbone
 
-		configView->setValue(versionAlias, row, col2);
-		configView->setValue(configName, row, col3);
+
+		unsigned int row = -1;
+		//find configName, versionAlias pair
+		//	NOTE: only accept the first pair, repeats are ignored.
+		try	{
+			unsigned int tmpRow = -1;
+			do
+			{	//start looking from beyond last find
+				tmpRow = configView->findRow(col3,configName,tmpRow+1);
+			} while (configView->getDataView()[tmpRow][col2] != versionAlias);
+			//at this point the first pair was found! (else exception was thrown)
+			row = tmpRow;
+		}
+		catch (...) {}
+		if(row == (unsigned int)-1) //if row not found then add a row
+		{
+			isDifferent = true;
+			row = configView->addRow();
+
+			//set all columns in new row
+			col = configView->findCol("CommentDescription");
+			configView->setValue(std::string("Entry was added by server in ") +
+					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
+					row, col);
+
+			col = configView->findCol("VersionAliasId");
+			configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
+					versionAlias, row, col);
+
+			configView->setValue(versionAlias, row, col2);
+			configView->setValue(configName, row, col3);
+		}
+
+		__COUT__ << "\t\t row: " << row << std::endl;
+
+		col = configView->findCol("Version");
+		__COUT__ << "\t\t version: " << version << " vs " <<
+				configView->getDataView()[row][col] << std::endl;
+		if(version.toString() != configView->getDataView()[row][col])
+		{
+			configView->setValue(version.toString(), row, col);
+			isDifferent = true;
+		}
+
+		if(isDifferent)	//set author/time of new version if different
+		{
+			configView->setValue(author, row, configView->findCol("Author"));
+			configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
+		}
 	}
-
-	__COUT__ << "\t\t row: " << row << std::endl;
-
-	col = configView->findCol("Version");
-	__COUT__ << "\t\t version: " << version << " vs " <<
-			configView->getDataView()[row][col] << std::endl;
-	if(version.toString() != configView->getDataView()[row][col])
+	catch(...)
 	{
-		configView->setValue(version.toString(), row, col);
-		isDifferent = true;
+		__COUT_ERR__ << "Error editing Version Alias view!" << std::endl;
+
+		//delete temporaryVersion
+		config->eraseView(temporaryVersion);
+		throw;
 	}
 
 	ConfigurationVersion newAssignedVersion;
 	if(isDifferent)	//make new version if different
 	{
-		configView->setValue(author, row, configView->findCol("Author"));
-		configView->setValue(time(0), row, configView->findCol("RecordInsertionTime"));
-
 		__COUT__ << "\t\t**************************** Save as new table version" << std::endl;
 
-		newAssignedVersion  =
-				cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
+		//newAssignedVersion  =
+		//		cfgMgr->saveNewConfiguration(versionAliasesTableName,temporaryVersion);
+
+		newAssignedVersion = saveModifiedVersionXML(xmldoc,cfgMgr,
+						config->getConfigurationName(),originalVersion, false /*makeTemporary*/,
+						config,temporaryVersion,false /*ignoreDuplicates*/,true /*lookForEquivalent*/);
 	}
 	else	//use existing version
 	{
@@ -4886,10 +4952,11 @@ try
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[versionAliasesTableName];
+
+		xmldoc.addTextElementToData("savedAlias", versionAliasesTableName);
+		xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	}
 
-	xmldoc.addTextElementToData("savedAlias", versionAliasesTableName);
-	xmldoc.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	__COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << std::endl;
 }
 catch(std::runtime_error& e)

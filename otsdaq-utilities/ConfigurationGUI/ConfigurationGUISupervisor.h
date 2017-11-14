@@ -57,7 +57,7 @@ private:
     void 			handleConfigurationGroupsXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool returnMembers);
     void 			handleGetConfigurationGroupXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, ConfigurationGroupKey groupKey);
     void 			handleGetConfigurationGroupTypeXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configList);
-    void			handleCreateConfigurationGroupXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const std::string& configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string& groupComment = "");
+    void			handleCreateConfigurationGroupXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const std::string& configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string& groupComment = "", bool lookForEquivalent = false);
 
     void 			handleConfigurationsXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool allowIllegalColumns=false);

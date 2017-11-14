@@ -51,6 +51,8 @@ else {
 		var _cookieCodeStr = "otsCookieCode";
 		var _cookieUserStr = "otsCookieUser";
 		var _cookieRememberMeStr = "otsRememberMeUser";
+		var _BLACKOUT_COOKIE_STR = "TEMPORARY_SYSTEM_BLACKOUT";
+		var _system_blackout = false;
 		var _user = "";
 		var _displayName = "No-Login";
 		var _permissions = 0;
@@ -125,7 +127,8 @@ else {
 		
 			Debug.log("loginPrompt " + _keepFeedbackText,Debug.LOW_PRIORITY);
 					
-			_deleteCookies(); //local logout
+			if(_attemptedCookieCheck)
+				_deleteCookies(); //local logout/reset
 			
 			//if login screen already displayed then do nothing more
 			if(document.getElementById("Desktop-loginDiv"))
@@ -267,8 +270,22 @@ else {
 		// 		use this as only method for refreshing and setting login cookie!!
 		//		sets 2 cookies, cookieCode to code and userName to _user
 		var _setCookie = function(code) {
+			
+			if(code == _BLACKOUT_COOKIE_STR)
+			{
+				Debug.log("maintaining cookie code = " + _cookieCode);
+				
+				var exdate = new Date();
+				exdate.setDate(exdate.getDate() + _DEFAULT_COOKIE_DURATION_DAYS);
+				var c_value;
+				c_value = escape(code) + ((_DEFAULT_COOKIE_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
+				document.cookie= _cookieCodeStr + "=" + c_value;
+
+				return;
+			}
+			
 			if(_user == "" || !code.length || code.length < 2) return; //only refresh/set cookies if valid user and cookie code
-			if(_cookieCode == code) return; //unchanged
+			if(!_system_blackout && _cookieCode == code) return; //unchanged do nothing (unless coming out of blackout)
 			
 			_cookieCode = code;	//set local cookie code values
 			var exdate = new Date();
@@ -346,7 +363,7 @@ else {
 			}
 			else
 			{					
-				Debug.log("No cookie found",Debug.LOW_PRIORITY);
+				Debug.log("No cookie found (" + code + ")",Debug.LOW_PRIORITY);
 
 				//attempt CERT login
 				if(!_attemptedLoginWithCert)
@@ -503,6 +520,20 @@ else {
 			//successfully received session ID			
 			_sessionId = req.responseText;		
 			
+			
+			
+			//check if system blackout exists
+			if(!_attemptedCookieCheck &&
+					_getCookie(_cookieCodeStr) == _BLACKOUT_COOKIE_STR)
+			{
+				_loginPrompt();
+				Debug.log("There is a system wide blackout! (Attempts to login right now may fail - likely someone is rebooting the system)", Debug.WARN_PRIORITY);				
+				return;
+			}
+			
+			
+			
+			
 			if(_attemptedCookieCheck)
 			{
 				Debug.log("Already tried browser cookie login. Giving up.");
@@ -642,13 +673,53 @@ else {
          			//		false:true; //prevent infinite logout requests, on server failure
 		}
 		
+
+		//blackout ~
+		//	use to blackout all open sessions in the same browser
+		//	during known periods of server unavailability
+		this.blackout = function(setVal) {
+			setVal = setVal?true:false;
+			if(setVal == _system_blackout)
+				return; // do nothing if already setup with value
+						
+			if(setVal) //start blackout
+			{
+				_setCookie(_BLACKOUT_COOKIE_STR);
+			}
+			else //remove blackout
+			{
+				_setCookie(_cookieCode);				
+			}
+			
+			_system_blackout = setVal;
+			Debug.log("Login blackout " + _system_blackout);
+		}
+		
+		//isBlackout ~
+		//	use to check for existing system blackout from exernal sources
+		this.isBlackout = function() {
+			var cc = _getCookie(_cookieCodeStr);
+			if(!cc) return false; //may be undefined
+			//Debug.log("Checking for blackout signal = " + cc.substr(0,10));
+			return (cc == _BLACKOUT_COOKIE_STR);
+		}
+		
 		//getCookieCode --
 		// The public getCookieCode function does not actually check the cookie
 		// it is the server which controls if a cookieCode is still valid.
 		// This function just refreshes the cookie and returns the local cookieCode value.
 		// Note: should only refresh from user activity, not auto
 		this.getCookieCode = function(doNotRefresh) {
-			if(!doNotRefresh) _setCookie(_cookieCode); //refresh cookies
+			if(!doNotRefresh)
+			{
+				if(this.isBlackout())
+				{
+					Debug.log("Found an external blackout signal.");
+					return;
+				}
+				
+				_setCookie(_cookieCode); //refresh cookies
+			}
 			return _cookieCode;
 		}
         
