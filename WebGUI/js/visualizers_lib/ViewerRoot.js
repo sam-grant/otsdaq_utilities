@@ -196,6 +196,7 @@ ViewerRoot.init = function() {
 	ViewerRoot.rootObjArr = [];
 	ViewerRoot.rootObjIndexArr = [];
 	ViewerRoot.rootObjNameArr = [];
+	ViewerRoot.rootObjTitleArr = [];
 	ViewerRoot.rootHeaderElArr = [];
 	ViewerRoot.rootIsTransparentArr = [];
 	ViewerRoot.rootIsAutoRefreshArr = [];
@@ -266,7 +267,7 @@ ViewerRoot.autoRefreshTick = function() {
 //		based on RADIO: Tile, Replace, Superimpose. The div id
 //		will be "histogram"+ViewerRoot.objIndex.. this is the div
 //		the root js library will draw to.
-ViewerRoot.prepareNextLocation = function(objName) {
+    ViewerRoot.prepareNextLocation = function(objName, objTitle) {
 	Debug.log("ViewerRoot prepareNextLocation for ViewerRoot.objIndex " + "mode " + ViewerRoot.nextObjectMode +
 			": " + ViewerRoot.objIndex + ": " + objName);
 	
@@ -312,6 +313,7 @@ ViewerRoot.prepareNextLocation = function(objName) {
 	ViewerRoot.rootIsTransparentArr.push(drawTransparently); //keep for transparent drawing
 	ViewerRoot.rootIsAutoRefreshArr.push(ViewerRoot.autoRefreshDefault);
 	ViewerRoot.rootObjNameArr.push(objName);	//assign new report to position
+	ViewerRoot.rootObjTitleArr.push(objTitle);
 	
 	ViewerRoot.manageRootHeaders(); 	//manage headers for all positions	
 	ViewerRoot.resizeRootObjects(true); 	//resize all root objects as a result of new element
@@ -335,6 +337,7 @@ ViewerRoot.removeAllAtPosition = function(posi, isClosingPosition) {
 			ViewerRoot.rootObjArr.splice(i,1);
 			ViewerRoot.rootObjIndexArr.splice(i,1);
 			ViewerRoot.rootObjNameArr.splice(i,1);
+			ViewerRoot.rootObjTitleArr.splice(i,1);
 			ViewerRoot.rootIsTransparentArr.splice(i,1);
 			ViewerRoot.rootIsAutoRefreshArr.splice(i,1);			
 			
@@ -387,8 +390,8 @@ ViewerRoot.manageRootHeaders = function() {
 		isAtLeastOneRefreshing = false;
 		for(var j=0;j<ViewerRoot.rootPosArr.length;++j)
 			if(ViewerRoot.rootPosArr[j] == i) { ++found; fullPath = ViewerRoot.rootObjNameArr[j];
-				name = (fullPath.length > 20)?("..." + fullPath.substr(fullPath.length-18)):fullPath;
-				
+			    //name = (fullPath.length > 20)?("..." + fullPath.substr(fullPath.length-18)):fullPath;
+			    name=ViewerRoot.rootObjTitleArr[j];	
 				if(ViewerRoot.rootIsAutoRefreshArr[j]) isAtLeastOneRefreshing = true; //this root object is set to autorefresh
 			}
 		
@@ -746,6 +749,7 @@ ViewerRoot.getRootDataHandler = function(req) {
 	//Debug.log("ViewerRoot tmpRootDataHandler JSON \n\n" + rootJSON );
 		
 	var ojbect = JSROOT.parse(rootJSON);
+	var rootTitle = ojbect.fTitle;
 		
 	if(!ojbect || !rootType || !rootName)
 	{ 
@@ -790,7 +794,7 @@ ViewerRoot.getRootDataHandler = function(req) {
 	
 	console.log("refreshIndex=" + refreshIndex + " ViewerRoot.rootTargetIndex=" + ViewerRoot.rootTargetIndex);
 	
-	if(refreshIndex < 0) ViewerRoot.prepareNextLocation(rootName);
+	if(refreshIndex < 0) ViewerRoot.prepareNextLocation(rootName, rootTitle);
 	else
 	{
 		//refreshIndex is the location to target
@@ -853,6 +857,7 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex) 
 		{
 			delete ViewerRoot.rootObjArr[refreshIndex]; ViewerRoot.rootObjArr[refreshIndex] = null;
 			ViewerRoot.rootObjArr[refreshIndex] = object;
+			ViewerRoot.rootObjTitleArr[refreshIndex] = object.fTitle;
 			ViewerRoot.rootObjIndexArr[refreshIndex] = ViewerRoot.objIndex;
 			
 			
@@ -888,10 +893,12 @@ ViewerRoot.interpretObjectJSON = function(object,rootType,objName,refreshIndex) 
 		{
 			delete ViewerRoot.rootObjArr[refreshIndex]; ViewerRoot.rootObjArr[refreshIndex] = null;
 			ViewerRoot.rootObjArr[refreshIndex] = object;
+			ViewerRoot.rootObjTitleArr[refreshIndex] = object.fTitle;
 		}
 	}
 	
 	ViewerRoot.refreshTransparency(refreshIndex<0?(ViewerRoot.rootObjArr.length-1):refreshIndex);
+	ViewerRoot.manageRootHeaders(); 	//manage headers for all positions	
 
 }
 
