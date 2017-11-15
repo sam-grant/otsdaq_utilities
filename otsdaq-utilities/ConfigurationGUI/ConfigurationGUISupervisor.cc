@@ -3873,6 +3873,21 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 	{
 		ConfigurationVersion duplicateVersion;
 
+		{
+			//"DEEP" checking
+			//	load into cache 'recent' versions for this table
+			const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(); //do not refresh
+
+			auto rit = allCfgInfo.at(configName).versions_.rbegin();
+			for(;rit != allCfgInfo.at(configName).versions_.rend();rit--)
+			{
+				__COUT__ << "Versions in reverse order " << *rit << std::endl;
+				//cfgMgr->getVersionedConfigurationByName(configName,version)
+			}
+		}
+
+
+
 		duplicateVersion = config->checkForDuplicate(temporaryModifiedVersion,
 				originalVersion);
 

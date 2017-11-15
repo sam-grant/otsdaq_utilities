@@ -78,9 +78,9 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 				getApplicationDescriptor()->getLocalId()
 		))
 , supervisorConfigurationPath_  ("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
-, theRemoteWebUsers_          (this)
-, theDataManager_             (0)
-, loadedRunNumber_	          (-1)
+, theRemoteWebUsers_          	(this)
+, theDataManager_             	(0)
+, loadedRunNumber_	          	(-1)
 {
 	INIT_MF("VisualSupervisor");
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
@@ -198,7 +198,8 @@ throw (xgi::exception::Exception)
 	//**** start LOGIN GATEWAY CODE ***//
 	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
 	{
-		bool automaticCommand = Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+		bool automaticCommand = false;//Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+
 		bool checkLock = false;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
