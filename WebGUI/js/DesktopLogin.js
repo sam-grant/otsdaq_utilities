@@ -162,8 +162,10 @@ else {
 			//reset pointer (seems to get lost somehow)
 			Desktop.desktop.login.loginDiv = _loginDiv = document.getElementById("DesktopLoginDiv");
 			
-			_loginDiv.appendChild(ldiv); //add centering elements to page
-			//else return; //abandon, no login element being displayed
+			if(!_loginDiv)
+				return; //abandon, no login element being displayed
+			
+			_loginDiv.appendChild(ldiv); //add centering elements to page			
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
