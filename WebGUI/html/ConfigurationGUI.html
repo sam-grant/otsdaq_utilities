@@ -10692,9 +10692,16 @@
 						_editingCellEl.innerHTML = _editingCellElOldValue;
 
 						//show again nav context menu
-						if(treeEditingNodeType_.indexOf("link") == 0)
-							document.getElementById("treeNode-LinkContextMenuTD-" + 
-									treeEditingNodeIdString_).style.display = "block";
+						try
+						{
+							if(treeEditingNodeType_.indexOf("link") == 0)
+								document.getElementById("treeNode-LinkContextMenuTD-" + 
+										treeEditingNodeIdString_).style.display = "block";
+						}
+						catch(e)
+						{
+							Debug.log("Link does not have context menu? " + e);							
+						}
 					}
 					else
 					{

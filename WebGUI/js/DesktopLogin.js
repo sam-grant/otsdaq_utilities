@@ -552,7 +552,12 @@ else {
 		var _offerActiveSessionOptions = function(cnt) {
 		
 			ldiv = document.getElementById("Desktop-loginContent");
-
+			if(!ldiv) 
+			{
+				Debug.log("No login prompt, so not offering active session options.");
+				return;
+			}
+			
 			str = "";
 			str += "<center>Warning! You currently have " + cnt + " other active session" + (cnt > 1?"s":"") + ".<br />";
 			str += "<div id='loginFeedbackDiv'>You can opt to force logout the other session" + (cnt > 1?"s":"") + ", " + 

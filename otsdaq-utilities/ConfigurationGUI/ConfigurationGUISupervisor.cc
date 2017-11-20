@@ -227,7 +227,8 @@ throw (xgi::exception::Exception)
 		__COUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmldoc,cfgMgr,configName);
 	}
-	else if(Command == "launchOTS" || Command == "launchWiz" || Command == "flattenToSystemAliases")
+	else if(Command == "gatewayLaunchOTS" || Command == "gatewayLaunchWiz" ||//Command == "launchOTS" || Command == "launchWiz" ||
+			Command == "flattenToSystemAliases")
 	{
 		//NOTE: similar to Supervisor version but does not keep active sessions
 		__COUT_WARN__ << Command << " command received! " << std::endl;
@@ -280,7 +281,11 @@ throw (xgi::exception::Exception)
 				else if(Command == "gatewayLaunchWiz")
 					fprintf(fp,"LAUNCH_WIZ");
 				else if(Command == "flattenToSystemAliases")
+				{
 					fprintf(fp,"FLATTEN_TO_SYSTEM_ALIASES");
+					fclose(fp);
+					break; // only do at one host
+				}
 
 				fclose(fp);
 			}
