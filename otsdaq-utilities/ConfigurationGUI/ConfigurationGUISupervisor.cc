@@ -564,7 +564,7 @@ throw (xgi::exception::Exception)
 						cfgMgr->getActiveVersionAliases();
 
 				versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
-	//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) /NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
+	//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
 	//			{
 	//				version = ConfigurationVersion::SCRATCH;
 	//				__COUT__ << "version alias translated to: " << version << std::endl;
@@ -3876,20 +3876,27 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 	//check for duplicate tables already in cache
 	if(!ignoreDuplicates)
 	{
+		__COUT__ << "Checking for duplicate tables..." << std::endl;
+
 		ConfigurationVersion duplicateVersion;
-//
-//		{
-//			//"DEEP" checking
-//			//	load into cache 'recent' versions for this table
-//			const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(); //do not refresh
-//
-//			auto rit = allCfgInfo.at(configName).versions_.rbegin();
-//			for(;rit != allCfgInfo.at(configName).versions_.rend();rit--)
-//			{
-//				__COUT__ << "Versions in reverse order " << *rit << std::endl;
-//				//cfgMgr->getVersionedConfigurationByName(configName,version)
-//			}
-//		}
+
+		{
+			//"DEEP" checking
+			//	load into cache 'recent' versions for this table
+			//		'recent' := those already in cache, plus highest version numbers not in cache
+			const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(); //do not refresh
+
+			auto versionReverseIterator = allCfgInfo.at(configName).versions_.rbegin(); //get reverse iterator
+			__COUT__ << "Filling up cached from " <<
+					config->getNumberOfStoredViews() <<
+					" to max count of " << config->MAX_VIEWS_IN_CACHE << std::endl;
+			for(;config->getNumberOfStoredViews() < config->MAX_VIEWS_IN_CACHE &&
+				versionReverseIterator != allCfgInfo.at(configName).versions_.rend();++versionReverseIterator)
+			{
+				__COUT__ << "Versions in reverse order " << *versionReverseIterator << std::endl;
+				cfgMgr->getVersionedConfigurationByName(configName,*versionReverseIterator); //load to cache
+			}
+		}
 
 
 
@@ -3923,6 +3930,8 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 			config->eraseView(temporaryModifiedVersion);
 			throw std::runtime_error(ss.str());
 		}
+
+		__COUT__ << "Check for duplicate tables complete." << std::endl;
 	}
 
 
@@ -4317,6 +4326,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 
 	if(!allowDuplicates)
 	{
+		__COUT__ << "Checking for duplicate groups..." << std::endl;
 		ConfigurationGroupKey foundKey =
 				cfgMgr->findConfigurationGroup(groupName,groupMembers);
 
@@ -4344,6 +4354,8 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 				return;
 			}
 		}
+
+		__COUT__ << "Check for duplicate groups complete." << std::endl;
 	}
 
 	//check the group for errors before creating group

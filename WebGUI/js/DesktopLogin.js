@@ -162,8 +162,10 @@ else {
 			//reset pointer (seems to get lost somehow)
 			Desktop.desktop.login.loginDiv = _loginDiv = document.getElementById("DesktopLoginDiv");
 			
-			_loginDiv.appendChild(ldiv); //add centering elements to page
-			//else return; //abandon, no login element being displayed
+			if(!_loginDiv)
+				return; //abandon, no login element being displayed
+			
+			_loginDiv.appendChild(ldiv); //add centering elements to page			
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
@@ -295,8 +297,8 @@ else {
 			document.cookie= _cookieCodeStr + "=" + c_value;
 			c_value = escape(_user) + ((_DEFAULT_COOKIE_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
 			document.cookie= _cookieUserStr + "=" + c_value;
-            
-			Debug.log("set cookie");
+			
+			//Debug.log("set cookie");
 			var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
             ccdiv.innerHTML = _cookieCode; //place in mailbox for desktop content
 			ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");

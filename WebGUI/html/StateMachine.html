@@ -32,6 +32,7 @@
 				position: absolute;
 				margin: 3px 0 0 270px;
 				color: white;
+				font-family: 'Donegal One', arial;
 			}
 			#refresh-box a:hover {
 				cursor: pointer;
@@ -783,8 +784,11 @@
                 		localPlaceState(i);                
 			}
 			
+
+			//=====================================================================================
 			//getCurrentState ~~
-			function getCurrentState() {
+			function getCurrentState() 
+			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
 						"", currStateRequestHandler);
@@ -806,9 +810,11 @@
 			}
 			
 
+			//=====================================================================================
 			//currStateRequestHandler ~~
 			//	poll current state of state machine
-			function currStateRequestHandler(req,id,err) {		
+			function currStateRequestHandler(req,id,err) 
+			{		
 
             	if(!req) //error! stop handler
             	{            		
@@ -2195,10 +2201,10 @@
 			function refreshFSM()
 			{
 				Debug.log("refreshFSM");
-				//init();?
-				_transitionProgress = -1; 
-				window.clearInterval(_transitionTimer);
-				_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+				init();
+				//_transitionProgress = -1; 
+				//window.clearInterval(_transitionTimer);
+				//_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
 			}
 		</script>
 </head>
@@ -2212,11 +2218,11 @@
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
 </div>
-<!--	FIXME comeback to defining a proper refresh...	
+<!--	FIXME comeback to defining a proper refresh...	-->
 <div id='refresh-box'>
 	<a onclick='refreshFSM()'>Refresh</a>
 </div>
-		-->
+		
 
 <div id='extras-box'>
 	<div id='run-number'></div>
