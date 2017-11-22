@@ -98,7 +98,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							 ":\t " + Debug.lastLog + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									 :(num < 99?"color:#092":"color:#333")); 
+									 :(num == 1?"color:#F70" //warn
+											 :(num < 99?"color:#092":"color:#333"))); 
 					Debug.lastLog = str;
 					
 					if(num < 4) //show all high priorities as popup!

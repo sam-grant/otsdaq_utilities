@@ -2703,14 +2703,14 @@ try
 
 						getline(g, paramValue, ','); ++i;
 						//__COUT__ << "paramValue " << paramValue << std::endl;
-						commands.back().type = paramValue;
+						commands.back().type_ = paramValue;
 					}
 					else // params
 					{
 						getline(g, paramValue, ','); ++i;
 						//__COUT__ << "paramValue " << paramValue << std::endl;
 
-						commands.back().params.emplace(
+						commands.back().params_.emplace(
 								std::pair<
 								std::string /*param name*/,
 								std::string /*param value*/> (
@@ -2740,9 +2740,9 @@ try
 		{
 
 			__COUT__ << "command " <<
-					command.type << std::endl;
+					command.type_ << std::endl;
 			__COUT__ << "table " <<
-					IterateConfiguration::commandToTableMap_.at(command.type) << std::endl;
+					IterateConfiguration::commandToTableMap_.at(command.type_) << std::endl;
 
 			//create command entry at plan level
 			row = planTable.cfgView_->addRow(author,"planCommand");
@@ -2750,7 +2750,7 @@ try
 
 			//set command type
 			planTable.cfgView_->setURIEncodedValue(
-					command.type,
+					command.type_,
 					row,
 					cmdTypeCol);
 
@@ -2761,51 +2761,51 @@ try
 					planTable.cfgView_->getColStatus());
 
 			//create command specifics
-			if(commandTypeToCommandTableMap.find(command.type) !=
+			if(commandTypeToCommandTableMap.find(command.type_) !=
 					commandTypeToCommandTableMap.end()) //if table exists in map! (some commands may have no parameters)
 			{
-				__COUT__ << "table " << commandTypeToCommandTableMap[command.type].configName_ << std::endl;
+				__COUT__ << "table " << commandTypeToCommandTableMap[command.type_].configName_ << std::endl;
 
 				//at this point have config, tempVersion, and createdFlag
 
 				//create command parameter entry at command level
-				cmdRow = commandTypeToCommandTableMap[command.type].cfgView_->addRow(
-						author,command.type + "_COMMAND_");
+				cmdRow = commandTypeToCommandTableMap[command.type_].cfgView_->addRow(
+						author,command.type_ + "_COMMAND_");
 
 				//parameters are linked
 				//now set value of all parameters
 				//	find parameter column, and set value
-				for(auto& param:command.params)
+				for(auto& param:command.params_)
 				{
 					__COUT__ << "\t param " <<
 							param.first << " : " <<
 							param.second << std::endl;
 
-					cmdCol = commandTypeToCommandTableMap[command.type].cfgView_->findCol(
+					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
 							param.first);
 
 					__COUT__ << "param col " << cmdCol << std::endl;
 
-					commandTypeToCommandTableMap[command.type].cfgView_->setURIEncodedValue(
+					commandTypeToCommandTableMap[command.type_].cfgView_->setURIEncodedValue(
 							param.second,cmdRow,cmdCol);
 				}
 
 				//and link at plan level to created UID
 				planTable.cfgView_->setValueAsString(
-						commandTypeToCommandTableMap[command.type].configName_,
+						commandTypeToCommandTableMap[command.type_].configName_,
 						row,
 						commandUidLink.first);
 				planTable.cfgView_->setValueAsString(
-						commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
-						)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()],
+						commandTypeToCommandTableMap[command.type_].cfgView_->getDataView(
+						)[cmdRow][commandTypeToCommandTableMap[command.type_].cfgView_->getColUID()],
 						row,
 						commandUidLink.second);
 
 				__COUT__ << "linked to uid = " <<
-						commandTypeToCommandTableMap[command.type].cfgView_->getDataView(
-								)[cmdRow][commandTypeToCommandTableMap[command.type].cfgView_->getColUID()] << std::endl;
+						commandTypeToCommandTableMap[command.type_].cfgView_->getDataView(
+								)[cmdRow][commandTypeToCommandTableMap[command.type_].cfgView_->getColUID()] << std::endl;
 
-				commandTypeToCommandTableMap[command.type].modified_ = true;
+				commandTypeToCommandTableMap[command.type_].modified_ = true;
 			}
 
 		} //end command loop
@@ -3910,6 +3910,10 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 
 			//erase and return equivalent version
 
+			//erase modified equivalent version
+			cfgMgr->eraseTemporaryVersion(configName,temporaryModifiedVersion);
+
+			//erase original if needed
 			if(needToEraseTemporarySource)
 				cfgMgr->eraseTemporaryVersion(configName,originalVersion);
 
@@ -3918,6 +3922,7 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 			xmldoc.addTextElementToData("foundEquivalentVersion", "1");
 
 			__COUT__ << "\t\t equivalent AssignedVersion: " << duplicateVersion << std::endl;
+
 			return duplicateVersion;
 		}
 
@@ -3926,6 +3931,7 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 			__SS__ << "This version is identical to another version currently cached v" <<
 					duplicateVersion << ". No reason to save a duplicate." << std::endl;
 			__COUT_ERR__ << "\n" << ss.str();
+
 			//delete temporaryModifiedVersion
 			config->eraseView(temporaryModifiedVersion);
 			throw std::runtime_error(ss.str());
@@ -4077,8 +4083,10 @@ try
 		throw std::runtime_error(ss.str());
 	}
 
+	//note: if sourceTableAsIs, accept equivalent versions
 	saveModifiedVersionXML(xmldoc,cfgMgr,configName,version,makeTemporary,
-			config,temporaryVersion,false /*ignoreDuplicates*/,lookForEquivalent);
+			config,temporaryVersion,false /*ignoreDuplicates*/,
+			lookForEquivalent || sourceTableAsIs /*lookForEquivalent*/);
 }
 catch(std::runtime_error& e)
 {
@@ -4342,6 +4350,9 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 						groupName << "." << std::endl;
 				//allow this equivalent group to be the response without an error
 				xmldoc.addTextElementToData("foundEquivalentKey","1"); //indicator
+
+				//insert get configuration info
+				handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,foundKey);
 				return;
 			}
 			else //treat as error, if not looking for equivalent
@@ -4456,6 +4467,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		return;
 	}
 
+	//insert get configuration info
 	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
 }
 

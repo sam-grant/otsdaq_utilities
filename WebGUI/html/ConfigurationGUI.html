@@ -653,7 +653,7 @@
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
 					versionTrackingHandler,
-					
+					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 			);
 		}
 		
@@ -1543,6 +1543,9 @@
 			} while(el);	
 			
 			var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+
+			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
@@ -1560,11 +1563,7 @@
 				var el = document.getElementById("display");
 				var str = "";
 				str += "Failed.<br><br>" + err; 
-				
-
-				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-				
+								
 				if(groupName && groupKey)
 				{
 					str += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;";
@@ -1595,8 +1594,16 @@
 					return;
 			}
 			else if(attemptedNewGroupName && attemptedNewGroupName != "") //if attempted and no errors, shout success
-				Debug.log("New group '" + attemptedNewGroupName + "' successfully created!",
-						Debug.INFO_PRIORITY);
+			{
+				var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+				if(foundEquivalentKey)	
+					Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+							" (" + groupKey + ")'", Debug.INFO_PRIORITY);
+				else
+					Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+							" (" + groupKey + ")'", Debug.INFO_PRIORITY);
+			}
 				
 			
 			var backLinkStr = "";
@@ -1621,8 +1628,6 @@
 				}			
 			}
 			
-			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
 			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
@@ -1805,7 +1810,7 @@
 				
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + configName + "-currentVersionLink' " +
-						"href='#' onclick='" + replaceScreenJS + "'>";
+						"href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForConfigGroup()!!
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
@@ -1851,38 +1856,7 @@
 									"groupMemberNavContextMenu",
 									_CONTEXT_MENU_PRIMARY_COLOR,
 									_CONTEXT_MENU_SECONDARY_COLOR) + "' ";// end link onmousedown
-//					
-//							"onmousedown='" + // start link onmousedown	
-//							"SimpleContextMenu.createMenu(["; //open array for items
-
-//					//output item strings
-//					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
-//					{
-//						if(j)
-//							str += ",";
-//						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
-//					}
-//					str += //end items and open array for item handlers
-//							"]," +
-//							"[";
-//
-//					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
-//					{
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//need to escape all quotes by one more level
-//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-//								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-//						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
-//						if(j != groupMemberNavContextMenuItemHandlers.length-1)
-//							str += ",";
-//					}
-//					str += "]" + //end treeNavContextMenuItemHandlers array
-//							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
-//							"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
+					
 					str += 
 							//"onmouseup='" + onmouseupJS + "' " +
 							">" +	
@@ -4478,7 +4452,7 @@
 				Debug.log("configMap " + configMap);
 				//return;
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+				DesktopContent.XMLHttpRequest("Request?RequestType=" +
 						"&groupName=" +	(groupTypeName + "Group" + "WizToLatest") +
 						"&ignoreWarnings=" + (ignoreWarnings?1:0),
 						configMap, 
@@ -4573,8 +4547,12 @@
 		//saveGroupAndActivate
 		function saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 		{
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-					groupName, configMap, 
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" +	groupName +
+					"&allowDuplicates=0" +
+					"&lookForEquivalent=1" +
+					"", //end get data
+					configMap, //end post data
 					function(req)
 					{
 				var err = DesktopContent.getXMLValue(req,"Error");
@@ -6672,7 +6650,7 @@
 					{			
 						if(!i)//check for arbitraryBool flag
 						{
-							let needToContinue = false;
+							var needToContinue = false;
 
 							if(_tableFixedChoiceData[c][i].indexOf("arbitraryBool=") == 0)
 							{
@@ -6841,14 +6819,14 @@
 			//Add OK | CANCEL
 			//	if link, add GOTO 'button'
 			{
-				let controlString;  
+				var controlString;  
 				
 				if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
 				{
-					let backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
+					var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
 							_version + "\\\");";
 					
-					let w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
+					var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
 					controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
 					w += ("width:95px;").length;
 					controlString += "width:150px;"; //needs to be wider
@@ -7740,13 +7718,22 @@
 						}						
 
 						var configName = DesktopContent.getXMLValue(req,"savedName");
-						var version = DesktopContent.getXMLValue(req,"savedVersion");
-
-						Debug.log("Successfully created new table '" + configName + "-v" + 
-								version + "'",Debug.INFO_PRIORITY);
+						var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
+						var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion")|0; //as int
+										
+						var scratchNotice = (ConfigurationAPI._SCRATCH_VERSION == (savedVersion|0))?_SCRATCH_VIEW_NAME:savedVersion;
+										
+						if(foundEquivalentVersion)
+							Debug.log("Found equivalent version '" + scratchNotice +
+									"' for table '" +
+									configName + ".' ", Debug.INFO_PRIORITY);
+						else
+							Debug.log("New persistent version '" + scratchNotice +
+									"' for table '" +
+									configName + "' was successfully created.", Debug.INFO_PRIORITY);
 
 						//update tree member table version based on result
-						treeMemberVersions_[treeMemberIndex] = version;					
+						treeMemberVersions_[treeMemberIndex] = savedVersion;					
 
 						++numberOfReturns;
 
@@ -8150,7 +8137,8 @@
 							reqStr = ""; //reuse
 							reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 									"&groupName=" + affectedGroupNames[i] +
-									"&allowDuplicates=1" +
+									"&allowDuplicates=0" +
+									"&lookForEquivalent=1" +
 									"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 									"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
 							Debug.log("reqStr = " + reqStr);
@@ -8207,9 +8195,17 @@
 								var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 								affectedGroupKeys.push(newGroupKey);
 
+								var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+								if(foundEquivalentKey)	
+									Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+											" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+								else
+									Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+											" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
 								//need to modify root group name if changed
-								Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-										" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+								
 
 								//activate if option was selected
 								if(activatingSavedGroups)
@@ -10548,7 +10544,7 @@
 					if(_editingCellType.indexOf("ChildLink-") == 0 && 
 							str != "NO_LINK")
 					{
-						let astr = "";
+						var astr = "";
 						astr += "<a href='#'>"; //for show
 						astr += str;
 						astr += "</a>";
@@ -10573,7 +10569,7 @@
 					if(_editingCellType.indexOf("ChildLink-") == 0 && 
 							str != "NO_LINK")
 					{
-						let astr = "";
+						var astr = "";
 						astr += "<a href='#'>"; //for show
 						astr += str;
 						astr += "</a>";
@@ -10636,7 +10632,7 @@
 				if(_editingCellType.indexOf("ChildLink-") == 0 && 
 						str != "NO_LINK")
 				{
-					let astr = "";
+					var astr = "";
 					astr += "<a href='#'>"; //for show
 					astr += str;
 					astr += "</a>";
@@ -10716,7 +10712,7 @@
 					if(_editingCellType.indexOf("ChildLink-") == 0 &&
 							_editingCellElOldValue != "NO_LINK")
 					{
-						let astr = "";
+						var astr = "";
 						astr += "<a href='#'>"; //for show
 						astr += _editingCellElOldValue;
 						astr += "</a>";
@@ -11939,11 +11935,11 @@
 			//clean up [[ ]] from bitmap
 			// may only be necessary for backwards compatibility?
 			{
-				let x = 0;
-				let y = 0;
-				let c = 0;
-				let tmpStr = "";
-				for(let i=0;i<_tableUploadStr.length;++i)
+				var x = 0;
+				var y = 0;
+				var c = 0;
+				var tmpStr = "";
+				for(var i=0;i<_tableUploadStr.length;++i)
 				{
 					if(_tableUploadStr[i] == '[')
 						++c; //increase number of closing brackets necessary 
@@ -12438,7 +12434,8 @@
 					reqStr = ""; //reuse
 					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 							"&groupName=" + affectedArr[0] +
-							"&allowDuplicates=1" +
+							"&allowDuplicates=0" +
+							"&lookForEquivalent=1" +
 							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 							"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);										
 					Debug.log(reqStr);
@@ -12495,10 +12492,17 @@
 						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
-						//need to modify root group name if changed
-						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+						
+						if(foundEquivalentKey)	
+							Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						else
+							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 
+						//need to modify root group name if changed
+						
 						//activate if option was selected
 						if(activatingSavedGroups)
 							activateSystemConfig(attemptedNewGroupName,newGroupKey);
@@ -12610,6 +12614,7 @@
 									}
 									Debug.log(configMap);
 
+									//FIXME -- use config API version of setGroupAliasInActiveBackbone
 									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
@@ -12619,7 +12624,7 @@
 										{							
 											Debug.log("Successfully modified the active Backbone group.\n" +
 													"Backbone group '" + retParams.groupName + " (" + 
-													retParams.groupKey + ")' was created and activated.",
+													retParams.groupKey + ")' was activated.",
 													Debug.INFO_PRIORITY);							
 										}
 
@@ -12703,7 +12708,9 @@
 						
 			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
-					"&configName=" + _currentConfigName + "&version="+_version +
+					"&configName=" + _currentConfigName + 
+					"&version="+_version +
+					"&lookForEquivalent="+"1" +
 					"&temporary="+(temporary?1:0) +
 					"&tableComment=" + comment; 
 			Debug.log(dataStr);
@@ -12736,12 +12743,19 @@
 				}		
 				
 				var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
+				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion")|0; //as int
 				
 				var scratchNotice = (ConfigurationAPI._SCRATCH_VERSION == (savedVersion|0))?_SCRATCH_VIEW_NAME:savedVersion;
-				Debug.log("New persistent version '" + scratchNotice +
-						"' for table '" +
-						_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
 				
+				if(foundEquivalentVersion)
+					Debug.log("Found equivalent version '" + scratchNotice +
+							"' for table '" +
+							_currentConfigName + ".' ", Debug.INFO_PRIORITY);
+				else
+					Debug.log("New persistent version '" + scratchNotice +
+							"' for table '" +
+							_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
+
 				//handle group handling based on popup options
 				localHandleAffectedGroups(savedVersion);
 				
@@ -12797,7 +12811,12 @@
 			
 			//change link
 			el = document.getElementById(configName + "-currentVersionLink");
-			var str = el.href;
+//			el.onclick = function()
+//					{
+//							
+//					}
+			var str;
+			str = el.href;
 			var linkSplitArr = str.split(',');
 			str = ""; //build link href str back up with new version
 			for(var i=0;i<linkSplitArr.length;++i)
@@ -12808,7 +12827,7 @@
 				else
 					str += linkSplitArr[i];				
 			}
-			el.href = str;
+			str.href = str;
 			
 			//update existing
 			el = document.getElementById(configName + "-versions");
@@ -13003,6 +13022,7 @@
 					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 							"&groupName=" + affectedGroupNames[i] +
 							"&allowDuplicates=0" +
+							"&lookForEquivalent=1" +
 							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 							"&groupComment=" + comment;										
 					Debug.log(reqStr);
@@ -13057,9 +13077,16 @@
 						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
+						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+						if(foundEquivalentKey)	
+							Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						else
+							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
 						//need to modify root group name if changed
-						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 						
 						specificGroupRequestHandler(req); //display new group
 						
@@ -13174,6 +13201,7 @@
 									}
 									Debug.log(configMap);
 
+									//FIXME use API 
 									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
@@ -13183,7 +13211,7 @@
 										{							
 											Debug.log("Successfully modified the active Backbone group.\n" +
 													"Backbone group '" + retParams.groupName + " (" + 
-													retParams.groupKey + ")' was created and activated.",
+													retParams.groupKey + ")' was activated.",
 													Debug.INFO_PRIORITY);							
 										}
 
