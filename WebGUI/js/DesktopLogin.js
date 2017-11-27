@@ -400,7 +400,7 @@ else {
 
                 // Set user name if logged in using cert
                 if (_user == "" || _user === null && Desktop.getXMLValue(req, "pref_username")) 
-                	_user = Desktop.getXMLValue(req, "UserName");
+                	_user = Desktop.getXMLValue(req, "pref_username");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
 				if(activeSessionCount && _loginDiv) //only if the login div exists
