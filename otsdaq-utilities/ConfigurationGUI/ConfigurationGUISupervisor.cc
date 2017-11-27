@@ -5418,36 +5418,39 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 
 		//try to get members
-		try
-		{
-			memberMap = theInterface->getConfigurationGroupMembers(groupString);
-		}
-		catch(std::runtime_error& e)
-		{
-			__SS__ << "Configuration group \"" + groupString +
-					"\" has been corrupted! " + e.what() << std::endl;
-			__COUT__ << "\n" << ss.str();
-			xmldoc.addTextElementToData("Error",ss.str());
-			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
-			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
-			continue;
-		}
-		catch(...)
-		{
-			__SS__ << "Configuration group \"" + groupString +
-					"\" has been corrupted! " << std::endl;
-			__COUT__ << "\n" << ss.str();
-			xmldoc.addTextElementToData("Error",ss.str());
-			xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
-			xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
-			continue;
-		}
+//		if(returnMembers)
+//		{
+//			try
+//			{
+//				memberMap = theInterface->getConfigurationGroupMembers(groupString);
+//			}
+//			catch(std::runtime_error& e)
+//			{
+//				__SS__ << "Configuration group \"" + groupString +
+//						"\" has been corrupted! " + e.what() << std::endl;
+//				__COUT__ << "\n" << ss.str();
+//				xmldoc.addTextElementToData("Error",ss.str());
+//				xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+//				xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
+//				continue;
+//			}
+//			catch(...)
+//			{
+//				__SS__ << "Configuration group \"" + groupString +
+//						"\" has been corrupted! " << std::endl;
+//				__COUT__ << "\n" << ss.str();
+//				xmldoc.addTextElementToData("Error",ss.str());
+//				xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+//				xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
+//				continue;
+//			}
+//		}
 
 		//try to determine type, dont report errors, just mark "Invalid"
 		try
 		{
 			//determine the type configuration group
-			cfgMgr->loadConfigurationGroup(groupName,groupKey,
+			memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
 					0,0,0,&groupComment,0,0, //mostly defaults
 					true /*doNotLoadMembers*/,&groupTypeString);
 			//groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);

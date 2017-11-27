@@ -226,6 +226,7 @@
 		var _topPane, _bottomPane;
 		var _updateTimer = 0;
 		var _UPDATE_TIMER_PERIOD = 1000; //ms
+		var _old_active_plan_status;
 		
 		var _eventListenersCreated = false;
 		
@@ -1579,6 +1580,7 @@
 		function startTargetIterationPlan() 
 		{
 			Debug.log("startTargetIterationPlan " + _targetPlan);
+			
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
 					"&StateMachine=iteratePlay" +
@@ -1587,6 +1589,8 @@
 					function(req) //start handler
 					{
 				Debug.log("startTargetIterationPlan handler ");
+				_old_active_plan_status = ""; //clear for new action
+				
 					}, //end handler
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -1598,6 +1602,7 @@
 		function pauseTargetIterationPlan() 
 		{
 			Debug.log("pauseTargetIterationPlan " + _targetPlan);
+			
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
 					"&StateMachine=iteratePause", //end get data 
@@ -1605,6 +1610,8 @@
 					function(req) //start handler
 					{
 				Debug.log("pauseTargetIterationPlan handler ");
+				_old_active_plan_status = ""; //clear for new action
+				
 					}, //end handler
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -1616,6 +1623,7 @@
 		function haltTargetIterationPlan() 
 		{
 			Debug.log("haltTargetIterationPlan " + _targetPlan);
+			
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
 					"&StateMachine=iterateHalt", //end get data 
@@ -1623,6 +1631,8 @@
 					function(req) //start handler
 					{
 				Debug.log("haltTargetIterationPlan handler ");
+				_old_active_plan_status = ""; //clear for new action
+				
 					}, //end handler
 					0, //handler param
 					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
@@ -1664,6 +1674,13 @@
 				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
 				var last_finished_plan	= DesktopContent.getXMLValue(req,"last_finished_plan");
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+								
+				if(active_plan_status == "Error" && 
+						_old_active_plan_status != active_plan_status)
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				
+				_old_active_plan_status = active_plan_status;
 				
 				// "Running""Paused""Inactive"
 				//Debug.log("_targetPlan = " + _targetPlan);

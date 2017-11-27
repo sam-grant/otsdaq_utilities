@@ -557,6 +557,7 @@ else {
 			if(!ldiv) 
 			{
 				Debug.log("No login prompt, so not offering active session options.");
+				_closeLoginPrompt(1); //clear login prompt
 				return;
 			}
 			
