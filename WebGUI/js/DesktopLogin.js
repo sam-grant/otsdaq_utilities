@@ -399,7 +399,7 @@ else {
                 _applyUserPreferences(req);
 
                 // Set user name if logged in using cert
-                if (_user == "" || !_user && Desktop.getXMLValue(req, "pref_username")) 
+                if (Desktop.getXMLValue(req, "pref_username")) 
                 	_user = Desktop.getXMLValue(req, "pref_username");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
