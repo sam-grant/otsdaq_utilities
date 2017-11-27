@@ -227,6 +227,7 @@
 		var _updateTimer = 0;
 		var _UPDATE_TIMER_PERIOD = 1000; //ms
 		var _old_active_plan_status;
+		var _need_plan_complete = false;
 		
 		var _eventListenersCreated = false;
 		
@@ -546,7 +547,8 @@
                 });
                 commands.push({		//RUN 5 minutes
                 "type" : _COMMAND_TYPES.RUN,
-                "param" : {"DurationInSeconds": 5*60},
+                "param" : {"WaitForAllFrontEndsRunningThread":0,
+					"DurationInSeconds": 5*60},
                 });
                 commands.push({ 	//REPEAT_LABEL
                 "type" : _COMMAND_TYPES.REPEAT_LABEL,
@@ -1203,8 +1205,7 @@
 						commands.push({		//RUN 5 minutes
 							"type" : _COMMAND_TYPES.RUN,
 							"param" : {"WaitForAllFrontEndsRunningThread":0,
-								"DurationInSeconds": 5*60,
-								"ConfigurationDumpType":"All"},							
+								"DurationInSeconds": 5*60},							
 						});
 						commands.push({ 	//REPEAT_LABEL
 							"type" : _COMMAND_TYPES.REPEAT_LABEL,
@@ -1437,8 +1438,7 @@
 				_commands.push({
 					"param": {
 						"WaitForAllFrontEndsRunningThread":params[0], 
-						"DurationInSeconds":params[1],
-						"ConfigurationDumpType":params[2]
+						"DurationInSeconds":params[1]
 					},
 				});
 			}
@@ -1589,7 +1589,17 @@
 					function(req) //start handler
 					{
 				Debug.log("startTargetIterationPlan handler ");
-				_old_active_plan_status = ""; //clear for new action
+				
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+					Debug.log("Successfully started the iteration plan '" + _targetPlan + ".'",
+							Debug.INFO_PRIORITY);
+					_need_plan_complete = true;
+				}
 				
 					}, //end handler
 					0, //handler param
@@ -1605,12 +1615,22 @@
 			
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
-					"&StateMachine=iteratePause", //end get data 
+					"StateMachine=iteratePause", //end get data 
 					"", //end post data
 					function(req) //start handler
 					{
 				Debug.log("pauseTargetIterationPlan handler ");
-				_old_active_plan_status = ""; //clear for new action
+
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+
+					Debug.log("Successfully paused the iteration plan '" + _targetPlan + ".'",
+							Debug.INFO_PRIORITY);
+				}
 				
 					}, //end handler
 					0, //handler param
@@ -1623,15 +1643,26 @@
 		function haltTargetIterationPlan() 
 		{
 			Debug.log("haltTargetIterationPlan " + _targetPlan);
-			
+
+			_need_plan_complete = false; //prevent "complete" message, which might be confusing (depend on the error message
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
-					"&StateMachine=iterateHalt", //end get data 
+					"StateMachine=iterateHalt", //end get data 
 					"", //end post data
 					function(req) //start handler
 					{
 				Debug.log("haltTargetIterationPlan handler ");
-				_old_active_plan_status = ""; //clear for new action
+
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+
+					Debug.log("Successfully halted the iteration plan '" + _targetPlan + ".'",
+							Debug.INFO_PRIORITY);					
+				}
 				
 					}, //end handler
 					0, //handler param
@@ -1645,8 +1676,8 @@
 		{
 			//Debug.log("updateIterateStatus");
 
-			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
-					"&StateMachine=getIterationPlanStatus", //end get data 
+			DesktopContent.XMLHttpRequest("Request?" + 
+					"RequestType=getIterationPlanStatus", //end get data 
 					"", //end post data
 					function(req,ignoreParam,errStr) //start handler
 					{
@@ -1675,7 +1706,15 @@
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
 				var last_finished_plan	= DesktopContent.getXMLValue(req,"last_finished_plan");
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
-								
+				
+				if(_need_plan_complete && 
+						active_plan_status == "Inactive")
+				{
+					Debug.log("Iteration plan was completed.",
+							Debug.INFO_PRIORITY);
+					_need_plan_complete = false;
+				}
+				
 				if(active_plan_status == "Error" && 
 						_old_active_plan_status != active_plan_status)
 					Debug.log(error_message,Debug.HIGH_PRIORITY);
