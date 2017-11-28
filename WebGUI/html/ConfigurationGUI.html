@@ -1114,7 +1114,8 @@
 		}
 		
 		//configGroupsRequestHandler ~
-		function configGroupsRequestHandler(req, anchorTarget) {				
+		function configGroupsRequestHandler(req, anchorTarget) 
+		{				
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -1163,7 +1164,7 @@
 			str += "<label id='filteredGroupCount'></label> of " +
 					groupNames.length + " groups. ";
 			str += "Don't see what you need: ";
-			str += "<a href='" +
+			str += "<a href='#' onclick='" +
 					"setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 					"\");' title='" +
 					"Goto the group creator interface." +
