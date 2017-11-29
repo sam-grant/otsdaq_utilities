@@ -158,14 +158,14 @@
 		//			- CONFIGURE_GROUP <group name> <group key>
 		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
 		//				<relative path from FE> <start value> <iteration step size>
-		//				<target FE Group #which can span multiple FE-Managers> 
+		//				<target Group #which can span multiple FE-Managers or whatever> 
 		//				#note: always must (so that macro things work) have a CONFIGURE_ACTIVE_GROUP after a MODIFY_ACTIVE_GROUP
 		//				#	but can group modifies together and do one CONFIGURE_ACTIVE_GROUP.	
 		//			- CONFIGURE_ACTIVE_GROUP
-		//			- EXECUTE_MACRO <macro name> <target FE Group #which can span multiple FE-Managers>
+		//			- EXECUTE_MACRO <macro name> <target Group #which can span multiple FE-Managers or whatever>
 		//				<parameter group of name, value, iteration step size to adjust in macro> 
 		//				#note: must be a public macro
-		//			- EXECUTE_FE_MACRO <FE macro name> <target FE Group #which can span multiple FE-Managers>
+		//			- EXECUTE_FE_MACRO <FE macro name> <target Group #which can span multiple FE-Managers or whatever>
 		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
 		//			- RUN	<dump type> <bool: wait for all FEs to complete running thread else use time> 
 		//				<seconds for run>		
@@ -1182,39 +1182,65 @@
 						_modifiedTables = modifiedTables;
 
 						//create DEFAULT commands:
-						//	BEGIN_LABEL						
+						//	BEGIN_LABEL			
+						//	CHOOSE_FSM	fsmNames[0]
 						//	CONFIGURE_ALIAS aliasMap[0]
 						//	RUN 5 minutes
 						// 	REPEAT_LABEL
 						
-						var commands = [];
-						commands.push({ 	//BEGIN_LABEL
-							"type" : _COMMAND_TYPES.BEGIN_LABEL,
-							"param" : {"Label":"Main"},							
-						});
-						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
-							"type" : _COMMAND_TYPES.CHOOSE_FSM,
-							"param" : {"NameOfStateMachine":(_fsmNames.length? //use first name, if any exist
-									_fsmNames[0]
-									:"")},							
-						});
-						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
-							"type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
-							"param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
-									_configGroupAliases[0].alias
-									:"")},							
-						});
-						commands.push({		//RUN 5 minutes
-							"type" : _COMMAND_TYPES.RUN,
-							"param" : {"WaitForAllFrontEndsRunningThread":0,
-								"DurationInSeconds": 5*60},							
-						});
-						commands.push({ 	//REPEAT_LABEL
-							"type" : _COMMAND_TYPES.REPEAT_LABEL,
-							"param" : {"Label":"Main", "NumberOfRepetitions" : 0},							
-						});
+//						var commands = [];
+//						commands.push({ 	//BEGIN_LABEL
+//							"type" : _COMMAND_TYPES.BEGIN_LABEL,
+//							"param" : {"Label":"Main"},							
+//						});
+//						commands.push({		//CHOOSE_FSM fsmNames[0]
+//							"type" : _COMMAND_TYPES.CHOOSE_FSM,
+//							"param" : {"NameOfStateMachine":(_fsmNames.length? //use first name, if any exist
+//									_fsmNames[0]
+//									:"")},							
+//						});
+//						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
+//							"type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
+//							"param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
+//									_configGroupAliases[0].alias
+//									:"")},							
+//						});
+//						commands.push({		//RUN 5 minutes
+//							"type" : _COMMAND_TYPES.RUN,
+//							"param" : {"WaitForAllFrontEndsRunningThread":0,
+//								"DurationInSeconds": 5*60},							
+//						});
+//						commands.push({ 	//REPEAT_LABEL
+//							"type" : _COMMAND_TYPES.REPEAT_LABEL,
+//							"param" : {"Label":"Main", "NumberOfRepetitions" : 0},							
+//						});
 						
-						savePlanCommandSequence(newRowUID,commands,
+						//FOR DEBUGGING
+						//FOR DEBUGGING
+						//FOR DEBUGGING
+						
+						_commands = []; //clear
+						addCommand(_COMMAND_TYPES.BEGIN_LABEL,
+								["Main"]);
+						addCommand(_COMMAND_TYPES.CHOOSE_FSM,
+								[(_fsmNames.length? //use first name, if any exist
+								_fsmNames[0]
+								:"")]);
+						addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
+								[
+								"FEInterfaceConfiguration,FEInterfaceConfiguration",//"Tables":params[0],
+								"ExampleInterface0,ExampleInterface1",//"UIDs":params[1],
+								1,//"DoTrackGroupChanges":params[2], 
+								"FEOtsUDPTemplateInterfaceConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+								5,//"FieldStartValue":params[4],
+								3]);//"FieldIterationStepSize":params[5]);
+						addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
+						//addCommand(_COMMAND_TYPES.RUN,[1,0]);
+						addCommand(_COMMAND_TYPES.REPEAT_LABEL,
+								["Main",5]);
+						
+						
+						savePlanCommandSequence(newRowUID,_commands,
 								/////////////////////
 								function()
 								{
@@ -1394,8 +1420,8 @@
 			{
 				_commands.push({
 					"param": {
-						"LinkToTargetFrontEnds":params[0], 
-						"LinkToTargetFrontEndsGroupID":params[1],
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
 						"FEMacroName":params[2],
 						"LinkToFEMacroParameterGroup":params[3],
 						"LinkToFEMacroParameterGroupID":params[4]
@@ -1406,8 +1432,8 @@
 			{
 				_commands.push({
 					"param": {
-						"LinkToTargetFrontEnds":params[0], 
-						"LinkToTargetFrontEndsGroupID":params[1],
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
 						"MacroName":params[2],
 						"LinkToMacroParameterGroup":params[3],
 						"LinkToMacroParameterGroupID":params[4]
@@ -1418,9 +1444,9 @@
 			{
 				_commands.push({
 					"param": {
-						"DoTrackGroupChanges":params[0], 
-						"LinkToTargetFrontEnds":params[1],
-						"LinkToTargetFrontEndsGroupID":params[2],
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
+						"DoTrackGroupChanges":params[2], 
 						"RelativePathToField":params[3],
 						"FieldStartValue":params[4],
 						"FieldIterationStepSize":params[5]

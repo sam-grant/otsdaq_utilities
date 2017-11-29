@@ -2019,7 +2019,7 @@
 			{				
 				if(i) _colChoicesArr[c]	+= ",";
 				else _colChoicesArr[c]	+= "arbitraryBool=" + val + ",";
-				_colChoicesArr[c] += encodeURIComponent(src[i]);
+				_colChoicesArr[c] += encodeURIComponent(src[i].trim()); //trim is important for weird formats of white-space (like a mac)
 			}
 			setupTable();
 
