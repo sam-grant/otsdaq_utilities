@@ -2586,9 +2586,8 @@ try
 
 
 
-
-
 	TableEditStruct planTable(IterateConfiguration::PLAN_TABLE,cfgMgr);	// Table ready for editing!
+	TableEditStruct targetTable(IterateConfiguration::TARGET_TABLE,cfgMgr);	// Table ready for editing!
 
 	//create table-edit struct for each iterate command type
 	std::map<std::string, TableEditStruct> commandTypeToCommandTableMap;
@@ -2735,6 +2734,8 @@ try
 
 		unsigned int row, cmdRow;
 		unsigned int cmdCol;
+		unsigned int targetIndex;
+		std::string targetStr, cmdUID;
 
 		for(auto& command:commands)
 		{
@@ -2772,14 +2773,65 @@ try
 				cmdRow = commandTypeToCommandTableMap[command.type_].cfgView_->addRow(
 						author,command.type_ + "_COMMAND_");
 
+
 				//parameters are linked
 				//now set value of all parameters
 				//	find parameter column, and set value
+				//	if special target parameter, extract targets
 				for(auto& param:command.params_)
 				{
 					__COUT__ << "\t param " <<
 							param.first << " : " <<
 							param.second << std::endl;
+
+					if(param.first ==
+							IterateConfiguration::targetParams_.Tables_)
+					{
+						__COUT__ << "\t\t found target tables" << __E__;
+						std::istringstream f(param.second);
+
+						targetIndex = 0;
+						while (getline(f, targetStr, ','))
+						{
+							__COUT__ << "\t\t targetStr = " << targetStr << __E__;
+							if(!command.targets_.size() ||
+									command.targets_.back().table_ != "")
+							{
+								__COUT__ << "\t\t make targetStr = " << targetStr << __E__;
+								//make new target
+								command.addTarget();
+								command.targets_.back().table_ = targetStr;
+							}
+							else //file existing target
+								command.targets_[targetIndex++].table_ = targetStr;
+						}
+
+						continue; //go to next parameter
+					}
+
+					if(param.first ==
+							IterateConfiguration::targetParams_.UIDs_)
+					{
+						__COUT__ << "\t\t found target UIDs" << __E__;
+						std::istringstream f(param.second);
+
+						targetIndex = 0;
+						while (getline(f, targetStr, ','))
+						{
+							__COUT__ << "\t\t targetStr = " << targetStr << __E__;
+							if(!command.targets_.size() ||
+									command.targets_.back().UID_ != "")
+							{
+								__COUT__ << "\t\t make targetStr = " << targetStr << __E__;
+								//make new target
+								command.addTarget();
+								command.targets_.back().UID_ = targetStr;
+							}
+							else //file existing target
+								command.targets_[targetIndex++].UID_ = targetStr;
+						}
+						continue;
+					}
 
 					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
 							param.first);
@@ -2788,27 +2840,53 @@ try
 
 					commandTypeToCommandTableMap[command.type_].cfgView_->setURIEncodedValue(
 							param.second,cmdRow,cmdCol);
+				} //end parameter loop
+
+				cmdUID = commandTypeToCommandTableMap[command.type_].cfgView_->getDataView()
+						[cmdRow][commandTypeToCommandTableMap[command.type_].cfgView_->getColUID()];
+
+				if(command.targets_.size())
+				{
+					//if targets, create group in target table
+
+					__COUT__ << "targets found for command UID=" << cmdUID << __E__;
+					for(const auto& target:command.targets_)
+						__COUT__ << target.table_ << " " << target.UID_ << __E__;
+
+					//create link from command table to  target
+
+					//create row in target table with correct groupID
+
+					//create link from target table to UID
+					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
+							IterateConfiguration::targetCols_.GroupID_);
+
+//					TargetLink_
+//					targetTable.cfgView_->setValueAsString(
+//							commandTypeToCommandTableMap[command.type_].configName_,
+//							row,
+//							commandUidLink.first);
 				}
 
-				//and link at plan level to created UID
+				//add link at plan level to created UID
 				planTable.cfgView_->setValueAsString(
 						commandTypeToCommandTableMap[command.type_].configName_,
 						row,
 						commandUidLink.first);
 				planTable.cfgView_->setValueAsString(
-						commandTypeToCommandTableMap[command.type_].cfgView_->getDataView(
-						)[cmdRow][commandTypeToCommandTableMap[command.type_].cfgView_->getColUID()],
+						cmdUID,
 						row,
 						commandUidLink.second);
 
 				__COUT__ << "linked to uid = " <<
-						commandTypeToCommandTableMap[command.type_].cfgView_->getDataView(
-								)[cmdRow][commandTypeToCommandTableMap[command.type_].cfgView_->getColUID()] << std::endl;
+						cmdUID << std::endl;
 
 				commandTypeToCommandTableMap[command.type_].modified_ = true;
-			}
+			} //done with command specifics
 
 		} //end command loop
+
+		throw;
 
 		//commands are created in the temporary tables
 		//	validate with init
@@ -4192,6 +4270,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
 		const std::string& configList, bool allowDuplicates, bool ignoreWarnings,
 		const std::string& groupComment, bool lookForEquivalent)
+try
 {
 	__COUT__ << "handleCreateConfigurationGroupXML \n";
 
@@ -4291,41 +4370,61 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 
 
 			//if other versions exist check for another mockup, and use that instead
-			if(allCfgInfo.at(name).versions_.size())
-			{
-				//half-hearted check of cache (not checking DB)
-				ConfigurationVersion duplicateVersion =
-						config->checkForDuplicate(temporaryVersion);
-				if(!duplicateVersion.isInvalid())
-					version = duplicateVersion;
+			__COUT__ << "Creating version from mock-up for name: " << name <<
+					" inputVersionStr: " << versionStr << std::endl;
 
-				//RAR -- now allow if no mockup in cache
-					//				__SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
-					//						"Table member '" << name << "' with mock-up version '" << version <<
-					//						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
-					//						" other valid versions." << std::endl;
-					//				xmldoc.addTextElementToData("Error", ss.str());
-					//	return;
-			}
+			//set table comment
+			config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
 
-			//if version is still the mockup, save a new persistent version based on mockup
-			if(version.isMockupVersion())
-			{
-				__COUT__ << "Creating version from mock-up for name: " << name <<
-						" inputVersionStr: " << versionStr << std::endl;
+			//finish off the version creation
+			version = saveModifiedVersionXML(xmldoc,cfgMgr,name,
+					ConfigurationVersion() /*original source is mockup*/,
+					false /*make persistent*/,
+					config,
+					temporaryVersion /*temporary modified version*/,
+					false /*ignore duplicates*/,
+					true /*look for equivalent*/);
 
-				//set table comment
-				config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
+			__COUT__ << "Using mockup version: " << version << std::endl;
 
-				//finish off the version creation
-				version = saveModifiedVersionXML(xmldoc,cfgMgr,name,
-						ConfigurationVersion() /*original source is mockup*/,
-						false /*make persistent*/,
-						config,
-						temporaryVersion /*temporary modified version*/);
-			}
-			else
-				__COUT__ << "Found already existing mockup version: " << version << std::endl;
+			//commented out below because of better duplicate handling above
+//
+//			//if other versions exist check for another mockup, and use that instead
+//			if(allCfgInfo.at(name).versions_.size())
+//			{
+//				//half-hearted check of cache (not checking DB)
+//				ConfigurationVersion duplicateVersion =
+//						config->checkForDuplicate(temporaryVersion);
+//				if(!duplicateVersion.isInvalid())
+//					version = duplicateVersion;
+//
+//				//RAR -- now allow if no mockup in cache
+//					//				__SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
+//					//						"Table member '" << name << "' with mock-up version '" << version <<
+//					//						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
+//					//						" other valid versions." << std::endl;
+//					//				xmldoc.addTextElementToData("Error", ss.str());
+//					//	return;
+//			}
+//
+//			//if version is still the mockup, save a new persistent version based on mockup
+//			if(version.isMockupVersion())
+//			{
+//				__COUT__ << "Creating version from mock-up for name: " << name <<
+//						" inputVersionStr: " << versionStr << std::endl;
+//
+//				//set table comment
+//				config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
+//
+//				//finish off the version creation
+//				version = saveModifiedVersionXML(xmldoc,cfgMgr,name,
+//						ConfigurationVersion() /*original source is mockup*/,
+//						false /*make persistent*/,
+//						config,
+//						temporaryVersion /*temporary modified version*/);
+//			}
+//			else
+//				__COUT__ << "Found already existing mockup version: " << version << std::endl;
 		}
 
 		//__COUT__ << "version: " << version << std::endl;
@@ -4470,6 +4569,17 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 	//insert get configuration info
 	handleGetConfigurationGroupXML(xmldoc,cfgMgr,groupName,newKey);
 }
+catch(std::runtime_error& e)
+{
+	__COUT__ << "Error detected!\n\n " << e.what() << std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving group! " + std::string(e.what()));
+}
+catch(...)
+{
+	__COUT__ << "Error detected!\n\n "<< std::endl;
+	xmldoc.addTextElementToData("Error", "Error saving group! ");
+}
+
 
 //========================================================================================================================
 //	handleDeleteConfigurationInfoXML
