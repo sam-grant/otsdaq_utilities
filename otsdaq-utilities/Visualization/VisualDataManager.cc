@@ -38,6 +38,19 @@ void VisualDataManager::halt(void)
 }
 
 //========================================================================================================================
+void VisualDataManager::pause(void)
+{
+	__COUT__ << "Pausing..." << std::endl;
+	DataManager::pause();
+}
+
+//========================================================================================================================
+void VisualDataManager::resume(void)
+{
+	DataManager::resume();
+}
+
+//========================================================================================================================
 void VisualDataManager::start(std::string runNumber)
 {
 	DataManager::start(runNumber);

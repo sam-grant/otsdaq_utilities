@@ -829,7 +829,6 @@ throw (toolbox::fsm::exception::Exception)
 void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
 	try
 	{
 		theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
@@ -844,7 +843,6 @@ throw (toolbox::fsm::exception::Exception)
 void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
 	try
 	{
 		theDataManager_->stop();
@@ -852,6 +850,35 @@ throw (toolbox::fsm::exception::Exception)
 	catch(...)
 	{
 		__COUT_INFO__ << "ERROR! Couldn't Stop the VisualSupervisor" << std::endl;
+	}
+}
+
+
+//========================================================================================================================
+void VisualSupervisor::transitionPausing(toolbox::Event::Reference e)
+throw (toolbox::fsm::exception::Exception)
+{
+	try
+	{
+		theDataManager_->pause();
+	}
+	catch(...)
+	{
+		__COUT_INFO__ << "ERROR! Couldn't Pause the VisualSupervisor" << std::endl;
+	}
+}
+
+//========================================================================================================================
+void VisualSupervisor::transitionResuming(toolbox::Event::Reference e)
+throw (toolbox::fsm::exception::Exception)
+{
+	try
+	{
+		theDataManager_->resume();
+	}
+	catch(...)
+	{
+		__COUT_INFO__ << "ERROR! Couldn't Resume the VisualSupervisor" << std::endl;
 	}
 }
 

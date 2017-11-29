@@ -44,16 +44,18 @@ throw (xdaq::exception::Exception)
 	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
 	init();
-	SupervisorDescriptors::const_iterator it;
-	it = theSupervisorDescriptorInfo_.getFEDescriptors().begin();
-	__COUT__ << "PixelFESupervisor instance size " <<
-			theSupervisorDescriptorInfo_.getFEDescriptors().size() << std::endl;
-	for (; it != theSupervisorDescriptorInfo_.getFEDescriptors().end(); it++)
-	{
-		__COUT__ << "PixelFESupervisor instance " << it->first <<
-				"...and..." << it->second << std::endl;
-		__COUT__ << "Look! Here's a FE! @@@" << std::endl;
-	}
+
+// 	//example getting FE supervisor descriptors
+//	SupervisorDescriptors::const_iterator it;
+//	it = theSupervisorDescriptorInfo_.getFEDescriptors().begin();
+//	__COUT__ << "PixelFESupervisor instance size " <<
+//			theSupervisorDescriptorInfo_.getFEDescriptors().size() << std::endl;
+//	for (; it != theSupervisorDescriptorInfo_.getFEDescriptors().end(); it++)
+//	{
+//		__COUT__ << "PixelFESupervisor instance " << it->first <<
+//				"...and..." << it->second << std::endl;
+//		__COUT__ << "Look! Here's a FE! @@@" << std::endl;
+//	}
 
 	//make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);

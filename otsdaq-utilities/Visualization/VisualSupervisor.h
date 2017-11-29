@@ -56,6 +56,8 @@ public:
     void transitionHalting     (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     void transitionStarting    (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     void transitionStopping    (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void transitionPausing	   (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void transitionResuming	   (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
 
 private:
 
