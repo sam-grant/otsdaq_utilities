@@ -54,14 +54,14 @@ private:
     void 			handleSetVersionAliasInBackboneXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& versionAlias, const std::string& configName, ConfigurationVersion version, const std::string& author);
     void			handleAliasGroupMembersInBackboneXML		(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& versionAlias, const std::string& groupName, ConfigurationGroupKey groupKey, const std::string& author);
     void 			handleVersionAliasesXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
-    void 			handleConfigurationGroupsXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
+    void 			handleConfigurationGroupsXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool returnMembers);
     void 			handleGetConfigurationGroupXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, ConfigurationGroupKey groupKey);
     void 			handleGetConfigurationGroupTypeXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configList);
-    void			handleCreateConfigurationGroupXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const std::string& configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string& groupComment = "");
+    void			handleCreateConfigurationGroupXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const std::string& configList, bool allowDuplicates=false, bool ignoreWarnings=false, const std::string& groupComment = "", bool lookForEquivalent = false);
 
     void 			handleConfigurationsXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, bool allowIllegalColumns);
     void 			handleGetConfigurationXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool allowIllegalColumns=false);
-    void 			handleCreateConfigurationXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool makeTemporary, const std::string& data, const int& dataOffset, const std::string& author, const std::string& comment, bool sourceTableAsIs);
+    void 			handleCreateConfigurationXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion version, bool makeTemporary, const std::string& data, const int& dataOffset, const std::string& author, const std::string& comment, bool sourceTableAsIs, bool lookForEquivalent);
 
     void			setupActiveTablesXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, bool refreshAll = true, bool getGroupInfo = false, std::map<std::string /*name*/, ConfigurationVersion /*version*/>* returnMemberMap = 0, bool outputActiveTables = true, std::string* accumulatedErrors = 0);
     void 			handleFillTreeViewXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& startPath, unsigned int depth, bool hideStatusFalse, const std::string& modifiedTables, const std::string& filterList);
@@ -78,7 +78,10 @@ private:
     void 			handleGetAffectedGroupsXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& rootGroupName, const ConfigurationGroupKey& rootGroupKey, const std::string& modifiedTables);
     void			handleGetLinkToChoicesXML					(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& linkToTableName, const ConfigurationVersion& linkToTableVersion, const std::string& linkIdType, const std::string& linkIndex, const std::string& linkInitId);
 
-    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false);
+    void			handleSavePlanCommandSequenceXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, const std::string& author, const std::string& planName, const std::string& commandString);
+
+
+    ConfigurationVersion	saveModifiedVersionXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false, bool lookForEquivalent = false);
 
 
     void testXDAQContext(); //for debugging
@@ -98,6 +101,46 @@ private:
     std::map<std::string, time_t> 						userLastUseTime_;
 };
 
-}
+/////
+struct TableEditStruct {
+	//everything needed for editing a table
+	ConfigurationBase* config_;
+	ConfigurationView* cfgView_;
+	ConfigurationVersion temporaryVersion_, originalVersion_;
+	bool createdTemporaryVersion_; //indicates if temp version was created here
+	bool modified_; //indicates if temp version was modified
+	std::string configName_;
+	/////
+	TableEditStruct(){ __SS__ << "impossible!" << std::endl; throw std::runtime_error(ss.str());}
+	TableEditStruct(const std::string& configName, ConfigurationManagerRW* cfgMgr)
+	:createdTemporaryVersion_(false)
+	,modified_(false)
+	,configName_(configName)
+	{
+		__COUT__ << "Creating Table-Edit Struct for " << configName_ << std::endl;
+		config_ = cfgMgr->getConfigurationByName(configName_);
+
+		if(!(originalVersion_ =
+				config_->getView().getVersion()).isTemporaryVersion())
+		{
+			__COUT__ << "Start version " << originalVersion_ << std::endl;
+			//create temporary version for editing
+			temporaryVersion_ = config_->createTemporaryView(originalVersion_);
+			cfgMgr->saveNewConfiguration(
+					configName_,
+					temporaryVersion_, true); //proper bookkeeping for temporary version with the new version
+
+			__COUT__ << "Created temporary version " << temporaryVersion_ << std::endl;
+			createdTemporaryVersion_ = true;
+		}
+		else //else table is already temporary version
+			__COUT__ << "Using temporary version " << temporaryVersion_ << std::endl;
+
+		cfgView_ = config_->getViewP();
+	}
+}; //end TableEditStruct declaration
+
+
+} //end ots namespace
 
 #endif

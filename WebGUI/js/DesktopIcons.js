@@ -294,7 +294,10 @@ else {
 			//define icon content
 			if(picfn != "0" && picfn != "DEFAULT" && picfn != "")
 			{ //if icon image			
-				div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
+				if(picfn[0] != '/')
+					div.style.backgroundImage = "url(/WebPath/images/iconImages/" + picfn+")";
+				else
+					div.style.backgroundImage = "url(" + picfn+")";
 				
 				var div2 = document.createElement("div");
 				div2.setAttribute("class", "DesktopIcons-iconDiv");
@@ -442,6 +445,7 @@ else {
       		div.style.padding = "0 5px 5px 12px";
       		div.style.backgroundColor = DesktopContent.getDefaultWindowColor();//Desktop.desktop.defaultWindowFrameColor;
       		div.style.position = "absolute";
+      		div.style.width = (300) + "px";
       		div.style.left = (x) + "px";
       		div.style.top = (y) + "px";
       		//each mouse up events.. because mouseup on desktop closes folder
@@ -451,7 +455,7 @@ else {
       		
       		div = document.createElement("div");
       		//div.style.width = 300 + "px";
-      		div.style.height = 300 + "px";
+      		div.style.height = 250 + "px";
       		div.style.position = "relative";
       		_openFolderElement.appendChild(div);
       		_openFolderElement = div;

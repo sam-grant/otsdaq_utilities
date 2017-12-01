@@ -239,6 +239,8 @@ else {
 			_isMinimized = false; 
             //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
             _isMaximized = !_isMaximized;
+            if(_isMaximized) //make sure is visible
+            	this.windiv.style.display = "inline";
             this.setWindowSizeAndPosition(_x,_y,_w,_h);
         }
 

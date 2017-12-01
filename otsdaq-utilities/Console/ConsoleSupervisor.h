@@ -52,7 +52,7 @@ public:
 
 private:
     enum {
-    	ADMIN_PERMISSIONS_THRESHOLD = 255,
+    	CONSOLE_PERMISSIONS_THRESHOLD = 100,
     };
 
     static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);

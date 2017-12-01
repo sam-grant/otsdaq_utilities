@@ -89,13 +89,17 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
-	fgets(tmp,100,fp);
-	fgets(tmp,100,fp);
+	fgets(tmp,100,fp); //receive port (ignore)
+	fgets(tmp,100,fp); //destination port *** used here ***
 	int myport;
 	sscanf(tmp,"%*s %d",&myport);
+
+	fgets(tmp,100,fp); //destination ip *** used here ***
+	char myip[100];
+	sscanf(tmp,"%*s %s",myip);
 	fclose(fp);
 
-	ReceiverSocket rsock("127.0.0.1",myport); //Take Port from Configuration
+	ReceiverSocket rsock(myip,myport); //Take Port from Configuration
 	try
 	{
 		rsock.initialize();
@@ -225,9 +229,10 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 		//if nothing received for 2 minutes seconds, then something is wrong with Console configuration
 		//	after 5 seconds there is a self-send. Which will at least confirm configuration.
-		if(i==120)
+		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
+		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			std::cout << __COUT_HDR_FL__ << "Exiting Console MFReceiverWorkLoop" << std::endl;
+			std::cout << __COUT_HDR_FL__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}
@@ -269,7 +274,7 @@ throw (xgi::exception::Exception)
 	//**** start LOGIN GATEWAY CODE ***//
 	{
 		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
+		bool checkLock = false;
 		bool getUser = (Command == "SaveUserPreferences") || (Command == "LoadUserPreferences");
 		bool requireLock = false;
 
@@ -280,7 +285,7 @@ throw (xgi::exception::Exception)
 				theSupervisorDescriptorInfo_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				ADMIN_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				CONSOLE_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
@@ -307,7 +312,7 @@ throw (xgi::exception::Exception)
 
         if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
         {
-    		__MOUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
+    		__COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
     				", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
     		xmldoc.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
     		goto CLEANUP;
@@ -340,7 +345,7 @@ throw (xgi::exception::Exception)
 
 		if(user == "") //should never happen?
 		{
-			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
 			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
 			goto CLEANUP;
 		}
@@ -350,7 +355,7 @@ throw (xgi::exception::Exception)
 		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
-			throw std::runtime_error("Could not open file: " + fn);
+			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
 		fprintf(fp,"colorIndex %d\n",colorIndex);
 		fprintf(fp,"showSideBar %d\n",showSideBar);
 		fprintf(fp,"noWrap %d\n",noWrap);
@@ -366,7 +371,7 @@ throw (xgi::exception::Exception)
 
 		if(user == "") //should never happen?
 		{
-			__MOUT_ERR__ << "Invalid user found! user=" << user << std::endl;
+			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
 			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
 			goto CLEANUP;
 		}
@@ -495,6 +500,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 
 	refreshParent_ = xmldoc->addTextElementToData("messages","");
 
+	bool requestOutOfSync = false;
+	std::string requestOutOfSyncMsg;
 	//output oldest to new (from refreshReadPointer_ to writePointer_-1, inclusive)
 	for(/*refreshReadPointer_=<first index to read>*/;
 			refreshReadPointer_ != writePointer_;
@@ -502,9 +509,14 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	{
 		if(messages_[refreshReadPointer_].getCount() < lastUpdateCount)
 		{
-			__MOUT_ERR__ << "Request is out of sync! Message count should be more recent than update clock! " <<
-					messages_[refreshReadPointer_].getCount() << " < " <<
-					lastUpdateCount << std::endl;
+			if(!requestOutOfSync) //record out of sync message once only
+			{
+				requestOutOfSync = true;
+				__SS__ << "Request is out of sync! Message count should be more recent than update clock! " <<
+						messages_[refreshReadPointer_].getCount() << " < " <<
+						lastUpdateCount << std::endl;
+				requestOutOfSyncMsg = ss.str();
+			}
 			//assume these messages are new (due to a system restart)
 			//continue;
 		}
@@ -524,6 +536,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 		xmldoc->addTextElementToParent("message_Count",
 				refreshTempStr_, refreshParent_);
 	}
+
+	if(requestOutOfSync) //if request was out of sync, show message
+		__COUT__ << requestOutOfSyncMsg;
 }
 
 

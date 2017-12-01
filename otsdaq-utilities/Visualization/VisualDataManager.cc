@@ -2,7 +2,6 @@
 #include "otsdaq-core/DataManager/DQMHistosConsumerBase.h"
 #include "otsdaq-core/DataManager/DataManager.h"
 #include "otsdaq-core/DataManager/DataProcessor.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/DataBufferConfiguration.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
 #include <iostream>
@@ -39,21 +38,34 @@ void VisualDataManager::halt(void)
 }
 
 //========================================================================================================================
+void VisualDataManager::pause(void)
+{
+	__COUT__ << "Pausing..." << std::endl;
+	DataManager::pause();
+}
+
+//========================================================================================================================
+void VisualDataManager::resume(void)
+{
+	DataManager::resume();
+}
+
+//========================================================================================================================
 void VisualDataManager::start(std::string runNumber)
 {
 	DataManager::start(runNumber);
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
-		__MOUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
-		if(buffer.second.getNode("Status").getValue<bool>())
+		__COUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
+		if(buffer.second.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue<bool>())
 		{
 			std::vector<std::string> producers;
 			std::vector<std::string> consumers;
 			auto bufferConfigurationMap = buffer.second.getNode("LinkToDataBufferConfiguration").getChildren();
 			for(const auto& bufferConfiguration: bufferConfigurationMap)
 			{
-				__MOUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
-				if(bufferConfiguration.second.getNode("Status").getValue<bool>()
+				__COUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
+				if(bufferConfiguration.second.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue<bool>()
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
 				)
 				{

@@ -28,6 +28,17 @@
 				height: 100%;
 			}
 			
+			#refresh-box {
+				position: absolute;
+				margin: 3px 0 0 270px;
+				color: white;
+				font-family: 'Donegal One', arial;
+			}
+			#refresh-box a:hover {
+				cursor: pointer;
+				text-decoration: underline;
+			}
+			
 			#error-box {
 				position: absolute;
 				display: none;
@@ -279,7 +290,7 @@
             	//getAltTransitionSelection(x,y)
             	//toggleViewMode()
             
-            var _altStateDrawingMode = true;
+            var _altStateDrawingMode = false;
             var _altStateGrid = [];
             var _altPlacedStates = [];
             var _ALT_GRID_WIDTH = 3;
@@ -773,8 +784,11 @@
                 		localPlaceState(i);                
 			}
 			
+
+			//=====================================================================================
 			//getCurrentState ~~
-			function getCurrentState() {
+			function getCurrentState() 
+			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
 						"", currStateRequestHandler);
@@ -796,9 +810,11 @@
 			}
 			
 
+			//=====================================================================================
 			//currStateRequestHandler ~~
 			//	poll current state of state machine
-			function currStateRequestHandler(req,id,err) {		
+			function currStateRequestHandler(req,id,err) 
+			{		
 
             	if(!req) //error! stop handler
             	{            		
@@ -1502,7 +1518,8 @@
 						transitionParameterData = transitionParameterData.split('=');	                
 						var transitionParameterName = transitionParameterData[0];
 						var transitionParameterValue = transitionParameterData[1];
-						y += 2*f;
+						
+						y += f+8;
 						
 						if(transitionParameterName == "ConfigurationAlias") //handle special
 						{
@@ -1511,25 +1528,25 @@
 							
 							_context.font = '10pt Donegal One';
 							y += f;
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Aliased Group: '" + _aliasTranslationMap[transitionParameterValue] + "'",
 									x, y);
 	
 							y += f-4;
 							var metaValue;
 							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Author: '" + metaValue + "'", 
 											x, y);
 							y += f-4;
 							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
 							metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Creation Time: '" + metaValue + "'", 
 											x, y);
 							y += f-4;
 							metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
-							_context.fillText("      " + 
+							_context.fillText("   " + 
 									"Comment: '" + metaValue.substr(0,30) + 
 											(metaValue.length > 30?"...":"") + "'", 
 											x, y);
@@ -1592,6 +1609,8 @@
         		for(var r=0;r<_altStateGrid.length;++r)
         			for(var c=0;c<_ALT_GRID_WIDTH;++c)
         			{        		
+        				if(_altStateGrid[r][c] == -1) continue; //skip empty grid locales
+        				
         				sx = x + c*_perimeterRadius;
         				sy = y + r*_perimeterRadius;
         				
@@ -2177,7 +2196,16 @@
 				_errorBox.style.display = "none";
 				document.getElementById("error-box-err").innerHTML = ""; //clear string
 			}
-			
+
+			//closeErrorBox() ~~
+			function refreshFSM()
+			{
+				Debug.log("refreshFSM");
+				init();
+				//_transitionProgress = -1; 
+				//window.clearInterval(_transitionTimer);
+				//_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+			}
 		</script>
 </head>
 
@@ -2190,6 +2218,11 @@
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
 </div>
+<!--	FIXME comeback to defining a proper refresh...	-->
+<div id='refresh-box'>
+	<a onclick='refreshFSM()'>Refresh</a>
+</div>
+		
 
 <div id='extras-box'>
 	<div id='run-number'></div>

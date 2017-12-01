@@ -161,15 +161,23 @@
 		margin: 20px;	
 	}
 	
-	#Desktop .DesktopIcons-iconDiv:hover {
+	#Desktop .DesktopIcons-iconDiv :hover {
 		box-shadow: rgba(0,0,0,0.6) 0 0 .3em;
 	}
 	
+
 	#Desktop .DesktopIcons-iconDiv:active {
-		box-shadow: rgba(0,0,0,0.6) 0 0 0;
+		box-shadow: rgba(0,0,0,0.6) 0 0 .2em;
 		-webkit-transform: 	translateY(.1em);
 		-moz-transform: 	translateY(.1em);
 		transform: 			translateY(.1em);
+	}
+	
+	#Desktop .DesktopIcons-iconDiv .DesktopIcons-iconDiv:active {
+		box-shadow: rgba(0,0,0,0.6) 0 0 .2em;
+		-webkit-transform: 	translateY(.0em);
+		-moz-transform: 	translateY(.0em);
+		transform: 			translateY(.0em);
 	}
 	
 	#Desktop .DesktopIcons-iconDiv, #Desktop .DesktopIcons-folderDiv {
@@ -312,6 +320,13 @@
 		left: 0;
 		top: 0;
 		background-color: rgba(0,0,0,1);
+	}
+	#Desktop #Desktop-loginDiv:hover {
+		cursor: -webkit-grab; /*so cursor can be seen on black background*/
+		cursor: grab;
+	}
+	#Desktop #Desktop-loginDiv input[type=checkbox] {
+		cursor: pointer;
 	}
 	
 	#Desktop #Desktop-loginDiv input {

@@ -8,15 +8,15 @@ import subprocess
 otsdaqVersion = "s46-e10 prof";
 
 try:
-	os.path.isdir(os.environ['ProductsDir']);
+	os.path.isdir(os.environ['Products']);
 except KeyError:
-	print "ProductsDir variable not set";
+	print "Products variable not set";
 	exit(1);
 
 ########################################################################
 #get pull products
 ########################################################################
-cmd=os.environ['ProductsDir'];
+cmd=os.environ['Products'];
 print cmd
 os.chdir(cmd);
 
@@ -67,7 +67,7 @@ elif "el7" in operatingSystem:
 	xerces_os = "sl7"
 
 
-cmd='cd $ProductsDir';
+cmd='cd $Products';
 print cmd
 os.system(cmd)
 

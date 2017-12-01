@@ -164,20 +164,20 @@ void ControlsDashboardSupervisor::init(void)
 	theSupervisorDescriptorInfo_.init(getApplicationContext());
 	//if(true)
 
-	__MOUT__ << std::endl;
+	__COUT__ << std::endl;
 	std::string t = "test";
 	//std::string path = "/XDAQContextConfiguration";
 	std::string nodeName = theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName();
-	__MOUT__ << nodeName << std::endl;
+	__COUT__ << nodeName << std::endl;
 	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);
-	__MOUT__ << node << std::endl;
+	__COUT__ << node << std::endl;
 
 	interface_ = makeControls(
 			"ControlsOtsInterface"
 			, t /*Key Value*/
 			, node
 			, nodeName);
-	__MOUT__ << std::endl;
+	__COUT__ << std::endl;
 	//interface_->initialize();
 	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 

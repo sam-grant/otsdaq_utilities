@@ -98,7 +98,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							 ":\t " + Debug.lastLog + ":\n" +
 							 Debug.lastLogger + "::\t" + str,							 
 							 num == 0?"color:#F30;"	//chrome/firefox allow css styling
-									 :(num < 99?"color:#092":"color:#333")); 
+									 :(num == 1?"color:#F70" //warn
+											 :(num < 99?"color:#092":"color:#333"))); 
 					Debug.lastLog = str;
 					
 					if(num < 4) //show all high priorities as popup!
@@ -136,30 +137,34 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 									if(!((str[l] >= 'a' && str[l] <= 'z') ||  
 											(str[l] >= 'A' && str[l] <= 'Z') ||
 											(str[l] >= '0' && str[l] <= '9') ||
-											(str[l] >= '.') ||
-											(str[l] >= '_') ||
-											(str[l] >= '-') ||
-											(str[l] >= '/') ||
-											(str[l] >= ':')))								
+											(str[l] == '.') ||
+											(str[l] == '_') ||
+											(str[l] == '-') ||
+											(str[l] == '/') ||
+											(str[l] == ':')))								
 										break; //found beginning (-1)
 								
 								++l; //increment to first character of blob
 											
 								if(!returnStr) //check if need to define for the first time
 									returnStr = "";
-								
-								//previous chunk
+																
+								//previous chunk								
 								returnStr += str.substr(i,l-i);
 								
 								//add label
-								returnStr += "<label class='" + 
-										Debug._errBoxId + "-localCallOut'>";
+								returnStr += "<br><label class='" + 
+										Debug._errBoxId + "-localCallOut'>";								
 								
 								//add callout
 								returnStr += str.substr(l,k+1-l);
 								
 								//add end label
-								returnStr += "</label>";
+								returnStr += "</label><br>";
+								
+								//skip any tabs and new lines (so that the next content is right below line #)
+								while(k+1 < str.length && 
+										(str[k+1] == '\n' || str[k+1] == '\t')) ++k;								
 								
 							}
 							i = k+1;						

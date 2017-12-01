@@ -32,15 +32,8 @@
 			overflow-y: auto;
 			overflow-x: hidden;
 		}
-		#leftPane {
-			/*background-color : rgb(241, 231, 231);*/
-			overflow-x: hidden;
-			overflow-y: scroll;
-			
-		    border-top: 1px solid rgb(224, 196, 196);
-						
-		}
-		#rightPane {
+		
+		#bottomPane {
 			background-color : rgb(241, 231, 231);
 			overflow: auto;
 
@@ -53,17 +46,7 @@
 		}
 		
 
-    	/* for mouse over highlighting */
-		.myOption:hover 
-		{
-            background-color : rgb(241, 231, 231);
-		}    
-		#recordMultiSelect .optionhighlighted:hover,
-		.groupFilerMultiSelect .optionhighlighted:hover
-		{
-			background-color : rgb(11, 66, 138);
-		}
-		
+		/* =============== plan selector ================ */
 		.recordAdd,
 		.recordAdd:hover {
 			text-decoration: none;
@@ -72,28 +55,24 @@
 			color: rgb(15, 152, 76);
 		}
 		
-		#recordsNameDiv {
-			float: left;
-			font-size: 20px;
-		}
 		#recordAddDiv {
-	    	margin: -7px 16px -10px 0;
-			float: right;
+	    	margin: -2px 16px -10px 0;
+			float: left;
 		}
 		#recordDeleteDiv {
-			margin: -1px 60px 0 0;
-			float: right;
+			margin: 4px 0 0 0;
+			float: left;
 		}
 		
 		.treeNode-deleteIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCan.png);
 			width: 				16px;
 			height: 			20px;
 			border: 			0;
 			margin: 			-9px 0 -10px 10px;
 		}
 		.treeNode-deleteIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 			cursor: 			pointer;
 		}
 
@@ -105,17 +84,34 @@
 			top: 				0;
 		}
 		#preloadImage-treeEditTrashIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			background-image: 	url(..//images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
+
+		#planSelector {
+			margin: 20px 0 0 20px;
+		}
+				
+		#planSelectDiv {
+			float: left;
+			margin-right: 20px;
+		}
+		
+		#planSelect {
+			height: 30px;
+			width: 210px;
+		}
+		/* =============== end plan selector ================ */
+		
+		
 		
 	</style>
 	
 	
-	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
-	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
-	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="..//js/Globals.js"></script>	
+	<script type="text/JavaScript" src="..//js/Debug.js"></script>	
+	<script type="text/JavaScript" src="..//js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="..//js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="..//js/js_lib/ConfigurationAPI.js"></script>
 	
 	<script>		
 	
@@ -126,90 +122,153 @@
 		//	Description of Iterate Functionality/Behavior:
 		//	
 		//	GET parameters:
-		//		<forceSavingModifiedGroups> = Do not provide user with option to use the temporary group for modified groups
-		//		<forceUseOfAliases> = Do not provide user with option to use an arbitrary group
-		//		<forceGroupsOnly> = Do not provide user with option to use Macros
+		//		<forceSavingModifiedGroups> = Do not provide user with option in command sequence to use the temporary group for modified groups
+		//		<forceUseOfAliases> = Do not provide user with option in command sequence to use an arbitrary group
+		//		<forceGroupsOnly> = Do not provide user with option in command sequence to use Macros
 		//		
 		//
 		//	- Requires user to have LOCK
 		//
 		//	- Top Pane:
-		//		* > || |_|  controls and "Status: Inactive"
+		//		* Refresh
+		//		* Iteration Plan: <name> and  > || |_|  controls and "Status: Inactive"
+		//		* when modified, do not show > || |_| controls.. 
+		//			instead show Save and Discard Changes buttons
 		//
 		//	- Bottom Pane:
 		//		* Similar functionality to GUI subset.. in that it edits the 
 		//			the currently active Iteration group. (If a user wants to change the active
 		//			Iteration group, they must do so in the Config GUI)
 		//
-		//		* Very top of "tree-view" choose the Iteration name
-		//			
-		//		
-		//		* Create Rows in table 
-		//
-		//	- Split remaining window into two panes: Left and Right; Left is fixed width and hideable.	
-		//	
-		//	- Left Pane:
-		//		* Fixed width, vertical auto scroll, hideable.
-		//		* Filter icon that toggles display of multi-select boxes for each <subLevelGrouping>. 
-		//		* Filtering:
-		//		 	- AND/OR option if multiple sublevels
-		//			- multi-select for each <subLevelGrouping>
-		//		* Icon to toggle record representation (Multi-select or Square Grid groupings)
-		//		* Record UID Selector:
-		//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
-		//		* Alternatively can represent the detectors as squares (with mouse over UID names)
-		//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+		//		* Very top of "tree-view" choose the Iteration Plan name
+		//			* Then default to
+		//				- BEGIN_LABEL 0 (hide index from user - show by indent)
+		//				- Configure Configuration Group/System Alias
+		//				- REPEAT_LABEL 0 ( 0 times - when 0 show as END LOOP)
+		//				- In GUI, show END (no representation in table)
 		//					
-		//	- Right Pane:
-		//		* Show toggle Left Pane link
-		//		* Show fields that are common based on SubLevelGrouping filters
-		//			- E.g. if *,* then can only show SlowControls fields
-		//			- Challenge: show all common fields, even through links
-		//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
-		//			- A field becomes the "selected" field when clicked
-		//				= the selected field should survive resizing, and get reset on filtering
-		//			- A field enters edit mode when pencil is clicked
-		//			- TAB and SHIFT+TAB should jump to next field for editing
-		//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
+		//		* Create Rows in table that match sequence
+		//
+		//		* Row Types
+		//			- BEGIN_LABEL <label>
+		//			- REPEAT_LABEL <label> <number of times to repeat 0-to-N>
+		//				#note: must have a matching BEGIN_LABEL
+		//			- CHOOSE_STATE_MACHINE <fsm name> #by default ""
+		//			- CONFIGURE_ALIAS <alias name>
+		//			- CONFIGURE_GROUP <group name> <group key>
+		//			- MODIFY_ACTIVE_GROUP <bool:do save new group #else use temporary group> 
+		//				<relative path from FE> <start value> <iteration step size>
+		//				<target Group #which can span multiple FE-Managers or whatever> 
+		//				#note: always must (so that macro things work) have a CONFIGURE_ACTIVE_GROUP after a MODIFY_ACTIVE_GROUP
+		//				#	but can group modifies together and do one CONFIGURE_ACTIVE_GROUP.	
+		//			- CONFIGURE_ACTIVE_GROUP
+		//			- EXECUTE_MACRO <macro name> <target Group #which can span multiple FE-Managers or whatever>
+		//				<parameter group of name, value, iteration step size to adjust in macro> 
+		//				#note: must be a public macro
+		//			- EXECUTE_FE_MACRO <FE macro name> <target Group #which can span multiple FE-Managers or whatever>
+		//				<parameter group of name, value, iteration step size to adjust in inputs to FE macro>
+		//			- RUN	<dump type> <bool: wait for all FEs to complete running thread else use time> 
+		//				<seconds for run>		
+		//
 		//		
 		//	- Save functionality should be same as saving tree	
-		//		* If admin, give options to target a certain system alias.. Etc.
+		//		* If admin, could give options to target a certain system alias.. Etc.
 		//		* Else assume saving to currently active groups
-
+		//
+		//
+		//	- Interactions with Server
+		//		* App must have access to Configuration GUI Supervisor, Gateway Supervisor,
+		//				MacroMaker Supervisor (Macro Maker can run FE Macros) 
+		//			-- this means primary urn to GUI Supervisor, secondary to Gateway Supervisor,
+		//				and special handshaking (from Gateway Supervisor) with MacroMaker Supervisors
+		//		
+		//		* Requests:
+		//				= from Configuration GUI Supervisor =
+		//			-- Get Iteration Plan Names
+		//			-- Load Iteration Plan
+		//			-- Save Iteration Plan
+		//
+		//				= from Gateway Supervisor =
+		//			-- Play/Resume Iteration Plan (implications for MacroMaker, coordinated by Gateway)
+		//			-- Pause Iteration Plan
+		//			-- Stop/Reset Iteration Plan
+		//			-- Get Active Iteration Plan Status (status could be: inactive, running, paused)
 		
-				
-		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
-		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
+		//	Gateway Server Iterator 
+		//		- Iterator to manage iterating -- separate thread
+		//		- Commands:
+		//			- stateMachineXgiHandler/PlayIterationPlan:
+		//				- if not running, launches thread (if all state machines are halted)
+		//					and starts playing iteration plan.
+		//			- stateMachineXgiHandler/PauseIterationPlan:
+		//				- if running, pauses iteration plan.
+		//			- stateMachineXgiHandler/HaltIterationPlan:
+		//				- if running, halts/resets iteration plan. Lose progress. Halts FSM.
+		//			- stateMachineXgiHandler/getIterationPlanStatus:
+		//				- returns status (status could be: inactive, running, paused)
+		//					and FSM state and isTransitioning,
+		//					and which iteration plan command.
+		//		
+		
+	
+	
+	
+		//
+		//	- Iteration Plan Configuration Tree
+		//		* Iterate
+		//			- records of 'Iteration Plans'
+		//		|* Iteration Plans
+		//			- group of 'Iteration Plan Commands' defining an 'Iteration Plan Sequence' 
+		//		||* Specific Command-Type (a table for each type)
+		//			- definition of parameters associated with the command type
 		
 		
-		var _leftPane, _rightPane, _topPane;
-		var _leftPaneHidden = false;
+		var _topPane, _bottomPane;
+		var _updateTimer = 0;
+		var _UPDATE_TIMER_PERIOD = 1000; //ms
+		var _old_active_plan_status;
+		var _need_plan_complete = false;
+		var _need_plan_halted = false;
+		var _need_plan_paused = false;
 		
-		var _rightPaneFields;
-		var _RIGHT_PANE_RW_BTN_HEIGHT = 48;
-		
-		var eventListenersCreated = false;
+		var _eventListenersCreated = false;
 		
 		//global vars for GET params
-		var _subsetBasePath;			
-		var _groupingFieldList;			
-		var _editableFieldList;			
-		var _recordPreFilterList;
-		var _recordsAlias;
+		var _forceSavingModifiedGroups;// = Do not provide user with option to use the temporary group for modified groups
+		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
+		var _forceGroupsOnly;//= Do not provide user with option to use Macros
 		
-		//global vars for multiselects				
-		var _filterValsObj; //for each filter MultiSelect (one for each grouping field), an array of filter values
-		var _subsetUIDs; //array of UIDs defined by the subset selected filterVals in multiselects (based on _subsetBasePath and _recordPreFilterList)
-		var _filterTimer;
-		MultiSelectBox.REQUIRE_CTRL_MULTI_CLICK = true; //require control
+		var _ITERATE_BASE_PATH = "IterateConfiguration";	
+		var _PLAN_BASE_PATH = "IterationPlanConfiguration";	
+		var _recordsAlias = "Iteration Plan";
 		
-		//global vars for fields
-		var _selectedFieldIndex = -1;
-		var _editFieldIndex = -1;	
-		var _fields;
-		
-		//global vars saving tables
+		//global vars for iteration plan records
+		var _planUIDs; //array of UIDs in the currently active Iterate group
+		var _targetPlan = "";
+				
+		//global vars for saving tables
 		var _modifiedTables;
+		
+		//global vars for editing plans
+		var _configGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups
+		var _fsmNames = [];	//array of names
+		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
+        var _commands = [];
+        
+		var _COMMAND_TYPES = {};
+		_COMMAND_TYPES.BEGIN_LABEL 				= "BEGIN_LABEL";
+		_COMMAND_TYPES.CHOOSE_FSM 				= "CHOOSE_FSM";
+		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_ACTIVE_GROUP";
+		_COMMAND_TYPES.CONFIGURE_ALIAS 			= "CONFIGURE_ALIAS";
+		_COMMAND_TYPES.CONFIGURE_GROUP 			= "CONFIGURE_GROUP";
+		_COMMAND_TYPES.EXECUTE_FE_MACRO 		= "EXECUTE_FE_MACRO";
+		_COMMAND_TYPES.EXECUTE_MACRO 			= "EXECUTE_MACRO";
+		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
+		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
+		_COMMAND_TYPES.RUN 						= "RUN";
+        
+        
+        var _DEBUG_WOUT_SERVER = 0;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -218,27 +277,43 @@
 			//init()
 			//paint() 
 			//extractGETParameters()
-			//initSubsetGlobalData()
-			//runFilter()
-			//updateRecordsAndFields()
+			//initIterateData()
+        	//		localCompleteInit()
+        	//		localGetGroups()	
+        	//		localGetNamesOfFSMs()
+			//getIterationPlans(responseHandler)
 		
 			//createTopPaneContent()
-			//createLeftPaneContent(leftW)
-			//		localCreateGroupingFieldFilters()
-			//		localCreateRecordsSelector()
-			//groupFilterSelectionHandler(el)
-			//createRightPaneContent()
-			//		localAddReadWriteButtons(cel)
+			//createBottomPaneContent()
+			//updateIterationPlanContent()
 		
-			//		getSelectedRecords(forceOne)
-			//btnActionReadAllFields()
-			//btnActionReadOneField()
-			//btnActionWriteAllFields()
-			//btnActionWriteOneField()
+				//Plan Editing:
+			//createEmptyIterateGroup()
+			//getIterationPlans()
+			//addIterationPlan()
+			//deleteIterationPlan()
+			//addCommand(type,params)
+			//deleteCommand()
+			//savePlanCommandSequence(plan,commands,respsonseHandler)
 		
-			//deleteRecords()
-			//addRecord()
+				//Plan Control:
+			//startTargetIterationPlan
+			//haltTargetIterationPlan
+			//pauseTargetIterationPlan
+			
+				//Helpers:
+			//saveModifiedTables(successMsg,failureMsg)        	
 		
+				//Display:
+            //drawIterationPlan(plan)
+            //  localExtractTree(tree)
+            //  localDrawIterationPlan()
+        	//updateIterateStatus()	
+		
+				//Input Handlers:
+			//handleMouseOver(type,id) 
+			//handleEndMouseOver() 
+			//handlePlanSelect() 
 	
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -249,15 +324,32 @@
 		//	init called once body has loaded
 		function init() 
 		{									
-			Debug.log("CfgGUI_sebset init ");
-			DesktopContent.tooltip("Configuration-Subset GUI Introduction",
-					"Welcome to the Configuration-Subset GUI. Here you can manipulate the fields "+
-					"of a subset of your <i>otsdaq</i> system. \n\n" +
-					"The organization of the Configuration-Subset GUI is in the form of two panes, a left and right.\n\n" +
+			Debug.log("Iterate init ");
+			DesktopContent.tooltip("Iterate Introduction",
+					"Welcome to the Iterate GUI. Here you can create 'Iteration Plans' that can facilitate "+
+					"calibrations or complex run plans. \n\n" +
+					
+					"For an example calibration case, you might create an Iteration Plan to step through " +
+					"a register value from 0 to 50, counting by 10.\n\n" +
+					
+					"For an example run plan case, you might create an Iteration Plan to take 5 runs for " +
+					"10 minutes each.\n\n" +
+					
+					"The organization of the Iterate GUI is in the form of two panes, a top and bottom.\n\n" +
 					
 					"Briefly, here is a description of the two panes: " +
-					"\n\t- 'Left Pane' is for selecting one or many records to target." +
-					"\n\t- 'Right Pane' is for modifying the common fields associated with the selected records."
+					"<INDENT> " +
+					"- <b>Top Pane</b>\n" +
+					"<INDENT> The 'Top Pane' is for controlling the selected Iteration Plan. " +
+					"You can Play, Pause, or Stop the Iteration Plan. Or if you make modifications " +
+					"you can Save or Discard them." +
+					"</INDENT>" +
+					"</INDENT>" + 
+					"<INDENT> " +
+					"- <b>Bottom Pane</b>\n" +
+					"<INDENT> The 'Bottom Pane' is for viewing and modifying the selected Iteration Plan. " +
+					"</INDENT>" +
+					"</INDENT>"
 			);
 			
 			//extract get parameters
@@ -268,12 +360,10 @@
 				return;
 			}
 
+
 			//get subset record uids and 
-			//	filter values for all possible grouping fields
 			//	calls paint() and adds resize listener when done
-			initSubsetGlobalData();
-				//paint();
-				//window.addEventListener("resize",paint);
+			initIterateData();
 						
 		} //end init()
 		
@@ -295,19 +385,17 @@
 			
 			Debug.log("paint w,h=" + w + "," +h);
 
-			var TOP_H = 56;
-			var LEFT_W = 400;
+			var TOP_H = 85;//56;
 			var BORDER_SZ = 0;			
 			var MARGIN = 5;
 			
-			if(!_leftPane && !_rightPane && !_topPane)
+			if(!_bottomPane && !_topPane)
 			{
 				//first time create elements
 				createTopPaneContent();
-				createLeftPaneContent(LEFT_W-2*BORDER_SZ);
-				createRightPaneContent();
+				createBottomPaneContent();
 				
-				updateRecordsAndFields();
+				updateIterationPlanContent();
 			}
 
 			
@@ -324,152 +412,349 @@
 			y += TOP_H + MARGIN;
 			h -= TOP_H + MARGIN;
 
-			//set left pane sizes
-			if(!_leftPaneHidden)
-			{
-				_leftPane.style.left = MARGIN + "px";
-				_leftPane.style.top = y + "px";
-				_leftPane.style.width = (LEFT_W-2*BORDER_SZ) + "px";
-				_leftPane.style.height = (h - 2*BORDER_SZ) + "px";
-	
-				x += LEFT_W + MARGIN;
-				w -= LEFT_W + MARGIN;
-			}
-
-			//set right pane sizes
+			//set bottom pane sizes
 			h -= 2*BORDER_SZ + MARGIN;
-			w -= 2*BORDER_SZ;
-			_rightPane.style.left = x + "px";
-			_rightPane.style.top = y + "px";
-			_rightPane.style.width = w + "px";
-			_rightPane.style.height = h + "px";
-
-			_rightPaneFields.style.height = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
-			_rightPaneFields.style.height = (h - 20 - //for left pane hide
-					(_RIGHT_PANE_RW_BTN_HEIGHT*2) - //for top/bottom read/write buttons
-					2*BORDER_SZ - 2*MARGIN) + "px";
+			
+			_bottomPane.style.left = x + "px";
+			_bottomPane.style.top = y + "px";
+			_bottomPane.style.width = w + "px";
+			_bottomPane.style.height = h + "px";
 						
 		}	//end paint()
 
 		//=====================================================================================
-		//updateRecordsAndFields ~~
-		//	update records selector display
-		//		based on _subsetUIDs
-		function updateRecordsAndFields() 
-		{
-			var el = document.getElementById("recordMultiSelect");
-			if(!el) {Debug.log("Error: updateRecordsSelector null"); return; } 
+		//updateIterationPlanContent ~~
+		function updateIterationPlanContent() 
+		{	
+			var el = document.getElementById("planSelector");
+			if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; } 
 			
-			var str;
+			var optionIndex = -1;
 			
-			var noMultiSelect = false; // true or false (false for multiselect functionality) 
-			var maintainPreviousSelections = true; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-
-			var vals = _subsetUIDs;//["One little piggy","two little piggies","three little piggies"];
-			var keys = [];
-			var types = [];
-			for(var j=0;j<vals.length;++j)
-			{
-				keys.push(j);
-				types.push("record");								
-			}				
-
 			str = "";
 
-			str += "<div id='recordsNameDiv'>";
-			str += _recordsAlias + ":";
-			str += "</div>";
+			str += "<div id='planSelectDiv'>";
+			str += "<b>Choose an Iteration Plan: </b>";
+			if(_planUIDs.length == 0)
+			{
+				str += "No plans found. Create one here ==> ";
+			}
+			else
+			{
+				str += "<select id='planSelect' onchange='handlePlanSelect();'>";
+				for(var i=0;i<_planUIDs.length;++i)
+				{
+					str += "<option value='" + i + "'>";
+					str += _planUIDs[i];	//can display however
+					str += "</option>";
+					
+					if(_planUIDs[i] == _targetPlan)
+						optionIndex = i;
+				}
+				str += "</select>";
+			}
+			str += "</div>"; //end planSelectDiv
 
-			
-			str += "<div id='recordDeleteDiv' class='treeNode-deleteIcon' ";
-			str += "onclick='deleteRecords(); return false;' " +
-					"title='Delete the selected one or many " + _recordsAlias + " records.\"'" +					
-					">";
-			str += "</div>";
-			
-			str += "<div id='recordAddDiv'>";
-			str += "<a class='recordAdd' onclick='addRecord(); return false;' " +
-					"title='Create a new " + _recordsAlias + " record.\"'" +
+			str += "<div id='recordAddDiv' ";
+			if(_planUIDs.length == 0)
+				str += "style='margin: -4px 16px -10px 0;' ";
+			else 
+				str += "style='margin: -2px 16px -10px 0;' ";
+			str += "'>";			
+			str += "<a class='recordAdd' onclick='addIterationPlan(); return false;' ";			
+			str += "title='Create a new " + _recordsAlias + ".'" +
 					">";
 			str += "+";
 			str += "</a>";
 			str += "</div>";
-			
-			//write MultiSelectBox to a particular div
-			MultiSelectBox.createSelectBox(
-					el,
-					"RecordsGroupBox",
-					str,
-					vals,keys,types,groupFilterSelectionHandler,noMultiSelect,
-					0 /* mouseOverHandler */,
-					0 /* iconURLs */,
-					0 /* mouseDownHandler */,
-					0 /* mouseUpHandler */,
-					true /* requireCtrlMultiClick */);
 
-			MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
-			
-			
-			//get grouping field values
-			//	for record list
-			_rightPaneFields.innerHTML = ""; //clear any existing fields
-			ConfigurationAPI.getFieldsOfRecords(
-					_subsetBasePath,
-					_subsetUIDs,
-					_editableFieldList,
-					-1,
-					function(recordFields)
-					{				
-				_fields = recordFields;
-				Debug.log("recordFields found = " + recordFields.length);
-				console.log(recordFields);
+			str += "<div id='recordDeleteDiv' class='treeNode-deleteIcon' ";
+			if(_planUIDs.length == 0) str += "style='display:none' ";
+			str += "onclick='deleteIterationPlan(); return false;' " +
+					"title='Delete the selected " + _recordsAlias + ".'" +					
+					">";
+			str += "</div>";
 
-				if(!recordFields.length)
+			el.innerHTML = str;
+			
+			//if no target plan and plans exist, load the first one
+			if(_targetPlan == "")
+			{
+				if(_planUIDs.length)
+					drawIterationPlan(_planUIDs[0]);
+				else
+					drawIterationPlan();					
+			}
+			else
+			{
+				var sel = document.getElementById("planSelect");				
+
+				if(optionIndex >= 0)
 				{
-					Debug.log("No common fields found among current set of records! " +
-							"Something is wrong - check. the window input parameters.",
-							Debug.HIGH_PRIORITY);
-					return;
+					sel.selectedIndex = optionIndex;
+					sel.focus();
 				}
+				
+				drawIterationPlan(_targetPlan);
+			}
+			
+		} //end updateIterationPlanContent()
+		
 
-				//		on success, the array will be an array of Field objects	
-				//		Field := {}
-				//			obj.fieldTableName 
-				//			obj.fieldUID 
-				//			obj.fieldColumnName
-				//			obj.fieldRelativePath 
-				//			obj.fieldColumnType
-				//			obj.fieldColumnDataType
-				//			obj.fieldColumnDataChoicesArr[]
-				//			obj.fieldColumnDefaultValue
+		//=====================================================================================
+		//drawIterationPlan ~~
+        //  if plan then request commands from server, otherwise use current _targetPlan and
+        //      existing _commands.
+		function drawIterationPlan(plan) 
+		{
+			if(plan !== undefined)
+            {
+				_targetPlan = plan;
+                
+				if(!_DEBUG_WOUT_SERVER)
+                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
+                                         4, //down through command parameters
+										 _modifiedTables,
+                                         localExtractTree
+                                         );
+            }
+			else
+				plan = _targetPlan;
+			
+			Debug.log("drawIterationPlan " + plan);
+			
+			//load plan and display detail
+			//	get command sequence
+			
+            if(_DEBUG_WOUT_SERVER)
+            {
+                //by pass server request and fake data
+                var children = document.createElement("div");
+                var commands = [];
+                commands.push({ 	//BEGIN_LABEL
+                "type" : _COMMAND_TYPES.BEGIN_LABEL,
+                "param" : {"Label":"Main"},
+                });
+                commands.push({ 	//CHOOSE_FSM
+                "type" : _COMMAND_TYPES.CHOOSE_FSM,
+                "param" : {"NameOfStateMachine":(_fsmNames.length? //use first name, if any exist
+                		_fsmNames[0]
+                        :"")},
+                });
+                commands.push({		//CONFIGURE_ALIAS aliasMap[0]
+                "type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
+                "param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
+                		_configGroupAliases[0].alias
+						:"")},
+                });
+                commands.push({		//RUN 5 minutes
+                "type" : _COMMAND_TYPES.RUN,
+                "param" : {"WaitForAllFrontEndsRunningThread":0,
+					"DurationInSeconds": 5*60},
+                });
+                commands.push({ 	//REPEAT_LABEL
+                "type" : _COMMAND_TYPES.REPEAT_LABEL,
+                "param" : {"Label":"Main", "NumberOfRepetitions":0},
+                });
+                
+                _commands = commands;
+                
+                localDrawIterationPlan();
+                return;
+            }
+            else
+                localDrawIterationPlan();
+            	
+            
+            
+            //::::::::::::::::::::::::::::::::::::
+            //localExtractTree ~
+            //	extract tree into the _commands object
+            function localExtractTree(tree)
+            {
+                if(!tree && !_DEBUG_WOUT_SERVER)
+                {
+                    Debug.log("Invalid tree xml object.");
+                    return;
+                }
+                
+                _commands = []; //clear
+                
+                var nodes = tree.children;
+                var nodeChildren;
+                var commandChildren;
+                var commandFieldsChildren;
+                var parameterChildren;
+                var countCommands = 0;
+                
+                var type,params; //to make command
+                
+                //for each plan field
+                //	find link to command group
+                //		for each command
+                //			fill command type
+                //			find link to parameters
+                //				fill parameters
+                for(var i=0;i<nodes.length;++i)
+                {                    
+                    nodeChildren = nodes[i].children;
+                    
+                    if(nodeChildren[0].nodeName != "value")    //asssume this is group link to commands
+                    {
+                        for(var j=0;j<nodeChildren.length;++j)
+                        {
+                            if(nodeChildren[j].nodeName == "node")
+                            {
+                                //found child node -- command UID level                            	
+                            	commandChildren = nodeChildren[j].children;
 
-				//for each record,
-				//	make an element that is "editable" and "selectable" (_selectedFieldIndex)
-				//		- when clicked becomes selected element
-				//	 	- when pencil is clicked is edit mode
-				//		- tab should move from edit field to edit field
-				for(var i=0;i<recordFields.length;++i)
-				{
-					//create field
-					el = document.createElement("div");
-					el.setAttribute("id", "cfg_subset_field-" + i);
-					el.setAttribute("style", "white-space:nowrap;" +
-							"margin: 5px;");
-					_rightPaneFields.appendChild(el); //add field to field container
-										
-					el.appendChild(ConfigurationAPI.createEditableFieldElement(
-							recordFields[i],i));
-					
-					//add clear div
-					el = document.createElement("div");
-					el.setAttribute("id", "clearDiv");
-					_rightPaneFields.appendChild(el);
-				}
+                                for(var k=0;k<commandChildren.length;++k)
+                                {   	
+                                    if(commandChildren[k].nodeName == "node")
+                                    {
+                                    	//found child node -- command field
+                                    	if(commandChildren[k].getAttribute("value") == "CommandType")
+                                    	{
+                                    		type = commandChildren[k].children[0].getAttribute("value");
+                                    		params = [];
+                                    	}
+                                    	else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
+                                    	{
+                                    		parameterChildren = commandChildren[k].children;
 
+                                            for(var l=0;l<parameterChildren.length;++l)
+                                            {   	
+                                                if(parameterChildren[l].nodeName == "node")
+                                                {
+                                                	//found child node -- parameter field
+                                                	// take as parameter until the comment field is reached
+                                                	
+                                                	if(parameterChildren[l].getAttribute("value") == "CommentDescription")
+                                                		break;
+                                                	
+                                                	Debug.log("parameter name = " + parameterChildren[l].getAttribute("value"));
+                                                	                                                	
+                                                	params.push(parameterChildren[l].children[0].getAttribute("value"));
+                                                	
+                                                	Debug.log("parameter value = " + params[params.length-1]);                                                	
+                                                }
+                                            }
+                                    	}
+                                    }
 
-					}, //end getFieldsOfRecords handler
-					 _modifiedTables);
-		} //end updateRecordsAndFields()
+                                }
+
+                                //at this point, have command type and params
+                                console.log(type);	
+                                console.log(params); 
+                                addCommand(type,params);
+                            }
+                        }
+                        
+                        Debug.log("countCommands = " + _commands.length);
+                    }
+                    
+                    /*
+                    str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
+                    
+                    //ConfigurationAPI.getDateString(date)
+                    nodeChildren = nodes[i].children;
+                    if(nodeChildren[0].nodeName == "value") //value node
+                    str += nodeChildren[0].getAttribute("value");
+                    else //asssume group link to commands
+                    {
+                        for(var j=0;j<nodeChildren.length;++j)
+                        {
+                            if(nodeChildren[j].nodeName == "node")
+                            {
+                                //found child node
+                                
+                                str += "<br>";
+                                str += "<b>" + nodes[i].getAttribute("value") + "/" +
+                                nodeChildren[j].getAttribute("value") + "</b>";
+                                ++countCommands;
+                            }
+                        }
+                        
+                        Debug.log("countCommands = " + countCommands);
+                        
+                        str += "<br>";
+                        str += "Number of Commands = " + countCommands;
+                    }
+                    str += "<br>";*/
+                }
+                
+                localDrawIterationPlan();
+                
+            } // end localExtractTree()
+            
+            //::::::::::::::::::::::::::::::::::::
+            //draw based on _commands
+            function localDrawIterationPlan()
+            {
+                if(!_commands)
+                {
+                    Debug.log("Invalid commands object.");
+                    return;
+                }
+                
+                var el = document.getElementById("planDetail");
+                if(!el) {Debug.log("Error: updateIterationPlanContent null"); return; }
+                
+                el.innerHTML = ""; //clear
+                
+                if(!plan || plan == "")
+                	return;
+                 
+                var str = "";
+                
+                //Display Concept:
+                //  Plan name at top left
+                //      Blue vertical bar extending down inset off left edge of name
+                //      Each Loop
+                //          New vertical bar extending down inset off BEGIN_LABEL command
+                
+                
+                
+                str += "Plan: " + plan;
+                str += "<br>";str += "<br>";
+                
+                var commands = _commands;
+                var depth = 0;
+                var paramKeys;
+                
+                //make first vertical bar
+                str += "<div id='clearDiv'></div>";
+                str += "<div class='depthBar' id='depthBar-" + depth + "'>";
+                
+                for(var i=0;i<commands.length;++i)
+                {
+                    str += "<div id='clearDiv'></div>";
+                    
+                    str += "<div class='command' id='command-" + i + "'>";
+                    
+                    str += "<b>" + commands[i].type + ":</b> ";
+                    
+                    //show properties
+                    paramKeys = Object.keys(commands[i].param);
+
+                    for(var j=0;j<paramKeys.length;++j)
+                    	str += " " + paramKeys[j] + "=" + 
+							commands[i].param[paramKeys[j]];
+                                        
+                    
+                    //ConfigurationAPI.getDateString(date)
+                                        
+                    str += "<br>";
+                }
+                
+                el.innerHTML = str;
+                              
+                
+            } //end localDrawIterationPlan()
+			
+			
+		} //end drawIterationPlan()
 		
 		//=====================================================================================
 		//extractGETParameters ~~
@@ -477,106 +762,266 @@
 		function extractGETParameters() 
 		{
 			//extract get parameters
-			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
-			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
-			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
-			//		<recordPreFilterList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
-			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
 			
-			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
-			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList"); //"LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
-			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");//"";//DesktopContent.getParameter(0,"editableFieldList");			
-			_recordPreFilterList 	= DesktopContent.getParameter(0,"recordPreFilterList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"recordPreFilterList");
-			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
-					
-			if(!_subsetBasePath)
-			{
-				Debug.log("Missing required GET parameter 'subsetBasePath.'",
-						Debug.HIGH_PRIORITY);
-				return false;
-			}
-			if(!_groupingFieldList) _groupingFieldList = "";
-			if(!_editableFieldList) _editableFieldList = "";
-			if(!_recordPreFilterList) _recordPreFilterList = "";
-			if(!_recordsAlias) _recordsAlias = "Records";
-
-			Debug.log("_subsetBasePath " + _subsetBasePath);
-			Debug.log("_groupingFieldList " + _groupingFieldList);
-			Debug.log("_editableFieldList " + _editableFieldList);
-			Debug.log("_recordPreFilterList " + _recordPreFilterList);
-			Debug.log("_recordsAlias " + _recordsAlias);
+			_forceSavingModifiedGroups	= DesktopContent.getParameter(0,"forceSavingModifiedGroups");			
+			_forceUseOfAliases		 	= DesktopContent.getParameter(0,"forceUseOfAliases");			
+			_forceGroupsOnly			= DesktopContent.getParameter(0,"forceGroupsOnly");			
+			
+			//setup defaults
+			if(_forceSavingModifiedGroups === undefined) 	_forceSavingModifiedGroups = false;
+			if(_forceUseOfAliases === undefined) 			_forceUseOfAliases = false;
+			if(_forceGroupsOnly === undefined) 				_forceGroupsOnly = false;
+			
+			Debug.log("_forceSavingModifiedGroups " + _forceSavingModifiedGroups);
+			Debug.log("_forceUseOfAliases " + _forceUseOfAliases);
+			Debug.log("_forceGroupsOnly " + _forceGroupsOnly);
 			
 			return true;
 		}	//end extractGETParameters()
 		
 		//=====================================================================================
-		//initSubsetGlobalData ~~
-		//	fills _subsetUIDs
+		//initIterateData ~~
+		//	fills _planUIDs
 		//		array of UIDs defined by the subset (based on _subsetBasePath and _recordPreFilterList)
 		//	fills _filterValsObj
 		//		for each filter MultiSelect (one for each grouping field), an array of filter values
-		function initSubsetGlobalData() 
+		function initIterateData() 
 		{
+			window.clearTimeout(_updateTimer);
+					
 			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
-			_subsetUIDs = []; //reset
+			_planUIDs = []; //reset
 			_filterValsObj = {}; //reset
 			_fields = undefined; //reset
 			_modifiedTables = undefined; //reset
+            
+            _targetPlan = ""; //reset
+            _commands = []; //reset
 			
 
-			if(_leftPane && _rightPane && _topPane)
+			if(_bottomPane && _topPane)
 			{
 				_topPane.innerHTML = ""; //clear
-				_rightPane.innerHTML = ""; //clear
-				_leftPane.innerHTML = ""; //clear
+				_bottomPane.innerHTML = ""; //clear
 				_topPane.parentNode.removeChild(_topPane); //remove element
-				_rightPane.parentNode.removeChild(_rightPane); //remove element
-				_leftPane.parentNode.removeChild(_leftPane); //remove element
+				_bottomPane.parentNode.removeChild(_bottomPane); //remove element
 				
 			}
 			_topPane = undefined; //reset
-			_rightPane = undefined; //reset
-			_leftPane = undefined; //reset
+			_bottomPane = undefined; //reset
+            
+            
+            if(_DEBUG_WOUT_SERVER)
+            {
+                //bypass server and give example iterate plan
+                
+                _planUIDs = ["test 1", "testB"];
+                
+                localCompleteInit();
+                return;
+            }
+
 						
-			window.clearTimeout(_filterTimer); 
-			_selectedFieldIndex = -1;
-			_editFieldIndex = -1;
+			ConfigurationAPI.getActiveGroups(
+					function(groups)
+					{
+				if(!groups || !groups.Iterate || 
+						groups.Iterate.groupKey === undefined ||
+						(groups.Iterate.groupKey|0) == -1)
+				{
+					Debug.log("No active Iterate group.");
+					
+					//create an empty active group
+					createEmptyIterateGroup(
+							function(params)
+							{
+						if(params === undefined)
+						{
+							Debug.log("Creation of empty Iterate Group failed. Giving up. Call a system admin.",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+						getIterationPlans(localCompleteInit);
+							});
+					return;
+				}
+				
+				Debug.log("Active Iterate group is " +
+						groups.Iterate.groupName + " (" +
+						groups.Iterate.groupKey + ").");
+
+				getIterationPlans(localCompleteInit);
+				
+
+					}); //end getActiveGroups handler
+
+			//::::::::::::::::::::::::::::::::::::
+			function localCompleteInit()
+			{
+				Debug.log("localCompleteInit -- Wrapping up init.");
+				paint();
+				if(!_eventListenersCreated)
+				{
+					window.addEventListener("resize",paint);
+					_eventListenersCreated = true; //prevent multiple event creation
+				}	
+				
+				updateIterateStatus();
+			} //end localCompleteInit()
+
+						
+
+			//::::::::::::::::::::::::::::::::::::
+			//localGetGroups ~
+			//	get groups and aliases
+			function localGetGroups() 
+			{
+				Debug.log("localGetGroups");
+				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" + 
+						"", //end get data 
+						"", //end post data
+						function(req)
+						{
+	
+					Debug.log("getGroupAliases handler");
+	
+					var groupAliases = req.responseXML.getElementsByTagName("GroupAlias");
+					var groupNames = req.responseXML.getElementsByTagName("GroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("GroupKey");
+					var groupComments = req.responseXML.getElementsByTagName("GroupComment");
+					var groupTypes = req.responseXML.getElementsByTagName("GroupType");
+					var aliasComments = req.responseXML.getElementsByTagName("AliasComment");
+	
+					_configGroupAliases = [];
+					for(var i=0;i<groupAliases.length;++i) 
+						if(groupTypes[i].getAttribute('value') == "Configuration")
+							_configGroupAliases.push({
+									"alias" : groupAliases[i].getAttribute('value'),
+									"name" : groupNames[i].getAttribute('value'),
+									"key" : groupKeys[i].getAttribute('value'),
+									"groupComment" : groupComments[i].getAttribute('value'),
+									"aliasComment" : aliasComments[i].getAttribute('value')
+						});
+	
+					console.log("_configGroupAliases",_configGroupAliases);
+	
+	
+						}, //handler
+						0, //handler param
+						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						false /*targetSupervisor*/);
+				
+				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+						+"&doNotReturnMembers=1", //end get data 
+						"", //end post data
+						function(req)
+						{
+					Debug.log("getConfigurationGroups handler");
+					
+					var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+					var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+					var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+					
+					_configGroups = [];
+					for(var i=0;i<groupNames.length;++i) 
+						if(groupTypes[i].getAttribute('value') == "Configuration")
+							_configGroups.push({								
+									"name" : groupNames[i].getAttribute('value'),
+									"key" : groupKeys[i].getAttribute('value'),
+									"groupComment" : groupComments[i].getAttribute('value')
+						});
+					
+					console.log("_configGroups",_configGroups);
+					
+						}, //handler
+						0, //handler param
+						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						false /*targetSupervisor*/);
+			} //end localGetGroups()
+			localGetGroups();
 			
 			
+			//::::::::::::::::::::::::::::::::::::
+			//localGetNamesOfFSMs ~
+			//	get groups and aliases
+			function localGetNamesOfFSMs() 
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachineNames" + 
+						"", //end get data 
+						"", //end post data
+						function(req)
+						{
+
+					Debug.log("getStateMachineNames handler");
+
+					var names = req.responseXML.getElementsByTagName("stateMachineName");
+
+					_fsmNames = [];
+					for(var i=0;i<names.length;++i) 
+						_fsmNames.push(names[i].getAttribute('value'))
+
+					console.log("_fsmNames",_fsmNames);
+
+						}, //handler
+						0, //handler param
+						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						true /*targetSupervisor*/);
+			} //end localGetNamesOfFSMs()
+			localGetNamesOfFSMs(); 
 			
+			
+		}	//end initIterateData()
+
+		//=====================================================================================
+		//createEmptyIterateGroup ~~
+		function createEmptyIterateGroup(responseHandler) 
+		{
+			Debug.log("createEmptyIterateGroup");
+			
+			//create a group with each table in group key -1 (to use empty mockup table)
+			//  on failure, give up and assume there are existing groups that admin could activate
+					
+			ConfigurationAPI.getGroupTypeMemberNames("Iterate",
+					function(members)
+					{
+				Debug.log("getGroupTypeMemberNames handler");				
+				var configMapStr = "configList=";
+				for(var i=0;i<members.length;++i)
+					configMapStr += members[i] + ",-1,";
+				ConfigurationAPI.saveGroupAndActivate(
+						"iterateDefaultGroup",
+						configMapStr,
+						responseHandler, //pass handler to be called
+						true /*doReturnParams*/						
+						)			
+					}); // end getGroupTypeMemberNames handler
+	
+
+		}	//end createEmptyIterateGroup()
+		
+		//=====================================================================================
+		//getIterationPlans ~~
+		function getIterationPlans(responseHandler) 
+		{
+			Debug.log("getIterationPlans");
+			
+			//get existing iteration plans
 			ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					_recordPreFilterList,
+					_ITERATE_BASE_PATH,
+					"",
 					function(records)
 					{
-				_subsetUIDs = records;
-				Debug.log("records found = " + records.length);
+				_planUIDs = records;
+				Debug.log("iteration plans found = " + records.length);
 				console.log(records);
+
+				if(responseHandler) responseHandler();
 				
-				
-				ConfigurationAPI.getUniqueFieldValuesForRecords(
-						_subsetBasePath,
-						records,
-						_groupingFieldList,
-						function(uniqueValues)
-						{
-					_filterValsObj = uniqueValues;
-					Debug.log("uniqueValues found = " + uniqueValues.length);
-					console.log(uniqueValues);
-					
-					paint();
-					if(!eventListenersCreated)
-					{
-						window.addEventListener("resize",paint);
-						eventListenersCreated = true; //prevent multiple event creation
-					}
-						
-						}, //end getUniqueFieldValuesForRecords handler
-						 _modifiedTables);
-				
-					});
+					});	//end getSubsetRecords handler	
 			
-		}	//end getSubsetUIDs()
+		}	//end getIterationPlans()	
 		
 		//=====================================================================================
 		//createTopPaneContent ~~
@@ -591,7 +1036,7 @@
 			
 			el = document.createElement("div");
 			str = "";
-			str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
+			str += "<a href='#' onclick='initIterateData()'>Refresh</a>";
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
 
@@ -601,709 +1046,93 @@
 			
 			el = document.createElement("div");
 			el.setAttribute("id", "topPane-header");
-			str = "Targeting ";
-			
-			if(_recordPreFilterList != "")
-				str += _recordsAlias + " ";
-			else
-				str += "all " + _recordsAlias + " ";
-		
-			str += "at path '/" + _subsetBasePath + ",' ";
-			
-			if(_recordPreFilterList != "")
-				str += "matching '" + _recordPreFilterList + ",' ";
-			else
-				str += "";
-			
-			if(_groupingFieldList != "")
-				str += "organized by '" + _groupingFieldList + "' ";
-			else
-				str += "";
-			
-			
-			el.innerHTML = str;
 			_topPane.appendChild(el);			
 			
 			document.body.appendChild(_topPane);			
 		}	//end createTopPaneContent()
 		
 		//=====================================================================================
-		//createLeftPaneContent ~~
-		function createLeftPaneContent(leftW) 
+		//createBottomPaneContent ~~
+		function createBottomPaneContent(leftW) 
 		{
-			_leftPane = document.createElement("div");
-			_leftPane.setAttribute("class", "pane");
-			_leftPane.setAttribute("id", "leftPane");
-			
-			//	- Left Pane:
-			//		* Fixed width, vertical auto scroll, hideable.
-			//		* Filter link that toggles display of multi-select boxes for each <subLevelGrouping>. 
-			//		* Filtering:
-			//		 	- AND/OR option if multiple sublevels
-			//			- multi-select for each <subLevelGrouping>
-			//		* Link to toggle record representation (Multi-select or Square Grid groupings)
-			//		* Record UID Selector:
-			//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
-			//		* Alternatively can represent the detectors as squares (with mouse over UID names)
-			//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
-			
-			var el;
-			var str;
-						
-						
-						
-			//:::::::::::::::::::::::::::::
-			//localCreateGroupingFieldFilters ~~
-			function localCreateGroupingFieldFilters()
-			{
-				var groups = _groupingFieldList.split(',');
-				Debug.log("_groupingFieldList " + _groupingFieldList);
-				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
-				
-				var filterBoxesEl = document.createElement("div");
-				var defaultShowFilters = false;
-				
-				//create toggle icon
-				el = document.createElement("a");
-				el.setAttribute("style", "float:left;");
-				el.onclick = function() {
-					if(this.textContent == "Show Filters")
-					{
-						this.innerHTML = "Hide Filters";
-						filterBoxesEl.style.display = "block";
-					}
-					else
-					{
-						this.innerHTML = "Show Filters";
-						filterBoxesEl.style.display = "none";
-					}
-				};			
-				el.innerHTML = defaultShowFilters?"Hide Filters":"Show Filters";
-				_leftPane.appendChild(el); //add toggle icon
-
-				//clear floats
-				el = document.createElement("div");
-				el.setAttribute("id", "clearDiv");
-				_leftPane.appendChild(el);
-				
-				
-				//create multi-select filter boxes
-				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
-				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
-
-				var H = 150;
-				try //catch errors due to undefined _filterValsObj[i]
-				{					
-					for(var i=0;i<groups.length;++i)
-					{
-						//get group values
-						
-						//create multiselect box
-	
-						el = document.createElement("div");
-						el.setAttribute("class", "groupFilerMultiSelect");
-						el.setAttribute("id", "groupFilerMultiSelect-" + i);
-						el.setAttribute("style", //"height:200px; width:250px;" +
-								//);
-										//"margin-bottom: 0px;" +
-								"margin: -15px 0 0 0;" +
-								"height:" + H + "px;" + 
-								"width:" + (leftW-25) + "px;");
-						filterBoxesEl.appendChild(el);			
-						
-						var noMultiSelect = false; // true or false (false for multiselect functionality) 
-						var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
-	
-						var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
-						var keys = [];
-						var types = [];
-						for(var j=0;j<vals.length;++j)
-						{
-							keys.push(j);
-							types.push(groups[i]);								
-						}				
-	
-						//write MultiSelectBox to a particular div
-						MultiSelectBox.createSelectBox(el,
-								"FilterGroupBox" + i,
-								"'" + groups[i] + "' Filter:",
-								vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
-	
-						MultiSelectBox.initMySelectBoxes();
-	
-						el = document.createElement("div");
-						el.setAttribute("id", "clearDiv");					
-						filterBoxesEl.appendChild(el);
-					}
-				}
-				catch(err)
-				{
-					//likely this error is due to undefined _filterValsObj[i]
-					Debug.log("Error creating group filters.", Debug.HIGH_PRIORITY);
-				} 
-				
-				_leftPane.appendChild(filterBoxesEl);
-
-								
-			} //end localCreateGroupingFieldFilters(leftW)
-			
-			//if grouping fields given then create
-			if(_groupingFieldList != "")
-				localCreateGroupingFieldFilters(); 
-			
-			
-			//add records
-			function localCreateRecordsSelector()
-			{
-				var H = 300;
-				//create multiselect box
-				el = document.createElement("div");
-				el.setAttribute("class", "recordMultiSelect");
-				el.setAttribute("id", "recordMultiSelect");
-				el.setAttribute("style", //"height:200px; width:250px;" +
-						//);
-						//"margin-bottom: 0px;" +
-						"margin: -15px 0 -10px 0;" +
-						"height:" + H + "px;" + 
-						"width:" + (leftW-25) + "px;");
-
-				_leftPane.appendChild(el);
-
-				el = document.createElement("div");
-				el.setAttribute("id", "clearDiv");
-				_leftPane.appendChild(el);
-				
-			} localCreateRecordsSelector ();
-						
-			document.body.appendChild(_leftPane);
-						
-		}	//end createLeftPaneContent()
-
-		//=====================================================================================
-		//groupFilterSelectionHandler ~~
-		function groupFilterSelectionHandler(el) 
-		{
-			Debug.log("multiselect for " + el.id);
-			
-			//if multi select target was a Filter
-			//	then change filter
-			if(el.id.indexOf("selbox-Filter") == 0)
-			{
-				window.clearTimeout(_filterTimer);
-				_filterTimer = window.setTimeout(runFilter,1000);
-			}
-			
-		}	//end groupFilterSelectionHandler(el)
-
-		//=====================================================================================
-		//runFilter ~~
-		function runFilter() 
-		{
-			Debug.log("Run Filter");
-			
-			var groups = _groupingFieldList.split(',');
-			Debug.log("groups length " + groups.length);
-			
-			var selArr;
-			
-			var filterStr = "";
-			var subFilterStr;
-			for(var i=0;i<groups.length;++i)
-			{
-				subFilterStr = "";
-				
-				selArr = MultiSelectBox.getSelectionArray(
-						document.getElementById("groupFilerMultiSelect-" + i));
-				for(var s in selArr)
-				{
-					MultiSelectBox.dbg("filter " + i + 
-							" selected [" + s + "]: ",
-							selArr[s], 
-							_filterValsObj[i].fieldUniqueValueArray[s|0]);
-					
-					//if selected, add value to filter string
-					if(selArr[s])
-						subFilterStr += (subFilterStr.length?",":"") +
-							encodeURIComponent(_filterValsObj[i].fieldUniqueValueArray[s|0])
-				}
-				
-				//if any values selected then add to filter string				
-				if(subFilterStr.length)
-					filterStr += encodeURIComponent(groups[i]) + 
-						"=" + subFilterStr + ";";
-			}
-			
-			//append global filters 
-			filterStr += _recordPreFilterList;
-			Debug.log("filterStr " + filterStr);
-			
-			ConfigurationAPI.getSubsetRecords(
-					_subsetBasePath,
-					filterStr,
-					function(records)
-					{
-				_subsetUIDs = records;
-				Debug.log("records found = " + records.length);
-				console.log(records);
-				
-				updateRecordsAndFields();
-					}, //end getSubsetRecords handler
-					 _modifiedTables);
-			
-			
-		} // end runFilter()
-		
-		//=====================================================================================
-		//createRightPaneContent ~~
-		function createRightPaneContent() 
-		{
-			_rightPane = document.createElement("div");
-			_rightPane.setAttribute("class", "pane");
-			_rightPane.setAttribute("id", "rightPane");
-			
-			//	- Right Pane:
-			//		* Show toggle Left Pane link
-			//		* Show fields that are common based on SubLevelGrouping filters
-			//			- E.g. if *,* then can only show SlowControls fields
-			//			- Challenge: show all common fields, even through links
-			//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
-			//			- A field becomes the "selected" field when clicked
-			//				= the selected field should survive resizing, and get reset on filtering
-			//			- A field enters edit mode when pencil is clicked
-			//			- TAB and SHIFT+TAB should jump to next field for editing
-			//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
-			//		
-			
-			var el;
-			var str;
-			
-			//create toggle left pane link
-			el = document.createElement("a");
-			el.setAttribute("style", "float:left;" +
-					"margin-left: 5px;");
-			el.onclick = function() {
-				_leftPaneHidden = !_leftPaneHidden;
-				this.innerHTML = (_leftPaneHidden?"Show":"Hide") +
-									" Left Pane";
-				paint();
-			};			
-			el.innerHTML = (_leftPaneHidden?"Show":"Hide") +
-					" Left Pane";
-			_rightPane.appendChild(el); //add toggle link
-			
-			//add clear div
-			el = document.createElement("div");
-			el.setAttribute("id", "clearDiv");
-			_rightPane.appendChild(el);
-
-
-			//create TOP read/write buttons			
-			el = document.createElement("div");
-			var readWriteContainerStyle = "height:" + _RIGHT_PANE_RW_BTN_HEIGHT + "px;" + 
-					"overflow-x:auto; " +
-					"white-space:nowrap;";
-			el.setAttribute("style", readWriteContainerStyle);
-			_rightPane.appendChild(el); //add field container link
-
-			//:::::::::::::::::::::::::::::
-			//localAddReadWriteButtons ~~
-			//	add four buttons to container element
-			function localAddReadWriteButtons(cel)
-			{
-				var btnText = ["Read All Fields",
-							   "Write All Fields",
-							   "Read Selected Field", 
-							   "Write Selected Field"];
-
-				var btnHelp = ["Read all fields for selected record in Left Pane.",
-							   "Write all fields for selected record(s) in Left Pane.",							   
-							   "Read selected field for selected record in Left Pane.",
-							   "Write Selected field for selected record(s) in Left Pane."];
-				
-				var btnAction = [btnActionReadAllFields,
-								 btnActionWriteAllFields,							   
-								 btnActionReadOneField,
-								 btnActionWriteOneField];
-				
-				for(var i=0;i<btnText.length;++i)
-				{
-					el = document.createElement("input");
-					el.setAttribute("style", "height:22px;" + 
-							"margin:5px; ");
-					el.setAttribute("type", "button");
-					el.value = btnText[i];
-					el.title = btnHelp[i];
-					el.onclick = btnAction[i];
-					cel.appendChild(el); //add field container link
-				}
-			} // end localAddReadWriteButtons(cel)
-			
-			localAddReadWriteButtons(el);
+			_bottomPane = document.createElement("div");
+			_bottomPane.setAttribute("class", "pane");
+			_bottomPane.setAttribute("id", "bottomPane");
 			
 
-			//add clear div
-			el = document.createElement("div");
-			el.setAttribute("id", "clearDiv");
-			_rightPane.appendChild(el);
-			
-			//create field container with auto scroll
-			el = document.createElement("div");
-			el.setAttribute("style", "overflow:auto;" + 
-					"border: 1px solid rgb(224, 196, 196);" +
-					"margin: 5px;"
-					);
-			_rightPane.appendChild(el); //add field container link
-			_rightPaneFields = el;
-				
-			//create BOTTOM read/write buttons			
-			el = document.createElement("div");
-			el.setAttribute("style", readWriteContainerStyle);
-			_rightPane.appendChild(el); //add bottom buttons
-			localAddReadWriteButtons(el);
-			
-			
-			document.body.appendChild(_rightPane);			
-		}	//end createRightPaneContent()
-
-		//=====================================================================================
-		//getSelectedRecords ~~
-		//	returns index of selected records
-		//	if forceOne
-		//		only allow one selected record
-		//		else -1 on error
-		//	else if not forceOne
-		//		return array of selected records
-		//		else return empty array
-		function getSelectedRecords(forceOne) 
-		{
-			var selArr = 
-					MultiSelectBox.getSelectionArray(
-							document.getElementById("recordMultiSelect"));
-			var cntSelected = 0;
-			var selectedIndices = [];
-			for(var s in selArr)
-			{
-				//MultiSelectBox.dbg("record selected [" + s + "]: ",
-				//		selArr[s], 
-				//		_subsetUIDs[s|0]);
-
-				if(selArr[s]) 
-				{
-					++cntSelected;
-					selectedIndices.push(s|0);
-
-					if((s|0) < 0 || (s|0) >= _subsetUIDs.length)
-					{
-						Debug.log("Invalid record index '" + (s|0) + 
-								"' should be impossible. Please notify developers " +
-								"as to how you got here!", Debug.HIGH_PRIORITY);						
-						return forceOne?-1:[];
-					}
-				}
-			}
-
-			if(forceOne)
-			{
-				if(cntSelected != 1)
-				{
-					Debug.log("Error! Please choose one and only one target from the list of " +
-							_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
-					return -1;
-				}
-				return selectedIndices[0];
-			}
-			else
-				return selectedIndices;
-			
-		}	//end getSelectedRecords()
-
-		//=====================================================================================
-		//btnActionReadAllFields ~~
-		//	read all fields for one record
-		function btnActionReadAllFields() 
-		{
-			var selectedIndex = getSelectedRecords(true);
-			if(selectedIndex < 0) return;
-							
-			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex]);
-			
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					[_subsetUIDs[selectedIndex]], //array of size 1
-					_fields,
-					function(recFieldValues)
-					{
-				console.log(recFieldValues);
-				
-				//for each field, set value
-				for(var i=0;i<recFieldValues.length;++i)
-				{
-					ConfigurationAPI.setEditableFieldValue(
-							_fields[i],
-							recFieldValues[i].fieldValue,
-							i);
-				}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-			
-		}	//end btnActionReadAllFields()
-
-		
-		//=====================================================================================
-		//btnActionReadOneField ~~
-		// read one field from one record
-		function btnActionReadOneField() 
-		{
-			var selectedIndex = getSelectedRecords(true);
-			if(selectedIndex < 0) return;
-			
-			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
-			if(selectedFieldIndex < 0) 
-			{
-				Debug.log("Error! There is no selected field. In order to read " +
-						"a field please toggle selection of the target field by " +
-						"clicking on the name of the " +
-						"field in the Right Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("btnActionReadOneField target record = " + 
-					_subsetUIDs[selectedIndex]);
-
-			ConfigurationAPI.getFieldValuesForRecords(
-					_subsetBasePath,
-					[_subsetUIDs[selectedIndex]], //array of size 1
-					[_fields[selectedFieldIndex]], //array of size 1
-					function(recFieldValues)
-					{
-				console.log(recFieldValues);
-
-				//for each field, set value
-				//	SHOULD only be one field value returned
-				for(var i=0;i<recFieldValues.length;++i)
-				{
-					ConfigurationAPI.setEditableFieldValue(
-							_fields[selectedFieldIndex],
-							recFieldValues[i].fieldValue,
-							selectedFieldIndex);
-				}
-					}, //end getFieldValuesForRecord handler
-					 _modifiedTables);
-			
-		}	//end btnActionReadOneField()
-		
-		//=====================================================================================
-		//btnActionWriteAllFields ~~
-		//	write all fields for all selected records
-		function btnActionWriteAllFields() 
-		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to write " +
-						"the fields to one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-			
-			Debug.log("btnActionWriteAllFields target record length = " + 
-					selectedIndices.length);
-			
-			//make array of all field values
-			var valueArr = [];
-			
-			//for each field, set value
-			for(var i=0;i<_fields.length;++i)			
-				valueArr.push(ConfigurationAPI.getEditableFieldValue(
-						_fields[i],
-						i));
-
-			Debug.log("btnActionWriteAllFields values length = " + 
-					valueArr.length);
-			Debug.log("btnActionWriteAllFields fields length = " + 
-					_fields.length);
-			
-			//make array of target records
-			var recordArr = [];
-			for(var i=0;i<selectedIndices.length;++i)	
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-						
-			ConfigurationAPI.setFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 	//recordArr
-					_fields, 	//fieldArr
-					valueArr, 	//valueArr
-					function(modifiedTables)
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-								
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while writing the values.",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-									
-				_modifiedTables = modifiedTables;
-				
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
-						function(savedTables, savedGroups, savedAliases)
-						{
-					if(!savedTables.length)
-					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-					
-					Debug.log("The values for each field were successfully written to the targeted " +
-							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
-							Debug.INFO_PRIORITY);
-					
-					_modifiedTables = undefined; //clear after save
-					
-						}); //end saveModifiedTables handler
-				
-					}, //end setFieldValuesForRecords handler
-					 _modifiedTables);			
-
-		}	//end btnActionWriteAllFields()
-		
-		//=====================================================================================
-		//btnActionWriteOneField ~~
-		//	write the selected field for all selected records
-		function btnActionWriteOneField() 
-		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to write " +
-						"the fields to one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("btnActionWriteOneField target record length = " + 
-					selectedIndices.length);
-			
-			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
-			if(selectedFieldIndex < 0) 
-			{
-				Debug.log("Error! There is no selected field. In order to read " +
-						"a field please toggle selection of the target field by " +
-						"clicking on the name of the " +
-						"field in the Right Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			//make array of all field values
-			var valueArr = [];
-
-			//for each field, set value
-			valueArr.push(ConfigurationAPI.getEditableFieldValue(
-					_fields[selectedFieldIndex],
-					selectedFieldIndex));
-
-			Debug.log("btnActionWriteOneField values length = " + 
-					valueArr.length);
-			
-			//make array of target records
-			var recordArr = [];
-			for(var i=0;i<selectedIndices.length;++i)	
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-			
+			//	- Bottom Pane:
+			//		* Similar functionality to GUI subset.. in that it edits the 
+			//			the currently active Iteration group. (If a user wants to change the active
+			//			Iteration group, they must do so in the Config GUI)
 			//
+			//		* Very top of "tree-view" choose the Iteration Plan name
+			//			* Then default to
+			//				- START LOOP 0 (hide index from user - show by indent)
+			//				- Configure Configuration Group/System Alias
+			//				- REPEAT LOOP 0 ( 0 times - when 0 show as END LOOP)
+			//				- In GUI, show END (no representation in table)
+			//					
+			//		* Create Rows in table that match sequence
 			
-			ConfigurationAPI.setFieldValuesForRecords(
-					_subsetBasePath,
-					recordArr, 	//recordArr
-					[_fields[selectedFieldIndex]], 	//fieldArr of size 1
-					valueArr, 	//valueArr of size 1
-					/////////////////////
-					function(modifiedTables)
-					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-
-				if(!modifiedTables.length)
-				{
-					Debug.log("There was an error while writing the values.",
-							Debug.HIGH_PRIORITY);
-					return;					
-				}
-
-				_modifiedTables = modifiedTables;
-
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
-						/////////////////////
-						function(savedTables, savedGroups, savedAliases)
-						{
-					if(!savedTables.length)
-					{
-						Debug.log("There was an error while saving the values.",
-								Debug.HIGH_PRIORITY);
-						return;					
-					}
-
-					Debug.log("The value for the selected field was successfully written to the targeted " +
-							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
-							Debug.INFO_PRIORITY);
-
-					_modifiedTables = undefined; //clear after save
-
-						}); //end saveModifiedTables handler
-
-					}, //end setFieldValuesForRecords handler
-					_modifiedTables);	
+			var el;
+			var str;
+						
+						
+						
+			//create target plan selector div: dropdown with + / TRASH
+			el = document.createElement("div");
+			el.setAttribute("id", "planSelector");			
+			_bottomPane.appendChild(el);	
 			
-		}	//end btnActionWriteOneField()
-		
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_bottomPane.appendChild(el);
+			
+			//create plan detail div
+			el = document.createElement("div");
+			el.setAttribute("id", "planDetail");			
+			_bottomPane.appendChild(el);	
+
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_bottomPane.appendChild(el);		
+						
+			document.body.appendChild(_bottomPane);
+						
+		}	//end createBottomPaneContent()
+
 
 		//=====================================================================================
-		//deleteRecords ~~
-		//	delete the selected records
-		function deleteRecords() 
+		//addIterationPlan ~~
+		function addIterationPlan()
 		{
-			var selectedIndices = getSelectedRecords();
-			if(selectedIndices.length == 0)
-			{
-				Debug.log("Error! There are no selected " + _recordsAlias + 
-						". In order to delete " +
-						"one or many " + _recordsAlias + "," +
-						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			Debug.log("deleteRecords target record length = " + 
-					selectedIndices.length);	
-
-
-			//make array of target records
-			var recordArr = [];
-			var recordStr = "";
-			for(var i=0;i<selectedIndices.length;++i)	
-			{
-				if(i) recordStr += ", ";
-				recordStr += decodeURIComponent(_subsetUIDs[selectedIndices[i]]);
-				recordArr.push(_subsetUIDs[selectedIndices[i]]);
-			}			
-
-			DesktopContent.popUpVerification(
-					"Are you sure you want to remove the following " + _recordsAlias + 
-					" records from the configuration?<br><br>" +
-					"Here are the records (count = " + recordArr.length + 
-					") that will be deleted:<br> <b>" + recordStr + "</b>",
-					localProceedWithDelete							
-					,0,"#efeaea",0,"#770000");
+			Debug.log("addIterationPlan");
 			
-			/////////////////////
-			function localProceedWithDelete()
-			{
+			var newRowUID = prompt("Please enter a name for the new " + 
+					_recordsAlias + ":");
+			if(newRowUID)
+				newRowUID = newRowUID.trim();
+			else //prompt was cancelled
+				return;
 
-				ConfigurationAPI.deleteSubsetRecords(_subsetBasePath,recordArr,
+
+			localCreateIterationPlan();
+			return;
+			
+			//::::::::::::::::::::::::::::::::::::::::::
+			//localCreateIterationPlan ~
+			function localCreateIterationPlan()
+			{
+				//new default iteration plan 
+
+				//steps:
+				//	create new record
+				//	edit record (status=On, groupLinkId=uid + "plan)
+				//	save
+				//	refresh
+
+				/////////////////////
+				ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
 						/////////////////////
 						function(modifiedTables) //start addSubsetRecords handler
 						{
@@ -1311,98 +1140,683 @@
 
 					if(!modifiedTables.length)
 					{
-						Debug.log("There was an error while removing the record(s).",
+						Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+								newRowUID  + ".'",
 								Debug.HIGH_PRIORITY);
 						return;					
 					}
 
 					_modifiedTables = modifiedTables;
 
-					//proceed to save (quietly) tables, groups, aliases
-					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+					var fieldArr = ["Status",
+									"LinkToIterationPlanConfiguration",
+									"LinkToIterationPlanGroupID",
+									"CommentDescription"
+									];
+
+					var valueArr = ["1",//"Status",
+									_PLAN_BASE_PATH,//"LinkToIterationPlanConfiguration",
+									newRowUID+"-Plan",//"LinkToIterationPlanGroupID",
+									"Generated by Iterate app"//"CommentDescription"
+									];
+
+					/////////////////////
+					ConfigurationAPI.setFieldValuesForRecords(
+							_ITERATE_BASE_PATH,
+							[newRowUID], 	//recordArr
+							fieldArr, 	//fieldArr
+							valueArr, 	//valueArr
 							/////////////////////
-							function(savedTables, savedGroups, savedAliases)
+							function(modifiedTables) //start setFieldValuesForRecords
 							{
-						if(!savedTables.length)
+						Debug.log("modifiedTables length " + modifiedTables.length);
+
+						if(!modifiedTables.length)
 						{
-							Debug.log("There was an error while removing the record(s).",
+							Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+									newRowUID  + ".'",
 									Debug.HIGH_PRIORITY);
 							return;					
 						}
 
-						Debug.log("The following " +
-								_recordsAlias + " records (count = " +
-								selectedIndices.length + ") "+ 
-								"were successfully removed: " + recordStr + ".",
-								Debug.INFO_PRIORITY);
+						_modifiedTables = modifiedTables;
 
-						_modifiedTables = undefined; //clear after save
+						//create DEFAULT commands:
+						//	BEGIN_LABEL			
+						//	CHOOSE_FSM	fsmNames[0]
+						//	CONFIGURE_ALIAS aliasMap[0]
+						//	RUN 5 minutes
+						// 	REPEAT_LABEL
+						
+//						var commands = [];
+//						commands.push({ 	//BEGIN_LABEL
+//							"type" : _COMMAND_TYPES.BEGIN_LABEL,
+//							"param" : {"Label":"Main"},							
+//						});
+//						commands.push({		//CHOOSE_FSM fsmNames[0]
+//							"type" : _COMMAND_TYPES.CHOOSE_FSM,
+//							"param" : {"NameOfStateMachine":(_fsmNames.length? //use first name, if any exist
+//									_fsmNames[0]
+//									:"")},							
+//						});
+//						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
+//							"type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
+//							"param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
+//									_configGroupAliases[0].alias
+//									:"")},							
+//						});
+//						commands.push({		//RUN 5 minutes
+//							"type" : _COMMAND_TYPES.RUN,
+//							"param" : {"WaitForAllFrontEndsRunningThread":0,
+//								"DurationInSeconds": 5*60},							
+//						});
+//						commands.push({ 	//REPEAT_LABEL
+//							"type" : _COMMAND_TYPES.REPEAT_LABEL,
+//							"param" : {"Label":"Main", "NumberOfRepetitions" : 0},							
+//						});
+						
+						//FOR DEBUGGING
+						//FOR DEBUGGING
+						//FOR DEBUGGING
+						
+						_commands = []; //clear
+						addCommand(_COMMAND_TYPES.BEGIN_LABEL,
+								["Main"]);
+						addCommand(_COMMAND_TYPES.CHOOSE_FSM,
+								[(_fsmNames.length? //use first name, if any exist
+								_fsmNames[0]
+								:"")]);
+						addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
+								[
+								"FEInterfaceConfiguration,FEInterfaceConfiguration",//"Tables":params[0],
+								"ExampleInterface0,ExampleInterface1",//"UIDs":params[1],
+								1,//"DoTrackGroupChanges":params[2], 
+								"FEOtsUDPTemplateInterfaceConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+								5,//"FieldStartValue":params[4],
+								3]);//"FieldIterationStepSize":params[5]);
+						addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
+						//addCommand(_COMMAND_TYPES.RUN,[1,0]);
+						addCommand(_COMMAND_TYPES.REPEAT_LABEL,
+								["Main",5]);
+						
+						
+						savePlanCommandSequence(newRowUID,_commands,
+								/////////////////////
+								function()
+								{
+							//only arrive here on success
+							
+							_targetPlan = newRowUID;														
+							
+							saveModifiedTables(									
+									"The new " +
+									_recordsAlias + " '" + 
+									newRowUID +
+									"' was successfully created!",
 
-						runFilter(); //updates records and fields, and applies filter
-
-							}); //end saveModifiedTables handler
-
-
+									"There was an error while creating the " + _recordsAlias + " '" + 
+									newRowUID  + ".'");
+							
+								}); //end savePlanCommandSequence handler
+						
+							}, //end setFieldValuesForRecords handler
+							_modifiedTables);
+					
 						}, //end addSubsetRecords handler
-						_modifiedTables);	
-			} //end localProceedWithDelete()
-		} //end deleteRecords()
-		
+						_modifiedTables);
+					
+			} //end localCreateIterationPlan()
+			
+			
+		}	//end addIterationPlan()
+
 		//=====================================================================================
-		//addRecord ~~
-		//	create new record
-		function addRecord() 
+		//saveModifiedTables ~~
+		//	parameter newRowUID is just used for success/error messages
+		//	e.g. actionWord = "the creation"
+		function saveModifiedTables(successMsg,failureMsg)
 		{
-			var newRowUID = prompt("Please enter the UID for the new " + 
-					_recordsAlias + " record:");
-			if(newRowUID)
-				newRowUID = newRowUID.trim();
-			else //prompt was cancelled
-				return;
-
-			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
+			//proceed to save (quietly) tables, groups, aliases
+			ConfigurationAPI.saveModifiedTables(_modifiedTables,
 					/////////////////////
-					function(modifiedTables) //start addSubsetRecords handler
+					function(savedTables, savedGroups, savedAliases)
 					{
-				Debug.log("modifiedTables length " + modifiedTables.length);
-
-				if(!modifiedTables.length)
+				if(!savedTables.length)
 				{
-					Debug.log("There was an error while creating the record.",
+					Debug.log(failureMsg,
 							Debug.HIGH_PRIORITY);
 					return;					
 				}
 
-				_modifiedTables = modifiedTables;
+				Debug.log(successMsg, Debug.INFO_PRIORITY);
 
-				//proceed to save (quietly) tables, groups, aliases
-				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+				_modifiedTables = undefined; //clear after save
+
+				getIterationPlans(updateIterationPlanContent); //updates plans display
+
+					}); //end saveModifiedTables handler
+			
+		} 	//end saveModifiedTables()
+		
+		//=====================================================================================
+		//deleteIterationPlan ~~		
+		function deleteIterationPlan()
+		{	
+			var uid = document.getElementById("planSelect").value;
+			uid = _planUIDs[uid];
+			
+			Debug.log("deleteIterationPlan " + uid);
+
+			if(_targetPlan == uid)
+				_targetPlan = ""; //clear target plan if being deleted
+			
+			DesktopContent.popUpVerification( 
+					"Are you sure you want to delete the iteration plan named '" +
+					uid, localHandleDeleteIterationPlan,
+					0,"#efeaea",0,"#770000");
+			return;
+						
+
+			/////////////////////
+			//localHandleDeleteIterationPlan ~~
+			function localHandleDeleteIterationPlan()
+			{
+
+				//Steps:
+				//	delete plan
+				//	delete command sequence
+
+				/////////////////////
+				//addSubsetRecords opposite is deleteSubsetRecords
+				ConfigurationAPI.deleteSubsetRecords(_ITERATE_BASE_PATH,uid,
 						/////////////////////
-						function(savedTables, savedGroups, savedAliases)
+						function(modifiedTables) //start deleteSubsetRecords handler
 						{
-					if(!savedTables.length)
+					Debug.log("modifiedTables length " + modifiedTables.length);
+
+					if(!modifiedTables.length)
 					{
-						Debug.log("There was an error while creating the record.",
+						Debug.log("There was an error while deleted the " + _recordsAlias + " '" + 
+								uid  + ".'",
 								Debug.HIGH_PRIORITY);
 						return;					
 					}
 
-					Debug.log("The new " +
-							_recordsAlias + " record '" + 
-							decodeURIComponent(newRowUID) + 
-							"' was successfully created!",
+					_modifiedTables = modifiedTables;
+
+					//delete command sequence
+					//	by saving empty sequence	
+					savePlanCommandSequence(uid,[],
+							function()
+							{
+						Debug.log("Done deleting command sequence.");
+
+						//only arrive here on success
+						saveModifiedTables(
+								"The " +
+								_recordsAlias + " '" + 
+								uid +
+								"' was successfully deleted!",
+
+								"There was an error while deleting the " + _recordsAlias + " '" + 
+								uid  + ".'");
+
+							});
+
+						}, //end deleteSubsetRecords handler
+						_modifiedTables);
+
+
+			} //end localHandleDeleteIterationPlan
+			
+			
+			
+			
+		}	//end deleteIterationPlan()
+
+		//=====================================================================================
+		//addCommand ~~
+		//	push to _commands object
+		function addCommand(type,params)
+		{
+			Debug.log("addCommand type = " + type);
+			
+			if(type == _COMMAND_TYPES.BEGIN_LABEL)
+			{
+				_commands.push({
+					"param": {
+						"Label":params[0]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CHOOSE_FSM)
+			{
+				_commands.push({
+					"param": {
+						"NameOfStateMachine":params[0]},		
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
+			{
+				_commands.push({
+					"param": {},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_ALIAS)
+			{
+				_commands.push({
+					"param": {
+						"SystemAlias":params[0]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.CONFIGURE_GROUP)
+			{
+				_commands.push({
+					"param": {
+						"GroupName":params[0], 
+						"GroupKey":params[1]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.EXECUTE_FE_MACRO)
+			{
+				_commands.push({
+					"param": {
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
+						"FEMacroName":params[2],
+						"LinkToFEMacroParameterGroup":params[3],
+						"LinkToFEMacroParameterGroupID":params[4]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.EXECUTE_MACRO)
+			{
+				_commands.push({
+					"param": {
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
+						"MacroName":params[2],
+						"LinkToMacroParameterGroup":params[3],
+						"LinkToMacroParameterGroupID":params[4]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.MODIFY_ACTIVE_GROUP)
+			{
+				_commands.push({
+					"param": {
+						"CSVTargetTables":params[0], 
+						"CSVTargetUIDs":params[1],
+						"DoTrackGroupChanges":params[2], 
+						"RelativePathToField":params[3],
+						"FieldStartValue":params[4],
+						"FieldIterationStepSize":params[5]
+					},
+				});
+			}
+			else if(type == _COMMAND_TYPES.REPEAT_LABEL)
+			{
+				_commands.push({
+					"param": {
+						"Label":params[0], 
+						"NumberOfRepetitions":params[1]},
+				});
+			}
+			else if(type == _COMMAND_TYPES.RUN)
+			{
+				_commands.push({
+					"param": {
+						"WaitForAllFrontEndsRunningThread":params[0], 
+						"DurationInSeconds":params[1]
+					},
+				});
+			}
+			else
+			{
+				Debug.log("Fatal error. Unknown command attempted!", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			_commands[_commands.length-1].type = type;
+			
+		}	//end addCommand()
+
+		//=====================================================================================
+		//deleteCommand ~~
+		//	TODO
+		function deleteCommand()
+		{
+			Debug.log("deleteCommand");
+		}	//end deleteCommand()
+
+		//=====================================================================================
+		//savePlanCommandSequence ~~
+		function savePlanCommandSequence(plan,commands,responseHandler)
+		{
+			Debug.log("savePlanCommandSequence");
+			
+			plan = encodeURIComponent(plan);
+			
+			//; separated commands and comma separated params
+			var cmdStr = "";
+			var pkeys;
+			for(var i=0;i<commands.length;++i)
+			{
+				cmdStr += "type," + encodeURIComponent(commands[i].type);
+				pkeys = Object.keys(commands[i].param);
+
+				for(var j=0;j<pkeys.length;++j)
+					cmdStr += "," + pkeys[j] + "," +
+						encodeURIComponent(commands[i].param[pkeys[j]]);
+
+				cmdStr += ";"; //end command
+			}
+			Debug.log("cmdStr = " + cmdStr);	
+			
+			var modifiedTablesListStr = "";
+			for(var i=0;_modifiedTables && i<_modifiedTables.length;++i)
+			{
+				if(i) modifiedTablesListStr += ",";
+				modifiedTablesListStr += _modifiedTables[i].tableName + "," +
+						_modifiedTables[i].tableVersion;
+			}
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=savePlanCommandSequence" +
+					"&planName=" + plan, //end get data 
+					"commands=" + cmdStr +
+					"&modifiedTables=" + modifiedTablesListStr, //end post data
+					function(req)
+					{
+
+				Debug.log("savePlanCommandSequence handler");
+
+				_modifiedTables = [];
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					responseHandler();
+					return;
+				}
+
+				//console.log(req);
+
+				//modifiedTables
+				var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
+				var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
+				var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
+				var tableVersion;
+
+				//add only temporary version
+				for(var i=0;i<tableNames.length;++i)
+				{
+					tableVersion = DesktopContent.getXMLValue(tableVersions[i])|0; //force integer
+					if(tableVersion >= -1) continue; //skip unless temporary
+					var obj = {};
+					obj.tableName = DesktopContent.getXMLValue(tableNames[i]);
+					obj.tableVersion = DesktopContent.getXMLValue(tableVersions[i]);
+					obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
+					_modifiedTables.push(obj);
+				}
+				console.log("_modifiedTables",_modifiedTables);
+				responseHandler();
+
+					}, //handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					false /*targetSupervisor*/);
+			
+		}	//end savePlanCommandSequence()
+		
+		//=====================================================================================
+		//handleMouseOver ~~
+		//	based on type and id, handle what should happen during mouseover
+		//	
+		//	e.g.:
+		//		* when over iteration plan, show author, time, etc.
+		//		* when over a command, show edit icon and any parameters
+		//		* when between commands, show add command icon
+		function handleMouseOver(type,id)
+		{
+			Debug.log("handleMouseOver type=" + type + " id=" + id);
+		} // end handleMouseOver()
+
+		//=====================================================================================
+		//handleEndMouseOver ~~
+		// end mouse over visible things
+		function handleEndMouseOver()
+		{
+			Debug.log("handleEndMouseOver");
+		}	//end handleEndMouseOver()
+		
+		//=====================================================================================
+		//handlePlanSelect ~~
+		function handlePlanSelect()
+		{
+			Debug.log("handlePlanSelect");
+			
+			var sel = document.getElementById("planSelect");
+
+			Debug.log("Selected plan: " + sel.value + " " + _planUIDs[sel.value|0]);
+			
+			drawIterationPlan(_planUIDs[sel.value|0]);
+			
+		}	//end handlePlanSelect()
+		
+		
+		//=====================================================================================
+		//startTargetIterationPlan ~~
+		function startTargetIterationPlan() 
+		{
+			Debug.log("startTargetIterationPlan " + _targetPlan);
+
+			window.clearTimeout(_updateTimer);
+			
+
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"&StateMachine=iteratePlay" +
+					"&fsmWindowName=" + encodeURIComponent(_targetPlan), //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("startTargetIterationPlan handler ");
+				
+				//resume updating
+				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
+				
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+					Debug.log("Successfully started the iteration plan '" + _targetPlan + ".'",
 							Debug.INFO_PRIORITY);
+					_need_plan_complete = true;
+				}
+				
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+		} //end startTargetIterationPlan
+		
+		//=====================================================================================
+		//pauseTargetIterationPlan ~~
+		function pauseTargetIterationPlan() 
+		{
+			Debug.log("pauseTargetIterationPlan " + _targetPlan);
+			
 
-					_modifiedTables = undefined; //clear after save
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"StateMachine=iteratePause", //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("pauseTargetIterationPlan handler ");
+
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+
+					Debug.log("Successfully attempted to pause the iteration plan '" + _targetPlan + ".'",
+							Debug.INFO_PRIORITY);
 					
-					runFilter(); //updates records and fields, and applies filter
+					_need_plan_paused = true;
+				}
+				
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+		} //end pauseTargetIterationPlan
+		
+		//=====================================================================================
+		//haltTargetIterationPlan ~~
+		function haltTargetIterationPlan() 
+		{
+			Debug.log("haltTargetIterationPlan " + _targetPlan);
 
-						}); //end saveModifiedTables handler
+			_need_plan_complete = false; //prevent "complete" message, which might be confusing (depend on the error message
 
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
+					"StateMachine=iterateHalt", //end get data 
+					"", //end post data
+					function(req) //start handler
+					{
+				Debug.log("haltTargetIterationPlan handler ");
 
-					}, //end addSubsetRecords handler
-					_modifiedTables);			
-		} //end addRecord()
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(error_message && error_message != "")
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				else
+				{
+					_old_active_plan_status = ""; //clear for new action
+
+					Debug.log("Successfully attempted to halt the iteration plan '" + 
+							_targetPlan + "'...",
+							Debug.INFO_PRIORITY);
+					
+					_need_plan_halted = true;
+				}
+				
+					}, //end handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+		} //end haltTargetIterationPlan
+
+		//=====================================================================================
+		//updateIterateStatus ~~
+		function updateIterateStatus() 
+		{
+			//Debug.log("updateIterateStatus");
+
+			DesktopContent.XMLHttpRequest("Request?" + 
+					"RequestType=getIterationPlanStatus", //end get data 
+					"", //end post data
+					function(req,ignoreParam,errStr) //start handler
+					{
+				
+				if(errStr)
+				{
+					Debug.log("getIterationPlanStatus ERROR handler ");
+					let str = "";
+					str += "Disconnected. Click Refresh to attempt to reconnect.";
+					document.getElementById('topPane-header').innerHTML = str;
+					return;
+				} //end error case handler
+				
+				//Debug.log("getIterationPlanStatus handler ");
+				
+
+				var current_state 		= DesktopContent.getXMLValue(req,"current_state");
+				var in_transition 		= DesktopContent.getXMLValue(req,"in_transition");
+				var transition_progress = DesktopContent.getXMLValue(req,"transition_progress");
+				var time_in_state 		= DesktopContent.getXMLValue(req,"time_in_state");
+				
+				var command_duration 	= DesktopContent.getXMLValue(req,"current_command_duration");
+				var command_index		= DesktopContent.getXMLValue(req,"current_command_index");
+				var active_plan_status	= DesktopContent.getXMLValue(req,"active_plan_status");
+				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
+				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
+				var last_finished_plan	= DesktopContent.getXMLValue(req,"last_finished_plan");
+				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				
+				if(_need_plan_complete && 
+						active_plan_status == "Inactive")
+				{
+					Debug.log("Iteration plan was completed.",
+							Debug.INFO_PRIORITY);
+					_need_plan_complete = false;
+				}
+				else if(_need_plan_halted && 
+						active_plan_status == "Inactive")
+				{
+					Debug.log("Iteration plan was halted.",
+							Debug.INFO_PRIORITY);
+					_need_plan_halted = false;
+				}
+				else if(_need_plan_paused && 
+						active_plan_status == "Paused")
+				{
+					Debug.log("Iteration plan was paused.",
+							Debug.INFO_PRIORITY);
+					_need_plan_paused = false;
+				}
+				
+				if(active_plan_status == "Error" && 
+						_old_active_plan_status != active_plan_status)
+					Debug.log(error_message,Debug.HIGH_PRIORITY);
+				
+				_old_active_plan_status = active_plan_status;
+				
+				// "Running""Paused""Inactive"
+				//Debug.log("_targetPlan = " + _targetPlan);
+				//Debug.log("active_plan = " + active_plan);
+				//Debug.log("active_plan_status = " + active_plan_status);
+				
+				
+				//========================================
+				//top controls and status
+
+				{
+					let str = "";
+
+					str += "Target Iteration Plan: ";
+					if(active_plan_status == "Inactive")
+						str += _targetPlan;
+					else
+						str += active_plan;
+					str += " | ";
+					str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
+					str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
+					str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
+					
+					str += "<br>";
+					str += "| active_plan_status = " + active_plan_status;
+					str += "| current_command_index = " + command_index;
+					str += "| current_command_duration = " + command_duration;
+					str += "| current_state = " + current_state;
+					str += "| in_transition = " + in_transition;
+					str += "| transition_progress = " + transition_progress;
+					str += "| time_in_state = " + time_in_state;
+					str += "|";
+
+					document.getElementById('topPane-header').innerHTML = str;
+				}
+				
+				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
+				
+				
+					}, //end handler
+					0, //handler param
+					0,true,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+		} //end updateIterateStatus
+		
 		
 		
 		</script>

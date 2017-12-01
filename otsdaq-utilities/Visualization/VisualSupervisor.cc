@@ -78,21 +78,21 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 				getApplicationDescriptor()->getLocalId()
 		))
 , supervisorConfigurationPath_  ("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
-, theRemoteWebUsers_          (this)
-, theDataManager_             (0)
-, loadedRunNumber_	          (-1)
+, theRemoteWebUsers_          	(this)
+, theDataManager_             	(0)
+, loadedRunNumber_	          	(-1)
 {
 	INIT_MF("VisualSupervisor");
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__MOUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>
 	(
 			theConfigurationManager_->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName()),
@@ -101,7 +101,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	);
 
 
-	__MOUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
+	__COUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
 	xgi::bind(this, &VisualSupervisor::Default, "Default" );
 	xgi::bind(this, &VisualSupervisor::request, "request");
 
@@ -181,7 +181,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //from GET or POST
 
-	__MOUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//getGeometry
@@ -198,8 +198,9 @@ throw (xgi::exception::Exception)
 	//**** start LOGIN GATEWAY CODE ***//
 	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
 	{
-		bool automaticCommand = Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
+		bool automaticCommand = false;//Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+
+		bool checkLock = false;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
 
@@ -241,9 +242,9 @@ throw (xgi::exception::Exception)
 	//    }
 	if (Command == "setUserPreferences")
 	{
-		__MOUT__ << "userName: " << userName << std::endl;
+		__COUT__ << "userName: " << userName << std::endl;
 		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
-		__MOUT__ << "fullPath: " << fullPath << std::endl;
+		__COUT__ << "fullPath: " << fullPath << std::endl;
 
 		std::string radioSelect = CgiDataUtilities::getData(cgi,"radioSelect");
 		std::string autoRefresh = CgiDataUtilities::getData(cgi,"autoRefresh");
@@ -251,11 +252,11 @@ throw (xgi::exception::Exception)
 		std::string hardRefresh = CgiDataUtilities::getData(cgi,"hardRefresh");
 		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgi,"autoRefreshPeriod");
 
-		__MOUT__ << "radioSelect: " << radioSelect 	<< std::endl;
-		__MOUT__ << "autoRefresh: " << autoRefresh 	<< std::endl;
-		__MOUT__ << "autoHide: " 	<< autoHide 	<< std::endl;
-		__MOUT__ << "hardRefresh: " << hardRefresh  << std::endl;
-		__MOUT__ << "autoRefreshPeriod: " << autoRefreshPeriod  << std::endl;
+		__COUT__ << "radioSelect: " << radioSelect 	<< std::endl;
+		__COUT__ << "autoRefresh: " << autoRefresh 	<< std::endl;
+		__COUT__ << "autoHide: " 	<< autoHide 	<< std::endl;
+		__COUT__ << "hardRefresh: " << hardRefresh  << std::endl;
+		__COUT__ << "autoRefreshPeriod: " << autoRefreshPeriod  << std::endl;
 
 
 		//read existing
@@ -305,13 +306,13 @@ throw (xgi::exception::Exception)
 			fclose(fp);
 		}
 		else
-			__MOUT_ERR__ << "Failure writing preferences to file: " << fullPath << std::endl;
+			__COUT_ERR__ << "Failure writing preferences to file: " << fullPath << std::endl;
 	}
 	else if (Command == "getUserPreferences")
 	{
-		__MOUT__ << "userName: " << userName << std::endl;
+		__COUT__ << "userName: " << userName << std::endl;
 		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
-		__MOUT__ << "fullPath: " << fullPath << std::endl;
+		__COUT__ << "fullPath: " << fullPath << std::endl;
 
 		FILE *fp = fopen(fullPath.c_str(),"r");
 		if(fp)
@@ -354,7 +355,7 @@ throw (xgi::exception::Exception)
 
 		std::string rootpath = std::string(ROOT_BROWSER_PATH) + "/";
 		std::string path  = CgiDataUtilities::postData(cgi,"Path");
-		__MOUT__ << path << std::endl;
+		__COUT__ << path << std::endl;
 
 		char permStr[10];
 		sprintf(permStr,"%d",userPermissions);
@@ -367,7 +368,7 @@ throw (xgi::exception::Exception)
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") == 0) //ROOT config path must start the path
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" + path.substr(PRE_MADE_ROOT_CFG_DIR.length()+2);
 
-		__MOUT__ << "full path: " << dirpath << std::endl;
+		__COUT__ << "full path: " << dirpath << std::endl;
 
 		DIR *pDIR;
 		struct dirent *entry;
@@ -392,7 +393,7 @@ throw (xgi::exception::Exception)
 				{
 					recheck = true;
 					if(mkdir(ROOT_DISPLAY_CONFIG_PATH, S_IRWXU | (S_IRGRP | S_IXGRP) | (S_IROTH | S_IXOTH))) //mode = drwx r-x r-x
-						__MOUT__ << "Failed to make directory for pre made views: " << ROOT_DISPLAY_CONFIG_PATH << std::endl;
+						__COUT__ << "Failed to make directory for pre made views: " << ROOT_DISPLAY_CONFIG_PATH << std::endl;
 				}
 				else
 					closedir(pRtDIR); //else close and display
@@ -407,11 +408,11 @@ throw (xgi::exception::Exception)
 
 			while((entry = readdir(pDIR)))
 			{
-				//__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
+				//__COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
 				if( entry->d_name[0] != '.' && (entry->d_type == 0 || //0 == UNKNOWN (which can happen - seen in SL7 VM)
 						entry->d_type == 4 || entry->d_type == 8))
 				{
-					//__MOUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
+					//__COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" << std::endl;
 					isNotRtCfg = std::string(entry->d_name).find(".rcfg") == std::string::npos;
 					isDir = false;
 
@@ -443,7 +444,7 @@ throw (xgi::exception::Exception)
 			closedir(pDIR);
 		}
 		else
-			__MOUT__ << "Failed to access directory contents!" << std::endl;
+			__COUT__ << "Failed to access directory contents!" << std::endl;
 	}
 	else if (Command == "getRoot")
 	{
@@ -452,7 +453,7 @@ throw (xgi::exception::Exception)
 		std::string path = CgiDataUtilities::postData(cgi,"RootPath");
 		std::string fullPath  = std::string(getenv("ROOT_BROWSER_PATH")) + path;
 
-		__MOUT__ << "Full path:-" << fullPath << "-" << std::endl;
+		__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
 
 		std::string rootFileName      = fullPath.substr(0,fullPath.find(".root")+5);
 		std::string rootDirectoryName = rootFileName + ":" + fullPath.substr(fullPath.find(".root")+5,fullPath.size()-fullPath.find(".root")+5+1);
@@ -462,24 +463,24 @@ throw (xgi::exception::Exception)
 
 		if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
 		{
-			__MOUT__ << "Attempting to get LIVE file." << std::endl;
+			__COUT__ << "Attempting to get LIVE file." << std::endl;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			if(!rootFile)
-				__MOUT__ << "File was closed." << std::endl;
+				__COUT__ << "File was closed." << std::endl;
 			else
 			{
-				__MOUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
+				__COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
 				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
 			}
 		}
 		else
 			rootFile = TFile::Open(rootFileName.c_str());
 
-		//__MOUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
+		//__COUT__ << "FileName : " << rootFileName << " Object: " << rootDirectoryName << std::endl;
 
 		if(!rootFile || !rootFile->IsOpen())
 		{
-			__MOUT__ << "Failed to access root file: " << rootFileName << std::endl;
+			__COUT__ << "Failed to access root file: " << rootFileName << std::endl;
 		}
 		else
 		{
@@ -488,29 +489,29 @@ throw (xgi::exception::Exception)
 			TDirectory* directory;
 			if((directory = rootFile->GetDirectory(rootDirectoryName.c_str())) == 0)
 			{
-				//__MOUT__ << "This is not a directory!" << std::endl;
+				//__COUT__ << "This is not a directory!" << std::endl;
 				directory = rootFile;
 
 				//failed directory so assume it's file
-				//__MOUT__ << "Getting object name: " << rootDirectoryName << std::endl;
+				//__COUT__ << "Getting object name: " << rootDirectoryName << std::endl;
 				TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
 				if(!histo)
-					__MOUT__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
+					__COUT__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
 				else //turns out was a root object path
 				{
-					//__MOUT__ << "Converting histo to json: " << histo->GetName() << std::endl;
+					//__COUT__ << "Converting histo to json: " << histo->GetName() << std::endl;
 					TString json = TBufferJSON::ConvertToJSON(histo);
-					//__MOUT__ << "json " << json << std::endl;
+					//__COUT__ << "json " << json << std::endl;
 
 					TBufferFile tbuff(TBuffer::kWrite);
 
 					std::string rootType = histo->ClassName();
-					__MOUT__ << "rootType " << rootType << std::endl;
+					__COUT__ << "rootType " << rootType << std::endl;
 
 					histo->Streamer(tbuff);
 
-					//__MOUT__ << "histo length " << tbuff.Length() << std::endl;
+					//__COUT__ << "histo length " << tbuff.Length() << std::endl;
 
 					std::string dest;
 					binaryBufferToHexString(tbuff.Buffer(), tbuff.Length(), dest);
@@ -520,14 +521,14 @@ throw (xgi::exception::Exception)
 					xmldoc.addTextElementToData("rootType", rootType);
 					xmldoc.addTextElementToData("rootData", dest);
 					xmldoc.addTextElementToData("rootJSON", json.Data());
-					__MOUT__ << "Done" << std::endl;
+					__COUT__ << "Done" << std::endl;
 
 					//std::cout << "\n\n" << json.Data() << "\n\n";
 				}
 			}
 			else
 			{
-				//__MOUT__ << "directory found getting the content!" << std::endl;
+				//__COUT__ << "directory found getting the content!" << std::endl;
 				TRegexp re("*", kTRUE);
 				if (LDQM_pos == 0)
 				{
@@ -538,7 +539,7 @@ throw (xgi::exception::Exception)
 						TString s = obj->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__MOUT__ << __PRETTY_FUNCTION__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
+						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
 						xmldoc.addTextElementToData((std::string(obj->IsA()->GetName()).find("Directory") != std::string::npos)?"dir":"file", obj->GetName());
 					}
 				}
@@ -552,7 +553,7 @@ throw (xgi::exception::Exception)
 						TString s = key->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__MOUT__ << __PRETTY_FUNCTION__ << "Class Name: " << key->GetClassName() << std::endl;
+						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << key->GetClassName() << std::endl;
 						xmldoc.addTextElementToData((std::string(key->GetClassName()).find("Directory") != std::string::npos)?"dir":"file", key->GetName());
 					}
 				}
@@ -565,7 +566,7 @@ throw (xgi::exception::Exception)
 	{
 		int Run = atoi(cgi("run").c_str());
 
-		__MOUT__ << "getEvents for run " << Run << std::endl;
+		__COUT__ << "getEvents for run " << Run << std::endl;
 
 		if(Run != (int)loadedRunNumber_ || loadedRunNumber_ == (unsigned int)-1)
 		{
@@ -578,11 +579,11 @@ throw (xgi::exception::Exception)
 		char str[40];
 
 		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
-		//		__MOUT__ << "Preparing hits xml" << std::endl;
+		//		__COUT__ << "Preparing hits xml" << std::endl;
 		//		int numberOfEvents = 0;
 		//		for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() && numberOfEvents < 10000; it++, numberOfEvents++)
 		//		{
-		//			//__MOUT__ << "Event: " << numberOfEvents << std::endl;
+		//			//__COUT__ << "Event: " << numberOfEvents << std::endl;
 		//			eventParent = xmldoc.addTextElementToParent("event", str, eventsParent);
 		//			const VisualHits& hits = it->getHits();
 		//			for(VisualHits::const_iterator itHits=hits.begin(); itHits!=hits.end(); itHits++)
@@ -593,7 +594,7 @@ throw (xgi::exception::Exception)
 		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
 		//				sprintf(str,"%f",itHits->z);
 		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
-		//				//__MOUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z: " << itHits->z << std::endl;
+		//				//__COUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z: " << itHits->z << std::endl;
 		//			}
 		//			const VisualTracks& tracks = it->getTracks();
 		//			for(VisualTracks::const_iterator itTrks=tracks.begin(); itTrks!=tracks.end(); itTrks++)
@@ -610,21 +611,21 @@ throw (xgi::exception::Exception)
 		//			}
 		//
 		//		}
-		__MOUT__ << "Done hits xml" << std::endl;
+		__COUT__ << "Done hits xml" << std::endl;
 	}
 	else if (Command == "getGeometry")
 	{
-		__MOUT__ << "getGeometry" << std::endl;
+		__COUT__ << "getGeometry" << std::endl;
 
 		//FIXME -- this crashes when the file doesn't exist!
 		theDataManager_->load("Run1684.geo","Geometry");
 
-		__MOUT__ << "getGeometry" << std::endl;
+		__COUT__ << "getGeometry" << std::endl;
 
 		DOMElement* geometryParent = xmldoc.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes = theDataManager_->getVisual3DGeometry().getShapes();
 		//
-		//		__MOUT__ << "getGeometry" << std::endl;
+		//		__COUT__ << "getGeometry" << std::endl;
 		//
 		//
 		//		DOMElement* objectParent;
@@ -651,12 +652,12 @@ throw (xgi::exception::Exception)
 	else if (Command == "getRootConfig")
 	{
 		std::string path =  CgiDataUtilities::postData(cgi,"RootConfigPath");
-		__MOUT__ << "path " << path << std::endl;
+		__COUT__ << "path " << path << std::endl;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") == 0) //ROOT config path must start the path
 		{
 			path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" + path.substr(PRE_MADE_ROOT_CFG_DIR.length()+2);
-			__MOUT__ << "mod path " << path << std::endl;
+			__COUT__ << "mod path " << path << std::endl;
 		}
 
 		HttpXmlDocument cfgXml;
@@ -673,7 +674,7 @@ throw (xgi::exception::Exception)
 	{
 		if(userPermissions < ROOT_VIEWER_PERMISSIONS_THRESHOLD)
 		{
-			__MOUT__ << "Insufficient permissions for Root Viewer Admin Controls: " << userPermissions << " < " << ROOT_VIEWER_PERMISSIONS_THRESHOLD << std::endl;
+			__COUT__ << "Insufficient permissions for Root Viewer Admin Controls: " << userPermissions << " < " << ROOT_VIEWER_PERMISSIONS_THRESHOLD << std::endl;
 			xmldoc.addTextElementToData("status", "Failed. Insufficient user permissions.");
 		}
 		else
@@ -685,14 +686,14 @@ throw (xgi::exception::Exception)
 
 			std::string path =  CgiDataUtilities::postData(cgi,"path");
 			std::string name =  CgiDataUtilities::postData(cgi,"name");
-			__MOUT__ << "cmd " << cmd << std::endl;
-			__MOUT__ << "path " << path << std::endl;
-			__MOUT__ << "name " << name << std::endl;
+			__COUT__ << "cmd " << cmd << std::endl;
+			__COUT__ << "path " << path << std::endl;
+			__COUT__ << "name " << name << std::endl;
 
 			if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") == 0) //ROOT config path must start the path
 			{
 				path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" + path.substr(PRE_MADE_ROOT_CFG_DIR.length()+2) + name;
-				__MOUT__ << "mod path " << path << std::endl;
+				__COUT__ << "mod path " << path << std::endl;
 
 
 				if(cmd == "mkdir")
@@ -708,8 +709,8 @@ throw (xgi::exception::Exception)
 
 					bool useRunWildCard =  atoi(CgiDataUtilities::postData(cgi,"useRunWildCard").c_str()); //0 or 1
 					std::string config =  CgiDataUtilities::postData(cgi,"config");
-					__MOUT__ << "config " << config << std::endl;
-					__MOUT__ << "useRunWildCard " << useRunWildCard << std::endl;
+					__COUT__ << "config " << config << std::endl;
+					__COUT__ << "useRunWildCard " << useRunWildCard << std::endl;
 
 					//check if file already exists
 					FILE *fp = fopen(path.c_str(),"r");
@@ -717,7 +718,7 @@ throw (xgi::exception::Exception)
 					{
 						fclose(fp);
 						xmldoc.addTextElementToData("status", "Failed. File already exists.");
-						__MOUT__ << " Failed. File already exists." << std::endl;
+						__COUT__ << " Failed. File already exists." << std::endl;
 					}
 					else
 					{
@@ -742,7 +743,7 @@ throw (xgi::exception::Exception)
 						{
 							xmldoc.addTextElementToData("status", "Failed. Fatal. Improper file format.");
 							if(remove(path.c_str()) != 0)
-								__MOUT__ << "Failed. Could not remove poorly formed Root config file!" << std::endl;
+								__COUT__ << "Failed. Could not remove poorly formed Root config file!" << std::endl;
 						}
 					}
 
@@ -765,7 +766,7 @@ throw (xgi::exception::Exception)
 
 	}
 	else
-		__MOUT__ << "Command request, " << Command << ", not recognized." << std::endl;
+		__COUT__ << "Command request, " << Command << ", not recognized." << std::endl;
 	//return xml doc holding server response
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
@@ -795,7 +796,7 @@ throw (toolbox::fsm::exception::Exception)
 							ConfigurationGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).
 							getParameters().getValue("ConfigurationGroupKey")));
 
-		__MOUT__ << "Configuration group name: " << theGroup.first << " key: " <<
+		__COUT__ << "Configuration group name: " << theGroup.first << " key: " <<
 				theGroup.second << std::endl;
 
 		theConfigurationManager_->loadConfigurationGroup(
@@ -806,7 +807,7 @@ throw (toolbox::fsm::exception::Exception)
 	}
 	//catch(...)
 	//{
-	//	throw std::runtime_error("Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");
+	//	{__SS__;throw std::runtime_error(ss.str()+"Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");}
 	//}
 }
 
@@ -820,7 +821,7 @@ throw (toolbox::fsm::exception::Exception)
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "ERROR! Couldn't Halt the VisualSupervisor" << std::endl;
+		__COUT_INFO__ << "ERROR! Couldn't Halt the VisualSupervisor" << std::endl;
 	}
 }
 
@@ -828,14 +829,13 @@ throw (toolbox::fsm::exception::Exception)
 void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
 	try
 	{
 		theDataManager_->start(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber"));
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "ERROR! Couldn't Start the VisualSupervisor" << std::endl;
+		__COUT_INFO__ << "ERROR! Couldn't Start the VisualSupervisor" << std::endl;
 	}
 }
 
@@ -843,14 +843,42 @@ throw (toolbox::fsm::exception::Exception)
 void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
 throw (toolbox::fsm::exception::Exception)
 {
-
 	try
 	{
 		theDataManager_->stop();
 	}
 	catch(...)
 	{
-		__MOUT_INFO__ << "ERROR! Couldn't Stop the VisualSupervisor" << std::endl;
+		__COUT_INFO__ << "ERROR! Couldn't Stop the VisualSupervisor" << std::endl;
+	}
+}
+
+
+//========================================================================================================================
+void VisualSupervisor::transitionPausing(toolbox::Event::Reference e)
+throw (toolbox::fsm::exception::Exception)
+{
+	try
+	{
+		theDataManager_->pause();
+	}
+	catch(...)
+	{
+		__COUT_INFO__ << "ERROR! Couldn't Pause the VisualSupervisor" << std::endl;
+	}
+}
+
+//========================================================================================================================
+void VisualSupervisor::transitionResuming(toolbox::Event::Reference e)
+throw (toolbox::fsm::exception::Exception)
+{
+	try
+	{
+		theDataManager_->resume();
+	}
+	catch(...)
+	{
+		__COUT_INFO__ << "ERROR! Couldn't Resume the VisualSupervisor" << std::endl;
 	}
 }
 

@@ -379,7 +379,7 @@ else {
 
        		var str = "";       			
        		if(usernameWithLock != user) //not user so cant unlock
-       			el.innerHTML = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
+       			str = "<img src='/WebPath/images/dashboardImages/icon-Settings-LockDisabled.png' " +
        					"title='User " + 
        					usernameWithLock + " has the ots Lock'>"; 
        		else //this is user so can unlock
@@ -403,7 +403,9 @@ else {
 			if(serverAlert) Debug.log("Message from Server: " + serverAlert, Debug.HIGH_PRIORITY);
 
         	Desktop.desktop.dashboard.displayUserLock(
-        			Desktop.getXMLValue(req,"username_with_lock"));
+        			Desktop.getXMLValue(req,"username_with_lock"));        	
+
+        	Desktop.desktop.resetDesktop(); //soft reset attempt
         }
         
 

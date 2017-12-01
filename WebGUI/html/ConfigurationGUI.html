@@ -221,37 +221,37 @@
 
 		_OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
 				"width:95px;height:20px;margin:0 -122px -32px 10px; font-size: 16px; white-space:nowrap; text-align:center;'>";
-		_OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='javascript:editCellOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
+		_OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='editCellOK(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
 				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
-				"<a class='popUpOkCancel' onclick='javascript:editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
+				"<a class='popUpOkCancel' onclick='editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 		
-		var _OTS_RELAUNCH_STR = 
+		var _OTS_RELAUNCH_STR =  
 				//Normal mode
 				"Click here to relaunch ots in " +
-				"<a href='#' onclick='javascript:" +
+				"<a href='#' onclick='" +
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchOTS\"," +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
 				"\"\",handleOtsRelaunchResponse,0);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Normal Mode</a>" +
 				" or " +
 				//Wiz Mode
-				"<a href='#' onclick='javascript:" +
+				"<a href='#' onclick='" +
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
 				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=launchWiz\"," +
+				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
 				"\"\",handleOtsRelaunchResponse,1);" +
 				"},0,\"#efeaea\",0,\"#770000\");" +
 				"'>Wiz Mode</a>." +
 				"<br>" +
 				//Toggle Version Tracking
 				"Click here to " +
-				"<a href='#' id='versionTrackingSystemLink' onclick='javascript:" +
+				"<a href='#' id='versionTrackingSystemLink' onclick='" +
 				"var el = this;" +
 				"if(el.textContent == \"Turn Version Tracking OFF\")" +
 				"DesktopContent.popUpVerification(" + 
@@ -269,7 +269,7 @@
 				//Flatten Versions
 				"<br>" +
 				"Click here to " +
-				"<a href='#' onclick='javascript:" +
+				"<a href='#' onclick='" +
 				"DesktopContent.popUpVerification(" + 
 				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
 				"function() {" + 
@@ -281,7 +281,7 @@
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
-		var _editingCellEl, _editingCellElOldValue, _editingCellElOldTitle;
+		var _editingCellEl, _editingCellElOldValue, _editingCellElOldTitle, _editingCellType;
 		var _editingCellPos = [-1,-1];
 		var _versionIsChanged = false;
 		var _version;
@@ -375,8 +375,8 @@
 			//toggleTableDetails(setVal)
 			//toggleGroupDetails(setVal)
 			//transposeTableView()
-			//getTableViewColIsBoolType(rows)
-			//createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
+			//getTableViewColTypes(rows)
+			//createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
 			//downloadTableAsCSV()
 			//uploadTableFromCSV()
 
@@ -653,7 +653,7 @@
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
 					versionTrackingHandler,
-					
+					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 			);
 		}
 		
@@ -694,12 +694,35 @@
 		function handleOtsRelaunchResponse(req,isWiz) {
 			if(isWiz)
 				Debug.log("Attempt to restart your system in Wiz Mode was successfully launched... " +
-					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
 				Debug.log("Attempt to restart your system in Normal Mode was successfully launched... " +
-					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
+			
+			localCountDown();
+			//=================
+			function localCountDown()
+			{
+				Debug.log("Waiting " + countDown + " seconds for startup sequence...",
+						Debug.INFO_PRIORITY);
+
+				window.setTimeout(function() {
+					Debug.log("localCountDown handler ");
+					--countDown;
+					if(countDown == 0)
+					{
+						//end blackout
+						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
+						Debug.log("And we are back!",Debug.INFO_PRIORITY);
+						setupSystemViewMode();
+						return;
+					}
+					localCountDown();
+				}, //end blackout-end handler 
+				1000/*ms*/);
+			}// end localCountDown
 		}
 
 		//setupSpecificConfigGroup ~		
@@ -753,7 +776,7 @@
 			_displayTargetEl = document.getElementById("display-right");
 			setupSpecificConfig(configName,version,"special display target");
 		}
-		
+				
 		//groupAliasesRequestHandler ~
 		function groupAliasesRequestHandler(req, anchorTarget) {
 			
@@ -844,9 +867,9 @@
 			str += "<br>";
 			
 			//show active backbone and config
-			function showActiveBackboneAndConfig()
+			function localShowActiveBackboneAndConfig()
 			{
-				var activeConfigHeaders = ["Context","Backbone","Configuration"];
+				var activeConfigHeaders = ["Context","Backbone","Iterate Group","Configuration"];
 				
 				str += "<table cellpadding='0' cellspacing='0' border='0' >"; //open active groups table
 
@@ -854,10 +877,10 @@
 				{
 					str += "<tr><td style='text-align:left'>";
 					
-					if(i == 1) //for backbone
-						str += "Currently Active " + activeConfigHeaders[i] + ": ";
-					else	//for last configured 
+					if(i == activeConfigHeaders.length-1) //for last configured 
 						str += "Last Activated " + activeConfigHeaders[i] + ": ";
+					else	//for backbone, iterate
+						str += "Currently Active " + activeConfigHeaders[i] + ": ";
 					
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
 
@@ -867,13 +890,13 @@
 					}
 					else
 					{
-						str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
+						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
 								"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
 						str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
 					}
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
-					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+					str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + 
 							_activeConfigGroups[i*2] + 
 							"\",\"" + 
 							_activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
@@ -917,13 +940,13 @@
 					}
 					else
 					{
-						str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
+						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
 								"\",\"" + _lastConfigGroups[i+1] + "\"); return false;'>";
 						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i+1] + ")</a>";
 					}
 
 					str += "</td><td style='text-align:left; padding-left:20px;'>";
-					str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+					str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + 
 							_lastConfigGroups[i] + 
 							"\",\"" + 
 							_lastConfigGroups[i+1] + "\"); return false;'>Tree-view</a>";								
@@ -935,17 +958,17 @@
 				
 				str += "</table>"; //close active groups table
 				
-			} showActiveBackboneAndConfig();
+			} localShowActiveBackboneAndConfig();
 			
 			
-			str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
+			str += "<a href='#' onclick='setupSpecificConfig(\"" + 
 					groupAliasesName + "\",\"" +
 					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += "Edit System Aliases</a>";
 
 			str += "<br>";
 			
-			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(1); return false;' " +
+			str += "<a href='#' onclick='popUpGroupAliasForm(1); return false;' " +
 					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
 					">";
 			str += "Wiz-New System Alias-to-Latest</a>";
@@ -953,7 +976,7 @@
 			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "<br>";
 
-			str += "<a href='#' onclick='javascript:popUpGroupAliasForm(0); return false;'  " +
+			str += "<a href='#' onclick='popUpGroupAliasForm(0); return false;'  " +
 						"title='Automatically assign a new System Alias to an Active Group.'" +
 						">";
 			str += "Wiz-New System Alias-to-Active</a>";
@@ -1002,7 +1025,7 @@
 				str += "<a name='anchorTag-" + 
 						groupAlias + "'></a>";
 				str += "&quot;";
-				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + 
+				str += "<a href='#' onclick='setupSpecificConfig(\"" + 
 						groupAliasesName + "\",\"" +
 						groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;' " +
 						"title='Alias Comment:\n\"" + aliasComment + "\"' " +
@@ -1015,7 +1038,7 @@
 
 				//add group view link				
 				str += "&lt; ";
-				str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+				str += " <a href='#' onclick='setupSpecificConfigGroup(\"" + groupName +
 						"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;' " +
 						"title='Group Comment:\n\"" + groupComment + "\"' " +
 						">";
@@ -1027,7 +1050,7 @@
 				
 				
 				//add tree view link
-				str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+				str += " <a href='#' onclick='setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + groupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += "Tree-view</a>";		
 
@@ -1036,7 +1059,7 @@
 				
 				
 				//add Activate link
-				str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+				str += " <a href='#' onclick='activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
 				str += "Activate</a>";
 
@@ -1045,7 +1068,7 @@
 				
 				
 				//Wiz to latest of all tables
-				str += " <a href='#' onclick='javascript:" + 
+				str += " <a href='#' onclick='" + 
 						//"wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
 						"popUpGroupAliasForm(1,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to a Group comprised of the latest table versions.'" +
@@ -1057,7 +1080,7 @@
 				
 				
 				//Wiz to active config group
-				str += " <a href='#' onclick='javascript:" +
+				str += " <a href='#' onclick='" +
 						//"wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 						"popUpGroupAliasForm(0,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to an Active Group.'" +
@@ -1091,7 +1114,8 @@
 		}
 		
 		//configGroupsRequestHandler ~
-		function configGroupsRequestHandler(req, anchorTarget) {				
+		function configGroupsRequestHandler(req, anchorTarget) 
+		{				
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{
@@ -1129,7 +1153,7 @@
 					str += " <b>" + typeName[i] + "</b>";
 				else
 				{
-					str += " <a href='#' onclick='javascript:_groupViewFilterIndex=" + 
+					str += " <a href='#' onclick='_groupViewFilterIndex=" + 
 							typeFilterIndex[i] + ";setupGroupViewMode(); return false;'>";
 					str += typeName[i];
 					str += "</a>";
@@ -1140,8 +1164,8 @@
 			str += "<label id='filteredGroupCount'></label> of " +
 					groupNames.length + " groups. ";
 			str += "Don't see what you need: ";
-			str += "<a href='" +
-					"javascript:setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
+			str += "<a href='#' onclick='" +
+					"setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 					"\");' title='" +
 					"Goto the group creator interface." +
 					"'>" + 
@@ -1159,7 +1183,7 @@
 				//////////////////////////////////////
 				//add search box div
 
-				str += "<button type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+				str += "<button type='button' onmouseup='gotoSelectedMSGroup()' title='" +
 						"View the Latest Key for the Selected Group." +
 						"'>" +
 						"View Latest Key for Selected Group</button>";
@@ -1171,7 +1195,7 @@
 				str += "<div id='clearDiv'></div>";
 
 				str += "<button style='margin-top:-25px' " + 
-						"type='button' onmouseup='javascript:gotoSelectedMSGroup()' title='" +
+						"type='button' onmouseup='gotoSelectedMSGroup()' title='" +
 						"View the Latest Key for the Selected Group." +
 						"'>" +
 						"View Latest Key for Selected Group</button>";
@@ -1370,7 +1394,7 @@
 				backLinkStr = "setupGroupViewMode()";
 			for(var j=0;j<allKeys.length-2;++j)
 			{
-				str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + 
+				str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + 
 						groupName + "\",\"" + 
 						allKeys[j] + "\",\"" + 
 						backLinkStr + "\"); return false;'>";
@@ -1383,17 +1407,17 @@
 
 			str += "<a name='anchorTag-" + 
 					groupName + "-" + latestKey + "'></a>";
-			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+			str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + groupName +
 					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += groupName + "</a> (" + latestKey +")";
 
 			//add tree view link
-			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+			str += " <a href='#' onclick='setupConfigGroupTreeView(\"" + groupName +
 					"\",\"" + latestKey + "\",\"" + backLinkStr + "\"); return false;'>";
 			str += "Tree-view</a>";										
 
 			//add Activate link
-			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+			str += " <a href='#' onclick='activateSystemConfig(\"" + groupName +
 					"\",\"" + latestKey + "\"); return false;'>";
 			str += "Activate</a>";
 
@@ -1417,7 +1441,7 @@
 
 				str += "<a name='anchorTag-" + 
 						groupName + "-" + configName + "'></a>";
-				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+				str += "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 						"\",\"" + configVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(configName) + "</a><br>" + 
 						((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
@@ -1473,7 +1497,7 @@
 				backLinkStr = "setupTableViewMode(\\\"anchorTag-" + configName + "\\\");"; 
 
 				str += "<a name='anchorTag-" + configName + "'></a>";
-				str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+				str += "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 					"\",\"\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(configName);
 				str += "</a><br><table style='margin-left:40px'><tr>";
@@ -1488,7 +1512,7 @@
 					version = configVersions[j].getAttribute("value");
 					str += "<td align='center'>";
 					str += "version" + "<br>";
-					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+					str += "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 							"\",\"" + version + "\",\"" + backLinkStr + "\"); return false;'>";
 					str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);					
 					str += "</td>";
@@ -1520,6 +1544,9 @@
 			} while(el);	
 			
 			var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
+
+			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
@@ -1537,15 +1564,11 @@
 				var el = document.getElementById("display");
 				var str = "";
 				str += "Failed.<br><br>" + err; 
-				
-
-				var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-				var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-				
+								
 				if(groupName && groupKey)
 				{
 					str += "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + groupName +
+					str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
 					str += "Go-to group &quot;" + groupName + "&quot;</a>";	
 				}
@@ -1558,7 +1581,7 @@
 							 "in ots wiz to verify the column info is valid; or you can try " +
 							 "goint to to the table view:";
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
-					str += "<a href='#' onclick='javascript:setupSpecificConfig(\"" + errSplit[1] +
+					str += "<a href='#' onclick='setupSpecificConfig(\"" + errSplit[1] +
 						"\"); return false;'>";
 					str += "Go-to table &quot;" + errSplit[1] + "&quot;</a>";						
 				}
@@ -1572,8 +1595,16 @@
 					return;
 			}
 			else if(attemptedNewGroupName && attemptedNewGroupName != "") //if attempted and no errors, shout success
-				Debug.log("New group '" + attemptedNewGroupName + "' successfully created!",
-						Debug.INFO_PRIORITY);
+			{
+				var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+				if(foundEquivalentKey)	
+					Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+							" (" + groupKey + ")'", Debug.INFO_PRIORITY);
+				else
+					Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+							" (" + groupKey + ")'", Debug.INFO_PRIORITY);
+			}
 				
 			
 			var backLinkStr = "";
@@ -1598,8 +1629,6 @@
 				}			
 			}
 			
-			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
 			var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
 			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
 
@@ -1623,7 +1652,7 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\");  return false;'>Back</a>";
+				str += "<a href='#' onclick='evaluateJS(\"" + backLinkStr + "\");  return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}	
 			else backLinkStr = "";		
@@ -1631,7 +1660,7 @@
 			var refreshLinkStr = "setupSpecificConfigGroup(\"" + 
 					groupName + "\",\"" +
 					groupKey + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onclick='" + refreshLinkStr + 
 					"; return false;'>Refresh</a>";
 			str += "<br>";
 
@@ -1642,7 +1671,7 @@
 			//add tree view link
 			var returnToHereLink = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 					groupKey + "\\\");"; 	
-			str += " <a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + groupName +
+			str += " <a href='#' onclick='setupConfigGroupTreeView(\"" + groupName +
 				"\",\"" + groupKey + "\",\"" + returnToHereLink + "\"); return false;' title='" +
 					"Display the tree-view for the current group '" + groupName + 
 					" (" + groupKey + ").'" +
@@ -1650,7 +1679,7 @@
 			str += "Tree-view</a>";	
 			
 			//add Activate link
-			str += " <a href='#' onclick='javascript:activateSystemConfig(\"" + groupName +
+			str += " <a href='#' onclick='activateSystemConfig(\"" + groupName +
 					"\",\"" + groupKey + "\"); return false;' title='" +
 					"Activate the current group '" + groupName + 
 					" (" + groupKey + ").'" +
@@ -1658,7 +1687,7 @@
 			str += "Activate</a>";
 			
 			//add Alias link
-			str += " <a href='#' onclick='javascript:popUpGroupViewAliasForm(\"" + groupName +
+			str += " <a href='#' onclick='popUpGroupViewAliasForm(\"" + groupName +
 					"\",\"" + groupKey + "\"); return false;' title='" +
 					"Create a System to Alias that refers to the current group '" + groupName + 
 					" (" + groupKey + ").'" +
@@ -1703,7 +1732,7 @@
 					if(groupKey == key)
 					{ str += " " + key; continue; }
 					
-					str += " <a href='#' onclick='javascript:setupSpecificConfigGroup(\"" +
+					str += " <a href='#' onclick='setupSpecificConfigGroup(\"" +
 								groupName + "\",\"" + key + "\",\"" + backLinkStr + "\"); return false;'>";
 					str += key;
 					str += "</a>";
@@ -1713,7 +1742,7 @@
 				str += "No Historical keys exist for " + groupName + ".<br>";
 			
 			
-			str += "<br><a href='#' onclick='javascript:addMemberToConfigGroup(\"" + 
+			str += "<br><a href='#' onclick='addMemberToConfigGroup(\"" + 
 					groupName + "\",\"" + returnToHereLink + "\"); return false;'>";
 			str += "Add/Remove/Modify Configuration Members</a> for "  + groupName + "(" + groupKey + ")";
 			
@@ -1728,7 +1757,7 @@
 							"0,0,true" +  //progressHandler, callHandlerOnErr, showLoadingOverlay
 							");";
 					
-			str += "<a href='#' onclick='javascript:" + setMembersToDefaultReq + "; return false;' title='Make all member versions" + 
+			str += "<a href='#' onclick='" + setMembersToDefaultReq + "; return false;' title='Make all member versions" + 
 					" the &apos;Default&apos; version for that member " + 
 					" by automatically setting up the &apos;Default&apos; alias " + 
 					"in the active Backbone group.'" +
@@ -1737,7 +1766,7 @@
 			str += "</a>";
 			str += "<br>";
 
-			str += "<a href='#' onclick='javascript:popUpVersionAliasSpecificGroupForm(" + 
+			str += "<a href='#' onclick='popUpVersionAliasSpecificGroupForm(" + 
 					"\"" + groupName + "\",\"" + groupKey + "\"); return false;' title='Set an Alias for all member versions" +
 					" by automatically setting up the specified Alias " + 
 					"in the active Backbone group.'" +
@@ -1782,7 +1811,7 @@
 				
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + configName + "-currentVersionLink' " +
-						"href='javascript:" + replaceScreenJS + "'>";
+						"href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForConfigGroup()!!
 				str += "(Current version: ";
 				str += "<label id='" + configName + "-currentVersion'>";					
 				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
@@ -1828,38 +1857,7 @@
 									"groupMemberNavContextMenu",
 									_CONTEXT_MENU_PRIMARY_COLOR,
 									_CONTEXT_MENU_SECONDARY_COLOR) + "' ";// end link onmousedown
-//					
-//							"onmousedown='" + // start link onmousedown	
-//							"SimpleContextMenu.createMenu(["; //open array for items
-
-//					//output item strings
-//					for(j=0;j<DEFAULT_groupNavContextMenuItems.length;++j)
-//					{
-//						if(j)
-//							str += ",";
-//						str += "\"" + DEFAULT_groupNavContextMenuItems[j] + "\"";
-//					}
-//					str += //end items and open array for item handlers
-//							"]," +
-//							"[";
-//
-//					for(j=0;j<groupMemberNavContextMenuItemHandlers.length;++j)
-//					{
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//need to escape all quotes by one more level
-//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/\\\"/g, "AAAAA");
-//								groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/"/g, "\\\"");
-//						groupMemberNavContextMenuItemHandlers[j] = groupMemberNavContextMenuItemHandlers[j].replace(/AAAAA/g, "\\\\\\\"");										
-//						//Debug.log("treeNavContextMenuItemHandlers[j]= " + treeNavContextMenuItemHandlers[j]);
-//						//Debug.log("this works= " + "Debug.log(\\\"hi\\\");");
-//						//THIS WORKS: treeViewHandlerStr_ += "\"" + "Debug.log(\\\"hi\\\");" + "\"";
-//						str += "\"" + groupMemberNavContextMenuItemHandlers[j] + "\"";
-//						if(j != groupMemberNavContextMenuItemHandlers.length-1)
-//							str += ",";
-//					}
-//					str += "]" + //end treeNavContextMenuItemHandlers array
-//							",\"groupMemberNavContextMenu\",event.pageX-1,event.pageY-1, " +
-//							"\"" + _CONTEXT_MENU_PRIMARY_COLOR + "\", \"" + _CONTEXT_MENU_SECONDARY_COLOR + "\");";					
+					
 					str += 
 							//"onmouseup='" + onmouseupJS + "' " +
 							">" +	
@@ -1913,7 +1911,7 @@
 						str += " " + existingVersion; continue;
 					}
 					str += " ";
-					str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
+					str += "<a href='#' onclick='changeMemberVersionForConfigGroup(\"" +
 							groupName + "\",\"" + groupKey + "\",\"" + configName + "\"," + 
 							"\"" + existingVersion + "\"";
 					str += "); return false;' " +
@@ -1954,7 +1952,7 @@
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		}
+		} //end specificGroupRequestHandler
 		
 		//specificConfigRequestHandler
 		function specificConfigRequestHandler(req, backLinkStr) {	
@@ -2028,7 +2026,7 @@
 			var rows = req.responseXML.getElementsByTagName("CurrentVersionRows")[0].getElementsByTagName("Row");
 			
 			var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
-			var colTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+			var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
 			
@@ -2076,12 +2074,14 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
+				str += "<a href='#' onclick='evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				
 				var backLinkStrSplit = backLinkStr.split('"');
 				
-				if(backLinkStr.indexOf("setupTableViewMode") < 0 && 
+				//take a clue from backlink about associated group 
+				if(backLinkStr.indexOf("setupTableViewMode") < 0 && //attempt to identify a group source
+						backLinkStr.indexOf("setupSpecificConfig") < 0 && 
 						backLinkStrSplit.length > 3)
 				{
 					_associatedGroupName = backLinkStrSplit[1].split('\\')[0];
@@ -2093,7 +2093,7 @@
 			var refreshLinkStr = "setupSpecificConfig(\"" + 
 					configName + "\",\"" +
 					version + "\",\"" + backLinkStr + "\");"; 
-			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onclick='" + refreshLinkStr + 
 					"; return false;'>Refresh</a>";
 
 			{
@@ -2101,7 +2101,7 @@
 				var clearLinkStr = "popUpClearVersionsPrompt(0,\"" + 
 						backLinkStr + "\");"; 
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				str += "<a href='#' onclick='javascript:" + clearLinkStr + 
+				str += "<a href='#' onclick='" + clearLinkStr + 
 						"; return false;'>Clear Cache</a>";
 			}
 
@@ -2110,7 +2110,7 @@
 				var clearLinkStr = "popUpClearVersionsPrompt(1,\"" + 
 						backLinkStr + "\");"; 
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				str += "<a href='#' onclick='javascript:" + clearLinkStr + 
+				str += "<a href='#' onclick='" + clearLinkStr + 
 						"; return false;'>Clear Temporary Versions</a>";
 			}
 
@@ -2136,7 +2136,7 @@
 			if(version != -1)
 			{
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='javascript:setVersionAliasInActiveBackbone(\"Default\",\"" + 
+				str +=  "<a href='#' onclick='setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
 						version + "\"); return false;' title='Make '" + configName + "' version " + version + 
 						" the 'Default' table version " + 
@@ -2148,7 +2148,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='javascript:popUpVersionAliasForm(); return false;' "+
+				str +=  "<a href='#' onclick='popUpVersionAliasForm(); return false;' "+
 						"title='Assign an Alias you specify to '" + configName + 
 						"' version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -2166,7 +2166,7 @@
 			//display mockup link (mockup always present)
 			str += " ";
 			if(-1 != version)				
-				str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+				str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
 			str += _MOCKUP_VIEW_NAME;
 			if(-1 != version)				
@@ -2180,7 +2180,7 @@
 					configVersion = configVersions[j].getAttribute("value")
 					str += " ";
 					if(configVersion != version)
-						str +=  "<a href='#' onclick='javascript:setupSpecificConfig(\"" + configName +
+						str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 							"\",\"" + configVersion + 
 							"\", \"" + backLinkStr + "\"); return false;'>";
 					str += ((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
@@ -2254,12 +2254,12 @@
 			
 			//create structure for call to createTableViewOutputStr
 			{
-				var colIsBoolArray 	= [];				
+				var colTypes = [];				
 				var cols = [];
 				var typeDivStr;
 				
 				//add types (first column is for row numbers)
-				//	and fill colIsBoolArray
+				//	and fill colTypes
 				{
 					var boolTypes 		= ["OnOff","TrueFalse","YesNo"];
 					var colType,colDataType,isStatusType;
@@ -2269,12 +2269,14 @@
 					for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
 					{
 						cols[cols.length-1].push("");
-						colIsBoolArray.push(false);	
+						colTypes.push("Header");
 					}
+					//handle data columns
 					for(var c=0;c<colHdrs.length;++c)
 					{
-						colType = colTypes[c].getAttribute("value");
+						colType = colTypeEls[c].getAttribute("value");
 						colDataType = colDataTypes[c].getAttribute("value");
+						
 						
 						typeDivStr = "";
 						typeDivStr += "<div style='font-size:12px' title='";		
@@ -2294,7 +2296,7 @@
 							{
 								isStatusType = true; break;
 							}
-						colIsBoolArray.push(isStatusType);
+						colTypes.push(isStatusType?"Bool":colType);
 					}
 				}
 					
@@ -2329,11 +2331,11 @@
 					//invert so it can be inverted again in transposeTableView()
 					_tableViewIsTransposed = !_tableViewIsTransposed; 
 					transposeOutput = true;			
-					str += createTableViewOutputStr(cols,colIsBoolArray,transposeOutput,colsIsArray);
+					str += createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray);
 					_tableViewIsTransposed = !_tableViewIsTransposed; 
 				}
 				else
-					str += createTableViewOutputStr(cols,colIsBoolArray,transposeOutput,colsIsArray);
+					str += createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray);
 			}
 				
 			str += "</table>";
@@ -2346,7 +2348,7 @@
 				str += "";
 			else
 				str += "style='display:none' ";							
-			str += "href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += "href='#' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2359,7 +2361,7 @@
 				str += "";
 			else
 				str += "style='display:none' ";							
-			str += "href='#' onclick='javascript:addRow(" + r + "); return false;'>";
+			str += "href='#' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2635,7 +2637,7 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-					treeViewHandlerStr_ += "<a href='#' onclick='javascript:evaluateJS(\"" + treeViewBackLinkStr_ + 
+					treeViewHandlerStr_ += "<a href='#' onclick='evaluateJS(\"" + treeViewBackLinkStr_ + 
 							"\"); return false;'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
@@ -2643,11 +2645,11 @@
 				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 				//						treeGroupName_ + "\",\"" +
 				//						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
-				//				treeViewHandlerStr_ += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+				//				treeViewHandlerStr_ += "<a href='#' onclick='" + refreshLinkStr + 
 				//						"; return false;'>Refresh</a>";	
 				//treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				
-				treeViewHandlerStr_ += "<a href='#' onclick='javascript:expandTreeChildrenDepth(); return false;' " + 
+				treeViewHandlerStr_ += "<a href='#' onclick='expandTreeChildrenDepth(); return false;' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
 						"(Hot-keys: + , &gt; , } , A , E )" +
@@ -2655,7 +2657,7 @@
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onclick='javascript:hideTreeChildrenDepth(); return false;'" + 
+				treeViewHandlerStr_ += "<a href='#' onclick='hideTreeChildrenDepth(); return false;'" + 
 						"title='Hide all children at deepest depth.\n\n" +
 						"(Hot-keys: - , &lt; , { , Z , M )" +
 						"\nNote: hot keys will target the highlighted node.'" +
@@ -2728,7 +2730,7 @@
 				
 				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
-					"href='#' onclick='javascript:setupSpecificConfigGroup(\"" + configGroupName +
+					"href='#' onclick='setupSpecificConfigGroup(\"" + configGroupName +
 					"\",\"" + configGroupKey + "\",\"" + backLinkStr + "\"); return false;'>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
 				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
@@ -2739,7 +2741,7 @@
 				
 				//add Activate link
 				treeViewHandlerStr_ += " <a id='treeView-ConfigGroupActivateLink' " +
-						"href='#' onclick='javascript:activateSystemConfig(\"" + configGroupName +
+						"href='#' onclick='activateSystemConfig(\"" + configGroupName +
 						"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
@@ -4136,29 +4138,38 @@
 			var name,key; //only filled in if withWarningsStr != ""
 			if(displayErrors)
 			{
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
+				try
 				{
-					Debug.log(err,Debug.HIGH_PRIORITY);				
-					
-					Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
-
-					//try to find group name and key
-					//	if found, show activate with warnings button
-					var i = err.indexOf("'")+1;//("activating group '") + ("activating group '").length;
-					name = err.substr(i,err.indexOf("'",i)-i).split("(");
-					if(name.length == 2)
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
 					{
-						key = name[1].split(")")[0] | 0; //force integer
-						name = name[0];					
-												
-						//add ignore warnings Activate link
-						withWarningsStr += " <a href='#' onclick='javascript:activateSystemConfig(\"" + 
-								name +
-								"\",\"" + key + "\",1); return false;'>"; //ignore warnings
-						withWarningsStr += "Activate " + 
-								name + "(" + key + ") w/warnings ignored</a>";
+						Debug.log(err,Debug.HIGH_PRIORITY);				
+						
+						Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
+	
+						//try to find group name and key
+						//	if found, show activate with warnings button
+						var i = err.indexOf("'")+1;//("activating group '") + ("activating group '").length;
+						name = err.substr(i,err.indexOf("'",i)-i).split("(");
+						if(name.length == 2)
+						{
+							key = name[1].split(")")[0] | 0; //force integer
+							name = name[0];					
+													
+							//add ignore warnings Activate link
+							withWarningsStr += " <a href='#' onclick='activateSystemConfig(\"" + 
+									name +
+									"\",\"" + key + "\",1); return false;'>"; //ignore warnings
+							withWarningsStr += "Activate " + 
+									name + "(" + key + ") w/warnings ignored</a>";
+						}
 					}
+				}
+				catch(e)
+				{
+					Debug.log("Missing request response. " +
+							"Something is very wrong. Did the server crash?",Debug.HIGH_PRIORITY);
+					return;
 				}
 			}
 			
@@ -4170,10 +4181,12 @@
 									  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
 									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+									  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+									  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
 									  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
 									  
-			var activeConfigHeaders = ["Context","Backbone","Configuration"];
+			var activeConfigHeaders = ["Context","Backbone","Iterate Group","Configuration"];
 			Debug.log("activeConfigGroups: " + _activeConfigGroups);
 			
 			var oldStr = document.getElementById("activeConfig").innerHTML;
@@ -4185,11 +4198,8 @@
 			for(var i=0;i<1 && i<activeConfigHeaders.length;++i)
 			{
 				str += "<tr><td style='text-align:left'>";
-				if(i==2)
-					str += "Active " + activeConfigHeaders[i] + ": ";//"Last Initialized " + activeConfigHeaders[i] + "... ";
-				else
-					str += "Active " + activeConfigHeaders[i] + ": ";
 				
+				str += "Active " + activeConfigHeaders[i] + ": ";				
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
 				
@@ -4200,14 +4210,14 @@
 				}
 				else
 				{
-					str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
+					str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + _activeConfigGroups[i*2] +
 					"\",\"" + _activeConfigGroups[i*2+1] + "\"); return false;'>";
 					str += _activeConfigGroups[i*2] + " (" + _activeConfigGroups[i*2+1] + ")</a>";
 				}
 				//str += "<br>";
 
 				str += "</td><td style='text-align:left; padding-left:20px;'>";
-				str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + 
+				str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + 
 						_activeConfigGroups[i*2] + 
 									"\",\"" + 
 									_activeConfigGroups[i*2+1] + "\"); return false;'>Tree-view</a>";								
@@ -4443,7 +4453,7 @@
 				Debug.log("configMap " + configMap);
 				//return;
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+				DesktopContent.XMLHttpRequest("Request?RequestType=" +
 						"&groupName=" +	(groupTypeName + "Group" + "WizToLatest") +
 						"&ignoreWarnings=" + (ignoreWarnings?1:0),
 						configMap, 
@@ -4538,8 +4548,12 @@
 		//saveGroupAndActivate
 		function saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 		{
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
-					groupName, configMap, 
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+					"&groupName=" +	groupName +
+					"&allowDuplicates=0" +
+					"&lookForEquivalent=1" +
+					"", //end get data
+					configMap, //end post data
 					function(req)
 					{
 				var err = DesktopContent.getXMLValue(req,"Error");
@@ -4707,13 +4721,13 @@
 					backLinkStr = backLinkStr.replace(/"/g, "\\\"");
 				Debug.log("Back-link = " + backLinkStr);
 
-				str += "<a href='#' onclick='javascript:evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
+				str += "<a href='#' onclick='evaluateJS(\"" + backLinkStr + "\"); return false;'>Back</a>";
 				str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			}
 			
 			var refreshLinkStr = "setupConfigCreator(\"" + 
 					preSelectStr + "&backLinkStr=" + backLinkStr + "\");"; 
-			str += "<a href='#' onclick='javascript:" + refreshLinkStr + 
+			str += "<a href='#' onclick='" + refreshLinkStr + 
 					"; return false;'>Refresh</a>";
 			str += "<br>";
 
@@ -4722,7 +4736,7 @@
 			
 			str += "<div id='createGroupInfo'></div><br>";
 			
-			var createButtonStr = "<button type='button' onmouseup='javascript:" +
+			var createButtonStr = "<button type='button' onmouseup='" +
 					"popUpSaveNewGroupForm(document.getElementById(\"newConfigName\").value," +
 					"-1,1);" + //sourceGroupKey, sourceType
 					//createConfigGroup()'
@@ -4747,17 +4761,17 @@
 			str += "<tr><td>";
 			
 			var title = "Select/Deselect checkboxes based on this selection.";
-			str += "<a href='#' onclick='javascript:selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
-					"<a href='#' onclick='javascript:selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
-					"<a href='#' onclick='javascript:selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
-					"<a href='#' onclick='javascript:selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
-					"<a href='#' onclick='javascript:selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
+			str += "<a href='#' onclick='selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
+					"<a href='#' onclick='selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
+					"<a href='#' onclick='selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
+					"<a href='#' onclick='selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
+					"<a href='#' onclick='selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td colspan='2' style='white-space: nowrap;'>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
-			str += "<a href='#' onclick='javascript:versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
-					"<a href='#' onclick='javascript:versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
-					"<a href='#' onclick='javascript:popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
+			str += "<a href='#' onclick='versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
+					"<a href='#' onclick='versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
+					"<a href='#' onclick='popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
 			str += "</td>";
 			str += "</tr>";
 			
@@ -4771,7 +4785,7 @@
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='#' onclick='javascript:" +
+				str += "<a style='text-decoration:none;color:black;' href='#' onclick='" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 						" return false;'>";
@@ -5072,11 +5086,11 @@
 			str += "New Configuration Group Created: <b class='bold-header'>" +
 					name + " (" + key + ")</b>"; 
 			str += "<br>Goto its ";
-			str += "<a href='#' onclick='javascript:setupSpecificConfigGroup(\"" + name + 
+			str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Member-view</a> or ";
-			str += "<a href='#' onclick='javascript:setupConfigGroupTreeView(\"" + name + 
+			str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Tree-view</a>, or ";
-			str += "<a href='#' onclick='javascript:activateSystemConfig(\"" + name + 
+			str += "<a href='#' onclick='activateSystemConfig(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Activate</a> it.";
 			
 			el.innerHTML = str;
@@ -5167,7 +5181,7 @@
 			var cols = [];
 			var newCols = [];
 
-			var colIsBoolType = getTableViewColIsBoolType(rows);
+			var colTypes = getTableViewColTypes(rows);
 			var val;
 			
 			if(!_tableViewIsTransposed) //reading from normal view
@@ -5294,7 +5308,7 @@
 			
 
 			//create output string based on cols
-			str += createTableViewOutputStr(cols,colIsBoolType);
+			str += createTableViewOutputStr(cols,colTypes);
 			el.innerHTML = str;		
 			versionHasChanged();
 			
@@ -5326,90 +5340,7 @@
 				};
 			}
 			
-			////////////done 
-			
-			
-//			var el = document.getElementById("SubSystemTable");
-//			var rows = el.getElementsByTagName("tr");
-//			if(src < 0 || src >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-//			{
-//				Debug.log("Error: Illegal source row of '" + src + 
-//						"' given. Row must be less than " + 
-//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-//				return;
-//			}
-//			if(src+srcCount-1 < 0 || src+srcCount-1 >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-//			{
-//				Debug.log("Error: Illegal last source row of '" + (src+srcCount-1) + 
-//						"' given. Row must be less than " + 
-//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-//				return;
-//			}
-//			if(dest < -1 || dest >= rows.length - _CONFIG_DATA_ROW_OFFSET)
-//			{
-//				Debug.log("Error: Illegal destination row of '" + dest + 
-//						"' given. Use '-1' for a new row, otherwise row must be less than " + 
-//						(rows.length- _CONFIG_DATA_ROW_OFFSET), Debug.HIGH_PRIORITY);
-//				return;
-//			}
-//
-//			//steps:
-//			//	- add destination row
-//			//	- for each src col 
-//			//		- dest[col] = src[col]
-//
-//			//if(deleteSrc) --dest;	//when move, add before target row
-//			
-//			//get col types for bool coloring
-//			var colIsBoolType = getTableViewColIsBoolType(rows);
-//			var boolTypeTrues = ["On","True","Yes"];
-//			
-//			var inputDest = dest;
-//			for(var r=0;r<srcCount;++r,++src,++dest)
-//			{
-//				if(inputDest == -1) //new row, so point to last row for addRow use
-//					dest = rows.length - _CONFIG_DATA_ROW_OFFSET;				
-//	
-//				//get source row before adding row
-//				var srcCols = rows[_CONFIG_DATA_ROW_OFFSET+src].getElementsByTagName("td");
-//				
-//				addRow(dest); 	
-//				Debug.log("src=" + src + " dest=" + dest);
-//				
-//				//get destination row after add
-//				el = document.getElementById("SubSystemTable");
-//				rows = el.getElementsByTagName("tr");
-//				
-//				var val;
-//				var destCols = rows[_CONFIG_DATA_ROW_OFFSET+dest].getElementsByTagName("td");
-//				for(var c=1;c<srcCols.length;++c)
-//				{
-//					Debug.log("copy c=" + c + " srcHTML=" + srcCols[c].innerHTML);
-//					val = srcCols[c].innerHTML;
-//					destCols[c].innerHTML = val;
-//					if(colIsBoolType[c]) //colorize bool types
-//					{
-//						//determine if true value
-//						var isTrue = false;
-//						for(var i=0;i<boolTypeTrues.length;++i)
-//							if(boolTypeTrues[i] == val)
-//							{
-//								isTrue = true; break;
-//							}
-//						
-//						destCols[c].style.backgroundColor =
-//								(isTrue)?_TABLE_BOOL_TYPE_TRUE_COLOR:_TABLE_BOOL_TYPE_FALSE_COLOR;										
-//					}
-//				}
-//				
-//				if(dest < src) ++src; //to account for added row
-//				
-//				if(deleteSrc)
-//				{					
-//					deleteRow(src);
-//					--src;	//to account for deleted row
-//				}
-//			}
+			////////////done 			
 		}	
 		
 		//setupFindAndReplace
@@ -6658,8 +6589,9 @@
 			_editingCell = true;
 			_editingCellEl = el;
 			_editingCellPos = [r,c];
+			_editingCellType = colType;
 			
-			_editingCellElOldValue = el.textContent;//el.innerHTML;
+			_editingCellElOldValue = el.textContent;
 			var str = "";		
 			var optionIndex = -1;
 					
@@ -6719,46 +6651,52 @@
 					{			
 						if(!i)//check for arbitraryBool flag
 						{
+							var needToContinue = false;
+
 							if(_tableFixedChoiceData[c][i].indexOf("arbitraryBool=") == 0)
 							{
 								//found arbitraryBool flag								
 								allowFixedChoiceArbitraryEdit = _tableFixedChoiceData[c][i][
 											("arbitraryBool=").length] == "1"?true:false;
 								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
-								continue;
+								needToContinue = true;
 							}
 							else
 							{
 								//else no flag found, so treat as fixed choice option
 								++optionCount; //count as an option in dropdown
 							}
+							
+							//before the first option is added, add preamble and default
+							{
+								str += "<div style='" +
+										"white-space:nowrap;" +
+										"margin:-4px -2px -4px 1px;width:" + 						
+										(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
+										"px; height:" + (el.offsetHeight-8) + "px'>";
+
+								str += "<select  onkeydown='keyHandler(event)' " +
+										"id='fixedChoice-editSelectBox' " +
+										"style='" + 
+										"float:left;" +
+										//"margin:-4px -2px -4px 1px;" +
+										"width:" + 
+										(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
+										"'>";
+
+								//default value is assumed in list
+								str += "<option>";
+								str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
+								str += "</option>";
+							}
+							
+							if(needToContinue) continue;
 						}		
 						else
 							++optionCount; //count as an option in dropdown
 						
 						
-						if(optionCount == 1) //before the first option is added, add preamble and default
-						{
-							str += "<div style='" +
-									"white-space:nowrap;" +
-									"margin:-4px -2px -4px 1px;width:" + 						
-									(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
-									"px; height:" + (el.offsetHeight-8) + "px'>";
-
-							str += "<select  onkeydown='keyHandler(event)' " +
-									"id='fixedChoice-editSelectBox' " +
-									"style='" + 
-									"float:left;" +
-									//"margin:-4px -2px -4px 1px;" +
-									"width:" + 
-									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px" + 
-									"'>";
-
-							//default value is assumed in list
-							str += "<option>";
-							str += decodeURIComponent(_tableDefaultRowValues[c]);	//can display however
-							str += "</option>";
-						}
+						
 						
 						
 						
@@ -6877,8 +6815,44 @@
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
 						">";
 			}
-						
-			str += _OK_CANCEL_DIALOG_STR;		
+			
+
+			//Add OK | CANCEL
+			//	if link, add GOTO 'button'
+			{
+				var controlString;  
+				
+				if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
+				{
+					var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
+							_version + "\\\");";
+					
+					var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
+					controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
+					w += ("width:95px;").length;
+					controlString += "width:150px;"; //needs to be wider
+					controlString += _OK_CANCEL_DIALOG_STR.substr(w,
+							_OK_CANCEL_DIALOG_STR.length-6-w);//remove closing </div>
+					controlString += " | " +
+							"<a class='popUpOkCancel' href='#' onclick='setupSpecificConfig(\"" + 
+							_editingCellElOldValue +
+							"\",\"\",\"" + backLinkStr + "\"); event.stopPropagation();' " +
+							"onmouseup='event.stopPropagation();'" +
+							"style='color:rgb(44, 44, 187);' " +
+							"title='Go-to Link Table' " +
+							">" +
+							"<b style='color:rgb(44, 44, 187);font-size: 16px;'>Goto</b></a>";
+					controlString += "</div>";
+				}
+				else
+					controlString = _OK_CANCEL_DIALOG_STR;
+				
+				str += controlString;
+			}
+				
+			
+					
+			
 			
 			el.innerHTML = str;
 
@@ -7230,7 +7204,7 @@
 
 				var str = "<a id='" + 
 						"popUpDialog" + 
-						"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+						"-header' href='#' onclick='var el = document.getElementById(" +
 						"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 				str += "<div id='popUpDialog-div'>";				
@@ -7407,7 +7381,7 @@
 
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -7468,7 +7442,7 @@
 						modTblStr += ",";
 
 
-					modTblStr += "<a style='color:black' href='#' onclick='javascript:" +								
+					modTblStr += "<a style='color:black' href='#' onclick='" +								
 							"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 							" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 							"title='Click to edit the comment for this group' " +
@@ -7492,7 +7466,7 @@
 				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 						"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='javascript:" +
+				str += "<a href='#' onclick='" +
 						"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 						"var forFirefox = (el.checked = !el.checked);" +
 						" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -7504,7 +7478,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='javascript:" +
+				str += "<a href='#' onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -7605,7 +7579,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='javascript:" +
+						str += "<a href='#' onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -7745,13 +7719,22 @@
 						}						
 
 						var configName = DesktopContent.getXMLValue(req,"savedName");
-						var version = DesktopContent.getXMLValue(req,"savedVersion");
-
-						Debug.log("Successfully created new table '" + configName + "-v" + 
-								version + "'",Debug.INFO_PRIORITY);
+						var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
+						var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion")|0; //as int
+										
+						var scratchNotice = (ConfigurationAPI._SCRATCH_VERSION == (savedVersion|0))?_SCRATCH_VIEW_NAME:savedVersion;
+										
+						if(foundEquivalentVersion)
+							Debug.log("Found equivalent version '" + scratchNotice +
+									"' for table '" +
+									configName + ".' ", Debug.INFO_PRIORITY);
+						else
+							Debug.log("New persistent version '" + scratchNotice +
+									"' for table '" +
+									configName + "' was successfully created.", Debug.INFO_PRIORITY);
 
 						//update tree member table version based on result
-						treeMemberVersions_[treeMemberIndex] = version;					
+						treeMemberVersions_[treeMemberIndex] = savedVersion;					
 
 						++numberOfReturns;
 
@@ -7815,6 +7798,7 @@
 				var affectedConfigGroups = [];
 				var affectedContextGroups = [];
 				var affectedBackboneGroups = [];
+				var affectedIterateGroups = [];
 				
 				// first organize and order by group type: config, context, backbone
 				for(var i=0;i<affectedGroupEls.length;++i)
@@ -7881,6 +7865,8 @@
 							affectedContextGroups.push(groupIndex);
 						else if(groupType == "Backbone")
 							affectedBackboneGroups.push(groupIndex);
+						else if(groupType == "Iterate")
+							affectedIterateGroups.push(groupIndex);
 						else
 						{	
 							Debug.log("Invalid Group Type determined '" + groupType +
@@ -7923,6 +7909,7 @@
 					//		var affectedConfigGroups = [];
 					//		var affectedContextGroups = [];
 					//		var affectedBackboneGroups = [];
+					//		var affectedIterateGroups = [];
 					
 					numberOfRequests = 0;		//re-use
 					numberOfReturns = 0;		//re-use
@@ -7941,7 +7928,8 @@
 					//		these arrays:
 					//		var affectedConfigGroups = [];
 					//		var affectedContextGroups = [];
-					//		var affectedBackboneGroups = [];					
+					//		var affectedBackboneGroups = [];
+					//		var affectedIterateGroups = [];					
 					function localSaveAndActivateGroup(orderedGroupListIndex)
 					{
 						//complete save and activate for group specified by 
@@ -7972,6 +7960,15 @@
 							if(orderedGroupListIndex - offsetIndex < 
 									affectedBackboneGroups.length)
 								i = affectedBackboneGroups[orderedGroupListIndex - offsetIndex]
+						}
+						
+						if(i == -1)
+						{
+							offsetIndex += affectedBackboneGroups.length;
+							
+							if(orderedGroupListIndex - offsetIndex < 
+									affectedIterateGroups.length)
+								i = affectedIterateGroups[orderedGroupListIndex - offsetIndex]
 						}
 						
 						Debug.log("affectedGroupIndex " + i);
@@ -8141,7 +8138,8 @@
 							reqStr = ""; //reuse
 							reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 									"&groupName=" + affectedGroupNames[i] +
-									"&allowDuplicates=1" +
+									"&allowDuplicates=0" +
+									"&lookForEquivalent=1" +
 									"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 									"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
 							Debug.log("reqStr = " + reqStr);
@@ -8198,9 +8196,17 @@
 								var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 								affectedGroupKeys.push(newGroupKey);
 
+								var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+								if(foundEquivalentKey)	
+									Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+											" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+								else
+									Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+											" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
 								//need to modify root group name if changed
-								Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-										" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+								
 
 								//activate if option was selected
 								if(activatingSavedGroups)
@@ -10533,8 +10539,20 @@
 					{
 						Debug.log("Error try-catch: " + err);
 					}
+					
 					_editingCellEl.innerHTML = "";
-					_editingCellEl.appendChild(document.createTextNode(str));					
+
+					if(_editingCellType.indexOf("ChildLink-") == 0 && 
+							str != "NO_LINK")
+					{
+						var astr = "";
+						astr += "<a href='#'>"; //for show
+						astr += str;
+						astr += "</a>";
+						_editingCellEl.innerHTML = astr;
+					}
+					else
+						_editingCellEl.appendChild(document.createTextNode(str));					
 				}
 				else
 				{		
@@ -10546,7 +10564,20 @@
 	
 					str = "";
 					str += selVal;
-					_editingCellEl.innerHTML = str;		
+
+					_editingCellEl.innerHTML = "";
+					
+					if(_editingCellType.indexOf("ChildLink-") == 0 && 
+							str != "NO_LINK")
+					{
+						var astr = "";
+						astr += "<a href='#'>"; //for show
+						astr += str;
+						astr += "</a>";
+						_editingCellEl.innerHTML = astr;
+					}
+					else						
+						_editingCellEl.appendChild(document.createTextNode(str)); //_editingCellEl.innerHTML = str;		
 					
 					//assume no child link will be named a boolean word
 					var boolTypeTrues =  ["On","True","Yes"];
@@ -10596,8 +10627,20 @@
 				{
 					Debug.log("Error try-catch: " + err);
 				}
+				
 				_editingCellEl.innerHTML = "";
-				_editingCellEl.appendChild(document.createTextNode(str));
+
+				if(_editingCellType.indexOf("ChildLink-") == 0 && 
+						str != "NO_LINK")
+				{
+					var astr = "";
+					astr += "<a href='#'>"; //for show
+					astr += str;
+					astr += "</a>";
+					_editingCellEl.innerHTML = astr;
+				}
+				else
+					_editingCellEl.appendChild(document.createTextNode(str));
 			}
 			
 			_editingCell = false;
@@ -10627,32 +10670,57 @@
 			if(_editingCellEl) //return old value, convert from text to html
 			{
 				var isTreeView = document.getElementById("treeView-ConfigGroupLink")?true:false;
-							
 								
-				if(isTreeView && treeEditingNodeType_.indexOf("link") == 0 
-						 && treeEditingNodeType_ != "link-comment")
+				if(isTreeView)
 				{
-					//if canceling from link edit, show tooltip
-					tableLinkTooltip("We noticed you canceled your link edit.");
+					if(treeEditingNodeType_.indexOf("link") == 0 
+							&& treeEditingNodeType_ != "link-comment")
+					{
+						//if canceling from link edit, show tooltip
+						tableLinkTooltip("We noticed you canceled your link edit.");
+					}
+
+					if(treeEditingNodeType_ == "value-bool" ||
+							treeEditingNodeType_.indexOf("link") == 0 ||
+							treeEditingNodeType_ == "table-newGroupRow" || 
+							treeEditingNodeType_ == "table-newUIDRow") 
+					{
+						//take old value as HTML for bool values
+						_editingCellEl.innerHTML = _editingCellElOldValue;
+
+						//show again nav context menu
+						try
+						{
+							if(treeEditingNodeType_.indexOf("link") == 0)
+								document.getElementById("treeNode-LinkContextMenuTD-" + 
+										treeEditingNodeIdString_).style.display = "block";
+						}
+						catch(e)
+						{
+							Debug.log("Link does not have context menu? " + e);							
+						}
+					}
+					else
+					{
+						_editingCellEl.innerHTML = "";
+						_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+					}
 				}
-				
-				if(isTreeView && (treeEditingNodeType_ == "value-bool" ||
-						treeEditingNodeType_.indexOf("link") == 0 ||
-						treeEditingNodeType_ == "table-newGroupRow" || 
-						treeEditingNodeType_ == "table-newUIDRow")) 
-				{
-					//take old value as HTML for bool values
-					_editingCellEl.innerHTML = _editingCellElOldValue;
-					
-					//show again nav context menu
-					if(treeEditingNodeType_.indexOf("link") == 0)
-						 document.getElementById("treeNode-LinkContextMenuTD-" + 
-								 treeEditingNodeIdString_).style.display = "block";
-				}
-				else
+				else //!isTreeView
 				{
 					_editingCellEl.innerHTML = "";
-					_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
+					
+					if(_editingCellType.indexOf("ChildLink-") == 0 &&
+							_editingCellElOldValue != "NO_LINK")
+					{
+						var astr = "";
+						astr += "<a href='#'>"; //for show
+						astr += _editingCellElOldValue;
+						astr += "</a>";
+						_editingCellEl.innerHTML = astr;
+					}
+					else
+						_editingCellEl.appendChild(document.createTextNode(_editingCellElOldValue));
 				}
 
 				_editingCellEl.title = _editingCellElOldTitle;
@@ -10676,7 +10744,7 @@
 			var str = "";
 			var cols = [];
 
-			var colIsBoolType = getTableViewColIsBoolType(rows);
+			var colTypes = getTableViewColTypes(rows);
 			
 
 			if(!_tableViewIsTransposed) //reading from normal view
@@ -10757,7 +10825,7 @@
 			}
 			
 			//create output string based on cols
-			str += createTableViewOutputStr(cols,colIsBoolType);
+			str += createTableViewOutputStr(cols,colTypes);
 
 			el.innerHTML = str;		
 
@@ -10807,7 +10875,7 @@
 			var str = "";
 			var cols = [];
 			
-			var colIsBoolType = getTableViewColIsBoolType(rows);
+			var colTypes = getTableViewColTypes(rows);
 			
 			if(!_tableViewIsTransposed) //reading from normal view
 			{
@@ -10824,28 +10892,6 @@
 					++newr;
 				}				
 				
-//				var r = rowToDelete;
-//				//make sure el references the container of rows ("TR")
-//				while(el.childNodes[0].tagName != "TR")
-//					el = el.childNodes[0];
-//				el.removeChild(rows[r+_CONFIG_DATA_ROW_OFFSET]);
-//				
-//				//update all row numbers after row added
-//				for(var i=_CONFIG_DATA_ROW_OFFSET;i<rows.length;++i)
-//				{
-//					if(i < r) continue;
-//					
-//					str = (_dataOffset + (i-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-//					
-//					//add +/- row controls
-//					str += "<br><a href='#' onclick='javascript:addRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-//					str += "+";
-//					str += "</a>";
-//					str += "/<a href='#' onclick='javascript:deleteRow(" + (i-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
-//					str += "-";
-//					str += "</a>";							
-//					rows[i].childNodes[0].innerHTML = str;
-//				}
 			} // end normal view handling
 			else 					//reading from transposed view
 			{				
@@ -10875,7 +10921,7 @@
 				}					
 			} // end transpose view handling
 			
-			str = createTableViewOutputStr(cols,colIsBoolType);			
+			str = createTableViewOutputStr(cols,colTypes);			
 			el.innerHTML = str;
 			versionHasChanged();
 			
@@ -10931,7 +10977,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -10993,7 +11039,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11048,7 +11094,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11100,7 +11146,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11190,7 +11236,7 @@
 			
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
@@ -11272,7 +11318,7 @@
 							modTblStr += ",";
 						
 												
-						modTblStr += "<a style='color:black' href='#' onclick='javascript:" +								
+						modTblStr += "<a style='color:black' href='#' onclick='" +								
 								"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 								" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 								"title='Click to edit the comment for this group' " +
@@ -11296,7 +11342,7 @@
 					str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 							"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='javascript:" +
+					str += "<a href='#' onclick='" +
 							"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 							"var forFirefox = (el.checked = !el.checked);" +
 							" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -11308,7 +11354,7 @@
 					str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 							">";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='javascript:" +
+					str += "<a href='#' onclick='" +
 							"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 							"if(el.disabled) return false; " +
 							"var forFirefox = (el.checked = !el.checked);" +
@@ -11410,7 +11456,7 @@
 									(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 									">";
 							//add link so text toggles checkbox
-							str += "<a href='#' onclick='javascript:" +
+							str += "<a href='#' onclick='" +
 									"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 									"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 									" return false;'>";
@@ -11526,7 +11572,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11556,7 +11602,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='javascript:" +
+				str += "<a href='#' onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -11634,7 +11680,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='javascript:" +
+						str += "<a href='#' onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -11741,7 +11787,7 @@
 			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11836,7 +11882,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='javascript:var el = document.getElementById(" +
+					"-header' href='#' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11887,6 +11933,36 @@
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 			
+			//clean up [[ ]] from bitmap
+			// may only be necessary for backwards compatibility?
+			{
+				var x = 0;
+				var y = 0;
+				var c = 0;
+				var tmpStr = "";
+				for(var i=0;i<_tableUploadStr.length;++i)
+				{
+					if(_tableUploadStr[i] == '[')
+						++c; //increase number of closing brackets necessary 
+					else if(_tableUploadStr[i] == ']')
+						--c; //decrease number of closing brackets necessary 
+					
+					if(c) // if looking for a closing bracket.. block \n and ,
+					{
+						if(_tableUploadStr[i] == '\n')
+							tmpStr += "NNNEWLINNE";
+						else if(_tableUploadStr[i] == ',')
+							tmpStr += "CCCOMMACCC";
+						else
+							tmpStr += _tableUploadStr[i];
+					}
+					else
+						tmpStr += _tableUploadStr[i];
+				}
+				console.log(tmpStr);
+				_tableUploadStr = tmpStr;
+			}
+			
 			var srcRows = _tableUploadStr.split('\n');
 			var src = []; //src = [r][c]
 			for(var i=0;i<srcRows.length;++i)
@@ -11897,7 +11973,7 @@
 			var rows = el.getElementsByTagName("tr");				
 			var str = "";
 			var cols = [];
-			var colIsBoolType = getTableViewColIsBoolType(rows);
+			var colTypes = getTableViewColTypes(rows);
 			
 			var rowOffset = 0;
 			
@@ -11914,7 +11990,7 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c]);
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -11926,7 +12002,7 @@
 						for(var c=0;c<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c]);
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -12015,13 +12091,16 @@
 			
 
 			//create output string based on cols
-			str += createTableViewOutputStr(cols,colIsBoolType,0,true);
+			str += createTableViewOutputStr(cols,colTypes,
+					false /*transpose output*/,true /*cols is array*/);
 			
 			el.innerHTML = str;	
 			
 			//on succes remove popup
 			el = document.getElementById("popUpDialog"); 
 			if(el) el.parentNode.removeChild(el);	
+			
+			versionHasChanged();
 		}
 		
 		//popUpUploadCSVTableForm ~~
@@ -12047,7 +12126,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + //clear upload string on cancel!
-					"-header' href='#' onclick='javascript:_tableUploadStr = \"\"; var el = document.getElementById(" +
+					"-header' href='#' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";	
@@ -12066,7 +12145,7 @@
 			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
 					">";			
 			//add link so text toggles checkbox
-			str += "<a href='#' onclick='javascript:" +
+			str += "<a href='#' onclick='" +
 					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
 					"var forFirefox = (el.checked = !el.checked);" +					
 					"return false;'>";
@@ -12079,7 +12158,7 @@
 			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:110px;'> ";
 			str += "<input checked type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
 			//add link so text toggles checkbox
-			str += "<a href='#' onclick='javascript:" +
+			str += "<a href='#' onclick='" +
 					"var el = document.getElementById(\"popUpDialog-appendData\");" +
 					"var forFirefox = (el.checked = !el.checked);" +
 					"return false;'>";
@@ -12090,7 +12169,7 @@
 			//add append or prepend radop
 			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
 			//add link so text toggles checkbox
-			str += "<a href='#' onclick='javascript:" +
+			str += "<a href='#' onclick='" +
 					"var el = document.getElementById(\"popUpDialog-prependData\");" +
 					"var forFirefox = (el.checked = !el.checked);" +
 					"return false;'>";
@@ -12356,7 +12435,8 @@
 					reqStr = ""; //reuse
 					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 							"&groupName=" + affectedArr[0] +
-							"&allowDuplicates=1" +
+							"&allowDuplicates=0" +
+							"&lookForEquivalent=1" +
 							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 							"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);										
 					Debug.log(reqStr);
@@ -12413,10 +12493,17 @@
 						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
-						//need to modify root group name if changed
-						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+						
+						if(foundEquivalentKey)	
+							Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						else
+							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 
+						//need to modify root group name if changed
+						
 						//activate if option was selected
 						if(activatingSavedGroups)
 							activateSystemConfig(attemptedNewGroupName,newGroupKey);
@@ -12528,6 +12615,7 @@
 									}
 									Debug.log(configMap);
 
+									//FIXME -- use config API version of setGroupAliasInActiveBackbone
 									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
@@ -12537,7 +12625,7 @@
 										{							
 											Debug.log("Successfully modified the active Backbone group.\n" +
 													"Backbone group '" + retParams.groupName + " (" + 
-													retParams.groupKey + ")' was created and activated.",
+													retParams.groupKey + ")' was activated.",
 													Debug.INFO_PRIORITY);							
 										}
 
@@ -12621,7 +12709,9 @@
 						
 			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
 					"&dataOffset=" + _dataOffset + "&chunkSize=" + (rows.length-_CONFIG_DATA_ROW_OFFSET) +  
-					"&configName=" + _currentConfigName + "&version="+_version +
+					"&configName=" + _currentConfigName + 
+					"&version="+_version +
+					"&lookForEquivalent="+"1" +
 					"&temporary="+(temporary?1:0) +
 					"&tableComment=" + comment; 
 			Debug.log(dataStr);
@@ -12654,12 +12744,19 @@
 				}		
 				
 				var savedVersion = DesktopContent.getXMLValue(req,"savedVersion");
+				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion")|0; //as int
 				
 				var scratchNotice = (ConfigurationAPI._SCRATCH_VERSION == (savedVersion|0))?_SCRATCH_VIEW_NAME:savedVersion;
-				Debug.log("New persistent version '" + scratchNotice +
-						"' for table '" +
-						_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
 				
+				if(foundEquivalentVersion)
+					Debug.log("Found equivalent version '" + scratchNotice +
+							"' for table '" +
+							_currentConfigName + ".' ", Debug.INFO_PRIORITY);
+				else
+					Debug.log("New persistent version '" + scratchNotice +
+							"' for table '" +
+							_currentConfigName + "' was successfully created.", Debug.INFO_PRIORITY);
+
 				//handle group handling based on popup options
 				localHandleAffectedGroups(savedVersion);
 				
@@ -12715,7 +12812,12 @@
 			
 			//change link
 			el = document.getElementById(configName + "-currentVersionLink");
-			var str = el.href;
+//			el.onclick = function()
+//					{
+//							
+//					}
+			var str;
+			str = el.href;
 			var linkSplitArr = str.split(',');
 			str = ""; //build link href str back up with new version
 			for(var i=0;i<linkSplitArr.length;++i)
@@ -12726,7 +12828,7 @@
 				else
 					str += linkSplitArr[i];				
 			}
-			el.href = str;
+			str.href = str;
 			
 			//update existing
 			el = document.getElementById(configName + "-versions");
@@ -12749,7 +12851,7 @@
  					continue;
 				}
 				str += " ";
-				str += "<a href='#' onclick='javascript:changeMemberVersionForConfigGroup(\"" +
+				str += "<a href='#' onclick='changeMemberVersionForConfigGroup(\"" +
 						groupName + "\",\"" + groupKey + "\",\"" + configName + "\"," + 
 						"\"" + configNameArr[i] + "\"";
 				str += "); return false;'>" + configNameArr[i];
@@ -12921,6 +13023,7 @@
 					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
 							"&groupName=" + affectedGroupNames[i] +
 							"&allowDuplicates=0" +
+							"&lookForEquivalent=1" +
 							"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
 							"&groupComment=" + comment;										
 					Debug.log(reqStr);
@@ -12975,9 +13078,16 @@
 						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
+						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
+
+						if(foundEquivalentKey)	
+							Debug.log("Found equivalent group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+						else
+							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
+									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
+
 						//need to modify root group name if changed
-						Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-								" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
 						
 						specificGroupRequestHandler(req); //display new group
 						
@@ -13092,6 +13202,7 @@
 									}
 									Debug.log(configMap);
 
+									//FIXME use API 
 									saveGroupAndActivate("TableEditWizBackbone",configMap,
 											function(retParams)
 											{
@@ -13101,7 +13212,7 @@
 										{							
 											Debug.log("Successfully modified the active Backbone group.\n" +
 													"Backbone group '" + retParams.groupName + " (" + 
-													retParams.groupKey + ")' was created and activated.",
+													retParams.groupKey + ")' was activated.",
 													Debug.INFO_PRIORITY);							
 										}
 
@@ -13315,17 +13426,17 @@
 			);
 		}
 
-		//transposeTableView ~~
-		//	returns a bool array indicating the columns 
+		//getTableViewColTypes ~~
+		//	returns column types for each column and specially indicates the columns 
 		//	that have a bool type
-		function getTableViewColIsBoolType(rows)
+		function getTableViewColTypes(rows)
 		{
-			var colIsBoolArray 	= [];
+			var colTypes 	= [];
 			var boolTypes 		= ["OnOff","TrueFalse","YesNo"];	
 			
 			//init pre-data columns
 			for(var c=0;c<_CONFIG_DATA_COL_OFFSET;++c)
-				colIsBoolArray.push(false);	
+				colTypes.push(false);	
 			
 			//////////////////////////
 			{	//determine the boolean columns			
@@ -13339,12 +13450,11 @@
 						colType = rows[c].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
 						isStatusType = false;
 						for(var i=0;i<boolTypes.length;++i)
-							if(boolTypes[i] == 
-									colType)
+							if(boolTypes[i] == colType)
 							{
 								isStatusType = true; break;
 							}
-						colIsBoolArray.push(isStatusType);
+						colTypes.push(isStatusType?"Bool":colType);
 					}
 				}
 				else						//table is currently normal view, type is at row 0
@@ -13355,23 +13465,22 @@
 						colType = firstRowEls[c].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font
 						isStatusType = false;
 						for(var i=0;i<boolTypes.length;++i)
-							if(boolTypes[i] == 
-									colType)
+							if(boolTypes[i] == colType)
 							{
 								isStatusType = true; break;
 							}
-						colIsBoolArray.push(isStatusType);
+						colTypes.push(isStatusType?"Bool":colType);
 					}
 				}		
 			}
 			/////////// done determining bool columns
 			
-			return colIsBoolArray;
+			return colTypes;
 		}
 
 		//createTableViewOutputStr ~~
 		//	must exactly match the data table section of specificConfigRequestHandler()
-		function createTableViewOutputStr(cols,colIsBoolType,transposeOutput,colsIsArray)
+		function createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
 		{
 			var boolTypeTrues = ["On","True","Yes"];
 			var tdStyle;	
@@ -13475,7 +13584,7 @@
 					
 					//handle bool style
 					tdStyle = "";	
-					if(colIsBoolType[c]) //use r/c depending on source data
+					if(colTypes[c] == "Bool") //use r/c depending on source data
 					{
 						//determine if true value
 						var isTrue = false;
@@ -13522,16 +13631,24 @@
 						str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
 
 						//add +/- row controls
-						str += "<br><a href='#' onclick='javascript:addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "<br><a href='#' onclick='addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "+";
 						str += "</a>";
-						str += "/<a href='#' onclick='javascript:deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "/<a href='#' onclick='deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "-";
 						str += "</a>";	
 					}
 					else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
 						str += "Row";
-					else
+					else if(r >= _CONFIG_DATA_ROW_OFFSET && colTypes[c].indexOf("ChildLink-") == 0 && 
+							val != "NO_LINK")
+					{
+						//apply link 
+						str += "<a href='#'>"; //show link just for show ... goto is in Edit selectThisCell
+						str += val;
+						str += "</a>";
+					}
+					else					
 						str += val;
 					
 					//close table cell
@@ -13558,7 +13675,7 @@
 			var str = "";
 			var cols = [];
 			
-			var colIsBoolType = getTableViewColIsBoolType(rows);				
+			var colTypes = getTableViewColTypes(rows);				
 	
 			
 			if(!_tableViewIsTransposed) //reading from normal view and transposing
@@ -13573,7 +13690,7 @@
 				}
 
 				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType,true);							
+				str += createTableViewOutputStr(cols,colTypes,true /*transpose output*/);							
 				
 				document.getElementById("lastAddRowLink0").style.display = "none";
 				document.getElementById("lastAddRowLink1").style.display = "block";
@@ -13603,7 +13720,7 @@
 				}
 
 				//create output string based on cols
-				str += createTableViewOutputStr(cols,colIsBoolType, true);
+				str += createTableViewOutputStr(cols,colTypes,true /*transpose output*/);
 				
 				document.getElementById("lastAddRowLink0").style.display = "block";
 				document.getElementById("lastAddRowLink1").style.display = "none";
@@ -13740,6 +13857,7 @@
 			else
 			{
 				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
+				tel.parentNode.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)+50) + "px"; //div may need to expand to accomodate pencil is display				
 				sel.style.display = "none";
 				
 				if(tel.value == "") //fill with oldvalue for user convenience, if blank
@@ -13842,14 +13960,16 @@
 	<h1>Configuration GUI</h1>
 		
 		<div style='width:550px'>		
-	<a href='#' onclick='javascript:setupSystemViewMode(); return false;'>System View</a> 	&nbsp;&nbsp;
-	<a href='#' onclick='javascript:setupGroupViewMode(); return false;'>Group View</a>	&nbsp;&nbsp;
-	<a href='#' onclick='javascript:setupTableViewMode(); return false;'>Table View</a>	&nbsp;&nbsp;
+		
+	<a href='#' onclick='setupSystemViewMode(); return false;'>System View</a> 	&nbsp;&nbsp;
+	<a href='#' onclick='setupGroupViewMode(); return false;'>Group View</a>	&nbsp;&nbsp;
+	<a href='#' onclick='setupTableViewMode(); return false;'>Table View</a>	&nbsp;&nbsp;
 
 	<a style='margin-left:50px;' target="_blank" 
 			href="https://cdcvs.fnal.gov/redmine/projects/otsdaq/search?utf8=%E2%9C%93&wiki_pages=1&q=configuration+gui&all_words=1&issues=1&documents=1" 
 					title="Click to open ots documentation">
 	<img src="/WebPath/images/dashboardImages/icon-Help.png"></a>
+	
 		</div>
 	
 	<hr>

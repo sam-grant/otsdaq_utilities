@@ -1,7 +1,7 @@
 var selectedSecurityChoice_ = "";
 var IDs_ = ['NoSecurity', 'DigestAccessAuthentication'];//, 'ResetSecurityUserData'];//'Kerberos','ResetSecurityUserData'];
 var selection_ = [];
-INTERVAL_ = 10;
+INTERVAL_ = 1;
 state_ = document.getElementById("state");
 //////////////////////////
 nonSelectedRed = 2;

@@ -43,7 +43,9 @@ REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')"
 
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
-	echo "Repo directory found as: $(basename $p)"
+    if [ -d $p/.git ]; then
+		echo "Repo directory found as: $(basename $p)"
+	fi
     fi	   
 done
 
@@ -65,6 +67,7 @@ echo "=================="
 echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
+    if [ -d $p/.git ]; then
 	echo "Checking in $p"
 	cd $p
 	git pull
@@ -82,6 +85,7 @@ for p in ${REPO_DIR[@]}; do
 	echo
 	echo "=================="
 
+    fi	   
     fi	   
 done
 
@@ -159,12 +163,19 @@ if [ "x$1" == "x" ]; then
 	#copy tutorial launching scripts
 	echo
 	echo "updating tutorial launch scripts..."
+	rm $OTSDAQ_DIR/../../get_tutorial_data.sh
+	rm $OTSDAQ_DIR/../../get_tutorial_database.sh
 	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"	
-	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $OTSDAQ_DIR/../../
+	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	chmod 755 $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	
 	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"	
-	cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	echo "cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../
+	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo
 	echo "#######################################################################################################################"
@@ -212,9 +223,24 @@ if [ "x$1" == "x" ]; then
 	echo "#######################################################################################################################"
 	echo "#######################################################################################################################"
 		
+
 	
 	
+	echo
+	echo "#######################################################################################################################" 
+	echo "#######################################################################################################################" 
+	echo "Upgrading database (if needed)..."
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+	echo
 	
+	#TODO by lukhanin
+
+	echo
+	echo "#######################################################################################################################"
+	echo "#######################################################################################################################"
+		
+
 	
 	
 	

@@ -51,6 +51,8 @@ else {
 		var _cookieCodeStr = "otsCookieCode";
 		var _cookieUserStr = "otsCookieUser";
 		var _cookieRememberMeStr = "otsRememberMeUser";
+		var _BLACKOUT_COOKIE_STR = "TEMPORARY_SYSTEM_BLACKOUT";
+		var _system_blackout = false;
 		var _user = "";
 		var _displayName = "No-Login";
 		var _permissions = 0;
@@ -124,8 +126,21 @@ else {
 		var _loginPrompt = function() {
 		
 			Debug.log("loginPrompt " + _keepFeedbackText,Debug.LOW_PRIORITY);
-		
-			_deleteCookies(); //local logout
+					
+			if(_attemptedCookieCheck)
+				_deleteCookies(); //local logout/reset
+			
+			//if login screen already displayed then do nothing more
+			if(document.getElementById("Desktop-loginDiv"))
+			{
+				Debug.log("Login screen already up.");
+				if(_keepFeedbackText)
+				{
+					document.getElementById("loginFeedbackDiv").innerHTML = _keptFeedbackText;
+					_keepFeedbackText = false;
+				}
+				return;
+			}
 			
 			//refresh screen to nothing and then draw login
 			_closeLoginPrompt();
@@ -143,11 +158,22 @@ else {
 			str += "<b><u>Welcome to ots!</u></b><br /><br />";
 			str += "<table><td align='right'><div id='Desktop-loginContent'></div></td></table></td></table>";
 			ldiv.innerHTML = str;
-			if(_loginDiv) _loginDiv.appendChild(ldiv); //add centering elements to page
-			else return; //abandon, no login element being displayed
+			
+			//reset pointer (seems to get lost somehow)
+			Desktop.desktop.login.loginDiv = _loginDiv = document.getElementById("DesktopLoginDiv");
+			
+			if(!_loginDiv)
+				return; //abandon, no login element being displayed
+			
+			_loginDiv.appendChild(ldiv); //add centering elements to page			
 			
 			//now have centered in page div as ldiv
 			ldiv = document.getElementById("Desktop-loginContent");
+			if(!ldiv) //should never happen?
+			{
+				Debug.log("ldiv has no parent!");
+				return;
+			}
 
 			str = "";
 			var rememberMeName = _getCookie(_cookieRememberMeStr); //if remember me cookie exists, then use saved name assume remember me checked
@@ -246,7 +272,23 @@ else {
 		// 		use this as only method for refreshing and setting login cookie!!
 		//		sets 2 cookies, cookieCode to code and userName to _user
 		var _setCookie = function(code) {
+			
+			if(code == _BLACKOUT_COOKIE_STR)
+			{
+				Debug.log("maintaining cookie code = " + _cookieCode);
+				
+				var exdate = new Date();
+				exdate.setDate(exdate.getDate() + _DEFAULT_COOKIE_DURATION_DAYS);
+				var c_value;
+				c_value = escape(code) + ((_DEFAULT_COOKIE_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
+				document.cookie= _cookieCodeStr + "=" + c_value;
+
+				return;
+			}
+			
 			if(_user == "" || !code.length || code.length < 2) return; //only refresh/set cookies if valid user and cookie code
+			if(!_system_blackout && _cookieCode == code) return; //unchanged do nothing (unless coming out of blackout)
+			
 			_cookieCode = code;	//set local cookie code values
 			var exdate = new Date();
 			exdate.setDate(exdate.getDate() + _DEFAULT_COOKIE_DURATION_DAYS);
@@ -255,7 +297,8 @@ else {
 			document.cookie= _cookieCodeStr + "=" + c_value;
 			c_value = escape(_user) + ((_DEFAULT_COOKIE_DURATION_DAYS==null) ? "" : "; expires="+exdate.toUTCString());
 			document.cookie= _cookieUserStr + "=" + c_value;
-            
+			
+			//Debug.log("set cookie");
 			var ccdiv = document.getElementById("DesktopContent-cookieCodeMailbox");
             ccdiv.innerHTML = _cookieCode; //place in mailbox for desktop content
 			ccdiv = document.getElementById("DesktopContent-updateTimeMailbox");
@@ -308,15 +351,30 @@ else {
 			if(_sessionId.length != _DEFAULT_SESSION_STRING_LEN) return; //if no session id, fail			
 	
 			var code = _getCookie(_cookieCodeStr);
-			_user = _getCookie(_cookieUserStr);
+            _user = _getCookie(_cookieUserStr);
+            
 			if ((code != null && code != "") &&
-				(_user != null && _user != "")) {
+				(_user != null && _user != "")) 
+			{
+				Debug.log("Attempting browser cookie login.");
+				
 				//if cookie found, submit cookieCode and jumbled user to server to check if valid					
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=checkCookie","uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,_handleCookieCheck);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=checkCookie",
+						"uuid="+_uid+"&ju="+_jumble(_user,_sessionId)+"&cc="+code,
+						_handleCookieCheck);
 			}
-			else {					
-				Debug.log("No cookie found",Debug.LOW_PRIORITY);
-				_loginPrompt();		//no cookie, so prompt user  
+			else
+			{					
+				Debug.log("No cookie found (" + code + ")",Debug.LOW_PRIORITY);
+
+				//attempt CERT login
+				if(!_attemptedLoginWithCert)
+				{
+					Debug.log("Attempting CERT login.");
+					_attemptLoginWithCert();
+				}
+				else
+					_loginPrompt();		//no cookie, so prompt user 
 			}
 		}
 		
@@ -333,10 +391,16 @@ else {
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE)	//make user = display name if no login
 				_user = Desktop.getXMLValue(req,"pref_username");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
-			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
-				Debug.log("Login Successful",Debug.LOW_PRIORITY);
+			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) 
+			{ 	
+				//success!
+				Debug.log("Login Successful!",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie					
-				_applyUserPreferences(req);
+                _applyUserPreferences(req);
+
+                // Set user name if logged in using cert
+                if (Desktop.getXMLValue(req, "pref_username")) 
+                	_user = Desktop.getXMLValue(req, "pref_username");
 				
 				var activeSessionCount = parseInt(Desktop.getXMLValue(req,"user_active_session_count"));
 				if(activeSessionCount && _loginDiv) //only if the login div exists
@@ -346,23 +410,47 @@ else {
 				}
 				else				
 					_closeLoginPrompt(1); //clear login prompt
+				
+				//success!
+				
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
+				Desktop.desktopTooltip();
+				_attemptedCookieCheck = false;
+				return;
 			}
-			else { //login failed
-				Debug.log("Login failed " + cookieCode + " - " + _displayName,Debug.LOW_PRIORITY);				
+			else 
+			{ 
+				//login failed
+				
+				Debug.log("Login failed.");
+				//Debug.log("Debug failure... " + cookieCode + " - " +
+					//	_displayName + " - _attemptedLoginWithCert " + 
+						//_attemptedLoginWithCert,Debug.LOW_PRIORITY);				
 					
 				//set and keep feedback text
 				if(cookieCode == "1") //invalid uuid
-					_keptFeedbackText = "Sorry, your session has expired. Try again.";
+					_keptFeedbackText = "Sorry, your login session was invalid.<br>" +
+						"A new session has been started - please try again.";
+				else if(req && document.getElementById('loginInput3') && 
+						document.getElementById('loginInput3').value != "")	
+					_keptFeedbackText = "New Account Code (or Username/Password) not valid.";
 				else if(req)
 					_keptFeedbackText = "Username/Password not correct.";
 				else
 					_keptFeedbackText = "ots Server failed.";
 				_keepFeedbackText = true;
+				
+				if(_attemptedLoginWithCert)
+				{
+					Debug.log("Hiding feedback after CERT attempt.");
+					_keepFeedbackText = false;
+				}
+				
 	      		for(var i=1;i<3;++i) if(document.getElementById('loginInput'+i)) document.getElementById('loginInput'+i).value = ""; //clear input boxes
 
 	      		//refresh session id
 	    		_uid = _getUniqueUserId();
-				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);
+				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId);				
 	      	}
 		}
 		
@@ -370,19 +458,35 @@ else {
 			// handler for cookie check request from server
 			// current cookie code and display name is returned on success
 			// on failure, go to loginPrompt
+		var _attemptedCookieCheck = false;
 		var _handleCookieCheck = function(req) {			
+			
 			var cookieCode = Desktop.getXMLValue(req,"CookieCode");
 			_displayName = Desktop.getXMLValue(req,"DisplayName");
 			_permissions = Desktop.getXMLValue(req,"desktop_user_permissions");
-			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) { 	//success!
-				Debug.log("Cookie is good",Debug.LOW_PRIORITY);
+			
+			if(cookieCode && _displayName && cookieCode.length == _DEFAULT_COOKIE_STRING_LEN) 
+			{ 	
+				//success!
+				
+				Debug.log("Cookie is good!",Debug.LOW_PRIORITY);
 				_setCookie(cookieCode); //update cookie	
 				_applyUserPreferences(req);
 				_closeLoginPrompt(1); //clear login prompt
+				
+				//Note: only two places where login successful here in _handleCookieCheck() and in _handleLoginAttempt()				
+				Desktop.desktopTooltip();
+				_attemptedCookieCheck = false;
+				return;
 			}
-			else {
+			else 
+			{
 				Debug.log("Cookie is bad " + cookieCode.length + _displayName,Debug.LOW_PRIORITY);
-				_loginPrompt();		//no cookie, so prompt user 
+				
+				//attempt CERT login
+				Debug.log("Attempting CERT login.");
+				_attemptLoginWithCert();
+				//_loginPrompt();		//no cookie, so prompt user 
 			}
 		}
 		
@@ -398,6 +502,7 @@ else {
                 if(!req) 
                 {
                 	_loginPrompt();
+                	_killLogoutInfiniteLoop = true;
                 	return; //do nothing, because server failed
                 }
 				//try again
@@ -408,14 +513,38 @@ else {
 				if (_badSessionIdCount < 10)
 	                Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId","uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 				else
-					alert("Cannot establish session ID - failed 10 times");
+					Desktop.log("Cannot establish session ID - failed 10 times",Desktop.HIGH_PRIORITY);
 				
 				return;
 			} 
 			_badSessionIdCount = 0;
 
 			//successfully received session ID			
-			_sessionId = req.responseText;			
+			_sessionId = req.responseText;		
+			
+			
+			
+			//check if system blackout exists
+			if(!_attemptedCookieCheck &&
+					_getCookie(_cookieCodeStr) == _BLACKOUT_COOKIE_STR)
+			{
+				_loginPrompt();
+				Debug.log("There is a system wide blackout! (Attempts to login right now may fail - likely someone is rebooting the system)", Debug.WARN_PRIORITY);				
+				return;
+			}
+			
+			
+			
+			
+			if(_attemptedCookieCheck)
+			{
+				Debug.log("Already tried browser cookie login. Giving up.");
+				_loginPrompt();
+				return;
+			}
+			_attemptedCookieCheck = true;
+			
+			Debug.log("Attempting browser cookie login with new session ID.");
 			_checkCookieLogin();
 			_killLogoutInfiniteLoop = false;
 		}
@@ -425,7 +554,13 @@ else {
 		var _offerActiveSessionOptions = function(cnt) {
 		
 			ldiv = document.getElementById("Desktop-loginContent");
-
+			if(!ldiv) 
+			{
+				Debug.log("No login prompt, so not offering active session options.");
+				_closeLoginPrompt(1); //clear login prompt
+				return;
+			}
+			
 			str = "";
 			str += "<center>Warning! You currently have " + cnt + " other active session" + (cnt > 1?"s":"") + ".<br />";
 			str += "<div id='loginFeedbackDiv'>You can opt to force logout the other session" + (cnt > 1?"s":"") + ", " + 
@@ -541,7 +676,40 @@ else {
 				Debug.log("UUID: " + _uid)
 			}
 			
-         	_killLogoutInfiniteLoop = true; //prevent infinite logout requests, on server failure
+         	_killLogoutInfiniteLoop = false;  //prevent infinite logout requests, on server failure
+         			//document.getElementById("Desktop-loginContent")?
+         			//		false:true; //prevent infinite logout requests, on server failure
+		}
+		
+
+		//blackout ~
+		//	use to blackout all open sessions in the same browser
+		//	during known periods of server unavailability
+		this.blackout = function(setVal) {
+			setVal = setVal?true:false;
+			if(setVal == _system_blackout)
+				return; // do nothing if already setup with value
+						
+			if(setVal) //start blackout
+			{
+				_setCookie(_BLACKOUT_COOKIE_STR);
+			}
+			else //remove blackout
+			{
+				_setCookie(_cookieCode);				
+			}
+			
+			_system_blackout = setVal;
+			Debug.log("Login blackout " + _system_blackout);
+		}
+		
+		//isBlackout ~
+		//	use to check for existing system blackout from exernal sources
+		this.isBlackout = function() {
+			var cc = _getCookie(_cookieCodeStr);
+			if(!cc) return false; //may be undefined
+			//Debug.log("Checking for blackout signal = " + cc.substr(0,10));
+			return (cc == _BLACKOUT_COOKIE_STR);
 		}
 		
 		//getCookieCode --
@@ -550,7 +718,16 @@ else {
 		// This function just refreshes the cookie and returns the local cookieCode value.
 		// Note: should only refresh from user activity, not auto
 		this.getCookieCode = function(doNotRefresh) {
-			if(!doNotRefresh) _setCookie(_cookieCode); //refresh cookies
+			if(!doNotRefresh)
+			{
+				if(this.isBlackout())
+				{
+					Debug.log("Found an external blackout signal.");
+					return;
+				}
+				
+				_setCookie(_cookieCode); //refresh cookies
+			}
 			return _cookieCode;
 		}
         
@@ -587,7 +764,8 @@ else {
 		}
 		
 		this.attemptLogin = function() {
-       		Debug.log("Desktop Login Prompt Attempt Login ",Debug.LOW_PRIORITY);    	
+       		Debug.log("Desktop Login Prompt Attempt Login ",Debug.LOW_PRIORITY); 
+       		_attemptedLoginWithCert = false;
        		    			       		
 			var x = [];
 			for(var i=0;i<3;++i) x[i] = document.getElementById('loginInput'+i).value;
@@ -611,7 +789,25 @@ else {
        		Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid+"&nac="+document.getElementById('loginInput3').value
        			+"&ju="+_jumble(x[0],_sessionId)+"&jp="+_jumble(x[1],_sessionId),_handleLoginAttempt);        		
 		}
-			
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+        
+        var _attemptedLoginWithCert = false;
+        var _attemptLoginWithCert = function () {        	
+            Debug.log("Desktop Login Certificate Attempt Login ", Debug.LOW_PRIORITY);
+            
+            _attemptedLoginWithCert = true; //mark flag so that now error is displayed in login prompt for CERT failure
+            Desktop.XMLHttpRequest("LoginRequest?RequestType=cert", "uuid=" + _uid, _handleLoginAttempt);
+        }
+
 		//_applyUserPreferences
 		//	apply user preferences based on req if provided
 		//		window color should always have alpha of 0.9
@@ -680,7 +876,8 @@ else {
 			_uid = _getUniqueUserId();
 			if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS)	
 			{
-				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login	
+				this.loginDiv = _loginDiv = document.createElement("div"); //create holder for anything login
+				_loginDiv.setAttribute("id", "DesktopLoginDiv");
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=sessionId",
 							"uuid="+_uid,_handleGetSessionId); //if disabled, then cookieCode will return 0 to desktop
 			}
@@ -688,7 +885,7 @@ else {
 				Desktop.XMLHttpRequest("LoginRequest?RequestType=login","uuid="+_uid,_handleLoginAttempt); 
 			//else //no login prompt at all
 			
-			Debug.log("UUID: " + _uid);
+            Debug.log("UUID: " + _uid);
 		}
 		
 		this.setupLogin();

@@ -101,6 +101,7 @@ int main(int argc, char** argv)
 
 	std::string myPort_("3000"); 	//set default
 	std::string myFwdPort_("3001");	//set default
+	std::string myFwdIP_("127.0.0.1"); //set default
 	if(argc >= 2)
 	{
 		std::cout << "\n\n" << __FILE__ << "\t port parameter file:" <<
@@ -109,13 +110,16 @@ int main(int argc, char** argv)
 		if(fp)
 		{
 			char tmp[100];
-			char tmpPortStr[100];
+			char tmpParamStr[100];
 			fgets(tmp,100,fp);
-			sscanf(tmp,"%*s %s",tmpPortStr);
-			myPort_ = tmpPortStr;
+			sscanf(tmp,"%*s %s",tmpParamStr);
+			myPort_ = tmpParamStr;
 			fgets(tmp,100,fp);
-			sscanf(tmp,"%*s %s",tmpPortStr);
-			myFwdPort_ = tmpPortStr;
+			sscanf(tmp,"%*s %s",tmpParamStr);
+			myFwdPort_ = tmpParamStr;
+			fgets(tmp,100,fp);
+			sscanf(tmp,"%*s %s",tmpParamStr);
+			myFwdIP_ = tmpParamStr;
 			fclose(fp);
 		}
 		else //else use defaults
@@ -124,7 +128,7 @@ int main(int argc, char** argv)
 
 	}
 	std::cout << "\n\n" << __FILE__ << "\t Forwarding from: " << myPort_ <<
-			" to: " << myFwdPort_ << "\n\n" << std::endl;
+			" to: " << myFwdIP_ << ":" << myFwdPort_ << "\n\n" << std::endl;
 
 	int myFwdPort;
 	sscanf(myFwdPort_.c_str(),"%d",&myFwdPort);
@@ -145,7 +149,8 @@ int main(int argc, char** argv)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE; // use my IP
 
-	if ((rv = getaddrinfo(NULL,
+	if ((rv = getaddrinfo(
+			NULL,
 			myPort_.c_str(),
 			&hints,
 			&servinfo)) != 0)
@@ -209,7 +214,7 @@ int main(int argc, char** argv)
 	const int MF_POS_OF_MSG = 11;
 
 	//this should ip/port of Console xdaq app Receiver port
-	sendSockfd = makeSocket("127.0.0.1", myFwdPort, p);
+	sendSockfd = makeSocket(myFwdIP_.c_str(), myFwdPort, p);
 
 	while(1)
 	{
