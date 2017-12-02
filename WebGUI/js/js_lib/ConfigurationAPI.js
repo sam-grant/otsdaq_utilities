@@ -55,7 +55,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
-//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 //	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
@@ -1266,7 +1266,8 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 //
 ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		doNotIgnoreWarnings,doNotSaveAffectedGroups,
-		doNotActivateAffectedGroups,doNotSaveAliases)
+		doNotActivateAffectedGroups,doNotSaveAliases,
+		doNotIgnoreGroupActivationWarnings)
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
 
@@ -1587,7 +1588,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					//activate if option was selected
 					if(activatingSavedGroups) //allow to happen in parallel
 						ConfigurationAPI.activateGroup(attemptedNewGroupName,newGroupKey,
-								false /* ignoreWarnings */);
+								doNotIgnoreGroupActivationWarnings?false:true /* ignoreWarnings */);
 
 
 					if(allRequestsSent && 
@@ -1941,10 +1942,12 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 ConfigurationAPI.activateGroup = function(groupName, groupKey, 
 		ignoreWarnings)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup&groupName=" + 
-			groupName + "&groupKey=" + groupKey +
-			(ignoreWarnings?("&ignoreWarnings=" + ignoreWarnings):""),
-			"",
+	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+			"&groupName=" +	groupName + 
+			"&groupKey=" + groupKey +
+			"&ignoreWarnings=" + (ignoreWarnings?"1":"0") +
+			"", //end get data
+			"", //end post data
 			function(req) 
 			{
 		

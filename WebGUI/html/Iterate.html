@@ -513,7 +513,7 @@
                 
 				if(!_DEBUG_WOUT_SERVER)
                 ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
-                                         4, //down through command parameters
+                                         6, //down through command parameters
 										 _modifiedTables,
                                          localExtractTree
                                          );
@@ -580,109 +580,123 @@
                 
                 _commands = []; //clear
                 
-                var nodes = tree.children;
-                var nodeChildren;
-                var commandChildren;
-                var commandFieldsChildren;
-                var parameterChildren;
-                var countCommands = 0;
-                
-                var type,params; //to make command
-                
-                //for each plan field
-                //	find link to command group
-                //		for each command
-                //			fill command type
-                //			find link to parameters
-                //				fill parameters
-                for(var i=0;i<nodes.length;++i)
-                {                    
-                    nodeChildren = nodes[i].children;
-                    
-                    if(nodeChildren[0].nodeName != "value")    //asssume this is group link to commands
-                    {
-                        for(var j=0;j<nodeChildren.length;++j)
-                        {
-                            if(nodeChildren[j].nodeName == "node")
-                            {
-                                //found child node -- command UID level                            	
-                            	commandChildren = nodeChildren[j].children;
+                //try for any errors in format
+                try
+                {
+                	var nodes = tree.children;
+                	var nodeChildren;
+                	var commandChildren;
+                	var commandFieldsChildren;
+                	var parameterChildren;
+                	var parameterName;
+                	var targetTableCSVStr,targetUIDCSVStr;
+                	var targetChildren;
+                	var countCommands = 0;
 
-                                for(var k=0;k<commandChildren.length;++k)
-                                {   	
-                                    if(commandChildren[k].nodeName == "node")
-                                    {
-                                    	//found child node -- command field
-                                    	if(commandChildren[k].getAttribute("value") == "CommandType")
-                                    	{
-                                    		type = commandChildren[k].children[0].getAttribute("value");
-                                    		params = [];
-                                    	}
-                                    	else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
-                                    	{
-                                    		parameterChildren = commandChildren[k].children;
+                	var type,params; //to make command
 
-                                            for(var l=0;l<parameterChildren.length;++l)
-                                            {   	
-                                                if(parameterChildren[l].nodeName == "node")
-                                                {
-                                                	//found child node -- parameter field
-                                                	// take as parameter until the comment field is reached
-                                                	
-                                                	if(parameterChildren[l].getAttribute("value") == "CommentDescription")
-                                                		break;
-                                                	
-                                                	Debug.log("parameter name = " + parameterChildren[l].getAttribute("value"));
-                                                	                                                	
-                                                	params.push(parameterChildren[l].children[0].getAttribute("value"));
-                                                	
-                                                	Debug.log("parameter value = " + params[params.length-1]);                                                	
-                                                }
-                                            }
-                                    	}
-                                    }
+                	//for each plan field
+                	//	find link to command group
+                	//		for each command
+                	//			fill command type
+                	//			find link to parameters
+                	//				fill parameters
+                	for(var i=0;i<nodes.length;++i)
+                	{                    
+                		nodeChildren = nodes[i].children;
 
-                                }
+                		if(nodeChildren[0].nodeName != "value")    //asssume this is group link to commands
+                		{
+                			for(var j=0;j<nodeChildren.length;++j)
+                			{
+                				if(nodeChildren[j].nodeName == "node")
+                				{
+                					//found child node -- command UID level                            	
+                					commandChildren = nodeChildren[j].children;
 
-                                //at this point, have command type and params
-                                console.log(type);	
-                                console.log(params); 
-                                addCommand(type,params);
-                            }
-                        }
-                        
-                        Debug.log("countCommands = " + _commands.length);
-                    }
-                    
-                    /*
-                    str += "<b>" + nodes[i].getAttribute("value") + ":</b> ";
-                    
-                    //ConfigurationAPI.getDateString(date)
-                    nodeChildren = nodes[i].children;
-                    if(nodeChildren[0].nodeName == "value") //value node
-                    str += nodeChildren[0].getAttribute("value");
-                    else //asssume group link to commands
-                    {
-                        for(var j=0;j<nodeChildren.length;++j)
-                        {
-                            if(nodeChildren[j].nodeName == "node")
-                            {
-                                //found child node
-                                
-                                str += "<br>";
-                                str += "<b>" + nodes[i].getAttribute("value") + "/" +
-                                nodeChildren[j].getAttribute("value") + "</b>";
-                                ++countCommands;
-                            }
-                        }
-                        
-                        Debug.log("countCommands = " + countCommands);
-                        
-                        str += "<br>";
-                        str += "Number of Commands = " + countCommands;
-                    }
-                    str += "<br>";*/
+                					for(var k=0;k<commandChildren.length;++k)
+                					{   	
+                						if(commandChildren[k].nodeName == "node")
+                						{
+                							//found child node -- command field
+                							if(commandChildren[k].getAttribute("value") == "CommandType")
+                							{
+                								type = commandChildren[k].children[0].getAttribute("value");
+                								params = [];
+                							}
+                							else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
+                							{
+                								parameterChildren = commandChildren[k].children;
+
+                								for(var l=0;l<parameterChildren.length;++l)
+                								{   	
+                									if(parameterChildren[l].nodeName == "node")
+                									{
+                										//found child node -- parameter field
+                										// take as parameter until the comment field is reached
+
+                										parameterName = parameterChildren[l].getAttribute("value");
+                										if(parameterName == "CommentDescription")
+                											break;
+
+                										Debug.log("parameter name = " + parameterName);
+
+                										if(parameterName == "LinkToTargets")
+                										{
+                											//extract targets
+                											Debug.log("getting targets");
+                											targetTableCSVStr = "";
+                											targetUIDCSVStr = "";
+
+                											targetChildren = parameterChildren[l].children;
+
+                											for(var m=0;m<targetChildren.length;++m)
+                											{   	
+                												if(targetChildren[m].nodeName == "node")
+                												{
+                													//found target record
+                													//	second record is link
+                													//		first two nodes are uid and table
+                													targetUIDCSVStr += 
+                															targetChildren[m].children[1].getElementsByTagName(
+                																	"UID")[0].getAttribute("value");
+                													targetTableCSVStr += 
+                															targetChildren[m].children[1].getElementsByTagName(
+                																	"LinkConfigurationName")[0].getAttribute("value");                                                            	
+                												}
+                											} //end target loop
+
+                											params.push(targetTableCSVStr);
+                											params.push(targetUIDCSVStr);
+                										}
+                										else                                                
+                											params.push(parameterChildren[l].children[0].getAttribute("value"));
+
+                										Debug.log("parameter value = " + params[params.length-1]);                                                	
+                									}
+                								} //end parameter loop
+                							}
+                						}
+
+                					}
+
+                					//at this point, have command type and params
+                					console.log(type);	
+                					console.log(params); 
+                					addCommand(type,params);
+                				}
+                			}
+
+                			Debug.log("countCommands = " + _commands.length);
+                		}
+                	}
+                } //end try
+                catch(e)
+                {
+                	Debug.log("Invalid iteration plan loaded: " + e);
+                	_commands = []; //clear
                 }
+				
                 
                 localDrawIterationPlan();
                 
@@ -1228,10 +1242,10 @@
 								:"")]);
 						addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
 								[
-								"FEInterfaceConfiguration,FEInterfaceConfiguration",//"Tables":params[0],
-								"ExampleInterface0,ExampleInterface1",//"UIDs":params[1],
+								"FEInterfaceConfiguration",//"Tables":params[0],
+								"ExampleInterface0",//"UIDs":params[1],
 								1,//"DoTrackGroupChanges":params[2], 
-								"FEOtsUDPTemplateInterfaceConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+								"LinkToFETypeConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
 								5,//"FieldStartValue":params[4],
 								3]);//"FieldIterationStepSize":params[5]);
 						addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
