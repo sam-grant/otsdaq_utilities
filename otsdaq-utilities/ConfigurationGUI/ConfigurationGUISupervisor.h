@@ -101,44 +101,6 @@ private:
     std::map<std::string, time_t> 						userLastUseTime_;
 };
 
-/////
-struct TableEditStruct {
-	//everything needed for editing a table
-	ConfigurationBase* config_;
-	ConfigurationView* cfgView_;
-	ConfigurationVersion temporaryVersion_, originalVersion_;
-	bool createdTemporaryVersion_; //indicates if temp version was created here
-	bool modified_; //indicates if temp version was modified
-	std::string configName_;
-	/////
-	TableEditStruct(){ __SS__ << "impossible!" << std::endl; throw std::runtime_error(ss.str());}
-	TableEditStruct(const std::string& configName, ConfigurationManagerRW* cfgMgr)
-	:createdTemporaryVersion_(false)
-	,modified_(false)
-	,configName_(configName)
-	{
-		__COUT__ << "Creating Table-Edit Struct for " << configName_ << std::endl;
-		config_ = cfgMgr->getConfigurationByName(configName_);
-
-		if(!(originalVersion_ =
-				config_->getView().getVersion()).isTemporaryVersion())
-		{
-			__COUT__ << "Start version " << originalVersion_ << std::endl;
-			//create temporary version for editing
-			temporaryVersion_ = config_->createTemporaryView(originalVersion_);
-			cfgMgr->saveNewConfiguration(
-					configName_,
-					temporaryVersion_, true); //proper bookkeeping for temporary version with the new version
-
-			__COUT__ << "Created temporary version " << temporaryVersion_ << std::endl;
-			createdTemporaryVersion_ = true;
-		}
-		else //else table is already temporary version
-			__COUT__ << "Using temporary version " << temporaryVersion_ << std::endl;
-
-		cfgView_ = config_->getViewP();
-	}
-}; //end TableEditStruct declaration
 
 
 } //end ots namespace

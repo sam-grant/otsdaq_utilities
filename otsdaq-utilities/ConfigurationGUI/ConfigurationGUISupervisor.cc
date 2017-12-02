@@ -2619,6 +2619,11 @@ try
 		unsigned int groupIdCol = planTable.cfgView_->findCol(IterateConfiguration::planTableCols_.GroupID_);
 		unsigned int cmdTypeCol = planTable.cfgView_->findCol(IterateConfiguration::planTableCols_.CommandType_);
 
+
+		unsigned int targetGroupIdCol 	= targetTable.cfgView_->findCol(IterateConfiguration::targetCols_.GroupID_);
+		unsigned int targetTableCol 	= targetTable.cfgView_->findCol(IterateConfiguration::targetCols_.TargetLink_);
+		unsigned int targetUIDCol 		= targetTable.cfgView_->findCol(IterateConfiguration::targetCols_.TargetLinkUID_);
+
 		std::string groupLinkIndex = planTable.cfgView_->getColumnInfo(groupIdCol).getChildLinkIndex();
 		__COUT__ << "groupLinkIndex: " << groupLinkIndex << std::endl;
 
@@ -2631,11 +2636,13 @@ try
 					isGroup,commandUidLink);
 		}
 
+		unsigned int cmdRow, cmdCol;
+		std::string targetGroupName;
 
 		//Reset existing plan commands
 		{
 			std::string targetUID, cmdType;
-			unsigned int cmdRow;
+
 			for(unsigned int row=0;row < planTable.cfgView_->getNumberOfRows(); ++row)
 			{
 				targetUID = planTable.cfgView_->getDataView()[row][planTable.cfgView_->getColUID()];
@@ -2647,6 +2654,7 @@ try
 				{
 					__COUT__ << "Removing." << std::endl;
 
+
 					//delete linked command
 					//	find linked UID in table (mapped by type)
 					cmdType = planTable.cfgView_->getDataView()[row][cmdTypeCol];
@@ -2656,6 +2664,45 @@ try
 						cmdRow = commandTypeToCommandTableMap[cmdType].cfgView_->findRow(
 								commandTypeToCommandTableMap[cmdType].cfgView_->getColUID(),
 								planTable.cfgView_->getDataView()[row][commandUidLink.second]);
+
+						//before deleting row...
+						//look for target group
+						//	remove all targets in group
+						try
+						{
+							cmdCol = commandTypeToCommandTableMap[cmdType].cfgView_->findCol(
+									IterateConfiguration::commandTargetCols_.TargetsLinkGroupID_);
+							targetGroupName =
+									commandTypeToCommandTableMap[cmdType].cfgView_->getDataView()
+									[cmdRow][cmdCol];
+
+
+							for(unsigned int trow=0;
+									trow < targetTable.cfgView_->getNumberOfRows();
+									++trow)
+							{
+								//remove command from target group..
+								if(targetTable.cfgView_->isEntryInGroup(
+										trow,
+										commandTypeToCommandTableMap[cmdType].cfgView_->getColumnInfo(cmdCol).getChildLinkIndex(),
+										targetGroupName))
+								{
+									__COUT__ << "Removing target." << std::endl;
+									//remove command entry in plan table
+									if(targetTable.cfgView_->removeRowFromGroup(trow,
+											targetGroupIdCol,
+											targetGroupName,true /*deleteRowIfNoGroup*/))
+										--trow; //since row was deleted, go back!
+								}
+							}
+						}
+						catch(...)
+						{
+							__COUT__ << "No targets." << std::endl;
+						}
+
+						//now no more targets, delete row
+
 						commandTypeToCommandTableMap[cmdType].cfgView_->deleteRow(cmdRow);
 
 						commandTypeToCommandTableMap[cmdType].modified_ = true;
@@ -2732,8 +2779,7 @@ try
 		//	group should be "<plan>-Plan"
 
 
-		unsigned int row, cmdRow;
-		unsigned int cmdCol;
+		unsigned int row, tgtRow;
 		unsigned int targetIndex;
 		std::string targetStr, cmdUID;
 
@@ -2850,23 +2896,49 @@ try
 					//if targets, create group in target table
 
 					__COUT__ << "targets found for command UID=" << cmdUID << __E__;
+
+					//create link from command table to target
+					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
+							IterateConfiguration::commandTargetCols_.TargetsLink_);
+					commandTypeToCommandTableMap[command.type_].cfgView_->setValueAsString(
+							IterateConfiguration::TARGET_TABLE,
+							cmdRow,
+							cmdCol);
+
+					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
+							IterateConfiguration::commandTargetCols_.TargetsLinkGroupID_);
+					commandTypeToCommandTableMap[command.type_].cfgView_->setValueAsString(
+							cmdUID + "_Targets",
+							cmdRow,
+							cmdCol);
+
+					//create row(s) for each target in target table with correct groupID
+
 					for(const auto& target:command.targets_)
+					{
 						__COUT__ << target.table_ << " " << target.UID_ << __E__;
 
-					//create link from command table to  target
+						//create target entry in target table in group
+						tgtRow = targetTable.cfgView_->addRow(author,"commandTarget");
+						targetTable.cfgView_->addRowToGroup(
+								tgtRow,
+								targetGroupIdCol,
+								cmdUID + "_Targets");
 
-					//create row in target table with correct groupID
+						//set target table
+						targetTable.cfgView_->setValueAsString(
+								target.table_,
+								tgtRow,
+								targetTableCol);
 
-					//create link from target table to UID
-					cmdCol = commandTypeToCommandTableMap[command.type_].cfgView_->findCol(
-							IterateConfiguration::targetCols_.GroupID_);
+						//set target UID
+						targetTable.cfgView_->setValueAsString(
+								target.UID_,
+								tgtRow,
+								targetUIDCol);
+					}
+				} //end target handling
 
-//					TargetLink_
-//					targetTable.cfgView_->setValueAsString(
-//							commandTypeToCommandTableMap[command.type_].configName_,
-//							row,
-//							commandUidLink.first);
-				}
 
 				//add link at plan level to created UID
 				planTable.cfgView_->setValueAsString(
@@ -2886,7 +2958,6 @@ try
 
 		} //end command loop
 
-		throw;
 
 		//commands are created in the temporary tables
 		//	validate with init
@@ -2902,6 +2973,9 @@ try
 			modifiedConfig.second.cfgView_->init();
 		}
 
+		targetTable.cfgView_->print();
+		targetTable.cfgView_->init(); //verify new table (throws runtime_errors)
+
 	} //end try for plan
 	catch(...)
 	{
@@ -2915,6 +2989,14 @@ try
 									"-v" << planTable.temporaryVersion_ << std::endl;
 			//erase with proper version management
 			cfgMgr->eraseTemporaryVersion(planTable.configName_,planTable.temporaryVersion_);
+		}
+
+		if(targetTable.createdTemporaryVersion_)
+		{
+			__COUT__ << "Erasing temporary version " << targetTable.configName_ <<
+									"-v" << targetTable.temporaryVersion_ << std::endl;
+			//erase with proper version management
+			cfgMgr->eraseTemporaryVersion(targetTable.configName_,targetTable.temporaryVersion_);
 		}
 
 		for(auto& modifiedConfig : commandTypeToCommandTableMap)
@@ -2941,10 +3023,17 @@ try
 			planTable.originalVersion_,true /*make temporary*/,
 			planTable.config_,planTable.temporaryVersion_,true /*ignoreDuplicates*/); //save temporary version properly
 
-	__COUT__ << "Final version is " << planTable.configName_ << "-v" <<
+	__COUT__ << "Final plan version is " << planTable.configName_ << "-v" <<
 			finalVersion << std::endl;
 
-	ConfigurationVersion finalCmdVersion;
+	finalVersion = saveModifiedVersionXML(xmldoc,cfgMgr,
+			targetTable.configName_,
+			targetTable.originalVersion_,true /*make temporary*/,
+			targetTable.config_,targetTable.temporaryVersion_,true /*ignoreDuplicates*/); //save temporary version properly
+
+	__COUT__ << "Final target version is " << targetTable.configName_ << "-v" <<
+			finalVersion << std::endl;
+
 	for(auto& modifiedConfig : commandTypeToCommandTableMap)
 	{
 		if(!modifiedConfig.second.modified_)
@@ -2960,14 +3049,14 @@ try
 			continue;
 		}
 
-		finalCmdVersion = saveModifiedVersionXML(xmldoc,cfgMgr,
+		finalVersion = saveModifiedVersionXML(xmldoc,cfgMgr,
 				modifiedConfig.second.configName_,
 				modifiedConfig.second.originalVersion_,true /*make temporary*/,
 				modifiedConfig.second.config_,
 				modifiedConfig.second.temporaryVersion_,true /*ignoreDuplicates*/); //save temporary version properly
 
 		__COUT__ << "Final version is " << modifiedConfig.second.configName_ << "-v" <<
-				finalCmdVersion << std::endl;
+				finalVersion << std::endl;
 	}
 
 	handleFillModifiedTablesXML(xmldoc,cfgMgr);
