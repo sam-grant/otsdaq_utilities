@@ -45,6 +45,7 @@ esac
 case ${version} in
     v1_01_04)
         artdaq_ver=v2_03_03
+        ;;
     v1_01_03)
         artdaq_ver=v2_03_00
         ;;
