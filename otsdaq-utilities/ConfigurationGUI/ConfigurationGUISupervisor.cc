@@ -2983,7 +2983,7 @@ try
 
 		//erase all temporary tables if created here
 
-		if(planTable.createdTemporaryVersion_)
+		if(planTable.createdTemporaryVersion_) //if temporary version created here
 		{
 			__COUT__ << "Erasing temporary version " << planTable.configName_ <<
 									"-v" << planTable.temporaryVersion_ << std::endl;
@@ -2991,7 +2991,7 @@ try
 			cfgMgr->eraseTemporaryVersion(planTable.configName_,planTable.temporaryVersion_);
 		}
 
-		if(targetTable.createdTemporaryVersion_)
+		if(targetTable.createdTemporaryVersion_) //if temporary version created here
 		{
 			__COUT__ << "Erasing temporary version " << targetTable.configName_ <<
 									"-v" << targetTable.temporaryVersion_ << std::endl;
@@ -3011,7 +3011,7 @@ try
 			}
 		}
 
-		throw;
+		throw; //re-throw
 	}
 
 	//all edits are complete and tables verified
@@ -4051,7 +4051,8 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 			//"DEEP" checking
 			//	load into cache 'recent' versions for this table
 			//		'recent' := those already in cache, plus highest version numbers not in cache
-			const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(); //do not refresh
+			const std::map<std::string, ConfigurationInfo>& allCfgInfo =
+					cfgMgr->getAllConfigurationInfo(); //do not refresh
 
 			auto versionReverseIterator = allCfgInfo.at(configName).versions_.rbegin(); //get reverse iterator
 			__COUT__ << "Filling up cached from " <<
@@ -4068,29 +4069,40 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 
 
 		duplicateVersion = config->checkForDuplicate(temporaryModifiedVersion,
-				originalVersion);
+				(!originalVersion.isTemporaryVersion() && !makeTemporary)?
+						ConfigurationVersion()://if from persistent to persistent, then include original version in search
+						originalVersion);
 
 		if(lookForEquivalent && !duplicateVersion.isInvalid())
 		{
 			//found an equivalent!
 			__COUT__ << "Equivalent table found in version v" << duplicateVersion << std::endl;
 
-			//erase and return equivalent version
+			//if duplicate version was temporary, do not use
+			if(duplicateVersion.isTemporaryVersion() && !makeTemporary)
+			{
+				__COUT__ << "Need persistent. Duplicate version was temporary. Abandoning duplicate." << __E__;
+				duplicateVersion = ConfigurationVersion(); //set invalid
+			}
+			else
+			{
+				//erase and return equivalent version
 
-			//erase modified equivalent version
-			cfgMgr->eraseTemporaryVersion(configName,temporaryModifiedVersion);
+				//erase modified equivalent version
+				cfgMgr->eraseTemporaryVersion(configName,temporaryModifiedVersion);
 
-			//erase original if needed
-			if(needToEraseTemporarySource)
-				cfgMgr->eraseTemporaryVersion(configName,originalVersion);
+				//erase original if needed
+				if(needToEraseTemporarySource)
+					cfgMgr->eraseTemporaryVersion(configName,originalVersion);
 
-			xmldoc.addTextElementToData("savedName", configName);
-			xmldoc.addTextElementToData("savedVersion", duplicateVersion.toString());
-			xmldoc.addTextElementToData("foundEquivalentVersion", "1");
+				xmldoc.addTextElementToData("savedName", configName);
+				xmldoc.addTextElementToData("savedVersion", duplicateVersion.toString());
+				xmldoc.addTextElementToData("foundEquivalentVersion", "1");
 
-			__COUT__ << "\t\t equivalent AssignedVersion: " << duplicateVersion << std::endl;
+				__COUT__ << "\t\t equivalent AssignedVersion: " << duplicateVersion << std::endl;
 
-			return duplicateVersion;
+				return duplicateVersion;
+			}
 		}
 
 		if(!duplicateVersion.isInvalid())
@@ -4116,7 +4128,8 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 
 
 	ConfigurationVersion newAssignedVersion =
-			cfgMgr->saveNewConfiguration(configName,temporaryModifiedVersion,makeTemporary);
+			cfgMgr->saveNewConfiguration(configName,temporaryModifiedVersion,
+					makeTemporary);
 
 	if(needToEraseTemporarySource)
 		cfgMgr->eraseTemporaryVersion(configName,originalVersion);
@@ -4637,8 +4650,7 @@ try
 	ConfigurationGroupKey newKey;
 	try
 	{
-		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,
-				ConfigurationGroupKey(),groupComment);
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,groupComment);
 	}
 	catch(std::runtime_error& e)
 	{
