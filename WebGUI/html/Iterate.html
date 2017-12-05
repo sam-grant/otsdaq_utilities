@@ -46,7 +46,7 @@
 		}
 		
 
-		/* =============== plan selector ================ */
+		/* =============== start plan selector ================ */
 		.recordAdd,
 		.recordAdd:hover {
 			text-decoration: none;
@@ -100,8 +100,117 @@
 			height: 30px;
 			width: 210px;
 		}
-		/* =============== end plan selector ================ */
 		
+		/* =============== end plan selector ================ */		
+		
+
+		/* =============== start plan detail ================ */
+		
+		#planDetail {
+			margin:			10px 10px 10px 0;
+		    padding-left: 	10px;
+			overflow: 		hidden;
+		}
+			
+		#plan-planName {
+			margin-bottom: 15px;
+		}
+		
+		.plan-depthBar {
+			padding-left: 	10px;
+			border-left: 	20px solid rgb(218, 194, 194);
+			margin-left: 	0px;
+		}
+		
+		.plan-command-overlay {
+			position:		absolute;
+			height:			15px;
+			width:			100%;			
+			left: 			-30px;			
+		}
+		
+		.plan-command-upOverlay {
+			top: 			-5px;
+			/*background-color: rgba(255, 0, 0, 0.2);*/
+		}
+		.plan-command-dnOverlay {
+			top: 			10px;
+			/*background-color: rgba(0, 0, 255, 0.2);*/
+		}
+
+		.plan-command-addCommand {
+		    display: 			block;
+		    width: 				100%;
+		    background-color: 	rgb(218, 194, 194);
+		    height: 			1px;
+		    position: 			absolute;
+		    top: 				0;
+		    left: 				0;
+		}
+		
+		.plan-command-addCommand-button,
+		.plan-command-addCommand-button:hover {
+			text-decoration: 	none;
+			font-size: 			30px;
+			font-weight: 		bold;
+			color: 				rgb(15, 152, 76);
+			cursor: 			pointer;
+			
+		    position: 			absolute;
+		    top: 				-16px;
+		    border: 			1px solid rgb(6, 82, 9);
+		    border-radius: 		15px;
+		    padding: 			0px 7px 0px 7px;
+		    left: 				-36px;
+		    height: 			32px;
+		}
+
+		.plan-command-addCommand-button {
+		    background-color: 	rgb(195, 230, 193);			
+		}
+		.plan-command-addCommand-button:hover {
+		    background-color: 	rgb(215, 255, 213);			
+		}
+
+		.plan-command-name {
+			float: 				left;		
+			position: 			relative;
+		    z-index: 			1000;	/* to keep on top and hoverable */	
+		    cursor:				pointer; /* for dragging */
+		    padding-right:		10px; 	/* to force overlap with delete for mouseover continuity */
+		}
+		
+		.plan-command-delete {
+			float: 				left;		
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			position: 			relative;
+		    z-index: 			1000;	/* to keep on top and clickable */
+		    margin-left:		-10px; 	/* to force overlap with name for mouseover continuity */		    
+		}
+		.plan-command-delete:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+		
+		.plan-command-params {
+			float: 				left;
+			margin: 			2px 0 0 10px;
+			white-space: 		nowrap;
+			width:				5px; /*to force on the same line as command name*/
+			position: 			relative;
+		    z-index: 			1000;	/* to keep on top and hoverable */	
+		}
+		
+		#plan-command-parameterDisplay {
+			position: 			absolute;
+			z-index: 			2000;	/* to keep on top of everything */
+			background-color: 	red;			
+		}
+
+		/* =============== end plan detail ================ */
 		
 		
 	</style>
@@ -141,7 +250,7 @@
 		//			Iteration group, they must do so in the Config GUI)
 		//
 		//		* Very top of "tree-view" choose the Iteration Plan name
-		//			* Then default to
+		//			* Then default to simple plan, e.g.:
 		//				- BEGIN_LABEL 0 (hide index from user - show by indent)
 		//				- Configure Configuration Group/System Alias
 		//				- REPEAT_LABEL 0 ( 0 times - when 0 show as END LOOP)
@@ -221,6 +330,8 @@
 		//			- group of 'Iteration Plan Commands' defining an 'Iteration Plan Sequence' 
 		//		||* Specific Command-Type (a table for each type)
 		//			- definition of parameters associated with the command type
+		//		|||* Iteration Targets
+		//			- group of links to UIDs to be targeted
 		
 		
 		var _topPane, _bottomPane;
@@ -269,6 +380,9 @@
         
         
         var _DEBUG_WOUT_SERVER = 0;
+        
+        var _shownAddCommandIndex = -1;
+        var _shownDeleteCommandIndex = -1;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -293,7 +407,7 @@
 			//addIterationPlan()
 			//deleteIterationPlan()
 			//addCommand(type,params)
-			//deleteCommand()
+			//deleteCommand(i)
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
 		
 				//Plan Control:
@@ -308,7 +422,13 @@
             //drawIterationPlan(plan)
             //  localExtractTree(tree)
             //  localDrawIterationPlan()
+        	//	localOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr)
+        	//	localClearDiv()
+        	//handlePlanOverlayMouseMove(addIndex,event)
+        	//handlePlanNameMouseMove(deleteIndex,event)
+    		//handlePlanParamsMouseMove(i,event)
         	//updateIterateStatus()	
+        	//bodyMouseMoveHandler()
 		
 				//Input Handlers:
 			//handleMouseOver(type,id) 
@@ -364,6 +484,10 @@
 			//get subset record uids and 
 			//	calls paint() and adds resize listener when done
 			initIterateData();
+			
+
+			//be careful to not override the window.onmousemove DesktopContent action
+			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler);
 						
 		} //end init()
 		
@@ -528,7 +652,7 @@
 			
             if(_DEBUG_WOUT_SERVER)
             {
-                //by pass server request and fake data
+                //bypass server request and fake data
                 var children = document.createElement("div");
                 var commands = [];
                 commands.push({ 	//BEGIN_LABEL
@@ -724,51 +848,356 @@
                 
                 //Display Concept:
                 //  Plan name at top left
-                //      Blue vertical bar extending down inset off left edge of name
+                //      Vertical bar extending down inset off left edge of name
                 //      Each Loop
                 //          New vertical bar extending down inset off BEGIN_LABEL command
-                
-                
-                
-                str += "Plan: " + plan;
-                str += "<br>";str += "<br>";
-                
+
+                str += localOpenDiv('plan-planName');                	
+                str += "<b>Plan Name:</b> " + plan;
+                str += "</div>";
+
+                //show created time
+        		//ConfigurationAPI.getDateString(date)
+
+                str += localClearDiv();
+
                 var commands = _commands;
                 var depth = 0;
                 var paramKeys;
-                
-                //make first vertical bar
-                str += "<div id='clearDiv'></div>";
-                str += "<div class='depthBar' id='depthBar-" + depth + "'>";
-                
-                for(var i=0;i<commands.length;++i)
-                {
-                    str += "<div id='clearDiv'></div>";
-                    
-                    str += "<div class='command' id='command-" + i + "'>";
-                    
-                    str += "<b>" + commands[i].type + ":</b> ";
-                    
-                    //show properties
-                    paramKeys = Object.keys(commands[i].param);
+                var i;
+                //make first vertical bar					
+                str += localOpenDiv("plan-depthBar-" + depth,
+                		"plan-depthBar");                  
+                {	//start depth 0 span -----------										
+                	for(i=0;i<commands.length;++i)
+                	{
+                		str += localClearDiv();
 
-                    for(var j=0;j<paramKeys.length;++j)
-                    	str += " " + paramKeys[j] + "=" + 
+                		//get command parameter keys
+                		paramKeys = Object.keys(commands[i].param); 
+                		
+                		//each command should have a half up/down overlay
+                		//	for showing add command +
+
+                		str += localOpenDiv(	//start i command ----------- 
+                				"plan-command-" + i,
+								"plan-command",
+								"position:relative");                  		
+
+                		//command name
+                		str += localOpenDiv(
+                				"plan-command-name-" + i,
+								"plan-command-name",
+								0 /*style*/,
+								0 /*mouseup*/,
+								"handlePlanNameMouseMove(" + i + ",event)" /*mousemove*/);
+                		str += "<b>" + (i+1) + ". " + commands[i].type + 
+                				(paramKeys.length?":":".") + //show period if params
+								"</b> ";
+                		str += "</div>";
+
+                		//delete command button
+                		str += localOpenDiv(
+                				"plan-command-delete-" + i,
+								"plan-command-delete",
+								"display:none" /*style*/,
+								"deleteCommand(" + i + ");" /*mouseup*/,
+								"handlePlanOverlayMouseMove(-1,event);" /*mousemove*/, //trick, to hide add icon and stop event propagation
+								"Delete this command." /*title*/);
+                		str += "";
+                		str += "</div>";
+
+                		//command params
+                		str += localOpenDiv(
+                				"plan-command-params-" + i,
+								"plan-command-params",
+								0 /*style*/,
+								0 /*mouseup*/,
+								"handlePlanParamsMouseMove(" + i + ",event);" /*mousemove*/);
+                		for(var j=0;j<paramKeys.length;++j)
+                			str += " " + paramKeys[j] + "=" + 
 							commands[i].param[paramKeys[j]];
-                                        
-                    
-                    //ConfigurationAPI.getDateString(date)
-                                        
-                    str += "<br>";
-                }
-                
-                el.innerHTML = str;
-                              
+                		str += "</div>";
+
+                		//up overlay
+                		str += localOpenDiv(
+                				"plan-command-upOverlay-" + i,
+								"plan-command-overlay plan-command-upOverlay",
+								0 /*style*/,
+								0 /*mouseup*/,
+								"handlePlanOverlayMouseMove(" + i + ",event)"/*mousemove*/);
+                		str += "</div>";
+
+                		//dn overlay
+                		str += localOpenDiv(
+                				"plan-command-dnOverlay-" + i,
+								"plan-command-overlay plan-command-dnOverlay",
+								0 /*style*/,
+								0 /*mouseup*/,
+								"handlePlanOverlayMouseMove(" + (i+1) + ",event)"/*mousemove*/);
+                		str += "</div>";
+
+                		//add command control
+                		str += localOpenDiv( //start add i command ----------- 
+                				"plan-command-addCommand-" + i,
+								"plan-command-addCommand",
+								"display:none" /*style*/,
+								0 /*mouseup*/,
+								"event.stopPropagation();"/*mousemove*/);
+                		{
+                			//start add command button
+                			str += localOpenDiv(  
+                					"plan-command-addCommand-button" + i,
+									"plan-command-addCommand-button",
+									0 /*style*/,
+									0 /*mouseup*/,
+									"event.stopPropagation();"/*mousemove*/, 
+									"Insert new command" /*title*/ );
+                			str += "+";
+                			str += "</div>";
+                		}
+                		str += "</div>"; //end add i command -----------
+
+                		str += "</div>"; //close i command ----------- 
+                	}
+
+                	//finished with commands, add "End" indicator
+                	//add last command control
+                	{
+                		str += localClearDiv();
+
+                		str += localOpenDiv(	//start end command ----------- 
+                				"plan-command-" + i,
+								"plan-command",
+								"position:relative");  
+
+                		str += "<b>" + (i+1) + ". PLAN_END." + "</b> ";
+
+                		//up overlay
+                		str += localOpenDiv(
+                				"plan-command-upOverlay-" + i,
+								"plan-command-overlay plan-command-upOverlay",
+								0 /*style*/,
+								0 /*mouseup*/,
+								"handlePlanOverlayMouseMove(" + i + ",event)"/*mousemove*/);
+                		str += "</div>";                	
+
+                		//add command control
+                		str += localOpenDiv( //start add end command ----------- 
+                				"plan-command-addCommand-" + i,
+								"plan-command-addCommand",
+								"display:none" /*style*/,
+								0 /*mouseup*/,
+								"event.stopPropagation();"/*mousemove*/);
+                		{
+                			//start add command button
+                			str += localOpenDiv(  
+                					"plan-command-addCommand-button" + i,
+									"plan-command-addCommand-button",
+									0 /*style*/,
+									0 /*mouseup*/,
+									"event.stopPropagation();"/*mousemove*/,
+									"Insert a new command.");
+                			str += "+";
+                			str += "</div>";
+                		} str += "</div>"; //end add end command -----------
+                		 
+                		str += "</div>"; //close end command -----------
+                	} //end last command span
+
+                } str += "</div>";  //end depth 0 span -----------
+
+                //done with assembling display string                
+                el.innerHTML = str;                              
                 
             } //end localDrawIterationPlan()
 			
+
+            //::::::::::::::::::::::::::::::::::::
+            function localOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,
+            		titleStr,mousedownStr)
+            {
+            	return "<div " + 
+            			(idStr?("id='" + idStr + "' "):"") + 
+            			(classStr?(" class='" + classStr + "' "):"") +
+            			(styleStr?(" style='" + styleStr + "' "):"") +
+            			(mouseupStr?(" onmouseup='" + mouseupStr + "' "):"") + 
+            			(mousemoveStr?(" onmousemove='" + mousemoveStr + "' "):"") + 
+            			(titleStr?(" title='" + titleStr + "' "):"") + 
+            			(mousedownStr?(" onmousedown='" + mousedownStr + "' "):"") + 						
+						">";
+            }
+            //::::::::::::::::::::::::::::::::::::
+            function localClearDiv()
+            {
+            	return "<div id='clearDiv'></div>";
+            }
+
 			
 		} //end drawIterationPlan()
+
+		//=====================================================================================
+		//handlePlanNameMouseMove ~~		
+		function handlePlanNameMouseMove(deleteIndex,event)
+		{
+			//Debug.log("handlePlanNameMouseMove " + deleteIndex);
+			
+			//pass along event
+			handlePlanOverlayMouseMove(deleteIndex,event);
+			
+			if(_shownDeleteCommandIndex == deleteIndex)
+				return;
+			
+			//if not current, then hide current and show new
+
+			try //try to hide, and ignore errors
+			{
+				if(_shownDeleteCommandIndex != -1)
+					document.getElementById("plan-command-delete-" + 
+							_shownDeleteCommandIndex).style.display = "none";
+			}
+			catch(e){} //ignore
+
+			_shownDeleteCommandIndex = deleteIndex;
+			if(_shownDeleteCommandIndex != -1)
+				document.getElementById("plan-command-delete-" + 
+					_shownDeleteCommandIndex).style.display = "block";
+		}
+		
+		//=====================================================================================
+		//handlePlanOverlayMouseMove ~~		
+		function handlePlanOverlayMouseMove(addIndex,event)
+		{
+			//show add + command icon in right place
+			
+			event.stopPropagation();
+			
+			//Debug.log("handlePlanOverlayMouseMove " + addIndex);
+			
+			if(_shownAddCommandIndex == addIndex)
+				return;
+			
+			//if not current, then hide current and show new			
+
+			try //try to hide, and ignore errors
+			{
+				if(_shownAddCommandIndex != -1)
+					document.getElementById("plan-command-addCommand-" + 
+							_shownAddCommandIndex).style.display = "none";
+			}
+			catch(e){} //ignore
+			
+			_shownAddCommandIndex = addIndex;
+			
+			if(_shownAddCommandIndex != -1)
+				document.getElementById("plan-command-addCommand-" + 
+						_shownAddCommandIndex).style.display = "block";
+		}
+		
+		//=====================================================================================
+		//handlePlanOverlayMouseMove ~~		
+		function handlePlanParamsMouseMove(i,event)
+		{
+			event.stopPropagation();
+			
+			//show parameters in easy to read fashion
+			
+			//remove all previous param displays
+			var el;
+			do
+			{
+				el = document.getElementById("plan-command-parameterDisplay");
+				if(el) el.parentNode.removeChild(el);
+			} while(el);
+			
+			if(i == -1) return;
+
+			Debug.log("handlePlanParamsMouseMove " + i);
+			
+    		//get command parameter keys
+			var paramKeys = Object.keys(_commands[i].param);
+
+			el = document.createElement("div");
+			el.setAttribute("id","plan-command-parameterDisplay");
+			var str = "";
+			
+			str += "<b>" + (i+1) + ". " + _commands[i].type +					
+					"</b>";
+			str += "<br>";
+			str += "Time Created: ";
+			str += "<br>";
+			str += "Parameter Count: " + paramKeys.length;
+			str += "<br>";
+			str += "<br>";
+			str += "<table>";			
+			
+			for(var j=0;j<paramKeys.length;++j)
+			{
+				str += "<tr>";
+				str += "<td style='text-align:right'>";
+				str += "<b>" + paramKeys[j] + ":</b> ";
+				str += "</td>";
+				str += "<td>";
+				str += _commands[i].param[paramKeys[j]];
+				str += "</td>";
+				str += "</tr>";
+			}
+			str += "</table>";	
+			
+			el.innerHTML = str;
+			
+			//get x, y
+			var parentEl = document.getElementById("plan-command-params-" + i);
+			//el.style.left = (40 /*from offsets in relative parents*/ +
+			//		parentEl.offsetLeft) + "px";
+			
+			var top = 0;
+			var left = 0;
+			var offsetParent; //save last valid offsetParent
+			
+			//accumulate parents
+			while(parentEl)
+				{top += parentEl.offsetTop; left += parentEl.offsetLeft;
+				offsetParent = parentEl; //save last valid offsetParent
+				parentEl = parentEl.offsetParent;}
+			
+			el.style.top = (top) + "px";
+			el.style.left = (left) + "px";
+			
+			//add child to params so that position is correct
+			// 	note: it has position:relative
+			offsetParent.appendChild(el);
+		}
+		
+		//=====================================================================================
+		//bodyMouseMoveHandler ~~
+		//	handles mouse movements on window body
+		function bodyMouseMoveHandler() 
+		{
+			//try hiding add command and ignore errors
+			if(_shownAddCommandIndex != -1)
+			{
+				try
+				{
+					document.getElementById("plan-command-addCommand-" + 
+						_shownAddCommandIndex).style.display = "none";
+				}
+				catch(e){}
+				_shownAddCommandIndex = -1; //clear
+			}
+			
+			//try hiding delete command and ignore errors
+			if(_shownDeleteCommandIndex != -1)
+			{
+				try
+				{
+					document.getElementById("plan-command-delete-" + 
+							_shownDeleteCommandIndex).style.display = "none";
+				}
+				catch(e){}
+				_shownDeleteCommandIndex = -1; //clear
+			}
+		}
 		
 		//=====================================================================================
 		//extractGETParameters ~~
@@ -1496,10 +1925,24 @@
 
 		//=====================================================================================
 		//deleteCommand ~~
-		//	TODO
-		function deleteCommand()
+		function deleteCommand(i)
 		{
-			Debug.log("deleteCommand");
+			Debug.log("deleteCommand " + i);
+			
+			DesktopContent.popUpVerification(
+					"Are you sure you want to delete the command <br>" +
+					(i+1) + ". " + _commands[i].type + "?",
+					localDelete,
+					0,"#efeaea",0,"#770000");
+
+            //::::::::::::::::::::::::::::::::::::
+            function localDelete()
+            {
+            	Debug.log("localDelete " + i);
+            	_commands.splice(i,1);
+            	drawIterationPlan(); //update display
+            }
+			
 		}	//end deleteCommand()
 
 		//=====================================================================================
