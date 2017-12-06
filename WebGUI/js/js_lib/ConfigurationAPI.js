@@ -61,7 +61,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
-// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
+// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables,silenceErrors)	
 // 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
 
 
@@ -4951,7 +4951,7 @@ ConfigurationAPI.removeClass = function(ele,cls)
 //			obj.tableComment
 //
 ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
-		recordArr,responseHandler,modifiedTables)
+		recordArr,responseHandler,modifiedTables,silenceErrors)
 {
 	var modifiedTablesListStr = "";
 	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
@@ -4984,8 +4984,9 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(modifiedTables);
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
 			return;
 		}
 

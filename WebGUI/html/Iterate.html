@@ -175,20 +175,26 @@
 		.plan-command-name {
 			float: 				left;		
 			position: 			relative;
-		    z-index: 			1000;	/* to keep on top and hoverable */	
-		    cursor:				pointer; /* for dragging */
-		    padding-right:		10px; 	/* to force overlap with delete for mouseover continuity */
+		    z-index: 			1000;		/* to keep on top and hoverable */	
+		    cursor:				pointer; 	/* for dragging */
+		    padding-right:		10px; 		/* to force overlap with delete for mouseover continuity */
+		    width:				260px;		/* to lineup parameters display */
 		}
 		
-		.plan-command-delete {
-			float: 				left;		
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+		.plan-command-deleteWrapper{
+			float: 				left;	
 			width: 				16px;
 			height: 			20px;
 			border: 			0;
 			position: 			relative;
-		    z-index: 			1000;	/* to keep on top and clickable */
-		    margin-left:		-10px; 	/* to force overlap with name for mouseover continuity */		    
+		    z-index: 			1000;		/* to keep on top and clickable */	
+		    margin-left:		-10px; 		/* to force overlap with name for mouseover continuity */
+		}
+		.plan-command-delete {	
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;	    
 		}
 		.plan-command-delete:hover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
@@ -197,21 +203,35 @@
 		
 		.plan-command-params {
 			float: 				left;
-			margin: 			2px 0 0 10px;
+			margin: 			2px 0 0 0;
 			white-space: 		nowrap;
-			width:				5px; /*to force on the same line as command name*/
+			width:				5px; 		/* to force on the same line as command name*/
 			position: 			relative;
-		    z-index: 			1000;	/* to keep on top and hoverable */	
+		    z-index: 			1000;		/* to keep on top and hoverable */
+		    padding-left:		15px;		/* to allow for mouse region to bring-up param display */
 		}
 		
 		#plan-command-parameterDisplay {
 			position: 			absolute;
-			z-index: 			2000;	/* to keep on top of everything */
-			background-color: 	red;			
-		}
+			z-index: 			2000;		/* to keep on top of everything */
+			background-color: 	rgb(218, 194, 194);			
+		    border-radius: 		10px 10px 0 0; /* square bottom because scrollbar looks weird otherwise */
+		    padding: 			10px;
+		    border: 			2px solid rgb(160, 102, 102);		
+		    overflow-x:			auto;
+		}		
 
 		/* =============== end plan detail ================ */
 		
+		#popUp-paramControls {
+			margin-top: 		20px;
+			text-align:			left;
+		}
+		
+		.popUp-param {
+			height: 			17px;
+			width: 				200px;
+		}
 		
 	</style>
 	
@@ -366,7 +386,7 @@
 		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
         var _commands = [];
         
-		var _COMMAND_TYPES = {};
+		var _COMMAND_TYPES = {}; //for now, keys are same as value, but value is (intended to be) display name
 		_COMMAND_TYPES.BEGIN_LABEL 				= "BEGIN_LABEL";
 		_COMMAND_TYPES.CHOOSE_FSM 				= "CHOOSE_FSM";
 		_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP 	= "CONFIGURE_ACTIVE_GROUP";
@@ -377,12 +397,25 @@
 		_COMMAND_TYPES.MODIFY_ACTIVE_GROUP 		= "MODIFY_ACTIVE_GROUP";
 		_COMMAND_TYPES.REPEAT_LABEL 			= "REPEAT_LABEL";
 		_COMMAND_TYPES.RUN 						= "RUN";
+		
+		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
+		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.CHOOSE_FSM] 				= ["NameOfStateMachine"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP] 	= [];
+		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ALIAS] 		= ["SystemAlias"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= ["CSVTargetTables","CSVTargetUIDs","FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= ["CSVTargetTables","CSVTargetUIDs","MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= ["CSVTargetTables","CSVTargetUIDs","DoTrackGroupChanges","RelativePathToField","FieldStartValue","FieldIterationStepSize"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= ["WaitForAllFrontEndsRunningThread","DurationInSeconds"];
         
         
         var _DEBUG_WOUT_SERVER = 0;
         
         var _shownAddCommandIndex = -1;
         var _shownDeleteCommandIndex = -1;
+        var _planIsModified = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -404,8 +437,10 @@
 				//Plan Editing:
 			//createEmptyIterateGroup()
 			//getIterationPlans()
-			//addIterationPlan()
+			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
 			//deleteIterationPlan()
+        	//showAddCommandDialog(insertIndex)
+        	//	localShowParamControls(commandKey)
 			//addCommand(type,params)
 			//deleteCommand(i)
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
@@ -421,14 +456,15 @@
 				//Display:
             //drawIterationPlan(plan)
             //  localExtractTree(tree)
-            //  localDrawIterationPlan()
-        	//	localOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr)
-        	//	localClearDiv()
+            //  localDrawIterationPlan()        	
+        	//		localCreateSaveButton()
         	//handlePlanOverlayMouseMove(addIndex,event)
         	//handlePlanNameMouseMove(deleteIndex,event)
     		//handlePlanParamsMouseMove(i,event)
         	//updateIterateStatus()	
         	//bodyMouseMoveHandler()
+        	//openDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr)
+    		//clearDiv()
 		
 				//Input Handlers:
 			//handleMouseOver(type,id) 
@@ -585,7 +621,7 @@
 			else 
 				str += "style='margin: -2px 16px -10px 0;' ";
 			str += "'>";			
-			str += "<a class='recordAdd' onclick='addIterationPlan(); return false;' ";			
+			str += "<a class='recordAdd' onclick='createIterationPlan(); return false;' ";			
 			str += "title='Create a new " + _recordsAlias + ".'" +
 					">";
 			str += "+";
@@ -821,7 +857,7 @@
                 	_commands = []; //clear
                 }
 				
-                
+                _planIsModified = false; //because just loaded
                 localDrawIterationPlan();
                 
             } // end localExtractTree()
@@ -842,8 +878,8 @@
                 el.innerHTML = ""; //clear
                 
                 if(!plan || plan == "")
-                	return;
-                 
+                	return;                 
+                
                 var str = "";
                 
                 //Display Concept:
@@ -852,26 +888,29 @@
                 //      Each Loop
                 //          New vertical bar extending down inset off BEGIN_LABEL command
 
-                str += localOpenDiv('plan-planName');                	
+                if(_planIsModified)
+                	str += localCreateSaveButton();
+                
+                str += openDiv('plan-planName');                	
                 str += "<b>Plan Name:</b> " + plan;
                 str += "</div>";
 
                 //show created time
         		//ConfigurationAPI.getDateString(date)
 
-                str += localClearDiv();
+                str += clearDiv();
 
                 var commands = _commands;
                 var depth = 0;
                 var paramKeys;
                 var i;
                 //make first vertical bar					
-                str += localOpenDiv("plan-depthBar-" + depth,
+                str += openDiv("plan-depthBar-" + depth,
                 		"plan-depthBar");                  
                 {	//start depth 0 span -----------										
                 	for(i=0;i<commands.length;++i)
                 	{
-                		str += localClearDiv();
+                		str += clearDiv();
 
                 		//get command parameter keys
                 		paramKeys = Object.keys(commands[i].param); 
@@ -879,13 +918,13 @@
                 		//each command should have a half up/down overlay
                 		//	for showing add command +
 
-                		str += localOpenDiv(	//start i command ----------- 
+                		str += openDiv(	//start i command ----------- 
                 				"plan-command-" + i,
 								"plan-command",
 								"position:relative");                  		
 
                 		//command name
-                		str += localOpenDiv(
+                		str += openDiv(
                 				"plan-command-name-" + i,
 								"plan-command-name",
 								0 /*style*/,
@@ -897,7 +936,8 @@
                 		str += "</div>";
 
                 		//delete command button
-                		str += localOpenDiv(
+                		str += openDiv(0,"plan-command-deleteWrapper");
+                		str += openDiv(
                 				"plan-command-delete-" + i,
 								"plan-command-delete",
 								"display:none" /*style*/,
@@ -906,9 +946,10 @@
 								"Delete this command." /*title*/);
                 		str += "";
                 		str += "</div>";
+                		str += "</div>";
 
                 		//command params
-                		str += localOpenDiv(
+                		str += openDiv(
                 				"plan-command-params-" + i,
 								"plan-command-params",
 								0 /*style*/,
@@ -920,7 +961,7 @@
                 		str += "</div>";
 
                 		//up overlay
-                		str += localOpenDiv(
+                		str += openDiv(
                 				"plan-command-upOverlay-" + i,
 								"plan-command-overlay plan-command-upOverlay",
 								0 /*style*/,
@@ -929,7 +970,7 @@
                 		str += "</div>";
 
                 		//dn overlay
-                		str += localOpenDiv(
+                		str += openDiv(
                 				"plan-command-dnOverlay-" + i,
 								"plan-command-overlay plan-command-dnOverlay",
 								0 /*style*/,
@@ -938,7 +979,7 @@
                 		str += "</div>";
 
                 		//add command control
-                		str += localOpenDiv( //start add i command ----------- 
+                		str += openDiv( //start add i command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
 								"display:none" /*style*/,
@@ -946,11 +987,11 @@
 								"event.stopPropagation();"/*mousemove*/);
                 		{
                 			//start add command button
-                			str += localOpenDiv(  
+                			str += openDiv(  
                 					"plan-command-addCommand-button" + i,
 									"plan-command-addCommand-button",
 									0 /*style*/,
-									0 /*mouseup*/,
+									"showAddCommandDialog(" + i + ")" /*mouseup*/,
 									"event.stopPropagation();"/*mousemove*/, 
 									"Insert new command" /*title*/ );
                 			str += "+";
@@ -964,9 +1005,9 @@
                 	//finished with commands, add "End" indicator
                 	//add last command control
                 	{
-                		str += localClearDiv();
+                		str += clearDiv();
 
-                		str += localOpenDiv(	//start end command ----------- 
+                		str += openDiv(	//start end command ----------- 
                 				"plan-command-" + i,
 								"plan-command",
 								"position:relative");  
@@ -974,7 +1015,7 @@
                 		str += "<b>" + (i+1) + ". PLAN_END." + "</b> ";
 
                 		//up overlay
-                		str += localOpenDiv(
+                		str += openDiv(
                 				"plan-command-upOverlay-" + i,
 								"plan-command-overlay plan-command-upOverlay",
 								0 /*style*/,
@@ -983,7 +1024,7 @@
                 		str += "</div>";                	
 
                 		//add command control
-                		str += localOpenDiv( //start add end command ----------- 
+                		str += openDiv( //start add end command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
 								"display:none" /*style*/,
@@ -991,7 +1032,7 @@
 								"event.stopPropagation();"/*mousemove*/);
                 		{
                 			//start add command button
-                			str += localOpenDiv(  
+                			str += openDiv(  
                 					"plan-command-addCommand-button" + i,
 									"plan-command-addCommand-button",
 									0 /*style*/,
@@ -1007,35 +1048,72 @@
 
                 } str += "</div>";  //end depth 0 span -----------
 
+
+                if(_planIsModified)
+                {
+                	str += clearDiv();
+                	str += "<br><br>";
+                	str += localCreateSaveButton();
+                }
+                
                 //done with assembling display string                
-                el.innerHTML = str;                              
+                el.innerHTML = str;    
+                
+
+                //::::::::::::::::::::::::::::::::::::
+                function localCreateSaveButton()
+                {
+                	str = "";
+                	str += "<input type='button'" +
+                			" onmouseup='" + 
+							"createIterationPlan(true /*useTargetPlanName*/,true /*useCommandsFromGUI*/);" +							
+							"' " + 
+                			" value='Save'" +
+							" title='" +
+							"Save the current modified Iteration Plan." +
+							"'/>";
+                	str += "&nbsp;&nbsp;&nbsp;"
+                	str += "<input type='button'" +
+                			" onmouseup='" + 
+							"createIterationPlan(false /*useTargetPlanName*/,true /*useCommandsFromGUI*/);" + 						
+							"' " + 
+                			" value='Save as...'" +
+							" title='" +
+							"Save the current modified Iteration Plan." +
+							"'/>";
+                	str += "<br><br>";
+                	return str;
+                } //end localCreateSaveButton()
                 
             } //end localDrawIterationPlan()
-			
-
-            //::::::::::::::::::::::::::::::::::::
-            function localOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,
-            		titleStr,mousedownStr)
-            {
-            	return "<div " + 
-            			(idStr?("id='" + idStr + "' "):"") + 
-            			(classStr?(" class='" + classStr + "' "):"") +
-            			(styleStr?(" style='" + styleStr + "' "):"") +
-            			(mouseupStr?(" onmouseup='" + mouseupStr + "' "):"") + 
-            			(mousemoveStr?(" onmousemove='" + mousemoveStr + "' "):"") + 
-            			(titleStr?(" title='" + titleStr + "' "):"") + 
-            			(mousedownStr?(" onmousedown='" + mousedownStr + "' "):"") + 						
-						">";
-            }
-            //::::::::::::::::::::::::::::::::::::
-            function localClearDiv()
-            {
-            	return "<div id='clearDiv'></div>";
-            }
+            
 
 			
 		} //end drawIterationPlan()
 
+		//=====================================================================================
+		//openDiv ~~		
+		function openDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,
+				titleStr,mousedownStr)
+		{
+			return "<div " + 
+					(idStr?("id='" + idStr + "' "):"") + 
+					(classStr?(" class='" + classStr + "' "):"") +
+					(styleStr?(" style='" + styleStr + "' "):"") +
+					(mouseupStr?(" onmouseup='" + mouseupStr + "' "):"") + 
+					(mousemoveStr?(" onmousemove='" + mousemoveStr + "' "):"") + 
+					(titleStr?(" title='" + titleStr + "' "):"") + 
+					(mousedownStr?(" onmousedown='" + mousedownStr + "' "):"") + 						
+					">";
+		} //end openDiv
+		
+		//=====================================================================================
+		//clearDiv ~~		
+		function clearDiv()
+		{
+			return "<div id='clearDiv'></div>";
+		} //end clearDiv
+		
 		//=====================================================================================
 		//handlePlanNameMouseMove ~~		
 		function handlePlanNameMouseMove(deleteIndex,event)
@@ -1044,6 +1122,9 @@
 			
 			//pass along event
 			handlePlanOverlayMouseMove(deleteIndex,event);
+
+			//remove all previous param displays
+			handlePlanParamsMouseMove(-1);
 			
 			if(_shownDeleteCommandIndex == deleteIndex)
 				return;
@@ -1062,7 +1143,7 @@
 			if(_shownDeleteCommandIndex != -1)
 				document.getElementById("plan-command-delete-" + 
 					_shownDeleteCommandIndex).style.display = "block";
-		}
+		} //end handlePlanNameMouseMove()
 		
 		//=====================================================================================
 		//handlePlanOverlayMouseMove ~~		
@@ -1092,13 +1173,13 @@
 			if(_shownAddCommandIndex != -1)
 				document.getElementById("plan-command-addCommand-" + 
 						_shownAddCommandIndex).style.display = "block";
-		}
+		} //end handlePlanOverlayMouseMove()
 		
 		//=====================================================================================
 		//handlePlanOverlayMouseMove ~~		
 		function handlePlanParamsMouseMove(i,event)
 		{
-			event.stopPropagation();
+			if(event) event.stopPropagation();
 			
 			//show parameters in easy to read fashion
 			
@@ -1111,8 +1192,12 @@
 			} while(el);
 			
 			if(i == -1) return;
+			
+			
+			if(document.getElementById("DesktopContent-verifyPopUp"))
+				return; //do not show if there is a popup
 
-			Debug.log("handlePlanParamsMouseMove " + i);
+			//Debug.log("handlePlanParamsMouseMove " + i);
 			
     		//get command parameter keys
 			var paramKeys = Object.keys(_commands[i].param);
@@ -1123,21 +1208,21 @@
 			
 			str += "<b>" + (i+1) + ". " + _commands[i].type +					
 					"</b>";
-			str += "<br>";
-			str += "Time Created: ";
+			//str += "<br>";
+			//str += "Time Created: ";
 			str += "<br>";
 			str += "Parameter Count: " + paramKeys.length;
 			str += "<br>";
 			str += "<br>";
-			str += "<table>";			
+			str += "<table>";		
 			
 			for(var j=0;j<paramKeys.length;++j)
 			{
 				str += "<tr>";
-				str += "<td style='text-align:right'>";
+				str += "<td>";
 				str += "<b>" + paramKeys[j] + ":</b> ";
 				str += "</td>";
-				str += "<td>";
+				str += "<td style='padding-right:10px'>"; 	//for nice spacing after scroll right
 				str += _commands[i].param[paramKeys[j]];
 				str += "</td>";
 				str += "</tr>";
@@ -1146,11 +1231,9 @@
 			
 			el.innerHTML = str;
 			
-			//get x, y
+			//get x, y from offset parents
 			var parentEl = document.getElementById("plan-command-params-" + i);
-			//el.style.left = (40 /*from offsets in relative parents*/ +
-			//		parentEl.offsetLeft) + "px";
-			
+					
 			var top = 0;
 			var left = 0;
 			var offsetParent; //save last valid offsetParent
@@ -1161,13 +1244,22 @@
 				offsetParent = parentEl; //save last valid offsetParent
 				parentEl = parentEl.offsetParent;}
 			
-			el.style.top = (top) + "px";
-			el.style.left = (left) + "px";
+			el.style.top = (top-15) + "px";
+			el.style.left = (left+15) + "px";
+
+			el.style.width = "";
+
+			var width = _bottomPane.offsetWidth - left - 25;
 			
-			//add child to params so that position is correct
-			// 	note: it has position:relative
+			el.onmousemove = function(event) {event.stopPropagation();} //prevent disappearing act from body mousemove
+			
+			//add child to offsetParent so that position is correct
 			offsetParent.appendChild(el);
-		}
+			
+			//make sure width is on screen
+			if(el.offsetWidth > width)
+				el.style.width = width + "px";			
+		} //end handlePlanParamsMouseMove()
 		
 		//=====================================================================================
 		//bodyMouseMoveHandler ~~
@@ -1197,7 +1289,10 @@
 				catch(e){}
 				_shownDeleteCommandIndex = -1; //clear
 			}
-		}
+			
+			//remove all previous param displays
+			handlePlanParamsMouseMove(-1);
+		} //end bodyMouseMoveHandler()
 		
 		//=====================================================================================
 		//extractGETParameters ~~
@@ -1546,18 +1641,24 @@
 
 
 		//=====================================================================================
-		//addIterationPlan ~~
-		function addIterationPlan()
+		//createIterationPlan ~~
+		function createIterationPlan(useTargetPlanName,useCommandsFromGUI)
 		{
-			Debug.log("addIterationPlan");
+			var planName;
 			
-			var newRowUID = prompt("Please enter a name for the new " + 
-					_recordsAlias + ":");
-			if(newRowUID)
-				newRowUID = newRowUID.trim();
-			else //prompt was cancelled
-				return;
-
+			if(!useTargetPlanName)
+			{
+				planName = prompt("Please enter a name for the new " +
+						_recordsAlias + ":");
+				if(planName)
+					planName = planName.trim();
+				else //prompt was cancelled
+					return;	//do nothing
+			}
+			else 
+				planName = _targetPlan;
+			
+			Debug.log("createIterationPlan " + planName);
 
 			localCreateIterationPlan();
 			return;
@@ -1575,18 +1676,27 @@
 				//	refresh
 
 				/////////////////////
-				ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,newRowUID,
+				ConfigurationAPI.addSubsetRecords(_ITERATE_BASE_PATH,planName,
 						/////////////////////
-						function(modifiedTables) //start addSubsetRecords handler
+						function(modifiedTables,err) //start addSubsetRecords handler
 						{
 					Debug.log("modifiedTables length " + modifiedTables.length);
 
 					if(!modifiedTables.length)
 					{
-						Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
-								newRowUID  + ".'",
-								Debug.HIGH_PRIORITY);
-						return;					
+						if(err && err.indexOf("Entries in UID are not unique.") >= 0)
+						{
+							//not really an error, can use existing plan
+							Debug.log("Using existing plan name.", Debug.INFO_PRIORITY);							
+						}
+						else
+						{
+							//really an error
+							Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
+									planName  + ".'",
+									Debug.HIGH_PRIORITY);
+							return;
+						}
 					}
 
 					_modifiedTables = modifiedTables;
@@ -1599,14 +1709,14 @@
 
 					var valueArr = ["1",//"Status",
 									_PLAN_BASE_PATH,//"LinkToIterationPlanConfiguration",
-									newRowUID+"-Plan",//"LinkToIterationPlanGroupID",
+									planName+"-Plan",//"LinkToIterationPlanGroupID",
 									"Generated by Iterate app"//"CommentDescription"
 									];
 
 					/////////////////////
 					ConfigurationAPI.setFieldValuesForRecords(
 							_ITERATE_BASE_PATH,
-							[newRowUID], 	//recordArr
+							[planName], 	//recordArr
 							fieldArr, 	//fieldArr
 							valueArr, 	//valueArr
 							/////////////////////
@@ -1617,7 +1727,7 @@
 						if(!modifiedTables.length)
 						{
 							Debug.log("There was an error while creating the " + _recordsAlias + " '" + 
-									newRowUID  + ".'",
+									planName  + ".'",
 									Debug.HIGH_PRIORITY);
 							return;					
 						}
@@ -1630,75 +1740,69 @@
 						//	CONFIGURE_ALIAS aliasMap[0]
 						//	RUN 5 minutes
 						// 	REPEAT_LABEL
-						
-//						var commands = [];
-//						commands.push({ 	//BEGIN_LABEL
-//							"type" : _COMMAND_TYPES.BEGIN_LABEL,
-//							"param" : {"Label":"Main"},							
-//						});
-//						commands.push({		//CHOOSE_FSM fsmNames[0]
-//							"type" : _COMMAND_TYPES.CHOOSE_FSM,
-//							"param" : {"NameOfStateMachine":(_fsmNames.length? //use first name, if any exist
-//									_fsmNames[0]
-//									:"")},							
-//						});
-//						commands.push({		//CONFIGURE_ALIAS aliasMap[0]
-//							"type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
-//							"param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
-//									_configGroupAliases[0].alias
-//									:"")},							
-//						});
-//						commands.push({		//RUN 5 minutes
-//							"type" : _COMMAND_TYPES.RUN,
-//							"param" : {"WaitForAllFrontEndsRunningThread":0,
-//								"DurationInSeconds": 5*60},							
-//						});
-//						commands.push({ 	//REPEAT_LABEL
-//							"type" : _COMMAND_TYPES.REPEAT_LABEL,
-//							"param" : {"Label":"Main", "NumberOfRepetitions" : 0},							
-//						});
+						if(!useCommandsFromGUI)
+						{
+							_commands = []; //clear
+							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
+									["Main"]);
+							addCommand(_COMMAND_TYPES.CHOOSE_FSM,
+									[(_fsmNames.length? //use first name, if any exist
+											_fsmNames[0]
+													  :"")]);
+							addCommand(_COMMAND_TYPES.CONFIGURE_ALIAS,
+									[(_configGroupAliases.length? //use first alias, if any exist
+											_configGroupAliases[0].alias
+											:"")]);//"SystemAlias"
+							addCommand(_COMMAND_TYPES.RUN,
+									[0, //"WaitForAllFrontEndsRunningThread"
+									 5*60]); //"DurationInSeconds"
+							addCommand(_COMMAND_TYPES.REPEAT_LABEL,
+									["Main",
+									 0]); //"NumberOfRepetitions"
+						}		
 						
 						//FOR DEBUGGING
 						//FOR DEBUGGING
 						//FOR DEBUGGING
+						if(0)
+						{
+							_commands = []; //clear
+							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
+									["Main"]);
+							addCommand(_COMMAND_TYPES.CHOOSE_FSM,
+									[(_fsmNames.length? //use first name, if any exist
+											_fsmNames[0]
+													  :"")]);
+							addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
+									[								
+									 "FEInterfaceConfiguration",//"Tables":params[0],
+									 "ExampleInterface0",//"UIDs":params[1],
+									 0,//"DoTrackGroupChanges":params[2], 
+									 "LinkToFETypeConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+									 5,//"FieldStartValue":params[4],
+									 3]);//"FieldIterationStepSize":params[5]);
+							addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
+							//addCommand(_COMMAND_TYPES.RUN,[1,0]);
+							addCommand(_COMMAND_TYPES.REPEAT_LABEL,
+									["Main",5]);
+						}
 						
-						_commands = []; //clear
-						addCommand(_COMMAND_TYPES.BEGIN_LABEL,
-								["Main"]);
-						addCommand(_COMMAND_TYPES.CHOOSE_FSM,
-								[(_fsmNames.length? //use first name, if any exist
-								_fsmNames[0]
-								:"")]);
-						addCommand(_COMMAND_TYPES.MODIFY_ACTIVE_GROUP,
-								[
-								"FEInterfaceConfiguration",//"Tables":params[0],
-								"ExampleInterface0",//"UIDs":params[1],
-								0,//"DoTrackGroupChanges":params[2], 
-								"LinkToFETypeConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
-								5,//"FieldStartValue":params[4],
-								3]);//"FieldIterationStepSize":params[5]);
-						addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
-						//addCommand(_COMMAND_TYPES.RUN,[1,0]);
-						addCommand(_COMMAND_TYPES.REPEAT_LABEL,
-								["Main",5]);
-						
-						
-						savePlanCommandSequence(newRowUID,_commands,
+						savePlanCommandSequence(planName,_commands,
 								/////////////////////
 								function()
 								{
 							//only arrive here on success
 							
-							_targetPlan = newRowUID;														
+							_targetPlan = planName;														
 							
 							saveModifiedTables(									
 									"The new " +
 									_recordsAlias + " '" + 
-									newRowUID +
+									planName +
 									"' was successfully created!",
 
 									"There was an error while creating the " + _recordsAlias + " '" + 
-									newRowUID  + ".'");
+									planName  + ".'");
 							
 								}); //end savePlanCommandSequence handler
 						
@@ -1706,17 +1810,15 @@
 							_modifiedTables);
 					
 						}, //end addSubsetRecords handler
-						_modifiedTables);
+						_modifiedTables,
+						true /*silenceErrors*/);
 					
-			} //end localCreateIterationPlan()
+			} //end localCreateIterationPlan()			
 			
-			
-		}	//end addIterationPlan()
-
+		}	//end createIterationPlan()
+		
 		//=====================================================================================
 		//saveModifiedTables ~~
-		//	parameter newRowUID is just used for success/error messages
-		//	e.g. actionWord = "the creation"
 		function saveModifiedTables(successMsg,failureMsg)
 		{
 			//proceed to save (quietly) tables, groups, aliases
@@ -1734,7 +1836,9 @@
 				Debug.log(successMsg, Debug.INFO_PRIORITY);
 
 				_modifiedTables = undefined; //clear after save
-
+				
+				_planIsModified = false;
+				 
 				getIterationPlans(updateIterationPlanContent); //updates plans display
 
 					}); //end saveModifiedTables handler
@@ -1818,108 +1922,317 @@
 		}	//end deleteIterationPlan()
 
 		//=====================================================================================
+		//showAddCommandDialog ~~		
+		function showAddCommandDialog(insertIndex)
+		{
+			Debug.log("showAddCommandDialog");	
+
+			var str = "";
+
+			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 480;
+			var h = 200; //25 for each parameter
+			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+			
+			//build display string
+			var str = "";
+			{
+				str += "<a id='" + 
+						ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-cancel' href='#'>Cancel</a><br><br>";
+
+				str += openDiv(
+						ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-div"); //start main div ----------- 
+
+				str += "Insert a new command at position #" + (insertIndex+1) + 
+						" in the current Iteration Plan."; 
+				str += "<br>";
+				str += "<br>";
+						
+				//show dropdown for command type
+				//and then edit boxes for each parameter
+				
+				str += "<table>";
+				
+				//type dropdown
+				str += "<tr><td>Command Type:</td><td>";
+				str += "<select " +												
+						"id='popUp-commandType' " +						
+						">";
+				var commandKeys = Object.keys(_COMMAND_TYPES);
+				var defaultType = 0;
+				for(var i=0;i<commandKeys.length;++i)
+				{
+					str += "<option " + (i==defaultType?"selected":"") + ">";
+					str += _COMMAND_TYPES[commandKeys[i]];
+					str += "</option>";					
+				}
+				str += "</select>";
+				str += "</td></tr>";
+				str += "</table>";
+				
+
+				//parameter edit control
+				// added when type selected
+				str += openDiv("popUp-paramControls");
+				str += "</div>";
+				
+				
+				
+				str += "</table>";
+				
+				//then Add/Cancel button
+				
+				str += "</div>"; //close main div ----------- 
+				
+				str += "<br>";
+				str += "<input id='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-submitButton' type='button' " + 
+						"value='Add Command' title='" +
+						"Insert new command at position #" + (insertIndex+1) + 
+						" in the current Iteration Plan." + 
+						"'/>";
+				
+			} //end build display string
+
+			el.innerHTML = str;
+			document.body.appendChild(el); //add element to display div
+			el.style.display = "block";
+			
+			//now element is there, so setup finishing touches
+			
+			//block mousemove from affecting display below
+			el.onmousemove = function(event) {event.stopPropagation();} 
+			
+			//setup default choice parameters
+			localShowParamControls(commandKeys[defaultType]);			
+
+
+			//::::::::::::::::::::::::::::::::::::
+			function localShowParamControls(commandKey)
+			{
+				Debug.log("localShowParamControls " +commandKey);
+				var el = document.getElementById("popUp-paramControls");
+				var str = "";
+				str += "<b>" +  
+						"Parameter(s) [count = " + 
+						_COMMAND_PARAMS[commandKey].length + 
+						"]</b><br>";
+				
+				str += "<center>";
+				str += "<table>";
+				
+				//type dropdown
+				for(var i=0;i<_COMMAND_PARAMS[commandKey].length;++i)
+				{
+					str += "<tr><td>";
+					str += _COMMAND_PARAMS[commandKey][i] + ": ";
+					str += "</td><td>";
+					
+					str += "<input type='text' " +
+							" id='popUp-param-" + i + "'" +
+							" class='popUp-param'" +
+							"/>";	
+					
+					str += "</td></tr>";				
+				}
+				str += "</select>";
+				str += "</table>";		
+				str += "</center>";				
+
+				//set new popup height
+				//	25px for each parameter
+				var popEl = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "");
+				popEl.style.height = (h + 25*_COMMAND_PARAMS[commandKey].length) + "px";
+				
+				el.innerHTML = str;
+			} //end localShowParamControls()
+			
+			//::::::::::::::::::::::::::::::::::::
+			//create cancel onclick handler
+			document.getElementById(
+					"popUp-commandType").onchange = function(event) {
+				Debug.log("Selected " + this.value);
+				localShowParamControls(this.value);				
+			}; //end submit onmouseup handler	
+			
+            //::::::::::::::::::::::::::::::::::::
+			//create cancel onclick handler
+			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-cancel").onclick = function(event) {
+				Debug.log("Cancel click");
+				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+				if(el) el.parentNode.removeChild(el); //close popup
+				return false;
+			}; //end submit onmouseup handler	
+
+
+            //::::::::::::::::::::::::::::::::::::
+			//create submit onmouseup handler
+			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-submitButton").onmouseup = function() {
+				Debug.log("Submit mouseup");
+				this.disabled = true;
+				
+
+				var type = document.getElementById(
+						"popUp-commandType").value;
+				var params = [];
+				
+				for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
+				{
+					params.push(document.getElementById(
+							"popUp-param-" + i).value);				
+				}
+				addCommand(type,params,insertIndex);
+				drawIterationPlan();				
+
+				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+				if(el) el.parentNode.removeChild(el); //close popup	
+
+			}; //end submit onmouseup handler	
+			
+		} //end showAddCommandDialog()
+		
+		//=====================================================================================
 		//addCommand ~~
 		//	push to _commands object
-		function addCommand(type,params)
+		function addCommand(type,params,insertPos)
 		{
 			Debug.log("addCommand type = " + type);
 			
-			if(type == _COMMAND_TYPES.BEGIN_LABEL)
+			if(_COMMAND_PARAMS.hasOwnProperty(type))
 			{
-				_commands.push({
-					"param": {
-						"Label":params[0]},
-				});
+				_planIsModified = true;
+				
+				//valid command, so add
+				var cmdIndex;
+				if(insertPos == undefined || 
+						insertPos >= _commands.length || 
+						insertPos < 0) //if invalid, add to end
+				{
+					_commands.push({"param": {} });
+					cmdIndex = _commands.length-1;
+				}
+				else
+				{
+					cmdIndex = insertPos;
+					_commands.splice(cmdIndex, 0, {"param": {} });
+				}
+				Debug.log("addCommand at #" + (cmdIndex+1));
+				
+				_commands[cmdIndex].type = type;
+				
+				//fill parameters 
+				for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
+					_commands[cmdIndex].param
+						[_COMMAND_PARAMS[type][i]] = params[i];
 			}
-			else if(type == _COMMAND_TYPES.CHOOSE_FSM)
-			{
-				_commands.push({
-					"param": {
-						"NameOfStateMachine":params[0]},		
-				});
-			}
-			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
-			{
-				_commands.push({
-					"param": {},
-				});
-			}
-			else if(type == _COMMAND_TYPES.CONFIGURE_ALIAS)
-			{
-				_commands.push({
-					"param": {
-						"SystemAlias":params[0]},
-				});
-			}
-			else if(type == _COMMAND_TYPES.CONFIGURE_GROUP)
-			{
-				_commands.push({
-					"param": {
-						"GroupName":params[0], 
-						"GroupKey":params[1]},
-				});
-			}
-			else if(type == _COMMAND_TYPES.EXECUTE_FE_MACRO)
-			{
-				_commands.push({
-					"param": {
-						"CSVTargetTables":params[0], 
-						"CSVTargetUIDs":params[1],
-						"FEMacroName":params[2],
-						"LinkToFEMacroParameterGroup":params[3],
-						"LinkToFEMacroParameterGroupID":params[4]
-					},
-				});
-			}
-			else if(type == _COMMAND_TYPES.EXECUTE_MACRO)
-			{
-				_commands.push({
-					"param": {
-						"CSVTargetTables":params[0], 
-						"CSVTargetUIDs":params[1],
-						"MacroName":params[2],
-						"LinkToMacroParameterGroup":params[3],
-						"LinkToMacroParameterGroupID":params[4]
-					},
-				});
-			}
-			else if(type == _COMMAND_TYPES.MODIFY_ACTIVE_GROUP)
-			{
-				_commands.push({
-					"param": {
-						"CSVTargetTables":params[0], 
-						"CSVTargetUIDs":params[1],
-						"DoTrackGroupChanges":params[2], 
-						"RelativePathToField":params[3],
-						"FieldStartValue":params[4],
-						"FieldIterationStepSize":params[5]
-					},
-				});
-			}
-			else if(type == _COMMAND_TYPES.REPEAT_LABEL)
-			{
-				_commands.push({
-					"param": {
-						"Label":params[0], 
-						"NumberOfRepetitions":params[1]},
-				});
-			}
-			else if(type == _COMMAND_TYPES.RUN)
-			{
-				_commands.push({
-					"param": {
-						"WaitForAllFrontEndsRunningThread":params[0], 
-						"DurationInSeconds":params[1]
-					},
-				});
-			}
+			
+//			if(type == _COMMAND_TYPES.BEGIN_LABEL)
+//			{
+//				_commands.push({
+//					"param": {
+//						"Label":params[0]},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.CHOOSE_FSM)
+//			{
+//				_commands.push({
+//					"param": {
+//						"NameOfStateMachine":params[0]},		
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
+//			{
+//				_commands.push({
+//					"param": {},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.CONFIGURE_ALIAS)
+//			{
+//				_commands.push({
+//					"param": {
+//						"SystemAlias":params[0]},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.CONFIGURE_GROUP)
+//			{
+//				_commands.push({
+//					"param": {
+//						"GroupName":params[0], 
+//						"GroupKey":params[1]},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.EXECUTE_FE_MACRO)
+//			{
+//				_commands.push({
+//					"param": {
+//						"CSVTargetTables":params[0], 
+//						"CSVTargetUIDs":params[1],
+//						"FEMacroName":params[2],
+//						"LinkToFEMacroParameterGroup":params[3],
+//						"LinkToFEMacroParameterGroupID":params[4]
+//					},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.EXECUTE_MACRO)
+//			{
+//				_commands.push({
+//					"param": {
+//						"CSVTargetTables":params[0], 
+//						"CSVTargetUIDs":params[1],
+//						"MacroName":params[2],
+//						"LinkToMacroParameterGroup":params[3],
+//						"LinkToMacroParameterGroupID":params[4]
+//					},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.MODIFY_ACTIVE_GROUP)
+//			{
+//				_commands.push({
+//					"param": {
+//						"CSVTargetTables":params[0], 
+//						"CSVTargetUIDs":params[1],
+//						"DoTrackGroupChanges":params[2], 
+//						"RelativePathToField":params[3],
+//						"FieldStartValue":params[4],
+//						"FieldIterationStepSize":params[5]
+//					},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.REPEAT_LABEL)
+//			{
+//				_commands.push({
+//					"param": {
+//						"Label":params[0], 
+//						"NumberOfRepetitions":params[1]},
+//				});
+//			}
+//			else if(type == _COMMAND_TYPES.RUN)
+//			{
+//				_commands.push({
+//					"param": {
+//						"WaitForAllFrontEndsRunningThread":params[0], 
+//						"DurationInSeconds":params[1]
+//					},
+//				});
+//			}
 			else
 			{
 				Debug.log("Fatal error. Unknown command attempted!", Debug.HIGH_PRIORITY);
 				return;
 			}
 			
-			_commands[_commands.length-1].type = type;
 			
 		}	//end addCommand()
 
@@ -1939,7 +2252,10 @@
             function localDelete()
             {
             	Debug.log("localDelete " + i);
+
+            	_planIsModified = true;
             	_commands.splice(i,1);
+            	
             	drawIterationPlan(); //update display
             }
 			
@@ -1949,7 +2265,7 @@
 		//savePlanCommandSequence ~~
 		function savePlanCommandSequence(plan,commands,responseHandler)
 		{
-			Debug.log("savePlanCommandSequence");
+			Debug.log("savePlanCommandSequence " + plan);
 			
 			plan = encodeURIComponent(plan);
 			
