@@ -121,6 +121,10 @@
 			border-left: 	20px solid rgb(218, 194, 194);
 			margin-left: 	0px;
 		}
+
+		.plan-command {
+			height:			21px;
+		}
 		
 		.plan-command-overlay {
 			position:		absolute;
@@ -141,28 +145,30 @@
 		.plan-command-addCommand {
 		    display: 			block;
 		    width: 				100%;
-		    background-color: 	rgb(218, 194, 194);
+		    border-bottom:		1px solid rgb(218, 194, 194);
 		    height: 			1px;
 		    position: 			absolute;
-		    top: 				0;
-		    left: 				0;
+		    z-index:			2000; 	/* to place on top of names in loops */
+		    top: 				0px;
+		    left: 				-30px;
 		}
 		
-		.plan-command-addCommand-button,
-		.plan-command-addCommand-button:hover {
-			text-decoration: 	none;
+		.plan-command-addCommand-button {
+			position: 			absolute;
+			top: 				-16px; /* -16 + 21 */
+			border: 			1px solid rgb(6, 82, 9);
+			border-radius: 		15px;
+			padding: 			0px 7px 0px 7px;
+			left: 				-6px;
+			height: 			32px;
+
 			font-size: 			30px;
 			font-weight: 		bold;
 			color: 				rgb(15, 152, 76);
-			cursor: 			pointer;
-			
-		    position: 			absolute;
-		    top: 				-16px;
-		    border: 			1px solid rgb(6, 82, 9);
-		    border-radius: 		15px;
-		    padding: 			0px 7px 0px 7px;
-		    left: 				-36px;
-		    height: 			32px;
+		}
+		.plan-command-addCommand-button:hover {
+			text-decoration: 	none;
+			cursor: 			pointer;	
 		}
 
 		.plan-command-addCommand-button {
@@ -904,13 +910,34 @@
                 var depth = 0;
                 var paramKeys;
                 var i;
+                var depthLabelStack = [];
+                var isBeginLabel;
+                
+                
                 //make first vertical bar					
                 str += openDiv("plan-depthBar-" + depth,
-                		"plan-depthBar");                  
+                		"plan-depthBar",
+						0 /*style*/,
+						0 /*mouseup*/,						
+						"event.stopPropagation();"/*mousemove*/);                  
                 {	//start depth 0 span -----------										
                 	for(i=0;i<commands.length;++i)
                 	{
                 		str += clearDiv();
+
+                		isBeginLabel = (commands[i].type == _COMMAND_TYPES.BEGIN_LABEL);
+                		if(isBeginLabel)
+                		{
+                			//start new depth bar
+                			Debug.log("New depth bar " + (++depth));
+                			depthLabelStack.push(commands[i].param[0]);
+                			
+                            str += openDiv("plan-depthBar-" + depth,
+                            		"plan-depthBar",
+									0 /*style*/,
+									0 /*mouseup*/,						
+									"event.stopPropagation();"/*mousemove*/);      
+                		}
 
                 		//get command parameter keys
                 		paramKeys = Object.keys(commands[i].param); 
@@ -982,7 +1009,13 @@
                 		str += openDiv( //start add i command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
-								"display:none" /*style*/,
+								"display:none;" +
+								(isBeginLabel?
+										"left:-60px;" //to place in previous depth bar
+										:"")  +
+								(i?"": //first command give a high event blocker
+									"height:21px;top:-21px")
+								/*style*/,
 								0 /*mouseup*/,
 								"event.stopPropagation();"/*mousemove*/);
                 		{
@@ -990,7 +1023,12 @@
                 			str += openDiv(  
                 					"plan-command-addCommand-button" + i,
 									"plan-command-addCommand-button",
-									0 /*style*/,
+									//(isBeginLabel?
+									//		"left:-36px;" //to place in previous depth bar
+									//		:"")  +
+									(i?"": //first command give a high event blocker
+										 "top:5px;") /* -16 + 21 */
+									/*style*/,
 									"showAddCommandDialog(" + i + ")" /*mouseup*/,
 									"event.stopPropagation();"/*mousemove*/, 
 									"Insert new command" /*title*/ );
@@ -1000,6 +1038,24 @@
                 		str += "</div>"; //end add i command -----------
 
                 		str += "</div>"; //close i command ----------- 
+                		
+                		if(commands[i].type == _COMMAND_TYPES.REPEAT_LABEL)
+                		{
+                			//remove last depth
+                			// verify label match
+
+                			Debug.log("End depth bar " + (depth--));
+                			
+                    		str += "</div>";  //end depth span -----------
+                    		if(depthLabelStack.pop() != 
+                    				commands[i].param[0])
+                    		{
+                    			Debug.log("There is a problem with the BEGIN_LABEL and REPEAT_LABEL " +
+                    					"commands for label '" + commands[i].param[0] + ".' " +
+										"You can only repeat the label most recently begun (cross-nesting is not allowed).",
+										Debug.WARN_PRIORITY);
+                    		}
+                		}
                 	}
 
                 	//finished with commands, add "End" indicator
@@ -1046,6 +1102,15 @@
                 		str += "</div>"; //close end command -----------
                 	} //end last command span
 
+                	
+                	//end any open depth bars
+                	while(depthLabelStack.length)
+                	{
+                		str += "</div>";  //end depth span -----------
+                		depthLabelStack.pop();
+                	}
+                	
+                	
                 } str += "</div>";  //end depth 0 span -----------
 
 
@@ -1124,7 +1189,7 @@
 			handlePlanOverlayMouseMove(deleteIndex,event);
 
 			//remove all previous param displays
-			handlePlanParamsMouseMove(-1);
+			if(event) handlePlanParamsMouseMove(-1);
 			
 			if(_shownDeleteCommandIndex == deleteIndex)
 				return;
@@ -1134,15 +1199,24 @@
 			try //try to hide, and ignore errors
 			{
 				if(_shownDeleteCommandIndex != -1)
+				{
 					document.getElementById("plan-command-delete-" + 
 							_shownDeleteCommandIndex).style.display = "none";
+					document.getElementById("plan-command-name-" + 
+							_shownDeleteCommandIndex).style.backgroundColor = "transparent";					
+				}
 			}
 			catch(e){} //ignore
 
 			_shownDeleteCommandIndex = deleteIndex;
 			if(_shownDeleteCommandIndex != -1)
+			{
 				document.getElementById("plan-command-delete-" + 
-					_shownDeleteCommandIndex).style.display = "block";
+						_shownDeleteCommandIndex).style.display = "block";
+				document.getElementById("plan-command-name-" + 
+						_shownDeleteCommandIndex).style.backgroundColor = 
+								ConfigurationAPI.editableField_SELECTED_COLOR_;
+			}
 		} //end handlePlanNameMouseMove()
 		
 		//=====================================================================================
@@ -1151,7 +1225,7 @@
 		{
 			//show add + command icon in right place
 			
-			event.stopPropagation();
+			if(event) event.stopPropagation();
 			
 			//Debug.log("handlePlanOverlayMouseMove " + addIndex);
 			
@@ -1180,6 +1254,8 @@
 		function handlePlanParamsMouseMove(i,event)
 		{
 			if(event) event.stopPropagation();
+			
+			if(event) handlePlanNameMouseMove(i); //highlight plan name
 			
 			//show parameters in easy to read fashion
 			
@@ -1285,6 +1361,8 @@
 				{
 					document.getElementById("plan-command-delete-" + 
 							_shownDeleteCommandIndex).style.display = "none";
+					document.getElementById("plan-command-name-" + 
+							_shownDeleteCommandIndex).style.backgroundColor = "transparent";
 				}
 				catch(e){}
 				_shownDeleteCommandIndex = -1; //clear
