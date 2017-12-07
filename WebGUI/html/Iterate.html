@@ -256,6 +256,7 @@
 
 		.popUp-param[type="text"] {					 
 			height: 			24px;
+			padding-left: 		5px;
 		}
 
 		#popUp-param-systemAliasDetails {
@@ -433,8 +434,10 @@
 		_COMMAND_TYPES.RUN 						= "RUN";
 		
 		var _COMMAND_PARAM_FIELDS = {}; //for now, keys are same as value, but value is (intended to be) display name
-		_COMMAND_PARAM_FIELDS.NameOfStateMachine 		= "NameOfStateMachine";
-		_COMMAND_PARAM_FIELDS.SystemAlias 				= "SystemAlias";
+		_COMMAND_PARAM_FIELDS.NameOfStateMachine 				= "NameOfStateMachine";
+		_COMMAND_PARAM_FIELDS.SystemAlias 						= "SystemAlias";
+		_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread 	= "WaitForAllFrontEndsRunningThread";
+		_COMMAND_PARAM_FIELDS.DoTrackGroupChanges 				= "DoTrackGroupChanges";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
 		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
@@ -444,9 +447,9 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= ["CSVTargetTables","CSVTargetUIDs","FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= ["CSVTargetTables","CSVTargetUIDs","MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= ["CSVTargetTables","CSVTargetUIDs","DoTrackGroupChanges","RelativePathToField","FieldStartValue","FieldIterationStepSize"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= ["CSVTargetTables","CSVTargetUIDs",_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,"RelativePathToField","FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= ["WaitForAllFrontEndsRunningThread","DurationInSeconds"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
         
         
         var _DEBUG_WOUT_SERVER = 0;
@@ -1208,7 +1211,7 @@
 							"' " + 
                 			" value='Save as...'" +
 							" title='" +
-							"Save the current modified Iteration Plan." +
+							"Duplicate the current modified Iteration Plan as a new name." +
 							"'/>";
                 	str += "<br><br>";
                 	return str;
@@ -2023,8 +2026,6 @@
 						if(!useCommandsFromGUI)
 						{
 							_commands = []; //clear
-							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
-									["Main"]);
 							addCommand(_COMMAND_TYPES.CHOOSE_FSM,
 									[(_fsmNames.length? //use first name, if any exist
 											_fsmNames[0]
@@ -2033,6 +2034,8 @@
 									[(_configGroupAliases.length? //use first alias, if any exist
 											_configGroupAliases[0].alias
 											:"")]);//"SystemAlias"
+							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
+									["Main"]);
 							addCommand(_COMMAND_TYPES.RUN,
 									[0, //"WaitForAllFrontEndsRunningThread"
 									 5*60]); //"DurationInSeconds"
@@ -2407,6 +2410,47 @@
 								_configGroupAliases[0].alias);
 						str += "</div>";
 						hDelta += 90;						
+					}
+					else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
+							_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+							_COMMAND_PARAMS[commandKey][i] ==  //booleans
+									_COMMAND_PARAM_FIELDS.DoTrackGroupChanges)
+					{
+						//boolean field, show select box and set value to 1/0
+
+						str += htmlOpen("select",
+								{
+										"id":("popUp-param-" + i),
+										"class":"popUp-param"
+								});
+
+						//give empty option
+						if(initValue == "True" || 
+								initValue == "Yes" || 
+								initValue == "1") 
+						{
+							str += htmlOpen("option selected",
+									{"value":1},
+									"Yes" /*innerHTML*/, true /*closeTag*/);
+
+							str += htmlOpen("option",
+									{"value":0},
+									"No" /*innerHTML*/, true /*closeTag*/);
+						}
+						else
+						{
+							str += htmlOpen("option",
+									{"value":1},
+									"Yes" /*innerHTML*/, true /*closeTag*/);
+
+							str += htmlOpen("option selected",
+									{"value":0},
+									"No" /*innerHTML*/, true /*closeTag*/);
+						}
+
+					
+
+						str += "</select>";	
 					}
 					else //default field input	
 						str += htmlOpen("input",
