@@ -111,6 +111,13 @@
 		    padding-left: 	10px;
 			overflow: 		hidden;
 		}
+		
+		#planDetail div {
+			outline: 				none; /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* prevent selection*/
+			-moz-user-select: 		none;
+			user-select:			none;
+		}
 			
 		#plan-planName {
 			margin-bottom: 15px;
@@ -421,7 +428,9 @@
         
         var _shownAddCommandIndex = -1;
         var _shownDeleteCommandIndex = -1;
+        var _shownDragOverCommandIndex = -1;
         var _planIsModified = false;
+        var _draggningCommand = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -469,11 +478,12 @@
         	//handlePlanNameDrag(dragIndex,event)
         	//handlePlanNameDragOver(dragIndex,event)
         	//handlePlanNameDrop(dragIndex,event)
+        	//handlePlanNameDragEnd(dragIndex,event)
     		//handlePlanParamsMouseMove(i,event)
         	//updateIterateStatus()	
         	//bodyMouseMoveHandler()
-        	//openDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr,dragStr,dropStr)
-    		//clearDiv()
+        	//htmlOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr,dragStr,dragendStr)
+    		//htmlClearDiv()
 		
 				//Input Handlers:
 			//handleMouseOver(type,id) 
@@ -889,9 +899,8 @@
                 if(!plan || plan == "")
                 	return;                 
                 
-                var str = "";
-                
-
+                var str = "";               
+        		
                 //Display Concept:
                 //  Plan name at top left
                 //      Vertical bar extending down inset off left edge of name
@@ -901,14 +910,14 @@
                 if(_planIsModified)
                 	str += localCreateSaveButton();
                 
-                str += openDiv('plan-planName');                	
+                str += htmlOpenDiv('plan-planName');                	
                 str += "<b>Plan Name:</b> " + plan;
                 str += "</div>";
 
                 //show created time
         		//ConfigurationAPI.getDateString(date)
 
-                str += clearDiv();
+                str += htmlClearDiv();
 
                 var commands = _commands;
                 var depth = 0;
@@ -919,7 +928,7 @@
                 
                 
                 //make first vertical bar					
-                str += openDiv("plan-depthBar-" + depth,
+                str += htmlOpenDiv("plan-depthBar-" + depth,
                 		"plan-depthBar",
 						0 /*style*/,
 						0 /*mouseup*/,						
@@ -927,54 +936,54 @@
                 {	//start depth 0 span -----------										
                 	for(i=0;i<commands.length;++i)
                 	{
-                		str += clearDiv();
+                		str += htmlClearDiv();
 
+                		//get command parameter keys (already verified, hopefully, in extraction from server or creation of commands)
+                		paramKeys = Object.keys(commands[i].param); 
+                		
                 		isBeginLabel = (commands[i].type == _COMMAND_TYPES.BEGIN_LABEL);
                 		if(isBeginLabel)
                 		{
                 			//start new depth bar
-                			Debug.log("New depth bar " + (++depth));
-                			depthLabelStack.push(commands[i].param[0]);
+                			//Debug.log("New depth bar " + (++depth));
+                			depthLabelStack.push(commands[i].param[paramKeys[0]]);
                 			
-                            str += openDiv("plan-depthBar-" + depth,
+                            str += htmlOpenDiv("plan-depthBar-" + depth,
                             		"plan-depthBar",
 									0 /*style*/,
 									0 /*mouseup*/,						
 									"event.stopPropagation();"/*mousemove*/);      
                 		}
-
-                		//get command parameter keys
-                		paramKeys = Object.keys(commands[i].param); 
                 		
                 		//each command should have a half up/down overlay
                 		//	for showing add command +
 
-                		str += openDiv(	//start i command ----------- 
+                		str += htmlOpenDiv(	//start i command ----------- 
                 				"plan-command-" + i,
 								"plan-command",
 								"position:relative");                  		
 
                 		//command name
-                		str += openDiv(
+                		str += htmlOpenDiv(
                 				"plan-command-name-" + i,
 								"plan-command-name",
 								0 /*style*/,
 								0 /*mouseup*/,
 								"handlePlanNameMouseMove(" + i + ",event)" /*mousemove*/,
-								0 /*title*/,
+								"Drag to insert this command at a new position in the Iteration Plan." /*title*/,
 								0 /*mousedown*/,
 								"handlePlanNameDrag(" + i + ",event)" /*drag*/,
-								"handlePlanNameDragOver(" + i + ",event)" /*dragover*/,
-								"handlePlanNameDrop(" + i + ",event)" /*drop*/
+								"handlePlanNameDragOver(" + i + ",event)" /*dragover*/,								
+								"handlePlanNameDragEnd(" + i + ",event)" /*dragend*/
 								);
                 		str += "<b>" + (i+1) + ". " + commands[i].type + 
-                				(paramKeys.length?":":".") + //show period if params
+                				(paramKeys.length?":":".") + //show period if 0 params
 								"</b> ";
                 		str += "</div>";
 
                 		//delete command button
-                		str += openDiv(0,"plan-command-deleteWrapper");
-                		str += openDiv(
+                		str += htmlOpenDiv(0,"plan-command-deleteWrapper");
+                		str += htmlOpenDiv(
                 				"plan-command-delete-" + i,
 								"plan-command-delete",
 								"display:none" /*style*/,
@@ -986,7 +995,7 @@
                 		str += "</div>";
 
                 		//command params
-                		str += openDiv(
+                		str += htmlOpenDiv(
                 				"plan-command-params-" + i,
 								"plan-command-params",
 								0 /*style*/,
@@ -998,7 +1007,7 @@
                 		str += "</div>";
 
                 		//up overlay
-                		str += openDiv(
+                		str += htmlOpenDiv(
                 				"plan-command-upOverlay-" + i,
 								"plan-command-overlay plan-command-upOverlay",
 								0 /*style*/,
@@ -1007,7 +1016,7 @@
                 		str += "</div>";
 
                 		//dn overlay
-                		str += openDiv(
+                		str += htmlOpenDiv(
                 				"plan-command-dnOverlay-" + i,
 								"plan-command-overlay plan-command-dnOverlay",
 								0 /*style*/,
@@ -1016,7 +1025,7 @@
                 		str += "</div>";
 
                 		//add command control
-                		str += openDiv( //start add i command ----------- 
+                		str += htmlOpenDiv( //start add i command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
 								"display:none;" +
@@ -1030,7 +1039,7 @@
 								"event.stopPropagation();"/*mousemove*/);
                 		{
                 			//start add command button
-                			str += openDiv(  
+                			str += htmlOpenDiv(  
                 					"plan-command-addCommand-button" + i,
 									"plan-command-addCommand-button",
 									//(isBeginLabel?
@@ -1054,14 +1063,15 @@
                 			//remove last depth
                 			// verify label match
 
-                			Debug.log("End depth bar " + (depth--));
+                			//Debug.log("End depth bar " + (depth--));
                 			
                     		str += "</div>";  //end depth span -----------
                     		if(depthLabelStack.pop() != 
-                    				commands[i].param[0])
+                    				commands[i].param[paramKeys[0]])
                     		{
                     			Debug.log("There is a problem with the BEGIN_LABEL and REPEAT_LABEL " +
-                    					"commands for label '" + commands[i].param[0] + ".' " +
+                    					"commands for label '" + 
+										commands[i].param[paramKeys[0]] + ".' " +
 										"You can only repeat the label most recently begun (cross-nesting is not allowed).",
 										Debug.WARN_PRIORITY);
                     		}
@@ -1071,17 +1081,33 @@
                 	//finished with commands, add "End" indicator
                 	//add last command control
                 	{
-                		str += clearDiv();
+                		str += htmlClearDiv();
 
-                		str += openDiv(	//start end command ----------- 
+                		str += htmlOpenDiv(	//start end command ----------- 
                 				"plan-command-" + i,
 								"plan-command",
 								"position:relative");  
 
-                		str += "<b>" + (i+1) + ". PLAN_END." + "</b> ";
+
+                		//command name
+                		str += htmlOpenDiv(
+                				"plan-command-name-" + i /*id*/,
+								0 /*class*/,
+								0 /*style*/,
+								0 /*mouseup*/,
+								0 /*mousemove*/,
+								0 /*title*/,
+								0 /*mousedown*/,
+								0 /*drag*/,
+								"handlePlanNameDragOver(" + i + ",event)" /*dragover*/,								
+								0 /*dragend*/
+								);
+                		str += "<b>" + (i+1) + ". PLAN_END." + //show period if 0 params
+								"</b> ";
+                		str += "</div>";                		
 
                 		//up overlay
-                		str += openDiv(
+                		str += htmlOpenDiv(
                 				"plan-command-upOverlay-" + i,
 								"plan-command-overlay plan-command-upOverlay",
 								0 /*style*/,
@@ -1090,7 +1116,7 @@
                 		str += "</div>";                	
 
                 		//add command control
-                		str += openDiv( //start add end command ----------- 
+                		str += htmlOpenDiv( //start add end command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
 								"display:none" /*style*/,
@@ -1098,7 +1124,7 @@
 								"event.stopPropagation();"/*mousemove*/);
                 		{
                 			//start add command button
-                			str += openDiv(  
+                			str += htmlOpenDiv(  
                 					"plan-command-addCommand-button" + i,
 									"plan-command-addCommand-button",
 									0 /*style*/,
@@ -1126,7 +1152,7 @@
 
                 if(_planIsModified)
                 {
-                	str += clearDiv();
+                	str += htmlClearDiv();
                 	str += "<br><br>";
                 	str += localCreateSaveButton();
                 }
@@ -1167,9 +1193,9 @@
 		} //end drawIterationPlan()
 
 		//=====================================================================================
-		//openDiv ~~		
-		function openDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,
-				titleStr,mousedownStr,dragStr,dragoverStr,dropStr)
+		//htmlOpenDiv ~~		
+		function htmlOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,
+				titleStr,mousedownStr,dragStr,dragoverStr,dragendStr)
 		{
 			return "<div " + 
 					(idStr?("id='" + idStr + "' "):"") + 
@@ -1180,24 +1206,29 @@
 					(titleStr?(" title='" + titleStr + "' "):"") + 
 					(mousedownStr?(" onmousedown='" + mousedownStr + "' "):"") + 
 					(dragStr?(" draggable='true' ondragstart='" + dragStr + "' "):"") +
-					(dragoverStr?(" ondragover='" + dragoverStr + "' "):"") +
-					(dropStr?(" ondrop='" + dropStr + "' "):"") +
+					(dragoverStr?(" ondragover='" + dragoverStr + "' "):"") +					
+					(dragendStr?(" ondragend='" + dragendStr + "' "):"") +
 					">";
-		} //end openDiv
+		} //end htmlOpenDiv
 		
 		//=====================================================================================
-		//clearDiv ~~		
-		function clearDiv()
+		//htmlClearDiv ~~		
+		function htmlClearDiv()
 		{
 			return "<div id='clearDiv'></div>";
-		} //end clearDiv
+		} //end htmlClearDiv
 
 		//=====================================================================================
 		//handlePlanNameDrag ~~		
 		function handlePlanNameDrag(dragIndex,event)
 		{
 			Debug.log("dragstart " + dragIndex);
+			_draggningCommand = true;
 			handlePlanOverlayMouseMove(-1); //clear add command button
+			
+			if(event.dataTransfer) //for firefox draggin, must set dataTransfer
+				event.dataTransfer.setData("Text",dragIndex);
+			
 			
 		}	//end handlePlanNameDrag()
 
@@ -1205,10 +1236,74 @@
 		//handlePlanNameDragOver ~~		
 		function handlePlanNameDragOver(dragIndex,event)
 		{
-			Debug.log("dragover " + dragIndex);
+			//Debug.log("dragover " + dragIndex);			
 			
+			if(_shownDragOverCommandIndex == dragIndex )
+							return;
 			
+			//if not current, then hide current and show new
+
+			try //try to hide, and ignore errors
+			{
+				if(_shownDragOverCommandIndex != -1)
+				{
+					document.getElementById("plan-command-name-" + 
+							_shownDragOverCommandIndex).style.backgroundColor = "transparent";					
+				}
+			}
+			catch(e){} //ignore
+			
+			//do not set to drag over if this is the one being dragged
+			if(dragIndex == _shownDeleteCommandIndex)
+				return;
+			
+			_shownDragOverCommandIndex = dragIndex;
+			if(_shownDragOverCommandIndex != -1)
+			{
+				document.getElementById("plan-command-name-" + 
+						_shownDragOverCommandIndex).style.backgroundColor = 
+								"rgb(251, 172, 53)";
+			}
+					
 		}	//end handlePlanNameDragOver()
+
+		//=====================================================================================
+		//handlePlanNameDragEnd ~~		
+		function handlePlanNameDragEnd(dragIndex,event)
+		{
+			Debug.log("dragend " + dragIndex + " to " + _shownDragOverCommandIndex);
+			
+			dragIndex = dragIndex|0; //force int
+			_shownDragOverCommandIndex = _shownDragOverCommandIndex|0; //force int
+			
+			
+			//move dragIndex to _shownDragOverCommandIndex position
+			
+			//validate indices
+			if(dragIndex < 0 || dragIndex >=  _commands.length ||
+					dragIndex == _shownDragOverCommandIndex)
+			{
+				Debug.log("Invalid dragIndex -- how? " + 
+						dragIndex + " v " + _shownDragOverCommandIndex);
+				return;
+			}
+			if(_shownDragOverCommandIndex < 0 || 
+					_shownDragOverCommandIndex >  _commands.length)
+			{
+				Debug.log("Invalid _shownDragOverCommandIndex -- how? " + 
+						_shownDragOverCommandIndex);
+				return;
+			}
+			
+			//remove and insert
+			var movingCommand = _commands.splice(dragIndex, 1); //returns array of elements removed (array size will be 1)
+			if(dragIndex+1 < _shownDragOverCommandIndex) //now with removed, drop by 1
+				--_shownDragOverCommandIndex; //+1 because behavior of swapping nearest neighbor is 'expected'			
+			_commands.splice(_shownDragOverCommandIndex, 0, movingCommand[0]); //insert element 0 of array
+			_planIsModified = true;
+			drawIterationPlan();
+			
+		}	//end handlePlanNameDragEnd()
 		
 		//=====================================================================================
 		//handlePlanNameDrop ~~		
@@ -1222,7 +1317,7 @@
 		//=====================================================================================
 		//handlePlanNameMouseMove ~~		
 		function handlePlanNameMouseMove(deleteIndex,event)
-		{
+		{			
 			//Debug.log("handlePlanNameMouseMove " + deleteIndex);
 							
 			//pass along event
@@ -1262,12 +1357,14 @@
 		//=====================================================================================
 		//handlePlanOverlayMouseMove ~~		
 		function handlePlanOverlayMouseMove(addIndex,event)
-		{
+		{			
+			//Debug.log("handlePlanOverlayMouseMove " + addIndex);
+			
 			//show add + command icon in right place
 			
 			if(event) event.stopPropagation();
 			
-			//Debug.log("handlePlanOverlayMouseMove " + addIndex);
+			
 			
 			if(_shownAddCommandIndex == addIndex)
 				return;
@@ -1293,6 +1390,8 @@
 		//handlePlanOverlayMouseMove ~~		
 		function handlePlanParamsMouseMove(i,event)
 		{
+			//Debug.log("handlePlanParamsMouseMove " + i);
+			
 			if(event) event.stopPropagation();
 			
 			if(event) handlePlanNameMouseMove(i); //highlight plan name
@@ -1384,6 +1483,8 @@
 		//	handles mouse movements on window body
 		function bodyMouseMoveHandler() 
 		{
+			//Debug.log("bodyMouseMoveHandler ");
+			
 			//try hiding add command and ignore errors
 			if(_shownAddCommandIndex != -1)
 			{
@@ -2069,7 +2170,7 @@
 						ConfigurationAPI._POP_UP_DIALOG_ID + 
 						"-cancel' href='#'>Cancel</a><br><br>";
 
-				str += openDiv(
+				str += htmlOpenDiv(
 						ConfigurationAPI._POP_UP_DIALOG_ID + 
 						"-div"); //start main div ----------- 
 
@@ -2103,7 +2204,7 @@
 
 				//parameter edit control
 				// added when type selected
-				str += openDiv("popUp-paramControls");
+				str += htmlOpenDiv("popUp-paramControls");
 				str += "</div>";
 				
 				
@@ -2230,8 +2331,16 @@
 		{
 			Debug.log("addCommand type = " + type);
 			
+			//if valid type, build command based on parameter key array
 			if(_COMMAND_PARAMS.hasOwnProperty(type))
 			{
+				if(params.length != _COMMAND_PARAMS[type].length)
+				{
+					Debug.log("Fatal error. Mismatch in number of parameters! Alert admins as to how you got here. " +
+							params.length + " vs " + _COMMAND_PARAMS[type].length, Debug.HIGH_PRIORITY);
+					return;
+				}
+				
 				_planIsModified = true;
 				
 				//valid command, so add
@@ -2256,97 +2365,7 @@
 				for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
 					_commands[cmdIndex].param
 						[_COMMAND_PARAMS[type][i]] = params[i];
-			}
-			
-//			if(type == _COMMAND_TYPES.BEGIN_LABEL)
-//			{
-//				_commands.push({
-//					"param": {
-//						"Label":params[0]},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.CHOOSE_FSM)
-//			{
-//				_commands.push({
-//					"param": {
-//						"NameOfStateMachine":params[0]},		
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP)
-//			{
-//				_commands.push({
-//					"param": {},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.CONFIGURE_ALIAS)
-//			{
-//				_commands.push({
-//					"param": {
-//						"SystemAlias":params[0]},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.CONFIGURE_GROUP)
-//			{
-//				_commands.push({
-//					"param": {
-//						"GroupName":params[0], 
-//						"GroupKey":params[1]},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.EXECUTE_FE_MACRO)
-//			{
-//				_commands.push({
-//					"param": {
-//						"CSVTargetTables":params[0], 
-//						"CSVTargetUIDs":params[1],
-//						"FEMacroName":params[2],
-//						"LinkToFEMacroParameterGroup":params[3],
-//						"LinkToFEMacroParameterGroupID":params[4]
-//					},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.EXECUTE_MACRO)
-//			{
-//				_commands.push({
-//					"param": {
-//						"CSVTargetTables":params[0], 
-//						"CSVTargetUIDs":params[1],
-//						"MacroName":params[2],
-//						"LinkToMacroParameterGroup":params[3],
-//						"LinkToMacroParameterGroupID":params[4]
-//					},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.MODIFY_ACTIVE_GROUP)
-//			{
-//				_commands.push({
-//					"param": {
-//						"CSVTargetTables":params[0], 
-//						"CSVTargetUIDs":params[1],
-//						"DoTrackGroupChanges":params[2], 
-//						"RelativePathToField":params[3],
-//						"FieldStartValue":params[4],
-//						"FieldIterationStepSize":params[5]
-//					},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.REPEAT_LABEL)
-//			{
-//				_commands.push({
-//					"param": {
-//						"Label":params[0], 
-//						"NumberOfRepetitions":params[1]},
-//				});
-//			}
-//			else if(type == _COMMAND_TYPES.RUN)
-//			{
-//				_commands.push({
-//					"param": {
-//						"WaitForAllFrontEndsRunningThread":params[0], 
-//						"DurationInSeconds":params[1]
-//					},
-//				});
-//			}
+			}			
 			else
 			{
 				Debug.log("Fatal error. Unknown command attempted!", Debug.HIGH_PRIORITY);
@@ -2616,7 +2635,7 @@
 				if(errStr)
 				{
 					Debug.log("getIterationPlanStatus ERROR handler ");
-					let str = "";
+					var str = "";
 					str += "Disconnected. Click Refresh to attempt to reconnect.";
 					document.getElementById('topPane-header').innerHTML = str;
 					return;
@@ -2676,7 +2695,7 @@
 				//top controls and status
 
 				{
-					let str = "";
+					var str = "";
 
 					str += "Target Iteration Plan: ";
 					if(active_plan_status == "Inactive")
