@@ -997,7 +997,7 @@
 								0 /*style*/,
 								"showCommandDialog(" + i + ",true /*modifyExisting*/);" /*mouseup*/,
 								"handlePlanNameMouseMove(" + i + ",event)" /*mousemove*/,
-								"Drag to insert this command at a new position in the Iteration Plan." /*title*/,
+								"Clic to edit. Drag to insert this command at a new position in the Iteration Plan." /*title*/,
 								0 /*mousedown*/,
 								"handlePlanNameDrag(" + i + ",event)" /*drag*/,
 								"handlePlanNameDragOver(" + i + ",event)" /*dragover*/,								
@@ -2535,7 +2535,8 @@
 			{
 				if(params.length != _COMMAND_PARAMS[type].length)
 				{
-					Debug.log("Fatal error. Mismatch in number of parameters! Alert admins as to how you got here. " +
+					Debug.log("Fatal error. Mismatch in number of parameters at command " +
+							(insertPos+1) + ". " + type + "! Alert admins as to how you got here. " +
 							params.length + " vs " + _COMMAND_PARAMS[type].length, Debug.HIGH_PRIORITY);
 					return;
 				}
