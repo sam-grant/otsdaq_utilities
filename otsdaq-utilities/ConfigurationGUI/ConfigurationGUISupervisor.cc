@@ -2837,7 +2837,7 @@ try
 						std::istringstream f(param.second);
 
 						targetIndex = 0;
-						while (getline(f, targetStr, ','))
+						while (getline(f, targetStr, '='))
 						{
 							__COUT__ << "\t\t targetStr = " << targetStr << __E__;
 							if(!command.targets_.size() ||
@@ -2862,7 +2862,7 @@ try
 						std::istringstream f(param.second);
 
 						targetIndex = 0;
-						while (getline(f, targetStr, ','))
+						while (getline(f, targetStr, '='))
 						{
 							__COUT__ << "\t\t targetStr = " << targetStr << __E__;
 							if(!command.targets_.size() ||

@@ -5,7 +5,7 @@
 		
 		#ConfigurationAPI-popUpDialog {
 			position: absolute;
-			z-index: 10000;    
+			z-index: 1000;    
 			border: 1px solid #770000;
 		    background-color: #efeaea;
 		    text-align: center;

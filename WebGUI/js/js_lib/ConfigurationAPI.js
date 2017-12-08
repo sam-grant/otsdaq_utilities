@@ -3856,6 +3856,12 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		if(y<DesktopContent.getWindowScrollTop()+margin+padding) 
 			y = DesktopContent.getWindowScrollTop()+margin+padding; //don't let it bottom out though
 
+		//if dialog is smaller than window, allow scrolling to see the whole thing 
+		if(w > ww)			
+			x = -DesktopContent.getWindowScrollLeft();
+		if(h > wh)
+			y = -DesktopContent.getWindowScrollTop();
+			
 		el.style.left = x + "px";
 		el.style.top = y + "px"; 
 	}; 

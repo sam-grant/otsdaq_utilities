@@ -158,7 +158,7 @@
 		    border-bottom:		1px solid rgb(218, 194, 194);
 		    height: 			1px;
 		    position: 			absolute;
-		    z-index:			2000; 	/* to place on top of names in loops */
+		    z-index:			200; 	/* to place on top of names in loops */
 		    top: 				0px;
 		    left: 				-30px;
 		}
@@ -191,7 +191,7 @@
 		.plan-command-name {
 			float: 				left;		
 			position: 			relative;
-		    z-index: 			1000;		/* to keep on top and hoverable */	
+		    z-index: 			100;		/* to keep on top and hoverable */	
 		    cursor:				pointer; 	/* for dragging */
 		    padding-right:		10px; 		/* to force overlap with delete for mouseover continuity */
 		    width:				260px;		/* to lineup parameters display */
@@ -203,7 +203,7 @@
 			height: 			20px;
 			border: 			0;
 			position: 			relative;
-		    z-index: 			1000;		/* to keep on top and clickable */	
+		    z-index: 			100;		/* to keep on top and clickable */	
 		    margin-left:		-10px; 		/* to force overlap with name for mouseover continuity */
 		}
 		.plan-command-delete {	
@@ -223,13 +223,13 @@
 			white-space: 		nowrap;
 			width:				5px; 		/* to force on the same line as command name*/
 			position: 			relative;
-		    z-index: 			1000;		/* to keep on top and hoverable */
+		    z-index: 			100;		/* to keep on top and hoverable */
 		    padding-left:		15px;		/* to allow for mouse region to bring-up param display */
 		}
 		
 		#plan-command-parameterDisplay {
 			position: 			absolute;
-			z-index: 			2000;		/* to keep on top of everything */
+			z-index: 			200;		/* to keep on top of everything */
 			background-color: 	rgb(218, 194, 194);			
 		    border-radius: 		10px 10px 0 0; /* square bottom because scrollbar looks weird otherwise */
 		    padding: 			10px;
@@ -438,6 +438,9 @@
 		_COMMAND_PARAM_FIELDS.SystemAlias 						= "SystemAlias";
 		_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread 	= "WaitForAllFrontEndsRunningThread";
 		_COMMAND_PARAM_FIELDS.DoTrackGroupChanges 				= "DoTrackGroupChanges";
+		_COMMAND_PARAM_FIELDS.Targets 							= "CSV-Targets";
+		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
+		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
 		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
@@ -445,9 +448,9 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP] 	= [];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ALIAS] 		= [_COMMAND_PARAM_FIELDS.SystemAlias];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= ["CSVTargetTables","CSVTargetUIDs","FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= ["CSVTargetTables","CSVTargetUIDs","MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= ["CSVTargetTables","CSVTargetUIDs",_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,"RelativePathToField","FieldStartValue","FieldIterationStepSize"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,"RelativePathToField","FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
         
@@ -458,7 +461,7 @@
         var _shownDeleteCommandIndex = -1;
         var _shownDragOverCommandIndex = -1;
         var _planIsModified = false;
-        var _draggningCommand = false;
+        var _popUpParamsModified = false;
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -483,7 +486,9 @@
 			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
 			//deleteIterationPlan()
         	//showCommandDialog(insertIndex,modifyExisting)
+        	//	localShowCommandDialog()
         	//	localShowParamControls(commandKey)
+        	//showParamTargetWizDialog(paramIndex)
 			//addCommand(type,params)
 			//deleteCommand(i,noPrompt,noDraw)
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
@@ -798,7 +803,7 @@
                 	var commandFieldsChildren;
                 	var parameterChildren;
                 	var parameterName;
-                	var targetTableCSVStr,targetUIDCSVStr;
+                	var targetCSVStr, targetCount;
                 	var targetChildren;
                 	var countCommands = 0;
 
@@ -854,29 +859,29 @@
                 										{
                 											//extract targets
                 											Debug.log("getting targets");
-                											targetTableCSVStr = "";
-                											targetUIDCSVStr = "";
+                											targetCSVStr = "";
 
                 											targetChildren = parameterChildren[l].children;
+                											targetCount = 0;
 
                 											for(var m=0;m<targetChildren.length;++m)
                 											{   	
                 												if(targetChildren[m].nodeName == "node")
                 												{
+                													if(targetCount++) targetCSVStr += ",";
                 													//found target record
                 													//	second record is link
                 													//		first two nodes are uid and table
-                													targetUIDCSVStr += 
+                													targetCSVStr += 
                 															targetChildren[m].children[1].getElementsByTagName(
-                																	"UID")[0].getAttribute("value");
-                													targetTableCSVStr += 
+                																	"UID")[0].getAttribute("value") + 
+																					"/" + 
                 															targetChildren[m].children[1].getElementsByTagName(
                 																	"LinkConfigurationName")[0].getAttribute("value");                                                            	
                 												}
                 											} //end target loop
 
-                											params.push(targetTableCSVStr);
-                											params.push(targetUIDCSVStr);
+                											params.push(targetCSVStr);
                 										}
                 										else                                                
                 											params.push(parameterChildren[l].children[0].getAttribute("value"));
@@ -1272,7 +1277,7 @@
 		function handlePlanNameDrag(dragIndex,event)
 		{
 			Debug.log("dragstart " + dragIndex);
-			_draggningCommand = true;
+			
 			handlePlanOverlayMouseMove(-1); //clear add command button
 			
 			if(event.dataTransfer) //for firefox draggin, must set dataTransfer
@@ -1938,10 +1943,21 @@
 				else //prompt was cancelled
 					return;	//do nothing
 			}
-			else 
+			else
+			{
 				planName = _targetPlan;
-			
-			Debug.log("createIterationPlan " + planName);
+								
+				if(useCommandsFromGUI) //prompt user for overwrite
+				{
+					DesktopContent.popUpVerification(
+							"Are you sure you want to overwrite the current Iteration Plan '" +
+							planName + "'?",
+							localCreateIterationPlan,
+							0,"#efeaea",0,"#770000");
+					//if canceled, nothing will happen
+					return;
+				}
+			}			
 
 			localCreateIterationPlan();
 			return;
@@ -1950,6 +1966,8 @@
 			//localCreateIterationPlan ~
 			function localCreateIterationPlan()
 			{
+				Debug.log("createIterationPlan " + planName);
+				
 				//new default iteration plan 
 
 				//steps:
@@ -2208,12 +2226,476 @@
 		//showCommandDialog ~~		
 		function showCommandDialog(insertIndex, modifyExisting)
 		{
-			Debug.log("showCommandDialog");	
-
-			var str = "";
+			Debug.log("showCommandDialog");
 
 			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 			if(!el)
+			{
+				_popUpParamsModified = false; //reset
+			}
+			else
+			{
+				//if already exists, then prompt user to discard changes
+				if(_popUpParamsModified)
+				{
+					DesktopContent.popUpVerification(
+							"Are you sure you want to discard changes " +
+							"you have made to parameters in the pop-up dialog?",
+							localShowCommandDialog,
+							0,"#efeaea",0,"#770000");
+					//if canceled, nothing will happen
+					return;
+				}
+			}
+			
+			localShowCommandDialog();
+			return;
+
+			//::::::::::::::::::::::::::::::::::::
+			//localShowCommandDialog
+			//	create command editor popup
+			function localShowCommandDialog()
+			{
+				//use _popUpParamsModified to clear all existing dialogs
+				//	because there could be more than one, if wizards are open
+				if(_popUpParamsModified)
+				{
+					//remove all existing dialogs
+					el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+					while(el) 
+					{
+						el.parentNode.removeChild(el); //close popup
+						el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+					}
+				}
+				
+				if(!el) //make element if needed
+				{
+					el = document.createElement("div");			
+					el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+				}				
+				
+				el.style.display = "none";
+				_popUpParamsModified = false; //reset
+
+				//set position and size
+				var w = 480;
+				var h = 250; //+32 for each parameter
+				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+
+				//build display string
+				var str = "";
+				{
+					str += "<a id='" + 
+							ConfigurationAPI._POP_UP_DIALOG_ID + 
+							"-cancel' href='#'>Cancel</a><br><br>";
+
+					str += htmlOpenDiv(
+							ConfigurationAPI._POP_UP_DIALOG_ID + 
+							"-div"); //start main div ----------- 
+
+					if(modifyExisting)
+						str += "Modify the ";
+					else
+						str += "Insert a new ";
+
+					str += "command at position #" + (insertIndex+1) + 
+							" in the current Iteration Plan."; 
+					str += "<br>";
+					str += "<br>";
+
+					//show dropdown for command type
+					//and then edit boxes for each parameter
+
+					str += "<table>";
+
+					//type dropdown
+					str += "<tr><td>Command Type:</td><td>";
+					str += "<select " +												
+							"id='popUp-commandType' " +						
+							">";
+					var commandKeys = Object.keys(_COMMAND_TYPES);
+					var defaultType = _COMMAND_TYPES.BEGIN_LABEL;
+
+					if(modifyExisting) //if modifying, select command type
+						defaultType = _commands[insertIndex].type;
+
+					for(var i=0;i<commandKeys.length;++i)
+					{
+						str += "<option " + 
+								(_COMMAND_TYPES[commandKeys[i]]==defaultType?"selected":"") +
+								">";
+						str += _COMMAND_TYPES[commandKeys[i]];
+						str += "</option>";					
+					}
+					str += "</select>";
+					str += "</td></tr>";
+					str += "</table>";
+
+
+					//parameter edit control
+					// added when type selected
+					str += htmlOpenDiv("popUp-paramControls");
+					str += "</div>";
+
+
+
+					str += "</table>";
+
+					//then Add/Cancel button
+
+					str += "</div>"; //close main div ----------- 
+
+					str += "<center>";
+					str += "<br>";
+					str += htmlOpen("input",
+							{
+									"id": ConfigurationAPI._POP_UP_DIALOG_ID + "-submitButton",
+									"type": "button",
+									"value": (modifyExisting?"Modify":"Insert") + " Command at #" + (insertIndex+1),
+									"title": (modifyExisting?"Modify ":"Insert new ") +	"command at position #" + (insertIndex+1) + " in the current Iteration Plan."
+							},
+							0 /*html*/, true /*closeTag*/);	
+
+
+					if(modifyExisting) //add clone button 
+					{
+						str += "<br>";
+						str += "<table><tr><td>";
+						str += htmlOpen("input",
+								{
+										"id": "popUp-cloneButton",
+										"type": "button",
+										"value": "Insert as New Command at #",
+										"title": "Insert new command at position chosen to the right."
+								},
+								0 /*html*/, true /*closeTag*/);					
+
+						"'/>";
+						str += "</td><td>";
+						str += "<select id='popUp-cloneButtonPosition'>";
+
+						for(var i=0;i<=_commands.length;++i)
+						{
+							str += "<option value='" + i + "'>";
+							str += i+1;
+							str += "</option>";
+						}
+
+						str += "</select>";
+						str += "</td></tr></table>";
+					}
+
+				} //end build display string
+
+				el.innerHTML = str;
+				document.body.appendChild(el); //add element to display div
+				el.style.display = "block";
+
+				//now element is there, so setup finishing touches
+
+				//block mousemove from affecting display below
+				el.onmousemove = function(event) {event.stopPropagation();} 
+
+				//setup default choice parameters
+				localShowParamControls(defaultType);			
+
+
+				//::::::::::::::::::::::::::::::::::::
+				function localShowParamControls(commandKey)
+				{
+					Debug.log("localShowParamControls " +commandKey);
+					var el = document.getElementById("popUp-paramControls");
+					var str = "";
+					str += "<b>" +  
+							"Parameter(s) [count = " + 
+							_COMMAND_PARAMS[commandKey].length + 
+							"]</b><br>";
+
+					str += "<center>";
+					str += "<table>";
+
+					var initValue;
+					var hDelta =  32*_COMMAND_PARAMS[commandKey].length;
+
+					//each parameter, display name and edit control
+					for(var i=0;i<_COMMAND_PARAMS[commandKey].length;++i)
+					{
+						str += "<tr><td style='text-align:right;" +
+								"vertical-align: top;" +
+								"padding-top: 7px;'>";
+						str += _COMMAND_PARAMS[commandKey][i] + ": ";
+						str += "</td><td>";
+
+						initValue = "";
+						if (modifyExisting &&  //if modifying give current value, if field exists in command being modified
+								_commands[insertIndex].param.hasOwnProperty(
+										_COMMAND_PARAMS[commandKey][i]))
+							initValue = 
+									_commands[insertIndex].param
+									[_COMMAND_PARAMS[commandKey][i]];
+
+
+						//show specialized editing fields
+						if(_COMMAND_PARAMS[commandKey][i] == 	// FSM name
+								_COMMAND_PARAM_FIELDS.NameOfStateMachine)
+						{
+							//FSM name field, show select box including ""
+
+							str += htmlOpen("select",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"onchange":"_popUpParamsModified = true;"
+									});
+
+							//give empty option
+							str += htmlOpen("option",
+									{"value":" "},
+									0 /*innerHTML*/, true /*closeTag*/);
+
+							for(var j=0;j<_fsmNames.length;++j)
+								str += htmlOpen("option" +
+										(_fsmNames[j] == initValue? //select the init value if match
+												" selected":""),
+												{"value":_fsmNames[j]},
+												_fsmNames[j] /*innerHTML*/, true /*closeTag*/);
+
+							str += "</select>";						
+
+						}
+						else if(_COMMAND_PARAMS[commandKey][i] ==  //system alias
+								_COMMAND_PARAM_FIELDS.SystemAlias)
+						{
+							//system alias field, show select box
+							//	with details below
+							str += htmlOpen("select",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"onchange":"popUpParamSystemAliasOnChange(this.value); _popUpParamsModified = true;",
+
+									});
+
+							for(var j=0;j<_configGroupAliases.length;++j)
+								str += htmlOpen("option" +
+										(_configGroupAliases[j].alias == initValue? //select the init value if match
+												" selected":""),
+												{
+														"value":_configGroupAliases[j].alias
+												},
+												_configGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
+
+							str += "</select>";	
+
+							str += htmlOpen("div",
+									{
+											"id":"popUp-param-systemAliasDetails"										
+									});
+							if(_configGroupAliases.length)
+								str += popUpParamSystemAliasOnChange(
+										_configGroupAliases[0].alias);
+							str += "</div>";
+							hDelta += 90;						
+						}
+						else if(_COMMAND_PARAMS[commandKey][i] ==  //targets
+									_COMMAND_PARAM_FIELDS.Targets)
+						{
+							str += htmlOpen("input",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"type":"text",
+											"style":"float:left",
+											"value":initValue,
+											"onchange":"_popUpParamsModified = true;"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
+							
+							str += htmlOpen("div",
+									{
+											"class":ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
+											"style":"float:left; display:block; margin: 2px 0 0 10px;",
+											"onclick":"showParamTargetWizDialog(" + i + ");"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
+						}
+						else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
+								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+								_COMMAND_PARAMS[commandKey][i] ==  //booleans
+										_COMMAND_PARAM_FIELDS.DoTrackGroupChanges)
+						{
+							//boolean field, show select box and set value to 1/0
+
+							str += htmlOpen("select",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"onchange":"_popUpParamsModified = true;"
+									});
+
+							//give empty option
+							if(initValue == "True" || 
+									initValue == "Yes" || 
+									initValue == "On" || 
+									initValue == "1") 
+							{
+								str += htmlOpen("option selected",
+										{"value":1},
+										"Yes" /*innerHTML*/, true /*closeTag*/);
+
+								str += htmlOpen("option",
+										{"value":0},
+										"No" /*innerHTML*/, true /*closeTag*/);
+							}
+							else
+							{
+								str += htmlOpen("option",
+										{"value":1},
+										"Yes" /*innerHTML*/, true /*closeTag*/);
+
+								str += htmlOpen("option selected",
+										{"value":0},
+										"No" /*innerHTML*/, true /*closeTag*/);
+							}
+
+
+
+							str += "</select>";	
+						}						
+						else //default field input	
+							str += htmlOpen("input",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"type":"text",
+											"value":initValue,
+											"onchange":"_popUpParamsModified = true;"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
+
+
+						str += "</td></tr>";				
+					}
+					str += "</select>";
+					str += "</table>";		
+					str += "</center>";				
+
+					//set new popup height
+					//	25px for each parameter
+					var popEl = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "");
+					popEl.style.height = (h + hDelta) + "px";
+
+					el.innerHTML = str;
+				} //end localShowParamControls()
+
+				//::::::::::::::::::::::::::::::::::::
+				//create cancel onclick handler
+				document.getElementById(
+						"popUp-commandType").onchange = function(event) {
+					Debug.log("Selected " + this.value);
+					localShowParamControls(this.value);				
+				}; //end submit onmouseup handler	
+
+				//::::::::::::::::::::::::::::::::::::
+				//create cancel onclick handler
+				document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-cancel").onclick = function(event) {
+					
+					Debug.log("Cancel click");
+
+					if(_popUpParamsModified)
+					{
+						DesktopContent.popUpVerification(
+								"Are you sure you want to discard changes " +
+								"you have made to parameters in the pop-up dialog?",
+								localCancelCommandDialog,
+								0,"#efeaea",0,"#770000");
+						//if canceled, nothing will happen
+						return;
+					}
+					localCancelCommandDialog();
+					return false;
+					
+					//::::::::::::::::::::::::::::::::::::
+					function localCancelCommandDialog()
+					{
+						var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+						if(el) el.parentNode.removeChild(el); //close popup
+					}
+				}; //end submit onmouseup handler	
+
+				//::::::::::::::::::::::::::::::::::::
+				//create submit onmouseup handler
+				document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-submitButton").onmouseup = function() {
+					Debug.log("Submit mouseup");
+
+					//disable buttons to prevent double clicks
+					this.disabled = true;	
+					try {document.getElementById("popUp-cloneButton").disabled = true;}
+					catch(e){} //ignore if no clone button
+
+					var type = document.getElementById(
+							"popUp-commandType").value;
+					var params = [];
+
+					for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
+					{
+						params.push(document.getElementById(
+								"popUp-param-" + i).value);				
+					}
+
+					if(modifyExisting)
+						deleteCommand(insertIndex,true /*noPrompt*/,true /*noDraw*/);
+					addCommand(type,params,insertIndex);
+					drawIterationPlan();				
+
+					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+					if(el) el.parentNode.removeChild(el); //close popup	
+
+				}; //end submit onmouseup handler	
+
+				//::::::::::::::::::::::::::::::::::::
+				//create clone onmouseup handler
+				try {
+					document.getElementById("popUp-cloneButton").onmouseup = function() {
+						Debug.log("Submit clone");
+
+						//disable buttons to prevent double clicks
+						this.disabled = true;
+						document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+								"-submitButton").disabled = true;
+						var type = document.getElementById(
+								"popUp-commandType").value;
+						var params = [];
+
+						for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
+						{
+							params.push(document.getElementById(
+									"popUp-param-" + i).value);				
+						}
+						insertIndex =  document.getElementById(
+								"popUp-cloneButtonPosition").value;
+						addCommand(type,params,insertIndex);
+						drawIterationPlan();				
+
+						var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+						if(el) el.parentNode.removeChild(el); //close popup	
+					}} //end clone onmouseup handler	
+				catch(e){} //ignore if no clone button
+
+			} //end localShowCommandDialog()
+			
+		} //end showCommandDialog()
+
+		//=====================================================================================
+		//showParamTargetWizDialog ~~
+		function showParamTargetWizDialog(paramIndex)
+		{
+			Debug.log("showParamTargetWizDialog " + paramIndex);
+			_popUpParamsModified = true; 
+			
+			//always create element
+			var el;
+			if(1)
 			{
 				el = document.createElement("div");			
 				el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
@@ -2222,7 +2704,7 @@
 
 			//set position and size
 			var w = 480;
-			var h = 220; //32 for each parameter
+			var h = 410; 
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
 			//build display string
@@ -2230,299 +2712,45 @@
 			{
 				str += "<a id='" + 
 						ConfigurationAPI._POP_UP_DIALOG_ID + 
-						"-cancel' href='#'>Cancel</a><br><br>";
+						"-wizcancel' href='#'>Cancel</a><br><br>";
 
 				str += htmlOpenDiv(
 						ConfigurationAPI._POP_UP_DIALOG_ID + 
 						"-div"); //start main div ----------- 
 
-				if(modifyExisting)
-					str += "Modify the ";
-				else
-					str += "Insert a new ";
-				
-				str += "command at position #" + (insertIndex+1) + 
-						" in the current Iteration Plan."; 
-				str += "<br>";
-				str += "<br>";
-						
-				//show dropdown for command type
-				//and then edit boxes for each parameter
-				
-				str += "<table>";
-				
-				//type dropdown
-				str += "<tr><td>Command Type:</td><td>";
-				str += "<select " +												
-						"id='popUp-commandType' " +						
-						">";
-				var commandKeys = Object.keys(_COMMAND_TYPES);
-				var defaultType = _COMMAND_TYPES.BEGIN_LABEL;
-				
-				if(modifyExisting) //if modifying, select command type
-					defaultType = _commands[insertIndex].type;
-						
-				for(var i=0;i<commandKeys.length;++i)
-				{
-					str += "<option " + 
-							(_COMMAND_TYPES[commandKeys[i]]==defaultType?"selected":"") +
-							">";
-					str += _COMMAND_TYPES[commandKeys[i]];
-					str += "</option>";					
-				}
-				str += "</select>";
-				str += "</td></tr>";
-				str += "</table>";
-				
-
-				//parameter edit control
-				// added when type selected
-				str += htmlOpenDiv("popUp-paramControls");
-				str += "</div>";
-				
-				
-				
-				str += "</table>";
-				
-				//then Add/Cancel button
-				
-				str += "</div>"; //close main div ----------- 
+				str += "Choose your targets.";
 				
 				str += "<br>";
-				str += "<input id='" + ConfigurationAPI._POP_UP_DIALOG_ID + 
-						"-submitButton' type='button' " + 
-						"value='" + 
-						(modifyExisting?"Modify":"Insert") + 
-						" Command at #" + (insertIndex+1) + 
-						"' title='" +
-						(modifyExisting?"Modify ":"Insert new ") +
-						"command at position #" + (insertIndex+1) + 
-						" in the current Iteration Plan." + 
-						"'/>";
-				
-			} //end build display string
-
+				str += "<br>";
+			}
+			
+			
+			
+//			ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
+//					6, //down through command parameters
+//					_modifiedTables,
+//					localExtractTree
+//			);
+//			
+//
+//			//::::::::::::::::::::::::::::::::::::
+//			function localGet
+			
 			el.innerHTML = str;
-			document.body.appendChild(el); //add element to display div
 			el.style.display = "block";
-			
-			//now element is there, so setup finishing touches
-			
-			//block mousemove from affecting display below
-			el.onmousemove = function(event) {event.stopPropagation();} 
-			
-			//setup default choice parameters
-			localShowParamControls(defaultType);			
-
-
-			//::::::::::::::::::::::::::::::::::::
-			function localShowParamControls(commandKey)
-			{
-				Debug.log("localShowParamControls " +commandKey);
-				var el = document.getElementById("popUp-paramControls");
-				var str = "";
-				str += "<b>" +  
-						"Parameter(s) [count = " + 
-						_COMMAND_PARAMS[commandKey].length + 
-						"]</b><br>";
-				
-				str += "<center>";
-				str += "<table>";
-				
-				var initValue;
-				var hDelta =  32*_COMMAND_PARAMS[commandKey].length;
-				
-				//type dropdown
-				for(var i=0;i<_COMMAND_PARAMS[commandKey].length;++i)
-				{
-					str += "<tr><td style='text-align:right;" +
-							"vertical-align: top;" +
-							"padding-top: 7px;'>";
-					str += _COMMAND_PARAMS[commandKey][i] + ": ";
-					str += "</td><td>";
-					
-					initValue = "";
-					if (modifyExisting &&  //if modifying give current value, if field exists in command being modified
-							_commands[insertIndex].param.hasOwnProperty(
-									_COMMAND_PARAMS[commandKey][i]))
-						initValue = 
-								_commands[insertIndex].param
-								[_COMMAND_PARAMS[commandKey][i]];
-					
-					
-					//show specialized editing fields
-					if(_COMMAND_PARAMS[commandKey][i] == 	// FSM name
-							_COMMAND_PARAM_FIELDS.NameOfStateMachine)
-					{
-						//FSM name field, show select box including ""
-						
-						str += htmlOpen("select",
-								{
-									"id":("popUp-param-" + i),
-									"class":"popUp-param"
-								});
-
-						//give empty option
-						str += htmlOpen("option",
-								{"value":" "},
-								0 /*innerHTML*/, true /*closeTag*/);
-						
-						for(var j=0;j<_fsmNames.length;++j)
-							str += htmlOpen("option" +
-									(_fsmNames[j] == initValue? //select the init value if match
-											" selected":""),
-									{"value":_fsmNames[j]},
-									_fsmNames[j] /*innerHTML*/, true /*closeTag*/);
-						
-						str += "</select>";						
-						
-					}
-					else if(_COMMAND_PARAMS[commandKey][i] ==  //system alias
-							_COMMAND_PARAM_FIELDS.SystemAlias)
-					{
-						//system alias field, show select box
-						//	with details below
-						str += htmlOpen("select",
-								{
-										"id":("popUp-param-" + i),
-										"class":"popUp-param",
-										"onchange":"popUpParamSystemAliasOnChange(this.value)",
-									
-								});
-
-						for(var j=0;j<_configGroupAliases.length;++j)
-							str += htmlOpen("option" +
-									(_configGroupAliases[j].alias == initValue? //select the init value if match
-											" selected":""),
-									{
-											"value":_configGroupAliases[j].alias
-									},
-									_configGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
-						
-						str += "</select>";	
-
-						str += htmlOpen("div",
-								{
-										"id":"popUp-param-systemAliasDetails"										
-								});
-						if(_configGroupAliases.length)
-							str += popUpParamSystemAliasOnChange(
-								_configGroupAliases[0].alias);
-						str += "</div>";
-						hDelta += 90;						
-					}
-					else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
-							_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
-							_COMMAND_PARAMS[commandKey][i] ==  //booleans
-									_COMMAND_PARAM_FIELDS.DoTrackGroupChanges)
-					{
-						//boolean field, show select box and set value to 1/0
-
-						str += htmlOpen("select",
-								{
-										"id":("popUp-param-" + i),
-										"class":"popUp-param"
-								});
-
-						//give empty option
-						if(initValue == "True" || 
-								initValue == "Yes" || 
-								initValue == "1") 
-						{
-							str += htmlOpen("option selected",
-									{"value":1},
-									"Yes" /*innerHTML*/, true /*closeTag*/);
-
-							str += htmlOpen("option",
-									{"value":0},
-									"No" /*innerHTML*/, true /*closeTag*/);
-						}
-						else
-						{
-							str += htmlOpen("option",
-									{"value":1},
-									"Yes" /*innerHTML*/, true /*closeTag*/);
-
-							str += htmlOpen("option selected",
-									{"value":0},
-									"No" /*innerHTML*/, true /*closeTag*/);
-						}
-
-					
-
-						str += "</select>";	
-					}
-					else //default field input	
-						str += htmlOpen("input",
-								{
-									"id":("popUp-param-" + i),
-									"class":"popUp-param",
-									"type":"text",
-									"value":initValue
-								}, 0 /*innerHTML*/, true /*closeTag*/);
-					
-					
-					str += "</td></tr>";				
-				}
-				str += "</select>";
-				str += "</table>";		
-				str += "</center>";				
-
-				//set new popup height
-				//	25px for each parameter
-				var popEl = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "");
-				popEl.style.height = (h + hDelta) + "px";
-				
-				el.innerHTML = str;
-			} //end localShowParamControls()
+			document.body.appendChild(el); //add element to display div
 			
 			//::::::::::::::::::::::::::::::::::::
-			//create cancel onclick handler
-			document.getElementById(
-					"popUp-commandType").onchange = function(event) {
-				Debug.log("Selected " + this.value);
-				localShowParamControls(this.value);				
-			}; //end submit onmouseup handler	
-			
-            //::::::::::::::::::::::::::::::::::::
 			//create cancel onclick handler
 			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
-					"-cancel").onclick = function(event) {
-				Debug.log("Cancel click");
-				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+					"-wizcancel").onclick = function(event) {
+				Debug.log("Wiz Cancel click");				
 				if(el) el.parentNode.removeChild(el); //close popup
 				return false;
-			}; //end submit onmouseup handler	
-
-            //::::::::::::::::::::::::::::::::::::
-			//create submit onmouseup handler
-			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
-					"-submitButton").onmouseup = function() {
-				Debug.log("Submit mouseup");
-				this.disabled = true;				
-
-				var type = document.getElementById(
-						"popUp-commandType").value;
-				var params = [];
-				
-				for(var i=0;i<_COMMAND_PARAMS[type].length;++i)
-				{
-					params.push(document.getElementById(
-							"popUp-param-" + i).value);				
-				}
-				
-				if(modifyExisting)
-					deleteCommand(insertIndex,true /*noPrompt*/,true /*noDraw*/);
-				addCommand(type,params,insertIndex);
-				drawIterationPlan();				
-
-				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
-				if(el) el.parentNode.removeChild(el); //close popup	
-
-			}; //end submit onmouseup handler	
+			}; //end submit onmouseup handler
 			
-		} //end showCommandDialog()
-
+		} //end showParamTargetWizDialog()
+		
 		//=====================================================================================
 		//popUpParamSystemAliasOnChange ~~
 		function popUpParamSystemAliasOnChange(value)
@@ -2577,6 +2805,9 @@
 			//if valid type, build command based on parameter key array
 			if(_COMMAND_PARAMS.hasOwnProperty(type))
 			{
+				//if targets field, reduce to single field
+				if(params)
+				
 				if(params.length != _COMMAND_PARAMS[type].length)
 				{
 					Debug.log("Fatal error. Mismatch in number of parameters at command " +
@@ -2636,6 +2867,7 @@
 					(i+1) + ". " + _commands[i].type + "?",
 					localDelete,
 					0,"#efeaea",0,"#770000");
+			return;
 
             //::::::::::::::::::::::::::::::::::::
             function localDelete()
@@ -2663,14 +2895,52 @@
 			//; separated commands and comma separated params
 			var cmdStr = "";
 			var pkeys;
+			var targetStr, targetTableStr, targetUidStr;
+			var targetArr;
 			for(var i=0;i<commands.length;++i)
 			{
 				cmdStr += "type," + encodeURIComponent(commands[i].type);
+				
 				pkeys = Object.keys(commands[i].param);
-
 				for(var j=0;j<pkeys.length;++j)
-					cmdStr += "," + pkeys[j] + "," +
-						encodeURIComponent(commands[i].param[pkeys[j]]);
+				{
+					if(pkeys[j] ==_COMMAND_PARAM_FIELDS.Targets) //targets 
+					{
+						//handle target field differently
+						//	convert from CSV := table/uid,table/uid,...
+						//	to TableESV := table=table,...
+						//	and UidESV := uid=uid,...
+						targetStr = commands[i].param[pkeys[j]];
+						targetArr = targetStr.split(',');
+						targetTableStr = "";
+						targetUidStr = "";
+						for(var k=0;k<targetArr.length;++k)
+						{
+							if(targetArr[k].indexOf('/') < 0)
+								continue; //skip invalid entries
+							
+							if(k) 
+							{
+								targetTableStr += "=";
+								targetUidStr += "=";
+							}
+							targetStr = targetArr[k].split('/');
+							targetTableStr += encodeURIComponent(targetStr[0]);
+							targetUidStr += encodeURIComponent(targetStr[1]);							
+						}
+						
+						Debug.log("targetTableStr = " + targetTableStr);
+						Debug.log("targetUidStr = " + targetUidStr);
+
+						cmdStr += "," + _COMMAND_PARAM_FIELDS.ServerTargetTablesName + "," +
+								targetTableStr;
+						cmdStr += "," + _COMMAND_PARAM_FIELDS.ServerTargetUIDsName + "," +
+								targetUidStr;
+					}
+					else	//normal parameter
+						cmdStr += "," + pkeys[j] + "," +
+							encodeURIComponent(commands[i].param[pkeys[j]]);
+				}
 
 				cmdStr += ";"; //end command
 			}
