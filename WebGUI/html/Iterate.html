@@ -484,15 +484,21 @@
 			//createEmptyIterateGroup()
 			//getIterationPlans()
 			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
-			//deleteIterationPlan()
-        	//showCommandDialog(insertIndex,modifyExisting)
-        	//	localShowCommandDialog()
-        	//	localShowParamControls(commandKey)
-        	//showParamTargetWizDialog(paramIndex)
+			//deleteIterationPlan()        	
 			//addCommand(type,params)
 			//deleteCommand(i,noPrompt,noDraw)
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
-        	//popUpParamSystemAliasOnChange(value)
+        
+        		//Dialogs for Plane Editing:
+        	//showCommandDialog(insertIndex,modifyExisting)
+            //	localShowCommandDialog()
+			//	localShowParamControls(commandKey)
+    		//popUpParamSystemAliasOnChange(value)
+			//showParamTargetWizDialog(paramIndex)
+        	//	localFeCheckboxChanged(event)
+        	//	localFeCheckboxHandler(event,el)
+        	//		localExtractTargetTree(tree)
+        	//targetWizParentMultiSelectHandler(sel)
 		
 				//Plan Control:
 			//startTargetIterationPlan
@@ -2281,7 +2287,12 @@
 				//set position and size
 				var w = 480;
 				var h = 250; //+32 for each parameter
-				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/,
+						undefined /*padding*/,
+						undefined /*border*/,
+						undefined /*margin*/,
+						undefined /*doNotResize*/,
+						40 /*offsetUp*/); //offset up to hide beneath target dialog (and expect growth)
 
 				//build display string
 				var str = "";
@@ -2704,7 +2715,7 @@
 
 			//set position and size
 			var w = 480;
-			var h = 410; 
+			var h = 490; 
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
 			//build display string
@@ -2722,19 +2733,58 @@
 				
 				str += "<br>";
 				str += "<br>";
+
+				str += htmlClearDiv();
+				
+				//make checkbox for FE only filter
+				str += htmlOpen("input",
+						{
+								"type":"checkbox",
+								"id":"popUp-targetWizFEOnly"								
+						},
+						htmlOpen("label",
+								{
+								"id":"popUp-targetWizFEOnlyName",
+								"style":"cursor:pointer;"										
+								},
+								"Filter on Front-ends only",true),
+								true);
+
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-firstBox",
+								"style":"height:200px"
+						},
+						0,true);
+
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-secondBoxDiv",
+								"style":"display:none"
+						});
+				
+				//make checkbox for second-level all UIDs
+				str += htmlOpen("input",
+						{
+								"type":"checkbox",
+								"id":"popUp-targetWizAllUIDs",
+						},
+						htmlOpen("label",
+								{
+										"id":"popUp-targetWizAllUIDsName",
+										"style":"cursor:pointer;"										
+								},
+								"Target all UIDs within parent",true),
+								true);
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-secondBox",
+								"style":"display:none"
+						},
+						0,true);
+				str += "</div>";
 			}
-			
-			
-			
-//			ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
-//					6, //down through command parameters
-//					_modifiedTables,
-//					localExtractTree
-//			);
-//			
-//
-//			//::::::::::::::::::::::::::::::::::::
-//			function localGet
+						
 			
 			el.innerHTML = str;
 			el.style.display = "block";
@@ -2748,8 +2798,133 @@
 				if(el) el.parentNode.removeChild(el); //close popup
 				return false;
 			}; //end submit onmouseup handler
+
+			
+			document.getElementById("popUp-targetWizFEOnly").onchange = localFeCheckboxChanged;
+			document.getElementById("popUp-targetWizFEOnlyName").onmouseup = localFeCheckboxHandler;
+			
+			localFeCheckboxHandler(); //get first box of UIDs 
+			return;
+			
+			
+			//::::::::::::::::::::::::::::::::::::
+			//FEs only checkbox
+			function localFeCheckboxChanged(event) 
+			{
+				//Debug.log("localFeCheckboxChanged " + this.checked);
+				
+				localFeCheckboxHandler(event,this);				
+			}; //end localFeCheckboxChanged()
+			
+			//::::::::::::::::::::::::::::::::::::
+			//populate first level based on checkbox
+			function localFeCheckboxHandler(event,el) 
+			{
+				if(!el)
+				{
+					el = document.getElementById("popUp-targetWizFEOnly");
+					el.checked = !el.checked;
+				}
+				Debug.log("localFeCheckboxHandler " + el.checked);
+
+				var path = el.checked?"FESupervisorConfiguration":"/";
+				ConfigurationAPI.getTree(path,
+						1, //down through command parameters
+						_modifiedTables,
+						localExtractTargetTree
+				);
+				
+				//::::::::::::::::::::::::::::::::::::
+				//Extract UIDs from tree request and show in first box
+				function localExtractTargetTree(tree)
+				{
+					if(!tree)
+					{
+						Debug.log("Invalid tree xml object.",Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+					var msValues = [];
+					
+					//try for any errors in format
+					try
+					{
+						var nodes = tree.children;
+	                	for(var i=0;i<nodes.length;++i)
+	                	{                    
+	                		if(nodes[i].nodeName != "node")   continue;
+	                			
+	                		//Debug.log(nodes[i].getAttribute("value"));
+	                		msValues.push(nodes[i].getAttribute("value"));
+	                	}
+					}
+					catch(e)
+					{
+						Debug.log("Invalid tree xml object.",Debug.HIGH_PRIORITY);
+						return;
+					}
+					
+					//////////// make multiselect box
+					{	
+						var noMultiSelect = false; // true or false (false for multiselect functionality) 
+
+						var msKeys = []; 	//group keys for multi-select
+						var msTypes = [];	//back link strings for multi-select
+
+						//write to a particular div
+						MultiSelectBox.createSelectBox(
+								document.getElementById("popUp-targetWiz-firstBox"),
+								"targetWizFirstLevel",
+								"Select Target Parents:",
+								msValues,msValues,msValues,
+								targetWizParentMultiSelectHandler /*select*/,
+								noMultiSelect);
+
+
+
+						//set pre-selections for uids already in group
+						MultiSelectBox.initMySelectBoxes(true); //init to clear
+						//						var memberVal;
+						//						for(var i=0;i<groupMembers.length;++i)
+						//						{	
+						//							memberVal = DesktopContent.getXMLValue(groupMembers[i]);
+						//							for(var j=0;j<msValues.length;++j)
+						//								if(msValues[j] == memberVal)
+						//								{			
+						//									//found member!
+						//									MultiSelectBox.setSelectionElementByIndex(
+						//											nel,j,true);
+						//									treeEditingInitGroupMembers_.push(msValues[j]);	
+						//
+						//									if(firstTimeMembers) //append to init value the first time
+						//										treeEditingNodeInitValue_ += "," + msValues[j];
+						//									break;
+						//								}											
+						//						}
+						//						MultiSelectBox.initMySelectBoxes(false); //setup selections
+
+					} //////////// end make multiselect box
+					
+					
+				} //end localExtractTargetTree()
+				
+			}; //end localFeCheckboxHandler()
 			
 		} //end showParamTargetWizDialog()
+
+		//=====================================================================================
+		//targetWizParentMultiSelectHandler ~~
+		function targetWizParentMultiSelectHandler(sel)
+		{
+			var i = MultiSelectBox.getSelectedIndex(sel); 
+			var selArr = MultiSelectBox.getSelectionArray(sel);
+			MultiSelectBox.dbg("ms Chosen element index:",i,
+					"=", selArr[i],
+					" value:",sel.innerHTML);
+			for(var s in selArr)
+				MultiSelectBox.dbg("ms selected [" + s + "]: ",
+						selArr[s]);
+		} //end targetWizParentMultiSelectHandler()
 		
 		//=====================================================================================
 		//popUpParamSystemAliasOnChange ~~

@@ -2262,14 +2262,21 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmldoc, 
 
 		std::vector<std::pair<std::string,ConfigurationTree> > rootMap;
 
-		if(startPath == "/" && !usingActiveGroups)
-		{ 	//then consider the configurationManager the root node
-			std::string accumulateTreeErrs;
-			rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
-			__COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
-			if(accumulateTreeErrs != "")
-				xmldoc.addTextElementToData("TreeErrors",
-						accumulateTreeErrs);
+		if(startPath == "/")
+		{
+			//then consider the configurationManager the root node
+
+			if(usingActiveGroups)
+				rootMap = cfgMgr->getChildren();
+			else
+			{
+				std::string accumulateTreeErrs;
+				rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
+				__COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
+				if(accumulateTreeErrs != "")
+					xmldoc.addTextElementToData("TreeErrors",
+							accumulateTreeErrs);
+			}
 		}
 		else
 		{

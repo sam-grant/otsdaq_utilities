@@ -243,6 +243,9 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,responseHa
 		modifiedTablesListStr += modifiedTables[i].tableName + "," +
 				modifiedTables[i].tableVersion;
 	}
+	
+	treeBasePath = treeBasePath.trim();
+	if(treeBasePath == "/") treeBasePath = ""; //server does not like // for root
 
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 			"&configGroup=" +
