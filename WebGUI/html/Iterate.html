@@ -267,6 +267,26 @@
 		    width:				345px;
 		}
 		
+		#popUp-targetDisplayClearButton {
+			padding-left: 1px;
+			width: 18px;
+			height: 20px;
+			text-align: center;
+			margin: -2px -10px -10px 4px;
+			border: 1px solid rgb(144, 134, 134);
+			background-color: rgb(226, 223, 223);
+			color: rgb(197, 14, 14);
+			font-weight: bold;
+			border-radius: 11px;
+		}
+		
+		#popUp-targetDisplayClearButton:hover {
+			background-color: rgb(247, 204, 161);
+		}
+		#popUp-targetDisplayClearButton:active {
+			background-color: white;
+		}	
+		
 		
 	</style>
 	
@@ -461,7 +481,8 @@
         var _shownDeleteCommandIndex = -1;
         var _shownDragOverCommandIndex = -1;
         var _planIsModified = false;
-        var _popUpParamsModified = false;
+        var _popUpParamsModified = false
+        
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -2702,6 +2723,11 @@
 		function showParamTargetWizDialog(paramIndex)
 		{
 			Debug.log("showParamTargetWizDialog " + paramIndex);
+			
+			var targetStr = document.getElementById("popUp-param-" + paramIndex).value;
+
+			Debug.log("targetStr " + targetStr);
+			
 			_popUpParamsModified = true; 
 			
 			//always create element
@@ -2729,10 +2755,28 @@
 						ConfigurationAPI._POP_UP_DIALOG_ID + 
 						"-div"); //start main div ----------- 
 
-				str += "Choose your targets.";
+				//make target display
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetDisplayLabel",
+								"style":"float: left;"
+						},0,true);
+				str += htmlOpen("input readonly ",
+						{
+								"id":"popUp-targetDisplay",
+								"type":"text",
+								"style":"float: left; margin: -2px 0 0 1px; width: 300px;"
+						});
+				str += "</input>";
 				
-				str += "<br>";
-				str += "<br>";
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetDisplayClearButton",
+								"style":"float: left; cursor: pointer",
+								"title":"Clear all targets."
+						},
+						"x",
+						true);
 
 				str += htmlClearDiv();
 				
@@ -2749,19 +2793,8 @@
 								},
 								"Filter on Front-ends only",true),
 								true);
-
-				str += htmlOpen("div",
-						{
-								"id":"popUp-targetWiz-firstBox",
-								"style":"height:200px"
-						},
-						0,true);
-
-				str += htmlOpen("div",
-						{
-								"id":"popUp-targetWiz-secondBoxDiv",
-								"style":"display:none"
-						});
+				
+				str += htmlClearDiv();
 				
 				//make checkbox for second-level all UIDs
 				str += htmlOpen("input",
@@ -2774,12 +2807,28 @@
 										"id":"popUp-targetWizAllUIDsName",
 										"style":"cursor:pointer;"										
 								},
-								"Target all UIDs within parent",true),
+								"Target all records within parent",true),
 								true);
+
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-firstBox",
+								"style":"height:160px; margin-top: -16px;"
+						},
+						0,true);
+
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-secondBoxDiv",
+								"style":"display:block"
+						});
+				
+				
 				str += htmlOpen("div",
 						{
 								"id":"popUp-targetWiz-secondBox",
-								"style":"display:none"
+								"style":"height:160px; margin-top: -16px;"
+								//"style":"display:none"
 						},
 						0,true);
 				str += "</div>";
@@ -2802,10 +2851,61 @@
 			
 			document.getElementById("popUp-targetWizFEOnly").onchange = localFeCheckboxChanged;
 			document.getElementById("popUp-targetWizFEOnlyName").onmouseup = localFeCheckboxHandler;
+			document.getElementById("popUp-targetDisplayClearButton").onmouseup = localClearTargets;
 			
 			localFeCheckboxHandler(); //get first box of UIDs 
-			return;
 			
+
+			var targetObj = {"tables":[],"uids":[]}; //array of target tables/UIDs
+			
+			//extract initial targets
+			localExtractTargets();
+			localDisplayTargets();
+			
+			return;
+
+			
+			//::::::::::::::::::::::::::::::::::::
+			function localClearTargets() 
+			{
+				targetObj = {"tables":[],"uids":[]};
+				localDisplayTargets();				
+			} //end localClearTargets()
+
+			//::::::::::::::::::::::::::::::::::::
+			function localDisplayTargets() 
+			{
+				var labelEl = document.getElementById("popUp-targetDisplayLabel");
+				var el = document.getElementById("popUp-targetDisplay");
+				
+				var str = "";
+
+				for(var i=0;i<targetObj.tables.length;++i)
+				{
+					if(i) str += ",";
+					str += targetObj.tables[i] + "/" + targetObj.uids[i];
+				}
+				
+				el.value = str;
+				labelEl.innerHTML = "You have " + targetObj.tables.length + " targets:";
+				
+			} //end localDisplayTargets()
+			
+			//::::::::::::::::::::::::::::::::::::
+			//from targetStr
+			function localExtractTargets() 
+			{
+				targetObj.tables = [];
+				targetObj.uids = [];
+				var targetArr = targetStr.split(',');
+				var pair;
+				for(var i=0;i<targetArr.length;++i)
+				{
+					pair = targetArr[i].split('/');
+					targetObj.tables.push(pair[0]);
+					targetObj.uids.push(pair[1]);					
+				}
+			} //end localExtractTargets()
 			
 			//::::::::::::::::::::::::::::::::::::
 			//FEs only checkbox
@@ -2921,9 +3021,97 @@
 			MultiSelectBox.dbg("ms Chosen element index:",i,
 					"=", selArr[i],
 					" value:",sel.innerHTML);
-			for(var s in selArr)
-				MultiSelectBox.dbg("ms selected [" + s + "]: ",
-						selArr[s]);
+			//for(var s in selArr)
+			//	MultiSelectBox.dbg("ms selected [" + s + "]: ",
+			//			selArr[s]);
+			
+			var feMode = document.getElementById("popUp-targetWizFEOnly").checked;
+			var path = feMode?
+					"FESupervisorConfiguration":"";
+						
+			path += "/" + sel.innerText;
+			path += feMode?
+					"/LinkToFEInterfaceConfiguration":"";
+			
+			ConfigurationAPI.getTree(path,
+					1, //down through command parameters
+					_modifiedTables,
+					localExtractTargetTree
+			);
+			
+			//::::::::::::::::::::::::::::::::::::
+			//Extract UIDs from tree request and show in first box
+			function localExtractTargetTree(tree)
+			{
+				if(!tree)
+				{
+					Debug.log("Invalid tree xml object.",Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				var msValues = [];
+
+				//try for any errors in format
+				try
+				{
+					var nodes = tree.children;
+					for(var i=0;i<nodes.length;++i)
+					{                    
+						if(nodes[i].nodeName != "node")   continue;
+
+						//Debug.log(nodes[i].getAttribute("value"));
+						msValues.push(nodes[i].getAttribute("value"));
+					}
+				}
+				catch(e)
+				{
+					Debug.log("Invalid tree xml object.",Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				//////////// make multiselect box
+				{	
+					var noMultiSelect = false; // true or false (false for multiselect functionality) 
+
+					var msKeys = []; 	//group keys for multi-select
+					var msTypes = [];	//back link strings for multi-select
+
+					//write to a particular div
+					MultiSelectBox.createSelectBox(
+							document.getElementById("popUp-targetWiz-secondBox"),
+							"targetWizSecondLevel",
+							"Select Targets:",
+							msValues,msValues,msValues,
+							undefined,//targetWizParentMultiSelectHandler /*select*/,
+							noMultiSelect);
+
+
+
+					//set pre-selections for uids already in group
+					//MultiSelectBox.initMySelectBoxes(true); //init to clear
+					//						var memberVal;
+					//						for(var i=0;i<groupMembers.length;++i)
+					//						{	
+					//							memberVal = DesktopContent.getXMLValue(groupMembers[i]);
+					//							for(var j=0;j<msValues.length;++j)
+					//								if(msValues[j] == memberVal)
+					//								{			
+					//									//found member!
+					//									MultiSelectBox.setSelectionElementByIndex(
+					//											nel,j,true);
+					//									treeEditingInitGroupMembers_.push(msValues[j]);	
+					//
+					//									if(firstTimeMembers) //append to init value the first time
+					//										treeEditingNodeInitValue_ += "," + msValues[j];
+					//									break;
+					//								}											
+					//						}
+					//						MultiSelectBox.initMySelectBoxes(false); //setup selections
+
+				} //////////// end make multiselect box
+
+
+			} //end localExtractTargetTree()
 		} //end targetWizParentMultiSelectHandler()
 		
 		//=====================================================================================
@@ -3437,6 +3625,7 @@
 	<!-- body content populated by javascript paint(), etc. -->
 
 	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+	<div class='preloadImage' id='ConfigurationAPI-popUpDialog-preloadImage-editIconHover'></div>
 </body>
 	
 </html>
