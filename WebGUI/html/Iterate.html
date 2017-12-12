@@ -272,7 +272,7 @@
 			width: 18px;
 			height: 20px;
 			text-align: center;
-			margin: -2px -10px -10px 4px;
+			margin: 0px -10px -10px 4px;
 			border: 1px solid rgb(144, 134, 134);
 			background-color: rgb(226, 223, 223);
 			color: rgb(197, 14, 14);
@@ -483,6 +483,8 @@
         var _planIsModified = false;
         var _popUpParamsModified = false
         
+        var _cmdTargetObj = {"tables":[],"uids":[]}; //array of target tables/UIDs
+        var _
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -510,7 +512,7 @@
 			//deleteCommand(i,noPrompt,noDraw)
 			//savePlanCommandSequence(plan,commands,respsonseHandler)
         
-        		//Dialogs for Plane Editing:
+        		//Dialogs for Plan Editing:
         	//showCommandDialog(insertIndex,modifyExisting)
             //	localShowCommandDialog()
 			//	localShowParamControls(commandKey)
@@ -519,7 +521,9 @@
         	//	localFeCheckboxChanged(event)
         	//	localFeCheckboxHandler(event,el)
         	//		localExtractTargetTree(tree)
+        	//targetWizDisplayTargets()
         	//targetWizParentMultiSelectHandler(sel)
+    		//targetWizRecordMultiSelectHandler(sel)
 		
 				//Plan Control:
 			//startTargetIterationPlan
@@ -2765,7 +2769,8 @@
 						{
 								"id":"popUp-targetDisplay",
 								"type":"text",
-								"style":"float: left; margin: -2px 0 0 1px; width: 300px;"
+								"style":"float: left; margin: -2px 0 0 1px; width: 300px;",
+								"class":"popUp-param"
 						});
 				str += "</input>";
 				
@@ -2849,18 +2854,24 @@
 			}; //end submit onmouseup handler
 
 			
+			//fe checkbox handlers
 			document.getElementById("popUp-targetWizFEOnly").onchange = localFeCheckboxChanged;
 			document.getElementById("popUp-targetWizFEOnlyName").onmouseup = localFeCheckboxHandler;
+			
+			//all-in-parent checkbox handlers
+			document.getElementById("popUp-targetWizAllUIDs").onchange = localAllUIDsCheckboxChanged;			
+			document.getElementById("popUp-targetWizAllUIDsName").onmouseup = localAllUIDsCheckboxHandler;
+						
 			document.getElementById("popUp-targetDisplayClearButton").onmouseup = localClearTargets;
+
+			//init handling of targets
 			
 			localFeCheckboxHandler(); //get first box of UIDs 
-			
-
-			var targetObj = {"tables":[],"uids":[]}; //array of target tables/UIDs
+			localAllUIDsCheckboxHandler(); //deafult to true for all UIDs
 			
 			//extract initial targets
 			localExtractTargets();
-			localDisplayTargets();
+			targetWizDisplayTargets();
 			
 			return;
 
@@ -2868,44 +2879,51 @@
 			//::::::::::::::::::::::::::::::::::::
 			function localClearTargets() 
 			{
-				targetObj = {"tables":[],"uids":[]};
-				localDisplayTargets();				
+				_cmdTargetObj = {"tables":[],"uids":[]};
+				targetWizDisplayTargets();				
 			} //end localClearTargets()
 
-			//::::::::::::::::::::::::::::::::::::
-			function localDisplayTargets() 
-			{
-				var labelEl = document.getElementById("popUp-targetDisplayLabel");
-				var el = document.getElementById("popUp-targetDisplay");
-				
-				var str = "";
-
-				for(var i=0;i<targetObj.tables.length;++i)
-				{
-					if(i) str += ",";
-					str += targetObj.tables[i] + "/" + targetObj.uids[i];
-				}
-				
-				el.value = str;
-				labelEl.innerHTML = "You have " + targetObj.tables.length + " targets:";
-				
-			} //end localDisplayTargets()
+			
 			
 			//::::::::::::::::::::::::::::::::::::
 			//from targetStr
 			function localExtractTargets() 
 			{
-				targetObj.tables = [];
-				targetObj.uids = [];
+				_cmdTargetObj.tables = [];
+				_cmdTargetObj.uids = [];
 				var targetArr = targetStr.split(',');
 				var pair;
 				for(var i=0;i<targetArr.length;++i)
 				{
 					pair = targetArr[i].split('/');
-					targetObj.tables.push(pair[0]);
-					targetObj.uids.push(pair[1]);					
+					_cmdTargetObj.tables.push(pair[0]);
+					_cmdTargetObj.uids.push(pair[1]);					
 				}
 			} //end localExtractTargets()
+			
+			//::::::::::::::::::::::::::::::::::::
+			//AllUIDs checkbox
+			function localAllUIDsCheckboxChanged(event) 
+			{
+				//Debug.log("localFeCheckboxChanged " + this.checked);
+
+				localAllUIDsCheckboxHandler(event,this);				
+			} //end localFeCheckboxChanged()
+
+			//::::::::::::::::::::::::::::::::::::
+			//enable second level based on checkbox
+			function localAllUIDsCheckboxHandler(event,el) 
+			{
+				if(!el)
+				{
+					el = document.getElementById("popUp-targetWizAllUIDs");
+					el.checked = !el.checked;
+				}
+				useAllRecords = el.checked;
+				Debug.log("localAllUIDsCheckboxHandler " + useAllRecords);
+				
+				
+			} //end localAllUIDsCheckboxHandler()
 			
 			//::::::::::::::::::::::::::::::::::::
 			//FEs only checkbox
@@ -2914,7 +2932,7 @@
 				//Debug.log("localFeCheckboxChanged " + this.checked);
 				
 				localFeCheckboxHandler(event,this);				
-			}; //end localFeCheckboxChanged()
+			} //end localFeCheckboxChanged()
 			
 			//::::::::::::::::::::::::::::::::::::
 			//populate first level based on checkbox
@@ -3013,6 +3031,24 @@
 		} //end showParamTargetWizDialog()
 
 		//=====================================================================================
+		//targetWizRecordMultiSelectHandler ~~
+		function targetWizRecordMultiSelectHandler(sel)
+		{
+			var i = MultiSelectBox.getSelectedIndex(sel); 
+			var selArr = MultiSelectBox.getSelectionArray(sel);
+			MultiSelectBox.dbg("ms Chosen element index:",i,
+					"=", selArr[i],
+					" value:",sel.innerHTML);
+
+			var isChoiceSelected = selArr[i]?true:false;
+			
+
+			var parentTable = feMode?
+					"FEInterfaceConfiguration":sel.innerText;
+			
+		} //end targetWizRecordMultiSelectHandler()
+		
+		//=====================================================================================
 		//targetWizParentMultiSelectHandler ~~
 		function targetWizParentMultiSelectHandler(sel)
 		{
@@ -3025,9 +3061,15 @@
 			//	MultiSelectBox.dbg("ms selected [" + s + "]: ",
 			//			selArr[s]);
 			
+			var isChoiceSelected = selArr[i]?true:false;
 			var feMode = document.getElementById("popUp-targetWizFEOnly").checked;
+			var allUidMode = document.getElementById("popUp-targetWizAllUIDs").checked;
+			
 			var path = feMode?
 					"FESupervisorConfiguration":"";
+			
+			var parentTable = feMode?
+					"FEInterfaceConfiguration":sel.innerText;
 						
 			path += "/" + sel.innerText;
 			path += feMode?
@@ -3050,17 +3092,67 @@
 				}
 
 				var msValues = [];
+				var msSelected = []; //keep track of ms selected, even though it may not be displayed
+				var found; 
+				
+				Debug.log("parentTable " + parentTable);
+				Debug.log("isChoiceSelected " + isChoiceSelected);
 
 				//try for any errors in format
 				try
 				{
-					var nodes = tree.children;
+					var nodes = tree.children;					
 					for(var i=0;i<nodes.length;++i)
 					{                    
 						if(nodes[i].nodeName != "node")   continue;
 
 						//Debug.log(nodes[i].getAttribute("value"));
 						msValues.push(nodes[i].getAttribute("value"));
+						
+						//search targets for target
+						found = false;
+						for(var j=0;j<_cmdTargetObj.tables.length;++j)
+						{
+							if(_cmdTargetObj.tables[j] == parentTable && 
+									_cmdTargetObj.uids[j] == msValues[i])
+							{
+								//target found in targets
+								
+								found = true;							
+										
+								if(allUidMode && !isChoiceSelected)
+								{
+									Debug.log("Found " + _cmdTargetObj.tables[j] + "/" + 
+											_cmdTargetObj.uids[j] + ", clearing");
+	
+									//remove!
+									_cmdTargetObj.tables.splice(j,1);
+									_cmdTargetObj.uids.splice(j,1);
+									msSelected.push(false);
+								}
+								else
+									msSelected.push(true);
+								
+								break;
+							}
+							
+						} //end loop through targets
+						
+						if(!found)
+						{
+							//target not found in targets 
+							if(allUidMode && isChoiceSelected)
+							{
+								Debug.log("Not Found " + _cmdTargetObj.tables[j] + "/" + 
+										_cmdTargetObj.uids[j] + ", adding");
+
+								_cmdTargetObj.tables.push(parentTable);
+								_cmdTargetObj.uids.push(msValues[i]);	
+								msSelected.push(true);
+							}
+							else
+								msSelected.push(false);
+						}
 					}
 				}
 				catch(e)
@@ -3069,50 +3161,63 @@
 					return;
 				}
 
-				//////////// make multiselect box
+				//clear
+				document.getElementById("popUp-targetWiz-secondBox").innerHTML = "";
+				
+				targetWizDisplayTargets(); //update display
+									
+				if(!allUidMode)		//////////// make multiselect box
 				{	
 					var noMultiSelect = false; // true or false (false for multiselect functionality) 
 
 					var msKeys = []; 	//group keys for multi-select
 					var msTypes = [];	//back link strings for multi-select
-
+					var sel = document.getElementById("popUp-targetWiz-secondBox");
 					//write to a particular div
 					MultiSelectBox.createSelectBox(
-							document.getElementById("popUp-targetWiz-secondBox"),
+							sel,
 							"targetWizSecondLevel",
 							"Select Targets:",
 							msValues,msValues,msValues,
-							undefined,//targetWizParentMultiSelectHandler /*select*/,
+							targetWizRecordMultiSelectHandler /*select*/,
 							noMultiSelect);
 
 
-
 					//set pre-selections for uids already in group
-					//MultiSelectBox.initMySelectBoxes(true); //init to clear
-					//						var memberVal;
-					//						for(var i=0;i<groupMembers.length;++i)
-					//						{	
-					//							memberVal = DesktopContent.getXMLValue(groupMembers[i]);
-					//							for(var j=0;j<msValues.length;++j)
-					//								if(msValues[j] == memberVal)
-					//								{			
-					//									//found member!
-					//									MultiSelectBox.setSelectionElementByIndex(
-					//											nel,j,true);
-					//									treeEditingInitGroupMembers_.push(msValues[j]);	
-					//
-					//									if(firstTimeMembers) //append to init value the first time
-					//										treeEditingNodeInitValue_ += "," + msValues[j];
-					//									break;
-					//								}											
-					//						}
-					//						MultiSelectBox.initMySelectBoxes(false); //setup selections
+					MultiSelectBox.initMySelectBoxes(false); //init but do not clear others
+					var memberVal;
+					for(var i=0;i<msSelected.length;++i)
+					{	
+						MultiSelectBox.setSelectionElementByIndex(
+								sel,i,msSelected[i]);					
+					}
+					MultiSelectBox.initMySelectBoxes(false); //setup selections
 
 				} //////////// end make multiselect box
 
 
 			} //end localExtractTargetTree()
 		} //end targetWizParentMultiSelectHandler()
+		
+		//=====================================================================================
+		//targetWizDisplayTargets ~~
+		function targetWizDisplayTargets() 
+		{
+			var labelEl = document.getElementById("popUp-targetDisplayLabel");
+			var el = document.getElementById("popUp-targetDisplay");
+
+			var str = "";
+
+			for(var i=0;i<_cmdTargetObj.tables.length;++i)
+			{
+				if(i) str += ",";
+				str += _cmdTargetObj.tables[i] + "/" + _cmdTargetObj.uids[i];
+			}
+
+			el.value = str;
+			labelEl.innerHTML = "You have " + _cmdTargetObj.tables.length + " targets:";
+
+		} //end targetWizDisplayTargets()
 		
 		//=====================================================================================
 		//popUpParamSystemAliasOnChange ~~
