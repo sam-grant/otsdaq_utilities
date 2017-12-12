@@ -484,7 +484,7 @@
         var _popUpParamsModified = false
         
         var _cmdTargetObj = {"tables":[],"uids":[]}; //array of target tables/UIDs
-        var _
+        var _cmdTargetWizParentTable = "";
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -518,6 +518,8 @@
 			//	localShowParamControls(commandKey)
     		//popUpParamSystemAliasOnChange(value)
 			//showParamTargetWizDialog(paramIndex)
+        	//	localClearTargets()
+        	//	localExtractTargets() 
         	//	localFeCheckboxChanged(event)
         	//	localFeCheckboxHandler(event,el)
         	//		localExtractTargetTree(tree)
@@ -2623,12 +2625,12 @@
 				} //end localShowParamControls()
 
 				//::::::::::::::::::::::::::::::::::::
-				//create cancel onclick handler
+				//create select change handler
 				document.getElementById(
 						"popUp-commandType").onchange = function(event) {
 					Debug.log("Selected " + this.value);
 					localShowParamControls(this.value);				
-				}; //end submit onmouseup handler	
+				}; //end select change  handler	
 
 				//::::::::::::::::::::::::::::::::::::
 				//create cancel onclick handler
@@ -2656,7 +2658,7 @@
 						var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 						if(el) el.parentNode.removeChild(el); //close popup
 					}
-				}; //end submit onmouseup handler	
+				}; //end cancel onclick  handler	
 
 				//::::::::::::::::::::::::::::::::::::
 				//create submit onmouseup handler
@@ -2840,6 +2842,16 @@
 			}
 						
 			
+			str += htmlClearDiv();
+			str += htmlOpen("input",
+					{
+							"id": "popUp-targetWiz-submitButton",
+							"type": "button",
+							"value": "Save Targets",
+							"title": "Save targets back to the parameter value."
+					},
+					0 /*html*/, true /*closeTag*/);	
+
 			el.innerHTML = str;
 			el.style.display = "block";
 			document.body.appendChild(el); //add element to display div
@@ -2853,6 +2865,27 @@
 				return false;
 			}; //end submit onmouseup handler
 
+			//::::::::::::::::::::::::::::::::::::
+			//create cancel onclick handler
+			document.getElementById(
+					"popUp-targetWiz-submitButton").onclick = 
+							function(event) {
+				
+				Debug.log("Wiz ok click");
+				
+				//disable buttons to prevent double clicks
+				this.disabled = true;
+				
+				//export target string
+				document.getElementById("popUp-param-" + 
+						paramIndex).value = 
+								document.getElementById(
+										"popUp-targetDisplay").value;
+				
+				
+				if(el) el.parentNode.removeChild(el); //close popup
+				return false;
+			}; //end submit onmouseup handler
 			
 			//fe checkbox handlers
 			document.getElementById("popUp-targetWizFEOnly").onchange = localFeCheckboxChanged;
@@ -2881,12 +2914,10 @@
 			{
 				_cmdTargetObj = {"tables":[],"uids":[]};
 				targetWizDisplayTargets();				
-			} //end localClearTargets()
-
-			
+			} //end localClearTargets()			
 			
 			//::::::::::::::::::::::::::::::::::::
-			//from targetStr
+			//from targetStr to targets
 			function localExtractTargets() 
 			{
 				_cmdTargetObj.tables = [];
@@ -3041,10 +3072,35 @@
 					" value:",sel.innerHTML);
 
 			var isChoiceSelected = selArr[i]?true:false;
-			
+			var recordUID = sel.innerText;
 
-			var parentTable = feMode?
-					"FEInterfaceConfiguration":sel.innerText;
+			Debug.log("_cmdTargetWizParentTable " + _cmdTargetWizParentTable);
+						
+			//if selected add, else remove
+			
+			var found = false;
+			for(var j=0;j<_cmdTargetObj.tables.length;++j)
+			{
+				if(_cmdTargetObj.tables[j] == _cmdTargetWizParentTable && 
+						_cmdTargetObj.uids[j] == recordUID)
+				{
+					found = true;
+					if(!isChoiceSelected)			//remove
+					{
+						_cmdTargetObj.tables.splice(j,1);
+						_cmdTargetObj.uids.splice(j,1);
+					}
+					break;
+				}
+			}
+			
+			if(!found && isChoiceSelected) //add
+			{
+				_cmdTargetObj.tables.push(_cmdTargetWizParentTable);
+				_cmdTargetObj.uids.push(recordUID);						
+			}
+			
+			targetWizDisplayTargets(); //update display
 			
 		} //end targetWizRecordMultiSelectHandler()
 		
@@ -3068,7 +3124,7 @@
 			var path = feMode?
 					"FESupervisorConfiguration":"";
 			
-			var parentTable = feMode?
+			_cmdTargetWizParentTable = feMode?
 					"FEInterfaceConfiguration":sel.innerText;
 						
 			path += "/" + sel.innerText;
@@ -3095,7 +3151,7 @@
 				var msSelected = []; //keep track of ms selected, even though it may not be displayed
 				var found; 
 				
-				Debug.log("parentTable " + parentTable);
+				Debug.log("_cmdTargetWizParentTable " + _cmdTargetWizParentTable);
 				Debug.log("isChoiceSelected " + isChoiceSelected);
 
 				//try for any errors in format
@@ -3113,7 +3169,7 @@
 						found = false;
 						for(var j=0;j<_cmdTargetObj.tables.length;++j)
 						{
-							if(_cmdTargetObj.tables[j] == parentTable && 
+							if(_cmdTargetObj.tables[j] == _cmdTargetWizParentTable && 
 									_cmdTargetObj.uids[j] == msValues[i])
 							{
 								//target found in targets
@@ -3146,7 +3202,7 @@
 								Debug.log("Not Found " + _cmdTargetObj.tables[j] + "/" + 
 										_cmdTargetObj.uids[j] + ", adding");
 
-								_cmdTargetObj.tables.push(parentTable);
+								_cmdTargetObj.tables.push(_cmdTargetWizParentTable);
 								_cmdTargetObj.uids.push(msValues[i]);	
 								msSelected.push(true);
 							}
@@ -3177,7 +3233,7 @@
 					MultiSelectBox.createSelectBox(
 							sel,
 							"targetWizSecondLevel",
-							"Select Targets:",
+							"Select '" + _cmdTargetWizParentTable + "' Targets:",
 							msValues,msValues,msValues,
 							targetWizRecordMultiSelectHandler /*select*/,
 							noMultiSelect);
