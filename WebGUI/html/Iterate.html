@@ -461,6 +461,7 @@
 		_COMMAND_PARAM_FIELDS.Targets 							= "CSV-Targets";
 		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
 		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
+		_COMMAND_PARAM_FIELDS.RelativePathToField				= "RelativePathToField";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
 		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
@@ -470,7 +471,7 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,"RelativePathToField","FieldStartValue","FieldIterationStepSize"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,_COMMAND_PARAM_FIELDS.RelativePathToField,"FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
         
@@ -485,6 +486,7 @@
         
         var _cmdTargetObj = {"tables":[],"uids":[]}; //array of target tables/UIDs
         var _cmdTargetWizParentTable = "";
+        var _cmdTargetParentSelArr = [];
 		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -517,15 +519,18 @@
             //	localShowCommandDialog()
 			//	localShowParamControls(commandKey)
     		//popUpParamSystemAliasOnChange(value)
-			//showParamTargetWizDialog(paramIndex)
-        	//	localClearTargets()
-        	//	localExtractTargets() 
-        	//	localFeCheckboxChanged(event)
-        	//	localFeCheckboxHandler(event,el)
-        	//		localExtractTargetTree(tree)
-        	//targetWizDisplayTargets()
-        	//targetWizParentMultiSelectHandler(sel)
-    		//targetWizRecordMultiSelectHandler(sel)
+        			//for targets:
+				//showParamTargetWizDialog(paramIndex)
+				//	localClearTargets()
+				//	localExtractTargets() 
+				//	localFeCheckboxChanged(event)
+				//	localFeCheckboxHandler(event,el)
+				//		localExtractTargetTree(tree)
+				//targetWizDisplayTargets()
+				//targetWizParentMultiSelectHandler(sel)
+				//targetWizRecordMultiSelectHandler(sel)
+					//for path to fields
+        		//showParamPathToFieldWizDialog(paramIndex)
 		
 				//Plan Control:
 			//startTargetIterationPlan
@@ -907,10 +912,10 @@
                 													//		first two nodes are uid and table
                 													targetCSVStr += 
                 															targetChildren[m].children[1].getElementsByTagName(
-                																	"UID")[0].getAttribute("value") + 
+                																	"LinkConfigurationName")[0].getAttribute("value") +
 																					"/" + 
-                															targetChildren[m].children[1].getElementsByTagName(
-                																	"LinkConfigurationName")[0].getAttribute("value");                                                            	
+																					targetChildren[m].children[1].getElementsByTagName(
+																							"UID")[0].getAttribute("value");                                                            	
                 												}
                 											} //end target loop
 
@@ -2555,6 +2560,49 @@
 											"style":"float:left; display:block; margin: 2px 0 0 10px;",
 											"onclick":"showParamTargetWizDialog(" + i + ");"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
+							
+							//extract _cmdTargetObj from init value
+							
+							
+							//extract initial targets
+							localExtractTargets();
+							
+							//::::::::::::::::::::::::::::::::::::
+							//from initValue to targets
+							function localExtractTargets() 
+							{
+								_cmdTargetObj.tables = [];
+								_cmdTargetObj.uids = [];
+								var targetArr = initValue.split(',');
+								var pair;
+								for(var i=0;i<targetArr.length;++i)
+								{
+									pair = targetArr[i].split('/');
+									_cmdTargetObj.tables.push(pair[0]);
+									_cmdTargetObj.uids.push(pair[1]);					
+								}
+								console.log(_cmdTargetObj);
+							} //end localExtractTargets()
+						}
+						else if(_COMMAND_PARAMS[commandKey][i] ==  //targets
+								_COMMAND_PARAM_FIELDS.RelativePathToField)
+						{
+							str += htmlOpen("input",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"type":"text",
+											"style":"float:left",
+											"value":initValue,
+											"onchange":"_popUpParamsModified = true;"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
+							
+							str += htmlOpen("div",
+									{
+											"class":ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
+											"style":"float:left; display:block; margin: 2px 0 0 10px;",
+											"onclick":"showParamPathToFieldWizDialog(" + i + ");"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
 						}
 						else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
 								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
@@ -2725,14 +2773,126 @@
 		} //end showCommandDialog()
 
 		//=====================================================================================
+		//showParamPathToFieldWizDialog ~~
+		function showParamPathToFieldWizDialog(paramIndex)
+		{
+			Debug.log("showParamPathToFieldWizDialog " + paramIndex);
+
+			_popUpParamsModified = true; 
+
+			//always create element
+			var el;
+			if(1)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 480;
+			var h = 490; 
+			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+			
+			//build display string
+			var str = "";
+			{
+				str += "<a id='" + 
+						ConfigurationAPI._POP_UP_DIALOG_ID + 
+						"-wizcancel' href='#'>Cancel</a><br><br>";
+
+				str += htmlClearDiv();
+				str += htmlOpen("div",
+						{
+								"id":"popUp-targetWiz-firstBox",
+								"style":"height:160px; margin-top: -16px;"
+						},
+						0,true);
+
+				str += htmlClearDiv();
+				str += htmlOpen("input",
+						{
+								"id": "popUp-targetWiz-submitButton",
+								"type": "button",
+								"value": "Select Field",
+								"title": "Select Field and set path to field as the parameter value."
+						},
+						0 /*html*/, true /*closeTag*/);	
+				
+			}  //end build display string
+
+			el.innerHTML = str;
+			el.style.display = "block";
+			document.body.appendChild(el); //add element to display div
+			
+			
+			//::::::::::::::::::::::::::::::::::::
+			//create cancel onclick handler
+			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
+					"-wizcancel").onclick = function(event) {
+				Debug.log("Wiz Cancel click");				
+				if(el) el.parentNode.removeChild(el); //close popup
+				return false;
+			}; //end submit onmouseup handler
+
+			//::::::::::::::::::::::::::::::::::::
+			//create cancel onclick handler
+			document.getElementById(
+					"popUp-targetWiz-submitButton").onclick = 
+							function(event) {
+
+				Debug.log("Wiz ok click");
+
+				//disable buttons to prevent double clicks
+				this.disabled = true;
+
+				//export field string
+				document.getElementById("popUp-param-" + 
+						paramIndex).value = "field";
+
+
+				if(el) el.parentNode.removeChild(el); //close popup
+				return false;
+			}; //end submit onmouseup handler
+			
+			
+			//use _cmdTargetObj to ask for common fields
+			console.log(_cmdTargetObj);
+			var recordArr = [];
+
+			for(var i=0;i<_cmdTargetObj.tables.length;++i)
+				recordArr.push(_cmdTargetObj.tables[i] + "/" + 
+						_cmdTargetObj.uids[i]);
+			
+			ConfigurationAPI.getFieldsOfRecords(
+					"/"/*subsetBasePath*/,
+					recordArr,
+					"!*CommentDescription,!SlowControls*,!Status,!*GroupID,!*PluginName" /*fieldList*/,
+					10 /*maxDepth*/,
+					localGetFieldsHandler /*responseHandler*/,
+					_modifiedTables,
+					);
+			
+			
+			return;
+			
+
+			//::::::::::::::::::::::::::::::::::::
+			//get common fields handler
+			function localGetFieldsHandler(fields)
+			{
+				Debug.log("localGetFieldsHandler");
+				console.log(fields);
+				
+			} //end localGetFieldsHandler
+			
+		} //end showParamPathToFieldWizDialog()
+		
+		//=====================================================================================
 		//showParamTargetWizDialog ~~
 		function showParamTargetWizDialog(paramIndex)
 		{
 			Debug.log("showParamTargetWizDialog " + paramIndex);
-			
-			var targetStr = document.getElementById("popUp-param-" + paramIndex).value;
-
-			Debug.log("targetStr " + targetStr);
 			
 			_popUpParamsModified = true; 
 			
@@ -2771,7 +2931,8 @@
 						{
 								"id":"popUp-targetDisplay",
 								"type":"text",
-								"style":"float: left; margin: -2px 0 0 1px; width: 300px;",
+								"style":"float: left; margin: -2px 0 0 1px;" + 
+								"width: 270px;",
 								"class":"popUp-param"
 						});
 				str += "</input>";
@@ -2839,18 +3000,19 @@
 						},
 						0,true);
 				str += "</div>";
-			}
+
+				str += htmlClearDiv();
+				str += htmlOpen("input",
+						{
+								"id": "popUp-targetWiz-submitButton",
+								"type": "button",
+								"value": "Save Targets",
+								"title": "Save targets back to the parameter value."
+						},
+						0 /*html*/, true /*closeTag*/);	
+			} //end build display string
 						
 			
-			str += htmlClearDiv();
-			str += htmlOpen("input",
-					{
-							"id": "popUp-targetWiz-submitButton",
-							"type": "button",
-							"value": "Save Targets",
-							"title": "Save targets back to the parameter value."
-					},
-					0 /*html*/, true /*closeTag*/);	
 
 			el.innerHTML = str;
 			el.style.display = "block";
@@ -2862,6 +3024,23 @@
 					"-wizcancel").onclick = function(event) {
 				Debug.log("Wiz Cancel click");				
 				if(el) el.parentNode.removeChild(el); //close popup
+				
+				//extract the value back into targets	
+				var str = document.getElementById("popUp-param-" + 
+						paramIndex).value;
+				
+				_cmdTargetObj.tables = [];
+				_cmdTargetObj.uids = [];
+				var targetArr = str.split(',');
+				var pair;
+				for(var i=0;i<targetArr.length;++i)
+				{
+					pair = targetArr[i].split('/');
+					_cmdTargetObj.tables.push(pair[0]);
+					_cmdTargetObj.uids.push(pair[1]);					
+				}
+				console.log(_cmdTargetObj);
+				
 				return false;
 			}; //end submit onmouseup handler
 
@@ -2902,8 +3081,8 @@
 			localFeCheckboxHandler(); //get first box of UIDs 
 			localAllUIDsCheckboxHandler(); //deafult to true for all UIDs
 			
-			//extract initial targets
-			localExtractTargets();
+			//assume targets are already extracted by parameter dialog
+			
 			targetWizDisplayTargets();
 			
 			return;
@@ -2914,23 +3093,8 @@
 			{
 				_cmdTargetObj = {"tables":[],"uids":[]};
 				targetWizDisplayTargets();				
-			} //end localClearTargets()			
+			} //end localClearTargets()		
 			
-			//::::::::::::::::::::::::::::::::::::
-			//from targetStr to targets
-			function localExtractTargets() 
-			{
-				_cmdTargetObj.tables = [];
-				_cmdTargetObj.uids = [];
-				var targetArr = targetStr.split(',');
-				var pair;
-				for(var i=0;i<targetArr.length;++i)
-				{
-					pair = targetArr[i].split('/');
-					_cmdTargetObj.tables.push(pair[0]);
-					_cmdTargetObj.uids.push(pair[1]);					
-				}
-			} //end localExtractTargets()
 			
 			//::::::::::::::::::::::::::::::::::::
 			//AllUIDs checkbox
@@ -3029,28 +3193,9 @@
 								targetWizParentMultiSelectHandler /*select*/,
 								noMultiSelect);
 
-
-
 						//set pre-selections for uids already in group
 						MultiSelectBox.initMySelectBoxes(true); //init to clear
-						//						var memberVal;
-						//						for(var i=0;i<groupMembers.length;++i)
-						//						{	
-						//							memberVal = DesktopContent.getXMLValue(groupMembers[i]);
-						//							for(var j=0;j<msValues.length;++j)
-						//								if(msValues[j] == memberVal)
-						//								{			
-						//									//found member!
-						//									MultiSelectBox.setSelectionElementByIndex(
-						//											nel,j,true);
-						//									treeEditingInitGroupMembers_.push(msValues[j]);	
-						//
-						//									if(firstTimeMembers) //append to init value the first time
-						//										treeEditingNodeInitValue_ += "," + msValues[j];
-						//									break;
-						//								}											
-						//						}
-						//						MultiSelectBox.initMySelectBoxes(false); //setup selections
+						_cmdTargetParentSelArr = []; //clear what has been loaded
 
 					} //////////// end make multiselect box
 					
@@ -3113,6 +3258,7 @@
 			MultiSelectBox.dbg("ms Chosen element index:",i,
 					"=", selArr[i],
 					" value:",sel.innerHTML);
+						
 			//for(var s in selArr)
 			//	MultiSelectBox.dbg("ms selected [" + s + "]: ",
 			//			selArr[s]);
@@ -3124,6 +3270,55 @@
 			var path = feMode?
 					"FESupervisorConfiguration":"";
 			
+
+			
+			//compare selected array to last selected array
+			//	if allUidMode and different
+			//		then load all children and take action
+			//	else if not allUidMode just load the one that was clicked
+			
+			if(allUidMode)
+			{				
+				var parentTable;
+				
+				for(var i=0;i<selArr.length;++i)
+					if((_cmdTargetParentSelArr[i] == 
+							undefined && selArr[i]) ||
+							(_cmdTargetParentSelArr[i] != undefined && 	
+									_cmdTargetParentSelArr[i] != selArr[i]))
+					{
+						_cmdTargetParentSelArr[i] = selArr[i];
+						
+						//different, so load children and act
+						
+						parentTable = feMode?
+								"FEInterfaceConfiguration":
+								MultiSelectBox.getSelectionElementByIndex(
+									sel,i).innerText;
+
+						ConfigurationAPI.getTree(
+								path + 
+								("/" + 
+								MultiSelectBox.getSelectionElementByIndex(
+										sel,i).innerText) + 
+								(feMode?
+								"/LinkToFEInterfaceConfiguration":""),
+								1, //down through command parameters
+								_modifiedTables,
+								localExtractTargetTree,
+								[parentTable,selArr[i]] //pass parentTable and selected bool							
+						);
+					}
+					//else same, do nothing
+				
+				
+				return;
+			}
+			
+			
+			//else not allUidMode
+			
+			
 			_cmdTargetWizParentTable = feMode?
 					"FEInterfaceConfiguration":sel.innerText;
 						
@@ -3134,12 +3329,15 @@
 			ConfigurationAPI.getTree(path,
 					1, //down through command parameters
 					_modifiedTables,
-					localExtractTargetTree
+					localExtractTargetTree,
+					[_cmdTargetWizParentTable,isChoiceSelected] //pass parentTable and selected bool
 			);
+			
+			return;
 			
 			//::::::::::::::::::::::::::::::::::::
 			//Extract UIDs from tree request and show in first box
-			function localExtractTargetTree(tree)
+			function localExtractTargetTree(tree,parentInfo)
 			{
 				if(!tree)
 				{
@@ -3151,8 +3349,10 @@
 				var msSelected = []; //keep track of ms selected, even though it may not be displayed
 				var found; 
 				
+				Debug.log("parentTable " + parentInfo[0]);
+				//_cmdTargetWizParentTable is only valid when not ALL
 				Debug.log("_cmdTargetWizParentTable " + _cmdTargetWizParentTable);
-				Debug.log("isChoiceSelected " + isChoiceSelected);
+				Debug.log("isChoiceSelected " + parentInfo[1]);
 
 				//try for any errors in format
 				try
@@ -3169,7 +3369,7 @@
 						found = false;
 						for(var j=0;j<_cmdTargetObj.tables.length;++j)
 						{
-							if(_cmdTargetObj.tables[j] == _cmdTargetWizParentTable && 
+							if(_cmdTargetObj.tables[j] == parentInfo[0] && 
 									_cmdTargetObj.uids[j] == msValues[i])
 							{
 								//target found in targets
@@ -3199,10 +3399,10 @@
 							//target not found in targets 
 							if(allUidMode && isChoiceSelected)
 							{
-								Debug.log("Not Found " + _cmdTargetObj.tables[j] + "/" + 
-										_cmdTargetObj.uids[j] + ", adding");
+								Debug.log("Adding " + parentInfo[0] + "/" + 
+										msValues[i]);
 
-								_cmdTargetObj.tables.push(_cmdTargetWizParentTable);
+								_cmdTargetObj.tables.push(parentInfo[0]);
 								_cmdTargetObj.uids.push(msValues[i]);	
 								msSelected.push(true);
 							}
@@ -3213,7 +3413,7 @@
 				}
 				catch(e)
 				{
-					Debug.log("Invalid tree xml object.",Debug.HIGH_PRIORITY);
+					Debug.log("Invalid tree xml object: " + e,Debug.HIGH_PRIORITY);
 					return;
 				}
 
@@ -3233,7 +3433,7 @@
 					MultiSelectBox.createSelectBox(
 							sel,
 							"targetWizSecondLevel",
-							"Select '" + _cmdTargetWizParentTable + "' Targets:",
+							"Select '" + cmdTargetWizParentTable + "' Targets:",
 							msValues,msValues,msValues,
 							targetWizRecordMultiSelectHandler /*select*/,
 							noMultiSelect);
@@ -3263,14 +3463,18 @@
 			var el = document.getElementById("popUp-targetDisplay");
 
 			var str = "";
-
+			var titleStr = "";
+			
 			for(var i=0;i<_cmdTargetObj.tables.length;++i)
 			{
-				if(i) str += ",";
+				if(i) {str += ","; titleStr += "\n"; }
 				str += _cmdTargetObj.tables[i] + "/" + _cmdTargetObj.uids[i];
+				titleStr += (i+1) + ". " + 
+						_cmdTargetObj.tables[i] + "/" + _cmdTargetObj.uids[i];
 			}
 
 			el.value = str;
+			el.title = titleStr;
 			labelEl.innerHTML = "You have " + _cmdTargetObj.tables.length + " targets:";
 
 		} //end targetWizDisplayTargets()

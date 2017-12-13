@@ -1924,12 +1924,17 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 	{
 		DOMElement* parentEl = xmldoc.addTextElementToData("fields", startPath);
 
-		if(depth == 0) return; //done if 0 depth, no fields
+		if(depth == 0)
+		{
+			__SS__ << "Depth of search must be greater than 0." << __E__;
+			__COUT__ << ss.str();
+			throw std::runtime_error(ss.str()); //done if 0 depth, no fields
+		}
 
 		//do not allow traversing for common fields from root level
 		//	the tree view should be used for such a purpose
-		if(startPath == "/")
-			return;
+		//if(startPath == "/")
+		//	return;
 
 		std::vector<ConfigurationTree::RecordField> retFieldList;
 
@@ -1989,7 +1994,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 				}
 			}
 
-			retFieldList = cfgMgr->getNode(startPath).getCommonFields(
+			retFieldList = startNode.getCommonFields(
 					records,fieldAcceptList,fieldRejectList,depth);
 		}
 

@@ -87,7 +87,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
-//	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler)
+//	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
 
 //
 //		for Editable Fields
@@ -234,7 +234,10 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 //		considering the modifiedTables.
 //	
 //	on failure, calls response handler with undefined parameter
-ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,responseHandler)
+//
+//	responseHandler is called with extra responseHandlerParam (to indicate source, e.g.)
+ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
+		responseHandler,responseHandlerParam)
 {
 	var modifiedTablesListStr = "";
 	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
@@ -261,7 +264,7 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,responseHa
 		if(err) 
 		{
 			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler();
+			if(responseHandler) responseHandler(undefined,responseHandlerParam);
 			return;
 		}
 
@@ -271,7 +274,9 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,responseHa
 		//					for(var i=0;i<nodes.length;++i)
 		//						records.push(nodes[i].getAttribute("value"));
 		//					Debug.log("Records: " + records);
-		if(responseHandler) responseHandler(DesktopContent.getXMLNode(req,"tree"));
+		if(responseHandler) responseHandler(
+				DesktopContent.getXMLNode(req,"tree"),
+				responseHandlerParam);
 
 			}, //handler
 			0, //handler param
@@ -327,6 +332,9 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 		}
 	else //handle single record case
 		recordListStr = encodeURIComponent(recordArr);
+	
+	subsetBasePath = subsetBasePath.trim();
+	if(subsetBasePath == "/") subsetBasePath = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
 			"&configGroup=" +
