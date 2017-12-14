@@ -1571,7 +1571,7 @@
 
 			el.style.width = "";
 
-			var width = _bottomPane.offsetWidth - left - 25;
+			var width = _bottomPane.offsetWidth - left - 40;
 			
 			el.onmousemove = function(event) {event.stopPropagation();} //prevent disappearing act from body mousemove
 			
@@ -2798,21 +2798,21 @@
 			var str = "";
 			{
 				str += "<a id='" + 
-						ConfigurationAPI._POP_UP_DIALOG_ID + 
-						"-wizcancel' href='#'>Cancel</a><br><br>";
+						"popUp-fieldWiz-cancelButton" + 
+						"' href='#'>Cancel</a><br><br>";
 
 				str += htmlClearDiv();
 				str += htmlOpen("div",
 						{
-								"id":"popUp-targetWiz-firstBox",
-								"style":"height:160px; margin-top: -16px;"
+								"id":"popUp-fieldWiz-firstBox",
+								"style":"height:390px; margin-top: -16px;"
 						},
 						0,true);
-
+				
 				str += htmlClearDiv();
 				str += htmlOpen("input",
 						{
-								"id": "popUp-targetWiz-submitButton",
+								"id": "popUp-fieldWiz-submitButton",
 								"type": "button",
 								"value": "Select Field",
 								"title": "Select Field and set path to field as the parameter value."
@@ -2828,8 +2828,9 @@
 			
 			//::::::::::::::::::::::::::::::::::::
 			//create cancel onclick handler
-			document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID + 
-					"-wizcancel").onclick = function(event) {
+			document.getElementById(
+					"popUp-fieldWiz-cancelButton").onclick = 
+							function(event) {
 				Debug.log("Wiz Cancel click");				
 				if(el) el.parentNode.removeChild(el); //close popup
 				return false;
@@ -2838,18 +2839,24 @@
 			//::::::::::::::::::::::::::::::::::::
 			//create cancel onclick handler
 			document.getElementById(
-					"popUp-targetWiz-submitButton").onclick = 
+					"popUp-fieldWiz-submitButton").onclick = 
 							function(event) {
 
 				Debug.log("Wiz ok click");
 
 				//disable buttons to prevent double clicks
 				this.disabled = true;
-
+				
+				var sel = document.getElementById("popUp-fieldWiz-firstBox");
+				var choiceEl = MultiSelectBox.getSelectionElementByIndex(
+						sel,
+						MultiSelectBox.getSelectedIndex(sel));
+						
 				//export field string
 				document.getElementById("popUp-param-" + 
-						paramIndex).value = "field";
-
+						paramIndex).value = 
+								choiceEl.getAttribute("key-value") + 
+								choiceEl.innerText;
 
 				if(el) el.parentNode.removeChild(el); //close popup
 				return false;
@@ -2883,6 +2890,47 @@
 			{
 				Debug.log("localGetFieldsHandler");
 				console.log(fields);
+				
+				var msValues = [];
+				var msKeys = [];	
+				var msTypes = [];	
+				var msTitles = [];	
+				
+				for(var i=0;i<fields.length;++i)
+				{
+					msTitles.push(fields[i].fieldRelativePath +
+							fields[i].fieldColumnName);
+					msValues.push(fields[i].fieldColumnName);
+					msKeys.push(fields[i].fieldRelativePath);
+					msTypes.push("");
+				}
+				
+				
+				//////////// make multiselect box
+				{	
+					var noMultiSelect = true; // true or false (false for multiselect functionality) 
+
+
+					//write to a particular div
+					MultiSelectBox.createSelectBox(
+							document.getElementById("popUp-fieldWiz-firstBox"),
+							"fieldWizFirstLevel",
+							"Select the Target Field:",
+							msValues,msKeys,msTypes,
+							undefined /*select*/,
+							noMultiSelect,
+							undefined, //mouseOverHandler,
+							undefined, //iconURLs,
+							undefined, //mouseDownHandler,
+							undefined, //mouseUpHandler,
+							undefined, //requireCtrlMultiClick,
+							msTitles //	titles
+									);
+
+					//set pre-selections for uids already in group
+					MultiSelectBox.initMySelectBoxes(true); //init to clear					
+
+				} //////////// end make multiselect box
 				
 			} //end localGetFieldsHandler
 			

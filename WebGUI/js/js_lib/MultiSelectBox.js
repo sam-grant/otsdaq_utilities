@@ -224,8 +224,9 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 //		requireCtrlMultiClick
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler,
-		requireCtrlMultiClick)
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,
+		mouseUpHandler,
+		requireCtrlMultiClick,titles)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -304,6 +305,9 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 		else if(mouseUpHandler) //assume it is a function
 			str += mouseUpHandler.name + "(this,event);"; //user selection mouseUpHandler
 		str += "' ";
+		
+		if(titles)
+			str += "title='" + titles[i] + "' ";
 		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes
