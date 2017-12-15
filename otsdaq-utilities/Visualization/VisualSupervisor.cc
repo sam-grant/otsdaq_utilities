@@ -153,6 +153,7 @@ void VisualSupervisor::destroy(void)
 void VisualSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
+	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Visualization.html?urn=" <<
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
