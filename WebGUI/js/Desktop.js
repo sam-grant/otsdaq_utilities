@@ -666,6 +666,40 @@ Desktop.createDesktop = function(security) {
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
     
+	this.refreshWindowById = function(id) {
+	    var win = this.getWindowById(id);
+	    if(win == -1) return -1;
+
+	    this.setForeWindow(win);
+	    this.refreshWindow();
+    }
+
+	this.refreshWindow = function(e) {
+	    if(!_getForeWindow()) return;
+	    Debug.log("Windows Length: " + _windows.length);
+	    var window = _windows.pop();//_getForeWindow();
+	    var id  = window.getWindowId();
+	    var z   = window.getWindowZ();
+	    var name    = window.getWindowName();
+	    var subname = window.getWindowSubName();
+	    var url     = window.getWindowUrl();
+	    var width   = window.getWindowWidth();
+	    var height  = window.getWindowHeight();
+	    var x = window.getWindowX();
+	    var y = window.getWindowY();
+                                                                                                                                                                                                                                          
+            window.windiv.parentNode.removeChild(window.windiv);                                                                                                                                                                           
+            _windows.splice(_windows.length-1,1);                                                                                                                                                                                         
+            _dashboard.updateWindows();
+
+
+	    newWindow = this.addWindow(name,subname,url);
+	    newWindow.setWindowSizeAndPosition(x,y,width,height);
+            Debug.log("Windows Length: " + _windows.length);
+
+
+    }
+
         //minimizeWindowById ~~~
 		//	Find window by id
 	this.minimizeWindowById = function(id) {
@@ -1367,6 +1401,13 @@ Desktop.handleWindowManipulation = function(delta) {
 Desktop.handleWindowButtonDown = function(mouseEvent) {
 	mouseEvent.cancelBubble=true; //do nothing but eat event away from window so window doesn't move	
 	return false;
+}
+
+Desktop.handleWindowRefresh = function(mouseEvent){
+        Debug.log("Refresh " + this.id.split('-')[1]);
+        Desktop.desktop.refreshWindowById(this.id.split('-')[1]);
+        return false;
+
 }
 
 Desktop.handleWindowMinimize = function(mouseEvent) {
