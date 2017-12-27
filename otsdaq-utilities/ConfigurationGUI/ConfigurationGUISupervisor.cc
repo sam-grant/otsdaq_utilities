@@ -2829,7 +2829,7 @@ try
 
 				//create command parameter entry at command level
 				cmdRow = commandTypeToCommandTableMap[command.type_].cfgView_->addRow(
-						author,command.type_ + "_COMMAND_");
+						author,true /*incrementUniqueData*/,command.type_ + "_COMMAND_");
 
 
 				//parameters are linked
@@ -3205,7 +3205,7 @@ try
 				type == "table-newUIDRow")
 		{
 			//add row
-			unsigned int row = cfgView->addRow(author);
+			unsigned int row = cfgView->addRow(author,true /*incrementUniqueData*/);
 
 			//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 			try
@@ -3221,7 +3221,7 @@ try
 		else if(type == "table-newGroupRow")
 		{
 			//add row
-			unsigned int row = cfgView->addRow(author);
+			unsigned int row = cfgView->addRow(author,true /*incrementUniqueData*/);
 
 			//get index value and group id value
 			unsigned int csvIndex = newValue.find(',');
