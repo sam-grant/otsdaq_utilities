@@ -148,13 +148,17 @@
 			/*background-color: rgba(255, 0, 0, 0.2);*/
 		}
 		.plan-command-dnOverlay {
-			top: 			10px;
+			top: 				10px;
 			/*background-color: rgba(0, 0, 255, 0.2);*/
+		}
+		
+		.plan-command-bounceBall-container {
+			position:			relative;
+			display:			none;
 		}
 
 		.plan-command-bounceBall {
 			position: 			absolute;
-			left: 				-29px;
 			top: 				1px;
 			background-color: 	rgb(48, 63, 109);
 			border-radius: 		18px;
@@ -170,7 +174,15 @@
 			position: 			absolute;
 			text-align:			center;
 			left:				0;
-			top:				0;			
+			top:				0;		
+			width:				18px;
+		}
+		.plan-command-bounceBall-connector {
+			position: 			absolute;			
+			height:				3px;			
+			top: 				9px;
+			background-color: 	rgb(48, 63, 109);
+			z-index:			198;
 		}
 
 		.plan-command-addCommand {
@@ -434,6 +446,7 @@
 		var _updateTimer = 0;
 		var _UPDATE_TIMER_PERIOD = 1000; //ms
 		var _old_active_plan_status;
+		var _old_command_index;
 		var _need_plan_complete = false;
 		var _need_plan_halted = false;
 		var _need_plan_paused = false;
@@ -1023,7 +1036,7 @@
                 var commands = _commands;
                 var depth = 0;
                 var paramKeys;
-                var i;
+                var i,j;
                 var depthLabelStack = [];
                 var isBeginLabel;
                 
@@ -1046,7 +1059,8 @@
                 		if(isBeginLabel)
                 		{
                 			//start new depth bar
-                			//Debug.log("New depth bar " + (++depth));
+                			++depth
+                			//Debug.log("New depth bar " + depth);
                 			depthLabelStack.push(commands[i].param[paramKeys[0]]);
                 			
                             str += htmlOpenDiv("plan-depthBar-" + depth,
@@ -1124,21 +1138,42 @@
 								0 /*mouseup*/,
 								"handlePlanOverlayMouseMove(" + (i+1) + ",event)"/*mousemove*/);
                 		str += "</div>";
+                		
+                		Debug.log("Depth = " + depth);
 
-                		//add command control
-                		str += htmlOpenDiv( //start bounceball i command ----------- 
-                				"plan-command-bounceBall-" + i,
-								"plan-command-bounceBall"
-								);
+                		//add bounceball at each depth
+                		str += htmlOpenDiv( //start bounceball container i ----------- 
+                				"plan-command-bounceBall-container-" + i,
+								"plan-command-bounceBall-container");
+                		for(j=0;j<depth+1;++j)
                 		{
-                			//start add command button
-                			str += htmlOpenDiv(  
-                					"plan-command-bounceBall-text" + i,
-									"plan-command-bounceBall-text");
-                			str += "2<label style='font-size:9px'>x</label>";
-                			str += "</div>";
+							str += htmlOpenDiv( //start bounceball depth j ----------- 
+									"plan-command-bounceBall-" + i + "-depth-" + (depth-j),
+									"plan-command-bounceBall",
+									"left:-" + (29 + 30*j) + "px;"
+									/*style*/);
+							{
+								//bounceball content 
+								str += htmlOpenDiv(  
+										"plan-command-bounceBall-text-" + i+ "-depth-" + (depth-j),
+										"plan-command-bounceBall-text");
+								str += "2";//"2<label style='font-size:9px'>x</label>";
+								str += "</div>";
+							}
+							str += "</div>"; //end bounceball depth j -----------
+                		} //end bounceball
+                		
+                		if(depth > 0)
+                		{
+							str += htmlOpenDiv( //start bounceball connector ----------- 
+									"plan-command-bounceBall-connector-" + i,
+									"plan-command-bounceBall-connector",
+									"width:" + 30*(depth) + "px;" +
+									"left:-" + (30*(depth)+15) + "px;"
+									/*style*/);
+							str += "</div>"; //end bounceball connector -----------
                 		}
-                		str += "</div>"; //end bounceball i command -----------
+						str += "</div>"; //end bounceball container i -----------
                 		
                 		//add command control
                 		str += htmlOpenDiv( //start add i command ----------- 
@@ -1156,7 +1191,7 @@
                 		{
                 			//start add command button
                 			str += htmlOpenDiv(  
-                					"plan-command-addCommand-button" + i,
+                					"plan-command-addCommand-button-" + i,
 									"plan-command-addCommand-button",
 									//(isBeginLabel?
 									//		"left:-36px;" //to place in previous depth bar
@@ -1242,10 +1277,10 @@
                 		{
                 			//start add command button
                 			str += htmlOpenDiv(  
-                					"plan-command-addCommand-button" + i,
+                					"plan-command-addCommand-button-" + i,
 									"plan-command-addCommand-button",
 									0 /*style*/,
-									0 /*mouseup*/,
+									"showCommandDialog(" + i + ")" /*mouseup*/,
 									"event.stopPropagation();"/*mousemove*/,
 									"Insert a new command.");
                 			str += "+";
@@ -4001,8 +4036,9 @@
 				
 				var command_duration 	= DesktopContent.getXMLValue(req,"current_command_duration");
 				var command_index		= DesktopContent.getXMLValue(req,"current_command_index");
-				var current_command_iteration		= DesktopContent.getXMLValue(req,"current_command_iteration");
-				var current_loop_iteration			= DesktopContent.getXMLValue(req,"current_loop_iteration");
+				var command_iteration	= DesktopContent.getXMLValue(req,"current_command_iteration");				
+				var depth_iterations 	= req.responseXML.getElementsByTagName("depth_iteration");
+				
 				var active_plan_status	= DesktopContent.getXMLValue(req,"active_plan_status");
 				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
@@ -4037,6 +4073,50 @@
 				
 				_old_active_plan_status = active_plan_status;
 				
+				
+				//hide old bouncing ball
+				if(_old_command_index != command_index)
+				{
+					try
+					{
+						document.getElementById("plan-command-bounceBall-container-" + 
+								_old_command_index).style.display = 'none';
+					}
+					catch(e)
+					{} //ignore failure to hide
+					
+					_old_command_index = command_index;
+				}
+
+				//update current bouncing ball
+				try
+				{	
+					var val;
+					Debug.log("depth_iterations.length " + depth_iterations.length);
+					for(var i=0;i<depth_iterations.length;++i)
+					{
+						val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
+						if(val > 99) //truncate text length
+							val = "...";
+						document.getElementById("plan-command-bounceBall-text-" + 
+								command_index + "-depth-" + 
+								(i+1)).innerHTML = val;
+					}
+					val = command_iteration | 0;
+					if(val > 99) //truncate text length
+						val = "...";
+					document.getElementById("plan-command-bounceBall-text-" + 
+							command_index + "-depth-" + 0).innerHTML = val;
+
+					document.getElementById("plan-command-bounceBall-container-" + 
+							command_index).style.display = 'block';
+				}
+				catch(e)
+				{} //ignore failure to show
+								
+				
+				
+				
 				// "Running""Paused""Inactive"
 				//Debug.log("_targetPlan = " + _targetPlan);
 				//Debug.log("active_plan = " + active_plan);
@@ -4064,8 +4144,7 @@
 					str += "| current_command_index = " + command_index;
 					str += "| current_command_duration = " + command_duration;
 					str += "| current_state = " + current_state;
-					str += "| current_command_iteration = " + current_command_iteration;
-					str += "| current_loop_iteration = " + current_loop_iteration;
+					str += "| current_command_iteration = " + command_iteration;
 					str += "| in_transition = " + in_transition;
 					str += "| transition_progress = " + transition_progress;
 					str += "| time_in_state = " + time_in_state;					
