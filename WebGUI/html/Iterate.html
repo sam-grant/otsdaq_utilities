@@ -152,6 +152,27 @@
 			/*background-color: rgba(0, 0, 255, 0.2);*/
 		}
 
+		.plan-command-bounceBall {
+			position: 			absolute;
+			left: 				-29px;
+			top: 				1px;
+			background-color: 	rgb(48, 63, 109);
+			border-radius: 		18px;
+			height: 			18px;
+			width:				18px;
+		    z-index:			199; 	/* to place on top of names in loops */
+
+			font-size: 			12px;
+			font-weight: 		bold;
+			color: 				rgb(219, 226, 255);
+		}
+		.plan-command-bounceBall-text {
+			position: 			absolute;
+			text-align:			center;
+			left:				0;
+			top:				0;			
+		}
+
 		.plan-command-addCommand {
 		    display: 			block;
 		    width: 				100%;
@@ -506,8 +527,7 @@
 			//updateIterationPlanContent()
 		
 				//Plan Editing:
-			//createEmptyIterateGroup()
-			//getIterationPlans()
+			//createEmptyIterateGroup()			
 			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
 			//deleteIterationPlan()        	
 			//addCommand(type,params)
@@ -531,6 +551,7 @@
 				//targetWizRecordMultiSelectHandler(sel)
 					//for path to fields
         		//showParamPathToFieldWizDialog(paramIndex)
+        	//discardPlanChangesPrompt()
 		
 				//Plan Control:
 			//startTargetIterationPlan
@@ -754,6 +775,13 @@
 		
 
 		//=====================================================================================
+		//discardPlanChangesPrompt ~~
+		function discardPlanChangesPrompt() 
+		{
+			drawIterationPlan(_targetPlan);
+		} // end discardPlanChangesPrompt()
+		
+		//=====================================================================================
 		//drawIterationPlan ~~
         //  if plan then request commands from server, otherwise use current _targetPlan and
         //      existing _commands.
@@ -764,7 +792,7 @@
 				_targetPlan = plan;
                 
 				if(!_DEBUG_WOUT_SERVER)
-                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
+					ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
                                          6, //down through command parameters
 										 _modifiedTables,
                                          localExtractTree
@@ -1098,6 +1126,21 @@
                 		str += "</div>";
 
                 		//add command control
+                		str += htmlOpenDiv( //start bounceball i command ----------- 
+                				"plan-command-bounceBall-" + i,
+								"plan-command-bounceBall"
+								);
+                		{
+                			//start add command button
+                			str += htmlOpenDiv(  
+                					"plan-command-bounceBall-text" + i,
+									"plan-command-bounceBall-text");
+                			str += "2<label style='font-size:9px'>x</label>";
+                			str += "</div>";
+                		}
+                		str += "</div>"; //end bounceball i command -----------
+                		
+                		//add command control
                 		str += htmlOpenDiv( //start add i command ----------- 
                 				"plan-command-addCommand-" + i,
 								"plan-command-addCommand",
@@ -1255,6 +1298,15 @@
                 			" value='Save as...'" +
 							" title='" +
 							"Duplicate the current modified Iteration Plan as a new name." +
+							"'/>";
+                	str += "&nbsp;&nbsp;&nbsp;"
+                	str += "<input type='button'" +
+                			" onmouseup='" + 
+							"discardPlanChangesPrompt();" + 						
+							"' " + 
+                			" value='Discard Changes'" +
+							" title='" +
+							"Discard the current changes and revert to the original Iteration Plan." +
 							"'/>";
                 	str += "<br><br>";
                 	return str;
@@ -3949,6 +4001,8 @@
 				
 				var command_duration 	= DesktopContent.getXMLValue(req,"current_command_duration");
 				var command_index		= DesktopContent.getXMLValue(req,"current_command_index");
+				var current_command_iteration		= DesktopContent.getXMLValue(req,"current_command_iteration");
+				var current_loop_iteration			= DesktopContent.getXMLValue(req,"current_loop_iteration");
 				var active_plan_status	= DesktopContent.getXMLValue(req,"active_plan_status");
 				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
@@ -4010,9 +4064,11 @@
 					str += "| current_command_index = " + command_index;
 					str += "| current_command_duration = " + command_duration;
 					str += "| current_state = " + current_state;
+					str += "| current_command_iteration = " + current_command_iteration;
+					str += "| current_loop_iteration = " + current_loop_iteration;
 					str += "| in_transition = " + in_transition;
 					str += "| transition_progress = " + transition_progress;
-					str += "| time_in_state = " + time_in_state;
+					str += "| time_in_state = " + time_in_state;					
 					str += "|";
 
 					document.getElementById('topPane-header').innerHTML = str;

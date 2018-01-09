@@ -677,7 +677,8 @@ Desktop.createDesktop = function(security) {
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
 	    Debug.log("Windows Length: " + _windows.length);
-	    var window = _windows.pop();//_getForeWindow();
+	    	    
+	    var window = _getForeWindow();
 	    var id  = window.getWindowId();
 	    var z   = window.getWindowZ();
 	    var name    = window.getWindowName();
@@ -687,17 +688,12 @@ Desktop.createDesktop = function(security) {
 	    var height  = window.getWindowHeight();
 	    var x = window.getWindowX();
 	    var y = window.getWindowY();
-                                                                                                                                                                                                                                          
-            window.windiv.parentNode.removeChild(window.windiv);                                                                                                                                                                           
-            _windows.splice(_windows.length-1,1);                                                                                                                                                                                         
-            _dashboard.updateWindows();
-
-
+                 
+	    _closeWindow(window);
+        
 	    newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
-            Debug.log("Windows Length: " + _windows.length);
-
-
+        Debug.log("Windows Length: " + _windows.length);
     }
 
         //minimizeWindowById ~~~
