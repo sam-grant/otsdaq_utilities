@@ -468,6 +468,8 @@ throw (xgi::exception::Exception)
 	else if(Command == "getConfigurationGroups")
 	{
 		bool doNotReturnMembers = CgiDataUtilities::getDataAsInt(cgi,"doNotReturnMembers") == 1?true:false; //from GET
+
+		__COUT__ << "doNotReturnMembers: " << doNotReturnMembers << std::endl;
 		handleConfigurationGroupsXML(xmldoc,cfgMgr,!doNotReturnMembers);
 	}
 	else if(Command == "getConfigurationGroupType")

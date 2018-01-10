@@ -110,41 +110,43 @@
 		/* =============== start plan detail ================ */
 		
 		#planDetail {
-			margin:			10px 10px 10px 0;
-		    padding-left: 	10px;
-			overflow: 		hidden;
+			margin:				10px 10px 10px 0;
+		    padding-left: 		10px;
+			/*overflow-x: 		hidden;
+			overflow-y: 		visible;*/			
 		}
 		
 		#planDetail div {
-			outline: 				none; /* to stop firefox selection*/
-			-webkit-user-select: 	none; /* prevent selection*/
-			-moz-user-select: 		none;
-			user-select:			none;
+			outline: 			none; /* to stop firefox selection*/
+			-webkit-user-select:none; /* prevent selection*/
+			-moz-user-select: 	none;
+			user-select:		none;
 		}
 			
 		#plan-planName {
-			margin-bottom: 15px;
+			margin-bottom: 		15px;
 		}
 		
 		.plan-depthBar {
-			padding-left: 	10px;
-			border-left: 	20px solid rgb(218, 194, 194);
-			margin-left: 	0px;
+			padding-left: 		10px;
+			border-left: 		20px solid rgb(218, 194, 194);
+			margin-left: 		0px;
+			overflow-y: 		visible;
 		}
 
 		.plan-command {
-			height:			21px;
+			height:				21px;
 		}
 		
 		.plan-command-overlay {
-			position:		absolute;
-			height:			15px;
-			width:			100%;			
-			left: 			-30px;			
+			position:			absolute;
+			height:				15px;
+			width:				100%;			
+			left: 				-30px;			
 		}
 		
 		.plan-command-upOverlay {
-			top: 			-5px;
+			top: 				-5px;
 			/*background-color: rgba(255, 0, 0, 0.2);*/
 		}
 		.plan-command-dnOverlay {
@@ -183,6 +185,29 @@
 			top: 				9px;
 			background-color: 	rgb(48, 63, 109);
 			z-index:			198;
+		}
+		.plan-command-bounceBall-vconnector {
+			position: 			absolute;			
+			width:				3px;
+			height:				10px;	
+			left: 				9px;
+			top:				16px;
+			background-color: 	rgb(48, 63, 109);
+			z-index:			198;
+		}
+		.plan-command-bounceBall-status {
+			position: 			absolute;	
+			padding:			3px;	
+			left: 				9px;
+			top:				22px;
+			background-color: 	rgb(48, 63, 109);
+			/*border:				1px solid white;*/
+			color:				white;
+			z-index:			199;
+		}
+
+		.plan-command-bounceBall-status b {
+			color:				white;
 		}
 
 		.plan-command-addCommand {
@@ -324,11 +349,11 @@
 	</style>
 	
 	
-	<script type="text/JavaScript" src="..//js/Globals.js"></script>	
-	<script type="text/JavaScript" src="..//js/Debug.js"></script>	
-	<script type="text/JavaScript" src="..//js/DesktopWindowContentCode.js"></script>
-	<script type="text/JavaScript" src="..//js/js_lib/SimpleContextMenu.js"></script>
-	<script type="text/JavaScript" src="..//js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	
 	<script>		
 	
@@ -1173,6 +1198,25 @@
 									/*style*/);
 							str += "</div>"; //end bounceball connector -----------
                 		}
+                		
+                		
+
+						str += htmlOpenDiv( //start bounceball vertical connector ----------- 
+								"plan-command-bounceBall-vconnector-" + i,
+								"plan-command-bounceBall-vconnector",
+								"left:-" + (30*(depth)+22) + "px;"
+								/*style*/);
+						str += "</div>"; //end bounceball vertical connector -----------
+
+						str += htmlOpenDiv( //start bounceball status display ----------- 
+								"plan-command-bounceBall-status-" + i,
+								"plan-command-bounceBall-status",
+								"left:-" + (30*(depth)+28) + "px;"
+								/*style*/);
+						str += "Status";
+						str += "</div>"; //end bounceball status display -----------
+						
+                		
 						str += "</div>"; //end bounceball container i -----------
                 		
                 		//add command control
@@ -1214,7 +1258,8 @@
                 			//remove last depth
                 			// verify label match
 
-                			//Debug.log("End depth bar " + (depth--));
+                			--depth;
+                			//Debug.log("End depth bar " + (depth));
                 			Debug.log("End depth Label " + depthLabelStack[depthLabelStack.length-1]);
                     		str += "</div>";  //end depth span -----------
                     		if(depthLabelStack.pop() != 
@@ -4089,31 +4134,65 @@
 				}
 
 				//update current bouncing ball
-				try
-				{	
-					var val;
-					//Debug.log("depth_iterations.length " + depth_iterations.length);
-					for(var i=0;i<depth_iterations.length;++i)
-					{
-						val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
+				if(active_plan_status != "Inactive")
+				{
+					try
+					{	
+						var val;
+						//Debug.log("depth_iterations.length " + depth_iterations.length);
+						for(var i=0;i<depth_iterations.length;++i)
+						{
+							val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
+							if(val > 99) //truncate text length
+								val = "...";
+							document.getElementById("plan-command-bounceBall-text-" + 
+									command_index + "-depth-" + 
+									(i+1)).innerHTML = val;
+						}
+						val = command_iteration | 0;
 						if(val > 99) //truncate text length
 							val = "...";
 						document.getElementById("plan-command-bounceBall-text-" + 
-								command_index + "-depth-" + 
-								(i+1)).innerHTML = val;
-					}
-					val = command_iteration | 0;
-					if(val > 99) //truncate text length
-						val = "...";
-					document.getElementById("plan-command-bounceBall-text-" + 
-							command_index + "-depth-" + 0).innerHTML = val;
+								command_index + "-depth-" + 0).innerHTML = val;
 
-					document.getElementById("plan-command-bounceBall-container-" + 
-							command_index).style.display = 'block';
+						//create status string
+						var str = "";
+						str += "<b>Command " + command_index + ". " + _commands[(command_index|0)].type + "</b>";
+						str += "<br>";
+						str += "<table>";	
+						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Duration [h:mm:ss]:</td>" + 
+								"<td style='text-align:left;'>";				
+						{
+							var hours = (command_duration/60.0/60.0)|0;
+							var mins = ((command_duration%(60*60))/60.0)|0;
+							var secs = command_duration%60;
+
+							if(hours)
+								str += hours + ":";
+							if(mins < 10)	str += "0"; //keep to 2 digits
+							str += mins + ":";
+							if(secs < 10)	str += "0"; //keep to 2 digits
+							str += secs ;
+						}
+						str += "</td></tr>";
+						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Number of Executions:</td>" +
+								"<td style='text-align:left;'>" + command_iteration + "</td></tr>";
+						str += "</table>";					
+
+						document.getElementById("plan-command-bounceBall-status-" + 
+								command_index).innerHTML = str;
+
+						//display
+						document.getElementById("plan-command-bounceBall-container-" + 
+								command_index).style.display = 'block';					
+
+					}
+					catch(e)
+					{
+						console.log(e);
+					} //ignore failure to show
 				}
-				catch(e)
-				{} //ignore failure to show
-								
+
 				
 				
 				
@@ -4141,10 +4220,10 @@
 					
 					str += "<br>";
 					str += "| active_plan_status = " + active_plan_status;
-					str += "| current_command_index = " + command_index;
-					str += "| current_command_duration = " + command_duration;
-					str += "| current_state = " + current_state;
-					str += "| current_command_iteration = " + command_iteration;
+					//str += "| current_command_index = " + command_index;
+					//str += "| current_command_duration = " + command_duration;
+					//str += "| current_command_iteration = " + command_iteration;
+					str += "| current_state = " + current_state;					
 					str += "| in_transition = " + in_transition;
 					str += "| transition_progress = " + transition_progress;
 					str += "| time_in_state = " + time_in_state;					
