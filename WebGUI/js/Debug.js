@@ -203,6 +203,8 @@ Debug.log("This is an example for posterity that is not printed due to debug pri
 
 Debug._errBox = 0;
 Debug._errBoxId = "Debug-error-box";
+Debug._errBoxOffX = 0;
+Debug._errBoxOffY = 0;
 
 //=====================================================================================
 Debug.errorPopConditionString = function(str) {
@@ -238,12 +240,23 @@ Debug.errorPop = function(err,severity) {
 			var str = "<a class='" + 
 				Debug._errBoxId + 
 				"-header' onclick='javascript:Debug.closeErrorPop();event.stopPropagation();' onmouseup='event.stopPropagation();'>Close Errors</a>";
-			str = str + "<br>" + 
+			str = 
+					"<div class='" + 
+					Debug._errBoxId + 
+					"-moveBar' style='" +
+					"position:absolute;width:100%;height:20px;top:0;left:0;background-color:rgb(204, 204, 204);cursor:pointer;" +
+					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
+					"' " +
+					"onmousedown='javascript:Debug.handleErrorMoveStart(event);event.stopPropagation();' " +					
+					"></div>" + 
+					"<br>"+
+					str + "<br>" + 
 				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top.</div><br>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err'></div>" + 
 				"<br>" + str;
+			
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			
@@ -330,7 +343,9 @@ Debug.errorPop = function(err,severity) {
 			document.getElementsByTagName('head')[0].appendChild(style);
 			
 			window.addEventListener("resize",localResize);
-			window.addEventListener("scroll",localResize);
+			window.addEventListener("scroll",localScroll);
+			window.addEventListener("mouseup",Debug.handleErrorMoveStop);
+			window.addEventListener("mousemove",Debug.handleErrorMove);
 		}
 		Debug._errBox = el;	
 	}	
@@ -370,26 +385,15 @@ Debug.errorPop = function(err,severity) {
 	//show the error box whereever the current scroll is
 	function localResize()
 	{
-		var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
-		var offY = document.documentElement.scrollTop || document.body.scrollTop || 0;
-		var w;
-		
-		//and, set width properly so error box is scrollable for long winded errors
-		if(typeof DesktopContent != 'undefined') //define width using DesktopContent
-			w = (DesktopContent.getWindowWidth()-16-14); //scroll width is 14px		
-		else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
-			w = (Desktop.desktop.getDesktopWidth()-16-14); //scroll width is 14px
-		
-		if(w > 900) //clip to 850 and center (for looks)
-		{
-			offX += (w-850)/2;
-			w = 850;
-		}			
-		
-		Debug._errBox.style.width = (w) + "px";
-		Debug._errBox.style.left = (offX + 8) + "px";
-		Debug._errBox.style.top = (offY + 8) + "px";
-	} localResize(); //localResize
+		Debug._errBoxOffX = 0;
+		Debug._errBoxOffY = 0;
+		Debug.handleErrorResize();
+	} 
+	function localScroll()
+	{
+		Debug.handleErrorResize();
+	}
+	Debug.handleErrorResize(); //first size
 	
 	
 	Debug._errBox.style.display = "block";
@@ -440,6 +444,71 @@ Debug.errorPop = function(err,severity) {
 Debug.closeErrorPop = function() {
 	document.getElementById(Debug._errBoxId).style.display = "none";
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
+}
+
+
+Debug._errBoxOffMoveStartX = -1;
+Debug._errBoxOffMoveStartY;
+//=====================================================================================
+Debug.handleErrorMoveStart = function(e) {
+	Debug.log("Move Start");
+	Debug._errBoxOffMoveStartX = e.screenX - Debug._errBoxOffX;
+	Debug._errBoxOffMoveStartY = e.screenY - Debug._errBoxOffY;
+}
+
+//=====================================================================================
+Debug.handleErrorMoveStop = function(e) {
+	Debug.log("Move Stop");
+
+	if(Debug._errBoxOffMoveStartX != -1)
+	{
+		Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
+		Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
+		Debug._errBoxOffMoveStartX = -1; //done with move
+		Debug.handleErrorResize();
+	}
+}
+
+//=====================================================================================
+Debug.handleErrorMove = function(e) {
+	
+	if(e.buttons == 0) 
+	{
+		Debug._errBoxOffMoveStartX = -1; //done with move
+		return;
+	}
+	
+	Debug.log("Move " + e.buttons);
+	Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
+	Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
+	Debug.handleErrorResize();
+}
+
+//=====================================================================================
+Debug.handleErrorResize = function() {
+
+	
+	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
+	var offY = document.documentElement.scrollTop || document.body.scrollTop || 0;
+	var w;
+	
+	//and, set width properly so error box is scrollable for long winded errors
+	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+		w = (DesktopContent.getWindowWidth()-16-14); //scroll width is 14px		
+	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+		w = (Desktop.desktop.getDesktopWidth()-16-14); //scroll width is 14px
+	
+	if(w > 900) //clip to 850 and center (for looks)
+	{
+		offX += (w-850)/2;
+		w = 850;
+	}			
+	
+	Debug._errBox.style.width = (w) + "px";
+	Debug._errBox.style.left = (Debug._errBoxOffX + offX + 8) + "px";
+	Debug._errBox.style.top = (Debug._errBoxOffY + offY + 8) + "px";
+
+	
 }
 
 
