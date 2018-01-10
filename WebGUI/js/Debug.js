@@ -205,6 +205,8 @@ Debug._errBox = 0;
 Debug._errBoxId = "Debug-error-box";
 Debug._errBoxOffX = 0;
 Debug._errBoxOffY = 0;
+Debug._errBoxOffW = 0;
+Debug._errBoxOffH = 0;
 
 //=====================================================================================
 Debug.errorPopConditionString = function(str) {
@@ -244,19 +246,46 @@ Debug.errorPop = function(err,severity) {
 					"<div class='" + 
 					Debug._errBoxId + 
 					"-moveBar' style='" +
-					"position:absolute;width:100%;height:20px;top:0;left:0;background-color:rgb(204, 204, 204);cursor:pointer;" +
+					"position:absolute;width:100%;height:15px;top:0;left:0;background-color:rgb(204, 204, 204);cursor:move;" +
 					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
 					"' " +
-					"onmousedown='javascript:Debug.handleErrorMoveStart(event);event.stopPropagation();' " +					
+					"onmousedown='javascript:Debug.handleErrorMoveStart(event);event.stopPropagation();' " +
+					"title='Click and drag to reposition this popup window.' " +
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
 				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top.</div><br>" +
 				"<div id='" + 
 				Debug._errBoxId +
+				"-err' class='" + 
+				Debug._errBoxId +
 				"-err'></div>" + 
 				"<br>" + str;
-			
+
+			str += "<div class='" + Debug._errBoxId + "-resizeBarLeft' " +
+					"style='" +
+					"background-color:rgb(204, 204, 204);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nesw-resize;" +
+					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
+					"' " +
+					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1,1);event.stopPropagation();' " +
+					"title='Click and drag to resize vertically this popup window.' " +
+					"></div>";
+			str += "<div class='" + Debug._errBoxId + "-resizeBar' " +
+					"style='" +
+					"background-color:transparent;position:absolute;width:100%;height:5px;top:-1000px;left:15px;cursor:ns-resize;" +
+					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
+					"' " +
+					"onmousedown='javascript:Debug.handleErrorResizeStart(event);event.stopPropagation();' " +
+					"title='Click and drag to resize this popup window.' " +
+					"></div>";
+			str += "<div class='" + Debug._errBoxId + "-resizeBarRight' " +
+					"style='" +
+					"background-color:rgb(204, 204, 204);position:absolute;width:15px;height:15px;top:-1000px;left:0;cursor:nwse-resize;" +
+					"outline: 				none; /* to stop firefox selection*/	-webkit-user-select: 	none; /* prevent selection*/				-moz-user-select: 		none;						user-select:			none;" +
+					"' " +
+					"onmousedown='javascript:Debug.handleErrorResizeStart(event,1);event.stopPropagation();' " +
+					"title='Click and drag to resize this popup window.' " +
+					"></div>";
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
 			
@@ -283,12 +312,12 @@ Debug.errorPop = function(err,severity) {
 			css += "#" + Debug._errBoxId +
 					"{" +
 					"position: absolute; display: none; border: 2px solid gray;" +
-					"background-color: rgba(153,0,51, " + errBoxAlpha + "); overflow-y: scroll;" +
-					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
+					"background-color: rgba(153,0,51, " + errBoxAlpha + "); overflow-y: hidden;" +
+					"overflow-x: hidden;	padding: 5px; -moz-border-radius: 2px;" +
 					"-webkit-border-radius: 2px;	border-radius: 2px;" +
 					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
 					"font-family: 'Comfortaa', arial; text-align: center;" +
-					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
+					"left: 8px; top: 8px; margin-right: 8px; " +
 					"}\n\n";			
 
 			//error box err text style
@@ -297,7 +326,11 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
 					"left: 8px, top: 8px; margin-right: 8px;" +
+					"margin-bottom:-12px;" +
 					"text-align: left;" +
+					"overflow-y: scroll;" +
+					"overflow-x: auto;"
+					"width: 100%;" +
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err i" +
@@ -387,6 +420,8 @@ Debug.errorPop = function(err,severity) {
 	{
 		Debug._errBoxOffX = 0;
 		Debug._errBoxOffY = 0;
+		Debug._errBoxOffH = 0;
+		Debug._errBoxOffW = 0;
 		Debug.handleErrorResize();
 	} 
 	function localScroll()
@@ -449,6 +484,8 @@ Debug.closeErrorPop = function() {
 
 Debug._errBoxOffMoveStartX = -1;
 Debug._errBoxOffMoveStartY;
+Debug._errBoxOffResizeStartX = -1;
+Debug._errBoxOffResizeStartY = -1;
 //=====================================================================================
 Debug.handleErrorMoveStart = function(e) {
 	Debug.log("Move Start");
@@ -457,31 +494,92 @@ Debug.handleErrorMoveStart = function(e) {
 }
 
 //=====================================================================================
-Debug.handleErrorMoveStop = function(e) {
-	Debug.log("Move Stop");
-
-	if(Debug._errBoxOffMoveStartX != -1)
+Debug.handleErrorResizeStart = function(e,resizeW,moveLeft) {
+	Debug.log("Resize Start");
+	Debug._errBoxOffResizeStartY = e.screenY - Debug._errBoxOffH;
+	if(moveLeft)
 	{
+		Debug._errBoxOffMoveStartX = e.screenX - Debug._errBoxOffX;
+		Debug._errBoxOffResizeStartX = e.screenX + Debug._errBoxOffW;
+	}
+	else if(resizeW)
+		Debug._errBoxOffResizeStartX = e.screenX - Debug._errBoxOffW;
+	
+}
+
+//=====================================================================================
+Debug.handleErrorMoveStop = function(e) {
+
+	
+	if(Debug._errBoxOffResizeStartY != -1) //resize stop
+	{
+		Debug.log("Resize Stop");		
+		Debug._errBoxOffH = e.screenY - Debug._errBoxOffResizeStartY;
+		Debug._errBoxOffResizeStartY = -1; //done with resize
+
+		if(Debug._errBoxOffMoveStartX != -1) //resize from left
+		{
+			Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
+			Debug._errBoxOffW = Debug._errBoxOffResizeStartX - e.screenX;
+			Debug._errBoxOffMoveStartX = -1; //done with resize
+			Debug._errBoxOffResizeStartX = -1; //done with resize
+		}
+		else if(Debug._errBoxOffResizeStartX != -1) //resize from right
+		{
+			Debug._errBoxOffW = e.screenX - Debug._errBoxOffResizeStartX;
+			Debug._errBoxOffResizeStartX = -1; //done with resize
+		}
+		Debug.handleErrorResize();
+	}	
+	else if(Debug._errBoxOffMoveStartX != -1) //move stop
+	{
+		Debug.log("Move Stop");
 		Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
 		Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
 		Debug._errBoxOffMoveStartX = -1; //done with move
 		Debug.handleErrorResize();
 	}
+		
+		
 }
 
 //=====================================================================================
 Debug.handleErrorMove = function(e) {
 	
+	if(Debug._errBoxOffMoveStartX == -1 &&
+			Debug._errBoxOffResizeStartY == -1) return; //do nothing, not moving
+	
 	if(e.buttons == 0) 
 	{
 		Debug._errBoxOffMoveStartX = -1; //done with move
+		Debug._errBoxOffResizeStartY = -1; //done with resize
+		Debug._errBoxOffResizeStartX = -1; //done with resize
 		return;
 	}
-	
-	Debug.log("Move " + e.buttons);
-	Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
-	Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
-	Debug.handleErrorResize();
+
+	if(Debug._errBoxOffResizeStartY != -1) //resizing
+	{
+		Debug.log("Resize " + e.buttons);
+		Debug._errBoxOffH = e.screenY - Debug._errBoxOffResizeStartY;
+
+		if(Debug._errBoxOffMoveStartX != -1) //resize from left
+		{
+			Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
+			Debug._errBoxOffW = Debug._errBoxOffResizeStartX - e.screenX;
+		}
+		else if(Debug._errBoxOffResizeStartX != -1) //resize from right
+			Debug._errBoxOffW = e.screenX - Debug._errBoxOffResizeStartX;
+
+		Debug.handleErrorResize();
+	}
+	else if(Debug._errBoxOffMoveStartX != -1) //moving
+	{
+		Debug.log("Move " + e.buttons);
+		Debug._errBoxOffX = e.screenX - Debug._errBoxOffMoveStartX;
+		Debug._errBoxOffY = e.screenY - Debug._errBoxOffMoveStartY;
+		Debug.handleErrorResize();
+	}
+		
 }
 
 //=====================================================================================
@@ -491,24 +589,69 @@ Debug.handleErrorResize = function() {
 	var offX = document.documentElement.scrollLeft || document.body.scrollLeft || 0;
 	var offY = document.documentElement.scrollTop || document.body.scrollTop || 0;
 	var w;
+	var screenh;
 	
 	//and, set width properly so error box is scrollable for long winded errors
 	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
-		w = (DesktopContent.getWindowWidth()-16-14); //scroll width is 14px		
+	{
+		w = (DesktopContent.getWindowWidth()-16-14); //scroll width is 14px
+		screenh = (DesktopContent.getWindowHeight()-16-14);
+	}
 	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+	{
 		w = (Desktop.desktop.getDesktopWidth()-16-14); //scroll width is 14px
+		screenh = (Desktop.desktop.getDesktopHeight()-16-14); 
+	}
+	
+	var screenw = w;
 	
 	if(w > 900) //clip to 850 and center (for looks)
 	{
 		offX += (w-850)/2;
 		w = 850;
-	}			
+	}	
 	
-	Debug._errBox.style.width = (w) + "px";
+	if(w + Debug._errBoxOffW  < 200) //clip to minimum width
+	{
+		Debug._errBoxOffW = 200 - w;
+	}
+	w += Debug._errBoxOffW;
+	
+	var h = 400 + Debug._errBoxOffH;
+	if(h < 200) //clip to minimum height
+	{
+		Debug._errBoxOffH = -200;
+		h = 200;
+	}
+
+	//keep window on screen
+	if(Debug._errBoxOffX + w > screenw)
+		Debug._errBoxOffX = screenw - w;	
+	if(Debug._errBoxOffX < 0)
+		Debug._errBoxOffX = 0;
+	if(Debug._errBoxOffY + h > screenh)
+		Debug._errBoxOffY = screenh - h;	
+	if(Debug._errBoxOffY < 0)
+		Debug._errBoxOffY = 0;
+	
+	Debug._errBox.style.width = (w) + "px";	
+	Debug._errBox.style.height = (h) + "px";
 	Debug._errBox.style.left = (Debug._errBoxOffX + offX + 8) + "px";
 	Debug._errBox.style.top = (Debug._errBoxOffY + offY + 8) + "px";
+	Debug._errBox.style.marginRight = -(w+10) + "px"; //more for border effects to avoid causing scroll
+	Debug._errBox.style.marginBottom = -(h+80) + "px"; //more for border effects to avoid causing scroll
 
 	
+	var el = document.getElementsByClassName(Debug._errBoxId + "-resizeBar")[0];
+	el.style.top = (h+6) + "px";	
+	el = document.getElementsByClassName(Debug._errBoxId + "-resizeBarLeft")[0];	
+	el.style.top = (h+6-10) + "px";
+	el = document.getElementsByClassName(Debug._errBoxId + "-resizeBarRight")[0];	
+	el.style.left = (w-5) + "px";
+	el.style.top = (h+6-10) + "px";
+
+	el = document.getElementsByClassName(Debug._errBoxId + "-err")[0];
+	el.style.height = (h-115) + "px";
 }
 
 
