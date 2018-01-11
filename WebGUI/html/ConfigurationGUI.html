@@ -2797,6 +2797,7 @@
 			var nodes = parent.children;
 			var nodeName;
 			var value, valueType;
+
 			var tableLinkName, childLinkIndex, linkIdType, linkId;
 			var i,j;
 			var childrenLength;
@@ -2827,7 +2828,8 @@
 				//Debug.log("child's childrenLength=" + childrenLength);
 									
 				//handle value nodes
-				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value"
+				if(childrenLength && 
+						(value = nodes[i].children[0]).nodeName == "value"
 						)//&& (valueType = nodes[i].children[1]).nodeName != "Disconnected")
 				{	
 					value = value.getAttribute("value");
@@ -2987,7 +2989,7 @@
 					if(value.getAttribute("value") == "Disconnected")
 					{
 						//this is a disconnected link node!						
-						value = nodes[i].children[offset]; //get link ID node
+						value = nodes[i].children[offset++]; //get link ID node
 						--childrenLength; //subtract the link ID node from children length
 						isGroupLink = value.nodeName == "GroupID";					
 						isDisconnected = true;
@@ -6379,9 +6381,11 @@
 						//////
 						//localLinkEditSelectOnChangeHandler ~~
 						//	handle change of dropdowns
-						function localLinkEditSelectOnChangeHandler() {
+						function localLinkEditSelectOnChangeHandler(setLinkId) {
 							selectLinkTableName = sel.value;
-							if(selId.style.display != "none")
+							if(setLinkId)
+								selectLinkId = setLinkId;
+							else if(selId.style.display != "none")
 								selectLinkId = selId.value;
 							else //take from text edit input, this happens after a save when forced change is propagated
 								selectLinkId = telId.value;
@@ -8980,10 +8984,10 @@
 										".'");
 							}
 
-							Debug.log("Successfully added a new record to temporary version '" +
-									treeMemberVersions_[resultingTableIndex] + "' of table '" + 
-									treeEditingTargetTable_ + ".'",
-									Debug.INFO_PRIORITY);						
+							//							Debug.log("Successfully added a new record to temporary version '" +
+							//									treeMemberVersions_[resultingTableIndex] + "' of table '" + 
+							//									treeEditingTargetTable_ + ".'",
+							//									Debug.INFO_PRIORITY);						
 						}		
 						else if(treeEditingNodeType_ == "table-newGroupRow")
 						{
@@ -9052,7 +9056,7 @@
 					else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
 					{	
 						//reload members uid dropdown
-						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						_editingCellEl.getElementsByTagName("select")[0].onchange(newValue);										
 						return;					
 					}
 

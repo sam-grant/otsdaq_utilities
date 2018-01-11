@@ -105,6 +105,8 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	xgi::bind(this, &VisualSupervisor::Default, "Default" );
 	xgi::bind(this, &VisualSupervisor::request, "request");
 
+	xgi::bind(this, &VisualSupervisor::dataRequest, "dataRequest");
+
 
 	xgi::bind(this, &VisualSupervisor::safari, "safari" );
 
@@ -172,6 +174,63 @@ throw (xgi::exception::Exception)
 
 
 //========================================================================================================================
+void VisualSupervisor::dataRequest(xgi::Input * in, xgi::Output * out)
+throw (xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+	std::string Command;
+	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
+		Command = cgi("RequestType"); //from GET or POST
+
+	__COUT__ << "Command " << Command << std::endl;
+
+	HttpXmlDocument xmldoc;
+	uint8_t userPermissions;
+	std::string userName;
+
+	//**** start LOGIN GATEWAY CODE ***//
+	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
+	{
+		bool automaticCommand = false; //automatic commands should not refresh cookie code.. only user initiated commands should!
+
+		bool checkLock = false;
+		bool needUserName = false;//Command == "setUserPreferences" || Command == "getUserPreferences";
+		bool requireLock = false;
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,
+				out,
+				&xmldoc,
+				supervisorDescriptorInfo_,
+				&userPermissions,  			//acquire user's access level (optionally null pointer)
+				!automaticCommand,			//true/false refresh cookie code
+				1, 							//set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false requires this user has the lock to proceed
+				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
+				,0//&displayName			//acquire user's Display Name
+				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+		))
+		{	//failure
+			//std::cout << out->str() << std::endl; //could print out return string on failure
+			return;
+		}
+	}
+	//done checking cookieCode, sequence, userWithLock, and permissions access all in one shot!
+	//**** end LOGIN GATEWAY CODE ***//
+
+	//
+	if(Command == "getRawData")
+	{
+		//TODO -- add timestamp, so we know if data is new
+		xmldoc.addTextElementToData("rawData",
+				theDataManager_->getRawData());
+	}
+}
+
+
+//========================================================================================================================
 void VisualSupervisor::request(xgi::Input * in, xgi::Output * out)
 throw (xgi::exception::Exception)
 {
@@ -185,12 +244,12 @@ throw (xgi::exception::Exception)
 	__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
-	//getGeometry
-	//getEvents
-	//getRoot
-	//getDirectoryContents
-	//setUserPreferences
-	//getUserPreferences
+	//	getGeometry
+	//	getEvents
+	//	getRoot
+	//	getDirectoryContents
+	//	setUserPreferences
+	//	getUserPreferences
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;

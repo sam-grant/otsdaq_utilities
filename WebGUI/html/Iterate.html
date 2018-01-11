@@ -45,6 +45,43 @@
 			border-radius: 3px;	
 		}
 		
+		/*
+		<div class="arrow-right"></div>
+		.arrow-right {
+		  width: 0; 
+		  height: 0; 
+		  border-top: 60px solid transparent;
+		  border-bottom: 60px solid transparent;
+		  
+		  border-left: 60px solid green;
+		}
+
+		<div class="container">
+		    <div class="triangle"></div>
+		</div>
+		.container {
+		    width: 200px;
+		    height: 200px;
+		    position: relative;
+		    border-top: 4px solid #e74c3c;
+		}
+
+		.triangle {
+		    position: absolute;
+		    margin: auto;
+		    top: -70px;
+		    left: 0;
+		    right: 0;
+		    width: 137px;
+		    height: 137px;
+		    transform: rotate(45deg);
+		    -webkit-transform: rotate(45deg);
+		    -moz-transform: rotate(45deg);
+		    -o-transform: rotate(45deg);
+		    -ms-transform: rotate(45deg);
+		    border-right: 4px solid #e74c3c;
+		    border-bottom: 4px solid #e74c3c;
+		}*/
 
 		/* =============== start plan selector ================ */
 		.recordAdd,
@@ -110,46 +147,104 @@
 		/* =============== start plan detail ================ */
 		
 		#planDetail {
-			margin:			10px 10px 10px 0;
-		    padding-left: 	10px;
-			overflow: 		hidden;
+			margin:				10px 10px 10px 0;
+		    padding-left: 		10px;
+			/*overflow-x: 		hidden;
+			overflow-y: 		visible;*/			
 		}
 		
 		#planDetail div {
-			outline: 				none; /* to stop firefox selection*/
-			-webkit-user-select: 	none; /* prevent selection*/
-			-moz-user-select: 		none;
-			user-select:			none;
+			outline: 			none; /* to stop firefox selection*/
+			-webkit-user-select:none; /* prevent selection*/
+			-moz-user-select: 	none;
+			user-select:		none;
 		}
 			
 		#plan-planName {
-			margin-bottom: 15px;
+			margin-bottom: 		15px;
 		}
 		
 		.plan-depthBar {
-			padding-left: 	10px;
-			border-left: 	20px solid rgb(218, 194, 194);
-			margin-left: 	0px;
+			padding-left: 		10px;
+			border-left: 		20px solid rgb(218, 194, 194);
+			margin-left: 		0px;
+			overflow-y: 		visible;
 		}
 
 		.plan-command {
-			height:			21px;
+			height:				21px;
 		}
 		
 		.plan-command-overlay {
-			position:		absolute;
-			height:			15px;
-			width:			100%;			
-			left: 			-30px;			
+			position:			absolute;
+			height:				15px;
+			width:				100%;			
+			left: 				-30px;			
 		}
 		
 		.plan-command-upOverlay {
-			top: 			-5px;
+			top: 				-5px;
 			/*background-color: rgba(255, 0, 0, 0.2);*/
 		}
 		.plan-command-dnOverlay {
-			top: 			10px;
+			top: 				10px;
 			/*background-color: rgba(0, 0, 255, 0.2);*/
+		}
+		
+		.plan-command-bounceBall-container {
+			position:			relative;
+			display:			none;
+		}
+
+		.plan-command-bounceBall {
+			position: 			absolute;
+			top: 				1px;
+			background-color: 	rgb(48, 63, 109);
+			border-radius: 		18px;
+			height: 			18px;
+			width:				18px;
+		    z-index:			199; 	/* to place on top of names in loops */
+
+			font-size: 			12px;
+			font-weight: 		bold;
+			color: 				rgb(219, 226, 255);
+		}
+		.plan-command-bounceBall-text {
+			position: 			absolute;
+			text-align:			center;
+			left:				0;
+			top:				0;		
+			width:				18px;
+		}
+		.plan-command-bounceBall-connector {
+			position: 			absolute;			
+			height:				3px;			
+			top: 				9px;
+			background-color: 	rgb(48, 63, 109);
+			z-index:			198;
+		}
+		.plan-command-bounceBall-vconnector {
+			position: 			absolute;			
+			width:				3px;
+			height:				10px;	
+			left: 				9px;
+			top:				16px;
+			background-color: 	rgb(48, 63, 109);
+			z-index:			198;
+		}
+		.plan-command-bounceBall-status {
+			position: 			absolute;	
+			padding:			3px;	
+			left: 				9px;
+			top:				22px;
+			background-color: 	rgb(48, 63, 109);
+			/*border:				1px solid white;*/
+			color:				white;
+			z-index:			199;
+		}
+
+		.plan-command-bounceBall-status b {
+			color:				white;
 		}
 
 		.plan-command-addCommand {
@@ -291,11 +386,11 @@
 	</style>
 	
 	
-	<script type="text/JavaScript" src="..//js/Globals.js"></script>	
-	<script type="text/JavaScript" src="..//js/Debug.js"></script>	
-	<script type="text/JavaScript" src="..//js/DesktopWindowContentCode.js"></script>
-	<script type="text/JavaScript" src="..//js/js_lib/SimpleContextMenu.js"></script>
-	<script type="text/JavaScript" src="..//js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
 	
 	<script>		
 	
@@ -413,6 +508,7 @@
 		var _updateTimer = 0;
 		var _UPDATE_TIMER_PERIOD = 1000; //ms
 		var _old_active_plan_status;
+		var _old_command_index;
 		var _need_plan_complete = false;
 		var _need_plan_halted = false;
 		var _need_plan_paused = false;
@@ -506,8 +602,7 @@
 			//updateIterationPlanContent()
 		
 				//Plan Editing:
-			//createEmptyIterateGroup()
-			//getIterationPlans()
+			//createEmptyIterateGroup()			
 			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
 			//deleteIterationPlan()        	
 			//addCommand(type,params)
@@ -531,6 +626,7 @@
 				//targetWizRecordMultiSelectHandler(sel)
 					//for path to fields
         		//showParamPathToFieldWizDialog(paramIndex)
+        	//discardPlanChangesPrompt()
 		
 				//Plan Control:
 			//startTargetIterationPlan
@@ -754,6 +850,13 @@
 		
 
 		//=====================================================================================
+		//discardPlanChangesPrompt ~~
+		function discardPlanChangesPrompt() 
+		{
+			drawIterationPlan(_targetPlan);
+		} // end discardPlanChangesPrompt()
+		
+		//=====================================================================================
 		//drawIterationPlan ~~
         //  if plan then request commands from server, otherwise use current _targetPlan and
         //      existing _commands.
@@ -764,7 +867,7 @@
 				_targetPlan = plan;
                 
 				if(!_DEBUG_WOUT_SERVER)
-                ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
+					ConfigurationAPI.getTree(_ITERATE_BASE_PATH + "/" + plan,
                                          6, //down through command parameters
 										 _modifiedTables,
                                          localExtractTree
@@ -995,7 +1098,7 @@
                 var commands = _commands;
                 var depth = 0;
                 var paramKeys;
-                var i;
+                var i,j;
                 var depthLabelStack = [];
                 var isBeginLabel;
                 
@@ -1018,7 +1121,8 @@
                 		if(isBeginLabel)
                 		{
                 			//start new depth bar
-                			//Debug.log("New depth bar " + (++depth));
+                			++depth
+                			//Debug.log("New depth bar " + depth);
                 			depthLabelStack.push(commands[i].param[paramKeys[0]]);
                 			
                             str += htmlOpenDiv("plan-depthBar-" + depth,
@@ -1096,7 +1200,62 @@
 								0 /*mouseup*/,
 								"handlePlanOverlayMouseMove(" + (i+1) + ",event)"/*mousemove*/);
                 		str += "</div>";
+                		
+                		Debug.log("Depth = " + depth);
 
+                		//add bounceball at each depth
+                		str += htmlOpenDiv( //start bounceball container i ----------- 
+                				"plan-command-bounceBall-container-" + i,
+								"plan-command-bounceBall-container");
+                		for(j=0;j<depth+1;++j)
+                		{
+							str += htmlOpenDiv( //start bounceball depth j ----------- 
+									"plan-command-bounceBall-" + i + "-depth-" + (depth-j),
+									"plan-command-bounceBall",
+									"left:-" + (29 + 30*j) + "px;"
+									/*style*/);
+							{
+								//bounceball content 
+								str += htmlOpenDiv(  
+										"plan-command-bounceBall-text-" + i+ "-depth-" + (depth-j),
+										"plan-command-bounceBall-text");
+								str += "2";//"2<label style='font-size:9px'>x</label>";
+								str += "</div>";
+							}
+							str += "</div>"; //end bounceball depth j -----------
+                		} //end bounceball
+                		
+                		if(depth > 0)
+                		{
+							str += htmlOpenDiv( //start bounceball connector ----------- 
+									"plan-command-bounceBall-connector-" + i,
+									"plan-command-bounceBall-connector",
+									"width:" + 30*(depth) + "px;" +
+									"left:-" + (30*(depth)+15) + "px;"
+									/*style*/);
+							str += "</div>"; //end bounceball connector -----------
+                		}
+                		
+                		
+
+						str += htmlOpenDiv( //start bounceball vertical connector ----------- 
+								"plan-command-bounceBall-vconnector-" + i,
+								"plan-command-bounceBall-vconnector",
+								"left:-" + (30*(depth)+22) + "px;"
+								/*style*/);
+						str += "</div>"; //end bounceball vertical connector -----------
+
+						str += htmlOpenDiv( //start bounceball status display ----------- 
+								"plan-command-bounceBall-status-" + i,
+								"plan-command-bounceBall-status",
+								"left:-" + (30*(depth)+28) + "px;"
+								/*style*/);
+						str += "Status";
+						str += "</div>"; //end bounceball status display -----------
+						
+                		
+						str += "</div>"; //end bounceball container i -----------
+                		
                 		//add command control
                 		str += htmlOpenDiv( //start add i command ----------- 
                 				"plan-command-addCommand-" + i,
@@ -1113,7 +1272,7 @@
                 		{
                 			//start add command button
                 			str += htmlOpenDiv(  
-                					"plan-command-addCommand-button" + i,
+                					"plan-command-addCommand-button-" + i,
 									"plan-command-addCommand-button",
 									//(isBeginLabel?
 									//		"left:-36px;" //to place in previous depth bar
@@ -1136,7 +1295,8 @@
                 			//remove last depth
                 			// verify label match
 
-                			//Debug.log("End depth bar " + (depth--));
+                			--depth;
+                			//Debug.log("End depth bar " + (depth));
                 			Debug.log("End depth Label " + depthLabelStack[depthLabelStack.length-1]);
                     		str += "</div>";  //end depth span -----------
                     		if(depthLabelStack.pop() != 
@@ -1199,10 +1359,10 @@
                 		{
                 			//start add command button
                 			str += htmlOpenDiv(  
-                					"plan-command-addCommand-button" + i,
+                					"plan-command-addCommand-button-" + i,
 									"plan-command-addCommand-button",
 									0 /*style*/,
-									0 /*mouseup*/,
+									"showCommandDialog(" + i + ")" /*mouseup*/,
 									"event.stopPropagation();"/*mousemove*/,
 									"Insert a new command.");
                 			str += "+";
@@ -1255,6 +1415,15 @@
                 			" value='Save as...'" +
 							" title='" +
 							"Duplicate the current modified Iteration Plan as a new name." +
+							"'/>";
+                	str += "&nbsp;&nbsp;&nbsp;"
+                	str += "<input type='button'" +
+                			" onmouseup='" + 
+							"discardPlanChangesPrompt();" + 						
+							"' " + 
+                			" value='Discard Changes'" +
+							" title='" +
+							"Discard the current changes and revert to the original Iteration Plan." +
 							"'/>";
                 	str += "<br><br>";
                 	return str;
@@ -3839,8 +4008,8 @@
 				else
 				{
 					_old_active_plan_status = ""; //clear for new action
-					Debug.log("Successfully started the iteration plan '" + _targetPlan + ".'",
-							Debug.INFO_PRIORITY);
+					//Debug.log("Successfully started the iteration plan '" + _targetPlan + ".'",
+					//		Debug.INFO_PRIORITY);
 					_need_plan_complete = true;
 				}
 				
@@ -3949,6 +4118,9 @@
 				
 				var command_duration 	= DesktopContent.getXMLValue(req,"current_command_duration");
 				var command_index		= DesktopContent.getXMLValue(req,"current_command_index");
+				var command_iteration	= DesktopContent.getXMLValue(req,"current_command_iteration");				
+				var depth_iterations 	= req.responseXML.getElementsByTagName("depth_iteration");
+				
 				var active_plan_status	= DesktopContent.getXMLValue(req,"active_plan_status");
 				var active_plan			= DesktopContent.getXMLValue(req,"active_plan");
 				var last_started_plan	= DesktopContent.getXMLValue(req,"last_started_plan");
@@ -3983,6 +4155,84 @@
 				
 				_old_active_plan_status = active_plan_status;
 				
+				
+				//hide old bouncing ball
+				if(_old_command_index != command_index)
+				{
+					try
+					{
+						document.getElementById("plan-command-bounceBall-container-" + 
+								_old_command_index).style.display = 'none';
+					}
+					catch(e)
+					{} //ignore failure to hide
+					
+					_old_command_index = command_index;
+				}
+
+				//update current bouncing ball
+				if(active_plan_status != "Inactive")
+				{
+					try
+					{	
+						var val;
+						//Debug.log("depth_iterations.length " + depth_iterations.length);
+						for(var i=0;i<depth_iterations.length;++i)
+						{
+							val = DesktopContent.getXMLValue(depth_iterations[i]) | 0;
+							if(val > 99) //truncate text length
+								val = "...";
+							document.getElementById("plan-command-bounceBall-text-" + 
+									command_index + "-depth-" + 
+									(i+1)).innerHTML = val;
+						}
+						val = command_iteration | 0;
+						if(val > 99) //truncate text length
+							val = "...";
+						document.getElementById("plan-command-bounceBall-text-" + 
+								command_index + "-depth-" + 0).innerHTML = val;
+
+						//create status string
+						var str = "";
+						str += "<b>Command " + command_index + ". " + _commands[(command_index|0)].type + "</b>";
+						str += "<br>";
+						str += "<table>";	
+						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Duration [h:mm:ss]:</td>" + 
+								"<td style='text-align:left;'>";				
+						{
+							var hours = (command_duration/60.0/60.0)|0;
+							var mins = ((command_duration%(60*60))/60.0)|0;
+							var secs = command_duration%60;
+
+							if(hours)
+								str += hours + ":";
+							if(mins < 10)	str += "0"; //keep to 2 digits
+							str += mins + ":";
+							if(secs < 10)	str += "0"; //keep to 2 digits
+							str += secs ;
+						}
+						str += "</td></tr>";
+						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Number of Executions:</td>" +
+								"<td style='text-align:left;'>" + command_iteration + "</td></tr>";
+						str += "</table>";					
+
+						document.getElementById("plan-command-bounceBall-status-" + 
+								command_index).innerHTML = str;
+
+						//display
+						document.getElementById("plan-command-bounceBall-container-" + 
+								command_index).style.display = 'block';					
+
+					}
+					catch(e)
+					{
+						console.log(e);
+					} //ignore failure to show
+				}
+
+				
+				
+				
 				// "Running""Paused""Inactive"
 				//Debug.log("_targetPlan = " + _targetPlan);
 				//Debug.log("active_plan = " + active_plan);
@@ -4007,12 +4257,13 @@
 					
 					str += "<br>";
 					str += "| active_plan_status = " + active_plan_status;
-					str += "| current_command_index = " + command_index;
-					str += "| current_command_duration = " + command_duration;
-					str += "| current_state = " + current_state;
+					//str += "| current_command_index = " + command_index;
+					//str += "| current_command_duration = " + command_duration;
+					//str += "| current_command_iteration = " + command_iteration;
+					str += "| current_state = " + current_state;					
 					str += "| in_transition = " + in_transition;
 					str += "| transition_progress = " + transition_progress;
-					str += "| time_in_state = " + time_in_state;
+					str += "| time_in_state = " + time_in_state;					
 					str += "|";
 
 					document.getElementById('topPane-header').innerHTML = str;

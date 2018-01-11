@@ -222,6 +222,12 @@ else {
 				}
 		}
 		
+	        var _windowDashboardRefresh = function() {
+	        
+		    updateWindows();
+		    Debug.log("Window refreshed.")
+                }
+
 		//_windowDashboardLayoutsDropDown ~
 		//	toggles default layout drop down menu
 		var _windowDashboardLayoutsDropDown = function() {		
@@ -517,7 +523,6 @@ else {
         this.redrawFullScreenButton();
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
-        
         
         //user with lock on far right.. because it is the highest priority for user to see
 		tmpBtn = document.createElement("div");

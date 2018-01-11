@@ -6,6 +6,7 @@
 
 add_subdirectory(Chat)
 add_subdirectory(ConfigurationGUI)
+add_subdirectory(ECLWriter)
 add_subdirectory(Logbook)
 add_subdirectory(OtsConfigurationWizard)
 add_subdirectory(Visualization)
