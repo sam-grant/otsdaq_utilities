@@ -4,7 +4,7 @@
 #include "otsdaq-core/DataManager/DataProcessor.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
-#include "otsdaq-demo/DataProcessorPlugins/RawDataVisualizerConsumer.h"
+#include "otsdaq-core/DataProcessorPlugins/RawDataVisualizerConsumer.h"
 
 #include <iostream>
 #include <sstream>
