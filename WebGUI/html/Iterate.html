@@ -1,6 +1,86 @@
 <!DOCTYPE HTML>
-<html lang="en"> 
+<html lang="en">
+<script type="text/javaScript">
+/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+
+	//functions:			
+		//init()
+		//paint() 
+		//extractGETParameters()
+		//initIterateData()
+    	//		localCompleteInit()
+    	//		localGetGroups()	
+    	//		localGetNamesOfFSMs()
+		//getIterationPlans(responseHandler)
+	
+		//createTopPaneContent()
+		//createBottomPaneContent()
+		//updateIterationPlanContent()
+	
+			//Plan Editing:
+		//createEmptyIterateGroup()			
+		//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
+		//deleteIterationPlan()        	
+		//addCommand(type,params)
+		//deleteCommand(i,noPrompt,noDraw)
+		//savePlanCommandSequence(plan,commands,respsonseHandler)
+    
+    		//Dialogs for Plan Editing:
+    	//showCommandDialog(insertIndex,modifyExisting)
+        //	localShowCommandDialog()
+		//	localShowParamControls(commandKey)
+		//popUpParamSystemAliasOnChange(value)
+    			//for targets:
+			//showParamTargetWizDialog(paramIndex)
+			//	localClearTargets()
+			//	localExtractTargets() 
+			//	localFeCheckboxChanged(event)
+			//	localFeCheckboxHandler(event,el)
+			//		localExtractTargetTree(tree)
+			//targetWizDisplayTargets()
+			//targetWizParentMultiSelectHandler(sel)
+			//targetWizRecordMultiSelectHandler(sel)
+				//for path to fields
+    		//showParamPathToFieldWizDialog(paramIndex)
+    	//discardPlanChangesPrompt()
+	
+			//Plan Control:
+		//startTargetIterationPlan
+		//haltTargetIterationPlan
+		//pauseTargetIterationPlan
+		
+			//Helpers:
+		//saveModifiedTables(successMsg,failureMsg)        	
+	
+			//Display:
+        //drawIterationPlan(plan)
+        //  localExtractTree(tree)
+        //  localDrawIterationPlan()        	
+    	//		localCreateSaveButton()
+    	//handlePlanOverlayMouseMove(addIndex,event)
+    	//handlePlanNameMouseMove(deleteIndex,event)
+    	//handlePlanNameDrag(dragIndex,event)
+    	//handlePlanNameDragOver(dragIndex,event)
+    	//handlePlanNameDrop(dragIndex,event)
+    	//handlePlanNameDragEnd(dragIndex,event)
+		//handlePlanParamsMouseMove(i,event)
+    	//updateIterateStatus()	
+    	//bodyMouseMoveHandler()
+    	//htmlOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr,dragStr,dragendStr)
+    	//htmlOpen(tag,attObj,innerHTML,closeTag)
+		//htmlClearDiv()
+	
+			//Input Handlers:
+		//handleMouseOver(type,id) 
+		//handleEndMouseOver() 
+		//handlePlanSelect() 
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+</script>
 <head>
+	
 	<title>ConfigurationGUI</title>
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
@@ -82,6 +162,37 @@
 		    border-right: 4px solid #e74c3c;
 		    border-bottom: 4px solid #e74c3c;
 		}*/
+		
+		#topPane-targetPlan div { float: left; }
+		
+		#topPane-controls-playButton {
+			  width:			0; 
+			  height: 			0; 
+			  border-top: 		15px solid transparent;
+			  border-bottom: 	15px solid transparent;			  
+			  border-left: 		25px solid green;			  
+		}
+
+		#topPane-controls-pauseButton {
+			  width: 			6px; 
+			  height: 			24px;		
+			  margin-top: 		3px;
+			  border-right: 	9px solid rgb(13, 13, 148);			  
+			  border-left: 		9px solid rgb(13, 13, 148);			  
+		}
+		
+		#topPane-controls-stopButton {
+			  width: 			24px; 
+			  height: 			24px;	
+			  margin-top: 		3px;			  
+			  background-color: red;
+		}
+			  
+		.topPane-controls-button {
+			  cursor:			pointer;
+			  float: 			left;
+			  margin-left:		17px;
+		}
 
 		/* =============== start plan selector ================ */
 		.recordAdd,
@@ -584,83 +695,7 @@
         var _cmdTargetWizParentTable = "";
         var _cmdTargetParentSelArr = [];
 		
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
 	
-		//functions:			
-			//init()
-			//paint() 
-			//extractGETParameters()
-			//initIterateData()
-        	//		localCompleteInit()
-        	//		localGetGroups()	
-        	//		localGetNamesOfFSMs()
-			//getIterationPlans(responseHandler)
-		
-			//createTopPaneContent()
-			//createBottomPaneContent()
-			//updateIterationPlanContent()
-		
-				//Plan Editing:
-			//createEmptyIterateGroup()			
-			//createIterationPlan(useTargetPlanName,useCommandsFromGUI)
-			//deleteIterationPlan()        	
-			//addCommand(type,params)
-			//deleteCommand(i,noPrompt,noDraw)
-			//savePlanCommandSequence(plan,commands,respsonseHandler)
-        
-        		//Dialogs for Plan Editing:
-        	//showCommandDialog(insertIndex,modifyExisting)
-            //	localShowCommandDialog()
-			//	localShowParamControls(commandKey)
-    		//popUpParamSystemAliasOnChange(value)
-        			//for targets:
-				//showParamTargetWizDialog(paramIndex)
-				//	localClearTargets()
-				//	localExtractTargets() 
-				//	localFeCheckboxChanged(event)
-				//	localFeCheckboxHandler(event,el)
-				//		localExtractTargetTree(tree)
-				//targetWizDisplayTargets()
-				//targetWizParentMultiSelectHandler(sel)
-				//targetWizRecordMultiSelectHandler(sel)
-					//for path to fields
-        		//showParamPathToFieldWizDialog(paramIndex)
-        	//discardPlanChangesPrompt()
-		
-				//Plan Control:
-			//startTargetIterationPlan
-			//haltTargetIterationPlan
-			//pauseTargetIterationPlan
-			
-				//Helpers:
-			//saveModifiedTables(successMsg,failureMsg)        	
-		
-				//Display:
-            //drawIterationPlan(plan)
-            //  localExtractTree(tree)
-            //  localDrawIterationPlan()        	
-        	//		localCreateSaveButton()
-        	//handlePlanOverlayMouseMove(addIndex,event)
-        	//handlePlanNameMouseMove(deleteIndex,event)
-        	//handlePlanNameDrag(dragIndex,event)
-        	//handlePlanNameDragOver(dragIndex,event)
-        	//handlePlanNameDrop(dragIndex,event)
-        	//handlePlanNameDragEnd(dragIndex,event)
-    		//handlePlanParamsMouseMove(i,event)
-        	//updateIterateStatus()	
-        	//bodyMouseMoveHandler()
-        	//htmlOpenDiv(idStr,classStr,styleStr,mouseupStr,mousemoveStr,titleStr,mousedownStr,dragStr,dragendStr)
-        	//htmlOpen(tag,attObj,innerHTML,closeTag)
-    		//htmlClearDiv()
-		
-				//Input Handlers:
-			//handleMouseOver(type,id) 
-			//handleEndMouseOver() 
-			//handlePlanSelect() 
-	
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
 				
 
 		//=====================================================================================
@@ -2069,7 +2104,46 @@
 			
 			el = document.createElement("div");
 			str = "";
-			str += "<a href='#' onclick='initIterateData()'>Refresh</a>";
+			//str += "<a href='#' onclick='initIterateData()'>Refresh</a>";
+			str += htmlOpenDiv("topPane-targetPlan",0,
+					"float:left; margin: 6px 0 -6px 0;");
+			str += htmlOpenDiv("topPane-targetPlan-header");
+			str += "Target Iteration Plan: ";
+			str += "</div>";
+			str += htmlOpenDiv("topPane-targetPlan-name",0,"margin-left: 7px;");
+			str += "</div>";
+			
+			str += "</div>"; //end topPane-targetPlan
+			
+			str += htmlOpenDiv("topPane-controls",0,"float:left;");
+			
+				str += htmlOpenDiv("topPane-controls-playButton",
+						"topPane-controls-button",
+						0 /*style*/,
+						"startTargetIterationPlan()" /*mouseup*/,
+						0 /*mousemove*/,
+						"Start Iteration Plan" /*title*/);
+				str += "</div>"; //end topPane-controls-playButton
+				str += htmlOpenDiv("topPane-controls-pauseButton",
+						"topPane-controls-button",
+						0 /*style*/,
+						"pauseTargetIterationPlan()" /*mouseup*/,
+						0 /*mousemove*/,
+						"Pause Iteration Plan" /*title*/);
+				str += "</div>"; //end topPane-controls-playButton
+				str += htmlOpenDiv("topPane-controls-stopButton",
+						"topPane-controls-button",
+						0 /*style*/,
+						"haltTargetIterationPlan()" /*mouseup*/,
+						0 /*mousemove*/,
+						"Halt Iteration Plan" /*title*/);
+				str += "</div>"; //end topPane-controls-playButton
+			
+			str += "</div>"; //end topPane-controls
+			
+			str += htmlOpenDiv("topPane-status",0,"float:left; margin: 7px 0 -7px 17px;");
+			str += "</div>";
+			
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
 
@@ -3987,7 +4061,10 @@
 		function startTargetIterationPlan() 
 		{
 			Debug.log("startTargetIterationPlan " + _targetPlan);
-
+			
+			//for user experience, turn green immediately
+			document.getElementById('topPane').style.backgroundColor = "rgb(177, 206, 178)";
+			
 			window.clearTimeout(_updateTimer);
 			
 
@@ -4025,6 +4102,8 @@
 		{
 			Debug.log("pauseTargetIterationPlan " + _targetPlan);
 			
+			//for user experience, turn blue immediately
+			document.getElementById('topPane').style.backgroundColor = "rgb(197, 205, 226)";
 
 			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?" + 
 					"StateMachine=iteratePause", //end get data 
@@ -4040,7 +4119,7 @@
 				{
 					_old_active_plan_status = ""; //clear for new action
 
-					Debug.log("Successfully attempted to pause the iteration plan '" + _targetPlan + ".'",
+					Debug.log("Attempted to pause the iteration plan '" + _targetPlan + ".'",
 							Debug.INFO_PRIORITY);
 					
 					_need_plan_paused = true;
@@ -4074,7 +4153,7 @@
 				{
 					_old_active_plan_status = ""; //clear for new action
 
-					Debug.log("Successfully attempted to halt the iteration plan '" + 
+					Debug.log("Attempted to halt the iteration plan '" + 
 							_targetPlan + "'...",
 							Debug.INFO_PRIORITY);
 					
@@ -4197,7 +4276,7 @@
 						str += "<b>Command " + command_index + ". " + _commands[(command_index|0)].type + "</b>";
 						str += "<br>";
 						str += "<table>";	
-						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Duration [h:mm:ss]:</td>" + 
+						str += "<tr><td style='text-align:left; color:rgb(222, 222, 222);'>Duration [h:mm:ss]:</td>" + 
 								"<td style='text-align:left;'>";				
 						{
 							var hours = (command_duration/60.0/60.0)|0;
@@ -4212,7 +4291,7 @@
 							str += secs ;
 						}
 						str += "</td></tr>";
-						str += "<tr><td style='text-align:right; color:rgb(222, 222, 222);'>Number of Executions:</td>" +
+						str += "<tr><td style='text-align:left; color:rgb(222, 222, 222);'>Number of Executions:</td>" +
 								"<td style='text-align:left;'>" + command_iteration + "</td></tr>";
 						str += "</table>";					
 
@@ -4244,27 +4323,38 @@
 
 				{
 					var str = "";
-
-					str += "Target Iteration Plan: ";
 					if(active_plan_status == "Inactive")
 						str += _targetPlan;
 					else
 						str += active_plan;
-					str += " | ";
-					str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
-					str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
-					str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
+					document.getElementById('topPane-targetPlan-name').innerHTML = str;
 					
-					str += "<br>";
-					str += "| active_plan_status = " + active_plan_status;
-					//str += "| current_command_index = " + command_index;
+					if(active_plan_status == "Running") //play background color green
+						document.getElementById('topPane').style.backgroundColor = "rgb(177, 206, 178)";
+					else if(active_plan_status == "Paused") //play background color blue
+						document.getElementById('topPane').style.backgroundColor = "rgb(197, 205, 226)";					 
+					else if(active_plan_status == "Error") //play background color red
+						document.getElementById('topPane').style.backgroundColor = "rgb(226, 205, 197)";
+					else 
+						document.getElementById('topPane').style.backgroundColor = "transparent";
+
+					document.getElementById('topPane-status').innerHTML = active_plan_status;
+					
+					str = "";
+//					str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
+//					str += "<a onclick='pauseTargetIterationPlan()'>Pause</a> ";
+//					str += "<a onclick='haltTargetIterationPlan()'>Halt</a> ";
+//					
+//					str += "<br>";
+//					str += "| active_plan_status = " + active_plan_status;
+					str += "current_command_index = " + command_index;
 					//str += "| current_command_duration = " + command_duration;
 					//str += "| current_command_iteration = " + command_iteration;
 					str += "| current_state = " + current_state;					
-					str += "| in_transition = " + in_transition;
-					str += "| transition_progress = " + transition_progress;
+					//str += "| in_transition = " + in_transition;
+					//str += "| transition_progress = " + transition_progress;
 					str += "| time_in_state = " + time_in_state;					
-					str += "|";
+					//str += "|";
 
 					document.getElementById('topPane-header').innerHTML = str;
 				}
