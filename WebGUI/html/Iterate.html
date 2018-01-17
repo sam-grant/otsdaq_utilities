@@ -162,15 +162,27 @@
 		    border-right: 4px solid #e74c3c;
 		    border-bottom: 4px solid #e74c3c;
 		}*/
-		
+
 		#topPane-targetPlan div { float: left; }
+	   
+		#topPane-targetPlan { 
+	    	float: 				left; 
+	    	width: 				246px;
+	        margin: 			6px 0 -6px 0;
+		}
 		
 		#topPane-controls-playButton {
-			  width:			0; 
-			  height: 			0; 
-			  border-top: 		15px solid transparent;
-			  border-bottom: 	15px solid transparent;			  
-			  border-left: 		25px solid green;			  
+			width:				0; 
+			height: 			0; 
+			border-top: 		15px solid transparent;
+			border-bottom: 		15px solid transparent;			  
+			border-left: 		25px solid green;			  
+		}
+		#topPane-controls-playButton:hover {	
+		    border-top: 		20px solid transparent;
+		    border-bottom: 		20px solid transparent;
+		    border-left: 		32px solid rgb(83, 191, 83);
+		    margin: 			-5px -5px 0 15px;
 		}
 
 		#topPane-controls-pauseButton {
@@ -180,18 +192,48 @@
 			  border-right: 	9px solid rgb(13, 13, 148);			  
 			  border-left: 		9px solid rgb(13, 13, 148);			  
 		}
+		#topPane-controls-pauseButton:hover {	
+			height: 			32px;
+			width: 				6px;
+			border-right: 		11px solid rgb(79, 166, 255);			  
+			border-left: 		11px solid rgb(79, 166, 255);
+			margin: 			-1px -2px 0 15px;
+		}
 		
 		#topPane-controls-stopButton {
-			  width: 			24px; 
-			  height: 			24px;	
-			  margin-top: 		3px;			  
-			  background-color: red;
+			width: 				24px; 
+			height: 			24px;	
+			margin-top: 		3px;			  
+			background-color: 	rgb(218, 5, 5);
+		}
+		#topPane-controls-stopButton:hover {	
+			width: 				32px;
+			height: 			32px;
+		  	background-color: 	rgb(255, 59, 0);	
+			margin: 			-1px -4px 0 13px;	
 		}
 			  
 		.topPane-controls-button {
-			  cursor:			pointer;
-			  float: 			left;
-			  margin-left:		17px;
+			cursor:				pointer;
+			float: 				left;
+			margin-left:		17px;
+		}
+		
+		.topPane-fieldName {
+			font-weight: 		bold; 
+			color: 				rgb(127, 48, 48);
+		}
+		
+		#topPane-status {
+			float: 				left;
+			margin: 			12px 0 -6px 26px;			  
+			text-align:			center;
+		}
+		#topPane-status-fieldName {
+			text-decoration:	underline;
+		}
+		#topPane-status-field {
+			font-size: 			30px;
 		}
 
 		/* =============== start plan selector ================ */
@@ -696,7 +738,11 @@
         var _cmdTargetParentSelArr = [];
 		
 	
-				
+		var _HEADER_ERROR_BGCLR = 		"rgb(226, 205, 197)";
+		var _HEADER_PAUSED_BGCLR = 		"rgb(197, 205, 226)";
+		var _HEADER_RUNNING_BGCLR = 	"rgb(177, 206, 178)";
+		var _HEADER_INACTIVE_BGCLR = 	"transparent";
+        
 
 		//=====================================================================================
 		//init ~~
@@ -2105,17 +2151,30 @@
 			el = document.createElement("div");
 			str = "";
 			//str += "<a href='#' onclick='initIterateData()'>Refresh</a>";
-			str += htmlOpenDiv("topPane-targetPlan",0,
-					"float:left; margin: 6px 0 -6px 0;");
-			str += htmlOpenDiv("topPane-targetPlan-header");
-			str += "Target Iteration Plan: ";
-			str += "</div>";
-			str += htmlOpenDiv("topPane-targetPlan-name",0,"margin-left: 7px;");
-			str += "</div>";
+			str += htmlOpenDiv("topPane-targetPlan");
+//				str += htmlOpenDiv("topPane-targetPlan-header","topPane-fieldName");
+//				str += "Iteration Plan: ";
+//				str += "</div>";
+//				str += htmlOpenDiv("topPane-targetPlan-name",0,"margin-left: 7px;");
+//				str += "</div>";
+
+				str += "<table>";
+					str += "<tr><td class='topPane-fieldName'>";
+					str += "Iteration Plan:";
+					str += "</td><td id='topPane-targetPlan-name'></td></tr>";
+					
+					str += "<tr><td class='topPane-fieldName'>";
+					str += "FSM State:";
+					str += "</td><td id='topPane-field-fsmState'></td></tr>";
+	
+					str += "<tr><td class='topPane-fieldName'>";
+					str += "FSM Time-in-State:";
+					str += "</td><td id='topPane-field-fsmStateTime'></td></tr>";
+				str += "</table>";
 			
 			str += "</div>"; //end topPane-targetPlan
 			
-			str += htmlOpenDiv("topPane-controls",0,"float:left;");
+			str += htmlOpenDiv("topPane-controls",0,"float:left;margin: 24px 0 0 10px;");
 			
 				str += htmlOpenDiv("topPane-controls-playButton",
 						"topPane-controls-button",
@@ -2141,19 +2200,27 @@
 			
 			str += "</div>"; //end topPane-controls
 			
-			str += htmlOpenDiv("topPane-status",0,"float:left; margin: 7px 0 -7px 17px;");
-			str += "</div>";
+			
+			str += htmlOpenDiv("topPane-status");
+				str += "<label id='topPane-status-fieldName'>Iteration Status</label><br>";
+				str += "<label id='topPane-status-field'></label>";
+			str += "</div>"; //end topPane-status
+			
+			//str += htmlOpenDiv("clearDiv","topPane-fieldName");
+			//str += "</div>";
+			
+			
 			
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
 
-			el = document.createElement("div");
-			el.setAttribute("id", "clearDiv");
-			_topPane.appendChild(el);
-			
-			el = document.createElement("div");
-			el.setAttribute("id", "topPane-header");
-			_topPane.appendChild(el);			
+//			el = document.createElement("div");
+//			el.setAttribute("id", "clearDiv");
+//			_topPane.appendChild(el);
+//			
+//			el = document.createElement("div");
+//			el.setAttribute("id", "topPane-header");
+//			_topPane.appendChild(el);			
 			
 			document.body.appendChild(_topPane);			
 		}	//end createTopPaneContent()
@@ -4113,8 +4180,18 @@
 				Debug.log("pauseTargetIterationPlan handler ");
 
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				var fsm_error_message 	= DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+				
 				if(error_message && error_message != "")
+				{
 					Debug.log(error_message,Debug.HIGH_PRIORITY);
+					document.getElementById('topPane').style.backgroundColor = _HEADER_ERROR_BGCLR;
+				}					
+				else if(fsm_error_message && fsm_error_message != "")
+				{
+					Debug.log(fsm_error_message,Debug.HIGH_PRIORITY);
+					document.getElementById('topPane').style.backgroundColor = _HEADER_ERROR_BGCLR;
+				}
 				else
 				{
 					_old_active_plan_status = ""; //clear for new action
@@ -4327,18 +4404,20 @@
 						str += _targetPlan;
 					else
 						str += active_plan;
-					document.getElementById('topPane-targetPlan-name').innerHTML = str;
+					document.getElementById('topPane-targetPlan-name').innerHTML = 
+							"&quot;" + str + "&quot;";
 					
 					if(active_plan_status == "Running") //play background color green
-						document.getElementById('topPane').style.backgroundColor = "rgb(177, 206, 178)";
+						document.getElementById('topPane').style.backgroundColor = _HEADER_RUNNING_BGCLR;
 					else if(active_plan_status == "Paused") //play background color blue
-						document.getElementById('topPane').style.backgroundColor = "rgb(197, 205, 226)";					 
+						document.getElementById('topPane').style.backgroundColor = _HEADER_PAUSED_BGCLR;					 
 					else if(active_plan_status == "Error") //play background color red
-						document.getElementById('topPane').style.backgroundColor = "rgb(226, 205, 197)";
+						document.getElementById('topPane').style.backgroundColor = _HEADER_ERROR_BGCLR;
 					else 
-						document.getElementById('topPane').style.backgroundColor = "transparent";
+						document.getElementById('topPane').style.backgroundColor = _HEADER_INACTIVE_BGCLR;
 
-					document.getElementById('topPane-status').innerHTML = active_plan_status;
+					document.getElementById('topPane-status-field').innerHTML = 
+							active_plan_status;
 					
 					str = "";
 //					str += "<a onclick='startTargetIterationPlan()'>Start</a> ";
@@ -4347,16 +4426,36 @@
 //					
 //					str += "<br>";
 //					str += "| active_plan_status = " + active_plan_status;
-					str += "current_command_index = " + command_index;
+					//str += "<label class='topPane-fieldName'>current_command_index:</label>" +
+					//		command_index;
 					//str += "| current_command_duration = " + command_duration;
 					//str += "| current_command_iteration = " + command_iteration;
-					str += "| current_state = " + current_state;					
+					//str += "<label class='topPane-fieldName'>FSM State:</label>" +
+					//		current_state;
+					document.getElementById('topPane-field-fsmState').innerHTML = current_state;
+					//str += "| current_state = " + current_state;					
 					//str += "| in_transition = " + in_transition;
 					//str += "| transition_progress = " + transition_progress;
-					str += "| time_in_state = " + time_in_state;					
+					str = "";
+					{
+						var hours = (time_in_state/60.0/60.0)|0;
+						var mins = ((time_in_state%(60*60))/60.0)|0;
+						var secs = time_in_state%60;
+
+						if(hours)
+							str += hours + ":";
+						if(mins < 10)	str += "0"; //keep to 2 digits
+						str += mins + ":";
+						if(secs < 10)	str += "0"; //keep to 2 digits
+						str += secs ;
+					}
+					document.getElementById('topPane-field-fsmStateTime').innerHTML = str;
+					//str += "<label class='topPane-fieldName'>Time in State:</label>" +
+					//		time_in_state;
+					//str += "| time_in_state = " + time_in_state;					
 					//str += "|";
 
-					document.getElementById('topPane-header').innerHTML = str;
+					//document.getElementById('topPane-header').innerHTML = str;
 				}
 				
 				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
