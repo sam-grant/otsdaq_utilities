@@ -296,6 +296,7 @@ Debug.errorPop = function(err,severity) {
 			//give undefined things monopsace type
 			css += "#" + Debug._errBoxId + " *" +
 					"{font-family: 'Inconsolata', monospace;" +
+					"font-size: 18px;" +
 					"}\n\n";
 			
 			//error close link style
@@ -307,6 +308,12 @@ Debug.errorPop = function(err,severity) {
 			css += "#" + Debug._errBoxId + " a:hover" +
 					"{text-decoration: underline;" +
 					"cursor:pointer;" +
+					"}\n\n";
+			
+			css += "#" + Debug._errBoxId + " i" +
+					", #" + Debug._errBoxId + " u" +
+					"{" +
+					"font-size: 18px; font-family: 'Comfortaa', arial;" +
 					"}\n\n";
 			
 			//error box style

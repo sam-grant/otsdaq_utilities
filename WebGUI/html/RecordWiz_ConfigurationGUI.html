@@ -1,0 +1,1803 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<script>		
+		
+		//	Description of Record Wizard Configuration GUI Functionality/Behavior:
+		//	
+		//	GET parameters:
+		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
+		//		<recordsAlias> = Records display name, e.g. "Front-ends"
+		//
+		//	- User can have LOCK
+		//
+		//	Display:
+		//		- walk through steps at center of window
+		//			- use popup dialog to place at center
+		//		- steps:
+		//			- (error if unrecognized base path)
+		//			- "what is the name of your <record type>?"
+		//				- note the active context and config group being modified, with dropdown to 
+		//					change them.		
+		//			- "do you want to add it to an existing context or create a new one?"
+		//				- if create a new one
+		//					- provide default name with edit pencil, and continue
+		//			
+		//
+
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+		
+		//functions:			
+			//init()
+			//extractGETParameters()
+			//initRecordWizard()
+			//showPrompt(stepIndex,paramObj,prevParamObj)
+			//	localAddContent()
+			//	localAddHandlers()
+			//		localRecordsSelectHandler()
+			//		localNextButtonHandler()
+			//		localPrevButtonHandler()
+			
+			//htmlOpen(tag,attObj,innerHTML,closeTag)
+			//htmlClearDiv()
+			//incrementName(name)
+		
+			//		getSelectedRecords(forceOne)
+			//btnActionReadAllFields()
+			//btnActionReadOneField()
+			//btnActionWriteAllFields()
+			//btnActionWriteOneField()
+		
+			//deleteRecords()
+			//addRecord()
+		
+		
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+	</script>
+
+
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+		
+		body {
+			/*overflow: hidden; /* scrolling only happens in left and right panes */			
+		}
+
+		/* make buttons have a hand cursor */
+		input[type="button"], button {
+			cursor: 			pointer;
+		}
+		
+		/* style text inputs */
+		input[type="text"], select {
+			height: 			24px;
+			margin:				5px;
+			padding-left: 		5px;
+			width: 				200px;
+			border: 			1px solid rgb(171, 171, 230);
+		}
+		
+		/* style field names in tables */
+		td b {
+			font-size: 			16px !important;
+		}
+		
+		.treeNode-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 10px;
+		}
+		.treeNode-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
+		}
+
+		.preloadImage {			
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100px;
+			top: 				0;
+		}
+		#preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+		}
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	
+	<script>		
+		
+
+		
+				
+		var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
+		var _TABLE_BOOL_TYPE_FALSE_COLOR = "rgb(255, 178, 178)";
+		
+		
+		
+		//global vars for GET params
+		var _subsetBasePath;			
+		var _recordsAlias;
+		
+		//global vars for creation
+		var _subsetUIDs; //array of UIDs already defined at base path
+		var _systemGroups; //object of aliases and groups w/active groups
+		
+		
+		//global vars for saving tables
+		var _modifiedTables;
+		
+		
+		var 
+			_STEP_NEW_CONTEXT_HOST			= 1000,
+			_STEP_CHANGE_GROUP				= 2,
+			_STEP_WHERE_TO_ADD 				= 1,
+			_STEP_GET_RECORD_NAME			= 0;
+			
+		var _START_STEP_INDEX = _STEP_GET_RECORD_NAME;
+				
+		var _XDAQ_BASE_PATH 	= "XDAQContextConfiguration";	
+		var _XDAQAPP_BASE_PATH 	= "XDAQApplicationConfiguration";	
+		
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{									
+			Debug.log("CfgGUI record Wiz init ");
+		
+			//extract get parameters
+			if(!extractGETParameters())
+			{
+				Debug.log("Illegal GET parameters. Aborting.",
+						Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			DesktopContent.tooltip("Record Wizard Introduction",
+					"Welcome to the Record Wizard GUI. Here you can create new records for "+
+					"your <i>otsdaq</i> system. \n\n" +
+					"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
+
+					"Briefly, here is a description of the steps: " +
+					"\n\t- 'What is the name of your " + _recordsAlias + "?'" +
+					"\n\t- 'Do you want to add it to an existing context or create a new one?'"
+			);
+
+
+			//initialize data
+			//	calls paint() and adds resize listener when done
+			initRecordWizard();
+				//paint();
+				//window.addEventListener("resize",paint);
+						
+		} //end init()
+				
+		//=====================================================================================
+		//extractGETParameters ~~
+		//	return false, if illegal params
+		function extractGETParameters() 
+		{
+			//extract get parameters
+			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
+			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
+			
+			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
+			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
+			
+			//setup defaults and verify
+			if(!_subsetBasePath)
+			{
+				Debug.log("Missing required GET parameter 'subsetBasePath.'",
+						Debug.HIGH_PRIORITY);
+				return false;
+			}
+			else
+			{
+				if(!(_subsetBasePath == "FEInterfaceConfiguration" ||
+						_subsetBasePath == "DataBufferConfiguration"
+								))
+				{
+					Debug.log("Unrecognized value fo GET parameter 'subsetBasePath' = '" + 
+							_subsetBasePath + "'",
+							Debug.HIGH_PRIORITY);
+					return false;
+				}
+			}
+			if(!_recordsAlias) _recordsAlias = "Records";
+
+			Debug.log("_subsetBasePath " + _subsetBasePath);
+			Debug.log("_recordsAlias " + _recordsAlias);
+			
+			return true;
+		}	//end extractGETParameters()
+		
+		//=====================================================================================
+		//initRecordWizard ~~
+		//	get active groups and list of all groups
+		//	get list of existing records at base path
+		function initRecordWizard() 
+		{
+			//get list of records that match <subsetBasePath> AND <recordPreFilterList>
+			_subsetUIDs = []; //reset			
+			_modifiedTables = undefined; //reset
+			
+			{	//remove all existing dialogs
+				
+				var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+				while(el) 
+				{
+					el.parentNode.removeChild(el); //close popup
+					el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+				}
+			} //end remove all existing dialogs
+			
+			
+			//	get groups and aliases
+			ConfigurationAPI.getAliasesAndGroups(
+					function(retObj)
+					{
+				_systemGroups = retObj;
+				
+				// get existing records
+				ConfigurationAPI.getSubsetRecords(
+						_subsetBasePath,
+						""/*_recordPreFilterList*/,
+						function(records)
+						{
+					_subsetUIDs = records;
+					Debug.log("records found = " + records.length);
+					console.log(records);
+					
+					showPrompt(_START_STEP_INDEX);
+					
+						}); //end getSubsetRecords
+
+					}); //end getAliasesAndGroups
+						
+		}	//end initRecordWizard()
+		
+		//=====================================================================================
+		//showPrompt ~~
+		function showPrompt(stepIndex,paramObj,prevParamObj) 
+		{
+			//default to step 0
+			if(!stepIndex) stepIndex = 0;
+			
+			Debug.log("showPrompt " + stepIndex);
+			
+			var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+			
+			//remove all existing dialogs
+			while(el) 
+			{
+				el.parentNode.removeChild(el); //close popup
+				el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
+			}
+			
+			//make popup element
+			el = document.createElement("div");			
+			el.setAttribute("id", ConfigurationAPI._POP_UP_DIALOG_ID);
+			
+			//set position and size
+			var w = 480;
+			var h = 500;//250;
+			
+			var str = "";
+			var stepString = "stepIndex-" + stepIndex + "-";
+			
+			var showPrevButton = true;
+			var showNextButton = true;
+			var prevStepIndex = stepIndex-1;
+			var nextStepIndex = stepIndex+1;			
+
+			///////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////
+			// add content
+			localAddContent();
+			function localAddContent()
+			{
+				switch(stepIndex)
+				{
+
+				case _STEP_NEW_CONTEXT_HOST:
+					
+					prevStepIndex = _STEP_WHERE_TO_ADD;
+					nextStepIndex = -1; 
+					
+					str += "Please enter the Host Address and Port for your new Context:";
+					str += "<center>"; 
+					str += "<table style='margin-bottom: 20px;'>";
+
+					///////////////////////
+					{ // address input
+						str += "<tr><td><b>Address:</b></td><td>";
+
+						str += htmlOpen("input",
+								{
+										"type" : 	"text",	
+										"id" : 		stepString + "address",	
+								}, "" /*innerHTML*/, true /*closeTag*/);
+
+						str += "</td></tr>";
+					} //end new context input
+					///////////////////////
+					{ // port input
+						str += "<tr><td><b>Port:</b></td><td>";
+
+						str += htmlOpen("input",
+								{
+										"type" : 	"text",	
+										"id" : 		stepString + "port",	
+								}, "" /*innerHTML*/, true /*closeTag*/);
+
+						str += "</td></tr>";
+					} //end new context input
+
+					str += "</table>";
+					str += "</center>";
+					
+					///////////////////////
+					// existing addresses
+					str += htmlClearDiv();
+					str += "Here is a dropdown of existing Host Addresses " + 
+							" to help you in creating standardized addresses:";
+					str += htmlClearDiv();
+					str += htmlOpen("select",
+							{
+									"id" :		stepString + "addresses",
+									"style" :	"margin-bottom: 16px;"
+							});
+
+
+					for(var i=0;i<paramObj["hostAddresses"].length;++i)
+					{
+						str += htmlOpen("option",
+								{		
+								},paramObj["hostAddresses"][i] /*innerHTML*/, true /*closeTag*/);
+					}
+					str += "</select>"; //end existing records dropdown
+					
+					///////////////////////
+					// existing ports
+					str += htmlClearDiv();
+					str += "Here is a dropdown of existing Host Ports " + 
+							" to help you in creating standardized ports:";
+					str += htmlClearDiv();
+					str += htmlOpen("select",
+							{
+									"id" :		stepString + "ports",
+									"style" :	"margin-bottom: 16px;"
+							});
+
+
+					for(var i=0;i<paramObj["hostPorts"].length;++i)
+					{
+						str += htmlOpen("option",
+								{		
+								},paramObj["hostPorts"][i] /*innerHTML*/, true /*closeTag*/);
+					}
+					str += "</select>"; //end existing records dropdown
+
+					break;  //end _STEP_NEW_CONTEXT_HOST
+					
+				case _STEP_WHERE_TO_ADD:
+
+					showNextButton = false; //replace it		
+
+					//take parameter recordName
+					Debug.log("_STEP_WHERE_TO_ADD " + paramObj["recordName"]);
+
+					// " add to existing XDAQ Context or a new one?"
+					str += "<br>";
+					str += "Do you want to add the " + _recordsAlias + " named '" +  
+							paramObj["recordName"] + "' to a new XDAQ Context or an existing one?";
+
+					DesktopContent.tooltip("XDAQ Contexts",
+							"What is a XDAQ Context? Why do I need a XDAQ Context? Do I want a new one for my " + _recordsAlias + " or not?" + 
+							"<br><br>" +
+							"XDAQ Contexts are the fundamental executable program building blocks of <i>otsdaq</i>. " +
+							"A XDAQ Context runs a group of XDAQ Applications inside of it. If one of those XDAQ Applications crashes, " +
+							"then only the parent XDAQ Context will crash. This is one reason organizing your <i>otsdaq</i> entities into separate XDAQ Contexts makes sense." +
+							"<br><br>" +
+							"Two other useful features of XDAQ Contexts are that they can easily be turned on and off (enabled and disabled through the configuration editors), and " +
+							"they can easily be distributed to other nodes (computers) in your DAQ system when your system scales up."
+					);
+
+					str += "<center>"; 
+					str += "<table style='margin-bottom: 20px;'>";
+
+					///////////////////////
+					{ // new context input
+						str += "<tr><td><b>New XDAQ Context:</b></td><td>";
+
+						str += htmlOpen("input",
+								{
+										"type" : 	"text",	
+										"id" : 		stepString + "contextName",	
+								}, "" /*innerHTML*/, true /*closeTag*/);
+
+						str += htmlOpen("input",
+								{
+										"id": stepString + "addToNew",
+										"type": "button",
+										"value": "Add to New",
+										"title": "Create a new XDAQ Context and add the new " + _recordsAlias + " to it."
+								},
+								0 /*html*/, true /*closeTag*/);	
+						str += "</td></tr>";
+					} //end new context input
+
+					if(paramObj["contexts"].length)
+					{
+						str += "<tr><td><b>Existing Contexts:</b></td><td>";
+						{ //start contexts
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "contexts",
+									});
+
+							for(var i=0;i<paramObj["contexts"].length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										paramObj["contexts"][i] /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end aliases dropdown
+							str += htmlOpen("input",
+									{
+											"id": stepString + "addToExisting",
+											"type": "button",
+											"value": "Add to Existing",
+											"title": "Add new " + _recordsAlias + " to the chosen existing XDAQ Context."
+									},
+									0 /*html*/, true /*closeTag*/);	
+						} //end contexts
+						str += "</td></tr>";
+					} //end existing contexts
+
+					str += "</table>";
+					str += "</center>";
+
+					break; //end _STEP_WHERE_TO_ADD
+
+				case _STEP_CHANGE_GROUP:
+					//take paramter groupType
+					
+					showNextButton = false; //replace it					
+					nextStepIndex = _STEP_GET_RECORD_NAME;
+					prevStepIndex = _STEP_GET_RECORD_NAME;
+					
+					str += "Choose a '" + paramObj["groupType"] +
+					"' group to activate (either a System Alias or specific group):";
+					
+					str += htmlClearDiv();
+
+					str += "<center>"; 
+					str += "<table style='margin-bottom: 20px;'>";
+					if(_systemGroups.aliases[paramObj["groupType"]].length)
+					{
+						str += "<tr><td><b>System Aliases:</b></td><td>";
+						{ //start aliases
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "aliases",
+									});
+
+							for(var i=0;i<_systemGroups.aliases[paramObj["groupType"]].length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										_systemGroups.aliases[paramObj["groupType"]]
+															  [i].alias /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end aliases dropdown
+							str += htmlOpen("input",
+									{
+											"id": stepString + "activateAlias",
+											"type": "button",
+											"value": "Activate Alias",
+											"title": "Activate chosen System Alias and return to creating your new " + _recordsAlias + "."
+									},
+									0 /*html*/, true /*closeTag*/);	
+						} //end aliases
+						str += "</td></tr>";
+					}
+					else
+						str += "<tr><td colspan='2'>No system aliases of type Context found.</td></tr>";
+					
+					var groupNames = Object.keys(_systemGroups.groups[paramObj["groupType"]]);
+					if(groupNames.length)
+					{
+						str += "<tr><td><b>Group Names:</b></td><td>";
+						{ //start groups
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "groupNames",
+									});
+	
+							for(var i=0;i<groupNames.length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										groupNames[i] /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end group name dropdown
+							
+						} //end groups
+						str += "</td></tr>";
+					}
+					else
+						str += "<tr><td colspan='2'>No groups of type Context found.</td></tr>";
+					
+					if(groupNames.length)
+					{
+						str += "<tr><td><b>Group Keys:</b></td><td>";
+						{ //start keys
+							str += htmlOpen("select",
+									{
+											"id" :		stepString + "groupKeys",
+									});
+
+							for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
+															   [groupNames[0]].keys.length;++i)
+							{
+								str += htmlOpen("option",
+										{		
+										},
+										_systemGroups.groups[paramObj["groupType"]]
+															 [groupNames[0]].keys[i] /*innerHTML*/, true /*closeTag*/);
+							}
+							str += "</select>"; //end group keys dropdown
+							str += htmlOpen("input",
+									{
+											"id": stepString + "activateGroup",
+											"type": "button",
+											"value": "Activate Group",
+											"title": "Activate chosen Group and Key pair and return to creating your new " + _recordsAlias + "."
+									},
+									0 /*html*/, true /*closeTag*/);	
+						} //end keys
+						str += "</td></tr>";
+					}
+					str += "</table>";
+					str += "</center>";
+					
+					break; //end _STEP_CHANGE_GROUP				
+					
+				case _STEP_GET_RECORD_NAME:
+					h = 330;
+					
+					///////////////////////
+					// header
+					str += htmlOpen("div",
+							{
+									"style" : "font-weight:bold; margin: 16px 0 20px 0;"		
+							}, 
+							"Welcome to the " + _recordsAlias + " creation Wizard!" /*innerHTML*/,
+							true /*closeTag*/);
+					str += htmlClearDiv();
+
+					///////////////////////
+					// prompt
+					str += "Enter the unique record name for your " + _recordsAlias + ": ";
+					str += htmlClearDiv();
+					str += htmlOpen("input",
+							{
+									"type" : 	"text",	
+									"id" : 		stepString + "recordName",	
+								    "style" :	"margin-bottom: 16px;"
+							}, "" /*innerHTML*/, true /*closeTag*/);
+
+					
+
+					///////////////////////
+					// existing records
+					str += htmlClearDiv();
+					str += "Here is a dropdown of existing " + _recordsAlias + 
+							" records to help you in creating standardized record names:";
+					str += htmlClearDiv();
+					str += htmlOpen("select",
+							{
+									"id" :		stepString + "records",
+									"style" :	"margin-bottom: 16px;"
+							});
+
+					
+					for(var i=0;i<_subsetUIDs.length;++i)
+					{
+						str += htmlOpen("option",
+								{		
+								},_subsetUIDs[i] /*innerHTML*/, true /*closeTag*/);
+					}
+					str += "</select>"; //end existing records dropdown
+					
+					
+					///////////////////////
+					// active groups
+					str += htmlClearDiv();
+					str += "Note you are currently editing these active groups:";
+					str += "<center>"; 
+					str += "<table style='margin-bottom: 20px;'>";
+					str += "<tr><td><b>Active Context:</b></td><td>";
+					str += _systemGroups.activeGroups.Context.groupName + " (" + _systemGroups.activeGroups.Context.groupKey + ")";
+
+					str += htmlOpen("div",
+							{
+									"id":		stepString + "editContext",
+									"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
+									"style":	"float:right; display:block; margin: -3px 0 0 10px;",
+									"title":	"Click to activate a different Context group.",
+									
+							}, 0 /*innerHTML*/, true /*closeTag*/);
+					
+					str += "</td></tr>";
+					str += "<tr><td><b>Active Configuration:</b></td><td>";
+					str += _systemGroups.activeGroups.Configuration.groupName + " (" + _systemGroups.activeGroups.Configuration.groupKey + ")";
+					
+					str += htmlOpen("div",
+							{
+									"id":		stepString + "editConfig",
+									"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-editIcon",
+									"style":	"float:right; display:block; margin: -3px 0 0 10px;",
+									"title":	"Click to activate a different Configuration group.",
+							}, 0 /*innerHTML*/, true /*closeTag*/);
+					
+					str += "</td></tr>";
+					str += "</table>";
+					str += "</center>";
+
+					
+					break; // end _STEP_GET_RECORD_NAME
+					
+				default:
+					Debug.log("Should never happen - bad stepIndex!",Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				//add go back button
+				//add proceed to next step button
+				var ctrlStr = "";
+
+				if(stepIndex && showPrevButton)
+					ctrlStr += htmlOpen("input",
+							{
+									"class": stepString + "prevButton",
+									"type": "button",
+									"value": "Go Back",
+									"title": "Return to the previous step in the " + _recordsAlias + " creation wizard."
+							},
+							0 /*html*/, true /*closeTag*/);	
+				if(showNextButton)
+					ctrlStr += htmlOpen("input",
+							{
+									"class": stepString + "nextButton",
+									"type": "button",
+									"value": "Next Step",
+									"title": "Proceed to the next step in the " + _recordsAlias + " creation wizard."
+							},
+							0 /*html*/, true /*closeTag*/);	
+
+				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+				el.innerHTML = ctrlStr + htmlClearDiv() + str + htmlClearDiv() + ctrlStr;
+				document.body.appendChild(el);	
+			} //end localAddContent()
+			
+			
+			///////////////////////////////////////////////////////
+			///////////////////////////////////////////////////////
+			// add handlers
+			localAddHandlers();
+			function localAddHandlers()
+			{
+				var newParamObj = {};
+				
+				///////////////////////////////////////////////////////
+				//add handlers specific to the step
+				switch(stepIndex)
+				{
+				case _STEP_WHERE_TO_ADD:
+					
+					//create select change handler for existing records
+					document.getElementById(stepString + "contexts").onclick = localContextSelectHandler;
+					document.getElementById(stepString + "contexts").onchange = localContextSelectHandler;
+
+					function localContextSelectHandler(event) {
+						Debug.log("Selected " + this.value);
+
+						//increment index
+						document.getElementById(stepString + "contextName").value = 
+								incrementName(this.value);	
+					}; //end onchange handler for existing records
+					
+					/////////////////////////////////
+					document.getElementById(stepString + "addToNew").onclick = 
+							function()
+							{
+						var name = document.getElementById(stepString + "contextName").value;
+						Debug.log("addToNew " + name);
+						
+						//steps:
+						//	create new record
+						//	edit record (status=On, ApplicationGroupID=uid + "apps")
+						//	save
+						
+						/////////////////////
+						ConfigurationAPI.addSubsetRecords(_XDAQ_BASE_PATH,name,
+								/////////////////////
+								function(modifiedTables,err) //start addSubsetRecords handler
+								{
+							Debug.log("modifiedTables length " + modifiedTables.length);
+							if(!modifiedTables.length)
+							{
+								//really an error
+								Debug.log("There was an error while creating the XDAQ Context '" + 
+										name  + ".'",
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							_modifiedTables = modifiedTables;
+							
+							var fieldArr = ["Status",
+											"LinkToApplicationConfiguration",
+											"ApplicationGroupID",
+											"CommentDescription"
+											];
+
+							var valueArr = ["1",//"Status",
+											_PLAN_BASE_PATH,//"LinkToApplicationConfiguration",
+											planName+"-Plan",//"ApplicationGroupID",
+											"Generated by Record Creation wiz"//"CommentDescription"
+											];
+							
+								}, //end addSubsetRecords handler
+								_modifiedTables,
+								true /*silenceErrors*/); 
+						
+							}
+					
+					/////////////////////////////////
+					document.getElementById(stepString + "addToExisting").onclick = 
+							function()
+							{
+						var name = document.getElementById(stepString + "contexts").value;
+						Debug.log("addToExisting " + name);
+						
+						
+							}
+					break; //end _STEP_WHERE_TO_ADD
+					
+				case _STEP_GET_RECORD_NAME:
+					//create select change handler for existing records
+					document.getElementById(stepString + "records").onclick = localRecordsSelectHandler;
+					document.getElementById(stepString + "records").onchange = localRecordsSelectHandler;
+							
+					function localRecordsSelectHandler(event) {
+						Debug.log("Selected " + this.value);
+						
+						//increment index
+						document.getElementById(stepString + "recordName").value = 
+								incrementName(this.value);	
+					}; //end onchange handler for existing records
+					
+					document.getElementById(stepString + "editConfig").onclick = 
+							function()
+							{
+						newParamObj["groupType"] = "Configuration";
+						showPrompt(_STEP_CHANGE_GROUP,newParamObj);
+							};
+					document.getElementById(stepString + "editContext").onclick = 
+							function()
+							{
+						newParamObj["groupType"] = "Context";
+						showPrompt(_STEP_CHANGE_GROUP,newParamObj);
+							};
+					break; //end _STEP_GET_RECORD_NAME
+
+				case _STEP_CHANGE_GROUP:
+					/////////////////////////////////
+					document.getElementById(stepString + "activateAlias").onclick = 
+							function()
+							{
+						//activate alias then go back to record name
+						var alias = document.getElementById(stepString + "aliases").value;
+						Debug.log("activateAlias " + alias);
+						
+						//find associated aliasObj
+						var aliasObj;
+						for(var i=0;i<
+						_systemGroups.aliases[paramObj["groupType"]].length;++i)
+							if(_systemGroups.aliases[paramObj["groupType"]][i].alias == 
+									alias)
+							{
+								aliasObj = _systemGroups.aliases[paramObj["groupType"]][i];
+								break;						
+							}
+					
+						Debug.log("activateAlias group " + aliasObj.name + 
+								"-" + aliasObj.key);
+						
+						ConfigurationAPI.activateGroup(aliasObj.name, aliasObj.key, 
+								true /*ignoreWarnings*/, 
+								/*doneHandler*/
+								function()
+								{
+							Debug.log("The System Alias '" + alias + 
+									"' (" + aliasObj.name + " (" + 
+									aliasObj.key + ")) was successfully activated!", Debug.INFO_PRIORITY);
+
+							initRecordWizard();
+								}); //end activate group handler
+							}; //end activate alias handler
+					
+					/////////////////////////////////
+					document.getElementById(stepString + "groupNames").onchange = 
+							function()
+							{
+						//fill keys drop down
+						Debug.log("Filling dropdown with keys for " + this.value);
+						var str = "";
+						for(var i=0;i<_systemGroups.groups[paramObj["groupType"]]
+														   [this.value].keys.length;++i)
+						{
+							str += htmlOpen("option",
+									{		
+									},
+									_systemGroups.groups[paramObj["groupType"]]
+														 [this.value].keys[i] /*innerHTML*/, true /*closeTag*/);
+						}
+						document.getElementById(stepString + "groupKeys").innerHTML = 
+								str;
+							}; //end group names dropdown handler
+					
+					/////////////////////////////////
+					document.getElementById(stepString + "activateGroup").onclick = 
+							function()
+							{
+						//activate alias then go back to record name
+						var name = document.getElementById(stepString + "groupNames").value;
+						var key = document.getElementById(stepString + "groupKeys").value;
+						
+						Debug.log("activateGroup " + name + 
+								"-" + key);
+
+						ConfigurationAPI.activateGroup(name, key, 
+								true /*ignoreWarnings*/, 
+								/*doneHandler*/
+								function()
+								{
+							Debug.log("The Group '" + name + " (" + 
+									key + ") was successfully activated!", Debug.INFO_PRIORITY);
+							
+							initRecordWizard();
+								}); //end activate group handler
+							}; //end activate alias handler
+					break;  //end _STEP_CHANGE_GROUP
+				default:;
+				}
+				
+
+				///////////////////////////////////////////////////////
+				//add handlers for all steps
+				try
+				{
+					document.getElementsByClassName(stepString + "nextButton")[0].onclick = 
+							localNextButtonHandler;
+					document.getElementsByClassName(stepString + "nextButton")[1].onclick = 
+							localNextButtonHandler;
+					
+					function localNextButtonHandler()		
+					{
+
+						//extract specific step parameters
+						switch(stepIndex)
+						{
+						case _STEP_GET_RECORD_NAME:
+							//create select change handler for existing records
+							newParamObj["recordName"] = 
+									document.getElementById(stepString + "recordName").value.trim();
+							if(newParamObj["recordName"].length < 1)
+							{
+								Debug.log("Invalid " + _recordsAlias + " name (too short). Please enter a valid name.",
+										Debug.HIGH_PRIORITY);
+								return; 
+							}
+							
+							//get existing contexts and give as parameter
+							ConfigurationAPI.getSubsetRecords(
+									_XDAQ_BASE_PATH,
+									"",
+									function(records)
+									{
+								newParamObj["contexts"] = records;
+								Debug.log("iteration plans found = " + records.length);
+								console.log(records);
+
+								showPrompt(nextStepIndex,newParamObj,paramObj);
+									
+									});	//end getSubsetRecords handler	
+							return;//prevent default show prompt, do in handler
+							break;
+						default:;
+						}
+						showPrompt(nextStepIndex,newParamObj,paramObj);
+					} //end next handler
+				}
+				catch(e){ Debug.log("Caught ERROR: " + e.stack);}
+				
+				try
+				{
+					document.getElementsByClassName(stepString + "prevButton")[0].onclick = 
+							localPrevButtonHandler;
+					document.getElementsByClassName(stepString + "prevButton")[1].onclick = 
+							localPrevButtonHandler;
+					
+					function localPrevButtonHandler()
+					{
+						//extract specific step parameters
+						switch(stepIndex)
+						{
+						case _STEP_GET_RECORD_NAME:							
+							break;
+						default:;
+						}
+						showPrompt(prevStepIndex,prevParamObj);
+					} //end prev handler
+				}
+				catch(e){ Debug.log("Caught ERROR: " + e.stack);}
+				
+			} //end localAddHandlers()
+			
+		}	//end showPrompt()
+		
+		//=====================================================================================
+		//createLeftPaneContent ~~
+		function createLeftPaneContent(leftW) 
+		{
+			_leftPane = document.createElement("div");
+			_leftPane.setAttribute("class", "pane");
+			_leftPane.setAttribute("id", "leftPane");
+			
+			//	- Left Pane:
+			//		* Fixed width, vertical auto scroll, hideable.
+			//		* Filter link that toggles display of multi-select boxes for each <subLevelGrouping>. 
+			//		* Filtering:
+			//		 	- AND/OR option if multiple sublevels
+			//			- multi-select for each <subLevelGrouping>
+			//		* Link to toggle record representation (Multi-select or Square Grid groupings)
+			//		* Record UID Selector:
+			//			- Multi-select box for selection of UID (based on sublevelgrouping filters)
+			//		* Alternatively can represent the detectors as squares (with mouse over UID names)
+			//			- Squares will be grouped by SubLevel using AND logic with a sublevel-label
+			
+			var el;
+			var str;
+						
+						
+						
+			//:::::::::::::::::::::::::::::
+			//localCreateGroupingFieldFilters ~~
+			function localCreateGroupingFieldFilters()
+			{
+				var groups = _groupingFieldList.split(',');
+				Debug.log("_groupingFieldList " + _groupingFieldList);
+				Debug.log("localCreateGroupingFieldFilters groups.length " + groups.length);
+				
+				var filterBoxesEl = document.createElement("div");
+				var defaultShowFilters = false;
+				
+				//create toggle icon
+				el = document.createElement("a");
+				el.setAttribute("style", "float:left;");
+				el.onclick = function() {
+					if(this.textContent == "Show Filters")
+					{
+						this.innerHTML = "Hide Filters";
+						filterBoxesEl.style.display = "block";
+					}
+					else
+					{
+						this.innerHTML = "Show Filters";
+						filterBoxesEl.style.display = "none";
+					}
+				};			
+				el.innerHTML = defaultShowFilters?"Hide Filters":"Show Filters";
+				_leftPane.appendChild(el); //add toggle icon
+
+				//clear floats
+				el = document.createElement("div");
+				el.setAttribute("id", "clearDiv");
+				_leftPane.appendChild(el);
+				
+				
+				//create multi-select filter boxes
+				filterBoxesEl.setAttribute("style", "float:left;position:relative;"); //background-color:red;
+				filterBoxesEl.style.display = defaultShowFilters?"block":"none";
+
+				var H = 150;
+				try //catch errors due to undefined _filterValsObj[i]
+				{					
+					for(var i=0;i<groups.length;++i)
+					{
+						//get group values
+						
+						//create multiselect box
+	
+						el = document.createElement("div");
+						el.setAttribute("class", "groupFilerMultiSelect");
+						el.setAttribute("id", "groupFilerMultiSelect-" + i);
+						el.setAttribute("style", //"height:200px; width:250px;" +
+								//);
+										//"margin-bottom: 0px;" +
+								"margin: -15px 0 0 0;" +
+								"height:" + H + "px;" + 
+								"width:" + (leftW-25) + "px;");
+						filterBoxesEl.appendChild(el);			
+						
+						var noMultiSelect = false; // true or false (false for multiselect functionality) 
+						var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
+	
+						var vals = _filterValsObj[i].fieldUniqueValueArray;//["One little piggy","two little piggies","three little piggies"];
+						var keys = [];
+						var types = [];
+						for(var j=0;j<vals.length;++j)
+						{
+							keys.push(j);
+							types.push(groups[i]);								
+						}				
+	
+						//write MultiSelectBox to a particular div
+						MultiSelectBox.createSelectBox(el,
+								"FilterGroupBox" + i,
+								"'" + groups[i] + "' Filter:",
+								vals,keys,types,groupFilterSelectionHandler,noMultiSelect);
+	
+						MultiSelectBox.initMySelectBoxes();
+	
+						el = document.createElement("div");
+						el.setAttribute("id", "clearDiv");					
+						filterBoxesEl.appendChild(el);
+					}
+				}
+				catch(err)
+				{
+					//likely this error is due to undefined _filterValsObj[i]
+					Debug.log("Error creating group filters.", Debug.HIGH_PRIORITY);
+				} 
+				
+				_leftPane.appendChild(filterBoxesEl);
+
+								
+			} //end localCreateGroupingFieldFilters(leftW)
+			
+			//if grouping fields given then create
+			if(_groupingFieldList != "")
+				localCreateGroupingFieldFilters(); 
+			
+			
+			//add records
+			function localCreateRecordsSelector()
+			{
+				var H = 300;
+				//create multiselect box
+				el = document.createElement("div");
+				el.setAttribute("class", "recordMultiSelect");
+				el.setAttribute("id", "recordMultiSelect");
+				el.setAttribute("style", //"height:200px; width:250px;" +
+						//);
+						//"margin-bottom: 0px;" +
+						"margin: -15px 0 -10px 0;" +
+						"height:" + H + "px;" + 
+						"width:" + (leftW-25) + "px;");
+
+				_leftPane.appendChild(el);
+
+				el = document.createElement("div");
+				el.setAttribute("id", "clearDiv");
+				_leftPane.appendChild(el);
+				
+			} localCreateRecordsSelector ();
+						
+			document.body.appendChild(_leftPane);
+						
+		}	//end createLeftPaneContent()
+
+		//=====================================================================================
+		//groupFilterSelectionHandler ~~
+		function groupFilterSelectionHandler(el) 
+		{
+			Debug.log("multiselect for " + el.id);
+			
+			//if multi select target was a Filter
+			//	then change filter
+			if(el.id.indexOf("selbox-Filter") == 0)
+			{
+				window.clearTimeout(_filterTimer);
+				_filterTimer = window.setTimeout(runFilter,1000);
+			}
+			
+		}	//end groupFilterSelectionHandler(el)
+
+		//=====================================================================================
+		//runFilter ~~
+		function runFilter() 
+		{
+			Debug.log("Run Filter");
+			
+			var groups = _groupingFieldList.split(',');
+			Debug.log("groups length " + groups.length);
+			
+			var selArr;
+			
+			var filterStr = "";
+			var subFilterStr;
+			for(var i=0;i<groups.length;++i)
+			{
+				subFilterStr = "";
+				
+				selArr = MultiSelectBox.getSelectionArray(
+						document.getElementById("groupFilerMultiSelect-" + i));
+				for(var s in selArr)
+				{
+					MultiSelectBox.dbg("filter " + i + 
+							" selected [" + s + "]: ",
+							selArr[s], 
+							_filterValsObj[i].fieldUniqueValueArray[s|0]);
+					
+					//if selected, add value to filter string
+					if(selArr[s])
+						subFilterStr += (subFilterStr.length?",":"") +
+							encodeURIComponent(_filterValsObj[i].fieldUniqueValueArray[s|0])
+				}
+				
+				//if any values selected then add to filter string				
+				if(subFilterStr.length)
+					filterStr += encodeURIComponent(groups[i]) + 
+						"=" + subFilterStr + ";";
+			}
+			
+			//append global filters 
+			filterStr += _recordPreFilterList;
+			Debug.log("filterStr " + filterStr);
+			
+			ConfigurationAPI.getSubsetRecords(
+					_subsetBasePath,
+					filterStr,
+					function(records)
+					{
+				_subsetUIDs = records;
+				Debug.log("records found = " + records.length);
+				console.log(records);
+				
+				updateRecordsAndFields();
+					}, //end getSubsetRecords handler
+					 _modifiedTables);
+			
+			
+		} // end runFilter()
+		
+		//=====================================================================================
+		//createRightPaneContent ~~
+		function createRightPaneContent() 
+		{
+			_rightPane = document.createElement("div");
+			_rightPane.setAttribute("class", "pane");
+			_rightPane.setAttribute("id", "rightPane");
+			
+			//	- Right Pane:
+			//		* Show toggle Left Pane link
+			//		* Show fields that are common based on SubLevelGrouping filters
+			//			- E.g. if *,* then can only show SlowControls fields
+			//			- Challenge: show all common fields, even through links
+			//			- Allow editing the field (based on type) .. same as tree edit, but like already clicked
+			//			- A field becomes the "selected" field when clicked
+			//				= the selected field should survive resizing, and get reset on filtering
+			//			- A field enters edit mode when pencil is clicked
+			//			- TAB and SHIFT+TAB should jump to next field for editing
+			//		* Buttons at top and bottom: Read All, Write All, Read Selected, Write Selected.
+			//		
+			
+			var el;
+			var str;
+			
+			//create toggle left pane link
+			el = document.createElement("a");
+			el.setAttribute("style", "float:left;" +
+					"margin-left: 5px;");
+			el.onclick = function() {
+				_leftPaneHidden = !_leftPaneHidden;
+				this.innerHTML = (_leftPaneHidden?"Show":"Hide") +
+									" Left Pane";
+				paint();
+			};			
+			el.innerHTML = (_leftPaneHidden?"Show":"Hide") +
+					" Left Pane";
+			_rightPane.appendChild(el); //add toggle link
+			
+			//add clear div
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_rightPane.appendChild(el);
+
+
+			//create TOP read/write buttons			
+			el = document.createElement("div");
+			var readWriteContainerStyle = "height:" + _RIGHT_PANE_RW_BTN_HEIGHT + "px;" + 
+					"overflow-x:auto; " +
+					"white-space:nowrap;";
+			el.setAttribute("style", readWriteContainerStyle);
+			_rightPane.appendChild(el); //add field container link
+
+			//:::::::::::::::::::::::::::::
+			//localAddReadWriteButtons ~~
+			//	add four buttons to container element
+			function localAddReadWriteButtons(cel)
+			{
+				var btnText = ["Read All Fields",
+							   "Write All Fields",
+							   "Read Selected Field", 
+							   "Write Selected Field"];
+
+				var btnHelp = ["Read all fields for selected record in Left Pane.",
+							   "Write all fields for selected record(s) in Left Pane.",							   
+							   "Read selected field for selected record in Left Pane.",
+							   "Write Selected field for selected record(s) in Left Pane."];
+				
+				var btnAction = [btnActionReadAllFields,
+								 btnActionWriteAllFields,							   
+								 btnActionReadOneField,
+								 btnActionWriteOneField];
+				
+				for(var i=0;i<btnText.length;++i)
+				{
+					el = document.createElement("input");
+					el.setAttribute("style", "height:22px;" + 
+							"margin:5px; ");
+					el.setAttribute("type", "button");
+					el.value = btnText[i];
+					el.title = btnHelp[i];
+					el.onclick = btnAction[i];
+					cel.appendChild(el); //add field container link
+				}
+			} // end localAddReadWriteButtons(cel)
+			
+			localAddReadWriteButtons(el);
+			
+
+			//add clear div
+			el = document.createElement("div");
+			el.setAttribute("id", "clearDiv");
+			_rightPane.appendChild(el);
+			
+			//create field container with auto scroll
+			el = document.createElement("div");
+			el.setAttribute("style", "overflow:auto;" + 
+					"border: 1px solid rgb(224, 196, 196);" +
+					"margin: 5px;"
+					);
+			_rightPane.appendChild(el); //add field container link
+			_rightPaneFields = el;
+				
+			//create BOTTOM read/write buttons			
+			el = document.createElement("div");
+			el.setAttribute("style", readWriteContainerStyle);
+			_rightPane.appendChild(el); //add bottom buttons
+			localAddReadWriteButtons(el);
+			
+			
+			document.body.appendChild(_rightPane);			
+		}	//end createRightPaneContent()
+
+		//=====================================================================================
+		//getSelectedRecords ~~
+		//	returns index of selected records
+		//	if forceOne
+		//		only allow one selected record
+		//		else -1 on error
+		//	else if not forceOne
+		//		return array of selected records
+		//		else return empty array
+		function getSelectedRecords(forceOne) 
+		{
+			var selArr = 
+					MultiSelectBox.getSelectionArray(
+							document.getElementById("recordMultiSelect"));
+			var cntSelected = 0;
+			var selectedIndices = [];
+			for(var s in selArr)
+			{
+				//MultiSelectBox.dbg("record selected [" + s + "]: ",
+				//		selArr[s], 
+				//		_subsetUIDs[s|0]);
+
+				if(selArr[s]) 
+				{
+					++cntSelected;
+					selectedIndices.push(s|0);
+
+					if((s|0) < 0 || (s|0) >= _subsetUIDs.length)
+					{
+						Debug.log("Invalid record index '" + (s|0) + 
+								"' should be impossible. Please notify developers " +
+								"as to how you got here!", Debug.HIGH_PRIORITY);						
+						return forceOne?-1:[];
+					}
+				}
+			}
+
+			if(forceOne)
+			{
+				if(cntSelected != 1)
+				{
+					Debug.log("Error! Please choose one and only one target from the list of " +
+							_recordsAlias + " in the Left Pane.", Debug.HIGH_PRIORITY);						
+					return -1;
+				}
+				return selectedIndices[0];
+			}
+			else
+				return selectedIndices;
+			
+		}	//end getSelectedRecords()
+
+		//=====================================================================================
+		//btnActionReadAllFields ~~
+		//	read all fields for one record
+		function btnActionReadAllFields() 
+		{
+			var selectedIndex = getSelectedRecords(true);
+			if(selectedIndex < 0) return;
+							
+			Debug.log("btnActionReadAllFields target record = " + _subsetUIDs[selectedIndex]);
+			
+			ConfigurationAPI.getFieldValuesForRecords(
+					_subsetBasePath,
+					[_subsetUIDs[selectedIndex]], //array of size 1
+					_fields,
+					function(recFieldValues)
+					{
+				console.log(recFieldValues);
+				
+				//for each field, set value
+				for(var i=0;i<recFieldValues.length;++i)
+				{
+					ConfigurationAPI.setEditableFieldValue(
+							_fields[i],
+							recFieldValues[i].fieldValue,
+							i);
+				}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+			
+		}	//end btnActionReadAllFields()
+
+		
+		//=====================================================================================
+		//btnActionReadOneField ~~
+		// read one field from one record
+		function btnActionReadOneField() 
+		{
+			var selectedIndex = getSelectedRecords(true);
+			if(selectedIndex < 0) return;
+			
+			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
+			if(selectedFieldIndex < 0) 
+			{
+				Debug.log("Error! There is no selected field. In order to read " +
+						"a field please toggle selection of the target field by " +
+						"clicking on the name of the " +
+						"field in the Right Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("btnActionReadOneField target record = " + 
+					_subsetUIDs[selectedIndex]);
+
+			ConfigurationAPI.getFieldValuesForRecords(
+					_subsetBasePath,
+					[_subsetUIDs[selectedIndex]], //array of size 1
+					[_fields[selectedFieldIndex]], //array of size 1
+					function(recFieldValues)
+					{
+				console.log(recFieldValues);
+
+				//for each field, set value
+				//	SHOULD only be one field value returned
+				for(var i=0;i<recFieldValues.length;++i)
+				{
+					ConfigurationAPI.setEditableFieldValue(
+							_fields[selectedFieldIndex],
+							recFieldValues[i].fieldValue,
+							selectedFieldIndex);
+				}
+					}, //end getFieldValuesForRecord handler
+					 _modifiedTables);
+			
+		}	//end btnActionReadOneField()
+		
+		//=====================================================================================
+		//btnActionWriteAllFields ~~
+		//	write all fields for all selected records
+		function btnActionWriteAllFields() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to write " +
+						"the fields to one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			Debug.log("btnActionWriteAllFields target record length = " + 
+					selectedIndices.length);
+			
+			//make array of all field values
+			var valueArr = [];
+			
+			//for each field, set value
+			for(var i=0;i<_fields.length;++i)			
+				valueArr.push(ConfigurationAPI.getEditableFieldValue(
+						_fields[i],
+						i));
+
+			Debug.log("btnActionWriteAllFields values length = " + 
+					valueArr.length);
+			Debug.log("btnActionWriteAllFields fields length = " + 
+					_fields.length);
+			
+			//make array of target records
+			var recordArr = [];
+			for(var i=0;i<selectedIndices.length;++i)	
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+						
+			ConfigurationAPI.setFieldValuesForRecords(
+					_subsetBasePath,
+					recordArr, 	//recordArr
+					_fields, 	//fieldArr
+					valueArr, 	//valueArr
+					function(modifiedTables)
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+								
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while writing the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+									
+				_modifiedTables = modifiedTables;
+				
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while saving the values.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+					
+					Debug.log("The values for each field were successfully written to the targeted " +
+							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
+							Debug.INFO_PRIORITY);
+					
+					_modifiedTables = undefined; //clear after save
+					
+						}); //end saveModifiedTables handler
+				
+					}, //end setFieldValuesForRecords handler
+					 _modifiedTables);			
+
+		}	//end btnActionWriteAllFields()
+		
+		//=====================================================================================
+		//btnActionWriteOneField ~~
+		//	write the selected field for all selected records
+		function btnActionWriteOneField() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to write " +
+						"the fields to one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("btnActionWriteOneField target record length = " + 
+					selectedIndices.length);
+			
+			var selectedFieldIndex = ConfigurationAPI.getSelectedEditableFieldIndex();
+			if(selectedFieldIndex < 0) 
+			{
+				Debug.log("Error! There is no selected field. In order to read " +
+						"a field please toggle selection of the target field by " +
+						"clicking on the name of the " +
+						"field in the Right Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			//make array of all field values
+			var valueArr = [];
+
+			//for each field, set value
+			valueArr.push(ConfigurationAPI.getEditableFieldValue(
+					_fields[selectedFieldIndex],
+					selectedFieldIndex));
+
+			Debug.log("btnActionWriteOneField values length = " + 
+					valueArr.length);
+			
+			//make array of target records
+			var recordArr = [];
+			for(var i=0;i<selectedIndices.length;++i)	
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+			
+			//
+			
+			ConfigurationAPI.setFieldValuesForRecords(
+					_subsetBasePath,
+					recordArr, 	//recordArr
+					[_fields[selectedFieldIndex]], 	//fieldArr of size 1
+					valueArr, 	//valueArr of size 1
+					/////////////////////
+					function(modifiedTables)
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while writing the values.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while saving the values.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					Debug.log("The value for the selected field was successfully written to the targeted " +
+							_recordsAlias + " (target count = " + selectedIndices.length + ")!",
+							Debug.INFO_PRIORITY);
+
+					_modifiedTables = undefined; //clear after save
+
+						}); //end saveModifiedTables handler
+
+					}, //end setFieldValuesForRecords handler
+					_modifiedTables);	
+			
+		}	//end btnActionWriteOneField()
+		
+
+		//=====================================================================================
+		//deleteRecords ~~
+		//	delete the selected records
+		function deleteRecords() 
+		{
+			var selectedIndices = getSelectedRecords();
+			if(selectedIndices.length == 0)
+			{
+				Debug.log("Error! There are no selected " + _recordsAlias + 
+						". In order to delete " +
+						"one or many " + _recordsAlias + "," +
+						" please make selections in the Left Pane.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			Debug.log("deleteRecords target record length = " + 
+					selectedIndices.length);	
+
+
+			//make array of target records
+			var recordArr = [];
+			var recordStr = "";
+			for(var i=0;i<selectedIndices.length;++i)	
+			{
+				if(i) recordStr += ", ";
+				recordStr += decodeURIComponent(_subsetUIDs[selectedIndices[i]]);
+				recordArr.push(_subsetUIDs[selectedIndices[i]]);
+			}			
+
+			DesktopContent.popUpVerification(
+					"Are you sure you want to remove the following " + _recordsAlias + 
+					" records from the configuration?<br><br>" +
+					"Here are the records (count = " + recordArr.length + 
+					") that will be deleted:<br> <b>" + recordStr + "</b>",
+					localProceedWithDelete							
+					,0,"#efeaea",0,"#770000");
+			
+			/////////////////////
+			function localProceedWithDelete()
+			{
+
+				ConfigurationAPI.deleteSubsetRecords(_subsetBasePath,recordArr,
+						/////////////////////
+						function(modifiedTables) //start addSubsetRecords handler
+						{
+					Debug.log("modifiedTables length " + modifiedTables.length);
+
+					if(!modifiedTables.length)
+					{
+						Debug.log("There was an error while removing the record(s).",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					_modifiedTables = modifiedTables;
+
+					//proceed to save (quietly) tables, groups, aliases
+					ConfigurationAPI.saveModifiedTables(_modifiedTables,
+							/////////////////////
+							function(savedTables, savedGroups, savedAliases)
+							{
+						if(!savedTables.length)
+						{
+							Debug.log("There was an error while removing the record(s).",
+									Debug.HIGH_PRIORITY);
+							return;					
+						}
+
+						Debug.log("The following " +
+								_recordsAlias + " records (count = " +
+								selectedIndices.length + ") "+ 
+								"were successfully removed: " + recordStr + ".",
+								Debug.INFO_PRIORITY);
+
+						_modifiedTables = undefined; //clear after save
+
+						runFilter(); //updates records and fields, and applies filter
+
+							}); //end saveModifiedTables handler
+
+
+						}, //end addSubsetRecords handler
+						_modifiedTables);	
+			} //end localProceedWithDelete()
+		} //end deleteRecords()
+		
+		//=====================================================================================
+		//addRecord ~~
+		//	create new record
+		function addRecord() 
+		{
+			var newRowUID = prompt("Please enter the UID for the new " + 
+					_recordsAlias + " record:");
+			if(newRowUID)
+				newRowUID = newRowUID.trim();
+			else //prompt was cancelled
+				return;
+
+			ConfigurationAPI.addSubsetRecords(_subsetBasePath,newRowUID,
+					/////////////////////
+					function(modifiedTables) //start addSubsetRecords handler
+					{
+				Debug.log("modifiedTables length " + modifiedTables.length);
+
+				if(!modifiedTables.length)
+				{
+					Debug.log("There was an error while creating the record.",
+							Debug.HIGH_PRIORITY);
+					return;					
+				}
+
+				_modifiedTables = modifiedTables;
+
+				//proceed to save (quietly) tables, groups, aliases
+				ConfigurationAPI.saveModifiedTables(_modifiedTables,
+						/////////////////////
+						function(savedTables, savedGroups, savedAliases)
+						{
+					if(!savedTables.length)
+					{
+						Debug.log("There was an error while creating the record.",
+								Debug.HIGH_PRIORITY);
+						return;					
+					}
+
+					Debug.log("The new " +
+							_recordsAlias + " record '" + 
+							decodeURIComponent(newRowUID) + 
+							"' was successfully created!",
+							Debug.INFO_PRIORITY);
+
+					_modifiedTables = undefined; //clear after save
+					
+					runFilter(); //updates records and fields, and applies filter
+
+						}); //end saveModifiedTables handler
+
+
+					}, //end addSubsetRecords handler
+					_modifiedTables);			
+		} //end addRecord()
+		
+		//=====================================================================================
+		//htmlOpen ~~		
+		//	tab name and attribute/value map object
+		function htmlOpen(tag,attObj,innerHTML,closeTag)
+		{
+			var str = "";
+			var attKeys = Object.keys(attObj); 
+			str += "<" + tag + " ";
+			for(var i=0;i<attKeys.length;++i)
+				str += " " + attKeys[i] + "='" +
+				attObj[attKeys[i]] + "' ";
+			str += ">";
+			if(innerHTML) str += innerHTML;
+			if(closeTag)
+				str += "</" + tag + ">";
+			return str;
+		} // end htmlOpen()
+
+		//=====================================================================================
+		//htmlClearDiv ~~		
+		function htmlClearDiv()
+		{
+			return "<div id='clearDiv'></div>";
+		} //end htmlClearDiv()
+
+		//=====================================================================================
+		//incrementName ~~		
+		function incrementName(name)
+		{
+			//find last non-numeric
+			for(var i=name.length-1;i>=0;--i)
+				if(!(name[i] >= '0' && name[i] <= '9'))
+					break;
+			var num = (name.substr(i+1)|0) + 1;
+			if(i >= 0)
+				name = name.substr(0,i+1);
+			return name + num;
+		} //end incrementName()
+		</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<!-- body content populated by javascript paint(), etc. -->
+
+	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+</body>
+	
+</html>
