@@ -501,6 +501,9 @@
 			width: 				200px;
 			border: 			1px solid rgb(171, 171, 230);
 		}
+		.popUp-param-wiz {
+			width: 				165px;
+		}
 
 		.popUp-param[type="text"] {					 
 			height: 			24px;
@@ -1227,8 +1230,9 @@
 								"plan-command-name",
 								0 /*style*/,
 								"showCommandDialog(" + i + ",true /*modifyExisting*/);" /*mouseup*/,
-								"handlePlanNameMouseMove(" + i + ",event)" /*mousemove*/,
-								"Clic to edit. Drag to insert this command at a new position in the Iteration Plan." /*title*/,
+								"handlePlanNameMouseMove(" + i + ",event);" /*mousemove*/
+								+ "handlePlanParamsMouseMove(" + i + ",event);",
+								"Click to edit this command, or Drag to insert this command at a new position in the Iteration Plan." /*title*/,
 								0 /*mousedown*/,
 								"handlePlanNameDrag(" + i + ",event)" /*drag*/,
 								"handlePlanNameDragOver(" + i + ",event)" /*dragover*/,								
@@ -1258,7 +1262,7 @@
 								"plan-command-params",
 								0 /*style*/,
 								0 /*mouseup*/,
-								"handlePlanParamsMouseMove(" + i + ",event);" /*mousemove*/);
+								0);//"handlePlanParamsMouseMove(" + i + ",event);" /*mousemove*/);
                 		for(var j=0;j<paramKeys.length;++j)
                 			str += " " + paramKeys[j] + "=" + 
 							commands[i].param[paramKeys[j]];
@@ -2857,9 +2861,9 @@
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
-											"class":"popUp-param",
+											"class":"popUp-param popUp-param-wiz",
 											"type":"text",
-											"style":"float:left",
+											"style":"float:left; ",
 											"value":initValue,
 											"onchange":"_popUpParamsModified = true;"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
@@ -2887,6 +2891,7 @@
 								var pair;
 								for(var i=0;i<targetArr.length;++i)
 								{
+									if(targetArr[i].length < 3) continue; //too small, invalid
 									pair = targetArr[i].split('/');
 									_cmdTargetObj.tables.push(pair[0]);
 									_cmdTargetObj.uids.push(pair[1]);					
@@ -2900,7 +2905,7 @@
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
-											"class":"popUp-param",
+											"class":"popUp-param popUp-param-wiz",
 											"type":"text",
 											"style":"float:left",
 											"value":initValue,
@@ -3791,7 +3796,7 @@
 					MultiSelectBox.createSelectBox(
 							sel,
 							"targetWizSecondLevel",
-							"Select '" + cmdTargetWizParentTable + "' Targets:",
+							"Select '" + _cmdTargetWizParentTable + "' Targets:",
 							msValues,msValues,msValues,
 							targetWizRecordMultiSelectHandler /*select*/,
 							noMultiSelect);
@@ -3833,7 +3838,7 @@
 
 			el.value = str;
 			el.title = titleStr;
-			labelEl.innerHTML = "You have " + _cmdTargetObj.tables.length + " targets:";
+			labelEl.innerHTML = "You have " + _cmdTargetObj.tables.length + " target(s):";
 
 		} //end targetWizDisplayTargets()
 		
