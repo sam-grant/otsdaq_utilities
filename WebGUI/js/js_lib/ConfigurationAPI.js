@@ -451,7 +451,10 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 //		ConfigurationAPI.getSubsetRecords)
 // <fieldList> is a CSV list of tree paths relative to <subsetBasePath> 
 //	 to the allowed fields. If empty, then all available fields are allowed.
-//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName" 
+//		:= CSV of relative-to-record-path to filter common fields
+//		(accept or reject [use ! as first character to reject])
+//		[use leading*  to ignore relative path - note that only leading and trailing wildcards work]
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -4093,7 +4096,8 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 //=====================================================================================
 //createEditableFieldElement ~~
 //
-//	Creates div element with editable and highlight features
+//	Creates div element with editable and highlight features.
+//	Note: set ConfigurationAPI.editableField_SELECTED_COLOR_ = "transparent" to disable highlight features
 //
 //	Input field must be a value node.
 //	Input object is single field as returned from ConfigurationAPI.getFieldsOfRecords
@@ -4122,7 +4126,8 @@ ConfigurationAPI.editableFieldSelectedIdString_ = 0;
 ConfigurationAPI.editableFieldHandlersSubscribed_ = false;
 ConfigurationAPI.editableFieldMouseIsSelecting_ = false;
 ConfigurationAPI.editableField_SELECTED_COLOR_ = "rgb(251, 245, 53)";
-ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,
+		depthIndex /*optional*/)
 {
 	var str = "";
 	var depth = depthIndex|0;
