@@ -1430,7 +1430,7 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 				//copy "table-newRow" type edit from handleSaveTreeNodeEditXML() functionality
 
 				//add row
-				unsigned int row = config->getViewP()->addRow(author);
+				unsigned int row = config->getViewP()->addRow(author, true /*incrementUniqueData*/);
 
 				//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 				try
@@ -1712,11 +1712,13 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 				//for each field, set value
 				for(i=0;i<fieldPaths.size();++i)
 				{
-					//__COUT__ << "fieldPath " << fieldPaths[i] << std::endl;
-					//__COUT__ << "fieldValue " << fieldValues[i] << std::endl;
+					__COUT__ << "fieldPath " << fieldPaths[i] << std::endl;
+					__COUT__ << "fieldValue " << fieldValues[i] << std::endl;
 
+					//doNotThrowOnBrokenUIDLinks so that link UIDs can be edited like other fields
 					ConfigurationTree targetNode =
-							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPaths[i]);
+							cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPaths[i],
+									true /*doNotThrowOnBrokenUIDLinks*/);
 
 					//need table, uid, columnName to set a value
 
@@ -1749,6 +1751,9 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 					//	then after all edits return active versions
 					//
 
+					__COUT__ << "Getting table " <<
+							targetNode.getFieldConfigurationName() << std::endl;
+
 					//if link must get parent config name
 					config = cfgMgr->getConfigurationByName(
 							targetNode.getFieldConfigurationName()); //NOT getConfigurationName!
@@ -1766,8 +1771,8 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 								config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 					}
 					//else //else table is already temporary version
-					//	__COUT__ << "Using temporary version " <<
-					//	config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
+					__COUT__ << "Using temporary version " <<
+						config->getConfigurationName() << "-v" << temporaryVersion << std::endl;
 
 					//copy "value" type edit from handleSaveTreeNodeEditXML() functionality
 					config->getViewP()->setURIEncodedValue(
@@ -1977,8 +1982,18 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 							field << std::endl;
 				}
 			}
+
 			std::vector<std::string /*relative-path*/> records;
-			if(recordList != "")
+			if(recordList == "*") //handle all records case
+			{
+				records.clear();
+				records = startNode.getChildrenNames();
+				__COUT__ << "Translating wildcard..." << __E__;
+				for(auto& record:records)
+					__COUT__ << "recordList " <<
+					record << std::endl;
+			}
+			else if(recordList != "")
 			{
 				//extract record list
 				{
@@ -2117,8 +2132,27 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 			}
 		}
 
+
+
+		ConfigurationTree startNode = cfgMgr->getNode(startPath);
+		if(startNode.isLinkNode() && startNode.isDisconnected())
+		{
+			__SS__ << "Start path was a disconnected link node!" << std::endl;
+			__COUT_ERR__ << "\n" << ss.str();
+			throw std::runtime_error(ss.str());
+		}
+
 		std::vector<std::string /*relative-path*/> records;
-		if(recordList != "")
+		if(recordList == "*") //handle all records case
+		{
+			records.clear();
+			records = startNode.getChildrenNames();
+			__COUT__ << "Translating wildcard..." << __E__;
+			for(auto& record:records)
+				__COUT__ << "recordList " <<
+				record << std::endl;
+		}
+		else if(recordList != "")
 		{
 			//extract record list
 			{
@@ -2136,13 +2170,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 			}
 		}
 
-		ConfigurationTree startNode = cfgMgr->getNode(startPath);
-		if(startNode.isLinkNode() && startNode.isDisconnected())
-		{
-			__SS__ << "Start path was a disconnected link node!" << std::endl;
-			__COUT_ERR__ << "\n" << ss.str();
-			throw std::runtime_error(ss.str());
-		}
+
 
 		//loop through each field and get unique values among records
 		for(auto& field:fieldsToGet)
