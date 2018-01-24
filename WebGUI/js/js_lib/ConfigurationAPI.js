@@ -4172,6 +4172,8 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	//Debug.log("getEditableFieldValue " + fieldObj.fieldColumnName + " of type " + 
 	//		fieldObj.fieldColumnType);
 
+	ConfigurationAPI.handleEditableFieldEditOK(); //make sure OK|Cancel closed
+	
 	var depth = depthIndex|0;
 	var uid = fieldIndex|0;
 	var fieldEl = document.getElementById("treeNode-Value-leafNode-" + 
