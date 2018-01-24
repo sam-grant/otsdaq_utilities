@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+ <xsd:element name="entry" type="ECLEntry_t"/>
+
+ <xsd:complexType name="Tag_t">
+    <xsd:attribute name="name" type="xsd:string" use="required" />
+ </xsd:complexType>
+
+ <xsd:complexType name="Attachment_t">
+    <xsd:attribute name="type" type="xsd:string" use="required" />
+    <xsd:attribute name="filename" type="xsd:string" use="required" />
+ </xsd:complexType>
+
+ <xsd:complexType name="Field_t">
+   <xsd:simpleContent>
+     <xsd:extension base="xsd:string">
+       <xsd:attribute name="name" type="xsd:string" use="required" />
+     </xsd:extension>
+   </xsd:simpleContent>
+ </xsd:complexType>
+
+ <xsd:complexType name="Form_t">
+    <xsd:sequence>
+       <xsd:element name="field" type="Field_t" minOccurs="1" maxOccurs="unbounded" />
+    </xsd:sequence>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+ </xsd:complexType>
+
+ <xsd:complexType name="ECLEntry_t">
+   <xsd:sequence>
+     <xsd:element name="tag" type="Tag_t" minOccurs="0" maxOccurs="9999"/>
+     <xsd:element name="attachment" type="Attachment_t" minOccurs="0" maxOccurs="9999"/>
+     <xsd:element name="form" type="Form_t" minOccurs="0" maxOccurs="1"/>
+   </xsd:sequence>
+   <xsd:attribute name="author" type="xsd:string" use="required"/>
+   <xsd:attribute name="category" type="xsd:string" use="required"/>
+ </xsd:complexType>
+
+</xsd:schema>

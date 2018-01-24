@@ -4,6 +4,8 @@
 #include "otsdaq-core/DataManager/DataProcessor.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 
+#include "otsdaq-core/DataProcessorPlugins/RawDataVisualizerConsumer.h"
+
 #include <iostream>
 #include <sstream>
 #include <cassert>
@@ -53,6 +55,9 @@ void VisualDataManager::resume(void)
 //========================================================================================================================
 void VisualDataManager::start(std::string runNumber)
 {
+	theLiveDQMHistos_ = NULL;
+	theRawDataConsumer_ = NULL;
+
 	DataManager::start(runNumber);
 	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
 	{
@@ -75,7 +80,27 @@ void VisualDataManager::start(std::string runNumber)
 							if(itConsumer->getProcessorID() == bufferConfiguration.second.getNode("ProcessorUID").getValue<std::string>())
 							{
 								std::cout << __PRETTY_FUNCTION__ << "CONSUMER: " << itConsumer->getProcessorID() << std::endl;
-								theLiveDQMHistos_ = static_cast<DQMHistosConsumerBase*>(itConsumer.get());
+
+								try
+								{
+									theLiveDQMHistos_ = dynamic_cast<DQMHistosConsumerBase*>(itConsumer.get());
+								}
+								catch(...){} //ignore failures
+
+								if(!theLiveDQMHistos_)
+								{
+									__COUT__ << "Trying for raw data consumer." << __E__;
+
+									try
+									{
+										theRawDataConsumer_ = dynamic_cast<RawDataVisualizerConsumer*>(itConsumer.get());
+									}
+									catch(...){}
+
+									__COUT__ << "Did we succeed? " << theRawDataConsumer_ <<
+											__E__;
+								}
+								//static_cast<DQMHistosConsumerBase*>(itConsumer.get());
 							}
 						}
 					}
@@ -115,6 +140,12 @@ DQMHistosBase& VisualDataManager::getFileDQMHistos(void)
 {
 	return theFileDQMHistos_;
 }
+//========================================================================================================================
+const std::string&	 VisualDataManager::getRawData(void)
+{
+	return theRawDataConsumer_->getLastRawDataBuffer();
+}
+
 
 ////========================================================================================================================
 //const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)

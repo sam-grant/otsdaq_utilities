@@ -48,6 +48,7 @@ public:
 
     void 						Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void 						request                     (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 						dataRequest                 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void 						safari               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
                               
     void stateRunning          (toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);

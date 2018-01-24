@@ -140,8 +140,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	{
 		//if receive succeeds display message
 
-		//	int receive(std::string& buffer, unsigned int timeoutSeconds=1, unsigned int timeoutUSeconds=0);
-		if(rsock.receive(buffer,1,0,false) != -1) //set to rcv quiet mode
+		if(rsock.receive(buffer,1 /*timeoutSeconds*/,0/*timeoutUSeconds*/,
+				false /*verbose*/) != -1)
 		{
 			if(i != 200)
 			{

@@ -647,7 +647,7 @@
                 htmlStr += "<td><input type='text' id='accountsUsernameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
                 htmlStr += "<td><input type='text' id='accountsEmailNew' value='' onkeydown='return handleEmailInputKeyDown(event)'></td> ";
 				htmlStr += "<td><input type='text' id='accountsDisplayNameNew' value='' onkeydown='return handleAccountsInputKeyDown(event)'></td> ";
-				htmlStr += "<td>0</td> ";
+				htmlStr += "<td>1</td> ";
 				htmlStr += "</tr></table>";
 				htmlStr += "<input type='submit' onmouseup='createNewAccount(event);' value='Create New Account'>";
 				
@@ -934,7 +934,8 @@
 				_triedNewAccount = true;
 				_oldAccountSize = _accountsArray[0].length; //save to give feedback on success
 				
-				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
+						data, settingsRequestHandler);
 				
 			}
 			function reallyDelete(event) {	

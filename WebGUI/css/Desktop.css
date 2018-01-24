@@ -198,7 +198,7 @@
 	#Desktop .DesktopIcons-iconLink {
 		cursor: pointer;
 	}
-	
+		
 	/* for mouse over highlighting */
 	#Desktop .DesktopIcons-folderDiv .myOption:hover {
 		background-color : rgb(213, 227, 245);
