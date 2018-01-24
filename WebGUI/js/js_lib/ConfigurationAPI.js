@@ -432,7 +432,11 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 
 		//					var nodes = tree.children;
 		//					for(var i=0;i<nodes.length;++i)
-		//						records.push(nodes[i].getAttribute("value"));
+		//						if(nodeChildren[0].nodeName != "value")  
+		//							records.push(nodes[i].getAttribute("value"));
+		//						else if(nodeChildren[j].nodeName == "node")
+		//							child.push(nodes[i].getAttribute("value"));
+		//					
 		//					Debug.log("Records: " + records);
 		if(responseHandler) responseHandler(
 				DesktopContent.getXMLNode(req,"tree"),
