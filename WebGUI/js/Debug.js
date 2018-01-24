@@ -355,15 +355,18 @@ Debug.errorPop = function(err,severity) {
 			(wasAlreadyContent?"<br>...<br>":"") +
 			"<label style='color:white;font-size:16px;'>" + 
 			d.toLocaleDateString() +
-			" " + tstr + ":</label><br>" +
+			" " + tstr + " (Tip) :</label><br>" +
 			Debug.errorPopConditionString(err);	
 	else //normally put newest at top since likely highest priority
 		str = "<label style='color:white;font-size:16px;'>" + 
-			d.toLocaleDateString() +
-			" " + tstr + ":</label><br>" +
-			Debug.errorPopConditionString(err) + 
-			(wasAlreadyContent?"<br>...<br>":"") +
-			str;
+		    d.toLocaleDateString() +
+		    " " + tstr + 
+		    (severity == Debug.INFO_PRIORITY ? '(Info)':'')+
+		    (severity == Debug.WARN_PRIORITY ? '(Warning)':'') +
+		    ":</label><br>" +
+		    Debug.errorPopConditionString(err) + 
+		    (wasAlreadyContent?"<br>...<br>":"") +
+		    str;
 
 	el.innerHTML = str;
 

@@ -538,12 +538,24 @@ Desktop.createDesktop = function(security) {
 			Debug.log("FAILED -- Desktop Window Added - too many windows!",Debug.HIGH_PRIORITY);
 			return;
 		}
-				
+
+		if(name == "Security Settings") {
+		    window_width  = 730;
+		    window_height = 410;
+		}
+		else if(name == "Edit User Data") {
+		    window_width  = 730;
+		    window_height = 410;
+		}
+		else {
+		    window_width  = _defaultWidth;
+		    window_height = _defaultHeight;
+		}
 		//KEEP..
         //subname += _winId; //for visual window debugging (but destroys uniqueness)
 		//end KEEP.
 		var newWin = Desktop.createWindow(_winId++,_windows.length + _defaultWindowMinZindex,name,subname,url,
-			_defaultWidth,_defaultHeight,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
+			window_width,window_height,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
 
 		//handle initial window left,top evolution
 		if(_currentLeft > _defaultLeft+_defaultOffsetTimes*_defaultLeftOffset) {

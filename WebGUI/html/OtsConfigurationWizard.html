@@ -32,16 +32,34 @@
 
 
 		<script>
-			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			var notSecure = "";
+		        if ((window.location.search.split("?")[1].split("&").length > 1) )
+		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
+			
+			var urnLid    = (window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+
 			Debug.log("Application URN-LID #" + urnLid);
 
 			function init() {				
 				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 				Desktop.desktop.icons.resetWithPermissions(255);
-				
+
+
+			        if (notSecure) { 
+    		                      var msg = "<b>This Wizard is not secure!</b>\n" +
+    			                        "Welcome to ots! The ots configuration wizard controls many sensitive paramters for your DAQ sysetem" +
+			                        " as you will soon come to see. This page is secured by an authentication sequence to make sure that no unauthorized access occurs. " + 
+			                        "The sequence is only displayed on the console and never transmitted elsewhere to ensure maximum security. Currently, the authentication is a " +
+			                        "four character default sequence. If you would like to make your ots configuration wizard more secure, you can click " +
+                                                "<a href='#' onclick='DesktopContent.setSecurityOn(true)'>here</a>" +
+			                        " to have a new, more complex sequence generated at each runetime or you can set up this feature later by " +
+			                        "visiting the 'Edit Security' app in the future."; 
+			             Debug.log(msg, Debug.WARN_PRIORITY);
+                   	             //DesktopContent.tooltip("Security Alert",msg);
+			        }
 								
 				DesktopContent.tooltip("Wiz-mode Introduction",
-						"Welcome to the otsdaq Wiz-mode Desktop. Wiz-mode is like safe mode " +						 
+			                        "Welcome to the otsdaq Wiz-mode Desktop. Wiz-mode is like safe mode " +						 
 						"when everything is broken and crashing down around you, you can come here to " +
 						"revive your system. If you are here, you are considered an otsdaq system " +
 						"administrator.\n\n" +
@@ -82,6 +100,12 @@
 				);				
 				
 			}			            
+
+
+
+			        
+                                
+			
         </script>
 		
 

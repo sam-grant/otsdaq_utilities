@@ -7,7 +7,7 @@
 	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
 	
 	
-	<link rel="stylesheet" type="text/css" href="/WebPath/css/EditSecurity.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/SecuritySettings.css">
 	<script type="text/JavaScript">
 		var selectedSecurityChoice_ = "";
 		var IDs_ = ['ResetAllUserTooltips', 'ResetAllUserData'];
@@ -43,6 +43,7 @@
 			//Added all of the IDs into the selection_ array and position the selection at the end
 		
 			colorFade('orange', "all");
+			colorFade('red', "selected");
 			state_= document.getElementById("state");
 			state_.innerHTML = "Loading...";
 		
@@ -188,7 +189,8 @@
 		}
 		
 		function confirm(){
-			if(prompt("Are you sure? This will delete ALL user data. Type 15091420 to continue:")==15091420)
+	                var randomNumber = Math.floor(Math.random() * 99999999)
+			if(prompt("Are you sure? This will delete ALL user data. Type " + randomNumber + " to continue:") == randomNumber)
 				if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
 					setSecurity('ResetAllUserData');
 				}
@@ -263,7 +265,11 @@
 			}
 		
 			if(selectedSecurityChoice_ == "ResetAllUserData")
+		        {
 				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
+				Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
+
+			}			   
 		
 			selectedSecurityChoice_ = req.responseText; 
 			console.log(selectedSecurityChoice_);
@@ -280,7 +286,7 @@
 		}
 	
 		body {
-			background-color: rgb(124, 143, 182);
+		/*	background-color: rgb(124, 143, 182);*/
 		}
 	</style>
 </head>
@@ -307,7 +313,7 @@
 	</div>
 	<div class="bg"></div>
 	<div class="base">
-		<img src="/WebPath/images/windowContentImages/editSecurity-noSecurity.png" alt="" />
+		<img src="/WebPath/images/windowContentImages/EditUserData-ResetTooltips.png" alt="" />
 	</div>
   </div>	
   </div> 	
@@ -329,7 +335,7 @@
 	</div>
 	<div class="bg"></div>
 	<div class="base">
-		<img src="/WebPath/images/windowContentImages/editSecurity-Reset.png" alt="" />
+		<img src="/WebPath/images/windowContentImages/EditUserData-ResetUserData.png" alt="" />
 	</div>
   </div>	
   </div> 	

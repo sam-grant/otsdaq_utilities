@@ -25,7 +25,7 @@ using namespace ots;
 
 #define SECURITY_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/security.dat"
 #define SEQUENCE_FILE_NAME 		std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
-#define SEQUENCE_OUT_FILE_NAME 	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
+#define SEQUENCE_OUT_FILE_NAME 	        std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
 
 XDAQ_INSTANTIATOR_IMPL(OtsConfigurationWizardSupervisor)
 
@@ -48,16 +48,14 @@ SOAPMessenger  (this)
 	mkdir((std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData").c_str(), 0755);
 
 	generateURL();
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,            	"Default" 			);
-
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::verification,        	"Verify" 	  		);
-
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::requestIcons,       	"requestIcons"		);
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	"editSecurity"		);
-	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,         "TooltipRequest"	);
-
-	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,			"SupervisorSequenceCheck",        	XDAQ_NS_URI);
-	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest,	"SupervisorLastConfigGroupRequest", XDAQ_NS_URI);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::Default,            	      "Default" 	);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::verification,        	      "Verify" 	  	);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::requestIcons,       	      "requestIcons"	);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::editSecurity,       	      "editSecurity"	);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::tooltipRequest,                   "TooltipRequest"	);
+	xgi::bind (this, &OtsConfigurationWizardSupervisor::toggleSecurityCodeGeneration,     "ToggleSecurityCodeGeneration"	);
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorSequenceCheck,	      "SupervisorSequenceCheck",        	XDAQ_NS_URI);
+	xoap::bind(this, &OtsConfigurationWizardSupervisor::supervisorLastConfigGroupRequest, "SupervisorLastConfigGroupRequest", XDAQ_NS_URI);
 	init();
 
 }
@@ -77,6 +75,7 @@ void OtsConfigurationWizardSupervisor::init(void)
 //========================================================================================================================
 void OtsConfigurationWizardSupervisor::generateURL()
 {
+        defaultSequence_ = true;
 	int length = 4;
 	FILE *fp = fopen((SEQUENCE_FILE_NAME).c_str(),"r");
 	if(fp)
@@ -86,7 +85,10 @@ void OtsConfigurationWizardSupervisor::generateURL()
 		fgets(line,100,fp);
 		sscanf(line,"%d",&length);
 		fclose(fp);
-		if(length < 4) length = 4; //don't allow shorter than 4
+		if(length < 4) 
+		  length = 4; //don't allow shorter than 4
+		else
+		  defaultSequence_ = false;
 		srand(time(0)); //randomize differently each "time"
 	}
 	else
@@ -207,6 +209,54 @@ throw (xgi::exception::Exception)
 	xmldoc.outputXmlDocument((std::ostringstream*) out, false, true);
 }
 
+//========================================================================================================================
+void OtsConfigurationWizardSupervisor::toggleSecurityCodeGeneration(xgi::Input * in, xgi::Output * out)
+throw (xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+
+	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
+	__COUT__ << "Got to Command = " << Command <<  std::endl;
+
+	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+
+	//SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
+		return;
+	}
+	else
+	{
+		__COUT__ << "***Successfully authenticated security sequence." << std::endl;
+	}
+	//SECURITY CHECK END ****
+	
+	HttpXmlDocument xmldoc;
+
+	if(Command == "TurnGenerationOn")
+	{
+                __COUT__ << "Turning automatic URL Generation on with a sequence depth of 16!" << std::endl;	  
+		std::ofstream outfile ((SEQUENCE_FILE_NAME).c_str());
+		outfile << "16" << std::endl;
+		outfile.close();
+		generateURL();
+ 
+		//std::stringstream url;
+		//	url << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":" << getenv("PORT") 
+		//	    << "/urn:xdaq-application:lid=" << this->getApplicationDescriptor()->getLocalId() 
+      		//	    << "/Verify?code=" << securityCode_;
+		//	printURL(this, securityCode_);
+			std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
+				    {printURL(ptr,securityCode);},this,securityCode_).detach();
+
+		xmldoc.addTextElementToData("Status", "Generation_Success"); 
+	}
+	else
+		__COUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
+
+		xmldoc.outputXmlDocument((std::ostringstream*) out, false, true);
+}
 
 //========================================================================================================================
 //xoap::supervisorSequenceCheck
@@ -275,6 +325,8 @@ throw (xgi::exception::Exception)
 	__COUT__ << "submittedSequence=" << submittedSequence <<
 			" " << time(0) << std::endl;
 
+	std::string securityWarning = "";
+
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__COUT__ << "Unauthorized Request made, security sequence doesn't match!" << std::endl;
@@ -283,8 +335,15 @@ throw (xgi::exception::Exception)
 	}
 	else
 	{
-		__COUT__ << "***Successfully authenticated security sequence. " <<
+	  //defaultSequence_ = false;
+	  __COUT__ << "***Successfully authenticated security sequence. Default Sequence: "<<  defaultSequence_ <<
 				time(0) << std::endl;
+
+		if (defaultSequence_)
+		{
+		  __COUT__ << " UNSECURE!!!" << std::endl;
+		  securityWarning = "&secure=False";
+		}
 	}
 
 	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title>" <<
@@ -310,7 +369,7 @@ throw (xgi::exception::Exception)
 					//end show ots icon
 			"</head>" <<
 			"<frameset col='100%' row='100%'><frame src='/WebPath/html/OtsConfigurationWizard.html?urn=" <<
-			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	                this->getApplicationDescriptor()->getLocalId() << securityWarning <<"'></frameset></html>";
 
 }
 
@@ -346,7 +405,7 @@ throw (xgi::exception::Exception)
 	//5 - linkurl = url of the window to open
 	//6 - folderPath = folder and subfolder location
 
-	*out << "Edit Security,SEC,1,1,icon-EditSecurity.png,/WebPath/html/EditSecurity.html,/" <<
+	*out << "Security Settings,SEC,1,1,icon-SecuritySettings.png,/WebPath/html/SecuritySettings.html,/" <<
 			",Edit User Data,USER,1,1,icon-EditUserData.png,/WebPath/html/EditUserData.html,/" <<
 			",Configure,CFG,0,1,icon-Configure.png,/urn:xdaq-application:lid=280/,/" <<
 			",Table Editor,TBL,0,1,icon-IconEditor.png,/urn:xdaq-application:lid=280/?configWindowName=tableEditor,/" <<
@@ -394,6 +453,17 @@ throw (xgi::exception::Exception)
 		if(submittedSecurity == "ResetAllUserData")
 		{
 			WebUsers::deleteUserData();
+			__COUT__ << "Turning URL Generation back to default!" << std::endl;
+			//std::remove((SEQUENCE_FILE_NAME).c_str());
+			//std::remove((SEQUENCE_OUT_FILE_NAME).c_str());
+			std::ofstream newFile ((SEQUENCE_FILE_NAME).c_str());
+			newFile << "4" << std::endl;
+			newFile.close();
+
+			generateURL();
+			std::thread([&](OtsConfigurationWizardSupervisor *ptr, std::string securityCode)
+				    {printURL(ptr,securityCode);},this,securityCode_).detach();
+			*out << "Default_URL_Generation";
 		}
 		else if(submittedSecurity == "ResetAllUserTooltips")
 		{

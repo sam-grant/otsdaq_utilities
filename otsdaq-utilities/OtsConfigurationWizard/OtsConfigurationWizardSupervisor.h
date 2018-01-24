@@ -50,14 +50,14 @@ public:
 
     void 						editSecurity                		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void 						tooltipRequest                		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-
+    void                                                toggleSecurityCodeGeneration            (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     //External Supervisor XOAP handlers
     xoap::MessageReference 		supervisorSequenceCheck 			(xoap::MessageReference msg) throw (xoap::exception::Exception);
     xoap::MessageReference 		supervisorLastConfigGroupRequest	(xoap::MessageReference msg) throw (xoap::exception::Exception);
 
 private:
     std::string					securityCode_;
-
+    bool                                        defaultSequence_;
 };
 
 }
