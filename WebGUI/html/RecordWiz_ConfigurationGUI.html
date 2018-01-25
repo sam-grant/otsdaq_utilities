@@ -3,58 +3,16 @@
 <head>
 	<script>		
 		
-		//	Description of Record Wizard Configuration GUI Functionality/Behavior:
+		//	Description of Template for Record Wizard Configuration GUI:
 		//	
-		//	GET parameters:
-		//		<subsetBasePath> = Records at this path are the target of this GUI, e.g. “FEInterfaceConfiguration”
-		//		<recordsAlias> = Records display name, e.g. "Front-ends"
-		//
-		//	- User can have LOCK
-		//
-		//	Display:
-		//		- walk through steps at center of window
-		//			- use popup dialog to place at center
-		//		- steps:
-		//			- (error if unrecognized base path)
-		//			- "what is the name of your <record type>?"
-		//				- note the active context and config group being modified, with dropdown to 
-		//					change them.		
-		//			- "do you want to add it to an existing context or create a new one?"
-		//				- if create a new one
-		//					- provide default name with edit pencil, and continue
+		//		Example of presenting the record creation wizard.
 		//			
 		//
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 		
-		//functions:			
-			//init()
-			//extractGETParameters()
-			//initRecordWizard()
-			//showPrompt(stepIndex,paramObj)
-			//	localAddContent()
-			//	localAddHandlers()
-			//		localRecordsSelectHandler()
-			//		localNextButtonHandler()
-			//		localPrevButtonHandler()
-			
-			//htmlOpen(tag,attObj,innerHTML,closeTag)
-			//htmlClearDiv()
-			//incrementName(name)
-		
-			//		getSelectedRecords(forceOne)
-			//btnActionReadAllFields()
-			//btnActionReadOneField()
-			//btnActionWriteAllFields()
-			//btnActionWriteOneField()
-		
-			//deleteRecords()
-			//addRecord()
-		
-		
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
+
 	</script>
 
 
@@ -70,55 +28,8 @@
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
 
 	<style type="text/css">			
-		
-		body {
-			/*overflow: hidden; /* scrolling only happens in left and right panes */			
-		}
 
-		/* make buttons have a hand cursor */
-		input[type="button"], button {
-			cursor: 			pointer;
-		}
-		.prevButton, .nextButton {
-			margin:				10px;
-		}
-		
-		/* style text inputs */
-		input[type="text"], select {
-			height: 			24px;
-			margin:				5px;
-			padding-left: 		5px;
-			width: 				200px;
-			border: 			1px solid rgb(171, 171, 230);
-		}
-		
-		/* style field names in tables */
-		td b {
-			font-size: 			16px !important;
-		}
-		
-		.treeNode-deleteIcon {			
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
-			width: 				16px;
-			height: 			20px;
-			border: 			0;
-			margin: 			-9px 0 -10px 10px;
-		}
-		.treeNode-deleteIcon:hover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-			cursor: 			pointer;
-		}
-
-		.preloadImage {			
-			width: 				24px;
-			height: 			20px;
-			position:			absolute;
-			left: 				-100px;
-			top: 				0;
-		}
-		#preloadImage-treeEditTrashIconHover {
-			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
-		}
+	
 		
 	</style>
 	
@@ -131,81 +42,24 @@
 	<script type="text/JavaScript" src="/WebPath/js/RecordWiz_ConfigurationGUI.js"></script>
 	
 	<script>		
-		
-		
-		//global vars for GET params
-		var _subsetBasePath;			
-		var _recordsAlias;
-		
-		
+				
 		//=====================================================================================
 		//init ~~
 		//	init called once body has loaded
 		function init() 
 		{									
-			Debug.log("CfgGUI record Wiz init ");
+			Debug.log("CfgGUI record Wiz example init ");
 		
-			//extract get parameters
-			if(!extractGETParameters())
-			{
-				Debug.log("Illegal GET parameters. Aborting.",
-						Debug.HIGH_PRIORITY);
-				return;
-			}
-
-			DesktopContent.tooltip("Record Wizard Introduction",
-					"Welcome to the Record Wizard GUI. Here you can create new records for "+
-					"your <i>otsdaq</i> system. \n\n" +
-					"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
-
-					"Briefly, here is a description of the steps: " +
-					"\n\t- 'What is the name of your " + _recordsAlias + "?'" +
-					"\n\t- 'Do you want to add it to an existing context or create a new one?'"
-			);
-
-			RecordWiz.createWiz(_subsetBasePath,_recordsAlias);
+			RecordWiz.createWiz(
+					function(atLeastOneRecordWasCreated)
+					{				
+				Debug.log("Done at Template! atLeastOneRecordWasCreated = " + 
+						atLeastOneRecordWasCreated,
+						Debug.INFO_PRIORITY);
+					});
 						
 		} //end init()
 				
-		//=====================================================================================
-		//extractGETParameters ~~
-		//	return false, if illegal params
-		function extractGETParameters() 
-		{
-			//extract get parameters
-			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
-			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
-			
-			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
-			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
-			
-			//setup defaults and verify
-			if(!_subsetBasePath)
-			{
-				Debug.log("Missing required GET parameter 'subsetBasePath.'",
-						Debug.HIGH_PRIORITY);
-				return false;
-			}
-			else
-			{
-				if(!(_subsetBasePath == "FEInterfaceConfiguration" ||
-						_subsetBasePath == "DataBufferConfiguration"
-								))
-				{
-					Debug.log("Unrecognized value fo GET parameter 'subsetBasePath' = '" + 
-							_subsetBasePath + "'",
-							Debug.HIGH_PRIORITY);
-					return false;
-				}
-			}
-			if(!_recordsAlias) _recordsAlias = "Records";
-
-			Debug.log("_subsetBasePath " + _subsetBasePath);
-			Debug.log("_recordsAlias " + _recordsAlias);
-			
-			return true;
-		}	//end extractGETParameters()
-		
 	</script>
 </head>
 	
@@ -213,8 +67,7 @@
 <body onload='Javascript:init();'>	
 		
 	<!-- body content populated by javascript paint(), etc. -->
-
-	<div class='preloadImage' id='preloadImage-treeEditTrashIconHover'></div>
+	
 </body>
 	
 </html>
