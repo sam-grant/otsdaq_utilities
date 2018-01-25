@@ -49,6 +49,7 @@ if (typeof DesktopContent == 'undefined' &&
 //"public" function list: 
 //	ConfigurationAPI.getDateString(date)
 //	ConfigurationAPI.getActiveGroups(responseHandler)
+//	ConfigurationAPI.getAliasesAndGroups(responseHandler,optionForNoAliases,optionForNoGroups)
 // 	ConfigurationAPI.getSubsetRecords(subsetBasePath,filterList,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
@@ -71,6 +72,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.addClass(elem,class)
 //	ConfigurationAPI.removeClass(elem,class)
 //	ConfigurationAPI.hasClass(elem,class)
+//	ConfigurationAPI.extractActiveGroups(req)
 
 
 //"public" constants:
@@ -81,7 +83,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.handleGroupCommentToggle(groupName,setHideVal)
 //	ConfigurationAPI.handlePopUpHeightToggle(h,gh)
 //	ConfigurationAPI.handlePopUpAliasEditToggle(i)
-//	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings)
+//	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
 //	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
@@ -121,9 +123,11 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";
 //		on failure, the object will be empty.
 //		on success, the object of Active Groups
 //		Group := {}
-//			obj.groupType = {}
-//			obj.groupType.groupName
-//			obj.groupType.groupKey
+//			obj.<groupType> = {}
+//			obj.<groupType>.groupName
+//			obj.<groupType>.groupKey
+//
+//		<groupType> = Context, Backbone, Iterate, or Configuration
 //
 ConfigurationAPI.getActiveGroups = function(responseHandler)
 {	
@@ -131,36 +135,192 @@ ConfigurationAPI.getActiveGroups = function(responseHandler)
 	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
 			"", function(req) 
 			{
-
-		var activeConfigGroups = [
-							   DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
-							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
-							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
-							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
-							   DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
-		var i=0;
-		var retObj = {};		
-		retObj.Context = {};
-		retObj.Context.groupName = activeConfigGroups[i++];
-		retObj.Context.groupKey = activeConfigGroups[i++];
-		retObj.Backbone = {};
-		retObj.Backbone.groupName = activeConfigGroups[i++];
-		retObj.Backbone.groupKey = activeConfigGroups[i++];
-		retObj.Iterate = {};
-		retObj.Iterate.groupName = activeConfigGroups[i++];
-		retObj.Iterate.groupKey = activeConfigGroups[i++];
-		retObj.Configuration = {};
-		retObj.Configuration.groupName = activeConfigGroups[i++];
-		retObj.Configuration.groupKey = activeConfigGroups[i++];
-		
-		if(responseHandler) responseHandler(retObj);		
+		responseHandler(ConfigurationAPI.extractActiveGroups(req));
 			},
 			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 	); //end of getActiveConfigGroups handler
 }
+ConfigurationAPI.extractActiveGroups = function(req)
+{	
+	var activeConfigGroups = [
+							  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+							  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+							  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+							  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+							  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+							  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
+							  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+							  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
+	var i=0;
+	var retObj = {};		
+	retObj.Context = {};
+	retObj.Context.groupName = activeConfigGroups[i++];
+	retObj.Context.groupKey = activeConfigGroups[i++];
+	retObj.Backbone = {};
+	retObj.Backbone.groupName = activeConfigGroups[i++];
+	retObj.Backbone.groupKey = activeConfigGroups[i++];
+	retObj.Iterate = {};
+	retObj.Iterate.groupName = activeConfigGroups[i++];
+	retObj.Iterate.groupKey = activeConfigGroups[i++];
+	retObj.Configuration = {};
+	retObj.Configuration.groupName = activeConfigGroups[i++];
+	retObj.Configuration.groupKey = activeConfigGroups[i++];
+	return retObj;
+}
+
+
+//=====================================================================================
+//getAliasesAndGroups ~~
+//	get system aliases, existing groups (w/ currently active groups)
+//
+//	when complete, the responseHandler is called with an object parameter.
+//		on failure, the object will be empty.
+//		on success, the object of Active Groups
+//		Group := {}
+//			obj.activeGroups = {}
+//				obj.activeGroups.<groupType> = {}
+//				obj.activeGroups.<groupType>.groupName
+//				obj.activeGroups.<groupType>.groupKey
+//			obj.groups = {}
+//				obj.groups.<groupType> = {} 
+//					obj.groups.<groupType>.<groupName> = {}
+//						obj.groups.<groupType>.<groupName>.keys = [latestKey, key, ...]
+//						obj.groups.<groupType>.<groupName>.groupComment
+//			obj.aliases = {}
+//				obj.aliases.<groupType> = [ aliasObj,... ]
+//					aliasObj = {}
+//					aliasObj.alias
+//					aliasObj.name
+//					aliasObj.key
+//					aliasObj.groupComment
+//					aliasObj.groupType
+//					aliasObj.aliasComment
+//			
+//		<groupType> = Context, Backbone, Iterate, or Configuration
+//
+ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAliases,
+		optionForNoGroups)
+{	
+	var retObj = {};	
+	var reqCount = 0;
+	
+	//get aliases
+	if(!optionForNoAliases)
+		DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases" + 
+				"", //end get data 
+				"", //end post data
+				function(req)
+				{
+	
+			Debug.log("getGroupAliases handler");
+	
+			var groupAliases = 	req.responseXML.getElementsByTagName("GroupAlias");
+			var groupNames = 	req.responseXML.getElementsByTagName("GroupName");
+			var groupKeys = 	req.responseXML.getElementsByTagName("GroupKey");
+			var groupComments = req.responseXML.getElementsByTagName("GroupComment");
+			var groupTypes = 	req.responseXML.getElementsByTagName("GroupType");
+			var aliasComments = req.responseXML.getElementsByTagName("AliasComment");
+	
+			retObj.aliases = {};
+			var type;
+					
+			for(var i=0;i<groupAliases.length;++i) 
+			{
+				type = groupTypes[i].getAttribute('value');	
+				
+				if(type == "") continue;
+
+				if(!retObj.aliases[type])
+					retObj.aliases[type] = []; //create array
+				
+				retObj.aliases[type].push({
+						"alias" : 			groupAliases[i].getAttribute('value'),
+						"name" : 			groupNames[i].getAttribute('value'),
+						"key" : 			groupKeys[i].getAttribute('value'),
+						"groupComment" : 	groupComments[i].getAttribute('value'),
+						"groupComment" : 	groupTypes[i].getAttribute('value'),
+						"aliasComment" : 	aliasComments[i].getAttribute('value')
+				});
+			}
+		
+			++reqCount;
+			
+			if(reqCount == 2 || 
+					(reqCount == 1 && optionForNoGroups))
+			{
+				//done!
+				console.log("getAliasesAndGroups retObj ",retObj);
+				responseHandler(retObj);
+			}
+	
+				}, //handler
+				0, //handler param
+				0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+				false /*targetSupervisor*/); //end get aliases
+	
+
+	//get aliases
+	if(!optionForNoGroups)
+		DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+				+"&doNotReturnMembers=1", //end get data 
+				"", //end post data
+				function(req)
+				{
+		Debug.log("getConfigurationGroups handler");
+
+		retObj.activeGroups = {}; //clear
+		retObj.activeGroups = ConfigurationAPI.extractActiveGroups(req);
+		
+		var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+		var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+		var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+		var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+
+		retObj.groups = {}; //clear
+		
+		var type, name;
+		for(var i=0;i<groupNames.length;++i) 
+		{
+			type = groupTypes[i].getAttribute('value');			
+			
+			if(type == "") continue;
+			
+			//			obj.groups = {}
+			//				obj.groups.<groupType> = {} 
+			//					obj.groups.<groupType>.<groupName> = {}
+			//						obj.groups.<groupType>.<groupName>.keys = [latestKey, key, ...]
+			//						obj.groups.<groupType>.<groupName>.groupComment
+			
+			if(!retObj.groups[type])
+				retObj.groups[type] = {}; //create first of type
+			
+			name = groupNames[i].getAttribute('value');
+			if(!retObj.groups[type][name])
+			{
+				retObj.groups[type][name] = {}; //create first of group name
+				//set group comment the first time
+				retObj.groups[type][name].groupComment = groupComments[i].getAttribute('value');
+				retObj.groups[type][name].keys = []; //create empty keys array
+			}
+			//add key
+			retObj.groups[type][name].keys.push(groupKeys[i].getAttribute('value'));			
+		}
+		
+		++reqCount;
+
+		if(reqCount == 2 || 
+				(reqCount == 1 && optionForNoAliases))
+		{
+			//done!
+			console.log("getAliasesAndGroups retObj ",retObj);
+			responseHandler(retObj);
+		}
+				}, //handler
+				0, //handler param
+				0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+				false /*targetSupervisor*/);
+	
+} // end getAliasesAndGroups
 
 
 //=====================================================================================
@@ -272,7 +432,11 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 
 		//					var nodes = tree.children;
 		//					for(var i=0;i<nodes.length;++i)
-		//						records.push(nodes[i].getAttribute("value"));
+		//						if(nodeChildren[0].nodeName != "value")  
+		//							records.push(nodes[i].getAttribute("value"));
+		//						else if(nodeChildren[j].nodeName == "node")
+		//							child.push(nodes[i].getAttribute("value"));
+		//					
 		//					Debug.log("Records: " + records);
 		if(responseHandler) responseHandler(
 				DesktopContent.getXMLNode(req,"tree"),
@@ -291,7 +455,10 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 //		ConfigurationAPI.getSubsetRecords)
 // <fieldList> is a CSV list of tree paths relative to <subsetBasePath> 
 //	 to the allowed fields. If empty, then all available fields are allowed.
-//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+//		e.g. "LinkToFETypeConfiguration,FEInterfacePluginName" 
+//		:= CSV of relative-to-record-path to filter common fields
+//		(accept or reject [use ! as first character to reject])
+//		[use leading*  to ignore relative path - note that only leading and trailing wildcards work]
 //
 // <modifiedTables> is an array of Table objects (as returned from 
 //		ConfigurationAPI.setFieldValuesForRecords)
@@ -1951,7 +2118,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 //=====================================================================================
 //activateGroup ~~
 ConfigurationAPI.activateGroup = function(groupName, groupKey, 
-		ignoreWarnings)
+		ignoreWarnings, doneHandler)
 {
 	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
 			"&groupName=" +	groupName + 
@@ -1981,8 +2148,11 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 			
 			Debug.log("If you are are sure it is a good idea you can try to " +
 					"activate the group with warnings ignored: " +
-					str,Debug.HIGH_PRIORITY);
+					str,Debug.HIGH_PRIORITY);	
+			return;
 		}
+		
+		if(doneHandler) doneHandler();
 			},
 			true, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
 			true); //showLoadingOverlay
@@ -3846,18 +4016,20 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		catch(err) {return;} //do nothing on errors
 		
 		//else resize el
-		//Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
+		Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
 
 
 		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;
 		var wh = DesktopContent.getWindowHeight()-(padding+border)*2;
 
 		//ww & wh are max window size at this point
+		
+		var ah = el.offsetHeight;//actual height, in case of adjustments
 
 		if(w === undefined || h === undefined)
 		{
 			w = ww-(margin)*2;
-			h = wh-(margin)*2;
+			ah = wh-(margin)*2;
 		}
 		//else w,h are inputs and margin is ignored
 
@@ -3868,9 +4040,9 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 			y = DesktopContent.getWindowScrollTop()+margin+padding; //don't let it bottom out though
 
 		//if dialog is smaller than window, allow scrolling to see the whole thing 
-		if(w > ww)			
+		if(w > ww-margin-padding)			
 			x = -DesktopContent.getWindowScrollLeft();
-		if(h > wh)
+		if(ah > wh-margin-padding)
 			y = -DesktopContent.getWindowScrollTop();
 			
 		el.style.left = x + "px";
@@ -3928,7 +4100,8 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 //=====================================================================================
 //createEditableFieldElement ~~
 //
-//	Creates div element with editable and highlight features
+//	Creates div element with editable and highlight features.
+//	Note: set ConfigurationAPI.editableField_SELECTED_COLOR_ = "transparent" to disable highlight features
 //
 //	Input field must be a value node.
 //	Input object is single field as returned from ConfigurationAPI.getFieldsOfRecords
@@ -3957,7 +4130,8 @@ ConfigurationAPI.editableFieldSelectedIdString_ = 0;
 ConfigurationAPI.editableFieldHandlersSubscribed_ = false;
 ConfigurationAPI.editableFieldMouseIsSelecting_ = false;
 ConfigurationAPI.editableField_SELECTED_COLOR_ = "rgb(251, 245, 53)";
-ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,depthIndex /*optional*/)
+ConfigurationAPI.createEditableFieldElement = function(fieldObj,fieldIndex,
+		depthIndex /*optional*/)
 {
 	var str = "";
 	var depth = depthIndex|0;
@@ -3998,6 +4172,8 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	//Debug.log("getEditableFieldValue " + fieldObj.fieldColumnName + " of type " + 
 	//		fieldObj.fieldColumnType);
 
+	ConfigurationAPI.handleEditableFieldEditOK(); //make sure OK|Cancel closed
+	
 	var depth = depthIndex|0;
 	var uid = fieldIndex|0;
 	var fieldEl = document.getElementById("treeNode-Value-leafNode-" + 

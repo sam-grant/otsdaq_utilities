@@ -159,7 +159,13 @@ if [ "x$1" == "x" ]; then
 	
 	echo "cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
-
+	
+	#make sure permissions are usable
+	echo "chmod 755 $USER_DATA/XDAQConfigurations/*Info.xml"
+	chmod 755 $USER_DATA/XDAQConfigurations/*Info.xml #*/ just resetting comment coloring
+	echo "chmod 755 $USER_DATA/XDAQConfigurations/*Info.xsd"
+	chmod 755 $USER_DATA/XDAQConfigurations/*Info.xsd #*/ just resetting comment coloring
+	
 	#copy tutorial launching scripts
 	echo
 	echo "updating tutorial launch scripts..."
