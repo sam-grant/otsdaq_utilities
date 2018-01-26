@@ -3,14 +3,20 @@
 # This script is expected to be in otsdaq utilities repository in a specific directory
 # but it can be executed from any path (do not source it, execute with ./ )
 #
-# ./path/to/script/checkinAll.sh "comment for git commit"
+# ./path/to/script/UpdateOTS.sh "comment for git commit"
 #
 # If no comment is given, the script will only pull updates - it will not checkin.
+#
+# Note: it will be compiled by mrb so that no path is required:
+#
+# UpdateOTS.sh "comment for git commit"
 #
 
 
 
 CURRENT_AWESOME_BASE=$PWD
+CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.checkinAll.log
+UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.updateAll.log
 
 echo 
 echo
@@ -23,7 +29,7 @@ echo
 if [ "x$1" == "x" ]; then
     echo "Usage Error: parameter 1 is the comment for git commit"
 	echo "Note: to use ! at the end of your message put a space between the ! and the closing \""
-    echo "Note: git status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+    echo "Note: git status will be logged here: $CHECKIN_LOG_PATH"
     echo "WARNING: without comment, script will only do git pull and git status"
 fi
 
@@ -58,26 +64,26 @@ echo
 echo "=================="
 
 echo "Git comment '$1'"
-echo "Status will be logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
+echo "Status will be logged here: $CHECKIN_LOG_PATH"
 
 
 echo
 echo "=================="
 
-echo "log start:" > $CURRENT_AWESOME_BASE/checkinAll.log
+echo "log start:" > $CHECKIN_LOG_PATH
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
 	echo "Checking in $p"
 	cd $p
 	git pull
-	echo "==================" >> $CURRENT_AWESOME_BASE/checkinAll.log
-	pwd >> $CURRENT_AWESOME_BASE/checkinAll.log
-	git status &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	echo "==================" >> $CHECKIN_LOG_PATH
+	pwd >> $CHECKIN_LOG_PATH
+	git status &>> $CHECKIN_LOG_PATH
 	
 	if [ "x$1" != "x" ]; then
 		#add space for user
-	    git commit -m "$1 " .  &>> $CURRENT_AWESOME_BASE/checkinAll.log
+	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH
 	    git push   
 	fi
 
@@ -99,8 +105,8 @@ echo "=================="
 #handle manual updates that should take place ONLY if it is UPDATING not committing
 if [ "x$1" == "x" ]; then
 
-	echo "Update status will be logged here: $CURRENT_AWESOME_BASE/updateAll.log"
-	echo "Update log start:" > $CURRENT_AWESOME_BASE/updateAll.log
+	echo "Update status will be logged here: $UPDATE_LOG_PATH"
+	echo "Update log start:" > $UPDATE_LOG_PATH
 	
 	echo
 	echo "#######################################################################################################################" 
@@ -290,7 +296,7 @@ if [ "x$1" == "x" ]; then
 		if [ ! -d "$UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL" ]; then
 			echo "   $file unzipping..."
 			echo "   tar -xf $file"
-			tar -xf $file &>> $CURRENT_AWESOME_BASE/updateAll.log
+			tar -xf $file &>> $UPDATE_LOG_PATH
 			
 			if [ ! -d "$UPS_PRODUCT_NAME/v$UPS_PRODUCT_VERSION/$UPS_PRODUCT_QUAL" ]; then				
 				echo "   Something went wrong. Unzip was not successful. (Are special permissions required for products area?)"
@@ -315,16 +321,16 @@ fi
 
 
 echo "Git comment '$1'"
-echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-echo "Update status was logged here: $CURRENT_AWESOME_BASE/updateAll.log"
+echo "Check-in status was logged here: $CHECKIN_LOG_PATH"
+echo "Update status was logged here: $UPDATE_LOG_PATH"
 echo
 echo "log dump in 2 seconds... #######################################################"
 sleep 2s
 echo
 cat $CURRENT_AWESOME_BASE/checkinAll.log
 echo "end log dump... #######################################################"
-echo "Check-in status was logged here: $CURRENT_AWESOME_BASE/checkinAll.log"
-echo "Update status (not shown above) was logged here: $CURRENT_AWESOME_BASE/updateAll.log"
+echo "Check-in status was logged here: $CHECKIN_LOG_PATH"
+echo "Update status (not shown above) was logged here: $UPDATE_LOG_PATH"
 
 echo
 echo "=================="

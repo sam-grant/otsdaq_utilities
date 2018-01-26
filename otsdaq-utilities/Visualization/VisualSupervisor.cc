@@ -241,7 +241,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //from GET or POST
 
-	__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	//__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
 	//	getGeometry
@@ -513,7 +513,7 @@ throw (xgi::exception::Exception)
 		std::string path = CgiDataUtilities::postData(cgi,"RootPath");
 		std::string fullPath  = std::string(getenv("ROOT_BROWSER_PATH")) + path;
 
-		__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
+		//__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
 
 		std::string rootFileName      = fullPath.substr(0,fullPath.find(".root")+5);
 		std::string rootDirectoryName = rootFileName + ":" + fullPath.substr(fullPath.find(".root")+5,fullPath.size()-fullPath.find(".root")+5+1);
@@ -523,13 +523,13 @@ throw (xgi::exception::Exception)
 
 		if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
 		{
-			__COUT__ << "Attempting to get LIVE file." << std::endl;
+		  //__COUT__ << "Attempting to get LIVE file." << std::endl;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			if(!rootFile)
 				__COUT__ << "File was closed." << std::endl;
 			else
 			{
-				__COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
+			  //__COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
 				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
 			}
 		}
@@ -567,7 +567,7 @@ throw (xgi::exception::Exception)
 					TBufferFile tbuff(TBuffer::kWrite);
 
 					std::string rootType = histo->ClassName();
-					__COUT__ << "rootType " << rootType << std::endl;
+					//__COUT__ << "rootType " << rootType << std::endl;
 
 					histo->Streamer(tbuff);
 
@@ -581,7 +581,7 @@ throw (xgi::exception::Exception)
 					xmldoc.addTextElementToData("rootType", rootType);
 					xmldoc.addTextElementToData("rootData", dest);
 					xmldoc.addTextElementToData("rootJSON", json.Data());
-					__COUT__ << "Done" << std::endl;
+					//__COUT__ << "Done" << std::endl;
 
 					//std::cout << "\n\n" << json.Data() << "\n\n";
 				}

@@ -32,16 +32,20 @@
 			pointer: cursor;
 		}
 		
-		#ConfigurationAPI-popUpDialog b, 
 		#ConfigurationAPI-popUpDialog h3, 
 		#ConfigurationAPI-popUpDialog h1 {
-			color: rgb(65, 86, 146);
-			font-size: 20px;
+			color: 				rgb(65, 86, 146);
+			font-size: 			20px;
 		}
 		
 		#ConfigurationAPI-popUpDialog .bold-header {
-			color: rgb(81, 152, 204);
-			font-size: 16px;
+			color: 				rgb(81, 152, 204);
+			font-size: 			16px;
+		}
+		
+		#ConfigurationAPI-popUpDialog b {
+			color: 				rgb(65, 86, 146);
+			font-size: 			16px;
 		}
 		
 		/*firefox seems to put an extra pixel of letter-spacing in bold words*/
@@ -66,6 +70,21 @@
 		#ConfigurationAPI-popUpDialog button {
 			cursor: pointer;
 		}
+		
+		/* style text inputs */
+		#ConfigurationAPI-popUpDialog input[type="text"], 
+		#ConfigurationAPI-popUpDialog select {
+			height: 			24px;
+			margin:				5px;
+			padding-left: 		5px;
+			width: 				200px;
+			border: 			1px solid rgb(171, 171, 230);
+		}
+		
+		#ConfigurationAPI-popUpDialog .prevButton,
+		#ConfigurationAPI-popUpDialog .nextButton {
+			margin:				10px;
+		}		
 		
 		.ConfigurationAPI-popUpDialog-editIcon {			
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
