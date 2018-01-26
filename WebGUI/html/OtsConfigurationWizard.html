@@ -32,17 +32,22 @@
 
 
 		<script>
-			var notSecure = "";
-		        if ((window.location.search.split("?")[1].split("&").length > 1) )
-		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
 			
-			var urnLid    = (window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 
+			var urnLid    = DesktopContent.getDesktopWindowParameter(0,"urn");//(window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+			
 			Debug.log("Application URN-LID #" + urnLid);
 
 			function init() {				
 				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 				Desktop.desktop.icons.resetWithPermissions(255);
+				
+				
+				var notSecure = DesktopContent.getDesktopWindowParameter(0,"secure");
+				if(!notSecure) notSecure = "";
+				//			var notSecure = "";
+				//		        if ((window.location.search.split("?")[1].split("&").length > 1) )
+				//		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
 
 
 			        if (notSecure) { 

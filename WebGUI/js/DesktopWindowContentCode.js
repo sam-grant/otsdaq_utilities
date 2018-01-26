@@ -207,7 +207,7 @@ DesktopContent.init = function() {
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
 	window.focus();	//before this fix, full screen in new tab would not give window focus
 
-	DesktopContent._serverUrnLid = ((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
+	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
@@ -271,6 +271,41 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	else 
 		win = win.parent.parent.window;
 	var params = (win.location.search.substr(1)).split('&');
+	if(index >= params.length) return; //return undefined
+	var spliti, vs;
+	//if name given, make it the priority
+	if(name)
+	{
+		for(var index=0;index<params.length;++index)
+		{
+			spliti = params[index].indexOf('=');
+			if(spliti < 0) continue; //poorly formed parameter?	
+			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+			if(vs[0] == name)
+				return decodeURIComponent(vs[1]);
+		}
+		return; //return undefined .. name not found
+	}
+
+	spliti = params[index].indexOf('=');
+	if(spliti < 0) return; //return undefined	
+	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+	return decodeURIComponent(vs[1]); //return value
+}
+
+//DesktopContent.getDesktopWindowParameter ~
+//	returns the value of the url GET parameter specified by index of the Window frame url
+//	if using name, then (mostly) ignore index
+DesktopContent.getDesktopWindowParameter = function(index, name) {	
+	// Debug.log(window.location)	
+	
+	var win = DesktopContent._theWindow;
+	if(!win)	//for parameter directly from desktop code
+		win = window;
+	else 
+		win = win.parent.window;
+									  
+	var params = ((win.location.search.substr(1))).split('&');
 	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
