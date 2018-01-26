@@ -247,11 +247,18 @@ else {
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-            if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
-            _isMinimized = !_isMinimized;
-            this.windiv.style.display = _isMinimized?"none":"inline";
-            Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
-        }
+		    if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    _isMinimized = !_isMinimized;
+		    this.windiv.style.display = _isMinimized?"none":"inline";
+		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
+		}
+
+		this.unminimize = function() {
+		    if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    _isMinimized = false;
+		    this.windiv.style.display = "inline";
+		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
+		}
                 
 		//------------------------------------------------------------------
 		//handle class construction ----------------------

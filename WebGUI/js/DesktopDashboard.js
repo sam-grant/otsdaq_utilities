@@ -67,7 +67,7 @@ else {
         var _displayWindowDashboard = //default window dashboard view
         		window.parent.window.location.hash[1]? 
         				(window.parent.window.location.hash[1] | 0):1; 
-        var _windowDashboard,_topBar,_fullScreenBtn;
+        var _windowDashboard,_topBar,_showDesktopBtn,_fullScreenBtn,_fullScreenRefreshBtn;
         
         var _windowDashboardWindowCSSRule;  //e.g. _var.style.width = "100px"
         
@@ -219,8 +219,42 @@ else {
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
 					win = Desktop.desktop.getWindowByIndex(i);
 					win.minimize();	if(!win.isMinimized()) win.minimize(); //minimize twice, in case was mazimized
+				     
 				}
 		}
+
+		var _windowDashboardRestoreAll = function() {
+				var win;
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
+					win = Desktop.desktop.getWindowByIndex(i);
+					win.unminimize();
+
+				}
+				//Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));
+		}	
+	        var _windowDashboardToggleWindowsButtonLabel = function () {
+
+	        }
+
+
+	        var _windowDashboardToggleWindows = function () {
+		   
+		    
+		    // if (Desktop.desktop.getForeWindow() &&
+		    //	Desktop.desktop.getForeWindow().isMinimized())
+		    //		_windowDashboardRestoreAll();
+		    //else
+		    //	_windowDashboardMinimizeAll();
+
+		    if((_showDesktopBtn.innerHTML).includes(">Show Desktop</a>"))
+			_windowDashboardMinimizeAll();
+		    else
+			_windowDashboardRestoreAll();
+
+		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+		    ((Desktop.desktop.getForeWindow() &&
+		      Desktop.desktop.getForeWindow().isMinimized())?"Restore All Windows":"Show Desktop") + "</a>";
+	        }
 		
 	        var _windowDashboardRefresh = function() {
 	        
@@ -330,15 +364,31 @@ else {
 						"</div>\n";
             }      
             
-		   	_refreshTitle(); 
+		   	_refreshTitle();
         }        
         
         this.redrawFullScreenButton = function() {
             _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
             	((Desktop.desktop.getForeWindow() &&
                                         Desktop.desktop.getForeWindow().isMaximized())?"Exit Full Screen":"Full Screen") + "</a>"; 
+                                    		
+        }
+
+        this.redrawFullScreenRefreshButton = function() {
+            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the current window'> ↻ </a>";
+	    _fullScreenRefreshBtn.style.visibility = "" +
+	         ((Desktop.desktop.getForeWindow() &&
+	                Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
+	    console.log("Redrawing Refresh button in full screen!");
                                         		
         }
+
+	this.redrawShowDesktopButton = function() {
+            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+            	((Desktop.desktop.getForeWindow() &&
+                                        Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>"; 
+
+	}
         
         this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
         
@@ -512,17 +562,23 @@ else {
         tmpBtn.onmouseup = _windowDashboardOrganize;
         _topBar.appendChild(tmpBtn);
         
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
-        tmpBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>Show Desktop</a>";
-        tmpBtn.onmouseup = _windowDashboardMinimizeAll;
-        _topBar.appendChild(tmpBtn);
+        _showDesktopBtn = document.createElement("div");
+		_showDesktopBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
+        _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>Show Desktop</a>";
+        _showDesktopBtn.onmouseup = _windowDashboardToggleWindows;
+        _topBar.appendChild(_showDesktopBtn);
 
         _fullScreenBtn = document.createElement("div");
 		_fullScreenBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
         this.redrawFullScreenButton();
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
+
+        _fullScreenRefreshBtn = document.createElement("div");
+		_fullScreenRefreshBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
+        this.redrawFullScreenRefreshButton();
+        _fullScreenRefreshBtn.onmouseup = Desktop.handleFullScreenWindowRefresh;
+        _topBar.appendChild(_fullScreenRefreshBtn);
         
         //user with lock on far right.. because it is the highest priority for user to see
 		tmpBtn = document.createElement("div");

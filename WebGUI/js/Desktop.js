@@ -598,6 +598,8 @@ Desktop.createDesktop = function(security) {
         		
         }, 200);
 
+		
+
         return newWin;
 	}
 	
@@ -675,9 +677,13 @@ Desktop.createDesktop = function(security) {
         if(!_getForeWindow()) return;
         _getForeWindow().maximize();
         _dashboard.redrawFullScreenButton();
+	_dashboard.redrawFullScreenRefreshButton();
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
-    
+
+	this.fullScreenRefresh = function (e) {
+
+	}
 	this.refreshWindowById = function(id) {
 	    var win = this.getWindowById(id);
 	    if(win == -1) return -1;
@@ -702,10 +708,13 @@ Desktop.createDesktop = function(security) {
 	    var y = window.getWindowY();
                  
 	    _closeWindow(window);
-        
-	    newWindow = this.addWindow(name,subname,url);
+	    console.log(window, id, z, name, width, height);
+	    
+	    var newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
-        Debug.log("Windows Length: " + _windows.length);
+	   
+	   
+	    Debug.log("Windows Length: " + _windows.length);
     }
 
         //minimizeWindowById ~~~
@@ -724,6 +733,8 @@ Desktop.createDesktop = function(security) {
         if(!_getForeWindow()) return;
         _getForeWindow().minimize();
         Debug.log("Minimize Toggled",Debug.LOW_PRIORITY);
+        //_dashboard.updateWindows();
+
     }
         //clickedWindowDashboard ~~~
 		//	Handle window selection using dashboard
@@ -1414,6 +1425,14 @@ Desktop.handleWindowButtonDown = function(mouseEvent) {
 Desktop.handleWindowRefresh = function(mouseEvent){
         Debug.log("Refresh " + this.id.split('-')[1]);
         Desktop.desktop.refreshWindowById(this.id.split('-')[1]);
+        return false;
+
+}
+
+Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
+        Debug.log("Refresh Full Screen Window");
+        Desktop.desktop.refreshWindow();
+	Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
         return false;
 
 }
