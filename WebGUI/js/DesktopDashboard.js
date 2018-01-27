@@ -376,6 +376,8 @@ else {
 
         this.redrawFullScreenRefreshButton = function() {
             _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the current window'> ↻ </a>";
+	    _fullScreenRefreshBtn.style.height = "16px";
+	    console.log(_fullScreenRefreshBtn.style.height);//"16px";
 	    _fullScreenRefreshBtn.style.visibility = "" +
 	         ((Desktop.desktop.getForeWindow() &&
 	                Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 

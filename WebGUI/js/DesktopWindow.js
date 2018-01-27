@@ -236,25 +236,37 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
-			_isMinimized = false; 
-            //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
-            _isMaximized = !_isMaximized;
-            if(_isMaximized) //make sure is visible
-            	this.windiv.style.display = "inline";
-            this.setWindowSizeAndPosition(_x,_y,_w,_h);
+		    _isMinimized = false; 
+		    //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
+		    _isMaximized = !_isMaximized;
+		    if(_isMaximized) //make sure is visible
+			this.windiv.style.display = "inline";
+		    this.setWindowSizeAndPosition(_x,_y,_w,_h);
+		    window.parent.document.title= _name;
+		    console.log(document.title, _name);
+			
         }
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-		    if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    if(_isMaximized)
+			window.parent.document.title = _name;
+		    else
+			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
 		    _isMinimized = !_isMinimized;
 		    this.windiv.style.display = _isMinimized?"none":"inline";
 		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
 		}
 
 		this.unminimize = function() {
-		    if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    if(_isMaximized)
+			window.parent.document.title = _name;
+		    else
+			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+		   
 		    _isMinimized = false;
 		    this.windiv.style.display = "inline";
 		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
@@ -365,8 +377,9 @@ else {
 			   	   	
 	   		//add mouse handlers
 	   	this.windiv.onmousedown = Desktop.handleWindowMouseDown;
-	   	this.windiv.onmouseup = Desktop.handleWindowMouseUp;
+	   	this.windiv.onmouseup   = Desktop.handleWindowMouseUp;
 	   	this.windiv.onmousemove = Desktop.handleWindowMouseMove;
+		this.windiv.ondblclick  = Desktop.handleWindowMaximize;
 	   	
 	   		//add touch handlers (for mobile devices)
 	   	this.windiv.addEventListener('touchstart',Desktop.handleTouchStart);
