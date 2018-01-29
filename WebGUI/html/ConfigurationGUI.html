@@ -685,7 +685,7 @@
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleFlattenSystemAliasesResponse(req) {
-			Debug.log("Attempt to Flatten System Aliases was successfully launched... " +
+			Debug.log("Attempting to Flatten System Aliases... " +
 					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 		}
@@ -693,11 +693,11 @@
 		//handleFlattenSystemAliasesResponse ~
 		function handleOtsRelaunchResponse(req,isWiz) {
 			if(isWiz)
-				Debug.log("Attempt to restart your system in Wiz Mode was successfully launched... " +
+				Debug.log("Attempting to restart your system in Wiz Mode... " +
 					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
-				Debug.log("Attempt to restart your system in Normal Mode was successfully launched... " +
+				Debug.log("Attempting to restart your system in Normal Mode... " +
 					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			

@@ -246,11 +246,21 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		{
 			__COUT__ << "FESupervisor LID " << it->first << std::endl;
 
-			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-					it->second,
-					"MacroMakerSupervisorRequest",
-					txParameters);
-			receive(retMsg, rxParameters);
+			try
+			{
+				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+						it->second,
+						"MacroMakerSupervisorRequest",
+						txParameters);
+				receive(retMsg, rxParameters);
+			}
+			catch(const xdaq::exception::Exception& e)
+			{
+				__SS__ << "Error transmitting request to FE Supervisor. \n\n" << e.what() << __E__;
+				__COUT_ERR__ << ss.str();
+				return;
+			}
+
 			rxFEList = rxParameters.getValue("FEList");
 
 			__COUT__ << "FE List received: \n" << rxFEList << std::endl;
@@ -351,7 +361,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 
 	SOAPParameters rxParameters;
 	rxParameters.addParameter("dataResult");
-	__COUT__<<"Here comes the array from multiselect box for READ, behold: "
+	__COUT__<< "Here comes the array from multiselect box for READ, behold: "
 			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
 	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
@@ -374,22 +384,34 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 		txParameters.addParameter("InterfaceID",interfaceIndex);
 
 
-		__COUT__<<"The index of the supervisor instance is: " << FEIndex << std::endl;
-		__COUT__<<"...and the interface ID is: " << interfaceIndexArray << std::endl;
+		__COUT__ << "The index of the supervisor instance is: " << FEIndex << std::endl;
+		__COUT__ << "...and the interface ID is: " << interfaceIndexArray << std::endl;
 
 		SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
 		if (it == FESupervisors.end())
 		{
 			__COUT__<< "ERROR!? FE Index doesn't exist" << std::endl;
+			xmldoc.addTextElementToData("readData","MissingFrontEnd");
 			return;
 		}
 
-		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-				it->second,
-				"MacroMakerSupervisorRequest",
-				txParameters);
+		try
+		{
+			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+					it->second,
+					"MacroMakerSupervisorRequest",
+					txParameters);
 
-		receive(retMsg,rxParameters);
+			receive(retMsg,rxParameters);
+		}
+		catch(const xdaq::exception::Exception& e)
+		{
+			__SS__ << "Error transmitting request to FE Supervisor. \n\n" << e.what() << __E__;
+			__COUT_ERR__ << ss.str();
+			xmldoc.addTextElementToData("readData","NotConfigured");
+			return;
+		}
+
 		std::string dataReadResult = rxParameters.getValue("dataResult");
 		__COUT__<< "Data reading result received: " << dataReadResult << std::endl;
 		xmldoc.addTextElementToData("readData",dataReadResult);
