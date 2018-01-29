@@ -677,7 +677,7 @@ Desktop.createDesktop = function(security) {
         if(!_getForeWindow()) return;
         _getForeWindow().isMaximized() ? _getForeWindow().unmaximize(): _getForeWindow().maximize();
         _dashboard.redrawFullScreenButton();
-	_dashboard.redrawFullScreenRefreshButton();
+	_dashboard.redrawRefreshButton();
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
 
@@ -1428,8 +1428,9 @@ Desktop.handleWindowRefresh = function(mouseEvent){
 
 Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
         Debug.log("Refresh Full Screen Window");
-        Desktop.desktop.refreshWindow();
-	Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
+	//Desktop.logout();
+        Desktop.desktop.resetDesktop();
+	//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
         return false;
 
 }

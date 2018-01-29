@@ -374,15 +374,15 @@ else {
                                     		
         }
 
-        this.redrawFullScreenRefreshButton = function() {
-            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the current window'> ↻ </a>";
+        this.redrawRefreshButton = function() {
+            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
 	    var hght = "16px";//_fullScreenBtn.style.height;
 	    _fullScreenRefreshBtn.style.height = hght;//"16px";
 	    console.log(hght);//"16px";
-	    _fullScreenRefreshBtn.style.visibility = "" +
-	         ((Desktop.desktop.getForeWindow() &&
-	                Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
-	    console.log("Redrawing Refresh button in full screen!");
+	    //_fullScreenRefreshBtn.style.visibility = "" +
+	    //((Desktop.desktop.getForeWindow() &&
+	    //          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
+	    
                                         		
         }
 
@@ -579,7 +579,7 @@ else {
 
         _fullScreenRefreshBtn = document.createElement("div");
 		_fullScreenRefreshBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
-        this.redrawFullScreenRefreshButton();
+        this.redrawRefreshButton();
         _fullScreenRefreshBtn.onmouseup = Desktop.handleFullScreenWindowRefresh;
         _topBar.appendChild(_fullScreenRefreshBtn);
         
