@@ -4016,7 +4016,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		catch(err) {return;} //do nothing on errors
 		
 		//else resize el
-		Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
+		//Debug.log("ConfigurationAPI.setPopUpPosition.popupResize");
 
 
 		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;

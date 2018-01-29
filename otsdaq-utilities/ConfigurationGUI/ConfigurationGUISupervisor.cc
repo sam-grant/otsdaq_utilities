@@ -1062,9 +1062,10 @@ try
 	//determine the type of configuration group
 	try
 	{
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap =
-				cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
-						0,0,0,0,0,0, //defaults
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> rootGroupMemberMap;
+
+		cfgMgr->loadConfigurationGroup(rootGroupName,rootGroupKey,
+						0,&rootGroupMemberMap,0,0,0,0,0, //defaults
 						true); //doNotLoadMember
 
 		const std::string& groupType = cfgMgr->getTypeNameOfGroup(rootGroupMemberMap);
@@ -1134,15 +1135,15 @@ try
 
 		affected = false;
 
-		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap =
+		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 				//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
 				//						ConfigurationGroupKey::getFullGroupString(
 				//								group.second.first,
 				//								group.second.second),
 				//								true); //include meta data table
-				cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
-						0,0,0,&groupComment,0,0, //mostly defaults
-						true); //doNotLoadMember
+		cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
+				0,&memberMap,0,0,&groupComment,0,0, //mostly defaults
+				true); //doNotLoadMember
 
 		__COUT__ << "groupComment = " << groupComment << std::endl;
 
@@ -1237,18 +1238,11 @@ try
 		std::string groupComment, groupAuthor, configGroupCreationTime;
 
 		//only same member map if object pointer was passed
-		if(returnMemberMap)
-			*returnMemberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
-						0,0,0,
-						doGetGroupInfo?&groupComment:0,
-						doGetGroupInfo?&groupAuthor:0,
-						doGetGroupInfo?&configGroupCreationTime:0);
-		else
-			cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				0,0,0,
-				doGetGroupInfo?&groupComment:0,
-				doGetGroupInfo?&groupAuthor:0,
-				doGetGroupInfo?&configGroupCreationTime:0);
+		cfgMgr->loadConfigurationGroup(groupName,groupKey,
+								0,returnMemberMap,0,0,
+								doGetGroupInfo?&groupComment:0,
+								doGetGroupInfo?&groupAuthor:0,
+								doGetGroupInfo?&configGroupCreationTime:0);
 
 		if(doGetGroupInfo)
 		{
@@ -3702,8 +3696,8 @@ try
 	try
 	{
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
-		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				false /*doActivate*/,0 /*progressBar*/,0 /*accumulateErrors*/,
+		cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				false /*doActivate*/,&memberMap,0 /*progressBar*/,0 /*accumulateErrors*/,
 				&groupComment, &groupAuthor, &groupCreationTime,
 				false /*doNotLoadMember*/, &groupTypeString);
 
@@ -3714,15 +3708,19 @@ try
 		xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
 		xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
 	}
+	catch(const std::runtime_error& e)
+	{
+		xmldoc.addTextElementToData("Error","Configuration group \"" +
+				groupName + "(" + groupKey.toString() + ")" +
+				"\" members can not be loaded!\n\n" + e.what());
+		//return;
+	}
 	catch(...)
 	{
-//		__COUT__ << "Error occurred loading group, so giving up on comments." <<
-//				std::endl;
-//		commentsLoaded = false;
 		xmldoc.addTextElementToData("Error","Configuration group \"" +
-				ConfigurationGroupKey::getFullGroupString(groupName,groupKey) +
-				"\" can not be retrieved!");
-		return;
+				groupName + "(" + groupKey.toString() + ")" +
+				"\" members can not be loaded!");
+		//return;
 	}
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
@@ -5344,8 +5342,8 @@ try
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 	try
 	{
-		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				0,0,0,0,0,0, //defaults
+		cfgMgr->loadConfigurationGroup(groupName,groupKey,
+				0,&memberMap,0,0,0,0,0, //defaults
 				true); //doNotLoadMember
 		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
 		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
@@ -5515,7 +5513,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument& xmldoc,
 		try
 		{
 			cfgMgr->loadConfigurationGroup(groupName,ConfigurationGroupKey(groupKey),
-					0,0,0,&groupComment,0,0, //mostly defaults
+					0,0,0,0,&groupComment,0,0, //mostly defaults
 					true /*doNotLoadMembers*/,&groupType);
 		}
 		catch(...)
@@ -5786,7 +5784,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 					try
 					{
 						cfgMgr->loadConfigurationGroup(groupName,keyInSet,
-								0,0,0,&groupComment,0,0, //mostly defaults
+								0,0,0,0,&groupComment,0,0, //mostly defaults
 								true /*doNotLoadMembers*/,&groupTypeString);
 					}
 					catch(...)
