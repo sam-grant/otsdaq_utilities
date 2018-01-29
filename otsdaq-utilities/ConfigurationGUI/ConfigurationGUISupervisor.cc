@@ -1017,6 +1017,7 @@ throw (xgi::exception::Exception)
 				type.second.first);
 		xmldoc.addTextElementToData(type.first + "-ActiveGroupKey",
 				type.second.second.toString());
+		__COUT__ << "ActiveGroup " << type.first << " " << type.second.first << "(" << type.second.second << ")" << __E__;
 	}
 
 	//always add version tracking bool
@@ -4114,10 +4115,18 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 				versionReverseIterator != allCfgInfo.at(configName).versions_.rend();++versionReverseIterator)
 			{
 				__COUT__ << "Versions in reverse order " << *versionReverseIterator << std::endl;
-				cfgMgr->getVersionedConfigurationByName(configName,*versionReverseIterator); //load to cache
+				try
+				{
+					cfgMgr->getVersionedConfigurationByName(configName,*versionReverseIterator); //load to cache
+				}
+				catch(const std::runtime_error& e)
+				{
+					__COUT__ << "Error loadiing historical version, but ignoring: " << e.what() << __E__;
+				}
 			}
 		}
 
+		__COUT__ << "Checking duplicate..." << std::endl;
 
 
 		duplicateVersion = config->checkForDuplicate(temporaryModifiedVersion,
