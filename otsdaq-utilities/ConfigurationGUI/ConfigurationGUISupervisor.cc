@@ -5713,7 +5713,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 			//__COUT__ << "Latest Config group " << groupString << " := " << groupName <<
 			//		"(" << groupKey << ")" << std::endl;
 
-//			parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+ 			parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 //
 //			std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
 //			//try to determine type, dont report errors, just mark "Invalid"
@@ -5772,30 +5772,35 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 			xmldoc.addTextElementToData("ConfigurationGroupAuthor", groupInfo.second.latestKeyGroupAuthor_);
 			xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupInfo.second.latestKeyGroupCreationTime_);
 
-			//TODO -- make loadingHistoricalInfo an input parameter
-			bool loadingHistoricalInfo = false;
-			if(loadingHistoricalInfo)
+			if(returnMembers)
 			{
 				xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
 
-				groupComment = ""; //clear just in case failure
-				try
+				//TODO -- make loadingHistoricalInfo an input parameter
+				bool loadingHistoricalInfo = false;
+				if(loadingHistoricalInfo)
 				{
-					cfgMgr->loadConfigurationGroup(groupName,keyInSet,
-							0,0,0,&groupComment,0,0, //mostly defaults
-							true /*doNotLoadMembers*/,&groupTypeString);
-				}
-				catch(...)
-				{
-					groupTypeString = "Invalid";
-					__COUT_WARN__ << "Failed to load group '" << groupName << "(" << keyInSet <<
-							")' to extract group comment and type." << std::endl;
-				}
 
-				xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
-				xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
-				xmldoc.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
-				xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
+
+					groupComment = ""; //clear just in case failure
+					try
+					{
+						cfgMgr->loadConfigurationGroup(groupName,keyInSet,
+								0,0,0,&groupComment,0,0, //mostly defaults
+								true /*doNotLoadMembers*/,&groupTypeString);
+					}
+					catch(...)
+					{
+						groupTypeString = "Invalid";
+						__COUT_WARN__ << "Failed to load group '" << groupName << "(" << keyInSet <<
+								")' to extract group comment and type." << std::endl;
+					}
+
+					xmldoc.addTextElementToData("ConfigurationGroupType", groupTypeString);
+					xmldoc.addTextElementToData("ConfigurationGroupComment", groupComment);
+					xmldoc.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
+					xmldoc.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
+				}
 			}
 
 		} //end other key loop
