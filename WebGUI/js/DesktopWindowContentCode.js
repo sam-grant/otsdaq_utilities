@@ -232,6 +232,7 @@ DesktopContent.init = function() {
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
 //	if using name, then (mostly) ignore index
+//	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
 DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
@@ -304,8 +305,13 @@ DesktopContent.getDesktopWindowParameter = function(index, name) {
 		win = window;
 	else 
 		win = win.parent.window;
-									  
-	var params = ((win.location.search.substr(1))).split('&');
+									 
+	//fix/standardize search string
+	var searchStr = win.location.search.substr(1);
+	var i = searchStr.indexOf("=securityType");
+	if(i > 0) searchStr = searchStr.substr(0,i) + '&' + searchStr.substr(i+1);
+	
+	var params = ((searchStr)).split('&');	
 	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
