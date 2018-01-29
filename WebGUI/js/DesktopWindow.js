@@ -238,14 +238,25 @@ else {
 		this.maximize = function() {
 		    _isMinimized = false; 
 		    //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
-		    _isMaximized = !_isMaximized;
+		    _isMaximized = true;//!_isMaximized;
+		    if(_isMaximized) //make sure is visible
+			this.windiv.style.display = "inline";
+		    this.setWindowSizeAndPosition(_x+10,_y,_w,_h);
+		    window.parent.document.title= _name;
+		    console.log(document.title, _name, "Maximize()");
+			
+		}
+
+		this.unmaximize = function() {
+		  
+		    _isMaximized = false;
 		    if(_isMaximized) //make sure is visible
 			this.windiv.style.display = "inline";
 		    this.setWindowSizeAndPosition(_x,_y,_w,_h);
-		    window.parent.document.title= _name;
-		    console.log(document.title, _name);
-			
-        }
+		    window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+
+
+		}
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
@@ -255,8 +266,8 @@ else {
 			window.parent.document.title = _name;
 		    else
 			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
-		    _isMinimized = !_isMinimized;
-		    this.windiv.style.display = _isMinimized?"none":"inline";
+		    _isMinimized = true; //!_isMinimized;
+		    this.windiv.style.display = "none";//_isMinimized?"none":"inline";
 		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
 		}
 

@@ -228,13 +228,13 @@ else {
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
 					win = Desktop.desktop.getWindowByIndex(i);
 					win.unminimize();
+					if (win.isMaximized())
+					    Desktop.desktop.setForeWindow(win);
 
 				}
 				//Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));
 		}	
-	        var _windowDashboardToggleWindowsButtonLabel = function () {
 
-	        }
 
 
 	        var _windowDashboardToggleWindows = function () {
@@ -376,8 +376,9 @@ else {
 
         this.redrawFullScreenRefreshButton = function() {
             _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the current window'> ↻ </a>";
-	    _fullScreenRefreshBtn.style.height = "16px";
-	    console.log(_fullScreenRefreshBtn.style.height);//"16px";
+	    var hght = "16px";//_fullScreenBtn.style.height;
+	    _fullScreenRefreshBtn.style.height = hght;//"16px";
+	    console.log(hght);//"16px";
 	    _fullScreenRefreshBtn.style.visibility = "" +
 	         ((Desktop.desktop.getForeWindow() &&
 	                Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
