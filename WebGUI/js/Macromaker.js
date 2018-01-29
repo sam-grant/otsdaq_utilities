@@ -200,11 +200,10 @@
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
 	    	listoffecs.innerHTML = "<p class='red'>" +
-				"<br>No Front-End interfaces were found. <br><br>Once FE interfaces are " +
-				"added, " +
+				"<br>No Front-End interfaces were found. <br><br>Otsdaq must be configured with Front-ends, then " +				
 				"click " +
 				"<a href='#' onclick='initLite(); return false;' >refresh</a>" +
-				" in the upper right of Macro Maker.</p>";
+				" (also in the upper-right of Macro Maker).</p>";
 	    else
 	    {
 			var w = window.innerWidth;
