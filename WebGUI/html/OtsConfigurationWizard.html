@@ -51,14 +51,15 @@
 
 
 			        if (notSecure) { 
-    		                      var msg = "<b>This Wizard is not secure!</b>\n" +
-    			                        "Welcome to ots! The ots configuration wizard controls many sensitive paramters for your DAQ sysetem" +
-			                        " as you will soon come to see. This page is secured by an authentication sequence to make sure that no unauthorized access occurs. " + 
-			                        "The sequence is only displayed on the console and never transmitted elsewhere to ensure maximum security. Currently, the authentication is a " +
-			                        "four character default sequence. If you would like to make your ots configuration wizard more secure, you can click " +
+    		                      var msg = "<b>This Wizard is not as secure as it could be!</b>\n" +
+    			                        "\nWe see that you are using the default security sequence for accessing your otsdaq Wiz mode." +
+										"\n\nIn Wiz mode, many sensitive paramters for your DAQ system can be changed, so you may want it to be more secure. " +
+			                        "This page is secured by an authentication sequence to help avoid unauthorized access. " + 
+			                        "The sequence is only displayed at the Linux console and is never transmitted by your otsdaq server for security." +
+			                        "\n\n If you would like to make your Wiz mode more secure, you can click " +
                                                 "<a href='#' onclick='DesktopContent.setSecurityOn(true)'>here</a>" +
-			                        " to have a new, more complex sequence generated at each runetime or you can set up this feature later by " +
-			                        "visiting the 'Edit Security' app in the future."; 
+			                        " to enable a longer, randomly generated sequence generated at each runtime or you can set up this feature any time by " +
+			                        "visiting the 'Edit Security' app on the Wiz mode desktop."; 
 			             //Debug.log(msg, Debug.INFO_PRIORITY);
                    	             DesktopContent.tooltip("Security Alert",msg);
 			        }

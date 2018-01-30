@@ -185,10 +185,10 @@
 		block8El.style.top =  b8[1] + "px";
 		block8El.style.height =  b8[3] + "px";
 		
-		historybox.style.height =  h*0.88 + "px";
-		sequencebox.style.height =  h*0.88 + "px";
-		privateMacroBox.style.height =  h*0.38 + "px";
-		publicMacroBox.style.height =  h*0.38 + "px";
+		historybox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
+		sequencebox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
+		privateMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
+		publicMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
 		
 		initLite();
 	}

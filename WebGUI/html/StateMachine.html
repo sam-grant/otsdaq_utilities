@@ -1128,16 +1128,16 @@
             	{            		
             		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
             		
-            		//show refresh link            		
-            		var str = "";
-            		str += "<div style='margin:10px'>";
-            		str += "Did the server crash? If it's back, try a ";
-            		str += "<a onclick='_transitionProgress = -1; " + 
-					"window.clearInterval(_transitionTimer);" +
-					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-						">Refresh</a>.";
-            		str += "</div>";
-            		_blackoutReveal.innerHTML = str;
+//            		//show refresh link            		
+//            		var str = "";
+//            		str += "<div style='margin:10px'>";
+//            		str += "Did the server crash? If it's back, try a ";
+//            		str += "<a onclick='_transitionProgress = -1; " + 
+//					"window.clearInterval(_transitionTimer);" +
+//					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//						">Refresh</a>.";
+//            		str += "</div>";
+//            		_blackoutReveal.innerHTML = str;
             		return;
             	}
             	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
@@ -1171,16 +1171,16 @@
 			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
 			    	_transitionProgress = progress;
 			    	
-			    	//show refresh link            		
-			    	var str = "";
-			    	str += "<div style='margin:10px'>";
-
-			    	str += "<a onclick='_transitionProgress = -1; " + 
-			    			"window.clearInterval(_transitionTimer);" +
-							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-							">Refresh</a>";
-			    	str += "</div>";
-			    	_blackoutReveal.innerHTML = str;
+//			    	//show refresh link            		
+//			    	var str = "";
+//			    	str += "<div style='margin:10px'>";
+//
+//			    	str += "<a onclick='_transitionProgress = -1; " + 
+//			    			"window.clearInterval(_transitionTimer);" +
+//							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//							">Refresh</a>";
+//			    	str += "</div>";
+//			    	_blackoutReveal.innerHTML = str;
 			    }
 
 		    	_progressBar.style.width = _transitionProgress + "%";
@@ -1856,7 +1856,10 @@
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
 			function drawTransition(stateIndex, x, y, startx, starty) {				
-				var isSelected = _selectedTransition != -1 && stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
+				var isSelected = _selectedTransition != -1 && 
+						_currStateTransArr[_selectedTransition] &&
+						_transitions[_currStateTransArr[_selectedTransition]] &&
+						stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
                 var mag = Math.sqrt(x*x+y*y);
                 var up = [x/mag,y/mag];
                 var lt = [y/mag,-x/mag];
@@ -2218,10 +2221,10 @@
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
 </div>
-<!--	FIXME comeback to defining a proper refresh...	-->
+<!--	FIXME comeback to defining a proper refresh...	
 <div id='refresh-box'>
 	<a onclick='refreshFSM()'>Refresh</a>
-</div>
+</div>-->
 		
 
 <div id='extras-box'>

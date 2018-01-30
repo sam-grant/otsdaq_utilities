@@ -117,7 +117,7 @@ else {
 			{
 		    	Debug.log("OtsWizardConfiguration");
 		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.security, iconRequestHandler);
-	      		_permissions = 1;
+	      		if(!_permissions) _permissions = 1;
 		    	return;
 			}
 	      	 
@@ -182,7 +182,7 @@ else {
            			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2]|0,iconArray[i+4],iconArray[i+6]);       
       		}
      		
-     		_permissions = 0;
+     		//_permissions = 0; //RAR why were we setting to 0? this messes up multiple asyn reset requests
      		
       	}
       	
@@ -510,6 +510,8 @@ else {
       		Debug.log("_openFolderPath = " + _openFolderPath);
       		console.log(_openFolderPtr);
       	
+      		if(!_openFolderPtr) {Debug.log("Should never happen??!"); return;}//throw("What");
+      		//if(!_openFolderPtr) this.resetWithPermissions = function(_permissions);
       		
       		var noMultiSelect = true; // true or false (false for multiselect functionality) 
       		var maintainPreviousSelections = false; //true or false (true means redraw select box using the js array selects left over from the last time this box was drawn using the same element id)
@@ -599,12 +601,19 @@ else {
 					"Desktop.desktop.icons.mouseUpFolderContents");
       		MultiSelectBox.initMySelectBoxes(!maintainPreviousSelections);
       	}
-
+      	
       	//this.closeFolder ~~
       	this.closeFolder = function() {
       		//Debug.log("Close folder");
-      		if(_openFolderElement)
-      			_openFolderElement.parentNode.parentNode.removeChild(_openFolderElement.parentNode);
+      		try
+      		{
+				if(_openFolderElement)
+					_openFolderElement.parentNode.parentNode.removeChild(_openFolderElement.parentNode);
+      		}
+      		catch(e)
+      		{
+      			Debug.log("Ignoring close folder error: " + e);
+      		}
       		_openFolderElement = 0;
       		_openFolderPath = ""; //clear
       		_openFolderPtr = undefined; //clear
