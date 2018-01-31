@@ -681,6 +681,11 @@ Desktop.createDesktop = function(security) {
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
 
+	this.redrawFullScreenButtons = function() {
+	    _dashboard.redrawFullScreenButton();
+	    _dashboard.redrawRefreshButton();
+	}
+
 	this.refreshWindowById = function(id) {
 	    var win = this.getWindowById(id);
 	    if(win == -1) return -1;

@@ -1791,8 +1791,12 @@
 			{
 				configName = configNames[i].getAttribute("value");
 				version = configVersions[i].getAttribute("value");
-				configComment = configComments[i].getAttribute("value");
-				
+				if (configComments[i])			
+				    configComment = configComments[i].getAttribute("value");
+				else
+				    configComment = "UNKOWN";
+
+
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 						groupKey + "\\\",undefined,\\\"anchorTag-" + 
 						configName + "\\\");"; 
@@ -11629,7 +11633,9 @@
 					if(err) 
 					{					
 						Debug.log(err,Debug.HIGH_PRIORITY);
-						el.innerHTML = str;
+
+						localFinishDialog();
+						
 						return;
 					}
 
@@ -11722,9 +11728,14 @@
 
 						//increase height each time a group check is added
 						h += gh;
-						el.style.height = h + "px";						
+					
 					}
 
+					localFinishDialog();
+
+					function localFinishDialog()
+					{
+						el.style.height = h + "px";						
 					str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
 
 
@@ -11745,6 +11756,7 @@
 							"(Optionally, activate new group and assign system alias)" +
 							"'/>";
 					el.innerHTML = str;
+					}
 
 					//handle default dropdown selections for group alias
 					for(var i=0;i<1;++i)//groups.length;++i) //only one affected group, the trivial one

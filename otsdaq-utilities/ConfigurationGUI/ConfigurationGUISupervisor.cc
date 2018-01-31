@@ -3663,7 +3663,14 @@ try
 
 	xmldoc.addTextElementToData("ConfigurationGroupName", groupName);
 	xmldoc.addTextElementToData("ConfigurationGroupKey", groupKey.toString());
+
+	//add all other sorted keys for this groupName
+	for(auto& keyInOrder:sortedKeys)
+		xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", keyInOrder.toString());
+
+
 	parentEl = xmldoc.addTextElementToData("ConfigurationGroupMembers", "");
+
 
 	//	get specific group with key
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
@@ -3710,16 +3717,20 @@ try
 	}
 	catch(const std::runtime_error& e)
 	{
-		xmldoc.addTextElementToData("Error","Configuration group \"" +
+	  __SS__ <<"Configuration group \"" +
 				groupName + "(" + groupKey.toString() + ")" +
-				"\" members can not be loaded!\n\n" + e.what());
+	    "\" members can not be loaded!\n\n" + e.what();
+	  __COUT_ERR__ << ss.str();
+	    xmldoc.addTextElementToData("Error",ss.str());
 		//return;
 	}
 	catch(...)
 	{
-		xmldoc.addTextElementToData("Error","Configuration group \"" +
+	  __SS__ << "Configuration group \"" +
 				groupName + "(" + groupKey.toString() + ")" +
-				"\" members can not be loaded!");
+	    "\" members can not be loaded!" << __E__;
+	  __COUT_ERR__ << ss.str();
+	  xmldoc.addTextElementToData("Error",ss.str());
 		//return;
 	}
 
@@ -3728,25 +3739,14 @@ try
 
 	__COUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
 
+
+
+	//Seperate loop to get name and version
 	for(auto& memberPair:memberMap)
-	{
-		//__COUT__ << "\tMember config " << memberPair.first << ":" <<
-		//		memberPair.second << std::endl;
-
+	  {
 		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
-		//if(commentsLoaded)
-			xmldoc.addTextElementToParent("MemberComment",
-					allCfgInfo.at(memberPair.first).configurationPtr_->getView().getComment(),
-					parentEl);
-		//else
-		//	xmldoc.addTextElementToParent("MemberComment", "", parentEl);
-
-
-		__COUT__ << "\tMember config " << memberPair.first << ":" <<
-				memberPair.second << std::endl;
-
-		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
-
+	        configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+	
 		it = allCfgInfo.find(memberPair.first);
 		if(it == allCfgInfo.end())
 		{
@@ -3756,8 +3756,48 @@ try
 			return;
 		}
 
-		//include aliases for this table
 		if(versionAliases.find(it->first) != versionAliases.end())
+		  for (auto& aliasVersion:versionAliases[it->first])
+		    xmldoc.addTextElementToParent("ConfigurationExistingVersion",
+						  ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
+						  configEl);
+		
+		for (auto& version:it->second.versions_)
+		  //if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016 (might as well show all versions in list to avoid user confusion)
+		  //else
+		  xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
+	  }
+	//Seperate loop just for getting the Member Comment
+	for(auto& memberPair:memberMap)
+	{
+		//__COUT__ << "\tMember config " << memberPair.first << ":" <<
+		//		memberPair.second << std::endl;
+
+		//xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
+		//if(commentsLoaded)
+			xmldoc.addTextElementToParent("MemberComment",
+					allCfgInfo.at(memberPair.first).configurationPtr_->getView().getComment(),
+					parentEl);
+		//else
+		//	xmldoc.addTextElementToParent("MemberComment", "", parentEl);
+
+
+			//	__COUT__ << "\tMember config " << memberPair.first << ":" <<
+			//	memberPair.second << std::endl;
+
+		//configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+
+		/*	it = allCfgInfo.find(memberPair.first);
+		if(it == allCfgInfo.end())
+		{
+			xmldoc.addTextElementToData("Error","Configuration \"" +
+					memberPair.first +
+					"\" can not be retrieved!");
+			return;
+		}
+		*/
+		//include aliases for this table
+		/*if(versionAliases.find(it->first) != versionAliases.end())
 			for (auto& aliasVersion:versionAliases[it->first])
 				xmldoc.addTextElementToParent("ConfigurationExistingVersion",
 						ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
@@ -3767,12 +3807,9 @@ try
 			//if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016 (might as well show all versions in list to avoid user confusion)
 			//else
 			xmldoc.addTextElementToParent("ConfigurationExistingVersion", version.toString(), configEl);
-
+		*/
 	}
 
-	//add all other sorted keys for this groupName
-	for(auto& keyInOrder:sortedKeys)
-		xmldoc.addTextElementToData("HistoricalConfigurationGroupKey", keyInOrder.toString());
 
 	return;
 }

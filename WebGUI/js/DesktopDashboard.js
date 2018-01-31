@@ -195,8 +195,9 @@ else {
 							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
-					if(win.isMinimized()) win.minimize();
-					if(win.isMaximized()) win.maximize();
+					if(win.isMinimized()) win.unminimize();
+					if(win.isMaximized()) win.unmaximize();
+					Desktop.desktop.redrawFullScreenButtons();
 					
 					xx += ww;
 					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
