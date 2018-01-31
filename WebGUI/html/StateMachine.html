@@ -2056,6 +2056,8 @@
 			function getTransitionDrawingColor(i, isBorder, isSelected) {				
 				if(isSelected || 
 						(isSelected === undefined && _selectedTransition != -1 && 
+								_currStateTransArr[_selectedTransition] &&
+								_transitions[_currStateTransArr[_selectedTransition]] &&
 						_transitions[_currStateTransArr[_selectedTransition]][1] == i))
 					return isBorder?_ARROW_SEL_BORDER_COLOR:_ARROW_SEL_COLOR;
 				else 
