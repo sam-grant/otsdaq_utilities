@@ -884,7 +884,7 @@
 					str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();" +
-							"setCaretPosition(this,0,this.value.length);' " +
+							"if(this.value == 'My New Choice') setCaretPosition(this,0,this.value.length);' " +
 							"style='width:220px' />";
 					str += "</td><td style='white-space:nowrap' >";
 					str += "<a class='fixedChoiceAdd' onclick='addFixedChoice(" + c + "); return false;' " +
