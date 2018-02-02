@@ -246,6 +246,9 @@ RecordWiz.createWiz = function(doneHandler) {
 				function(retObj)
 				{
 			_systemGroups = retObj;
+			console.log("_systemGroups",_systemGroups);
+			console.log("ConfigurationAPI._activeGroups",ConfigurationAPI._activeGroups);
+			
 
 			// get existing records
 			ConfigurationAPI.getSubsetRecords(
@@ -490,7 +493,8 @@ RecordWiz.createWiz = function(doneHandler) {
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "appName",	
-									"value":	(paramObj["appName"]?paramObj["appName"]:createNewAppName()),
+									"value":	(paramObj["appName"]?paramObj["appName"]:
+											createNewRecordName(getApp(),paramObj["allApps"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
 					str += htmlOpen("input",
@@ -542,10 +546,10 @@ RecordWiz.createWiz = function(doneHandler) {
 					// existing addresses
 					str += htmlClearDiv();
 					str += "Here is a dropdown of all existing XDAQ Applications " + 
-							" to help you in creating standardized addresses (Note: shown above are " +
-							"only of class " + getAppClass() + " and in the chosen context '" + 
+							" to help you in creating standardized names (Note: shown above are " +
+							"only apps with class " + getAppClass() + " and in the chosen context '" + 
 							_paramObjMap[_STEP_WHICH_CONTEXT]["contextName"] + 
-							"':";
+							"'):";
 					
 					str += htmlClearDiv();
 					str += htmlOpen("select",
@@ -895,7 +899,8 @@ RecordWiz.createWiz = function(doneHandler) {
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
 				str += "<tr><td><b>Active Context:</b></td><td>";
-				str += _systemGroups.activeGroups.Context.groupName + " (" + _systemGroups.activeGroups.Context.groupKey + ")";
+				str += ConfigurationAPI._activeGroups.Context.groupName + " (" + ConfigurationAPI._activeGroups.Context.groupKey + ")";
+						//_systemGroups.activeGroups.Context.groupName + " (" + _systemGroups.activeGroups.Context.groupKey + ")";
 
 				str += htmlOpen("div",
 						{
@@ -2181,8 +2186,13 @@ RecordWiz.createWiz = function(doneHandler) {
 										function(allApps)
 										{
 									Debug.log("all apps found = " + allApps.length);
+
 									console.log(allApps);
-									newParamObj["allApps"] = allApps;
+
+									if(!_paramObjMap[_STEP_WHICH_APP]) _paramObjMap[_STEP_WHICH_APP] = {}; //init if needed
+									
+									//store all apps for later
+									_paramObjMap[_STEP_WHICH_APP]["allApps"] = allApps;
 									
 									// get existing apps of appClass 
 									ConfigurationAPI.getSubsetRecords( ////////////////////////////////
@@ -2205,15 +2215,14 @@ RecordWiz.createWiz = function(doneHandler) {
 											var appName = createNewRecordName(getApp(),allApps);
 											
 											//store app name for later
-											if(!_paramObjMap[_STEP_WHICH_APP]) _paramObjMap[_STEP_WHICH_APP] = {}; //init if needed
 											_paramObjMap[_STEP_WHICH_APP]["appName"] = appName;
 											
 											localCreateApp(appName);							
 										}
 										else //if apps in context, ask if adding to existing
 										{
-											newParamObj["apps"] = records;
-											showPrompt(nextStepIndex,newParamObj);
+											_paramObjMap[_STEP_WHICH_APP]["apps"] = records;
+											showPrompt(_STEP_WHICH_APP);
 										}
 
 											}, //end type class getSubsetRecords handler
