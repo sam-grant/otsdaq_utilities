@@ -223,10 +223,27 @@ throw (xgi::exception::Exception)
 	//
 	if(Command == "getRawData")
 	{
+	  __COUT__ << __E__;
+	  try{
 		//TODO -- add timestamp, so we know if data is new
-		xmldoc.addTextElementToData("rawData",
+	      __COUT__ << "Getting Raw data and converting to binary string" << __E__;
+		xmldoc.addBinaryStringToData("rawData",
 				theDataManager_->getRawData());
+		__COUT__ << __E__;
+	  }
+	  catch(std::exception const& e){
+	    __COUT__ << "ERROR! Exception while getting raw data. Incoming exception data..." << __E__;
+	    __COUT__ << e.what() << __E__;
+    	    __COUT__ << "End Exception Data" << __E__;
+
+	  }
+	  catch(...){
+		__COUT__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+		__COUT_INFO__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+	  }
 	}
+		//return xml doc holding server response
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
 }
 
 
