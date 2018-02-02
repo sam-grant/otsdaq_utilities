@@ -501,6 +501,7 @@
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
                         	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
+                        	if(aliasCommentArr[i])
                         	_aliasTranslationMetaDataMap[alias] = [
 																   aliasCommentArr[i].getAttribute('value'),
 																   aliasAuthorArr[i].getAttribute('value'),
@@ -1503,6 +1504,8 @@
                 var x = _HUD_X + m;
                 var y = _HUD_Y + m;
                 
+                try
+                {
                 if(_selectedTransition != -1)
                 {
 	                //_context.fillText("Click to " + _transitionActions[_currStateTransArr[_selectedTransition]], x, y);
@@ -1563,6 +1566,11 @@
 	                _context.fillText("The current state is ", x, y);
 	                y += f;
 	                _context.fillText(_stateNames[_currState], x, y);
+                }
+                }
+                catch(e)
+                {
+                	Debug.log("Ignoring error: " + e);
                 }
                 	
 				_context.restore(); //matching save/restore 1
