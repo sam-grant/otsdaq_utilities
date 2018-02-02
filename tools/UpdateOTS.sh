@@ -336,6 +336,6 @@ echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
-echo -e "UpdateOTS.sh [${LINENO}]  \t Awesome script done"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
