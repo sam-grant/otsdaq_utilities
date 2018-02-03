@@ -74,6 +74,8 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.hasClass(elem,class)
 //	ConfigurationAPI.extractActiveGroups(req)
 
+//"public" members:
+ConfigurationAPI._activeGroups = {}; //to fill, call ConfigurationAPI.getActiveGroups() or ConfigurationAPI.extractActiveGroups()
 
 //"public" constants:
 ConfigurationAPI._DEFAULT_COMMENT = "No comment.";
@@ -141,30 +143,43 @@ ConfigurationAPI.getActiveGroups = function(responseHandler)
 	); //end of getActiveConfigGroups handler
 }
 ConfigurationAPI.extractActiveGroups = function(req)
-{	
-	var activeConfigGroups = [
-							  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
-							  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
-							  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
-							  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
-							  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
-							  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
-							  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
-							  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
-	var i=0;
-	var retObj = {};		
-	retObj.Context = {};
-	retObj.Context.groupName = activeConfigGroups[i++];
-	retObj.Context.groupKey = activeConfigGroups[i++];
-	retObj.Backbone = {};
-	retObj.Backbone.groupName = activeConfigGroups[i++];
-	retObj.Backbone.groupKey = activeConfigGroups[i++];
-	retObj.Iterate = {};
-	retObj.Iterate.groupName = activeConfigGroups[i++];
-	retObj.Iterate.groupKey = activeConfigGroups[i++];
-	retObj.Configuration = {};
-	retObj.Configuration.groupName = activeConfigGroups[i++];
-	retObj.Configuration.groupKey = activeConfigGroups[i++];
+{
+	//can call this at almost all API handlers
+	try
+	{
+		var activeConfigGroups = [
+								  DesktopContent.getXMLValue(req,"Context-ActiveGroupName"),
+								  DesktopContent.getXMLValue(req,"Context-ActiveGroupKey"),
+								  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupName"),
+								  DesktopContent.getXMLValue(req,"Backbone-ActiveGroupKey"),
+								  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupName"),
+								  DesktopContent.getXMLValue(req,"Iterate-ActiveGroupKey"),
+								  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupName"),
+								  DesktopContent.getXMLValue(req,"Configuration-ActiveGroupKey")];
+		var i=0;
+		var retObj = {};		
+		retObj.Context = {};
+		retObj.Context.groupName = activeConfigGroups[i++];
+		retObj.Context.groupKey = activeConfigGroups[i++];
+		retObj.Backbone = {};
+		retObj.Backbone.groupName = activeConfigGroups[i++];
+		retObj.Backbone.groupKey = activeConfigGroups[i++];
+		retObj.Iterate = {};
+		retObj.Iterate.groupName = activeConfigGroups[i++];
+		retObj.Iterate.groupKey = activeConfigGroups[i++];
+		retObj.Configuration = {};
+		retObj.Configuration.groupName = activeConfigGroups[i++];
+		retObj.Configuration.groupKey = activeConfigGroups[i++];
+	}
+	catch(e)
+	{
+		Debug.log("Error extracting active groups: " + e);
+		return undefined;
+	}
+	
+	ConfigurationAPI._activeGroups = {};
+	ConfigurationAPI._activeGroups = retObj;
+	
 	return retObj;
 }
 
@@ -365,6 +380,8 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
+		ConfigurationAPI.extractActiveGroups(req);
+		
 		var records = [];
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
@@ -848,9 +865,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
-		
-		var modifiedTables = [];
-		
+				
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
@@ -863,6 +878,8 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
 		var tableVersion;
+		
+		modifiedTables = [];
 		
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
@@ -5173,7 +5190,6 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 			function(req)
 			{
 
-		var modifiedTables = [];
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
@@ -5190,6 +5206,8 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
 		var tableVersion;
+		
+		modifiedTables = [];
 
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
@@ -5256,7 +5274,6 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 			function(req)
 			{
 
-		var modifiedTables = [];
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
@@ -5273,6 +5290,8 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
 		var tableVersion;
 
+		modifiedTables = [];
+		
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
 		{

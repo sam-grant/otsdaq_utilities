@@ -52,6 +52,26 @@ Debug.BROWSER_TYPE = 0;
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
 {
+	try
+	{
+		//load dialog fonts
+		Debug.FontInconsolata = new FontFace('Inconsolata', 'url(/WebPath/fonts/inconsolata/Inconsolata-Regular.ttf)');
+		document.fonts.add(Debug.FontInconsolata);
+		Debug.FontComfortaa = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Regular.ttf)');
+		document.fonts.add(Debug.Comfortaa);
+		Debug.FontInconsolataBold = new FontFace('Inconsolata', 'url(/WebPath/fonts/inconsolata/Inconsolata-Bold.ttf)');
+		document.fonts.add(Debug.FontInconsolataBold);
+		Debug.FontComfortaaBold = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Bold.ttf)');
+		document.fonts.add(Debug.FontComfortaaBold);
+		Debug.FontComfortaaLight = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Light.ttf)');
+		document.fonts.add(Debug.FontComfortaaLight);
+	}
+	catch(e)
+	{
+		console.log("Ignoring font errors: " + e);
+	}
+	
+	
 	if (Debug.simple)
 	{
 		//If want default console.log use this:

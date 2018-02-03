@@ -55,11 +55,20 @@ void VisualDataManager::resume(void)
 //========================================================================================================================
 void VisualDataManager::start(std::string runNumber)
 {
+	__COUT__ << "Start!" << __E__;
+	
 	theLiveDQMHistos_ = NULL;
 	theRawDataConsumer_ = NULL;
 
 	DataManager::start(runNumber);
-	for(const auto& buffer: theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren())
+	
+	
+	auto buffers = theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren();
+	
+	__COUT__ << "Buffer count " << buffers.size() << __E__;
+	
+	
+	for(const auto& buffer:buffers)
 	{
 		__COUT__ << "Data Buffer Name: "<< buffer.first << std::endl;
 		if(buffer.second.getNode(ViewColumnInfo::COL_NAME_STATUS).getValue<bool>())
@@ -74,16 +83,23 @@ void VisualDataManager::start(std::string runNumber)
 						&& (bufferConfiguration.second.getNode("ProcessorType").getValue<std::string>() == "Consumer")
 				)
 				{
+						__COUT__ << "Consumer Plugin Type = " << bufferConfiguration.second.getNode("ProcessorPluginName") << __E__;
+						
 						for(const auto& itConsumer: buffers_[buffer.first].consumers_)
 						{
-							std::cout << __PRETTY_FUNCTION__ << "CONSUMER PROCESSOR: " << itConsumer->getProcessorID() << std::endl;
+							__COUT__ << "CONSUMER PROCESSOR: " << itConsumer->getProcessorID() << std::endl;
 							if(itConsumer->getProcessorID() == bufferConfiguration.second.getNode("ProcessorUID").getValue<std::string>())
 							{
-								std::cout << __PRETTY_FUNCTION__ << "CONSUMER: " << itConsumer->getProcessorID() << std::endl;
+								__COUT__ << "CONSUMER: " << itConsumer->getProcessorID() << std::endl;
 
 								try
 								{
+									__COUT__ << "Trying for DQMHistosConsumerBase." << __E__;
 									theLiveDQMHistos_ = dynamic_cast<DQMHistosConsumerBase*>(itConsumer.get());
+									
+									
+									__COUT__ << "Did we succeed? " << theLiveDQMHistos_ <<
+											__E__;
 								}
 								catch(...){} //ignore failures
 
@@ -100,7 +116,14 @@ void VisualDataManager::start(std::string runNumber)
 									__COUT__ << "Did we succeed? " << theRawDataConsumer_ <<
 											__E__;
 								}
-								//static_cast<DQMHistosConsumerBase*>(itConsumer.get());
+								
+								
+								if(!theLiveDQMHistos_ && !theRawDataConsumer_)
+								{
+								  __SS__ << "No valid visualizer consumer!" << __E__;
+								  __COUT_ERR__ << ss.str();
+								  throw std::runtime_error(ss.str());
+								}
 							}
 						}
 					}
@@ -143,7 +166,9 @@ DQMHistosBase& VisualDataManager::getFileDQMHistos(void)
 //========================================================================================================================
 const std::string&	 VisualDataManager::getRawData(void)
 {
-	return theRawDataConsumer_->getLastRawDataBuffer();
+  //__COUT__ << __E__;
+  
+  return theRawDataConsumer_->getLastRawDataBuffer();
 }
 
 
