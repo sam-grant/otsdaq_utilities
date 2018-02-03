@@ -545,7 +545,7 @@ Desktop.createDesktop = function(security) {
 		}
 		else if(name == "Edit User Data") {
 		    window_width  = 730;
-		    window_height = 410;
+		    window_height = 730;
 		}
 		else {
 		    window_width  = _defaultWidth;
@@ -692,7 +692,8 @@ Desktop.createDesktop = function(security) {
 
 	    this.setForeWindow(win);
 	    this.refreshWindow();
-    }
+            console.log("Finished refreshWindow() " + id);
+  	  }
 
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
@@ -858,6 +859,17 @@ Desktop.createDesktop = function(security) {
 		//				_checkMailboxes();
 		//				Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
 		//}
+	}
+
+	this.refreshDesktop = function() {
+
+
+		for(var i=0; i<Desktop.desktop.getNumberOfWindows();++i)
+       	 	{
+            		Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i));
+        	}	
+
+
 	}
 		
 	//actOnParameterAction() ~~~
@@ -1435,6 +1447,21 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
         Debug.log("Refresh Full Screen Window");
 	//Desktop.logout();
         Desktop.desktop.resetDesktop();
+	Desktop.desktop.refreshDesktop();
+        //for(var i=0; i<Desktop.desktop._windows.length;++i)
+	//{
+	//    Desktop.desktop.refreshWindowById(Desktop.desktop._windows[i].getWindowId());
+	//}
+	for(var i=Desktop.desktop.getNumberOfWindows()-1; i>-1; i--)
+       	{
+		Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(i));
+	// + " : " + Desktop.desktop.getWindowByIndex(i).getWindowId());
+		Debug.log(Desktop.desktop.getWindowByIndex(i).getWindowId());
+		Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(i));//.getWindowId());
+		Desktop.desktop.refreshWindow();
+
+  		//Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i).getWindowId());
+        }
 	//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
         return false;
 
