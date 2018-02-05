@@ -478,7 +478,7 @@ Debug.errorPop = function(err,severity) {
 					el.innerHTML == "Close Info"))
 			return;
 		el.innerHTML = "Close Tooltip";		
-		Debug._errBox.style.backgroundColor = "rgba(0, 79, 160, " + errBoxAlpha + ")";	
+		Debug._errBox.style.backgroundColor = "rgba(0, 49, 99, " + errBoxAlpha + ")";//"rgba(0, 79, 160, " + errBoxAlpha + ")";	
 		break;
 	case Debug.INFO_PRIORITY:
 		//don't change color or header for info, if there are still errors displayed
