@@ -35,6 +35,8 @@
 //		doneHandler is called with a bool parameter with true indicating
 //		at least one record was created.
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
 //functions:	
 	//localParameterCheck()
 	//xdaqContextTooltip()
@@ -43,9 +45,31 @@
 	//showPrompt(stepIndex,paramObj)
 	//	localAddContent()
 	//	localAddHandlers()
-	//		localRecordsSelectHandler()
-	//		localNextButtonHandler()
-	//		localPrevButtonHandler()
+	//		switch statements
+	//			scopeForSetRecordFieldsContent()
+	//			localAppSelectHandler(event)
+	//			localAddressSelectHandler(event)
+	//			localPortSelectHandler(event)
+	//			localContextSelectHandler(event)
+	//			localGetAllHostInfo()
+	//			localRecordsSelectHandler(event)
+	//		share scope functions (between switch and next/prev handlers)
+	//			localCreateIntermediateLevelRecord(name)
+	//			localSetupIntermediateLevelRecord(name)
+	//			localCreateApp(name)
+	//			localSetupApp(name)
+	//			localCreateAppConfig(name)
+	//			localSetupAppConfig(name)
+	//			localHandleIntermediateLevel()
+	//			localGetExistingSupervisorTargetGroupID(supervisorName)
+	//			localCreateRecord(table)
+	//			localGetHelperValuesForRecord()
+	//		localNextButtonHandler() switch
+	//			localScopeSetRecordFieldsDoIt()		_STEP_SET_RECORD_FIELDS
+	//			localHandleSetupContext() 			_STEP_SET_CONTEXT_HOST
+	//				localGetAppInfo()
+	//			scopeWhichRecordTypeNext() 			_STEP_WHICH_RECORD_TYPE
+	//		localPrevButtonHandler() switch
 	
 	//htmlOpen(tag,attObj,innerHTML,closeTag)
 	//htmlClearDiv()
@@ -342,7 +366,8 @@ RecordWiz.createWiz = function(doneHandler) {
 			{
 			case _STEP_PROC_WHICH_BUFFER:
 				//xdaqApplicationTooltip();
-
+				h = 370;
+				
 				showNextButton = false; //replace it		
 
 				//take parameter recordName
@@ -366,7 +391,9 @@ RecordWiz.createWiz = function(doneHandler) {
 							{
 									"type" : 	"text",	
 									"id" : 		stepString + "appName",	
-									"value":	(paramObj["appName"]?paramObj["appName"]:createNewAppName()),
+									"value":	(paramObj["appName"]?paramObj["appName"]:
+											createNewRecordName(getApp(),
+													_paramObjMap[_STEP_WHICH_APP]["allApps"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
 					str += htmlOpen("input",
@@ -467,6 +494,8 @@ RecordWiz.createWiz = function(doneHandler) {
 				break; //end _STEP_SET_RECORD_FIELDS
 				
 			case _STEP_WHICH_APP:
+				
+				h = 370;
 				
 				xdaqApplicationTooltip();
 				
@@ -1101,10 +1130,11 @@ RecordWiz.createWiz = function(doneHandler) {
 					//save name to param for this step
 					paramObj["appName"] = name;
 
-					newParamObj["isNewApp"] = false;	
+					if(!_paramObjMap[_STEP_WHICH_APP]["apps"]) _paramObjMap[_STEP_WHICH_APP]["apps"] = []; //initialize if needed
+					_paramObjMap[_STEP_WHICH_APP]["isNewApp"] = false;	
 
-					//check supervisor config -- TODO
-					localGetRecordGroupID(name);
+					//check supervisor config
+					localGetExistingSupervisorTargetGroupID(name);
 
 						}; //end addToExisting handler
 
@@ -1551,8 +1581,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						_modifiedTables = modifiedTables;
 
 						//at this point new app was created 
-						Debug.log("New app '" + name + "' was successfully created!");
-						newParamObj["isNewApp"] = true;	
+						Debug.log("New app '" + name + "' was successfully created!");						
 
 						//add to app list for going back
 						// Note may need to initialize things, if skipped _STEP_WHICH_APP to get here
@@ -1560,6 +1589,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						if(!_paramObjMap[_STEP_WHICH_APP]["apps"]) _paramObjMap[_STEP_WHICH_APP]["apps"] = []; //initialize if needed
 						if(_paramObjMap[_STEP_WHICH_APP]["apps"].indexOf(name) == -1)
 							_paramObjMap[_STEP_WHICH_APP]["apps"].push(name);
+						_paramObjMap[_STEP_WHICH_APP]["isNewApp"] = true;	
 
 						localSetupApp(name);
 
@@ -1733,20 +1763,18 @@ RecordWiz.createWiz = function(doneHandler) {
 						// Note may need to initialize things, if skipped _STEP_WHICH_APP to get here
 						if(!_paramObjMap[_STEP_WHICH_APP]) _paramObjMap[_STEP_WHICH_APP] = {};//initialize if needed		
 						
-						
+
+						_paramObjMap[_STEP_WHICH_APP]["appConfigGroupName"] = name+groupSuffix;
 
 						if(_recordAlias == _RECORD_TYPE_FE)
-						{
-							_paramObjMap[_STEP_WHICH_APP]["recordGroupName"] = name+groupSuffix;
-							
+						{							
+							Debug.log("Creating record...");	
 							// now setup specific plugin
 							localCreateRecord(getRecordConfiguration());
 						}
 						else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 						{
-							Debug.log("Setting up extra processor level");
-							_paramObjMap[_STEP_WHICH_APP]["appConfigGroupName"] = name+groupSuffix;
-							
+							Debug.log("Setting up extra buffer level...");							
 							localHandleIntermediateLevel();							
 						}
 						else throw("?");
@@ -1851,9 +1879,9 @@ RecordWiz.createWiz = function(doneHandler) {
 				
 				/////////////////////////////////
 				//for case when using existing supervisor
-				function localGetRecordGroupID(supervisorName)
+				function localGetExistingSupervisorTargetGroupID(supervisorName)
 				{
-					Debug.log("localGetRecordGroupID " + supervisorName);
+					Debug.log("localGetExistingSupervisorTargetGroupID " + supervisorName);
 
 					ConfigurationAPI.getTree(
 							_XDAQAPP_BASE_PATH + "/" + supervisorName,
@@ -1868,26 +1896,19 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						try
 						{ //accessing tree GroupID location directly
-							if(_recordAlias == _RECORD_TYPE_FE)
-							{	
-								if(tree.children[1].children[4].children[0].nodeName !=
-										"GroupID")
-									throw("Invalid GroupID location in tree.");
-								if(tree.children[1].children[4].children[1].nodeName !=
-										"LinkConfigurationName")
-									throw("Invalid Link Table location in tree.");
+							
+							if(tree.children[1].children[4].children[0].nodeName !=
+									"GroupID")
+								throw("Invalid GroupID location in tree.");
+							if(tree.children[1].children[4].children[1].nodeName !=
+									"LinkConfigurationName")
+								throw("Invalid Link Table location in tree.");
 
-								groupId =
-										tree.children[1].children[4].children[0].getAttribute("value");
-								table = 
-										tree.children[1].children[4].children[1].getAttribute("value");
+							groupId =
+									tree.children[1].children[4].children[0].getAttribute("value");
+							table = 
+									tree.children[1].children[4].children[1].getAttribute("value");
 
-							}
-							else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-									)
-							{
-								throw("TODO.");
-							}
 						}
 						catch(e)
 						{
@@ -1900,13 +1921,25 @@ RecordWiz.createWiz = function(doneHandler) {
 						//save group name for later
 						// Note may need to initialize things, if skipped _STEP_WHICH_APP to get here
 						if(!_paramObjMap[_STEP_WHICH_APP]) _paramObjMap[_STEP_WHICH_APP] = {};//initialize if needed
-						_paramObjMap[_STEP_WHICH_APP]["recordGroupName"] = groupId;
+						_paramObjMap[_STEP_WHICH_APP]["appChildGroupName"] = groupId;
 						
-						localCreateRecord(table);
+						if(_recordAlias == _RECORD_TYPE_FE)
+						{	
+							Debug.log("Creating record...");	
+							localCreateRecord(table);
+						}
+						else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+						{
+							Debug.log("Setting up extra buffer level...");	
+							_intermediateLevel = 0; //reset					
+							localHandleIntermediateLevel();							
+						}
+						else throw("?");
+
 
 							}); //end getTree
 
-				} //end localGetRecordGroupID()
+				} //end localGetExistingSupervisorTargetGroupID()
 
 
 				/////////////////////////////////
@@ -2021,7 +2054,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							var groupName = "";
 							
 							if(_recordAlias == _RECORD_TYPE_FE)
-								groupName = _paramObjMap[_STEP_WHICH_APP]["recordGroupName"];
+								groupName = _paramObjMap[_STEP_WHICH_APP]["appChildGroupName"];
 							else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 								groupName = _paramObjMap[_STEP_PROC_WHICH_BUFFER]["recordGroupName"];
 							else throw("?");

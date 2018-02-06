@@ -1,6 +1,160 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
 <head>
+	<script>
+	
+	// Configuration GUI 
+	/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+	
+	//functions:			
+		//init()
+		//niceName(str)									//removes "Configuration" from name
+	
+		//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
+		//groupAliasesRequestHandler(req,anchorTarget)		 
+		
+		//setupGroupViewMode(anchorTarget)							//gets all configuration groups
+		//configGroupsRequestHandler(req,anchorTarget)
+		//groupSearchSelectionHandler(el)
+		//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
+		//gotoSelectedMSGroup()
+		
+		//setupTableViewMode(anchorTarget)							//gets configuration tables
+		//tableViewRequestHandler(req,anchorTarget)
+		
+		//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
+		//specificGroupRequestHandler(req,param)			
+	
+		//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
+		//setupSpecificConfigInRight(configName,version)
+		//specificConfigRequestHandler(req,backLinkStr)			
+		//toggleTableDetails(setVal)
+		//toggleGroupDetails(setVal)
+		//transposeTableView()
+		//getTableViewColTypes(rows)
+		//createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
+		//downloadTableAsCSV()
+		//uploadTableFromCSV()
+		//launchRecordCreationWizard(typeOfLaunch)
+	
+	//tree-view focused
+		//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
+		//treeViewHandler(req,parentId,errStr)
+		//recursiveDrawTree(parent,depth,path,parentIdString)
+		//getTreeViewTableStrings(tableLinkName)
+		//refreshTreeView();
+		//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
+		//toggleTreeChildren(depth,uid,setVal)
+		//expandTreeChildrenDepth()
+		//hideTreeChildrenDepth()
+		//createTreeViewMenu(event)
+	
+		//handleTreeNodeClick(depth,uid,editClick,type)			
+		//treeHasChanged(reset)
+		//saveModifiedTree(ignoreWarnings)
+		//editTreeAddNewRow(tableName)
+		//editTreeNodeOK()
+		//editTreeNodePropagateChange()
+	
+		//selectThisTreeNode(idString,type,event)
+		//treeViewGroupMemberEditMultiSelectHandler(sel) 
+		//handleEditTreeGroupIDEditFreeformToggle()
+	
+		//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)
+		//refreshTreeTableVersions()
+	//end tree-view focused
+	
+		//selectThisCell(r,c,el,event)
+		//editCellCancel()
+		//keyHandler(e)
+		//bodyKeyHandler(e,keyEl)
+		//bodyMouseHandler(e)
+		//bodyMouseMoveHandler(e)
+	
+		//editCellOK()									//assumes edited cell is specified by its global variables
+		//addRow(r)										//add row at destination with default values populated
+		//deleteRow(r)									//delete row at destination
+	
+		//popUpClearVersionsPrompt(clearTemporary,backLinkStr)
+		//popUpSaveNewTableForm()
+		//popUpSaveNewGroupForm(groupName, sourceGroupKey, sourceTye)
+		//popUpGroupAliasForm(isLatest, myAlias)
+		//popUpVersionAliasForm()
+		//popUpVersionAliasGroupEditorForm()
+		//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+		//popUpFilterTreeForm()
+		//popUpGroupViewAliasForm(groupName,groupKey)
+		//popUpGroupViewAliasFormSubmit(groupName,groupKey)
+	
+		//handleGroupCommentToggle(groupName,setHideVal)
+		//handlePopUpHeightToggle(h,gh)
+	
+		//handleFixedChoiceEditToggle()
+	
+		//setupConfigCreator(preSelectStr)
+		//setupConfigCreatorHandler(req,preSelectStr)
+		//handleGroupMemberGoto(name,backLinkStr)
+		//addMemberToConfigGroup(groupName,backLinkStr) 
+	
+		//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
+		//activateSystemConfigHandler(req)
+		//versionTrackingHandler(req)
+		//selectForCreateConfig(i)
+		//versionsForCreateConfig(i, alias)		
+		//createConfigGroup(ignoreWarnings)
+		//createConfigGroupHandler(req)
+	
+		//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
+		//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
+		//wizToActiveConfigGroup(groupAlias, groupType)
+		//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+	
+		
+		
+		//saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings)
+		//saveConfigAsNewVersionHandler(req, backLinkStr)
+		//saveConfigGroupAsNewKey(groupName, sourceType, ignoreWarnings)	
+		//changeMemberVersionForConfigGroup(groupName, groupKey, configName, newVersion)
+	
+		//isTemporary(version)
+	
+		//setupFindAndReplace()
+		//configFind()
+		//configReplace() 
+		//configIncrementByReplace()
+		//versionHasChanged()
+	
+		//setupCopyAndMoveRows()
+		//configCopyView()
+		//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
+		//jump(anchor)
+		//evaluateJS(str)			
+		//createEditTableMenu(event)
+	
+		//tableLinkTooltip(prependString)
+	
+		//handleFlattenSystemAliasesResponse
+	
+	
+	//ConfigurationAPI functions
+		//ConfigurationAPI.getDateString(date)
+		//ConfigurationAPI.setCaretPosition(el,start,stop)
+		//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+		//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
+		//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
+	//end ConfigurationAPI functions
+	
+	//ConfigurationAPI constants
+		//ConfigurationAPI._DEFAULT_COMMENT
+	//end ConfigurationAPI constants
+	
+	/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+			
+
+	</script>
+	
 	<title>ConfigurationGUI</title>
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
@@ -11,6 +165,9 @@
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+
+	<script type="text/JavaScript" src="/WebPath/js/RecordWiz_ConfigurationGUI.js"></script>
 
 	<style type="text/css">			
 
@@ -347,153 +504,6 @@
 	
 		
 	
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-	
-		//functions:			
-			//init()
-			//niceName(str)									//removes "Configuration" from name
-		
-			//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
-			//groupAliasesRequestHandler(req,anchorTarget)		 
-			
-			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
-			//configGroupsRequestHandler(req,anchorTarget)
-			//groupSearchSelectionHandler(el)
-			//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
-			//gotoSelectedMSGroup()
-			
-			//setupTableViewMode(anchorTarget)							//gets configuration tables
-			//tableViewRequestHandler(req,anchorTarget)
-			
-			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
-			//specificGroupRequestHandler(req,param)			
-		
-			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
-			//setupSpecificConfigInRight(configName,version)
-			//specificConfigRequestHandler(req,backLinkStr)			
-			//toggleTableDetails(setVal)
-			//toggleGroupDetails(setVal)
-			//transposeTableView()
-			//getTableViewColTypes(rows)
-			//createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
-			//downloadTableAsCSV()
-			//uploadTableFromCSV()
-
-		//tree-view focused
-			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
-			//treeViewHandler(req,parentId,errStr)
-			//recursiveDrawTree(parent,depth,path,parentIdString)
-			//getTreeViewTableStrings(tableLinkName)
-			//refreshTreeView();
-			//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
-			//toggleTreeChildren(depth,uid,setVal)
-			//expandTreeChildrenDepth()
-			//hideTreeChildrenDepth()
-			//createTreeViewMenu(event)
-		
-			//handleTreeNodeClick(depth,uid,editClick,type)			
-			//treeHasChanged(reset)
-			//saveModifiedTree(ignoreWarnings)
-			//editTreeAddNewRow(tableName)
-			//editTreeNodeOK()
-			//editTreeNodePropagateChange()
-		
-			//selectThisTreeNode(idString,type,event)
-			//treeViewGroupMemberEditMultiSelectHandler(sel) 
-			//handleEditTreeGroupIDEditFreeformToggle()
-		
-			//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)
-			//refreshTreeTableVersions()
-		//end tree-view focused
-		
-			//selectThisCell(r,c,el,event)
-			//editCellCancel()
-			//keyHandler(e)
-			//bodyKeyHandler(e,keyEl)
-			//bodyMouseHandler(e)
-			//bodyMouseMoveHandler(e)
-
-			//editCellOK()									//assumes edited cell is specified by its global variables
-			//addRow(r)										//add row at destination with default values populated
-			//deleteRow(r)									//delete row at destination
-		
-			//popUpClearVersionsPrompt(clearTemporary,backLinkStr)
-			//popUpSaveNewTableForm()
-			//popUpSaveNewGroupForm(groupName, sourceGroupKey, sourceTye)
-			//popUpGroupAliasForm(isLatest, myAlias)
-			//popUpVersionAliasForm()
-			//popUpVersionAliasGroupEditorForm()
-			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
-			//popUpFilterTreeForm()
-			//popUpGroupViewAliasForm(groupName,groupKey)
-			//popUpGroupViewAliasFormSubmit(groupName,groupKey)
-		
-			//handleGroupCommentToggle(groupName,setHideVal)
-			//handlePopUpHeightToggle(h,gh)
-		
-			//handleFixedChoiceEditToggle()
-		
-			//setupConfigCreator(preSelectStr)
-			//setupConfigCreatorHandler(req,preSelectStr)
-			//handleGroupMemberGoto(name,backLinkStr)
-			//addMemberToConfigGroup(groupName,backLinkStr) 
-		
-			//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
-			//activateSystemConfigHandler(req)
-			//versionTrackingHandler(req)
-			//selectForCreateConfig(i)
-			//versionsForCreateConfig(i, alias)		
-			//createConfigGroup(ignoreWarnings)
-			//createConfigGroupHandler(req)
-
-			//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
-			//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
-			//wizToActiveConfigGroup(groupAlias, groupType)
-			//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
-	
-			
-			
-			//saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings)
-			//saveConfigAsNewVersionHandler(req, backLinkStr)
-			//saveConfigGroupAsNewKey(groupName, sourceType, ignoreWarnings)	
-			//changeMemberVersionForConfigGroup(groupName, groupKey, configName, newVersion)
-		
-			//isTemporary(version)
-		
-			//setupFindAndReplace()
-			//configFind()
-			//configReplace() 
-			//configIncrementByReplace()
-			//versionHasChanged()
-		
-			//setupCopyAndMoveRows()
-			//configCopyView()
-			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
-			//jump(anchor)
-			//evaluateJS(str)			
-			//createEditTableMenu(event)
-		
-			//tableLinkTooltip(prependString)
-		
-			//handleFlattenSystemAliasesResponse
-		
-
-		//ConfigurationAPI functions
-			//ConfigurationAPI.getDateString(date)
-			//ConfigurationAPI.setCaretPosition(el,start,stop)
-			//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
-			//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-			//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
-		//end ConfigurationAPI functions
-
-		//ConfigurationAPI constants
-			//ConfigurationAPI._DEFAULT_COMMENT
-		//end ConfigurationAPI constants
-		
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-				
 		
 		//init called once body has loaded
 		function init() {			
@@ -2428,6 +2438,28 @@
 			var el = document.getElementById("groupDetails");
 			el.style.display = _showGroupDetails?"block":"none";
 		}
+
+		//launchRecordCreationWizard ~~
+		function launchRecordCreationWizard(launchType)
+		{
+			Debug.log("launchRecordCreationWizard " + launchType);
+			if(launchType == "tree") //from tree view
+			{
+				RecordWiz.createWiz(
+						function(atLeastOneRecordWasCreated)
+						{				
+					if(atLeastOneRecordWasCreated)
+					{
+						Debug.log("Record creation complete. You may want to Refresh the tree " +
+								"to view additions.",
+							Debug.INFO_PRIORITY);
+					}
+					
+						});
+			}
+			else
+				throw("Unknown type for launchRecordCreationWizard: " + launchType);
+		} //end launchRecordCreationWizard
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.
@@ -5643,6 +5675,8 @@
 			
 			if(treeEditingGroupMembersLastSelect_ == sel.textContent)
 				return; //already shown uid values
+			
+			if(!_editingCellEl) return; //something interrupted process
 			
 			treeEditingGroupMembersLastSelect_ = sel.textContent;
 			
@@ -13408,7 +13442,8 @@
 									 "Filter Tree View Values",
 							 treeViewHideInfo_?
 									 "Show Info Fields":
-									 "Hide Info Fields"
+									 "Hide Info Fields",
+							 "Record Creation Wizard"
 									 ];
 						
 			var refreshLinkStr = "refreshTreeView();";
@@ -13430,7 +13465,8 @@
 													refreshLinkStr,
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
 							"treeViewHideInfo_ = !treeViewHideInfo_; " +
-													"applyTreeFilter('',0,1)"
+													"applyTreeFilter('',0,1)",
+							"launchRecordCreationWizard(\"tree\")"
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(

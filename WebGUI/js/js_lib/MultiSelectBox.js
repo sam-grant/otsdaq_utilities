@@ -9,8 +9,12 @@
 //
 //	This function is called by user to actually create the multi select box
 // 	These parameters are optional and can be omitted or set to 0: 
-//		keys, types, handler, noMultiSelect 
+//		keys, types, handler, noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,
+//		mouseUpHandler,
+//		requireCtrlMultiClick,titles
 // 	Note: handler is the string name of the function (put in quotes).
+//	Note: requireCtrlMultiClick enables CONTROL or SHIFT key selections
+//		- sometimes CONTROL forces right click in browser, so SHIFT is needed
 //
 // 	Can use MultiSelectBox.initMySelectBoxes after manually setting the mySelects_ array
 //

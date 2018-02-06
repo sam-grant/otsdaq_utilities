@@ -4193,7 +4193,7 @@ ConfigurationAPI.getEditableFieldValue = function(fieldObj,fieldIndex,depthIndex
 	
 	var depth = depthIndex|0;
 	var uid = fieldIndex|0;
-	var fieldEl = document.getElementById("treeNode-Value-leafNode-" + 
+	var fieldEl = document.getElementById("editableFieldNode-Value-leafNode-" + 
 			( depth + "-" + uid ));
 	if(!fieldEl)
 	{
@@ -4253,7 +4253,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	pathHTML = pathHTML.replace(/</g, "&lt");
 	pathHTML = pathHTML.replace(/>/g, "&gt");	
 
-	str += "<div class='treeNode-Path' style='display:none' id='treeNode-path-" +
+	str += "<div class='editableFieldNode-Path' style='display:none' id='editableFieldNode-path-" +
 			( depth + "-" + uid ) + "'>" + // end path id
 			pathHTML + //save path for future use.. and a central place to edit when changes occur
 			"</div>";
@@ -4262,8 +4262,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	{
 		//add CSV choices div
 		str += 
-				"<div class='treeNode-FixedChoice-CSV' style='display:none' " + 
-				"id='treeNode-FixedChoice-CSV-" +
+				"<div class='editableFieldNode-FixedChoice-CSV' style='display:none' " + 
+				"id='editableFieldNode-FixedChoice-CSV-" +
 				( depth + "-" + uid ) + "'>";
 
 		for(var j=0;j<choices.length;++j)
@@ -4277,8 +4277,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	{
 		//add bitmap params div
 		str += 
-				"<div class='treeNode-BitMap-Params' style='display:none' " + 
-				"id='treeNode-BitMap-Params-" +
+				"<div class='editableFieldNode-BitMap-Params' style='display:none' " + 
+				"id='editableFieldNode-BitMap-Params-" +
 				( depth + "-" + uid ) + "'>";
 
 		for(var j=1;j<choices.length;++j) //skip the first DEFAULT param
@@ -4293,9 +4293,9 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	{
 		//start value node
 		str += 
-				"<div class='treeNode-Value treeNode-ValueType-" + valueType +
+				"<div class='editableFieldNode-Value editableFieldNode-ValueType-" + valueType +
 				"' " +
-				"id='treeNode-Value-" +
+				"id='editableFieldNode-Value-" +
 				(depth + "-" + uid) + "' " +
 
 				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							
@@ -4314,13 +4314,13 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 		//left side of value
 		str += 
 				"<div style='float:left' title='" + titleStr + "'>" +
-				"<b class='treeNode-Value-leafNode-fieldName bold-header'>" + 
+				"<b class='editableFieldNode-Value-leafNode-fieldName bold-header'>" + 
 				nodeName + "</b>" + 
 				"</div><div style='float:left'>&nbsp;:</div>";
 
 		//normal edit icon
 		str += 
-				"<div class='treeNode-Value-editIcon' id='treeNode-Value-editIcon-" +
+				"<div class='editableFieldNode-Value-editIcon' id='editableFieldNode-Value-editIcon-" +
 				(depth + "-" + uid) + "' " +
 				"onclick='ConfigurationAPI.handleEditableFieldClick(" +							 
 				depth + "," + uid + "," + 	
@@ -4329,10 +4329,10 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 				"></div>";						
 	}
 
-	str += "<div style='float:left; margin-left:9px;' id='treeNode-Value-leafNode-" +
+	str += "<div style='float:left; margin-left:9px;' id='editableFieldNode-Value-leafNode-" +
 			(depth + "-" + uid) +			
 			"' class='" +
-			"treeNode-Value-leafNode-ColumnName-" + nodeName +
+			"editableFieldNode-Value-leafNode-ColumnName-" + nodeName +
 			"' " +
 			">";
 
@@ -4368,7 +4368,7 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	//check if this field is currently the selected field
 	//	if so, setup select color	
 	if(ConfigurationAPI.editableFieldSelectedIdString_ == (depth + "-" + uid))	
-		fieldEl.getElementsByClassName("treeNode-Value")[0].style.backgroundColor = 
+		fieldEl.getElementsByClassName("editableFieldNode-Value")[0].style.backgroundColor = 
 							ConfigurationAPI.editableField_SELECTED_COLOR_;
 	
 	return fieldEl;
@@ -4388,7 +4388,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 	Debug.log("handleEditableFieldClick editClick " + editClick);
 	Debug.log("handleEditableFieldClick idString " + idString);
 	
-	var el = document.getElementById("treeNode-Value-" + idString);
+	var el = document.getElementById("editableFieldNode-Value-" + idString);
 	
 	if(!el)
 	{
@@ -4409,7 +4409,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 		ConfigurationAPI.handleEditableFieldEditOK(); //if new cell, click ok on old cell before continuing
 	}
 
-	var path = document.getElementById("treeNode-path-" + idString).textContent;
+	var path = document.getElementById("editableFieldNode-path-" + idString).textContent;
 
 	//			Debug.log("handleEditableFieldClick el       " + el.innerHTML);
 	//Debug.log("handleEditableFieldClick idString    " + idString);
@@ -4455,15 +4455,15 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			{				
 				//edit column entry in record
 				//	data type matters here, also don't edit author, timestamp
-				var el = document.getElementById("treeNode-Value-leafNode-" + idString);
-				var vel = document.getElementById("treeNode-Value-" + idString);
+				var el = document.getElementById("editableFieldNode-Value-leafNode-" + idString);
+				var vel = document.getElementById("editableFieldNode-Value-" + idString);
 				
 				//if value node, dataType is in element class name
 				var colType = vel.className.split(' ')[1].split('-');
 				if(colType[1] == "ValueType")
 					colType = colType[2];
 
-				var fieldName = el.className.substr(("treeNode-Value-leafNode-ColumnName-").length);
+				var fieldName = el.className.substr(("editableFieldNode-Value-leafNode-ColumnName-").length);
 				
 				Debug.log("fieldName=" + fieldName);
 				Debug.log("colType=" + colType);
@@ -4544,7 +4544,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 
 					//default value is assumed in list
 
-					var vel = document.getElementById("treeNode-FixedChoice-CSV-" +
+					var vel = document.getElementById("editableFieldNode-FixedChoice-CSV-" +
 							idString);
 					var choices = vel.textContent.split(',');					
 					
@@ -4598,7 +4598,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 						str += "<div style='display:block;" +
 								"margin: -2px 0 -7px 14px;" +
 								"' " + 
-								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"class='editableFieldNode-Value-editIcon' id='fixedChoice-editIcon" +
 								"' " +
 								"onclick='ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle();' " +
 								"title='Toggle free-form editing' " +
@@ -4617,7 +4617,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							//_editingCellElOldTitle, //field name
 							"Target Field: &quot;" + 
 							fieldName_ + "&quot;",
-							document.getElementById("treeNode-BitMap-Params-" +
+							document.getElementById("editableFieldNode-BitMap-Params-" +
 														idString).textContent.split(';'), 
 							ConfigurationAPI.editableFieldEditingOldValue_,
 							function(val)
@@ -4719,12 +4719,12 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			//remove previously selected
 			var vel;
 			if(ConfigurationAPI.editableFieldSelectedIdString_ && 
-					(vel = document.getElementById("treeNode-Value-" + 
+					(vel = document.getElementById("editableFieldNode-Value-" + 
 										ConfigurationAPI.editableFieldSelectedIdString_)))
 				vel.style.backgroundColor = "transparent";
 			
 			//add newly selected 
-			vel = document.getElementById("treeNode-Value-" + 
+			vel = document.getElementById("editableFieldNode-Value-" + 
 					idString);
 			if(ConfigurationAPI.editableFieldSelectedIdString_ == idString)
 			{
@@ -4773,7 +4773,7 @@ ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
 	
 	if(ConfigurationAPI.editableFieldEditingCell_) return; //no setting while editing
 
-	var el = document.getElementById("treeNode-Value-editIcon-" + idString);
+	var el = document.getElementById("editableFieldNode-Value-editIcon-" + idString);
 	if(ConfigurationAPI.editableFieldHoveringCell_ == el) return;
 
 	if(ConfigurationAPI.editableFieldHoveringCell_)
@@ -4786,7 +4786,7 @@ ConfigurationAPI.handleEditableFieldHover = function(depth,uid,event)
 	ConfigurationAPI.editableFieldHoveringIdString_ = idString;
 	ConfigurationAPI.editableFieldHoveringCell_ = el;
 	ConfigurationAPI.editableFieldHoveringCell_.style.display = "block";	
-	var vel = document.getElementById("treeNode-Value-" + 
+	var vel = document.getElementById("editableFieldNode-Value-" + 
 			ConfigurationAPI.editableFieldHoveringIdString_);
 	vel.style.backgroundColor = "rgb(218, 194, 194)";
 }
@@ -4825,7 +4825,7 @@ ConfigurationAPI.handleEditableFieldBodyMouseMove = function(e)
 		ConfigurationAPI.editableFieldHoveringCell_.style.display = "none";
 		ConfigurationAPI.editableFieldHoveringCell_ = 0;
 
-		var vel = document.getElementById("treeNode-Value-" + 
+		var vel = document.getElementById("editableFieldNode-Value-" + 
 				ConfigurationAPI.editableFieldHoveringIdString_);
 		if(vel)
 		{

@@ -242,7 +242,14 @@
 			MultiSelectBox.createSelectBox(listoffecs,
 					"box1",
 					"Please select from below:",
-					vals,keys,types,"listSelectionHandler",noMultiSelect);            
+					vals,keys,types,"listSelectionHandler",noMultiSelect,
+					0,//mouseOverHandler,
+					0,//iconURLs,
+					0,//mouseDownHandler,
+					0,//mouseUpHandler,
+					true,//requireCtrlMultiClick
+					0 //titles
+					);            
 			//End of making box
 	    }
 	    
