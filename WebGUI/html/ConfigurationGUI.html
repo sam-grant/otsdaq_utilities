@@ -6446,7 +6446,7 @@
 						//////
 						//localLinkEditSelectOnChangeHandler ~~
 						//	handle change of dropdowns
-						function localLinkEditSelectOnChangeHandler(setLinkId) {
+						function localLinkEditSelectOnChangeHandler(event,setLinkId) {
 							selectLinkTableName = sel.value;
 							if(setLinkId)
 								selectLinkId = setLinkId;
@@ -13913,6 +13913,7 @@
 				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
+				if(tel.value == "") tel.value = sel.value; //take value from select the first time
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
 		}

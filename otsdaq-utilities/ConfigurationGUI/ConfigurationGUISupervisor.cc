@@ -1264,7 +1264,7 @@ try
 					ConfigurationVersion /*version*/>(
 							table, ConfigurationVersion(version)));
 		}
-		__COUT__ << modifiedTables << std::endl;
+		//__COUT__ << modifiedTables << std::endl;
 		for(auto& pair:modifiedTablesMap)
 			__COUT__ << "modified table " <<
 				pair.first << ":" <<
@@ -1314,9 +1314,9 @@ try
 					allCfgInfo.at(activePair.first).configurationPtr_->getView().getComment());
 		}
 
-		__COUT__ << "Active table = " <<
-				activePair.first << "-v" <<
-				allCfgInfo.at(activePair.first).configurationPtr_->getView().getVersion() << std::endl;
+		//__COUT__ << "Active table = " <<
+		//		activePair.first << "-v" <<
+		//		allCfgInfo.at(activePair.first).configurationPtr_->getView().getVersion() << std::endl;
 	}
 
 }
@@ -2334,7 +2334,8 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmldoc, 
 		}
 		else
 		{
-			ConfigurationTree startNode = cfgMgr->getNode(startPath,true /*doNotThrowOnBrokenUIDLinks*/);
+			ConfigurationTree startNode = cfgMgr->getNode(startPath,
+					true /*doNotThrowOnBrokenUIDLinks*/);
 			if(startNode.isLinkNode() && startNode.isDisconnected())
 			{
 				xmldoc.addTextElementToData("DisconnectedStartNode","1");
@@ -2395,6 +2396,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 		DOMElement* parentEl, bool hideStatusFalse)
 {
 	//__COUT__ << t.getValueAsString() << std::endl;
+
 	if(t.isValueNode())
 	{
 		parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
@@ -2406,7 +2408,8 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
 				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			//__COUT__ << t.getValueType() << std::endl;
+			__COUT__ << t.getValueType() << std::endl;
+
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto& choice:choices)
 				xmldoc.addTextElementToParent("fixedChoice", choice, parentEl);
@@ -2416,11 +2419,15 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 	{
 		if(t.isLinkNode())
 		{
+			//__COUT__ << t.getValueName() << std::endl;
+
 			//Note: The order of xml fields is required by JavaScript, so do NOT change order.
 			parentEl = xmldoc.addTextElementToParent("node", t.getValueName(), parentEl);
 
 			if(t.isDisconnected())
 			{
+				__COUT__ << t.getValueName() << std::endl;
+
 				//xmldoc.addTextElementToParent("value", t.getValueAsString(), parentEl);
 				//xmldoc.addTextElementToParent("DisconnectedLink", t.getValueAsString(), parentEl);
 
@@ -2440,16 +2447,21 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 
 
 				//add fixed choices (in case link has them)
-				DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
-				try
-				{
+				DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "",
+						parentEl);
+				//try
+				//{
 
 					std::vector<std::string> choices = t.getFixedChoices();
+					__COUT__ << "choices.size() " << choices.size() << std::endl;
+
 					for(const auto& choice:choices)
 						xmldoc.addTextElementToParent("fixedChoice", choice, choicesParentEl);
-				}
-				catch(...)
-				{} //ignore no fixed choices for disconnected
+				//}
+				//catch(...)
+				//{
+				//	__COUT__ << "Ignoring unknown fixed choice error"
+				//} //ignore no fixed choices for disconnected
 
 				return;
 			}
@@ -2470,6 +2482,9 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 			{
 				DOMElement* choicesParentEl = xmldoc.addTextElementToParent("fixedChoices", "", parentEl);
 				std::vector<std::string> choices = t.getFixedChoices();
+
+				//__COUT__ << "choices.size() " << choices.size() << std::endl;
+
 				for(const auto& choice:choices)
 					xmldoc.addTextElementToParent("fixedChoice", choice, choicesParentEl);
 			}
@@ -3583,8 +3598,8 @@ try
 
 				return;	//exit since table inits were already tested
 			}
-			else if(!changed)
-			{
+			else if(0 && !changed) //block error message because sometimes things get setup twice depending on the path of the user (e.g. when editing links in tree-view)
+			{						//RAR: block also becuase versions are temporary at this point anyway, might as well abuse temporary versions
 				__SS__ << "Link to table '" << newTable <<
 						"' and linkID '" << newLinkId <<
 						"' are the same as the current values. No need to save change to tree node." <<
@@ -3769,7 +3784,9 @@ try
 	for(auto& memberPair:memberMap)
 	  {
 		xmldoc.addTextElementToParent("MemberName", memberPair.first, parentEl);
-	        configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
+
+		configEl = xmldoc.addTextElementToParent("MemberVersion", memberPair.second.toString(),
+				parentEl);
 	
 		it = allCfgInfo.find(memberPair.first);
 		if(it == allCfgInfo.end())
@@ -3777,7 +3794,7 @@ try
 			xmldoc.addTextElementToData("Error","Configuration \"" +
 					memberPair.first +
 					"\" can not be retrieved!");
-			return;
+			continue;
 		}
 
 		if(versionAliases.find(it->first) != versionAliases.end())
