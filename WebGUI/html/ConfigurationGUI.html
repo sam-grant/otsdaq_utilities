@@ -2448,10 +2448,36 @@
 				RecordWiz.createWiz(
 						function(atLeastOneRecordWasCreated)
 						{				
-					if(atLeastOneRecordWasCreated)
+					if(1 || atLeastOneRecordWasCreated)
 					{
-						Debug.log("Record creation complete. You may want to Refresh the tree " +
-								"to view additions.",
+						var str = "Record creation complete. You may want to ";
+						str += "<a href='#' onclick='refreshTreeView()' " +
+								" title='Click to Refresh the current tree-view' " +
+								">";
+						str += "Refresh";
+						str += "</a>";
+						str += " the tree " +
+								"to view additions. ";
+						str += "The active groups are now ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Context.groupName + " (" +
+								ConfigurationAPI._activeGroups.Context.groupKey + ")";
+						str += "</a>";
+						str += " and ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Configuration.groupName + " (" +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ")";
+						str += "</a>";
+						str += " for the Context and Configuration groups respectively.";
+						Debug.log(str,
 							Debug.INFO_PRIORITY);
 					}
 					
@@ -6955,7 +6981,7 @@
 			//detect proper views
 			var el = document.getElementById("treeView-ConfigGroupLink");	
 			var popUpEl = document.getElementById("popUpDialog");
-
+			
 			//tree view key handler and no popup and no editing cell
 			if(el && !popUpEl && !_editingCellEl) 
 			{	

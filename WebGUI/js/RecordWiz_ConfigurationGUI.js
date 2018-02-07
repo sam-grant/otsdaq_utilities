@@ -53,22 +53,28 @@
 	//			localContextSelectHandler(event)
 	//			localGetAllHostInfo()
 	//			localRecordsSelectHandler(event)
+
 	//		share scope functions (between switch and next/prev handlers)
+	//			localHandleIntermediateLevel()
 	//			localCreateIntermediateLevelRecord(name)
 	//			localSetupIntermediateLevelRecord(name)
+	//			localGetExistingIntermediateTargetGroupID(supervisorName)
+
 	//			localCreateApp(name)
 	//			localSetupApp(name)
 	//			localCreateAppConfig(name)
 	//			localSetupAppConfig(name)
-	//			localHandleIntermediateLevel()
+
 	//			localGetExistingSupervisorTargetGroupID(supervisorName)
 	//			localCreateRecord(table)
 	//			localGetHelperValuesForRecord()
+
 	//		localNextButtonHandler() switch
 	//			localScopeSetRecordFieldsDoIt()		_STEP_SET_RECORD_FIELDS
 	//			localHandleSetupContext() 			_STEP_SET_CONTEXT_HOST
 	//				localGetAppInfo()
 	//			scopeWhichRecordTypeNext() 			_STEP_WHICH_RECORD_TYPE
+
 	//		localPrevButtonHandler() switch
 	
 	//htmlOpen(tag,attObj,innerHTML,closeTag)
@@ -83,6 +89,7 @@
 	//getRecordGroupIDField()
 	//getRecordFilter()
 	//getIntermediateTable()
+	//getIntermediateTypeName()
 	//createNewRecordName(startingName,existingArr)
 
 
@@ -157,6 +164,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	var _systemGroups; //object of aliases and groups w/active groups
 	var _paramObjMap; //allows for lookup of parameter objects based on stepIndex
 	var _furthestStep = -1;
+	var _lastNextStep = -1;
 	var _intermediateLevel = -1;
 	
 	//global vars for saving tables
@@ -345,7 +353,8 @@ RecordWiz.createWiz = function(doneHandler) {
 
 		var showPrevButton = true;
 		var showNextButton = true;
-		var prevStepIndex = stepIndex-1;
+		var prevStepIndex = _lastNextStep; //default back button to last next step //stepIndex-1;
+		_lastNextStep = stepIndex;
 		var nextStepIndex = stepIndex+1;
 		var prevButtonText = "Go Back";
 		var nextButtonText = "Next Step";
@@ -373,27 +382,27 @@ RecordWiz.createWiz = function(doneHandler) {
 				//take parameter recordName
 				Debug.log("_STEP_PROC_WHICH_BUFFER " + recordName);
 
-				// " add to existing XDAQ App or a new one?"
+				// " add to existing buffer or a new one?"
 				str += "<br>";
 				str += "Do you want to add the " + _recordAlias + " named '" +  
-						recordName + "' to a new XDAQ " + getAppClass() +
-						" Application or an existing one in the context '" +
-						_paramObjMap[_STEP_WHICH_CONTEXT]["contextName"] + "'?";
+						recordName + "' to a new Data Manager Buffer " +
+						"or an existing one in the Data Manager '" +
+						_paramObjMap[_STEP_WHICH_APP]["appName"] + "'?";
 
 				str += "<center>"; 
 				str += "<table style='margin-bottom: 10px;'>";
 
 				///////////////////////
 				{ // new app input
-					str += "<tr><td><b>New XDAQ App:</b></td><td>";
+					str += "<tr><td><b>New Buffer:</b></td><td>";
 
 					str += htmlOpen("input",
 							{
 									"type" : 	"text",	
-									"id" : 		stepString + "appName",	
-									"value":	(paramObj["appName"]?paramObj["appName"]:
-											createNewRecordName(getApp(),
-													_paramObjMap[_STEP_WHICH_APP]["allApps"])),
+									"id" : 		stepString + "bufferName",	
+									"value":	(paramObj["bufferName"]?paramObj["bufferName"]:
+											createNewRecordName("Buffer",
+													paramObj["allBuffers"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
 					str += htmlOpen("input",
@@ -401,71 +410,73 @@ RecordWiz.createWiz = function(doneHandler) {
 									"id": stepString + "addToNew",
 									"type": "button",
 									"value": "Add to New",
-									"title": "Create a new XDAQ Application and add the new " + _recordAlias + " to it."
+									"title": "Create a new Buffer and add the new " + 
+									_recordAlias + " to it."
 							},
 							0 /*html*/, true /*closeTag*/);	
 					str += "</td></tr>";
 				} //end new app input
 
-				if(paramObj["apps"].length)
+				if(paramObj["buffers"].length)
 				{
-					str += "<tr><td><b>Existing Apps:</b></td><td>";
+					str += "<tr><td><b>Existing Buffers:</b></td><td>";
 					{ //start apps
 						str += htmlOpen("select",
 								{
-										"id" :		stepString + "apps",
+										"id" :		stepString + "buffers",
 								});
 
-						for(var i=0;i<paramObj["apps"].length;++i)
+						for(var i=0;i<paramObj["buffers"].length;++i)
 						{
 							str += htmlOpen("option",
 									{		
 									},
-									paramObj["apps"][i] /*innerHTML*/, true /*closeTag*/);
+									paramObj["buffers"][i] /*innerHTML*/, true /*closeTag*/);
 						}
-						str += "</select>"; //end aliases dropdown
+						str += "</select>"; //end dropdown
 						str += htmlOpen("input",
 								{
 										"id": stepString + "addToExisting",
 										"type": "button",
 										"value": "Add to Existing",
-										"title": "Add new " + _recordAlias + " to the chosen existing XDAQ Application."
+										"title": "Add new " + _recordAlias +
+											" to the chosen existing Buffer."
 								},
 								0 /*html*/, true /*closeTag*/);	
-					} //end apps
+					} //end buffers
 					str += "</td></tr>";
-				} //end existing apps			
+				} //end existing buffers			
 
 				str += "</table>";
 
 
-				if(paramObj["allApps"].length)
+				if(paramObj["allBuffers"].length)
 				{
 					///////////////////////
 					// existing addresses
 					str += htmlClearDiv();
-					str += "Here is a dropdown of all existing XDAQ Applications " + 
-							" to help you in creating standardized addresses (Note: shown above are " +
-							"only of class " + getAppClass() + " and in the chosen context '" + 
-							_paramObjMap[_STEP_WHICH_CONTEXT]["contextName"] + 
+					str += "Here is a dropdown of all existing Buffers " + 
+							" to help you in creating standardized names (Note: shown above are " +
+							"only the Buffers in the chosen Data Manager '" + 
+							_paramObjMap[_STEP_WHICH_APP]["appName"] + 
 							"':";
 
 					str += htmlClearDiv();
 					str += htmlOpen("select",
 							{
-									"id" :		stepString + "allApps",
+									"id" :		stepString + "allBuffers",
 									"style" :	"margin-bottom: 16px;"
 							});
 
-					for(var i=0;i<paramObj["allApps"].length;++i)
+					for(var i=0;i<paramObj["allBuffers"].length;++i)
 					{
 						str += htmlOpen("option",
 								{		
 								},
-								paramObj["allApps"][i] /*innerHTML*/, true /*closeTag*/);
+								paramObj["allBuffers"][i] /*innerHTML*/, true /*closeTag*/);
 					}
-					str += "</select>"; //end all apps dropdown
-				} //end existing all apps
+					str += "</select>"; //end all buffers dropdown
+				} //end existing all buffers
 
 
 
@@ -553,7 +564,7 @@ RecordWiz.createWiz = function(doneHandler) {
 									},
 									paramObj["apps"][i] /*innerHTML*/, true /*closeTag*/);
 						}
-						str += "</select>"; //end aliases dropdown
+						str += "</select>"; //end dropdown
 						str += htmlOpen("input",
 								{
 										"id": stepString + "addToExisting",
@@ -881,7 +892,9 @@ RecordWiz.createWiz = function(doneHandler) {
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
-						"Welcome to the " + _recordAlias + " creation Wizard!" /*innerHTML*/,
+						(_aRecordWasCreated?
+								("Would you to create another " + _recordAlias + "?"):
+						("Welcome to the " + _recordAlias + " creation Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
 				str += htmlClearDiv();
 				
@@ -1088,7 +1101,63 @@ RecordWiz.createWiz = function(doneHandler) {
 				
 			} //end scope of _STEP_SET_RECORD_FIELDS
 				break;
-				
+			
+			case _STEP_PROC_WHICH_BUFFER:
+
+			{ //start scope of _STEP_WHICH_APP
+
+				//create select change handler for existing records
+				document.getElementById(stepString + "buffers").onclick = localAppSelectHandler;
+				document.getElementById(stepString + "buffers").onchange = localAppSelectHandler;
+				document.getElementById(stepString + "allBuffers").onclick = localAppSelectHandler;
+				document.getElementById(stepString + "allBuffers").onchange = localAppSelectHandler;
+
+				function localAppSelectHandler(event) {
+					Debug.log("Selected " + this.value);
+
+					//increment index
+					document.getElementById(stepString + "bufferName").value = 
+							incrementName(this.value);	
+				}; //end onchange handler
+
+				/////////////////////////////////
+				document.getElementById(stepString + "addToNew").onclick = 
+						function()
+						{
+					var name = document.getElementById(stepString + "bufferName").value.trim();
+					Debug.log("addToNew " + name);
+
+					//save name to param for this step
+					paramObj["bufferName"] = name;
+
+					localCreateIntermediateLevelRecord(name);
+						}; //end addToNew button handler
+
+				/////////////////////////////////
+				document.getElementById(stepString + "addToExisting").onclick = 
+						function()
+						{
+					var name = document.getElementById(stepString + "buffers").value.trim();
+					Debug.log("addToExisting " + name);
+
+					//save name to param for this step
+					paramObj["bufferName"] = name;
+
+					if(!_paramObjMap[_STEP_PROC_WHICH_BUFFER]["buffers"]) _paramObjMap[_STEP_PROC_WHICH_BUFFER]["buffers"] = []; //initialize if needed
+					_paramObjMap[_STEP_PROC_WHICH_BUFFER]["isNew" + getIntermediateTypeName()] = false;	
+
+					//get buffer child group name: _paramObjMap[_STEP_PROC_WHICH_BUFFER]["recordGroupName"]
+					localGetExistingIntermediateTargetGroupID(name);
+
+						}; //end addToExisting handler
+
+			} //end scope of _STEP_WHICH_APP
+			//NOTE: below this, functions were moved outside of swtich because they must be accessible to other steps and handlers
+			// and, apparently {} create "function scope" inside a switch case
+			// and, apparently switch statements create "function scope" too.
+
+
+			break; //end _STEP_WHICH_APP
 			case _STEP_WHICH_APP:
 				
 			{ //start scope of _STEP_WHICH_APP
@@ -1139,7 +1208,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						}; //end addToExisting handler
 
 			} //end scope of _STEP_WHICH_APP
-			//NOTE: below this, functions were moved outside of swtich because they must be accessible to other steps and handlers
+			//NOTE: below this, functions were moved outside of switch because they must be accessible to other steps and handlers
 			// and, apparently {} create "function scope" inside a switch case
 			// and, apparently switch statements create "function scope" too.
 
@@ -1451,10 +1520,10 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						//at this point new app was created 
 						Debug.log("New intermediate record '" + name + "' was successfully created!");
-						newParamObj["isNewRecord"] = true;	
+						
+						newParamObj["isNew" + getIntermediateTypeName()] = true;	
 
-						if(_recordAlias == _RECORD_TYPE_PROCESSOR
-								)
+						if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 						{
 							if(_intermediateLevel == 0)
 							{
@@ -1483,12 +1552,11 @@ RecordWiz.createWiz = function(doneHandler) {
 				{
 					//get group id
 					var recordGroupId = "";
-					if(_recordAlias == _RECORD_TYPE_PROCESSOR
-							)
+					if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 					{
 						if(_intermediateLevel == 0)
 						{
-							recordGroupId = _paramObjMap[_STEP_WHICH_APP]["appConfigGroupName"];
+							recordGroupId = _paramObjMap[_STEP_WHICH_APP]["appChildGroupName"];
 						}
 						else
 							throw("?");
@@ -1502,8 +1570,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					var fieldArr,valueArr;
 
-					if(_recordAlias == _RECORD_TYPE_PROCESSOR
-							)
+					if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 					{
 						if(_intermediateLevel == 0)
 						{
@@ -1764,7 +1831,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						if(!_paramObjMap[_STEP_WHICH_APP]) _paramObjMap[_STEP_WHICH_APP] = {};//initialize if needed		
 						
 
-						_paramObjMap[_STEP_WHICH_APP]["appConfigGroupName"] = name+groupSuffix;
+						_paramObjMap[_STEP_WHICH_APP]["appChildGroupName"] = name+groupSuffix;
 
 						if(_recordAlias == _RECORD_TYPE_FE)
 						{							
@@ -1795,7 +1862,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						case 0: //create Data Buffer in Data Manager
 						{	
 							
-							var bufferGroupId = _paramObjMap[_STEP_WHICH_APP]["appConfigGroupName"];
+							var bufferGroupId = _paramObjMap[_STEP_WHICH_APP]["appChildGroupName"];
 							var appName =  _paramObjMap[_STEP_WHICH_APP]["appName"];
 															 
 							
@@ -1824,7 +1891,6 @@ RecordWiz.createWiz = function(doneHandler) {
 								ConfigurationAPI.getSubsetRecords( ////////////////////////////////
 										getIntermediateTable(),
 										"DataManagerGroupID="+
-										//For DEBUG "testContextApps",
 										encodeURIComponent(bufferGroupId) /*_recordPreFilterList*/,
 										function(records)
 										{
@@ -1855,8 +1921,8 @@ RecordWiz.createWiz = function(doneHandler) {
 									}
 									else //if buffers in context, ask if adding to existing
 									{
-										newParamObj["buffers"] = records;
-										showPrompt(_STEP_PROC_WHICH_BUFFER,newParamObj);
+										_paramObjMap[_STEP_PROC_WHICH_BUFFER]["buffers"] = records;
+										showPrompt(_STEP_PROC_WHICH_BUFFER);
 									}
 									
 										}, //end all getSubsetRecords handler
@@ -1876,6 +1942,71 @@ RecordWiz.createWiz = function(doneHandler) {
 
 				} //end localCreateIntermediateLevel()
 
+				/////////////////////////////////
+				//for case when using existing intermediate (e.g. Buffer)
+				function localGetExistingIntermediateTargetGroupID(intermediateName)
+				{
+
+					Debug.log("localGetExistingSupervisorTargetGroupID " + intermediateName + 
+							" of type " + getIntermediateTypeName());
+
+					ConfigurationAPI.getTree(
+							getIntermediateTable() + "/" + intermediateName,
+							4 /*depth*/,
+							_modifiedTables,
+							function(tree)
+							{
+						console.log(tree);
+
+						var table;
+						var groupId;
+
+						try
+						{ //accessing tree GroupID location directly
+
+							if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+							{	
+
+								if(tree.children[1].children[0].nodeName !=
+										"GroupID")
+									throw("Invalid GroupID location in tree.");
+								if(tree.children[1].children[1].nodeName !=
+										"LinkConfigurationName")
+									throw("Invalid Link Table location in tree.");
+
+								groupId =
+										tree.children[1].children[0].getAttribute("value");
+								table = 
+										tree.children[1].children[1].getAttribute("value");
+							}
+							else throw("?");
+						}
+						catch(e)
+						{
+							Debug.log("Error locating group in configuration for the new record. " + e,
+									Debug.HIGH_PRIORITY);
+							return;
+						}
+						Debug.log("Group Link found as " + table + ":" + groupId);
+
+						//save group name for later
+						// Note may need to initialize things, if skipped _STEP_WHICH_APP to get here
+						
+					
+						if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+						{
+							if(!_paramObjMap[_STEP_PROC_WHICH_BUFFER]) _paramObjMap[_STEP_PROC_WHICH_BUFFER] = {};//initialize if needed
+							_paramObjMap[_STEP_PROC_WHICH_BUFFER]["recordGroupName"] = groupId;
+							localCreateRecord(table);
+							Debug.log("Setting up extra buffer level...");
+						}
+						else throw("?");
+
+
+							}); //end getTree
+
+
+				} //end localGetExistingIntermediateTargetGroupID()
 				
 				/////////////////////////////////
 				//for case when using existing supervisor
@@ -1956,7 +2087,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							function(modifiedTables,err) //start addSubsetRecords handler
 							{
 						Debug.log("modifiedTables length " + modifiedTables.length);
-						if(!modifiedTables.length)
+						if(!modifiedTables.length || err)
 						{
 							var reallyAnError = true;
 							if(_furthestStep >= _STEP_SET_RECORD_FIELDS)
@@ -1964,7 +2095,8 @@ RecordWiz.createWiz = function(doneHandler) {
 								//then already created record, so ignore error that it exists
 								if(err.indexOf("Entries in UID are not unique") >= 0)
 								{
-									Debug.log("Ignoring UID not unique error since likely already created...");
+									Debug.log("Ignoring UID not unique error since likely already created..." + 
+											err);
 									reallyAnError = false;
 								}
 							}
@@ -1979,8 +2111,11 @@ RecordWiz.createWiz = function(doneHandler) {
 								return;
 							}
 						}
-						_modifiedTables = modifiedTables;
+						else
+							_modifiedTables = modifiedTables;
 
+						console.log("_modifiedTables",_modifiedTables);
+						
 						//at this point new app config was created 
 						Debug.log("New " + _recordAlias + " record named '" + recordName + "' was successfully created!");
 
@@ -2313,7 +2448,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						///////////////////////
 						if(scopeWhichRecordTypeNext())
-							return; //prevent default show prompt, do in initRecordWizard
+							return; //prevent default show prompt, do initRecordWizard
 						
 						function scopeWhichRecordTypeNext() 
 						{
@@ -2529,7 +2664,25 @@ RecordWiz.createWiz = function(doneHandler) {
 			throw("Invalid getIntermediateTable");
 		
 		return retVal;		
-	} //end getIntermediateTable()()
+	} //end getIntermediateTable()
+
+	//=====================================================================================
+	//getIntermediateTypeName() ~~	
+	//	based on _intermediateLevel and _recordAlias
+	function getIntermediateTypeName()
+	{
+		var retVal = "";
+		if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+		{
+			if(_intermediateLevel == 0)
+				retVal = "Buffer";
+		}
+		
+		if(retVal == "")
+			throw("Invalid getIntermediateTypeName");
+		
+		return retVal;		
+	} //end getIntermediateTypeName()
 	
 	//=====================================================================================
 	//htmlOpen ~~		

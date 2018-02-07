@@ -4019,6 +4019,14 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	//:::::::::::::::::::::::::::::::::::::::::
 	//popupResize ~~
 	//	set position and size	
+	ConfigurationAPI.setPopUpPosition.stopPropagation = function(event) {
+		//Debug.log("stop propagation");
+		event.stopPropagation();
+	}
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	//	set position and size	
 	ConfigurationAPI.setPopUpPosition.popupResize = function() {
 		
 		try //check if element still exists
@@ -4026,7 +4034,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 			if(!el) //if element no longer exists.. then remove listener and exit
 			{
 				window.removeEventListener("resize",ConfigurationAPI.setPopUpPosition.popupResize);
-				window.removeEventListener("scroll",ConfigurationAPI.setPopUpPosition.popupResize);
+				window.removeEventListener("scroll",ConfigurationAPI.setPopUpPosition.popupResize);								
 				return;
 			}
 		}
@@ -4076,6 +4084,8 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		window.addEventListener("resize",ConfigurationAPI.setPopUpPosition.popupResize);
 		window.addEventListener("scroll",ConfigurationAPI.setPopUpPosition.popupResize);
 	}
+	el.addEventListener("keydown",ConfigurationAPI.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	
 	return {"w" : w, "h" : h, "x" : x, "y" : y};
 }

@@ -1386,6 +1386,9 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 		bool firstSave = true;
 
 
+		//save current version
+		ConfigurationView backupView;
+
 
 		//extract record list
 		{
@@ -1418,6 +1421,9 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 						__COUT__ << "Using temporary version " << temporaryVersion << std::endl;
 
 					firstSave = false;
+
+					//copy original to backup before modifying
+					backupView.copy(config->getView(),temporaryVersion,author);
 				}
 
 				//at this point have valid temporary version to edit
@@ -1425,7 +1431,8 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 				//copy "table-newRow" type edit from handleSaveTreeNodeEditXML() functionality
 
 				//add row
-				unsigned int row = config->getViewP()->addRow(author, true /*incrementUniqueData*/);
+				unsigned int row = config->getViewP()->addRow(author,
+						true /*incrementUniqueData*/); //increment all unique data fields to void conflict
 
 				//if ViewColumnInfo::COL_NAME_STATUS exists, set it to true
 				try
@@ -1436,13 +1443,30 @@ void ConfigurationGUISupervisor::handleFillCreateTreeNodeRecordsXML(HttpXmlDocum
 				catch(...) {} //if not, ignore
 
 				//set UID value
-				config->getViewP()->setURIEncodedValue(recordUID,row,config->getViewP()->getColUID());
+				config->getViewP()->setURIEncodedValue(recordUID,row,
+						config->getViewP()->getColUID());
 
 			}
 		}
 
 		if(!firstSave) //only test table if there was a change
-			config->getViewP()->init(); //verify new table (throws runtime_errors)
+		{
+			try
+			{
+				config->getViewP()->init(); //verify new table (throws runtime_errors)
+			}
+			catch(...)
+			{
+				__COUT_INFO__ << "Reverting to original view." << __E__;
+				__COUT__ << "Before:" << __E__;
+				config->getViewP()->print();
+				config->getViewP()->copy(backupView,temporaryVersion,author);
+				__COUT__ << "After:" << __E__;
+				config->getViewP()->print();
+
+				throw; //rethrow
+			}
+		}
 
 		handleFillModifiedTablesXML(xmldoc,cfgMgr);
 	}
