@@ -893,7 +893,7 @@ RecordWiz.createWiz = function(doneHandler) {
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
 						(_aRecordWasCreated?
-								("Would you to create another " + _recordAlias + "?"):
+								("Would you like to create another " + _recordAlias + "?"):
 						("Welcome to the " + _recordAlias + " creation Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
 				str += htmlClearDiv();

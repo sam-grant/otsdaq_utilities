@@ -734,7 +734,11 @@ Desktop.createDesktop = function(security) {
         //	Toggle current top window minimize functionality (can be called as event)
     this.toggleMinimize = function(e) {
         if(!_getForeWindow()) return;
-        _getForeWindow().minimize();
+        
+        if(_getForeWindow().isMinimized())
+        	_getForeWindow().unminimize();
+        else
+        	_getForeWindow().minimize();
         Debug.log("Minimize Toggled",Debug.LOW_PRIORITY);
         //_dashboard.updateWindows();
 
