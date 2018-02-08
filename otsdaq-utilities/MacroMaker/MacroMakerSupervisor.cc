@@ -183,7 +183,8 @@ throw (xgi::exception::Exception)
 		handleRequest(Command,xmldoc,cgi,username,userPermissions);
 
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false /*dispStdOut*/,
+			true /*allowWhiteSpace*/);
 }
 
 //========================================================================================================================
@@ -944,7 +945,8 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	if(supervisorListPairIt == FESupervisorLists_.end())
 	{
 		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target " <<
-				"was feSupervisorType=" << feSupervisorType << std::endl;
+				"was UID=" << feUID << " at supervisorLID=" << supervisorLID <<
+				"and feSupervisorType=" << feSupervisorType << "." << std::endl;
 		__COUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
 		return;
@@ -954,9 +956,8 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	auto supervisorDescriptorPairIt = supervisorListPairIt->second.find(supervisorLID);
 	if(supervisorDescriptorPairIt == supervisorListPairIt->second.end())
 	{
-		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target" <<
-				"was feSupervisorType=" << feSupervisorType << " and " <<
-				"supervisorLID=" << supervisorLID << std::endl;
+		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target " <<
+				"was UID=" << feUID << " at supervisorLID=" << supervisorLID << "." << std::endl;
 		__COUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
 		return;
@@ -979,10 +980,9 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 
 	if(!success)
 	{
-		__SS__ << "Attempted FE Macro Failed. Attempted target" <<
-				"was feSupervisorType=" << feSupervisorType << " and " <<
-				"supervisorLID=" << supervisorLID << std::endl;
-		ss << ".\n\n The error was:\n\n" << outputArgs << std::endl;
+		__SS__ << "Attempted FE Macro Failed. Attempted target " <<
+				"was UID=" << feUID << " at supervisorLID=" << supervisorLID << "." << std::endl;
+		ss << "\n\n The error was:\n\n" << outputArgs << std::endl;
 		__COUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
 		return;
