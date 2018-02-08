@@ -327,7 +327,7 @@ echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t log dump in 2 seconds... #######################################################"
 sleep 2s
 echo
-cat $CURRENT_AWESOME_BASE/checkinAll.log
+cat $CHECKIN_LOG_PATH
 echo -e "UpdateOTS.sh [${LINENO}]  \t end log dump... #######################################################"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Update status (not shown above) was logged here: $UPDATE_LOG_PATH"
