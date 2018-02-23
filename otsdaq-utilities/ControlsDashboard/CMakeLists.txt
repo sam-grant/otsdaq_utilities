@@ -7,7 +7,7 @@ cet_make(LIBRARY_NAME ControlsDashboard
 #		 CoreSupervisors
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 SupervisorDescriptorInfo
+		 SupervisorInfo
 		 PluginMakers
 		 CgiDataUtilities
 		 WebUsersUtilities

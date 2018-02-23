@@ -6,7 +6,6 @@
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -25,6 +24,7 @@
 
 #include <string>
 #include <map>
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
 namespace ots
@@ -92,7 +92,7 @@ private:
         CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*15, //15 minute, in seconds
     };
 
-    SupervisorDescriptorInfo    						theSupervisorDescriptorInfo_;
+    AllSupervisorInfo 									allSupervisorInfo_;
     RemoteWebUsers             							theRemoteWebUsers_;
 
 

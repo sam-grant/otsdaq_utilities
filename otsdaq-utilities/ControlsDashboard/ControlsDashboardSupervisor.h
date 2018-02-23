@@ -26,7 +26,7 @@
 #include <vector>
 #include <set>
 
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
@@ -68,7 +68,7 @@ public:
 
 private:
 	//SlowControlsInterface
-    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
+    AllSupervisorInfo allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
     ControlsVInterface*                     interface_;
     ConfigurationManager*          			theConfigurationManager_;

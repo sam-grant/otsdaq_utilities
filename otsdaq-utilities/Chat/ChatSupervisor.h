@@ -23,7 +23,7 @@
 #include <string>
 #include <map>
 
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 namespace ots
 {
@@ -37,20 +37,20 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ChatSupervisor            (xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
-    virtual ~ChatSupervisor   (void);
+    ChatSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    virtual ~ChatSupervisor   	(void);
 
-    void init                  (void);
-    void destroy               (void);
-    void Default               (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void init                  	(void);
+    void destroy               	(void);
+    void Default               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
-    void Chat	               (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void Chat	               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
                               
 
 private:
 
 
-    SupervisorDescriptorInfo    theSupervisorDescriptorInfo_;
+    AllSupervisorInfo 			allSupervisorInfo_;
     RemoteWebUsers				theRemoteWebUsers_;
 
     //"Chat History" database associations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

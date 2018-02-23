@@ -55,7 +55,7 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 void ConsoleSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
+	allSupervisorInfo_.init(getApplicationContext());
 
 	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 
@@ -282,7 +282,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				CONSOLE_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway

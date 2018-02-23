@@ -5,8 +5,6 @@
 #include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
-
 #include "xdaq/Application.h"
 #include "xgi/Method.h"
 
@@ -25,6 +23,7 @@
 
 #include <string>
 #include <map>
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
 
@@ -51,29 +50,30 @@ public:
     void 						dataRequest                 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void 						safari               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
                               
-    void stateRunning          (toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
+    void 						stateRunning         		(toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
 
-    void transitionConfiguring (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void transitionHalting     (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void transitionStarting    (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void transitionStopping    (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void transitionPausing	   (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void transitionResuming	   (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionConfiguring 		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionHalting     		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionStarting    		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionStopping    		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionPausing	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    void 						transitionResuming	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
 
 private:
 
-    void				binaryBufferToHexString(char *buff, unsigned int len, std::string& dest);
+    void						binaryBufferToHexString		(char *buff, unsigned int len, std::string& dest);
 
-    ConfigurationManager*                theConfigurationManager_;
- 	const std::string                    supervisorContextUID_;
-	const std::string                    supervisorApplicationUID_;
-	const std::string                    supervisorConfigurationPath_;
-    SupervisorDescriptorInfo             supervisorDescriptorInfo_;
-    RemoteWebUsers                       theRemoteWebUsers_;
-    VisualDataManager*                   theDataManager_;
+    ConfigurationManager*                	theConfigurationManager_;
+ 	const std::string                    	supervisorContextUID_;
+	const std::string                    	supervisorApplicationUID_;
+	const std::string                    	supervisorConfigurationPath_;
+
+    AllSupervisorInfo 						allSupervisorInfo_;
+    RemoteWebUsers                       	theRemoteWebUsers_;
+    VisualDataManager*                   	theDataManager_;
     //std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
-    unsigned int 			             loadedRunNumber_;
+    unsigned int 			            	loadedRunNumber_;
 
 };
 

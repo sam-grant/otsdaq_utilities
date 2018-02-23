@@ -45,40 +45,14 @@ throw (xdaq::exception::Exception)
 
 	init();
 
-// 	//example getting FE supervisor descriptors
-//	SupervisorDescriptors::const_iterator it;
-//	it = theSupervisorDescriptorInfo_.getFEDescriptors().begin();
-//	__COUT__ << "PixelFESupervisor instance size " <<
-//			theSupervisorDescriptorInfo_.getFEDescriptors().size() << std::endl;
-//	for (; it != theSupervisorDescriptorInfo_.getFEDescriptors().end(); it++)
-//	{
-//		__COUT__ << "PixelFESupervisor instance " << it->first <<
-//				"...and..." << it->second << std::endl;
-//		__COUT__ << "Look! Here's a FE! @@@" << std::endl;
-//	}
-
 	//make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
 
 
-	//Push the FE Supervisor types that MacroMaker cares about
-	//	when scanninng for all FEs:
-	//		- FEDescriptors
-	//		- FEDataManagerDescriptors
-	//		- ARTDAQFEDataManagerDescriptors
-	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
-			"FEDescriptors",
-			theSupervisorDescriptorInfo_.getFEDescriptors()));
-	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
-			"FEDataManagerDescriptors",
-			theSupervisorDescriptorInfo_.getFEDataManagerDescriptors()));
-	FESupervisorLists_.insert(std::pair<std::string, const SupervisorDescriptors&>(
-			"ARTDAQFEDataManagerDescriptors",
-			theSupervisorDescriptorInfo_.getARTDAQFEDataManagerDescriptors()));
-
-
+	//MacroMaker should consider all FE compatible types..
+	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
 }
 
 //========================================================================================================================
@@ -90,16 +64,7 @@ MacroMakerSupervisor::~MacroMakerSupervisor(void)
 void MacroMakerSupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
-	__COUT__ << "#######################################" << std::endl;
-	__COUT__ << "#######################################" << std::endl;
-
-	__COUT__ << "Running in MacroMaker Supervisor" << std::endl;
-
-	__COUT__ << "#######################################" << std::endl;
-	__COUT__ << "#######################################" << std::endl;
-
-
+	allSupervisorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -142,7 +107,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
@@ -232,57 +197,59 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	SOAPParameters rxParameters;  //params for xoap to recv
 	rxParameters.addParameter("FEList");
 
-	SupervisorDescriptors::const_iterator it;
+	SupervisorInfoMap::const_iterator it;
 	std::string oneInterface;
 	std::string rxFEList;
 
 	//for each list of FE Supervisors,
 	//	loop through each FE Supervisors and get FE interfaces list
-	for(auto &listPair:FESupervisorLists_)
+	for(auto &appInfo:allFESupervisorInfo_)
 	{
-		__COUT__ << "Number of " << listPair.first << " = " <<
-				listPair.second.size() << std::endl;
+		//		__COUT__ << "Number of " << listPair.first << " = " <<
+		//				listPair.second.size() << std::endl;
+		//
+		//		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
+		//		{
 
-		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
+		__COUT__ << "FESupervisor LID = " << appInfo.second.getId() <<
+				" name = " << appInfo.second.getName() << __E__;
+
+		try
 		{
-			__COUT__ << "FESupervisor LID " << it->first << std::endl;
-
-			try
-			{
-				xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-						it->second,
-						"MacroMakerSupervisorRequest",
-						txParameters);
-				receive(retMsg, rxParameters);
-			}
-			catch(const xdaq::exception::Exception& e)
-			{
-				__SS__ << "Error transmitting request to FE Supervisor. \n\n" << e.what() << __E__;
-				__COUT_ERR__ << ss.str();
-				return;
-			}
-
-			rxFEList = rxParameters.getValue("FEList");
-
-			__COUT__ << "FE List received: \n" << rxFEList << std::endl;
-
-			std::istringstream allInterfaces(rxFEList);
-			while (std::getline(allInterfaces, oneInterface))
-			{
-				//interfaceList.push_back(oneInterface);
-				xmldoc.addTextElementToData("FE",oneInterface);
-			}
+			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+					appInfo.second.getDescriptor(),
+					"MacroMakerSupervisorRequest",
+					txParameters);
+			receive(retMsg, rxParameters);
 		}
-	}
+		catch(const xdaq::exception::Exception& e)
+		{
+			__SS__ << "Error transmitting request to FE Supervisor LID = " << appInfo.second.getId() <<
+				" name = " << appInfo.second.getName() << ". \n\n" << e.what() << __E__;
+			__COUT_ERR__ << ss.str();
+			return;
+		}
 
-	return;
+		rxFEList = rxParameters.getValue("FEList");
+
+		__COUT__ << "FE List received: \n" << rxFEList << std::endl;
+
+		std::istringstream allInterfaces(rxFEList);
+		while (std::getline(allInterfaces, oneInterface))
+		{
+			//interfaceList.push_back(oneInterface);
+			xmldoc.addTextElementToData("FE",oneInterface);
+		}
+
+	}
 }
 
 
 //========================================================================================================================
 void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
-	__COUT__<< "������MacroMaker wants to write data!!!!!!!!!" << std::endl;
+	__COUT__<< "MacroMaker writing..." << std::endl;
+
 	std::string Address = CgiDataUtilities::getData(cgi, "Address");
 	std::string Data = CgiDataUtilities::getData(cgi, "Data");
 	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
@@ -306,8 +273,6 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 	__COUT__<< "Here comes the array from multiselect box for WRITE, behold: \n"
 			<< supervisorIndexArray << "\n" << interfaceIndexArray << std::endl;
 
-	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
-
 	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
 	std::vector<std::string> interfaceIndices;
 	std::istringstream f(interfaceIndexArray);
@@ -321,23 +286,23 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 
 	for(unsigned int i=0; i < supervisorIndices.size(); i++)
 	{
-		unsigned int FEIndex = supervisorIndices[i];
+		unsigned int FESupervisorIndex = supervisorIndices[i];
 		std::string interfaceIndex = interfaceIndices[i];
 
 		txParameters.addParameter("InterfaceID",interfaceIndex);
 
-		__COUT__<<"The index of the supervisor instance is: " << FEIndex << std::endl;
+		__COUT__<<"The index of the supervisor instance is: " << FESupervisorIndex << std::endl;
 		__COUT__<<"...and the interface ID is: " << interfaceIndex << std::endl;
 
-		SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-		if (it == FESupervisors.end())
+		SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FESupervisorIndex);
+		if (it == allFESupervisorInfo_.end())
 		{
 			__COUT__<< "ERROR!? FE Index doesn't exist" << std::endl;
 			return;
 		}
 
 		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-				it->second,
+				it->second.getDescriptor(),
 				"MacroMakerSupervisorRequest",
 				txParameters);
 		receive(retMsg);
@@ -365,7 +330,6 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 	__COUT__<< "Here comes the array from multiselect box for READ, behold: "
 			<< supervisorIndexArray << "," << interfaceIndexArray << std::endl;
 
-	SupervisorDescriptors FESupervisors = theSupervisorDescriptorInfo_.getFEDescriptors();
 
 	////////////////////////////////Store cgi arrays into vectors/////////////////////////////
 	std::vector<std::string> interfaceIndices;
@@ -388,8 +352,8 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 		__COUT__ << "The index of the supervisor instance is: " << FEIndex << std::endl;
 		__COUT__ << "...and the interface ID is: " << interfaceIndexArray << std::endl;
 
-		SupervisorDescriptors::iterator it = FESupervisors.find(FEIndex);
-		if (it == FESupervisors.end())
+		SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FEIndex);
+		if (it == allFESupervisorInfo_.end())
 		{
 			__COUT__<< "ERROR!? FE Index doesn't exist" << std::endl;
 			xmldoc.addTextElementToData("readData","MissingFrontEnd");
@@ -399,7 +363,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 		try
 		{
 			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-					it->second,
+					it->second.getDescriptor(),
 					"MacroMakerSupervisorRequest",
 					txParameters);
 
@@ -914,15 +878,15 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 {
 	__COUT__<< __COUT_HDR_P__ << std::endl;
 
-	std::string feSupervisorType = CgiDataUtilities::getData(cgi, "feSupervisorType");
-	unsigned int supervisorLID = CgiDataUtilities::getDataAsInt(cgi, "supervisorLID");
+	//std::string feSupervisorType = CgiDataUtilities::getData(cgi, "feSupervisorType");
+	unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
 	std::string feUID = CgiDataUtilities::getData(cgi, "feUID");
 	std::string macroName = CgiDataUtilities::getData(cgi, "macroName");
 	std::string inputArgs = CgiDataUtilities::postData(cgi, "inputArgs");
 	std::string outputArgs = CgiDataUtilities::postData(cgi, "outputArgs");
 
-	__COUT__ << "feSupervisorType = " << feSupervisorType << std::endl;
-	__COUT__ << "supervisorLID = " << supervisorLID << std::endl;
+	//__COUT__ << "feSupervisorType = " << feSupervisorType << std::endl;
+	__COUT__ << "feSupervisorID = " << feSupervisorID << std::endl;
 	__COUT__ << "feUID = " << feUID << std::endl;
 	__COUT__ << "macroName = " << macroName << std::endl;
 	__COUT__ << "inputArgs = " << inputArgs << std::endl;
@@ -940,24 +904,14 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	rxParameters.addParameter("success");
 	rxParameters.addParameter("outputArgs");
 
-	//find feSupervisorType in lists
-	auto supervisorListPairIt = FESupervisorLists_.find(feSupervisorType);
-	if(supervisorListPairIt == FESupervisorLists_.end())
-	{
-		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target " <<
-				"was UID=" << feUID << " at supervisorLID=" << supervisorLID <<
-				"and feSupervisorType=" << feSupervisorType << "." << std::endl;
-		__COUT_ERR__ << "\n" << ss.str();
-		xmldoc.addTextElementToData("Error",ss.str());
-		return;
-	}
 
-	//find supervisorLID in target list
-	auto supervisorDescriptorPairIt = supervisorListPairIt->second.find(supervisorLID);
-	if(supervisorDescriptorPairIt == supervisorListPairIt->second.end())
+
+	//find feSupervisorID in target list
+	auto supervisorDescriptorPairIt = allFESupervisorInfo_.find(feSupervisorID);
+	if(supervisorDescriptorPairIt == allFESupervisorInfo_.end())
 	{
 		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target " <<
-				"was UID=" << feUID << " at supervisorLID=" << supervisorLID << "." << std::endl;
+				"was UID=" << feUID << " at feSupervisorID=" << feSupervisorID << "." << std::endl;
 		__COUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
 		return;
@@ -965,7 +919,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 
 	//have FE supervisor descriptor, so send
 	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-			supervisorDescriptorPairIt->second, //supervisor descriptor
+			supervisorDescriptorPairIt->second.getDescriptor(), //supervisor descriptor
 			"MacroMakerSupervisorRequest",
 			txParameters);
 	SOAPMessenger::receive(retMsg, rxParameters);
@@ -981,7 +935,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	if(!success)
 	{
 		__SS__ << "Attempted FE Macro Failed. Attempted target " <<
-				"was UID=" << feUID << " at supervisorLID=" << supervisorLID << "." << std::endl;
+				"was UID=" << feUID << " at feSupervisorID=" << feSupervisorID << "." << std::endl;
 		ss << "\n\n The error was:\n\n" << outputArgs << std::endl;
 		__COUT_ERR__ << "\n" << ss.str();
 		xmldoc.addTextElementToData("Error",ss.str());
@@ -1010,7 +964,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 //========================================================================================================================
 void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::string &username)
 {
-	__COUT__<< "Getting FE Macro list!!!!!!!!!" << std::endl;
+	__COUT__<< "Getting FE Macro list" << std::endl;
 
 	SOAPParameters txParameters; //params for xoap to send
 	txParameters.addParameter("Request", "GetInterfaceMacros");
@@ -1018,35 +972,36 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::st
 	SOAPParameters rxParameters;  //params for xoap to recv
 	rxParameters.addParameter("FEMacros");
 
-	SupervisorDescriptors::const_iterator it;
 	std::string oneInterface;
 	std::string rxFEMacros;
 
 	//get all FE specific macros
 	//		for each list of FE Supervisors,
 	//			loop through each FE Supervisors and get FE interfaces list
-	for(auto &listPair:FESupervisorLists_)
+	for(auto &appInfo:allFESupervisorInfo_)
 	{
-		__COUT__ << "===== Number of " << listPair.first << " = " <<
-				listPair.second.size() << std::endl;
+		//		__COUT__ << "===== Number of " << listPair.first << " = " <<
+		//				listPair.second.size() << std::endl;
+		//
+		//		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
+		//		{
+		__COUT__ << "FESupervisor LID = " << appInfo.second.getId() <<
+				" name = " << appInfo.second.getName() << std::endl;
 
-		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
-		{
-			__COUT__ << "FESupervisor LID " << it->first << std::endl;
+		xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+				appInfo.second.getDescriptor(),
+				"MacroMakerSupervisorRequest",
+				txParameters);
+		SOAPMessenger::receive(retMsg, rxParameters);
 
-			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-					it->second,
-					"MacroMakerSupervisorRequest",
-					txParameters);
-			SOAPMessenger::receive(retMsg, rxParameters);
-			rxFEMacros = rxParameters.getValue("FEMacros");
+		rxFEMacros = rxParameters.getValue("FEMacros");
 
-			__COUT__ << "FE Macros received: \n" << rxFEMacros << std::endl;
+		__COUT__ << "FE Macros received: \n" << rxFEMacros << std::endl;
 
-			std::istringstream allInterfaces(rxFEMacros);
-			while (std::getline(allInterfaces, oneInterface))
-				xmldoc.addTextElementToData("FEMacros",listPair.first + ":" + oneInterface);
-		}
+		std::istringstream allInterfaces(rxFEMacros);
+		while (std::getline(allInterfaces, oneInterface))
+			xmldoc.addTextElementToData("FEMacros",appInfo.second.getId() + ":" + oneInterface);
+		//		}
 	}
 
 	//add macros to response

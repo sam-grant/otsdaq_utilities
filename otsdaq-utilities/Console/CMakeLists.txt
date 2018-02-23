@@ -6,7 +6,7 @@ include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Console
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
-		 SupervisorDescriptorInfo
+		 SupervisorInfo
 		${MF_MESSAGELOGGER}
 		${MF_UTILITIES}
 		 XmlUtilities

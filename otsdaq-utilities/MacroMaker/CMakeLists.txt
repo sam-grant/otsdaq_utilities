@@ -3,7 +3,7 @@ cet_make(LIBRARY_NAME MacroMaker
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ConfigurationInterface
-		 SupervisorDescriptorInfo
+		 SupervisorInfo
 		 XmlUtilities
 		 SOAPUtilities
 		 CgiDataUtilities

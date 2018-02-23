@@ -37,6 +37,7 @@
 		//downloadTableAsCSV()
 		//uploadTableFromCSV()
 		//launchRecordCreationWizard(typeOfLaunch)
+		//launchRecordDeletionWizard(typeOfLaunch)
 	
 	//tree-view focused
 		//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
@@ -168,6 +169,7 @@
 
 
 	<script type="text/JavaScript" src="/WebPath/js/RecordWiz_ConfigurationGUI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DeleteWiz_ConfigurationGUI.js"></script>
 
 	<style type="text/css">			
 
@@ -2486,6 +2488,54 @@
 			else
 				throw("Unknown type for launchRecordCreationWizard: " + launchType);
 		} //end launchRecordCreationWizard
+		
+		//launchRecordDeletionWizard ~~
+		function launchRecordDeletionWizard(launchType)
+		{
+			Debug.log("launchRecordDeletionWizard " + launchType);
+			if(launchType == "tree") //from tree view
+			{
+				DeleteWiz.createWiz(
+						function(atLeastOneRecordWasDeleted)
+						{				
+					if(1 || atLeastOneRecordWasDeleted)
+					{
+						var str = "Record deletion complete. You may want to ";
+						str += "<a href='#' onclick='refreshTreeView()' " +
+								" title='Click to Refresh the current tree-view' " +
+								">";
+						str += "Refresh";
+						str += "</a>";
+						str += " the tree " +
+								"to view changes. ";
+						str += "The active groups are now ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Context.groupName + " (" +
+								ConfigurationAPI._activeGroups.Context.groupKey + ")";
+						str += "</a>";
+						str += " and ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Configuration.groupName + " (" +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ")";
+						str += "</a>";
+						str += " for the Context and Configuration groups respectively.";
+						Debug.log(str,
+							Debug.INFO_PRIORITY);
+					}
+					
+						});
+			}
+			else
+				throw("Unknown type for launchRecordDeletionWizard: " + launchType);
+		} //end launchRecordDeletionWizard
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.
@@ -7448,6 +7498,13 @@
 					modifiedTables += treeMemberVersions_[j];
 				}
 
+			if(modTblCount == 0)
+			{
+				Debug.log("No modified tables found. Nothing to save.", Debug.WARN_PRIORITY);
+				return;
+			}
+			
+			
 			var str = "<a id='" + 
 					"popUpDialog" + 
 					"-header' href='#' onclick='var el = document.getElementById(" +
@@ -13469,7 +13526,8 @@
 							 treeViewHideInfo_?
 									 "Show Info Fields":
 									 "Hide Info Fields",
-							 "Record Creation Wizard"
+							 "Record Creation Wizard",
+							 "Record Deletion Wizard"
 									 ];
 						
 			var refreshLinkStr = "refreshTreeView();";
@@ -13492,7 +13550,8 @@
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
 							"treeViewHideInfo_ = !treeViewHideInfo_; " +
 													"applyTreeFilter('',0,1)",
-							"launchRecordCreationWizard(\"tree\")"
+							"launchRecordCreationWizard(\"tree\")",
+							"launchRecordDeletionWizard(\"tree\")"
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(

@@ -59,7 +59,7 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 void ConfigurationGUISupervisor::init(void)
 {
 	//called by constructor
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
+	allSupervisorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -168,7 +168,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommands,			//true/false refresh cookie code
 				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
@@ -212,7 +212,7 @@ throw (xgi::exception::Exception)
 		__COUT__ << "columnChoicesCSV: " << columnChoicesCSV << std::endl;
 		__COUT__ << "allowOverwrite: " << allowOverwrite << std::endl;
 
-		if(!theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_))
+		if(!allSupervisorInfo_.isWizardMode())
 		{
 			__SS__ << "Improper permissions for saving configuration info." << std::endl;
 			xmldoc.addTextElementToData("Error", ss.str());
@@ -959,9 +959,9 @@ throw (xgi::exception::Exception)
 	else if(Command == "getLastConfigGroups")
 	{
 		const xdaq::ApplicationDescriptor* gatewaySupervisor =
-				theRemoteWebUsers_.isWizardMode(theSupervisorDescriptorInfo_)?
-						theSupervisorDescriptorInfo_.getWizardDescriptor():
-						theSupervisorDescriptorInfo_.getSupervisorDescriptor();
+				allSupervisorInfo_.isWizardMode()?
+						allSupervisorInfo_.getWizardDescriptor():
+						allSupervisorInfo_.getGatewayDescriptor();
 
 		std::string timeString;
 		std::pair<std::string /*group name*/, ConfigurationGroupKey> theGroup =

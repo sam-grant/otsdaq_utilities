@@ -204,7 +204,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
 
 			"Briefly, here is a description of the steps: " +
-			"\n\t- 'What is the name of your record?'" +
+			"\n\t- 'What type of record do you want to add?'" +
 			"\n\t- 'Do you want to add it to an existing context or create a new one?'"
 	);
 
@@ -254,8 +254,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	//	get active groups and list of all groups
 	//	get list of existing records at base path
 	function initRecordWizard() 
-	{
-		//get list of records that match <subsetBasePath> AND <recordPreFilterList>
+	{		
 		_subsetUIDs = []; //reset			
 		_modifiedTables = undefined; //reset
 		_furthestStep = -1; // reset
@@ -296,7 +295,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					},_modifiedTables); //end getSubsetRecords
 
-				},_modifiedTables); //end getAliasesAndGroups
+				}); //end getAliasesAndGroups
 
 	}	//end initRecordWizard()
 
@@ -353,8 +352,11 @@ RecordWiz.createWiz = function(doneHandler) {
 
 		var showPrevButton = true;
 		var showNextButton = true;
-		var prevStepIndex = _lastNextStep; //default back button to last next step //stepIndex-1;
+		var prevStepIndex =  stepIndex-1; //default back button to last next step //stepIndex-1;		
+		if(prevStepIndex > _lastNextStep)
+			prevStepIndex = _lastNextStep;
 		_lastNextStep = stepIndex;
+		
 		var nextStepIndex = stepIndex+1;
 		var prevButtonText = "Go Back";
 		var nextButtonText = "Next Step";
@@ -2523,8 +2525,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FESupervisor";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataManagerSupervisor";
 		else
 			throw("?");
@@ -2546,8 +2547,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var otsModule = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			otsModule = "${OTSDAQ_LIB}/libCoreSupervisors.so";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			otsModule = "${OTSDAQ_LIB}/libCoreSupervisors.so";
 		else
 			throw("?");
@@ -2562,8 +2562,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FESupervisorConfiguration";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataManagerSupervisorConfiguration";
 		else
 			throw("?");
@@ -2578,8 +2577,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FEInterfaceConfiguration";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataBufferConfiguration";
 		else
 			throw("?");
@@ -2594,8 +2592,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FEInterfaceGroupID";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataBufferGroupID";
 		else
 			throw("?");
@@ -2611,8 +2608,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "";//"ProcessorType=" + _recordAlias;
 		
 		return retVal;		

@@ -141,7 +141,7 @@ VisualSupervisor::~VisualSupervisor(void)
 void VisualSupervisor::init(void)
 {
 	//called by constructor
-	supervisorDescriptorInfo_.init(getApplicationContext());
+	allSupervisorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -201,7 +201,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				supervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, 							//set access level requirement to pass gateway
@@ -285,7 +285,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				supervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, 							//set access level requirement to pass gateway

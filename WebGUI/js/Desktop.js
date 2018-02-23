@@ -697,7 +697,7 @@ Desktop.createDesktop = function(security) {
 
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
-	    Debug.log("Windows Length: " + _windows.length);
+	    //Debug.log("Windows Length: " + _windows.length);
 	    	    
 	    var window = _getForeWindow();
 	    var id  = window.getWindowId();
@@ -709,15 +709,21 @@ Desktop.createDesktop = function(security) {
 	    var height  = window.getWindowHeight();
 	    var x = window.getWindowX();
 	    var y = window.getWindowY();
-                 
+        var isMax = window.isMaximized();
+        var isMin = window.isMinimized();
+        
 	    _closeWindow(window);
 	    console.log(window, id, z, name, width, height);
 	    
 	    var newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
 	   
+	    if(isMax)
+	    	newWindow.maximize();
+	    if(isMin)
+	    	newWindow.minimize();
 	   
-	    Debug.log("Windows Length: " + _windows.length);
+	    //Debug.log("Windows Length: " + _windows.length);
     }
 
         //minimizeWindowById ~~~
@@ -1458,7 +1464,7 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
 	//}
 	for(var i=Desktop.desktop.getNumberOfWindows()-1; i>-1; i--)
        	{
-		Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(i));
+		Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(i).getWindowName());
 	// + " : " + Desktop.desktop.getWindowByIndex(i).getWindowId());
 		Debug.log(Desktop.desktop.getWindowByIndex(i).getWindowId());
 		Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(i));//.getWindowId());

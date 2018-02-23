@@ -12,7 +12,7 @@ cet_make(LIBRARY_NAME Visualization
 		 FiniteStateMachine
 		 WebUsersUtilities
 		 MonicelliInterface
-		 SupervisorDescriptorInfo
+		 SupervisorInfo
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 #otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration

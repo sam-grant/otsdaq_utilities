@@ -315,14 +315,15 @@ Debug.errorPop = function(err,severity) {
 
 			//give undefined things monopsace type
 			css += "#" + Debug._errBoxId + " *" +
-					"{font-family: 'Inconsolata', monospace;" +
+					"{font-family: 'Comfortaa', arial;" +//"{font-family: 'Inconsolata', monospace;" +
+					"font-weight: 200;" +
 					"font-size: 18px;" +
 					"}\n\n";
 			
 			//error close link style
 			css += "#" + Debug._errBoxId + " a" +
 					", #" + Debug._errBoxId + " b" +
-					"{color: white; text-decoration: none; font-weight: 800;" +
+					"{color: white; text-decoration: none; font-weight: 400;" +
 					"font-size: 18px; font-family: 'Comfortaa', arial;" +
 					"}\n\n";
 			css += "#" + Debug._errBoxId + " a:hover" +
@@ -436,7 +437,7 @@ Debug.errorPop = function(err,severity) {
 	else //normally put newest at top since likely highest priority
 		str = "<label style='color:white;font-size:16px;'>" + 
 		    d.toLocaleDateString() +
-		    " " + tstr + 
+		    " " + tstr + " " +
 		    (severity == Debug.INFO_PRIORITY ? '(Info)':'')+
 		    (severity == Debug.WARN_PRIORITY ? '(Warning)':'') +
 		    ":</label><br>" +
