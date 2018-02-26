@@ -4,20 +4,20 @@
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
-#include "xdaq/Application.h"
-#include "xgi/Method.h"
+#include <xdaq/Application.h>
+#include <xgi/Method.h>
 
-#include "xoap/MessageReference.h"
-#include "xoap/MessageFactory.h"
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
-#include "xoap/Method.h"
+#include <xoap/MessageReference.h>
+#include <xoap/MessageFactory.h>
+#include <xoap/SOAPEnvelope.h>
+#include <xoap/SOAPBody.h>
+#include <xoap/domutils.h>
+#include <xoap/Method.h>
 
 
-#include "cgicc/HTMLClasses.h"
+#include <cgicc/HTMLClasses.h>
 #include <cgicc/HTTPCookie.h>
-#include "cgicc/HTMLDoctype.h"
+#include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPHeader.h>
 
 #include <string>
