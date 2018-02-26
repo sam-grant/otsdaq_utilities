@@ -7,8 +7,6 @@
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
-
 #include <xdaq/Application.h>
 #include <xgi/Method.h>
 
