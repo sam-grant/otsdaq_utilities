@@ -73,6 +73,9 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.removeClass(elem,class)
 //	ConfigurationAPI.hasClass(elem,class)
 //	ConfigurationAPI.extractActiveGroups(req)
+//	ConfigurationAPI.incrementName(name)
+//	ConfigurationAPI.createNewRecordName(startingName,existingArr)
+
 
 //"public" members:
 ConfigurationAPI._activeGroups = {}; //to fill, call ConfigurationAPI.getActiveGroups() or ConfigurationAPI.extractActiveGroups()
@@ -5470,10 +5473,47 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 	
 } // end ConfigurationAPI.deleteSubsetRecords()
 
+//=====================================================================================
+//incrementName ~~		
+ConfigurationAPI.incrementName = function(name)
+{
+	//find last non-numeric
+	for(var i=name.length-1;i>=0;--i)
+		if(!(name[i] >= '0' && name[i] <= '9'))
+			break;	
+	//note: if all numbers, then i is -1, which still works
+	var num = (name.substr(i+1)|0) + 1;	
+	name = name.substr(0,i+1);	
+	return name + num;
+} //end incrementName()
+
+//=====================================================================================
+//createNewRecordName ~~		
+ConfigurationAPI.createNewRecordName = function(startingName,existingArr)
+{
+	var retVal = startingName;
+	var found,i;
+	try
+	{
+		var apps = existingArr;
+		do
+		{
+			retVal = ConfigurationAPI.incrementName(retVal);
+			found = false;
+			for(i=0;i<apps.length;++i)
+				if(apps[i] == retVal) 
+				{found = true; break;}
+		} while(found);
+		Debug.log("createNewRecordName " + retVal);
+	}
+	catch(e)
+	{
+		//ignore errors.. assume no all apps
+		return ConfigurationAPI.incrementName(retVal);
+	}
 	
-
-
-
+	return retVal;		
+} //end createNewRecordName()
 
 
 

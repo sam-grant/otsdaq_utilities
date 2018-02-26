@@ -3,6 +3,46 @@
 <head>
 <title>Supervisor</title>
 
+
+<script>
+
+//functions:
+	//init()
+	//initTransitionParameters()
+	//handleTransitionParameterChange()
+	//smRequestHandler(req)
+	//getCurrentState() 
+	//currStateRequestHandler(req)
+	//updateTimeInState(t)
+	//physicsLaunchHandler(req)
+    //handleMouseUp(mouseEvent)
+	//getTransitionParameterData(param)
+	//transitionTimerHandler(mouseEvent)
+	//handleCheckTransitionProgress(req)
+    //handleMouseMove(mouseEvent)
+    //drawHudForMouseHover()
+    //getTransitionSelection(x,y)
+	//redrawPhysics()						onresize
+	//drawCurrentStateAndTransitions()
+    //drawTransition(stateIndex, x, y, startx, starty)
+    //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected)
+	//getStateDrawingColor(i,isBorder)
+	//getTransitionDrawingColor(i,isBorder,isSelected)
+    //drawState(stateIndex, x, y, isRootState)
+	//toggleParameterSetup()
+	//eatParameterMouseEvent(touchEvent) 
+	//showAlarmSetup()
+	//setAlarm(start)
+	//displayError(err)
+	//closeErrorBox()
+
+	//altDrawCurrentStateAndTransitions()
+	//altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
+	//getAltTransitionSelection(x,y)
+	//toggleViewMode()
+
+</script>
+
 <link rel='stylesheet' type='text/css' href='/WebPath/css/fonts.css?family=Donegal+One'>
 
 <style type="text/css">			
@@ -255,40 +295,6 @@
             
             var _TRANSITION_PARAMETERS = ["ConfigurationAlias"];
             
-			//functions:
-				//init()
-            	//initTransitionParameters()
-            	//handleTransitionParameterChange()
-            	//smRequestHandler(req)
-            	//getCurrentState() 
-            	//currStateRequestHandler(req)
-            	//updateTimeInState(t)
-            	//physicsLaunchHandler(req)
-                //handleMouseUp(mouseEvent)
-            	//getTransitionParameterData(param)
-            	//transitionTimerHandler(mouseEvent)
-            	//handleCheckTransitionProgress(req)
-                //handleMouseMove(mouseEvent)
-                //drawHudForMouseHover()
-                //getTransitionSelection(x,y)
-				//redrawPhysics()
-				//drawCurrentStateAndTransitions()
-                //drawTransition(stateIndex, x, y, startx, starty)
-                //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected)
-            	//getStateDrawingColor(i,isBorder)
-            	//getTransitionDrawingColor(i,isBorder,isSelected)
-                //drawState(stateIndex, x, y, isRootState)
-            	//toggleParameterSetup()
-            	//eatParameterMouseEvent(touchEvent) 
-        		//showAlarmSetup()
-            	//setAlarm(start)
-				//displayError(err)
-				//closeErrorBox()
-            	//
-            	//altDrawCurrentStateAndTransitions()
-            	//altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
-            	//getAltTransitionSelection(x,y)
-            	//toggleViewMode()
             
             var _altStateDrawingMode = false;
             var _altStateGrid = [];
@@ -321,6 +327,7 @@
 			
 			var _inAnimation; //bool used to indicate if currently in transition (animation taking place)
 			var _smallStateMode, _stateOvalRadius, _perimeterRadius, _currStateTransArr;
+			var _fullConfigureDescriptionMode;
             var _selectedTransition = -1; //init to nothing selected
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
@@ -1394,7 +1401,8 @@
 				
 				if(_currState < 0) return; //do nothing if current state not defined
 				
-			    //Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    
 			    if(window.innerWidth == 0) 
 			    {
 			    	window.setTimeout(redrawPhysics,100); //for browser bug?..first time issue when not part of desktop
@@ -1408,11 +1416,18 @@
 			    
 
 			    if(_altStateDrawingMode)
+			    {
 			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_ALT_BIG_STATES || 
 			    			w < _MIN_WIN_SZ_FOR_ALT_BIG_STATES);  //decide if room for big states
+			    	_fullConfigureDescriptionMode = h >= 800; //decide if room for full description
+			    }
 			    else
+			    {
 			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_BIG_STATES || 
 			    			w < _MIN_WIN_SZ_FOR_BIG_STATES);  //decide if room for big states
+			    	_fullConfigureDescriptionMode = h >= 650; //decide if room for full description
+			    }
+			    
                 _stateOvalRadius = (_smallStateMode?_SM_MODE_STATE_SZ:_LG_MODE_STATE_SZ)/2;              
 			                                    
                 _parameterSetup.style.left = _MARGIN + _HUD_X + "px";  
@@ -1535,25 +1550,28 @@
 									"Aliased Group: '" + _aliasTranslationMap[transitionParameterValue] + "'",
 									x, y);
 	
-							y += f-4;
-							var metaValue;
-							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
-							_context.fillText("   " + 
-									"Author: '" + metaValue + "'", 
-											x, y);
-							y += f-4;
-							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
-							metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
-							_context.fillText("   " + 
-									"Creation Time: '" + metaValue + "'", 
-											x, y);
-							y += f-4;
-							metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
-							_context.fillText("   " + 
-									"Comment: '" + metaValue.substr(0,30) + 
-											(metaValue.length > 30?"...":"") + "'", 
-											x, y);
-	
+							if(_fullConfigureDescriptionMode)
+							{
+								y += f-4;
+								var metaValue;
+								metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
+								_context.fillText("   " + 
+										"Author: '" + metaValue + "'", 
+												x, y);
+								y += f-4;
+								metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
+								metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
+								_context.fillText("   " + 
+										"Creation Time: '" + metaValue + "'", 
+												x, y);
+								y += f-4;
+								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
+								_context.fillText("   " + 
+										"Comment: '" + metaValue.substr(0,30) + 
+												(metaValue.length > 30?"...":"") + "'", 
+												x, y);
+							}
+		
 							_context.font = '14pt Donegal One';
 						}
 						else //just show parameter

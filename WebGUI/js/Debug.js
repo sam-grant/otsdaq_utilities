@@ -187,6 +187,9 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 										(str[k+1] == '\n' || str[k+1] == '\t')) ++k;								
 								
 							}
+							else //not a call out so grab previous chunk
+								returnStr += str.substr(i,k+1-i);
+							
 							i = k+1;						
 						}
 					}
