@@ -7,8 +7,6 @@
 #include <xdaq/Application.h>
 #include <xgi/Method.h>
 
-#include <xoap/MessageReference.h>
-#include <xoap/MessageFactory.h>
 #include <xoap/SOAPEnvelope.h>
 #include <xoap/SOAPBody.h>
 #include <xoap/domutils.h>
