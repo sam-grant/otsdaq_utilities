@@ -421,6 +421,8 @@ Desktop.createDesktop = function(security) {
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
 
+		if(!req) return; //request failed			
+		
 		var userLock; //tmp hold user with lock
 		userLock = Desktop.getXMLValue(req,"username_with_lock"); //get user with lock
 		Desktop.desktop.dashboard.displayUserLock(userLock);
@@ -1560,6 +1562,10 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
+
+       			Debug.log("The user interface is disconnected from the ots Gateway server.", Debug.HIGH_PRIORITY);
+       			//hide user with lock icon (because it usually looks bad when disconnected)
+       			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
 			}
 			if(returnHandler) returnHandler(req,reqIndex,errStr);
 		}

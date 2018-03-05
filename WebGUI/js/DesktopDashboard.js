@@ -408,8 +408,6 @@ else {
         this.displayUserLock = function(usernameWithLock, el) {      
         	if(!el)
         		el = document.getElementById("DesktopDashboard-userWithLock");
-
-   			el.style.display = "block";
         	
         	var user = Desktop.desktop.login.getUsername();
         	var data = "";
@@ -425,13 +423,14 @@ else {
        		{		
        			//nobody has lock
        			var str = "";       			
-       			str += "<a href='javascript:" + jsReq + "'>";
-       			str += "<img " +
-       					"src='/WebPath/images/dashboardImages/icon-Settings-Unlock.png' " +
+       			str += "<a href='javascript:" + jsReq + "'" +
        					"title='Click to lockout the system and take the ots Lock'>";
+       			str += "<img " +
+       					"src='/WebPath/images/dashboardImages/icon-Settings-Unlock.png'>";
        			str += "</a>";
        			el.innerHTML = str; 
-       			_oldUserNameWithLock = "";       			
+       			_oldUserNameWithLock = "";    
+       			el.style.display = "block";   			
        			return; 
        		}  	
        		
@@ -444,14 +443,15 @@ else {
        					usernameWithLock + " has the ots Lock'>"; 
        		else //this is user so can unlock
        		{
-				str += "<a href='javascript:" + jsReq + "'>";
-				str += "<img " +	
-						"src='/WebPath/images/dashboardImages/icon-Settings-Lock.png' " +
+				str += "<a href='javascript:" + jsReq + "' " +
 						"title='Click to unlock the system and release the ots Lock'>";
+				str += "<img " +	
+						"src='/WebPath/images/dashboardImages/icon-Settings-Lock.png'>";
 				str += "</a>";
        		}
        		
    			el.innerHTML = str; 
+   			el.style.display = "block";
    			
        		_oldUserNameWithLock = usernameWithLock; 
         }        
@@ -483,7 +483,10 @@ else {
        		{
        			el.innerHTML = "*** <a onclick='Desktop.desktop.resetDesktop();//soft reset attempt' " + 
        					"style='cursor:pointer; color:rgb(255,150,0);'>Disconnected</a> ***";
-       			el.style.display = "block";       			
+       			el.style.display = "block";       	
+       			
+       			//hide user with lock icon (because it usually looks bad when disconnected)
+       			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
        		}
         }
         

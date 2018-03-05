@@ -163,7 +163,9 @@ else {
 			Desktop.desktop.login.loginDiv = _loginDiv = document.getElementById("DesktopLoginDiv");
 			
 			if(!_loginDiv)
+			{      			
 				return; //abandon, no login element being displayed
+			}
 			
 			_loginDiv.appendChild(ldiv); //add centering elements to page			
 			
