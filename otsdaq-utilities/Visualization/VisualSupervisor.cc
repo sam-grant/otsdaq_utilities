@@ -280,6 +280,8 @@ throw (xgi::exception::Exception)
 		bool checkLock = false;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
+		bool allowNoUser = Command == "setUserPreferences" || Command == "getUserPreferences" || Command == "getDirectoryContents" ||
+				Command == "getRoot" || Command == "getEvents";
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,
@@ -295,6 +297,7 @@ throw (xgi::exception::Exception)
 				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
 				,0//&displayName			//acquire user's Display Name
 				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+				,allowNoUser 				//allow no user access
 		))
 		{	//failure
 			//std::cout << out->str() << std::endl; //could print out return string on failure
@@ -317,7 +320,7 @@ throw (xgi::exception::Exception)
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
-	if (Command == "setUserPreferences")
+	if (Command == "setUserPreferences" && userName != "" /*from allow no user*/)
 	{
 		__COUT__ << "userName: " << userName << std::endl;
 		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
