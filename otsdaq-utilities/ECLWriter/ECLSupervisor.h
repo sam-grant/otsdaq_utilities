@@ -50,8 +50,6 @@ public:
     void 						transitionResuming	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
 
 private:
-	
-	std::string GetCurrentUser();
 
     ConfigurationManager*                	theConfigurationManager_;
  	const std::string                    	supervisorContextUID_;

@@ -272,7 +272,7 @@ throw (toolbox::fsm::exception::Exception)
 			supervisorContextUID_, supervisorApplicationUID_);
 
 		ECLUser = configLinkNode.getNode("ECLUserName").getValue<std::string>();
-		ECLHost = configLinkNode.getNode("ECLHostName").getValue<std::string>();
+		ECLHost = configLinkNode.getNode("ECLInstanceURL").getValue<std::string>();
 		ECLPwd = configLinkNode.getNode("ECLPassword").getValue<std::string>();
 
 	}
