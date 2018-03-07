@@ -958,7 +958,7 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "getLastConfigGroups")
 	{
-		const xdaq::ApplicationDescriptor* gatewaySupervisor =
+		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
 				allSupervisorInfo_.isWizardMode()?
 						allSupervisorInfo_.getWizardDescriptor():
 						allSupervisorInfo_.getGatewayDescriptor();
