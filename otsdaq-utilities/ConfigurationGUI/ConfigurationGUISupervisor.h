@@ -38,8 +38,6 @@ public:
 
     void 					init                  						(void);
     void 					destroy               						(void);
-//    void 					Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-//    void 					request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
     void 					handleSaveConfigurationInfoXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, std::string& configName, const std::string& columnCSV, const std::string& tableDescription, const std::string& columnChoicesCSV, bool allowOverwrite=false);

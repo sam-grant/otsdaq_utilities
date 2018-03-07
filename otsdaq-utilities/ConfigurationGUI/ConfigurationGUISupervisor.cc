@@ -34,25 +34,11 @@ XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
 : 	CoreSupervisorBase	(stub)
-//: xdaq::Application	 			(stub)
-//, SOAPMessenger  	 			(this)
-//, theRemoteWebUsers_ 			(this)
-//, theConfigurationManager_		(new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-//, supervisorContextUID_			(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
-//, supervisorApplicationUID_		(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
-//(
-//	getApplicationContext()->getContextDescriptor()->getURL(),
-//	getApplicationDescriptor()->getLocalId()
-//))
-//, LOCK_REQUIRED_	 			(true) 	//set default
-//, USER_PERMISSIONS_THRESHOLD_	(10) 	//set default
 {
 	LOCK_REQUIRED_ 				= true; //set default
 	USER_PERMISSIONS_THRESHOLD_ = 10; //set default
 
 	INIT_MF("ConfigurationGUI");
-//	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
-//	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
 
 	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
 	init();
