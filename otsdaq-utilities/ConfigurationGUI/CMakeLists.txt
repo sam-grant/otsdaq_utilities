@@ -6,12 +6,13 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 otsdaq-core_ConfigurationPluginDataFormats_IterateConfiguration_configuration
-		 SupervisorInfo
-		 CgiDataUtilities
-		 WebUsersUtilities
-		 SOAPUtilities
-		 XmlUtilities
-		 MessageFacility
+		 CoreSupervisors
+		 #SupervisorInfo
+		 #CgiDataUtilities
+		 #WebUsersUtilities
+		 #SOAPUtilities
+		 #XmlUtilities
+		 #MessageFacility
 		 cetlib
          $ENV{XERCES_C_LIB}/libxerces-c.so
 	 ${MF_MESSAGELOGGER}
