@@ -289,6 +289,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
+		__COUT_INFO__ << "ECLSupervisor sending Start Run log message to ECL" << std::endl;
 		run = SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber");
 		run_start = std::chrono::steady_clock::now();
 		Write(false, false);
@@ -305,6 +306,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
+		__COUT_INFO__ << "ECLSupervisor sending Stop Run log message to ECL" << std::endl;
 		Write(true, false);
 	}
 	catch (...)
@@ -320,6 +322,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
+		__COUT_INFO__ << "ECLSupervisor sending Pause Run log message to ECL" << std::endl;
 		Write(true, true);
 	}
 	catch (...)
@@ -334,6 +337,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
+		__COUT_INFO__ << "ECLSupervisor sending Resume Run log message to ECL" << std::endl;
 		run_start = std::chrono::steady_clock::now();
 		Write(false, true);
 	}
