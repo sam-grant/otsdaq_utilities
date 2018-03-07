@@ -267,6 +267,14 @@ throw (toolbox::fsm::exception::Exception)
 			theGroup.first,
 			theGroup.second, true);
 
+
+		ConfigurationTree configLinkNode = theConfigurationManager_->getSupervisorConfigurationNode(
+			supervisorContextUID_, supervisorApplicationUID_);
+
+		ECLUser = configLinkNode.getNode("ECLUserName").getValue<std::string>();
+		ECLHost = configLinkNode.getNode("ECLHostName").getValue<std::string>();
+		ECLPwd = configLinkNode.getNode("ECLPassword").getValue<std::string>();
+
 	}
 	//catch(...)
 	//{
@@ -281,7 +289,8 @@ throw (toolbox::fsm::exception::Exception)
 	try
 	{
 		run = SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber");
-		Write(false,false);
+		run_start = std::chrono::steady_clock::now();
+		Write(false, false);
 	}
 	catch (...)
 	{
@@ -295,7 +304,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
-		Write(true,false);
+		Write(true, false);
 	}
 	catch (...)
 	{
@@ -324,6 +333,7 @@ throw (toolbox::fsm::exception::Exception)
 {
 	try
 	{
+		run_start = std::chrono::steady_clock::now();
 		Write(false, true);
 	}
 	catch (...)
@@ -331,7 +341,6 @@ throw (toolbox::fsm::exception::Exception)
 		__COUT_INFO__ << "ERROR! Couldn't Resume the ECLSupervisor" << std::endl;
 	}
 }
-
 
 int ECLSupervisor::Write(bool atEnd, bool pause)
 {
@@ -344,17 +353,11 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 
 	if (!atEnd) {
 
-		if (pause) form.name("RC Resume Run");
-		else 			form.name("RC Start Run");
+		if (pause) form.name("FTBF OTS DAQ Resume Run");
+		else 			form.name("FTBF OTS DAQ Start Run");
 
 
 		field = Field_t(EscapeECLString(run), "RunNumber");
-		fields.push_back(field);
-
-		field = Field_t(EscapeECLString(shifter), "Shifter");
-		fields.push_back(field);
-
-		field = Field_t(EscapeECLString(comment), "Comments");
 		fields.push_back(field);
 
 		form.field(fields);
@@ -363,20 +366,25 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 
 	}
 	else {
-		if (pause) 				form.name("RC Pause Run");
-		else 			form.name("RC End Run");
+		if (pause) 				form.name("FTBF OTS DAQ Pause Run");
+		else 			form.name("FTBF OTS DAQ End Run");
 
 
 		field = Field_t(EscapeECLString(run), "RunNumber");
 		fields.push_back(field);
 
-		field = Field_t(EscapeECLString(runDuration), "Duration");
-		fields.push_back(field);
+		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count();
+		int dur_s = dur / 1000;
+		dur = dur % 1000;
+		int dur_m = dur_s / 60;
+		dur_s = dur_s % 60;
+		int dur_h = dur_m / 60;
+		dur_m = dur_m % 60;
 
-		field = Field_t(EscapeECLString(shifter), "Shifter");
-		fields.push_back(field);
+		std::ostringstream dur_ss;
+		dur_ss << dur_h << ":" << dur_m << ":" << dur_s << "." << dur;
 
-		field = Field_t(EscapeECLString(comment), "Comments");
+		field = Field_t(EscapeECLString(dur_ss.str()), "Duration");
 		fields.push_back(field);
 
 		form.field(fields);

@@ -15,6 +15,7 @@
 
 #include <string>
 #include <map>
+#include <chrono>
 #include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
@@ -50,6 +51,8 @@ public:
 
 private:
 	
+	std::string GetCurrentUser();
+
     ConfigurationManager*                	theConfigurationManager_;
  	const std::string                    	supervisorContextUID_;
 	const std::string                    	supervisorApplicationUID_;
@@ -63,9 +66,7 @@ private:
 	std::string ECLHost; 
 	std::string ECLPwd;
 	std::string run;
-	std::string shifter; 
-	std::string comment;
-	std::string runDuration;
+	std::chrono::steady_clock::time_point run_start;
 
 	std::string EscapeECLString(std::string input = "");
 
