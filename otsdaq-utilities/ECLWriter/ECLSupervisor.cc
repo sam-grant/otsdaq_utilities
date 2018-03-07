@@ -274,6 +274,7 @@ throw (toolbox::fsm::exception::Exception)
 		ECLUser = configLinkNode.getNode("ECLUserName").getValue<std::string>();
 		ECLHost = configLinkNode.getNode("ECLInstanceURL").getValue<std::string>();
 		ECLPwd = configLinkNode.getNode("ECLPassword").getValue<std::string>();
+		ExperimentName = configLinkNode.getNode("ExperimentName").getValue<std::string>();
 
 	}
 	//catch(...)
@@ -342,6 +343,54 @@ throw (toolbox::fsm::exception::Exception)
 	}
 }
 
+//========================================================================================================================
+//xoap::MakeSystemLogbookEntry
+//	make a system logbook entry into active experiment's logbook from Supervisor only
+//	TODO: (how to enforce?)
+xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageReference msg)
+throw (xoap::exception::Exception)
+{
+	SOAPParameters parameters("EntryText");
+	//	SOAPParametersV parameters(1);
+	//	parameters[0].setName("EntryText");
+	receive(msg, parameters);
+	std::string EntryText = parameters.getValue("EntryText");
+
+	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;
+
+	std::string retStr = "Success";
+
+	ECLEntry_t eclEntry;
+	eclEntry.author(ECLUser);
+	eclEntry.category("System Entry");
+	Form_t form;
+	Field_t field;
+	Form_t::field_sequence fields;
+	std::string users = theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
+
+	form.name(ExperimentName + " System Logbook Entry");
+
+	field = Field_t(EscapeECLString(run), "RunNumber");
+	fields.push_back(field);
+
+	field = Field_t(EscapeECLString(users), "ActiveUsers");
+	fields.push_back(field);
+
+	field = Field_t(EscapeECLString(EntryText), "Entry");
+	fields.push_back(field);
+
+	ECLConnection eclConn(ECLUser, ECLPwd, ECLHost);
+	if (!eclConn.Post(eclEntry)) {
+		retStr = "Failure";
+	}
+
+	//fill return parameters
+	SOAPParameters retParameters("Status", retStr);
+
+	return SOAPUtilities::makeSOAPMessageReference("LogbookEntryStatusResponse", retParameters);
+}
+
+
 int ECLSupervisor::Write(bool atEnd, bool pause)
 {
 	ECLEntry_t eclEntry;
@@ -350,14 +399,18 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 	Form_t form;
 	Field_t field;
 	Form_t::field_sequence fields;
+	std::string users = theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
 
 	if (!atEnd) {
 
-		if (pause) form.name("FTBF OTS DAQ Resume Run");
-		else 			form.name("FTBF OTS DAQ Start Run");
+		if (pause) form.name(ExperimentName + " OTSDAQ Resume Run");
+		else 			form.name(ExperimentName + " OTSDAQ Start Run");
 
 
 		field = Field_t(EscapeECLString(run), "RunNumber");
+		fields.push_back(field);
+
+		field = Field_t(EscapeECLString(users), "ActiveUsers");
 		fields.push_back(field);
 
 		form.field(fields);
@@ -366,11 +419,14 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 
 	}
 	else {
-		if (pause) 				form.name("FTBF OTS DAQ Pause Run");
-		else 			form.name("FTBF OTS DAQ End Run");
+		if (pause) 				form.name(ExperimentName + " OTSDAQ Pause Run");
+		else 			form.name(ExperimentName + " OTSDAQ End Run");
 
 
 		field = Field_t(EscapeECLString(run), "RunNumber");
+		fields.push_back(field);
+
+		field = Field_t(EscapeECLString(users), "ActiveUsers");
 		fields.push_back(field);
 
 		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count();

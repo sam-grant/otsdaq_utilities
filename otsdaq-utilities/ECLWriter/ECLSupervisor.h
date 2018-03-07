@@ -48,6 +48,8 @@ public:
     void 						transitionStopping    		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     void 						transitionPausing	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
     void 						transitionResuming	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+	
+	xoap::MessageReference 		MakeSystemLogbookEntry(xoap::MessageReference msg) 			throw (xoap::exception::Exception);
 
 private:
 
@@ -63,6 +65,7 @@ private:
 	std::string ECLUser; 
 	std::string ECLHost; 
 	std::string ECLPwd;
+	std::string ExperiemntName;
 	std::string run;
 	std::chrono::steady_clock::time_point run_start;
 
