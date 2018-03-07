@@ -65,7 +65,7 @@ private:
 	std::string ECLUser; 
 	std::string ECLHost; 
 	std::string ECLPwd;
-	std::string ExperiemntName;
+	std::string ExperimentName;
 	std::string run;
 	std::chrono::steady_clock::time_point run_start;
 
