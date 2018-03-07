@@ -29,25 +29,33 @@ XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
 
 
 //========================================================================================================================
+//new user gets a config mgr assigned
+//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: xdaq::Application	 (stub)
-, SOAPMessenger  	 (this)
-, theRemoteWebUsers_ (this)
+: 	CoreSupervisorBase	(stub)
+//: xdaq::Application	 			(stub)
+//, SOAPMessenger  	 			(this)
+//, theRemoteWebUsers_ 			(this)
+//, theConfigurationManager_		(new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
+//, supervisorContextUID_			(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
+//, supervisorApplicationUID_		(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
+//(
+//	getApplicationContext()->getContextDescriptor()->getURL(),
+//	getApplicationDescriptor()->getLocalId()
+//))
+//, LOCK_REQUIRED_	 			(true) 	//set default
+//, USER_PERMISSIONS_THRESHOLD_	(10) 	//set default
 {
+	LOCK_REQUIRED_ 				= true; //set default
+	USER_PERMISSIONS_THRESHOLD_ = 10; //set default
+
 	INIT_MF("ConfigurationGUI");
-	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
-	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
+//	xgi::bind (this, &ConfigurationGUISupervisor::Default, "Default" );
+//	xgi::bind (this, &ConfigurationGUISupervisor::request, "Request" );
 
 	std::cout << __COUT_HDR_FL__ << "Initializing..." << std::endl;
 	init();
-
-	//new user gets a config mgr assigned
-	//user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
-
-
-	__COUT__ << "Activating saved context, which may prepare for normal mode..." << std::endl;
-	testXDAQContext(); //test context group activation
 }
 
 //========================================================================================================================
@@ -58,8 +66,47 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 //========================================================================================================================
 void ConfigurationGUISupervisor::init(void)
 {
-	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
+
+	__COUT__ << "Activating saved context, which may prepare for normal mode..." << std::endl;
+	testXDAQContext(); //test context group activation
+
+
+//	//called by constructor of CoreSupervisorBase
+//	allSupervisorInfo_.init(getApplicationContext());
+
+
+	ConfigurationTree appNode = theConfigurationManager_->getSupervisorNode(
+			CoreSupervisorBase::supervisorContextUID_, CoreSupervisorBase::supervisorApplicationUID_);
+	//try to get security settings
+	try
+	{
+		__COUT__ << "Looking for supervisor security settings..." << __E__;
+		auto /*map<name,node>*/ children = appNode.getNode("LinkToPropertyConfiguration").getChildren();
+
+		for(auto& child:children)
+		{
+			if(child.second.getNode("Status").getValue<bool>() == false) continue; //skip OFF properties
+
+			auto propertyName = child.second.getNode("PropertyName");
+
+			if(propertyName.getValue() ==
+					supervisorProperties_.fieldDoNotRequireLock)
+			{
+				LOCK_REQUIRED_ = child.second.getNode("PropertyValue").getValue<bool>();
+				__COUTV__(LOCK_REQUIRED_);
+			}
+			else if(propertyName.getValue() ==
+					supervisorProperties_.fieldUserPermissionsThreshold)
+			{
+				USER_PERMISSIONS_THRESHOLD_ = child.second.getNode("PropertyValue").getValue<uint8_t>();
+				__COUTV__(USER_PERMISSIONS_THRESHOLD_);
+			}
+		}
+	}
+	catch(...)
+	{
+		__COUT__ << "No supervisor security settings found, going with defaults." << __E__;
+	}
 }
 
 //========================================================================================================================
@@ -162,7 +209,6 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommands = 0; //automatic commands should not refresh cookie code.. only user initiated commands should!
 		bool checkLock = true;
-		bool lockRequired = true;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,
@@ -171,9 +217,9 @@ throw (xgi::exception::Exception)
 				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommands,			//true/false refresh cookie code
-				USER_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				USER_PERMISSIONS_THRESHOLD_, //set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				lockRequired,				//true/false requires this user has the lock to proceed
+				LOCK_REQUIRED_,				//true/false requires this user has the lock to proceed
 				&userWithLock,				//acquire username with lock (optionally null pointer)
 				&userName					//acquire username of this user (optionally null pointer)
 				,0//,&displayName			//acquire user's Display Name

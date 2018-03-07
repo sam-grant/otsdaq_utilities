@@ -434,7 +434,9 @@ else {
        			return; 
        		}  	
        		
-       		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
+       		if(_oldUserNameWithLock == usernameWithLock && 
+       				el.style.display == "block")
+       			return; //no need to re-write element
 
        		var str = "";       			
        		if(usernameWithLock != user) //not user so cant unlock

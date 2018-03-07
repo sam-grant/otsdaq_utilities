@@ -5,8 +5,6 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ${CETLIB_EXCEPT}
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 #otsdaq-core_ConfigurationPluginDataFormats_ConfigurationAliases_configuration
-		 #otsdaq-core_ConfigurationPluginDataFormats_Configurations_configuration
 		 otsdaq-core_ConfigurationPluginDataFormats_IterateConfiguration_configuration
 		 SupervisorInfo
 		 CgiDataUtilities
