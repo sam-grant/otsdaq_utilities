@@ -2,31 +2,16 @@
 #define _ots_ConfigurationGUISupervisor_h_
 
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
-
-//#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-
-//#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
-//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-
-//#include <xdaq/Application.h>
-//#include <xgi/Method.h>
-//
-//#include <cgicc/HTMLClasses.h>
-//#include <cgicc/HTTPCookie.h>
-//#include <cgicc/HTMLDoctype.h>
-//#include <cgicc/HTTPHeader.h>
 
 #include <string>
 #include <map>
-//#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
-
 
 
 namespace ots
 {
 
-class ConfigurationGUISupervisor: public CoreSupervisorBase //xdaq::Application, public SOAPMessenger
+class ConfigurationGUISupervisor: public CoreSupervisorBase
 {
 
 public:
@@ -38,6 +23,8 @@ public:
 
     void 					init                  						(void);
     void 					destroy               						(void);
+    virtual void 			Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
     void 					handleSaveConfigurationInfoXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, std::string& configName, const std::string& columnCSV, const std::string& tableDescription, const std::string& columnChoicesCSV, bool allowOverwrite=false);
@@ -85,17 +72,11 @@ private:
         CONFIGURATION_MANAGER_REFRESH_THRESHOLD = 60*15, 	//15 minutes, in seconds
     };
 
-//    AllSupervisorInfo 									allSupervisorInfo_;
-//    RemoteWebUsers             							theRemoteWebUsers_;
-
 
     ConfigurationManagerRW*								refreshUserSession(std::string username, uint64_t activeSessionIndex, bool refresh);
     std::map<std::string, ConfigurationManagerRW* > 	userConfigurationManagers_;
     std::map<std::string, time_t> 						userLastUseTime_;
-//
-//    ConfigurationManager*                				theConfigurationManager_;
-// 	const std::string                    				supervisorContextUID_;
-//	const std::string                    				supervisorApplicationUID_;
+
 };
 
 
