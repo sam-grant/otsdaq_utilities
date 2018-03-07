@@ -21,8 +21,8 @@ public:
     ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
     virtual ~ConfigurationGUISupervisor   (void);
 
-    void 					init                  						(void);
-    void 					destroy               						(void);
+    virtual void 			init                  						(void);
+    virtual void			destroy               						(void);
     virtual void 			Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     virtual void 			request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
