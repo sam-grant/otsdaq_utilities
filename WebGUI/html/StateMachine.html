@@ -24,8 +24,8 @@
     //getTransitionSelection(x,y)
 	//redrawPhysics()						onresize
 	//drawCurrentStateAndTransitions()
-    //drawTransition(stateIndex, x, y, startx, starty)
-    //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected)
+    //drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents)
+    //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents)
 	//getStateDrawingColor(i,isBorder)
 	//getTransitionDrawingColor(i,isBorder,isSelected)
     //drawState(stateIndex, x, y, isRootState)
@@ -1781,6 +1781,31 @@
                                    _perimeterRadius * Math.sin(angle),
 								   _canvas.width/2,_canvas.height/3);
                 }
+
+                //place selected label last
+                angleOff = Math.PI/_currStateTransArr.length;                
+                angle = angleOff/2 + _STATE_ANGLE_OFFSET;
+                
+                //draw selected transition on top of everything to look nicer                
+                for(var i=0;i<_currStateTransArr.length;++i,angle += angleOff)
+                {
+                	if(_transitions[_currStateTransArr[i]][1] == _currState) //special loop back transition case
+                	{
+                		drawSelfTransition(_transitions[_currStateTransArr[i]][1],
+                				_perimeterRadius * Math.cos(angle),
+								_perimeterRadius * Math.sin(angle),
+								_canvas.width/2,_canvas.height/3, 
+								undefined /*isSelected*/,
+								true /*drawSelectedComponents*/);
+                		continue;
+                	}
+
+                	drawTransition(_transitions[_currStateTransArr[i]][1],
+                			_perimeterRadius * Math.cos(angle),
+							_perimeterRadius * Math.sin(angle),
+							_canvas.width/2,_canvas.height/3,
+							true /*drawSelectedComponents*/);
+                }
                 
 			}
 
@@ -1881,11 +1906,12 @@
 
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function drawTransition(stateIndex, x, y, startx, starty) {				
+			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) {				
 				var isSelected = _selectedTransition != -1 && 
-						_currStateTransArr[_selectedTransition] &&
-						_transitions[_currStateTransArr[_selectedTransition]] &&
+						_currStateTransArr[_selectedTransition] !== undefined &&
+						_transitions[_currStateTransArr[_selectedTransition]] !== undefined &&
 						stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
+				
                 var mag = Math.sqrt(x*x+y*y);
                 var up = [x/mag,y/mag];
                 var lt = [y/mag,-x/mag];
@@ -1894,32 +1920,34 @@
                 
 				_context.save(); //matching save/restore 1
                 
-				_context.fillStyle = getTransitionDrawingColor(stateIndex);
-                _context.beginPath();
-                _context.moveTo(startx + arrowOff*up[0] +
-                                (_ARROW_PATH[0][0]*lt[0] + _ARROW_PATH[0][1]*up[0])*arrowSz,
-								starty + arrowOff*up[1] +
-                                (_ARROW_PATH[0][0]*lt[1] + _ARROW_PATH[0][1]*up[1])*arrowSz);
-                for(var i=0;i<_ARROW_PATH.length;++i)
-                    _context.lineTo(startx + arrowOff*up[0] +
-                                    (_ARROW_PATH[i][0]*lt[0] + _ARROW_PATH[i][1]*up[0])*arrowSz,
+				if(!drawSelectedComponents)
+				{
+					_context.fillStyle = getTransitionDrawingColor(stateIndex);
+					_context.beginPath();
+					_context.moveTo(startx + arrowOff*up[0] +
+									(_ARROW_PATH[0][0]*lt[0] + _ARROW_PATH[0][1]*up[0])*arrowSz,
 									starty + arrowOff*up[1] +
-                                    (_ARROW_PATH[i][0]*lt[1] + _ARROW_PATH[i][1]*up[1])*arrowSz);
-                _context.closePath();
-                _context.fill();
-            
-                //draw shadow border
-                _context.save();
-				_context.lineWidth = 5;
-				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1);
-				_context.shadowColor = 'black';
-				_context.shadowBlur = 10;
-				_context.shadowOffsetX = 0;
-				_context.shadowOffsetY = 0;
-				_context.stroke();
-				_context.restore();
+									(_ARROW_PATH[0][0]*lt[1] + _ARROW_PATH[0][1]*up[1])*arrowSz);
+					for(var i=0;i<_ARROW_PATH.length;++i)
+						_context.lineTo(startx + arrowOff*up[0] +
+										(_ARROW_PATH[i][0]*lt[0] + _ARROW_PATH[i][1]*up[0])*arrowSz,
+										starty + arrowOff*up[1] +
+										(_ARROW_PATH[i][0]*lt[1] + _ARROW_PATH[i][1]*up[1])*arrowSz);
+					_context.closePath();
+					_context.fill();
 				
-				if(isSelected) //add text for action if arrow is selected
+					//draw shadow border
+					_context.save();
+					_context.lineWidth = 5;
+					_context.strokeStyle = getTransitionDrawingColor(stateIndex,1);
+					_context.shadowColor = 'black';
+					_context.shadowBlur = 10;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.stroke();
+					_context.restore();
+				} 
+				else if(isSelected) //if (drawSelectedComponents), add text for action if arrow is selected
 				{
 					var rw = 150;
 					var rh = 40;
@@ -1958,7 +1986,7 @@
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
 			//	isSelected added for alt drawing mode
-			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected) {
+			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) {
 				
 				var mag = Math.sqrt(x*x+y*y);
 				var up = [x/mag,y/mag]; //from canvas center towards state pos
@@ -1974,91 +2002,97 @@
                 var finalAng = startAng - 2*Math.PI/3;
 				_context.save(); //matching save/restore 1
                 
-                _context.beginPath();
-                _context.moveTo(arrowPos[0] + innerRadius*Math.cos(startAng),
-                                arrowPos[1] + innerRadius*Math.sin(startAng));
-				_context.arc(arrowPos[0], arrowPos[1], innerRadius, startAng, finalAng, false);
-                _context.lineTo(arrowPos[0] + outerRadius*Math.cos(finalAng),
-                                arrowPos[1] + outerRadius*Math.sin(finalAng));
-				_context.arc(arrowPos[0], arrowPos[1], outerRadius,  finalAng, startAng, true);
-				
-				
-                //draw arrow from here
-                var lt = [-outerRadius*Math.cos(startAng), -outerRadius*Math.sin(startAng)] //towards center
-                mag = Math.sqrt(lt[0]*lt[0]+lt[1]*lt[1]);
-                lt[0] /= mag; lt[1] /= mag;
-                up = [-lt[1],lt[0]]; //pointing direction
-                
-                var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
-                               arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
-                var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
-                		(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
-                var jutSz = 0.1;
-                var pointSz = 0.3;
-                
-                drawPos[0] += -lt[0]*(arrowSz*jutSz); drawPos[1] += -lt[1]*(arrowSz*jutSz);//jut right
-                _context.lineTo(drawPos[0],drawPos[1]);
-                drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[0]*(arrowSz*pointSz);
-                drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[1]*(arrowSz*pointSz); //to arrow point
-                _context.lineTo(drawPos[0],drawPos[1]);
-                drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[0]*(arrowSz*pointSz);
-                drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[1]*(arrowSz*pointSz); //jut left
-                _context.lineTo(drawPos[0],drawPos[1]);
-                _context.lineTo(arrowPos[0] + innerRadius*Math.cos(startAng),
-                                arrowPos[1] + innerRadius*Math.sin(startAng)); //to finishing point
-                
-                _context.closePath();
-				_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
-                _context.fill();                
-                
-                //draw shadow border
-                _context.save();
-				_context.lineWidth = 5;
-				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
-				_context.shadowColor = 'black';
-				_context.shadowBlur = 10;
-				_context.shadowOffsetX = 0;
-				_context.shadowOffsetY = 0;
-				_context.stroke();
-				_context.restore();
-				
-				 //add text for action if arrow is selected
-				isSelected = isSelected || 
-						(isSelected === undefined && 
-								_selectedTransition != -1 && 
-								stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1]);
-				if(isSelected)
+				if(!drawSelectedComponents)
 				{
-					var rw = 150;
-					var rh = 40;
-					
-					//background rectangle
 					_context.beginPath();
-					_context.rect(arrowPos[0] - rw/2, 
-							arrowPos[1] - rh/2-9, 
-							rw, rh);
-					_context.fillStyle = 'rgba(255,255,255,1)';
-					_context.fill();
-					_context.lineWidth = 3;
-					_context.strokeStyle = _TRANS_STATE_COLOR;
-					_context.shadowColor = 'black'; //add shadow
+					_context.moveTo(arrowPos[0] + innerRadius*Math.cos(startAng),
+							arrowPos[1] + innerRadius*Math.sin(startAng));
+					_context.arc(arrowPos[0], arrowPos[1], innerRadius, startAng, finalAng, false);
+					_context.lineTo(arrowPos[0] + outerRadius*Math.cos(finalAng),
+							arrowPos[1] + outerRadius*Math.sin(finalAng));
+					_context.arc(arrowPos[0], arrowPos[1], outerRadius,  finalAng, startAng, true);
+
+
+					//draw arrow from here
+					var lt = [-outerRadius*Math.cos(startAng), -outerRadius*Math.sin(startAng)] //towards center
+							  mag = Math.sqrt(lt[0]*lt[0]+lt[1]*lt[1]);
+					lt[0] /= mag; lt[1] /= mag;
+					up = [-lt[1],lt[0]]; //pointing direction
+
+					var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
+								   arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
+					var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
+							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
+					var jutSz = 0.1;
+					var pointSz = 0.3;
+
+					drawPos[0] += -lt[0]*(arrowSz*jutSz); drawPos[1] += -lt[1]*(arrowSz*jutSz);//jut right
+					_context.lineTo(drawPos[0],drawPos[1]);
+					drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[0]*(arrowSz*pointSz);
+					drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[1]*(arrowSz*pointSz); //to arrow point
+					_context.lineTo(drawPos[0],drawPos[1]);
+					drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[0]*(arrowSz*pointSz);
+					drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[1]*(arrowSz*pointSz); //jut left
+					_context.lineTo(drawPos[0],drawPos[1]);
+					_context.lineTo(arrowPos[0] + innerRadius*Math.cos(startAng),
+							arrowPos[1] + innerRadius*Math.sin(startAng)); //to finishing point
+
+					_context.closePath();
+					_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
+					_context.fill();                
+
+					//draw shadow border
+					_context.save();
+					_context.lineWidth = 5;
+					_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
+					_context.shadowColor = 'black';
 					_context.shadowBlur = 10;
 					_context.shadowOffsetX = 0;
 					_context.shadowOffsetY = 0;
 					_context.stroke();
+					_context.restore();
 
-					//apply text
-					_context.font = '18pt Donegal One';
-					_context.textAlign = 'center';
-					_context.fillStyle = '#54967e';
-					_context.shadowColor = 'gray';
-					_context.shadowBlur = 1;
-					_context.shadowOffsetX = 0;
-					_context.shadowOffsetY = 0;
-					_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
-							arrowPos[0],
-							arrowPos[1]);
+				}
+				else //if(drawSelectedComponents)
+				{
+					//add text for action if arrow is selected
+					isSelected = isSelected || 
+							(isSelected === undefined && 
+									_selectedTransition != -1 && 
+									stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1]);
+					if(isSelected)
+					{
+						var rw = 150;
+						var rh = 40;
 
+						//background rectangle
+						_context.beginPath();
+						_context.rect(arrowPos[0] - rw/2, 
+								arrowPos[1] - rh/2-9, 
+								rw, rh);
+						_context.fillStyle = 'rgba(255,255,255,1)';
+						_context.fill();
+						_context.lineWidth = 3;
+						_context.strokeStyle = _TRANS_STATE_COLOR;
+						_context.shadowColor = 'black'; //add shadow
+						_context.shadowBlur = 10;
+						_context.shadowOffsetX = 0;
+						_context.shadowOffsetY = 0;
+						_context.stroke();
+
+						//apply text
+						_context.font = '18pt Donegal One';
+						_context.textAlign = 'center';
+						_context.fillStyle = '#54967e';
+						_context.shadowColor = 'gray';
+						_context.shadowBlur = 1;
+						_context.shadowOffsetX = 0;
+						_context.shadowOffsetY = 0;
+						_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
+								arrowPos[0],
+								arrowPos[1]);
+
+					}
 				}
                 
 				_context.restore(); //matching save/restore 1
