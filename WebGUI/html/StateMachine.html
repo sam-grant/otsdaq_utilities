@@ -799,22 +799,7 @@
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
-						"", currStateRequestHandler);
-				
-				//update alias list periodically also, since it could change
-				_parameterInitCount = 0;
-				DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
-						"&fsmName=" + _fsmName, "", 
-						function(req)
-						{
-					//update system aliases conversion map
-					var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
-					var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
-        			
-                    for(var i=0;i<aliasArr.length;++i) 
-                    	_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
-                    			aliasGroupArr[i].getAttribute('value');
-						});	
+						"", currStateRequestHandler);				
 			}
 			
 
@@ -1480,7 +1465,32 @@
                 {
 			    	drawCurrentStateAndTransitions();
                     //if(_selectedTransition != -1) 
-                    drawHudForMouseHover(); //display text description for mouse hover
+			    	
+			    	var isSelected = _selectedTransition != -1 && 
+			    			_currStateTransArr[_selectedTransition] !== undefined;
+			    	
+			    	if(isSelected && _transitionActions[_currStateTransArr[_selectedTransition]] 
+										  == "Configure") //if configure, get alias info
+		            {
+						//update alias list periodically also, since it could change
+						_parameterInitCount = 0;
+						DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
+								"&fsmName=" + _fsmName, "", 
+								function(req)
+								{
+							//update system aliases conversion map
+							var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
+							var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
+
+							for(var i=0;i<aliasArr.length;++i) 
+								_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
+										aliasGroupArr[i].getAttribute('value');
+							
+		                    drawHudForMouseHover(); //display text description for mouse hover
+								});
+		            }
+			    	else  //if not configure transition do simple display
+			    		drawHudForMouseHover(); //display text description for mouse hover
                 }
 			}
     
@@ -1982,7 +1992,7 @@
                 
 				_context.restore(); //matching save/restore 1
             }
-            
+
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
 			//	isSelected added for alt drawing mode

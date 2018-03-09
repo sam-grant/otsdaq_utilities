@@ -22,23 +22,25 @@ public:
     virtual ~VisualSupervisor   	(void);
 
 
-    virtual void 				init         				(void);
-    void 						destroy               		(void);
+    void 					destroy               			(void);
 
-    virtual void 				Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    virtual void 				request                     (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void			setSupervisorPropertyDefaults	(void);
+    virtual void 			Default               			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			request                     	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
-    void 						dataRequest                 (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void 						safari               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 					dataRequest                 	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void 					safari               			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
                               
-    void 						stateRunning         		(toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
+    void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
 
-    void 						transitionConfiguring 		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void 						transitionHalting     		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void 						transitionStarting    		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void 						transitionStopping    		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void 						transitionPausing	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    void 						transitionResuming	  		(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionHalting     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionInitializing			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionPausing     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionResuming    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionStarting    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionStopping    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			enteringError         			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
 
 private:
 

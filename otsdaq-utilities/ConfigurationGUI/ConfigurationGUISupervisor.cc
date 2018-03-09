@@ -37,6 +37,8 @@ throw (xdaq::exception::Exception)
 {
 
 	INIT_MF("ConfigurationGUI");
+
+	init();
 }
 
 //========================================================================================================================
@@ -46,16 +48,21 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 }
 
 //========================================================================================================================
-//When overriding, setup default property values here
-// called by CoreSupervisorBase constructor
 void ConfigurationGUISupervisor::init(void)
 {
 	__COUT__ << "Initializing..." << std::endl;
-	LOCK_REQUIRED_ 				= true; //set default
-	USER_PERMISSIONS_THRESHOLD_ = 10; //set default
 
 	__COUT__ << "Activating saved context, which may prepare for normal mode..." << std::endl;
 	testXDAQContext(); //test context group activation
+}
+
+//========================================================================================================================
+//When overriding, setup default property values here
+// called by CoreSupervisorBase constructor
+void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
+{
+	LOCK_REQUIRED_ 				= true; //set default
+	USER_PERMISSIONS_THRESHOLD_ = 10; //set default
 }
 
 //========================================================================================================================

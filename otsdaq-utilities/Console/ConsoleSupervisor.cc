@@ -30,20 +30,17 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: 	CoreSupervisorBase	(stub)
-//: xdaq::Application (stub)
-//, SOAPMessenger     (this)
-//, theRemoteWebUsers_(this)
-, writePointer_     (0)
-, messageCount_     (0)
+: CoreSupervisorBase	(stub)
+, writePointer_     	(0)
+, messageCount_     	(0)
 {
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
-	//xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
 	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
+
 	init();
 }
 
@@ -55,14 +52,8 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 //========================================================================================================================
 void ConsoleSupervisor::init(void)
 {
-	//called by constructor
-	//allSupervisorInfo_.init(getApplicationContext());
-
-	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
-
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
-
 }
 
 //========================================================================================================================

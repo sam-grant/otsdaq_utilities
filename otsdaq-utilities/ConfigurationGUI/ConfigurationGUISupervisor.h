@@ -4,9 +4,6 @@
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManagerRW.h"
 
-#include <string>
-#include <map>
-
 
 namespace ots
 {
@@ -21,8 +18,10 @@ public:
     ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
     virtual ~ConfigurationGUISupervisor   (void);
 
-    virtual void 			init                  						(void);
-    virtual void			destroy               						(void);
+    void 					init                  						(void);
+    void					destroy               						(void);
+
+    virtual void			setSupervisorPropertyDefaults				(void);
     virtual void 			Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     virtual void 			request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 

@@ -4,29 +4,11 @@
 
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
-//
-//#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-//#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-//
-//#include <xdaq/Application.h>
-//#include <xgi/Method.h>
-//
-//#include <cgicc/HTMLClasses.h>
-//#include <cgicc/HTTPCookie.h>
-//#include <cgicc/HTMLDoctype.h>
-//#include <cgicc/HTTPHeader.h>
-
-#include <string>
-#include <map>
 #include <mutex>        //for std::mutex
-//#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
 namespace ots
 {
-
-//class HttpXmlDocument;
-
 
 class ConsoleSupervisor: public CoreSupervisorBase
 {
@@ -38,10 +20,11 @@ public:
     ConsoleSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
     virtual ~ConsoleSupervisor   	(void);
 
-    virtual void init         		(void);
+    void init         				(void);
     void destroy              		(void);
 
     virtual void Default       		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+
     void Console               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:

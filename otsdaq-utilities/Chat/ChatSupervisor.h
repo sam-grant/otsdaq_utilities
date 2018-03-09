@@ -1,29 +1,13 @@
 #ifndef _ots_ChatSupervisor_h
 #define _ots_ChatSupervisor_h
 
-#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
-#include <xdaq/Application.h>
-#include <xgi/Method.h>
-
-
-#include <cgicc/HTMLClasses.h>
-#include <cgicc/HTTPCookie.h>
-#include <cgicc/HTMLDoctype.h>
-#include <cgicc/HTTPHeader.h>
-
-#include <string>
-#include <map>
-
-#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 namespace ots
 {
 
-class HttpXmlDocument;
-
-class ChatSupervisor: public xdaq::Application, public SOAPMessenger
+class ChatSupervisor: public CoreSupervisorBase
 {
 
 public:
@@ -33,18 +17,15 @@ public:
     ChatSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
     virtual ~ChatSupervisor   	(void);
 
-    void init                  	(void);
     void destroy               	(void);
-    void Default               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+
+    virtual void Default        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
     void Chat	               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
                               
 
 private:
 
-
-    AllSupervisorInfo 			allSupervisorInfo_;
-    RemoteWebUsers				theRemoteWebUsers_;
 
     //"Chat History" database associations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     	//Maintain list of most recent chats and active display names

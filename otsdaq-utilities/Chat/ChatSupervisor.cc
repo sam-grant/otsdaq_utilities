@@ -18,29 +18,19 @@ XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 //========================================================================================================================
 ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: xdaq::Application (stub)
-, SOAPMessenger     (this)
-, theRemoteWebUsers_(this)
+: CoreSupervisorBase	(stub)
 {
 	INIT_MF("ChatSupervisor");
-	xgi::bind (this, &ChatSupervisor::Default, "Default");
+
 	xgi::bind (this, &ChatSupervisor::Chat,    "Chat");
 
 	ChatLastUpdateIndex = 1; //skip 0
-
-	init();
 }
 
 //========================================================================================================================
 ChatSupervisor::~ChatSupervisor(void)
 {
 	destroy();
-}
-//========================================================================================================================
-void ChatSupervisor::init(void)
-{
-	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -54,7 +44,6 @@ void ChatSupervisor::destroy(void)
 void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }

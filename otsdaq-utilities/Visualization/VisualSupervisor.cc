@@ -84,6 +84,15 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) throw (xdaq::exc
 }
 
 //========================================================================================================================
+//When overriding, setup default property values here
+// called by CoreSupervisorBase constructor
+void VisualSupervisor::setSupervisorPropertyDefaults(void)
+{
+	LOCK_REQUIRED_ 				= false; //set default
+	USER_PERMISSIONS_THRESHOLD_ = 1; 	 //set default
+}
+
+//========================================================================================================================
 void VisualSupervisor::binaryBufferToHexString(char *buff, unsigned int len,  std::string& dest)
 {
 	dest = "";
@@ -102,11 +111,6 @@ void VisualSupervisor::binaryBufferToHexString(char *buff, unsigned int len,  st
 VisualSupervisor::~VisualSupervisor(void)
 {
 	destroy();
-}
-//========================================================================================================================
-void VisualSupervisor::init(void)
-{
-	//called by CoreSupervisorBase constructor to set Supervisor Property defaults
 }
 
 //========================================================================================================================
@@ -158,9 +162,9 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = false; //automatic commands should not refresh cookie code.. only user initiated commands should!
 
-		bool checkLock = false;
+		bool checkLock = LOCK_REQUIRED_;
 		bool needUserName = false;//Command == "setUserPreferences" || Command == "getUserPreferences";
-		bool requireLock = false;
+		bool requireLock = LOCK_REQUIRED_;
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,
@@ -169,7 +173,7 @@ throw (xgi::exception::Exception)
 				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				1, 							//set access level requirement to pass gateway
+				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
@@ -242,9 +246,9 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = false;//Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 
-		bool checkLock = false;
+		bool checkLock = LOCK_REQUIRED_;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
-		bool requireLock = false;
+		bool requireLock = LOCK_REQUIRED_;
 		bool allowNoUser = Command == "setUserPreferences" || Command == "getUserPreferences" || Command == "getDirectoryContents" ||
 				Command == "getRoot" || Command == "getEvents";
 
@@ -255,7 +259,7 @@ throw (xgi::exception::Exception)
 				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				1, 							//set access level requirement to pass gateway
+				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
