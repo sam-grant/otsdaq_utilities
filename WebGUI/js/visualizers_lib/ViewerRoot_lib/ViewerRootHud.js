@@ -177,10 +177,10 @@ ViewerRoot.createHud = function() {
 			ViewerRoot.hudAutoHide = chk.checked; 	//auto hide
 			ViewerRoot.handleWindowResize();
 		}
-		var hardRefresh = DesktopContent.getXMLValue(req,'hardRefresh');
-		hardRefresh = hardRefresh|0; //force to integer
-		if(!hardRefresh && hardRefresh !== "")
+		var hardRefresh = DesktopContent.getXMLValue(req,'hardRefresh');		
+		if(hardRefresh !== undefined && hardRefresh !== "")
 		{
+			hardRefresh = hardRefresh|0; //force to integer
 			Debug.log("setting hardRefresh=" + hardRefresh);
 			ViewerRoot.hardRefresh = hardRefresh; 	//hard refresh
 		}
