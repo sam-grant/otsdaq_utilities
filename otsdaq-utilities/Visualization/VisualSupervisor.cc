@@ -1,16 +1,5 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-#include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
-//#include "otsdaq-core/DataManager/NetworkDataManager.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
 //#include "otsdaq-core/RootUtilities/DQMHistos.h"
-#include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
 
 
@@ -66,33 +55,14 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //========================================================================================================================
-VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception)
-: xdaq::Application           (s)
-, SOAPMessenger               (this)
-, RunControlStateMachine      ("VisualSupervisor")
-, theConfigurationManager_    (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-, supervisorContextUID_    (theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
-, supervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
-		(
-				getApplicationContext()->getContextDescriptor()->getURL(),
-				getApplicationDescriptor()->getLocalId()
-		))
-, supervisorConfigurationPath_  ("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
-, theRemoteWebUsers_          	(this)
+VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) throw (xdaq::exception::Exception)
+: CoreSupervisorBase			(stub)
 , theDataManager_             	(0)
 , loadedRunNumber_	          	(-1)
 {
 	INIT_MF("VisualSupervisor");
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << std::endl;
+
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>
 	(
 			theConfigurationManager_->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName()),
@@ -101,12 +71,9 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	);
 
 
-	__COUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
-	xgi::bind(this, &VisualSupervisor::Default, "Default" );
-	xgi::bind(this, &VisualSupervisor::request, "request");
+	__COUT__ << "done data manager" << std::endl;
 
 	xgi::bind(this, &VisualSupervisor::dataRequest, "dataRequest");
-
 
 	xgi::bind(this, &VisualSupervisor::safari, "safari" );
 
@@ -114,7 +81,6 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	//make preferences directory in case they don't exist
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
-	init();
 }
 
 //========================================================================================================================
@@ -140,8 +106,7 @@ VisualSupervisor::~VisualSupervisor(void)
 //========================================================================================================================
 void VisualSupervisor::init(void)
 {
-	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
+	//called by CoreSupervisorBase constructor to set Supervisor Property defaults
 }
 
 //========================================================================================================================
@@ -619,7 +584,7 @@ throw (xgi::exception::Exception)
 						TString s = obj->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
+						__COUT__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
 						xmldoc.addTextElementToData((std::string(obj->IsA()->GetName()).find("Directory") != std::string::npos)?"dir":"file", obj->GetName());
 					}
 				}
@@ -633,7 +598,7 @@ throw (xgi::exception::Exception)
 						TString s = key->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << key->GetClassName() << std::endl;
+						__COUT__ << "Class Name: " << key->GetClassName() << std::endl;
 						xmldoc.addTextElementToData((std::string(key->GetClassName()).find("Directory") != std::string::npos)?"dir":"file", key->GetName());
 					}
 				}

@@ -49,7 +49,7 @@ ViewerRoot.createHud = function() {
 			chk = document.getElementById("hardRefreshCheckbox");
 			ViewerRoot.hardRefresh = chk.checked; 	//hard refresh
 			console.log("checkboxUpdate: hardRefresh: " + chk.checked);
-			DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&hardRefresh="+
+			DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&hardRefresh="+
 					(chk.checked?1:0));	
 		}	
 		else
@@ -61,7 +61,7 @@ ViewerRoot.createHud = function() {
 			{
 				ViewerRoot.autoRefreshDefault = chk.checked; 	//auto refresh
 				
-				DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefresh="+
+				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefresh="+
 						(chk.checked?1:0));	
 			}
 			else if(i==1) 
@@ -69,7 +69,7 @@ ViewerRoot.createHud = function() {
 				ViewerRoot.hudAutoHide = chk.checked; 				//auto hide
 				ViewerRoot.handleWindowResize();
 	
-				DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoHide="+
+				DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoHide="+
 						(chk.checked?1:0));	
 			}
 			else if(i==2) 
@@ -92,7 +92,7 @@ ViewerRoot.createHud = function() {
 		Debug.log("ViewerRoot Hud handlerRefreshPeriodChange " + v);
 		document.getElementById("hudAutoRefreshPeriod").value = v;
 		ViewerRoot.autoRefreshPeriod = v;
-		DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&autoRefreshPeriod="+
+		DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&autoRefreshPeriod="+
 				ViewerRoot.autoRefreshPeriod);
 		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
 		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
@@ -103,7 +103,7 @@ ViewerRoot.createHud = function() {
 		Debug.log("ViewerRoot Hud radioSelect " + i);
 		ViewerRoot.nextObjectMode = i;
 		
-		DesktopContent.XMLHttpRequest("request?RequestType=setUserPreferences&radioSelect="+i);
+		DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&radioSelect="+i);
 	}
 	
 	this.handleDirContents = function(req) {
@@ -494,7 +494,7 @@ ViewerRoot.createHud = function() {
 		var dir = document.getElementById('hudAdminControlField').value;
 		Debug.log("ViewerRoot Hud makeConfigDir  " + dir);
 
-		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
 			
 	}
 
@@ -527,7 +527,7 @@ ViewerRoot.createHud = function() {
 		fileStr += "</DATA></ROOT>";
 		Debug.log("ViewerRoot Hud saveConfigFile fileStr  " + fileStr);
 		
-		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=save", 
+		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=save", 
 				"path="+adminControlsPath+"&name="+file+"&config="+fileStr, ViewerRoot.hud.adminControlsReqHandler);
 	}
 
@@ -536,7 +536,7 @@ ViewerRoot.createHud = function() {
 		var target = document.getElementById('hudAdminControlField').value;
 		Debug.log("ViewerRoot Hud removeConfigPath  " + target);		
 
-		DesktopContent.XMLHttpRequest("request?RequestType=rootAdminControls&cmd=delete", "path="+adminControlsPath+"&name="+target, ViewerRoot.hud.adminControlsReqHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=delete", "path="+adminControlsPath+"&name="+target, ViewerRoot.hud.adminControlsReqHandler);
 	}
 
 	this.adminControlsReqHandler = function(req) {
@@ -683,7 +683,7 @@ ViewerRoot.createHud = function() {
     	this.handleWindowResize();
     
     //get user preferences from server
-    DesktopContent.XMLHttpRequest("request?RequestType=getUserPreferences","",handleUserPreferences);	
+    DesktopContent.XMLHttpRequest("Request?RequestType=getUserPreferences","",handleUserPreferences);	
 }
 
 

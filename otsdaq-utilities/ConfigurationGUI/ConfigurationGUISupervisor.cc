@@ -47,6 +47,7 @@ ConfigurationGUISupervisor::~ConfigurationGUISupervisor(void)
 
 //========================================================================================================================
 //When overriding, setup default property values here
+// called by CoreSupervisorBase constructor
 void ConfigurationGUISupervisor::init(void)
 {
 	__COUT__ << "Initializing..." << std::endl;

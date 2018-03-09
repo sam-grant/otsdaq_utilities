@@ -30,9 +30,10 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: xdaq::Application (stub)
-, SOAPMessenger     (this)
-, theRemoteWebUsers_(this)
+: 	CoreSupervisorBase	(stub)
+//: xdaq::Application (stub)
+//, SOAPMessenger     (this)
+//, theRemoteWebUsers_(this)
 , writePointer_     (0)
 , messageCount_     (0)
 {
@@ -41,7 +42,7 @@ throw (xdaq::exception::Exception)
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
-	xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
+	//xgi::bind (this, &ConsoleSupervisor::Default, "Default" );
 	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
 	init();
 }
@@ -55,9 +56,9 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 void ConsoleSupervisor::init(void)
 {
 	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
+	//allSupervisorInfo_.init(getApplicationContext());
 
-	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 
 	//start mf msg listener
 	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
@@ -77,7 +78,7 @@ void ConsoleSupervisor::destroy(void)
 //	Note: Uses std::mutex to avoid conflict with reading thread.
 void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 {
-	std::cout << __COUT_HDR_FL__ << std::endl;
+	__COUT__ << std::endl;
 
 	std::string configFile = QUIET_CFG_FILE;
 	FILE *fp = fopen(configFile.c_str(),"r");
@@ -85,7 +86,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	{
 		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
-		std::cout << __COUT_HDR_FL__ << "\n" << ss.str();
+		__COUT__ << "\n" << ss.str();
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
@@ -113,7 +114,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
 				myport << ". Perhaps it is already in use? Exiting Console receive loop." << std::endl;
-		std::cout << __COUT_HDR_FL__ << ss.str();
+		__COUT__ << ss.str();
 
 
 		cs->messages_[cs->writePointer_].set("||0|||Error|Console|||0||ConsoleSupervisor|" +
@@ -145,7 +146,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		{
 			if(i != 200)
 			{
-				std::cout << __COUT_HDR_FL__ << "Console has first message." << std::endl;
+				__COUT__ << "Console has first message." << std::endl;
 				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
 
 				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
@@ -159,7 +160,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			else
 				heartbeatCount = 0; //reset heartbeat if external messages are coming through
 
-			//std::cout << __COUT_HDR_FL__ << buffer << std::endl;
+			//__COUT__ << buffer << std::endl;
 
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
@@ -172,8 +173,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			newSourceId = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
 			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
 
-			//std::cout << __COUT_HDR_FL__ << "newSourceId: " << newSourceId << std::endl;
-			//std::cout << __COUT_HDR_FL__ << "newSequenceId: " << newSequenceId << std::endl;
+			//__COUT__ << "newSourceId: " << newSourceId << std::endl;
+			//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
 
 			if(sourceLastSequenceID.find(newSourceId) !=
 					sourceLastSequenceID.end() && //ensure not first packet received
@@ -232,7 +233,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
 		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			std::cout << __COUT_HDR_FL__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
+			__COUT__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}
@@ -243,7 +244,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 void ConsoleSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-	std::cout << __COUT_HDR_FL__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
 			getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
@@ -260,7 +261,7 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //get command from form, if PreviewEntry
 
-	//std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
+	//__COUT__ << "Command " << Command << std::endl;
 
 	//Commands:
 		//GetConsoleMsgs
@@ -285,7 +286,7 @@ throw (xgi::exception::Exception)
 				allSupervisorInfo_,
 				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				CONSOLE_PERMISSIONS_THRESHOLD, //set access level requirement to pass gateway
+				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
@@ -294,7 +295,7 @@ throw (xgi::exception::Exception)
 				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
 				))
 		{	//failure
-			std::cout << __COUT_HDR_FL__ << "Failed Login Gateway: " <<
+			__COUT__ << "Failed Login Gateway: " <<
 					out->str() << std::endl; //print out return string on failure
 			return;
 		}
@@ -323,7 +324,7 @@ throw (xgi::exception::Exception)
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
-//		std::cout << __COUT_HDR_FL__ << "lastUpdateCount=" << lastUpdateCount <<
+//		__COUT__ << "lastUpdateCount=" << lastUpdateCount <<
 //				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 
 		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
@@ -336,12 +337,12 @@ throw (xgi::exception::Exception)
         int messageOnly = CgiDataUtilities::postDataAsInt(cgi,"messageOnly");
         int hideLineNumers = CgiDataUtilities::postDataAsInt(cgi,"hideLineNumers");
 
-		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
-		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
-		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
-		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
-		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
-		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__COUT__ << "Command " << Command << std::endl;
+		__COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__COUT__ << "noWrap: " << noWrap << std::endl;
+		__COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		if(user == "") //should never happen?
 		{
@@ -352,7 +353,7 @@ throw (xgi::exception::Exception)
 
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		std::cout << __COUT_HDR_FL__ << "Save preferences: " << fn << std::endl;
+		__COUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
@@ -365,7 +366,7 @@ throw (xgi::exception::Exception)
 	}
 	else if(Command == "LoadUserPreferences")
 	{
-		std::cout << __COUT_HDR_FL__ << "Command " << Command << std::endl;
+		__COUT__ << "Command " << Command << std::endl;
 
 		unsigned int colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers;
 
@@ -378,13 +379,13 @@ throw (xgi::exception::Exception)
 
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		std::cout << __COUT_HDR_FL__ << "Load preferences: " << fn << std::endl;
+		__COUT__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
 		{
 			//return defaults
-			std::cout << __COUT_HDR_FL__ << "Returning defaults." << std::endl;
+			__COUT__ << "Returning defaults." << std::endl;
 			xmldoc.addTextElementToData("colorIndex","0");
 			xmldoc.addTextElementToData("showSideBar","0");
 			xmldoc.addTextElementToData("noWrap","1");
@@ -398,11 +399,11 @@ throw (xgi::exception::Exception)
 		fscanf(fp,"%*s %u",&messageOnly);
 		fscanf(fp,"%*s %u",&hideLineNumers);
 		fclose(fp);
-		std::cout << __COUT_HDR_FL__ << "colorIndex: " << colorIndex << std::endl;
-		std::cout << __COUT_HDR_FL__ << "showSideBar: " << showSideBar << std::endl;
-		std::cout << __COUT_HDR_FL__ << "noWrap: " << noWrap << std::endl;
-		std::cout << __COUT_HDR_FL__ << "messageOnly: " << messageOnly << std::endl;
-		std::cout << __COUT_HDR_FL__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__COUT__ << "noWrap: " << noWrap << std::endl;
+		__COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		char tmpStr[20];
 		sprintf(tmpStr,"%u",colorIndex);
@@ -451,7 +452,7 @@ throw (xgi::exception::Exception)
 void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 		const time_t lastUpdateCount, const unsigned int lastUpdateIndex)
 {
-	//std::cout << __COUT_HDR_FL__ << std::endl;
+	//__COUT__ << std::endl;
 
 	//validate lastUpdateIndex
 	if(lastUpdateIndex > messages_.size() &&
@@ -485,15 +486,15 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	{
 		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
 		xmldoc->addTextElementToData("message_overflow","1");
-		std::cout << __COUT_HDR_FL__ << "Overflow was detected!" << std::endl;
+		__COUT__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = (writePointer_+1) % messages_.size();
 	}
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;
 
-//	std::cout << __COUT_HDR_FL__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-//	std::cout << __COUT_HDR_FL__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
-//	std::cout << __COUT_HDR_FL__ << "writePointer_: " << writePointer_ << std::endl;
+//	__COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
+//	__COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
+//	__COUT__ << "writePointer_: " << writePointer_ << std::endl;
 
 	//return anything from refreshReadPointer_ to writePointer_
 	//all should have a clock greater than lastUpdateClock

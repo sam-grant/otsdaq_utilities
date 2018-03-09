@@ -1,32 +1,34 @@
 #ifndef _ots_ConsoleSupervisor_h_
 #define _ots_ConsoleSupervisor_h_
 
-#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
-#include <xdaq/Application.h>
-#include <xgi/Method.h>
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
-#include <cgicc/HTMLClasses.h>
-#include <cgicc/HTTPCookie.h>
-#include <cgicc/HTMLDoctype.h>
-#include <cgicc/HTTPHeader.h>
+//
+//#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
+//#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
+//
+//#include <xdaq/Application.h>
+//#include <xgi/Method.h>
+//
+//#include <cgicc/HTMLClasses.h>
+//#include <cgicc/HTTPCookie.h>
+//#include <cgicc/HTMLDoctype.h>
+//#include <cgicc/HTTPHeader.h>
 
 #include <string>
 #include <map>
 #include <mutex>        //for std::mutex
-#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
+//#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
 namespace ots
 {
 
-class HttpXmlDocument;
+//class HttpXmlDocument;
 
 
-
-
-class ConsoleSupervisor: public xdaq::Application, public SOAPMessenger
+class ConsoleSupervisor: public CoreSupervisorBase
 {
 
 public:
@@ -36,23 +38,16 @@ public:
     ConsoleSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
     virtual ~ConsoleSupervisor   	(void);
 
-    void init                  		(void);
+    virtual void init         		(void);
     void destroy              		(void);
 
-    void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void Default       		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
     void Console               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
 private:
-    enum {
-    	CONSOLE_PERMISSIONS_THRESHOLD = 100,
-    };
 
     static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);
     void							insertMessageRefresh		(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
-
-    AllSupervisorInfo allSupervisorInfo_;
-    RemoteWebUsers					theRemoteWebUsers_;
-
 
 
     struct ConsoleMessageStruct
