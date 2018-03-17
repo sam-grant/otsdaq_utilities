@@ -21,7 +21,7 @@ cet_make(LIBRARY_NAME Visualization
 		 otsdaq-core_DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 XmlUtilities
 		 SOAPUtilities
-		 MessageFacility
+		 #MessageFacility
          $ENV{XERCES_C_LIB}/libxerces-c.so
          
 )

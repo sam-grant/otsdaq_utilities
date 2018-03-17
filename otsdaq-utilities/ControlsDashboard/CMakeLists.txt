@@ -14,7 +14,7 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 SOAPUtilities
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
-         MessageFacility
+ #        MessageFacility
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
 )

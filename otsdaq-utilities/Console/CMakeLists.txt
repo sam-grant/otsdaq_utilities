@@ -13,7 +13,7 @@ cet_make(LIBRARY_NAME Console
 		 SOAPUtilities
 		 CgiDataUtilities
 		 WebUsersUtilities
-		 MessageFacility
+#		 MessageFacility
 		 NetworkUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )

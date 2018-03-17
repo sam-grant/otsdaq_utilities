@@ -7,7 +7,7 @@ cet_make(LIBRARY_NAME Chat
 		 XmlUtilities
 		 WebUsersUtilities
          SOAPUtilities
-	 MessageFacility
+#	 MessageFacility
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 

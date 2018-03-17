@@ -9,7 +9,7 @@ cet_make(LIBRARY_NAME MacroMaker
 		 CgiDataUtilities
 		 WebUsersUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
-	 MessageFacility
+#	 MessageFacility
 )
 
 install_headers()
