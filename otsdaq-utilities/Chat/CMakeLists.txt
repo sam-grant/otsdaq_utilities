@@ -2,6 +2,7 @@ include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Chat
 		 LIBRARIES
 		 ${XDAQ_BASIC_LIB_LIST}
+		 CoreSupervisors
 		 SupervisorInfo
 		 CgiDataUtilities
 		 XmlUtilities

@@ -9,6 +9,7 @@ cet_make(LIBRARY_NAME Console
 		 SupervisorInfo
 		${MF_MESSAGELOGGER}
 		${MF_UTILITIES}
+		CoreSupervisors
 		 XmlUtilities
 		 SOAPUtilities
 		 CgiDataUtilities

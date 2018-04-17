@@ -930,15 +930,3 @@ throw (toolbox::fsm::exception::Exception)
 		__COUT_INFO__ << "ERROR! Couldn't Resume the VisualSupervisor" << std::endl;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-

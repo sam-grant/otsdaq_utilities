@@ -6,6 +6,7 @@ cet_make(LIBRARY_NAME Visualization
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
 		 ${ROOTSYS}/lib/libRHTTP.so
+		 CoreSupervisors
 		 RootUtilities
 		 DataManager
 		 CgiDataUtilities
@@ -23,7 +24,7 @@ cet_make(LIBRARY_NAME Visualization
 		 SOAPUtilities
 		 #MessageFacility
          $ENV{XERCES_C_LIB}/libxerces-c.so
-         
+
 )
 
 

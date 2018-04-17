@@ -34,7 +34,15 @@ if(CURL_FOUND)
 
 cet_make( LIBRARY_NAME ECLWriter
 	LIBRARIES
+	${XDAQ_BASIC_LIB_LIST}
 	XmlUtilities
+		 SupervisorInfo
+		 WebUsersUtilities
+		 CgiDataUtilities
+		 SOAPUtilities
+		 FiniteStateMachine
+		 ConfigurationInterface
+		 ConfigurationDataFormats
     $ENV{XERCES_C_LIB}/libxerces-c.so
     crypto
     ${CURL_LIBRARIES}
