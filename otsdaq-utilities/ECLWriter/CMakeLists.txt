@@ -34,6 +34,7 @@ if(CURL_FOUND)
 
 cet_make( LIBRARY_NAME ECLWriter
 	LIBRARIES
+	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	XmlUtilities
 		 SupervisorInfo
@@ -43,6 +44,7 @@ cet_make( LIBRARY_NAME ECLWriter
 		 FiniteStateMachine
 		 ConfigurationInterface
 		 ConfigurationDataFormats
+		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
     $ENV{XERCES_C_LIB}/libxerces-c.so
     crypto
     ${CURL_LIBRARIES}

@@ -3,6 +3,7 @@ include_directories($ENV{XERCES_C_INC})
 
 cet_make(LIBRARY_NAME Visualization
 		 LIBRARIES
+		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${ROOT_GUI_LIB_LIST}
 		 ${ROOTSYS}/lib/libRHTTP.so

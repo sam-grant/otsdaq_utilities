@@ -5,10 +5,12 @@ cet_make_exec(mf_rcv_n_fwd SOURCE MF_ReceiveAndForward.cpp)
 include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME Console
 		 LIBRARIES
+		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 SupervisorInfo
 		${MF_MESSAGELOGGER}
 		${MF_UTILITIES}
+		FiniteStateMachine
 		CoreSupervisors
 		 XmlUtilities
 		 SOAPUtilities
