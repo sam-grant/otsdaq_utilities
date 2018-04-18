@@ -333,7 +333,7 @@
 			_rightPane.style.width = w + "px";
 			_rightPane.style.height = h + "px";
 
-			_rightPaneFields.style.height = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
+			//_rightPaneFields.style.width = (w - 2*BORDER_SZ - 2*MARGIN) + "px";
 			_rightPaneFields.style.height = (h - 20 - //for left pane hide
 					(_RIGHT_PANE_RW_BTN_HEIGHT*2) - //for top/bottom read/write buttons
 					2*BORDER_SZ - 2*MARGIN) + "px";
@@ -406,7 +406,7 @@
 					_subsetBasePath,
 					_subsetUIDs,
 					_editableFieldList,
-					-1,
+					-1 /*maxDepth*/,
 					function(recordFields)
 					{				
 				_fields = recordFields;
@@ -580,7 +580,7 @@
 			
 			el = document.createElement("div");
 			str = "";
-			str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
+			//str += "<a href='#' onclick='initSubsetGlobalData()'>Refresh</a>";
 			el.innerHTML = str;
 			_topPane.appendChild(el);			
 
@@ -1102,7 +1102,7 @@
 			//make array of all field values
 			var valueArr = [];
 			
-			//for each field, set value
+			//for each field, get value
 			for(var i=0;i<_fields.length;++i)			
 				valueArr.push(ConfigurationAPI.getEditableFieldValue(
 						_fields[i],

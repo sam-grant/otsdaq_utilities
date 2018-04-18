@@ -421,6 +421,8 @@ Desktop.createDesktop = function(security) {
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
 
+		if(!req) return; //request failed			
+		
 		var userLock; //tmp hold user with lock
 		userLock = Desktop.getXMLValue(req,"username_with_lock"); //get user with lock
 		Desktop.desktop.dashboard.displayUserLock(userLock);
@@ -538,12 +540,24 @@ Desktop.createDesktop = function(security) {
 			Debug.log("FAILED -- Desktop Window Added - too many windows!",Debug.HIGH_PRIORITY);
 			return;
 		}
-				
+
+		if(name == "Security Settings") {
+		    window_width  = 730;
+		    window_height = 410;
+		}
+		else if(name == "Edit User Data") {
+		    window_width  = 730;
+		    window_height = 730;
+		}
+		else {
+		    window_width  = _defaultWidth;
+		    window_height = _defaultHeight;
+		}
 		//KEEP..
         //subname += _winId; //for visual window debugging (but destroys uniqueness)
 		//end KEEP.
 		var newWin = Desktop.createWindow(_winId++,_windows.length + _defaultWindowMinZindex,name,subname,url,
-			_defaultWidth,_defaultHeight,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
+			window_width,window_height,_dashboard.getDashboardWidth() + _currentLeft,_currentTop);
 
 		//handle initial window left,top evolution
 		if(_currentLeft > _defaultLeft+_defaultOffsetTimes*_defaultLeftOffset) {
@@ -585,6 +599,8 @@ Desktop.createDesktop = function(security) {
         	}
         		
         }, 200);
+
+		
 
         return newWin;
 	}
@@ -661,11 +677,57 @@ Desktop.createDesktop = function(security) {
         //	Toggle current top window full screen (can be called as event)
     this.toggleFullScreen = function(e) {
         if(!_getForeWindow()) return;
-        _getForeWindow().maximize();
+        _getForeWindow().isMaximized() ? _getForeWindow().unmaximize(): _getForeWindow().maximize();
         _dashboard.redrawFullScreenButton();
+	_dashboard.redrawRefreshButton();
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
-    
+
+	this.redrawFullScreenButtons = function() {
+	    _dashboard.redrawFullScreenButton();
+	    _dashboard.redrawRefreshButton();
+	}
+
+	this.refreshWindowById = function(id) {
+	    var win = this.getWindowById(id);
+	    if(win == -1) return -1;
+
+	    this.setForeWindow(win);
+	    this.refreshWindow();
+            console.log("Finished refreshWindow() " + id);
+  	  }
+
+	this.refreshWindow = function(e) {
+	    if(!_getForeWindow()) return;
+	    //Debug.log("Windows Length: " + _windows.length);
+	    	    
+	    var window = _getForeWindow();
+	    var id  = window.getWindowId();
+	    var z   = window.getWindowZ();
+	    var name    = window.getWindowName();
+	    var subname = window.getWindowSubName();
+	    var url     = window.getWindowUrl();
+	    var width   = window.getWindowWidth();
+	    var height  = window.getWindowHeight();
+	    var x = window.getWindowX();
+	    var y = window.getWindowY();
+        var isMax = window.isMaximized();
+        var isMin = window.isMinimized();
+        
+	    _closeWindow(window);
+	    console.log(window, id, z, name, width, height);
+	    
+	    var newWindow = this.addWindow(name,subname,url);
+	    newWindow.setWindowSizeAndPosition(x,y,width,height);
+	   
+	    if(isMax)
+	    	newWindow.maximize();
+	    if(isMin)
+	    	newWindow.minimize();
+	   
+	    //Debug.log("Windows Length: " + _windows.length);
+    }
+
         //minimizeWindowById ~~~
 		//	Find window by id
 	this.minimizeWindowById = function(id) {
@@ -680,8 +742,14 @@ Desktop.createDesktop = function(security) {
         //	Toggle current top window minimize functionality (can be called as event)
     this.toggleMinimize = function(e) {
         if(!_getForeWindow()) return;
-        _getForeWindow().minimize();
+        
+        if(_getForeWindow().isMinimized())
+        	_getForeWindow().unminimize();
+        else
+        	_getForeWindow().minimize();
         Debug.log("Minimize Toggled",Debug.LOW_PRIORITY);
+        //_dashboard.updateWindows();
+
     }
         //clickedWindowDashboard ~~~
 		//	Handle window selection using dashboard
@@ -803,6 +871,17 @@ Desktop.createDesktop = function(security) {
 		//				_checkMailboxes();
 		//				Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
 		//}
+	}
+
+	this.refreshDesktop = function() {
+
+
+		for(var i=0; i<Desktop.desktop.getNumberOfWindows();++i)
+       	 	{
+            		Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i));
+        	}	
+
+
 	}
 		
 	//actOnParameterAction() ~~~
@@ -1369,6 +1448,37 @@ Desktop.handleWindowButtonDown = function(mouseEvent) {
 	return false;
 }
 
+Desktop.handleWindowRefresh = function(mouseEvent){
+        Debug.log("Refresh " + this.id.split('-')[1]);
+        Desktop.desktop.refreshWindowById(this.id.split('-')[1]);
+        return false;
+
+}
+
+Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
+        Debug.log("Refresh Full Screen Window");
+	//Desktop.logout();
+        Desktop.desktop.resetDesktop();
+	Desktop.desktop.refreshDesktop();
+        //for(var i=0; i<Desktop.desktop._windows.length;++i)
+	//{
+	//    Desktop.desktop.refreshWindowById(Desktop.desktop._windows[i].getWindowId());
+	//}
+	for(var i=Desktop.desktop.getNumberOfWindows()-1; i>-1; i--)
+       	{
+		Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(i).getWindowName());
+	// + " : " + Desktop.desktop.getWindowByIndex(i).getWindowId());
+		Debug.log(Desktop.desktop.getWindowByIndex(i).getWindowId());
+		Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(i));//.getWindowId());
+		Desktop.desktop.refreshWindow();
+
+  		//Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i).getWindowId());
+        }
+	//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
+        return false;
+
+}
+
 Desktop.handleWindowMinimize = function(mouseEvent) {
 	Debug.log("minimize " + this.id.split('-')[1]);
 	Desktop.desktop.minimizeWindowById(this.id.split('-')[1]);
@@ -1452,6 +1562,10 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
+
+       			Debug.log("The user interface is disconnected from the ots Gateway server.", Debug.HIGH_PRIORITY);
+       			//hide user with lock icon (because it usually looks bad when disconnected)
+       			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
 			}
 			if(returnHandler) returnHandler(req,reqIndex,errStr);
 		}

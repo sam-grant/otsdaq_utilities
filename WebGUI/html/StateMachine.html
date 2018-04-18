@@ -3,6 +3,46 @@
 <head>
 <title>Supervisor</title>
 
+
+<script>
+
+//functions:
+	//init()
+	//initTransitionParameters()
+	//handleTransitionParameterChange()
+	//smRequestHandler(req)
+	//getCurrentState() 
+	//currStateRequestHandler(req)
+	//updateTimeInState(t)
+	//physicsLaunchHandler(req)
+    //handleMouseUp(mouseEvent)
+	//getTransitionParameterData(param)
+	//transitionTimerHandler(mouseEvent)
+	//handleCheckTransitionProgress(req)
+    //handleMouseMove(mouseEvent)
+    //drawHudForMouseHover()
+    //getTransitionSelection(x,y)
+	//redrawPhysics()						onresize
+	//drawCurrentStateAndTransitions()
+    //drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents)
+    //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents)
+	//getStateDrawingColor(i,isBorder)
+	//getTransitionDrawingColor(i,isBorder,isSelected)
+    //drawState(stateIndex, x, y, isRootState)
+	//toggleParameterSetup()
+	//eatParameterMouseEvent(touchEvent) 
+	//showAlarmSetup()
+	//setAlarm(start)
+	//displayError(err)
+	//closeErrorBox()
+
+	//altDrawCurrentStateAndTransitions()
+	//altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
+	//getAltTransitionSelection(x,y)
+	//toggleViewMode()
+
+</script>
+
 <link rel='stylesheet' type='text/css' href='/WebPath/css/fonts.css?family=Donegal+One'>
 
 <style type="text/css">			
@@ -255,40 +295,6 @@
             
             var _TRANSITION_PARAMETERS = ["ConfigurationAlias"];
             
-			//functions:
-				//init()
-            	//initTransitionParameters()
-            	//handleTransitionParameterChange()
-            	//smRequestHandler(req)
-            	//getCurrentState() 
-            	//currStateRequestHandler(req)
-            	//updateTimeInState(t)
-            	//physicsLaunchHandler(req)
-                //handleMouseUp(mouseEvent)
-            	//getTransitionParameterData(param)
-            	//transitionTimerHandler(mouseEvent)
-            	//handleCheckTransitionProgress(req)
-                //handleMouseMove(mouseEvent)
-                //drawHudForMouseHover()
-                //getTransitionSelection(x,y)
-				//redrawPhysics()
-				//drawCurrentStateAndTransitions()
-                //drawTransition(stateIndex, x, y, startx, starty)
-                //drawSelfTransition(stateIndex, x, y, startx, starty, isSelected)
-            	//getStateDrawingColor(i,isBorder)
-            	//getTransitionDrawingColor(i,isBorder,isSelected)
-                //drawState(stateIndex, x, y, isRootState)
-            	//toggleParameterSetup()
-            	//eatParameterMouseEvent(touchEvent) 
-        		//showAlarmSetup()
-            	//setAlarm(start)
-				//displayError(err)
-				//closeErrorBox()
-            	//
-            	//altDrawCurrentStateAndTransitions()
-            	//altDrawTransition(stateIndex, x, y, startx, starty, isBidir, isSelected)
-            	//getAltTransitionSelection(x,y)
-            	//toggleViewMode()
             
             var _altStateDrawingMode = false;
             var _altStateGrid = [];
@@ -321,6 +327,7 @@
 			
 			var _inAnimation; //bool used to indicate if currently in transition (animation taking place)
 			var _smallStateMode, _stateOvalRadius, _perimeterRadius, _currStateTransArr;
+			var _fullConfigureDescriptionMode;
             var _selectedTransition = -1; //init to nothing selected
             var _transitionFadeAlpha, _transitionFadeAlphaInc, _transitionTimer, _transitionProgress, 
             	_transitionResultingState;
@@ -501,6 +508,7 @@
                         	//if(aliasArr[i].getAttribute('value').indexOf("Physics") == -1) continue;
                         	alias = aliasArr[i].getAttribute('value');
                         	_aliasTranslationMap[alias] = aliasGroupArr[i].getAttribute('value');
+                        	if(aliasCommentArr[i])
                         	_aliasTranslationMetaDataMap[alias] = [
 																   aliasCommentArr[i].getAttribute('value'),
 																   aliasAuthorArr[i].getAttribute('value'),
@@ -791,22 +799,7 @@
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
-						"", currStateRequestHandler);
-				
-				//update alias list periodically also, since it could change
-				_parameterInitCount = 0;
-				DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
-						"&fsmName=" + _fsmName, "", 
-						function(req)
-						{
-					//update system aliases conversion map
-					var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
-					var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
-        			
-                    for(var i=0;i<aliasArr.length;++i) 
-                    	_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
-                    			aliasGroupArr[i].getAttribute('value');
-						});	
+						"", currStateRequestHandler);				
 			}
 			
 
@@ -1128,16 +1121,16 @@
             	{            		
             		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
             		
-            		//show refresh link            		
-            		var str = "";
-            		str += "<div style='margin:10px'>";
-            		str += "Did the server crash? If it's back, try a ";
-            		str += "<a onclick='_transitionProgress = -1; " + 
-					"window.clearInterval(_transitionTimer);" +
-					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-						">Refresh</a>.";
-            		str += "</div>";
-            		_blackoutReveal.innerHTML = str;
+//            		//show refresh link            		
+//            		var str = "";
+//            		str += "<div style='margin:10px'>";
+//            		str += "Did the server crash? If it's back, try a ";
+//            		str += "<a onclick='_transitionProgress = -1; " + 
+//					"window.clearInterval(_transitionTimer);" +
+//					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//						">Refresh</a>.";
+//            		str += "</div>";
+//            		_blackoutReveal.innerHTML = str;
             		return;
             	}
             	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
@@ -1171,16 +1164,16 @@
 			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
 			    	_transitionProgress = progress;
 			    	
-			    	//show refresh link            		
-			    	var str = "";
-			    	str += "<div style='margin:10px'>";
-
-			    	str += "<a onclick='_transitionProgress = -1; " + 
-			    			"window.clearInterval(_transitionTimer);" +
-							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
-							">Refresh</a>";
-			    	str += "</div>";
-			    	_blackoutReveal.innerHTML = str;
+//			    	//show refresh link            		
+//			    	var str = "";
+//			    	str += "<div style='margin:10px'>";
+//
+//			    	str += "<a onclick='_transitionProgress = -1; " + 
+//			    			"window.clearInterval(_transitionTimer);" +
+//							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//							">Refresh</a>";
+//			    	str += "</div>";
+//			    	_blackoutReveal.innerHTML = str;
 			    }
 
 		    	_progressBar.style.width = _transitionProgress + "%";
@@ -1393,7 +1386,8 @@
 				
 				if(_currState < 0) return; //do nothing if current state not defined
 				
-			    //Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    
 			    if(window.innerWidth == 0) 
 			    {
 			    	window.setTimeout(redrawPhysics,100); //for browser bug?..first time issue when not part of desktop
@@ -1407,11 +1401,18 @@
 			    
 
 			    if(_altStateDrawingMode)
+			    {
 			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_ALT_BIG_STATES || 
 			    			w < _MIN_WIN_SZ_FOR_ALT_BIG_STATES);  //decide if room for big states
+			    	_fullConfigureDescriptionMode = h >= 800; //decide if room for full description
+			    }
 			    else
+			    {
 			    	_smallStateMode = (h < _MIN_WIN_SZ_FOR_BIG_STATES || 
 			    			w < _MIN_WIN_SZ_FOR_BIG_STATES);  //decide if room for big states
+			    	_fullConfigureDescriptionMode = h >= 650; //decide if room for full description
+			    }
+			    
                 _stateOvalRadius = (_smallStateMode?_SM_MODE_STATE_SZ:_LG_MODE_STATE_SZ)/2;              
 			                                    
                 _parameterSetup.style.left = _MARGIN + _HUD_X + "px";  
@@ -1464,7 +1465,32 @@
                 {
 			    	drawCurrentStateAndTransitions();
                     //if(_selectedTransition != -1) 
-                    drawHudForMouseHover(); //display text description for mouse hover
+			    	
+			    	var isSelected = _selectedTransition != -1 && 
+			    			_currStateTransArr[_selectedTransition] !== undefined;
+			    	
+			    	if(isSelected && _transitionActions[_currStateTransArr[_selectedTransition]] 
+										  == "Configure") //if configure, get alias info
+		            {
+						//update alias list periodically also, since it could change
+						_parameterInitCount = 0;
+						DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
+								"&fsmName=" + _fsmName, "", 
+								function(req)
+								{
+							//update system aliases conversion map
+							var aliasArr = req.responseXML.getElementsByTagName("config_alias"); 
+							var aliasGroupArr = req.responseXML.getElementsByTagName("config_key");
+
+							for(var i=0;i<aliasArr.length;++i) 
+								_aliasTranslationMap[aliasArr[i].getAttribute('value')] = 
+										aliasGroupArr[i].getAttribute('value');
+							
+		                    drawHudForMouseHover(); //display text description for mouse hover
+								});
+		            }
+			    	else  //if not configure transition do simple display
+			    		drawHudForMouseHover(); //display text description for mouse hover
                 }
 			}
     
@@ -1503,6 +1529,8 @@
                 var x = _HUD_X + m;
                 var y = _HUD_Y + m;
                 
+                try
+                {
                 if(_selectedTransition != -1)
                 {
 	                //_context.fillText("Click to " + _transitionActions[_currStateTransArr[_selectedTransition]], x, y);
@@ -1532,25 +1560,28 @@
 									"Aliased Group: '" + _aliasTranslationMap[transitionParameterValue] + "'",
 									x, y);
 	
-							y += f-4;
-							var metaValue;
-							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
-							_context.fillText("   " + 
-									"Author: '" + metaValue + "'", 
-											x, y);
-							y += f-4;
-							metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
-							metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
-							_context.fillText("   " + 
-									"Creation Time: '" + metaValue + "'", 
-											x, y);
-							y += f-4;
-							metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
-							_context.fillText("   " + 
-									"Comment: '" + metaValue.substr(0,30) + 
-											(metaValue.length > 30?"...":"") + "'", 
-											x, y);
-	
+							if(_fullConfigureDescriptionMode)
+							{
+								y += f-4;
+								var metaValue;
+								metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][1];
+								_context.fillText("   " + 
+										"Author: '" + metaValue + "'", 
+												x, y);
+								y += f-4;
+								metaValue = _aliasTranslationMetaDataMap[transitionParameterValue][2];
+								metaValue = ConfigurationAPI.getDateString(new Date((metaValue|0)*1000))
+								_context.fillText("   " + 
+										"Creation Time: '" + metaValue + "'", 
+												x, y);
+								y += f-4;
+								metaValue = decodeURIComponent(_aliasTranslationMetaDataMap[transitionParameterValue][0]);
+								_context.fillText("   " + 
+										"Comment: '" + metaValue.substr(0,30) + 
+												(metaValue.length > 30?"...":"") + "'", 
+												x, y);
+							}
+		
 							_context.font = '14pt Donegal One';
 						}
 						else //just show parameter
@@ -1563,6 +1594,11 @@
 	                _context.fillText("The current state is ", x, y);
 	                y += f;
 	                _context.fillText(_stateNames[_currState], x, y);
+                }
+                }
+                catch(e)
+                {
+                	Debug.log("Ignoring error: " + e);
                 }
                 	
 				_context.restore(); //matching save/restore 1
@@ -1755,6 +1791,31 @@
                                    _perimeterRadius * Math.sin(angle),
 								   _canvas.width/2,_canvas.height/3);
                 }
+
+                //place selected label last
+                angleOff = Math.PI/_currStateTransArr.length;                
+                angle = angleOff/2 + _STATE_ANGLE_OFFSET;
+                
+                //draw selected transition on top of everything to look nicer                
+                for(var i=0;i<_currStateTransArr.length;++i,angle += angleOff)
+                {
+                	if(_transitions[_currStateTransArr[i]][1] == _currState) //special loop back transition case
+                	{
+                		drawSelfTransition(_transitions[_currStateTransArr[i]][1],
+                				_perimeterRadius * Math.cos(angle),
+								_perimeterRadius * Math.sin(angle),
+								_canvas.width/2,_canvas.height/3, 
+								undefined /*isSelected*/,
+								true /*drawSelectedComponents*/);
+                		continue;
+                	}
+
+                	drawTransition(_transitions[_currStateTransArr[i]][1],
+                			_perimeterRadius * Math.cos(angle),
+							_perimeterRadius * Math.sin(angle),
+							_canvas.width/2,_canvas.height/3,
+							true /*drawSelectedComponents*/);
+                }
                 
 			}
 
@@ -1855,8 +1916,12 @@
 
 			//drawTransition
 			//	draws arrow for state transition from (startx, starty) towards <x, y> vector
-			function drawTransition(stateIndex, x, y, startx, starty) {				
-				var isSelected = _selectedTransition != -1 && stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
+			function drawTransition(stateIndex, x, y, startx, starty, drawSelectedComponents) {				
+				var isSelected = _selectedTransition != -1 && 
+						_currStateTransArr[_selectedTransition] !== undefined &&
+						_transitions[_currStateTransArr[_selectedTransition]] !== undefined &&
+						stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1];
+				
                 var mag = Math.sqrt(x*x+y*y);
                 var up = [x/mag,y/mag];
                 var lt = [y/mag,-x/mag];
@@ -1865,32 +1930,34 @@
                 
 				_context.save(); //matching save/restore 1
                 
-				_context.fillStyle = getTransitionDrawingColor(stateIndex);
-                _context.beginPath();
-                _context.moveTo(startx + arrowOff*up[0] +
-                                (_ARROW_PATH[0][0]*lt[0] + _ARROW_PATH[0][1]*up[0])*arrowSz,
-								starty + arrowOff*up[1] +
-                                (_ARROW_PATH[0][0]*lt[1] + _ARROW_PATH[0][1]*up[1])*arrowSz);
-                for(var i=0;i<_ARROW_PATH.length;++i)
-                    _context.lineTo(startx + arrowOff*up[0] +
-                                    (_ARROW_PATH[i][0]*lt[0] + _ARROW_PATH[i][1]*up[0])*arrowSz,
+				if(!drawSelectedComponents)
+				{
+					_context.fillStyle = getTransitionDrawingColor(stateIndex);
+					_context.beginPath();
+					_context.moveTo(startx + arrowOff*up[0] +
+									(_ARROW_PATH[0][0]*lt[0] + _ARROW_PATH[0][1]*up[0])*arrowSz,
 									starty + arrowOff*up[1] +
-                                    (_ARROW_PATH[i][0]*lt[1] + _ARROW_PATH[i][1]*up[1])*arrowSz);
-                _context.closePath();
-                _context.fill();
-            
-                //draw shadow border
-                _context.save();
-				_context.lineWidth = 5;
-				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1);
-				_context.shadowColor = 'black';
-				_context.shadowBlur = 10;
-				_context.shadowOffsetX = 0;
-				_context.shadowOffsetY = 0;
-				_context.stroke();
-				_context.restore();
+									(_ARROW_PATH[0][0]*lt[1] + _ARROW_PATH[0][1]*up[1])*arrowSz);
+					for(var i=0;i<_ARROW_PATH.length;++i)
+						_context.lineTo(startx + arrowOff*up[0] +
+										(_ARROW_PATH[i][0]*lt[0] + _ARROW_PATH[i][1]*up[0])*arrowSz,
+										starty + arrowOff*up[1] +
+										(_ARROW_PATH[i][0]*lt[1] + _ARROW_PATH[i][1]*up[1])*arrowSz);
+					_context.closePath();
+					_context.fill();
 				
-				if(isSelected) //add text for action if arrow is selected
+					//draw shadow border
+					_context.save();
+					_context.lineWidth = 5;
+					_context.strokeStyle = getTransitionDrawingColor(stateIndex,1);
+					_context.shadowColor = 'black';
+					_context.shadowBlur = 10;
+					_context.shadowOffsetX = 0;
+					_context.shadowOffsetY = 0;
+					_context.stroke();
+					_context.restore();
+				} 
+				else if(isSelected) //if (drawSelectedComponents), add text for action if arrow is selected
 				{
 					var rw = 150;
 					var rh = 40;
@@ -1925,11 +1992,11 @@
                 
 				_context.restore(); //matching save/restore 1
             }
-            
+
 			//drawSelfTransition
 			//	draws loop-back arrow for self state transition
 			//	isSelected added for alt drawing mode
-			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected) {
+			function drawSelfTransition(stateIndex, x, y, startx, starty, isSelected, drawSelectedComponents) {
 				
 				var mag = Math.sqrt(x*x+y*y);
 				var up = [x/mag,y/mag]; //from canvas center towards state pos
@@ -1945,91 +2012,97 @@
                 var finalAng = startAng - 2*Math.PI/3;
 				_context.save(); //matching save/restore 1
                 
-                _context.beginPath();
-                _context.moveTo(arrowPos[0] + innerRadius*Math.cos(startAng),
-                                arrowPos[1] + innerRadius*Math.sin(startAng));
-				_context.arc(arrowPos[0], arrowPos[1], innerRadius, startAng, finalAng, false);
-                _context.lineTo(arrowPos[0] + outerRadius*Math.cos(finalAng),
-                                arrowPos[1] + outerRadius*Math.sin(finalAng));
-				_context.arc(arrowPos[0], arrowPos[1], outerRadius,  finalAng, startAng, true);
-				
-				
-                //draw arrow from here
-                var lt = [-outerRadius*Math.cos(startAng), -outerRadius*Math.sin(startAng)] //towards center
-                mag = Math.sqrt(lt[0]*lt[0]+lt[1]*lt[1]);
-                lt[0] /= mag; lt[1] /= mag;
-                up = [-lt[1],lt[0]]; //pointing direction
-                
-                var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
-                               arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
-                var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
-                		(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
-                var jutSz = 0.1;
-                var pointSz = 0.3;
-                
-                drawPos[0] += -lt[0]*(arrowSz*jutSz); drawPos[1] += -lt[1]*(arrowSz*jutSz);//jut right
-                _context.lineTo(drawPos[0],drawPos[1]);
-                drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[0]*(arrowSz*pointSz);
-                drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[1]*(arrowSz*pointSz); //to arrow point
-                _context.lineTo(drawPos[0],drawPos[1]);
-                drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[0]*(arrowSz*pointSz);
-                drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[1]*(arrowSz*pointSz); //jut left
-                _context.lineTo(drawPos[0],drawPos[1]);
-                _context.lineTo(arrowPos[0] + innerRadius*Math.cos(startAng),
-                                arrowPos[1] + innerRadius*Math.sin(startAng)); //to finishing point
-                
-                _context.closePath();
-				_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
-                _context.fill();                
-                
-                //draw shadow border
-                _context.save();
-				_context.lineWidth = 5;
-				_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
-				_context.shadowColor = 'black';
-				_context.shadowBlur = 10;
-				_context.shadowOffsetX = 0;
-				_context.shadowOffsetY = 0;
-				_context.stroke();
-				_context.restore();
-				
-				 //add text for action if arrow is selected
-				isSelected = isSelected || 
-						(isSelected === undefined && 
-								_selectedTransition != -1 && 
-								stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1]);
-				if(isSelected)
+				if(!drawSelectedComponents)
 				{
-					var rw = 150;
-					var rh = 40;
-					
-					//background rectangle
 					_context.beginPath();
-					_context.rect(arrowPos[0] - rw/2, 
-							arrowPos[1] - rh/2-9, 
-							rw, rh);
-					_context.fillStyle = 'rgba(255,255,255,1)';
-					_context.fill();
-					_context.lineWidth = 3;
-					_context.strokeStyle = _TRANS_STATE_COLOR;
-					_context.shadowColor = 'black'; //add shadow
+					_context.moveTo(arrowPos[0] + innerRadius*Math.cos(startAng),
+							arrowPos[1] + innerRadius*Math.sin(startAng));
+					_context.arc(arrowPos[0], arrowPos[1], innerRadius, startAng, finalAng, false);
+					_context.lineTo(arrowPos[0] + outerRadius*Math.cos(finalAng),
+							arrowPos[1] + outerRadius*Math.sin(finalAng));
+					_context.arc(arrowPos[0], arrowPos[1], outerRadius,  finalAng, startAng, true);
+
+
+					//draw arrow from here
+					var lt = [-outerRadius*Math.cos(startAng), -outerRadius*Math.sin(startAng)] //towards center
+							  mag = Math.sqrt(lt[0]*lt[0]+lt[1]*lt[1]);
+					lt[0] /= mag; lt[1] /= mag;
+					up = [-lt[1],lt[0]]; //pointing direction
+
+					var drawPos = [arrowPos[0] + outerRadius*Math.cos(startAng),
+								   arrowPos[1] + outerRadius*Math.sin(startAng)]; //setup starting position
+					var arrowSz = _altStateDrawingMode?_stateOvalRadius*2:
+							(_perimeterRadius - (_stateOvalRadius*2 + _ARROW_MARGIN)*2); //match other arrow size
+					var jutSz = 0.1;
+					var pointSz = 0.3;
+
+					drawPos[0] += -lt[0]*(arrowSz*jutSz); drawPos[1] += -lt[1]*(arrowSz*jutSz);//jut right
+					_context.lineTo(drawPos[0],drawPos[1]);
+					drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[0]*(arrowSz*pointSz);
+					drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) + up[1]*(arrowSz*pointSz); //to arrow point
+					_context.lineTo(drawPos[0],drawPos[1]);
+					drawPos[0] += lt[0]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[0]*(arrowSz*pointSz);
+					drawPos[1] += lt[1]*(arrowSz*jutSz+(outerRadius-innerRadius)/2) - up[1]*(arrowSz*pointSz); //jut left
+					_context.lineTo(drawPos[0],drawPos[1]);
+					_context.lineTo(arrowPos[0] + innerRadius*Math.cos(startAng),
+							arrowPos[1] + innerRadius*Math.sin(startAng)); //to finishing point
+
+					_context.closePath();
+					_context.fillStyle = getTransitionDrawingColor(stateIndex,0,isSelected);
+					_context.fill();                
+
+					//draw shadow border
+					_context.save();
+					_context.lineWidth = 5;
+					_context.strokeStyle = getTransitionDrawingColor(stateIndex,1,isSelected);
+					_context.shadowColor = 'black';
 					_context.shadowBlur = 10;
 					_context.shadowOffsetX = 0;
 					_context.shadowOffsetY = 0;
 					_context.stroke();
+					_context.restore();
 
-					//apply text
-					_context.font = '18pt Donegal One';
-					_context.textAlign = 'center';
-					_context.fillStyle = '#54967e';
-					_context.shadowColor = 'gray';
-					_context.shadowBlur = 1;
-					_context.shadowOffsetX = 0;
-					_context.shadowOffsetY = 0;
-					_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
-							arrowPos[0],
-							arrowPos[1]);
+				}
+				else //if(drawSelectedComponents)
+				{
+					//add text for action if arrow is selected
+					isSelected = isSelected || 
+							(isSelected === undefined && 
+									_selectedTransition != -1 && 
+									stateIndex == _transitions[_currStateTransArr[_selectedTransition]][1]);
+					if(isSelected)
+					{
+						var rw = 150;
+						var rh = 40;
 
+						//background rectangle
+						_context.beginPath();
+						_context.rect(arrowPos[0] - rw/2, 
+								arrowPos[1] - rh/2-9, 
+								rw, rh);
+						_context.fillStyle = 'rgba(255,255,255,1)';
+						_context.fill();
+						_context.lineWidth = 3;
+						_context.strokeStyle = _TRANS_STATE_COLOR;
+						_context.shadowColor = 'black'; //add shadow
+						_context.shadowBlur = 10;
+						_context.shadowOffsetX = 0;
+						_context.shadowOffsetY = 0;
+						_context.stroke();
+
+						//apply text
+						_context.font = '18pt Donegal One';
+						_context.textAlign = 'center';
+						_context.fillStyle = '#54967e';
+						_context.shadowColor = 'gray';
+						_context.shadowBlur = 1;
+						_context.shadowOffsetX = 0;
+						_context.shadowOffsetY = 0;
+						_context.fillText(_transitionActions[_currStateTransArr[_selectedTransition]],
+								arrowPos[0],
+								arrowPos[1]);
+
+					}
 				}
                 
 				_context.restore(); //matching save/restore 1
@@ -2053,6 +2126,8 @@
 			function getTransitionDrawingColor(i, isBorder, isSelected) {				
 				if(isSelected || 
 						(isSelected === undefined && _selectedTransition != -1 && 
+								_currStateTransArr[_selectedTransition] &&
+								_transitions[_currStateTransArr[_selectedTransition]] &&
 						_transitions[_currStateTransArr[_selectedTransition]][1] == i))
 					return isBorder?_ARROW_SEL_BORDER_COLOR:_ARROW_SEL_COLOR;
 				else 
@@ -2218,10 +2293,10 @@
 	<a href='Javascript:toggleParameterSetup();' title='Toggle Parameter Setup Pane'>Parameter Setup</a>
 	<br><br>	
 </div>
-<!--	FIXME comeback to defining a proper refresh...	-->
+<!--	FIXME comeback to defining a proper refresh...	
 <div id='refresh-box'>
 	<a onclick='refreshFSM()'>Refresh</a>
-</div>
+</div>-->
 		
 
 <div id='extras-box'>

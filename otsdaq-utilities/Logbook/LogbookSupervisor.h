@@ -3,26 +3,24 @@
 
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 
-#include "xdaq/Application.h"
-#include "xgi/Method.h"
+#include <xdaq/Application.h>
+#include <xgi/Method.h>
 
-#include "xoap/MessageReference.h"
-#include "xoap/MessageFactory.h"
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
-#include "xoap/Method.h"
+#include <xoap/SOAPEnvelope.h>
+#include <xoap/SOAPBody.h>
+#include <xoap/domutils.h>
+#include <xoap/Method.h>
 
 
-#include "cgicc/HTMLClasses.h"
+#include <cgicc/HTMLClasses.h>
 #include <cgicc/HTTPCookie.h>
-#include "cgicc/HTMLDoctype.h"
+#include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPHeader.h>
 
 #include <string>
 #include <map>
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 
 
 namespace ots
@@ -69,7 +67,7 @@ private:
     void 			hideLogbookEntry	        (const std::string &entryId, bool hide, const std::string &hider);
     static void		MFReceiverWorkLoop			();
     
-    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
+    AllSupervisorInfo 						allSupervisorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
 
     enum {

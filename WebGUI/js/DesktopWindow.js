@@ -60,8 +60,8 @@ else {
 		var _winhdr,_winfrm,_winfrmHolder;
 		
 		var _w,_h,_x,_y; //position and size members
-        var _isMaximized = false;
-        var _isMinimized = false;
+		var _isMaximized = false;
+		var _isMinimized = false;
 		var _z = z;
 		
 		//------------------------------------------------------------------
@@ -78,7 +78,7 @@ else {
 			//	private function to refresh header name based on window size
 			// 	clip text if too long
 		var _refreshHeader = function() {
-			var hdrW = _w-2*_defaultHeaderLeftMargin-3*(_defaultButtonSize+_defaultButtonLeftMargin);
+			var hdrW = _w-2*_defaultHeaderLeftMargin-4*(_defaultButtonSize+_defaultButtonLeftMargin);
 			_winhdr.style.width = hdrW +"px"; 
 			_winhdr.innerHTML = _name + (_subname==""?"":" - ") + _subname;
 			while(_winhdr.scrollWidth > hdrW && _winhdr.innerHTML.length > 4)
@@ -112,8 +112,8 @@ else {
 		this.getWindowWidth = function() { return _w; }
 		this.getWindowHeight = function() { return _h; }
 		this.getWindowHeaderHeight = function() { return _defaultHeaderHeight; }
-        this.isMaximized = function() {return _isMaximized;}
-        this.isMinimized = function() {return _isMinimized;}
+		this.isMaximized = function() {return _isMaximized;}
+		this.isMinimized = function() {return _isMinimized;}
 				
 		this.setWindowZ = function(z) { _z = z; this.windiv.style.zIndex = _z; }
 		
@@ -236,22 +236,52 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
-			_isMinimized = false; 
-            //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
-            _isMaximized = !_isMaximized;
-            if(_isMaximized) //make sure is visible
-            	this.windiv.style.display = "inline";
-            this.setWindowSizeAndPosition(_x,_y,_w,_h);
-        }
+		    _isMinimized = false; 
+		    //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
+		    _isMaximized = true;//!_isMaximized;
+		    if(_isMaximized) //make sure is visible
+			this.windiv.style.display = "inline";
+		    this.setWindowSizeAndPosition(_x+10,_y,_w,_h);
+		    window.parent.document.title= _name;
+		    console.log(document.title, _name, "Maximize()");
+			
+		}
+
+		this.unmaximize = function() {
+		  
+		    _isMaximized = false;
+		    if(_isMaximized) //make sure is visible
+			this.windiv.style.display = "inline";
+		    this.setWindowSizeAndPosition(_x,_y,_w,_h);
+		    window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+
+
+		}
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-            if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
-            _isMinimized = !_isMinimized;
-            this.windiv.style.display = _isMinimized?"none":"inline";
-            Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
-        }
+		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    if(_isMaximized)
+			window.parent.document.title = _name;
+		    else
+			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+		    _isMinimized = true; //!_isMinimized;
+		    this.windiv.style.display = "none";//_isMinimized?"none":"inline";
+		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
+		}
+
+		this.unminimize = function() {
+		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    if(_isMaximized)
+			window.parent.document.title = _name;
+		    else
+			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+		   
+		    _isMinimized = false;
+		    this.windiv.style.display = "inline";
+		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
+		}
                 
 		//------------------------------------------------------------------
 		//handle class construction ----------------------
@@ -276,33 +306,48 @@ else {
 	   	this.windiv.appendChild(_winhdr); //add header to window	   	
 	   	
 			//create buttons
-		var tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopWindowButton");
-		tmpBtn.setAttribute("id", "DesktopWindowButtonMin-" + _id);
-		tmpBtn.style.width = (_defaultButtonSize) +"px"; 
-		tmpBtn.style.height = (_defaultButtonSize) +"px"; 			
-		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px"; 	
-		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
-	   	tmpBtn.onmouseup = Desktop.handleWindowMinimize; 	
-		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
-		var tmpEl = document.createElement("div");
-		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMin");
-		tmpBtn.appendChild(tmpEl);		
-	   	this.windiv.appendChild(tmpBtn); //add button to window	   	
-		
-		tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopWindowButton");
-		tmpBtn.setAttribute("id", "DesktopWindowButtonMax-" + _id);
-		tmpBtn.style.width = (_defaultButtonSize) +"px"; 
-		tmpBtn.style.height = (_defaultButtonSize) +"px"; 			
-		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px"; 	
-		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
-	   	tmpBtn.onmouseup = Desktop.handleWindowMaximize; 	
-		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
-		var tmpEl = document.createElement("div");
-		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMax");
-		tmpBtn.appendChild(tmpEl);		
-	   	this.windiv.appendChild(tmpBtn); //add button to window	  
+                var tmpBtn = document.createElement("div");
+                tmpBtn.setAttribute("class", "DesktopWindowButton");
+                tmpBtn.setAttribute("id", "DesktopWindowButtonRefresh-" + _id);
+                tmpBtn.style.width = (_defaultButtonSize) +"px";
+                tmpBtn.style.height = (_defaultButtonSize) +"px";
+                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";
+                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";
+                tmpBtn.onmouseup = Desktop.handleWindowRefresh;
+                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+                var tmpEl = document.createElement("div");
+                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicRefresh");
+                tmpEl.innerHTML = "↻";
+                tmpBtn.appendChild(tmpEl);
+                this.windiv.appendChild(tmpBtn); //add button to window 
+
+                var tmpBtn = document.createElement("div");
+                tmpBtn.setAttribute("class", "DesktopWindowButton");
+                tmpBtn.setAttribute("id", "DesktopWindowButtonMin-" + _id);
+                tmpBtn.style.width = (_defaultButtonSize) +"px"; 
+                tmpBtn.style.height = (_defaultButtonSize) +"px";                         
+                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
+                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
+		tmpBtn.onmouseup = Desktop.handleWindowMinimize;         
+                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+                var tmpEl = document.createElement("div");
+                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMin");
+                tmpBtn.appendChild(tmpEl);                
+		this.windiv.appendChild(tmpBtn); //add button to window 
+
+                tmpBtn = document.createElement("div");
+                tmpBtn.setAttribute("class", "DesktopWindowButton");
+                tmpBtn.setAttribute("id", "DesktopWindowButtonMax-" + _id);
+                tmpBtn.style.width = (_defaultButtonSize) +"px"; 
+                tmpBtn.style.height = (_defaultButtonSize) +"px";                         
+                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
+                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
+		tmpBtn.onmouseup = Desktop.handleWindowMaximize;         
+                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+                var tmpEl = document.createElement("div");
+                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMax");
+                tmpBtn.appendChild(tmpEl);                
+		this.windiv.appendChild(tmpBtn); //add button to window   
 		
 		tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopWindowButton");
@@ -343,8 +388,9 @@ else {
 			   	   	
 	   		//add mouse handlers
 	   	this.windiv.onmousedown = Desktop.handleWindowMouseDown;
-	   	this.windiv.onmouseup = Desktop.handleWindowMouseUp;
+	   	this.windiv.onmouseup   = Desktop.handleWindowMouseUp;
 	   	this.windiv.onmousemove = Desktop.handleWindowMouseMove;
+		this.windiv.ondblclick  = Desktop.handleWindowMaximize;
 	   	
 	   		//add touch handlers (for mobile devices)
 	   	this.windiv.addEventListener('touchstart',Desktop.handleTouchStart);

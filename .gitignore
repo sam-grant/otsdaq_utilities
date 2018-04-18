@@ -1,4 +1,7 @@
 *~
 \#*\#
 CMakeLists.txt_Dan
+obj
+bin
+*.vcxproj*
 

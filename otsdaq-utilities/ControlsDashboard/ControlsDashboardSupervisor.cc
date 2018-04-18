@@ -91,7 +91,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  		//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
 				1, //set access level requirement to pass gateway
@@ -161,7 +161,7 @@ void ControlsDashboardSupervisor::init(void)
 {
 	UID_= 0;
 
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
+	allSupervisorInfo_.init(getApplicationContext());
 	//if(true)
 
 	__COUT__ << std::endl;

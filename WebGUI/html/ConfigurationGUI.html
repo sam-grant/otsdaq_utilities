@@ -1,6 +1,161 @@
 <!DOCTYPE HTML>
 <html lang="en"> 
 <head>
+	<script>
+	
+	// Configuration GUI 
+	/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+	
+	//functions:			
+		//init()
+		//niceName(str)									//removes "Configuration" from name
+	
+		//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
+		//groupAliasesRequestHandler(req,anchorTarget)		 
+		
+		//setupGroupViewMode(anchorTarget)							//gets all configuration groups
+		//configGroupsRequestHandler(req,anchorTarget)
+		//groupSearchSelectionHandler(el)
+		//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
+		//gotoSelectedMSGroup()
+		
+		//setupTableViewMode(anchorTarget)							//gets configuration tables
+		//tableViewRequestHandler(req,anchorTarget)
+		
+		//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
+		//specificGroupRequestHandler(req,param)			
+	
+		//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
+		//setupSpecificConfigInRight(configName,version)
+		//specificConfigRequestHandler(req,backLinkStr)			
+		//toggleTableDetails(setVal)
+		//toggleGroupDetails(setVal)
+		//transposeTableView()
+		//getTableViewColTypes(rows)
+		//createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
+		//downloadTableAsCSV()
+		//uploadTableFromCSV()
+		//launchRecordCreationWizard(typeOfLaunch)
+		//launchRecordDeletionWizard(typeOfLaunch)
+	
+	//tree-view focused
+		//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
+		//treeViewHandler(req,parentId,errStr)
+		//recursiveDrawTree(parent,depth,path,parentIdString)
+		//getTreeViewTableStrings(tableLinkName)
+		//refreshTreeView();
+		//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
+		//toggleTreeChildren(depth,uid,setVal)
+		//expandTreeChildrenDepth()
+		//hideTreeChildrenDepth()
+		//createTreeViewMenu(event)
+	
+		//handleTreeNodeClick(depth,uid,editClick,type)			
+		//treeHasChanged(reset)
+		//saveModifiedTree(ignoreWarnings)
+		//editTreeAddNewRow(tableName)
+		//editTreeNodeOK()
+		//editTreeNodePropagateChange()
+	
+		//selectThisTreeNode(idString,type,event)
+		//treeViewGroupMemberEditMultiSelectHandler(sel) 
+		//handleEditTreeGroupIDEditFreeformToggle()
+	
+		//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)
+		//refreshTreeTableVersions()
+	//end tree-view focused
+	
+		//selectThisCell(r,c,el,event)
+		//editCellCancel()
+		//keyHandler(e)
+		//bodyKeyHandler(e,keyEl)
+		//bodyMouseHandler(e)
+		//bodyMouseMoveHandler(e)
+	
+		//editCellOK()									//assumes edited cell is specified by its global variables
+		//addRow(r)										//add row at destination with default values populated
+		//deleteRow(r)									//delete row at destination
+	
+		//popUpClearVersionsPrompt(clearTemporary,backLinkStr)
+		//popUpSaveNewTableForm()
+		//popUpSaveNewGroupForm(groupName, sourceGroupKey, sourceTye)
+		//popUpGroupAliasForm(isLatest, myAlias)
+		//popUpVersionAliasForm()
+		//popUpVersionAliasGroupEditorForm()
+		//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
+		//popUpFilterTreeForm()
+		//popUpGroupViewAliasForm(groupName,groupKey)
+		//popUpGroupViewAliasFormSubmit(groupName,groupKey)
+	
+		//handleGroupCommentToggle(groupName,setHideVal)
+		//handlePopUpHeightToggle(h,gh)
+	
+		//handleFixedChoiceEditToggle()
+	
+		//setupConfigCreator(preSelectStr)
+		//setupConfigCreatorHandler(req,preSelectStr)
+		//handleGroupMemberGoto(name,backLinkStr)
+		//addMemberToConfigGroup(groupName,backLinkStr) 
+	
+		//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
+		//activateSystemConfigHandler(req)
+		//versionTrackingHandler(req)
+		//selectForCreateConfig(i)
+		//versionsForCreateConfig(i, alias)		
+		//createConfigGroup(ignoreWarnings)
+		//createConfigGroupHandler(req)
+	
+		//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
+		//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
+		//wizToActiveConfigGroup(groupAlias, groupType)
+		//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+	
+		
+		
+		//saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings)
+		//saveConfigAsNewVersionHandler(req, backLinkStr)
+		//saveConfigGroupAsNewKey(groupName, sourceType, ignoreWarnings)	
+		//changeMemberVersionForConfigGroup(groupName, groupKey, configName, newVersion)
+	
+		//isTemporary(version)
+	
+		//setupFindAndReplace()
+		//configFind()
+		//configReplace() 
+		//configIncrementByReplace()
+		//versionHasChanged()
+	
+		//setupCopyAndMoveRows()
+		//configCopyView()
+		//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
+		//jump(anchor)
+		//evaluateJS(str)			
+		//createEditTableMenu(event)
+	
+		//tableLinkTooltip(prependString)
+	
+		//handleFlattenSystemAliasesResponse(req)
+	
+	
+	//ConfigurationAPI functions
+		//ConfigurationAPI.getDateString(date)
+		//ConfigurationAPI.setCaretPosition(el,start,stop)
+		//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
+		//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
+		//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
+	//end ConfigurationAPI functions
+	
+	//ConfigurationAPI constants
+		//ConfigurationAPI._DEFAULT_COMMENT
+	//end ConfigurationAPI constants
+	
+	/////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////
+			
+
+	</script>
+	
 	<title>ConfigurationGUI</title>
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
@@ -11,6 +166,10 @@
 	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
 	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+
+	<script type="text/JavaScript" src="/WebPath/js/RecordWiz_ConfigurationGUI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DeleteWiz_ConfigurationGUI.js"></script>
 
 	<style type="text/css">			
 
@@ -347,153 +506,6 @@
 	
 		
 	
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-	
-		//functions:			
-			//init()
-			//niceName(str)									//removes "Configuration" from name
-		
-			//setupSystemViewMode(anchorTarget)							//gets configuration groups aliases
-			//groupAliasesRequestHandler(req,anchorTarget)		 
-			
-			//setupGroupViewMode(anchorTarget)							//gets all configuration groups
-			//configGroupsRequestHandler(req,anchorTarget)
-			//groupSearchSelectionHandler(el)
-			//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
-			//gotoSelectedMSGroup()
-			
-			//setupTableViewMode(anchorTarget)							//gets configuration tables
-			//tableViewRequestHandler(req,anchorTarget)
-			
-			//setupSpecificConfigGroup(groupName,groupKey,backLinkStr,anchorTarget)	//setup editor for specific configuration group
-			//specificGroupRequestHandler(req,param)			
-		
-			//setupSpecificConfig(configName,version,backLinkStr)			//setup editor for specific configuration table
-			//setupSpecificConfigInRight(configName,version)
-			//specificConfigRequestHandler(req,backLinkStr)			
-			//toggleTableDetails(setVal)
-			//toggleGroupDetails(setVal)
-			//transposeTableView()
-			//getTableViewColTypes(rows)
-			//createTableViewOutputStr(cols,colTypes,transposeOutput,colsIsArray)
-			//downloadTableAsCSV()
-			//uploadTableFromCSV()
-
-		//tree-view focused
-			//setupConfigGroupTreeView(configGroupName,configGroupKey,backLinkStr)
-			//treeViewHandler(req,parentId,errStr)
-			//recursiveDrawTree(parent,depth,path,parentIdString)
-			//getTreeViewTableStrings(tableLinkName)
-			//refreshTreeView();
-			//applyTreeFilter(filter,reapplyFilter,infoWasToggled)
-			//toggleTreeChildren(depth,uid,setVal)
-			//expandTreeChildrenDepth()
-			//hideTreeChildrenDepth()
-			//createTreeViewMenu(event)
-		
-			//handleTreeNodeClick(depth,uid,editClick,type)			
-			//treeHasChanged(reset)
-			//saveModifiedTree(ignoreWarnings)
-			//editTreeAddNewRow(tableName)
-			//editTreeNodeOK()
-			//editTreeNodePropagateChange()
-		
-			//selectThisTreeNode(idString,type,event)
-			//treeViewGroupMemberEditMultiSelectHandler(sel) 
-			//handleEditTreeGroupIDEditFreeformToggle()
-		
-			//refreshLinkTreeNode(targetEl,idString,LinkColumnNameLabel,linkType,linkTable,linkId,tableComment,tableTitle,menuItems,menuItemHandlers)
-			//refreshTreeTableVersions()
-		//end tree-view focused
-		
-			//selectThisCell(r,c,el,event)
-			//editCellCancel()
-			//keyHandler(e)
-			//bodyKeyHandler(e,keyEl)
-			//bodyMouseHandler(e)
-			//bodyMouseMoveHandler(e)
-
-			//editCellOK()									//assumes edited cell is specified by its global variables
-			//addRow(r)										//add row at destination with default values populated
-			//deleteRow(r)									//delete row at destination
-		
-			//popUpClearVersionsPrompt(clearTemporary,backLinkStr)
-			//popUpSaveNewTableForm()
-			//popUpSaveNewGroupForm(groupName, sourceGroupKey, sourceTye)
-			//popUpGroupAliasForm(isLatest, myAlias)
-			//popUpVersionAliasForm()
-			//popUpVersionAliasGroupEditorForm()
-			//popUpVersionAliasSpecificGroupForm(groupName,groupKey)
-			//popUpFilterTreeForm()
-			//popUpGroupViewAliasForm(groupName,groupKey)
-			//popUpGroupViewAliasFormSubmit(groupName,groupKey)
-		
-			//handleGroupCommentToggle(groupName,setHideVal)
-			//handlePopUpHeightToggle(h,gh)
-		
-			//handleFixedChoiceEditToggle()
-		
-			//setupConfigCreator(preSelectStr)
-			//setupConfigCreatorHandler(req,preSelectStr)
-			//handleGroupMemberGoto(name,backLinkStr)
-			//addMemberToConfigGroup(groupName,backLinkStr) 
-		
-			//activateSystemConfig(groupName, groupKey, ignoreWarnings, doneHandler)
-			//activateSystemConfigHandler(req)
-			//versionTrackingHandler(req)
-			//selectForCreateConfig(i)
-			//versionsForCreateConfig(i, alias)		
-			//createConfigGroup(ignoreWarnings)
-			//createConfigGroupHandler(req)
-
-			//setVersionAliasInActiveBackbone(versionAlias,configName,version,newBackboneNameAdd,doneHandler,doReturnParams)			
-			//wizToLatestConfigGroup(groupAlias, ignoreWarnings, groupType)
-			//wizToActiveConfigGroup(groupAlias, groupType)
-			//saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
-	
-			
-			
-			//saveConfigAsNewVersion(temporary, backLinkStr, ignoreWarnings)
-			//saveConfigAsNewVersionHandler(req, backLinkStr)
-			//saveConfigGroupAsNewKey(groupName, sourceType, ignoreWarnings)	
-			//changeMemberVersionForConfigGroup(groupName, groupKey, configName, newVersion)
-		
-			//isTemporary(version)
-		
-			//setupFindAndReplace()
-			//configFind()
-			//configReplace() 
-			//configIncrementByReplace()
-			//versionHasChanged()
-		
-			//setupCopyAndMoveRows()
-			//configCopyView()
-			//configCopyRow(deleteSrc)					//copy/move row from source to destination row			
-			//jump(anchor)
-			//evaluateJS(str)			
-			//createEditTableMenu(event)
-		
-			//tableLinkTooltip(prependString)
-		
-			//handleFlattenSystemAliasesResponse
-		
-
-		//ConfigurationAPI functions
-			//ConfigurationAPI.getDateString(date)
-			//ConfigurationAPI.setCaretPosition(el,start,stop)
-			//ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
-			//ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-			//ConfigurationAPI.setPopUpPosition(el,w,h,padding,border,margin)
-		//end ConfigurationAPI functions
-
-		//ConfigurationAPI constants
-			//ConfigurationAPI._DEFAULT_COMMENT
-		//end ConfigurationAPI constants
-		
-		/////////////////////////////////////////////////////////////////////////////////////////
-		/////////////////////////////////////////////////////////////////////////////////////////
-				
 		
 		//init called once body has loaded
 		function init() {			
@@ -685,7 +697,7 @@
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleFlattenSystemAliasesResponse(req) {
-			Debug.log("Attempt to Flatten System Aliases was successfully launched... " +
+			Debug.log("Attempting to Flatten System Aliases... " +
 					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 		}
@@ -693,14 +705,15 @@
 		//handleFlattenSystemAliasesResponse ~
 		function handleOtsRelaunchResponse(req,isWiz) {
 			if(isWiz)
-				Debug.log("Attempt to restart your system in Wiz Mode was successfully launched... " +
+				Debug.log("Attempting to restart your system in Wiz Mode... " +
 					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
-				Debug.log("Attempt to restart your system in Normal Mode was successfully launched... " +
+				Debug.log("Attempting to restart your system in Normal Mode... " +
 					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			
+			var countDown = 10;
 			localCountDown();
 			//=================
 			function localCountDown()
@@ -1579,7 +1592,7 @@
 					str += "<br><br>It seems like there was trouble with a specific table, " +
 							 "&quot;" + errSplit[1] + "&quot;. Try using the Table Editor " +
 							 "in ots wiz to verify the column info is valid; or you can try " +
-							 "goint to to the table view:";
+							 "going to to the table view:";
 					str += "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
 					str += "<a href='#' onclick='setupSpecificConfig(\"" + errSplit[1] +
 						"\"); return false;'>";
@@ -1790,8 +1803,12 @@
 			{
 				configName = configNames[i].getAttribute("value");
 				version = configVersions[i].getAttribute("value");
-				configComment = configComments[i].getAttribute("value");
-				
+				if (configComments[i])			
+				    configComment = configComments[i].getAttribute("value");
+				else
+				    configComment = "UNKOWN";
+
+
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
 						groupKey + "\\\",undefined,\\\"anchorTag-" + 
 						configName + "\\\");"; 
@@ -2423,6 +2440,102 @@
 			var el = document.getElementById("groupDetails");
 			el.style.display = _showGroupDetails?"block":"none";
 		}
+
+		//launchRecordCreationWizard ~~
+		function launchRecordCreationWizard(launchType)
+		{
+			Debug.log("launchRecordCreationWizard " + launchType);
+			if(launchType == "tree") //from tree view
+			{
+				RecordWiz.createWiz(
+						function(atLeastOneRecordWasCreated)
+						{				
+					if(1 || atLeastOneRecordWasCreated)
+					{
+						var str = "Record creation complete. You may want to ";
+						str += "<a href='#' onclick='refreshTreeView()' " +
+								" title='Click to Refresh the current tree-view' " +
+								">";
+						str += "Refresh";
+						str += "</a>";
+						str += " the tree " +
+								"to view additions. ";
+						str += "The active groups are now ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Context.groupName + " (" +
+								ConfigurationAPI._activeGroups.Context.groupKey + ")";
+						str += "</a>";
+						str += " and ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Configuration.groupName + " (" +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ")";
+						str += "</a>";
+						str += " for the Context and Configuration groups respectively.";
+						Debug.log(str,
+							Debug.INFO_PRIORITY);
+					}
+					
+						});
+			}
+			else
+				throw("Unknown type for launchRecordCreationWizard: " + launchType);
+		} //end launchRecordCreationWizard
+		
+		//launchRecordDeletionWizard ~~
+		function launchRecordDeletionWizard(launchType)
+		{
+			Debug.log("launchRecordDeletionWizard " + launchType);
+			if(launchType == "tree") //from tree view
+			{
+				DeleteWiz.createWiz(
+						function(atLeastOneRecordWasDeleted)
+						{				
+					if(1 || atLeastOneRecordWasDeleted)
+					{
+						var str = "Record deletion complete. You may want to ";
+						str += "<a href='#' onclick='refreshTreeView()' " +
+								" title='Click to Refresh the current tree-view' " +
+								">";
+						str += "Refresh";
+						str += "</a>";
+						str += " the tree " +
+								"to view changes. ";
+						str += "The active groups are now ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Context.groupName + " (" +
+								ConfigurationAPI._activeGroups.Context.groupKey + ")";
+						str += "</a>";
+						str += " and ";
+						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
+								" title='Click to open in tree-view' " +
+								">";
+						str += ConfigurationAPI._activeGroups.Configuration.groupName + " (" +
+								ConfigurationAPI._activeGroups.Configuration.groupKey + ")";
+						str += "</a>";
+						str += " for the Context and Configuration groups respectively.";
+						Debug.log(str,
+							Debug.INFO_PRIORITY);
+					}
+					
+						});
+			}
+			else
+				throw("Unknown type for launchRecordDeletionWizard: " + launchType);
+		} //end launchRecordDeletionWizard
 		
 		//setVersionAliasInActiveBackbone ~~
 		//	Used to setup a table-alias.
@@ -2797,6 +2910,7 @@
 			var nodes = parent.children;
 			var nodeName;
 			var value, valueType;
+
 			var tableLinkName, childLinkIndex, linkIdType, linkId;
 			var i,j;
 			var childrenLength;
@@ -2827,7 +2941,8 @@
 				//Debug.log("child's childrenLength=" + childrenLength);
 									
 				//handle value nodes
-				if(childrenLength && (value = nodes[i].children[0]).nodeName == "value"
+				if(childrenLength && 
+						(value = nodes[i].children[0]).nodeName == "value"
 						)//&& (valueType = nodes[i].children[1]).nodeName != "Disconnected")
 				{	
 					value = value.getAttribute("value");
@@ -2987,7 +3102,7 @@
 					if(value.getAttribute("value") == "Disconnected")
 					{
 						//this is a disconnected link node!						
-						value = nodes[i].children[offset]; //get link ID node
+						value = nodes[i].children[offset++]; //get link ID node
 						--childrenLength; //subtract the link ID node from children length
 						isGroupLink = value.nodeName == "GroupID";					
 						isDisconnected = true;
@@ -5165,8 +5280,8 @@
 			var srcCount = document.getElementById("copyAndMoveRowsSrcCount").value | 0;
 					
 			
-			Debug.log("configCopyRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);
-
+			Debug.log("configCopyRow src=" + src + " srcCount=" + srcCount + " dest=" + dest);			
+			
 			if(srcCount < 1)
 			{
 				Debug.log("Error: Illegal Number of Rows '" + (srcCount) + 
@@ -5183,6 +5298,7 @@
 
 			var colTypes = getTableViewColTypes(rows);
 			var val;
+			var uniqueVals;
 			
 			if(!_tableViewIsTransposed) //reading from normal view
 			{	
@@ -5230,12 +5346,24 @@
 				//copy source values to dest values
 				if(src >= dest) //account for source index being pushed back
 					src += srcCount;
+												
 				for(var r=0;r<srcCount;++r) 
 				{
 					for(var c=0;c<rows[0].childNodes.length;++c)
 					{
 						val = cols[_CONFIG_DATA_ROW_OFFSET+src+r][c].innerHTML;
-						cols[_CONFIG_DATA_ROW_OFFSET+dest+r][c].innerHTML = val;
+						
+						if(colTypes[c] == "UID" || colTypes[c] == "UniqueData")
+						{
+							//create array for existing unique values
+							uniqueVals = []; 
+							for(var rr=_CONFIG_DATA_ROW_OFFSET;rr<cols.length;++rr)
+								uniqueVals.push(cols[rr][c].innerHTML)
+
+							cols[_CONFIG_DATA_ROW_OFFSET+dest+r][c].innerHTML = ConfigurationAPI.createNewRecordName(val,uniqueVals);
+						}
+						else
+							cols[_CONFIG_DATA_ROW_OFFSET+dest+r][c].innerHTML = val;
 					}					
 				}
 				
@@ -5295,7 +5423,19 @@
 					for(var c=0;c<rows.length;++c)
 					{
 						val = cols[c][_CONFIG_DATA_ROW_OFFSET+src+r].innerHTML;
-						cols[c][_CONFIG_DATA_ROW_OFFSET+dest+r].innerHTML = val;
+						
+
+						if(colTypes[c] == "UID" || colTypes[c] == "UniqueData")
+						{	
+							//create array for existing unique values
+							uniqueVals = []; 
+							for(var rr=_CONFIG_DATA_ROW_OFFSET;rr<cols.length;++rr)
+								uniqueVals.push(cols[c][rr].innerHTML)
+								
+							cols[c][_CONFIG_DATA_ROW_OFFSET+dest+r].innerHTML = ConfigurationAPI.createNewRecordName(val,uniqueVals);
+						}
+						else
+							cols[c][_CONFIG_DATA_ROW_OFFSET+dest+r].innerHTML = val; 
 					}					
 				}
 
@@ -5636,6 +5776,8 @@
 			
 			if(treeEditingGroupMembersLastSelect_ == sel.textContent)
 				return; //already shown uid values
+			
+			if(!_editingCellEl) return; //something interrupted process
 			
 			treeEditingGroupMembersLastSelect_ = sel.textContent;
 			
@@ -6155,7 +6297,7 @@
 								var memberVal;
 								for(var i=0;i<groupMembers.length;++i)
 								{	
-									memberVal = DesktopContent.getXMLValue(groupMembers[i])
+									memberVal = DesktopContent.getXMLValue(groupMembers[i]);
 									for(var j=0;j<msValues.length;++j)
 										if(msValues[j] == memberVal)
 										{			
@@ -6379,9 +6521,11 @@
 						//////
 						//localLinkEditSelectOnChangeHandler ~~
 						//	handle change of dropdowns
-						function localLinkEditSelectOnChangeHandler() {
+						function localLinkEditSelectOnChangeHandler(event,setLinkId) {
 							selectLinkTableName = sel.value;
-							if(selId.style.display != "none")
+							if(setLinkId)
+								selectLinkId = setLinkId;
+							else if(selId.style.display != "none")
 								selectLinkId = selId.value;
 							else //take from text edit input, this happens after a save when forced change is propagated
 								selectLinkId = telId.value;
@@ -6912,7 +7056,7 @@
 			//detect proper views
 			var el = document.getElementById("treeView-ConfigGroupLink");	
 			var popUpEl = document.getElementById("popUpDialog");
-
+			
 			//tree view key handler and no popup and no editing cell
 			if(el && !popUpEl && !_editingCellEl) 
 			{	
@@ -7379,6 +7523,13 @@
 					modifiedTables += treeMemberVersions_[j];
 				}
 
+			if(modTblCount == 0)
+			{
+				Debug.log("No modified tables found. Nothing to save.", Debug.WARN_PRIORITY);
+				return;
+			}
+			
+			
 			var str = "<a id='" + 
 					"popUpDialog" + 
 					"-header' href='#' onclick='var el = document.getElementById(" +
@@ -7991,6 +8142,8 @@
 								//kill popup dialog
 								var el = document.getElementById("popUpDialog"); 
 								if(el) el.parentNode.removeChild(el);
+
+								Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 								treeHasChanged(true); // reset
 								return;
 							}
@@ -8084,6 +8237,8 @@
 										//kill popup dialog
 										var el = document.getElementById("popUpDialog"); 
 										if(el) el.parentNode.removeChild(el);
+										
+										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 										treeHasChanged(true); // reset
 										return;
 									}
@@ -8093,6 +8248,8 @@
 									//kill popup dialog
 									var el = document.getElementById("popUpDialog"); 
 									if(el) el.parentNode.removeChild(el);	
+									
+									Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 									treeHasChanged(true); // reset
 									return;	
 								}	
@@ -8282,312 +8439,6 @@
 						} //end else case for saving group i 
 					} //localSaveAndActivateGroup()
 					
-					
-					
-					//for(var i=0;i<affectedGroupEls.length;++i)
-//					{
-//						//save member list but with tree table versions
-//						Debug.log(affectedGroupEls[i].textContent);
-//						Debug.log("group comment: " + affectedGroupCommentEls[i].textContent);
-//	
-//						var affectedArr = affectedGroupEls[i].textContent.split(','); 
-//	
-//						//build member config map
-//						var configMap = "configList=";
-//						//member map starts after group name/key (i.e. [2])
-//						for(var a=2;a<affectedArr.length;a+=2)								
-//							if((affectedArr[a+1]|0) < -1) //there should be a new modified version
-//							{
-//								Debug.log("affectedArr " + affectedArr[a] + "-v" + affectedArr[a+1]);
-//								//find version
-//								for(var k=0;k<treeMemberNames_.length;++k)
-//									if(affectedArr[a] == treeMemberNames_[k])
-//									{
-//										Debug.log("found " + treeMemberNames_[k] + "-v" + treeMemberVersions_[k]);
-//										configMap += affectedArr[a] + "," + 
-//												treeMemberVersions_[k] + ",";
-//										break;
-//									}
-//							}
-//							else //use existing version
-//								configMap += affectedArr[a] + "," + affectedArr[a+1] + ",";
-//	
-//						affectedGroupNames.push(affectedArr[0]);		
-//						reqStr = ""; //reuse
-//						reqStr = "Request?RequestType=saveNewConfigurationGroup" +
-//								"&groupName=" + affectedArr[0] +
-//								"&allowDuplicates=1" +
-//								"&ignoreWarnings=" + (ignoreWarnings?1:0) + 
-//								"&groupComment=" + encodeURIComponent(affectedGroupCommentEls[i].textContent);
-//						Debug.log(reqStr);
-//						Debug.log(configMap);
-//	
-//						++numberOfRequests;
-//						///////////////////////////////////////////////////////////
-//						DesktopContent.XMLHttpRequest(reqStr, configMap, 
-//								function(req) 
-//								{
-//	
-//							var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
-//							var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
-//							if(treeErr) 
-//							{	
-//								Debug.log(treeErr,Debug.HIGH_PRIORITY);
-//								Debug.log("There were problems identified in the tree view of the " +
-//										"attempted new group '" +
-//										attemptedNewGroupName +
-//										"'.\nThe new group was not created.\n" +
-//										"(Note: Other tables and groups may have been successfully created, " +
-//										"and would have success indications below this error info)\n\n" +
-//										"You can save the group anyway (if you think it is a good idea) by clicking " +
-//										"the button in the pop-up dialog " +
-//										"'<u>Save Groups with Warnings Ignored</u>.' " +
-//										"\n\nOtherwise, you can hit '<u>Cancel</u>.' and fix the tree. " +
-//										"Below you will find the description of the problem:",																		
-//										Debug.HIGH_PRIORITY);
-//	
-//								//change dialog save button
-//								var el = document.getElementById("popUpDialog-submitButton");
-//								el.onmouseup = function() {
-//									document.getElementById("popUpDialog-submitButton").disabled = true;
-//									saveModifiedTree(1);								
-//								};
-//								el.value = "Save Groups with Warnings Ignored";
-//								el.disabled = false;
-//								return;
-//							}
-//	
-//							var err = DesktopContent.getXMLValue(req,"Error");
-//							if(err) 
-//							{					
-//								Debug.log(err,Debug.HIGH_PRIORITY);
-//	
-//								//kill popup dialog
-//								var el = document.getElementById("popUpDialog"); 
-//								if(el) el.parentNode.removeChild(el);	
-//								return;
-//							}			
-//	
-//							++numberOfReturns;
-//	
-//							var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
-//							affectedGroupKeys.push(newGroupKey);
-//	
-//							//need to modify root group name if changed
-//							Debug.log("Successfully created new group '" + attemptedNewGroupName + 
-//									" (" + newGroupKey + ")'", Debug.INFO_PRIORITY);
-//							
-//							//activate if option was selected
-//							if(activatingSavedGroups)
-//								activateSystemConfig(attemptedNewGroupName,newGroupKey);
-//							
-//							//if this was root group, modify
-//							if(rootGroupName == attemptedNewGroupName)
-//							{
-//								//modify display and onlick for root group link
-//								Debug.log("Modifying root group key");
-//								var str = "";
-//								str += "<div style='display:none'>" + rootGroupName + "</div>";
-//								str += "<div style='display:none'>" + newGroupKey + "</div>";
-//								str += rootGroupName + " (" + newGroupKey + ")";
-//								rootGroupEl.innerHTML = str;
-//								rootGroupEl.onclick = function() {
-//									
-//									var backLinkStr = "setupConfigGroupTreeView(\"" + 
-//											rootGroupName + "\",\"" +
-//											newGroupKey + "\");";
-//									setupSpecificConfigGroup(rootGroupName,newGroupKey,
-//											backLinkStr);
-//									return false;
-//								};
-//								
-//								//modify group details
-//								{
-//									str = "";
-//									str += "Root-Group Details:";
-//									var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
-//									groupComment = decodeURIComponent(groupComment);								
-//									var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-//									var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
-//									groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
-//									
-//									str += "<table border='0' style='" +
-//											"border: 1px solid #9c5e5e;" +
-//											"margin: 5px 0 5px 30px;" +
-//											"background-color: #d2c1c1;" +
-//											"'>";
-//									str += "<tr><th>Author:</th><td class='underlineRow'>" + groupAuthor + "</td></tr>";
-//									str += "<tr><th>Created:</th><td class='underlineRow'>" + groupCreationTime + "</td></tr>";				
-//									str += "<tr><th>Comment:</th><td>" + 
-//											groupComment.replace(/\n/g , "<br>") + "</td></tr>";
-//									str += "</table>";
-//	
-//									document.getElementById("groupDetails").innerHTML = str;
-//								}
-//								
-//								
-//								//modify the activate link
-//								rootGroupEl = document.getElementById("treeView-ConfigGroupActivateLink");
-//								rootGroupEl.onclick = function() {
-//									activateSystemConfig(rootGroupName,newGroupKey);
-//									return false;
-//								};
-//								
-//								//edit global key value
-//								treeGroupKey_ = newGroupKey;
-//							}
-//	
-//							if(allRequestsSent && 
-//									numberOfReturns == numberOfRequests)
-//							{
-//								Debug.log("Done with group saving.");
-//	
-//								Debug.log("Moving on to Alias creation...");										
-//	
-//								//check each alias checkbox
-//								//	for each alias that is checked
-//								//		set alias for new group
-//								//if any aliases modified, save and activate backbone
-//	
-//								//get checkboxes
-//								var setAliasCheckboxes = 
-//										document.getElementsByClassName("popUpDialog-setGroupAlias");
-//	
-//								var groupAlias, groupName, groupKey;
-//								var setAliasCheckboxIndex = -1;
-//								var groupAliasName, groupAliasVersion;
-//	
-//								//in order to set alias, we need:
-//								//	groupAlias
-//								//	groupName
-//								//	groupKey				
-//	
-//								//for each set alias checkbox that is checked
-//								//	modify the active group alias table one after the other
-//	
-//								//localNextAliasHandler
-//								//	uses setAliasCheckboxIndex to iterate through setAliasCheckboxes
-//								//	and send the next request to modify the activegroupAlias table
-//								//	sequentially
-//								function localNextAliasHandler(retParams) 
-//								{
-//									//first time there is no setAliasCheckboxIndex == -1
-//									if(setAliasCheckboxIndex >= 0) 
-//									{	
-//										if(retParams)
-//										{
-//											if(retParams.newBackbone)
-//												Debug.log("Successfully modified the active Backbone group " +
-//														" to set the System Alias '" + groupAlias + "' to " +
-//														" refer to the current group '" + groupName + 
-//														" (" + groupKey + ").'" +
-//														"\n\n" +
-//														"Backbone group '" + retParams.groupName + " (" + 
-//														retParams.groupKey + ")' was created and activated.",
-//														Debug.INFO_PRIORITY);
-//											else
-//												Debug.log("Success, but no need to create a new Backbone group. " +
-//														"An existing Backbone group " +
-//														" already has the System Alias '" + groupAlias + "' " +
-//														" referring to the current group '" + groupName + 
-//														" (" + groupKey + ").'" +
-//														"\n\n" +
-//														"Backbone group '" + retParams.groupName + " (" + 
-//														retParams.groupKey + ")' was activated.",
-//														Debug.INFO_PRIORITY);
-//										}
-//										else
-//										{										
-//											Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
-//	
-//											//kill popup dialog
-//											var el = document.getElementById("popUpDialog"); 
-//											if(el) el.parentNode.removeChild(el);	
-//											return;
-//										}	
-//										
-//										++setAliasCheckboxIndex; //req back, so ready for next index
-//									}
-//									else
-//										setAliasCheckboxIndex = 0; //ready for first checkbox
-//								
-//									//get next affected group index			
-//									while(setAliasCheckboxIndex < setAliasCheckboxes.length &&
-//											!setAliasCheckboxes[setAliasCheckboxIndex].checked)
-//										Debug.log("Skipping checkbox " + (++setAliasCheckboxIndex));
-//	
-//									if(setAliasCheckboxIndex >= setAliasCheckboxes.length)
-//									{
-//										Debug.log("Done with alias checkboxes ");
-//	
-//										if(!retParams)//req) 
-//										{
-//											Debug.log("No System Aliases were changed, so Backbone was not modified. Done.");
-//	
-//											//kill popup dialog
-//											var el = document.getElementById("popUpDialog"); 
-//											if(el) el.parentNode.removeChild(el);
-//											treeHasChanged(true); // reset
-//											return;
-//										}
-//										
-//										Debug.log("Saving and activating Backbone done.");
-//										
-//										//kill popup dialog
-//										var el = document.getElementById("popUpDialog"); 
-//										if(el) el.parentNode.removeChild(el);	
-//										treeHasChanged(true); // reset
-//										return;	
-//									}	
-//	
-//									//get next alias
-//									{
-//										var el = document.getElementById("popUpDialog-editAliasSelect-" +
-//												setAliasCheckboxIndex);
-//										if(el.style.display == "none")
-//										{
-//											//get value from text box
-//											el = document.getElementById("popUpDialog-editAliasTextBox-" + 
-//													setAliasCheckboxIndex);					
-//										}
-//										groupAlias = el.value;
-//									}
-//	
-//									groupName = affectedGroupNames[setAliasCheckboxIndex];
-//									groupKey = affectedGroupKeys[setAliasCheckboxIndex];
-//	
-//									Debug.log("groupAlias = " + groupAlias);
-//									Debug.log("groupName = " + groupName);
-//									Debug.log("groupKey = " + groupKey);
-//	
-//									ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
-//											"TreeEditWiz",
-//											localNextAliasHandler,										
-//											true); //request return parameters		
-//								}
-//	
-//								localNextAliasHandler();
-//	
-//								Debug.log("Aliases set in motion");
-//	
-//								return;
-//							}
-//	
-//								},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-//						); //end save new group request								
-//					} //end affected group for loop
-//	
-//					allRequestsSent = true;
-//					if(numberOfRequests == 0) //no groups to save
-//					{
-//						//this could happen if editing tables with no current active groups
-//						Debug.log("There were no groups to save!", Debug.INFO_PRIORITY);
-//	
-//						//kill popup dialog
-//						var el = document.getElementById("popUpDialog"); 
-//						if(el) el.parentNode.removeChild(el);
-//						treeHasChanged(true); // reset
-//					}
 				} //end localSaveAndActivateGroups()
 			} //end localHandleAffectedGroups()			
 		} //end saveModifiedTree()
@@ -8598,6 +8449,7 @@
 			if(reset)			
 			{
 				treeHasChanged_ = false;
+				
 				//delete all buttons
 				var svBtn = document.getElementById("treeSaveButton");
 				while(svBtn)				
@@ -8980,10 +8832,10 @@
 										".'");
 							}
 
-							Debug.log("Successfully added a new record to temporary version '" +
-									treeMemberVersions_[resultingTableIndex] + "' of table '" + 
-									treeEditingTargetTable_ + ".'",
-									Debug.INFO_PRIORITY);						
+							//							Debug.log("Successfully added a new record to temporary version '" +
+							//									treeMemberVersions_[resultingTableIndex] + "' of table '" + 
+							//									treeEditingTargetTable_ + ".'",
+							//									Debug.INFO_PRIORITY);						
 						}		
 						else if(treeEditingNodeType_ == "table-newGroupRow")
 						{
@@ -9052,7 +8904,7 @@
 					else if(treeEditingNodeType_ == "table-newUIDRow") //spawns from uid link edit)
 					{	
 						//reload members uid dropdown
-						_editingCellEl.getElementsByTagName("select")[0].onchange();										
+						_editingCellEl.getElementsByTagName("select")[0].onchange(newValue);										
 						return;					
 					}
 
@@ -11624,7 +11476,9 @@
 					if(err) 
 					{					
 						Debug.log(err,Debug.HIGH_PRIORITY);
-						el.innerHTML = str;
+
+						localFinishDialog();
+						
 						return;
 					}
 
@@ -11717,9 +11571,14 @@
 
 						//increase height each time a group check is added
 						h += gh;
-						el.style.height = h + "px";						
+					
 					}
 
+					localFinishDialog();
+
+					function localFinishDialog()
+					{
+						el.style.height = h + "px";						
 					str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
 
 
@@ -11740,6 +11599,7 @@
 							"(Optionally, activate new group and assign system alias)" +
 							"'/>";
 					el.innerHTML = str;
+					}
 
 					//handle default dropdown selections for group alias
 					for(var i=0;i<1;++i)//groups.length;++i) //only one affected group, the trivial one
@@ -12585,6 +12445,8 @@
 										//kill popup dialog
 										var el = document.getElementById("popUpDialog"); 
 										if(el) el.parentNode.removeChild(el);
+										
+										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 										treeHasChanged(true); // reset
 										return;
 									}
@@ -12632,6 +12494,8 @@
 										//kill popup dialog
 										var el = document.getElementById("popUpDialog"); 
 										if(el) el.parentNode.removeChild(el);	
+										
+										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 										treeHasChanged(true); // reset
 										return;
 											},	//end of done handler for saveGroupAndActivate
@@ -12699,6 +12563,8 @@
 					//kill popup dialog
 					var el = document.getElementById("popUpDialog"); 
 					if(el) el.parentNode.removeChild(el);
+					
+					Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 					treeHasChanged(true); // reset
 				}
 			}	//end localHandleAffectedGroups
@@ -13172,6 +13038,8 @@
 										//kill popup dialog
 										var el = document.getElementById("popUpDialog"); 
 										if(el) el.parentNode.removeChild(el);
+										
+										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 										treeHasChanged(true); // reset
 										return;
 									}
@@ -13219,6 +13087,8 @@
 										//kill popup dialog
 										var el = document.getElementById("popUpDialog"); 
 										if(el) el.parentNode.removeChild(el);	
+										
+										Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 										treeHasChanged(true); // reset
 										return;
 											},	//end of done handler for saveGroupAndActivate
@@ -13286,6 +13156,8 @@
 					//kill popup dialog
 					var el = document.getElementById("popUpDialog"); 
 					if(el) el.parentNode.removeChild(el);
+					
+					Debug.log("Tree saving operations complete.", Debug.INFO_PRIORITY);
 					treeHasChanged(true); // reset
 				}
 			}	//end localHandleAffectedGroups
@@ -13391,7 +13263,9 @@
 									 "Filter Tree View Values",
 							 treeViewHideInfo_?
 									 "Show Info Fields":
-									 "Hide Info Fields"
+									 "Hide Info Fields",
+							 "Record Creation Wizard",
+							 "Record Deletion Wizard"
 									 ];
 						
 			var refreshLinkStr = "refreshTreeView();";
@@ -13413,7 +13287,9 @@
 													refreshLinkStr,
 							"treeFilterApplied_?applyTreeFilter():popUpFilterTreeForm()",
 							"treeViewHideInfo_ = !treeViewHideInfo_; " +
-													"applyTreeFilter('',0,1)"
+													"applyTreeFilter('',0,1)",
+							"launchRecordCreationWizard(\"tree\")",
+							"launchRecordDeletionWizard(\"tree\")"
 									 ];
 			Debug.log("createEditTableMenu()");
 			SimpleContextMenu.createMenu(
@@ -13834,6 +13710,7 @@
 				tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
 				sel.style.display = "none";
 				tel.style.display = "block";
+				if(tel.value == "") tel.value = sel.value; //take value from select the first time
 				ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 			}
 		}

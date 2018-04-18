@@ -1,16 +1,5 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-#include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
-//#include "otsdaq-core/DataManager/NetworkDataManager.h"
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
 //#include "otsdaq-core/RootUtilities/DQMHistos.h"
-#include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
 
 
@@ -66,33 +55,14 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //========================================================================================================================
-VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception)
-: xdaq::Application           (s)
-, SOAPMessenger               (this)
-, RunControlStateMachine      ("VisualSupervisor")
-, theConfigurationManager_    (new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
-, supervisorContextUID_    (theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
-, supervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
-		(
-				getApplicationContext()->getContextDescriptor()->getURL(),
-				getApplicationDescriptor()->getLocalId()
-		))
-, supervisorConfigurationPath_  ("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
-, theRemoteWebUsers_          	(this)
+VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) throw (xdaq::exception::Exception)
+: CoreSupervisorBase			(stub)
 , theDataManager_             	(0)
 , loadedRunNumber_	          	(-1)
 {
 	INIT_MF("VisualSupervisor");
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
-	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
+	__COUT__ << std::endl;
+
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>
 	(
 			theConfigurationManager_->getNode(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName()),
@@ -101,10 +71,9 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	);
 
 
-	__COUT__ << __PRETTY_FUNCTION__ << "done data manager" << std::endl;
-	xgi::bind(this, &VisualSupervisor::Default, "Default" );
-	xgi::bind(this, &VisualSupervisor::request, "request");
+	__COUT__ << "done data manager" << std::endl;
 
+	xgi::bind(this, &VisualSupervisor::dataRequest, "dataRequest");
 
 	xgi::bind(this, &VisualSupervisor::safari, "safari" );
 
@@ -112,7 +81,15 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub * s) throw (xdaq::excep
 	//make preferences directory in case they don't exist
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
-	init();
+}
+
+//========================================================================================================================
+//When overriding, setup default property values here
+// called by CoreSupervisorBase constructor
+void VisualSupervisor::setSupervisorPropertyDefaults(void)
+{
+	LOCK_REQUIRED_ 				= false; //set default
+	USER_PERMISSIONS_THRESHOLD_ = 1; 	 //set default
 }
 
 //========================================================================================================================
@@ -135,12 +112,6 @@ VisualSupervisor::~VisualSupervisor(void)
 {
 	destroy();
 }
-//========================================================================================================================
-void VisualSupervisor::init(void)
-{
-	//called by constructor
-	supervisorDescriptorInfo_.init(getApplicationContext());
-}
 
 //========================================================================================================================
 void VisualSupervisor::destroy(void)
@@ -153,6 +124,7 @@ void VisualSupervisor::destroy(void)
 void VisualSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
+	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
 
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Visualization.html?urn=" <<
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
@@ -171,6 +143,80 @@ throw (xgi::exception::Exception)
 
 
 //========================================================================================================================
+void VisualSupervisor::dataRequest(xgi::Input * in, xgi::Output * out)
+throw (xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+	std::string Command;
+	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
+		Command = cgi("RequestType"); //from GET or POST
+
+	__COUT__ << "Command " << Command << std::endl;
+
+	HttpXmlDocument xmldoc;
+	uint8_t userPermissions;
+	std::string userName;
+
+	//**** start LOGIN GATEWAY CODE ***//
+	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
+	{
+		bool automaticCommand = false; //automatic commands should not refresh cookie code.. only user initiated commands should!
+
+		bool checkLock = LOCK_REQUIRED_;
+		bool needUserName = false;//Command == "setUserPreferences" || Command == "getUserPreferences";
+		bool requireLock = LOCK_REQUIRED_;
+
+		if(!theRemoteWebUsers_.xmlLoginGateway(
+				cgi,
+				out,
+				&xmldoc,
+				allSupervisorInfo_,
+				&userPermissions,  			//acquire user's access level (optionally null pointer)
+				!automaticCommand,			//true/false refresh cookie code
+				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
+				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+				requireLock,				//true/false requires this user has the lock to proceed
+				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
+				,0//&displayName			//acquire user's Display Name
+				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+		))
+		{	//failure
+			//std::cout << out->str() << std::endl; //could print out return string on failure
+			return;
+		}
+	}
+	//done checking cookieCode, sequence, userWithLock, and permissions access all in one shot!
+	//**** end LOGIN GATEWAY CODE ***//
+
+	//
+	if(Command == "getRawData")
+	{
+	  __COUT__ << __E__;
+	  try{
+		//TODO -- add timestamp, so we know if data is new
+	      __COUT__ << "Getting Raw data and converting to binary string" << __E__;
+		xmldoc.addBinaryStringToData("rawData",
+				theDataManager_->getRawData());
+		__COUT__ << __E__;
+	  }
+	  catch(std::exception const& e){
+	    __COUT__ << "ERROR! Exception while getting raw data. Incoming exception data..." << __E__;
+	    __COUT__ << e.what() << __E__;
+    	    __COUT__ << "End Exception Data" << __E__;
+
+	  }
+	  catch(...){
+		__COUT__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+		__COUT_INFO__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+	  }
+	}
+		//return xml doc holding server response
+	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
+}
+
+
+//========================================================================================================================
 void VisualSupervisor::request(xgi::Input * in, xgi::Output * out)
 throw (xgi::exception::Exception)
 {
@@ -181,15 +227,15 @@ throw (xgi::exception::Exception)
 	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
 		Command = cgi("RequestType"); //from GET or POST
 
-	__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
+	//__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
-	//getGeometry
-	//getEvents
-	//getRoot
-	//getDirectoryContents
-	//setUserPreferences
-	//getUserPreferences
+	//	getGeometry
+	//	getEvents
+	//	getRoot
+	//	getDirectoryContents
+	//	setUserPreferences
+	//	getUserPreferences
 
 	HttpXmlDocument xmldoc;
 	uint8_t userPermissions;
@@ -200,24 +246,27 @@ throw (xgi::exception::Exception)
 	{
 		bool automaticCommand = false;//Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
 
-		bool checkLock = false;
+		bool checkLock = LOCK_REQUIRED_;
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
-		bool requireLock = false;
+		bool requireLock = LOCK_REQUIRED_;
+		bool allowNoUser = Command == "setUserPreferences" || Command == "getUserPreferences" || Command == "getDirectoryContents" ||
+				Command == "getRoot" || Command == "getEvents";
 
 		if(!theRemoteWebUsers_.xmlLoginGateway(
 				cgi,
 				out,
 				&xmldoc,
-				supervisorDescriptorInfo_,
+				allSupervisorInfo_,
 				&userPermissions,  			//acquire user's access level (optionally null pointer)
 				!automaticCommand,			//true/false refresh cookie code
-				1, 							//set access level requirement to pass gateway
+				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
 				checkLock,					//true/false enable check that system is unlocked or this user has the lock
 				requireLock,				//true/false requires this user has the lock to proceed
 				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
 				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
 				,0//&displayName			//acquire user's Display Name
 				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
+				,allowNoUser 				//allow no user access
 		))
 		{	//failure
 			//std::cout << out->str() << std::endl; //could print out return string on failure
@@ -240,7 +289,7 @@ throw (xgi::exception::Exception)
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
-	if (Command == "setUserPreferences")
+	if (Command == "setUserPreferences" && userName != "" /*from allow no user*/)
 	{
 		__COUT__ << "userName: " << userName << std::endl;
 		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
@@ -453,7 +502,7 @@ throw (xgi::exception::Exception)
 		std::string path = CgiDataUtilities::postData(cgi,"RootPath");
 		std::string fullPath  = std::string(getenv("ROOT_BROWSER_PATH")) + path;
 
-		__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
+		//__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
 
 		std::string rootFileName      = fullPath.substr(0,fullPath.find(".root")+5);
 		std::string rootDirectoryName = rootFileName + ":" + fullPath.substr(fullPath.find(".root")+5,fullPath.size()-fullPath.find(".root")+5+1);
@@ -463,13 +512,13 @@ throw (xgi::exception::Exception)
 
 		if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
 		{
-			__COUT__ << "Attempting to get LIVE file." << std::endl;
+		  //__COUT__ << "Attempting to get LIVE file." << std::endl;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			if(!rootFile)
 				__COUT__ << "File was closed." << std::endl;
 			else
 			{
-				__COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
+			  //__COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
 				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
 			}
 		}
@@ -507,7 +556,7 @@ throw (xgi::exception::Exception)
 					TBufferFile tbuff(TBuffer::kWrite);
 
 					std::string rootType = histo->ClassName();
-					__COUT__ << "rootType " << rootType << std::endl;
+					//__COUT__ << "rootType " << rootType << std::endl;
 
 					histo->Streamer(tbuff);
 
@@ -521,7 +570,7 @@ throw (xgi::exception::Exception)
 					xmldoc.addTextElementToData("rootType", rootType);
 					xmldoc.addTextElementToData("rootData", dest);
 					xmldoc.addTextElementToData("rootJSON", json.Data());
-					__COUT__ << "Done" << std::endl;
+					//__COUT__ << "Done" << std::endl;
 
 					//std::cout << "\n\n" << json.Data() << "\n\n";
 				}
@@ -539,7 +588,7 @@ throw (xgi::exception::Exception)
 						TString s = obj->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
+						__COUT__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
 						xmldoc.addTextElementToData((std::string(obj->IsA()->GetName()).find("Directory") != std::string::npos)?"dir":"file", obj->GetName());
 					}
 				}
@@ -553,7 +602,7 @@ throw (xgi::exception::Exception)
 						TString s = key->GetName();
 						if (s.Index(re) == kNPOS)
 							continue;
-						__COUT__ << __PRETTY_FUNCTION__ << "Class Name: " << key->GetClassName() << std::endl;
+						__COUT__ << "Class Name: " << key->GetClassName() << std::endl;
 						xmldoc.addTextElementToData((std::string(key->GetClassName()).find("Directory") != std::string::npos)?"dir":"file", key->GetName());
 					}
 				}
@@ -881,15 +930,3 @@ throw (toolbox::fsm::exception::Exception)
 		__COUT_INFO__ << "ERROR! Couldn't Resume the VisualSupervisor" << std::endl;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-

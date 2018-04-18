@@ -50,7 +50,7 @@ else {
         //------------------------------------------------------------------
 		//create private members variables ----------------------
 		//------------------------------------------------------------------
-        var _defaultDashboardColor = "#3C404B";
+        var _defaultDashboardColor = "rgb(0,40,85)";
 		
 		
 		
@@ -67,7 +67,7 @@ else {
         var _displayWindowDashboard = //default window dashboard view
         		window.parent.window.location.hash[1]? 
         				(window.parent.window.location.hash[1] | 0):1; 
-        var _windowDashboard,_topBar,_fullScreenBtn;
+        var _windowDashboard,_topBar,_showDesktopBtn,_fullScreenBtn,_fullScreenRefreshBtn;
         
         var _windowDashboardWindowCSSRule;  //e.g. _var.style.width = "100px"
         
@@ -195,8 +195,9 @@ else {
 							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
-					if(win.isMinimized()) win.minimize();
-					if(win.isMaximized()) win.maximize();
+					if(win.isMinimized()) win.unminimize();
+					if(win.isMaximized()) win.unmaximize();
+					Desktop.desktop.redrawFullScreenButtons();
 					
 					xx += ww;
 					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
@@ -219,9 +220,49 @@ else {
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
 					win = Desktop.desktop.getWindowByIndex(i);
 					win.minimize();	if(!win.isMinimized()) win.minimize(); //minimize twice, in case was mazimized
+				     
 				}
 		}
+
+		var _windowDashboardRestoreAll = function() {
+				var win;
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
+					win = Desktop.desktop.getWindowByIndex(i);
+					win.unminimize();
+					if (win.isMaximized())
+					    Desktop.desktop.setForeWindow(win);
+
+				}
+				//Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));
+		}	
+
+
+
+	        var _windowDashboardToggleWindows = function () {
+		   
+		    
+		    // if (Desktop.desktop.getForeWindow() &&
+		    //	Desktop.desktop.getForeWindow().isMinimized())
+		    //		_windowDashboardRestoreAll();
+		    //else
+		    //	_windowDashboardMinimizeAll();
+
+		    if((_showDesktopBtn.innerHTML).includes(">Show Desktop</a>"))
+			_windowDashboardMinimizeAll();
+		    else
+			_windowDashboardRestoreAll();
+
+		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+		    ((Desktop.desktop.getForeWindow() &&
+		      Desktop.desktop.getForeWindow().isMinimized())?"Restore All Windows":"Show Desktop") + "</a>";
+	        }
 		
+	        var _windowDashboardRefresh = function() {
+	        
+		    updateWindows();
+		    Debug.log("Window refreshed.")
+                }
+
 		//_windowDashboardLayoutsDropDown ~
 		//	toggles default layout drop down menu
 		var _windowDashboardLayoutsDropDown = function() {		
@@ -324,15 +365,34 @@ else {
 						"</div>\n";
             }      
             
-		   	_refreshTitle(); 
+		   	_refreshTitle();
         }        
         
         this.redrawFullScreenButton = function() {
             _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
             	((Desktop.desktop.getForeWindow() &&
                                         Desktop.desktop.getForeWindow().isMaximized())?"Exit Full Screen":"Full Screen") + "</a>"; 
+                                    		
+        }
+
+        this.redrawRefreshButton = function() {
+            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
+	    var hght = "16px";//_fullScreenBtn.style.height;
+	    _fullScreenRefreshBtn.style.height = hght;//"16px";
+	    console.log(hght);//"16px";
+	    //_fullScreenRefreshBtn.style.visibility = "" +
+	    //((Desktop.desktop.getForeWindow() &&
+	    //          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
+	    
                                         		
         }
+
+	this.redrawShowDesktopButton = function() {
+            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+            	((Desktop.desktop.getForeWindow() &&
+                                        Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>"; 
+
+	}
         
         this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
         
@@ -348,8 +408,6 @@ else {
         this.displayUserLock = function(usernameWithLock, el) {      
         	if(!el)
         		el = document.getElementById("DesktopDashboard-userWithLock");
-
-   			el.style.display = "block";
         	
         	var user = Desktop.desktop.login.getUsername();
         	var data = "";
@@ -365,17 +423,20 @@ else {
        		{		
        			//nobody has lock
        			var str = "";       			
-       			str += "<a href='javascript:" + jsReq + "'>";
-       			str += "<img " +
-       					"src='/WebPath/images/dashboardImages/icon-Settings-Unlock.png' " +
+       			str += "<a href='javascript:" + jsReq + "'" +
        					"title='Click to lockout the system and take the ots Lock'>";
+       			str += "<img " +
+       					"src='/WebPath/images/dashboardImages/icon-Settings-Unlock.png'>";
        			str += "</a>";
        			el.innerHTML = str; 
-       			_oldUserNameWithLock = "";       			
+       			_oldUserNameWithLock = "";    
+       			el.style.display = "block";   			
        			return; 
        		}  	
        		
-       		if(_oldUserNameWithLock == usernameWithLock) return; //stop graphics flashing of lock
+       		if(_oldUserNameWithLock == usernameWithLock && 
+       				el.style.display == "block")
+       			return; //no need to re-write element
 
        		var str = "";       			
        		if(usernameWithLock != user) //not user so cant unlock
@@ -384,14 +445,15 @@ else {
        					usernameWithLock + " has the ots Lock'>"; 
        		else //this is user so can unlock
        		{
-				str += "<a href='javascript:" + jsReq + "'>";
-				str += "<img " +	
-						"src='/WebPath/images/dashboardImages/icon-Settings-Lock.png' " +
+				str += "<a href='javascript:" + jsReq + "' " +
 						"title='Click to unlock the system and release the ots Lock'>";
+				str += "<img " +	
+						"src='/WebPath/images/dashboardImages/icon-Settings-Lock.png'>";
 				str += "</a>";
        		}
        		
    			el.innerHTML = str; 
+   			el.style.display = "block";
    			
        		_oldUserNameWithLock = usernameWithLock; 
         }        
@@ -423,7 +485,10 @@ else {
        		{
        			el.innerHTML = "*** <a onclick='Desktop.desktop.resetDesktop();//soft reset attempt' " + 
        					"style='cursor:pointer; color:rgb(255,150,0);'>Disconnected</a> ***";
-       			el.style.display = "block";       			
+       			el.style.display = "block";       	
+       			
+       			//hide user with lock icon (because it usually looks bad when disconnected)
+       			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
        		}
         }
         
@@ -506,18 +571,23 @@ else {
         tmpBtn.onmouseup = _windowDashboardOrganize;
         _topBar.appendChild(tmpBtn);
         
-        tmpBtn = document.createElement("div");
-		tmpBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
-        tmpBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>Show Desktop</a>";
-        tmpBtn.onmouseup = _windowDashboardMinimizeAll;
-        _topBar.appendChild(tmpBtn);
+        _showDesktopBtn = document.createElement("div");
+		_showDesktopBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
+        _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>Show Desktop</a>";
+        _showDesktopBtn.onmouseup = _windowDashboardToggleWindows;
+        _topBar.appendChild(_showDesktopBtn);
 
         _fullScreenBtn = document.createElement("div");
 		_fullScreenBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
         this.redrawFullScreenButton();
         _fullScreenBtn.onmouseup = Desktop.desktop.toggleFullScreen;
         _topBar.appendChild(_fullScreenBtn);
-        
+
+        _fullScreenRefreshBtn = document.createElement("div");
+		_fullScreenRefreshBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
+        this.redrawRefreshButton();
+        _fullScreenRefreshBtn.onmouseup = Desktop.handleFullScreenWindowRefresh;
+        _topBar.appendChild(_fullScreenRefreshBtn);
         
         //user with lock on far right.. because it is the highest priority for user to see
 		tmpBtn = document.createElement("div");

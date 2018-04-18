@@ -1,19 +1,20 @@
 include_directories($ENV{XERCES_C_INC})
 cet_make(LIBRARY_NAME ConfigurationGUI
 		 LIBRARIES
+		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 ${CETLIB_EXCEPT}
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 #otsdaq-core_ConfigurationPluginDataFormats_ConfigurationAliases_configuration
-		 #otsdaq-core_ConfigurationPluginDataFormats_Configurations_configuration
 		 otsdaq-core_ConfigurationPluginDataFormats_IterateConfiguration_configuration
-		 SupervisorDescriptorInfo
+		 FiniteStateMachine
+		 CoreSupervisors
+		 SupervisorInfo
 		 CgiDataUtilities
 		 WebUsersUtilities
-		 SOAPUtilities
+		 #SOAPUtilities
 		 XmlUtilities
-		 MessageFacility
+		 #MessageFacility
 		 cetlib
          $ENV{XERCES_C_LIB}/libxerces-c.so
 	 ${MF_MESSAGELOGGER}

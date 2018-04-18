@@ -25,6 +25,9 @@ var selectedtargetBlue;
 
 function init(){
 	console.log("init()");
+	DesktopContent.tooltip("Security in the Wiz-Mode",
+			       "This is an introduction into the Wiz-Mode Security!"
+	);
 
 
 	for(var index = 0; index < IDs_.length; index++)
@@ -166,8 +169,9 @@ function showVisualSelection(){
 
 }
 
-function confirm(){
-	if(prompt("Are you sure? This will delete ALL user data. Type 15091420 to continue:")==15091420)
+function confirm(description){
+        var randomNumber = Math.floor(Math.random() * 99999999)
+	if(prompt("Are you sure? "+ description + " Type " + randomNumber + " to continue:") == randomNumber)
 		if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
 			setSecurity('ResetSecurityUserData');
 		}

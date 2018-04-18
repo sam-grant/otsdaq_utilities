@@ -207,7 +207,7 @@ DesktopContent.init = function() {
 	window.onmousemove = DesktopContent.mouseMove; //setup mouse move handler
 	window.focus();	//before this fix, full screen in new tab would not give window focus
 
-	DesktopContent._serverUrnLid = ((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
+	DesktopContent._serverUrnLid = DesktopContent.getDesktopWindowParameter(0,"urn");//((DesktopContent._theWindow.parent.window.location.search.substr(1)).split('='))[1];
 	if(typeof DesktopContent._serverUrnLid == 'undefined')
 		Debug.log("ERROR -- Supervisor Application URN-LID not found",Debug.HIGH_PRIORITY);
 	Debug.log("Supervisor Application URN-LID #" + DesktopContent._serverUrnLid);
@@ -232,6 +232,7 @@ DesktopContent.init = function() {
 //DesktopContent.getParameter ~
 //	returns the value of the url GET parameter specified by index
 //	if using name, then (mostly) ignore index
+//	Note: in normal mode the first two params are only separated by = (no &'s) for historical reasons
 DesktopContent.getParameter = function(index,name) {	
 	// Debug.log(window.location)
 	var params = (window.location.search.substr(1)).split('&');
@@ -271,6 +272,46 @@ DesktopContent.getDesktopParameter = function(index, name) {
 	else 
 		win = win.parent.parent.window;
 	var params = (win.location.search.substr(1)).split('&');
+	if(index >= params.length) return; //return undefined
+	var spliti, vs;
+	//if name given, make it the priority
+	if(name)
+	{
+		for(var index=0;index<params.length;++index)
+		{
+			spliti = params[index].indexOf('=');
+			if(spliti < 0) continue; //poorly formed parameter?	
+			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+			if(vs[0] == name)
+				return decodeURIComponent(vs[1]);
+		}
+		return; //return undefined .. name not found
+	}
+
+	spliti = params[index].indexOf('=');
+	if(spliti < 0) return; //return undefined	
+	vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
+	return decodeURIComponent(vs[1]); //return value
+}
+
+//DesktopContent.getDesktopWindowParameter ~
+//	returns the value of the url GET parameter specified by index of the Window frame url
+//	if using name, then (mostly) ignore index
+DesktopContent.getDesktopWindowParameter = function(index, name) {	
+	// Debug.log(window.location)	
+	
+	var win = DesktopContent._theWindow;
+	if(!win)	//for parameter directly from desktop code
+		win = window;
+	else 
+		win = win.parent.window;
+									 
+	//fix/standardize search string
+	var searchStr = win.location.search.substr(1);
+	var i = searchStr.indexOf("=securityType");
+	if(i > 0) searchStr = searchStr.substr(0,i) + '&' + searchStr.substr(i+1);
+	
+	var params = ((searchStr)).split('&');	
 	if(index >= params.length) return; //return undefined
 	var spliti, vs;
 	//if name given, make it the priority
@@ -631,7 +672,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 								DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 
 						}
-						else 
+						else if(DesktopContent._lastCookieCode != "AllowNoUser")
 						{ //check if should update cc mailbox
 
 							//check twice to handle race conditions with other content code
@@ -992,7 +1033,45 @@ DesktopContent.tooltip = function(id,tip) {
 	},0,0,0,true,true); //show loading, and target supervisor
 	
 }
-
+//=====================================================================================
+//setSecurityOne
+//       make server request to enable random security sequence for URL
+DesktopContent.setSecurityOn = function(on) {
+        console.log("Reached");
+	DesktopContent.XMLHttpRequest(
+			"ToggleSecurityCodeGeneration?RequestType=TurnGenerationOn" + 
+			"&srcFunc=0"
+			,""
+			,DesktopContent.toggleSecurityCodeGenerationHandler
+			,0,0,0,true,true);
+ }
+DesktopContent.toggleSecurityCodeGenerationHandler = function(req)
+{
+    var status = DesktopContent.getXMLValue(req,"Status");
+    Debug.log("Status: " + status);
+    if (status == "Generation_Success") {
+	Debug.log("Successfully switched to using authentication sequence!");
+	Debug.closeErrorPop();
+	Debug.log("If you wish to return to the default security generation, you can use the 'Reset User Information' in the " +
+		  "'Edit User Data' app.");
+	Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
+    }
+    
+    //var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+    //if(err) 
+    //	{
+    //	    Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+    //	    return;
+    //	}
+    
+    //if(reqParam = 0)
+    //	{ //... do something }
+    //	}else if(reqParam = 1)
+    //	{ //... do something else}
+    //	}else
+    //	{ //... do something else}	    
+    //	}   
+}
 //=====================================================================================
 //tooltipSetNeverShow ~~
 //	set value of never show for target tip to 1/0 based on alwaysShow

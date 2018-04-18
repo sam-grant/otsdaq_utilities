@@ -185,10 +185,10 @@
 		block8El.style.top =  b8[1] + "px";
 		block8El.style.height =  b8[3] + "px";
 		
-		historybox.style.height =  h*0.88 + "px";
-		sequencebox.style.height =  h*0.88 + "px";
-		privateMacroBox.style.height =  h*0.38 + "px";
-		publicMacroBox.style.height =  h*0.38 + "px";
+		historybox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
+		sequencebox.style.height =  (h-_MARGIN*2-54) + "px"; //h*0.88 + "px";
+		privateMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
+		publicMacroBox.style.height =  (h/2-_MARGIN*2-54-2) + "px"; //h*0.38 + "px";
 		
 		initLite();
 	}
@@ -200,11 +200,10 @@
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
 	    	listoffecs.innerHTML = "<p class='red'>" +
-				"<br>No Front-End interfaces were found. <br><br>Once FE interfaces are " +
-				"added, " +
+				"<br>No Front-End interfaces were found. <br><br>Otsdaq must be configured with Front-ends, then " +				
 				"click " +
 				"<a href='#' onclick='initLite(); return false;' >refresh</a>" +
-				" in the upper right of Macro Maker.</p>";
+				" (also in the upper-right of Macro Maker).</p>";
 	    else
 	    {
 			var w = window.innerWidth;
@@ -243,7 +242,14 @@
 			MultiSelectBox.createSelectBox(listoffecs,
 					"box1",
 					"Please select from below:",
-					vals,keys,types,"listSelectionHandler",noMultiSelect);            
+					vals,keys,types,"listSelectionHandler",noMultiSelect,
+					0,//mouseOverHandler,
+					0,//iconURLs,
+					0,//mouseDownHandler,
+					0,//mouseUpHandler,
+					true,//requireCtrlMultiClick
+					0 //titles
+					);            
 			//End of making box
 	    }
 	    

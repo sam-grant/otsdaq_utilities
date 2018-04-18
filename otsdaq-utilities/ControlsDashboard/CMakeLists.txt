@@ -1,19 +1,21 @@
 
 include_directories($ENV{XERCES_C_INC})
+
 cet_make(LIBRARY_NAME ControlsDashboard
 		 LIBRARIES
+		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 #		 CoreSupervisors
 		 ConfigurationInterface
 		 ConfigurationDataFormats
-		 SupervisorDescriptorInfo
+		 SupervisorInfo
 		 PluginMakers
 		 CgiDataUtilities
 		 WebUsersUtilities
 		 SOAPUtilities
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
-         MessageFacility
+ #        MessageFacility
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
 )

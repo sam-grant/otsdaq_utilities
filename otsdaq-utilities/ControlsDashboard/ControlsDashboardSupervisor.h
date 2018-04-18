@@ -5,20 +5,12 @@
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
-#include "xdaq/Application.h"
-#include "xgi/Method.h"
+#include <xdaq/Application.h>
+#include <xgi/Method.h>
 
-#include "xoap/MessageReference.h"
-#include "xoap/MessageFactory.h"
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
-#include "xoap/Method.h"
-
-
-#include "cgicc/HTMLClasses.h"
+#include <cgicc/HTMLClasses.h>
 #include <cgicc/HTTPCookie.h>
-#include "cgicc/HTMLDoctype.h"
+#include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPHeader.h>
 
 #include <string>
@@ -26,7 +18,7 @@
 #include <vector>
 #include <set>
 
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
+#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
@@ -68,7 +60,7 @@ public:
 
 private:
 	//SlowControlsInterface
-    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
+    AllSupervisorInfo 						allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
     ControlsVInterface*                     interface_;
     ConfigurationManager*          			theConfigurationManager_;

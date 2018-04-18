@@ -620,9 +620,9 @@ ViewerRoot.getDirectoryContents = function(path) {
 	Debug.log("ViewerRoot getDirectoryContents " + path);
 	
 	if(path.indexOf(".root/") >=0)
-		DesktopContent.XMLHttpRequest("request?RequestType=getRoot", "RootPath="+path, ViewerRoot.getDirContentsHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", "RootPath="+path, ViewerRoot.getDirContentsHandler);
 	else
-		DesktopContent.XMLHttpRequest("request?RequestType=getDirectoryContents", "Path="+path, ViewerRoot.getDirContentsHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getDirectoryContents", "Path="+path, ViewerRoot.getDirContentsHandler);
 }
 
 // ViewerRoot.getDirContentsHandler ~~
@@ -647,7 +647,7 @@ ViewerRoot.getDirContentsHandler = function(req) {
 ViewerRoot.rootReq = function(rootPath) {
 	
 	Debug.log("ViewerRoot.rootReq " + rootPath );
-	DesktopContent.XMLHttpRequest("request?RequestType=getRoot", "RootPath="+rootPath, 
+	DesktopContent.XMLHttpRequest("Request?RequestType=getRoot", "RootPath="+rootPath, 
 			//ViewerRoot.tmpRootDataHandler);
 			ViewerRoot.getRootDataHandler);
 }
@@ -655,7 +655,7 @@ ViewerRoot.rootReq = function(rootPath) {
 //ViewerRoot.rootConfigReq ~~
 ViewerRoot.rootConfigReq = function(rootConfigPath) {	
 	//Debug.log("ViewerRoot.rootReq");
-	DesktopContent.XMLHttpRequest("request?RequestType=getRootConfig", "RootConfigPath="+rootConfigPath, 
+	DesktopContent.XMLHttpRequest("Request?RequestType=getRootConfig", "RootConfigPath="+rootConfigPath, 
 			ViewerRoot.getRootConfigHandler);
 }
 

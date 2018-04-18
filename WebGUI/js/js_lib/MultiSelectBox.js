@@ -9,8 +9,12 @@
 //
 //	This function is called by user to actually create the multi select box
 // 	These parameters are optional and can be omitted or set to 0: 
-//		keys, types, handler, noMultiSelect 
+//		keys, types, handler, noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,
+//		mouseUpHandler,
+//		requireCtrlMultiClick,titles
 // 	Note: handler is the string name of the function (put in quotes).
+//	Note: requireCtrlMultiClick enables CONTROL or SHIFT key selections
+//		- sometimes CONTROL forces right click in browser, so SHIFT is needed
 //
 // 	Can use MultiSelectBox.initMySelectBoxes after manually setting the mySelects_ array
 //
@@ -112,7 +116,12 @@ MultiSelectBox.getSelectionArray = function(el)
 
 MultiSelectBox.getSelectionElementByIndex = function(el,i)
 {    
-	return document.getElementById(el.getElementsByClassName("mySelect")[0].id + 
+	if(el.parentElement.id.indexOf("selbox-") == 0)
+		return document.getElementById(el.parentElement.parentElement.
+				getElementsByClassName("mySelect")[0].id + 
+				"-option_" + i);
+	else
+		return document.getElementById(el.getElementsByClassName("mySelect")[0].id + 
 			"-option_" + i);
 }
 
@@ -219,8 +228,9 @@ MultiSelectBox.myOptionSelect = function(option, index, isSingleSelect, event)
 //		requireCtrlMultiClick
 // Note: handler is the string name of the function
 MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
-		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,mouseUpHandler,
-		requireCtrlMultiClick)
+		handler,noMultiSelect,mouseOverHandler,iconURLs,mouseDownHandler,
+		mouseUpHandler,
+		requireCtrlMultiClick,titles)
 {
 	if(!el) 
 	{ MultiSelectBox.dbg("Invalid Element given to MultiSelectBox: " + el);
@@ -299,6 +309,9 @@ MultiSelectBox.createSelectBox = function(el,name,title,vals,keys,types,
 		else if(mouseUpHandler) //assume it is a function
 			str += mouseUpHandler.name + "(this,event);"; //user selection mouseUpHandler
 		str += "' ";
+		
+		if(titles)
+			str += "title='" + titles[i] + "' ";
 		
 		str += "key-value='" + keys[i] + "' type-value='" +
 			types[i] + "'>";  //index, key, ids available as attributes

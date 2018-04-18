@@ -105,23 +105,30 @@
 					while(c < macroVar.length)
 					{					
 						var macroName = macroVar[c];
-						str += macroName + " Permissions Req=" + 
+						str += "&quot;" + macroName + "()&quot; RequiredPermissions=" + 
 								macroVar[c+1] + "<br>" +
 								"&nbsp;&nbsp;&nbsp; Inputs:" +
 								"<div style='margin-left:60px;'>";
 						c += 2;
 						var inputArgs = [];
+						
+						str += "<table>";
 						for(var j=0;j<macroVar[c];++j)
 						{
 							inputArgs.push(macroVar[c+1+j]);
-							str += macroVar[c+1+j] + 
+							str += "<tr><td>";
+							str += macroVar[c+1+j];
+							str += "</td><td>";
+							str +=
 								" = <input type='text' id='" + 
 								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
 								"' class='" + 
 								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-in" +
-								"'value='Default'>" +
-								"<br>";
+								"'value='Default'>";
+							str += "</td></tr>";
 						}
+						str += "</table>";
+						
 						str += "</div>";	
 
 						c += 1 + (macroVar[c]|0);
@@ -130,6 +137,14 @@
 								"<div id='" +
 								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-out" +								
 								"' style='margin-left:60px;'>";
+						for(var j=0;j<macroVar[c];++j)
+							str += macroVar[c+1+j] + "<br>";
+						str += "</div>";
+
+						//create hidden div that will have output args persistently
+						str += "<div id='" +
+						macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-outArgs" +								
+						"' style='display:none'>";
 						for(var j=0;j<macroVar[c];++j)
 							str += macroVar[c+1+j] + "<br>";
 						str += "</div>";
@@ -308,7 +323,7 @@
 					supervisorLID + "-" + feUID + "-" + macroName + "-in"
 			);
 			var outEl = document.getElementById(
-					supervisorLID + "-" + feUID + "-" + macroName + "-out"
+					supervisorLID + "-" + feUID + "-" + macroName + "-outArgs"
 			);
 			var postData = "";
 			
@@ -392,10 +407,10 @@
 <body onload='Javascript:init();'>	
 		
 	<h1>FE Macros</h1>
-		<div style='width:550px'>		
+		<div style='width:550px'></div>		
 
-	<a onclick='init();'>Refresh</a>
-		<br>
+	<!--<a onclick='init();'>Refresh</a>
+		<br>-->
 	<div id='display'></div>
 	
 </body>

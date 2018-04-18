@@ -18,29 +18,19 @@ XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 //========================================================================================================================
 ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: xdaq::Application (stub)
-, SOAPMessenger     (this)
-, theRemoteWebUsers_(this)
+: CoreSupervisorBase	(stub)
 {
 	INIT_MF("ChatSupervisor");
-	xgi::bind (this, &ChatSupervisor::Default, "Default");
+
 	xgi::bind (this, &ChatSupervisor::Chat,    "Chat");
 
 	ChatLastUpdateIndex = 1; //skip 0
-
-	init();
 }
 
 //========================================================================================================================
 ChatSupervisor::~ChatSupervisor(void)
 {
 	destroy();
-}
-//========================================================================================================================
-void ChatSupervisor::init(void)
-{
-	//called by constructor
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -54,7 +44,6 @@ void ChatSupervisor::destroy(void)
 void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
 }
@@ -88,7 +77,7 @@ throw (xgi::exception::Exception)
 				cgi,
 				out,
 				&xmldoc,
-				theSupervisorDescriptorInfo_
+				allSupervisorInfo_
 				,0//&userPermissions,  		//acquire user's access level (optionally null pointer)
 				,!automaticCommand			//true/false refresh cookie code
 				,1 //set access level requirement to pass gateway
@@ -139,7 +128,7 @@ throw (xgi::exception::Exception)
 
 		__COUT__ << "Paging = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
 
-		theRemoteWebUsers_.sendSystemMessage(theSupervisorDescriptorInfo_.getSupervisorDescriptor(),
+		theRemoteWebUsers_.sendSystemMessage(allSupervisorInfo_.getGatewayDescriptor(),
 				topage, user + " is paging you to come chat.");
 	}
 	else
@@ -167,7 +156,7 @@ void ChatSupervisor::escapeChat(std::string &chat)
 void ChatSupervisor::insertActiveUsers(HttpXmlDocument *xmldoc)
 {
 	xmldoc->addTextElementToData("active_users",
-			theRemoteWebUsers_.getActiveUserList(theSupervisorDescriptorInfo_.getSupervisorDescriptor()));
+			theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor()));
 }
 
 //========================================================================================================================

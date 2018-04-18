@@ -12,6 +12,8 @@
 		
 		<!--link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'-->
 		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Donegal+One:400' rel='stylesheet' type='text/css'>
 
 		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
 		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
@@ -32,16 +34,40 @@
 
 
 		<script>
-			var urnLid = ((window.location.search.substr(1)).split('='))[1];
+			
+
+			var urnLid    = DesktopContent.getDesktopWindowParameter(0,"urn");//(window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+			
 			Debug.log("Application URN-LID #" + urnLid);
 
 			function init() {				
 				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
 				Desktop.desktop.icons.resetWithPermissions(255);
 				
+				
+				var notSecure = DesktopContent.getDesktopWindowParameter(0,"secure");
+				if(!notSecure) notSecure = "";
+				//			var notSecure = "";
+				//		        if ((window.location.search.split("?")[1].split("&").length > 1) )
+				//		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
+
+
+			        if (notSecure) { 
+    		                      var msg = "<b>This Wizard is not as secure as it could be!</b>\n" +
+    			                        "\nWe see that you are using the default security sequence for accessing your otsdaq Wiz mode." +
+										"\n\nIn Wiz mode, many sensitive paramters for your DAQ system can be changed, so you may want it to be more secure. " +
+			                        "This page is secured by an authentication sequence to help avoid unauthorized access. " + 
+			                        "The sequence is only displayed at the Linux console and is never transmitted by your otsdaq server for security." +
+			                        "\n\n If you would like to make your Wiz mode more secure, you can click " +
+                                                "<a href='#' onclick='DesktopContent.setSecurityOn(true)'>here</a>" +
+			                        " to enable a longer, randomly generated sequence generated at each runtime or you can set up this feature any time by " +
+			                        "visiting the 'Edit Security' app on the Wiz mode desktop."; 
+			             //Debug.log(msg, Debug.INFO_PRIORITY);
+                   	             DesktopContent.tooltip("Security Alert",msg);
+			        }
 								
 				DesktopContent.tooltip("Wiz-mode Introduction",
-						"Welcome to the otsdaq Wiz-mode Desktop. Wiz-mode is like safe mode " +						 
+			                        "Welcome to the otsdaq Wiz-mode Desktop. Wiz-mode is like safe mode " +						 
 						"when everything is broken and crashing down around you, you can come here to " +
 						"revive your system. If you are here, you are considered an otsdaq system " +
 						"administrator.\n\n" +
@@ -82,6 +108,12 @@
 				);				
 				
 			}			            
+
+
+
+			        
+                                
+			
         </script>
 		
 

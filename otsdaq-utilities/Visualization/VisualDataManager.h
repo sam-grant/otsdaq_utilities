@@ -16,6 +16,7 @@ namespace ots
 {
 
 class ConfigurationManager;
+class RawDataVisualizerConsumer;
 
 class VisualDataManager : public DataManager
 {
@@ -39,12 +40,16 @@ public:
     //const Visual3DEvents&   getVisual3DEvents   (void);
     //const Visual3DGeometry& getVisual3DGeometry (void);
 
+    const std::string&		getRawData			(void);
+
 private:
     DQMHistosBase*             theLiveDQMHistos_;
     DQMHistosBase              theFileDQMHistos_;
     //MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
     //MonicelliGeometryConverter theMonicelliGeometryConverter_;
     //Visual3DData           the3DData_;
+
+    RawDataVisualizerConsumer* theRawDataConsumer_;
 };
 
 }
