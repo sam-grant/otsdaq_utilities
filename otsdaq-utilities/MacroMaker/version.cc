@@ -8,7 +8,7 @@ GETPACKAGEINFO(MacroMaker)
 
 
 //========================================================================================================================
-void MacroMaker::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void MacroMaker::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

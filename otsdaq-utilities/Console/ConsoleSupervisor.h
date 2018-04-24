@@ -17,15 +17,15 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ConsoleSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    ConsoleSupervisor            	(xdaq::ApplicationStub * s) ;
     virtual ~ConsoleSupervisor   	(void);
 
     void init         				(void);
     void destroy              		(void);
 
-    virtual void Default       		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void Default       		(xgi::Input* in, xgi::Output* out) ;
 
-    void Console               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void Console               		(xgi::Input* in, xgi::Output* out) ;
 
 private:
 

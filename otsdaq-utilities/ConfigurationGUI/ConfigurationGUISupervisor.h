@@ -13,17 +13,17 @@ class ConfigurationGUISupervisor: public CoreSupervisorBase
 
 public:
 
-    XDAQ_INSTANTIATOR();
+	static xdaq::Application* instantiate(xdaq::ApplicationStub* s);
 
-    ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+    ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) ;
     virtual ~ConfigurationGUISupervisor   (void);
 
     void 					init                  						(void);
     void					destroy               						(void);
 
     virtual void			setSupervisorPropertyDefaults				(void);
-    virtual void 			Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    virtual void 			request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			Default               						(xgi::Input* in, xgi::Output* out) ;
+    virtual void 			request              						(xgi::Input* in, xgi::Output* out) ;
 
 private:
     void 					handleSaveConfigurationInfoXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, std::string& configName, const std::string& columnCSV, const std::string& tableDescription, const std::string& columnChoicesCSV, bool allowOverwrite=false);

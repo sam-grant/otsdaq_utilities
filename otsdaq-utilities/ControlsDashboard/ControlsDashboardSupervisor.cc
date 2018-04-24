@@ -37,7 +37,7 @@ XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 
 //========================================================================================================================
 ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub * s)
-throw (xdaq::exception::Exception)
+
 :
 xdaq::Application			(s   )
 , SOAPMessenger  				(this)
@@ -59,7 +59,7 @@ ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	std::cout << __COUT_HDR_FL__ << std::endl;
 	cgicc::Cgicc cgi(in);
@@ -191,7 +191,7 @@ void ControlsDashboardSupervisor::destroy(void)
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	//	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 	//
@@ -200,7 +200,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string UID )
-throw (xgi::exception::Exception)
+
 {
 
 	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Polling on UID:" << UID << std::endl;
@@ -290,7 +290,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPVSettings(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList )
-throw (xgi::exception::Exception)
+
 {
 	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Getting settings for " << pvList << std::endl;
 
@@ -346,7 +346,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GenerateUID(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvlist )
-throw (xgi::exception::Exception)
+
 {
 
 	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Generating UID" << std::endl;
@@ -389,7 +389,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetList(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+
 {
 
 	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
@@ -400,7 +400,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+
 {
 	/*DIR * dir;
 	struct dirent * ent;
@@ -452,7 +452,7 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::loadPage(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string page )
-throw (xgi::exception::Exception)
+
 {
 	//FIXME Filter out malicious attacks i.e. ../../../../../ stuff
 	struct stat buffer;
@@ -491,14 +491,14 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Subscribe(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+
 {
 
 
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Unsubscribe(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+
 {
 
 

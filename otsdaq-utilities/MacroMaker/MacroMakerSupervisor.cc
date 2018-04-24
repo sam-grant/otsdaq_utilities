@@ -34,7 +34,7 @@ XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 
 //========================================================================================================================
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
+
 : xdaq::Application (stub)
 , SOAPMessenger     (this)
 , theRemoteWebUsers_(this)
@@ -76,13 +76,13 @@ void MacroMakerSupervisor::destroy(void)
 
 //========================================================================================================================
 void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 }
 
 //========================================================================================================================
 void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");

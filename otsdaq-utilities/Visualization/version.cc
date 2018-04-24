@@ -8,7 +8,7 @@ GETPACKAGEINFO(Visualization)
 
 
 //========================================================================================================================
-void Visualization::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void Visualization::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

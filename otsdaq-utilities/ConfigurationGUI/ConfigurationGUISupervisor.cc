@@ -24,15 +24,17 @@ using namespace ots;
 #define CONFIG_INFO_PATH	std::string(getenv("CONFIGURATION_INFO_PATH")) + "/"
 #define CONFIG_INFO_EXT		std::string("Info.xml")
 
-
-XDAQ_INSTANTIATOR_IMPL(ConfigurationGUISupervisor)
+/*! the XDAQ_INSTANTIATOR_IMPL(ns1::ns2::...) macro needs to be put into the implementation file (.cc) of the XDAQ application */
+xdaq::Application * ConfigurationGUISupervisor::instantiate(xdaq::ApplicationStub * stub )
+{
+	return new ConfigurationGUISupervisor(stub);
+}
 
 
 //========================================================================================================================
 //new user gets a config mgr assigned
 //user can fill any of the tables (fill from version or init empty), which becomes the active view for that table
 ConfigurationGUISupervisor::ConfigurationGUISupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
 : 	CoreSupervisorBase	(stub)
 {
 
@@ -83,7 +85,7 @@ void ConfigurationGUISupervisor::destroy(void)
 
 //========================================================================================================================
 void ConfigurationGUISupervisor::Default(xgi::Input*  in, xgi::Output*  out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string configName = CgiDataUtilities::getData(cgi,"configWindowName"); //from GET
@@ -100,7 +102,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void ConfigurationGUISupervisor::request(xgi::Input*  in, xgi::Output*  out)
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string Command = CgiDataUtilities::getOrPostData(cgi,"RequestType");//from GET or POST

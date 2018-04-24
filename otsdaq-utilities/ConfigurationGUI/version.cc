@@ -8,7 +8,7 @@ GETPACKAGEINFO(ConfigurationGUI)
 
 
 //========================================================================================================================
-void ConfigurationGUI::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void ConfigurationGUI::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

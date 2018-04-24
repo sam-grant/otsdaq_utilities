@@ -14,15 +14,15 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ChatSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    ChatSupervisor            	(xdaq::ApplicationStub * s) ;
     virtual ~ChatSupervisor   	(void);
 
     void destroy               	(void);
 
-    virtual void Default        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void Default        (xgi::Input* in, xgi::Output* out) ;
 
-    void Chat	               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-                              
+    void Chat	               	(xgi::Input* in, xgi::Output* out) ;
+
 
 private:
 

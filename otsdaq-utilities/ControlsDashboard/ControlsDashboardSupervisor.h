@@ -37,20 +37,20 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
+    ControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) ;
     virtual ~ControlsDashboardSupervisor     (void                                                              );
     void init                  		  	 		 (void                                                              );
     void destroy                   		 		 (void                                                              );
-	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);
-	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					throw (xgi::exception::Exception);
-    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception);
-    void GetPVSettings                           (xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) throw (xgi::exception::Exception);
-    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception);
-    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
-    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
-    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	throw (xgi::exception::Exception);
-    void Subscribe                               (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
-    void Unsubscribe                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
+	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											;
+	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					;
+    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	;
+    void GetPVSettings                           (xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) ;
+    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist);
+    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	;
+    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	;
+    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	;
+    void Subscribe                               (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					;
+    void Unsubscribe                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					;
 
 
     //Utilities, eventually to be moved

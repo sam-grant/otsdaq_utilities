@@ -83,7 +83,7 @@ int sendmail(const char *to, const char *from, const char *subject, const char *
 
 
 //========================================================================================================================
-LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception):
+LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub * s) :
 xdaq::Application(s   ),
 SOAPMessenger  (this),
 theRemoteWebUsers_(this)
@@ -213,7 +213,7 @@ void LogbookSupervisor::destroy(void)
 
 //========================================================================================================================
 void LogbookSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 
 	__COUT__ << " active experiment " << activeExperiment_ << std::endl;
@@ -226,7 +226,7 @@ throw (xgi::exception::Exception)
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
 xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageReference msg)
-throw (xoap::exception::Exception)
+
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
@@ -309,7 +309,7 @@ throw (xoap::exception::Exception)
 //	Since xdaq's headers are wrong for images, browsers get confused if not wrapped in an html page.
 //	This function wraps an uploaded logbook entry image at src for display to user.
 void LogbookSupervisor::LogImage(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string src = CgiDataUtilities::getData(cgi,"src");
@@ -325,7 +325,7 @@ throw (xgi::exception::Exception)
 //			paps LogbookData/experiment_list.xml > test.ps
 //			ps2pdfwr test.ps test.pdf
 void LogbookSupervisor::LogReport(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string activeExperiment = CgiDataUtilities::getData(cgi,"activeExperiment");
@@ -1070,7 +1070,7 @@ void LogbookSupervisor::hideLogbookEntry(const std::string &entryId, bool hide,c
 //		Handles Web Interface requests to Logbook supervisor.
 //		Does not refresh cookie for automatic update checks.
 void LogbookSupervisor::Log(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string Command;

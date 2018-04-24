@@ -35,19 +35,19 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    LogbookSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    LogbookSupervisor            	(xdaq::ApplicationStub * s) ;
     virtual ~LogbookSupervisor   	(void);
 
     void init                  		(void);
     void destroy              		(void);
 
-    void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void Log	               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void LogImage              		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void LogReport             		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void Default               		(xgi::Input* in, xgi::Output* out) ;
+    void Log	               		(xgi::Input* in, xgi::Output* out) ;
+    void LogImage              		(xgi::Input* in, xgi::Output* out) ;
+    void LogReport             		(xgi::Input* in, xgi::Output* out) ;
 
     //External Supervisor XOAP handlers
-    xoap::MessageReference 		MakeSystemLogbookEntry 		 (xoap::MessageReference msg) 			throw (xoap::exception::Exception);
+    xoap::MessageReference 		MakeSystemLogbookEntry 		 (xoap::MessageReference msg) 			;
 
 private:
 
@@ -66,7 +66,7 @@ private:
     void            movePreviewEntry            (std::string previewNumber, bool approve, HttpXmlDocument *xmldoc = 0);
     void 			hideLogbookEntry	        (const std::string &entryId, bool hide, const std::string &hider);
     static void		MFReceiverWorkLoop			();
-    
+
     AllSupervisorInfo 						allSupervisorInfo_;
     RemoteWebUsers							theRemoteWebUsers_;
 
@@ -77,7 +77,7 @@ private:
     	LOGBOOK_PREVIEW_EXPIRATION_TIME = 60*20, //20 minutes
     };
     std::vector<std::string>                allowedFileUploadTypes_, matchingFileUploadTypes_;
-    
+
     std::string                             activeExperiment_;
     unsigned int							mostRecentDayIndex_;
 };

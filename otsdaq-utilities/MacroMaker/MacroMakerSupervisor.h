@@ -30,13 +30,13 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    MacroMakerSupervisor            (xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    MacroMakerSupervisor            (xdaq::ApplicationStub * s) ;
     virtual ~MacroMakerSupervisor   (void);
 
     void init                  		(void);
     void destroy                    (void);
-    void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void MacroMakerRequest          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    void Default               		(xgi::Input* in, xgi::Output* out) ;
+    void MacroMakerRequest          (xgi::Input* in, xgi::Output* out) ;
 
     //xoap GetMacroList (username) //give macro list for user's and public
     //xoap RunMacro(macropath)		//get back unique id?

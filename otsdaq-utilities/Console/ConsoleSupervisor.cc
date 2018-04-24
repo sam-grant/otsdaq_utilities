@@ -29,7 +29,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
+
 : CoreSupervisorBase	(stub)
 , writePointer_     	(0)
 , messageCount_     	(0)
@@ -233,7 +233,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 //========================================================================================================================
 void ConsoleSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
@@ -245,7 +245,7 @@ throw (xgi::exception::Exception)
 //		Handles Web Interface requests to Console supervisor.
 //		Does not refresh cookie for automatic update checks.
 void ConsoleSupervisor::Console(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string Command;

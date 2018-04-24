@@ -17,7 +17,7 @@ XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 
 //========================================================================================================================
 ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
+
 : CoreSupervisorBase	(stub)
 {
 	INIT_MF("ChatSupervisor");
@@ -42,7 +42,7 @@ void ChatSupervisor::destroy(void)
 
 //========================================================================================================================
 void ChatSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
@@ -53,7 +53,7 @@ throw (xgi::exception::Exception)
 //		Handles Web Interface requests to chat supervisor.
 //		Does not refresh cookie for automatic update checks.
 void ChatSupervisor::Chat(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 
