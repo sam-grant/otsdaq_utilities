@@ -1,14 +1,14 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
 #include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 
 #include <xdaq/NamespaceURI.h>
 #include <string>
@@ -35,15 +35,12 @@ XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 //========================================================================================================================
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 throw (xdaq::exception::Exception)
-: xdaq::Application (stub)
-, SOAPMessenger     (this)
-, theRemoteWebUsers_(this)
+: CoreSupervisorBase(stub)
 {
 	INIT_MF("MacroMaker");
-	xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" 			);
-	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
-	init();
+//	xgi::bind (this, &MacroMakerSupervisor::Default,                	"Default" 			);
+//	xgi::bind (this, &MacroMakerSupervisor::MacroMakerRequest,          "MacroMakerRequest" );
 
 	//make macro directories in case they don't exist
 	mkdir(((std::string)MACROS_DB_PATH).c_str(), 0755);
@@ -51,8 +48,7 @@ throw (xdaq::exception::Exception)
 	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
 
 
-	//MacroMaker should consider all FE compatible types..
-	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
+	init();
 }
 
 //========================================================================================================================
@@ -60,103 +56,112 @@ MacroMakerSupervisor::~MacroMakerSupervisor(void)
 {
 	destroy();
 }
+
 //========================================================================================================================
 void MacroMakerSupervisor::init(void)
 {
 	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
+
+	//MacroMaker should consider all FE compatible types..
+	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
 }
 
 //========================================================================================================================
 void MacroMakerSupervisor::destroy(void)
 {
 	//called by destructor
-
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+//forceSupervisorPropertyValues
+//		override to force supervisor property values (and ignore user settings)
+void MacroMakerSupervisor::forceSupervisorPropertyValues()
 {
+//	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
+//			"getPermission");
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::MacroMakerRequest(xgi::Input* in, xgi::Output* out)
+void MacroMakerSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
+		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 throw (xgi::exception::Exception)
 {
-	cgicc::Cgicc cgi(in);
-	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	__COUT__<< "Command: " << Command << std::endl;
+//	cgicc::Cgicc cgi(in);
+//	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
+//	__COUT__<< "Command: " << Command << std::endl;
+//
+//	//FIXME -- need to lock out MacroMaker vs State machine
+//
+//	HttpXmlDocument xmldoc;
+//	uint64_t activeSessionIndex;
+//	uint8_t userPermissions;
+//	std::string username;
+//
+//	//**** start LOGIN GATEWAY CODE ***//
+//	{
+//		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+//		bool checkLock = true;
+//		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
+//				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
+//		bool requireLock = false;
+//
+//		if(!theRemoteWebUsers_.xmlRequestToGateway(
+//				cgi,
+//				out,
+//				&xmldoc,
+//				allSupervisorInfo_,
+//				&userPermissions,  		//acquire user's access level (optionally null pointer)
+//				!automaticCommand,			//true/false refresh cookie code
+//				1, //set access level requirement to pass gateway
+//				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+//				requireLock,				//true/false requires this user has the lock to proceed
+//				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+//				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
+//				&username,
+//				0,						//acquire user's Display Name
+//				&activeSessionIndex		//acquire user's session index associated with the cookieCode
+//		))
+//		{	//failure
+//			__COUT__<< "Failed Login Gateway: " <<
+//					out->str() << std::endl; //print out return string on failure
+//			return;
+//		}
+//	}
+//	//**** end LOGIN GATEWAY CODE ***//
 
-	//FIXME -- need to lock out MacroMaker vs State machine
 
-	HttpXmlDocument xmldoc;
-	uint64_t activeSessionIndex;
-	uint8_t userPermissions;
-	std::string username;
+	__COUT__ << "User name is " << userInfo.username_ << "." << std::endl;
+	__COUT__ << "User permission level for request '" << requestType << "' is " <<
+			unsigned(userInfo.permissionLevel_) << "." << std::endl;
 
-	//**** start LOGIN GATEWAY CODE ***//
+
+	//handle request per requestType
+	if(requestType == "getPermission")
 	{
-		bool automaticCommand = Command == "RefreshLogbook"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = true;
-		bool getUser = (Command == "CreateExperiment") || (Command == "RemoveExperiment") ||
-				(Command == "PreviewEntry") || (Command == "AdminRemoveRestoreEntry");
-		bool requireLock = false;
+		xmlOut.addTextElementToData("Permission", std::to_string(unsigned(userInfo.permissionLevel_)));
 
-		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,
-				out,
-				&xmldoc,
-				allSupervisorInfo_,
-				&userPermissions,  		//acquire user's access level (optionally null pointer)
-				!automaticCommand,			//true/false refresh cookie code
-				1, //set access level requirement to pass gateway
-				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				requireLock,				//true/false requires this user has the lock to proceed
-				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
-				&username,
-				0,						//acquire user's Display Name
-				&activeSessionIndex		//acquire user's session index associated with the cookieCode
-		))
-		{	//failure
-			__COUT__<< "Failed Login Gateway: " <<
-					out->str() << std::endl; //print out return string on failure
-			return;
-		}
+		//create macro maker folders for the user (the first time a user authenticates with macro maker)
+		std::string macroPath = (std::string)MACROS_DB_PATH + userInfo.username_ + "/";
+		mkdir(macroPath.c_str(), 0755);
+		std::string histPath = (std::string)MACROS_HIST_PATH + userInfo.username_ + "/";
+		mkdir(histPath.c_str(), 0755);
+		std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
+		mkdir(publicPath.c_str(), 0755);
+		std::string exportPath = (std::string)MACROS_EXPORT_PATH + userInfo.username_ + "/";
+		mkdir(exportPath.c_str(), 0755);
 	}
-	//**** end LOGIN GATEWAY CODE ***//
-
-
-	__COUT__<< "User name is " << username << "!!!" << std::endl;
-	__COUT__<< "User Permission is " << unsigned(userPermissions) << "!!!" << std::endl;
-
-	//create macro maker folders for the user (the first time a user authenticates with macro maker)
-	std::string macroPath = (std::string)MACROS_DB_PATH + username + "/";
-	mkdir(macroPath.c_str(), 0755);
-	std::string histPath = (std::string)MACROS_HIST_PATH + username + "/";
-	mkdir(histPath.c_str(), 0755);
-	std::string publicPath = (std::string)MACROS_DB_PATH + "publicMacros/";
-	mkdir(publicPath.c_str(), 0755);
-	std::string exportPath = (std::string)MACROS_EXPORT_PATH + username + "/";
-	mkdir(exportPath.c_str(), 0755);
-
-	//hanle request per Command
-	if(Command == "getPermission")
-		xmldoc.addTextElementToData("Permission", std::to_string(unsigned(userPermissions)));
 	else
-		handleRequest(Command,xmldoc,cgi,username,userPermissions);
-
-	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false /*dispStdOut*/,
-			true /*allowWhiteSpace*/);
+		handleRequest(requestType,xmlOut,cgiIn,userInfo.username_);
+//
+//	//return xml doc holding server response
+//	xmldoc.outputXmlDocument((std::ostringstream*) out, false /*dispStdOut*/,
+//			true /*allowWhiteSpace*/);
 }
 
 //========================================================================================================================
 void MacroMakerSupervisor::handleRequest(const std::string Command,
 		HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
-		const std::string &username,
-		const uint8_t userPermissions)
+		const std::string &username)
 {
 	if(Command 				== "FElist")
 		getFElist(xmldoc);

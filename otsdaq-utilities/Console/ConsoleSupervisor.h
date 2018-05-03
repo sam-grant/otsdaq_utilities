@@ -17,20 +17,21 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ConsoleSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
-    virtual ~ConsoleSupervisor   	(void);
+    						ConsoleSupervisor            	(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+    virtual 				~ConsoleSupervisor   			(void);
 
-    void init         				(void);
-    void destroy              		(void);
+    void 					init         					(void);
+    void					destroy              			(void);
 
-    virtual void Default       		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception) override;
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) throw (xgi::exception::Exception) override;
 
-    void Console               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
 
 private:
 
-    static void						MFReceiverWorkLoop			(ConsoleSupervisor *cs);
-    void							insertMessageRefresh		(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
+    static void						MFReceiverWorkLoop			(ConsoleSupervisor* cs);
+    void							insertMessageRefresh		(HttpXmlDocument* xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
 
 
     struct ConsoleMessageStruct

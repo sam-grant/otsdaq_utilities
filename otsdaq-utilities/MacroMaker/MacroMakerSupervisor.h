@@ -1,42 +1,33 @@
 #ifndef _ots_MacroMakerSupervisor_h_
 #define _ots_MacroMakerSupervisor_h_
 
-#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/CoreSupervisors/FESupervisor.h"
-
-#include <xdaq/Application.h>
-#include <xgi/Method.h>
-
-#include <cgicc/HTMLClasses.h>
-#include <cgicc/HTTPCookie.h>
-#include <cgicc/HTMLDoctype.h>
-#include <cgicc/HTTPHeader.h>
-
-#include <string>
-#include <map>
-#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
 namespace ots
 {
 
-class ConfigurationManager;
-class HttpXmlDocument;
-
-class MacroMakerSupervisor: public xdaq::Application, public SOAPMessenger
+class MacroMakerSupervisor: public CoreSupervisorBase
 {
 
 public:
 
     XDAQ_INSTANTIATOR();
 
-    MacroMakerSupervisor            (xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
-    virtual ~MacroMakerSupervisor   (void);
 
-    void init                  		(void);
-    void destroy                    (void);
-    void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void MacroMakerRequest          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    						MacroMakerSupervisor            (xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+	virtual 				~MacroMakerSupervisor   		(void);
+
+	void 					init	              			(void);
+	void 					destroy              			(void);
+
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception) override;
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, 	const WebUsers::RequestUserInfo& userInfo) throw (xgi::exception::Exception) override;
+
+    virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
+
+
+    //void Default               		(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    //void MacroMakerRequest          (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
     //xoap GetMacroList (username) //give macro list for user's and public
     //xoap RunMacro(macropath)		//get back unique id?
@@ -46,7 +37,7 @@ private:
 
     //	void printStatus();
 
-	void handleRequest				(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username, const uint8_t userPermissions);
+	void handleRequest				(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 	void getFElist					(HttpXmlDocument& xmldoc);
 	void getFEMacroList				(HttpXmlDocument& xmldoc, const std::string &username);
 
@@ -65,10 +56,11 @@ private:
 
 	std::string generateHexArray	(const std::string& sourceHexString,int &numOfBytes);
 
-    AllSupervisorInfo 						allSupervisorInfo_;
-    RemoteWebUsers							theRemoteWebUsers_;
+    //AllSupervisorInfo 						allSupervisorInfo_;
+    //RemoteWebUsers							theRemoteWebUsers_;
     //FESupervisor*			 				theFESupervisor_;
 	//ConfigurationManager*   				theConfigurationManager_;
+
 	SupervisorInfoMap						allFESupervisorInfo_;
 
 };

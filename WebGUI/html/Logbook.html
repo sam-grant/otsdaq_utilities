@@ -458,7 +458,7 @@
 						"/WebPath/images/windowContentImages/logbook-expand.png";
 				}
 
-				DesktopContent.XMLHttpRequest("Log", 		//update experiment list 
+				DesktopContent.XMLHttpRequest("Request", 		//update experiment list 
 						"RequestType=GetExperimentList", handleGetExperimentListRequest);					
 			}	
 
@@ -600,7 +600,7 @@
 				Debug.log("Logbook cancelPost " );
 				document.getElementById('postPreviewDiv').innerHTML = "";
 				document.getElementById('postFormDiv').style.display = "block";
-				DesktopContent.XMLHttpRequest("Log", 
+				DesktopContent.XMLHttpRequest("Request", 
 						"RequestType=ApproveEntry&Approve=0&PreviewNumber="+previewNum);	
 				document.getElementById('PreviewStatus').innerHTML = "Post cancelled.";
 			}
@@ -612,7 +612,7 @@
 				document.getElementById('postFormDiv').style.display = "block";
 				newPostText.value = _DEFAULT_ENTRY_INPUT_TEXT;
 				newPostSubject.value = _DEFAULT_ENTRY_INPUT_SUBJECT;
-				DesktopContent.XMLHttpRequest("Log", 
+				DesktopContent.XMLHttpRequest("Request", 
 						"RequestType=ApproveEntry&Approve=1&PreviewNumber="+previewNum);	
 				document.getElementById('PreviewStatus').innerHTML = "Entry posted.";	
 				clearFileInput();
@@ -764,7 +764,7 @@
 				var el = document.getElementById("experimentTextBox");				
 				Debug.log("Logbook createExperiment " + el.value);
 				
-				DesktopContent.XMLHttpRequest("Log", 
+				DesktopContent.XMLHttpRequest("Request", 
 						"RequestType=CreateExperiment&Experiment="+el.value, handleExperimentChangeRequest);	
 			}
 			
@@ -773,7 +773,7 @@
 				var el = document.getElementById("experimentTextBox");				
 				Debug.log("Logbook removeExperiment " + el.value);
 
-				DesktopContent.XMLHttpRequest("Log", 
+				DesktopContent.XMLHttpRequest("Request", 
 						"RequestType=RemoveExperiment&Experiment="+el.value, handleExperimentChangeRequest);				
 			}
 
@@ -781,7 +781,7 @@
 			function handleExperimentChangeRequest(req) {							
 				_adminStatusEl.innerHTML = DesktopContent.getXMLValue(req,"logbook_admin_status");				
 
-				DesktopContent.XMLHttpRequest("Log", 		//update experiment list 
+				DesktopContent.XMLHttpRequest("Request", 		//update experiment list 
 						"RequestType=GetExperimentList", handleGetExperimentListRequest);
 			}
 
@@ -846,7 +846,7 @@
 			//activeExperimentSetRequest ~~ 
 			function activeExperimentSetRequest(experiment) {
 				Debug.log("Logbook activeExperimentSetRequest experiment " + experiment);
-				DesktopContent.XMLHttpRequest("Log", 		//update experiment list 
+				DesktopContent.XMLHttpRequest("Request", 		//update experiment list 
 						"RequestType=SetActiveExperiment&Experiment="+experiment, handleExperimentChangeRequest);
 
 				var el = document.getElementById("experimentTextBox");	
@@ -887,7 +887,7 @@
 				var reqDate = (((((new Date()).getTime())/(1000*60*60*24)) | 0) - _refreshDayIndex)*24*60*60;
 				if(_mostRecentDayIndex < 0) //most recent day request 
 					reqDate = 0; //to indicate get most recent day
-				DesktopContent.XMLHttpRequest("Log", 		//update experiment list 
+				DesktopContent.XMLHttpRequest("Request", 		//update experiment list 
 						"RequestType=RefreshLogbook&Date="+reqDate+"&Duration="+_refreshDuration, 
 						handleRefreshLogbook);				
 				
@@ -1094,7 +1094,7 @@
 				    	pathPreface += "logbooks/log_" + _activeExperiment + "/uploads/upload_" + entryId + "_";
 				    
 				    var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
-					var requestURL = "/urn:xdaq-application:lid="+urn+"/LogImage?src=";
+					var requestURL = "/urn:xdaq-application:lid="+urn+"/Request?RequestType=LogImage&src=";
 					
 					Debug.log("Logbook pathPreface " + pathPreface);
 				    for(var i=0;i<uploadsArr.length;++i)
@@ -1152,7 +1152,7 @@
 			function adminRemoveRestoreEntry(entryId, hide) {
 
 				Debug.log("Logbook adminRemoveRestoreEntry " + entryId + " - " + hide);
-				DesktopContent.XMLHttpRequest("Log", 
+				DesktopContent.XMLHttpRequest("Request", 
 						"RequestType=AdminRemoveRestoreEntry&EntryId=" + entryId + "&Hide=" + (hide?1:0),handleRemoveRestoreEntry);				
 			}
 			
@@ -1230,7 +1230,7 @@
 				}
 					
 				var urn = DesktopContent._localUrnLid?DesktopContent._localUrnLid:DesktopContent._serverUrnLid;
-				var requestURL = "/urn:xdaq-application:lid="+urn+"/LogReport?activeExperiment=";				
+				var requestURL = "/urn:xdaq-application:lid="+urn+"/Request?RequestType=LogReport&activeExperiment=";				
 				window.open(requestURL + _activeExperiment,	'_blank');	//open in new window
 			}
 

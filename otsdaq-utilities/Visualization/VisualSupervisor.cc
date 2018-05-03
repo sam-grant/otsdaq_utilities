@@ -70,26 +70,13 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) throw (xdaq::exc
 			supervisorApplicationUID_
 	);
 
+	__COUT__ << "Done instantiating Visual data manager." << std::endl;
 
-	__COUT__ << "done data manager" << std::endl;
-
-	xgi::bind(this, &VisualSupervisor::dataRequest, "dataRequest");
-
-	xgi::bind(this, &VisualSupervisor::safari, "safari" );
+	xgi::bind(this, &VisualSupervisor::safariDefaultPage, "safari" );
 
 
 	//make preferences directory in case they don't exist
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
-
-}
-
-//========================================================================================================================
-//When overriding, setup default property values here
-// called by CoreSupervisorBase constructor
-void VisualSupervisor::setSupervisorPropertyDefaults(void)
-{
-	LOCK_REQUIRED_ 				= false; //set default
-	USER_PERMISSIONS_THRESHOLD_ = 1; 	 //set default
 }
 
 //========================================================================================================================
@@ -121,7 +108,7 @@ void VisualSupervisor::destroy(void)
 }
 
 //========================================================================================================================
-void VisualSupervisor::Default(xgi::Input * in, xgi::Output * out )
+void VisualSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
 	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
@@ -132,153 +119,55 @@ throw (xgi::exception::Exception)
 }
 
 //========================================================================================================================
-void VisualSupervisor::safari(xgi::Input * in, xgi::Output * out )
+void VisualSupervisor::safariDefaultPage(xgi::Input * in, xgi::Output * out )
 throw (xgi::exception::Exception)
 {
-
 	*out << "<!DOCTYPE HTML><html lang='en'><iframe style='width:100%;height:100%;position:absolute;left:0;top:0;border:0;padding:0;margin:0;' src='/WebPath/html/Visualization.html?urn=" <<
 			this->getApplicationDescriptor()->getLocalId() <<"'></iframe></html>";
+}
 
+//========================================================================================================================
+//setSupervisorPropertyDefaults
+//		override to set defaults for supervisor property values (before user settings override)
+void VisualSupervisor::setSupervisorPropertyDefaults()
+{
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AllowNoLoginRequestTypes,
+			"setUserPreferences |  getUserPreferences | getDirectoryContents | getRoot | getEvents");
+
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
+			"*=1 | rootAdminControls=100");
 }
 
 
 //========================================================================================================================
-void VisualSupervisor::dataRequest(xgi::Input * in, xgi::Output * out)
-throw (xgi::exception::Exception)
+//forceSupervisorPropertyValues
+//		override to force supervisor property values (and ignore user settings)
+void VisualSupervisor::forceSupervisorPropertyValues()
 {
-	cgicc::Cgicc cgi(in);
-	std::string Command;
-	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
-		Command = cgi("RequestType"); //from GET or POST
-
-	__COUT__ << "Command " << Command << std::endl;
-
-	HttpXmlDocument xmldoc;
-	uint8_t userPermissions;
-	std::string userName;
-
-	//**** start LOGIN GATEWAY CODE ***//
-	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
-	{
-		bool automaticCommand = false; //automatic commands should not refresh cookie code.. only user initiated commands should!
-
-		bool checkLock = LOCK_REQUIRED_;
-		bool needUserName = false;//Command == "setUserPreferences" || Command == "getUserPreferences";
-		bool requireLock = LOCK_REQUIRED_;
-
-		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,
-				out,
-				&xmldoc,
-				allSupervisorInfo_,
-				&userPermissions,  			//acquire user's access level (optionally null pointer)
-				!automaticCommand,			//true/false refresh cookie code
-				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
-				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				requireLock,				//true/false requires this user has the lock to proceed
-				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
-				,0//&displayName			//acquire user's Display Name
-				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
-		))
-		{	//failure
-			//std::cout << out->str() << std::endl; //could print out return string on failure
-			return;
-		}
-	}
-	//done checking cookieCode, sequence, userWithLock, and permissions access all in one shot!
-	//**** end LOGIN GATEWAY CODE ***//
-
-	//
-	if(Command == "getRawData")
-	{
-	  __COUT__ << __E__;
-	  try{
-		//TODO -- add timestamp, so we know if data is new
-	      __COUT__ << "Getting Raw data and converting to binary string" << __E__;
-		xmldoc.addBinaryStringToData("rawData",
-				theDataManager_->getRawData());
-		__COUT__ << __E__;
-	  }
-	  catch(std::exception const& e){
-	    __COUT__ << "ERROR! Exception while getting raw data. Incoming exception data..." << __E__;
-	    __COUT__ << e.what() << __E__;
-    	    __COUT__ << "End Exception Data" << __E__;
-
-	  }
-	  catch(...){
-		__COUT__ << "ERROR! Something went wrong trying to get raw data." << __E__;
-		__COUT_INFO__ << "ERROR! Something went wrong trying to get raw data." << __E__;
-	  }
-	}
-		//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+			"getRoot | getEvents");
+//	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
+//			"setUserPreferences | getUserPreferences");
 }
 
-
 //========================================================================================================================
-void VisualSupervisor::request(xgi::Input * in, xgi::Output * out)
+void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
+		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 throw (xgi::exception::Exception)
 {
-
-
-	cgicc::Cgicc cgi(in);
-	std::string Command;
-	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
-		Command = cgi("RequestType"); //from GET or POST
-
-	//__COUT__ << "Command " << Command << " files: " << cgi.getFiles().size() << std::endl;
 
 	//Commands
+	//	getRawData
 	//	getGeometry
 	//	getEvents
 	//	getRoot
 	//	getDirectoryContents
 	//	setUserPreferences
-	//	getUserPreferences
-
-	HttpXmlDocument xmldoc;
-	uint8_t userPermissions;
-	std::string userName;
-
-	//**** start LOGIN GATEWAY CODE ***//
-	//check cookieCode, sequence, userWithLock, and permissions access all in one shot!
-	{
-		bool automaticCommand = false;//Command == "getRoot" || Command == "getEvents"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-
-		bool checkLock = LOCK_REQUIRED_;
-		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
-		bool requireLock = LOCK_REQUIRED_;
-		bool allowNoUser = Command == "setUserPreferences" || Command == "getUserPreferences" || Command == "getDirectoryContents" ||
-				Command == "getRoot" || Command == "getEvents";
-
-		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,
-				out,
-				&xmldoc,
-				allSupervisorInfo_,
-				&userPermissions,  			//acquire user's access level (optionally null pointer)
-				!automaticCommand,			//true/false refresh cookie code
-				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
-				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				requireLock,				//true/false requires this user has the lock to proceed
-				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				(needUserName?&userName:0)	//acquire username of this user (optionally null pointer)
-				,0//&displayName			//acquire user's Display Name
-				,0//&activeSessionIndex		//acquire user's session index associated with the cookieCode
-				,allowNoUser 				//allow no user access
-		))
-		{	//failure
-			//std::cout << out->str() << std::endl; //could print out return string on failure
-			return;
-		}
-	}
-	//done checking cookieCode, sequence, userWithLock, and permissions access all in one shot!
-	//**** end LOGIN GATEWAY CODE ***//
+	//	getUserPreference
 
 
 
-	//    if (Command == "getHisto" && theDataManager_->getLiveDQMHistos() != 0)
+	//    if (requestType == "getHisto" && theDataManager_->getLiveDQMHistos() != 0)
 	//    {
 	//       // TH1I* histo = (TH1I*)theDataManager_->getLiveDQMHistos()->get("Planes/Plane_0_Occupancy");
 	//
@@ -289,17 +178,38 @@ throw (xgi::exception::Exception)
 	//        //TProfile* profile  = theDataManager_->getFileDQMHistos().getProfile();
 	//
 	//    }
-	if (Command == "setUserPreferences" && userName != "" /*from allow no user*/)
+	if(requestType == "getRawData")
 	{
-		__COUT__ << "userName: " << userName << std::endl;
-		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
+		__COUT__ << __E__;
+		try{
+			//TODO -- add timestamp, so we know if data is new
+			__COUT__ << "Getting Raw data and converting to binary string" << __E__;
+			xmlOut.addBinaryStringToData("rawData",
+					theDataManager_->getRawData());
+			__COUT__ << __E__;
+		}
+		catch(std::exception const& e){
+			__COUT__ << "ERROR! Exception while getting raw data. Incoming exception data..." << __E__;
+			__COUT__ << e.what() << __E__;
+			__COUT__ << "End Exception Data" << __E__;
+
+		}
+		catch(...){
+			__COUT__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+			__COUT_INFO__ << "ERROR! Something went wrong trying to get raw data." << __E__;
+		}
+	}
+	else if (requestType == "setUserPreferences" && userInfo.username_ != "" /*from allow no user*/)
+	{
+		__COUT__ << "userInfo.username_: " << userInfo.username_ << std::endl;
+		std::string fullPath = (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
 		__COUT__ << "fullPath: " << fullPath << std::endl;
 
-		std::string radioSelect = CgiDataUtilities::getData(cgi,"radioSelect");
-		std::string autoRefresh = CgiDataUtilities::getData(cgi,"autoRefresh");
-		std::string autoHide = CgiDataUtilities::getData(cgi,"autoHide");
-		std::string hardRefresh = CgiDataUtilities::getData(cgi,"hardRefresh");
-		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgi,"autoRefreshPeriod");
+		std::string radioSelect = CgiDataUtilities::getData(cgiIn,"radioSelect");
+		std::string autoRefresh = CgiDataUtilities::getData(cgiIn,"autoRefresh");
+		std::string autoHide = CgiDataUtilities::getData(cgiIn,"autoHide");
+		std::string hardRefresh = CgiDataUtilities::getData(cgiIn,"hardRefresh");
+		std::string autoRefreshPeriod = CgiDataUtilities::getData(cgiIn,"autoRefreshPeriod");
 
 		__COUT__ << "radioSelect: " << radioSelect 	<< std::endl;
 		__COUT__ << "autoRefresh: " << autoRefresh 	<< std::endl;
@@ -357,10 +267,10 @@ throw (xgi::exception::Exception)
 		else
 			__COUT_ERR__ << "Failure writing preferences to file: " << fullPath << std::endl;
 	}
-	else if (Command == "getUserPreferences")
+	else if (requestType == "getUserPreferences")
 	{
-		__COUT__ << "userName: " << userName << std::endl;
-		std::string fullPath = (std::string)PREFERENCES_PATH + userName + PREFERENCES_FILE_EXT;
+		__COUT__ << "userInfo.username_: " << userInfo.username_ << std::endl;
+		std::string fullPath = (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
 		__COUT__ << "fullPath: " << fullPath << std::endl;
 
 		FILE *fp = fopen(fullPath.c_str(),"r");
@@ -373,42 +283,47 @@ throw (xgi::exception::Exception)
 			fgets(line,100,fp);
 			sscanf(line,"%*s %d",&val);
 			if(val < 0 || val > 3) val = 0; //FIXME.. value can get corrupt...
-			xmldoc.addTextElementToData("radioSelect", std::to_string(val));
+			xmlOut.addTextElementToData("radioSelect", std::to_string(val));
 			fgets(line,100,fp);
 			sscanf(line,"%*s %d",&val);
-			xmldoc.addTextElementToData("autoRefresh", std::to_string(val));
+			xmlOut.addTextElementToData("autoRefresh", std::to_string(val));
 			fgets(line,100,fp);
 			sscanf(line,"%*s %d",&val);
-			xmldoc.addTextElementToData("autoHide", std::to_string(val));
+			xmlOut.addTextElementToData("autoHide", std::to_string(val));
 			fgets(line,100,fp);
 			sscanf(line,"%*s %d",&val);
-			xmldoc.addTextElementToData("hardRefresh", std::to_string(val));
+			xmlOut.addTextElementToData("hardRefresh", std::to_string(val));
 			fgets(line,100,fp);
 			sscanf(line,"%*s %d",&val);
-			xmldoc.addTextElementToData("autoRefreshPeriod", std::to_string(val));
+			xmlOut.addTextElementToData("autoRefreshPeriod", std::to_string(val));
 			fclose(fp);
 		}
 		else
 		{
 			//else assume user has no preferences yet
-			xmldoc.addTextElementToData("radioSelect", "");
-			xmldoc.addTextElementToData("autoRefresh", "");
-			xmldoc.addTextElementToData("autoHide", "");
-			xmldoc.addTextElementToData("hardRefresh", "");
-			xmldoc.addTextElementToData("autoRefreshPeriod", "");
+			xmlOut.addTextElementToData("radioSelect", "");
+			xmlOut.addTextElementToData("autoRefresh", "");
+			xmlOut.addTextElementToData("autoHide", "");
+			xmlOut.addTextElementToData("hardRefresh", "");
+			xmlOut.addTextElementToData("autoRefreshPeriod", "");
 		}
 	}
-	else if (Command == "getDirectoryContents")
+	else if (requestType == "getDirectoryContents")
 	{
 		//return directory structure for requested path, types are "dir" and "file"
 
 		std::string rootpath = std::string(ROOT_BROWSER_PATH) + "/";
-		std::string path  = CgiDataUtilities::postData(cgi,"Path");
+		std::string path  = CgiDataUtilities::postData(cgiIn,"Path");
 		__COUT__ << path << std::endl;
 
+
+		//return 1 if user has access to admin controls, else 0
 		char permStr[10];
-		sprintf(permStr,"%d",userPermissions);
-		xmldoc.addTextElementToData("permissions", permStr); //add permissions
+		sprintf(permStr,"%d",
+				userInfo.permissionLevel_ >=
+				CoreSupervisorBase::getSupervisorPropertyUserPermissionsThreshold("rootAdminControls")
+				);
+		xmlOut.addTextElementToData("permissions", permStr); //add permissions
 
 		std::string dirpath = rootpath + path;
 		if(path == "/" + PRE_MADE_ROOT_CFG_DIR + "/")
@@ -425,7 +340,7 @@ throw (xgi::exception::Exception)
 		bool isDir;
 		if( (pDIR=opendir(dirpath.c_str())) )
 		{
-			xmldoc.addTextElementToData("path", path);
+			xmlOut.addTextElementToData("path", path);
 
 			//add LIVE if path is / and DQM is active
 			//add Pre-made Views if path is / and ROOT_DISPLAY_CONFIG_PATH isnt already there
@@ -433,7 +348,7 @@ throw (xgi::exception::Exception)
 			{
 
 				if(theDataManager_->getLiveDQMHistos() != 0)
-					xmldoc.addTextElementToData("dir", LIVEDQM_DIR + ".root"); //add to xml
+					xmlOut.addTextElementToData("dir", LIVEDQM_DIR + ".root"); //add to xml
 
 				//check for ROOT_DISPLAY_CONFIG_PATH
 				DIR *pRtDIR = opendir(ROOT_DISPLAY_CONFIG_PATH);
@@ -449,7 +364,7 @@ throw (xgi::exception::Exception)
 
 				if(!recheck || (pRtDIR = opendir(ROOT_DISPLAY_CONFIG_PATH)))
 				{
-					xmldoc.addTextElementToData("dir", PRE_MADE_ROOT_CFG_DIR); //add to xml
+					xmlOut.addTextElementToData("dir", PRE_MADE_ROOT_CFG_DIR); //add to xml
 					if(recheck)
 						closedir(pRtDIR);
 				}
@@ -485,7 +400,7 @@ throw (xgi::exception::Exception)
 						isDir = true; //flag directory types
 
 
-					xmldoc.addTextElementToData(isDir?"dir":
+					xmlOut.addTextElementToData(isDir?"dir":
 							(isNotRtCfg?"dir":"file"),
 							entry->d_name);
 				}
@@ -495,11 +410,11 @@ throw (xgi::exception::Exception)
 		else
 			__COUT__ << "Failed to access directory contents!" << std::endl;
 	}
-	else if (Command == "getRoot")
+	else if (requestType == "getRoot")
 	{
 		//return directory structure for requested ROOT path, types are "dir" and "file"
 
-		std::string path = CgiDataUtilities::postData(cgi,"RootPath");
+		std::string path = CgiDataUtilities::postData(cgiIn,"RootPath");
 		std::string fullPath  = std::string(getenv("ROOT_BROWSER_PATH")) + path;
 
 		//__COUT__ << "Full path:-" << fullPath << "-" << std::endl;
@@ -533,7 +448,7 @@ throw (xgi::exception::Exception)
 		}
 		else
 		{
-			xmldoc.addTextElementToData("path", path);
+			xmlOut.addTextElementToData("path", path);
 
 			TDirectory* directory;
 			if((directory = rootFile->GetDirectory(rootDirectoryName.c_str())) == 0)
@@ -567,9 +482,9 @@ throw (xgi::exception::Exception)
 
 					//*out << json.Data() << std::endl;
 					//return;
-					xmldoc.addTextElementToData("rootType", rootType);
-					xmldoc.addTextElementToData("rootData", dest);
-					xmldoc.addTextElementToData("rootJSON", json.Data());
+					xmlOut.addTextElementToData("rootType", rootType);
+					xmlOut.addTextElementToData("rootData", dest);
+					xmlOut.addTextElementToData("rootJSON", json.Data());
 					//__COUT__ << "Done" << std::endl;
 
 					//std::cout << "\n\n" << json.Data() << "\n\n";
@@ -589,7 +504,7 @@ throw (xgi::exception::Exception)
 						if (s.Index(re) == kNPOS)
 							continue;
 						__COUT__ << "Class Name: " << obj->IsA()->GetName() << std::endl;
-						xmldoc.addTextElementToData((std::string(obj->IsA()->GetName()).find("Directory") != std::string::npos)?"dir":"file", obj->GetName());
+						xmlOut.addTextElementToData((std::string(obj->IsA()->GetName()).find("Directory") != std::string::npos)?"dir":"file", obj->GetName());
 					}
 				}
 				else
@@ -603,7 +518,7 @@ throw (xgi::exception::Exception)
 						if (s.Index(re) == kNPOS)
 							continue;
 						__COUT__ << "Class Name: " << key->GetClassName() << std::endl;
-						xmldoc.addTextElementToData((std::string(key->GetClassName()).find("Directory") != std::string::npos)?"dir":"file", key->GetName());
+						xmlOut.addTextElementToData((std::string(key->GetClassName()).find("Directory") != std::string::npos)?"dir":"file", key->GetName());
 					}
 				}
 			}
@@ -611,9 +526,9 @@ throw (xgi::exception::Exception)
 				rootFile->Close();
 		}
 	}
-	else if (Command == "getEvents")
+	else if (requestType == "getEvents")
 	{
-		int Run = atoi(cgi("run").c_str());
+		int Run = atoi(cgiIn("run").c_str());
 
 		__COUT__ << "getEvents for run " << Run << std::endl;
 
@@ -623,7 +538,7 @@ throw (xgi::exception::Exception)
 			loadedRunNumber_ = Run;
 		}
 
-		DOMElement* eventsParent = xmldoc.addTextElementToData("events", "");
+		DOMElement* eventsParent = xmlOut.addTextElementToData("events", "");
 		DOMElement* eventParent;
 		char str[40];
 
@@ -633,36 +548,36 @@ throw (xgi::exception::Exception)
 		//		for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() && numberOfEvents < 10000; it++, numberOfEvents++)
 		//		{
 		//			//__COUT__ << "Event: " << numberOfEvents << std::endl;
-		//			eventParent = xmldoc.addTextElementToParent("event", str, eventsParent);
+		//			eventParent = xmlOut.addTextElementToParent("event", str, eventsParent);
 		//			const VisualHits& hits = it->getHits();
 		//			for(VisualHits::const_iterator itHits=hits.begin(); itHits!=hits.end(); itHits++)
 		//			{
 		//				sprintf(str,"%f",itHits->x);
-		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
 		//				sprintf(str,"%f",itHits->y);
-		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
 		//				sprintf(str,"%f",itHits->z);
-		//				xmldoc.addTextElementToParent("xyz_point", str, eventParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
 		//				//__COUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z: " << itHits->z << std::endl;
 		//			}
 		//			const VisualTracks& tracks = it->getTracks();
 		//			for(VisualTracks::const_iterator itTrks=tracks.begin(); itTrks!=tracks.end(); itTrks++)
 		//			{
 		//				sprintf(str,"%f",itTrks->slopeX);
-		//				xmldoc.addTextElementToParent("slope", str, eventParent);
+		//				xmlOut.addTextElementToParent("slope", str, eventParent);
 		//				sprintf(str,"%f",itTrks->slopeY);
-		//				xmldoc.addTextElementToParent("slope", str, eventParent);
+		//				xmlOut.addTextElementToParent("slope", str, eventParent);
 		//				sprintf(str,"%f",itTrks->interceptX);
-		//				xmldoc.addTextElementToParent("intcpt", str, eventParent);
+		//				xmlOut.addTextElementToParent("intcpt", str, eventParent);
 		//				sprintf(str,"%f",itTrks->interceptY);
-		//				xmldoc.addTextElementToParent("intcpt", str, eventParent);
+		//				xmlOut.addTextElementToParent("intcpt", str, eventParent);
 		//
 		//			}
 		//
 		//		}
 		__COUT__ << "Done hits xml" << std::endl;
 	}
-	else if (Command == "getGeometry")
+	else if (requestType == "getGeometry")
 	{
 		__COUT__ << "getGeometry" << std::endl;
 
@@ -671,7 +586,7 @@ throw (xgi::exception::Exception)
 
 		__COUT__ << "getGeometry" << std::endl;
 
-		DOMElement* geometryParent = xmldoc.addTextElementToData("geometry", "");
+		DOMElement* geometryParent = xmlOut.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes = theDataManager_->getVisual3DGeometry().getShapes();
 		//
 		//		__COUT__ << "getGeometry" << std::endl;
@@ -681,26 +596,26 @@ throw (xgi::exception::Exception)
 		//		char str[40];
 		//		for(Visual3DShapes::const_iterator itShapes=shapes.begin(); itShapes!=shapes.end(); itShapes++)
 		//		{
-		//			objectParent = xmldoc.addTextElementToParent("object", str, geometryParent);
-		//			xmldoc.addTextElementToParent("object_type", "LINE_LOOP", objectParent);
+		//			objectParent = xmlOut.addTextElementToParent("object", str, geometryParent);
+		//			xmlOut.addTextElementToParent("object_type", "LINE_LOOP", objectParent);
 		//			sprintf(str,"%d",itShapes->numberOfRows);
-		//			xmldoc.addTextElementToParent("object_rows", str, objectParent);
+		//			xmlOut.addTextElementToParent("object_rows", str, objectParent);
 		//			sprintf(str,"%d",itShapes->numberOfColumns);
-		//			xmldoc.addTextElementToParent("object_columns", str, objectParent);
+		//			xmlOut.addTextElementToParent("object_columns", str, objectParent);
 		//			for(Points::const_iterator itCorners=itShapes->corners.begin(); itCorners!=itShapes->corners.end(); itCorners++)
 		//			{
 		//				sprintf(str,"%f",itCorners->x);
-		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, objectParent);
 		//				sprintf(str,"%f",itCorners->y);
-		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, objectParent);
 		//				sprintf(str,"%f",itCorners->z);
-		//				xmldoc.addTextElementToParent("xyz_point", str, objectParent);
+		//				xmlOut.addTextElementToParent("xyz_point", str, objectParent);
 		//			}
 		//		}
 	}
-	else if (Command == "getRootConfig")
+	else if (requestType == "getRootConfig")
 	{
-		std::string path =  CgiDataUtilities::postData(cgi,"RootConfigPath");
+		std::string path =  CgiDataUtilities::postData(cgiIn,"RootConfigPath");
 		__COUT__ << "path " << path << std::endl;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") == 0) //ROOT config path must start the path
@@ -712,29 +627,29 @@ throw (xgi::exception::Exception)
 		HttpXmlDocument cfgXml;
 		if(cfgXml.loadXmlDocument(path))
 		{
-			xmldoc.addTextElementToData("status", "1");
-			xmldoc.copyDataChildren(cfgXml); //copy file to output xml
+			xmlOut.addTextElementToData("status", "1");
+			xmlOut.copyDataChildren(cfgXml); //copy file to output xml
 			cfgXml.saveXmlDocument(path);
 		}
 		else
-			xmldoc.addTextElementToData("status", "Failed. File to properly load config file.");
+			xmlOut.addTextElementToData("status", "Failed. File to properly load config file.");
 	}
-	else if (Command == "rootAdminControls")
+	else if (requestType == "rootAdminControls")
 	{
-		if(userPermissions < ROOT_VIEWER_PERMISSIONS_THRESHOLD)
-		{
-			__COUT__ << "Insufficient permissions for Root Viewer Admin Controls: " << userPermissions << " < " << ROOT_VIEWER_PERMISSIONS_THRESHOLD << std::endl;
-			xmldoc.addTextElementToData("status", "Failed. Insufficient user permissions.");
-		}
-		else
-		{
-			std::string cmd = cgi("cmd"); //possible commands are
+//		if(userPermissions < ROOT_VIEWER_PERMISSIONS_THRESHOLD)
+//		{
+//			__COUT__ << "Insufficient permissions for Root Viewer Admin Controls: " << userPermissions << " < " << ROOT_VIEWER_PERMISSIONS_THRESHOLD << std::endl;
+//			xmlOut.addTextElementToData("status", "Failed. Insufficient user permissions.");
+//		}
+//		else
+//		{
+			std::string cmd = cgiIn("cmd"); //possible commands are
 			//	mkdir
 			//	save
 			// 	delete
 
-			std::string path =  CgiDataUtilities::postData(cgi,"path");
-			std::string name =  CgiDataUtilities::postData(cgi,"name");
+			std::string path =  CgiDataUtilities::postData(cgiIn,"path");
+			std::string name =  CgiDataUtilities::postData(cgiIn,"name");
 			__COUT__ << "cmd " << cmd << std::endl;
 			__COUT__ << "path " << path << std::endl;
 			__COUT__ << "name " << name << std::endl;
@@ -748,16 +663,16 @@ throw (xgi::exception::Exception)
 				if(cmd == "mkdir")
 				{
 					if(mkdir(path.c_str(), S_IRWXU | (S_IRGRP | S_IXGRP) | (S_IROTH | S_IXOTH))) //mode = drwx r-x r-x
-						xmldoc.addTextElementToData("status", "Failed. Directory create rejected.");
+						xmlOut.addTextElementToData("status", "Failed. Directory create rejected.");
 					else
-						xmldoc.addTextElementToData("status", "1"); //success
+						xmlOut.addTextElementToData("status", "1"); //success
 				}
 				else if(cmd == "save")
 				{
 					path += PRE_MADE_ROOT_CFG_FILE_EXT; //add file extension
 
-					bool useRunWildCard =  atoi(CgiDataUtilities::postData(cgi,"useRunWildCard").c_str()); //0 or 1
-					std::string config =  CgiDataUtilities::postData(cgi,"config");
+					bool useRunWildCard =  atoi(CgiDataUtilities::postData(cgiIn,"useRunWildCard").c_str()); //0 or 1
+					std::string config =  CgiDataUtilities::postData(cgiIn,"config");
 					__COUT__ << "config " << config << std::endl;
 					__COUT__ << "useRunWildCard " << useRunWildCard << std::endl;
 
@@ -766,7 +681,7 @@ throw (xgi::exception::Exception)
 					if(fp)
 					{
 						fclose(fp);
-						xmldoc.addTextElementToData("status", "Failed. File already exists.");
+						xmlOut.addTextElementToData("status", "Failed. File already exists.");
 						__COUT__ << " Failed. File already exists." << std::endl;
 					}
 					else
@@ -786,11 +701,11 @@ throw (xgi::exception::Exception)
 						{
 							//successfully loaded, re-save for formatting
 							cfgXml.saveXmlDocument(path);
-							xmldoc.addTextElementToData("status", "1"); //success
+							xmlOut.addTextElementToData("status", "1"); //success
 						}
 						else //failed to load properly
 						{
-							xmldoc.addTextElementToData("status", "Failed. Fatal. Improper file format.");
+							xmlOut.addTextElementToData("status", "Failed. Fatal. Improper file format.");
 							if(remove(path.c_str()) != 0)
 								__COUT__ << "Failed. Could not remove poorly formed Root config file!" << std::endl;
 						}
@@ -801,23 +716,23 @@ throw (xgi::exception::Exception)
 				{
 					//guess first directory and then file
 					if (rmdir(path.c_str()) == 0 || remove((path+PRE_MADE_ROOT_CFG_FILE_EXT).c_str()) == 0 )
-						xmldoc.addTextElementToData("status", "1"); //success
+						xmlOut.addTextElementToData("status", "1"); //success
 					else
-						xmldoc.addTextElementToData("status", "Failed. Target could not be deleted.");
+						xmlOut.addTextElementToData("status", "Failed. Target could not be deleted.");
 				}
 				else
-					xmldoc.addTextElementToData("status", "Failed. Unrecognized command.");
+					xmlOut.addTextElementToData("status", "Failed. Unrecognized command.");
 			}
 			else
-				xmldoc.addTextElementToData("status", "Failed. Invalid path.");
+				xmlOut.addTextElementToData("status", "Failed. Invalid path.");
 
-		}
+		//}
 
 	}
 	else
-		__COUT__ << "Command request, " << Command << ", not recognized." << std::endl;
+		__COUT__ << "requestType request, " << requestType << ", not recognized." << std::endl;
 	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*) out, false);
+	//xmlOut.outputXmlDocument((std::ostringstream*) out, false);
 }
 
 

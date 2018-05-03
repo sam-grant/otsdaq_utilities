@@ -1,6 +1,6 @@
 #include "otsdaq-utilities/ECLWriter/ECLSupervisor.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
@@ -132,7 +132,7 @@ throw (xgi::exception::Exception)
 		bool needUserName = false;//Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
 
-		if (!theRemoteWebUsers_.xmlLoginGateway(
+		if (!theRemoteWebUsers_.xmlRequestToGateway(
 			cgi,
 			out,
 			&xmldoc,
@@ -198,7 +198,7 @@ throw (xgi::exception::Exception)
 		bool needUserName = Command == "setUserPreferences" || Command == "getUserPreferences";
 		bool requireLock = false;
 
-		if (!theRemoteWebUsers_.xmlLoginGateway(
+		if (!theRemoteWebUsers_.xmlRequestToGateway(
 			cgi,
 			out,
 			&xmldoc,
