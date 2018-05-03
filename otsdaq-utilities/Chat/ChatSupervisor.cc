@@ -17,7 +17,7 @@ XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
 
 //========================================================================================================================
 ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
+
 : CoreSupervisorBase	(stub)
 {
 	INIT_MF("ChatSupervisor");
@@ -40,7 +40,6 @@ void ChatSupervisor::destroy(void)
 
 //========================================================================================================================
 void ChatSupervisor::defaultPage(xgi::Input * cgiIn, xgi::Output * out )
-throw (xgi::exception::Exception)
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
 			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
@@ -61,7 +60,6 @@ void ChatSupervisor::forceSupervisorPropertyValues()
 //		Does not refresh cookie for automatic update checks.
 void ChatSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
 

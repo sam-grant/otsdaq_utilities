@@ -204,7 +204,6 @@ void ControlsDashboardSupervisor::destroy(void)
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID )
-throw (xgi::exception::Exception)
 {
 
 	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Polling on UID:" << UID << std::endl;
@@ -294,7 +293,6 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList )
-throw (xgi::exception::Exception)
 {
 	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Getting settings for " << pvList << std::endl;
 
@@ -350,7 +348,6 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist )
-throw (xgi::exception::Exception)
 {
 
 	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Generating UID" << std::endl;
@@ -393,7 +390,6 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
-throw (xgi::exception::Exception)
 {
 
 	__COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
@@ -404,7 +400,6 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
-throw (xgi::exception::Exception)
 {
 	/*DIR * dir;
 	struct dirent * ent;
@@ -456,7 +451,6 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page )
-throw (xgi::exception::Exception)
 {
 	//FIXME Filter out malicious attacks i.e. ../../../../../ stuff
 	struct stat buffer;
@@ -495,14 +489,12 @@ throw (xgi::exception::Exception)
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
-throw (xgi::exception::Exception)
 {
 
 
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
-throw (xgi::exception::Exception)
 {
 
 

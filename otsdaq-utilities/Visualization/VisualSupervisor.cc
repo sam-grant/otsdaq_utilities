@@ -55,7 +55,7 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 
 //========================================================================================================================
-VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) throw (xdaq::exception::Exception)
+VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub) 
 : CoreSupervisorBase			(stub)
 , theDataManager_             	(0)
 , loadedRunNumber_	          	(-1)
@@ -109,7 +109,6 @@ void VisualSupervisor::destroy(void)
 
 //========================================================================================================================
 void VisualSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
 {
 	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
 
@@ -120,7 +119,6 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::safariDefaultPage(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
 {
 	*out << "<!DOCTYPE HTML><html lang='en'><iframe style='width:100%;height:100%;position:absolute;left:0;top:0;border:0;padding:0;margin:0;' src='/WebPath/html/Visualization.html?urn=" <<
 			this->getApplicationDescriptor()->getLocalId() <<"'></iframe></html>";
@@ -153,7 +151,6 @@ void VisualSupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 
 	//Commands
@@ -738,7 +735,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::stateRunning(toolbox::fsm::FiniteStateMachine& fsm)
-throw (toolbox::fsm::exception::Exception)
+
 {
 
 
@@ -746,7 +743,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 
 	//try
@@ -777,7 +774,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -791,7 +788,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -805,7 +802,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionStopping(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -820,7 +817,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionPausing(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -834,7 +831,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void VisualSupervisor::transitionResuming(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -845,15 +842,3 @@ throw (toolbox::fsm::exception::Exception)
 		__COUT_INFO__ << "ERROR! Couldn't Resume the VisualSupervisor" << std::endl;
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-

@@ -28,7 +28,7 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ECLSupervisor)
 
 //========================================================================================================================
-ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception)
+ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s) 
 	: xdaq::Application(s)
 	, SOAPMessenger(this)
 	, RunControlStateMachine("ECLSupervisor")
@@ -88,7 +88,7 @@ void ECLSupervisor::destroy(void)
 
 //========================================================================================================================
 void ECLSupervisor::Default(xgi::Input * in, xgi::Output * out)
-throw (xgi::exception::Exception)
+
 {
 	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
 
@@ -99,7 +99,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::safari(xgi::Input * in, xgi::Output * out)
-throw (xgi::exception::Exception)
+
 {
 
 	*out << "<!DOCTYPE HTML><html lang='en'><iframe style='width:100%;height:100%;position:absolute;left:0;top:0;border:0;padding:0;margin:0;' src='/WebPath/html/ECL.html?urn=" <<
@@ -110,7 +110,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::dataRequest(xgi::Input * in, xgi::Output * out)
-throw (xgi::exception::Exception)
+
 {
 	cgicc::Cgicc cgi(in);
 	std::string Command;
@@ -166,7 +166,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::request(xgi::Input * in, xgi::Output * out)
-throw (xgi::exception::Exception)
+
 {
 
 
@@ -246,7 +246,7 @@ throw (xgi::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 
 	//try
@@ -285,7 +285,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -302,7 +302,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -318,7 +318,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -333,7 +333,7 @@ throw (toolbox::fsm::exception::Exception)
 
 //========================================================================================================================
 void ECLSupervisor::transitionResuming(toolbox::Event::Reference e)
-throw (toolbox::fsm::exception::Exception)
+
 {
 	try
 	{
@@ -352,7 +352,7 @@ throw (toolbox::fsm::exception::Exception)
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
 xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageReference msg)
-throw (xoap::exception::Exception)
+
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);

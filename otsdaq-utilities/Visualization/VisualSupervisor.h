@@ -15,15 +15,15 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    VisualSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    VisualSupervisor            	(xdaq::ApplicationStub * s) ;
     virtual ~VisualSupervisor   	(void);
 
 
     void 					destroy               			(void);
 
 
-    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception) override;
-    void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
+    void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out) ;
 
     virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) throw (xgi::exception::Exception) override;
 
@@ -32,16 +32,16 @@ public:
 
 
                               
-    void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
+    void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) ;
 
-    virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionHalting     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    //virtual void 			transitionInitializing			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionPausing     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionResuming    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionStarting    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionStopping    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    //virtual void 			enteringError         			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
+    virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) ;
+    virtual void 			transitionHalting     			(toolbox::Event::Reference e) ;
+    //virtual void 			transitionInitializing			(toolbox::Event::Reference e) ;
+    virtual void 			transitionPausing     			(toolbox::Event::Reference e) ;
+    virtual void 			transitionResuming    			(toolbox::Event::Reference e) ;
+    virtual void 			transitionStarting    			(toolbox::Event::Reference e) ;
+    virtual void 			transitionStopping    			(toolbox::Event::Reference e) ;
+    //virtual void 			enteringError         			(toolbox::Event::Reference e) ;
 
 private:
 

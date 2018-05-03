@@ -8,7 +8,7 @@ GETPACKAGEINFO(Console)
 
 
 //========================================================================================================================
-void Console::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void Console::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

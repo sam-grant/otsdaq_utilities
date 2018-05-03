@@ -152,10 +152,8 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	headers = curl_slist_append(headers, buff.c_str());
 
 	const char* estr = eclString.c_str();
-	char estr2[eclString.size()];
-	strcpy(estr2, estr);
 
-	curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, estr2);
+	curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, estr);
 	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, fullURL.c_str());
 	//      curl_easy_setopt(curl_handle, CURLOPT_VERBOSE,1);

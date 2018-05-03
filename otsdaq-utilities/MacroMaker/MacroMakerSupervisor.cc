@@ -34,7 +34,6 @@ XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 
 //========================================================================================================================
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
 : CoreSupervisorBase(stub)
 {
 	INIT_MF("MacroMaker");
@@ -84,7 +83,6 @@ void MacroMakerSupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void MacroMakerSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 //	cgicc::Cgicc cgi(in);
 //	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");

@@ -15,6 +15,9 @@
 
 using namespace ots;
 
+// UDP Message Format: 
+// UDPMESSAGE|TIMESTAMP|SEQNUM|HOSTNAME|HOSTADDR|SEVERITY|CATEGORY|APPLICATION|PID|ITERATION|MODULE|(FILE|LINE)|MESSAGE
+// FILE and LINE are only printed for s67+
 
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
@@ -29,7 +32,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
+
 : CoreSupervisorBase	(stub)
 , writePointer_     	(0)
 , messageCount_     	(0)
@@ -231,7 +234,6 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
 {
 	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
@@ -255,7 +257,6 @@ void ConsoleSupervisor::forceSupervisorPropertyValues()
 //		Does not refresh cookie for automatic update checks.
 void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 	//__COUT__ << "requestType " << requestType << std::endl;
 

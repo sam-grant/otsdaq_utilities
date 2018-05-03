@@ -12,16 +12,15 @@ class LogbookSupervisor: public CoreSupervisorBase
 public:
 
     XDAQ_INSTANTIATOR();
-
-    						LogbookSupervisor            	(xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+    						LogbookSupervisor            	(xdaq::ApplicationStub* s);
     virtual 				~LogbookSupervisor   			(void);
 
     void 					init                  			(void);
     void 					destroy              			(void);
 
-    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception) override;
-    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, 	const WebUsers::RequestUserInfo& userInfo) throw (xgi::exception::Exception) override;
-    virtual void			nonXmlRequest      	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, std::ostream& out, 		const WebUsers::RequestUserInfo& userInfo) throw (xgi::exception::Exception) override;
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, 	const WebUsers::RequestUserInfo& userInfo) override;
+    virtual void			nonXmlRequest      	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, std::ostream& out, 		const WebUsers::RequestUserInfo& userInfo) override;
 
     virtual void			setSupervisorPropertyDefaults	(void) override; //override to control supervisor specific defaults
     virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
@@ -47,6 +46,7 @@ private:
     void 					hideLogbookEntry	        (const std::string &entryId, bool hide, const std::string &hider);
     static void				MFReceiverWorkLoop			(void);
 
+
     enum {
     	ADMIN_PERMISSIONS_THRESHOLD = 255,
     	EXPERIMENT_NAME_MIN_LENTH = 3,
@@ -54,7 +54,7 @@ private:
     	LOGBOOK_PREVIEW_EXPIRATION_TIME = 60*20, //20 minutes
     };
     std::vector<std::string>                allowedFileUploadTypes_, matchingFileUploadTypes_;
-    
+
     std::string                             activeExperiment_;
     unsigned int							mostRecentDayIndex_;
 };

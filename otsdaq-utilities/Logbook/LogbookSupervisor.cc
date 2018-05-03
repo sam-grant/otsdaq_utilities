@@ -128,7 +128,7 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss;
+			std::cout << ss.str();
 			throw std::runtime_error(ss.str());
 		}
 
@@ -142,7 +142,7 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path <<  std::endl;
-			std::cout << ss;
+			std::cout << ss.str();
 			throw std::runtime_error(ss.str());
 		}
 
@@ -156,7 +156,7 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss;
+			std::cout << ss.str();
 			throw std::runtime_error(ss.str());
 		}
 	}
@@ -412,7 +412,6 @@ throw (xgi::exception::Exception)
 //		Does not refresh cookie for automatic update checks.
 void LogbookSupervisor::nonXmlRequest(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		std::ostream& out, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 	//Commands
 	//	LogImage
@@ -443,7 +442,7 @@ throw (xgi::exception::Exception)
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
 xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageReference msg)
-throw (xoap::exception::Exception)
+
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
@@ -520,6 +519,7 @@ throw (xoap::exception::Exception)
 
 	return SOAPUtilities::makeSOAPMessageReference("LogbookEntryStatusResponse",retParameters);
 }
+
 //
 ////========================================================================================================================
 ////LogImage
