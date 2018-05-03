@@ -26,7 +26,7 @@ public:
     virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
 
     //External Supervisor XOAP handlers
-    xoap::MessageReference 	MakeSystemLogbookEntry 		 (xoap::MessageReference msg) 			throw (xoap::exception::Exception);
+    xoap::MessageReference 	MakeSystemLogbookEntry 		 (xoap::MessageReference msg);
 
 private:
 

@@ -34,14 +34,14 @@ public:
     virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)
 
 
-    void Poll                                    (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID) 	throw (xgi::exception::Exception);
+    void Poll                                    (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID) 	;
     void GetPVSettings                           (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList);
     void GenerateUID                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
-    void GetList                                 (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	throw (xgi::exception::Exception);
-    void GetPages                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	throw (xgi::exception::Exception);
-    void loadPage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page)	throw (xgi::exception::Exception);
-    void Subscribe                               (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					throw (xgi::exception::Exception);
-    void Unsubscribe                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					throw (xgi::exception::Exception);
+    void GetList                                 (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
+    void GetPages                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
+    void loadPage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page)	;
+    void Subscribe                               (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
+    void Unsubscribe                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
 
 
 

@@ -40,7 +40,6 @@ XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 
 //========================================================================================================================
 ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
 : CoreSupervisorBase(stub)
 {
 	INIT_MF("ControlsDashboardSupervisor");
@@ -76,7 +75,6 @@ void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 //	__COUT__ << std::endl;
 //	cgicc::Cgicc cgi(in);

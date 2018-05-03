@@ -84,7 +84,6 @@ int sendmail(const char *to, const char *from, const char *subject, const char *
 
 //========================================================================================================================
 LogbookSupervisor::LogbookSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
 : CoreSupervisorBase(stub)
 , allowedFileUploadTypes_({"image/png","image/jpeg","image/gif","image/bmp","application/pdf","application/zip","text/plain"})	//init allowed file upload types
 , matchingFileUploadTypes_({"png","jpeg","gif","bmp","pdf","zip","txt"})	//init allowed file upload types
@@ -175,7 +174,6 @@ void LogbookSupervisor::destroy(void)
 
 //========================================================================================================================
 void LogbookSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
 {
 	__COUT__ << " active experiment " << activeExperiment_ << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Logbook.html?urn=" <<
@@ -212,7 +210,6 @@ void LogbookSupervisor::forceSupervisorPropertyValues()
 //		Does not refresh cookie for automatic update checks.
 void LogbookSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 	//Commands
 	//	CreateExperiment
@@ -442,7 +439,6 @@ void LogbookSupervisor::nonXmlRequest(const std::string& requestType, cgicc::Cgi
 //	make a system logbook entry into active experiment's logbook from Supervisor only
 //	TODO: (how to enforce?)
 xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageReference msg)
-
 {
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);

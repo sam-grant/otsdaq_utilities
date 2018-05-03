@@ -788,7 +788,6 @@ void VisualSupervisor::transitionHalting(toolbox::Event::Reference e)
 
 //========================================================================================================================
 void VisualSupervisor::transitionStarting(toolbox::Event::Reference e)
-
 {
 	try
 	{
@@ -831,7 +830,6 @@ void VisualSupervisor::transitionPausing(toolbox::Event::Reference e)
 
 //========================================================================================================================
 void VisualSupervisor::transitionResuming(toolbox::Event::Reference e)
-
 {
 	try
 	{

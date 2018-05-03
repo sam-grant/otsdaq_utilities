@@ -14,7 +14,7 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    						ChatSupervisor            		(xdaq::ApplicationStub * s)
+    						ChatSupervisor            		(xdaq::ApplicationStub * s);
     virtual 				~ChatSupervisor   				(void);
 
     void 					destroy               			(void);

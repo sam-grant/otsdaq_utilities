@@ -117,7 +117,6 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-throw (xgi::exception::Exception)
 {
 	//Commands
 	//	saveConfigurationInfo
