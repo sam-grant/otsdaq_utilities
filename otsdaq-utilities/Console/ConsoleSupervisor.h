@@ -33,6 +33,9 @@ private:
     void							insertMessageRefresh		(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
 
 
+	// UDP Message Format:
+	// UDPMESSAGE|TIMESTAMP|SEQNUM|HOSTNAME|HOSTADDR|SEVERITY|CATEGORY|APPLICATION|PID|ITERATION|MODULE|(FILE|LINE)|MESSAGE
+	// FILE and LINE are only printed for s67+
     struct ConsoleMessageStruct
     {
     	ConsoleMessageStruct()
@@ -46,9 +49,9 @@ private:
     		fields[SEQID].set	("SequenceID",2,-1);
     		fields[LEVEL].set	("Level",5,-1);
     		fields[LABEL].set	("Label",6,-1);
-    		fields[SOURCEID].set("SourceID",9,-1); //number
-    		fields[SOURCE].set	("Source",11,-1); //number
-    		fields[MSG].set		("Msg",12,-1);
+    		fields[SOURCEID].set("SourceID",8,-1); //number
+    		fields[SOURCE].set	("Source",10,-1); //number
+    		fields[MSG].set		("Msg",11,-1);
     	}
 
     	void set(const std::string &msg, const time_t count)
