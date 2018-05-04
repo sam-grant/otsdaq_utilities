@@ -21,6 +21,43 @@ ul li {
 	margin:20px 25px;
 }
 
+.inputfile {
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+
+#submitBtn:hover,
+.inputfile:focus + label,
+.inputfile + label:hover {
+		background: #fff;
+		color: #2f3644;	
+}
+#submitBtn {
+ 	cursor: pointer; /* "hand" cursor */
+ 	padding:5px 15px;
+	border: 0px;
+	width: 80px !important;
+	display: none !important;
+ }
+ 
+.inputfile + label {
+	cursor: pointer; /* "hand" cursor */
+	
+    overflow:hidden;	
+    text-overflow:ellipsis;
+    /* Handle file input name overflow */
+}
+#submitBtn:focus,
+.inputfile:focus + label {
+	outline: 1px dotted #000;
+	outline: -webkit-focus-ring-color auto 5px;
+}
+
 
 .shape {
 	width: 300px;
@@ -28,28 +65,30 @@ ul li {
 	position: relative;
 }
 		
-	.shape .overlay {
-		display:block;
-		width: 310px;
-		height: 310px;
-		position: absolute;
-		top:-5px;
-		left:-5px;
-		-webkit-transform: scale(1,1);
-		-webkit-transition-timing-function:ease-out;
-		-webkit-transition-duration: 0.6s;
-		-moz-transform: scale(1,1);
-		-moz-transition-timing-function: ease-out;
-		-moz-transition-duration: 0.6s;
-		transform: scale(1,1);
-		transition-timing-function: ease-out;
-		transition-duration: 0.6s;				
-		z-index:500;
-		/* allow user to actually perform actions underneath this layer */
-		pointer-events:none; 
-		background-repeat: no-repeat;
-		outline:0;		
-	}
+.shape .overlay {
+	display:block;
+	width: 310px;
+	height: 310px;
+	position: absolute;
+	top:-5px;
+	left:-5px;
+	-webkit-transform: scale(1,1);
+	-webkit-transition-timing-function:ease-out;
+	-webkit-transition-duration: 0.6s;
+	-moz-transform: scale(1,1);
+	-moz-transition-timing-function: ease-out;
+	-moz-transition-duration: 0.6s;
+	transform: scale(1,1);
+	transition-timing-function: ease-out;
+	transition-duration: 0.6s;				
+	z-index:500;
+	/* allow user to actually perform actions underneath this layer */
+	pointer-events:none; 
+	background-repeat: no-repeat;
+	outline:0;		
+	
+
+}
 
 /* different shapes */
 .shape .overlay.round {
@@ -135,7 +174,8 @@ ul li {
 	font-size:14px;
 	margin:0 auto;
 }
-
+#submitBtn,
+.inputfile + label,
 .shape a.button {
 	padding:5px 15px;
 	font-family: 'Abel', sans-serif;	
@@ -154,11 +194,10 @@ ul li {
 	text-align:center;
 	margin-top:15px;
 }
-
-	.shape a.button:hover {
-		background: #fff;
-		color: #2f3644;				
-	}
+ .shape a.button:hover {
+	background: #fff;
+	color: #2f3644;				
+}
 	
 	
 .glow{

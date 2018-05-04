@@ -9,8 +9,8 @@
 	
 	<link rel="stylesheet" type="text/css" href="/WebPath/css/SecuritySettings.css">
 	<script type="text/JavaScript">
-		var selectedSecurityChoice_ = "";
-		var IDs_ = ['ResetAllUserTooltips', 'ResetAllUserData'];
+		var selectedChoice_ = "";
+		var IDs_ = ['ResetAllUserTooltips', 'ImportExportUserData', 'ResetAllUserData'];
 		var selection_ = [];
 		INTERVAL_ = 10;
 		state_ = document.getElementById("state");
@@ -42,10 +42,40 @@
 				selection_[index] = IDs_[index];
 			//Added all of the IDs into the selection_ array and position the selection at the end
 		
-			colorFade('orange', "all");
+			var inputs = document.querySelectorAll( '.inputfile' );
+			Array.prototype.forEach.call( inputs, function( input )
+			{
+				var label	 = input.nextElementSibling;
+				var	labelVal = label.innerHTML;
+				var exportBtn= document.getElementById("exportBtn");
+			
+				input.addEventListener( 'change', function( e )
+				{
+					var fileName = '';
+					if( this.files && this.files.length > 1 )
+						fileName = ( this.getAttribute( 'data-multiple-caption' ) || '' ).replace( '{count}', this.files.length );
+					else
+						fileName = e.target.value.split( '\\' ).pop();
+			
+					if( fileName ) {
+						label.innerHTML = fileName;
+						exportBtn.innerHTML = "Upload";
+						//exportBtn.setAttribute("onclick", "uploadToServer(\"Import\",handleImportSettings);");
+					}
+					else {
+						label.innerHTML = labelVal;
+						exportBtn.innerHTML = "Export";
+						//exportBtn.setAttribute("onclick", "exportUserSettings()");
+					}
+				});
+			});
+		
+			colorFade('grey', "all");
 			colorFade('red', "selected");
 			state_= document.getElementById("state");
 			state_.innerHTML = "Loading...";
+			
+			
 		
 			//var setSelection=setTimeout(makeServerRequest, 1000);
 		}
@@ -62,6 +92,14 @@
 					selectedTargetRed = 255;
 					selectedTargetGreen = 188;
 					selectedTargetBlue = 18;				
+				}else if(secondColor == 'blue'){
+					nonSelectedTargetRed = 0;
+					nonSelectedTargetGreen = 210;
+					nonSelectedTargetBlue = 255;					
+				}else if(secondColor == 'grey'){
+					nonSelectedTargetRed = 232;
+					nonSelectedTargetGreen = 232;
+					nonSelectedTargetBlue = 232;					
 				}else if(secondColor == 'red'){
 					selectedTargetRed = 242;
 					selectedTargetGreen = 5;
@@ -81,6 +119,14 @@
 					nonSelectedTargetRed = 255;
 					nonSelectedTargetGreen = 188;
 					nonSelectedTargetBlue = 18;				
+				}else if(secondColor == 'blue'){
+					nonSelectedTargetRed = 0;
+					nonSelectedTargetGreen = 210;
+					nonSelectedTargetBlue = 255;					
+				}else if(secondColor == 'grey'){
+					nonSelectedTargetRed = 232;
+					nonSelectedTargetGreen = 232;
+					nonSelectedTargetBlue = 232;					
 				}else if(secondColor == 'red'){
 					nonSelectedTargetRed = 242;
 					nonSelectedTargetGreen = 5;
@@ -192,7 +238,7 @@
 	                var randomNumber = Math.floor(Math.random() * 99999999)
 			if(prompt("Are you sure? This will delete ALL user data. Type " + randomNumber + " to continue:") == randomNumber)
 				if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
-					setSecurity('ResetAllUserData');
+					select('ResetAllUserData');
 				}
 				else
 					alert("You did not type 'I Do.' Mission aborted!");
@@ -204,24 +250,28 @@
 		function confirmTooltip(){
 			if(prompt("Are you sure? This will reset Tooltips for ALL users. " +
 					"Type 'YES' to continue:")=="YES")				
-				setSecurity('ResetAllUserTooltips');
+				select('ResetAllUserTooltips');
 		
 			else
 				alert("You did not type 'YES'. Tooltip reset canceled.");
 		}
 		
-		function setSecurity(id){
+		function select(id){
 
 			if(id == 'ResetAllUserTooltips')
 			{
 				console.log("ResetAllUserTooltips selected.");
-				selectedSecurityChoice_ = id;
+				selectedChoice_ = id;
 			}
 			else if(id == 'ResetAllUserData')
 			{
 				console.log("Reset ALL User Data selected.");
-				selectedSecurityChoice_ = id;
+				selectedChoice_ = id;
 			}
+			else if(id = 'ImportExportUserData')
+			{
+				console.log("Importing/Exporting User Data selected.");		   
+       		        }
 			else
 			{
 				console.log("Selection not recognized!");
@@ -229,29 +279,208 @@
 			}
 
 		
-			var serverRequest = "selection=" + selectedSecurityChoice_;
+			var serverRequest = "selection=" + selectedChoice_;
 			console.log(serverRequest);
-			makeServerRequest(serverRequest);
+			makeServerRequest("editSecurity", serverRequest, editSecurityHandler);
 		}
 		
-		function makeServerRequest(data){
-		
-			DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined);
-		}
 		
 		function restructure(){
 		
 			for(var index = 0; index < IDs_.length; index++)
 			{
-				if(selectedSecurityChoice_ != "")
+				if(selectedChoice_ != "")
 				{
-					if(selectedSecurityChoice_ != IDs_[index])
+					if(selectedChoice_ != IDs_[index])
 						selection_[index] = IDs_[index];	
 				}	
 			}
-			if(selectedSecurityChoice_ != "")
-				selection_[selection_.length] = selectedSecurityChoice_;
+			if(selectedChoice_ != "")
+				selection_[selection_.length] = selectedChoice_;
 		
+		}
+
+		function makeServerRequest(req, data, handler){
+		
+			DesktopContent.XMLHttpRequest(req, data, handler, undefined, undefined);
+		}		
+		//handleFiles
+		function handleFiles() { 
+		
+			var fileHolder = document.getElementById("fileToUpload");
+			var submitBtn  = document.getElementById("submitBtn");
+			var exportBtn  = document.getElementById("exportBtn");
+			
+			if(fileHolder.value != "")
+			{
+				console.log("File selected!");
+				submitBtn.style.display = "block !important";
+				exportBtn.style.display = "none !important";
+			}
+			else
+			{
+				console.log("File not selected!");
+				submitBtn.style.display = "none !important";
+				exportBtn.style.display = "block !important";
+			}
+		
+		}
+
+
+		//uploadToServer ~~
+		//	upload logbook entry to server.
+		//	Used to upload as temporary previewable post
+		function uploadToServer(reqCmd, handler) {
+			
+			console.log();
+			
+			var xhr = new XMLHttpRequest();
+			
+			var fd = new FormData();
+			fd.append("RequestType", "Import");
+			fd.append("Entry",convertForServer("File Contents")); //add escaped user text
+            fd.append("Filename",convertForServer("Name of the file")); //add escaped user subject
+            fd.append("Imported_File", document.getElementById('fileToUpload').files[0]);
+            
+			var urnLid    = DesktopContent.getDesktopWindowParameter(0,"urn");				
+			requestURL = "/urn:xdaq-application:lid="+urnLid+"/";
+			xhr.open("POST", requestURL + "UserSettings?sequence=" + DesktopContent._sequence);
+			
+			xhr.send(fd);
+			
+			
+			//'import_file',document.getElementById('fileToUpload').files[0]);
+			console.log(fd);
+			//makeServerRequest(reqCmd, fd, handler); 
+		
+		}
+				//convertForServer ~
+		//	replace server reserved characters with %<hex> equivalents
+		//	reserved: ", ', &, <, >, newline, double-space
+		function convertForServer(entry) {
+		    return entry
+	         .replace(/&/g, "%26")
+	         .replace(/</g, "%3C")
+	         .replace(/>/g, "%3E")
+	         .replace(/"/g, "%22")
+	         .replace(/'/g, "%27")
+			 .replace(/\n/g,"%0A%0D")
+			 .replace(/  /g, "%20%20");				
+		}
+
+	
+		//convertForClient ~
+		//	replace server reserved characters with html equivalents
+		//	reserved: ", ', &, <, >, newline, double-space
+		function convertForClient(entry) {
+			//replace special HTML chars-----------
+		    return entry
+		         .replace(/%26/g, "&amp;")  			//&
+		         .replace(/%3C/g, "&lt;") 				//<
+		         .replace(/%3E/g, "&gt;")				//>
+		         .replace(/%22/g, "&quot;")				//"
+		         .replace(/%27/g, "&#039;")				//'
+		         .replace(/%0A%0D/g, "<br>")			//newline
+		         .replace(/%20%20/g, "&nbsp;&nbsp;");	//space        
+		}
+
+		//uploadProgress ~~
+		function uploadProgress(evt) {
+			if (evt.lengthComputable) {
+				var percentComplete = Math.round(evt.loaded * 100 / evt.total);
+				document.getElementById('PreviewStatus').innerHTML = percentComplete.toString() + '%';
+				Debug.log("Edit User Data uploadProgress " +  percentComplete.toString() + '%');
+			}
+			else {
+				document.getElementById('PreviewStatus').innerHTML = 'unable to compute';
+				Debug.log("Edit User Data uploadProgress 'unable to compute'");
+			}
+		}
+
+		//uploadComplete ~
+		// This event is raised when the server send back a response
+		function uploadComplete(evt) {
+			Debug.log("Edit User Data uploadComplete " +  evt.target.responseText);
+		}
+
+		//uploadFailed ~
+		function uploadFailed(evt) {
+			Debug.log("There was an error attempting to upload the file.");
+		}
+
+		//uploadCanceled ~
+		function uploadCanceled(evt) {
+			Debug.log("The upload has been canceled by the user or the browser dropped the connection.");
+		}  
+		
+				//fileSelected ~
+		function fileSelected() {
+			var el = document.getElementById('fileToUpload');
+			var totFileSize = 0;
+			var fileNameConcat = "";
+			var fileTypeConcat = "";
+			for(var i=0;i<el.files.length;++i)
+			{
+				var file = el.files[i];	
+				Debug.log("Edit User Data fileSelected " + file.name);
+				if (file) {					    
+				    totFileSize += file.size;
+				    fileNameConcat += file.name + ";";
+				    fileTypeConcat += file.type + ";";
+				}
+			}
+
+			var fileSize = 0;
+			var MAX = 100; //MB
+		    if (totFileSize > MAX * 1024 * 1024)
+		    {
+		    	//delete file input element and create same empty
+		    	clearFileInput();
+		    	document.getElementById('PreviewStatus').innerHTML = "File upload limit is " + MAX + " MB";
+		    	return;
+		    }
+		    else if (totFileSize > 1024 * 1024)
+		    	fileSize = (Math.round(totFileSize * 100 / (1024 * 1024)) / 100).toString() + ' MB';
+		    else	
+		    	fileSize = (Math.round(totFileSize * 100 / 1024) / 100).toString() + ' KB';
+		    
+			/*document.getElementById('fileName').innerHTML = '<b>Name:</b> ' + 
+				fileNameConcat.substr(0,60) + (fileNameConcat.length > 60?"...":"");
+			document.getElementById('fileSize').innerHTML = '<b>Size:</b>&nbsp;&nbsp;&nbsp; ' + fileSize;
+			document.getElementById('fileType').innerHTML = '<b>Type:</b>&nbsp;&nbsp; ' + 
+				fileTypeConcat.substr(0,20) + (fileTypeConcat.length > 20?"...":"");*/
+		}
+  	
+  
+		
+		function exportUserSettingsBtn() {
+			Debug.log("Making request to export settings!");
+			//makeServerRequest("");
+			var data = "RequestType=Export";
+			DesktopContent.XMLHttpRequest("UserSettings", data, userSettingsHandler, undefined, undefined);
+
+		}
+		
+		var userSettingsHandler = function(req){
+		
+			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
+			{
+				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
+
+				return;
+			}
+		
+			if(selectedChoice_ == "ResetAllUserData")
+		        {
+				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
+				Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
+
+			}			   
+	
+			Debug.log("Successfully handled User Settings.");
+			Debug.log(req);
+
+			return;
 		}
 		
 		var editSecurityHandler = function(req){
@@ -264,7 +493,7 @@
 				return;
 			}
 		
-			if(selectedSecurityChoice_ == "ResetAllUserData")
+			if(selectedChoice_ == "ResetAllUserData")
 		        {
 				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 				Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
@@ -276,6 +505,21 @@
 			showVisualSelection();
 			return;
 		}
+		
+			
+			var handleImportSettings = function(req){
+		
+			if(!req || !req.responseText.length || req.responseText.indexOf("Error") >= 0)
+			{
+				Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
+
+				return;
+			}
+		
+			console.log(req.responseText);
+			return;
+		}
+		
 	</script>
 	
 	
@@ -337,12 +581,37 @@
 	<div class="base">
 		<img src="/WebPath/images/windowContentImages/EditUserData-ResetUserData.png" alt="" />
 	</div>
-  </div>	
+  </div>
+</li>
+<li>
+ <div class="shape">
+	<div class="glow" id="ImportExportUserData">
+	<a href="#"  class="overlay round"></a>
+	<div class="details">
+		<span class="heading">Import/Export<br>User Data</span>
+		<hr />
+		<p>Use this tool to import or export usernames and preferences for or from another installation.</p>
+		<p id="PreviewStatus"></p>
+		<br>
+  			<form id="fileForm" enctype="multipart/form-data" method="post" action="Log">
+				<input type="file" name="fileToUpload" id="fileToUpload" onchange="handleFiles()" class="inputfile"/>
+				<label for="fileToUpload">Import</label>
+			</form>
+				<input type='submit' id="submitBtn" onmouseup='uploadToServer("UserSettings",handleImportSettings);' value='Import' >	
+				<a href="#" id="exportBtn" class="button" onmouseup='exportUserSettingsBtn()'>Export</a>
+	</div>
+	<div class="bg"></div>
+	<div class="base">
+		<img src="/WebPath/images/windowContentImages/EditUserData-ImportExportData.png" alt="" />
+	</div>
+	</div>	
   </div> 	
   </li>
 
   	
   </ul>
+  
+  
 </body>
 
 </html>

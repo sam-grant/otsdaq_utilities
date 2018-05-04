@@ -198,6 +198,7 @@ else {
 					if(win.isMinimized()) win.unminimize();
 					if(win.isMaximized()) win.unmaximize();
 					Desktop.desktop.redrawFullScreenButtons();
+					_windowDashboardToggleWindows();
 					
 					xx += ww;
 					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
@@ -247,10 +248,10 @@ else {
 		    //else
 		    //	_windowDashboardMinimizeAll();
 
-		    if((_showDesktopBtn.innerHTML).includes(">Show Desktop</a>"))
-			_windowDashboardMinimizeAll();
+		    if(_showDesktopBtn.innerHTML.indexOf(">Show Desktop</a>") !== -1)
+				_windowDashboardMinimizeAll();
 		    else
-			_windowDashboardRestoreAll();
+				_windowDashboardRestoreAll();
 
 		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
 		    ((Desktop.desktop.getForeWindow() &&
