@@ -26,7 +26,7 @@ namespace ots
 class ConfigurationManager;
 class ConfigurationGroupKey;
 
-class ECLSupervisor: public xdaq::Application, public SOAPMessenger, public RunControlStateMachine
+class ECLSupervisor: public CoreSupervisorBase
 {
 
 public:
@@ -58,9 +58,6 @@ private:
 	const std::string                    	supervisorApplicationUID_;
 	const std::string                    	supervisorConfigurationPath_;
 
-    AllSupervisorInfo 						allSupervisorInfo_;
-    RemoteWebUsers                       	theRemoteWebUsers_;
-    //std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
 	std::string ECLUser;
 	std::string ECLHost;

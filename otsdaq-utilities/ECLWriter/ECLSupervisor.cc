@@ -29,9 +29,7 @@ XDAQ_INSTANTIATOR_IMPL(ECLSupervisor)
 
 //========================================================================================================================
 ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s) 
-	: xdaq::Application(s)
-	, SOAPMessenger(this)
-	, RunControlStateMachine("ECLSupervisor")
+: CoreSupervisorBase(s)
 	, theConfigurationManager_(new ConfigurationManager)//(Singleton<ConfigurationManager>::getInstance()) //I always load the full config but if I want to load a partial configuration (new ConfigurationManager)
 	, supervisorContextUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
 	, supervisorApplicationUID_(theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getApplicationUID
@@ -40,7 +38,6 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s)
 		getApplicationDescriptor()->getLocalId()
 	))
 	, supervisorConfigurationPath_("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
-	, theRemoteWebUsers_(this)
 {
 	INIT_MF("ECLSupervisor");
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
@@ -76,7 +73,7 @@ ECLSupervisor::~ECLSupervisor(void)
 void ECLSupervisor::init(void)
 {
 	//called by constructor
-	allSupervisorInfo_.init(getApplicationContext());
+	//allSupervisorInfo_.init(getApplicationContext());
 }
 
 //========================================================================================================================
@@ -87,7 +84,7 @@ void ECLSupervisor::destroy(void)
 }
 
 //========================================================================================================================
-void ECLSupervisor::Default(xgi::Input * in, xgi::Output * out)
+void ECLSupervisor::defaultPage(xgi::Input * in, xgi::Output * out)
 
 {
 	//__COUT__ << this->getApplicationContext()->getURL() << __E__;
