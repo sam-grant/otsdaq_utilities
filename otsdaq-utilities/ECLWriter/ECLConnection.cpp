@@ -3,6 +3,8 @@
 #include <openssl/md5.h>
 #include <sstream>
 #include <cstring>
+#include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 
 
 ECLConnection::ECLConnection(std::string user,
@@ -115,7 +117,7 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	std::ostringstream oss;
 	oss << e;
 	std::string eclString = oss.str();
-	std::cout << "ECL XML is: " << eclString << std::endl;
+	__COUT__ << "ECL XML is: " << eclString << std::endl;
 	//std::string eclString = e.entry();
 	eclString = eclString.substr(eclString.find_first_of(">") + 2);
 
@@ -153,12 +155,15 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	const char* estr = eclString.c_str();
 
+	__COUT__ << "ECL Setting message headers" << std::endl;
 	curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, estr);
 	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, fullURL.c_str());
 	//      curl_easy_setopt(curl_handle, CURLOPT_VERBOSE,1);
 
-	// post it! 
+	// post it!
+
+	__COUT__ << "ECL Posting message" << std::endl;
 	CURLcode result = curl_easy_perform(curl_handle);
 
 	if (result != CURLE_OK) {
@@ -166,7 +171,8 @@ bool ECLConnection::Post(ECLEntry_t& e)
 		return false;
 	}
 
-	// cleanup curl stuff 
+	__COUT__ << "ECL Cleanup" << std::endl;
+	// cleanup curl stuff
 	curl_easy_cleanup(curl_handle);
 	curl_slist_free_all(headers);
 
