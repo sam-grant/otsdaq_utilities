@@ -36,11 +36,12 @@ cet_make( LIBRARY_NAME ECLWriter
 	LIBRARIES
 	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
-	XmlUtilities
-		 SupervisorInfo
-		 WebUsersUtilities
-		 CgiDataUtilities
-		 SOAPUtilities
+	#XmlUtilities
+	CoreSupervisors
+	#	 SupervisorInfo
+#		 WebUsersUtilities
+		 #CgiDataUtilities
+		 #SOAPUtilities
 		 FiniteStateMachine
 		 ConfigurationInterface
 		 ConfigurationDataFormats

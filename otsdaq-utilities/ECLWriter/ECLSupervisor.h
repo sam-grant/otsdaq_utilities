@@ -16,7 +16,7 @@
 #include <string>
 #include <map>
 #include <chrono>
-#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
 
 
@@ -38,10 +38,7 @@ public:
     void init                  		(void);
     void destroy               		(void);
 
-    void 						Default               		(xgi::Input* in, xgi::Output* out) ;
-    void 						request                     (xgi::Input* in, xgi::Output* out) ;
-    void 						dataRequest                 (xgi::Input* in, xgi::Output* out) ;
-    void 						safari               		(xgi::Input* in, xgi::Output* out) ;
+    void 						defaultPage                 (xgi::Input* in, xgi::Output* out) ;
 
     void 						transitionConfiguring 		(toolbox::Event::Reference e) ;
     void 						transitionStarting    		(toolbox::Event::Reference e) ;
