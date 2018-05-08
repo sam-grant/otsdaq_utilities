@@ -6,6 +6,7 @@
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
 #include <xdaq/Application.h>
+#include "otsdaq-core/Macros/XDAQApplicationMacros.h"
 #include <xgi/Method.h>
 
 #include <cgicc/HTMLClasses.h>
