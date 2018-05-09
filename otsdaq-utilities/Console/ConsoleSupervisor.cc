@@ -32,17 +32,20 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-
 : CoreSupervisorBase	(stub)
 , writePointer_     	(0)
 , messageCount_     	(0)
 {
+	__COUT__ << "Constructor started." << __E__;
+
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
 	init();
+
+	__COUT__ << "Constructor complete." << __E__;
 }
 
 //========================================================================================================================
