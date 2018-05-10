@@ -73,7 +73,7 @@ void ConsoleSupervisor::destroy(void)
 //	Note: Uses std::mutex to avoid conflict with reading thread.
 void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 {
-	__SUP_COUT__ << std::endl;
+	__COUT__ << std::endl;
 
 	std::string configFile = QUIET_CFG_FILE;
 	FILE *fp = fopen(configFile.c_str(),"r");
@@ -81,7 +81,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	{
 		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
-		__SUP_COUT__ << "\n" << ss.str();
+		__COUT__ << "\n" << ss.str();
 		throw std::runtime_error(ss.str());
 	}
 	char tmp[100];
@@ -109,7 +109,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
 				myport << ". Perhaps it is already in use? Exiting Console receive loop." << std::endl;
-		__SUP_COUT__ << ss.str();
+		__COUT__ << ss.str();
 
 
 		cs->messages_[cs->writePointer_].set("||0|||Error|Console|||0||ConsoleSupervisor|" +
@@ -141,13 +141,13 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		{
 			if(i != 200)
 			{
-				__SUP_COUT__ << "Console has first message." << std::endl;
+				__COUT__ << "Console has first message." << std::endl;
 				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
 
-				mf::LogDebug (__MF_SUBJECT__) << __SUP_COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
-				mf::LogInfo (__MF_SUBJECT__) << __SUP_COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
-				mf::LogWarning (__MF_SUBJECT__) << __SUP_COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
-				mf::LogError (__MF_SUBJECT__) << __SUP_COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
+				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
+				mf::LogInfo (__MF_SUBJECT__) << __COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
+				mf::LogWarning (__MF_SUBJECT__) << __COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
+				mf::LogError (__MF_SUBJECT__) << __COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
 			}
 
 			if(selfGeneratedMessageCount)
@@ -155,7 +155,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			else
 				heartbeatCount = 0; //reset heartbeat if external messages are coming through
 
-			//__SUP_COUT__ << buffer << std::endl;
+			//__COUT__ << buffer << std::endl;
 
 			//lockout the messages array for the remainder of the scope
 			//this guarantees the reading thread can safely access the messages
@@ -168,8 +168,8 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			newSourceId = cs->messages_[cs->writePointer_].getSourceIDAsNumber();
 			newSequenceId = cs->messages_[cs->writePointer_].getSequenceIDAsNumber();
 
-			//__SUP_COUT__ << "newSourceId: " << newSourceId << std::endl;
-			//__SUP_COUT__ << "newSequenceId: " << newSequenceId << std::endl;
+			//__COUT__ << "newSourceId: " << newSourceId << std::endl;
+			//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
 
 			if(sourceLastSequenceID.find(newSourceId) !=
 					sourceLastSequenceID.end() && //ensure not first packet received
@@ -228,7 +228,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
 		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			__SUP_COUT__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
+			__COUT__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}
