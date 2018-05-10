@@ -106,6 +106,16 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//this guarantees the reading thread can safely access the messages
 		std::lock_guard<std::mutex> lock(cs->messageMutex_);
 
+		//NOTE: if we do not want this to be fatal, do not throw here, just print out
+
+		if(1) //generate special message and throw for failed socket
+		{
+			__SS__ << "FATAL Console error. Could not initialize socket on port " <<
+					myport << ". Perhaps the port is already in use? Check for multiple stale instances of otsdaq processes, or notify admins." <<
+					" Multiple instances of otsdaq on the same node should be possible, but port numbers must be unique." << std::endl;
+			__SS_THROW__;
+		}
+
 		//generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
 				myport << ". Perhaps it is already in use? Exiting Console receive loop." << std::endl;
