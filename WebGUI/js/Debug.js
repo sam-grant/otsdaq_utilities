@@ -65,17 +65,17 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 	} catch(e){console.log("Ignoring font errors: " + e);}
 	try
 	{
-		Debug.FontInconsolataBold = new FontFace('Inconsolata', 'url(/WebPath/fonts/inconsolata/Inconsolata-Bold.ttf)');
+		Debug.FontInconsolataBold = new FontFace('Inconsolata-Bold', 'url(/WebPath/fonts/inconsolata/Inconsolata-Bold.ttf)');
 		document.fonts.add(Debug.FontInconsolataBold);
 	} catch(e){console.log("Ignoring font errors: " + e);}
 	try
 	{
-		Debug.FontComfortaaBold = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Bold.ttf)');
+		Debug.FontComfortaaBold = new FontFace('Comfortaa-Bold', 'url(/WebPath/fonts/comfortaa/Comfortaa-Bold.ttf)');
 		document.fonts.add(Debug.FontComfortaaBold);
 	} catch(e){console.log("Ignoring font errors: " + e);}
 	try
 	{
-		Debug.FontComfortaaLight = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Light.ttf)');
+		Debug.FontComfortaaLight = new FontFace('Comfortaa-Light', 'url(/WebPath/fonts/comfortaa/Comfortaa-Light.ttf)');
 		document.fonts.add(Debug.FontComfortaaLight);
 	} catch(e){console.log("Ignoring font errors: " + e);}
 	
