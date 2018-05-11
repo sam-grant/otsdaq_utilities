@@ -52,24 +52,32 @@ Debug.BROWSER_TYPE = 0;
 
 if (Debug.mode) //IF DEBUG MODE IS ON!
 {
+	//load dialog fonts
 	try
 	{
-		//load dialog fonts
 		Debug.FontInconsolata = new FontFace('Inconsolata', 'url(/WebPath/fonts/inconsolata/Inconsolata-Regular.ttf)');
 		document.fonts.add(Debug.FontInconsolata);
+	} catch(e){console.log("Ignoring font errors: " + e);}
+	try
+	{
 		Debug.FontComfortaa = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Regular.ttf)');
-		document.fonts.add(Debug.Comfortaa);
+		document.fonts.add(Debug.FontComfortaa);
+	} catch(e){console.log("Ignoring font errors: " + e);}
+	try
+	{
 		Debug.FontInconsolataBold = new FontFace('Inconsolata', 'url(/WebPath/fonts/inconsolata/Inconsolata-Bold.ttf)');
 		document.fonts.add(Debug.FontInconsolataBold);
+	} catch(e){console.log("Ignoring font errors: " + e);}
+	try
+	{
 		Debug.FontComfortaaBold = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Bold.ttf)');
 		document.fonts.add(Debug.FontComfortaaBold);
+	} catch(e){console.log("Ignoring font errors: " + e);}
+	try
+	{
 		Debug.FontComfortaaLight = new FontFace('Comfortaa', 'url(/WebPath/fonts/comfortaa/Comfortaa-Light.ttf)');
 		document.fonts.add(Debug.FontComfortaaLight);
-	}
-	catch(e)
-	{
-		console.log("Ignoring font errors: " + e);
-	}
+	} catch(e){console.log("Ignoring font errors: " + e);}
 	
 	
 	if (Debug.simple)
