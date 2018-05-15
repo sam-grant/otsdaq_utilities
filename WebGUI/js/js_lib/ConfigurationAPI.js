@@ -4054,7 +4054,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 		if(w === undefined || h === undefined)
 		{
 			w = ww-(margin)*2;
-			ah = wh-(margin)*2;
+			h = wh-(margin)*2;
 		}
 		//else w,h are inputs and margin is ignored
 
