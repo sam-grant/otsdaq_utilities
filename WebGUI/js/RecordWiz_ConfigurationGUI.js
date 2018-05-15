@@ -79,7 +79,6 @@
 	
 	//htmlOpen(tag,attObj,innerHTML,closeTag)
 	//htmlClearDiv()
-	//incrementName(name)
 
 	//getApp()
 	//getAppClass()	
@@ -90,7 +89,6 @@
 	//getRecordFilter()
 	//getIntermediateTable()
 	//getIntermediateTypeName()
-	//createNewRecordName(startingName,existingArr)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +202,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
 
 			"Briefly, here is a description of the steps: " +
-			"\n\t- 'What is the name of your record?'" +
+			"\n\t- 'What type of record do you want to add?'" +
 			"\n\t- 'Do you want to add it to an existing context or create a new one?'"
 	);
 
@@ -254,8 +252,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	//	get active groups and list of all groups
 	//	get list of existing records at base path
 	function initRecordWizard() 
-	{
-		//get list of records that match <subsetBasePath> AND <recordPreFilterList>
+	{		
 		_subsetUIDs = []; //reset			
 		_modifiedTables = undefined; //reset
 		_furthestStep = -1; // reset
@@ -296,7 +293,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					},_modifiedTables); //end getSubsetRecords
 
-				},_modifiedTables); //end getAliasesAndGroups
+				}); //end getAliasesAndGroups
 
 	}	//end initRecordWizard()
 
@@ -353,8 +350,11 @@ RecordWiz.createWiz = function(doneHandler) {
 
 		var showPrevButton = true;
 		var showNextButton = true;
-		var prevStepIndex = _lastNextStep; //default back button to last next step //stepIndex-1;
+		var prevStepIndex =  stepIndex-1; //default back button to last next step //stepIndex-1;		
+		if(prevStepIndex > _lastNextStep)
+			prevStepIndex = _lastNextStep;
 		_lastNextStep = stepIndex;
+		
 		var nextStepIndex = stepIndex+1;
 		var prevButtonText = "Go Back";
 		var nextButtonText = "Next Step";
@@ -401,7 +401,7 @@ RecordWiz.createWiz = function(doneHandler) {
 									"type" : 	"text",	
 									"id" : 		stepString + "bufferName",	
 									"value":	(paramObj["bufferName"]?paramObj["bufferName"]:
-											createNewRecordName("Buffer",
+											ConfigurationAPI.createNewRecordName("Buffer",
 													paramObj["allBuffers"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
@@ -534,7 +534,7 @@ RecordWiz.createWiz = function(doneHandler) {
 									"type" : 	"text",	
 									"id" : 		stepString + "appName",	
 									"value":	(paramObj["appName"]?paramObj["appName"]:
-											createNewRecordName(getApp(),paramObj["allApps"])),
+											ConfigurationAPI.createNewRecordName(getApp(),paramObj["allApps"])),
 							}, "" /*innerHTML*/, true /*closeTag*/);
 
 					str += htmlOpen("input",
@@ -1117,7 +1117,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					//increment index
 					document.getElementById(stepString + "bufferName").value = 
-							incrementName(this.value);	
+							ConfigurationAPI.incrementName(this.value);	
 				}; //end onchange handler
 
 				/////////////////////////////////
@@ -1173,7 +1173,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					//increment index
 					document.getElementById(stepString + "appName").value = 
-							incrementName(this.value);	
+							ConfigurationAPI.incrementName(this.value);	
 				}; //end onchange handler
 
 				/////////////////////////////////
@@ -1253,7 +1253,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					//increment index
 					document.getElementById(stepString + "contextName").value = 
-							incrementName(this.value);	
+							ConfigurationAPI.incrementName(this.value);	
 				}; //end onchange handler
 
 				/////////////////////////////////
@@ -1373,7 +1373,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 					//increment index
 					document.getElementById(stepString + "recordName").value = 
-							incrementName(this.value);	
+							ConfigurationAPI.incrementName(this.value);	
 				}; //end onchange handler for existing records
 
 				/////////////////////////////////
@@ -1903,7 +1903,7 @@ RecordWiz.createWiz = function(doneHandler) {
 									//										bufferName = _paramObj["level" + _intermediateLevel + "RecordName"];
 									//else 
 									//	_paramObj["level" + _intermediateLevel + "RecordName"] =
-									//			(bufferName = createNewRecordName(listOfExisting)appName + "DB"); //generate the buffer name
+									//			(bufferName = ConfigurationAPI.createNewRecordName(listOfExisting)appName + "DB"); //generate the buffer name
 
 									//Debug.log("bufferName " + bufferName);
 									
@@ -1912,7 +1912,7 @@ RecordWiz.createWiz = function(doneHandler) {
 										//if no buffers in context, create buffer
 										//	with made up name
 
-										var bufferName = createNewRecordName("Buffer",allRecords);
+										var bufferName = ConfigurationAPI.createNewRecordName("Buffer",allRecords);
 
 										//store bufferName for later
 										_paramObjMap[_STEP_PROC_WHICH_BUFFER]["bufferName"] = bufferName;
@@ -2380,7 +2380,7 @@ RecordWiz.createWiz = function(doneHandler) {
 											//if no apps in context, create XDAQ App
 											//	with made up name
 
-											var appName = createNewRecordName(getApp(),allApps);
+											var appName = ConfigurationAPI.createNewRecordName(getApp(),allApps);
 											
 											//store app name for later
 											_paramObjMap[_STEP_WHICH_APP]["appName"] = appName;
@@ -2523,8 +2523,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FESupervisor";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataManagerSupervisor";
 		else
 			throw("?");
@@ -2546,8 +2545,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var otsModule = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			otsModule = "${OTSDAQ_LIB}/libCoreSupervisors.so";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			otsModule = "${OTSDAQ_LIB}/libCoreSupervisors.so";
 		else
 			throw("?");
@@ -2562,8 +2560,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FESupervisorConfiguration";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataManagerSupervisorConfiguration";
 		else
 			throw("?");
@@ -2578,8 +2575,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FEInterfaceConfiguration";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataBufferConfiguration";
 		else
 			throw("?");
@@ -2594,8 +2590,7 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "FEInterfaceGroupID";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "DataBufferGroupID";
 		else
 			throw("?");
@@ -2611,41 +2606,12 @@ RecordWiz.createWiz = function(doneHandler) {
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
 			retVal = "";
-		else if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 			retVal = "";//"ProcessorType=" + _recordAlias;
 		
 		return retVal;		
 	} //end getRecordFilter()
 	
-	//=====================================================================================
-	//createNewRecordName ~~	
-	//	look through all apps and create a name that does not exist yet
-	function createNewRecordName(startingName,existingArr) 
-	{
-		var retVal = startingName;
-		var found,i;
-		try
-		{
-			var apps = existingArr;
-			do
-			{
-				retVal = incrementName(retVal);
-				found = false;
-				for(i=0;i<apps.length;++i)
-					if(apps[i] == retVal) 
-					{found = true; break;}
-			} while(found);
-			Debug.log("createNewRecordName " + retVal);
-		}
-		catch(e)
-		{
-			//ignore errors.. assume no all apps
-			return incrementName(retVal);
-		}
-		
-		return retVal;		
-	} //end createNewRecordName()
 
 	//=====================================================================================
 	//getIntermediateTable() ~~	
@@ -2709,19 +2675,6 @@ RecordWiz.createWiz = function(doneHandler) {
 		return "<div id='clearDiv'></div>";
 	} //end htmlClearDiv()
 
-	//=====================================================================================
-	//incrementName ~~		
-	function incrementName(name)
-	{
-		//find last non-numeric
-		for(var i=name.length-1;i>=0;--i)
-			if(!(name[i] >= '0' && name[i] <= '9'))
-				break;
-		var num = (name.substr(i+1)|0) + 1;
-		if(i >= 0)
-			name = name.substr(0,i+1);
-		return name + num;
-	} //end incrementName()
 
 }; //end RecordWiz.createWiz()
 

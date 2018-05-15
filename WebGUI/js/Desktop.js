@@ -421,6 +421,8 @@ Desktop.createDesktop = function(security) {
 		
 		_sysMsgCounter = 0; //reset system message counter to setup next request
 
+		if(!req) return; //request failed			
+		
 		var userLock; //tmp hold user with lock
 		userLock = Desktop.getXMLValue(req,"username_with_lock"); //get user with lock
 		Desktop.desktop.dashboard.displayUserLock(userLock);
@@ -526,8 +528,10 @@ Desktop.createDesktop = function(security) {
 			for(var i=0;i<_windows.length;++i)
 				if(_windows[i].getWindowName() == name && _windows[i].getWindowSubName() == subname) {
 					Debug.log("Window creation failed. Not unique.",Debug.LOW_PRIORITY);
-					if(_windows[i].isMinimized())
-						_windows[i].minimize(); //restore window
+					if(_windows[i].isMinimized()) {
+						Debug.log(_windows[i].getWindowSubName() + "was minimized but will now be restored!");
+						_windows[i].unminimize(); //restore window
+					}
 					else
 						Desktop.desktop.setForeWindow(_windows[i]); //bring window to front                   
 					return;
@@ -611,6 +615,10 @@ Desktop.createDesktop = function(security) {
 		}		
 		return -1;
 	}
+
+		//setWindowZIndex
+		// bringing window to foreground then back to original location for refresh
+	
 
 		//setForeWindow ~~~
 		//	handle bringing window to front
@@ -697,7 +705,7 @@ Desktop.createDesktop = function(security) {
 
 	this.refreshWindow = function(e) {
 	    if(!_getForeWindow()) return;
-	    Debug.log("Windows Length: " + _windows.length);
+	    //Debug.log("Windows Length: " + _windows.length);
 	    	    
 	    var window = _getForeWindow();
 	    var id  = window.getWindowId();
@@ -709,15 +717,21 @@ Desktop.createDesktop = function(security) {
 	    var height  = window.getWindowHeight();
 	    var x = window.getWindowX();
 	    var y = window.getWindowY();
-                 
+        var isMax = window.isMaximized();
+        var isMin = window.isMinimized();
+        
 	    _closeWindow(window);
 	    console.log(window, id, z, name, width, height);
 	    
 	    var newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
 	   
+	    if(isMax)
+	    	newWindow.maximize();
+	    if(isMin)
+	    	newWindow.minimize();
 	   
-	    Debug.log("Windows Length: " + _windows.length);
+	    //Debug.log("Windows Length: " + _windows.length);
     }
 
         //minimizeWindowById ~~~
@@ -1449,25 +1463,24 @@ Desktop.handleWindowRefresh = function(mouseEvent){
 
 Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
         Debug.log("Refresh Full Screen Window");
-	//Desktop.logout();
         Desktop.desktop.resetDesktop();
-	Desktop.desktop.refreshDesktop();
-        //for(var i=0; i<Desktop.desktop._windows.length;++i)
-	//{
-	//    Desktop.desktop.refreshWindowById(Desktop.desktop._windows[i].getWindowId());
-	//}
-	for(var i=Desktop.desktop.getNumberOfWindows()-1; i>-1; i--)
-       	{
-		Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(i));
-	// + " : " + Desktop.desktop.getWindowByIndex(i).getWindowId());
-		Debug.log(Desktop.desktop.getWindowByIndex(i).getWindowId());
-		Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(i));//.getWindowId());
-		Desktop.desktop.refreshWindow();
+		Desktop.desktop.refreshDesktop();
 
-  		//Desktop.desktop.refreshWindowById(Desktop.desktop.getWindowByIndex(i).getWindowId());
-        }
-	//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
-        return false;
+		//for(var i = 0; i < Desktop.desktop.getNumberOfWindows()-1; i++)
+		//for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+    	{
+    		var zIndex = Desktop.desktop.getWindowByIndex(i).getWindowZ(); 
+			Debug.log(zIndex); 
+			Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(0).getWindowName());
+			Debug.log(Desktop.desktop.getWindowByIndex(0).getWindowId());
+			Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));//.getWindowId());
+			Desktop.desktop.refreshWindow();            
+            //Desktop.desktop.getWindowByIndex(i).setWindowZ(zIndex); //done with refreshing window i
+			
+	    }
+		//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
+    	return false;
 
 }
 
@@ -1554,6 +1567,10 @@ Desktop.XMLHttpRequest = function(requestURL, data, returnHandler, reqIndex) {
 				Debug.log("Error: " + errStr,Debug.HIGH_PRIORITY);
 				//alert(errStr);
 				req = 0; //force to 0 to indicate error
+
+       			Debug.log("The user interface is disconnected from the ots Gateway server.", Debug.HIGH_PRIORITY);
+       			//hide user with lock icon (because it usually looks bad when disconnected)
+       			document.getElementById("DesktopDashboard-userWithLock").style.display = "none";
 			}
 			if(returnHandler) returnHandler(req,reqIndex,errStr);
 		}

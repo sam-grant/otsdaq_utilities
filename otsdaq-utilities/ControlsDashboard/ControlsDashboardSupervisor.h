@@ -1,32 +1,8 @@
 #ifndef _ots_ControlsDashboardSupervisor_h_
 #define _ots_ControlsDashboardSupervisor_h_
 
-#include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
-#include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
-#include "xdaq/Application.h"
-#include "xgi/Method.h"
-
-#include "xoap/MessageReference.h"
-#include "xoap/MessageFactory.h"
-#include "xoap/SOAPEnvelope.h"
-#include "xoap/SOAPBody.h"
-#include "xoap/domutils.h"
-#include "xoap/Method.h"
-
-
-#include "cgicc/HTMLClasses.h"
-#include <cgicc/HTTPCookie.h>
-#include "cgicc/HTMLDoctype.h"
-#include <cgicc/HTTPHeader.h>
-
-#include <string>
-#include <map>
-#include <vector>
-#include <set>
-
-#include "otsdaq-core/SupervisorDescriptorInfo/SupervisorDescriptorInfo.h"
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
@@ -38,27 +14,35 @@ namespace ots
 	class ControlsVInterface;
 	class ConfigurationManager;
 
-class ControlsDashboardSupervisor: public xdaq::Application, public SOAPMessenger
+class ControlsDashboardSupervisor: public CoreSupervisorBase
 {
 
 public:
 
     XDAQ_INSTANTIATOR();
 
-    ControlsDashboardSupervisor              (xdaq::ApplicationStub *        ) throw (xdaq::exception::Exception);
-    virtual ~ControlsDashboardSupervisor     (void                                                              );
-    void init                  		  	 		 (void                                                              );
-    void destroy                   		 		 (void                                                              );
-	void requestHandler	            		 	 (xgi::Input* in, xgi::Output* out) 											throw (xgi::exception::Exception);
-	void Default                      		 	 (xgi::Input* in, xgi::Output* out)							 					throw (xgi::exception::Exception);
-    void Poll                                    (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string UID) 	throw (xgi::exception::Exception);
-    void GetPVSettings                           (xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList ) throw (xgi::exception::Exception);
-    void GenerateUID                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string pvlist)throw (xgi::exception::Exception);
-    void GetList                                 (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
-    void GetPages                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 				 	throw (xgi::exception::Exception);
-    void loadPage                                (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc, std::string page)	throw (xgi::exception::Exception);
-    void Subscribe                               (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
-    void Unsubscribe                             (xgi::Input* in, xgi::Output* out, HttpXmlDocument *xmldoc) 					throw (xgi::exception::Exception);
+    						ControlsDashboardSupervisor     (xdaq::ApplicationStub* s);
+	virtual 				~ControlsDashboardSupervisor	(void);
+
+	void 					init                  			(void);
+	void 					destroy              			(void);
+
+
+	virtual void			request         	 						(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
+
+    virtual void			setSupervisorPropertyDefaults				(void) override;
+    virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)
+
+
+    void Poll                                    (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID) 	;
+    void GetPVSettings                           (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList);
+    void GenerateUID                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
+    void GetList                                 (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
+    void GetPages                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
+    void loadPage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page)	;
+    void Subscribe                               (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
+    void Unsubscribe                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
+
 
 
     //Utilities, eventually to be moved
@@ -68,12 +52,12 @@ public:
 
 private:
 	//SlowControlsInterface
-    SupervisorDescriptorInfo              	theSupervisorDescriptorInfo_;
+    //AllSupervisorInfo 						allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
     ControlsVInterface*                     interface_;
-    ConfigurationManager*          			theConfigurationManager_;
-    RemoteWebUsers							theRemoteWebUsers_;
-	std::string                             username;
+//    ConfigurationManager*          			theConfigurationManager_;
+//    RemoteWebUsers							theRemoteWebUsers_;
+//	std::string                             username;
 	std::map<int, std::set<std::string>> 	pvDependencyLookupMap_;
 	int										UID_;
 

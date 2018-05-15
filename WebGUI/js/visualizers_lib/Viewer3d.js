@@ -1044,7 +1044,7 @@ Viewer3d.createHud = function() {
 
 Viewer3d.getEvents = function() {
 	Debug.log("Viewer3d getEvents for run " + Viewer3d.hud.hudRunNumberInput.value);
-	DesktopContent.XMLHttpRequest("request?RequestType=getEvents&run=" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=getEvents&run=" +
 			parseInt(Viewer3d.hud.hudRunNumberInput.value), "", Viewer3d.getEventsHandler);
 }
 
@@ -1132,7 +1132,7 @@ Viewer3d.getEventsHandler = function (req) {
 
 Viewer3d.getGeometry = function() {
 	Debug.log("Viewer3d.getGeometry ");
-	DesktopContent.XMLHttpRequest("request?RequestType=getGeometry", "", Viewer3d.getGeometryHandler);
+	DesktopContent.XMLHttpRequest("Request?RequestType=getGeometry", "", Viewer3d.getGeometryHandler);
 }
 
 // Viewer3d.getGeometryHandler ~~

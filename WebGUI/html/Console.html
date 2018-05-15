@@ -311,7 +311,7 @@
 			
 			var _chosenColorScheme = -1; //(start decremented by 1 from choice)
 			var _colorSchemes = [ //background, foreground	
-								 ["#333333","#66ff33"],
+								 ["#000000","#66ff33"],
 								 ["#cccccc","#333333"],								 
 								 ["transparent",DesktopContent.getDefaultDesktopColor()]
 								];
@@ -386,7 +386,7 @@
 			    toggleFilterControls();		//call to initially setup
 			    
 			    //call to setup colorScheme first time
-				DesktopContent.XMLHttpRequest("Console?RequestType=LoadUserPreferences", "",
+				DesktopContent.XMLHttpRequest("Request?RequestType=LoadUserPreferences", "",
 						handleLoadUserPreferences);
 			}
 
@@ -642,7 +642,7 @@
 			    if(_consoleUpdateTimer) //only allow one timer for updates at a time
 			    	clearTimeout(_consoleUpdateTimer);	
 			    
-				DesktopContent.XMLHttpRequest("Console?RequestType=GetConsoleMsgs", 
+				DesktopContent.XMLHttpRequest("Request?RequestType=GetConsoleMsgs", 
 										"lcount="+_lastUpdateCount+"&lindex="+_lastUpdateIndex,
 										handleRefreshConsole,
 										0, //reqParam
@@ -937,8 +937,8 @@
 									secondMsg[secondMsgIndex] <= '9');
 							if(secondMsgIndex != -1)
 							{
-								firstMsg = secondMsg.slice(0,secondMsgIndex+1);
-								secondMsg = secondMsg.slice(secondMsgIndex+1);
+								firstMsg = secondMsg.slice(0,secondMsgIndex);
+								secondMsg = secondMsg.slice(secondMsgIndex);
 							}
 						}
 											
@@ -1064,7 +1064,7 @@
 					hideLineNumers = _hideLineNumbersCheckbox.checked;
 				
 				//force only integer values in request
-			    DesktopContent.XMLHttpRequest("Console?RequestType=SaveUserPreferences", 
+			    DesktopContent.XMLHttpRequest("Request?RequestType=SaveUserPreferences", 
 			    										"colorIndex=" + (colorIndex|0) +
 														"&showSideBar=" + (showSideBar?1:0) +
 														"&noWrap=" + (noWrap?1:0) +

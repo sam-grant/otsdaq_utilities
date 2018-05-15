@@ -101,9 +101,7 @@ else {
       	// this.resetWithPermissions ~~      	
       	this.resetWithPermissions = function(permissions) {
             Debug.log("Desktop resetWithPermissions " + permissions,Debug.LOW_PRIORITY);
-            
-            this.iconsElement.innerHTML = ""; //clear current icons
-            _numOfIcons = 0;
+                        
             _permissions = permissions;
             ////////////
 
@@ -129,6 +127,9 @@ else {
 
       		//clear folder object
       		Desktop.desktop.icons.folders = [{},[]];
+      		
+      		_iconsElement.innerHTML = ""; //clear existing icons
+      		_numOfIcons = 0;
       		
       		var iconArray;
 

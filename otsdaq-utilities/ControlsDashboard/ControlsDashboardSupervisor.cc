@@ -1,53 +1,49 @@
 #include "otsdaq-utilities/ControlsDashboard/ControlsDashboardSupervisor.h"
 
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
-
-#include <xdaq/NamespaceURI.h>
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-#include "otsdaq-core/WebUsersUtilities/WebUsers.h"
-#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
-
-#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-
-
-#include <sys/stat.h> //for quickly checking if file exists
+#include <sys/stat.h> //for stat() quickly checking if file exists
 #include <dirent.h> //for DIR
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
-#include <errno.h>
+
+//
+//#include "otsdaq-core/MessageFacility/MessageFacility.h"
+//#include "otsdaq-core/Macros/CoutMacros.h"
+//
+//#include <xdaq/NamespaceURI.h>
+//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
+//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+//#include "otsdaq-core/WebUsersUtilities/WebUsers.h"
+//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
+//#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
+//
+//#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
+//
+//
+//#include <iostream>
+//#include <fstream>
+//#include <string>
+//#include <thread>         // std::this_thread::sleep_for
+//#include <chrono>         // std::chrono::seconds
+//#include <errno.h>
 
 //#include "EpicsInterface.h.bkup"
 #include "otsdaq-core/ControlsCore/ControlsVInterface.h"
-
 #include "otsdaq-core/PluginMakers/MakeControls.h"
-#define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/ControlsDashboardData/pages/";
+
+
 
 using namespace ots;
 
 
+#define PAGES_DIRECTORY 			std::string(getenv("SERVICE_DATA_PATH")) + "/ControlsDashboardData/pages/";
 
 
 XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 
 //========================================================================================================================
-ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub * s)
-throw (xdaq::exception::Exception)
-:
-xdaq::Application			(s   )
-, SOAPMessenger  				(this)
-, theConfigurationManager_      (new ConfigurationManager)
-, theRemoteWebUsers_			(this)
+ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* stub)
+: CoreSupervisorBase(stub)
 {
 	INIT_MF("ControlsDashboardSupervisor");
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 
-	xgi::bind (this, &ControlsDashboardSupervisor::requestHandler, "Default");
 	init();
 
 }
@@ -57,101 +53,120 @@ ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void)
 {
 	destroy();
 }
+
 //========================================================================================================================
-void ControlsDashboardSupervisor::requestHandler(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+//setSupervisorPropertyDefaults
+//		override to set defaults for supervisor property values (before user settings override)
+void ControlsDashboardSupervisor::setSupervisorPropertyDefaults()
 {
-	std::cout << __COUT_HDR_FL__ << std::endl;
-	cgicc::Cgicc cgi(in);
-	std::cout << __COUT_HDR_FL__ << std::endl;
-	std::string Command = CgiDataUtilities::getData(cgi,"RequestType");
-	std::cout << __COUT_HDR_FL__ << Command << std::endl;
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " " << Command << " : end"<< std::endl;
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.CheckUserLockRequestTypes,
+			"*");
+}
+
+//========================================================================================================================
+//forceSupervisorPropertyValues
+//		override to force supervisor property values (and ignore user settings)
+void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
+{
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+			"poll");
+}
+
+//========================================================================================================================
+void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
+		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
+{
+//	__COUT__ << std::endl;
+//	cgicc::Cgicc cgi(in);
+//	__COUT__ << std::endl;
+//	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
+//	__COUT__ << request << std::endl;
+//	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << requestType << " : end"<< std::endl;
 
 
-	if(Command == "")
-	{
-		Default(in, out);
-		return;
-	}
-
-	HttpXmlDocument xmldoc;
-	uint64_t activeSessionIndex;
-	std::string user;
-	uint8_t userPermissions;
-
-	//**** start LOGIN GATEWAY CODE ***//
-	{
-		bool automaticCommand = Command == "poll"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock   = true;
-		bool getUser     = false;
-		bool requireLock = false;
-
-		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,
-				out,
-				&xmldoc,
-				theSupervisorDescriptorInfo_,
-				&userPermissions,  		//acquire user's access level (optionally null pointer)
-				!automaticCommand,			//true/false refresh cookie code
-				1, //set access level requirement to pass gateway
-				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				requireLock,				//true/false requires this user has the lock to proceed
-				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
-				&username,
-				0,						//acquire user's Display Name
-				&activeSessionIndex		//acquire user's session index associated with the cookieCode
-		))
-		{	//failure
-			std::cout << __COUT_HDR_FL__ << "Failed Login Gateway: " <<
-					out->str() << std::endl; //print out return string on failure
-			return;
-		}
-	}
-	//**** end LOGIN GATEWAY CODE ***//
-
-
+//	if(requestType == "")
+//	{
+//		Default(in, out);
+//		return;
+//	}
+//
+//	HttpXmlDocument xmldoc;
+//	uint64_t activeSessionIndex;
+//	std::string user;
+//	uint8_t userPermissions;
+//
+//	//**** start LOGIN GATEWAY CODE ***//
+//	{
+//		bool automaticCommand = requestType == "poll"; //automatic commands should not refresh cookie code.. only user initiated commands should!
+//		bool checkLock   = true;
+//		bool getUser     = false;
+//		bool requireLock = false;
+//
+//		if(!theRemoteWebUsers_.xmlRequestToGateway(
+//				cgi,
+//				out,
+//				&xmldoc,
+//				allSupervisorInfo_,
+//				&userPermissions,  		//acquire user's access level (optionally null pointer)
+//				!automaticCommand,			//true/false refresh cookie code
+//				1, //set access level requirement to pass gateway
+//				checkLock,					//true/false enable check that system is unlocked or this user has the lock
+//				requireLock,				//true/false requires this user has the lock to proceed
+//				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
+//				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
+//				&username,
+//				0,						//acquire user's Display Name
+//				&activeSessionIndex		//acquire user's session index associated with the cookieCode
+//		))
+//		{	//failure
+//			__COUT__ << "Failed Login Gateway: " <<
+//					out->str() << std::endl; //print out return string on failure
+//			return;
+//		}
+//	}
+//	//**** end LOGIN GATEWAY CODE ***//
+//
+//
 
 
 	//return xml doc holding server response
-	std::cout << __COUT_HDR_FL__ << std::endl;
+	__COUT__ << std::endl;
 
-	if(Command == "poll")
+	if(requestType == "poll")
 	{
-		std::string uid = CgiDataUtilities::getOrPostData(cgi,"uid");
-		Poll(in, out, &xmldoc, uid);
+		std::string uid = CgiDataUtilities::getOrPostData(cgiIn,"uid");
+		Poll(cgiIn, xmlOut, uid);
 	}
-	else if(Command == "generateUID")
+	else if(requestType == "generateUID")
 	{
-		std::string pvList = CgiDataUtilities::getOrPostData(cgi,"PVList");
-		GenerateUID(in, out, &xmldoc, pvList);
+		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn,"PVList");
+		GenerateUID(cgiIn, xmlOut, pvList);
 	}
-	else if(Command == "GetPVSettings")
+	else if(requestType == "GetPVSettings")
 	{
-		std::string pvList = CgiDataUtilities::getOrPostData(cgi,"PVList");
-		GetPVSettings(in, out, &xmldoc, pvList);
-		xmldoc.addTextElementToData("id", CgiDataUtilities::getData(cgi,"id"));
+		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn,"PVList");
+		GetPVSettings(cgiIn, xmlOut, pvList);
+		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn,"id"));
 	}
-	else if(Command == "getList")
+	else if(requestType == "getList")
 	{
-		GetList(in, out, &xmldoc);
+		GetList(cgiIn, xmlOut);
 	}
-	else if(Command == "getPages")
+	else if(requestType == "getPages")
 	{
-		GetPages(in, out, &xmldoc);
+		GetPages(cgiIn, xmlOut);
 	}
-	else if(Command == "loadPage")
+	else if(requestType == "loadPage")
 	{
-		std::string page = CgiDataUtilities::getData(cgi,"Page");
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " " << page << std::endl;
+		std::string page = CgiDataUtilities::getData(cgiIn,"Page");
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page << std::endl;
 
-		loadPage(in, out, &xmldoc, page);
+		loadPage(cgiIn, xmlOut, page);
 	}
-	std::cout << __COUT_HDR_FL__ << std::endl;
+	__COUT__ << std::endl;
 
 
-	xmldoc.outputXmlDocument((std::ostringstream*) out, true);
+	//xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 
 
 }
@@ -161,12 +176,8 @@ void ControlsDashboardSupervisor::init(void)
 {
 	UID_= 0;
 
-	theSupervisorDescriptorInfo_.init(getApplicationContext());
-	//if(true)
-
 	__COUT__ << std::endl;
 	std::string t = "test";
-	//std::string path = "/XDAQContextConfiguration";
 	std::string nodeName = theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName();
 	__COUT__ << nodeName << std::endl;
 	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);
@@ -190,20 +201,10 @@ void ControlsDashboardSupervisor::destroy(void)
 }
 
 //========================================================================================================================
-void ControlsDashboardSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
-{
-	//	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-	//
-	//	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/SlowControlsDashboard.html?urn=" <<
-	//	this->getApplicationDescriptor()->getLocalId() <<"' /></frameset></html>";
-}
-//========================================================================================================================
-void ControlsDashboardSupervisor::Poll(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string UID )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::Poll(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID )
 {
 
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Polling on UID:" << UID << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Polling on UID:" << UID << std::endl;
 
 	std::map<int, std::set<std::string>>::iterator mapReference;
 
@@ -213,18 +214,18 @@ throw (xgi::exception::Exception)
 
 		for(auto pv : mapReference->second)
 		{
-			std::cout << __COUT_HDR_FL__ << pv << std::endl;
+			__COUT__ << pv << std::endl;
 			//PVInfo * pvInfo = interface_->mapOfPVInfo_.find(pv)->second;
-			//std::cout << __COUT_HDR_FL__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
+			//__COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			//interface_->getCurrentPVValue(pv);
 			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
 
-			std::cout << __COUT_HDR_FL__ << pv << ": " << pvInformation[1] <<  " : " << pvInformation[3] << std::endl;
+			__COUT__ << pv << ": " << pvInformation[1] <<  " : " << pvInformation[3] << std::endl;
 
 
 			if(pvInformation[0] != "NO_CHANGE")
 			{
-				//std::cout << __COUT_HDR_FL__ << "Reached" <<  std::endl;
+				//__COUT__ << "Reached" <<  std::endl;
 				JSONMessage += "\"" + pv + "\": {";
 
 				/*if(pvInfo->mostRecentBufferIndex - 1 < 0)
@@ -241,7 +242,7 @@ throw (xgi::exception::Exception)
 			}
 			else
 			{
-				std::cout << __COUT_HDR_FL__ << "No change in value since last poll: " <<  pv << std::endl;
+				__COUT__ << "No change in value since last poll: " <<  pv << std::endl;
 			}
 
 			//Handle Channels that disconnect, etc
@@ -251,20 +252,20 @@ throw (xgi::exception::Exception)
 			}
 
 
-			//std::cout << __COUT_HDR_FL__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
-			//std::cout << __COUT_HDR_FL__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
-			//std::cout << __COUT_HDR_FL__ << pv << " : " << pvInfo->dataCache[(pvInfo->mostRecentBufferIndex -1)].second << std::endl;
+			//__COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
+			//__COUT__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
+			//__COUT__ << pv << " : " << pvInfo->dataCache[(pvInfo->mostRecentBufferIndex -1)].second << std::endl;
 
 		}
 
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
 		JSONMessage += "}";
-		std::cout << __COUT_HDR_FL__ << JSONMessage << std::endl;
-		xmldoc->addTextElementToData("JSON", JSONMessage); //add to response
+		__COUT__ << JSONMessage << std::endl;
+		xmlOut.addTextElementToData("JSON", JSONMessage); //add to response
 
 		/*for (std::set<unsigned long>::iterator it = mapReference->second->begin(); it != mapReference->second.end(); ++it)
 		{
-			//std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << it << std::endl;
+			//__COUT__ << this->getApplicationDescriptor()->getLocalId() << it << std::endl;
 
 
 		}*/
@@ -276,7 +277,7 @@ throw (xgi::exception::Exception)
 								+ "\"Mu2e_CompStatus_daq01/load_one\":\"80\","
 								+ "\"Mu2e_Weather_2/timestamp\": \"11.14.45.2016.4.8\""
 								+ "}";
-		xmldoc->addTextElementToData("JSON", fakeData); //add to response*/
+		xmlOut.addTextElementToData("JSON", fakeData); //add to response*/
 
 
 
@@ -285,14 +286,13 @@ throw (xgi::exception::Exception)
 	}
 	else // UID is not in our map so force them to generate a new one
 	{
-		xmldoc->addTextElementToData("JSON", "{ \"message\": \"NOT_FOUND\"}"); //add to response
+		xmlOut.addTextElementToData("JSON", "{ \"message\": \"NOT_FOUND\"}"); //add to response
 	}
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::GetPVSettings(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvList )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList )
 {
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Getting settings for " << pvList << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Getting settings for " << pvList << std::endl;
 
 	std::string JSONMessage = "{ ";
 
@@ -309,7 +309,7 @@ throw (xgi::exception::Exception)
 			pv = pvList.substr(pos, nextPos-pos);
 
 
-			std::cout << __COUT_HDR_FL__ << pv << std::endl;
+			__COUT__ << pv << std::endl;
 
 			std::array<std::string, 9> pvSettings = interface_->getSettings(pv);
 
@@ -331,13 +331,13 @@ throw (xgi::exception::Exception)
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
 		JSONMessage += "}";
 
-		std::cout << __COUT_HDR_FL__ << JSONMessage << std::endl;
-		xmldoc->addTextElementToData("JSON", JSONMessage); //add to response
+		__COUT__ << JSONMessage << std::endl;
+		xmlOut.addTextElementToData("JSON", JSONMessage); //add to response
 
 	}
 	else
 	{
-		xmldoc->addTextElementToData("JSON", "{ \"message\": \"GetPVSettings\"}"); //add to response
+		xmlOut.addTextElementToData("JSON", "{ \"message\": \"GetPVSettings\"}"); //add to response
 	}
 
 
@@ -345,11 +345,10 @@ throw (xgi::exception::Exception)
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::GenerateUID(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string pvlist )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist )
 {
 
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Generating UID" << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "	<< "Generating UID" << std::endl;
 
 	std::set<std::string> pvDependencies;
 	std::string uid;
@@ -361,12 +360,12 @@ throw (xgi::exception::Exception)
 	if(pvlist.size() > 0)
 	{
 		//pvlist.substr(2);
-		std::cout << __COUT_HDR_FL__ << pvlist << std::endl;
+		__COUT__ << pvlist << std::endl;
 
 		while((nextPos = pvlist.find(",", pos)) != std::string::npos)
 		{
 			pv = pvlist.substr(pos, nextPos-pos);
-			//std::cout << __COUT_HDR_FL__ << UID_ << ":" << pos << "-" << nextPos << " ->" << pv << std::endl;
+			//__COUT__ << UID_ << ":" << pos << "-" << nextPos << " ->" << pv << std::endl;
 			pvDependencies.insert(pv);
 			pos = nextPos + 1;
 		}
@@ -376,31 +375,29 @@ throw (xgi::exception::Exception)
 		uid = (std::string("{ \"message\": \"") + std::to_string(UID_) +"\"}");
 	}else
 	{
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " PVList invalid: "	<< pvlist << std::endl;
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << " PVList invalid: "	<< pvlist << std::endl;
 		uid = "{ \"message\": \"-1\"}";
 	}
 
 
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: "	<< UID_ << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: "	<< UID_ << std::endl;
 
-	xmldoc->addTextElementToData("JSON", uid); //add to response
+	xmlOut.addTextElementToData("JSON", uid); //add to response
 
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::GetList(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
 
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 	std::cout << " "	<< interface_->getList("JSON") << std::endl;
 
-	xmldoc->addTextElementToData("JSON", interface_->getList("JSON")); //add to response
+	xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::GetPages(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
 	/*DIR * dir;
 	struct dirent * ent;
@@ -408,19 +405,19 @@ throw (xgi::exception::Exception)
 
 	std::vector<std::string> pages;
 
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages: " << pathToPages << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages: " << pathToPages << std::endl;
 	if((dir = opendir (pathToPages.c_str())) != NULL)
 	{
 		while((ent = readdir(dir)) != NULL)
 		{
 			pages.push_back(ent->d_name);
-			std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << " GetPages"	<< ent->d_name << std::endl;
+			__COUT__ << this->getApplicationDescriptor()->getLocalId() << " GetPages"	<< ent->d_name << std::endl;
 		}
 		closedir(dir);
 	}
 	else
 	{
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Could not open directory: " << pathToPages << std::endl;
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not open directory: " << pathToPages << std::endl;
 		return;
 	}*/
 	std::vector<std::string> pages;
@@ -435,44 +432,43 @@ throw (xgi::exception::Exception)
 	}
 	if(returnJSON.size() > 2 && returnJSON.compare("[") != 0)
 	{
-		std::cout << __COUT_HDR_FL__ << "Found pages on server!" << std::endl;
+		__COUT__ << "Found pages on server!" << std::endl;
 		returnJSON.resize(returnJSON.size()-2);
 		returnJSON += "]";
 	}
 	else
 	{
 		//No pages on the server
-		std::cout << __COUT_HDR_FL__ << "No pages found on server!" << std::endl;
+		__COUT__ << "No pages found on server!" << std::endl;
 		returnJSON = "[\"None\"]";
 	}
 	std::cout << returnJSON << std::endl;
 
-	xmldoc->addTextElementToData("JSON", returnJSON); //add to response
+	xmlOut.addTextElementToData("JSON", returnJSON); //add to response
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::loadPage(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc, std::string page )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page )
 {
 	//FIXME Filter out malicious attacks i.e. ../../../../../ stuff
 	struct stat buffer;
 	if(page.find("..") != std::string::npos)
 	{
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '..': " << page << std::endl;
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '..': " << page << std::endl;
 	}
 	else if (page.find("~") != std::string::npos)
 	{
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '~': " << page << std::endl;
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Error! Request using '~': " << page << std::endl;
 	}
 	else if(!(stat(page.c_str(), &buffer) == 0))
 	{
-		std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Error! File not found: " << page << std::endl;
+		__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Error! File not found: " << page << std::endl;
 	}
 
 	std::string file = PAGES_DIRECTORY
 			file += "/" + page;
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< page << std::endl;
-	std::cout << __COUT_HDR_FL__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< file << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< page << std::endl;
+	__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Trying to load page: "	<< file << std::endl;
 	//read file
 	//for each line in file
 
@@ -486,19 +482,17 @@ throw (xgi::exception::Exception)
 	}
 	std::cout << "Finished reading file" << std::endl;
 
-	xmldoc->addTextElementToData("JSON", JSONpage); //add to response
+	xmlOut.addTextElementToData("JSON", JSONpage); //add to response
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::Subscribe(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
 
 
 }
 //========================================================================================================================
-void ControlsDashboardSupervisor::Unsubscribe(xgi::Input * in, xgi::Output * out, HttpXmlDocument *xmldoc )
-throw (xgi::exception::Exception)
+void ControlsDashboardSupervisor::Unsubscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
 
 

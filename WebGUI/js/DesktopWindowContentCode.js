@@ -672,7 +672,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 								DesktopContent._needToLoginMailbox.innerHTML = "1"; //force to login screen on server failure                        
 
 						}
-						else 
+						else if(DesktopContent._lastCookieCode != "AllowNoUser")
 						{ //check if should update cc mailbox
 
 							//check twice to handle race conditions with other content code

@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<script>		
+		
+		//	Description of Template for Record Wizard Configuration GUI:
+		//	
+		//		Example of presenting the record creation wizard.
+		//			
+		//
+
+		/////////////////////////////////////////////////////////////////////////////////////////
+		/////////////////////////////////////////////////////////////////////////////////////////
+		
+
+	</script>
+
+
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationGUI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+
+	<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/MultiSelectBox.js"></script>
+
+	<style type="text/css">			
+
+	
+		
+	</style>
+	
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/DeleteWiz_ConfigurationGUI.js"></script>
+	
+	<script>		
+				
+		//=====================================================================================
+		//init ~~
+		//	init called once body has loaded
+		function init() 
+		{									
+			Debug.log("CfgGUI record Wiz example init ");
+		
+			DeleteWiz.createWiz(
+					function(atLeastOneRecordWasCreated)
+					{				
+				Debug.log("Done at Template! atLeastOneRecordWasCreated = " + 
+						atLeastOneRecordWasCreated,
+						Debug.INFO_PRIORITY);
+					});
+						
+		} //end init()
+				
+	</script>
+</head>
+	
+
+<body onload='Javascript:init();'>	
+		
+	<!-- body content populated by javascript paint(), etc. -->
+	
+</body>
+	
+</html>

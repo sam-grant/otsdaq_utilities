@@ -54,7 +54,7 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getFieldsOfRecords(subsetBasePath,recordArr,fieldList,maxDepth,responseHandler,modifiedTables)
 //	ConfigurationAPI.getFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,responseHandler,modifiedTables)
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
-//	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTables)
+//	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTablesIn,silenceErrors)	)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
 //	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
@@ -62,8 +62,8 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.setEditableFieldValue(fieldObj,value,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getSelectedEditableFieldIndex()
-// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables,silenceErrors)	
-// 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTables)	
+// 	ConfigurationAPI.addSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
+// 	ConfigurationAPI.deleteSubsetRecords(subsetBasePath,recordArr,responseHandler,modifiedTablesIn,silenceErrors)	
 
 
 //"public" helpers:
@@ -73,6 +73,9 @@ if (typeof DesktopContent == 'undefined' &&
 //	ConfigurationAPI.removeClass(elem,class)
 //	ConfigurationAPI.hasClass(elem,class)
 //	ConfigurationAPI.extractActiveGroups(req)
+//	ConfigurationAPI.incrementName(name)
+//	ConfigurationAPI.createNewRecordName(startingName,existingArr)
+
 
 //"public" members:
 ConfigurationAPI._activeGroups = {}; //to fill, call ConfigurationAPI.getActiveGroups() or ConfigurationAPI.extractActiveGroups()
@@ -92,6 +95,11 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
+//	ConfigurationAPI.getTreeChildren(tree,pathToChildren)
+//	ConfigurationAPI.getTreeRecordLinks(node)
+//	ConfigurationAPI.getTreeRecordName(node)
+//	ConfigurationAPI.getTreeLinkChildren(link)
+//	ConfigurationAPI.getTreeLinkTable(link)
 
 //
 //		for Editable Fields
@@ -462,7 +470,148 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 			}, //handler
 			0, //handler param
 			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
-} 
+} // end getTree()
+
+
+//=====================================================================================
+//getTreeChildren ~~
+//	returns an array of children nodes at pathToChildren starting at root of tree (xml object).
+//	
+ConfigurationAPI.getTreeChildren = function(tree,pathToChildren)
+{
+	var pathArr = pathToChildren?pathToChildren.split('/'):"";
+	var children;
+	var found;
+	
+	children = tree.children;
+	
+	//look through path elements and for all nodes
+	for(var i=0;i<pathArr.length;++i)
+	{
+		if(pathArr[i].trim().length == 0) continue; //skip empty path segments
+		
+		Debug.log(i + ": " + pathArr[i]);
+		
+		found = false;
+		for(var j=0;j<children.length;++j)
+			if(children[j].getAttribute("value") == pathArr[i])
+			{
+				found = true;
+				//new tree
+				children = children[j].children;
+				Debug.log("found " + pathArr[i]);
+				break;
+			}
+		
+		if(!found)
+		{
+			Debug.log("Invalid path '" + pathToChildren + "' through tree! How did you get here? Notify admins.", Debug.HIGH_PRIORITY);
+			return undefined;
+		}
+	}
+	
+	//result is all children, but we just want nodes
+	
+	var retArr = [];
+	for(var i=0;i<children.length;++i)
+		if(children[i].nodeName == "node")
+			retArr.push(children[i]);	
+	
+	return retArr;
+	
+} //end getTreeChildren
+
+//=====================================================================================
+//getTreeRecordLinks ~~
+//	returns an array of links within a record node
+//	
+ConfigurationAPI.getTreeRecordLinks = function(node)
+{
+	var children = node.children;
+	var retArr = [];
+	var subchildren;
+	
+	//for each child, check if link
+	for(var i=0;i<children.length;++i)
+	{	
+		if(children[i].nodeName != "node") continue;
+		
+		subchildren = children[i].children;
+		
+		for(var j=0;j<subchildren.length;++j)
+		{
+			if(subchildren[j].nodeName == "LinkConfigurationName")
+			{
+				retArr.push(children[i]);
+				break;
+			}	
+		}		
+	}
+	
+	return retArr;	
+} //end getTreeRecordLinks
+
+
+//=====================================================================================
+//getTreeRecordName ~~
+//	returns name of a record node
+//	
+ConfigurationAPI.getTreeRecordName = function(node)
+{
+	//if is UID link then give UID as name
+	//	assume its in first two children
+	var children = node.children;
+	if(children.length > 2)
+	{
+		if(children[0].nodeName == "valueType" && 
+				children[0].getAttribute("value") == "Disconnected")
+			throw("Disconnected link!");
+			
+		if(children[0].nodeName == "UID")
+			return children[0].getAttribute("value");
+
+		if(children[1].nodeName == "UID")
+			return children[0].getAttribute("value");				
+	}
+	
+	return node.getAttribute("value");
+}  //end getTreeRecordName
+
+//=====================================================================================
+//getTreeLinkChildren ~~
+//	returns an array of child nodes connected through the link
+//	
+ConfigurationAPI.getTreeLinkChildren = function(link)
+{
+	var children = link.children;
+	var retArr = [];
+
+	for(var i=0;i<children.length;++i)
+	{		
+		if(children[i].nodeName == "UID")
+		{
+			retArr.push(link);
+			break; //done since UID link
+		}
+		else if(children[i].nodeName == "node")
+			retArr.push(children[i]);
+	}
+
+	return retArr;	
+} //end getTreeLinkChildren
+
+//=====================================================================================
+//getTreeLinkTable ~~
+//	returns the name of the table connected through the link
+//	
+ConfigurationAPI.getTreeLinkTable = function(link)
+{
+	var children = link.children;	
+	for(var i=0;i<children.length;++i)
+		if(children[i].nodeName == "LinkConfigurationName")
+			return children[i].getAttribute("value");
+	throw("Table name not found!");	
+} //end getTreeLinkTable
 
 //=====================================================================================
 //getFieldsOfRecords ~~
@@ -797,14 +946,14 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 //
 //
 ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fieldObjArr,
-		valueArr,responseHandler,modifiedTables)
+		valueArr,responseHandler,modifiedTablesIn,silenceErrors)
 {	
 	var modifiedTablesListStr = "";
-	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
 	{
 		if(i) modifiedTablesListStr += ",";
-		modifiedTablesListStr += modifiedTables[i].tableName + "," +
-				modifiedTables[i].tableVersion;
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
 	}
 	
 	var fieldListStr = ""; 
@@ -865,12 +1014,14 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
-				
+		var modifiedTables = [];
+		
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			if(responseHandler) responseHandler(modifiedTables);
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			if(responseHandler) responseHandler(modifiedTables,err);
 			return;
 		}		
 		//modifiedTables
@@ -878,8 +1029,6 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
 		var tableVersion;
-		
-		modifiedTables = [];
 		
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
@@ -1822,7 +1971,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 									document.getElementsByClassName("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-setGroupAlias");
 							//Not sure if the above may throw under certain cicumstances with popup, 
 							//	so keeping above and below for now 
-							if(!document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""))
+							if(setAliasCheckboxes.length != affectedGroupNames.length)
 								throw("no popup"); //if no popup, throw
 							
 
@@ -5171,14 +5320,14 @@ ConfigurationAPI.removeClass = function(ele,cls)
 //			obj.tableComment
 //
 ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
-		recordArr,responseHandler,modifiedTables,silenceErrors)
+		recordArr,responseHandler,modifiedTablesIn,silenceErrors)
 {
 	var modifiedTablesListStr = "";
-	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
 	{
 		if(i) modifiedTablesListStr += ",";
-		modifiedTablesListStr += modifiedTables[i].tableName + "," +
-				modifiedTables[i].tableVersion;
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
 	}
 	
 	var recordListStr = "";
@@ -5199,6 +5348,7 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
 			function(req)
 			{
+		var modifiedTables = [];
 
 		var err = DesktopContent.getXMLValue(req,"Error");
 		if(err) 
@@ -5215,9 +5365,7 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		var tableNames = req.responseXML.getElementsByTagName("NewActiveTableName");
 		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
-		var tableVersion;
-		
-		modifiedTables = [];
+		var tableVersion;		
 
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
@@ -5255,23 +5403,27 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 //			obj.tableComment
 //
 ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
-		recordArr,responseHandler,modifiedTables)
+		recordArr,responseHandler,modifiedTablesIn,silenceErrors)
 {
 	var modifiedTablesListStr = "";
-	for(var i=0;modifiedTables && i<modifiedTables.length;++i)
+	for(var i=0;modifiedTablesIn && i<modifiedTablesIn.length;++i)
 	{
 		if(i) modifiedTablesListStr += ",";
-		modifiedTablesListStr += modifiedTables[i].tableName + "," +
-				modifiedTables[i].tableVersion;
+		modifiedTablesListStr += modifiedTablesIn[i].tableName + "," +
+				modifiedTablesIn[i].tableVersion;
 	}
 	
 	var recordListStr = "";
+	var recordCount = 1;
 	if(Array.isArray(recordArr))
+	{
 		for(var i=0;i<recordArr.length;++i)
 		{
 			if(i) recordListStr += ",";
 			recordListStr += encodeURIComponent(recordArr[i]);
 		}
+		recordCount = recordArr.length;
+	}
 	else //handle single record case
 		recordListStr = encodeURIComponent(recordArr);
 	
@@ -5285,10 +5437,12 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 			{
 
 		var err = DesktopContent.getXMLValue(req,"Error");
+		var modifiedTables = [];
 		if(err) 
 		{
-			Debug.log(err,Debug.HIGH_PRIORITY);
-			responseHandler(modifiedTables);
+			if(!silenceErrors)
+				Debug.log(err,Debug.HIGH_PRIORITY);
+			responseHandler(modifiedTables,err);
 			return;
 		}
 
@@ -5299,8 +5453,6 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 		var tableVersions = req.responseXML.getElementsByTagName("NewActiveTableVersion");
 		var tableComments = req.responseXML.getElementsByTagName("NewActiveTableComment");
 		var tableVersion;
-
-		modifiedTables = [];
 		
 		//add only temporary version
 		for(var i=0;i<tableNames.length;++i)
@@ -5313,7 +5465,7 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 			obj.tableComment = DesktopContent.getXMLValue(tableComments[i]);
 			modifiedTables.push(obj);
 		}
-		responseHandler(modifiedTables);
+		responseHandler(modifiedTables,undefined,subsetBasePath,recordCount);
 
 			}, //handler
 			0, //handler param
@@ -5321,10 +5473,47 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 	
 } // end ConfigurationAPI.deleteSubsetRecords()
 
+//=====================================================================================
+//incrementName ~~		
+ConfigurationAPI.incrementName = function(name)
+{
+	//find last non-numeric
+	for(var i=name.length-1;i>=0;--i)
+		if(!(name[i] >= '0' && name[i] <= '9'))
+			break;	
+	//note: if all numbers, then i is -1, which still works
+	var num = (name.substr(i+1)|0) + 1;	
+	name = name.substr(0,i+1);	
+	return name + num;
+} //end incrementName()
+
+//=====================================================================================
+//createNewRecordName ~~		
+ConfigurationAPI.createNewRecordName = function(startingName,existingArr)
+{
+	var retVal = startingName;
+	var found,i;
+	try
+	{
+		var apps = existingArr;
+		do
+		{
+			retVal = ConfigurationAPI.incrementName(retVal);
+			found = false;
+			for(i=0;i<apps.length;++i)
+				if(apps[i] == retVal) 
+				{found = true; break;}
+		} while(found);
+		Debug.log("createNewRecordName " + retVal);
+	}
+	catch(e)
+	{
+		//ignore errors.. assume no all apps
+		return ConfigurationAPI.incrementName(retVal);
+	}
 	
-
-
-
+	return retVal;		
+} //end createNewRecordName()
 
 
 

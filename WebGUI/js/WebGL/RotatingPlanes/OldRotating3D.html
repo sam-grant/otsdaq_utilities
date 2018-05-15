@@ -334,7 +334,7 @@ var _arrayIdentifier;
 
 function getPlaneParticleCollisionsFromServer() {
 
-	DesktopContent.XMLHttpRequest("request?RequestType=getHits", "", getPlaneParticleCollisionsHandler);
+	DesktopContent.XMLHttpRequest("Request?RequestType=getHits", "", getPlaneParticleCollisionsHandler);
 }
 
 function getPlaneParticleCollisionsHandler (req) {
@@ -415,7 +415,7 @@ function getPlaneParticleCollisionsHandler (req) {
 
 function get3dDataFromServer() {
 
-	DesktopContent.XMLHttpRequest("request?RequestType=get3dData", "", get3dDataHandler);
+	DesktopContent.XMLHttpRequest("Request?RequestType=get3dData", "", get3dDataHandler);
 
 }
 
@@ -471,7 +471,7 @@ function drawParticles() {
 
 function getGeometryFromServer () {
 
-	DesktopContent.XMLHttpRequest("request?RequestType=getGeometry", "", getGeometryHandler);
+	DesktopContent.XMLHttpRequest("Request?RequestType=getGeometry", "", getGeometryHandler);
 }
 
 function getGeometryHandler (req) {

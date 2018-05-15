@@ -449,7 +449,7 @@
 			    Debug.log("Chat sendChat  ");
 			    
 				//send chat to server
-				DesktopContent.XMLHttpRequest("Chat?RequestType=SendChat", "chat="+chat+"&user="+_displayName);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=SendChat", "chat="+chat+"&user="+_displayName);		
 			    
 				_lastSentChat = _lastTypedChat = _inputEl.value;
 			    _inputEl.value = ""; 	//clear input 
@@ -568,13 +568,13 @@
 			//	if _lastUpdateIndex doesn't match server, server will give all new info since
 			//	initially _lastUpdateIndex = 0
 			function getChatUpdates() {			
-				DesktopContent.XMLHttpRequest("Chat?RequestType=RefreshChat","lastUpdateIndex="+_lastUpdateIndex+"&user="+_displayName,handleRefreshChat);
+				DesktopContent.XMLHttpRequest("Request?RequestType=RefreshChat","lastUpdateIndex="+_lastUpdateIndex+"&user="+_displayName,handleRefreshChat);
 			}
 
 			//getActiveUsers ~
 			// 	get active users from server
 			function getActiveUsers() {	
-				DesktopContent.XMLHttpRequest("Chat?RequestType=RefreshUsers","",handleActiveUsers);
+				DesktopContent.XMLHttpRequest("Request?RequestType=RefreshUsers","",handleActiveUsers);
 			}
 			
 			//handleActiveUsers ~
@@ -743,7 +743,7 @@
 			//pageUser ~
 			function pageUser(u) {
 			    Debug.log("Chat pageUser now is " + u);	
-				DesktopContent.XMLHttpRequest("Chat?RequestType=PageUser","topage="+u+"&user="+_displayName,handleRefreshChat);
+				DesktopContent.XMLHttpRequest("Request?RequestType=PageUser","topage="+u+"&user="+_displayName,handleRefreshChat);
 			}
 			
 		</script>
