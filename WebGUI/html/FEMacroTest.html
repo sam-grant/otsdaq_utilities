@@ -65,7 +65,7 @@
 	
 	
 			//get context and backbone member list 
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getFEMacroList", "", 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getFEMacroList", "", 
 					function (req) {				
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
@@ -345,7 +345,7 @@
 				postData += outEls[i];
 			}
 			
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=runFEMacro" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +
 					"&feSupervisorType=" + feSupervisorType + 
 					"&supervisorLID=" + supervisorLID +
 					"&feUID=" + feUID +
