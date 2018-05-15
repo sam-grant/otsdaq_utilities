@@ -57,7 +57,15 @@ void ConfigurationGUISupervisor::init(void)
 	__SUP_COUT__ << "Initializing..." << std::endl;
 
 	__SUP_COUT__ << "Activating saved context, which may prepare for normal mode..." << std::endl;
-	testXDAQContext(); //test context group activation
+	try
+	{
+		testXDAQContext(); //test context group activation
+	}
+	catch(...)
+	{
+		__COUT_WARN__ << "Failed test context group activation. otsdaq, in Normal mode, will not launch when this test fails. " <<
+				"Check the active context group from within Wizard Mode." << __E__;
+	}
 }
 
 
