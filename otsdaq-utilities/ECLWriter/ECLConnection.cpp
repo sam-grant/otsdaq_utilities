@@ -114,12 +114,13 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	std::string myData = mySalt + ":" + _pwd + ":";
 
 	// create text from xml form, but need to remove all \n's
-	std::ostringstream oss;
-	oss << e;
+    std::ostringstream oss;
+    entry(oss, e);
 	std::string eclString = oss.str();
 	__COUT__ << "ECL XML is: " << eclString << std::endl;
 	//std::string eclString = e.entry();
 	eclString = eclString.substr(eclString.find_first_of(">") + 2);
+eclString = myData+eclString;
 
 	unsigned char resultMD5[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)eclString.c_str(), eclString.size(), resultMD5);
