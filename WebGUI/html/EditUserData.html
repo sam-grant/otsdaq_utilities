@@ -60,12 +60,12 @@
 					if( fileName ) {
 						label.innerHTML = fileName;
 						exportBtn.innerHTML = "Upload";
-						//exportBtn.setAttribute("onclick", "uploadToServer(\"Import\",handleImportSettings);");
+						exportBtn.setAttribute("onmouseup", "uploadToServer(\"Import\",handleImportSettings);");
 					}
 					else {
 						label.innerHTML = labelVal;
 						exportBtn.innerHTML = "Export";
-						//exportBtn.setAttribute("onclick", "exportUserSettings()");
+						exportBtn.setAttribute("onmouseup", "exportUserSettings()");
 					}
 				});
 			});
@@ -475,7 +475,12 @@
 				Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
 				Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
 
-			}			   
+			}	
+			
+			if(req.responseText.indexOf("Upload Success") >= 0)
+			{
+				Debug.log("User Settings successfully uploaded!");
+			}		   
 	
 			Debug.log("Successfully handled User Settings.");
 			Debug.log(req);
