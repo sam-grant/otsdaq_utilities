@@ -144,6 +144,8 @@ void VisualSupervisor::forceSupervisorPropertyValues()
 {
 	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
 			"getRoot | getEvents");
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NoXmlWhiteSpaceRequestTypes,
+			"getRoot | getEvents"); //json data in ROOTJS library expects no funny characters
 //	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
 //			"setUserPreferences | getUserPreferences");
 }
