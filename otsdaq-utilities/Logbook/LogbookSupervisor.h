@@ -6,6 +6,8 @@
 namespace ots
 {
 
+//LogbookSupervisor
+//	This class handles the write and read requests for web users interfacing to the web desktop Logbook
 class LogbookSupervisor: public CoreSupervisorBase
 {
 

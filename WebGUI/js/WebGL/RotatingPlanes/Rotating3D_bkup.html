@@ -342,7 +342,7 @@
 //	
 	function getDataFromServer () {
 
-		DesktopContent.XMLHttpRequest("request?RequestType=get3dData", "", get3dDataHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=get3dData", "", get3dDataHandler);
 		reqServerData(_Coordinates)
 		return _Coordinates
 	}
@@ -356,7 +356,7 @@
 	
 	function getGeometryFromServer () {
 
-		DesktopContent.XMLHttpRequest("request?RequestType=getGeometry", "", getGeometryHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getGeometry", "", getGeometryHandler);
 	}
 
 	

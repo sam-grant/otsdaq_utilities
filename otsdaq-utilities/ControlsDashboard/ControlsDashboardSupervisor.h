@@ -14,6 +14,8 @@ namespace ots
 	class ControlsVInterface;
 	class ConfigurationManager;
 
+//ControlsDashboardSupervisor
+//	This class handles the management of slow controls interface plugins, as well as the user web interface
 class ControlsDashboardSupervisor: public CoreSupervisorBase
 {
 

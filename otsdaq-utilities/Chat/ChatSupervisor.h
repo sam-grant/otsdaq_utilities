@@ -7,6 +7,8 @@
 namespace ots
 {
 
+//ChatSupervisor
+//	This class handles the otsdaq user chat functionality available in the web desktop environment.
 class ChatSupervisor: public CoreSupervisorBase
 {
 

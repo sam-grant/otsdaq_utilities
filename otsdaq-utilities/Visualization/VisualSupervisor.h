@@ -8,6 +8,9 @@
 namespace ots
 {
 
+//VisualSupervisor
+//	This class handles the web user interface to a VisualDataManager with reqgard to the web desktop Visualizer.
+//	The Visualizer can display ROOT object in real-time, as well as 2D and 3D displays of streaming data.
 class VisualSupervisor: public CoreSupervisorBase
 {
 

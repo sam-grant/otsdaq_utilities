@@ -8,6 +8,8 @@
 namespace ots
 {
 
+//ConfigurationGUISupervisor
+//	This class handles the user requests to read and write the Configuration Tree.
 class ConfigurationGUISupervisor: public CoreSupervisorBase
 {
 

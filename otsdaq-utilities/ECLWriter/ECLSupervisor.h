@@ -6,6 +6,7 @@
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
 #include <xdaq/Application.h>
+#include "otsdaq-core/Macros/XDAQApplicationMacros.h"
 #include <xgi/Method.h>
 
 #include <cgicc/HTMLClasses.h>
@@ -16,7 +17,7 @@
 #include <string>
 #include <map>
 #include <chrono>
-#include "otsdaq-core/SupervisorInfo/AllSupervisorInfo.h"
+#include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
 
 
@@ -26,7 +27,7 @@ namespace ots
 class ConfigurationManager;
 class ConfigurationGroupKey;
 
-class ECLSupervisor: public xdaq::Application, public SOAPMessenger, public RunControlStateMachine
+class ECLSupervisor: public CoreSupervisorBase
 {
 
 public:
@@ -38,10 +39,7 @@ public:
     void init                  		(void);
     void destroy               		(void);
 
-    void 						Default               		(xgi::Input* in, xgi::Output* out) ;
-    void 						request                     (xgi::Input* in, xgi::Output* out) ;
-    void 						dataRequest                 (xgi::Input* in, xgi::Output* out) ;
-    void 						safari               		(xgi::Input* in, xgi::Output* out) ;
+    void 						defaultPage                 (xgi::Input* in, xgi::Output* out) ;
 
     void 						transitionConfiguring 		(toolbox::Event::Reference e) ;
     void 						transitionStarting    		(toolbox::Event::Reference e) ;
@@ -58,9 +56,6 @@ private:
 	const std::string                    	supervisorApplicationUID_;
 	const std::string                    	supervisorConfigurationPath_;
 
-    AllSupervisorInfo 						allSupervisorInfo_;
-    RemoteWebUsers                       	theRemoteWebUsers_;
-    //std::shared_ptr<ConfigurationGroupKey>    theConfigurationGroupKey_;
 
 	std::string ECLUser;
 	std::string ECLHost;

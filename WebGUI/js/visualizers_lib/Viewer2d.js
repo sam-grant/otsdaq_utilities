@@ -398,7 +398,7 @@ Viewer2d.createHud = function() {
 
 Viewer2d.getConfiguration = function() {
 	Debug.log("Viewer2d getConfiguration ");
-	//DesktopContent.XMLHttpRequest("request?RequestType=get2dConfiguration", "", Viewer2d.getConfigurationHandler);
+	//DesktopContent.XMLHttpRequest("Request?RequestType=get2dConfiguration", "", Viewer2d.getConfigurationHandler);
 	Viewer2d.getConfigurationHandler();
 }
 

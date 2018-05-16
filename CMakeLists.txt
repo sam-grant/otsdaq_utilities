@@ -84,6 +84,9 @@ add_subdirectory(otsdaq-utilities)
 # Scripts
 add_subdirectory(tools)
 
+# Documentation directory
+add_subdirectory(doc)
+
 # UPS Version files
 add_subdirectory(ups)
 

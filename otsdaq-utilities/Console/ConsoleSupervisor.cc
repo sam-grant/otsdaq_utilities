@@ -32,17 +32,20 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-
 : CoreSupervisorBase	(stub)
 , writePointer_     	(0)
 , messageCount_     	(0)
 {
+	__SUP_COUT__ << "Constructor started." << __E__;
+
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
 	init();
+
+	__SUP_COUT__ << "Constructor complete." << __E__;
 }
 
 //========================================================================================================================
@@ -102,6 +105,16 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//lockout the messages array for the remainder of the scope
 		//this guarantees the reading thread can safely access the messages
 		std::lock_guard<std::mutex> lock(cs->messageMutex_);
+
+		//NOTE: if we do not want this to be fatal, do not throw here, just print out
+
+		if(1) //generate special message and throw for failed socket
+		{
+			__SS__ << "FATAL Console error. Could not initialize socket on port " <<
+					myport << ". Perhaps the port is already in use? Check for multiple stale instances of otsdaq processes, or notify admins." <<
+					" Multiple instances of otsdaq on the same node should be possible, but port numbers must be unique." << std::endl;
+			__SS_THROW__;
+		}
 
 		//generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
@@ -235,7 +248,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
 {
-	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	__SUP_COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
 			getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
 }
@@ -258,7 +271,7 @@ void ConsoleSupervisor::forceSupervisorPropertyValues()
 void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 {
-	//__COUT__ << "requestType " << requestType << std::endl;
+	//__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 	//Commands:
 		//GetConsoleMsgs
@@ -276,7 +289,7 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 
         if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
         {
-    		__COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
+    		__SUP_COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
     				", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
     		xmlOut.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
     		return;
@@ -287,7 +300,7 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
-//		__COUT__ << "lastUpdateCount=" << lastUpdateCount <<
+//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount <<
 //				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 
 		insertMessageRefresh(&xmlOut,lastUpdateCount,lastUpdateIndex);
@@ -300,23 +313,23 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
         int messageOnly = CgiDataUtilities::postDataAsInt(cgiIn,"messageOnly");
         int hideLineNumers = CgiDataUtilities::postDataAsInt(cgiIn,"hideLineNumers");
 
-		__COUT__ << "requestType " << requestType << std::endl;
-		__COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__COUT__ << "noWrap: " << noWrap << std::endl;
-		__COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
+		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		if(userInfo.username_ == "") //should never happen?
 		{
-			__COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
+			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
 			xmlOut.addTextElementToData("Error","Error - InvauserInfo.username_user found.");
 			return;
 		}
 
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__COUT__ << "Save preferences: " << fn << std::endl;
+		__SUP_COUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
@@ -329,26 +342,26 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 	}
 	else if(requestType == "LoadUserPreferences")
 	{
-		__COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 		unsigned int colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers;
 
 		if(userInfo.username_ == "") //should never happen?
 		{
-			__COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
+			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
 			xmlOut.addTextElementToData("Error","Error - Invalid user found.");
 			return;
 		}
 
 		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__COUT__ << "Load preferences: " << fn << std::endl;
+		__SUP_COUT__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
 		{
 			//return defaults
-			__COUT__ << "Returning defaults." << std::endl;
+			__SUP_COUT__ << "Returning defaults." << std::endl;
 			xmlOut.addTextElementToData("colorIndex","0");
 			xmlOut.addTextElementToData("showSideBar","0");
 			xmlOut.addTextElementToData("noWrap","1");
@@ -362,11 +375,11 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 		fscanf(fp,"%*s %u",&messageOnly);
 		fscanf(fp,"%*s %u",&hideLineNumers);
 		fclose(fp);
-		__COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__COUT__ << "noWrap: " << noWrap << std::endl;
-		__COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
+		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		char tmpStr[20];
 		sprintf(tmpStr,"%u",colorIndex);
@@ -408,7 +421,7 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 		const time_t lastUpdateCount, const unsigned int lastUpdateIndex)
 {
-	//__COUT__ << std::endl;
+	//__SUP_COUT__ << std::endl;
 
 	//validate lastUpdateIndex
 	if(lastUpdateIndex > messages_.size() &&
@@ -442,15 +455,15 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 	{
 		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
 		xmlOut->addTextElementToData("message_overflow","1");
-		__COUT__ << "Overflow was detected!" << std::endl;
+		__SUP_COUT__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = (writePointer_+1) % messages_.size();
 	}
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;
 
-//	__COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-//	__COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
-//	__COUT__ << "writePointer_: " << writePointer_ << std::endl;
+//	__SUP_COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
+//	__SUP_COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
+//	__SUP_COUT__ << "writePointer_: " << writePointer_ << std::endl;
 
 	//return anything from refreshReadPointer_ to writePointer_
 	//all should have a clock greater than lastUpdateClock
@@ -495,7 +508,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 	}
 
 	if(requestOutOfSync) //if request was out of sync, show message
-		__COUT__ << requestOutOfSyncMsg;
+		__SUP_COUT__ << requestOutOfSyncMsg;
 }
 
 

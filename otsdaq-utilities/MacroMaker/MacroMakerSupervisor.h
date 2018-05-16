@@ -6,6 +6,10 @@
 namespace ots
 {
 
+//MacroMakerSupervisor
+//	This class handles the user interface to the web desktop MacroMaker. MacroMaker
+//	is a tool to conduct read and write commands with front-end interfaces and to manage
+//	sequence of commands on a per user basis.
 class MacroMakerSupervisor: public CoreSupervisorBase
 {
 
