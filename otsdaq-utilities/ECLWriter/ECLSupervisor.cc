@@ -135,7 +135,7 @@ void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
 		__COUT_INFO__ << "ECLSupervisor sending Start Run log message to ECL" << std::endl;
 		run = SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber");
 		run_start = std::chrono::steady_clock::now();
-		Write(false, false);
+		Write(WriteState::kStart);
 	}
 	catch (...)
 	{
@@ -150,7 +150,7 @@ void ECLSupervisor::transitionStopping(toolbox::Event::Reference e)
 	try
 	{
 		__COUT_INFO__ << "ECLSupervisor sending Stop Run log message to ECL" << std::endl;
-		Write(true, false);
+		Write(WriteState::kStop);
 	}
 	catch (...)
 	{
@@ -166,7 +166,7 @@ void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
 	try
 	{
 		__COUT_INFO__ << "ECLSupervisor sending Pause Run log message to ECL" << std::endl;
-		Write(true, true);
+		Write(WriteState::kPause);
 	}
 	catch (...)
 	{
@@ -182,11 +182,24 @@ void ECLSupervisor::transitionResuming(toolbox::Event::Reference e)
 	{
 		__COUT_INFO__ << "ECLSupervisor sending Resume Run log message to ECL" << std::endl;
 		run_start = std::chrono::steady_clock::now();
-		Write(false, true);
+		Write(WriteState::kResume);
 	}
 	catch (...)
 	{
 		__COUT_INFO__ << "ERROR! Couldn't Resume the ECLSupervisor" << std::endl;
+	}
+}
+
+void ECLSupervisor::enteringError(toolbox::Event::Reference e)
+{
+	try
+	{
+		__COUT_INFO__ << "ECLSupervisor sending Error log message to ECL" << std::endl;
+		Write(WriteState::kError);
+	}
+	catch (...)
+	{
+		__COUT_INFO__ << "ERROR! Couldn't Error the ECLSupervisor" << std::endl;
 	}
 }
 
@@ -238,37 +251,27 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 }
 
 
-int ECLSupervisor::Write(bool atEnd, bool pause)
+int ECLSupervisor::Write(WriteState state)
 {
 	ECLEntry_t eclEntry;
 	eclEntry.author(ECLUser);
-	eclEntry.category("Run History");
+	eclEntry.category("Facility");
 	Form_t form;
 	Field_t field;
 	Form_t::field_sequence fields;
 	std::string users = theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
 
-	if (!atEnd) {
+	switch(state)
+	  {
+	  case WriteState::kStart: form.name("OTSDAQ Start Run");break;
+	  case WriteState::kStop: form.name("OTSDAQ Stop Run"); break;
+	  case WriteState::kResume: form.name("OTSDAQ Resume Run"); break;
+	  case WriteState::kPause: form.name("OTSDAQ Pause Run"); break;
+	  case WriteState::kError: form.name("OTSDAQ Run Error"); break;
+	  }
 
-		if (pause) form.name(ExperimentName + " OTSDAQ Resume Run");
-		else 			form.name(ExperimentName + " OTSDAQ Start Run");
-
-
-		field = Field_t(EscapeECLString(run), "RunNumber");
-		fields.push_back(field);
-
-		field = Field_t(EscapeECLString(users), "ActiveUsers");
-		fields.push_back(field);
-
-		form.field(fields);
-
-		eclEntry.form(form);
-
-	}
-	else {
-		if (pause) 				form.name(ExperimentName + " OTSDAQ Pause Run");
-		else 			form.name(ExperimentName + " OTSDAQ End Run");
-
+	  field = Field_t(EscapeECLString(ExperimentName), "Experiment");
+	  fields.push_back(field);
 
 		field = Field_t(EscapeECLString(run), "RunNumber");
 		fields.push_back(field);
@@ -276,6 +279,8 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 		field = Field_t(EscapeECLString(users), "ActiveUsers");
 		fields.push_back(field);
 
+
+		if(state != WriteState::kStart) {
 		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count();
 		int dur_s = dur / 1000;
 		dur = dur % 1000;
@@ -289,11 +294,11 @@ int ECLSupervisor::Write(bool atEnd, bool pause)
 
 		field = Field_t(EscapeECLString(dur_ss.str()), "Duration");
 		fields.push_back(field);
+		}
 
 		form.field(fields);
 
 		eclEntry.form(form);
-	}
 
 	ECLConnection eclConn(ECLUser, ECLPwd, ECLHost);
 	if (!eclConn.Post(eclEntry)) {

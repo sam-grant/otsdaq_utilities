@@ -46,6 +46,7 @@ public:
     void 						transitionStopping    		(toolbox::Event::Reference e) ;
     void 						transitionPausing	  		(toolbox::Event::Reference e) ;
     void 						transitionResuming	  		(toolbox::Event::Reference e) ;
+    void 						enteringError	  		(toolbox::Event::Reference e) ;
 
 	xoap::MessageReference 		MakeSystemLogbookEntry(xoap::MessageReference msg) 			;
 
@@ -66,7 +67,16 @@ private:
 
 	std::string EscapeECLString(std::string input = "");
 
-	int Write(bool atEnd, bool pause);
+	enum class WriteState
+	{
+	  kStart,
+	  kStop,
+	  kPause,
+	  kResume,
+	  kError
+	};
+
+	int Write(WriteState state);
 };
 
 }
