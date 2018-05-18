@@ -50,7 +50,7 @@ ONLY_MAIN=1
 if [ "x$2" == "x" ]; then    
 	ONLY_MAIN=0
 else
-	echo -e "OnlineDoc [${LINENO}]  \t Skipping mrb z and regeneration of documentation."
+	echo -e "OnlineDoc [${LINENO}]  \t Only regenerating and updating main.html"
 fi
 
 if [ $DO_MRBZ == 1 ]; then
@@ -81,38 +81,55 @@ echo -e "OnlineDoc [${LINENO}]  \t Finding paths and transferring doxygen html..
 
 REPO_DIR="$(find $SCRIPT_DIR/../../../build_slf6.x86_64 -maxdepth 1 -iname 'otsdaq*')"
 
+
 for p in ${REPO_DIR[@]}; do
-    if [ -d $p ]; then    
-    if [ -d $p/doc/html ]; then
+	if [ -d $p ]; then    
+	if [ -d $p/doc/html ]; then
 		echo -e "OnlineDoc [${LINENO}]  \t Doc directory found as: $(basename $p)"
+	fi
+	fi
+done
+				
+for p in ${REPO_DIR[@]}; do
+	if [ -d $p ]; then    
+	if [ -d $p/doc/html ]; then
+		echo -e "OnlineDoc [${LINENO}]  \t Handling directory: $(basename $p)"
 
 		echo -e "OnlineDoc [${LINENO}]  \t Injecting main html..."
 
 		if [ $DO_MRBZ == 1 ]; then #only backup when generated
 			cp $p/doc/html/main.html $p/doc/html/main.html.bk
 		fi
-		doxygen_main_editor $p/doc/html/main.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/doc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/doc/inject_$(basename $p)_head.html
+		doxygen_main_editor $p/doc/html/main.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p)_head.html
 
 		if [ $ONLY_MAIN == 1 ]; then
-			scp -r $p/doc/html/main.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/
-			exit
+			scp -r $p/doc/html/main.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/			
+			continue
 		fi
-		
+
+		echo
+		echo -e "OnlineDoc [${LINENO}]  \t =================="
+		echo -e "OnlineDoc [${LINENO}]  \t Transferring content..."
+		echo
+		echo
 		
 		echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)"
 		scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)
+
+		echo
+		echo -e "OnlineDoc [${LINENO}]  \t =================="
+		echo -e "OnlineDoc [${LINENO}]  \t Refining content..."
+		echo
+		echo
+		
+		echo -e "OnlineDoc [${LINENO}]  \t scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/index.html"
+		scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/index.html
+
 	fi
     fi	   
 done
 
-echo
-echo -e "OnlineDoc [${LINENO}]  \t =================="
-echo -e "OnlineDoc [${LINENO}]  \t Refining transferred content..."
-echo
-echo
 
-echo -e "OnlineDoc [${LINENO}]  \t scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/doc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/otsdaq/index.html"
-scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/doc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/otsdaq/index.html
 
 
 echo
@@ -122,3 +139,24 @@ echo -e "OnlineDoc [${LINENO}]  \t =================="
 echo -e "OnlineDoc [${LINENO}]  \t Online documentation update done"
 echo -e "OnlineDoc [${LINENO}]  \t *******************************"
 echo -e "OnlineDoc [${LINENO}]  \t *******************************"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

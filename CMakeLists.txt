@@ -22,6 +22,7 @@ set(CMAKE_MODULE_PATH
         $ENV{ART_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
         $ENV{XDAQ_DIR}/Modules
+        $ENV{ARTDAQ_UTILITIES_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 message(STATUS "CMAKE_MODULE_PATH is ${CMAKE_MODULE_PATH}")
 
@@ -85,7 +86,8 @@ add_subdirectory(otsdaq-utilities)
 add_subdirectory(tools)
 
 # Documentation directory
-add_subdirectory(doc)
+#add_subdirectory(doc)
+add_subdirectory(onlineDoc)
 
 # UPS Version files
 add_subdirectory(ups)

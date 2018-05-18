@@ -1,4 +1,3 @@
-cet_make_exec(doxygen_main_editor SOURCE doxygen_main_editor.cpp)
+include(artdaq_doxygen)
 
-install_headers()
-install_source()
+create_doxygen_documentation()
