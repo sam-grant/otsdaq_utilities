@@ -155,6 +155,9 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							
 							//found new possible call out 
 							//console.log(str.substr(j,k-j+1));
+
+							if(!returnStr) //check if need to define for the first time
+								returnStr = "";
 							
 							//look for .cc and .h 
 							if((str[j-3] == '.' && str[j-2] == 'h') || 
@@ -174,8 +177,6 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 								
 								++l; //increment to first character of blob
 											
-								if(!returnStr) //check if need to define for the first time
-									returnStr = "";
 																
 								//previous chunk								
 								returnStr += str.substr(i,l-i);
