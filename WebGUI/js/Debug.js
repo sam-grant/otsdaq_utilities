@@ -155,6 +155,9 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							
 							//found new possible call out 
 							//console.log(str.substr(j,k-j+1));
+
+							if(!returnStr) //check if need to define for the first time
+								returnStr = "";
 							
 							//look for .cc and .h 
 							if((str[j-3] == '.' && str[j-2] == 'h') || 
@@ -174,8 +177,6 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 								
 								++l; //increment to first character of blob
 											
-								if(!returnStr) //check if need to define for the first time
-									returnStr = "";
 																
 								//previous chunk								
 								returnStr += str.substr(i,l-i);
@@ -329,12 +330,14 @@ Debug.errorPop = function(err,severity) {
 					"{font-family: 'Comfortaa', arial;" +//"{font-family: 'Inconsolata', monospace;" +
 					"font-weight: 200;" +
 					"font-size: 18px;" +
+					"color: rgb(255,200,100);" +
 					"}\n\n";
+			
 			
 			//error close link style
 			css += "#" + Debug._errBoxId + " a" +
-					", #" + Debug._errBoxId + " b" +
-					"{color: white; text-decoration: none; font-weight: 400;" +
+					", #" + Debug._errBoxId + " center b" +
+					"{color: white; text-decoration: none; font-weight: bold;" +
 					"font-size: 18px; font-family: 'Comfortaa', arial;" +
 					"}\n\n";
 			css += "#" + Debug._errBoxId + " a:hover" +
@@ -342,10 +345,16 @@ Debug.errorPop = function(err,severity) {
 					"cursor:pointer;" +
 					"}\n\n";
 			
+			//error italics, underline, bold
 			css += "#" + Debug._errBoxId + " i" +
 					", #" + Debug._errBoxId + " u" +
 					"{" +
 					"font-size: 18px; font-family: 'Comfortaa', arial;" +
+					"}\n\n";
+			css += "#" + Debug._errBoxId + " b" +
+					"{" +
+					"font-weight: bold;" +
+					"color: rgb(255, 231, 187);" +
 					"}\n\n";
 			
 			//error box style

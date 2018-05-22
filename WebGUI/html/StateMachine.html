@@ -2224,6 +2224,11 @@
 			//setAlarm() ~~
 			function setAlarm(start)
 			{
+				Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft);
+				
+				var pauseStopEl = 
+						document.getElementById("alarm-pause-stop-btn");
+				
 				if(start && !_alarmTimeLeft) //if start and alarm time is at 0, then initialize alarm time
 				{
 					var val = document.getElementById("alarm-time").value;
@@ -2232,11 +2237,25 @@
 					val /= 100;
 					if(val < 0) val = 0;
 					_alarmTimeLeft = (val*60)|0;
+					
+					pauseStopEl.innerHTML = "Pause";
+					pauseStopEl.style.display = "inline";
 				}
-				Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft); 
+				else if(!start && _alarmRunning) //pause
+				{
+					pauseStopEl.innerHTML = "Stop";
+				}
+				else if(!start && !_alarmRunning) //stop
+				{
+					stopAlarm();
+					pauseStopEl.style.display = "none";					
+				}
+				 
 				
                 //set alarm running
                 _alarmRunning = start?true:false;
+                
+                Debug.log("Physics setAlarm " + start + " _alarmTimeLeft=" + _alarmTimeLeft);
 			}
 			
 			//stopAlarm() ~~
@@ -2314,7 +2333,7 @@
 	Minutes: <input style='width:50px' id='alarm-time'/>
 		<br><br>
 	<a href='Javascript:setAlarm(1);' title='Start the Alarm Countdown'>Start</a>
-	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown'>Pause</a>
+	<a href='Javascript:setAlarm(0);' title='Start the Alarm Countdown' id='alarm-pause-stop-btn' style='display:none;'>Pause</a>
 	<a href='Javascript:showAlarmSetup(0);' title='Close the Alarm Setup Box'>Close</a>	
 </div>	
 
