@@ -180,12 +180,13 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	struct curl_slist* headers = NULL;
 	std::string buff = "X-User: " + _user;
 	headers = curl_slist_append(headers, buff.c_str());
-	buff = "X-Password: " + _pwd;
-	headers = curl_slist_append(headers,buff.c_str());
+	//	buff = "X-Password: " + _pwd;
+	//headers = curl_slist_append(headers,buff.c_str());
 	headers = curl_slist_append(headers, "Content-type: text/xml");
-	//headers = curl_slist_append(headers, "X-Signature-Method: md5");
+	headers = curl_slist_append(headers, "X-Signature-Method: md5");
 	//buff = "X-Signature: " + base64Sig;
-	//headers = curl_slist_append(headers, buff.c_str());
+	buff = "X-Signature: " + xSig;
+	headers = curl_slist_append(headers, buff.c_str());
 
 	const char* estr = eclString.c_str();
 

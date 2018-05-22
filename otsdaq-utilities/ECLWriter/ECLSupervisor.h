@@ -64,6 +64,7 @@ private:
 	std::string ExperimentName;
 	std::string run;
 	std::chrono::steady_clock::time_point run_start;
+	int duration_ms; // For paused runs, don't count time spend in pause state
 
 	std::string EscapeECLString(std::string input = "");
 

@@ -18,7 +18,7 @@
 #include <xdaq/NamespaceURI.h>
 
 #include <iostream>
-
+#include <iomanip>
 
 using namespace ots;
 
@@ -135,6 +135,7 @@ void ECLSupervisor::transitionStarting(toolbox::Event::Reference e)
 		__COUT_INFO__ << "ECLSupervisor sending Start Run log message to ECL" << std::endl;
 		run = SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("RunNumber");
 		run_start = std::chrono::steady_clock::now();
+		duration_ms = 0;
 		Write(WriteState::kStart);
 	}
 	catch (...)
@@ -167,6 +168,7 @@ void ECLSupervisor::transitionPausing(toolbox::Event::Reference e)
 	{
 		__COUT_INFO__ << "ECLSupervisor sending Pause Run log message to ECL" << std::endl;
 		Write(WriteState::kPause);
+		duration_ms += std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count();
 	}
 	catch (...)
 	{
@@ -222,13 +224,16 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 
 	ECLEntry_t eclEntry;
 	eclEntry.author(ECLUser);
-	eclEntry.category("System Entry");
+	eclEntry.category("Facility/DAQ");
 	Form_t form;
 	Field_t field;
 	Form_t::field_sequence fields;
 	std::string users = theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor());
 
-	form.name(ExperimentName + " System Logbook Entry");
+	form.name("OTSDAQ System Logbook Entry");
+
+	  field = Field_t(EscapeECLString(ExperimentName), "Experiment");
+	  fields.push_back(field);
 
 	field = Field_t(EscapeECLString(run), "RunNumber");
 	fields.push_back(field);
@@ -255,7 +260,7 @@ int ECLSupervisor::Write(WriteState state)
 {
 	ECLEntry_t eclEntry;
 	eclEntry.author(ECLUser);
-	eclEntry.category("Facility");
+	eclEntry.category("Facility/DAQ");
 	Form_t form;
 	Field_t field;
 	Form_t::field_sequence fields;
@@ -280,8 +285,8 @@ int ECLSupervisor::Write(WriteState state)
 		fields.push_back(field);
 
 
-		if(state != WriteState::kStart) {
-		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count();
+		if(state != WriteState::kStart && state != WriteState::kResume) {
+		int dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - run_start).count() + duration_ms;
 		int dur_s = dur / 1000;
 		dur = dur % 1000;
 		int dur_m = dur_s / 60;
@@ -290,7 +295,7 @@ int ECLSupervisor::Write(WriteState state)
 		dur_m = dur_m % 60;
 
 		std::ostringstream dur_ss;
-		dur_ss << dur_h << ":" << dur_m << ":" << dur_s << "." << dur;
+		dur_ss << std::setw(2) << std::setfill('0') << dur_h << ":" << dur_m << ":" << dur_s << "." << dur;
 
 		field = Field_t(EscapeECLString(dur_ss.str()), "Duration");
 		fields.push_back(field);
