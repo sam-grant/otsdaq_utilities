@@ -295,7 +295,10 @@ int ECLSupervisor::Write(WriteState state)
 		dur_m = dur_m % 60;
 
 		std::ostringstream dur_ss;
-		dur_ss << std::setw(2) << std::setfill('0') << dur_h << ":" << dur_m << ":" << dur_s << "." << dur;
+		dur_ss << std::setw(2) << std::setfill('0') << dur_h 
+			<< ":" << std::setw(2) << std::setfill('0') << dur_m
+			<< ":" << std::setw(2) << std::setfill('0') << dur_s
+			<< "." << dur;
 
 		field = Field_t(EscapeECLString(dur_ss.str()), "Duration");
 		fields.push_back(field);

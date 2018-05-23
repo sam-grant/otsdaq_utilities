@@ -5,12 +5,6 @@
 #include <cstring>
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
-#include <boost/algorithm/string.hpp>
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/insert_linebreaks.hpp>
-#include <boost/archive/iterators/remove_whitespace.hpp>
 
 ECLConnection::ECLConnection(std::string user,
 							 std::string pwd,
@@ -120,8 +114,8 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	std::string myData = mySalt + ":" + _pwd + ":";
 
 	// create text from xml form, but need to remove all \n's
-    std::ostringstream oss;
-    entry(oss, e);
+	std::ostringstream oss;
+	entry(oss, e);
 	std::string eclString = oss.str();
 	__COUT__ << "ECL XML is: " << eclString << std::endl;
 	//std::string eclString = e.entry();
@@ -129,17 +123,17 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	while(eclString.find('\n') != std::string::npos)
 	  {
-	    eclString = eclString.erase(eclString.find('\n'), 1);
+		eclString = eclString.erase(eclString.find('\n'), 1);
 	  }
 	while(eclString.find('\r') != std::string::npos)
 	  {
-	    eclString = eclString.erase(eclString.find('\r'), 1);
+		eclString = eclString.erase(eclString.find('\r'), 1);
 	  }
 	while(eclString.find(" <") != std::string::npos)
 	  {
-	    eclString = eclString.erase(eclString.find(" <"), 1); 
+		eclString = eclString.erase(eclString.find(" <"), 1);
 	  }
-        boost::trim(eclString);
+		boost::trim(eclString);
 	myData += eclString;
  __COUT__ << "ECL Hash string is: " << myData << std::endl;
 	unsigned char resultMD5[MD5_DIGEST_LENGTH];
@@ -152,17 +146,6 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	  xSig.append( buf );
 	}
 	__COUT__ << "ECL MD5 Signature is: " << xSig << std::endl;
-
-
-	typedef boost::archive::iterators::insert_linebreaks<
-  boost::archive::iterators::base64_from_binary<
-  boost::archive::iterators::transform_width<unsigned char *,6,8> >, 72 > it_base64_t;
-
-  // Encode
-  unsigned int writePaddChars = (3-MD5_DIGEST_LENGTH%3)%3;
-  std::string base64Sig(it_base64_t(resultMD5),it_base64_t(resultMD5 + MD5_DIGEST_LENGTH));
-  base64Sig.append(writePaddChars,'=');
-	__COUT__ << "ECL base64 Signature is: " << base64Sig << std::endl;
 
 	CURL *curl_handle;
 	char errorBuffer[CURL_ERROR_SIZE];
@@ -180,11 +163,8 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	struct curl_slist* headers = NULL;
 	std::string buff = "X-User: " + _user;
 	headers = curl_slist_append(headers, buff.c_str());
-	//	buff = "X-Password: " + _pwd;
-	//headers = curl_slist_append(headers,buff.c_str());
 	headers = curl_slist_append(headers, "Content-type: text/xml");
 	headers = curl_slist_append(headers, "X-Signature-Method: md5");
-	//buff = "X-Signature: " + base64Sig;
 	buff = "X-Signature: " + xSig;
 	headers = curl_slist_append(headers, buff.c_str());
 
