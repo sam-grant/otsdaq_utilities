@@ -197,13 +197,15 @@ else {
 					win.setWindowSizeAndPosition(xx,yy,ww,wh);
 					if(win.isMinimized()) win.unminimize();
 					if(win.isMaximized()) win.unmaximize();
-					Desktop.desktop.redrawFullScreenButtons();
-					_windowDashboardToggleWindows();
+					
+					//_windowDashboardToggleWindows();
 					
 					xx += ww;
 					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
 					//Debug.log("Desktop Dashboard Organize i:" + (i+1)%cols + " -  " + xx + " , " + yy,Debug.LOW_PRIORITY);	
 				}
+				Desktop.desktop.redrawDashboardWindowButtons();
+				
 				break;
 			case 1: //offset arrange
 				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
@@ -238,8 +240,7 @@ else {
 		}	
 
 
-
-	        var _windowDashboardToggleWindows = function () {
+		var _windowDashboardToggleWindows = function () {
 		   
 		    
 		    // if (Desktop.desktop.getForeWindow() &&
@@ -253,16 +254,17 @@ else {
 		    else
 				_windowDashboardRestoreAll();
 
-		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
-		    ((Desktop.desktop.getForeWindow() &&
-		      Desktop.desktop.getForeWindow().isMinimized())?"Restore All Windows":"Show Desktop") + "</a>";
-	        }
+		    Desktop.desktop.redrawDashboardWindowButtons();
+		    
+//		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+//				((Desktop.desktop.getForeWindow() &&
+//				  Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>";
+		}
 		
-	        var _windowDashboardRefresh = function() {
-	        
+		var _windowDashboardRefresh = function() {	        
 		    updateWindows();
-		    Debug.log("Window refreshed.")
-                }
+		    Debug.log("Window refreshed.");
+		}
 
 		//_windowDashboardLayoutsDropDown ~
 		//	toggles default layout drop down menu
@@ -370,30 +372,30 @@ else {
         }        
         
         this.redrawFullScreenButton = function() {
-            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
-            	((Desktop.desktop.getForeWindow() &&
-                                        Desktop.desktop.getForeWindow().isMaximized())?"Exit Full Screen":"Full Screen") + "</a>"; 
-                                    		
+        	_fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
+        			((Desktop.desktop.getForeWindow() &&
+        					Desktop.desktop.getForeWindow().isMaximized())? 
+									"Exit Full Screen":"Full Screen") + "</a>"; 
+
         }
 
         this.redrawRefreshButton = function() {
-            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
-	    var hght = "16px";//_fullScreenBtn.style.height;
-	    _fullScreenRefreshBtn.style.height = hght;//"16px";
-	    console.log(hght);//"16px";
-	    //_fullScreenRefreshBtn.style.visibility = "" +
-	    //((Desktop.desktop.getForeWindow() &&
-	    //          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
-	    
-                                        		
+        	_fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
+        	var hght = "16px";//_fullScreenBtn.style.height;
+        	_fullScreenRefreshBtn.style.height = hght;//"16px";
+        	//console.log(hght);//"16px";
+        	//_fullScreenRefreshBtn.style.visibility = "" +
+        	//((Desktop.desktop.getForeWindow() &&
+        	//          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden");
         }
 
-	this.redrawShowDesktopButton = function() {
-            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
-            	((Desktop.desktop.getForeWindow() &&
-                                        Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>"; 
-
-	}
+        this.redrawShowDesktopButton = function() {
+        	_showDesktopBtn.innerHTML = "<a href='#' title='Click to 43toggle minimize/restore all windows'>" +
+        			((Desktop.desktop.getForeWindow() &&
+        					Desktop.desktop.getForeWindow().isMinimized())?
+        							"Restore Windows":"Show Desktop") + "</a>"; 
+        	//Debug.log("Desktop.desktop.getForeWindow().isMinimized() " + Desktop.desktop.getForeWindow().isMinimized());	
+        }
         
         this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
         

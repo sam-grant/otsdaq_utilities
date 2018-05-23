@@ -123,7 +123,8 @@ if [ "x$1" == "x" ]; then
 			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
+		echo
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
 		
@@ -167,26 +168,28 @@ if [ "x$1" == "x" ]; then
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 	
 	#make sure permissions are usable
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/XDAQConfigurations/*Info.xml"
-	chmod 755 $USER_DATA/XDAQConfigurations/*Info.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/XDAQConfigurations/*Info.xsd"
-	chmod 755 $USER_DATA/XDAQConfigurations/*Info.xsd #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 777 $USER_DATA/XDAQConfigurations/*.xml"
+	chmod 777 $USER_DATA/XDAQConfigurations/*.xml #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml"
+	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd"
+	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd #*/ just resetting comment coloring
 	
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t updating tutorial launch scripts..."
-	rm $OTSDAQ_DIR/../../get_tutorial_data.sh
-	rm $OTSDAQ_DIR/../../get_tutorial_database.sh
-	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $OTSDAQ_DIR/../../
+	rm $OTSDAQ_DIR/../../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
+	rm $OTSDAQ_DIR/../../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
+	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
+	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $OTSDAQ_DIR/../../	
 	chmod 755 $OTSDAQ_DIR/../../reset_ots_tutorial.sh
 	
 	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../
+	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
 	chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo

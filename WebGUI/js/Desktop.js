@@ -683,15 +683,20 @@ Desktop.createDesktop = function(security) {
         //	Toggle current top window full screen (can be called as event)
     this.toggleFullScreen = function(e) {
         if(!_getForeWindow()) return;
+        
         _getForeWindow().isMaximized() ? _getForeWindow().unmaximize(): _getForeWindow().maximize();
-        _dashboard.redrawFullScreenButton();
-	_dashboard.redrawRefreshButton();
+        
+        Desktop.desktop.redrawDashboardWindowButtons();        
+        
+        //_dashboard.redrawFullScreenButton();
+        //_dashboard.redrawRefreshButton();
         Debug.log("Full Screen Toggled",Debug.LOW_PRIORITY);
     }
 
-	this.redrawFullScreenButtons = function() {
+	this.redrawDashboardWindowButtons = function() {
 	    _dashboard.redrawFullScreenButton();
 	    _dashboard.redrawRefreshButton();
+	    _dashboard.redrawShowDesktopButton();
 	}
 
 	this.refreshWindowById = function(id) {
