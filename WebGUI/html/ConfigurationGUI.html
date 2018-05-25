@@ -8634,6 +8634,7 @@
 						{
 							//revert edit type back to link-GroupID
 							treeEditingNodeType_ = "link-GroupID";
+							editCellCancel();
 							return;
 						}	
 					}
@@ -8652,6 +8653,7 @@
 						{
 							//revert edit type back to link-UID
 							treeEditingNodeType_ = "link-UID";
+							editCellCancel();
 							return;
 						}
 					}
@@ -8662,7 +8664,11 @@
 						if(newValue)
 							newValue = encodeURIComponent(newValue.trim());
 						else //prompt was cancelled
+						{
+							editCellCancel();
 							return;
+						}
+							
 					}
 					else	//value (normal or multiline data)
 					{
@@ -8799,6 +8805,7 @@
 						if(!_editingCellEl)
 						{
 							Debug.log("Mid request _editingCellEl became invalid. Assuming there was a cancel?");
+							editCellCancel();
 							return;
 						}
 						//change target edit tree node 
@@ -8857,7 +8864,8 @@
 				else	//unrecognized type!?
 				{
 					Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
-					editCellCancel(); return;
+					editCellCancel(); 
+					return;
 				}
 
 
@@ -9149,7 +9157,8 @@
 					else	//unrecognized type!?
 					{
 						Debug.log("Unrecognizd tree edit type! Should be impossible!",Debug.HIGH_PRIORITY);
-						editCellCancel(); return;
+						editCellCancel(); 
+						return;
 					}
 
 					//requests are done, so end editing
@@ -9165,7 +9174,7 @@
 				Debug.log("Error occured during editCellOK - attempting to recover. Error: " + e);
 				editCellCancel();
 			}		
-		}
+		} //end editTreeNodeOK()
 
 		//refreshTreeTableVersions ~~
 		//	refresh versions based on treeMemberVersions_ fix all the table and table-link versions
