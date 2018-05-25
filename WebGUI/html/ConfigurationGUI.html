@@ -2450,7 +2450,7 @@
 				RecordWiz.createWiz(
 						function(atLeastOneRecordWasCreated)
 						{				
-					if(1 || atLeastOneRecordWasCreated)
+					if(atLeastOneRecordWasCreated)
 					{
 						var str = "Record creation complete. You may want to ";
 						str += "<a href='#' onclick='refreshTreeView()' " +
@@ -2498,7 +2498,7 @@
 				DeleteWiz.createWiz(
 						function(atLeastOneRecordWasDeleted)
 						{				
-					if(1 || atLeastOneRecordWasDeleted)
+					if(atLeastOneRecordWasDeleted)
 					{
 						var str = "Record deletion complete. You may want to ";
 						str += "<a href='#' onclick='refreshTreeView()' " +
