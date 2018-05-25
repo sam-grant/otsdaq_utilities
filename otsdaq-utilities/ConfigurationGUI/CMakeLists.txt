@@ -14,6 +14,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 WebUsersUtilities
 		 #SOAPUtilities
 		 XmlUtilities
+         Macros
 		 #MessageFacility
 		 cetlib
          $ENV{XERCES_C_LIB}/libxerces-c.so

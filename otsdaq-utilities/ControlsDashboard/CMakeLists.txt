@@ -8,6 +8,9 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 ConfigurationInterface
 		 ConfigurationDataFormats		 
 		 PluginMakers
+		 XMLUtilities
+		 CgiDataUtilities
+		 FiniteStateMachine
 		 
 		 CoreSupervisors
          $ENV{XERCES_C_LIB}/libxerces-c.so     

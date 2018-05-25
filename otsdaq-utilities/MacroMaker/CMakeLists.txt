@@ -4,6 +4,10 @@ cet_make(LIBRARY_NAME MacroMaker
 		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
 		 CoreSupervisors
+		 CgiDataUtilities
+		 SOAPUtilities
+		 FiniteStateMachine
+		 XMLUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 

@@ -38,10 +38,10 @@ cet_make( LIBRARY_NAME ECLWriter
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
 	CoreSupervisors
-	#	 SupervisorInfo
-#		 WebUsersUtilities
+		 SupervisorInfo
+		 WebUsersUtilities
 		 #CgiDataUtilities
-		 #SOAPUtilities
+		 SOAPUtilities
 		 FiniteStateMachine
 		 ConfigurationInterface
 		 ConfigurationDataFormats
