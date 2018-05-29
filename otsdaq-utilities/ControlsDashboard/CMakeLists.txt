@@ -8,7 +8,7 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 ConfigurationInterface
 		 ConfigurationDataFormats		 
 		 PluginMakers
-		 XMLUtilities
+		 XmlUtilities
 		 CgiDataUtilities
 		 FiniteStateMachine
 		 

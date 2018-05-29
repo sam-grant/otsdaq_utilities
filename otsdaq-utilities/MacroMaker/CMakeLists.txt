@@ -7,7 +7,7 @@ cet_make(LIBRARY_NAME MacroMaker
 		 CgiDataUtilities
 		 SOAPUtilities
 		 FiniteStateMachine
-		 XMLUtilities
+		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
