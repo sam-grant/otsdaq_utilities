@@ -117,8 +117,8 @@ ViewerRoot.TILE_MODE = 0;
 ViewerRoot.REPLACE_MODE = 1;
 ViewerRoot.SUPERIMPOSE_MODE = 2;
 
-ViewerRoot.ADMIN_PERMISSIONS_THRESHOLD = 100;
-ViewerRoot.userPermissions = 0; //0 is min, 255 is max
+ViewerRoot.ADMIN_PERMISSIONS_THRESHOLD = 1;
+ViewerRoot.userPermissions = 0; //0 is no access, 1 is access
 
 ViewerRoot.omni;
 ViewerRoot.rootContainer;

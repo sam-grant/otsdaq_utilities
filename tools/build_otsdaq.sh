@@ -21,16 +21,16 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
-    s48:e10)
-        basequal=e10
-        squal=s48
-        artver=v2_06_03
+    s64:e15)
+        basequal=e15
+        squal=s64
+        artver=v2_10_02
         ;;
-    s47:e10)
-        basequal=e10
-        squal=s47
-        artver=v2_06_02
-        ;;
+	s50:e14)
+		basequal=e14
+		squal=s50
+		artver=v2_07_03
+		;;
     s46:e10)
         basequal=e10
         squal=s46
@@ -42,26 +42,9 @@ case ${qual_set} in
 	exit 1
 esac
 
-case ${version} in
-    v1_01_04)
-        artdaq_ver=v2_03_03
-        ;;
-    v1_01_03)
-        artdaq_ver=v2_03_00
-        ;;
-	v1_01_02)
-	artdaq_ver=v2_03_00
-	;;
-	v1_01_01)
-	artdaq_ver=v2_03_00
-	;;
-	v1_01_00)
-	artdaq_ver=v2_02_03
-	;;
-  *)
-    echo "Unexpected otsdaq version ${version}"
-    exit 1
-esac
+wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/revisions/${version}/raw/ups/product_deps && \
+artdaq_ver=`grep "^artdaq " product_deps|awk '{print $2}'` || \
+$(echo "Unexpected version ${version}" && usage && exit 1)
 
 case ${build_type} in
     debug) ;;
@@ -73,6 +56,8 @@ case ${build_type} in
 esac
 
 dotver=`echo ${version} | sed -e 's/_/./g' | sed -e 's/^v//'`
+art_dotver=`echo ${artver} | sed -e 's/_/./g' | sed -e 's/^v//'`
+artdaq_dotver=`echo ${artdaq_ver} | sed -e 's/_/./g' | sed -e 's/^v//'`
 
 echo "building the otsdaq distribution for ${version} ${dotver} ${qual_set} ${build_type}"
 
@@ -105,23 +90,8 @@ mkdir -p $WORKSPACE/copyBack || exit 1
 cd ${blddir} || exit 1
 curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts || exit 1
 chmod +x pullProducts
-# source code tarballs MUST be pulled first
-./pullProducts ${blddir} source otsdaq-${version} || \
-      { cat 1>&2 <<EOF
-ERROR: pull of otsdaq-${version} failed
-EOF
-        exit 1
-      }
-./pullProducts ${blddir} source artdaq-${artdaq_ver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull artdaq-${artdaq_ver}, this may not be fatal (but probably is)
-EOF
-}
-./pullProducts ${blddir} source art-${artver} || \
-    { cat 1>&2 <<EOF
-WARNING: Could not pull art-${artver}, this may not be fatal (but probably is)
-EOF
-}
+curl --fail --silent --location --insecure -O http://scisoft.fnal.gov/scisoft/bundles/tools/buildFW || exit 1
+chmod +x buildFW
 
 mv ${blddir}/*source* ${srcdir}/
 
@@ -141,17 +111,30 @@ fi
 echo
 echo "begin build"
 echo
-cp ${working_dir}/otsdaq-utilities/tools/buildFW .
 ./buildFW -t -b ${basequal} -s ${squal} ${blddir} ${build_type} otsdaq-${version} || \
  { mv ${blddir}/*.log  $WORKSPACE/copyBack/
    exit 1 
  }
 
+source ${blddir}/setups
+upsflavor=`ups flavor`
 echo "Fix Manifests"
-cat ${blddir}/art-${artver}-*-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/artdaq-${artdaq_ver}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt
-cat ${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt|sort|uniq >${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
-mv ${blddir}/otsdaq-${version}-*-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
+
+artManifest=`ls ${blddir}/art-*_MANIFEST.txt|tail -1`
+artdaqManifest=`ls ${blddir}/artdaq-*_MANIFEST.txt|tail -1`
+otsdaqManifest=`ls ${blddir}/otsdaq-*_MANIFEST.txt|tail -1`
+
+cat ${artManifest} >>${artdaqManifest}
+cat ${artdaqManifest} >>${otsdaqManifest}
+cat ${artdaqManifest}|grep -v source|sort|uniq >>${artdaqManifest}.tmp
+mv ${artdaqManifest}.tmp ${artdaqManifest}
+cat ${otsdaqManifest}|grep -v source|sort|uniq >>${otsdaqManifest}.tmp
+mv ${otsdaqManifest}.tmp ${otsdaqManifest}
+
+cat ${blddir}/art-${art_dotver}-${upsflavor}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/artdaq-${artdaq_dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt
+cat ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt|grep -v source|sort|uniq >>${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt.tmp
+mv ${blddir}/otsdaq-${dotver}-${upsflavor}-${squal}-${basequal}-${build_type}_MANIFEST.txt{.tmp,}
 
 echo
 echo "move files"
@@ -163,7 +146,7 @@ mv ${blddir}/*.log  $WORKSPACE/copyBack/
 echo
 echo "cleanup"
 echo
-rm -fr ${blddir}
+rm -rf ${blddir}
 rm -rf ${srcdir}
 
 exit 0

@@ -611,11 +611,11 @@
 
 				
 				//console.log("editBlock_.hidden : " + editBlock_.hidden);
-				DesktopContent.XMLHttpRequest("Default?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
 				pagesList_ = "Loading";
 				//get frame and set some text to loading
 
-				DesktopContent.XMLHttpRequest("Default?RequestType=getList", "", pvListReqHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=getList", "", pvListReqHandler);
 
 				var fileFrame = document.createElement("iframe");
 				fileFrame.id = "fileFrame";
@@ -828,7 +828,7 @@
 				timeToPoll_ = false;
 				//Debug.log("pollServer");
 				//console.log("UID is ", UID_);
-				DesktopContent.XMLHttpRequest("Default?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
 
 			}
 			
@@ -851,7 +851,7 @@
 				
 				//END Put all pvs in a JSON and send to server
 
-				DesktopContent.XMLHttpRequest("Default?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=generateUID","PVList=" + pvList, generateUIDHandlerFunction);//, undefined, undefined, "sequence");	
 
 				
 			}
@@ -865,7 +865,7 @@
 			
 			function loadPage(page)
 			{
-				DesktopContent.XMLHttpRequest("Default?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=loadPage&Page=" + page, "", loadPageReqHandler);//, undefined, undefined, "sequence");	
 				
 			}
 			
@@ -892,7 +892,7 @@
 				
 				console.log("******************************^^^^^^^^^^^^^^^^^^^^^" + pvList);
 				
-				DesktopContent.XMLHttpRequest("Default?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest("Request?RequestType=GetPVSettings&PVList=" + pvList + "&id=" + id, "", settingsReqHandler);//, undefined, undefined, "sequence");	
 				page_.widgets[id].el.contentWindow.newWidget(page_.widgets[id], parameters);
 
 

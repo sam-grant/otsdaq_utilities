@@ -93,8 +93,8 @@
 	function init() 
 	{			
 		Debug.log("init() was called");
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",FElistHandler);
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=getPermission","",getPermissionHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=FElist","",FElistHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=getPermission","",getPermissionHandler);
 		block1El = document.getElementById('fecList');
 		block2El = document.getElementById('macroLib');
 		block3El = document.getElementById('main');
@@ -118,7 +118,7 @@
 	//This is what refresh button and redrawWindow() calls
 	function initLite() 
 	{
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=FElist","",
+		DesktopContent.XMLHttpRequest("Request?RequestType=FElist","",
 				FElistHandler);
 		loadUserHistory();
 	}
@@ -341,7 +341,7 @@
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr),reverse);
 			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr),reverse);
 					
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=writeData&Address="
+			DesktopContent.XMLHttpRequest("Request?RequestType=writeData&Address="
 					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
 					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
@@ -396,7 +396,7 @@
 	    	
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead),reverse);
 
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=readData&Address="
+			DesktopContent.XMLHttpRequest("Request?RequestType=readData&Address="
 					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
 					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
@@ -796,7 +796,7 @@
     
     function clearHistory(el)
     {
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=clearHistory","",clearHistoryHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=clearHistory","",clearHistoryHandler);
 		var contentEl = document.getElementById('historyContent');
 		contentEl.innerHTML = "";
 		hideSmallPopup(el);
@@ -872,7 +872,7 @@
     				return;
     			};
     			document.getElementById('popupMacroAlreadyExistsOverwrite').onclick = function(){ //call edit
-    				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
+    				DesktopContent.XMLHttpRequest("Request?RequestType=editMacro&isPublic="
     								+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
     								+macroName+"&newMacroName="+macroName+"&Sequence="
     								+tempString+"&Time="+Date().toString()+"&Notes="
@@ -886,7 +886,7 @@
         	}
         	else
         	{
-				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=createMacro&isPublic="+isMacroPublic
+				DesktopContent.XMLHttpRequest("Request?RequestType=createMacro&isPublic="+isMacroPublic
 						+"&isLSBF="+isMacroLSBF+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
 						+macroNotes,"",createMacroHandler);		
 				loadExistingMacros();
@@ -1015,12 +1015,12 @@
     
     function loadExistingMacros()
     {
-    	DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadMacros","",loadingMacrosHandler);
+    	DesktopContent.XMLHttpRequest("Request?RequestType=loadMacros","",loadingMacrosHandler);
     }
     
     function loadUserHistory()
 	{
-		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=loadHistory","",loadingHistHandler);
+		DesktopContent.XMLHttpRequest("Request?RequestType=loadHistory","",loadingHistHandler);
 	}
     
     function loadingMacrosHandler(req)
@@ -1193,7 +1193,7 @@
     			document.getElementById('popupDeleteMacroConfirm').style.display = "block";
     			document.getElementById('macroNameForDelete').innerHTML = macroName;
     			document.getElementById('popupDeleteMacroConfirmYes').onclick = function(){
-    				DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=deleteMacro&isPublic="+isMacroPublic+"&MacroName="
+    				DesktopContent.XMLHttpRequest("Request?RequestType=deleteMacro&isPublic="+isMacroPublic+"&MacroName="
     						+macroName,"",deleteMacroHandler);
     				hideSmallPopup(this);
     			}; 
@@ -1321,7 +1321,7 @@
 			toggleDisplay(1);
     		break;
     	case "Export":
-    		DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=exportMacro&MacroName="
+    		DesktopContent.XMLHttpRequest("Request?RequestType=exportMacro&MacroName="
     							+macroName+"&MacroSequence="+macroSequence,"",exportMacroHandler);
     		break;
     	}
@@ -1411,7 +1411,7 @@
 			}
 			var isMacroLSBF = document.getElementById('isMacroEditLSBF').checked;
 			var isMacroPublic = !isOnPrivateMacros;
-			DesktopContent.XMLHttpRequest("MacroMakerRequest?RequestType=editMacro&isPublic="
+			DesktopContent.XMLHttpRequest("Request?RequestType=editMacro&isPublic="
 							+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
 							+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
 							+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="

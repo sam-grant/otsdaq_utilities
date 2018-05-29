@@ -4,13 +4,13 @@ cet_make(LIBRARY_NAME Logbook
 		 LIBRARIES
 		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
-		 SupervisorInfo
+		 CoreSupervisors
+		 CgiDataUtilities
 		 XmlUtilities
 		 SOAPUtilities
-		 CgiDataUtilities
+		 SupervisorInfo
 		 WebUsersUtilities
-		 #MessageFacility
-		 NetworkUtilities
+		 FiniteStateMachine
          $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 

@@ -7,6 +7,8 @@
 namespace ots
 {
 
+//ChatSupervisor
+//	This class handles the otsdaq user chat functionality available in the web desktop environment.
 class ChatSupervisor: public CoreSupervisorBase
 {
 
@@ -14,15 +16,15 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    ChatSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
-    virtual ~ChatSupervisor   	(void);
+    						ChatSupervisor            		(xdaq::ApplicationStub * s);
+    virtual 				~ChatSupervisor   				(void);
 
-    void destroy               	(void);
+    void 					destroy               			(void);
 
-    virtual void Default        (xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
 
-    void Chat	               	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-                              
+    virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
 
 private:
 

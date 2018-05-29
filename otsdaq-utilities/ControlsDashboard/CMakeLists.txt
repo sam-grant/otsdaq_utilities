@@ -5,17 +5,16 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 LIBRARIES
 		 artdaq-core_Utilities
 		 ${XDAQ_BASIC_LIB_LIST}
-#		 CoreSupervisors
 		 ConfigurationInterface
-		 ConfigurationDataFormats
-		 SupervisorInfo
+		 ConfigurationDataFormats		 
 		 PluginMakers
-		 CgiDataUtilities
-		 WebUsersUtilities
-		 SOAPUtilities
 		 XmlUtilities
-         $ENV{XERCES_C_LIB}/libxerces-c.so
- #        MessageFacility
+		 CgiDataUtilities
+		 FiniteStateMachine
+		 
+		 CoreSupervisors
+         $ENV{XERCES_C_LIB}/libxerces-c.so     
+         
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
 )

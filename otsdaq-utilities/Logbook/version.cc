@@ -8,7 +8,7 @@ GETPACKAGEINFO(Logbook)
 
 
 //========================================================================================================================
-void Logbook::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void Logbook::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

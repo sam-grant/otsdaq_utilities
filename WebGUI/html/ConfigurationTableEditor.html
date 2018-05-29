@@ -71,8 +71,7 @@
 		var _CONFIG_FIXED_CELLS = 3;
 		
 
-		var _typeArray = ["Data","UniqueData","FixedChoiceData", //"MultilineData", FIXME when multiline data is functional
-						  "OnOff","TrueFalse","YesNo","ChildLinkUID","ChildLinkGroupID","ChildLink","GroupID"];
+		var _typeArray = []; //filled by request to getColumnTypes, e.g.:  ["Data", "UniqueData", "FixedChoiceData", "MultilineData", "BitMap", "OnOff", "TrueFalse", "YesNo", "ChildLinkUID", "ChildLinkGroupID", "ChildLink", "GroupID"]
 		var _dataTypeArray = ["VARCHAR2","NUMBER","TIMESTAMP WITH TIMEZONE"];
 		var _defaultArray = {};
 				
@@ -534,8 +533,8 @@
 				{
 					if(csvStr.length) csvStr += ",";
 					
-					if(!j)//force first to be arbitraryBool flag 
-							
+					if(colTypesArr[i] != "BitMap" && //for fields with choices, except BitMap (BitMap does not use arbitraryBool)...
+							!j)//force first to be arbitraryBool flag 							
 					{
 						if(colChoiceArr[j].getAttribute("value").indexOf("arbitraryBool=") != 0)
 							csvStr += "arbitraryBool=0";

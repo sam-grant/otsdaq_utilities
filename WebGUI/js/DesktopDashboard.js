@@ -166,52 +166,101 @@ else {
 	        return 0;
 		}
 		
-		var _windowOrganizeMode = 0;
+				
+		//tile the desktop windows in various ways
+        var _windowOrganizeMode = -1;
+        var _windowOrganizeModeTimeout = 0;
 		var _windowDashboardOrganize = function() {
 		
+			//reset mode after 10 seconds
+			clearTimeout(_windowOrganizeModeTimeout);
+			_windowOrganizeModeTimeout = setTimeout(function() {_windowOrganizeMode = -1; Debug.log("Reseting _windowOrganizeMode.");},10000);
+
+			
 			var win;
 			
 			var dx = Desktop.desktop.getDesktopContentX(), dy = Desktop.desktop.getDesktopContentY(),
 				dw = Desktop.desktop.getDesktopContentWidth(), dh = Desktop.desktop.getDesktopContentHeight();
 			var xx, yy;
+
+			var numOfWindows = Desktop.desktop.getNumberOfWindows();
 			
-			switch(_windowOrganizeMode) {
-			case 0: //tile
+			//cycle through different modes where the various windows get a bigger spot
+			if(++_windowOrganizeMode < 0 || _windowOrganizeMode >= numOfWindows)
+				_windowOrganizeMode = 0; //wrap-around
+			
+			//for all modes, except 0, add a spot
+			// and allow that window to use the first two spots
+			if(_windowOrganizeMode && numOfWindows > 1)
+				++numOfWindows;
+			
+			if(1) //tile code
+			{
 				var rows = 1;
-				var ww = Math.floor(dw/Desktop.desktop.getNumberOfWindows());
+				var ww = Math.floor(dw/numOfWindows);
 				var wh = dh;
 				
 				while(ww*2 < wh) {				
 					//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
-					ww = Math.floor(dw/Math.ceil(Desktop.desktop.getNumberOfWindows()/++rows)); wh = Math.floor(dh/rows);				
+					ww = Math.floor(dw/Math.ceil(numOfWindows/++rows)); wh = Math.floor(dh/rows);				
 				}  //have too much height, so add row
 				xx = dx; yy = dy;
 				//Debug.log("Desktop Dashboard Organize " + ww + " , " + wh,Debug.LOW_PRIORITY);
-				var cols = Math.ceil(Desktop.desktop.getNumberOfWindows()/rows);
+				var cols = Math.ceil(numOfWindows/rows);
 				Debug.log("Desktop Dashboard Organize r" + rows + " , c" + cols,Debug.LOW_PRIORITY);
 						
-				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {					
+				
+				//we know size, now place windows
+				
+				//first the bigger one
+				var ic = 0; //counter for new row
+				if(_windowOrganizeMode && numOfWindows > 1)
+				{
+					var i = _windowOrganizeMode-1; //target window index
+					
 					win = Desktop.desktop.getWindowByIndex(
 							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
 
-					win.setWindowSizeAndPosition(xx,yy,ww,wh);
 					if(win.isMinimized()) win.unminimize();
 					if(win.isMaximized()) win.unmaximize();
-					Desktop.desktop.redrawFullScreenButtons();
 					
+					//make double wide
+					win.setWindowSizeAndPosition(xx,yy,ww*2,wh);						
+
+					xx += ww*2;
+					ic+=2;
+					if((ic)%cols==0){xx = dx; yy += wh;} //start new row	
+					//					Debug.log("Desktop Dashboard Organize i:" + i + " - " + (ic)%cols + " -  " 
+					//							+ xx + " , " + yy + " :: "
+					//							+ ww*2 + " , " + wh,Debug.LOW_PRIORITY);
+				}
+				
+				//now the other windows
+				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {		
+					
+					if(_windowOrganizeMode && numOfWindows > 1 && i == _windowOrganizeMode-1) continue; //skip the window already placed
+					
+					win = Desktop.desktop.getWindowByIndex(
+							document.getElementById('DesktopDashboard-windowDashboard-winIndex'+i).innerHTML);
+
+					if(win.isMinimized()) win.unminimize();
+					if(win.isMaximized()) win.unmaximize();
+
+					//if last window fill remaining space rows*cols > numOfWindows
+					if(i == Desktop.desktop.getNumberOfWindows()-1) 
+						win.setWindowSizeAndPosition(xx,yy,ww*(1 + (rows*cols - numOfWindows)),wh);
+					else
+						win.setWindowSizeAndPosition(xx,yy,ww,wh);
+										
 					xx += ww;
-					if((i+1)%cols==0){xx = dx; yy += wh;} //start new row			
-					//Debug.log("Desktop Dashboard Organize i:" + (i+1)%cols + " -  " + xx + " , " + yy,Debug.LOW_PRIORITY);	
+					if((++ic)%cols==0){xx = dx; yy += wh;} //start new row			
+					//					Debug.log("Desktop Dashboard Organize i:" + i + " - " + (ic)%cols + " -  " 
+					//							+ xx + " , " + yy + " :: "
+					//							+ ww + " , " + wh,Debug.LOW_PRIORITY);	
 				}
-				break;
-			case 1: //offset arrange
-				for(var i=0;i<Desktop.desktop.getNumberOfWindows();++i) {
-					win = Desktop.desktop.getWindowByIndex(winIndex);
-				}
-				break;
-			default:
-				Debug.log("Desktop Dashboard Organize Impossible Mode",Debug.LOW_PRIORITY);
+				Desktop.desktop.redrawDashboardWindowButtons();				
 			}
+			
 			Debug.log("Desktop Dashboard Organize Mode: " + _windowOrganizeMode,Debug.LOW_PRIORITY);
 		}
 		
@@ -237,8 +286,7 @@ else {
 		}	
 
 
-
-	        var _windowDashboardToggleWindows = function () {
+		var _windowDashboardToggleWindows = function () {
 		   
 		    
 		    // if (Desktop.desktop.getForeWindow() &&
@@ -247,21 +295,22 @@ else {
 		    //else
 		    //	_windowDashboardMinimizeAll();
 
-		    if((_showDesktopBtn.innerHTML).includes(">Show Desktop</a>"))
-			_windowDashboardMinimizeAll();
+		    if(_showDesktopBtn.innerHTML.indexOf(">Show Desktop</a>") !== -1)
+				_windowDashboardMinimizeAll();
 		    else
-			_windowDashboardRestoreAll();
+				_windowDashboardRestoreAll();
 
-		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
-		    ((Desktop.desktop.getForeWindow() &&
-		      Desktop.desktop.getForeWindow().isMinimized())?"Restore All Windows":"Show Desktop") + "</a>";
-	        }
+		    Desktop.desktop.redrawDashboardWindowButtons();
+		    
+//		    _showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
+//				((Desktop.desktop.getForeWindow() &&
+//				  Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>";
+		}
 		
-	        var _windowDashboardRefresh = function() {
-	        
+		var _windowDashboardRefresh = function() {	        
 		    updateWindows();
-		    Debug.log("Window refreshed.")
-                }
+		    Debug.log("Window refreshed.");
+		}
 
 		//_windowDashboardLayoutsDropDown ~
 		//	toggles default layout drop down menu
@@ -369,30 +418,30 @@ else {
         }        
         
         this.redrawFullScreenButton = function() {
-            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
-            	((Desktop.desktop.getForeWindow() &&
-                                        Desktop.desktop.getForeWindow().isMaximized())?"Exit Full Screen":"Full Screen") + "</a>"; 
-                                    		
+        	_fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle full screen mode for current window'>" +
+        			((Desktop.desktop.getForeWindow() &&
+        					Desktop.desktop.getForeWindow().isMaximized())? 
+									"Exit Full Screen":"Full Screen") + "</a>"; 
+
         }
 
         this.redrawRefreshButton = function() {
-            _fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
-	    var hght = "16px";//_fullScreenBtn.style.height;
-	    _fullScreenRefreshBtn.style.height = hght;//"16px";
-	    console.log(hght);//"16px";
-	    //_fullScreenRefreshBtn.style.visibility = "" +
-	    //((Desktop.desktop.getForeWindow() &&
-	    //          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden"); 
-	    
-                                        		
+        	_fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
+        	var hght = "16px";//_fullScreenBtn.style.height;
+        	_fullScreenRefreshBtn.style.height = hght;//"16px";
+        	//console.log(hght);//"16px";
+        	//_fullScreenRefreshBtn.style.visibility = "" +
+        	//((Desktop.desktop.getForeWindow() &&
+        	//          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden");
         }
 
-	this.redrawShowDesktopButton = function() {
-            _fullScreenBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
-            	((Desktop.desktop.getForeWindow() &&
-                                        Desktop.desktop.getForeWindow().isMinimized())?"Restore Windows":"Show Desktop") + "</a>"; 
-
-	}
+        this.redrawShowDesktopButton = function() {
+        	_showDesktopBtn.innerHTML = "<a href='#' title='Click to 43toggle minimize/restore all windows'>" +
+        			((Desktop.desktop.getForeWindow() &&
+        					Desktop.desktop.getForeWindow().isMinimized())?
+        							"Restore Windows":"Show Desktop") + "</a>"; 
+        	//Debug.log("Desktop.desktop.getForeWindow().isMinimized() " + Desktop.desktop.getForeWindow().isMinimized());	
+        }
         
         this.getDefaultDashboardColor = function() { return _defaultDashboardColor; }
         

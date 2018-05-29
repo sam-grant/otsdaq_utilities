@@ -5,12 +5,12 @@
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
 
-#include <string>
-#include <map>
-
 namespace ots
 {
 
+//VisualSupervisor
+//	This class handles the web user interface to a VisualDataManager with reqgard to the web desktop Visualizer.
+//	The Visualizer can display ROOT object in real-time, as well as 2D and 3D displays of streaming data.
 class VisualSupervisor: public CoreSupervisorBase
 {
 
@@ -18,29 +18,33 @@ public:
 
     XDAQ_INSTANTIATOR();
 
-    VisualSupervisor            	(xdaq::ApplicationStub * s) throw (xdaq::exception::Exception);
+    VisualSupervisor            	(xdaq::ApplicationStub * s) ;
     virtual ~VisualSupervisor   	(void);
 
 
     void 					destroy               			(void);
 
-    virtual void			setSupervisorPropertyDefaults	(void);
-    virtual void 			Default               			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    virtual void 			request                     	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
 
-    void 					dataRequest                 	(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    void 					safari               			(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
+    void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out) ;
 
-    void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) throw (toolbox::fsm::exception::Exception);
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)  override;
 
-    virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionHalting     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionInitializing			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception) {}
-    virtual void 			transitionPausing     			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionResuming    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionStarting    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-    virtual void 			transitionStopping    			(toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception);
-	virtual void 			enteringError                   (toolbox::Event::Reference e) throw (toolbox::fsm::exception::Exception) {}
+    virtual void			setSupervisorPropertyDefaults	(void) override;
+    virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
+
+
+                              
+    void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) ;
+
+    virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) ;
+    virtual void 			transitionHalting     			(toolbox::Event::Reference e) ;
+    //virtual void 			transitionInitializing			(toolbox::Event::Reference e) ;
+    virtual void 			transitionPausing     			(toolbox::Event::Reference e) ;
+    virtual void 			transitionResuming    			(toolbox::Event::Reference e) ;
+    virtual void 			transitionStarting    			(toolbox::Event::Reference e) ;
+    virtual void 			transitionStopping    			(toolbox::Event::Reference e) ;
+    //virtual void 			enteringError         			(toolbox::Event::Reference e) ;
 
 private:
 

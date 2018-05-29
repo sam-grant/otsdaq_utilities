@@ -18,10 +18,11 @@ IF (NOT CETBUILDTOOLS_VERSION)
     MESSAGE (FATAL_ERROR "ERROR: setup cetbuildtools to get the cmake modules")
 ENDIF()
 
-set(CMAKE_MODULE_PATH 
+set(CMAKE_MODULE_PATH
         $ENV{ART_DIR}/Modules
         $ENV{CETBUILDTOOLS_DIR}/Modules
         $ENV{XDAQ_DIR}/Modules
+        $ENV{ARTDAQ_UTILITIES_DIR}/Modules
         ${CMAKE_MODULE_PATH})
 message(STATUS "CMAKE_MODULE_PATH is ${CMAKE_MODULE_PATH}")
 
@@ -57,13 +58,20 @@ find_ups_boost( v1_50_0 filesystem
 find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
 find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
 
-find_package(MPI QUIET)
+##find_package(MPI QUIET)
 
 check_ups_version(xdaq "$ENV{XDAQ_VERSION}" v14_0_0 PRODUCT_OLDER_VAR slf6_xdaq)
 if(slf6_xdaq)
 	message("Building on SLF6, defining NOCONST")
   add_definitions(-DXDAQ_NOCONST)
 endif()
+
+string(REGEX MATCHALL "[0-9][0-9]?[0-9]?" MESSAGEFACILITY_VERSION_LIST "$ENV{MESSAGEFACILITY_VERSION}")
+list(GET MESSAGEFACILITY_VERSION_LIST 0 MESSAGEFACILITY_MAJOR_VERSION)
+list(GET MESSAGEFACILITY_VERSION_LIST 1 MESSAGEFACILITY_MINOR_VERSION)
+list(GET MESSAGEFACILITY_VERSION_LIST 2 MESSAGEFACILITY_PATCH_VERSION)
+message("-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION}")
+add_definitions(-DMESSAGEFACILITY_HEX_VERSION=0x${MESSAGEFACILITY_MAJOR_VERSION}${MESSAGEFACILITY_MINOR_VERSION}${MESSAGEFACILITY_PATCH_VERSION})
 
 # macros for art_dictionary and simple_plugin
 include(ArtDictionary)
@@ -76,6 +84,10 @@ add_subdirectory(otsdaq-utilities)
 
 # Scripts
 add_subdirectory(tools)
+
+# Documentation directory
+#add_subdirectory(doc)
+add_subdirectory(onlineDoc)
 
 # UPS Version files
 add_subdirectory(ups)

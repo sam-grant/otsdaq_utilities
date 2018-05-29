@@ -112,7 +112,7 @@ else {
 		this.getWindowWidth = function() { return _w; }
 		this.getWindowHeight = function() { return _h; }
 		this.getWindowHeaderHeight = function() { return _defaultHeaderHeight; }
-		this.isMaximized = function() {return _isMaximized;}
+		this.isMaximized = function() {return _isMaximized && !_isMinimized;} //make sure the maximized window is visible
 		this.isMinimized = function() {return _isMinimized;}
 				
 		this.setWindowZ = function(z) { _z = z; this.windiv.style.zIndex = _z; }
@@ -236,47 +236,46 @@ else {
         	//maximize() ~~~
 			//	maximize window toggle fulls screen mode
 		this.maximize = function() {
-		    _isMinimized = false; 
-		    //if(_isMinimized) Desktop.desktop.toggleMinimize(); //untoggle minimize flag
-		    _isMaximized = true;//!_isMaximized;
-		    if(_isMaximized) //make sure is visible
-			this.windiv.style.display = "inline";
-		    this.setWindowSizeAndPosition(_x+10,_y,_w,_h);
-		    window.parent.document.title= _name;
-		    console.log(document.title, _name, "Maximize()");
+			 
+			if(_isMinimized) this.unminimize(); //untoggle minimize flag
+			_isMaximized = true;
+			
+			this.windiv.style.display = "inline"; //make sure is visible
+			this.setWindowSizeAndPosition(_x+10,_y,_w,_h);
+			window.parent.document.title= _name;
+			console.log(document.title, _name, "Maximize()");
 			
 		}
 
 		this.unmaximize = function() {
-		  
-		    _isMaximized = false;
-		    if(_isMaximized) //make sure is visible
-			this.windiv.style.display = "inline";
-		    this.setWindowSizeAndPosition(_x,_y,_w,_h);
-		    window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
 
-
+			_isMaximized = false;
+			
+			this.windiv.style.display = "inline"; //make sure is visible
+			this.setWindowSizeAndPosition(_x,_y,_w,_h);
+			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
 		}
 
 			//minimize() ~~~
 			//	minimize window toggles visible or not (does not affect current position/size)
 		this.minimize = function() {
-		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    
 		    if(_isMaximized)
-			window.parent.document.title = _name;
+		    	window.parent.document.title = _name;
 		    else
-			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
-		    _isMinimized = true; //!_isMinimized;
-		    this.windiv.style.display = "none";//_isMinimized?"none":"inline";
+		    	window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+		    
+		    _isMinimized = true;
+		    this.windiv.style.display = "none";
 		    Debug.log("-----------Chat this.windiv.style.display now is " + this.windiv.style.display);
 		}
 
 		this.unminimize = function() {
-		    //if(_isMaximized) Desktop.desktop.toggleFullScreen(); //untoggle minimize flag
+		    
 		    if(_isMaximized)
-			window.parent.document.title = _name;
+		    	window.parent.document.title = _name;
 		    else
-			window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
+		    	window.parent.document.title = Desktop.isWizardMode()?"ots wiz":"ots";
 		   
 		    _isMinimized = false;
 		    this.windiv.style.display = "inline";

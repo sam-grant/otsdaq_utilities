@@ -8,7 +8,7 @@ GETPACKAGEINFO(Chat)
 
 
 //========================================================================================================================
-void Chat::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void Chat::checkPackageDependencies() 
 {
 	CHECKDEPENDENCY(config);
 	CHECKDEPENDENCY(xcept );

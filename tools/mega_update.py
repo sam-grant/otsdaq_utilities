@@ -8,7 +8,7 @@ import subprocess
 otsdaqVersion = "s46-e10 prof";
 
 try:
-	os.path.isdir(os.environ['Products']);
+	os.path.isdir(os.environ['PRODUCTS]);
 except KeyError:
 	print "Products variable not set";
 	exit(1);
@@ -16,7 +16,7 @@ except KeyError:
 ########################################################################
 #get pull products
 ########################################################################
-cmd=os.environ['Products'];
+cmd=os.environ['PRODUCTS'];
 print cmd
 os.chdir(cmd);
 

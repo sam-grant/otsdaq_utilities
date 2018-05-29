@@ -3,7 +3,8 @@
 #include <openssl/md5.h>
 #include <sstream>
 #include <cstring>
-
+#include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 
 ECLConnection::ECLConnection(std::string user,
 							 std::string pwd,
@@ -98,6 +99,7 @@ std::string ECLConnection::MakeSaltString()
 	return rndString;
 }
 
+
 bool ECLConnection::Post(ECLEntry_t& e)
 {
 	std::string safe_url;
@@ -113,22 +115,37 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	// create text from xml form, but need to remove all \n's
 	std::ostringstream oss;
-	oss << e;
+	entry(oss, e);
 	std::string eclString = oss.str();
-	std::cout << "ECL XML is: " << eclString << std::endl;
+	__COUT__ << "ECL XML is: " << eclString << std::endl;
 	//std::string eclString = e.entry();
 	eclString = eclString.substr(eclString.find_first_of(">") + 2);
 
+	while(eclString.find('\n') != std::string::npos)
+	  {
+		eclString = eclString.erase(eclString.find('\n'), 1);
+	  }
+	while(eclString.find('\r') != std::string::npos)
+	  {
+		eclString = eclString.erase(eclString.find('\r'), 1);
+	  }
+	while(eclString.find(" <") != std::string::npos)
+	  {
+		eclString = eclString.erase(eclString.find(" <"), 1);
+	  }
+		boost::trim(eclString);
+	myData += eclString;
+ __COUT__ << "ECL Hash string is: " << myData << std::endl;
 	unsigned char resultMD5[MD5_DIGEST_LENGTH];
-	MD5((unsigned char*)eclString.c_str(), eclString.size(), resultMD5);
+	MD5((unsigned char*)myData.c_str(), myData.size(), resultMD5);
 
-	std::ostringstream sout;
-	sout << std::hex << std::setfill('0');
-	for (long long c : resultMD5)
-	{
-		sout << std::setw(2) << (long long)c;
+	std::string xSig;
+	char buf[3];
+	for (auto i=0;i<MD5_DIGEST_LENGTH;i++){
+	  sprintf(buf, "%02x", resultMD5[i]);
+	  xSig.append( buf );
 	}
-	auto xSig = sout.str();
+	__COUT__ << "ECL MD5 Signature is: " << xSig << std::endl;
 
 	CURL *curl_handle;
 	char errorBuffer[CURL_ERROR_SIZE];
@@ -153,12 +170,15 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 	const char* estr = eclString.c_str();
 
+	__COUT__ << "ECL Setting message headers" << std::endl;
 	curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, estr);
 	curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(curl_handle, CURLOPT_URL, fullURL.c_str());
 	//      curl_easy_setopt(curl_handle, CURLOPT_VERBOSE,1);
 
-	// post it! 
+	// post it!
+
+	__COUT__ << "ECL Posting message" << std::endl;
 	CURLcode result = curl_easy_perform(curl_handle);
 
 	if (result != CURLE_OK) {
@@ -166,7 +186,8 @@ bool ECLConnection::Post(ECLEntry_t& e)
 		return false;
 	}
 
-	// cleanup curl stuff 
+	__COUT__ << "ECL Cleanup" << std::endl;
+	// cleanup curl stuff
 	curl_easy_cleanup(curl_handle);
 	curl_slist_free_all(headers);
 

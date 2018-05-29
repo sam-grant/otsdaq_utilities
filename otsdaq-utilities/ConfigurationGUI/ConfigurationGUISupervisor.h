@@ -8,22 +8,26 @@
 namespace ots
 {
 
+//ConfigurationGUISupervisor
+//	This class handles the user requests to read and write the Configuration Tree.
 class ConfigurationGUISupervisor: public CoreSupervisorBase
 {
 
 public:
 
-    XDAQ_INSTANTIATOR();
+	static xdaq::Application* instantiate(xdaq::ApplicationStub* s);
 
-    ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) throw (xdaq::exception::Exception);
+    ConfigurationGUISupervisor            (xdaq::ApplicationStub* s) ;
     virtual ~ConfigurationGUISupervisor   (void);
 
     void 					init                  						(void);
     void					destroy               						(void);
 
-    virtual void			setSupervisorPropertyDefaults				(void);
-    virtual void 			Default               						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
-    virtual void 			request              						(xgi::Input* in, xgi::Output* out) throw (xgi::exception::Exception);
+    virtual void 			defaultPage      							(xgi::Input* in, xgi::Output* out) override;
+    virtual void			request         	 						(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
+
+    virtual void			setSupervisorPropertyDefaults				(void) override;
+    virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)
 
 private:
     void 					handleSaveConfigurationInfoXML				(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, std::string& configName, const std::string& columnCSV, const std::string& tableDescription, const std::string& columnChoicesCSV, bool allowOverwrite=false);

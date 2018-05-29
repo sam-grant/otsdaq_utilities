@@ -1,6 +1,6 @@
 #include "otsdaq-utilities/Console/ConsoleSupervisor.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutHeaderMacros.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 #include "otsdaq-core/NetworkUtilities/ReceiverSocket.h"
@@ -15,6 +15,9 @@
 
 using namespace ots;
 
+// UDP Message Format: 
+// UDPMESSAGE|TIMESTAMP|SEQNUM|HOSTNAME|HOSTADDR|SEVERITY|CATEGORY|APPLICATION|PID|ITERATION|MODULE|(FILE|LINE)|MESSAGE
+// FILE and LINE are only printed for s67+
 
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
@@ -29,19 +32,20 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 //========================================================================================================================
 ConsoleSupervisor::ConsoleSupervisor(xdaq::ApplicationStub* stub)
-throw (xdaq::exception::Exception)
 : CoreSupervisorBase	(stub)
 , writePointer_     	(0)
 , messageCount_     	(0)
 {
+	__SUP_COUT__ << "Constructor started." << __E__;
+
 	INIT_MF("ConsoleSupervisor");
 
 	//attempt to make directory structure (just in case)
 	mkdir(((std::string)USER_CONSOLE_PREF_PATH).c_str(), 0755);
 
-	xgi::bind (this, &ConsoleSupervisor::Console, "Console" );
-
 	init();
+
+	__SUP_COUT__ << "Constructor complete." << __E__;
 }
 
 //========================================================================================================================
@@ -101,6 +105,16 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//lockout the messages array for the remainder of the scope
 		//this guarantees the reading thread can safely access the messages
 		std::lock_guard<std::mutex> lock(cs->messageMutex_);
+
+		//NOTE: if we do not want this to be fatal, do not throw here, just print out
+
+		if(1) //generate special message and throw for failed socket
+		{
+			__SS__ << "FATAL Console error. Could not initialize socket on port " <<
+					myport << ". Perhaps the port is already in use? Check for multiple stale instances of otsdaq processes, or notify admins." <<
+					" Multiple instances of otsdaq on the same node should be possible, but port numbers must be unique." << std::endl;
+			__SS_THROW__;
+		}
 
 		//generate special message to indicate failed socket
 		__SS__ << "FATAL Console error. Could not initialize socket on port " <<
@@ -232,82 +246,53 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 }
 
 //========================================================================================================================
-void ConsoleSupervisor::Default(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+void ConsoleSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
 {
-	__COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
+	__SUP_COUT__ << "ApplicationDescriptor LID=" << getApplicationDescriptor()->getLocalId() << std::endl;
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Console.html?urn=" <<
 			getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
+}
+
+//========================================================================================================================
+//forceSupervisorPropertyValues
+//		override to force supervisor property values (and ignore user settings)
+void ConsoleSupervisor::forceSupervisorPropertyValues()
+{
+	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+			"GetConsoleMsgs");
+//	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
+//			"SaveUserPreferences | LoadUserPreferences");
 }
 
 //========================================================================================================================
 //	Request
 //		Handles Web Interface requests to Console supervisor.
 //		Does not refresh cookie for automatic update checks.
-void ConsoleSupervisor::Console(xgi::Input * in, xgi::Output * out )
-throw (xgi::exception::Exception)
+void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
+		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 {
-	cgicc::Cgicc cgi(in);
-	std::string Command;
-	if((Command = CgiDataUtilities::postData(cgi,"RequestType")) == "")
-		Command = cgi("RequestType"); //get command from form, if PreviewEntry
-
-	//__COUT__ << "Command " << Command << std::endl;
+	//__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 	//Commands:
 		//GetConsoleMsgs
 		//SaveUserPreferences
 		//LoadUserPreferences
 
-	HttpXmlDocument xmldoc;
-	uint64_t activeSessionIndex;
-	std::string user;
 
-	//**** start LOGIN GATEWAY CODE ***//
-	{
-		bool automaticCommand = Command == "GetConsoleMsgs"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-		bool checkLock = false;
-		bool getUser = (Command == "SaveUserPreferences") || (Command == "LoadUserPreferences");
-		bool requireLock = false;
+	//Note: to report to logbook admin status use xmlOut.addTextElementToData(XML_ADMIN_STATUS,refreshTempStr_);
 
-		if(!theRemoteWebUsers_.xmlLoginGateway(
-				cgi,
-				out,
-				&xmldoc,
-				allSupervisorInfo_,
-				0,//&userPermissions,  		//acquire user's access level (optionally null pointer)
-				!automaticCommand,			//true/false refresh cookie code
-				USER_PERMISSIONS_THRESHOLD_,//set access level requirement to pass gateway
-				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-				requireLock,				//true/false requires this user has the lock to proceed
-				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-				getUser?&user:0				//acquire username of this user (optionally null pointer)
-				,0//,&displayName			//acquire user's Display Name
-				,&activeSessionIndex		//acquire user's session index associated with the cookieCode
-				))
-		{	//failure
-			__COUT__ << "Failed Login Gateway: " <<
-					out->str() << std::endl; //print out return string on failure
-			return;
-		}
-	}
-	//**** end LOGIN GATEWAY CODE ***//
-
-
-	//to report to logbook admin status use xmldoc.addTextElementToData(XML_ADMIN_STATUS,refreshTempStr_);
-
-	if(Command == "GetConsoleMsgs")
+	if(requestType == "GetConsoleMsgs")
 	{
 		//lindex of -1 means first time and user just gets update lcount and lindex
-        std::string lastUpdateCountStr = CgiDataUtilities::postData(cgi,"lcount");
-        std::string lastUpdateIndexStr = CgiDataUtilities::postData(cgi,"lindex");
+        std::string lastUpdateCountStr = CgiDataUtilities::postData(cgiIn,"lcount");
+        std::string lastUpdateIndexStr = CgiDataUtilities::postData(cgiIn,"lindex");
 
         if(lastUpdateCountStr == "" || lastUpdateIndexStr == "")
         {
-    		__COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
+    		__SUP_COUT_ERR__ << "Invalid Parameters! lastUpdateCount=" << lastUpdateCountStr <<
     				", lastUpdateIndex=" << lastUpdateIndexStr << std::endl;
-    		xmldoc.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
-    		goto CLEANUP;
+    		xmlOut.addTextElementToData("Error","Error - Invalid parameters for GetConsoleMsgs.");
+    		return;
         }
 
         clock_t lastUpdateCount;
@@ -315,36 +300,36 @@ throw (xgi::exception::Exception)
 
         unsigned int lastUpdateIndex;
         sscanf(lastUpdateIndexStr.c_str(),"%u",&lastUpdateIndex);
-//		__COUT__ << "lastUpdateCount=" << lastUpdateCount <<
+//		__SUP_COUT__ << "lastUpdateCount=" << lastUpdateCount <<
 //				", lastUpdateIndex=" << lastUpdateIndex << std::endl;
 
-		insertMessageRefresh(&xmldoc,lastUpdateCount,lastUpdateIndex);
+		insertMessageRefresh(&xmlOut,lastUpdateCount,lastUpdateIndex);
 	}
-	else if(Command == "SaveUserPreferences")
+	else if(requestType == "SaveUserPreferences")
 	{
-        int colorIndex = CgiDataUtilities::postDataAsInt(cgi,"colorIndex");
-        int showSideBar = CgiDataUtilities::postDataAsInt(cgi,"showSideBar");
-        int noWrap = CgiDataUtilities::postDataAsInt(cgi,"noWrap");
-        int messageOnly = CgiDataUtilities::postDataAsInt(cgi,"messageOnly");
-        int hideLineNumers = CgiDataUtilities::postDataAsInt(cgi,"hideLineNumers");
+        int colorIndex = CgiDataUtilities::postDataAsInt(cgiIn,"colorIndex");
+        int showSideBar = CgiDataUtilities::postDataAsInt(cgiIn,"showSideBar");
+        int noWrap = CgiDataUtilities::postDataAsInt(cgiIn,"noWrap");
+        int messageOnly = CgiDataUtilities::postDataAsInt(cgiIn,"messageOnly");
+        int hideLineNumers = CgiDataUtilities::postDataAsInt(cgiIn,"hideLineNumers");
 
-		__COUT__ << "Command " << Command << std::endl;
-		__COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__COUT__ << "noWrap: " << noWrap << std::endl;
-		__COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
+		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
+		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
-		if(user == "") //should never happen?
+		if(userInfo.username_ == "") //should never happen?
 		{
-			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
-			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
-			goto CLEANUP;
+			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
+			xmlOut.addTextElementToData("Error","Error - InvauserInfo.username_user found.");
+			return;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__COUT__ << "Save preferences: " << fn << std::endl;
+		__SUP_COUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
 			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
@@ -355,34 +340,34 @@ throw (xgi::exception::Exception)
 		fprintf(fp,"hideLineNumers %d\n",hideLineNumers);
 		fclose(fp);
 	}
-	else if(Command == "LoadUserPreferences")
+	else if(requestType == "LoadUserPreferences")
 	{
-		__COUT__ << "Command " << Command << std::endl;
+		__SUP_COUT__ << "requestType " << requestType << std::endl;
 
 		unsigned int colorIndex,showSideBar,noWrap,messageOnly,hideLineNumers;
 
-		if(user == "") //should never happen?
+		if(userInfo.username_ == "") //should never happen?
 		{
-			__COUT_ERR__ << "Invalid user found! user=" << user << std::endl;
-			xmldoc.addTextElementToData("Error","Error - Invalid user found.");
-			goto CLEANUP;
+			__SUP_COUT_ERR__ << "Invalid user found! user=" << userInfo.username_ << std::endl;
+			xmlOut.addTextElementToData("Error","Error - Invalid user found.");
+			return;
 		}
 
-		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + user + "." + (std::string)USERS_PREFERENCES_FILETYPE;
+		std::string fn = (std::string)USER_CONSOLE_PREF_PATH + userInfo.username_ + "." + (std::string)USERS_PREFERENCES_FILETYPE;
 
-		__COUT__ << "Load preferences: " << fn << std::endl;
+		__SUP_COUT__ << "Load preferences: " << fn << std::endl;
 
 		FILE *fp = fopen(fn.c_str(),"r");
 		if(!fp)
 		{
 			//return defaults
-			__COUT__ << "Returning defaults." << std::endl;
-			xmldoc.addTextElementToData("colorIndex","0");
-			xmldoc.addTextElementToData("showSideBar","0");
-			xmldoc.addTextElementToData("noWrap","1");
-			xmldoc.addTextElementToData("messageOnly","0");
-			xmldoc.addTextElementToData("hideLineNumers","1");
-			goto CLEANUP;
+			__SUP_COUT__ << "Returning defaults." << std::endl;
+			xmlOut.addTextElementToData("colorIndex","0");
+			xmlOut.addTextElementToData("showSideBar","0");
+			xmlOut.addTextElementToData("noWrap","1");
+			xmlOut.addTextElementToData("messageOnly","0");
+			xmlOut.addTextElementToData("hideLineNumers","1");
+			return;
 		}
 		fscanf(fp,"%*s %u",&colorIndex);
 		fscanf(fp,"%*s %u",&showSideBar);
@@ -390,32 +375,25 @@ throw (xgi::exception::Exception)
 		fscanf(fp,"%*s %u",&messageOnly);
 		fscanf(fp,"%*s %u",&hideLineNumers);
 		fclose(fp);
-		__COUT__ << "colorIndex: " << colorIndex << std::endl;
-		__COUT__ << "showSideBar: " << showSideBar << std::endl;
-		__COUT__ << "noWrap: " << noWrap << std::endl;
-		__COUT__ << "messageOnly: " << messageOnly << std::endl;
-		__COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
+		__SUP_COUT__ << "colorIndex: " << colorIndex << std::endl;
+		__SUP_COUT__ << "showSideBar: " << showSideBar << std::endl;
+		__SUP_COUT__ << "noWrap: " << noWrap << std::endl;
+		__SUP_COUT__ << "messageOnly: " << messageOnly << std::endl;
+		__SUP_COUT__ << "hideLineNumers: " << hideLineNumers << std::endl;
 
 		char tmpStr[20];
 		sprintf(tmpStr,"%u",colorIndex);
-		xmldoc.addTextElementToData("colorIndex",tmpStr);
+		xmlOut.addTextElementToData("colorIndex",tmpStr);
 		sprintf(tmpStr,"%u",showSideBar);
-		xmldoc.addTextElementToData("showSideBar",tmpStr);
+		xmlOut.addTextElementToData("showSideBar",tmpStr);
 		sprintf(tmpStr,"%u",noWrap);
-		xmldoc.addTextElementToData("noWrap",tmpStr);
+		xmlOut.addTextElementToData("noWrap",tmpStr);
 		sprintf(tmpStr,"%u",messageOnly);
-		xmldoc.addTextElementToData("messageOnly",tmpStr);
+		xmlOut.addTextElementToData("messageOnly",tmpStr);
 		sprintf(tmpStr,"%u",hideLineNumers);
-		xmldoc.addTextElementToData("hideLineNumers",tmpStr);
+		xmlOut.addTextElementToData("hideLineNumers",tmpStr);
 	}
 
-
-
-
-	CLEANUP:
-
-	//return xml doc holding server response
-	xmldoc.outputXmlDocument((std::ostringstream*)out, false, true); //allow whitespace
 }
 
 
@@ -440,10 +418,10 @@ throw (xgi::exception::Exception)
 //	</messages>
 //
 //	NOTE: Uses std::mutex to avoid conflict with writing thread. (this is the reading thread)
-void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
+void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 		const time_t lastUpdateCount, const unsigned int lastUpdateIndex)
 {
-	//__COUT__ << std::endl;
+	//__SUP_COUT__ << std::endl;
 
 	//validate lastUpdateIndex
 	if(lastUpdateIndex > messages_.size() &&
@@ -462,9 +440,9 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	refreshReadPointer_ = (writePointer_ + messages_.size() - 1) % messages_.size();
 
 	sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getCount());
-	xmldoc->addTextElementToData("last_update_count",refreshTempStr_);
+	xmlOut->addTextElementToData("last_update_count",refreshTempStr_);
 	sprintf(refreshTempStr_,"%u",refreshReadPointer_);
-	xmldoc->addTextElementToData("last_update_index",refreshTempStr_);
+	xmlOut->addTextElementToData("last_update_index",refreshTempStr_);
 
 	if(!messages_[refreshReadPointer_].getTime()) //if no data, then no data
 		return;
@@ -476,21 +454,21 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 	else if(messages_[writePointer_].getTime()) //check that writePointer_ message has been initialized, therefore has wrapped around at least once already
 	{
 		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
-		xmldoc->addTextElementToData("message_overflow","1");
-		__COUT__ << "Overflow was detected!" << std::endl;
+		xmlOut->addTextElementToData("message_overflow","1");
+		__SUP_COUT__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = (writePointer_+1) % messages_.size();
 	}
 	else  //user does not have valid index, and writePointer_ has not wrapped around, so give all new messages
 		refreshReadPointer_ = 0;
 
-//	__COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
-//	__COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
-//	__COUT__ << "writePointer_: " << writePointer_ << std::endl;
+//	__SUP_COUT__ << "refreshReadPointer_: " << refreshReadPointer_ << std::endl;
+//	__SUP_COUT__ << "lastUpdateCount: " << lastUpdateCount << std::endl;
+//	__SUP_COUT__ << "writePointer_: " << writePointer_ << std::endl;
 
 	//return anything from refreshReadPointer_ to writePointer_
 	//all should have a clock greater than lastUpdateClock
 
-	refreshParent_ = xmldoc->addTextElementToData("messages","");
+	refreshParent_ = xmlOut->addTextElementToData("messages","");
 
 	bool requestOutOfSync = false;
 	std::string requestOutOfSyncMsg;
@@ -515,22 +493,22 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmldoc,
 
 		//for all fields, give value
 		for(refreshIndex_=0; refreshIndex_ < messages_[refreshReadPointer_].fields.size();++refreshIndex_)
-			xmldoc->addTextElementToParent("message_" +
+			xmlOut->addTextElementToParent("message_" +
 					messages_[refreshReadPointer_].fields[refreshIndex_].fieldName,
 					messages_[refreshReadPointer_].getField(refreshIndex_), refreshParent_);
 
 		//give timestamp also
 		sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getTime());
-		xmldoc->addTextElementToParent("message_Time",
+		xmlOut->addTextElementToParent("message_Time",
 				refreshTempStr_, refreshParent_);
 		//give clock also
 		sprintf(refreshTempStr_,"%lu",messages_[refreshReadPointer_].getCount());
-		xmldoc->addTextElementToParent("message_Count",
+		xmlOut->addTextElementToParent("message_Count",
 				refreshTempStr_, refreshParent_);
 	}
 
 	if(requestOutOfSync) //if request was out of sync, show message
-		__COUT__ << requestOutOfSyncMsg;
+		__SUP_COUT__ << requestOutOfSyncMsg;
 }
 
 
