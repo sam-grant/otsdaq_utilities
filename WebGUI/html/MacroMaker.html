@@ -240,6 +240,7 @@
             margin-right:5px;
             width:90px;
             outline: none;
+            padding: 2px;
         }
         
         .hide {
@@ -607,7 +608,29 @@
 		        	<button onclick="callRead()">Read</button>
 		        	<button onclick="callWrite()">Write</button>
 		        </div>
-		        <div class="buttonGroup" style='margin-top:50px'>
+
+			    <div class="buttonGroup">
+		           	  
+		          <input id="enableReadBitField" type="checkbox" onclick="toggleReadBitField()"> <a onclick='toggleReadBitField(1)'>Read Bit-field</a></input>
+		          
+		           <center>
+		           <div id='readBitFieldTable' style='display:none'>
+		           <center>
+		           <table >
+		           <tr><td>Bit-field Start Position: </td><td><input type="text"
+		        		   style='width:20px'
+		        		   id="readBitFieldStartPos" class="inputBox" value="0"/></td></tr>
+		           <tr><td>Bit-field Length: </td><td><input type="text" 
+		        		   style='width:20px'
+		        		   id="readBitFieldLength" class="inputBox" value="8"/></td></tr>
+		           </table>
+		           </center>
+		           </div>
+		           </center>
+			    </div>
+		           
+		           
+		        <div class="buttonGroup" style='margin-top:20px'>
 		        	<button onclick="showPopupClearHistoryConfirm()">Clear History</button>
 		        </div>
 		    </div>
