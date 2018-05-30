@@ -503,7 +503,6 @@
 		var treeEditingEditIconShownIdString_ = "";
 		var treeEditingInitGroupMembers_ = [];
 		var treeEditingGroupMembersLastSelect_ = "";
-	
 		
 	
 		
@@ -2692,6 +2691,8 @@
 				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
 				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
 			}
+			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
+			
 			
 			var el;
 			var depth;			
@@ -2867,9 +2868,11 @@
 			
 			//add tree
 			var tree = DesktopContent.getXMLNode(req,"tree");
-			var preLength = treeViewHandlerStr_.length;
-			recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
-			if(preLength == treeViewHandlerStr_.length) //no children found 	
+			var childrenLength = tree.children.length;
+						
+			if(childrenLength)
+				recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
+			else //no children found 	
 			{
 				//treat this as an empty value node!
 				
@@ -2887,6 +2890,20 @@
 						"</div>" + //end treeNode div							
 						"<div id='clearDiv'></div>";  
 				//////////=======================
+				
+				
+				//consider offering to delete the parent of last deleted child
+				if(parentId == treeEditingNodeParentIdString_ && 
+						treeEditingNodeType_ == "delete-uid")
+				{
+					Debug.log("parentId " + parentId + " treeEditingNodeParentIdString_ " +
+							treeEditingNodeParentIdString_ + " treeEditingNodeType_ " +
+							treeEditingNodeType_);
+
+					//if no children at parent, then find closest parent that is a UID record
+					//	and prompt for deletion
+					localHandleEmptyParent();
+				}
 			}
 			
 			el.innerHTML = treeViewHandlerStr_;
@@ -2897,8 +2914,61 @@
 			applyTreeFilter("",1); //reapplyFilter
 			toggleGroupDetails(_showGroupDetails);
 
-			activateSystemConfigHandler(req); //display active config groups	
-		}
+			activateSystemConfigHandler(req); //display active config groups
+
+			
+			
+			//===========
+			//localHandleEmptyParent ~~
+			function localHandleEmptyParent()
+			{
+				//Steps:
+				//	- navigate up tree until UID node found
+				//		:: UID node determined if treeNode-Value-editIcon-## exists
+				//	- offer to delete that UID node
+				
+				//start at parent element.. is it a UID
+				
+				var pel;
+				var parentIdString = treeEditingNodeParentIdString_;
+				var depth;
+				
+				try
+				{
+					Debug.log("Trying " + parentIdString);
+					while(!(pel = document.getElementById("treeNode-Value-editIcon-" + 
+							parentIdString)))
+					{
+						//current parent is not a UID node
+						//	so keep ascending tree
+						
+						if(((parentIdString.split('-')[0])|0) <= 1) 
+						{
+							Debug.log("Reached top of tree?! Still no UID node found?");
+							break;
+						}
+						
+						//get parent's parentIdString
+						parentIdString = 
+								document.getElementById("treeNode-ParentId-" + parentIdString).textContent;
+						
+						Debug.log("Trying " + parentIdString);
+					}
+				}
+				catch(e)
+				{
+					Debug.log("Error finding UID parent... " + e);
+					return;
+				}
+				
+				Debug.log("Found " + parentIdString);
+				
+				
+				
+				
+			} //end localHandleEmptyParent
+			
+		} //end treeViewHandler()
 
 		//recursiveDrawTree ~		
 		function recursiveDrawTree(parent,depth,path,parentIdString) 
@@ -3415,7 +3485,7 @@
 				
 				
 			}
-		}
+		} //end recursiveDrawTree()
 
 		//getTreeViewTableStrings ~
 		function getTreeViewTableStrings(tableLinkName, isLink)
@@ -4147,7 +4217,9 @@
 						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
 						"startPath=" + path + nodeName + "/"+ 
-						"&modifiedTables=" + modifiedTables,treeViewHandler,idString,
+						"&modifiedTables=" + modifiedTables,
+						treeViewHandler,
+						idString,
 						0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 				return true;
 			}
@@ -8992,9 +9064,16 @@
 						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
 								treeEditingNodeParentIdString_.split('-')[1],false);
 						pel.innerHTML = "";
+
+						//check if parent is now empty in treeViewHandler()
 						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
 								treeEditingNodeParentIdString_.split('-')[1],true);
+						
+						Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
+						
 
+						
+						
 					}
 					else if(treeEditingNodeType_.indexOf("link-") == 0)
 					{
