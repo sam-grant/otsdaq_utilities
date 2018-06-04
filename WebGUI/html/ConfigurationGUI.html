@@ -2869,12 +2869,12 @@
 			//add tree
 			var tree = DesktopContent.getXMLNode(req,"tree");
 			var childrenLength = tree.children.length;
-						
+			
 			if(childrenLength)
 				recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
-			else //no children found 	
-			{
-				//treat this as an empty value node!
+			else								//no children found					
+			{				
+				//treat no children as an empty value node!
 				
 				//////////=======================
 				treeViewHandlerStr_ += 
@@ -2929,23 +2929,27 @@
 				
 				//start at parent element.. is it a UID
 				
-				var pel;
+				var parentType;
 				var parentIdString = treeEditingNodeParentIdString_;
-				var depth;
+				
 				
 				try
 				{
 					Debug.log("Trying " + parentIdString);
-					while(!(pel = document.getElementById("treeNode-Value-editIcon-" + 
-							parentIdString)))
+					parentType = document.getElementById("treeNode-Value-" + 
+							parentIdString).className.split(' ')[2].split('-')[3];
+					Debug.log("parentType " + parentType);
+					
+					while(parentType != "uid")
 					{
 						//current parent is not a UID node
 						//	so keep ascending tree
 						
+						//check depth
 						if(((parentIdString.split('-')[0])|0) <= 1) 
 						{
 							Debug.log("Reached top of tree?! Still no UID node found?");
-							break;
+							return;
 						}
 						
 						//get parent's parentIdString
@@ -2953,6 +2957,9 @@
 								document.getElementById("treeNode-ParentId-" + parentIdString).textContent;
 						
 						Debug.log("Trying " + parentIdString);
+						parentType = document.getElementById("treeNode-Value-" + 
+													parentIdString).className.split(' ')[2].split('-')[3];
+						Debug.log("parentType " + parentType);
 					}
 				}
 				catch(e)
@@ -2962,8 +2969,77 @@
 				}
 				
 				Debug.log("Found " + parentIdString);
+				Debug.log("parentType " + parentType);
 				
+				var depth = (parentIdString.split('-')[0])|0;
+				var idString = parentIdString;
+				var path = document.getElementById("treeNode-path-" + idString).innerText;
 				
+				DesktopContent.popUpVerification(
+						"The deleted record &apos;" + treeEditingNodeInitValue_ +
+						"&apos; was the last remaining child descending from the parent record &apos;" +
+						path + 
+						"REPLACE.&apos; " +
+						"Would you like to also delete the parent record &apos;REPLACE?&apos;",
+						function() //delete the parent handler
+						{
+					
+					Debug.log("Deleting the parent also. " + idString);					
+					
+					//copied code from handleTreeNodeClick() and selectThisTreeNode()
+					
+					var el = document.getElementById("treeNode-Value-" + idString);	
+					
+					treeEditingNodeDepth_ = depth;
+					treeEditingNodeIdString_ = parentIdString;
+					
+					var splitArr = path.split('/');
+					treeEditingNodeParentIdString_ = 		
+							document.getElementById("treeNode-ParentId-" + idString).textContent;
+									
+										
+					if(depth == 1)
+						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
+					else //accessing through link so need to get from parent
+					{
+						//needs to get from parent OR parent-of-parent
+						//	if parent is uid link.. then one level back
+						//	if parent is groupid link.. then two levels back
+
+						var pel = document.getElementById("treeNode-linkTableName-" +
+								treeEditingNodeParentIdString_);
+						if(!pel)
+							pel = document.getElementById("treeNode-linkTableName-" +
+									(document.getElementById("treeNode-ParentId-" + 
+											treeEditingNodeParentIdString_).textContent));
+
+						treeEditingTargetTable_ = pel.textContent;
+					}
+
+					treeEditingTargetUID_ = el.textContent;
+					treeEditingTargetColumn_ = "UID";
+					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
+							"/" + treeEditingTargetUID_ + "/" +
+							treeEditingTargetColumn_);
+					
+					treeEditingNodeType_ = "delete-uid";								
+					_editingCellElOldValue = el.textContent;
+					treeEditingNodeInitValue_ = _editingCellElOldValue;
+					
+					_editingCell = true;
+					_editingCellEl = el;			
+
+					_editingCellElOldTitle = el.title;
+					el.title = "";
+
+					editTreeNodeOK();					
+					
+					
+						}, //end delete the parent handler
+						document.getElementById("treeNode-nodeName-" + parentIdString).innerText /* REPLACE val*/,
+						"#efeaea" /*bgColor*/, 0 /*textColor*/,
+						"#770000" /*borderColor*/,0 /*getUserInput*/,300 /*dialogWidth*/
+				); //end of DesktopContent.popUpVerification
 				
 				
 			} //end localHandleEmptyParent
@@ -3484,7 +3560,7 @@
 				
 				
 				
-			}
+			} //end children loop
 		} //end recursiveDrawTree()
 
 		//getTreeViewTableStrings ~
@@ -3738,7 +3814,7 @@
 				
 				if(type == "uid")
 				{
-					//edit UID mode (up/down tab/shtab enter esc active)
+					//edit UID mode 
 					if(depth == 1)
 						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
 					else //accessing through link so need to get from parent
@@ -5989,7 +6065,7 @@
 						"function() {" + 
 						"treeEditingNodeType_ = \"delete-uid\";" +
 						"editTreeNodeOK();" +
-						"},0,\"#efeaea\",0,\"#770000\");' " +
+						"},0,\"#efeaea\",0,\"#770000\",0,250);' " + //val, bgColor, textColor, borderColor, getUserInput, dialogWidth)
 						"title='Delete the record associated with this UID node.' " +
 						"></div>";
 				str += "</td></tr></table>";
@@ -8759,6 +8835,9 @@
 							else
 								newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
 						}
+						else if(treeEditingNodeType_ == "delete-uid" && //take from old value if deleting this node programatically (not from user clicking directly)
+								(sel = _editingCellEl.getElementsByTagName("input")).length == 0)
+							newValue = encodeURIComponent(treeEditingNodeInitValue_); 
 						else
 							newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 

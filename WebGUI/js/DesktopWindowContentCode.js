@@ -1106,7 +1106,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1130,6 +1130,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	if(!bgColor) bgColor = "rgb(255,241,189)";	//set default
 	if(!textColor) textColor = "black";	//set default
 	if(!borderColor) borderColor = "black";
+	if(!dialogWidth) dialogWidth = 200;
 	
 	var css = "";
 	//pop up div style
@@ -1142,7 +1143,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//pop up text style 
 	css += "#" + DesktopContent._verifyPopUpId + "-text " +
 			"{" +
-			"color: " + textColor + ";width: 200px; padding-bottom: 10px;" +
+			"color: " + textColor + ";width: " + dialogWidth + "px; padding-bottom: 10px;" +
 			"}\n\n";
 	//..and anything in the text div
 	css += "#" + DesktopContent._verifyPopUpId + "-text *" +
