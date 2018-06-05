@@ -74,7 +74,7 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
 	cd $p
 	git pull
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ==================" >> $CHECKIN_LOG_PATH
@@ -82,8 +82,9 @@ for p in ${REPO_DIR[@]}; do
 	git status &>> $CHECKIN_LOG_PATH
 	
 	if [ "x$1" != "x" ]; then
-		#add space for user
-	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH
+		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
+	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
 	    git push   
 	fi
 
@@ -189,8 +190,8 @@ if [ "x$1" == "x" ]; then
 	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
-	chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
+	#chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"

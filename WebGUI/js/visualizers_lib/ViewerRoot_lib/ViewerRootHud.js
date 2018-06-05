@@ -3,6 +3,30 @@
 
 ViewerRoot.createHud = function() {
 		
+	
+	//"memeber" functions
+	//	this.handleWindowResize()
+	//	this.checkboxUpdate(i)
+	//	this.handlerRefreshPeriodChange(v)
+	//	this.radioSelect(i)
+	//	this.handleDirContents(req)
+	//	handleUserPreferences(req)
+	//	findDir(path,currDir,currPath)
+	//	redrawDirectoryDisplay(currDir,tabSz,path,str)
+	//	this.collapseDirectory(dirPath)
+	//	this.changeDirectory(dirPath)
+	//	animateDropDown()
+	//	mouseOverDropDown()
+	//	mouseOutDropDown(event)
+	//	this.toggleControls()
+	//	this.toggleAdminControls(type, path)
+	//	this.makeConfigDir()
+	// 	this.saveConfigFile()
+	// 	this.removeConfigPath()
+	//	this.adminControlsReqHandler()
+	//	this.popUpVerification()
+	//	this.clearPopUpVerification()
+	
 	var hudMouseOverDiv;
 	var animationTargetTop, isDropDownAnimating, isDropDownDown;
 	
@@ -40,7 +64,7 @@ ViewerRoot.createHud = function() {
 			document.getElementById("ViewerRoot-hudControlsIcon").style.display = "block";
 		else
 			document.getElementById("ViewerRoot-hudControlsIcon").style.display = "none";
-	}
+	} //end handleWindowResize()
 
 	//should match response by handleUserPreferences()
 	this.checkboxUpdate = function(i) {
@@ -83,7 +107,7 @@ ViewerRoot.createHud = function() {
 
 		}
 		
-	}
+	} //end checkboxUpdate()
 	
 	this.handlerRefreshPeriodChange = function(v) {
 		v = parseInt(v);
@@ -97,14 +121,14 @@ ViewerRoot.createHud = function() {
 		if(ViewerRoot.autoRefreshTimer) window.clearInterval(ViewerRoot.autoRefreshTimer);
 		ViewerRoot.autoRefreshTimer = window.setInterval(ViewerRoot.autoRefreshTick,
 			ViewerRoot.autoRefreshPeriod);
-	}
+	} //end handlerRefreshPeriodChange()
 	
 	this.radioSelect = function(i) {
 		Debug.log("ViewerRoot Hud radioSelect " + i);
 		ViewerRoot.nextObjectMode = i;
 		
 		DesktopContent.XMLHttpRequest("Request?RequestType=setUserPreferences&radioSelect="+i);
-	}
+	} //end radioSelect()
 	
 	this.handleDirContents = function(req) {
 		Debug.log("ViewerRoot Hud handleDirContents " + req.responseText);
@@ -145,7 +169,7 @@ ViewerRoot.createHud = function() {
 		//Debug.log("ViewerRoot Hud handleDirContents baseDir " + baseDir);
 		
 		redrawDirectoryDisplay();
-	}
+	} //end handleDirContents()
 	
 	//set user preferences based on server response
 	//	should match response by this.checkboxUpdate() and this.radioSelect()
@@ -191,7 +215,7 @@ ViewerRoot.createHud = function() {
 			ViewerRoot.autoRefreshPeriod = autoRefreshPeriod; 	//autoRefreshPeriod 
 			document.getElementById("hudAutoRefreshPeriod").value = ViewerRoot.autoRefreshPeriod;			
 		}
-	}
+	} // end handleUserPreferences()
 			
 	//return tuple to path, if not found return 0
 	//	recursive function
@@ -231,7 +255,7 @@ ViewerRoot.createHud = function() {
 			tuplePtr = tuplePtr[TUPLE_PARENT];
 		}
 		return path;
-	}
+	} //end findDir()
 	
 	
 	//draw for current directory, currDir, as starting level
@@ -332,7 +356,7 @@ ViewerRoot.createHud = function() {
 			hudDirBrowserDiv.innerHTML = str;
 		else 
 			return str;
-	}
+	} //end redrawDirectoryDisplay()
 	
 
 	//minimize directory is done by removing the structure from dirPath
@@ -345,13 +369,13 @@ ViewerRoot.createHud = function() {
 		baseDir[TUPLE_TYPE] &= ~TUPLE_TYPE_DIR_EXPANDED; //unset dir expanded flag
 		        
 		redrawDirectoryDisplay(); //redraw current directory			
-	}
+	} //end collapseDirectory()
 	
 	this.changeDirectory = function(dirPath) {
 		Debug.log("ViewerRoot Hud changeDirectory  " + dirPath);
 		currDirPtr = findDir(dirPath);	
 		ViewerRoot.getDirectoryContents(dirPath);
-	}
+	} // end changeDirectory()
 	
 	
 	// animateDropDown ~~
@@ -368,7 +392,7 @@ ViewerRoot.createHud = function() {
 		//else still going towards target
 		hudMouseOverDiv.style.top = tmpTop + "px";
 		window.setTimeout(animateDropDown,30);
-	}
+	} //end animateDropDown()
 
 	// mouseOverDropDown ~~
 	var mouseOverDropDown = function() {
@@ -384,7 +408,8 @@ ViewerRoot.createHud = function() {
 			animationTargetTop = -15;
 			window.setTimeout(animateDropDown,30);
 		}		
-	}
+	} //end mouseOverDropDown()
+	
 	// mouseOutDropDown ~~
 	var mouseOutDropDown = function(event) {		
 		if(isDropDownAnimating) return; //do nothing if animating currently
@@ -408,7 +433,7 @@ ViewerRoot.createHud = function() {
 			animationTargetTop = 15 - hudMouseOverDiv.offsetHeight;
 			window.setTimeout(animateDropDown,30);
 		}
-	}
+	} //end mouseOutDropDown()
 	
 	//types
 	this.toggleControls = function() {
@@ -433,7 +458,7 @@ ViewerRoot.createHud = function() {
 		}
 		else //return to showing current directory
 			ViewerRoot.hud.changeDirectory(getPath(currDirPtr));	//return and refresh directory contents from server
-	}
+	} //end this.toggleControls()
 	
 	//types
 	//	0 - make directory
@@ -488,7 +513,7 @@ ViewerRoot.createHud = function() {
 		}
 		else //return to showing current directory
 			ViewerRoot.hud.changeDirectory(getPath(currDirPtr));	//return and refresh directory contents from server
-	}
+	} //end toggleAdminControls()
 
 	this.makeConfigDir = function() {
 		var dir = document.getElementById('hudAdminControlField').value;
@@ -496,7 +521,7 @@ ViewerRoot.createHud = function() {
 
 		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=mkdir", "path="+adminControlsPath+"&name="+dir, ViewerRoot.hud.adminControlsReqHandler);
 			
-	}
+	} //end makeConfigDir()
 
 	this.saveConfigFile = function() {
 		
@@ -529,7 +554,7 @@ ViewerRoot.createHud = function() {
 		
 		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=save", 
 				"path="+adminControlsPath+"&name="+file+"&config="+fileStr, ViewerRoot.hud.adminControlsReqHandler);
-	}
+	} //end saveConfigFile()
 
 	this.removeConfigPath = function() {
 
@@ -537,7 +562,7 @@ ViewerRoot.createHud = function() {
 		Debug.log("ViewerRoot Hud removeConfigPath  " + target);		
 
 		DesktopContent.XMLHttpRequest("Request?RequestType=rootAdminControls&cmd=delete", "path="+adminControlsPath+"&name="+target, ViewerRoot.hud.adminControlsReqHandler);
-	}
+	} //end removeConfigPath()
 
 	this.adminControlsReqHandler = function(req) {
 		Debug.log("ViewerRoot Hud adminControlsReqHandler  " + req.responseText);
@@ -548,7 +573,7 @@ ViewerRoot.createHud = function() {
 			ViewerRoot.hud.toggleAdminControls();
 		else
 			document.getElementById('hudAdminControlStatus').innerHTML = status;
-	}
+	} //end adminControlsReqHandler()
 
 	//popUpVerification ~~
 	//	asks user if sure
@@ -578,7 +603,7 @@ ViewerRoot.createHud = function() {
 			"<input type='submit' onmouseup='ViewerRoot.hud.clearPopUpVerification();' value='Cancel'>";
 		hudPopUpDiv.innerHTML = str;
 		el.appendChild(hudPopUpDiv);
-	}
+	}	//end popUpVerification()
 	
 	//clearPopUpVerification ~~
 	//	call func after clearing, if exists
@@ -589,7 +614,7 @@ ViewerRoot.createHud = function() {
 		if(func) func();
 		else	//Action was cancelled by user
 			document.getElementById('hudAdminControlStatus').innerHTML = "Action was cancelled by user!";
-	}
+	}	//end clearPopUpVerification()
 	
 	hudMouseOverDiv = this.hudMouseOverDiv = document.createElement('div');	
 	hudMouseOverDiv.setAttribute("id", "ViewerRoot-hudMouseOver");//ViewerRoot.hudAutoHide?"ViewerRoot-hudMouseOver":"ViewerRoot-hudMouseOver-locked");
