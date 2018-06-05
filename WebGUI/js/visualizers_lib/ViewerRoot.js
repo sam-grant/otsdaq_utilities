@@ -63,11 +63,10 @@ ViewerRoot.launch = function() {
 	//allow window splitting and comparing and contrasting with transparent histos
 	////////uncomment for initial ROOT example end//////////////////////
 	
-	loadScript(source_dir+'ViewerRootHud.js',function(){
-	loadScript(source_dir+'JsRoot/scripts/JSRootCore.js',function(){
-			JSROOT.AssertPrerequisites('2d;io;3d;',ViewerRoot.init);
-		}); });
-	
+		loadScript(source_dir+'ViewerRootHud.js',function(){
+			loadScript(source_dir+'JsRoot/scripts/JSRootCore.js',function(){
+					JSROOT.AssertPrerequisites('2d;io;3d;',ViewerRoot.init);
+			}); });
 
 	///	Drawing Strategy
 	//		- if rootCanvas not created, clear omni and create, full window
