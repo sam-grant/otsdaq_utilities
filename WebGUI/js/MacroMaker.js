@@ -101,7 +101,10 @@
 		block1El = document.getElementById('fecList');
 		block2El = document.getElementById('macroLib');
 		block3El = document.getElementById('main');
+		
 		block4El = document.getElementById('progressBarOuter');
+		block4El.style.display = "none"; //only show while macro is running
+		
 		block5El = document.getElementById('history');
 		block6El = document.getElementById('sequence');
 		block7El = document.getElementById('maker');
@@ -532,13 +535,38 @@
     		var startPos = document.getElementById("readBitFieldStartPos").value | 0;
     		var fieldSz = document.getElementById("readBitFieldLength").value | 0;
     		Debug.log("Extracting Bit-Field start/size = " + startPos + " / " + fieldSz);
+
+    		while(((startPos/4)|0) && target.length)
+    		{
+    			target = target.substr(0,target.length-1); //shift by 4 bits right
+    			Debug.log("div4 target " + target);
+    			startPos -= 4; //moved 4 bits
+    		}
+
+    		Debug.log("target " + target);
+
+    		var size = Math.ceil((startPos+fieldSz)/4);
+    		target = target.substr(target.length-size);
+
+    		Debug.log("sized target " + target);
+
+    		if(target.length == 0) target = "0";
+
     		
+    		//target should be shifted for bit manipulations
     		var num = parseInt(target,16);
+    		Debug.log("num " + num);
+
     		var mask = 0;
     		for(var i=0;i<fieldSz;++i)
     			mask |= (1<<i);
+    		Debug.log("mask " + mask);
     		num = (num >> startPos) & mask;
-    		target = num.toString(16); //return to hex number
+
+    		Debug.log("final num " + num);
+    		target = num.toString(16).toUpperCase(); //return to hex number
+
+    		Debug.log("final target " + target);
     	}
     	
 		switch(format) 
@@ -604,7 +632,7 @@
     		 fecListEl.style.display = "block";
     		 macroLibEl.style.display = "block";
     		 sequenceEl.style.display = "none";
-    		 progressBarOuterEl.style.display = "block";
+    		 progressBarOuterEl.style.display = "none";
     		 mainEl.style.display = "block";
     		 makerEl.style.display = "none";
     		 document.getElementById("page2tag").style.fontWeight = "400";
@@ -951,11 +979,14 @@
     {
 		var contentEl = document.getElementById('historyContent');
 		var progressBarInnerEl = document.getElementById('progressBarInner');
+		var progressBarOuterEl = document.getElementById("progressBarOuter");
+		
 		var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
 		contentEl.innerHTML += start;
 		contentEl.scrollTop = contentEl.scrollHeight;
 		
 		progressBarInnerEl.style.display = "block";
+		progressBarOuterEl.style.display = "block";
 		var barEl = document.getElementById('macroRunningBar');
 		barEl.style.width = '0%';
 		barIncrement = 100/stringOfCommands.length;
@@ -972,6 +1003,7 @@
 					isMacroRunning = false;
 					setTimeout(function(){ 
 						progressBarInnerEl.style.display = "none";
+						progressBarOuterEl.style.display = "none";
 	                }, 150);
 					barWidth = 0;
 				    barIncrement = 0;
