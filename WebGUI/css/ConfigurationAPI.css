@@ -98,6 +98,18 @@
 		.ConfigurationAPI-popUpDialog-editIcon:hover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
 			cursor: 			pointer;
+		}		
+
+		.ConfigurationAPI-popUpDialog-deleteIcon {			
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCan.png);
+			width: 				16px;
+			height: 			20px;
+			border: 			0;
+			margin: 			-9px 0 -10px 10px;
+		}
+		.ConfigurationAPI-popUpDialog-deleteIcon:hover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
+			cursor: 			pointer;
 		}
 		
 		.ConfigurationAPI-popUpDialog-preloadImage {			
@@ -109,6 +121,9 @@
 		}
 		#ConfigurationAPI-popUpDialog-preloadImage-editIconHover {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+		}
+		#ConfigurationAPI-popUpDialog-preloadImage-treeEditTrashIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-trashCanHover.png);
 		}
 		
 		

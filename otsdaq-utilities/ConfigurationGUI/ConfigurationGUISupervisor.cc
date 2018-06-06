@@ -108,7 +108,7 @@ void ConfigurationGUISupervisor::defaultPage(xgi::Input*  in, xgi::Output*  out 
 void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 {
 	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-			"*=10"); //experienced users
+			"*=10 | deleteTreeNodeRecords=255 | saveConfigurationInfo=255 | deleteConfigurationInfo=255"); //experienced users to edit, admins to delete
 	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.RequireUserLockRequestTypes,
 			"*");//all
 }

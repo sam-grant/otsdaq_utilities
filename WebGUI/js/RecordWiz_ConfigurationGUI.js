@@ -53,6 +53,12 @@
 	//			localContextSelectHandler(event)
 	//			localGetAllHostInfo()
 	//			localRecordsSelectHandler(event)
+	//			(stepString + "editConfig").onclick
+	//			(stepString + "editContext").onclick
+	//			(stepString + "deleteRecordIcon").onclick
+	//				ConfigurationAPI.deleteSubsetRecords() handler
+	//				ConfigurationAPI.saveModifiedTables() handler
+	//				localCheckParentChildren()
 
 	//		share scope functions (between switch and next/prev handlers)
 	//			localHandleIntermediateLevel()
@@ -918,10 +924,12 @@ RecordWiz.createWiz = function(doneHandler) {
 				str += "Here is a dropdown of existing " + _recordAlias + 
 						" records to help you in creating standardized record names:";
 				str += htmlClearDiv();
+				
+				
 				str += htmlOpen("select",
 						{
 								"id" :		stepString + "records",
-								"style" :	"margin-bottom: 16px;"
+								"style" :	"margin-bottom: 16px;",
 						});
 
 
@@ -932,6 +940,30 @@ RecordWiz.createWiz = function(doneHandler) {
 							},_subsetUIDs[i] /*innerHTML*/, true /*closeTag*/);
 				}
 				str += "</select>"; //end existing records dropdown
+
+
+				str += htmlOpen("div",
+						{
+								"id" : 		stepString + "deleteRecordIcon",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-deleteIcon",
+								"style" :	"float: right; margin: 6px 112px -16px -200px; display: block;",
+								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
+
+
+				//preload hover images
+				str += htmlOpen("div",
+						{
+								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
+									"-preloadImage-editIconHover",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-preloadImage",								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
+				str += htmlOpen("div",
+						{
+								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
+									"-preloadImage-treeEditTrashIconHover",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-preloadImage",								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
 
 
 				///////////////////////
@@ -1062,7 +1094,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			{
 			case _STEP_SET_RECORD_FIELDS:
 				
-			{ //start scope of _STEP_SET_RECORD_FIELDS
+			{ //start scope of _STEP_SET_RECORD_FIELDS localAddHandlers
 				//add the fields content in after parent element exists
 				scopeForSetRecordFieldsContent();
 				///////////////////////
@@ -1099,12 +1131,12 @@ RecordWiz.createWiz = function(doneHandler) {
 					}
 				} //end scopeForSetRecordFieldsContent
 				
-			} //end scope of _STEP_SET_RECORD_FIELDS
+			} //end scope of _STEP_SET_RECORD_FIELDS localAddHandlers
 				break;
 			
 			case _STEP_PROC_WHICH_BUFFER:
 
-			{ //start scope of _STEP_WHICH_APP
+			{ //start scope of _STEP_WHICH_APP localAddHandlers
 
 				//create select change handler for existing records
 				document.getElementById(stepString + "buffers").onclick = localAppSelectHandler;
@@ -1151,7 +1183,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						}; //end addToExisting handler
 
-			} //end scope of _STEP_WHICH_APP
+			} //end scope of _STEP_WHICH_APP localAddHandlers
 			//NOTE: below this, functions were moved outside of swtich because they must be accessible to other steps and handlers
 			// and, apparently {} create "function scope" inside a switch case
 			// and, apparently switch statements create "function scope" too.
@@ -1160,7 +1192,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			break; //end _STEP_WHICH_APP
 			case _STEP_WHICH_APP:
 				
-			{ //start scope of _STEP_WHICH_APP
+			{ //start scope of _STEP_WHICH_APP localAddHandlers
 
 				//create select change handler for existing records
 				document.getElementById(stepString + "apps").onclick = localAppSelectHandler;
@@ -1207,7 +1239,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						}; //end addToExisting handler
 
-			} //end scope of _STEP_WHICH_APP
+			} //end scope of _STEP_WHICH_APP localAddHandlers
 			//NOTE: below this, functions were moved outside of switch because they must be accessible to other steps and handlers
 			// and, apparently {} create "function scope" inside a switch case
 			// and, apparently switch statements create "function scope" too.
@@ -1216,7 +1248,7 @@ RecordWiz.createWiz = function(doneHandler) {
 				break; //end _STEP_WHICH_APP
 			case _STEP_SET_CONTEXT_HOST:
 
-			{ //start scope of _STEP_SET_CONTEXT_HOST
+			{ //start scope of _STEP_SET_CONTEXT_HOST localAddHandlers
 				//create select change handler for existing records
 				document.getElementById(stepString + "addresses").onclick = localAddressSelectHandler;
 				document.getElementById(stepString + "addresses").onchange = localAddressSelectHandler;
@@ -1237,13 +1269,13 @@ RecordWiz.createWiz = function(doneHandler) {
 							this.value;	
 				}; //end onchange handler
 
-			} //end scop of _STEP_SET_CONTEXT_HOST
+			} //end scop of _STEP_SET_CONTEXT_HOST localAddHandlers
 			
 				break; //end _STEP_SET_CONTEXT_HOST
 
 			case _STEP_WHICH_CONTEXT:
 
-			{ //start scope of _STEP_WHICH_CONTEXT
+			{ //start scope of _STEP_WHICH_CONTEXT localAddHandlers
 				//create select change handler for existing records
 				document.getElementById(stepString + "contexts").onclick = localContextSelectHandler;
 				document.getElementById(stepString + "contexts").onchange = localContextSelectHandler;
@@ -1355,13 +1387,13 @@ RecordWiz.createWiz = function(doneHandler) {
 							},
 							_modifiedTables);
 				} //end localGetAllHostInfo()
-			} //end scope of _STEP_WHICH_CONTEXT
+			} //end scope of _STEP_WHICH_CONTEXT localAddHandlers
 			
 				break; //end _STEP_WHICH_CONTEXT
 
 			case _STEP_GET_RECORD_NAME:
 			
-			{ //start scope of _STEP_GET_RECORD_NAME				
+			{ //start scope of _STEP_GET_RECORD_NAME localAddHandlers	 			
 			
 				//create select change handler for existing records
 				document.getElementById(stepString + "records").onclick = localRecordsSelectHandler;
@@ -1394,13 +1426,122 @@ RecordWiz.createWiz = function(doneHandler) {
 					paramObj["recordName"] = document.getElementById(stepString + "recordName").value.trim();
 					showPrompt(_STEP_CHANGE_GROUP,newParamObj);
 						};
-			} //end scope of _STEP_GET_RECORD_NAME
+				/////////////////////////////////
+				document.getElementById(stepString + "deleteRecordIcon").onclick = 
+						function() //start deleteRecordIcon handler
+						{
+					var selectedIndex =  document.getElementById(stepString + "records").selectedIndex;
+					var recordName = _subsetUIDs[selectedIndex];
+					Debug.log("deleteRecord " + selectedIndex + " : " + recordName);
+					Debug.log("getRecordConfiguration " + getRecordConfiguration());
+					Debug.log("getAppConfiguration " + getAppConfiguration());
+					try
+					{
+						Debug.log("getIntermediateTable " + getIntermediateTable());
+						Debug.log("getIntermediateTypeName " + getIntermediateTypeName());
+					}catch(e){
+						Debug.log("No intermediate table: " + e);
+					}
+					
+					//Steps:
+					//	prompt user, are you sure?
+					//	reset modified tables
+					//	delete record
+					//	save modified tables
+					//	check parent level for any empty children groups
+					//	for each parent found with no children.. offer to delete them
+					//	when complete, re-initialize with initRecordWizard()
+					
+					
+					DesktopContent.popUpVerification(
+							"Are you sure you want to remove the " + _recordAlias + " named '" +
+							recordName + "' from the active configuration?",
+							function() //delete the record handler
+							{
+
+						Debug.log("do deleteRecord " + selectedIndex + " : " + recordName);				
+
+
+						/////////////////////
+						//delete record
+						_modifiedTables = undefined; //reset modified tables
+						ConfigurationAPI.deleteSubsetRecords(
+								getRecordConfiguration(),
+								recordName,
+								/////////////////////
+								function(modifiedTables,err) //start deleteSubsetRecords handler
+								{
+							Debug.log("modifiedTables length " + modifiedTables.length);
+							if(!modifiedTables.length)
+							{
+								//really an error
+								Debug.log("There was an error while creating the XDAQ Context '" + 
+										recordName  + ".' " + err,
+										Debug.HIGH_PRIORITY);
+								return;
+							}
+							_modifiedTables = modifiedTables;
+
+							//at this point context was deleted in modified tables 
+							Debug.log("The " + _recordAlias + " named '" +  
+									recordName + "' was successfully removed!",
+									Debug.INFO_PRIORITY);
+
+							//localCheckParentChildren();
+							//return;
+							//now save, then check parent level for no children
+							
+							//proceed to save (quietly) tables, groups, aliases
+							ConfigurationAPI.saveModifiedTables(_modifiedTables,
+									function(savedTables, savedGroups, savedAliases)
+									{
+								if(!savedTables.length)
+								{
+									Debug.log("There was an error while saving the changes.",
+											Debug.HIGH_PRIORITY);
+									return;					
+								}
+
+								Debug.log("The " +
+										_recordAlias + " named '" + recordName + "' was successfully removed!",
+										Debug.INFO_PRIORITY);
+
+								_modifiedTables = undefined; //clear after save
+
+								//localCheckParentChildren();
+								initRecordWizard(); //start over if no done handler
+
+									}); //end saveModifiedTables handler
+							
+							
+
+								}, //end deleteSubsetRecords handler
+								_modifiedTables,
+								true /*silenceErrors*/);  //end deleteSubsetRecords
+
+							}, //end delete the record handler
+							0 /* REPLACE val*/,
+							"#efeaea" /*bgColor*/, 0 /*textColor*/,
+							"#770000" /*borderColor*/,0 /*getUserInput*/,300 /*dialogWidth*/
+					); //end of DesktopContent.popUpVerification
+
+
+					/////////////////////////////////	
+					function localCheckParentChildren()
+					{
+						Debug.log("localCheckParentChildren");
+
+						Debug.log("getAppConfiguration " + getAppConfiguration());
+						
+					}
+						}; //end deleteRecordIcon handler
+			} //end scope of _STEP_GET_RECORD_NAME localAddHandlers
 			
 				break; //end _STEP_GET_RECORD_NAME
 
 			case _STEP_CHANGE_GROUP:
 			
-			{ //start scope of _STEP_CHANGE_GROUP				
+			{ //start scope of _STEP_CHANGE_GROUP localAddHandlers			
 			
 				/////////////////////////////////
 				document.getElementById(stepString + "activateAlias").onclick = 
@@ -1480,7 +1621,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							}); //end activate group handler
 						}; //end activate alias handler
 				
-			} //end scope of _STEP_CHANGE_GROUP
+			} //end scope of _STEP_CHANGE_GROUP localAddHandlers
 			
 				break;  //end _STEP_CHANGE_GROUP
 			default:;
