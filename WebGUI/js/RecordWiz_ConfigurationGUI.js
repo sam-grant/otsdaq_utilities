@@ -135,7 +135,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	//global vars for params		
 	var _recordAlias;
 	var _doneHandler = doneHandler;
-	var _aRecordWasCreated = false;
+	var _aRecordWasModified = false;
 		
 	var _RECORD_TYPE_FE = "Front-end";
 	var _RECORD_TYPE_PROCESSOR = "Processor";
@@ -898,7 +898,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
-						(_aRecordWasCreated?
+						(_aRecordWasModified?
 								("Would you like to create another " + _recordAlias + "?"):
 						("Welcome to the " + _recordAlias + " creation Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
@@ -1487,8 +1487,8 @@ RecordWiz.createWiz = function(doneHandler) {
 									recordName + "' was successfully removed!",
 									Debug.INFO_PRIORITY);
 
-							//localCheckParentChildren();
-							//return;
+							localCheckParentChildren();
+							return;
 							//now save, then check parent level for no children
 							
 							//proceed to save (quietly) tables, groups, aliases
@@ -1508,8 +1508,10 @@ RecordWiz.createWiz = function(doneHandler) {
 
 								_modifiedTables = undefined; //clear after save
 
-								//localCheckParentChildren();
-								initRecordWizard(); //start over if no done handler
+								_aRecordWasModified = true;
+								
+								localCheckParentChildren();
+								//initRecordWizard(); //start over if no done handler
 
 									}); //end saveModifiedTables handler
 							
@@ -2394,7 +2396,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 									_modifiedTables = undefined; //clear after save
 									
-									_aRecordWasCreated = true;
+									_aRecordWasModified = true;
 									
 									initRecordWizard(); //start over if no done handler
 
@@ -2642,7 +2644,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 						}
 						
-						if(_doneHandler) _doneHandler(_aRecordWasCreated);
+						if(_doneHandler) _doneHandler(_aRecordWasModified);
 						return; //prevent default prev showPrompt
 						break;
 					default:;

@@ -2447,9 +2447,9 @@
 			if(launchType == "tree") //from tree view
 			{
 				RecordWiz.createWiz(
-						function(atLeastOneRecordWasCreated)
+						function(atLeastOneRecordWasModified)
 						{				
-					if(atLeastOneRecordWasCreated)
+					if(atLeastOneRecordWasModified)
 					{
 						var str = "Record creation complete. You may want to ";
 						str += "<a href='#' onclick='refreshTreeView()' " +
@@ -2458,7 +2458,7 @@
 						str += "Refresh";
 						str += "</a>";
 						str += " the tree " +
-								"to view additions. ";
+								"to view modifications. ";
 						str += "The active groups are now ";
 						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
@@ -2889,25 +2889,11 @@
 				treeViewHandlerStr_ += "</div>" + //end treeNode Value div		
 						"</div>" + //end treeNode div							
 						"<div id='clearDiv'></div>";  
-				//////////=======================
-				
-				
-				//consider offering to delete the parent of last deleted child
-				if(parentId == treeEditingNodeParentIdString_ && 
-						treeEditingNodeType_ == "delete-uid")
-				{
-					Debug.log("parentId " + parentId + " treeEditingNodeParentIdString_ " +
-							treeEditingNodeParentIdString_ + " treeEditingNodeType_ " +
-							treeEditingNodeType_);
-
-					//if no children at parent, then find closest parent that is a UID record
-					//	and prompt for deletion
-					localHandleEmptyParent();
-				}
+				//////////=======================				
 			}
 			
 			el.innerHTML = treeViewHandlerStr_;
-			
+						
 			//save the full string for posterity (and for back links)
 			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
 			
@@ -2917,33 +2903,84 @@
 			activateSystemConfigHandler(req); //display active config groups
 
 			
+
+			//consider offering to delete the parent of last deleted child
+			if(parentId == treeEditingNodeParentIdString_ && 
+					treeEditingNodeType_ == "delete-uid")
+			{
+				treeEditingNodeType_ = ""; //clear so parent not get considered again
+				
+				Debug.log("parentId " + parentId + " treeEditingNodeParentIdString_ " +
+						treeEditingNodeParentIdString_ + " treeEditingNodeType_ " +
+						treeEditingNodeType_);
+
+				var parentIsEmpty = childrenLength == 0;
+				
+				if(!parentIsEmpty) //check for disconnected due to deleting the uid-link
+				{
+					try
+					{
+						var fieldName = treeEditingNodeInitValue_.split('-')[0];
+						//look through children for fieldName
+						for(var i=0;i<tree.children.length;++i)
+							if(tree.children[i].getAttribute("value") == fieldName)
+							{
+								//found field, check for disconnected
+								if(tree.children[i].children[0].getAttribute("value") ==
+										"Disconnected")
+									parentIsEmpty = true;
+								break;
+							}
+					}
+					catch(e)
+					{
+						Debug.log("Ignoring error trying verify deleted uid-link: " + e);
+					}
+				}
+				
+				//if no children at parent, then find closest parent that is a UID record
+				//	and prompt for deletion
+				if(parentIsEmpty)
+					localHandleEmptyParent();
+			}
+			
 			
 			//===========
 			//localHandleEmptyParent ~~
 			function localHandleEmptyParent()
 			{
 				//Steps:
-				//	- navigate up tree until UID node found
-				//		:: UID node determined if treeNode-Value-editIcon-## exists
+				//	- navigate up tree until UID or LinkUID node found				
+				//		start at parent element.. is it a UID? etc.
 				//	- offer to delete that UID node
-				
-				//start at parent element.. is it a UID
+				//	- delete using tree deletion mechanism, and is recursive for free
+				//		i.e. when tree is drawn after deleting, it will check for empty parent again								
 				
 				var parentType;
-				var parentIdString = treeEditingNodeParentIdString_;
-				
+				var parentIdString = treeEditingNodeParentIdString_;								
+				var traversalCount = 0;
 				
 				try
 				{
 					Debug.log("Trying " + parentIdString);
 					parentType = document.getElementById("treeNode-Value-" + 
 							parentIdString).className.split(' ')[2].split('-')[3];
+					if(parentType == "link")  //get link type
+						parentType += document.getElementById("treeNode-childLinkIdType-" + 
+								parentIdString).innerText;
 					Debug.log("parentType " + parentType);
-					
-					while(parentType != "uid")
-					{
+										
+
+					while(parentType != "uid" && parentType != "linkUID")
+					{		
 						//current parent is not a UID node
 						//	so keep ascending tree
+						
+						if(++traversalCount > 10) 
+						{
+							Debug.log("Is tree path somehow circular?! Giving up. " + traversalCount);
+							return;							
+						}
 						
 						//check depth
 						if(((parentIdString.split('-')[0])|0) <= 1) 
@@ -2952,6 +2989,7 @@
 							return;
 						}
 						
+						
 						//get parent's parentIdString
 						parentIdString = 
 								document.getElementById("treeNode-ParentId-" + parentIdString).textContent;
@@ -2959,6 +2997,9 @@
 						Debug.log("Trying " + parentIdString);
 						parentType = document.getElementById("treeNode-Value-" + 
 													parentIdString).className.split(' ')[2].split('-')[3];
+						if(parentType == "link") //get link type
+							parentType += document.getElementById("treeNode-childLinkIdType-" + 
+									parentIdString).innerText;
 						Debug.log("parentType " + parentType);
 					}
 				}
@@ -2969,17 +3010,28 @@
 				}
 				
 				Debug.log("Found " + parentIdString);
-				Debug.log("parentType " + parentType);
+				Debug.log("parentType " + parentType);			
+				
 				
 				var depth = (parentIdString.split('-')[0])|0;
 				var idString = parentIdString;
 				var path = document.getElementById("treeNode-path-" + idString).innerText;
+				var uid;
+				
+				if(parentType == "linkUID")
+					uid = document.getElementById("treeNode-Value-" + 
+							parentIdString).innerText.split('(')[1].split(' ')[2].split(')')[0];
+				else //uid
+					uid = document.getElementById("treeNode-nodeName-" + parentIdString).innerText;
+				
+				Debug.log("path " + path);		
+				Debug.log("uid " + uid);		
 				
 				DesktopContent.popUpVerification(
-						"The deleted record &apos;" + treeEditingNodeInitValue_ +
-						"&apos; was the last remaining child descending from the parent record &apos;" +
+						"The removed record &apos;" + treeEditingNodeInitValue_ +
+						"&apos; left the parent record at path &apos;" +
 						path + 
-						"REPLACE.&apos; " +
+						"REPLACE&apos; childless.<br><br>" +
 						"Would you like to also delete the parent record &apos;REPLACE?&apos;",
 						function() //delete the parent handler
 						{
@@ -2997,26 +3049,35 @@
 					treeEditingNodeParentIdString_ = 		
 							document.getElementById("treeNode-ParentId-" + idString).textContent;
 									
-										
-					if(depth == 1)
-						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
-					else //accessing through link so need to get from parent
+
+					//get target table - similar to handleTreeNodeClick()
+					if(parentType == "linkUID")
 					{
-						//needs to get from parent OR parent-of-parent
-						//	if parent is uid link.. then one level back
-						//	if parent is groupid link.. then two levels back
+						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" +
+								idString).textContent;
+					}
+					else //uid
+					{
+						if(depth == 1)
+							treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
+						else //accessing through link so need to get from parent
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
 
-						var pel = document.getElementById("treeNode-linkTableName-" +
-								treeEditingNodeParentIdString_);
-						if(!pel)
-							pel = document.getElementById("treeNode-linkTableName-" +
-									(document.getElementById("treeNode-ParentId-" + 
-											treeEditingNodeParentIdString_).textContent));
+							var pel = document.getElementById("treeNode-linkTableName-" +
+									treeEditingNodeParentIdString_);
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" +
+										(document.getElementById("treeNode-ParentId-" + 
+												treeEditingNodeParentIdString_).textContent));
 
-						treeEditingTargetTable_ = pel.textContent;
+							treeEditingTargetTable_ = pel.textContent;
+						}
 					}
 
-					treeEditingTargetUID_ = el.textContent;
+					treeEditingTargetUID_ = uid;
 					treeEditingTargetColumn_ = "UID";
 					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
 							"/" + treeEditingTargetUID_ + "/" +
@@ -3032,13 +3093,18 @@
 					_editingCellElOldTitle = el.title;
 					el.title = "";
 
+
+					Debug.log("treeEditingTargetTable_ " + treeEditingTargetTable_);
+					Debug.log("treeEditingTargetColumn_ " + treeEditingTargetColumn_);	
+					Debug.log("treeEditingTargetUID_ " + treeEditingTargetUID_);	
+					Debug.log("treeEditingNodeType_ " + treeEditingNodeType_);		
 					editTreeNodeOK();					
 					
 					
 						}, //end delete the parent handler
-						document.getElementById("treeNode-nodeName-" + parentIdString).innerText /* REPLACE val*/,
+						uid /* REPLACE val*/,
 						"#efeaea" /*bgColor*/, 0 /*textColor*/,
-						"#770000" /*borderColor*/,0 /*getUserInput*/,300 /*dialogWidth*/
+						"#770000" /*borderColor*/,0 /*getUserInput*/,400 /*dialogWidth*/
 				); //end of DesktopContent.popUpVerification
 				
 				
@@ -3254,6 +3320,8 @@
 						isDisconnected = true;
 
 					}
+					else //define check if group link
+						isGroupLink = nodes[i].children[0].nodeName == "GroupID";
 					
 					value =  
 							"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
@@ -8837,16 +8905,18 @@
 						}
 						else if(treeEditingNodeType_ == "delete-uid" && //take from old value if deleting this node programatically (not from user clicking directly)
 								(sel = _editingCellEl.getElementsByTagName("input")).length == 0)
-							newValue = encodeURIComponent(treeEditingNodeInitValue_); 
+							newValue = treeEditingNodeInitValue_; 
 						else
 							newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 
 						newValue = encodeURIComponent(newValue.trim());
-					}
+					} //end extraction of newValue based on type
 
 					Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
 							newValue);
 
+					//check if value was modified, and if it should have been
+					
 					if(encodeURIComponent(treeEditingNodeInitValue_) == newValue)
 					{
 						//some types allow no change
