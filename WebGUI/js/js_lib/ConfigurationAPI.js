@@ -4235,6 +4235,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	}
 	el.addEventListener("keydown",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	el.addEventListener("mousemove",ConfigurationAPI.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",DesktopContent.mouseMove);
 	
 	return {"w" : w, "h" : h, "x" : x, "y" : y};
 }

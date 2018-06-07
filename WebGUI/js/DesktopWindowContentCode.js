@@ -1207,11 +1207,6 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			" Y: " + y + 
 			" W: " + w + 
 			" H: " + h);		
-
-	while(x < 0)
-		x += w;
-	while(y < 0)
-		y += h;
 	
 	while(x+w > DesktopContent.getWindowWidth())
 		x -= w;
