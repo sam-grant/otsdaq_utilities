@@ -98,7 +98,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
-//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor)
+//	DesktopContent.getXMLChildren(req, nodeName)
+//	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
@@ -817,6 +818,16 @@ DesktopContent.getXMLValue = function(req, name) {
 }
 
 //=====================================================================================
+//returns array of xml children nodes
+//	with tags that match nodeName
+DesktopContent.getXMLChildren = function(req, nodeName) {
+
+	if(req && req.responseXML) //to allow for arbitrary starting xml node
+		req = req.responseXML;
+	return req.getElementsByTagName(nodeName);
+}
+
+//=====================================================================================
 //returns xml entry node (first node with name)
 //	Note: could be any depth (not just depth 1)
 //	...uses getElementsByTagName(name)
@@ -1106,7 +1117,8 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
-DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth) {		
+DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
+		dialogWidth, cancelFunc) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1180,8 +1192,6 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
 			"<input type='submit' " +
-			"onmouseup='event.stopPropagation();" +
-			"DesktopContent.clearPopUpVerification();' " +
 			"onclick='event.stopPropagation();' " +
 			"value='Cancel'>";
 	el.innerHTML = str;
@@ -1189,6 +1199,9 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//onmouseup for "Yes" button
 	el.getElementsByTagName('input')[0].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
+	//onmouseup for "Cancel" button
+	el.getElementsByTagName('input')[1].onmouseup = 
+			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(cancelFunc);};
 
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;

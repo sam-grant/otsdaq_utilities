@@ -2237,8 +2237,9 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //	filterList := relative-to-record-path=value(,value,...);path=value... filtering
 //		records with relative path not meeting all filter criteria
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
-//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
 //		- fields/value pairs separated by ; for AND
+//			- Note: limitation here is there is no OR among fields/value pairs (in future, could separate field/value pairs by : for OR)
+//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr,
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,
@@ -2334,27 +2335,31 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 			}
 
 			std::map<std::string /*relative-path*/, std::string /*value*/> filterMap;
-			if(filterList != "")
-			{
-				//extract filter list
-				{
-					std::istringstream f(filterList);
-					std::string filterPath,filterValue;
-					while (getline(f, filterPath, '='))
-					{
-						getline(f, filterValue, ';');
-						filterMap.insert(
-								std::pair<std::string,std::string>(
-										filterPath,
-										filterValue));
-					}
-					__SUP_COUT__ << filterList << std::endl;
-					for(auto& pair:filterMap)
-						__SUP_COUT__ << "filterMap " <<
-						pair.first << "=" <<
-						pair.second << std::endl;
-				}
-			}
+			StringMacros::getMapFromString(filterList,filterMap,
+					std::set<char>({';'})/*pair delimiters*/,
+					std::set<char>({'='})/*name/value delimiters*/);
+			//			if(filterList != "")
+			//			{
+			//				//extract filter list
+			//				{
+			//					std::istringstream f(filterList);
+			//					std::string filterPath,filterValue;
+			//					while (getline(f, filterPath, '='))
+			//					{
+			//						getline(f, filterValue, ';');
+			//						filterMap.insert(
+			//								std::pair<std::string,std::string>(
+			//										filterPath,
+			//										filterValue));
+			//					}
+			//					__SUP_COUT__ << filterList << std::endl;
+			//					for(auto& pair:filterMap)
+			//						__SUP_COUT__ << "filterMap " <<
+			//						pair.first << "=" <<
+			//						pair.second << std::endl;
+			//				}
+			//			}
+			__COUTV__(StringMacros::mapToString(filterMap));
 
 			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
 		}

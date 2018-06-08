@@ -56,7 +56,7 @@ if (typeof DesktopContent == 'undefined' &&
 // 	ConfigurationAPI.getUniqueFieldValuesForRecords(subsetBasePath,recordArr,fieldList,responseHandler,modifiedTables)
 //	ConfigurationAPI.setFieldValuesForRecords(subsetBasePath,recordArr,fieldObjArr,valueArr,responseHandler,modifiedTablesIn,silenceErrors)	)
 //	ConfigurationAPI.popUpSaveModifiedTablesForm(modifiedTables,responseHandler)
-//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings)
+//	ConfigurationAPI.saveModifiedTables(modifiedTables,responseHandler,doNotIgnoreWarnings,doNotSaveAffectedGroups,doNotActivateAffectedGroups,doNotSaveAliases,doNotIgnoreGroupActivationWarnings,doNotKillPopUpEl)
 //	ConfigurationAPI.bitMapDialog(bitMapParams,initBitMapValue,okHandler,cancelHandler)
 //	ConfigurationAPI.createEditableFieldElement(fieldObj,fieldIndex,depthIndex /*optional*/)
 //	ConfigurationAPI.getEditableFieldValue(fieldObj,fieldIndex,depthIndex /*optional*/)
@@ -355,8 +355,8 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 //	filterList := relative-to-record-path=value(,value,...);path=value... filtering
 //		records with relative path not meeting all filter criteria
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
-//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
 //		- fields/value pairs separated by ; for AND
+//			- Note: limitation here is there is no OR among fields/value pairs (in future, could separate field/value pairs by : for OR)
 //		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 // <modifiedTables> is an array of Table objects (as returned from 
@@ -1611,7 +1611,8 @@ ConfigurationAPI.handlePopUpAliasEditToggle = function(i)
 ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		doNotIgnoreWarnings,doNotSaveAffectedGroups,
 		doNotActivateAffectedGroups,doNotSaveAliases,
-		doNotIgnoreGroupActivationWarnings)
+		doNotIgnoreGroupActivationWarnings,
+		doNotKillPopUpEl)
 {	
 	//copy from ConfigurationGUI::saveModifiedTree
 
@@ -1671,7 +1672,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 		{
 			//kill popup dialog
 			var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-			if(el) el.parentNode.removeChild(el);	
+			if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);	
 			if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 			return;
 		}
@@ -1900,7 +1901,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 						//kill popup dialog
 						var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-						if(el) el.parentNode.removeChild(el);	
+						if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);	
 						if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 						return;
 					}			
@@ -2111,7 +2112,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 									//kill popup dialog
 									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-									if(el) el.parentNode.removeChild(el);	
+									if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);	
 									if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 									return;
 								}	
@@ -2136,7 +2137,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 									//kill popup dialog
 									var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-									if(el) el.parentNode.removeChild(el);
+									if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);
 									if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 									return;
 								}
@@ -2145,7 +2146,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 								//kill popup dialog
 								var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-								if(el) el.parentNode.removeChild(el);	
+								if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);	
 								if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 								return;	
 							}	
@@ -2197,7 +2198,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 				//kill popup dialog
 				var el = document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + ""); 
-				if(el) el.parentNode.removeChild(el);
+				if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);
 			}
 		} //end localHandleSavingAffectedGroups
 	}	//end localHandleAffectedGroups
@@ -2235,7 +2236,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					//kill popup dialog
 					var el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID); 
-					if(el) el.parentNode.removeChild(el);
+					//do not kill on error --- if(el && !doNotKillPopUpEl) el.parentNode.removeChild(el);
 					if(responseHandler) responseHandler(savedTables,savedGroups,savedAliases);
 					return;
 				}						
