@@ -49,17 +49,34 @@
 		function init() 
 		{									
 			Debug.log("CfgGUI record Wiz example init ");
+			
+			var recordsAlias = extractGETParameters();
 		
 			RecordWiz.createWiz(
 					function(atLeastOneRecordWasCreated)
 					{				
-				Debug.log("Done at Template! atLeastOneRecordWasCreated = " + 
-						atLeastOneRecordWasCreated,
+				Debug.log("Done with Wizard! At least one record was successfully modified.",
 						Debug.INFO_PRIORITY);
-					});
+					},
+					recordsAlias);
 						
 		} //end init()
 				
+		//=====================================================================================
+		//extractGETParameters ~~
+		//	return false, if illegal params
+		function extractGETParameters() 
+		{
+			//extract get parameters
+			//		<recordsAlias> 		= Target record type, e.g. "Front-ends"
+			
+			var recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
+			if(!recordsAlias) recordsAlias = "";
+			Debug.log("recordsAlias " + recordsAlias);
+			
+			return recordsAlias;
+		}	//end extractGETParameters()
+		
 	</script>
 </head>
 	

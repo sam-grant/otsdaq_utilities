@@ -130,7 +130,7 @@ else
 //call createWiz to create instance of a RecordWiz
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-RecordWiz.createWiz = function(doneHandler) {
+RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	
 	
 	var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
@@ -207,18 +207,38 @@ RecordWiz.createWiz = function(doneHandler) {
 	Debug.log("RecordWiz.wiz constructed");
 	RecordWiz.wiz = this; 
 	
+	
+	if(recordsAliasFastForward == "")
+	{
+		DesktopContent.tooltip("Record Wizard Introduction",
+				"Welcome to the Record Wizard GUI. Here you can create new records for "+
+				"your <i>otsdaq</i> system. \n\n" +
+				"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
+	
+				"Briefly, here is a description of the steps: " +
+				"\n\t- 'What type of record do you want to add?'" +
+				"\n\t- 'Do you want to add it to an existing context or create a new one?'"
+		);
+	
+		showPrompt(_STEP_WHICH_RECORD_TYPE);
+	}
+	else
+	{
+		_recordAlias = recordsAliasFastForward;
+		localParameterCheck();
+		
 
-	DesktopContent.tooltip("Record Wizard Introduction",
-			"Welcome to the Record Wizard GUI. Here you can create new records for "+
-			"your <i>otsdaq</i> system. \n\n" +
-			"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
-
-			"Briefly, here is a description of the steps: " +
-			"\n\t- 'What type of record do you want to add?'" +
-			"\n\t- 'Do you want to add it to an existing context or create a new one?'"
-	);
-
-	showPrompt(_STEP_WHICH_RECORD_TYPE);
+		DesktopContent.tooltip(_recordAlias + " Wizard Introduction",
+				"Welcome to the " + _recordAlias + " Wizard GUI. Here you can create new records for " +
+				"your <i>otsdaq</i> system. \n\n" +
+				"The " + _recordAlias + " Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new " +
+				_recordAlias + ".\n\n" +	
+				"Briefly, here is a description of the steps: " +
+				"\n\t- 'Do you want to add your " + _recordAlias + " to an existing context or create a new one?'"
+		);
+		
+		initRecordWizard();
+	}
 	
 	return;
 	
