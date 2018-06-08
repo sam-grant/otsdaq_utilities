@@ -340,12 +340,13 @@ ViewerRoot.createHud = function() {
 		{
 			Debug.log("ViewerRoot Hud redrawDirectoryDisplay path " + path);
 
-			var iconArr = ["folderopen","page","remove","refresh"];
-			var captionArr = ["Make New Directory","Save New View","Delete Pre-made File/Folder!","Toggle Hard/Soft Refresh"];
+			var iconArr = ["folderopen","page","remove"];//,"refresh"];
+			var captionArr = ["Make New Directory","Save New View","Delete Pre-made File/Folder!"];//,"Toggle Hard/Soft Refresh"];
 			for(var i=0;i<captionArr.length;++i)
 			{
 				str += "<div class='ViewerRoot-hudDirBrowser-item' style='margin-left:" + tabSz + "px;'>"; //item container	
-				str += "<a style='color:gray' title='Admin action: " + captionArr[i] + "' href='Javascript:ViewerRoot.hud.toggleAdminControls(" + i + ",\"" + path + "\");'>" + 
+				str += "<a style='color:gray' title='Admin action: " + captionArr[i] +
+						"' href='Javascript:ViewerRoot.hud.toggleAdminControls(" + i + ",\"" + path + "\");'>" + 
 					"<img style='margin:2px 2px -2px 0;' src='/WebPath/js/visualizers_lib/ViewerRoot_lib/img/" + iconArr[i] + ".gif'>";
 				str += captionArr[i] + "</a>";	
 				str += "</div>"; //close item container
@@ -502,6 +503,11 @@ ViewerRoot.createHud = function() {
 				str += "<input type='button' onmouseup=\"ViewerRoot.hud.popUpVerification(" +
 					"'Are you sure you want to delete file or directory with name &quot;REPLACE&quot;?','ViewerRoot.hud.removeConfigPath');\" value='Delete Path'><br>";
 			
+			}
+			else
+			{
+				Debug.log("Unknown admin type " + type);
+				throw("Unknown type?");
 			}
 
 			str += "<br><div id='hudAdminControlStatus'></div>";
