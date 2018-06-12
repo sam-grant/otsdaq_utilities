@@ -1213,9 +1213,8 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var w = el.offsetWidth; 
 	var h = el.offsetHeight;
 	var x = DesktopContent.getMouseX();
-	var y = DesktopContent.getMouseY(); 
-	y -= h/2;
-	x -= w/2;
+	var y = DesktopContent.getMouseY();
+	x -= w/2; //center on x, but try to avoid having mouse lineup with buttons to avoid accidental double click by user
 	Debug.log("X: " + x + 
 			" Y: " + y + 
 			" W: " + w + 
@@ -1224,7 +1223,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	while(x+w > DesktopContent.getWindowWidth())
 		x -= w;
 	if(y > DesktopContent.getWindowHeight()/2 + h/2)
-		y -= h/2; //move to top half of screen
+		y -= h; //move to top half of screen
 	while(y+h > DesktopContent.getWindowHeight())
 		y -= h;
 

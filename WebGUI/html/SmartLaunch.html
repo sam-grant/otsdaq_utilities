@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+<head>
+	<title>ConfigurationGUI</title>
+
+	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+	<link href='/WebPath/css/fonts.css?family=Comfortaa:400' rel='stylesheet' type='text/css'>
+		
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/library/pretty-checkbox.min.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/library/MaterialDesign-Webfont-master/css/materialdesignicons.min.css">
+	
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/ConfigurationAPI.css">
+	<link rel="stylesheet" type="text/css" href="/WebPath/css/SmartLaunch.css">
+	
+	<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+	<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+	<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+	
+	<script type="text/JavaScript" src="/WebPath/js/SmartLaunch.js"></script>
+	
+	<script>		
+	
+	
+		
+		//	Smart Launch template:
+		//	
+		//		Checkboxes on left to select configuration systems to enable
+		//		Giant button on right to launch
+		//	
+		//		The user can copy this template into their own repository and 
+		//			and make custom groupings of contexts. For example,
+		//			the Tracker might consist of 5 contents, and could then
+		//			be reduced to a single checkbox.
+		//		Use SmartLaunch.subsystems and SmartLaunch.systemToContextMap to define custom context groups.
+		//
+		//		Launch means:
+		//			- enable associated contexts
+		//			- save new context group, activate (do not alias)
+		//			- save user active sessions
+		//			- relaunch otsdaq normal mode
+		//			- load active sessions
+		//			- detect in GUI that system is back alive
+		//
+		//
+	
+
+
+	SmartLaunch.MENU_PRIMARY_COLOR = "rgb(220, 187, 165)";
+	SmartLaunch.MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
+	
+//	var _NAME_STRIPS 	= "Strip Telescope";
+//	var _NAME_MWPC 		= "Wire Chambers";
+//	var _NAME_NIMPLUS 	= "NIM+ Trigger/Coincidence Module";
+	
+	SmartLaunch.doShowContexts = true; //true to also include contexts
+	
+	SmartLaunch.subsystems = [];
+//					   _NAME_STRIPS,
+//					   _NAME_MWPC,
+//					   _NAME_NIMPLUS
+//					   ]; 
+	
+	SmartLaunch.systemToContextMap = {};
+//	SmartLaunch.systemToContextMap[_NAME_STRIPS] = [
+//										 "StripTelescopeContext"
+//										 ];
+//	SmartLaunch.systemToContextMap[_NAME_MWPC] = [
+//									   "WireChamberContext",
+//									   "ARTDAQBoardReader0", 
+//									   "ARTDAQEventBuilder0",
+//									   "ARTDAQEventBuilder1",
+//									   "ARTDAQAggregator0"
+//									   ];
+//	SmartLaunch.systemToContextMap[_NAME_NIMPLUS] = [
+//										  "NimPlusContext"
+//										  ];
+
+	//=====================================================================================
+	//init ~~
+	//	init called once body has loaded
+	function init() 
+	{		
+		SmartLaunch.create();
+	}
+	
+	</script>
+</head>
+	
+
+<body onload='Javascript:init();'>		
+	
+</body>
+	
+</html>
