@@ -127,6 +127,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
+try
 {
 	//Commands
 	//	saveConfigurationInfo
@@ -1018,6 +1019,21 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 //	xmlOut.outputXmlDocument(0,true,true);
 //	__SUP_COUT__ << __E__;
 
+} //end ::request()
+catch(const std::runtime_error& e)
+{
+	__SS__ << "A fatal error occurred while handling the request '" <<
+			requestType << ".' Error: " <<
+			e.what() << __E__;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmlOut.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SS__ << "A fatal error occurred while handling the request '" <<
+			requestType << ".'" << __E__;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmlOut.addTextElementToData("Error", ss.str());
 }
 
 
