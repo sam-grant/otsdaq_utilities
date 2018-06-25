@@ -1027,6 +1027,17 @@ catch(const std::runtime_error& e)
 			e.what() << __E__;
 	__COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
+
+	try
+	{
+		//always add version tracking bool
+		xmlOut.addTextElementToData("versionTracking",
+				ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+	}
+	catch(...)
+	{
+		__COUT_ERR__ << "Error getting version tracking status!" << __E__;
+	}
 }
 catch(...)
 {
@@ -1034,6 +1045,17 @@ catch(...)
 			requestType << ".'" << __E__;
 	__COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
+
+	try
+	{
+		//always add version tracking bool
+		xmlOut.addTextElementToData("versionTracking",
+				ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+	}
+	catch(...)
+	{
+		__COUT_ERR__ << "Error getting version tracking status!" << __E__;
+	}
 }
 
 
