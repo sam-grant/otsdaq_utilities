@@ -780,7 +780,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	req.open("POST",requestURL,true);
 	req.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");		
 	req.send(data);	
-}
+} // end XMLHttpRequest()
 
 //check cookie code race conditions
 DesktopContent.checkCookieCodeRace = function() {
