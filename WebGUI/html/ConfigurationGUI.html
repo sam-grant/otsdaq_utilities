@@ -582,7 +582,7 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("DataBufferConfiguration","3",""); return;
+			//setupSpecificConfig("DesktopIconConfiguration","2",""); return;
 			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
@@ -6915,11 +6915,11 @@
 			{
 				event.stopPropagation();
 
-				Debug.log(_mouseIsSelecting);
+				//Debug.log(_mouseIsSelecting);
 				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
 				{
 					_mouseIsSelecting = false;
-					Debug.log(_mouseIsSelecting);
+					//Debug.log(_mouseIsSelecting);
 					return; 							
 				}
 			}
@@ -6958,6 +6958,92 @@
 			Debug.log("colType=" + colType);
 			Debug.log("colType.indexOf('ChildLink')" + colType.indexOf("ChildLink"));
 			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+			
+			///////////// localHandleDropdownForLinkUID
+			function localHandleDropdownForLinkUID()
+			{
+				//find link column pair
+				Debug.log("Looking for link table column matching " + colType.split('-')[1]);
+				
+				var pairCol = c - 1;
+				var colSz = _tableViewIsTransposed? rows.length : rows[0].getElementsByTagName("td").length;
+				Debug.log("Number of columns " + colSz);
+
+				var pairColType;
+				var pairColTable;
+
+				pairCol = (pairCol + colSz) % colSz; //make a legal col					
+				while(pairCol != c)
+				{
+					if(_tableViewIsTransposed) 	//type is at col 0
+						pairColType = rows[_CONFIG_DATA_COL_OFFSET+pairCol].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+					else						//type is at row 0
+						pairColType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+pairCol].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+
+					Debug.log("pairColType=" + pairColType);
+
+					if(pairColType.split('-')[1] == colType.split('-')[1])
+					{
+						Debug.log("Found link pair at col " + pairCol);
+
+						//get value of table at cell [r,pairCol]
+						if(_tableViewIsTransposed) 	//type is at col 0
+							pairColTable = rows[_CONFIG_DATA_COL_OFFSET+pairCol].getElementsByTagName("td")[_CONFIG_DATA_ROW_OFFSET-1+r].innerText;
+						else						//type is at row 0
+							pairColTable = rows[_CONFIG_DATA_ROW_OFFSET+r].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+pairCol].innerText;			
+
+						Debug.log("pairColTable=" + pairColTable);
+								
+						if(pairColTable ==  "NO_LINK")
+						{
+							Debug.log("Invalid table name.");
+							return false;
+						}
+						
+						//ready to get all UIDs
+						ConfigurationAPI.getSubsetRecords(pairColTable,
+								undefined /*filterList*/,
+								function(records)
+								{
+							
+							console.log(records);
+							
+							//create dropdown
+							str += "<select  onkeydown='keyHandler(event)' " +
+									"style='margin:-4px -2px -4px 1px;width:" + 
+									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+							for(var i=0;i<records.length;++i)
+							{			
+								str += "<option value='" + records[i]
+																   + "'>";
+								str += records[i]; //can display however
+								str += "</option>";
+								if(records[i] 
+										   == _editingCellElOldValue)
+									optionIndex = i; //get starting sel index
+							}	
+							str += "</select>";		
+							
+							//finish up
+							Debug.log("Finishing up select cell handling...");
+							localFinishUpSelectCell();
+								}); //end getSubsetRecords
+						
+						//successfully requested records
+						return true;
+					}
+
+
+					--pairCol;
+					pairCol = (pairCol + colSz) % colSz; //make a legal col
+				}
+
+				Debug.log("Never found");
+				return false;
+			}	//end localHandleDropdownForLinkUID
+			
+			
+			
 			if(_useTableLinkDropdown && 
 					colType.indexOf("ChildLink") == 0 &&
 					colType.indexOf("ChildLinkGroupID") < 0 &&
@@ -6997,6 +7083,13 @@
 				}	
 				
 				str += "</select>";				
+			}
+			else if(_useTableLinkDropdown && 
+								colType.indexOf("ChildLinkUID") == 0 &&
+								localHandleDropdownForLinkUID()) //if column type is ChildLinkUID, use dropdown
+			{
+				//if here then dropdown UIDs were found successfully
+				return true;
 			}
 			else if(colType == "FixedChoiceData")
 			{		
@@ -7176,72 +7269,87 @@
 						">";
 			}
 			
-
-			//Add OK | CANCEL
-			//	if link, add GOTO 'button'
-			{
-				var controlString;  
-				
-				if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
-				{
-					var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
-							_version + "\\\");";
-					
-					var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
-					controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
-					w += ("width:95px;").length;
-					controlString += "width:150px;"; //needs to be wider
-					controlString += _OK_CANCEL_DIALOG_STR.substr(w,
-							_OK_CANCEL_DIALOG_STR.length-6-w);//remove closing </div>
-					controlString += " | " +
-							"<a class='popUpOkCancel' href='#' onclick='setupSpecificConfig(\"" + 
-							_editingCellElOldValue +
-							"\",\"\",\"" + backLinkStr + "\"); event.stopPropagation();' " +
-							"onmouseup='event.stopPropagation();'" +
-							"style='color:rgb(44, 44, 187);' " +
-							"title='Go-to Link Table' " +
-							">" +
-							"<b style='color:rgb(44, 44, 187);font-size: 16px;'>Goto</b></a>";
-					controlString += "</div>";
-				}
-				else
-					controlString = _OK_CANCEL_DIALOG_STR;
-				
-				str += controlString;
-			}
-				
-			
-					
-			
-			
-			el.innerHTML = str;
-
-			if(_useTableLinkDropdown && 
-					colType.indexOf("ChildLink") == 0 &&
-					colType.indexOf("ChildLinkGroupID") < 0 &&
-					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();
-			}
-			else if(colType == "FixedChoiceData")
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();				
-			}
-			else if(colType == "MultilineData")
-				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
-			else if(colType == "YesNo" || 
-					colType == "TrueFalse" || 
-					colType == "OnOff")  //if column type is boolean, use dropdown
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();				
-			}
-			else //select text box
-				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
-			
+			localFinishUpSelectCell();
 			return true;
+			
+			///////////// localFinishUpSelectCell
+			function localFinishUpSelectCell()
+			{
+	
+				//Add OK | CANCEL
+				//	if link, add GOTO 'button'
+				{
+					var controlString;  
+					
+					if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
+					{
+						var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
+								_version + "\\\");";
+						
+						var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
+						controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
+						w += ("width:95px;").length;
+						controlString += "width:150px;"; //needs to be wider
+						controlString += _OK_CANCEL_DIALOG_STR.substr(w,
+								_OK_CANCEL_DIALOG_STR.length-6-w);//remove closing </div>
+						controlString += " | " +
+								"<a class='popUpOkCancel' href='#' onclick='setupSpecificConfig(\"" + 
+								_editingCellElOldValue +
+								"\",\"\",\"" + backLinkStr + "\"); event.stopPropagation();' " +
+								"onmouseup='event.stopPropagation();'" +
+								"style='color:rgb(44, 44, 187);' " +
+								"title='Go-to Link Table' " +
+								">" +
+								"<b style='color:rgb(44, 44, 187);font-size: 16px;'>Goto</b></a>";
+						controlString += "</div>";
+					}
+					else
+						controlString = _OK_CANCEL_DIALOG_STR;
+					
+					str += controlString;
+				}
+						
+				
+				//give focus to created element
+				
+				el.innerHTML = str;
+	
+				if(_useTableLinkDropdown && 
+						colType.indexOf("ChildLink") == 0 &&
+						colType.indexOf("ChildLinkGroupID") < 0 &&
+						colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();
+				}
+				else if(colType.indexOf("ChildLinkUID") == 0)
+				{
+					if(el.getElementsByTagName("select").length)
+					{
+						el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+						el.getElementsByTagName("select")[0].focus();						
+					}
+					else //assume text box
+						ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else if(colType == "MultilineData")
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
+				else if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else //select text box
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			} //end localFinishUpSelectCell()
+			
 		}				
 		
 		//bodyMouseHandler ~~

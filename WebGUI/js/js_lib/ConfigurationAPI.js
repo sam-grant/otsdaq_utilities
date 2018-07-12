@@ -377,6 +377,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 		modifiedTablesListStr += modifiedTables[i].tableName + "," +
 				modifiedTables[i].tableVersion;
 	}
+	if(filterList === undefined) filterList = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
 			"&configGroup=" +
