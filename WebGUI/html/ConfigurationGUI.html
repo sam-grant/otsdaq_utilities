@@ -67,6 +67,11 @@
 	//end tree-view focused
 	
 		//selectThisCell(r,c,el,event)
+		//		localGetPairColumnInfo()
+		//		localHandleDropdownForLinkUID()
+		//		localHandleDropdownForLinkGroupID()
+		//			localFinishGroupIdDropdown()
+		//		localFinishUpSelectCell()
 		//editCellCancel()
 		//keyHandler(e)
 		//bodyKeyHandler(e,keyEl)
@@ -583,7 +588,7 @@
 			//		for debugging
 			
 			//setupSpecificConfig("DesktopIconConfiguration","2",""); return;
-			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+			//setupSpecificConfig("XDAQContextConfiguration","2","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
 			//setupSpecificConfigGroup("defaultConfig","1"); return;
@@ -5979,12 +5984,12 @@
 		{
 			var i = MultiSelectBox.getSelectedIndex(sel); 
 			var selArr = MultiSelectBox.getSelectionArray(sel);
-			MultiSelectBox.dbg("ms Chosen element index:",i,
-					"=", selArr[i],
-					" value:",sel.innerHTML);
-			for(var s in selArr)
-				MultiSelectBox.dbg("ms selected [" + s + "]: ",
-						selArr[s]);
+			//			MultiSelectBox.dbg("ms Chosen element index:",i,
+			//					"=", selArr[i],
+			//					" value:",sel.innerHTML);
+			//			for(var s in selArr)
+			//				MultiSelectBox.dbg("ms selected [" + s + "]: ",
+			//						selArr[s]);
 			
 			//show uid info box			
 			var el = document.getElementById("treeView-editLink-uidInfo");
@@ -6958,19 +6963,22 @@
 			Debug.log("colType=" + colType);
 			Debug.log("colType.indexOf('ChildLink')" + colType.indexOf("ChildLink"));
 			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
-			
-			///////////// localHandleDropdownForLinkUID
-			function localHandleDropdownForLinkUID()
+
+			///////////// localGetPairColumnInfo
+			function localGetPairColumnInfo()
 			{
-				//find link column pair
-				Debug.log("Looking for link table column matching " + colType.split('-')[1]);
-				
+				var obj = {};
+				obj.success = false;
+
 				var pairCol = c - 1;
 				var colSz = _tableViewIsTransposed? rows.length : rows[0].getElementsByTagName("td").length;
 				Debug.log("Number of columns " + colSz);
 
 				var pairColType;
 				var pairColTable;
+				var colTypeSplit = colType.split('-')[1];
+
+				Debug.log("Looking for link table column matching " + colTypeSplit);
 
 				pairCol = (pairCol + colSz) % colSz; //make a legal col					
 				while(pairCol != c)
@@ -6982,7 +6990,7 @@
 
 					Debug.log("pairColType=" + pairColType);
 
-					if(pairColType.split('-')[1] == colType.split('-')[1])
+					if(pairColType.split('-')[1] == colTypeSplit)
 					{
 						Debug.log("Found link pair at col " + pairCol);
 
@@ -6993,44 +7001,21 @@
 							pairColTable = rows[_CONFIG_DATA_ROW_OFFSET+r].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+pairCol].innerText;			
 
 						Debug.log("pairColTable=" + pairColTable);
-								
+
 						if(pairColTable ==  "NO_LINK")
 						{
 							Debug.log("Invalid table name.");
-							return false;
+							return obj;
 						}
+
+						obj.success = true;
+
+						obj.pairCol = pairCol;
+						obj.pairColType = pairColType;
+						obj.pairColTable = pairColTable;
 						
-						//ready to get all UIDs
-						ConfigurationAPI.getSubsetRecords(pairColTable,
-								undefined /*filterList*/,
-								function(records)
-								{
-							
-							console.log(records);
-							
-							//create dropdown
-							str += "<select  onkeydown='keyHandler(event)' " +
-									"style='margin:-4px -2px -4px 1px;width:" + 
-									(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
-							for(var i=0;i<records.length;++i)
-							{			
-								str += "<option value='" + records[i]
-																   + "'>";
-								str += records[i]; //can display however
-								str += "</option>";
-								if(records[i] 
-										   == _editingCellElOldValue)
-									optionIndex = i; //get starting sel index
-							}	
-							str += "</select>";		
-							
-							//finish up
-							Debug.log("Finishing up select cell handling...");
-							localFinishUpSelectCell();
-								}); //end getSubsetRecords
-						
-						//successfully requested records
-						return true;
+						//successfully found link info
+						return obj;
 					}
 
 
@@ -7038,10 +7023,186 @@
 					pairCol = (pairCol + colSz) % colSz; //make a legal col
 				}
 
-				Debug.log("Never found");
-				return false;
+				Debug.log("Never found link pair.");
+				return obj;
+
+			} //end localGetPairColumnInfo()
+			
+			
+			///////////// localHandleDropdownForLinkUID
+			function localHandleDropdownForLinkUID()
+			{
+				Debug.log("localHandleDropdownForLinkUID");
+
+				//find link column pair
+
+				var linkInfo = localGetPairColumnInfo();
+				if(!linkInfo.success)
+					return false;
+
+				//else have link info				
+
+				//ready to get all UIDs
+				ConfigurationAPI.getSubsetRecords(linkInfo.pairColTable,
+						undefined /*filterList*/,
+						function(records)
+						{
+
+					console.log(records);
+
+					//create dropdown
+					str += "<select  onkeydown='keyHandler(event)' " +
+							"style='margin:-4px -2px -4px 1px;width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+					for(var i=0;i<records.length;++i)
+					{			
+						str += "<option value='" + records[i]
+														   + "'>";
+						str += records[i]; //can display however
+						str += "</option>";
+						if(records[i] 
+								   == _editingCellElOldValue)
+							optionIndex = i; //get starting sel index
+					}	
+					str += "</select>";		
+
+					//finish up
+					Debug.log("Finishing up select cell handling...");
+					localFinishUpSelectCell();
+						}); //end getSubsetRecords
+
+				//successfully requested records
+				return true;
 			}	//end localHandleDropdownForLinkUID
 			
+
+			///////////// localHandleDropdownForLinkGroupID
+			function localHandleDropdownForLinkGroupID()
+			{
+				Debug.log("localHandleDropdownForLinkGroupID");
+
+				//find link column pair
+				Debug.log("Looking for link table column matching " + colType.split('-')[1]);
+
+				var linkInfo = localGetPairColumnInfo();
+				if(!linkInfo.success)
+					return false;
+
+				//else have link info		
+
+				//ready to get matching groupID field in destination table
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + 
+						"&dataOffset=0&chunkSize=" + 0 +  
+						"&configName=" + linkInfo.pairColTable + 
+						"&version=" + "-1", //get mockup 
+						"", 
+						function (req) 
+						{		
+
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+
+						Debug.log("There were errors loading the mockup version.\n\n" +
+								"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
+						//try to power through
+					}
+
+					var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+					if(warns)
+						Debug.log("There were warnings found when loading this table " +
+								"(you can treat them as informational):\n\n" +
+								warns,Debug.WARN_PRIORITY);
+
+					var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+					var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+
+					var colTypeSplit = colType.split('-')[1];
+					Debug.log("Looking for groupID column in linked to table matching " + colTypeSplit);
+
+					var groupIdCol = -1;
+					var groupIdField;
+					for(var i=0;i<colTypeEls.length;++i)
+						if(colTypeEls[i].getAttribute("value").split('-')[1] == colTypeSplit)
+						{
+							groupIdField = colHdrs[i].getAttribute("value");
+							Debug.log("Found link groupid col " + i + " - " + groupIdField);
+							groupIdCol = i;
+							break;
+						}
+
+					var groupIds = [];
+					if(groupIdCol == -1)
+					{
+						Debug.log("No matching GroupID column found at linked to table!",Debug.HIGH_PRIORITY);						
+					}
+					else
+					{
+						//get unique values of the groupID field, for all records
+						ConfigurationAPI.getSubsetRecords(linkInfo.pairColTable,
+								undefined /*filterList*/,
+								function(records)
+								{
+
+							console.log(records);
+
+							ConfigurationAPI.getUniqueFieldValuesForRecords(
+									linkInfo.pairColTable,
+									records,
+									groupIdField,
+									function(obj)
+									{
+								console.log(obj);
+								
+								try
+								{
+									groupIds = obj[0].fieldUniqueValueArray;
+								}
+								catch(e)
+								{
+									Debug.log("Caught error: " + e);									
+								}
+								
+								localFinishGroupIdDropdown();
+
+									}); //end getUniqueFieldValuesForRecords
+								}); //end getSubsetRecords
+
+					}
+					
+					///////////////////// localFinishGroupIdDropdown
+					function localFinishGroupIdDropdown()
+					{
+						//create dropdown
+						str += "<select  onkeydown='keyHandler(event)' " +
+								"style='margin:-4px -2px -4px 1px;width:" + 
+								(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+						for(var i=0;i<groupIds.length;++i)
+						{			
+							str += "<option value='" + groupIds[i]
+															   + "'>";
+							str += groupIds[i]; //can display however
+							str += "</option>";
+							if(groupIds[i] 
+									   == _editingCellElOldValue)
+								optionIndex = i; //get starting sel index
+						}	
+						str += "</select>";		
+
+						//finish up
+						Debug.log("Finishing up select cell handling...");
+						localFinishUpSelectCell();
+						
+					}	//end localFinishGroupIdDropdown
+						}, //end getSpecificConfiguration request handler
+				0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				); //end XML Request for getSpecificConfiguration		
+
+				//successfully requested groupID values
+				return true;
+			}	//end localHandleDropdownForLinkGroupID
 			
 			
 			if(_useTableLinkDropdown && 
@@ -7087,6 +7248,13 @@
 			else if(_useTableLinkDropdown && 
 								colType.indexOf("ChildLinkUID") == 0 &&
 								localHandleDropdownForLinkUID()) //if column type is ChildLinkUID, use dropdown
+			{
+				//if here then dropdown UIDs were found successfully
+				return true;
+			}
+			else if(_useTableLinkDropdown && 
+								colType.indexOf("ChildLinkGroupID") == 0 &&
+								localHandleDropdownForLinkGroupID()) //if column type is ChildLinkGroupID, use dropdown
 			{
 				//if here then dropdown UIDs were found successfully
 				return true;
@@ -7273,8 +7441,17 @@
 			return true;
 			
 			///////////// localFinishUpSelectCell
-			function localFinishUpSelectCell()
+			function localFinishUpSelectCell(doAddNormalTextInput)
 			{
+				if(doAddNormalTextInput)
+				{
+					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+							((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+					str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
+					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+							">";
+				}
 	
 				//Add OK | CANCEL
 				//	if link, add GOTO 'button'
@@ -7314,15 +7491,16 @@
 				
 				el.innerHTML = str;
 	
-				if(_useTableLinkDropdown && 
-						colType.indexOf("ChildLink") == 0 &&
-						colType.indexOf("ChildLinkGroupID") < 0 &&
-						colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
-				{
-					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();
-				}
-				else if(colType.indexOf("ChildLinkUID") == 0)
+//				if(_useTableLinkDropdown && 
+//						colType.indexOf("ChildLink") == 0 &&
+//						colType.indexOf("ChildLinkGroupID") < 0 &&
+//						colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+//				{
+//					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+//					el.getElementsByTagName("select")[0].focus();
+//				}
+//				else if(colType.indexOf("ChildLinkUID") == 0 || )
+				if(colType.indexOf("ChildLink") == 0) //for all child link types, including ID and GroupID
 				{
 					if(el.getElementsByTagName("select").length)
 					{
@@ -13080,7 +13258,7 @@
 					"&version=" + newVersion, 
 					"", 
 					function (req) {		
-				
+
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
 				{
