@@ -503,8 +503,8 @@ try
 	}
 	else if(requestType == "getSpecificConfigurationGroup")
 	{
-		std::string 	groupName = CgiDataUtilities::getData(cgiIn,"groupName"); 	//from GET
-		std::string 	groupKey = CgiDataUtilities::getData(cgiIn,"groupKey"); 		//from GET
+		std::string 	groupName = CgiDataUtilities::getData	(cgiIn,"groupName"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData	(cgiIn,"groupKey"); 		//from GET
 
 		__SUP_COUT__ << "groupName: " << groupName << std::endl;
 		__SUP_COUT__ << "groupKey: " << groupKey << std::endl;
@@ -513,12 +513,12 @@ try
 	}
 	else if(requestType == "saveNewConfigurationGroup")
 	{
-		std::string groupName 		= CgiDataUtilities::getData (cgiIn,"groupName"); 		//from GET
-		bool			ignoreWarnings = CgiDataUtilities::getDataAsInt(cgiIn,"ignoreWarnings");	//from GET
-		bool			allowDuplicates = CgiDataUtilities::getDataAsInt(cgiIn,"allowDuplicates");	//from GET
-		bool			lookForEquivalent = CgiDataUtilities::getDataAsInt(cgiIn,"lookForEquivalent");	//from GET
-		std::string configList 		= CgiDataUtilities::postData(cgiIn,"configList"); 	//from POST
-		std::string	comment 		= CgiDataUtilities::getData	(cgiIn,"groupComment");	//from GET
+		std::string groupName 			= CgiDataUtilities::getData 	(cgiIn,"groupName"); 		//from GET
+		bool		ignoreWarnings 		= CgiDataUtilities::getDataAsInt(cgiIn,"ignoreWarnings");	//from GET
+		bool		allowDuplicates 	= CgiDataUtilities::getDataAsInt(cgiIn,"allowDuplicates");	//from GET
+		bool		lookForEquivalent	= CgiDataUtilities::getDataAsInt(cgiIn,"lookForEquivalent");	//from GET
+		std::string configList 			= CgiDataUtilities::postData	(cgiIn,"configList"); 	//from POST
+		std::string	comment 			= CgiDataUtilities::getData		(cgiIn,"groupComment");	//from GET
 
 		__SUP_COUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__SUP_COUT__ << "configList: " << configList << std::endl;
