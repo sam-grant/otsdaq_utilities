@@ -334,6 +334,18 @@
 			cursor: pointer;
 		}
 		
+		.tableAddRowButton, .tableDeleteRowButton {
+			background-color: white;
+			border: 1px solid rgb(44, 44, 187);
+			padding: 0px 4px 0px 4px;
+			text-decoration: none;
+			margin: 2px;
+			width: 8px;
+		}
+		.tableAddRowButton:hover, .tableDeleteRowButton:hover {
+			text-decoration: none;
+			background-color: rgb(208, 209, 222);
+		}
 	</style>
 	
 	
@@ -588,7 +600,7 @@
 			//		for debugging
 			
 			//setupSpecificConfig("DesktopIconConfiguration","2",""); return;
-			//setupSpecificConfig("XDAQContextConfiguration","2","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+			setupSpecificConfig("XDAQContextConfiguration","2","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
 			//setupSpecificConfigGroup("defaultConfig","1"); return;
@@ -2368,8 +2380,9 @@
 			if(_tableViewIsTransposed) 
 				str += "";
 			else
-				str += "style='display:none' ";							
-			str += "href='#' onclick='addRow(" + r + "); return false;'>";
+				str += "style='display:none' ";		
+			str += "title='Append a new row to the table.' ";
+			str += "class='tableAddRowButton' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2381,8 +2394,9 @@
 			if(!_tableViewIsTransposed) 
 				str += "";
 			else
-				str += "style='display:none' ";							
-			str += "href='#' onclick='addRow(" + r + "); return false;'>";
+				str += "style='display:none' ";		
+			str += "title='Append a new row to the table.' ";					
+			str += "class='tableAddRowButton' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -12311,11 +12325,23 @@
 			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI uploadTableFromCSV _tableUploadStr = " + _tableUploadStr);
 
-			var doReplace = document.getElementById("popUpDialog-replaceData").checked;
-			var doAppend = document.getElementById("popUpDialog-appendData").checked;
+			var uploadStyle = document.getElementById("popUpDialog-uploadStyleSelect").value | 0;
+
+			Debug.log("CfgGUI uploadTableFromCSV uploadStyle = " + uploadStyle);
+			
+			var doReplace = uploadStyle == 0;
+			var doAppend = uploadStyle == 1 || uploadStyle == 2 || uploadStyle == 3;
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 			
+			//			"Replace all current records with uploaded records", 			//0
+			//			"Append all uploaded records to current table", 				//1
+			//			"Append only uploaded records without conflicting UIDs",		//2
+			//			"Append all uploaded records and replace conflicting UIDs",		//3
+			//			"Prepend all uploaded records to current table",				//4
+			//			"Prepend only uploaded records without conflicting UIDs",		//5
+			//			"Prepend all uploaded records and replace conflicting UIDs"		//6
+						
 			//clean up [[ ]] from bitmap
 			// may only be necessary for backwards compatibility?
 			{
@@ -12457,20 +12483,135 @@
 			//FIRST, always get rows up to data offset
 			localInsertCurrentData(0,_CONFIG_DATA_ROW_OFFSET-1);
 			
+			var uploadStartRow = -1;
+			var existingStartRow = -1;
+			var uploadSize = -1;
+			var existingSize = -1;
+			
 			if(!doAppend) //prepending or replacing data, so add first
 			{
+				uploadStartRow = rowOffset;
 				localInsertSourceData();
+				uploadSize = rowOffset - uploadStartRow;
 			}
 			
 			if(!doReplace) //get current values from table
 			{
+				existingStartRow = rowOffset;
 				localInsertCurrentData(_CONFIG_DATA_ROW_OFFSET);
+				existingSize = rowOffset - existingStartRow;
 			}
 			
 			if(doAppend) //appending or replacing data, so add last
 			{
+				uploadStartRow = rowOffset;
 				localInsertSourceData();
+				uploadSize = rowOffset - uploadStartRow;
 			}
+			
+			
+			//now remove conflicting UIDs based on uploadStyle
+			Debug.log("CfgGUI uploadTableFromCSV uploadStartRow = " + uploadStartRow);
+			Debug.log("CfgGUI uploadTableFromCSV existingStartRow = " + existingStartRow);
+			Debug.log("CfgGUI uploadTableFromCSV uploadSize = " + uploadSize);
+			Debug.log("CfgGUI uploadTableFromCSV existingSize = " + existingSize);
+			var colUID = -1;
+			for(var j=0;j<colTypes.length;++j)
+				if(colTypes[j] == "UID")
+				{colUID = j; break;}
+			
+			if(colUID == -1)
+			{
+				Debug.log("Could not find UID column during upload!", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			if(!_tableViewIsTransposed && uploadStyle != 1 &&
+					uploadStyle != 4)
+			{
+				//delete conficts
+				for(var j=0;j<uploadSize;++j)
+				{
+					//search for conflict
+					for(var r=0;r<existingSize;++r)
+					{
+						if(cols[r+existingStartRow][colUID] ==
+								cols[j+uploadStartRow][colUID])
+						{
+							Debug.log("Found conflict");							
+
+							if(uploadStyle == 2 || uploadStyle == 5)
+							{
+								//remove from upload
+								cols.splice(j+uploadStartRow,1);
+								if(uploadStartRow < existingStartRow)
+									--existingStartRow;								
+								--uploadSize;
+								--j;
+							}		
+							else if(uploadStyle == 3 || uploadStyle == 6)
+							{
+								//remove from existing table
+								cols.splice(r+existingStartRow,1);
+								if(uploadStartRow > existingStartRow)
+									--uploadStartRow;								
+								--existingSize;
+								--r;								
+							}
+
+							break; //stop search
+						}
+					}
+				}
+				
+			} //end non-transposed handling
+			else //transposed
+			{
+				//delete conficts
+				for(var j=0;j<uploadSize;++j)
+				{
+					//search for conflict
+					for(var r=0;r<existingSize;++r)
+					{
+						if(cols[colUID][r+existingStartRow] ==
+								cols[colUID][j+uploadStartRow])
+						{
+							Debug.log("Found conflict");							
+
+							if(uploadStyle == 2 || uploadStyle == 5)
+							{
+								//remove from upload
+								
+								//remove from every column
+								for(var c=0;c<cols.length;++c)
+									cols[c].splice(j+uploadStartRow,1);
+								
+								if(uploadStartRow < existingStartRow)
+									--existingStartRow;								
+								--uploadSize;
+								--j;
+							}		
+							else if(uploadStyle == 3 || uploadStyle == 6)
+							{
+								//remove from existing table
+								
+								//remove from every column
+								for(var c=0;c<cols.length;++c)
+									cols[c].splice(r+existingStartRow,1);
+								
+								if(uploadStartRow > existingStartRow)
+									--uploadStartRow;								
+								--existingSize;
+								--r;								
+							}
+
+							break; //stop search
+						}
+					}
+				}
+				
+			}  //end transposed handling
+						
 			
 
 			//create output string based on cols
@@ -12504,7 +12645,7 @@
 
 			//set position and size
 			var w = 380;
-			var h = 305;
+			var h = 275;
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
 			var str = "<a id='" + 
@@ -12524,43 +12665,122 @@
 					"accept='.csv' enctype='multipart/form-data' />";
 			str += "<br><br>";
 			
-			//add checkbox to replaceData
-			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
-					">";			
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +					
-					"return false;'>";
-			str += "Overwrite current data";
-			str += "</a>";
-			str +=	"</input><br>";
+//			//add checkbox to replaceData
+//			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
+//					">";			
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +					
+//					"return false;'>";
+//			str += "Overwrite current data";
+//			str += "</a>";
+//			str +=	"</input><br>";
 			
 
-			//add append or prepend radop
-			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:110px;'> ";
-			str += "<input checked type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-appendData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +
-					"return false;'>";
-			str += "Append";
-			str += "</a>";
-			str +=	"</input><br>";
+			str += "Select your upload method: <br>";
+			str += "<select id='popUpDialog-uploadStyleSelect' style='width:360px'>";
 			
-			//add append or prepend radop
-			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-prependData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +
-					"return false;'>";
-			str += "Prepend";
-			str += "</a>";
-			str +=	"</input><br>";
+			var selectArr = [
+							 "Replace all current records with uploaded records", 			//0
+							 "Append all uploaded records to current table", 				//1
+							 "Append only uploaded records without conflicting UIDs",		//2
+							 "Append all uploaded records and replace conflicting UIDs",	//3
+							 "Prepend all uploaded records to current table",				//4
+							 "Prepend only uploaded records without conflicting UIDs",		//5
+							 "Prepend all uploaded records and replace conflicting UIDs"	//6
+							 ];
+			for(var j=0;j<selectArr.length;++j)
+			{
+				str += "<option value='" + j + "'>";
+				str += selectArr[j];	//can display however
+				str += "</option>";
+			}
+			str += "</select>";
 			
-			str += "</form>"; //close radio group
+			
+//			//start radio group
+//			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:200px; margin-left:0px;'> ";
+//			
+//			//add append or prepend radio
+//			str += "<input checked type='radio' id='popUpDialog-replaceData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Replace all current records with uploaded records";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append all uploaded records to current table";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append only uploaded records without conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendAndReplaceNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append all uploaded records and replace conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend all uploaded records to current table";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend only uploaded records without conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a href='#' onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependAndReplaceNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend all uploaded records and replace conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			str += "</form>"; //close radio group
 
 			// done with special handling
 			// continue with pop-up prompt
@@ -14026,16 +14246,24 @@
 					//cell value
 					//first column is row numbers
 					if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-					{							
+					{				
+						str += "<center>";
 						str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-
+						str += "<br>";
+						
 						//add +/- row controls
-						str += "<br><a href='#' onclick='addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "<a class='tableAddRowButton' " +
+								"title='Add a row before this row.' " +
+								"onclick='addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "+";
 						str += "</a>";
-						str += "/<a href='#' onclick='deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "/";
+						str += "<a  class='tableDeleteRowButton' " +
+								"title='Delete this row.' " +
+								"onclick='deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "-";
 						str += "</a>";	
+						str += "</center>";
 					}
 					else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
 						str += "Row";
