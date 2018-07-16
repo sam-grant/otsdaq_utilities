@@ -7065,8 +7065,19 @@
 					console.log(records);
 
 					//create dropdown
+
+					str += "<div style='" +
+							"white-space:nowrap;" +
+							"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+							(el.offsetWidth-6+(1?50:0)) +
+							"px; height:" + (el.offsetHeight-8) + "px'>";
+					
 					str += "<select  onkeydown='keyHandler(event)' " +
-							"style='margin:-4px -2px -4px 1px;width:" + 
+							"id='fixedChoice-editSelectBox' " +
+							"style='" + 
+							"float:left;" +
+							//"style='margin:-4px -2px -4px 1px;
+							"width:" + 
 							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 					for(var i=0;i<records.length;++i)
 					{			
@@ -7078,7 +7089,33 @@
 								   == _editingCellElOldValue)
 							optionIndex = i; //get starting sel index
 					}	
-					str += "</select>";		
+					str += "</select>";	
+					
+					//add arbitrary edit
+					if(true)
+					{
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+								"width:" + 
+								((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: 2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='handleFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+
+					str += "</div>";
 
 					//finish up
 					Debug.log("Finishing up select cell handling...");
@@ -7190,8 +7227,19 @@
 					function localFinishGroupIdDropdown()
 					{
 						//create dropdown
+
+						str += "<div style='" +
+								"white-space:nowrap;" +
+								"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+								(el.offsetWidth-6+(1?50:0)) +
+								"px; height:" + (el.offsetHeight-8) + "px'>";
+						
 						str += "<select  onkeydown='keyHandler(event)' " +
-								"style='margin:-4px -2px -4px 1px;width:" + 
+								"id='fixedChoice-editSelectBox' " +
+								"style='" + 
+								"float:left;" +
+								//"style='margin:-4px -2px -4px 1px;
+								"width:" + 
 								(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 						for(var i=0;i<groupIds.length;++i)
 						{			
@@ -7205,6 +7253,32 @@
 						}	
 						str += "</select>";		
 
+						//add arbitrary edit
+						if(true)
+						{
+							str += "<input type='text' " +
+									"id='fixedChoice-editTextBox' " +
+									"style='display:none;" + 
+									"float:left;" +
+									"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+									"width:" + 
+									((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+									"'>";					
+							str += "";
+							str += "</input>";	
+
+							str += "<div style='display:block;" +
+									"margin: 2px 0 -7px 14px;" +
+									"' " + 
+									"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+									"' " +
+									"onclick='handleFixedChoiceEditToggle();' " +
+									"title='Toggle free-form editing' " +
+									"></div>";
+						}
+						
+						str += "</div>";
+						
 						//finish up
 						Debug.log("Finishing up select cell handling...");
 						localFinishUpSelectCell();
@@ -7224,8 +7298,18 @@
 					colType.indexOf("ChildLinkGroupID") < 0 &&
 					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
 			{
+				str += "<div style='" +
+						"white-space:nowrap;" +
+						"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+						(el.offsetWidth-6+(1?50:0)) +
+						"px; height:" + (el.offsetHeight-8) + "px'>";
+				
 				str += "<select  onkeydown='keyHandler(event)' " +
-						"style='margin:-4px -2px -4px 1px;width:" + 
+						"id='fixedChoice-editSelectBox' " +
+						"style='" + 
+						"float:left;" +
+						//"style='margin:-4px -2px -4px 1px;
+						"width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 				
 
@@ -7257,7 +7341,34 @@
 						optionIndex = i - (useAllTables?0:1); //get starting sel index
 				}	
 				
-				str += "</select>";				
+				str += "</select>";
+				
+				//add arbitrary edit
+				if(true)
+				{
+					str += "<input type='text' " +
+							"id='fixedChoice-editTextBox' " +
+							"style='display:none;" + 
+							"float:left;" +
+							"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+							"width:" + 
+							((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+							"'>";					
+					str += "";
+					str += "</input>";	
+
+					str += "<div style='display:block;" +
+							"margin: 2px 0 -7px 14px;" +
+							"' " + 
+							"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+							"' " +
+							"onclick='handleFixedChoiceEditToggle();' " +
+							"title='Toggle free-form editing' " +
+							"></div>";
+				}
+				
+				str += "</div>";
+				
 			}
 			else if(_useTableLinkDropdown && 
 								colType.indexOf("ChildLinkUID") == 0 &&
@@ -7306,7 +7417,7 @@
 							{
 								str += "<div style='" +
 										"white-space:nowrap;" +
-										"margin:-4px -2px -4px 1px;width:" + 						
+										"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
 										(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
 										"px; height:" + (el.offsetHeight-8) + "px'>";
 
@@ -13964,9 +14075,9 @@
 									 "Hide Table Details":
 									 "Show Table Details",
 							 "Transpose Table View",
-							 _useTableLinkDropdown?
-									 "Disable Table Link Drop-down Assistance":
-									 "Enable Table Link Drop-down Assistance",
+//							 _useTableLinkDropdown?
+//									 "Disable Table Link Drop-down Assistance":
+//									 "Enable Table Link Drop-down Assistance",
 							 "Download Data (CSV)",
 							 "Upload Data (CSV)"
 									 ];
@@ -13975,7 +14086,7 @@
 							 "setupCopyAndMoveRows()",
 							 "toggleTableDetails()",
 							 "transposeTableView()",
-							 "_useTableLinkDropdown = !_useTableLinkDropdown;",
+							 //"_useTableLinkDropdown = !_useTableLinkDropdown;",
 							 "downloadTableAsCSV()",
 							 "popUpUploadCSVTableForm()"													 
 									 ];
