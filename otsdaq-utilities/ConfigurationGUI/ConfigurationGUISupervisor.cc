@@ -172,6 +172,7 @@ try
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
 	//	getLastConfigGroups
+	//	mergeGroups
 	//
 	//		---- associated with JavaScript Iterate App
 	//	savePlanCommandSequence
@@ -985,6 +986,25 @@ try
 
 		handleSavePlanCommandSequenceXML(xmlOut,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
 				modifiedTables,userInfo.username_,planName,commands);
+	}
+	else if(requestType == "mergeGroups")
+	{
+		std::string 	groupAName 		= CgiDataUtilities::getData(cgiIn,"groupAName");
+		std::string 	groupAKey 		= CgiDataUtilities::getData(cgiIn,"groupAKey");
+		std::string 	groupBName 		= CgiDataUtilities::getData(cgiIn,"groupBName");
+		std::string 	groupBKey 		= CgiDataUtilities::getData(cgiIn,"groupBKey");
+		std::string 	mergeApproach	= CgiDataUtilities::getData(cgiIn,"mergeApproach");
+
+		__SUP_COUTV__(groupAName);
+		__SUP_COUTV__(groupAKey);
+		__SUP_COUTV__(groupBName);
+		__SUP_COUTV__(groupBKey);
+		__SUP_COUTV__(mergeApproach);
+
+		handleMergeGroupsXML(xmlOut,cfgMgr,
+				groupAName,ConfigurationGroupKey(groupAKey),
+				groupBName,ConfigurationGroupKey(groupBKey),
+				userInfo.username_,mergeApproach);
 	}
 	else
 	{
@@ -2668,6 +2688,127 @@ catch(std::runtime_error& e)
 catch(...)
 {
 	__SUP_SS__ << "Error detected saving tree node!\n\n "<< std::endl;
+	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmlOut.addTextElementToData("Error", ss.str());
+}
+
+
+//========================================================================================================================
+//handleMergeGroupsXML
+void ConfigurationGUISupervisor::handleMergeGroupsXML(HttpXmlDocument& xmlOut,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string& groupAName, const ConfigurationGroupKey& groupAKey,
+		const std::string& groupBName, const ConfigurationGroupKey& groupBKey,
+		const std::string& author, const std::string& mergeApproach)
+try
+{
+	__SUP_COUT__ << "Merging groups " <<
+			groupAName << " (" << groupAKey << ") and " <<
+			groupBName << " (" << groupBKey << ") with approach '" <<
+			mergeApproach << __E__;
+
+	// Merges group A and group B
+	//	with consideration for UID conflicts
+	// Result is a new key of group A's name
+	//
+	//There 3 modes:
+	//	rename		-- All records from both groups are maintained, but conflicts from B are renamed.
+	//					Must maintain a map of UIDs that are remapped to new name for groupB,
+	//					because linkUID fields must be preserved.
+	//	replace		-- Any UID conflicts for a record are replaced by the record from group B.
+	//	skip		-- Any UID conflicts for a record are skipped so that group A record remains
+
+
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMapA, memberMapB;
+
+	//get group member maps
+
+	cfgMgr->loadConfigurationGroup(groupBName,groupBKey,
+			false /*doActivate*/,&memberMapB,0 /*progressBar*/,0 /*accumulateErrors*/,
+			0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+			false /*doNotLoadMember*/, 0 /*groupTypeString*/
+			);
+
+	__SUP_COUTV__(StringMacros::mapToString(memberMapB));
+
+	cfgMgr->loadConfigurationGroup(groupAName,groupAKey,
+			false /*doActivate*/,&memberMapA,0 /*progressBar*/,0 /*accumulateErrors*/,
+			0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+			false /*doNotLoadMember*/, 0 /*groupTypeString*/
+			);
+	__SUP_COUTV__(StringMacros::mapToString(memberMapA));
+
+
+	//for each member of B
+	//	if not found in A member map, add it
+	//	if found in both member maps, and versions are different, load both tables and merge
+
+	std::map<std::string /*original uidB*/, std::string /*converted uidB*/> uidConversionMap;
+
+	for(unsigned int i=0;i<2;++i)
+	{
+		if(mergeApproach != "rename") continue; //only need to construct uidConversionMap for rename approach
+
+		__COUT__ << "Starting member map B scan." << __E__;
+		for(const auto bkey : memberMapB)
+		{
+			__SUP_COUTV__(bkey.first);
+
+			if(memberMapA.find(bkey.first) == memberMapA.end())
+			{
+				//not found, so add to A member map
+				memberMapA[bkey.first] = bkey.second;
+			}
+			else if(memberMapA[bkey.first] != bkey.second)
+			{
+				//found table version confict
+				__SUP_COUTV__(memberMapA[bkey.first]);
+				__SUP_COUTV__(bkey.second);
+
+				//load both tables, and merge
+				ConfigurationBase* config = cfgMgr->getConfigurationByName(bkey.first);
+
+				__SUP_COUT__ << "Got configuration." << __E__;
+
+				ConfigurationVersion newVersion = config->mergeViews(
+						cfgMgr->getVersionedConfigurationByName(bkey.first,memberMapA[bkey.first])->getView(),
+						cfgMgr->getVersionedConfigurationByName(bkey.first,bkey.second)->getView(),
+						ConfigurationVersion() /* destinationVersion*/,
+						author,
+						mergeApproach /*rename,replace,skip*/,
+						uidConversionMap,
+						!i  /* doNotMakeDestinationVersion*/); //dont make destination version the first time
+
+				__SUP_COUTV__(newVersion);
+			}
+		}
+	}
+
+	__SUP_COUT__ << "New member map complete." << __E__;
+	__SUP_COUTV__(StringMacros::mapToString(memberMapA));
+
+	//return new resulting group
+	xmlOut.addTextElementToData("ConfigurationGroupName", groupAName);
+	xmlOut.addTextElementToData("ConfigurationGroupKey", groupAKey.toString());
+
+
+} //end handleMergeGroupsXML
+catch(std::runtime_error& e)
+{
+	__SUP_SS__ << "Error merging groups " <<
+			groupAName << " (" << groupAKey << ") and " <<
+			groupBName << " (" << groupBKey << ") with approach '" <<
+			mergeApproach << "': \n\n" <<
+			e.what() << std::endl;
+	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmlOut.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SUP_SS__ << "Unknown error merging groups " <<
+			groupAName << " (" << groupAKey << ") and " <<
+			groupBName << " (" << groupBKey << ") with approach '" <<
+			mergeApproach << ".' \n\n";
 	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
 	xmlOut.addTextElementToData("Error", ss.str());
 }
@@ -5768,7 +5909,6 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 
 	//get all group info from cache (if no cache, get from interface)
 
-
 	if(!cfgMgr->getAllGroupInfo().size()) //empty cache is strange, attempt to get from interface
 	{
 		__SUP_COUT__ << "Cache is empty? Attempting to regenerate." << __E__;
@@ -5800,6 +5940,12 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 	for(auto& groupInfo:allGroupInfo)
 	{
 		groupName = groupInfo.first;
+		if(groupInfo.second.keys_.size() == 0)
+		{
+			__SUP_COUT__ << "Group name '" << groupName << "' found, but no keys so ignoring." << __E__;
+			continue;
+		}
+
 		groupKey = *(groupInfo.second.keys_.rbegin());
 
 		xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
@@ -5864,7 +6010,6 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 				xmlOut.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 			}
 		} // end if returnMembers
-
 
 
 		//add other group keys to xml for this group name

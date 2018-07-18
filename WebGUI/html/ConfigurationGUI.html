@@ -522,6 +522,29 @@
 		var treeEditingGroupMembersLastSelect_ = "";
 		
 	
+		//mergeGroups
+		function mergeGroups(groupAName, groupAKey,groupBName, groupBKey, mergeApproach)
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=mergeGroups" +
+					"&groupAName="+groupAName+
+					"&groupAKey="+groupAKey+
+					"&groupBName="+groupBName+
+					"&groupBKey="+groupBKey+
+					"&mergeApproach="+mergeApproach+
+					"", "", 
+								function (req)
+								{				
+							var err = DesktopContent.getXMLValue(req,"Error");
+							if(err) 
+							{
+								Debug.log(err,Debug.HIGH_PRIORITY);
+								return;
+							}
+								}, //end handler
+							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					);							
+		} //end mergeGroups
+		
 		
 		//init called once body has loaded
 		function init() {			
@@ -603,7 +626,11 @@
 			//setupSpecificConfig("XDAQContextConfiguration","2","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
-			//setupSpecificConfigGroup("defaultConfig","1"); return;
+			//setupSpecificConfigGroup("GroupAliasTreeEditWizBackbone","0"); 
+			
+			//mergeGroups("GroupAliasTreeEditWizBackbone","0","GroupAliasTreeEditWizBackbone","3","replace");
+			
+			//return;
 			
 			//setupConfigCreator(); return
 			
@@ -613,6 +640,7 @@
 			//setupGroupViewMode(); return;
 			
 			//setupConfigCreator(); return;
+			
 			
 			//============================
 

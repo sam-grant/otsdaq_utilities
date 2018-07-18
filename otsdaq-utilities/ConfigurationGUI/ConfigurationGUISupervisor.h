@@ -64,6 +64,7 @@ private:
 
     void					handleSavePlanCommandSequenceXML			(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& groupName, const ConfigurationGroupKey& groupKey, const std::string& modifiedTables, const std::string& author, const std::string& planName, const std::string& commandString);
 
+    void					handleMergeGroupsXML						(HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr, const std::string& groupAName, const ConfigurationGroupKey& groupAKey, const std::string& groupBName, const ConfigurationGroupKey& groupBKey, const std::string& author, const std::string& mergeApproach);
 
     ConfigurationVersion	saveModifiedVersionXML						(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr, const std::string& configName, ConfigurationVersion originalVersion, bool makeTemporary, ConfigurationBase*  config, ConfigurationVersion temporaryModifiedVersion, bool ignoreDuplicates = false, bool lookForEquivalent = false);
 
