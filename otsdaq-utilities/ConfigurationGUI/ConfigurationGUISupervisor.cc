@@ -2718,6 +2718,12 @@ try
 	//	replace		-- Any UID conflicts for a record are replaced by the record from group B.
 	//	skip		-- Any UID conflicts for a record are skipped so that group A record remains
 
+	//check valid mode
+	if(!(mergeApproach == "rename" || mergeApproach == "replace" || mergeApproach == "skip"))
+	{
+		__SS__ << "Error! Invalid merge approach '" <<	mergeApproach << ".'" << __E__;
+		__SS_THROW__;
+	}
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMapA, memberMapB;
 
@@ -2743,11 +2749,12 @@ try
 	//	if not found in A member map, add it
 	//	if found in both member maps, and versions are different, load both tables and merge
 
-	std::map<std::string /*original uidB*/, std::string /*converted uidB*/> uidConversionMap;
+	std::map< std::pair<std::string /*original table*/,std::string /*original uidB*/>,
+		std::string /*converted uidB*/> uidConversionMap;
 
 	for(unsigned int i=0;i<2;++i)
 	{
-		if(mergeApproach != "rename") continue; //only need to construct uidConversionMap for rename approach
+		if(i==0 && mergeApproach != "rename") continue; //only need to construct uidConversionMap for rename approach
 
 		__COUT__ << "Starting member map B scan." << __E__;
 		for(const auto bkey : memberMapB)
@@ -2777,9 +2784,14 @@ try
 						author,
 						mergeApproach /*rename,replace,skip*/,
 						uidConversionMap,
-						!i  /* doNotMakeDestinationVersion*/); //dont make destination version the first time
+						i==0  /* fillRecordConversionMap */,
+						i==1  /* applyRecordConversionMap */); //dont make destination version the first time
 
-				__SUP_COUTV__(newVersion);
+				if(i==1)
+				{
+					__SUP_COUTV__(newVersion);
+					memberMapA[bkey.first] = newVersion;
+				}
 			}
 		}
 	}
