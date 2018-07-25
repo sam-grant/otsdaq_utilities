@@ -538,8 +538,21 @@
 							if(err) 
 							{
 								Debug.log(err,Debug.HIGH_PRIORITY);
+								Debug.log("Error! The merger of the two groups, " + groupAName + "(" + groupAKey + ") & " +
+										groupBName + "(" + groupBKey + "), failed...",Debug.HIGH_PRIORITY);
 								return;
 							}
+							
+							//open newly created group
+							var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
+							var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+
+							Debug.log("The two groups, " + groupAName + "(" + groupAKey + ") & " +
+									groupBName + "(" + groupBKey + "), were successfully merged into a new group, " + 
+									groupName + "(" + groupKey + ")!",Debug.INFO_PRIORITY);
+							
+							setupSpecificConfigGroup(groupName,groupKey);
+							
 								}, //end handler
 							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
 					);							

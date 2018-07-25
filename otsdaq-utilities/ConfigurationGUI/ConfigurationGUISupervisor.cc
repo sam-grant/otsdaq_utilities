@@ -2751,6 +2751,8 @@ try
 
 	std::map< std::pair<std::string /*original table*/,std::string /*original uidB*/>,
 		std::string /*converted uidB*/> uidConversionMap;
+	std::map< std::pair<std::string /*original table*/,std::pair<std::string /*group linkid*/,std::string /*original gidB*/>>,
+		std::string /*converted gidB*/> groupidConversionMap;
 
 	for(unsigned int i=0;i<2;++i)
 	{
@@ -2783,13 +2785,28 @@ try
 						ConfigurationVersion() /* destinationVersion*/,
 						author,
 						mergeApproach /*rename,replace,skip*/,
-						uidConversionMap,
-						i==0  /* fillRecordConversionMap */,
-						i==1  /* applyRecordConversionMap */); //dont make destination version the first time
+						uidConversionMap, groupidConversionMap,
+						i==0  /* fillRecordConversionMaps */,
+						i==1  /* applyRecordConversionMaps */); //dont make destination version the first time
 
 				if(i==1)
 				{
 					__SUP_COUTV__(newVersion);
+
+					//save all temporary tables to persistent tables
+					//finish off the version creation
+					newVersion = saveModifiedVersionXML(xmlOut,cfgMgr,
+							bkey.first,
+							ConfigurationVersion() /*original source version*/,
+							false /* makeTemporary */,
+							config,
+							newVersion /*temporary modified version*/,
+							false /*ignore duplicates*/,
+							true /*look for equivalent*/);
+
+					__SUP_COUTV__(newVersion);
+
+
 					memberMapA[bkey.first] = newVersion;
 				}
 			}
@@ -2799,9 +2816,17 @@ try
 	__SUP_COUT__ << "New member map complete." << __E__;
 	__SUP_COUTV__(StringMacros::mapToString(memberMapA));
 
+
+	//save the new configuration group
+	ConfigurationGroupKey newKey =
+			cfgMgr->saveNewConfigurationGroup(groupAName,memberMapA,
+					"Merger of group " + groupAName + " (" + groupAKey.toString() + ") and " +
+					groupBName + " (" + groupBKey.toString() + ").");
+
+
 	//return new resulting group
 	xmlOut.addTextElementToData("ConfigurationGroupName", groupAName);
-	xmlOut.addTextElementToData("ConfigurationGroupKey", groupAKey.toString());
+	xmlOut.addTextElementToData("ConfigurationGroupKey", newKey.toString());
 
 
 } //end handleMergeGroupsXML
@@ -4804,7 +4829,7 @@ try
 			//finish off the version creation
 			version = saveModifiedVersionXML(xmlOut,cfgMgr,name,
 					ConfigurationVersion() /*original source is mockup*/,
-					false /*make persistent*/,
+					false /* makeTemporary */,
 					config,
 					temporaryVersion /*temporary modified version*/,
 					false /*ignore duplicates*/,
