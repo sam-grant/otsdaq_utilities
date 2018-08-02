@@ -989,21 +989,31 @@ try
 	}
 	else if(requestType == "mergeGroups")
 	{
-		std::string 	groupAName 		= CgiDataUtilities::getData(cgiIn,"groupAName");
-		std::string 	groupAKey 		= CgiDataUtilities::getData(cgiIn,"groupAKey");
-		std::string 	groupBName 		= CgiDataUtilities::getData(cgiIn,"groupBName");
-		std::string 	groupBKey 		= CgiDataUtilities::getData(cgiIn,"groupBKey");
+		std::string 	groupANameContext 		= CgiDataUtilities::getData(cgiIn,"groupANameContext");
+		std::string 	groupAKeyContext 		= CgiDataUtilities::getData(cgiIn,"groupAKeyContext");
+		std::string 	groupBNameContext 		= CgiDataUtilities::getData(cgiIn,"groupBNameContext");
+		std::string 	groupBKeyContext 		= CgiDataUtilities::getData(cgiIn,"groupBKeyContext");
+		std::string 	groupANameConfig 		= CgiDataUtilities::getData(cgiIn,"groupANameConfig");
+		std::string 	groupAKeyConfig 		= CgiDataUtilities::getData(cgiIn,"groupAKeyConfig");
+		std::string 	groupBNameConfig 		= CgiDataUtilities::getData(cgiIn,"groupBNameConfig");
+		std::string 	groupBKeyConfig 		= CgiDataUtilities::getData(cgiIn,"groupBKeyConfig");
 		std::string 	mergeApproach	= CgiDataUtilities::getData(cgiIn,"mergeApproach");
 
-		__SUP_COUTV__(groupAName);
-		__SUP_COUTV__(groupAKey);
-		__SUP_COUTV__(groupBName);
-		__SUP_COUTV__(groupBKey);
+		__SUP_COUTV__(groupANameContext);
+		__SUP_COUTV__(groupAKeyContext);
+		__SUP_COUTV__(groupBNameContext);
+		__SUP_COUTV__(groupBKeyContext);
+		__SUP_COUTV__(groupANameConfig);
+		__SUP_COUTV__(groupAKeyConfig);
+		__SUP_COUTV__(groupBNameConfig);
+		__SUP_COUTV__(groupBKeyConfig);
 		__SUP_COUTV__(mergeApproach);
 
 		handleMergeGroupsXML(xmlOut,cfgMgr,
-				groupAName,ConfigurationGroupKey(groupAKey),
-				groupBName,ConfigurationGroupKey(groupBKey),
+				groupANameContext,ConfigurationGroupKey(groupAKeyContext),
+				groupBNameContext,ConfigurationGroupKey(groupBKeyContext),
+				groupANameConfig,ConfigurationGroupKey(groupAKeyConfig),
+				groupBNameConfig,ConfigurationGroupKey(groupBKeyConfig),
 				userInfo.username_,mergeApproach);
 	}
 	else
@@ -2697,14 +2707,18 @@ catch(...)
 //handleMergeGroupsXML
 void ConfigurationGUISupervisor::handleMergeGroupsXML(HttpXmlDocument& xmlOut,
 		ConfigurationManagerRW* cfgMgr,
-		const std::string& groupAName, const ConfigurationGroupKey& groupAKey,
-		const std::string& groupBName, const ConfigurationGroupKey& groupBKey,
+		const std::string& groupANameContext, const ConfigurationGroupKey& groupAKeyContext,
+		const std::string& groupBNameContext, const ConfigurationGroupKey& groupBKeyContext,
+		const std::string& groupANameConfig, const ConfigurationGroupKey& groupAKeyConfig,
+		const std::string& groupBNameConfig, const ConfigurationGroupKey& groupBKeyConfig,
 		const std::string& author, const std::string& mergeApproach)
 try
 {
-	__SUP_COUT__ << "Merging groups " <<
-			groupAName << " (" << groupAKey << ") and " <<
-			groupBName << " (" << groupBKey << ") with approach '" <<
+	__SUP_COUT__ << "Merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
 			mergeApproach << __E__;
 
 	// Merges group A and group B
@@ -2712,38 +2726,76 @@ try
 	// Result is a new key of group A's name
 	//
 	//There 3 modes:
-	//	rename		-- All records from both groups are maintained, but conflicts from B are renamed.
+	//	Rename		-- All records from both groups are maintained, but conflicts from B are renamed.
 	//					Must maintain a map of UIDs that are remapped to new name for groupB,
 	//					because linkUID fields must be preserved.
-	//	replace		-- Any UID conflicts for a record are replaced by the record from group B.
-	//	skip		-- Any UID conflicts for a record are skipped so that group A record remains
+	//	Replace		-- Any UID conflicts for a record are replaced by the record from group B.
+	//	Skip		-- Any UID conflicts for a record are skipped so that group A record remains
 
 	//check valid mode
-	if(!(mergeApproach == "rename" || mergeApproach == "replace" || mergeApproach == "skip"))
+	if(!(mergeApproach == "Rename" || mergeApproach == "Replace" || mergeApproach == "Skip"))
 	{
 		__SS__ << "Error! Invalid merge approach '" <<	mergeApproach << ".'" << __E__;
 		__SS_THROW__;
 	}
 
-	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMapA, memberMapB;
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMapAContext, memberMapBContext,
+		memberMapAConfig, memberMapBConfig;
 
-	//get group member maps
 
-	cfgMgr->loadConfigurationGroup(groupBName,groupBKey,
-			false /*doActivate*/,&memberMapB,0 /*progressBar*/,0 /*accumulateErrors*/,
-			0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
-			false /*doNotLoadMember*/, 0 /*groupTypeString*/
-			);
+	//check if skipping group pairs
+	bool skippingContextPair = false;
+	bool skippingConfigPair = false;
+	if(groupANameContext.size() == 0 || groupANameContext[0] == ' ' ||
+			groupBNameContext.size() == 0 || groupBNameContext[0] == ' ')
+	{
+		skippingContextPair = true;
+		__SUP_COUTV__(skippingContextPair);
+	}
+	if(groupANameConfig.size() == 0 || groupANameConfig[0] == ' ' ||
+			groupBNameConfig.size() == 0 || groupBNameConfig[0] == ' ')
+	{
+		skippingConfigPair = true;
+		__SUP_COUTV__(skippingConfigPair);
+	}
 
-	__SUP_COUTV__(StringMacros::mapToString(memberMapB));
+	//get context group member maps
+	if(!skippingContextPair)
+	{
+		cfgMgr->loadConfigurationGroup(groupANameContext,groupAKeyContext,
+				false /*doActivate*/,&memberMapAContext,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAContext));
 
-	cfgMgr->loadConfigurationGroup(groupAName,groupAKey,
-			false /*doActivate*/,&memberMapA,0 /*progressBar*/,0 /*accumulateErrors*/,
-			0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
-			false /*doNotLoadMember*/, 0 /*groupTypeString*/
-			);
-	__SUP_COUTV__(StringMacros::mapToString(memberMapA));
+		cfgMgr->loadConfigurationGroup(groupBNameContext,groupBKeyContext,
+				false /*doActivate*/,&memberMapBContext,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
 
+		__SUP_COUTV__(StringMacros::mapToString(memberMapBContext));
+	}
+
+	//get config group member maps
+	if(!skippingConfigPair)
+	{
+		cfgMgr->loadConfigurationGroup(groupANameConfig,groupAKeyConfig,
+				false /*doActivate*/,&memberMapAConfig,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAConfig));
+
+		cfgMgr->loadConfigurationGroup(groupBNameConfig,groupBKeyConfig,
+				false /*doActivate*/,&memberMapBConfig,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+
+		__SUP_COUTV__(StringMacros::mapToString(memberMapBConfig));
+	}
 
 	//for each member of B
 	//	if not found in A member map, add it
@@ -2754,87 +2806,149 @@ try
 	std::map< std::pair<std::string /*original table*/,std::pair<std::string /*group linkid*/,std::string /*original gidB*/>>,
 		std::string /*converted gidB*/> groupidConversionMap;
 
+	//first loop create record conversion map, second loop implement merge (using conversion map if Rename)
 	for(unsigned int i=0;i<2;++i)
 	{
-		if(i==0 && mergeApproach != "rename") continue; //only need to construct uidConversionMap for rename approach
+		if(i==0 && mergeApproach != "Rename") continue; //only need to construct uidConversionMap for rename approach
 
-		__COUT__ << "Starting member map B scan." << __E__;
-		for(const auto bkey : memberMapB)
+		//loop for context and config pair types
+		for(unsigned int j=0;j<2;++j)
 		{
-			__SUP_COUTV__(bkey.first);
-
-			if(memberMapA.find(bkey.first) == memberMapA.end())
+			if(j == 0 && skippingContextPair) //context
 			{
-				//not found, so add to A member map
-				memberMapA[bkey.first] = bkey.second;
+				__COUT__ << "Skipping context pair..." << __E__;
+				continue;
 			}
-			else if(memberMapA[bkey.first] != bkey.second)
+			else if(j == 1 && skippingConfigPair)
 			{
-				//found table version confict
-				__SUP_COUTV__(memberMapA[bkey.first]);
-				__SUP_COUTV__(bkey.second);
+				__COUT__ << "Skipping config pair..." << __E__;
+				continue;
+			}
 
-				//load both tables, and merge
-				ConfigurationBase* config = cfgMgr->getConfigurationByName(bkey.first);
+			std::map<std::string /*name*/, ConfigurationVersion /*version*/>& memberMapAref =
+					j == 0?memberMapAContext:memberMapAConfig;
 
-				__SUP_COUT__ << "Got configuration." << __E__;
+			std::map<std::string /*name*/, ConfigurationVersion /*version*/>& memberMapBref =
+					j == 0?memberMapBContext:memberMapBConfig;
 
-				ConfigurationVersion newVersion = config->mergeViews(
-						cfgMgr->getVersionedConfigurationByName(bkey.first,memberMapA[bkey.first])->getView(),
-						cfgMgr->getVersionedConfigurationByName(bkey.first,bkey.second)->getView(),
-						ConfigurationVersion() /* destinationVersion*/,
-						author,
-						mergeApproach /*rename,replace,skip*/,
-						uidConversionMap, groupidConversionMap,
-						i==0  /* fillRecordConversionMaps */,
-						i==1  /* applyRecordConversionMaps */); //dont make destination version the first time
+			if(j == 0) //context
+				__COUT__ << "Context pair..." << __E__;
+			else
+				__COUT__ << "Config pair..." << __E__;
 
-				if(i==1)
+			__COUT__ << "Starting member map B scan." << __E__;
+			for(const auto bkey : memberMapBref)
+			{
+				__SUP_COUTV__(bkey.first);
+
+				if(memberMapAref.find(bkey.first) == memberMapAref.end())
 				{
-					__SUP_COUTV__(newVersion);
-
-					//save all temporary tables to persistent tables
-					//finish off the version creation
-					newVersion = saveModifiedVersionXML(xmlOut,cfgMgr,
-							bkey.first,
-							ConfigurationVersion() /*original source version*/,
-							false /* makeTemporary */,
-							config,
-							newVersion /*temporary modified version*/,
-							false /*ignore duplicates*/,
-							true /*look for equivalent*/);
-
-					__SUP_COUTV__(newVersion);
-
-
-					memberMapA[bkey.first] = newVersion;
+					//not found, so add to A member map
+					memberMapAref[bkey.first] = bkey.second;
 				}
-			}
-		}
+				else if(memberMapAref[bkey.first] != bkey.second)
+				{
+					//found table version confict
+					__SUP_COUTV__(memberMapAref[bkey.first]);
+					__SUP_COUTV__(bkey.second);
+
+					//load both tables, and merge
+					ConfigurationBase* config = cfgMgr->getConfigurationByName(bkey.first);
+
+					__SUP_COUT__ << "Got configuration." << __E__;
+
+					ConfigurationVersion newVersion = config->mergeViews(
+							cfgMgr->getVersionedConfigurationByName(bkey.first,
+									memberMapAref[bkey.first])->getView(),
+									cfgMgr->getVersionedConfigurationByName(bkey.first,bkey.second)->getView(),
+									ConfigurationVersion() /* destinationVersion*/,
+									author,
+									mergeApproach /*Rename,Replace,Skip*/,
+									uidConversionMap, groupidConversionMap,
+									i==0  /* fillRecordConversionMaps */,
+									i==1  /* applyRecordConversionMaps */,
+									config->getConfigurationName() ==
+											ConfigurationManager::XDAQ_APPLICATION_CONFIG_NAME /* generateUniqueDataColumns */
+											); //dont make destination version the first time
+
+					if(i==1)
+					{
+						__SUP_COUTV__(newVersion);
+
+						try
+						{
+							//save all temporary tables to persistent tables
+							//finish off the version creation
+							newVersion = saveModifiedVersionXML(xmlOut,cfgMgr,
+									bkey.first,
+									ConfigurationVersion() /*original source version*/,
+									false /* makeTemporary */,
+									config,
+									newVersion /*temporary modified version*/,
+									false /*ignore duplicates*/,
+									true /*look for equivalent*/);
+						}
+						catch(std::runtime_error& e)
+						{
+							__SUP_SS__ << "There was an error saving the '" <<
+									config->getConfigurationName() << "' merge result to a persistent table version. " <<
+									"Perhaps you can modify this table in one of the groups to resolve this issue, and then re-merge." <<
+									__E__ << e.what();
+							__SS_THROW__;
+						}
+
+						__SUP_COUTV__(newVersion);
+
+
+						memberMapAref[bkey.first] = newVersion;
+					}
+				} //end member version conflict handling
+			} //end B member map loop
+		} //end context and config loop
+	} //end top level conversion map or not loop
+
+	//Now save groups
+
+	if(!skippingContextPair)
+	{
+		__SUP_COUT__ << "New context member map complete." << __E__;
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAContext));
+
+		//save the new configuration group
+		ConfigurationGroupKey newKeyContext =
+				cfgMgr->saveNewConfigurationGroup(groupANameContext,memberMapAContext,
+						"Merger of group " + groupANameContext + " (" + groupAKeyContext.toString() + ") and " +
+						groupBNameContext + " (" + groupBKeyContext.toString() + ").");
+
+		//return new resulting group
+		xmlOut.addTextElementToData("ContextGroupName", groupANameContext);
+		xmlOut.addTextElementToData("ContextGroupKey", newKeyContext.toString());
+	}
+	if(!skippingConfigPair)
+	{
+		__SUP_COUT__ << "New config member map complete." << __E__;
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAConfig));
+		//save the new configuration group
+		ConfigurationGroupKey newKeyConfig =
+				cfgMgr->saveNewConfigurationGroup(groupANameConfig,memberMapAConfig,
+						"Merger of group " + groupANameConfig + " (" + groupAKeyConfig.toString() + ") and " +
+						groupBNameConfig + " (" + groupBKeyConfig.toString() + ").");
+
+		//return new resulting group
+		xmlOut.addTextElementToData("ConfigGroupName", groupANameConfig);
+		xmlOut.addTextElementToData("ConfigGroupKey", newKeyConfig.toString());
 	}
 
-	__SUP_COUT__ << "New member map complete." << __E__;
-	__SUP_COUTV__(StringMacros::mapToString(memberMapA));
-
-
-	//save the new configuration group
-	ConfigurationGroupKey newKey =
-			cfgMgr->saveNewConfigurationGroup(groupAName,memberMapA,
-					"Merger of group " + groupAName + " (" + groupAKey.toString() + ") and " +
-					groupBName + " (" + groupBKey.toString() + ").");
-
-
-	//return new resulting group
-	xmlOut.addTextElementToData("ConfigurationGroupName", groupAName);
-	xmlOut.addTextElementToData("ConfigurationGroupKey", newKey.toString());
 
 
 } //end handleMergeGroupsXML
 catch(std::runtime_error& e)
 {
-	__SUP_SS__ << "Error merging groups " <<
-			groupAName << " (" << groupAKey << ") and " <<
-			groupBName << " (" << groupBKey << ") with approach '" <<
+	__SUP_SS__ << "Error merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
 			mergeApproach << "': \n\n" <<
 			e.what() << std::endl;
 	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
@@ -2842,9 +2956,11 @@ catch(std::runtime_error& e)
 }
 catch(...)
 {
-	__SUP_SS__ << "Unknown error merging groups " <<
-			groupAName << " (" << groupAKey << ") and " <<
-			groupBName << " (" << groupBKey << ") with approach '" <<
+	__SUP_SS__ << "Unknown error merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
 			mergeApproach << ".' \n\n";
 	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
 	xmlOut.addTextElementToData("Error", ss.str());

@@ -93,7 +93,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(num === undefined) num = Debug.LOW_PRIORITY;
 				
 				//add call out labels to file [line] text blobs
-				var returnStr = localCallOutDebugLocales(str);
+				var returnStr;
+				
+				if(num < 4) //modify string for popup
+					returnStr = localCallOutDebugLocales(str);
 				if(returnStr)
 					str = returnStr;
 				
@@ -332,7 +335,7 @@ Debug.errorPop = function(err,severity) {
 					"font-size: 18px;" +
 					"color: rgb(255,200,100);" +
 					"}\n\n";
-			
+
 			
 			//error close link style
 			css += "#" + Debug._errBoxId + " a" +
@@ -374,11 +377,11 @@ Debug.errorPop = function(err,severity) {
 					"{" +					
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
-					"left: 8px, top: 8px; margin-right: 8px;" +
+					"left: 8px; top: 8px; margin-right: 8px;" +
 					"margin-bottom:-12px;" +
 					"text-align: left;" +
 					"overflow-y: scroll;" +
-					"overflow-x: auto;"
+					"overflow-x: auto;" +
 					"width: 100%;" +
 					"}\n\n";
 			
@@ -409,9 +412,9 @@ Debug.errorPop = function(err,severity) {
 					"font-family: 'Comfortaa', arial;" +
 					"text-align: left;" +
 					"}\n\n";
-			
-			css += "." + Debug._errBoxId + "-localCallOut" + 
-					"{font-size: 15px;color: rgb(191, 185, 193);}\n\n";
+
+			css += "#" + Debug._errBoxId + " ." + Debug._errBoxId + "-localCallOut" + 
+					"{font-size: 10px;}\n\n";//color: rgb(191, 185, 193);}\n\n";
 
 			//add style element to HEAD tag
 			var style = document.createElement('style');

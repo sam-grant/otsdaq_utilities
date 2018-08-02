@@ -137,6 +137,13 @@
 		//jump(anchor)
 		//evaluateJS(str)			
 		//createEditTableMenu(event)
+		//createSystemViewMenu(event)
+		//verifyRelaunchNormalMode()
+		//verifyRelaunchWizMode()
+		//toggleVersionTracking()
+		//flattenToSystemAliases()
+		//mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext,groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
+		//mergeGroupsDialog()
 	
 		//tableLinkTooltip(prependString)
 	
@@ -403,57 +410,57 @@
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 		
-		var _OTS_RELAUNCH_STR =  
-				//Normal mode
-				"Click here to relaunch ots in " +
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
-				"\"\",handleOtsRelaunchResponse,0);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Normal Mode</a>" +
-				" or " +
-				//Wiz Mode
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
-				"\"\",handleOtsRelaunchResponse,1);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Wiz Mode</a>." +
-				"<br>" +
-				//Toggle Version Tracking
-				"Click here to " +
-				"<a href='#' id='versionTrackingSystemLink' onclick='" +
-				"var el = this;" +
-				"if(el.textContent == \"Turn Version Tracking OFF\")" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"else " +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Turn Version Tracking OFF</a>." +
-				//Flatten Versions
-				"<br>" +
-				"Click here to " +
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
-				"\"\",handleFlattenSystemAliasesResponse);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Flatten to System Aliases</a>."
-				;
+//		var _OTS_RELAUNCH_STR =  
+//				//Normal mode
+//				"Click here to relaunch ots in " +
+//				"<a href='#' onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
+//				"\"\",handleOtsRelaunchResponse,0);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Normal Mode</a>" +
+//				" or " +
+//				//Wiz Mode
+//				"<a href='#' onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
+//				"\"\",handleOtsRelaunchResponse,1);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Wiz Mode</a>." +
+//				"<br>" +
+//				//Toggle Version Tracking
+//				"Click here to " +
+//				"<a href='#' id='versionTrackingSystemLink' onclick='" +
+//				"var el = this;" +
+//				"if(el.textContent == \"Turn Version Tracking OFF\")" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"else " +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Turn Version Tracking OFF</a>." +
+//				//Flatten Versions
+//				"<br>" +
+//				"Click here to " +
+//				"<a href='#' onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
+//				"\"\",handleFlattenSystemAliasesResponse);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Flatten to System Aliases</a>."
+//				;
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
@@ -522,41 +529,6 @@
 		var treeEditingGroupMembersLastSelect_ = "";
 		
 	
-		//mergeGroups
-		function mergeGroups(groupAName, groupAKey,groupBName, groupBKey, mergeApproach)
-		{
-			DesktopContent.XMLHttpRequest("Request?RequestType=mergeGroups" +
-					"&groupAName="+groupAName+
-					"&groupAKey="+groupAKey+
-					"&groupBName="+groupBName+
-					"&groupBKey="+groupBKey+
-					"&mergeApproach="+mergeApproach+
-					"", "", 
-								function (req)
-								{				
-							var err = DesktopContent.getXMLValue(req,"Error");
-							if(err) 
-							{
-								Debug.log(err,Debug.HIGH_PRIORITY);
-								Debug.log("Error! The merger of the two groups, " + groupAName + "(" + groupAKey + ") & " +
-										groupBName + "(" + groupBKey + "), failed...",Debug.HIGH_PRIORITY);
-								return;
-							}
-							
-							//open newly created group
-							var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-							var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
-
-							Debug.log("The two groups, " + groupAName + "(" + groupAKey + ") & " +
-									groupBName + "(" + groupBKey + "), were successfully merged into a new group, " + 
-									groupName + "(" + groupKey + ")!",Debug.INFO_PRIORITY);
-							
-							setupSpecificConfigGroup(groupName,groupKey);
-							
-								}, //end handler
-							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-					);							
-		} //end mergeGroups
 		
 		
 		//init called once body has loaded
@@ -642,8 +614,9 @@
 			//setupSpecificConfigGroup("TableEditWizBackbone","0"); 
 			
 			//mergeGroups("TableEditWizBackbone","0","TableEditWizBackbone","3","rename");
-			//mergeGroups("defaultConfig","1","defaultConfig","4","rename");
+			//mergeGroups("  ","2","testContext","3","defaultConfig","1","defaultConfig","4","Rename");
 			
+			//mergeGroupsDialog();
 			//return;
 			
 			//setupConfigCreator(); return
@@ -931,11 +904,19 @@
 			backLinkStr = "setupSystemViewMode();"; 
 			
 
-			str += "<h3><u>System View</u></h3>";
+			//display edit menu
+			str +=
+					"<div style='margin-top:-4px' class='tableView-Menu' onmousedown='createSystemViewMenu(event,\"" +
+					 groupAliasesName + "\",\"" + groupAliasesVersion + "\",\"" + backLinkStr + "\"" +
+					");' title='System View Menu'>" +
+					"<div class='gotoNavDiv'></div>" +
+					"</div>"; //end context menu link div
 			
-			str += _OTS_RELAUNCH_STR + "<br>";
+			str += "<h3 style='margin-top:-10px'><u>System View</u></h3>";
 			
-			str += "<br>";
+
+			//str += _OTS_RELAUNCH_STR + "<br>";		
+			//str += "<br>";
 			
 			//show active backbone and config
 			function localShowActiveBackboneAndConfig()
@@ -1032,25 +1013,25 @@
 			} localShowActiveBackboneAndConfig();
 			
 			
-			str += "<a href='#' onclick='setupSpecificConfig(\"" + 
-					groupAliasesName + "\",\"" +
-					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
-			str += "Edit System Aliases</a>";
-
-			str += "<br>";
-			
-			str += "<a href='#' onclick='popUpGroupAliasForm(1); return false;' " +
-					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
-					">";
-			str += "Wiz-New System Alias-to-Latest</a>";
-
-			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			str += "<br>";
-
-			str += "<a href='#' onclick='popUpGroupAliasForm(0); return false;'  " +
-						"title='Automatically assign a new System Alias to an Active Group.'" +
-						">";
-			str += "Wiz-New System Alias-to-Active</a>";
+//			str += "<a href='#' onclick='setupSpecificConfig(\"" + 
+//					groupAliasesName + "\",\"" +
+//					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+//			str += "Edit System Aliases</a>";
+//
+//			str += "<br>";
+//			
+//			str += "<a href='#' onclick='popUpGroupAliasForm(1); return false;' " +
+//					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
+//					">";
+//			str += "Wiz-New System Alias-to-Latest</a>";
+//
+//			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+//			str += "<br>";
+//
+//			str += "<a href='#' onclick='popUpGroupAliasForm(0); return false;'  " +
+//						"title='Automatically assign a new System Alias to an Active Group.'" +
+//						">";
+//			str += "Wiz-New System Alias-to-Active</a>";
 			
 			str += "<br><br><br>";
 
@@ -8084,7 +8065,7 @@
 
 			document.getElementById("display").appendChild(el); //add element to display div
 			el.style.display = "block";
-		}
+		} //end popUpGroupViewAliasForm
 		
 		//popUpGroupViewAliasFormSubmit ~~
 		function popUpGroupViewAliasFormSubmit(groupName,groupKey)
@@ -14141,9 +14122,436 @@
 					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 			);
-		}
+		} //end createEditTableMenu
 		
-		//createEditTableMenu ~~
+		//createSystemViewMenu ~~
+		function createSystemViewMenu(event, groupAliasesName, groupAliasesVersion, backLinkStr)
+		{
+			var menuItems = [
+							 "Relaunch ots in Normal Mode",
+							 "Relaunch ots in Wiz Mode",
+							 _versionTrackingIsOn?"Turn Version Tracking OFF":"Turn Version Tracking ON",
+							 "Flatten Configuration to System Aliases ONLY",
+							 "Merge Configuration Groups",
+							 "Edit System Aliases",
+							 "Create System Alias for Latest Tables",
+							 "Create System Alias for Active Group"
+									 ];
+			var menuItemHandlers = [
+									"verifyRelaunchNormalMode()",
+									"verifyRelaunchWizMode()",
+									"toggleVersionTracking()",
+									"flattenToSystemAliases()",
+									"mergeGroupsDialog()",
+									"setupSpecificConfig(\"" + 
+									groupAliasesName + "\",\"" +
+									groupAliasesVersion + "\",\"" + backLinkStr + "\")",
+									"popUpGroupAliasForm(1)",
+									"popUpGroupAliasForm(0);"									
+									];
+			
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 		//top left position
+					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+			);
+		} //end createSystemViewMenu
+		
+		//mergeGroupsDialog ~~
+		function mergeGroupsDialog()
+		{
+			Debug.log("mergeGroupsDialog");
+			
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 500;
+			var h = 295;
+			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+			
+			//show choices for context and config groups
+			
+			var str = "<a id='" + 
+					"popUpDialog" + 
+					"-header' href='#' onclick='var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+			
+			
+			//get existing group aliases	
+			///////////////////////////////////////////////////////////
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups" +	
+					"",
+					"",
+					function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					el.innerHTML = str;
+					return;
+				}
+				
+				var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+				var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+				var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+
+				var groupName, lastGroupName;
+				
+				//Two group types here:	"Context" "Configuration"
+			
+				str += "<div id='popUpDialog-div'>";
+				str += "Please select a pair of context and/or configuration groups to merge. (If you would like to target " + 
+						"just one pair of groups, then leave the other pair of group names blank.)" + 
+						"<br><br>";
+				str += "<center>";
+				
+				str += "<table>"+
+					"<tr><td></td><td>Name</td><td>Key</td></tr>";
+				
+				str += "<tr><td style='text-align:right'>Context Group-A: </td><td>";
+					
+				str += "<select id='select-ContextA' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Context")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ContextA-key-el'>" +
+						"<select id='select-ContextA-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				str += "<tr><td style='text-align:right'>Context Group-B: </td><td>";
+
+				str += "<select id='select-ContextB' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Context")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ContextB-key-el'>" +
+						"<select id='select-ContextB-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				
+				str += "<tr><td style='text-align:right'>Config Group-A: </td><td>";
+
+				str += "<select id='select-ConfigA' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Configuration")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ConfigA-key-el'>" +
+						"<select id='select-ConfigA-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				str += "<tr><td style='text-align:right'>Config Group-B: </td><td>";
+
+				str += "<select id='select-ConfigB' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Configuration")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ConfigB-key-el'>" +
+						"<select id='select-ConfigB-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				
+				
+				//Merge approach
+				str += "<tr><td colspan='3' style='text-align:center' title='" +
+						"Choose the method for handling record conflicts when merging Group-B records into Group-A,\n" + 
+						"i.e. if a B record has the same UID as an A record, do you want to skip the B record, replace\n" + 
+						"the A record, or rename the B record." +
+						"'>Merge Conflict Approach: ";
+
+				str += "<select id='select-MergeApproach' style='width:85px'>";
+				var approaches = ["Skip", "Replace", "Rename"];
+				for(var j=0;j<approaches.length;++j)
+				{
+					str += "<option value='" + approaches[j] + "'>";
+					str += approaches[j];	//can display however
+					str += "</option>";				
+				}
+				str += "</select>";
+				str += "</td></tr>";
+				
+				str += "</table>";
+				
+				
+				
+				str += "</center>";
+
+				str += "</div><br>"; //close main popup div
+				
+				var onmouseupJS = "";
+				onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";				
+				onmouseupJS += "mergeGroups(" +
+						"document.getElementById(\"select-ContextA\").value," +
+						"document.getElementById(\"select-ContextA-key\").value," +
+						"document.getElementById(\"select-ContextB\").value," +
+						"document.getElementById(\"select-ContextB-key\").value," +
+						"document.getElementById(\"select-ConfigA\").value," +
+						"document.getElementById(\"select-ConfigA-key\").value," +
+						"document.getElementById(\"select-ConfigB\").value," +
+						"document.getElementById(\"select-ConfigB-key\").value," +
+						"document.getElementById(\"select-MergeApproach\").value," +
+						");";					
+
+				str += "<input id='popUpDialog-submitButton' type='button' onmouseup='" + 
+						onmouseupJS + "' " +
+						"value='Merge Groups' title='" +
+						"Merge Group-B records into Group-A using the record conflict handling method selected." +
+						"'/>";
+				el.innerHTML = str;
+
+				///////////////////////////////////////////
+				document.getElementById("select-ContextA").onchange = 
+						document.getElementById("select-ContextB").onchange = 
+								document.getElementById("select-ConfigA").onchange = 
+										document.getElementById("select-ConfigB").onchange= function() {					
+					
+					Debug.log(this.id + " changed to " + this.value);
+					var el = document.getElementById(this.id  + "-key-el");
+					var type = this.id.length > 14?"Context":"Configuration";
+					
+					var str = "";
+					str += "<select id='" + this.id  + "-key' style='width:85px'>";
+					for(var j=0;j<groupNames.length;++j)
+					{
+						if(groupNames[j].getAttribute("value") == this.value &&
+								types[j].getAttribute("value") == type)
+						{							
+							str += "<option value='" + keys[j].getAttribute("value") + "'>";
+							str += keys[j].getAttribute("value");	//can display however
+							str += "</option>";
+						}
+					}
+					str += "</select>";
+					
+					el.innerHTML = str;
+					
+				}  //end select-group change handler
+
+
+					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			); //end of getConfigurationGroups handler
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+			
+			
+		} //end mergeGroupsDialog
+		
+		//mergeGroups
+		function mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext, 
+				groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
+		{			
+			DesktopContent.XMLHttpRequest("Request?RequestType=mergeGroups" +
+					"&groupANameContext="+groupANameContext.trim() +
+					"&groupAKeyContext="+groupAKeyContext+
+					"&groupBNameContext="+groupBNameContext.trim() +
+					"&groupBKeyContext="+groupBKeyContext+
+					"&groupANameConfig="+groupANameConfig.trim() +
+					"&groupAKeyConfig="+groupAKeyConfig+
+					"&groupBNameConfig="+groupBNameConfig.trim() +
+					"&groupBKeyConfig="+groupBKeyConfig+
+					"&mergeApproach="+mergeApproach+
+					"", "", 
+								function (req)
+								{				
+							var err = DesktopContent.getXMLValue(req,"Error");
+							if(err) 
+							{
+								Debug.log(err,Debug.HIGH_PRIORITY);
+								Debug.log("Error! The merger of the two group pairs, " + 
+										groupANameContext + "(" + groupAKeyContext + ") & " +
+										groupBNameContext + "(" + groupBKeyContext + "), and " +
+										groupANameConfig + "(" + groupAKeyConfig + ") & " +
+										groupBNameConfig + "(" + groupBKeyConfig + "), " +
+										"failed...",Debug.HIGH_PRIORITY);
+								
+								try
+								{
+									//attempt to re-enable submit button in dialog (if there)
+									document.getElementById("popUpDialog-submitButton").disabled = false;
+								} catch(e){} //ignore error
+								
+								return;
+							}
+							
+							//open newly created group
+							var contextGroupName = DesktopContent.getXMLValue(req,"ContextGroupName");
+							var contextGroupKey = DesktopContent.getXMLValue(req,"ContextGroupKey");
+							var didContextMerge = contextGroupName && contextGroupName != "";
+
+							if(didContextMerge)
+							{
+								Debug.log("The context groups, " + groupANameContext + "(" + groupAKeyContext + ") & " +
+										groupBNameContext + "(" + groupBKeyContext + "), were successfully merged into a new group, " + 
+										contextGroupName + "(" + contextGroupKey + ")!",Debug.INFO_PRIORITY);
+								Debug.log("Click to <a onclick='activateSystemConfig(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>Activate " + 
+										contextGroupName + "(" + contextGroupKey + ")</a> (to avoid errors, activate the config group before the context group). or goto " + 
+										"<a onclick='setupSpecificConfigGroup(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>" + 
+										contextGroupName + "(" + contextGroupKey + ") Group-view</a> or " + 
+										"<a onclick='setupConfigGroupTreeView(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>" + 
+										contextGroupName + "(" + contextGroupKey + ") Tree-view</a>!"
+										,Debug.INFO_PRIORITY);
+							}
+							else
+								Debug.log("Skipped merger of context groups due to empty group name.", Debug.INFO_PRIORITY);
+							
+							var configGroupName = DesktopContent.getXMLValue(req,"ConfigGroupName");
+							var configGroupKey = DesktopContent.getXMLValue(req,"ConfigGroupKey");
+							var didConfigMerge = configGroupName && configGroupName != "";
+
+							if(didConfigMerge)
+							{
+								Debug.log("The config groups, " + groupANameConfig + "(" + groupAKeyConfig + ") & " +
+										groupBNameConfig + "(" + groupBKeyConfig + "), were successfully merged into a new group, " + 
+										configGroupName + "(" + configGroupKey + ")!",Debug.INFO_PRIORITY);
+								Debug.log("Click here to <a onclick='activateSystemConfig(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>Activate " + 
+										configGroupName + "(" + configGroupKey + ")</a> (to avoid errors, activate the config group before the context group), or goto " + 
+										"<a onclick='setupSpecificConfigGroup(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
+										configGroupName + "(" + configGroupKey + ") Group-view</a> or " + 
+										"<a onclick='setupConfigGroupTreeView(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
+										configGroupName + "(" + configGroupKey + ") Tree-view</a>!"
+										,Debug.INFO_PRIORITY);
+							}
+							else
+								Debug.log("Skipped merger of config groups due to empty group name.", Debug.INFO_PRIORITY);
+							
+							//decide on next view
+//							if(didContextMerge && !didConfigMerge) //group view							
+//								setupSpecificConfigGroup(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
+//							else if(!didContextMerge && didConfigMerge) //group view							
+//								setupSpecificConfigGroup(configGroupName,configGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
+//							else //both, so tree view of contex
+//								setupConfigGroupTreeView(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/)
+							
+								}, //end handler
+							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					);							
+		} //end mergeGroups
+
+		//flattenToSystemAliases ~~
+		function flattenToSystemAliases()
+		{
+			Debug.log("flattenToSystemAliases");
+			DesktopContent.popUpVerification("Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=flattenToSystemAliases",
+						"",
+						handleFlattenSystemAliasesResponse,0);
+					},0,"#efeaea",0,"#770000");			
+		} //end flattenToSystemAliases
+		
+		//toggleVersionTracking ~~
+		function toggleVersionTracking()
+		{
+			Debug.log("toggleVersionTracking init=" + _versionTrackingIsOn);
+
+			DesktopContent.popUpVerification("Are you sure you want to turn " + 
+					(_versionTrackingIsOn?"OFF":"ON") + " your configuration version tracking?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=" +
+						(_versionTrackingIsOn?"OFF":"ON"),
+						"",
+						versionTrackingHandler,0);
+					},0,"#efeaea",0,"#770000");
+		} //end toggleVersionTracking
+
+		//verifyRelaunchWizMode ~~
+		function verifyRelaunchWizMode()
+		{
+			Debug.log("verifyRelaunchWizMode");
+			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Wiz Mode?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
+						"",
+						handleOtsRelaunchResponse,0);
+					},0,"#efeaea",0,"#770000");
+		} //end verifyRelaunchWizMode
+		
+		//verifyRelaunchNormalMode ~~
+		function verifyRelaunchNormalMode()
+		{
+			Debug.log("verifyRelaunchNormalMode");
+			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Normal Mode?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
+						"",
+						handleOtsRelaunchResponse,0);
+					},0,"#efeaea",0,"#770000");
+		} //end verifyRelaunchNormalMode
+		
+		//createTreeViewMenu ~~
 		function createTreeViewMenu(event)
 		{
 			var menuItems = [
@@ -14196,7 +14604,7 @@
 					_CONTEXT_MENU_PRIMARY_COLOR, 	//primary color
 					_CONTEXT_MENU_SECONDARY_COLOR	//secondary color
 			);
-		}
+		} //end createTreeViewMenu
 
 		//getTableViewColTypes ~~
 		//	returns column types for each column and specially indicates the columns 
