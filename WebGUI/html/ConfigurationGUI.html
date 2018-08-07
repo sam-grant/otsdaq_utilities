@@ -1194,6 +1194,8 @@
 			var configName, configVersion;									
 			
 			backLinkStr = "setupGroupViewMode();"; 
+
+			str += "<h3 style='margin-top:-10px'><u>Group View</u></h3>";
 			
 			var typeName = ["All","Contexts","Backbones","Configurations"];
 			var typeFilterIndex = [-1,0,1,2];
@@ -1540,6 +1542,8 @@
 			var configVersions;
 			var configName, version;
 			var backLinkStr;
+
+			str += "<h3 style='margin-top:-10px'><u>Table View</u></h3>";
 
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 			for(var i=0;i<configNames.length;++i)
