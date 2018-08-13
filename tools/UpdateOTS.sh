@@ -44,8 +44,10 @@ SCRIPT_DIR="$(
 		
 echo -e "UpdateOTS.sh [${LINENO}]  \t Script directory found as: $SCRIPT_DIR"
 
-#REPO_DIR="$(find $SCRIPT_DIR/../../ -maxdepth 1 -iname 'otsdaq*')" #old way before moving script to tools, and allowing compiling with CMake 
-REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')"
+ 
+#REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
+REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+						
 
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
@@ -179,15 +181,15 @@ if [ "x$1" == "x" ]; then
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t updating tutorial launch scripts..."
-	rm $OTSDAQ_DIR/../../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
-	rm $OTSDAQ_DIR/../../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
-	rm $OTSDAQ_DIR/../../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
+	rm $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
+	rm $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
+	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $OTSDAQ_DIR/../../	
-	chmod 755 $OTSDAQ_DIR/../../reset_ots_tutorial.sh
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../	
+	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh
 	
-	rm $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
+	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
@@ -222,15 +224,15 @@ if [ "x$1" == "x" ]; then
 		while read line; do
 			echo
 			echo -e "UpdateOTS.sh [${LINENO}]  \t updating ${line} repository...."
-			echo -e "UpdateOTS.sh [${LINENO}]  \t running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
-			$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+			echo -e "UpdateOTS.sh [${LINENO}]  \t running script $MRB_SOURCE/${line}/tools/update_ots_repo.sh"	
+			$MRB_SOURCE/${line}/tools/update_ots_repo.sh			
 		done < $USER_DATA/ServiceData/InstalledRepoNames.dat
 	
 		#do one more time after loop to make sure last line is read (even if user did not put new line)
 		echo
 		echo -e "UpdateOTS.sh [${LINENO}]  \t updating ${line} repository...."		
-		echo -e "UpdateOTS.sh [${LINENO}]  \t running script $OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh"	
-		$OTSDAQ_DIR/../${line}/tools/update_ots_repo.sh			
+		echo -e "UpdateOTS.sh [${LINENO}]  \t running script $MRB_SOURCE/${line}/tools/update_ots_repo.sh"	
+		$MRB_SOURCE/${line}/tools/update_ots_repo.sh			
 			
 	fi
 	
@@ -342,3 +344,7 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
+
+
+
+
