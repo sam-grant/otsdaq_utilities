@@ -289,7 +289,14 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top.</div><br>" +
+				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top." +
+				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
+				//make download arrow
+					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
+					"<div style='display: block; width: 0; height: 0; border-left: 6px dotted transparent; border-right: 6px dotted transparent; border-top: 8px solid white;'></div>" +
+					"<div style='position: relative; top: 5px; width: 12px; height: 2px; display: block; background-color: white;'></div>" +				
+				"</div>" +
+				"</div><br>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err' class='" + 
@@ -712,4 +719,29 @@ Debug.handleErrorResize = function() {
 }
 
 
+//=====================================================================================
+Debug.downloadMessages = function() {
+	
+	console.log("downloading messages...");
+	
+	//create CSV data string from html table
+	var dataStr = "data:text/txt;charset=utf-8,";
+	
+	var lines = Debug._errBox.innerText.split('\n');
+	for(var i=2;i<lines.length-2;++i)
+	{
+		dataStr += encodeURIComponent(lines[i] + "\n"); //encoded \n
+	}
+	
+	var link = document.createElement("a");
+	link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+	link.setAttribute("style", "display:none");
+	link.setAttribute("download", "otsdaq_Messages_download.txt");
+	document.body.appendChild(link); // Required for FF
+
+	link.click(); // This will download the data file named "my_data.csv"
+
+	link.parentNode.removeChild(link);
+	
+} //end Debug.downloadMessages 
 

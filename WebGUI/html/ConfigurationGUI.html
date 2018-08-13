@@ -3176,7 +3176,7 @@
 			var backLinkStr;
 			var titleStr;
 			var nodeEditType, nodeEditTypeDisplay;
-			var isLink,isDisconnected, isGroupLink;	
+			var isLink, isDisconnected, isGroupLink;	
 			var choices; 
 			
 			var pathHTML = path;
@@ -12753,9 +12753,19 @@
 			
 
 			//create output string based on cols
-			str += createTableViewOutputStr(cols,colTypes,
+			try
+			{
+				str += createTableViewOutputStr(cols,colTypes,
 					false /*transpose output*/,true /*cols is array*/);
-			
+			}
+			catch(e)
+			{
+				Debug.log(e);
+				Debug.log("There was a problem importing the CSV file. There may have been a mismatch in the " +
+						"number of columns. Please check the compatibility of the imported data.", 
+						Debug.HIGH_PRIORITY);
+				return;
+			}
 			el.innerHTML = str;	
 			
 			//on succes remove popup
@@ -12954,8 +12964,8 @@
 		}
 		
 		//downloadTableAsCSV ~~
-		// online people complain that this doesn't work for big files.
-		// Note: if files are too big, could have server create csv file
+		// on the internet, people complain that this doesn't work for big files.
+		// Note: if files become too big, could have server create csv file
 		//	then link to <a href='/WebPath/download.csv' download></a>
 		//	Note: href must be  encodeURI(dataStr) if data not already encoded
 		function downloadTableAsCSV()
