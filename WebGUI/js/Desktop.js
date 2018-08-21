@@ -654,7 +654,9 @@ Desktop.createDesktop = function(security) {
 			else if(_windows[i] == win) found = 1; //found!
 		}
 		
-		if(!found && win) Debug.log("FAIL -- Desktop Foreground window not Found!! Window: " + win.getWindowSubName(),Debug.HIGH_PRIORITY);
+		if(!found && win)
+			Debug.log("Desktop Foreground window not Found!! Window: " + 
+				win.getWindowSubName());
 		
 		_dashboard.updateWindows();
 		

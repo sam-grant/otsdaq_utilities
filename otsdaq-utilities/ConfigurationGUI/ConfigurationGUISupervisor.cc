@@ -5,6 +5,9 @@
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
+#if MESSAGEFACILITY_HEX_VERSION > 0x20100
+#include <boost/stacktrace.hpp>
+#endif
 
 #include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h" //for context relaunch
 
@@ -4235,20 +4238,20 @@ catch(...)
 //	if not allowIllegalColumns, then it is still ok if the source has more or less columns:
 //	the client is notified through "TableWarnings" field in this case.
 void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument& xmlOut,
-		ConfigurationManagerRW* cfgMgr, const std::string& configName,
+		ConfigurationManagerRW* cfgMgr, const std::string& tableName,
 		ConfigurationVersion version, bool allowIllegalColumns)
 try
 {
 	char tmpIntStr[100];
-	DOMElement* parentEl;
+	DOMElement *parentEl, *subparentEl;
 
 	std::string accumulatedErrors = "";
 
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = //if allowIllegalColumns, then also refresh
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
-					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
+					allowIllegalColumns?&accumulatedErrors:0,tableName); //filter errors by tableName
 
-	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(tableName);
 
 	//send all config names along with
 	//	and check for specific version
@@ -4257,7 +4260,7 @@ try
 	{
 		xmlOut.addTextElementToData("ExistingConfigurationNames",
 				configPair.first);
-		if(configPair.first == configName && //check that version exists
+		if(configPair.first == tableName && //check that version exists
 				configPair.second.versions_.find(version) ==
 						configPair.second.versions_.end())
 		{
@@ -4266,15 +4269,54 @@ try
 		}
 	}
 
-	xmlOut.addTextElementToData("ConfigurationName", configName);	//table name
+	xmlOut.addTextElementToData("ConfigurationName", tableName);	//table name
 	xmlOut.addTextElementToData("ConfigurationDescription",
 			config->getConfigurationDescription());	//table name
 
-	//existing table versions
-	parentEl = xmlOut.addTextElementToData("ConfigurationVersions", "");
-	for(const ConfigurationVersion& v:allCfgInfo.at(configName).versions_)
-		xmlOut.addTextElementToParent("Version", v.toString(), parentEl);
 
+	//existing table versions
+	{
+		//get version aliases for translation
+		std::map<std::string /*table name*/,std::map<
+		std::string /*version alias*/,ConfigurationVersion /*aliased version*/> > versionAliases;
+		try
+		{
+			//use whatever backbone is currently active
+			versionAliases = cfgMgr->getActiveVersionAliases();
+			for(const auto& aliases:versionAliases)
+				for(const auto& alias:aliases.second)
+					__SUP_COUT__ << "ALIAS: " << aliases.first << " " << alias.first << " ==> " << alias.second << std::endl;
+		}
+		catch(const std::runtime_error& e)
+		{
+			__SUP_COUT__ << "Could not get backbone information for version aliases: " << e.what() << __E__;
+		}
+
+		auto tableIterator = versionAliases.find(tableName);
+
+		parentEl = xmlOut.addTextElementToData("ConfigurationVersions", "");
+		for(const ConfigurationVersion& v:allCfgInfo.at(tableName).versions_)
+		{
+			subparentEl = xmlOut.addTextElementToParent("Version", v.toString(), parentEl);
+
+			if(tableIterator != versionAliases.end())
+			{
+				//check if this version has one or many aliases
+				for(const auto& aliasPair : tableIterator->second)
+				{
+					//					__SUP_COUT__ << "Checking " << aliasPair.second << " --> " <<
+					//							aliasPair.first << " for " << v << __E__;
+					if(v == aliasPair.second)
+					{
+						__SUP_COUT__ << "Found Alias " << aliasPair.second << " --> " <<
+								aliasPair.first << __E__;
+						xmlOut.addTextElementToParent("VersionAlias", aliasPair.first, subparentEl);
+					}
+				}
+			}
+
+		}
+	}
 
 	//table columns and then rows (from config view)
 
@@ -4288,11 +4330,11 @@ try
 	{
 		try
 		{
-			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(tableName,version)->getViewP();
 		}
 		catch(std::runtime_error& e) //default to mock-up for fail-safe in GUI editor
 		{
-			__SUP_SS__ << "Failed to get table " << configName <<
+			__SUP_SS__ << "Failed to get table " << tableName <<
 					" version " << version <<
 					"... defaulting to mock-up! " <<
 					std::endl;
@@ -4306,7 +4348,7 @@ try
 		}
 		catch(...) //default to mock-up for fail-safe in GUI editor
 		{
-			__SUP_SS__ << "Failed to get table " << configName <<
+			__SUP_SS__ << "Failed to get table " << tableName <<
 					" version: " << version <<
 					"... defaulting to mock-up! " <<
 					"(You may want to try again to see what was partially loaded into cache before failure. " <<
@@ -4327,7 +4369,9 @@ try
 	//get 'columns' of view
 	DOMElement* choicesParentEl;
 	parentEl = xmlOut.addTextElementToData("CurrentVersionColumnHeaders", "");
+
 	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+
 	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 	{
 		//		__SUP_COUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
@@ -4406,6 +4450,7 @@ try
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
+
 	if(accumulatedErrors != "") //add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so maybe you can ignore this, ") +
@@ -4419,7 +4464,7 @@ try
 					cfgViewPtr->getSourceColumnMismatch() != 0)) //check for column size mismatch
 	{
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " <<
-				configName << ":v" << version << ". Please see the details below:\n\n" <<
+				tableName << ":v" << version << ". Please see the details below:\n\n" <<
 				"The source column size was found to be " << cfgViewPtr->getDataColumnSize() <<
 				", and the current number of columns for this table is " <<
 				cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
@@ -4831,6 +4876,11 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //		Note: if version of -1 (INVALID/MOCKUP) is given and there are no other existing table versions...
 //			a new table version is generated using the mockup table.
 //
+//		Table Version Alias Handling:
+//			Allow table versions to be specified as an alias with ALIAS: preamble. Aliased versions
+//			will be translated according to the active backbone at activation time.
+//
+//
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		HttpXmlDocument& xmlOut,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
@@ -4847,8 +4897,10 @@ try
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	cfgMgr->loadConfigurationBackbone();
 
-	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-			cfgMgr->getActiveVersionAliases();
+	std::map<std::string /*tableName*/,
+		std::map<std::string /*aliasName*/,
+			ConfigurationVersion /*version*/> > versionAliases =
+					cfgMgr->getActiveVersionAliases();
 	for(const auto& aliases:versionAliases)
 		for(const auto& alias:aliases.second)
 		__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second << std::endl;
@@ -4882,6 +4934,8 @@ try
 		//check if version is an alias and convert
 		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
 		{
+			__SUP_COUT__ << "Found alias " << name << " " << versionStr << __E__;
+
 			//convert alias to version
 			if(versionAliases.find(name) != versionAliases.end() &&
 					versionAliases[name].find(versionStr.substr(
@@ -4953,44 +5007,6 @@ try
 
 			__SUP_COUT__ << "Using mockup version: " << version << std::endl;
 
-			//commented out below because of better duplicate handling above
-//
-//			//if other versions exist check for another mockup, and use that instead
-//			if(allCfgInfo.at(name).versions_.size())
-//			{
-//				//half-hearted check of cache (not checking DB)
-//				ConfigurationVersion duplicateVersion =
-//						config->checkForDuplicate(temporaryVersion);
-//				if(!duplicateVersion.isInvalid())
-//					version = duplicateVersion;
-//
-//				//RAR -- now allow if no mockup in cache
-//					//				__SUP_SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
-//					//						"Table member '" << name << "' with mock-up version '" << version <<
-//					//						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
-//					//						" other valid versions." << std::endl;
-//					//				xmlOut.addTextElementToData("Error", ss.str());
-//					//	return;
-//			}
-//
-//			//if version is still the mockup, save a new persistent version based on mockup
-//			if(version.isMockupVersion())
-//			{
-//				__SUP_COUT__ << "Creating version from mock-up for name: " << name <<
-//						" inputVersionStr: " << versionStr << std::endl;
-//
-//				//set table comment
-//				config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
-//
-//				//finish off the version creation
-//				version = saveModifiedVersionXML(xmlOut,cfgMgr,name,
-//						ConfigurationVersion() /*original source is mockup*/,
-//						false /*make persistent*/,
-//						config,
-//						temporaryVersion /*temporary modified version*/);
-//			}
-//			else
-//				__SUP_COUT__ << "Found already existing mockup version: " << version << std::endl;
 		}
 
 		//__SUP_COUT__ << "version: " << version << std::endl;
@@ -5618,7 +5634,7 @@ try
 					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
 					row, col);
 
-			col = configView->findCol("VersionAliasId");
+			col = configView->findCol("VersionAliasUID");
 			configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
 					versionAlias, row, col);
 
@@ -6321,9 +6337,15 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 	//behave like a new user
 	//
-	//ConfigurationManagerRW cfgMgrInst("ExampleUser");
-	//	//
-	//ConfigurationManagerRW* cfgMgr =& cfgMgrInst;
+	ConfigurationManagerRW cfgMgrInst("ExampleUser");
+		//
+	ConfigurationManagerRW* cfgMgr =& cfgMgrInst;
+
+	std::map<std::string, ConfigurationVersion> groupMembers;
+	groupMembers["DesktopIcon"] = ConfigurationVersion(2);
+//	cfgMgr->saveNewConfigurationGroup("test",
+//			groupMembers, "test comment");
+
 	//	//
 	//	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	//	__SUP_COUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;
@@ -6340,7 +6362,7 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//	}
 
 	//testXDAQContext just a test bed for navigating the new config tree
-	//cfgMgr->testXDAQContext();
+	cfgMgr->testXDAQContext();
 
 
 

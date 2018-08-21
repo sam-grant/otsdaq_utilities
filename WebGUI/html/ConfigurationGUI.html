@@ -340,19 +340,7 @@
 			text-decoration: underline;
 			cursor: pointer;
 		}
-		
-		.tableAddRowButton, .tableDeleteRowButton {
-			background-color: white;
-			border: 1px solid rgb(44, 44, 187);
-			padding: 0px 4px 0px 4px;
-			text-decoration: none;
-			margin: 2px;
-			width: 8px;
-		}
-		.tableAddRowButton:hover, .tableDeleteRowButton:hover {
-			text-decoration: none;
-			background-color: rgb(208, 209, 222);
-		}
+	
 	</style>
 	
 	
@@ -2235,15 +2223,25 @@
 			//display all other version links
 			{
 				var configVersion;
+				var aliasString;
+				var versionAliases;
 				for(var j=0;j<configVersions.length;++j)
 				{
-					configVersion = configVersions[j].getAttribute("value")
+					configVersion = configVersions[j].getAttribute("value");
+					
+					aliasString = "";
+					versionAliases = configVersions[j].getElementsByTagName("VersionAlias");
+					for(var k=0;k<versionAliases.length;++k)						
+						aliasString += (k==0?"==>":",") + versionAliases[k].getAttribute("value");
+					
 					str += " ";
 					if(configVersion != version)
 						str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 							"\",\"" + configVersion + 
 							"\", \"" + backLinkStr + "\"); return false;'>";
 					str += ((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
+					//add alias string
+					str += aliasString;
 					if(configVersion != version)
 						str += "</a>";
 				}
