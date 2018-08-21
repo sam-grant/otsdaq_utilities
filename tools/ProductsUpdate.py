@@ -5,10 +5,10 @@
 import os
 import subprocess
 
-otsdaqVersion = "s46-e10 prof";
+otsdaqVersion = "s64-e15 prof";
 
 try:
-	os.path.isdir(os.environ['PRODUCTS]);
+	os.path.isdir(os.environ['PRODUCTS']);
 except KeyError:
 	print "Products variable not set";
 	exit(1);
