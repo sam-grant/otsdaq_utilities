@@ -401,7 +401,7 @@
 //		var _OTS_RELAUNCH_STR =  
 //				//Normal mode
 //				"Click here to relaunch ots in " +
-//				"<a href='#' onclick='" +
+//				"<a onclick='" +
 //				"DesktopContent.popUpVerification(" + 
 //				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
 //				"function() {" + 
@@ -411,7 +411,7 @@
 //				"'>Normal Mode</a>" +
 //				" or " +
 //				//Wiz Mode
-//				"<a href='#' onclick='" +
+//				"<a onclick='" +
 //				"DesktopContent.popUpVerification(" + 
 //				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
 //				"function() {" + 
@@ -422,7 +422,7 @@
 //				"<br>" +
 //				//Toggle Version Tracking
 //				"Click here to " +
-//				"<a href='#' id='versionTrackingSystemLink' onclick='" +
+//				"<a id='versionTrackingSystemLink' onclick='" +
 //				"var el = this;" +
 //				"if(el.textContent == \"Turn Version Tracking OFF\")" +
 //				"DesktopContent.popUpVerification(" + 
@@ -440,7 +440,7 @@
 //				//Flatten Versions
 //				"<br>" +
 //				"Click here to " +
-//				"<a href='#' onclick='" +
+//				"<a onclick='" +
 //				"DesktopContent.popUpVerification(" + 
 //				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
 //				"function() {" + 
@@ -885,6 +885,7 @@
 					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationName");		
 
 			var str = ""; //string for html content			
+			str += "<div style='display:none'>System View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
 			var groupAlias, groupName, groupKey, groupComment, aliasComment;
 			var backLinkStr;
@@ -1008,7 +1009,7 @@
 //
 //			str += "<br>";
 //			
-//			str += "<a href='#' onclick='popUpGroupAliasForm(1); return false;' " +
+//			str += "<a onclick='popUpGroupAliasForm(1); return false;' " +
 //					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
 //					">";
 //			str += "Wiz-New System Alias-to-Latest</a>";
@@ -1016,7 +1017,7 @@
 //			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 //			str += "<br>";
 //
-//			str += "<a href='#' onclick='popUpGroupAliasForm(0); return false;'  " +
+//			str += "<a onclick='popUpGroupAliasForm(0); return false;'  " +
 //						"title='Automatically assign a new System Alias to an Active Group.'" +
 //						">";
 //			str += "Wiz-New System Alias-to-Active</a>";
@@ -1099,7 +1100,7 @@
 				
 				
 				//add Activate link
-				str += " <a href='#' onclick='activateSystemConfig(\"" + groupName +
+				str += " <a onclick='activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
 				str += "Activate</a>";
 
@@ -1108,7 +1109,7 @@
 				
 				
 				//Wiz to latest of all tables
-				str += " <a href='#' onclick='" + 
+				str += " <a onclick='" + 
 						//"wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
 						"popUpGroupAliasForm(1,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to a Group comprised of the latest table versions.'" +
@@ -1120,7 +1121,7 @@
 				
 				
 				//Wiz to active config group
-				str += " <a href='#' onclick='" +
+				str += " <a onclick='" +
 						//"wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 						"popUpGroupAliasForm(0,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to an Active Group.'" +
@@ -1177,6 +1178,8 @@
 			var el = document.getElementById("display");
 
 			var str = "";
+			str += "<div style='display:none'>Group View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
+			
 			var configNames, configVersions;
 			var backLinkStr;
 			var configName, configVersion;									
@@ -1527,6 +1530,8 @@
 			var el = document.getElementById("display");
 
 			var str = "";
+			str += "<div style='display:none'>Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
+			
 			var configVersions;
 			var configName, version;
 			var backLinkStr;
@@ -2108,7 +2113,8 @@
 			_versionIsChanged = false;
 			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
 
-			var str = "";			
+			var str = "";	
+			str += "<div style='display:none'>Specific Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
 			_associatedGroupName = "";
 			_associatedGroupKey = -1;
@@ -2184,9 +2190,13 @@
 			if(version != -1)
 			{
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='setVersionAliasInActiveBackbone(\"Default\",\"" + 
+				str +=  "<a onclick='setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
-						version + "\"); return false;' title='Make '" + configName + "' version " + version + 
+						version + "\",0,/*done handler*/ function()" +
+							"{setupSpecificConfig(\"" + 
+							configName + "\",\"" + 
+							version + "\");}" + 
+						"); return false;' title='Make '" + configName + "' version " + version + 
 						" the 'Default' table version " + 
 						" by automatically setting up the 'Default' alias " + 
 						"in the active Backbone group.'" +
@@ -2196,7 +2206,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='popUpVersionAliasForm(); return false;' "+
+				str +=  "<a onclick='popUpVersionAliasForm(); return false;' "+
 						"title='Assign an Alias you specify to '" + configName + 
 						"' version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -2214,7 +2224,7 @@
 			//display mockup link (mockup always present)
 			str += " ";
 			if(-1 != version)				
-				str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
+				str +=  "<a onclick='setupSpecificConfig(\"" + configName +
 					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
 			str += _MOCKUP_VIEW_NAME;
 			if(-1 != version)				
@@ -2289,11 +2299,11 @@
 			str += "<tr><th>Description:</th><td>";
 
 			str += "<label id='tableDescriptionText-Show' style='display:block'>";
-			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"block\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"none\";'>" +
+			str += "<a onclick='document.getElementById(\"tableDescriptionText\").style.display = \"block\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"none\";'>" +
 					"show</a>";
 			str += "</label>";			
 			str += "<label id='tableDescriptionText' style='display:none'>";
-			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
+			str += "<a onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
 					"hide</a><br>" +					
 					Debug.errorPopConditionString(DesktopContent.tooltipConditionString(tableDescription)) + 
 					"</label>";			
@@ -2496,7 +2506,7 @@
 					if(atLeastOneRecordWasModified)
 					{
 						var str = "Record creation complete. You may want to ";
-						str += "<a href='#' onclick='refreshTreeView()' " +
+						str += "<a onclick='refreshTreeView()' " +
 								" title='Click to Refresh the current tree-view' " +
 								">";
 						str += "Refresh";
@@ -2504,7 +2514,7 @@
 						str += " the tree " +
 								"to view modifications. ";
 						str += "The active groups are now ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2513,7 +2523,7 @@
 								ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						str += "</a>";
 						str += " and ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2544,7 +2554,7 @@
 					if(atLeastOneRecordWasDeleted)
 					{
 						var str = "Record deletion complete. You may want to ";
-						str += "<a href='#' onclick='refreshTreeView()' " +
+						str += "<a onclick='refreshTreeView()' " +
 								" title='Click to Refresh the current tree-view' " +
 								">";
 						str += "Refresh";
@@ -2552,7 +2562,7 @@
 						str += " the tree " +
 								"to view changes. ";
 						str += "The active groups are now ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2561,7 +2571,7 @@
 								ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						str += "</a>";
 						str += " and ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2795,7 +2805,7 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-					treeViewHandlerStr_ += "<a href='#' onclick='evaluateJS(\"" + treeViewBackLinkStr_ + 
+					treeViewHandlerStr_ += "<a onclick='evaluateJS(\"" + treeViewBackLinkStr_ + 
 							"\"); return false;'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
@@ -2803,11 +2813,11 @@
 				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 				//						treeGroupName_ + "\",\"" +
 				//						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
-				//				treeViewHandlerStr_ += "<a href='#' onclick='" + refreshLinkStr + 
+				//				treeViewHandlerStr_ += "<a onclick='" + refreshLinkStr + 
 				//						"; return false;'>Refresh</a>";	
 				//treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				
-				treeViewHandlerStr_ += "<a href='#' onclick='expandTreeChildrenDepth(); return false;' " + 
+				treeViewHandlerStr_ += "<a onclick='expandTreeChildrenDepth(); return false;' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
 						"(Hot-keys: + , &gt; , } , A , E )" +
@@ -2815,7 +2825,7 @@
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onclick='hideTreeChildrenDepth(); return false;'" + 
+				treeViewHandlerStr_ += "<a onclick='hideTreeChildrenDepth(); return false;'" + 
 						"title='Hide all children at deepest depth.\n\n" +
 						"(Hot-keys: - , &lt; , { , Z , M )" +
 						"\nNote: hot keys will target the highlighted node.'" +
@@ -2899,7 +2909,7 @@
 				
 				//add Activate link
 				treeViewHandlerStr_ += " <a id='treeView-ConfigGroupActivateLink' " +
-						"href='#' onclick='activateSystemConfig(\"" + configGroupName +
+						"onclick='activateSystemConfig(\"" + configGroupName +
 						"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
@@ -4532,7 +4542,7 @@
 							name = name[0];					
 													
 							//add ignore warnings Activate link
-							withWarningsStr += " <a href='#' onclick='activateSystemConfig(\"" + 
+							withWarningsStr += " <a onclick='activateSystemConfig(\"" + 
 									name +
 									"\",\"" + key + "\",1); return false;'>"; //ignore warnings
 							withWarningsStr += "Activate " + 
@@ -4591,7 +4601,7 @@
 				}
 				//str += "<br>";
 
-				str += "</td><td style='text-align:left; padding-left:20px;'>";
+				str += "</td><td style='text-align: left; padding-left:20px;'>";
 				str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + 
 						_activeConfigGroups[i*2] + 
 									"\",\"" + 
@@ -5136,17 +5146,17 @@
 			str += "<tr><td>";
 			
 			var title = "Select/Deselect checkboxes based on this selection.";
-			str += "<a href='#' onclick='selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
-					"<a href='#' onclick='selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
+			str += "<a onclick='selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
+					"<a onclick='selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
+					"<a onclick='selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
+					"<a onclick='selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
+					"<a onclick='selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td colspan='2' style='white-space: nowrap;'>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
-			str += "<a href='#' onclick='versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
-					"<a href='#' onclick='versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
-					"<a href='#' onclick='popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
+			str += "<a onclick='versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
+					"<a onclick='versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
+					"<a onclick='popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
 			str += "</td>";
 			str += "</tr>";
 			
@@ -5160,7 +5170,7 @@
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='#' onclick='" +
+				str += "<a style='text-decoration:none;color:black;' onclick='" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 						" return false;'>";
@@ -5465,7 +5475,7 @@
 					"\",\"" + key + "\"); return false;'>Member-view</a> or ";
 			str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Tree-view</a>, or ";
-			str += "<a href='#' onclick='activateSystemConfig(\"" + name + 
+			str += "<a onclick='activateSystemConfig(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Activate</a> it.";
 			
 			el.innerHTML = str;
@@ -8000,7 +8010,7 @@
 
 				var str = "<a id='" + 
 						"popUpDialog" + 
-						"-header' href='#' onclick='var el = document.getElementById(" +
+						"-header' onclick='var el = document.getElementById(" +
 						"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 				str += "<div id='popUpDialog-div'>";				
@@ -8184,7 +8194,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -8245,7 +8255,7 @@
 						modTblStr += ",";
 
 
-					modTblStr += "<a style='color:black' href='#' onclick='" +								
+					modTblStr += "<a style='color:black' onclick='" +								
 							"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 							" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 							"title='Click to edit the comment for this group' " +
@@ -8269,7 +8279,7 @@
 				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 						"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 						"var forFirefox = (el.checked = !el.checked);" +
 						" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -8281,7 +8291,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -8382,7 +8392,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='" +
+						str += "<a onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -11502,7 +11512,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11564,7 +11574,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11619,7 +11629,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11671,7 +11681,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11761,7 +11771,7 @@
 			
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
@@ -11782,7 +11792,7 @@
 				//Note: 1/13/2017 - changed to always using cached comment 
 				//give option to use cached comment
 				//			if(_cachedTableComment != "") 			
-				//				str += "<a href='#' onclick='" + 
+				//				str += "<a onclick='" + 
 				//					"var el = document.getElementById(" +
 				//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
 				//					"title='Load the cached comment associated with last persistent version " +
@@ -11843,7 +11853,7 @@
 							modTblStr += ",";
 						
 												
-						modTblStr += "<a style='color:black' href='#' onclick='" +								
+						modTblStr += "<a style='color:black' onclick='" +								
 								"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 								" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 								"title='Click to edit the comment for this group' " +
@@ -11867,7 +11877,7 @@
 					str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 							"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='" +
+					str += "<a onclick='" +
 							"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 							"var forFirefox = (el.checked = !el.checked);" +
 							" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -11879,7 +11889,7 @@
 					str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 							">";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='" +
+					str += "<a onclick='" +
 							"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 							"if(el.disabled) return false; " +
 							"var forFirefox = (el.checked = !el.checked);" +
@@ -11981,7 +11991,7 @@
 									(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 									">";
 							//add link so text toggles checkbox
-							str += "<a href='#' onclick='" +
+							str += "<a onclick='" +
 									"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 									"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 									" return false;'>";
@@ -12097,7 +12107,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -12127,7 +12137,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -12207,7 +12217,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='" +
+						str += "<a onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -12320,7 +12330,7 @@
 			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -12415,7 +12425,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -12431,7 +12441,11 @@
 					"document.getElementById(\"popUpDialog-alias\").value" +
 					",\"" + 
 					_currentConfigName + "\",\"" + 
-					_version + "\"); ";
+					_version + "\",0,/*done handler*/ function()" +
+							"{setupSpecificConfig(\"" + 
+							_currentConfigName + "\",\"" + 
+							_version + "\");}" + 
+						"); ";
 			onmouseupJS += "var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
 			
@@ -12796,7 +12810,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + //clear upload string on cancel!
-					"-header' href='#' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
+					"-header' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";	
@@ -12815,7 +12829,7 @@
 //			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
 //					">";			
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +					
 //					"return false;'>";
@@ -12851,7 +12865,7 @@
 //			//add append or prepend radio
 //			str += "<input checked type='radio' id='popUpDialog-replaceData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12862,7 +12876,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-appendData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12873,7 +12887,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-appendNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-appendNewData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12884,7 +12898,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-appendAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-appendAndReplaceNewData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12896,7 +12910,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-prependData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12907,7 +12921,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-prependNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-prependNewData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -12918,7 +12932,7 @@
 //			//add append or prepend radio
 //			str += "<input type='radio' id='popUpDialog-prependAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
 //			//add link so text toggles checkbox
-//			str += "<a href='#' onclick='" +
+//			str += "<a onclick='" +
 //					"var el = document.getElementById(\"popUpDialog-prependAndReplaceNewData\");" +
 //					"var forFirefox = (el.checked = !el.checked);" +
 //					"return false;'>";
@@ -14195,7 +14209,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			
