@@ -5013,7 +5013,7 @@ try
 	{
 		__SUP_COUT__ << "Checking for duplicate groups..." << std::endl;
 		ConfigurationGroupKey foundKey =
-				cfgMgr->findConfigurationGroup(groupName,groupMembers);
+				cfgMgr->findConfigurationGroup(groupName,groupMembers,groupAliases);
 
 		if(!foundKey.isInvalid())
 		{
@@ -5763,10 +5763,8 @@ try
 	try
 	{
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				0,&memberMap,0,0,0,0,0, //defaults
-				true); //doNotLoadMember
-		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+				false /*doActivate*/,&memberMap,0,0,0,0,0, //defaults
+				true /*doNotLoadMember*/);
 	}
 	catch(...)
 	{
