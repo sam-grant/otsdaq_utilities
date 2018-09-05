@@ -410,8 +410,8 @@ Viewer2d.getConfigurationHandler = function (req) {
 	Viewer2d.stations= [];
 	
 	var cnt = 0;
-	stations[cnt++] = [[1024, 1, 60, 90000]];
-	stations[cnt++] = [[1024, 1, 60, 90000],[512, 1, 60, 90000]];
+	Viewer2d.stations[cnt++] = [[1024, 1, 60, 90000]];
+	Viewer2d.stations[cnt++] = [[1024, 1, 60, 90000],[512, 1, 60, 90000]];
 	                   
 	//var objects = req.responseXML.getElementsByTagName("object");
 	

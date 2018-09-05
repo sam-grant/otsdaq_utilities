@@ -62,13 +62,28 @@
 		
 
 		#SubSystemTable {
-			background-color : rgb(241, 231, 231);			
+			background-color : rgb(210, 193, 193);
 		}
 		#SubSystemTable td, #SubSystemTable th {
 			background-color : rgb(226, 216, 216);	
 			white-space: pre; /* was pre-wrap; but not sure why.. pre seems to maintain text better*/
 		}
+		#SubSystemTable {
+			background-color : rgb(210, 193, 193); /*chrome does not color table unless after the td/th*/
+		}
 		
+		.tableAddRowButton, .tableDeleteRowButton {
+			background-color: rgb(210, 193, 193);
+			border: 1px solid grey;
+			padding: 0px 4px 0px 4px;
+			text-decoration: none;
+			margin: 2px;
+			width: 8px;
+		}
+		.tableAddRowButton:hover, .tableDeleteRowButton:hover {
+			text-decoration: none;
+			background-color: rgb(208, 209, 222);
+		}
 
 		.tableView-Menu {
 			float:				left;

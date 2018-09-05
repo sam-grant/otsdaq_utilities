@@ -92,7 +92,8 @@
 				animationTargetTop = 15 - dropDownDiv.offsetHeight;
 				window.setTimeout(animateDropDown,30);
 				
-				if(!DesktopContent._needToLoginMailbox) dropDownDiv.style.display = 'none'; //hide from public users				
+				if(0 //hide from everyone until 2D and 3D are revived
+						|| !DesktopContent._needToLoginMailbox) dropDownDiv.style.display = 'none'; //hide from public users				
 
 
 				//Viewer2d.launch();//
@@ -151,13 +152,14 @@
 
 			function initVisualizer() {
 				var v = getRadioGroupValue("viewType");
-				Debug.log("initVisualizer: " +  v);			
-//				if(v == 0)
+				Debug.log("initVisualizer: " +  v);		
+				
+				if(v == 0)
 					ViewerRoot.launch();	
-//				else if(v == 1)
-//					Viewer2d.launch();	
-//				else if(v == 2)
-//					Viewer3d.launch();
+				else if(v == 1)
+					Viewer2d.launch();	
+				else if(v == 2)
+					Viewer3d.launch();
 
 			}
 			

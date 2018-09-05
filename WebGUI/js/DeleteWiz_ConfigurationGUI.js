@@ -1028,7 +1028,8 @@ DeleteWiz.createWiz = function(doneHandler) {
 						if(!modifiedTables.length)
 						{
 							//really an error
-							Debug.log("There was an error while creating the XDAQ Context '" + 
+							Debug.log("There was an error while removing the " + _recordAlias +
+									" named '" + 
 									recordName  + ".' " + err,
 									Debug.HIGH_PRIORITY);
 							return;

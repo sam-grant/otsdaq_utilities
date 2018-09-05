@@ -1,5 +1,5 @@
 cet_script( 
-	mega_update.py
+	ProductsUpdate.py
 	UpdateOTS.sh
 	AddNewInterface.py
 )

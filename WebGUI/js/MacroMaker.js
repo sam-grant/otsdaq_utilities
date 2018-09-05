@@ -9,10 +9,13 @@
 		//FElistHandler
 		//getPermissionHandler
 		//listSelectionHandler
+		
 		//callWrite
 		//callRead
 		//writeHandler
 		//readHandler
+		//toggleReadBitField
+	
 		//isArrayAllZero
 		//convertToHex
 		//convertFromHex
@@ -98,7 +101,10 @@
 		block1El = document.getElementById('fecList');
 		block2El = document.getElementById('macroLib');
 		block3El = document.getElementById('main');
+		
 		block4El = document.getElementById('progressBarOuter');
+		block4El.style.display = "none"; //only show while macro is running
+		
 		block5El = document.getElementById('history');
 		block6El = document.getElementById('sequence');
 		block7El = document.getElementById('maker');
@@ -206,7 +212,11 @@
 				" (also in the upper-right of Macro Maker).</p>";
 	    else
 	    {
-			var w = window.innerWidth;
+	    	//get width of multiselect text
+			var w = document.getElementById("fecList").offsetWidth - 76;//window.innerWidth;
+			w /= 7; //divide by letter width to get number of letters allowed
+			w -= 3; //to account for elipsis ...
+			
 			//Make search box for the list
 			var noMultiSelect = false; 									
 					
@@ -214,27 +224,37 @@
 			var vals = [];
 			var types = [];
 			var fullnames = [];
+			
 			//Only displays the first 11 letters, mouse over display full name
 			for(var i=0;i<FEELEMENTS.length;++i)
 			{
 				keys[i] = "one";
 				fullnames[i] = FEELEMENTS[i].getAttribute("value");
 				var sp = fullnames[i].split(":");
-				if (sp[0].length < 11) 
-					vals[i] = fullnames[i];
-				else
-				{
-					var display;
-					if (w < 680)
-						display = sp[0].substr(0,4)+"...:"+sp[1]+":"+sp[2];
-					else if (w < 810)
-						display = sp[0].substr(0,8)+"...:"+sp[1]+":"+sp[2];
-					else if (w < 1016)
-						display = sp[0].substr(0,12)+"...:"+sp[1]+":"+sp[2];
-					else
-						display = sp[0]+":"+sp[1]+":"+sp[2];
-					vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
-				}
+				
+				
+				display = sp[2] + ":" + sp[0] + ":" + sp[1];
+				
+				if(display.length > w)
+					display = display.substr(0,w-4) + "..." + display.substr(display.length - 4);
+					
+				vals[i] = "<abbr title='" + (sp[2] + ":" + sp[0] + ":" + sp[1]) + "'>"+display+"</abbr>";
+				
+//				if (sp[0].length < 11) 
+//					vals[i] = sp[2] + ":" + sp[0] + ":" + sp[1]; //fullnames[i];
+//				else
+//				{
+//					var display;
+//					if (w < 680)
+//						display = sp[2] + ":" + sp[0].substr(0,4)+"...:"+sp[1];
+//					else if (w < 810)
+//						display = sp[2] + ":" + sp[0].substr(0,8)+"...:"+sp[1];
+//					else if (w < 1016)
+//						display = sp[2] + ":" + sp[0].substr(0,12)+"...:"+sp[1];
+//					else
+//						display = sp[2] + ":" + sp[0] + ":" + sp[1];
+//					vals[i] = "<abbr title='" + fullnames[i] + "'>"+display+"</abbr>";
+//				}
 				types[i] = "number";
 				Debug.log(vals[i]);
 			}
@@ -400,8 +420,21 @@
 					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
 					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
 					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",readHandler);
+					+"&dataFormatStr="+dataFormatStr,"",
+					readHandler);
 		}
+    }
+    
+    function toggleReadBitField(fromLink)
+    {
+    	var el = document.getElementById("enableReadBitField");
+    	if(fromLink)
+    		el.checked = !el.checked;
+    	
+    	var	val = el.checked;
+    	
+    	Debug.log("checkbox val " + val);
+    	document.getElementById("readBitFieldTable").style.display = val?"block":"none";
     }
     
     function writeHandler(req)
@@ -415,18 +448,18 @@
 		waitForCurrentCommandToComeBack = false;
 
     }
-    
     function readHandler(req)
 	{
 		Debug.log("readHandler() was called.");// Req: " + req.responseText);
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
+    	var extractBitField = document.getElementById("enableReadBitField").checked && !isMacroRunning;
     	
     	if(isMacroRunning == true)
     	{
     		addressFormatStr = "hex";
     		dataFormatStr = "hex";
-    	}
+    	}    	
     	
     	var reminderEl = document.getElementById('reminder');
     	
@@ -440,7 +473,7 @@
         if(runningMacroLSBF == 2) reverse = false; 
         
 		if (isNaN("0x"+dataOutput)) convertedOutput = "<span class='red'>" + dataOutput + "</span>";
-		else convertedOutput = convertFromHex(dataFormatStr,reverseLSB(dataOutput,reverse));
+		else convertedOutput = convertFromHex(dataFormatStr,reverseLSB(dataOutput,reverse),extractBitField);
 
 		var selectionStrArray = [];
 		for (var i = 0; i < selected.length; i++) 
@@ -494,9 +527,49 @@
 		}
     }
     
-    function convertFromHex(format,target)
+    function convertFromHex(format,target,extractBitField)
     {
-		switch (format) 
+    	if(extractBitField)
+    	{
+    		Debug.log("Extracting Bit-Field");
+    		var startPos = document.getElementById("readBitFieldStartPos").value | 0;
+    		var fieldSz = document.getElementById("readBitFieldLength").value | 0;
+    		Debug.log("Extracting Bit-Field start/size = " + startPos + " / " + fieldSz);
+
+    		while(((startPos/4)|0) && target.length)
+    		{
+    			target = target.substr(0,target.length-1); //shift by 4 bits right
+    			Debug.log("div4 target " + target);
+    			startPos -= 4; //moved 4 bits
+    		}
+
+    		Debug.log("target " + target);
+
+    		var size = Math.ceil((startPos+fieldSz)/4);
+    		target = target.substr(target.length-size);
+
+    		Debug.log("sized target " + target);
+
+    		if(target.length == 0) target = "0";
+
+    		
+    		//target should be shifted for bit manipulations
+    		var num = parseInt(target,16);
+    		Debug.log("num " + num);
+
+    		var mask = 0;
+    		for(var i=0;i<fieldSz;++i)
+    			mask |= (1<<i);
+    		Debug.log("mask " + mask);
+    		num = (num >> startPos) & mask;
+
+    		Debug.log("final num " + num);
+    		target = num.toString(16).toUpperCase(); //return to hex number
+
+    		Debug.log("final target " + target);
+    	}
+    	
+		switch(format) 
 		{
 	      case "hex":
 			return target;
@@ -559,7 +632,7 @@
     		 fecListEl.style.display = "block";
     		 macroLibEl.style.display = "block";
     		 sequenceEl.style.display = "none";
-    		 progressBarOuterEl.style.display = "block";
+    		 progressBarOuterEl.style.display = "none";
     		 mainEl.style.display = "block";
     		 makerEl.style.display = "none";
     		 document.getElementById("page2tag").style.fontWeight = "400";
@@ -906,11 +979,14 @@
     {
 		var contentEl = document.getElementById('historyContent');
 		var progressBarInnerEl = document.getElementById('progressBarInner');
+		var progressBarOuterEl = document.getElementById("progressBarOuter");
+		
 		var start = "<p class=\"red\"><b><small>-- Start of Macro: " + macroName + " --</small></b></p>";
 		contentEl.innerHTML += start;
 		contentEl.scrollTop = contentEl.scrollHeight;
 		
 		progressBarInnerEl.style.display = "block";
+		progressBarOuterEl.style.display = "block";
 		var barEl = document.getElementById('macroRunningBar');
 		barEl.style.width = '0%';
 		barIncrement = 100/stringOfCommands.length;
@@ -927,6 +1003,7 @@
 					isMacroRunning = false;
 					setTimeout(function(){ 
 						progressBarInnerEl.style.display = "none";
+						progressBarOuterEl.style.display = "none";
 	                }, 150);
 					barWidth = 0;
 				    barIncrement = 0;

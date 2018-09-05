@@ -53,6 +53,13 @@
 	//			localContextSelectHandler(event)
 	//			localGetAllHostInfo()
 	//			localRecordsSelectHandler(event)
+	//			(stepString + "editConfig").onclick
+	//			(stepString + "editContext").onclick
+	//			(stepString + "deleteRecordIcon").onclick
+	//				localPromptAndHandleRecordDeletion(recordType,recordName)
+	//					ConfigurationAPI.deleteSubsetRecords() handler
+	//					ConfigurationAPI.saveModifiedTables() handler
+	//					localCheckParentChildren()
 
 	//		share scope functions (between switch and next/prev handlers)
 	//			localHandleIntermediateLevel()
@@ -87,8 +94,13 @@
 	//getRecordConfiguration()
 	//getRecordGroupIDField()
 	//getRecordFilter()
+
 	//getIntermediateTable()
 	//getIntermediateTypeName()
+	//getParentTable(generationsBack)
+	//getParentType(generationsBack)
+	//getParentLinkField(generationsBack)
+	//getParentFilter(generationsBack)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +130,7 @@ else
 //call createWiz to create instance of a RecordWiz
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-RecordWiz.createWiz = function(doneHandler) {
+RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	
 	
 	var _TABLE_BOOL_TYPE_TRUE_COLOR = "rgb(201, 255, 201)";
@@ -129,7 +141,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	//global vars for params		
 	var _recordAlias;
 	var _doneHandler = doneHandler;
-	var _aRecordWasCreated = false;
+	var _aRecordWasModified = false;
 		
 	var _RECORD_TYPE_FE = "Front-end";
 	var _RECORD_TYPE_PROCESSOR = "Processor";
@@ -195,18 +207,38 @@ RecordWiz.createWiz = function(doneHandler) {
 	Debug.log("RecordWiz.wiz constructed");
 	RecordWiz.wiz = this; 
 	
+	
+	if(recordsAliasFastForward == "")
+	{
+		DesktopContent.tooltip("Record Wizard Introduction",
+				"Welcome to the Record Wizard GUI. Here you can create new records for "+
+				"your <i>otsdaq</i> system. \n\n" +
+				"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
+	
+				"Briefly, here is a description of the steps: " +
+				"\n\t- 'What type of record do you want to add?'" +
+				"\n\t- 'Do you want to add it to an existing context or create a new one?'"
+		);
+	
+		showPrompt(_STEP_WHICH_RECORD_TYPE);
+	}
+	else
+	{
+		_recordAlias = recordsAliasFastForward;
+		localParameterCheck();
+		
 
-	DesktopContent.tooltip("Record Wizard Introduction",
-			"Welcome to the Record Wizard GUI. Here you can create new records for "+
-			"your <i>otsdaq</i> system. \n\n" +
-			"The Record Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new record.\n\n" +
-
-			"Briefly, here is a description of the steps: " +
-			"\n\t- 'What type of record do you want to add?'" +
-			"\n\t- 'Do you want to add it to an existing context or create a new one?'"
-	);
-
-	showPrompt(_STEP_WHICH_RECORD_TYPE);
+		DesktopContent.tooltip(_recordAlias + " Wizard Introduction",
+				"Welcome to the " + _recordAlias + " Wizard GUI. Here you can create new records for " +
+				"your <i>otsdaq</i> system. \n\n" +
+				"The " + _recordAlias + " Wizard is presented as a step-by-step process that will walk you through creating the skeleton for your new " +
+				_recordAlias + ".\n\n" +	
+				"Briefly, here is a description of the steps: " +
+				"\n\t- 'Do you want to add your " + _recordAlias + " to an existing context or create a new one?'"
+		);
+		
+		initRecordWizard();
+	}
 	
 	return;
 	
@@ -892,7 +924,7 @@ RecordWiz.createWiz = function(doneHandler) {
 						{
 								"style" : "font-weight:bold; margin: 6px 0 20px 0;"		
 						}, 
-						(_aRecordWasCreated?
+						(_aRecordWasModified?
 								("Would you like to create another " + _recordAlias + "?"):
 						("Welcome to the " + _recordAlias + " creation Wizard!")) /*innerHTML*/,
 						true /*closeTag*/);
@@ -918,10 +950,12 @@ RecordWiz.createWiz = function(doneHandler) {
 				str += "Here is a dropdown of existing " + _recordAlias + 
 						" records to help you in creating standardized record names:";
 				str += htmlClearDiv();
+				
+				
 				str += htmlOpen("select",
 						{
 								"id" :		stepString + "records",
-								"style" :	"margin-bottom: 16px;"
+								"style" :	"margin-bottom: 16px;",
 						});
 
 
@@ -932,6 +966,30 @@ RecordWiz.createWiz = function(doneHandler) {
 							},_subsetUIDs[i] /*innerHTML*/, true /*closeTag*/);
 				}
 				str += "</select>"; //end existing records dropdown
+
+
+				str += htmlOpen("div",
+						{
+								"id" : 		stepString + "deleteRecordIcon",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-deleteIcon",
+								"style" :	"float: right; margin: 6px 112px -16px -200px; display: block;",
+								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
+
+
+				//preload hover images
+				str += htmlOpen("div",
+						{
+								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
+									"-preloadImage-editIconHover",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-preloadImage",								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
+				str += htmlOpen("div",
+						{
+								"id" : 		ConfigurationAPI._POP_UP_DIALOG_ID + 
+									"-preloadImage-treeEditTrashIconHover",	
+								"class":	ConfigurationAPI._POP_UP_DIALOG_ID + "-preloadImage",								
+						}, 0 /*innerHTML*/, true /*closeTag*/);
 
 
 				///////////////////////
@@ -1062,7 +1120,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			{
 			case _STEP_SET_RECORD_FIELDS:
 				
-			{ //start scope of _STEP_SET_RECORD_FIELDS
+			{ //start scope of _STEP_SET_RECORD_FIELDS localAddHandlers
 				//add the fields content in after parent element exists
 				scopeForSetRecordFieldsContent();
 				///////////////////////
@@ -1099,12 +1157,12 @@ RecordWiz.createWiz = function(doneHandler) {
 					}
 				} //end scopeForSetRecordFieldsContent
 				
-			} //end scope of _STEP_SET_RECORD_FIELDS
+			} //end scope of _STEP_SET_RECORD_FIELDS localAddHandlers
 				break;
 			
 			case _STEP_PROC_WHICH_BUFFER:
 
-			{ //start scope of _STEP_WHICH_APP
+			{ //start scope of _STEP_WHICH_APP localAddHandlers
 
 				//create select change handler for existing records
 				document.getElementById(stepString + "buffers").onclick = localAppSelectHandler;
@@ -1151,7 +1209,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						}; //end addToExisting handler
 
-			} //end scope of _STEP_WHICH_APP
+			} //end scope of _STEP_WHICH_APP localAddHandlers
 			//NOTE: below this, functions were moved outside of swtich because they must be accessible to other steps and handlers
 			// and, apparently {} create "function scope" inside a switch case
 			// and, apparently switch statements create "function scope" too.
@@ -1160,7 +1218,7 @@ RecordWiz.createWiz = function(doneHandler) {
 			break; //end _STEP_WHICH_APP
 			case _STEP_WHICH_APP:
 				
-			{ //start scope of _STEP_WHICH_APP
+			{ //start scope of _STEP_WHICH_APP localAddHandlers
 
 				//create select change handler for existing records
 				document.getElementById(stepString + "apps").onclick = localAppSelectHandler;
@@ -1207,7 +1265,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 						}; //end addToExisting handler
 
-			} //end scope of _STEP_WHICH_APP
+			} //end scope of _STEP_WHICH_APP localAddHandlers
 			//NOTE: below this, functions were moved outside of switch because they must be accessible to other steps and handlers
 			// and, apparently {} create "function scope" inside a switch case
 			// and, apparently switch statements create "function scope" too.
@@ -1216,7 +1274,7 @@ RecordWiz.createWiz = function(doneHandler) {
 				break; //end _STEP_WHICH_APP
 			case _STEP_SET_CONTEXT_HOST:
 
-			{ //start scope of _STEP_SET_CONTEXT_HOST
+			{ //start scope of _STEP_SET_CONTEXT_HOST localAddHandlers
 				//create select change handler for existing records
 				document.getElementById(stepString + "addresses").onclick = localAddressSelectHandler;
 				document.getElementById(stepString + "addresses").onchange = localAddressSelectHandler;
@@ -1237,13 +1295,13 @@ RecordWiz.createWiz = function(doneHandler) {
 							this.value;	
 				}; //end onchange handler
 
-			} //end scop of _STEP_SET_CONTEXT_HOST
+			} //end scop of _STEP_SET_CONTEXT_HOST localAddHandlers
 			
 				break; //end _STEP_SET_CONTEXT_HOST
 
 			case _STEP_WHICH_CONTEXT:
 
-			{ //start scope of _STEP_WHICH_CONTEXT
+			{ //start scope of _STEP_WHICH_CONTEXT localAddHandlers
 				//create select change handler for existing records
 				document.getElementById(stepString + "contexts").onclick = localContextSelectHandler;
 				document.getElementById(stepString + "contexts").onchange = localContextSelectHandler;
@@ -1355,13 +1413,13 @@ RecordWiz.createWiz = function(doneHandler) {
 							},
 							_modifiedTables);
 				} //end localGetAllHostInfo()
-			} //end scope of _STEP_WHICH_CONTEXT
+			} //end scope of _STEP_WHICH_CONTEXT localAddHandlers
 			
 				break; //end _STEP_WHICH_CONTEXT
 
 			case _STEP_GET_RECORD_NAME:
 			
-			{ //start scope of _STEP_GET_RECORD_NAME				
+			{ //start scope of _STEP_GET_RECORD_NAME localAddHandlers	 			
 			
 				//create select change handler for existing records
 				document.getElementById(stepString + "records").onclick = localRecordsSelectHandler;
@@ -1394,13 +1452,271 @@ RecordWiz.createWiz = function(doneHandler) {
 					paramObj["recordName"] = document.getElementById(stepString + "recordName").value.trim();
 					showPrompt(_STEP_CHANGE_GROUP,newParamObj);
 						};
-			} //end scope of _STEP_GET_RECORD_NAME
+				/////////////////////////////////
+				document.getElementById(stepString + "deleteRecordIcon").onclick = 
+						function() //start deleteRecordIcon handler
+						{
+					var selectedIndex =  document.getElementById(stepString + "records").selectedIndex;
+					var recordName = _subsetUIDs[selectedIndex];
+					Debug.log("deleteRecord " + selectedIndex + " : " + recordName);
+					Debug.log("getRecordConfiguration " + getRecordConfiguration());
+					Debug.log("getAppConfiguration " + getAppConfiguration());
+					try
+					{
+						Debug.log("getIntermediateTable " + getIntermediateTable());
+						Debug.log("getIntermediateTypeName " + getIntermediateTypeName());
+					}catch(e){
+						Debug.log("No intermediate table: " + e);
+					}
+
+					var generationsBack = 0; //initialize generations back for recursive prompt and remove
+					var lastGenerationsBack, parentCheckParentIndex;
+
+					//reset modified tables at start of deletion process
+					//	to not accidentally permanently save an incompletely created record
+					_modifiedTables = undefined; 
+					
+					localPromptAndHandleRecordDeletion(_recordAlias,recordName);					
+					/////////////////////////////////
+					function localPromptAndHandleRecordDeletion(recordType,recordName)
+					{
+						//Steps:
+						//	prompt user, are you sure?
+						//	reset modified tables
+						//	delete record
+						//	save modified tables
+						//	check parent level for any empty children groups
+						//	for each parent found with no children.. offer to delete them
+						//	when complete, re-initialize with initRecordWizard()
+						
+						var prompt;
+						
+						if(generationsBack == 0)
+							prompt = "Are you sure you want to remove the " + recordType + " named '" +
+								recordName + "' from the active configuration?";
+						else
+							prompt = "Alert! A parent node, " + generationsBack + " level(s) up in the " +
+								"configuration tree from the " +
+								"origial " + _recordAlias + " '" + _subsetUIDs[selectedIndex] + ",' was found to " + 
+								"have no children.<br><br>Do you want to remove the childless " + recordType + " named '" +
+								recordName + "' from the active configuration?";
+
+						DesktopContent.popUpVerification(
+								prompt,
+								function() //OK handler, delete the record handler
+								{
+
+							Debug.log("do deleteRecord " + recordType + " : " + recordName);				
+
+
+							/////////////////////
+							//delete record
+							ConfigurationAPI.deleteSubsetRecords(
+									getParentTable(generationsBack),
+									recordName,
+									/////////////////////
+									function(modifiedTables,err) //start deleteSubsetRecords handler
+									{
+								Debug.log("modifiedTables length " + modifiedTables.length);
+								if(!modifiedTables.length)
+								{
+									//really an error
+									Debug.log("There was an error while creating the XDAQ Context '" + 
+											recordName  + ".' " + err,
+											Debug.HIGH_PRIORITY);
+									return;
+								}
+								_modifiedTables = modifiedTables;
+								console.log(_modifiedTables);
+
+								//at this point context was deleted in modified tables 
+								Debug.log("The " + recordType + " named '" +  
+										recordName + "' was successfully removed!",
+										Debug.INFO_PRIORITY);
+
+								parentCheckParentIndex = 0; //reset when record is deleted
+								
+															
+								//now save, then check parent level for no children
+
+								//proceed to save (quietly) tables, groups, aliases
+								ConfigurationAPI.saveModifiedTables(_modifiedTables,
+										function(savedTables, savedGroups, savedAliases)
+										{
+									if(!savedTables.length)
+									{
+										Debug.log("There was an error while saving the changes.",
+												Debug.HIGH_PRIORITY);
+										return;					
+									}
+
+									Debug.log("The " +
+											_recordAlias + " named '" + recordName + "' was successfully removed!",
+											Debug.INFO_PRIORITY);
+
+									_modifiedTables = undefined; //clear after save
+
+									_aRecordWasModified = true;
+
+									if(generationsBack == 0)
+									{
+										generationsBack = 1;
+										localCheckParentChildren();
+									}
+									else
+										localCheckParentChildren();
+
+										}, //end saveModifiedTables handler
+										
+										0, //doNotIgnoreWarnings,
+										0, //doNotSaveAffectedGroups,
+										0, //doNotActivateAffectedGroups,
+										0, //doNotSaveAliases,
+										0, //doNotIgnoreGroupActivationWarnings,
+										true //doNotKillPopUpEl
+										
+										); //end saveModifiedTables handler
+
+
+
+									}, //end deleteSubsetRecords handler
+									_modifiedTables,
+									true /*silenceErrors*/);  //end deleteSubsetRecords
+
+								}, //end OK, delete the record handler
+								0 /* REPLACE val*/,
+								"#efeaea" /*bgColor*/, 0 /*textColor*/,
+								"#770000" /*borderColor*/,0 /*getUserInput*/,300 /*dialogWidth*/,
+								function() // on Cancel, check parent children handler
+								{
+									Debug.log("User opted not to delete node.");
+									
+									//even if one parent is cancelled.. keep checking
+									if(generationsBack)
+										localCheckParentChildren();
+								} //end Cancel, check parent children handler
+						); //end of DesktopContent.popUpVerification
+
+
+						/////////////////////////////////
+						function localCheckParentChildren()
+						{
+							if(lastGenerationsBack != generationsBack)
+							{
+								//new generation, so reset starting parent to consider
+								Debug.log("Starting new generation of checking...");
+								parentCheckParentIndex = 0;
+								lastGenerationsBack = generationsBack;
+							}
+							Debug.log("localCheckParentChildren generationsBack=" + generationsBack + 
+									" parentCheckParentIndex=" + parentCheckParentIndex);
+
+							//Steps:
+							//	check parent level for any empty children groups
+							//	for each parent found with no children.. offer to delete them
+							//	when complete, re-initialize with initRecordWizard()
+
+							//parent level table
+							Debug.log("getAppConfiguration " + getAppConfiguration());
+
+							var modifiedTablesListStr = "";
+							for(var i=0;_modifiedTables && i<_modifiedTables.length;++i)
+							{
+								if(i) modifiedTablesListStr += ",";
+								modifiedTablesListStr += _modifiedTables[i].tableName + "," +
+										_modifiedTables[i].tableVersion;
+							}
+
+							// get tree looking for empty children
+							DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
+									"&configGroup=" +
+									"&configGroupKey=-1" +
+									"&hideStatusFalse=0" + 
+									"&depth=3", //make sure to see empty parents 
+									"startPath=/" + getParentTable(generationsBack) +  
+									"&filterList=" + getParentFilter(generationsBack) + 
+									"&modifiedTables=" + modifiedTablesListStr, //end post data
+									function(req)
+									{
+								var err = DesktopContent.getXMLValue(req,"Error");
+								if(err) 
+								{
+									Debug.log(err,Debug.HIGH_PRIORITY);
+									return;
+								}
+
+
+								var tree = DesktopContent.getXMLNode(req,"tree");
+								console.log(tree);
+
+								//for each node record at parent level, check for empty children
+								try
+								{
+									var i,j;
+									var parentChildren;
+									var parentName;
+									for(i=parentCheckParentIndex;i<tree.children.length;++i)
+									{
+										++parentCheckParentIndex; //next time ensure check next parent record first
+
+										parentName = tree.children[i].getAttribute("value");
+										Debug.log("Checking parent record " + 
+												parentCheckParentIndex + ":" +
+												parentName);
+
+										//find link field
+										for(j=0;j<tree.children[i].children.length;++j)
+											if(tree.children[i].children[j].getAttribute("value") ==
+													getParentLinkField(generationsBack))
+											{
+												//found link
+												parentChildren = DesktopContent.getXMLChildren(
+														tree.children[i].children[j],
+														"node");
+												Debug.log("Num of children " + parentChildren.length);	
+
+												if(parentChildren.length == 0)
+												{
+													localPromptAndHandleRecordDeletion(
+															getParentType(generationsBack),
+															parentName)
+													return; //do just one parent at a time, so async requests dont go crazy
+												}
+												break;
+											}
+									}
+									//if here then no childless parent nodes found
+									Debug.log("No childless parent nodes found");
+									
+									//try next generation back, recursively
+									++generationsBack;
+									localCheckParentChildren();									
+								}
+								catch(e)
+								{
+									//get here on error, or if completed tree traversal
+									
+									Debug.log("Giving up on childless parent node check. " + 
+											"Ignoring errors: " + e);
+
+									initRecordWizard(); //start over to update list
+								}
+
+
+									}, //handler
+									0, //handler param
+									0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+
+						}
+					} //end localPromptAndHandleRecordDeletion()
+						}; //end deleteRecordIcon handler
+			} //end scope of _STEP_GET_RECORD_NAME localAddHandlers
 			
 				break; //end _STEP_GET_RECORD_NAME
 
 			case _STEP_CHANGE_GROUP:
 			
-			{ //start scope of _STEP_CHANGE_GROUP				
+			{ //start scope of _STEP_CHANGE_GROUP localAddHandlers			
 			
 				/////////////////////////////////
 				document.getElementById(stepString + "activateAlias").onclick = 
@@ -1480,7 +1796,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							}); //end activate group handler
 						}; //end activate alias handler
 				
-			} //end scope of _STEP_CHANGE_GROUP
+			} //end scope of _STEP_CHANGE_GROUP localAddHandlers
 			
 				break;  //end _STEP_CHANGE_GROUP
 			default:;
@@ -2253,7 +2569,7 @@ RecordWiz.createWiz = function(doneHandler) {
 
 									_modifiedTables = undefined; //clear after save
 									
-									_aRecordWasCreated = true;
+									_aRecordWasModified = true;
 									
 									initRecordWizard(); //start over if no done handler
 
@@ -2501,7 +2817,7 @@ RecordWiz.createWiz = function(doneHandler) {
 							el = document.getElementById(ConfigurationAPI._POP_UP_DIALOG_ID);
 						}
 						
-						if(_doneHandler) _doneHandler(_aRecordWasCreated);
+						if(_doneHandler) _doneHandler(_aRecordWasModified);
 						return; //prevent default prev showPrompt
 						break;
 					default:;
@@ -2605,9 +2921,12 @@ RecordWiz.createWiz = function(doneHandler) {
 	{
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_FE)
-			retVal = "";
+			retVal = " ";
 		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
-			retVal = "";//"ProcessorType=" + _recordAlias;
+			retVal = " ";//"ProcessorType=" + _recordAlias;
+
+		if(retVal == "")
+			throw("Invalid getRecordFilter");
 		
 		return retVal;		
 	} //end getRecordFilter()
@@ -2619,8 +2938,7 @@ RecordWiz.createWiz = function(doneHandler) {
 	function getIntermediateTable()
 	{
 		var retVal = "";
-		if(_recordAlias == _RECORD_TYPE_PROCESSOR
-				)
+		if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 		{
 			if(_intermediateLevel == 0)
 				retVal = "DataManagerConfiguration";
@@ -2649,6 +2967,131 @@ RecordWiz.createWiz = function(doneHandler) {
 		
 		return retVal;		
 	} //end getIntermediateTypeName()
+		
+	//=====================================================================================
+	//getParentTable() ~~	
+	//	based on generationsBack and _recordAlias
+	function getParentTable(generationsBack)
+	{
+		if(generationsBack == 0) return getRecordConfiguration();
+		
+		var retVal = "";
+
+		if(_recordAlias == _RECORD_TYPE_FE)
+		{
+			if(generationsBack == 1)
+				retVal = "FESupervisorConfiguration";
+			else if(generationsBack == 2)
+				retVal = _XDAQAPP_BASE_PATH;
+		}
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+		{
+			if(generationsBack == 1)
+				retVal = "DataManagerConfiguration";
+			else if(generationsBack == 2)
+				retVal = "DataManagerSupervisorConfiguration";
+			else if(generationsBack == 3)
+				retVal = _XDAQAPP_BASE_PATH;
+		}
+		
+		if(retVal == "")
+			throw("Invalid getParentTable");
+		
+		return retVal;		
+	} //end getParentTable()
+
+	//=====================================================================================
+	//getParentType() ~~	
+	//	based on generationsBack and _recordAlias
+	function getParentType(generationsBack)
+	{
+		if(generationsBack == 0) return _recordAlias;
+		
+		var retVal = "";
+
+		if(_recordAlias == _RECORD_TYPE_FE)
+		{
+			if(generationsBack == 1)
+				retVal = "FESupervisorConfiguration";
+			else if(generationsBack == 2)
+				retVal = "FESupervisor";
+		}
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+		{
+			if(generationsBack == 1)
+				retVal = "Buffer";
+			else if(generationsBack == 2)
+				retVal = "DataManagerSupervisorConfiguration";
+			else if(generationsBack == 3)
+				retVal = "DataManagerSupervisor";
+		}
+		
+		if(retVal == "")
+			throw("Invalid getParentType");
+		
+		return retVal;		
+	} //end getParentType()
+
+	//=====================================================================================
+	//getParentLinkField() ~~	
+	//	based on generationsBack and _recordAlias
+	function getParentLinkField(generationsBack)
+	{
+		var retVal = "";
+		
+		if(_recordAlias == _RECORD_TYPE_FE)
+		{
+			if(generationsBack == 1)
+				retVal = "LinkToFEInterfaceConfiguration";
+			else if(generationsBack == 2)
+				retVal = "LinkToSupervisorConfiguration";
+		}
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+		{
+			if(generationsBack == 1)
+				retVal = "LinkToDataBufferConfiguration";
+			else if(generationsBack == 2)
+				retVal = "LinkToDataManagerConfiguration";
+			else if(generationsBack == 3)
+				retVal = "LinkToSupervisorConfiguration";
+		}
+		
+		if(retVal == "")
+			throw("Invalid getParentLinkField");
+		
+		return retVal;		
+	} //end getParentLinkField()
+
+	//=====================================================================================
+	//getParentFilter() ~~	
+	//	based on generationsBack and _recordAlias
+	function getParentFilter(generationsBack)
+	{
+		var retVal = "";
+		
+		if(_recordAlias == _RECORD_TYPE_FE)
+		{
+			if(generationsBack == 1)
+				retVal = " ";
+			else if(generationsBack == 2)
+				retVal = "Class=ots::FESupervisor";
+		}
+		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
+		{
+			if(generationsBack == 1)
+				retVal = " ";
+			else if(generationsBack == 2)
+				retVal = " ";
+			else if(generationsBack == 3)
+				retVal = "Class=ots::DataManagerSupervisor,ots::ARTDAQDataManagerSupervisor," +
+				"ots::VisualSupervisor";
+		}
+
+		if(retVal == "")
+			throw("Invalid getParentFilter");
+		
+		return retVal;		
+	} //end getParentFilter()
 	
 	//=====================================================================================
 	//htmlOpen ~~		

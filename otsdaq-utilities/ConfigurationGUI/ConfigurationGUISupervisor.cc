@@ -5,6 +5,9 @@
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
+#if MESSAGEFACILITY_HEX_VERSION > 0x20100
+#include <boost/stacktrace.hpp>
+#endif
 
 #include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h" //for context relaunch
 
@@ -108,7 +111,7 @@ void ConfigurationGUISupervisor::defaultPage(xgi::Input*  in, xgi::Output*  out 
 void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 {
 	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-			"*=10"); //experienced users
+			"*=10 | deleteTreeNodeRecords=255 | saveConfigurationInfo=255 | deleteConfigurationInfo=255"); //experienced users to edit, admins to delete
 	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.RequireUserLockRequestTypes,
 			"*");//all
 }
@@ -127,6 +130,7 @@ void ConfigurationGUISupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
+try
 {
 	//Commands
 	//	saveConfigurationInfo
@@ -171,6 +175,7 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
 	//	getLastConfigGroups
+	//	mergeGroups
 	//
 	//		---- associated with JavaScript Iterate App
 	//	savePlanCommandSequence
@@ -502,8 +507,8 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 	}
 	else if(requestType == "getSpecificConfigurationGroup")
 	{
-		std::string 	groupName = CgiDataUtilities::getData(cgiIn,"groupName"); 	//from GET
-		std::string 	groupKey = CgiDataUtilities::getData(cgiIn,"groupKey"); 		//from GET
+		std::string 	groupName = CgiDataUtilities::getData	(cgiIn,"groupName"); 	//from GET
+		std::string 	groupKey = CgiDataUtilities::getData	(cgiIn,"groupKey"); 		//from GET
 
 		__SUP_COUT__ << "groupName: " << groupName << std::endl;
 		__SUP_COUT__ << "groupKey: " << groupKey << std::endl;
@@ -512,12 +517,12 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 	}
 	else if(requestType == "saveNewConfigurationGroup")
 	{
-		std::string groupName 		= CgiDataUtilities::getData (cgiIn,"groupName"); 		//from GET
-		bool			ignoreWarnings = CgiDataUtilities::getDataAsInt(cgiIn,"ignoreWarnings");	//from GET
-		bool			allowDuplicates = CgiDataUtilities::getDataAsInt(cgiIn,"allowDuplicates");	//from GET
-		bool			lookForEquivalent = CgiDataUtilities::getDataAsInt(cgiIn,"lookForEquivalent");	//from GET
-		std::string configList 		= CgiDataUtilities::postData(cgiIn,"configList"); 	//from POST
-		std::string	comment 		= CgiDataUtilities::getData	(cgiIn,"groupComment");	//from GET
+		std::string groupName 			= CgiDataUtilities::getData 	(cgiIn,"groupName"); 		//from GET
+		bool		ignoreWarnings 		= CgiDataUtilities::getDataAsInt(cgiIn,"ignoreWarnings");	//from GET
+		bool		allowDuplicates 	= CgiDataUtilities::getDataAsInt(cgiIn,"allowDuplicates");	//from GET
+		bool		lookForEquivalent	= CgiDataUtilities::getDataAsInt(cgiIn,"lookForEquivalent");	//from GET
+		std::string configList 			= CgiDataUtilities::postData	(cgiIn,"configList"); 	//from POST
+		std::string	comment 			= CgiDataUtilities::getData		(cgiIn,"groupComment");	//from GET
 
 		__SUP_COUT__ << "saveNewConfigurationGroup: " << groupName << std::endl;
 		__SUP_COUT__ << "configList: " << configList << std::endl;
@@ -554,8 +559,9 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 			else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
 			{
 				//convert alias to version
-				std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-						cfgMgr->getActiveVersionAliases();
+				std::map<std::string /*table*/, std::map<
+					std::string /*alias*/,ConfigurationVersion> > versionAliases =
+						cfgMgr->getVersionAliases();
 
 				versionAlias = versionStr.substr(ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
 	//			if(versionAlias == ConfigurationManager::SCRATCH_VERSION_ALIAS) //NOT NEEDED IF SCRATCH IS ALWAYS ALIAS
@@ -985,6 +991,35 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 		handleSavePlanCommandSequenceXML(xmlOut,cfgMgr,groupName,ConfigurationGroupKey(groupKey),
 				modifiedTables,userInfo.username_,planName,commands);
 	}
+	else if(requestType == "mergeGroups")
+	{
+		std::string 	groupANameContext 		= CgiDataUtilities::getData(cgiIn,"groupANameContext");
+		std::string 	groupAKeyContext 		= CgiDataUtilities::getData(cgiIn,"groupAKeyContext");
+		std::string 	groupBNameContext 		= CgiDataUtilities::getData(cgiIn,"groupBNameContext");
+		std::string 	groupBKeyContext 		= CgiDataUtilities::getData(cgiIn,"groupBKeyContext");
+		std::string 	groupANameConfig 		= CgiDataUtilities::getData(cgiIn,"groupANameConfig");
+		std::string 	groupAKeyConfig 		= CgiDataUtilities::getData(cgiIn,"groupAKeyConfig");
+		std::string 	groupBNameConfig 		= CgiDataUtilities::getData(cgiIn,"groupBNameConfig");
+		std::string 	groupBKeyConfig 		= CgiDataUtilities::getData(cgiIn,"groupBKeyConfig");
+		std::string 	mergeApproach	= CgiDataUtilities::getData(cgiIn,"mergeApproach");
+
+		__SUP_COUTV__(groupANameContext);
+		__SUP_COUTV__(groupAKeyContext);
+		__SUP_COUTV__(groupBNameContext);
+		__SUP_COUTV__(groupBKeyContext);
+		__SUP_COUTV__(groupANameConfig);
+		__SUP_COUTV__(groupAKeyConfig);
+		__SUP_COUTV__(groupBNameConfig);
+		__SUP_COUTV__(groupBKeyConfig);
+		__SUP_COUTV__(mergeApproach);
+
+		handleMergeGroupsXML(xmlOut,cfgMgr,
+				groupANameContext,ConfigurationGroupKey(groupAKeyContext),
+				groupBNameContext,ConfigurationGroupKey(groupBKeyContext),
+				groupANameConfig,ConfigurationGroupKey(groupAKeyConfig),
+				groupBNameConfig,ConfigurationGroupKey(groupBKeyConfig),
+				userInfo.username_,mergeApproach);
+	}
 	else
 	{
 		__SUP_SS__ << "requestType '" << requestType << "' request not recognized." << std::endl;
@@ -1018,6 +1053,43 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 //	xmlOut.outputXmlDocument(0,true,true);
 //	__SUP_COUT__ << __E__;
 
+} //end ::request()
+catch(const std::runtime_error& e)
+{
+	__SS__ << "A fatal error occurred while handling the request '" <<
+			requestType << ".' Error: " <<
+			e.what() << __E__;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmlOut.addTextElementToData("Error", ss.str());
+
+	try
+	{
+		//always add version tracking bool
+		xmlOut.addTextElementToData("versionTracking",
+				ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+	}
+	catch(...)
+	{
+		__COUT_ERR__ << "Error getting version tracking status!" << __E__;
+	}
+}
+catch(...)
+{
+	__SS__ << "A fatal error occurred while handling the request '" <<
+			requestType << ".'" << __E__;
+	__COUT_ERR__ << "\n" << ss.str();
+	xmlOut.addTextElementToData("Error", ss.str());
+
+	try
+	{
+		//always add version tracking bool
+		xmlOut.addTextElementToData("versionTracking",
+				ConfigurationInterface::isVersionTrackingEnabled()?"ON":"OFF");
+	}
+	catch(...)
+	{
+		__COUT_ERR__ << "Error getting version tracking status!" << __E__;
+	}
 }
 
 
@@ -1126,14 +1198,9 @@ try
 		affected = false;
 
 		std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
-				//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-				//						ConfigurationGroupKey::getFullGroupString(
-				//								group.second.first,
-				//								group.second.second),
-				//								true); //include meta data table
 		cfgMgr->loadConfigurationGroup(group.second.first,group.second.second,
 				0,&memberMap,0,0,&groupComment,0,0, //mostly defaults
-				true); //doNotLoadMember
+				true /*doNotLoadMember*/);
 
 		__SUP_COUT__ << "groupComment = " << groupComment << std::endl;
 
@@ -2237,8 +2304,9 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //	filterList := relative-to-record-path=value(,value,...);path=value... filtering
 //		records with relative path not meeting all filter criteria
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
-//		- TODO -- fields/value pairs separated by : for OR (before AND in order of operations)
 //		- fields/value pairs separated by ; for AND
+//			- Note: limitation here is there is no OR among fields/value pairs (in future, could separate field/value pairs by : for OR)
+//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr,
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,
@@ -2334,27 +2402,31 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 			}
 
 			std::map<std::string /*relative-path*/, std::string /*value*/> filterMap;
-			if(filterList != "")
-			{
-				//extract filter list
-				{
-					std::istringstream f(filterList);
-					std::string filterPath,filterValue;
-					while (getline(f, filterPath, '='))
-					{
-						getline(f, filterValue, ';');
-						filterMap.insert(
-								std::pair<std::string,std::string>(
-										filterPath,
-										filterValue));
-					}
-					__SUP_COUT__ << filterList << std::endl;
-					for(auto& pair:filterMap)
-						__SUP_COUT__ << "filterMap " <<
-						pair.first << "=" <<
-						pair.second << std::endl;
-				}
-			}
+			StringMacros::getMapFromString(filterList,filterMap,
+					std::set<char>({';'})/*pair delimiters*/,
+					std::set<char>({'='})/*name/value delimiters*/);
+			//			if(filterList != "")
+			//			{
+			//				//extract filter list
+			//				{
+			//					std::istringstream f(filterList);
+			//					std::string filterPath,filterValue;
+			//					while (getline(f, filterPath, '='))
+			//					{
+			//						getline(f, filterValue, ';');
+			//						filterMap.insert(
+			//								std::pair<std::string,std::string>(
+			//										filterPath,
+			//										filterValue));
+			//					}
+			//					__SUP_COUT__ << filterList << std::endl;
+			//					for(auto& pair:filterMap)
+			//						__SUP_COUT__ << "filterMap " <<
+			//						pair.first << "=" <<
+			//						pair.second << std::endl;
+			//				}
+			//			}
+			__COUTV__(StringMacros::mapToString(filterMap));
 
 			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
 		}
@@ -2625,6 +2697,270 @@ catch(std::runtime_error& e)
 catch(...)
 {
 	__SUP_SS__ << "Error detected saving tree node!\n\n "<< std::endl;
+	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmlOut.addTextElementToData("Error", ss.str());
+}
+
+
+//========================================================================================================================
+//handleMergeGroupsXML
+void ConfigurationGUISupervisor::handleMergeGroupsXML(HttpXmlDocument& xmlOut,
+		ConfigurationManagerRW* cfgMgr,
+		const std::string& groupANameContext, const ConfigurationGroupKey& groupAKeyContext,
+		const std::string& groupBNameContext, const ConfigurationGroupKey& groupBKeyContext,
+		const std::string& groupANameConfig, const ConfigurationGroupKey& groupAKeyConfig,
+		const std::string& groupBNameConfig, const ConfigurationGroupKey& groupBKeyConfig,
+		const std::string& author, const std::string& mergeApproach)
+try
+{
+	__SUP_COUT__ << "Merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
+			mergeApproach << __E__;
+
+	// Merges group A and group B
+	//	with consideration for UID conflicts
+	// Result is a new key of group A's name
+	//
+	//There 3 modes:
+	//	Rename		-- All records from both groups are maintained, but conflicts from B are renamed.
+	//					Must maintain a map of UIDs that are remapped to new name for groupB,
+	//					because linkUID fields must be preserved.
+	//	Replace		-- Any UID conflicts for a record are replaced by the record from group B.
+	//	Skip		-- Any UID conflicts for a record are skipped so that group A record remains
+
+	//check valid mode
+	if(!(mergeApproach == "Rename" || mergeApproach == "Replace" || mergeApproach == "Skip"))
+	{
+		__SS__ << "Error! Invalid merge approach '" <<	mergeApproach << ".'" << __E__;
+		__SS_THROW__;
+	}
+
+	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMapAContext, memberMapBContext,
+		memberMapAConfig, memberMapBConfig;
+
+
+	//check if skipping group pairs
+	bool skippingContextPair = false;
+	bool skippingConfigPair = false;
+	if(groupANameContext.size() == 0 || groupANameContext[0] == ' ' ||
+			groupBNameContext.size() == 0 || groupBNameContext[0] == ' ')
+	{
+		skippingContextPair = true;
+		__SUP_COUTV__(skippingContextPair);
+	}
+	if(groupANameConfig.size() == 0 || groupANameConfig[0] == ' ' ||
+			groupBNameConfig.size() == 0 || groupBNameConfig[0] == ' ')
+	{
+		skippingConfigPair = true;
+		__SUP_COUTV__(skippingConfigPair);
+	}
+
+	//get context group member maps
+	if(!skippingContextPair)
+	{
+		cfgMgr->loadConfigurationGroup(groupANameContext,groupAKeyContext,
+				false /*doActivate*/,&memberMapAContext,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAContext));
+
+		cfgMgr->loadConfigurationGroup(groupBNameContext,groupBKeyContext,
+				false /*doActivate*/,&memberMapBContext,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+
+		__SUP_COUTV__(StringMacros::mapToString(memberMapBContext));
+	}
+
+	//get config group member maps
+	if(!skippingConfigPair)
+	{
+		cfgMgr->loadConfigurationGroup(groupANameConfig,groupAKeyConfig,
+				false /*doActivate*/,&memberMapAConfig,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAConfig));
+
+		cfgMgr->loadConfigurationGroup(groupBNameConfig,groupBKeyConfig,
+				false /*doActivate*/,&memberMapBConfig,0 /*progressBar*/,0 /*accumulateErrors*/,
+				0 /*groupComment*/, 0 /*groupAuthor*/, 0 /*groupCreationTime*/,
+				false /*doNotLoadMember*/, 0 /*groupTypeString*/
+				);
+
+		__SUP_COUTV__(StringMacros::mapToString(memberMapBConfig));
+	}
+
+	//for each member of B
+	//	if not found in A member map, add it
+	//	if found in both member maps, and versions are different, load both tables and merge
+
+	std::map< std::pair<std::string /*original table*/,std::string /*original uidB*/>,
+		std::string /*converted uidB*/> uidConversionMap;
+	std::map< std::pair<std::string /*original table*/,std::pair<std::string /*group linkid*/,std::string /*original gidB*/>>,
+		std::string /*converted gidB*/> groupidConversionMap;
+
+	//first loop create record conversion map, second loop implement merge (using conversion map if Rename)
+	for(unsigned int i=0;i<2;++i)
+	{
+		if(i==0 && mergeApproach != "Rename") continue; //only need to construct uidConversionMap for rename approach
+
+		//loop for context and config pair types
+		for(unsigned int j=0;j<2;++j)
+		{
+			if(j == 0 && skippingContextPair) //context
+			{
+				__COUT__ << "Skipping context pair..." << __E__;
+				continue;
+			}
+			else if(j == 1 && skippingConfigPair)
+			{
+				__COUT__ << "Skipping config pair..." << __E__;
+				continue;
+			}
+
+			std::map<std::string /*name*/, ConfigurationVersion /*version*/>& memberMapAref =
+					j == 0?memberMapAContext:memberMapAConfig;
+
+			std::map<std::string /*name*/, ConfigurationVersion /*version*/>& memberMapBref =
+					j == 0?memberMapBContext:memberMapBConfig;
+
+			if(j == 0) //context
+				__COUT__ << "Context pair..." << __E__;
+			else
+				__COUT__ << "Config pair..." << __E__;
+
+			__COUT__ << "Starting member map B scan." << __E__;
+			for(const auto bkey : memberMapBref)
+			{
+				__SUP_COUTV__(bkey.first);
+
+				if(memberMapAref.find(bkey.first) == memberMapAref.end())
+				{
+					//not found, so add to A member map
+					memberMapAref[bkey.first] = bkey.second;
+				}
+				else if(memberMapAref[bkey.first] != bkey.second)
+				{
+					//found table version confict
+					__SUP_COUTV__(memberMapAref[bkey.first]);
+					__SUP_COUTV__(bkey.second);
+
+					//load both tables, and merge
+					ConfigurationBase* config = cfgMgr->getConfigurationByName(bkey.first);
+
+					__SUP_COUT__ << "Got configuration." << __E__;
+
+					ConfigurationVersion newVersion = config->mergeViews(
+							cfgMgr->getVersionedConfigurationByName(bkey.first,
+									memberMapAref[bkey.first])->getView(),
+									cfgMgr->getVersionedConfigurationByName(bkey.first,bkey.second)->getView(),
+									ConfigurationVersion() /* destinationVersion*/,
+									author,
+									mergeApproach /*Rename,Replace,Skip*/,
+									uidConversionMap, groupidConversionMap,
+									i==0  /* fillRecordConversionMaps */,
+									i==1  /* applyRecordConversionMaps */,
+									config->getConfigurationName() ==
+											ConfigurationManager::XDAQ_APPLICATION_CONFIG_NAME /* generateUniqueDataColumns */
+											); //dont make destination version the first time
+
+					if(i==1)
+					{
+						__SUP_COUTV__(newVersion);
+
+						try
+						{
+							//save all temporary tables to persistent tables
+							//finish off the version creation
+							newVersion = saveModifiedVersionXML(xmlOut,cfgMgr,
+									bkey.first,
+									ConfigurationVersion() /*original source version*/,
+									false /* makeTemporary */,
+									config,
+									newVersion /*temporary modified version*/,
+									false /*ignore duplicates*/,
+									true /*look for equivalent*/);
+						}
+						catch(std::runtime_error& e)
+						{
+							__SUP_SS__ << "There was an error saving the '" <<
+									config->getConfigurationName() << "' merge result to a persistent table version. " <<
+									"Perhaps you can modify this table in one of the groups to resolve this issue, and then re-merge." <<
+									__E__ << e.what();
+							__SS_THROW__;
+						}
+
+						__SUP_COUTV__(newVersion);
+
+
+						memberMapAref[bkey.first] = newVersion;
+					}
+				} //end member version conflict handling
+			} //end B member map loop
+		} //end context and config loop
+	} //end top level conversion map or not loop
+
+	//Now save groups
+
+	if(!skippingContextPair)
+	{
+		__SUP_COUT__ << "New context member map complete." << __E__;
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAContext));
+
+		//save the new configuration group
+		ConfigurationGroupKey newKeyContext =
+				cfgMgr->saveNewConfigurationGroup(groupANameContext,memberMapAContext,
+						"Merger of group " + groupANameContext + " (" + groupAKeyContext.toString() + ") and " +
+						groupBNameContext + " (" + groupBKeyContext.toString() + ").");
+
+		//return new resulting group
+		xmlOut.addTextElementToData("ContextGroupName", groupANameContext);
+		xmlOut.addTextElementToData("ContextGroupKey", newKeyContext.toString());
+	}
+	if(!skippingConfigPair)
+	{
+		__SUP_COUT__ << "New config member map complete." << __E__;
+		__SUP_COUTV__(StringMacros::mapToString(memberMapAConfig));
+		//save the new configuration group
+		ConfigurationGroupKey newKeyConfig =
+				cfgMgr->saveNewConfigurationGroup(groupANameConfig,memberMapAConfig,
+						"Merger of group " + groupANameConfig + " (" + groupAKeyConfig.toString() + ") and " +
+						groupBNameConfig + " (" + groupBKeyConfig.toString() + ").");
+
+		//return new resulting group
+		xmlOut.addTextElementToData("ConfigGroupName", groupANameConfig);
+		xmlOut.addTextElementToData("ConfigGroupKey", newKeyConfig.toString());
+	}
+
+
+
+} //end handleMergeGroupsXML
+catch(std::runtime_error& e)
+{
+	__SUP_SS__ << "Error merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
+			mergeApproach << "': \n\n" <<
+			e.what() << std::endl;
+	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
+	xmlOut.addTextElementToData("Error", ss.str());
+}
+catch(...)
+{
+	__SUP_SS__ << "Unknown error merging context group pair " <<
+			groupANameContext << " (" << groupAKeyContext << ") & " <<
+			groupBNameContext << " (" << groupBKeyContext << ") and config group pair " <<
+			groupANameConfig << " (" << groupAKeyConfig << ") & " <<
+			groupBNameConfig << " (" << groupBKeyConfig << ") with approach '" <<
+			mergeApproach << ".' \n\n";
 	__SUP_COUT_ERR__ << "\n" << ss.str() << std::endl;
 	xmlOut.addTextElementToData("Error", ss.str());
 }
@@ -3703,22 +4039,7 @@ try
 
 	//	get specific group with key
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> memberMap;
-//	try
-//	{
-//		memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
-//				0,0,0,0,0,0, //defaults
-//				true); //doNotLoadMember
-//		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-//		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
-//	}
-//	catch(...)
-//	{
-//		xmlOut.addTextElementToData("Error","Configuration group \"" +
-//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey) +
-//				"\" can not be retrieved!");
-//		return;
-//	}
-
+	std::map<std::string /*name*/, std::string /*alias*/> groupMemberAliases;
 
 	__SUP_COUT__ << "groupName=" << groupName << std::endl;
 	__SUP_COUT__ << "groupKey=" << groupKey << std::endl;
@@ -3735,7 +4056,7 @@ try
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
 				false /*doActivate*/,&memberMap,0 /*progressBar*/,0 /*accumulateErrors*/,
 				&groupComment, &groupAuthor, &groupCreationTime,
-				false /*doNotLoadMember*/, &groupTypeString);
+				false /*doNotLoadMember*/, &groupTypeString, &groupMemberAliases);
 
 		//commentsLoaded = true;
 
@@ -3763,10 +4084,12 @@ try
 		//return;
 	}
 
-	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-			cfgMgr->getActiveVersionAliases();
+	__COUTV__(StringMacros::mapToString(groupMemberAliases));
 
-	__SUP_COUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
+	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
+			cfgMgr->getVersionAliases();
+
+	__SUP_COUT__ << "# of table version aliases: " << versionAliases.size() << std::endl;
 
 
 
@@ -3775,8 +4098,15 @@ try
 	  {
 		xmlOut.addTextElementToParent("MemberName", memberPair.first, parentEl);
 
-		configEl = xmlOut.addTextElementToParent("MemberVersion", memberPair.second.toString(),
-				parentEl);
+		//if member is in groupMemberAliases, then alias version
+		if(groupMemberAliases.find(memberPair.first) != groupMemberAliases.end())
+			configEl = xmlOut.addTextElementToParent("MemberVersion",
+					ConfigurationManager::ALIAS_VERSION_PREAMBLE +
+					groupMemberAliases[memberPair.first], //return the ALIAS:<alias>
+					parentEl);
+		else
+			configEl = xmlOut.addTextElementToParent("MemberVersion", memberPair.second.toString(),
+					parentEl);
 	
 		it = allCfgInfo.find(memberPair.first);
 		if(it == allCfgInfo.end())
@@ -3898,20 +4228,20 @@ catch(...)
 //	if not allowIllegalColumns, then it is still ok if the source has more or less columns:
 //	the client is notified through "TableWarnings" field in this case.
 void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument& xmlOut,
-		ConfigurationManagerRW* cfgMgr, const std::string& configName,
+		ConfigurationManagerRW* cfgMgr, const std::string& tableName,
 		ConfigurationVersion version, bool allowIllegalColumns)
 try
 {
 	char tmpIntStr[100];
-	DOMElement* parentEl;
+	DOMElement *parentEl, *subparentEl;
 
 	std::string accumulatedErrors = "";
 
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = //if allowIllegalColumns, then also refresh
 			cfgMgr->getAllConfigurationInfo(allowIllegalColumns,
-					allowIllegalColumns?&accumulatedErrors:0,configName); //filter errors by configName
+					allowIllegalColumns?&accumulatedErrors:0,tableName); //filter errors by tableName
 
-	ConfigurationBase* config = cfgMgr->getConfigurationByName(configName);
+	ConfigurationBase* config = cfgMgr->getConfigurationByName(tableName);
 
 	//send all config names along with
 	//	and check for specific version
@@ -3920,7 +4250,7 @@ try
 	{
 		xmlOut.addTextElementToData("ExistingConfigurationNames",
 				configPair.first);
-		if(configPair.first == configName && //check that version exists
+		if(configPair.first == tableName && //check that version exists
 				configPair.second.versions_.find(version) ==
 						configPair.second.versions_.end())
 		{
@@ -3929,15 +4259,54 @@ try
 		}
 	}
 
-	xmlOut.addTextElementToData("ConfigurationName", configName);	//table name
+	xmlOut.addTextElementToData("ConfigurationName", tableName);	//table name
 	xmlOut.addTextElementToData("ConfigurationDescription",
 			config->getConfigurationDescription());	//table name
 
-	//existing table versions
-	parentEl = xmlOut.addTextElementToData("ConfigurationVersions", "");
-	for(const ConfigurationVersion& v:allCfgInfo.at(configName).versions_)
-		xmlOut.addTextElementToParent("Version", v.toString(), parentEl);
 
+	//existing table versions
+	{
+		//get version aliases for translation
+		std::map<std::string /*table name*/,std::map<
+		std::string /*version alias*/,ConfigurationVersion /*aliased version*/> > versionAliases;
+		try
+		{
+			//use whatever backbone is currently active
+			versionAliases = cfgMgr->getVersionAliases();
+			for(const auto& aliases:versionAliases)
+				for(const auto& alias:aliases.second)
+					__SUP_COUT__ << "ALIAS: " << aliases.first << " " << alias.first << " ==> " << alias.second << std::endl;
+		}
+		catch(const std::runtime_error& e)
+		{
+			__SUP_COUT__ << "Could not get backbone information for version aliases: " << e.what() << __E__;
+		}
+
+		auto tableIterator = versionAliases.find(tableName);
+
+		parentEl = xmlOut.addTextElementToData("ConfigurationVersions", "");
+		for(const ConfigurationVersion& v:allCfgInfo.at(tableName).versions_)
+		{
+			subparentEl = xmlOut.addTextElementToParent("Version", v.toString(), parentEl);
+
+			if(tableIterator != versionAliases.end())
+			{
+				//check if this version has one or many aliases
+				for(const auto& aliasPair : tableIterator->second)
+				{
+					//					__SUP_COUT__ << "Checking " << aliasPair.second << " --> " <<
+					//							aliasPair.first << " for " << v << __E__;
+					if(v == aliasPair.second)
+					{
+						__SUP_COUT__ << "Found Alias " << aliasPair.second << " --> " <<
+								aliasPair.first << __E__;
+						xmlOut.addTextElementToParent("VersionAlias", aliasPair.first, subparentEl);
+					}
+				}
+			}
+
+		}
+	}
 
 	//table columns and then rows (from config view)
 
@@ -3951,11 +4320,11 @@ try
 	{
 		try
 		{
-			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(configName,version)->getViewP();
+			cfgViewPtr = cfgMgr->getVersionedConfigurationByName(tableName,version)->getViewP();
 		}
 		catch(std::runtime_error& e) //default to mock-up for fail-safe in GUI editor
 		{
-			__SUP_SS__ << "Failed to get table " << configName <<
+			__SUP_SS__ << "Failed to get table " << tableName <<
 					" version " << version <<
 					"... defaulting to mock-up! " <<
 					std::endl;
@@ -3969,7 +4338,7 @@ try
 		}
 		catch(...) //default to mock-up for fail-safe in GUI editor
 		{
-			__SUP_SS__ << "Failed to get table " << configName <<
+			__SUP_SS__ << "Failed to get table " << tableName <<
 					" version: " << version <<
 					"... defaulting to mock-up! " <<
 					"(You may want to try again to see what was partially loaded into cache before failure. " <<
@@ -3990,7 +4359,9 @@ try
 	//get 'columns' of view
 	DOMElement* choicesParentEl;
 	parentEl = xmlOut.addTextElementToData("CurrentVersionColumnHeaders", "");
+
 	std::vector<ViewColumnInfo> colInfo = cfgViewPtr->getColumnsInfo();
+
 	for(int i=0;i<(int)colInfo.size();++i)	//column headers and types
 	{
 		//		__SUP_COUT__ << "\t\tCol " << i << ": " << colInfo[i].getType()  << "() " <<
@@ -4069,6 +4440,7 @@ try
 		xmlOut.addTextElementToData("DefaultRowValue", defaultRowValues[c]);
 	}
 
+
 	if(accumulatedErrors != "") //add accumulated errors to xmlOut
 	{
 		__SUP_SS__ << (std::string("Column errors were allowed for this request, so maybe you can ignore this, ") +
@@ -4082,7 +4454,7 @@ try
 					cfgViewPtr->getSourceColumnMismatch() != 0)) //check for column size mismatch
 	{
 		__SUP_SS__ << "\n\nThere were warnings found when loading the table " <<
-				configName << ":v" << version << ". Please see the details below:\n\n" <<
+				tableName << ":v" << version << ". Please see the details below:\n\n" <<
 				"The source column size was found to be " << cfgViewPtr->getDataColumnSize() <<
 				", and the current number of columns for this table is " <<
 				cfgViewPtr->getNumberOfColumns() << ". This resulted in a count of " <<
@@ -4494,6 +4866,11 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 //		Note: if version of -1 (INVALID/MOCKUP) is given and there are no other existing table versions...
 //			a new table version is generated using the mockup table.
 //
+//		Table Version Alias Handling:
+//			Allow table versions to be specified as an alias with ALIAS: preamble. Aliased versions
+//			will be translated according to the active backbone at activation time.
+//
+//
 void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		HttpXmlDocument& xmlOut,
 		ConfigurationManagerRW* cfgMgr, const std::string& groupName,
@@ -4510,14 +4887,18 @@ try
 	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	cfgMgr->loadConfigurationBackbone();
 
-	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-			cfgMgr->getActiveVersionAliases();
+	std::map<std::string /*tableName*/,
+		std::map<std::string /*aliasName*/,
+			ConfigurationVersion /*version*/> > versionAliases =
+					cfgMgr->getVersionAliases();
 	for(const auto& aliases:versionAliases)
 		for(const auto& alias:aliases.second)
 		__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second << std::endl;
 
 	std::map<std::string /*name*/, ConfigurationVersion /*version*/> groupMembers;
-	std::string name, versionStr;
+	std::map<std::string /*name*/, std::string /*alias*/> groupAliases;
+
+	std::string name, versionStr, alias;
 	ConfigurationVersion version;
 	auto c = configList.find(',',0);
 	auto i = c; i = 0; //auto used to get proper index/length type
@@ -4545,15 +4926,21 @@ try
 		//check if version is an alias and convert
 		if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
 		{
+			alias = versionStr.substr(
+					ConfigurationManager::ALIAS_VERSION_PREAMBLE.size());
+
+			__SUP_COUT__ << "Found alias " << name << " " << versionStr << __E__;
+
 			//convert alias to version
 			if(versionAliases.find(name) != versionAliases.end() &&
-					versionAliases[name].find(versionStr.substr(
-							ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
-									versionAliases[name].end())
+					versionAliases[name].find(alias) != versionAliases[name].end())
 			{
-				version = versionAliases[name][versionStr.substr(
-						ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
-				__SUP_COUT__ << "version alias translated to: " << version << std::endl;
+
+				version = versionAliases[name][alias];
+				__SUP_COUT__ << "version alias '" << alias <<
+						"'translated to: " << version << std::endl;
+
+				groupAliases[name] = alias;
 			}
 			else
 			{
@@ -4587,8 +4974,6 @@ try
 			return;
 		}
 
-
-
 		if(version.isMockupVersion())
 		{
 			//if mockup, then generate a new persistent version to use based on mockup
@@ -4608,7 +4993,7 @@ try
 			//finish off the version creation
 			version = saveModifiedVersionXML(xmlOut,cfgMgr,name,
 					ConfigurationVersion() /*original source is mockup*/,
-					false /*make persistent*/,
+					false /* makeTemporary */,
 					config,
 					temporaryVersion /*temporary modified version*/,
 					false /*ignore duplicates*/,
@@ -4616,55 +5001,19 @@ try
 
 			__SUP_COUT__ << "Using mockup version: " << version << std::endl;
 
-			//commented out below because of better duplicate handling above
-//
-//			//if other versions exist check for another mockup, and use that instead
-//			if(allCfgInfo.at(name).versions_.size())
-//			{
-//				//half-hearted check of cache (not checking DB)
-//				ConfigurationVersion duplicateVersion =
-//						config->checkForDuplicate(temporaryVersion);
-//				if(!duplicateVersion.isInvalid())
-//					version = duplicateVersion;
-//
-//				//RAR -- now allow if no mockup in cache
-//					//				__SUP_SS__ << "Groups can not be created using mock-up member tables unless there are no other persistent table versions. " <<
-//					//						"Table member '" << name << "' with mock-up version '" << version <<
-//					//						"' is illegal. There are " << allCfgInfo.at(name).versions_.size() <<
-//					//						" other valid versions." << std::endl;
-//					//				xmlOut.addTextElementToData("Error", ss.str());
-//					//	return;
-//			}
-//
-//			//if version is still the mockup, save a new persistent version based on mockup
-//			if(version.isMockupVersion())
-//			{
-//				__SUP_COUT__ << "Creating version from mock-up for name: " << name <<
-//						" inputVersionStr: " << versionStr << std::endl;
-//
-//				//set table comment
-//				config->getTemporaryView(temporaryVersion)->setComment("Auto-generated from mock-up.");
-//
-//				//finish off the version creation
-//				version = saveModifiedVersionXML(xmlOut,cfgMgr,name,
-//						ConfigurationVersion() /*original source is mockup*/,
-//						false /*make persistent*/,
-//						config,
-//						temporaryVersion /*temporary modified version*/);
-//			}
-//			else
-//				__SUP_COUT__ << "Found already existing mockup version: " << version << std::endl;
 		}
 
 		//__SUP_COUT__ << "version: " << version << std::endl;
 		groupMembers[name] = version;
-	}
+	} //end member verification loop
+
+	__COUTV__(StringMacros::mapToString(groupAliases));
 
 	if(!allowDuplicates)
 	{
 		__SUP_COUT__ << "Checking for duplicate groups..." << std::endl;
 		ConfigurationGroupKey foundKey =
-				cfgMgr->findConfigurationGroup(groupName,groupMembers);
+				cfgMgr->findConfigurationGroup(groupName,groupMembers,groupAliases);
 
 		if(!foundKey.isInvalid())
 		{
@@ -4777,7 +5126,9 @@ try
 	ConfigurationGroupKey newKey;
 	try
 	{
-		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,groupComment);
+		__COUT__ << "Saving new group..." << __E__;
+		newKey = cfgMgr->saveNewConfigurationGroup(groupName,groupMembers,
+				groupComment,&groupAliases);
 	}
 	catch(std::runtime_error& e)
 	{
@@ -4795,6 +5146,7 @@ try
 	}
 
 	//insert get configuration info
+	__COUT__ << "Loading new group..." << __E__;
 	handleGetConfigurationGroupXML(xmlOut,cfgMgr,groupName,newKey);
 }
 catch(std::runtime_error& e)
@@ -5058,7 +5410,7 @@ try
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	const std::string groupAliasesTableName = "GroupAliasesConfiguration";
+	const std::string groupAliasesTableName = ConfigurationManager::GROUP_ALIASES_CONFIG_NAME;
 	if(activeVersions.find(groupAliasesTableName) == activeVersions.end())
 	{
 		__SUP_SS__ << "Active version of " << groupAliasesTableName << " missing!" << std::endl;
@@ -5213,7 +5565,7 @@ try
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	const std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	const std::string versionAliasesTableName = ConfigurationManager::VERSION_ALIASES_CONFIG_NAME;
 	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
 	{
 		__SUP_SS__ << "Active version of " << versionAliasesTableName << " missing!" << std::endl;
@@ -5281,7 +5633,7 @@ try
 					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
 					row, col);
 
-			col = configView->findCol("VersionAliasId");
+			col = configView->findCol("VersionAliasUID");
 			configView->setValue(configName.substr(0,configName.rfind("Configuration")) +
 					versionAlias, row, col);
 
@@ -5368,7 +5720,7 @@ try
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	const std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	const std::string versionAliasesTableName = ConfigurationManager::VERSION_ALIASES_CONFIG_NAME;
 	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
 	{
 		__SUP_SS__ << "Active version of " << versionAliasesTableName << " missing!" << std::endl;
@@ -5411,10 +5763,8 @@ try
 	try
 	{
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				0,&memberMap,0,0,0,0,0, //defaults
-				true); //doNotLoadMember
-		//				cfgMgr->getConfigurationInterface()->getConfigurationGroupMembers(
-		//				ConfigurationGroupKey::getFullGroupString(groupName,groupKey));
+				false /*doActivate*/,&memberMap,0,0,0,0,0, //defaults
+				true /*doNotLoadMember*/);
 	}
 	catch(...)
 	{
@@ -5544,24 +5894,25 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument& xmlOut,
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	if(activeVersions.find("GroupAliasesConfiguration") == activeVersions.end())
+	std::string groupAliasesTableName = ConfigurationManager::GROUP_ALIASES_CONFIG_NAME;
+	if(activeVersions.find(groupAliasesTableName) == activeVersions.end())
 	{
-		__SUP_SS__ << "\nActive version of GroupAliasesConfiguration missing! " <<
-				"GroupAliasesConfiguration is a required member of the Backbone configuration group." <<
+		__SUP_SS__ << "\nActive version of " << groupAliasesTableName << " missing! " <<
+				groupAliasesTableName << " is a required member of the Backbone configuration group." <<
 				"\n\nLikely you need to activate a valid Backbone group." <<
 				std::endl;
 		xmlOut.addTextElementToData("Error", ss.str());
 		return;
 	}
-	__SUP_COUT__ << "activeVersions[\"GroupAliasesConfiguration\"]=" <<
-			activeVersions["GroupAliasesConfiguration"] << std::endl;
+	__SUP_COUT__ << "activeVersions[\"" << groupAliasesTableName << "\"]=" <<
+			activeVersions[groupAliasesTableName] << std::endl;
 	xmlOut.addTextElementToData("GroupAliasesConfigurationName",
-			"GroupAliasesConfiguration");
+			groupAliasesTableName);
 	xmlOut.addTextElementToData("GroupAliasesConfigurationVersion",
-			activeVersions["GroupAliasesConfiguration"].toString());
+			activeVersions[groupAliasesTableName].toString());
 
 	std::vector<std::pair<std::string,ConfigurationTree> > aliasNodePairs =
-			cfgMgr->getNode("GroupAliasesConfiguration").getChildren();
+			cfgMgr->getNode(groupAliasesTableName).getChildren();
 
 	std::string groupName, groupKey, groupComment, groupType;
 	for(auto& aliasNodePair:aliasNodePairs)
@@ -5611,7 +5962,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument& xmlOut
 	cfgMgr->loadConfigurationBackbone();
 	std::map<std::string, ConfigurationVersion> activeVersions = cfgMgr->getActiveVersions();
 
-	std::string versionAliasesTableName = "VersionAliasesConfiguration";
+	std::string versionAliasesTableName = ConfigurationManager::VERSION_ALIASES_CONFIG_NAME;
 	if(activeVersions.find(versionAliasesTableName) == activeVersions.end())
 	{
 		__SUP_SS__ << "Active version of VersionAliases  missing!" <<
@@ -5619,7 +5970,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument& xmlOut
 		xmlOut.addTextElementToData("Error", ss.str());
 		return;
 	}
-	__SUP_COUT__ << "activeVersions[\"VersionAliasesConfiguration\"]=" <<
+	__SUP_COUT__ << "activeVersions[\"" << versionAliasesTableName << "\"]=" <<
 			activeVersions[versionAliasesTableName] << std::endl;
 	xmlOut.addTextElementToData("VersionAliasesVersion",
 			activeVersions[versionAliasesTableName].toString());
@@ -5725,7 +6076,6 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 
 	//get all group info from cache (if no cache, get from interface)
 
-
 	if(!cfgMgr->getAllGroupInfo().size()) //empty cache is strange, attempt to get from interface
 	{
 		__SUP_COUT__ << "Cache is empty? Attempting to regenerate." << __E__;
@@ -5757,6 +6107,12 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 	for(auto& groupInfo:allGroupInfo)
 	{
 		groupName = groupInfo.first;
+		if(groupInfo.second.keys_.size() == 0)
+		{
+			__SUP_COUT__ << "Group name '" << groupName << "' found, but no keys so ignoring." << __E__;
+			continue;
+		}
+
 		groupKey = *(groupInfo.second.keys_.rbegin());
 
 		xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
@@ -5821,7 +6177,6 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(HttpXmlDocument& x
 				xmlOut.addTextElementToParent("MemberVersion", memberPair.second.toString(), parentEl);
 			}
 		} // end if returnMembers
-
 
 
 		//add other group keys to xml for this group name
@@ -5900,7 +6255,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument& xmlOut
 	__SUP_COUT__ << "# of configuration tables found: " << allCfgInfo.size() << std::endl;
 
 	std::map<std::string,std::map<std::string,ConfigurationVersion> > versionAliases =
-			cfgMgr->getActiveVersionAliases();
+			cfgMgr->getVersionAliases();
 
 	__SUP_COUT__ << "# of configuration tables w/aliases: " << versionAliases.size() << std::endl;
 
@@ -5981,8 +6336,14 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//behave like a new user
 	//
 	//ConfigurationManagerRW cfgMgrInst("ExampleUser");
-	//	//
+		//
 	//ConfigurationManagerRW* cfgMgr =& cfgMgrInst;
+
+	//std::map<std::string, ConfigurationVersion> groupMembers;
+	//groupMembers["DesktopIcon"] = ConfigurationVersion(2);
+//	cfgMgr->saveNewConfigurationGroup("test",
+//			groupMembers, "test comment");
+
 	//	//
 	//	const std::map<std::string, ConfigurationInfo>& allCfgInfo = cfgMgr->getAllConfigurationInfo(true);
 	//	__SUP_COUT__ << "allCfgInfo.size() = " << allCfgInfo.size() << std::endl;

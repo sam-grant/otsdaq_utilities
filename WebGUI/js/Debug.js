@@ -93,7 +93,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				if(num === undefined) num = Debug.LOW_PRIORITY;
 				
 				//add call out labels to file [line] text blobs
-				var returnStr = localCallOutDebugLocales(str);
+				var returnStr;
+				
+				if(num < 4) //modify string for popup
+					returnStr = localCallOutDebugLocales(str);
 				if(returnStr)
 					str = returnStr;
 				
@@ -286,7 +289,14 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top.</div><br>" +
+				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top." +
+				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
+				//make download arrow
+					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
+					"<div style='display: block; width: 0; height: 0; border-left: 6px dotted transparent; border-right: 6px dotted transparent; border-top: 8px solid white;'></div>" +
+					"<div style='position: relative; top: 5px; width: 12px; height: 2px; display: block; background-color: white;'></div>" +				
+				"</div>" +
+				"</div><br>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err' class='" + 
@@ -332,7 +342,7 @@ Debug.errorPop = function(err,severity) {
 					"font-size: 18px;" +
 					"color: rgb(255,200,100);" +
 					"}\n\n";
-			
+
 			
 			//error close link style
 			css += "#" + Debug._errBoxId + " a" +
@@ -374,11 +384,11 @@ Debug.errorPop = function(err,severity) {
 					"{" +					
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
-					"left: 8px, top: 8px; margin-right: 8px;" +
+					"left: 8px; top: 8px; margin-right: 8px;" +
 					"margin-bottom:-12px;" +
 					"text-align: left;" +
 					"overflow-y: scroll;" +
-					"overflow-x: auto;"
+					"overflow-x: auto;" +
 					"width: 100%;" +
 					"}\n\n";
 			
@@ -409,9 +419,9 @@ Debug.errorPop = function(err,severity) {
 					"font-family: 'Comfortaa', arial;" +
 					"text-align: left;" +
 					"}\n\n";
-			
-			css += "." + Debug._errBoxId + "-localCallOut" + 
-					"{font-size: 15px;color: rgb(191, 185, 193);}\n\n";
+
+			css += "#" + Debug._errBoxId + " ." + Debug._errBoxId + "-localCallOut" + 
+					"{font-size: 10px;}\n\n";//color: rgb(191, 185, 193);}\n\n";
 
 			//add style element to HEAD tag
 			var style = document.createElement('style');
@@ -709,4 +719,29 @@ Debug.handleErrorResize = function() {
 }
 
 
+//=====================================================================================
+Debug.downloadMessages = function() {
+	
+	console.log("downloading messages...");
+	
+	//create CSV data string from html table
+	var dataStr = "data:text/txt;charset=utf-8,";
+	
+	var lines = Debug._errBox.innerText.split('\n');
+	for(var i=2;i<lines.length-2;++i)
+	{
+		dataStr += encodeURIComponent(lines[i] + "\n"); //encoded \n
+	}
+	
+	var link = document.createElement("a");
+	link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+	link.setAttribute("style", "display:none");
+	link.setAttribute("download", "otsdaq_Messages_download.txt");
+	document.body.appendChild(link); // Required for FF
+
+	link.click(); // This will download the data file named "my_data.csv"
+
+	link.parentNode.removeChild(link);
+	
+} //end Debug.downloadMessages 
 

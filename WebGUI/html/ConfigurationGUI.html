@@ -67,6 +67,11 @@
 	//end tree-view focused
 	
 		//selectThisCell(r,c,el,event)
+		//		localGetPairColumnInfo()
+		//		localHandleDropdownForLinkUID()
+		//		localHandleDropdownForLinkGroupID()
+		//			localFinishGroupIdDropdown()
+		//		localFinishUpSelectCell()
 		//editCellCancel()
 		//keyHandler(e)
 		//bodyKeyHandler(e,keyEl)
@@ -132,6 +137,13 @@
 		//jump(anchor)
 		//evaluateJS(str)			
 		//createEditTableMenu(event)
+		//createSystemViewMenu(event)
+		//verifyRelaunchNormalMode()
+		//verifyRelaunchWizMode()
+		//toggleVersionTracking()
+		//flattenToSystemAliases()
+		//mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext,groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
+		//mergeGroupsDialog()
 	
 		//tableLinkTooltip(prependString)
 	
@@ -328,7 +340,7 @@
 			text-decoration: underline;
 			cursor: pointer;
 		}
-		
+	
 	</style>
 	
 	
@@ -386,57 +398,57 @@
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
 		
-		var _OTS_RELAUNCH_STR =  
-				//Normal mode
-				"Click here to relaunch ots in " +
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
-				"\"\",handleOtsRelaunchResponse,0);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Normal Mode</a>" +
-				" or " +
-				//Wiz Mode
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
-				"\"\",handleOtsRelaunchResponse,1);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Wiz Mode</a>." +
-				"<br>" +
-				//Toggle Version Tracking
-				"Click here to " +
-				"<a href='#' id='versionTrackingSystemLink' onclick='" +
-				"var el = this;" +
-				"if(el.textContent == \"Turn Version Tracking OFF\")" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"else " +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Turn Version Tracking OFF</a>." +
-				//Flatten Versions
-				"<br>" +
-				"Click here to " +
-				"<a href='#' onclick='" +
-				"DesktopContent.popUpVerification(" + 
-				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
-				"function() {" + 
-				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
-				"\"\",handleFlattenSystemAliasesResponse);" +
-				"},0,\"#efeaea\",0,\"#770000\");" +
-				"'>Flatten to System Aliases</a>."
-				;
+//		var _OTS_RELAUNCH_STR =  
+//				//Normal mode
+//				"Click here to relaunch ots in " +
+//				"<a onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
+//				"\"\",handleOtsRelaunchResponse,0);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Normal Mode</a>" +
+//				" or " +
+//				//Wiz Mode
+//				"<a onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
+//				"\"\",handleOtsRelaunchResponse,1);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Wiz Mode</a>." +
+//				"<br>" +
+//				//Toggle Version Tracking
+//				"Click here to " +
+//				"<a id='versionTrackingSystemLink' onclick='" +
+//				"var el = this;" +
+//				"if(el.textContent == \"Turn Version Tracking OFF\")" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"else " +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Turn Version Tracking OFF</a>." +
+//				//Flatten Versions
+//				"<br>" +
+//				"Click here to " +
+//				"<a onclick='" +
+//				"DesktopContent.popUpVerification(" + 
+//				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
+//				"function() {" + 
+//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
+//				"\"\",handleFlattenSystemAliasesResponse);" +
+//				"},0,\"#efeaea\",0,\"#770000\");" +
+//				"'>Flatten to System Aliases</a>."
+//				;
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
@@ -503,9 +515,9 @@
 		var treeEditingEditIconShownIdString_ = "";
 		var treeEditingInitGroupMembers_ = [];
 		var treeEditingGroupMembersLastSelect_ = "";
-	
 		
 	
+		
 		
 		//init called once body has loaded
 		function init() {			
@@ -583,11 +595,17 @@
 			//============================
 			//		for debugging
 			
-			//setupSpecificConfig("DataBufferConfiguration","3",""); return;
-			//setupSpecificConfig("XDAQContextConfiguration","10","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
+			//setupSpecificConfig("DesktopIconConfiguration","2",""); return;
+			//setupSpecificConfig("XDAQContextConfiguration","2","setupTableViewMode('anchorTag-XDAQContextConfiguration');"); return;
 
 			//setupSpecificConfigGroup("artdaqFclTest","46","","anchorTag-RawDataSaverConsumerConfiguration"); return;			
-			//setupSpecificConfigGroup("defaultConfig","1"); return;
+			//setupSpecificConfigGroup("TableEditWizBackbone","0"); 
+			
+			//mergeGroups("TableEditWizBackbone","0","TableEditWizBackbone","3","rename");
+			//mergeGroups("  ","2","testContext","3","defaultConfig","1","defaultConfig","4","Rename");
+			
+			//mergeGroupsDialog();
+			//return;
 			
 			//setupConfigCreator(); return
 			
@@ -597,6 +615,7 @@
 			//setupGroupViewMode(); return;
 			
 			//setupConfigCreator(); return;
+			
 			
 			//============================
 
@@ -866,6 +885,7 @@
 					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationName");		
 
 			var str = ""; //string for html content			
+			str += "<div style='display:none'>System View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
 			var groupAlias, groupName, groupKey, groupComment, aliasComment;
 			var backLinkStr;
@@ -873,11 +893,19 @@
 			backLinkStr = "setupSystemViewMode();"; 
 			
 
-			str += "<h3><u>System View</u></h3>";
+			//display edit menu
+			str +=
+					"<div style='margin-top:-4px' class='tableView-Menu' onmousedown='createSystemViewMenu(event,\"" +
+					 groupAliasesName + "\",\"" + groupAliasesVersion + "\",\"" + backLinkStr + "\"" +
+					");' title='System View Menu'>" +
+					"<div class='gotoNavDiv'></div>" +
+					"</div>"; //end context menu link div
 			
-			str += _OTS_RELAUNCH_STR + "<br>";
+			str += "<h3 style='margin-top:-10px'><u>System View</u></h3>";
 			
-			str += "<br>";
+
+			//str += _OTS_RELAUNCH_STR + "<br>";		
+			//str += "<br>";
 			
 			//show active backbone and config
 			function localShowActiveBackboneAndConfig()
@@ -974,25 +1002,25 @@
 			} localShowActiveBackboneAndConfig();
 			
 			
-			str += "<a href='#' onclick='setupSpecificConfig(\"" + 
-					groupAliasesName + "\",\"" +
-					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
-			str += "Edit System Aliases</a>";
-
-			str += "<br>";
-			
-			str += "<a href='#' onclick='popUpGroupAliasForm(1); return false;' " +
-					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
-					">";
-			str += "Wiz-New System Alias-to-Latest</a>";
-
-			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
-			str += "<br>";
-
-			str += "<a href='#' onclick='popUpGroupAliasForm(0); return false;'  " +
-						"title='Automatically assign a new System Alias to an Active Group.'" +
-						">";
-			str += "Wiz-New System Alias-to-Active</a>";
+//			str += "<a href='#' onclick='setupSpecificConfig(\"" + 
+//					groupAliasesName + "\",\"" +
+//					groupAliasesVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+//			str += "Edit System Aliases</a>";
+//
+//			str += "<br>";
+//			
+//			str += "<a onclick='popUpGroupAliasForm(1); return false;' " +
+//					"title='Automatically assign a new System Alias to a Group comprised of the latest table versions.'" +
+//					">";
+//			str += "Wiz-New System Alias-to-Latest</a>";
+//
+//			//str += "&nbsp;&nbsp;&nbsp;&nbsp;";
+//			str += "<br>";
+//
+//			str += "<a onclick='popUpGroupAliasForm(0); return false;'  " +
+//						"title='Automatically assign a new System Alias to an Active Group.'" +
+//						">";
+//			str += "Wiz-New System Alias-to-Active</a>";
 			
 			str += "<br><br><br>";
 
@@ -1072,7 +1100,7 @@
 				
 				
 				//add Activate link
-				str += " <a href='#' onclick='activateSystemConfig(\"" + groupName +
+				str += " <a onclick='activateSystemConfig(\"" + groupName +
 						"\",\"" + groupKey + "\"); return false;'>";
 				str += "Activate</a>";
 
@@ -1081,7 +1109,7 @@
 				
 				
 				//Wiz to latest of all tables
-				str += " <a href='#' onclick='" + 
+				str += " <a onclick='" + 
 						//"wizToLatestConfigGroup(\"" + groupAlias + "\"); return false;' "+
 						"popUpGroupAliasForm(1,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to a Group comprised of the latest table versions.'" +
@@ -1093,7 +1121,7 @@
 				
 				
 				//Wiz to active config group
-				str += " <a href='#' onclick='" +
+				str += " <a onclick='" +
 						//"wizToInitializedConfigGroup(\"" + groupAlias + "\"); return false;' " +
 						"popUpGroupAliasForm(0,\"" + groupAlias + "\"); return false;' " +
 						"title='Automatically assign this System Alias to an Active Group.'" +
@@ -1150,11 +1178,15 @@
 			var el = document.getElementById("display");
 
 			var str = "";
+			str += "<div style='display:none'>Group View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
+			
 			var configNames, configVersions;
 			var backLinkStr;
 			var configName, configVersion;									
 			
 			backLinkStr = "setupGroupViewMode();"; 
+
+			str += "<h3 style='margin-top:-10px'><u>Group View</u></h3>";
 			
 			var typeName = ["All","Contexts","Backbones","Configurations"];
 			var typeFilterIndex = [-1,0,1,2];
@@ -1498,9 +1530,13 @@
 			var el = document.getElementById("display");
 
 			var str = "";
+			str += "<div style='display:none'>Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
+			
 			var configVersions;
 			var configName, version;
 			var backLinkStr;
+
+			str += "<h3 style='margin-top:-10px'><u>Table View</u></h3>";
 
 			Debug.log("CfgGUI requestHandler configNames.length " + configNames.length);
 			for(var i=0;i<configNames.length;++i)
@@ -2077,7 +2113,8 @@
 			_versionIsChanged = false;
 			_dataOffset = rows.length?(rows[0].getAttribute("value") | 0):0;
 
-			var str = "";			
+			var str = "";	
+			str += "<div style='display:none'>Specific Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
 			_associatedGroupName = "";
 			_associatedGroupKey = -1;
@@ -2153,9 +2190,13 @@
 			if(version != -1)
 			{
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='setVersionAliasInActiveBackbone(\"Default\",\"" + 
+				str +=  "<a onclick='setVersionAliasInActiveBackbone(\"Default\",\"" + 
 						configName + "\",\"" + 
-						version + "\"); return false;' title='Make '" + configName + "' version " + version + 
+						version + "\",0,/*done handler*/ function()" +
+							"{setupSpecificConfig(\"" + 
+							configName + "\",\"" + 
+							version + "\");}" + 
+						"); return false;' title='Make '" + configName + "' version " + version + 
 						" the 'Default' table version " + 
 						" by automatically setting up the 'Default' alias " + 
 						"in the active Backbone group.'" +
@@ -2165,7 +2206,7 @@
 				str += "</div>";
 
 				str += "<div style='float:left;margin: 3px 0 0 15px;'>";
-				str +=  "<a href='#' onclick='popUpVersionAliasForm(); return false;' "+
+				str +=  "<a onclick='popUpVersionAliasForm(); return false;' "+
 						"title='Assign an Alias you specify to '" + configName + 
 						"' version " + version +					
 						" by automatically modifying the active Backbone group.'" +
@@ -2183,7 +2224,7 @@
 			//display mockup link (mockup always present)
 			str += " ";
 			if(-1 != version)				
-				str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
+				str +=  "<a onclick='setupSpecificConfig(\"" + configName +
 					"\",\"" + "-1" + "\", \"" + backLinkStr + "\"); return false;'>";
 			str += _MOCKUP_VIEW_NAME;
 			if(-1 != version)				
@@ -2192,15 +2233,25 @@
 			//display all other version links
 			{
 				var configVersion;
+				var aliasString;
+				var versionAliases;
 				for(var j=0;j<configVersions.length;++j)
 				{
-					configVersion = configVersions[j].getAttribute("value")
+					configVersion = configVersions[j].getAttribute("value");
+					
+					aliasString = "";
+					versionAliases = configVersions[j].getElementsByTagName("VersionAlias");
+					for(var k=0;k<versionAliases.length;++k)						
+						aliasString += (k==0?"==>":",") + versionAliases[k].getAttribute("value");
+					
 					str += " ";
 					if(configVersion != version)
 						str +=  "<a href='#' onclick='setupSpecificConfig(\"" + configName +
 							"\",\"" + configVersion + 
 							"\", \"" + backLinkStr + "\"); return false;'>";
 					str += ((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
+					//add alias string
+					str += aliasString;
 					if(configVersion != version)
 						str += "</a>";
 				}
@@ -2248,11 +2299,11 @@
 			str += "<tr><th>Description:</th><td>";
 
 			str += "<label id='tableDescriptionText-Show' style='display:block'>";
-			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"block\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"none\";'>" +
+			str += "<a onclick='document.getElementById(\"tableDescriptionText\").style.display = \"block\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"none\";'>" +
 					"show</a>";
 			str += "</label>";			
 			str += "<label id='tableDescriptionText' style='display:none'>";
-			str += "<a href='#' onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
+			str += "<a onclick='document.getElementById(\"tableDescriptionText\").style.display = \"none\"; document.getElementById(\"tableDescriptionText-Show\").style.display = \"block\";'>" +
 					"hide</a><br>" +					
 					Debug.errorPopConditionString(DesktopContent.tooltipConditionString(tableDescription)) + 
 					"</label>";			
@@ -2364,8 +2415,9 @@
 			if(_tableViewIsTransposed) 
 				str += "";
 			else
-				str += "style='display:none' ";							
-			str += "href='#' onclick='addRow(" + r + "); return false;'>";
+				str += "style='display:none' ";		
+			str += "title='Append a new row to the table.' ";
+			str += "class='tableAddRowButton' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2377,8 +2429,9 @@
 			if(!_tableViewIsTransposed) 
 				str += "";
 			else
-				str += "style='display:none' ";							
-			str += "href='#' onclick='addRow(" + r + "); return false;'>";
+				str += "style='display:none' ";		
+			str += "title='Append a new row to the table.' ";					
+			str += "class='tableAddRowButton' onclick='addRow(" + r + "); return false;'>";
 			str += "+";
 			str += "</a>";
 			
@@ -2448,20 +2501,20 @@
 			if(launchType == "tree") //from tree view
 			{
 				RecordWiz.createWiz(
-						function(atLeastOneRecordWasCreated)
+						function(atLeastOneRecordWasModified)
 						{				
-					if(atLeastOneRecordWasCreated)
+					if(atLeastOneRecordWasModified)
 					{
 						var str = "Record creation complete. You may want to ";
-						str += "<a href='#' onclick='refreshTreeView()' " +
+						str += "<a onclick='refreshTreeView()' " +
 								" title='Click to Refresh the current tree-view' " +
 								">";
 						str += "Refresh";
 						str += "</a>";
 						str += " the tree " +
-								"to view additions. ";
+								"to view modifications. ";
 						str += "The active groups are now ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2470,7 +2523,7 @@
 								ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						str += "</a>";
 						str += " and ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2501,7 +2554,7 @@
 					if(atLeastOneRecordWasDeleted)
 					{
 						var str = "Record deletion complete. You may want to ";
-						str += "<a href='#' onclick='refreshTreeView()' " +
+						str += "<a onclick='refreshTreeView()' " +
 								" title='Click to Refresh the current tree-view' " +
 								">";
 						str += "Refresh";
@@ -2509,7 +2562,7 @@
 						str += " the tree " +
 								"to view changes. ";
 						str += "The active groups are now ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Context.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Context.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2518,7 +2571,7 @@
 								ConfigurationAPI._activeGroups.Context.groupKey + ")";
 						str += "</a>";
 						str += " and ";
-						str += "<a href='#' onclick='setupConfigGroupTreeView(\"" +
+						str += "<a onclick='setupConfigGroupTreeView(\"" +
 								ConfigurationAPI._activeGroups.Configuration.groupName + "\"," +
 								ConfigurationAPI._activeGroups.Configuration.groupKey + ");' " +
 								" title='Click to open in tree-view' " +
@@ -2692,6 +2745,8 @@
 				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
 				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
 			}
+			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
+			
 			
 			var el;
 			var depth;			
@@ -2750,7 +2805,7 @@
 						treeViewBackLinkStr_ = treeViewBackLinkStr_.replace(/"/g, "\\\"");
 					Debug.log("Back-link = " + treeViewBackLinkStr_);
 
-					treeViewHandlerStr_ += "<a href='#' onclick='evaluateJS(\"" + treeViewBackLinkStr_ + 
+					treeViewHandlerStr_ += "<a onclick='evaluateJS(\"" + treeViewBackLinkStr_ + 
 							"\"); return false;'>Back</a>";
 					treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				}				
@@ -2758,11 +2813,11 @@
 				//				var refreshLinkStr = "treeViewHandlerStr_=\"\"; setupConfigGroupTreeView(\"" + 
 				//						treeGroupName_ + "\",\"" +
 				//						treeGroupKey_ + "\",\"" + treeViewBackLinkStr_ + "\");"; 
-				//				treeViewHandlerStr_ += "<a href='#' onclick='" + refreshLinkStr + 
+				//				treeViewHandlerStr_ += "<a onclick='" + refreshLinkStr + 
 				//						"; return false;'>Refresh</a>";	
 				//treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
 				
-				treeViewHandlerStr_ += "<a href='#' onclick='expandTreeChildrenDepth(); return false;' " + 
+				treeViewHandlerStr_ += "<a onclick='expandTreeChildrenDepth(); return false;' " + 
 						"title='Expand all children at deepest depth; " +
 						"if no nodes are expanded, then expand XDAQContextConfiguration preferentially.\n\n" +
 						"(Hot-keys: + , &gt; , } , A , E )" +
@@ -2770,7 +2825,7 @@
 						">+ All Children</a>";
 				
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				treeViewHandlerStr_ += "<a href='#' onclick='hideTreeChildrenDepth(); return false;'" + 
+				treeViewHandlerStr_ += "<a onclick='hideTreeChildrenDepth(); return false;'" + 
 						"title='Hide all children at deepest depth.\n\n" +
 						"(Hot-keys: - , &lt; , { , Z , M )" +
 						"\nNote: hot keys will target the highlighted node.'" +
@@ -2854,7 +2909,7 @@
 				
 				//add Activate link
 				treeViewHandlerStr_ += " <a id='treeView-ConfigGroupActivateLink' " +
-						"href='#' onclick='activateSystemConfig(\"" + configGroupName +
+						"onclick='activateSystemConfig(\"" + configGroupName +
 						"\",\"" + configGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
@@ -2867,11 +2922,13 @@
 			
 			//add tree
 			var tree = DesktopContent.getXMLNode(req,"tree");
-			var preLength = treeViewHandlerStr_.length;
-			recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
-			if(preLength == treeViewHandlerStr_.length) //no children found 	
-			{
-				//treat this as an empty value node!
+			var childrenLength = tree.children.length;
+			
+			if(childrenLength)
+				recursiveDrawTree(tree,depth,tree.getAttribute("value"),parentId);
+			else								//no children found					
+			{				
+				//treat no children as an empty value node!
 				
 				//////////=======================
 				treeViewHandlerStr_ += 
@@ -2886,19 +2943,228 @@
 				treeViewHandlerStr_ += "</div>" + //end treeNode Value div		
 						"</div>" + //end treeNode div							
 						"<div id='clearDiv'></div>";  
-				//////////=======================
+				//////////=======================				
 			}
 			
 			el.innerHTML = treeViewHandlerStr_;
-			
+						
 			//save the full string for posterity (and for back links)
 			treeViewHandlerStr_ = document.getElementById("display").innerHTML;
 			
 			applyTreeFilter("",1); //reapplyFilter
 			toggleGroupDetails(_showGroupDetails);
 
-			activateSystemConfigHandler(req); //display active config groups	
-		}
+			activateSystemConfigHandler(req); //display active config groups
+
+			
+
+			//consider offering to delete the parent of last deleted child
+			if(parentId == treeEditingNodeParentIdString_ && 
+					treeEditingNodeType_ == "delete-uid")
+			{
+				treeEditingNodeType_ = ""; //clear so parent not get considered again
+				
+				Debug.log("parentId " + parentId + " treeEditingNodeParentIdString_ " +
+						treeEditingNodeParentIdString_ + " treeEditingNodeType_ " +
+						treeEditingNodeType_);
+
+				var parentIsEmpty = childrenLength == 0;
+				
+				if(!parentIsEmpty) //check for disconnected due to deleting the uid-link
+				{
+					try
+					{
+						var fieldName = treeEditingNodeInitValue_.split('-')[0];
+						//look through children for fieldName
+						for(var i=0;i<tree.children.length;++i)
+							if(tree.children[i].getAttribute("value") == fieldName)
+							{
+								//found field, check for disconnected
+								if(tree.children[i].children[0].getAttribute("value") ==
+										"Disconnected")
+									parentIsEmpty = true;
+								break;
+							}
+					}
+					catch(e)
+					{
+						Debug.log("Ignoring error trying verify deleted uid-link: " + e);
+					}
+				}
+				
+				//if no children at parent, then find closest parent that is a UID record
+				//	and prompt for deletion
+				if(parentIsEmpty)
+					localHandleEmptyParent();
+			}
+			
+			
+			//===========
+			//localHandleEmptyParent ~~
+			function localHandleEmptyParent()
+			{
+				//Steps:
+				//	- navigate up tree until UID or LinkUID node found				
+				//		start at parent element.. is it a UID? etc.
+				//	- offer to delete that UID node
+				//	- delete using tree deletion mechanism, and is recursive for free
+				//		i.e. when tree is drawn after deleting, it will check for empty parent again								
+				
+				var parentType;
+				var parentIdString = treeEditingNodeParentIdString_;								
+				var traversalCount = 0;
+				
+				try
+				{
+					Debug.log("Trying " + parentIdString);
+					parentType = document.getElementById("treeNode-Value-" + 
+							parentIdString).className.split(' ')[2].split('-')[3];
+					if(parentType == "link")  //get link type
+						parentType += document.getElementById("treeNode-childLinkIdType-" + 
+								parentIdString).innerText;
+					Debug.log("parentType " + parentType);
+										
+
+					while(parentType != "uid" && parentType != "linkUID")
+					{		
+						//current parent is not a UID node
+						//	so keep ascending tree
+						
+						if(++traversalCount > 10) 
+						{
+							Debug.log("Is tree path somehow circular?! Giving up. " + traversalCount);
+							return;							
+						}
+						
+						//check depth
+						if(((parentIdString.split('-')[0])|0) <= 1) 
+						{
+							Debug.log("Reached top of tree?! Still no UID node found?");
+							return;
+						}
+						
+						
+						//get parent's parentIdString
+						parentIdString = 
+								document.getElementById("treeNode-ParentId-" + parentIdString).textContent;
+						
+						Debug.log("Trying " + parentIdString);
+						parentType = document.getElementById("treeNode-Value-" + 
+													parentIdString).className.split(' ')[2].split('-')[3];
+						if(parentType == "link") //get link type
+							parentType += document.getElementById("treeNode-childLinkIdType-" + 
+									parentIdString).innerText;
+						Debug.log("parentType " + parentType);
+					}
+				}
+				catch(e)
+				{
+					Debug.log("Error finding UID parent... " + e);
+					return;
+				}
+				
+				Debug.log("Found " + parentIdString);
+				Debug.log("parentType " + parentType);			
+				
+				
+				var depth = (parentIdString.split('-')[0])|0;
+				var idString = parentIdString;
+				var path = document.getElementById("treeNode-path-" + idString).innerText;
+				var uid;
+				
+				if(parentType == "linkUID")
+					uid = document.getElementById("treeNode-Value-" + 
+							parentIdString).innerText.split('(')[1].split(' ')[2].split(')')[0];
+				else //uid
+					uid = document.getElementById("treeNode-nodeName-" + parentIdString).innerText;
+				
+				Debug.log("path " + path);		
+				Debug.log("uid " + uid);		
+				
+				DesktopContent.popUpVerification(
+						"The removed record &apos;" + treeEditingNodeInitValue_ +
+						"&apos; left the parent record at path &apos;" +
+						path + 
+						"REPLACE&apos; childless.<br><br>" +
+						"Would you like to also delete the parent record &apos;REPLACE?&apos;",
+						function() //delete the parent handler
+						{
+					
+					Debug.log("Deleting the parent also. " + idString);					
+					
+					//copied code from handleTreeNodeClick() and selectThisTreeNode()
+					
+					var el = document.getElementById("treeNode-Value-" + idString);	
+					
+					treeEditingNodeDepth_ = depth;
+					treeEditingNodeIdString_ = parentIdString;
+					
+					var splitArr = path.split('/');
+					treeEditingNodeParentIdString_ = 		
+							document.getElementById("treeNode-ParentId-" + idString).textContent;
+									
+
+					//get target table - similar to handleTreeNodeClick()
+					if(parentType == "linkUID")
+					{
+						treeEditingTargetTable_ = document.getElementById("treeNode-linkTableName-" +
+								idString).textContent;
+					}
+					else //uid
+					{
+						if(depth == 1)
+							treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
+						else //accessing through link so need to get from parent
+						{
+							//needs to get from parent OR parent-of-parent
+							//	if parent is uid link.. then one level back
+							//	if parent is groupid link.. then two levels back
+
+							var pel = document.getElementById("treeNode-linkTableName-" +
+									treeEditingNodeParentIdString_);
+							if(!pel)
+								pel = document.getElementById("treeNode-linkTableName-" +
+										(document.getElementById("treeNode-ParentId-" + 
+												treeEditingNodeParentIdString_).textContent));
+
+							treeEditingTargetTable_ = pel.textContent;
+						}
+					}
+
+					treeEditingTargetUID_ = uid;
+					treeEditingTargetColumn_ = "UID";
+					Debug.log("edit uid mode target=" + treeEditingTargetTable_ +
+							"/" + treeEditingTargetUID_ + "/" +
+							treeEditingTargetColumn_);
+					
+					treeEditingNodeType_ = "delete-uid";								
+					_editingCellElOldValue = el.textContent;
+					treeEditingNodeInitValue_ = _editingCellElOldValue;
+					
+					_editingCell = true;
+					_editingCellEl = el;			
+
+					_editingCellElOldTitle = el.title;
+					el.title = "";
+
+
+					Debug.log("treeEditingTargetTable_ " + treeEditingTargetTable_);
+					Debug.log("treeEditingTargetColumn_ " + treeEditingTargetColumn_);	
+					Debug.log("treeEditingTargetUID_ " + treeEditingTargetUID_);	
+					Debug.log("treeEditingNodeType_ " + treeEditingNodeType_);		
+					editTreeNodeOK();					
+					
+					
+						}, //end delete the parent handler
+						uid /* REPLACE val*/,
+						"#efeaea" /*bgColor*/, 0 /*textColor*/,
+						"#770000" /*borderColor*/,0 /*getUserInput*/,400 /*dialogWidth*/
+				); //end of DesktopContent.popUpVerification
+				
+				
+			} //end localHandleEmptyParent
+			
+		} //end treeViewHandler()
 
 		//recursiveDrawTree ~		
 		function recursiveDrawTree(parent,depth,path,parentIdString) 
@@ -2918,7 +3184,7 @@
 			var backLinkStr;
 			var titleStr;
 			var nodeEditType, nodeEditTypeDisplay;
-			var isLink,isDisconnected, isGroupLink;	
+			var isLink, isDisconnected, isGroupLink;	
 			var choices; 
 			
 			var pathHTML = path;
@@ -3108,6 +3374,8 @@
 						isDisconnected = true;
 
 					}
+					else //define check if group link
+						isGroupLink = nodes[i].children[0].nodeName == "GroupID";
 					
 					value =  
 							"<label style='color:rgb(65, 86, 146);font-weight:bold;'>" +
@@ -3414,8 +3682,8 @@
 				
 				
 				
-			}
-		}
+			} //end children loop
+		} //end recursiveDrawTree()
 
 		//getTreeViewTableStrings ~
 		function getTreeViewTableStrings(tableLinkName, isLink)
@@ -3668,7 +3936,7 @@
 				
 				if(type == "uid")
 				{
-					//edit UID mode (up/down tab/shtab enter esc active)
+					//edit UID mode 
 					if(depth == 1)
 						treeEditingTargetTable_ = splitArr[splitArr.length-2]; //table should be before last slash in path
 					else //accessing through link so need to get from parent
@@ -4147,7 +4415,9 @@
 						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
 						"startPath=" + path + nodeName + "/"+ 
-						"&modifiedTables=" + modifiedTables,treeViewHandler,idString,
+						"&modifiedTables=" + modifiedTables,
+						treeViewHandler,
+						idString,
 						0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
 				return true;
 			}
@@ -4272,7 +4542,7 @@
 							name = name[0];					
 													
 							//add ignore warnings Activate link
-							withWarningsStr += " <a href='#' onclick='activateSystemConfig(\"" + 
+							withWarningsStr += " <a onclick='activateSystemConfig(\"" + 
 									name +
 									"\",\"" + key + "\",1); return false;'>"; //ignore warnings
 							withWarningsStr += "Activate " + 
@@ -4331,7 +4601,7 @@
 				}
 				//str += "<br>";
 
-				str += "</td><td style='text-align:left; padding-left:20px;'>";
+				str += "</td><td style='text-align: left; padding-left:20px;'>";
 				str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + 
 						_activeConfigGroups[i*2] + 
 									"\",\"" + 
@@ -4876,17 +5146,17 @@
 			str += "<tr><td>";
 			
 			var title = "Select/Deselect checkboxes based on this selection.";
-			str += "<a href='#' onclick='selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
-					"<a href='#' onclick='selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
-					"<a href='#' onclick='selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
+			str += "<a onclick='selectForCreateConfig(1); return false;' title='" + title + "'>All</a> | " +
+					"<a onclick='selectForCreateConfig(0); return false;' title='" + title + "'>None</a> | " + 
+					"<a onclick='selectForCreateConfig(2); return false;' title='" + title + "'>Context</a> | " +
+					"<a onclick='selectForCreateConfig(3); return false;' title='" + title + "'>Backbone</a> | " +
+					"<a onclick='selectForCreateConfig(4); return false;' title='" + title + "'>Configuration</a>";
 			str += "&nbsp;&nbsp;&nbsp;&nbsp;";
 			str += "</td><td colspan='2' style='white-space: nowrap;'>";
 			var title = "Select the version in the drop-downs for all tables based on this selection.";
-			str += "<a href='#' onclick='versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
-					"<a href='#' onclick='versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
-					"<a href='#' onclick='popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
+			str += "<a onclick='versionsForCreateConfig(0); return false;' title='" + title + "'>Latest</a> | " +
+					"<a onclick='versionsForCreateConfig(1); return false;' title='" + title + "'>Defaults</a> | " +
+					"<a onclick='popUpVersionAliasGroupEditorForm(); return false;' title='" + title + "'>Other Alias</a>";
 			str += "</td>";
 			str += "</tr>";
 			
@@ -4900,7 +5170,7 @@
 				str += "<input type='checkbox' class='memberConfigCheckbox' value='" + 
 						name + "'>";
 				//add link so text toggles checkbox
-				str += "<a style='text-decoration:none;color:black;' href='#' onclick='" +
+				str += "<a style='text-decoration:none;color:black;' onclick='" +
 						"var el = document.getElementsByClassName(\"memberConfigCheckbox\");" +
 						"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 						" return false;'>";
@@ -5205,7 +5475,7 @@
 					"\",\"" + key + "\"); return false;'>Member-view</a> or ";
 			str += "<a href='#' onclick='setupConfigGroupTreeView(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Tree-view</a>, or ";
-			str += "<a href='#' onclick='activateSystemConfig(\"" + name + 
+			str += "<a onclick='activateSystemConfig(\"" + name + 
 					"\",\"" + key + "\"); return false;'>Activate</a> it.";
 			
 			el.innerHTML = str;
@@ -5763,12 +6033,12 @@
 		{
 			var i = MultiSelectBox.getSelectedIndex(sel); 
 			var selArr = MultiSelectBox.getSelectionArray(sel);
-			MultiSelectBox.dbg("ms Chosen element index:",i,
-					"=", selArr[i],
-					" value:",sel.innerHTML);
-			for(var s in selArr)
-				MultiSelectBox.dbg("ms selected [" + s + "]: ",
-						selArr[s]);
+			//			MultiSelectBox.dbg("ms Chosen element index:",i,
+			//					"=", selArr[i],
+			//					" value:",sel.innerHTML);
+			//			for(var s in selArr)
+			//				MultiSelectBox.dbg("ms selected [" + s + "]: ",
+			//						selArr[s]);
 			
 			//show uid info box			
 			var el = document.getElementById("treeView-editLink-uidInfo");
@@ -5917,7 +6187,7 @@
 						"function() {" + 
 						"treeEditingNodeType_ = \"delete-uid\";" +
 						"editTreeNodeOK();" +
-						"},0,\"#efeaea\",0,\"#770000\");' " +
+						"},0,\"#efeaea\",0,\"#770000\",0,250);' " + //val, bgColor, textColor, borderColor, getUserInput, dialogWidth)
 						"title='Delete the record associated with this UID node.' " +
 						"></div>";
 				str += "</td></tr></table>";
@@ -6699,11 +6969,11 @@
 			{
 				event.stopPropagation();
 
-				Debug.log(_mouseIsSelecting);
+				//Debug.log(_mouseIsSelecting);
 				if(_mouseIsSelecting) //block select if mouse is selecting text currently 
 				{
 					_mouseIsSelecting = false;
-					Debug.log(_mouseIsSelecting);
+					//Debug.log(_mouseIsSelecting);
 					return; 							
 				}
 			}
@@ -6742,13 +7012,339 @@
 			Debug.log("colType=" + colType);
 			Debug.log("colType.indexOf('ChildLink')" + colType.indexOf("ChildLink"));
 			Debug.log("_tableLinkDropdownChoices " + _tableLinkDropdownChoices.length);
+
+			///////////// localGetPairColumnInfo
+			function localGetPairColumnInfo()
+			{
+				var obj = {};
+				obj.success = false;
+
+				var pairCol = c - 1;
+				var colSz = _tableViewIsTransposed? rows.length : rows[0].getElementsByTagName("td").length;
+				Debug.log("Number of columns " + colSz);
+
+				var pairColType;
+				var pairColTable;
+				var colTypeSplit = colType.split('-')[1];
+
+				Debug.log("Looking for link table column matching " + colTypeSplit);
+
+				pairCol = (pairCol + colSz) % colSz; //make a legal col					
+				while(pairCol != c)
+				{
+					if(_tableViewIsTransposed) 	//type is at col 0
+						pairColType = rows[_CONFIG_DATA_COL_OFFSET+pairCol].getElementsByTagName("td")[0].childNodes[0].innerHTML.split('<')[0];
+					else						//type is at row 0
+						pairColType = rows[0].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+pairCol].childNodes[0].innerHTML.split('<')[0]; //type text is in a div for smaller font			
+
+					Debug.log("pairColType=" + pairColType);
+
+					if(pairColType.split('-')[1] == colTypeSplit)
+					{
+						Debug.log("Found link pair at col " + pairCol);
+
+						//get value of table at cell [r,pairCol]
+						if(_tableViewIsTransposed) 	//type is at col 0
+							pairColTable = rows[_CONFIG_DATA_COL_OFFSET+pairCol].getElementsByTagName("td")[_CONFIG_DATA_ROW_OFFSET-1+r].innerText;
+						else						//type is at row 0
+							pairColTable = rows[_CONFIG_DATA_ROW_OFFSET+r].getElementsByTagName("td")[_CONFIG_DATA_COL_OFFSET+pairCol].innerText;			
+
+						Debug.log("pairColTable=" + pairColTable);
+
+						if(pairColTable ==  "NO_LINK")
+						{
+							Debug.log("Invalid table name.");
+							return obj;
+						}
+
+						obj.success = true;
+
+						obj.pairCol = pairCol;
+						obj.pairColType = pairColType;
+						obj.pairColTable = pairColTable;
+						
+						//successfully found link info
+						return obj;
+					}
+
+
+					--pairCol;
+					pairCol = (pairCol + colSz) % colSz; //make a legal col
+				}
+
+				Debug.log("Never found link pair.");
+				return obj;
+
+			} //end localGetPairColumnInfo()
+			
+			
+			///////////// localHandleDropdownForLinkUID
+			function localHandleDropdownForLinkUID()
+			{
+				Debug.log("localHandleDropdownForLinkUID");
+
+				//find link column pair
+
+				var linkInfo = localGetPairColumnInfo();
+				if(!linkInfo.success)
+					return false;
+
+				//else have link info				
+
+				//ready to get all UIDs
+				ConfigurationAPI.getSubsetRecords(linkInfo.pairColTable,
+						undefined /*filterList*/,
+						function(records)
+						{
+
+					console.log(records);
+
+					//create dropdown
+
+					str += "<div style='" +
+							"white-space:nowrap;" +
+							"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+							(el.offsetWidth-6+(1?50:0)) +
+							"px; height:" + (el.offsetHeight-8) + "px'>";
+					
+					str += "<select  onkeydown='keyHandler(event)' " +
+							"id='fixedChoice-editSelectBox' " +
+							"style='" + 
+							"float:left;" +
+							//"style='margin:-4px -2px -4px 1px;
+							"width:" + 
+							(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+					for(var i=0;i<records.length;++i)
+					{			
+						str += "<option value='" + records[i]
+														   + "'>";
+						str += records[i]; //can display however
+						str += "</option>";
+						if(records[i] 
+								   == _editingCellElOldValue)
+							optionIndex = i; //get starting sel index
+					}	
+					str += "</select>";	
+					
+					//add arbitrary edit
+					if(true)
+					{
+						str += "<input type='text' " +
+								"id='fixedChoice-editTextBox' " +
+								"style='display:none;" + 
+								"float:left;" +
+								"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+								"width:" + 
+								((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+								"'>";					
+						str += "";
+						str += "</input>";	
+
+						str += "<div style='display:block;" +
+								"margin: 2px 0 -7px 14px;" +
+								"' " + 
+								"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+								"' " +
+								"onclick='handleFixedChoiceEditToggle();' " +
+								"title='Toggle free-form editing' " +
+								"></div>";
+					}
+
+					str += "</div>";
+
+					//finish up
+					Debug.log("Finishing up select cell handling...");
+					localFinishUpSelectCell();
+						}); //end getSubsetRecords
+
+				//successfully requested records
+				return true;
+			}	//end localHandleDropdownForLinkUID
+			
+
+			///////////// localHandleDropdownForLinkGroupID
+			function localHandleDropdownForLinkGroupID()
+			{
+				Debug.log("localHandleDropdownForLinkGroupID");
+
+				//find link column pair
+				Debug.log("Looking for link table column matching " + colType.split('-')[1]);
+
+				var linkInfo = localGetPairColumnInfo();
+				if(!linkInfo.success)
+					return false;
+
+				//else have link info		
+
+				//ready to get matching groupID field in destination table
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration" + 
+						"&dataOffset=0&chunkSize=" + 0 +  
+						"&configName=" + linkInfo.pairColTable + 
+						"&version=" + "-1", //get mockup 
+						"", 
+						function (req) 
+						{		
+
+					var err = DesktopContent.getXMLValue(req,"Error");
+					if(err) 
+					{
+						Debug.log(err,Debug.HIGH_PRIORITY);
+
+						Debug.log("There were errors loading the mockup version.\n\n" +
+								"Please see the detailed Errors below:",Debug.HIGH_PRIORITY);
+
+						//try to power through
+					}
+
+					var warns = DesktopContent.getXMLValue(req,"TableWarnings");
+					if(warns)
+						Debug.log("There were warnings found when loading this table " +
+								"(you can treat them as informational):\n\n" +
+								warns,Debug.WARN_PRIORITY);
+
+					var colTypeEls = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnType");
+					var colHdrs = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnHeader");
+
+					var colTypeSplit = colType.split('-')[1];
+					Debug.log("Looking for groupID column in linked to table matching " + colTypeSplit);
+
+					var groupIdCol = -1;
+					var groupIdField;
+					for(var i=0;i<colTypeEls.length;++i)
+						if(colTypeEls[i].getAttribute("value").split('-')[1] == colTypeSplit)
+						{
+							groupIdField = colHdrs[i].getAttribute("value");
+							Debug.log("Found link groupid col " + i + " - " + groupIdField);
+							groupIdCol = i;
+							break;
+						}
+
+					var groupIds = [];
+					if(groupIdCol == -1)
+					{
+						Debug.log("No matching GroupID column found at linked to table!",Debug.HIGH_PRIORITY);						
+					}
+					else
+					{
+						//get unique values of the groupID field, for all records
+						ConfigurationAPI.getSubsetRecords(linkInfo.pairColTable,
+								undefined /*filterList*/,
+								function(records)
+								{
+
+							console.log(records);
+
+							ConfigurationAPI.getUniqueFieldValuesForRecords(
+									linkInfo.pairColTable,
+									records,
+									groupIdField,
+									function(obj)
+									{
+								console.log(obj);
+								
+								try
+								{
+									groupIds = obj[0].fieldUniqueValueArray;
+								}
+								catch(e)
+								{
+									Debug.log("Caught error: " + e);									
+								}
+								
+								localFinishGroupIdDropdown();
+
+									}); //end getUniqueFieldValuesForRecords
+								}); //end getSubsetRecords
+
+					}
+					
+					///////////////////// localFinishGroupIdDropdown
+					function localFinishGroupIdDropdown()
+					{
+						//create dropdown
+
+						str += "<div style='" +
+								"white-space:nowrap;" +
+								"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+								(el.offsetWidth-6+(1?50:0)) +
+								"px; height:" + (el.offsetHeight-8) + "px'>";
+						
+						str += "<select  onkeydown='keyHandler(event)' " +
+								"id='fixedChoice-editSelectBox' " +
+								"style='" + 
+								"float:left;" +
+								//"style='margin:-4px -2px -4px 1px;
+								"width:" + 
+								(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
+						for(var i=0;i<groupIds.length;++i)
+						{			
+							str += "<option value='" + groupIds[i]
+															   + "'>";
+							str += groupIds[i]; //can display however
+							str += "</option>";
+							if(groupIds[i] 
+									   == _editingCellElOldValue)
+								optionIndex = i; //get starting sel index
+						}	
+						str += "</select>";		
+
+						//add arbitrary edit
+						if(true)
+						{
+							str += "<input type='text' " +
+									"id='fixedChoice-editTextBox' " +
+									"style='display:none;" + 
+									"float:left;" +
+									"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+									"width:" + 
+									((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+									"'>";					
+							str += "";
+							str += "</input>";	
+
+							str += "<div style='display:block;" +
+									"margin: 2px 0 -7px 14px;" +
+									"' " + 
+									"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+									"' " +
+									"onclick='handleFixedChoiceEditToggle();' " +
+									"title='Toggle free-form editing' " +
+									"></div>";
+						}
+						
+						str += "</div>";
+						
+						//finish up
+						Debug.log("Finishing up select cell handling...");
+						localFinishUpSelectCell();
+						
+					}	//end localFinishGroupIdDropdown
+						}, //end getSpecificConfiguration request handler
+				0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				); //end XML Request for getSpecificConfiguration		
+
+				//successfully requested groupID values
+				return true;
+			}	//end localHandleDropdownForLinkGroupID
+			
+			
 			if(_useTableLinkDropdown && 
 					colType.indexOf("ChildLink") == 0 &&
 					colType.indexOf("ChildLinkGroupID") < 0 &&
 					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
 			{
+				str += "<div style='" +
+						"white-space:nowrap;" +
+						"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
+						(el.offsetWidth-6+(1?50:0)) +
+						"px; height:" + (el.offsetHeight-8) + "px'>";
+				
 				str += "<select  onkeydown='keyHandler(event)' " +
-						"style='margin:-4px -2px -4px 1px;width:" + 
+						"id='fixedChoice-editSelectBox' " +
+						"style='" + 
+						"float:left;" +
+						//"style='margin:-4px -2px -4px 1px;
+						"width:" + 
 						(el.offsetWidth-6) + "px; height:" + (el.offsetHeight-8) + "px'>";
 				
 
@@ -6780,7 +7376,48 @@
 						optionIndex = i - (useAllTables?0:1); //get starting sel index
 				}	
 				
-				str += "</select>";				
+				str += "</select>";
+				
+				//add arbitrary edit
+				if(true)
+				{
+					str += "<input type='text' " +
+							"id='fixedChoice-editTextBox' " +
+							"style='display:none;" + 
+							"float:left;" +
+							"margin:-2px 0 -" + (el.offsetHeight-10) + "px 0;" +							
+							"width:" + 
+							((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-10) + "px" + 
+							"'>";					
+					str += "";
+					str += "</input>";	
+
+					str += "<div style='display:block;" +
+							"margin: 2px 0 -7px 14px;" +
+							"' " + 
+							"class='treeNode-Value-editIcon' id='fixedChoice-editIcon" +
+							"' " +
+							"onclick='handleFixedChoiceEditToggle();' " +
+							"title='Toggle free-form editing' " +
+							"></div>";
+				}
+				
+				str += "</div>";
+				
+			}
+			else if(_useTableLinkDropdown && 
+								colType.indexOf("ChildLinkUID") == 0 &&
+								localHandleDropdownForLinkUID()) //if column type is ChildLinkUID, use dropdown
+			{
+				//if here then dropdown UIDs were found successfully
+				return true;
+			}
+			else if(_useTableLinkDropdown && 
+								colType.indexOf("ChildLinkGroupID") == 0 &&
+								localHandleDropdownForLinkGroupID()) //if column type is ChildLinkGroupID, use dropdown
+			{
+				//if here then dropdown UIDs were found successfully
+				return true;
 			}
 			else if(colType == "FixedChoiceData")
 			{		
@@ -6815,7 +7452,7 @@
 							{
 								str += "<div style='" +
 										"white-space:nowrap;" +
-										"margin:-4px -2px -4px 1px;width:" + 						
+										"margin:0px -2px -4px 1px;width:" +//"margin:-4px -2px -4px 1px;width:" + 						
 										(el.offsetWidth-6+(allowFixedChoiceArbitraryEdit?50:0)) +
 										"px; height:" + (el.offsetHeight-8) + "px'>";
 
@@ -6960,72 +7597,97 @@
 						">";
 			}
 			
-
-			//Add OK | CANCEL
-			//	if link, add GOTO 'button'
-			{
-				var controlString;  
-				
-				if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
-				{
-					var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
-							_version + "\\\");";
-					
-					var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
-					controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
-					w += ("width:95px;").length;
-					controlString += "width:150px;"; //needs to be wider
-					controlString += _OK_CANCEL_DIALOG_STR.substr(w,
-							_OK_CANCEL_DIALOG_STR.length-6-w);//remove closing </div>
-					controlString += " | " +
-							"<a class='popUpOkCancel' href='#' onclick='setupSpecificConfig(\"" + 
-							_editingCellElOldValue +
-							"\",\"\",\"" + backLinkStr + "\"); event.stopPropagation();' " +
-							"onmouseup='event.stopPropagation();'" +
-							"style='color:rgb(44, 44, 187);' " +
-							"title='Go-to Link Table' " +
-							">" +
-							"<b style='color:rgb(44, 44, 187);font-size: 16px;'>Goto</b></a>";
-					controlString += "</div>";
-				}
-				else
-					controlString = _OK_CANCEL_DIALOG_STR;
-				
-				str += controlString;
-			}
-				
-			
-					
-			
-			
-			el.innerHTML = str;
-
-			if(_useTableLinkDropdown && 
-					colType.indexOf("ChildLink") == 0 &&
-					colType.indexOf("ChildLinkGroupID") < 0 &&
-					colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();
-			}
-			else if(colType == "FixedChoiceData")
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();				
-			}
-			else if(colType == "MultilineData")
-				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
-			else if(colType == "YesNo" || 
-					colType == "TrueFalse" || 
-					colType == "OnOff")  //if column type is boolean, use dropdown
-			{
-				el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-				el.getElementsByTagName("select")[0].focus();				
-			}
-			else //select text box
-				ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
-			
+			localFinishUpSelectCell();
 			return true;
+			
+			///////////// localFinishUpSelectCell
+			function localFinishUpSelectCell(doAddNormalTextInput)
+			{
+				if(doAddNormalTextInput)
+				{
+					str += "<input type='text' onkeydown='keyHandler(event)' style='margin:-4px -2px -4px -1px;width:" + 
+							((el.offsetWidth>150?el.offsetWidth:150)-6) + "px; height:" + (el.offsetHeight-8) + "px' value='";
+					str += _editingCellElOldValue.replace(/'/g, "&apos;"); //replace single quotes since within html
+					str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
+							"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +
+							">";
+				}
+	
+				//Add OK | CANCEL
+				//	if link, add GOTO 'button'
+				{
+					var controlString;  
+					
+					if(colType.indexOf("ChildLink-") == 0 && _editingCellElOldValue != "NO_LINK")
+					{
+						var backLinkStr = "setupSpecificConfig(\\\"" + _currentConfigName + "\\\",\\\"" + 
+								_version + "\\\");";
+						
+						var w = _OK_CANCEL_DIALOG_STR.indexOf("width:95px;");
+						controlString = _OK_CANCEL_DIALOG_STR.substr(0,w);
+						w += ("width:95px;").length;
+						controlString += "width:150px;"; //needs to be wider
+						controlString += _OK_CANCEL_DIALOG_STR.substr(w,
+								_OK_CANCEL_DIALOG_STR.length-6-w);//remove closing </div>
+						controlString += " | " +
+								"<a class='popUpOkCancel' href='#' onclick='setupSpecificConfig(\"" + 
+								_editingCellElOldValue +
+								"\",\"\",\"" + backLinkStr + "\"); event.stopPropagation();' " +
+								"onmouseup='event.stopPropagation();'" +
+								"style='color:rgb(44, 44, 187);' " +
+								"title='Go-to Link Table' " +
+								">" +
+								"<b style='color:rgb(44, 44, 187);font-size: 16px;'>Goto</b></a>";
+						controlString += "</div>";
+					}
+					else
+						controlString = _OK_CANCEL_DIALOG_STR;
+					
+					str += controlString;
+				}
+						
+				
+				//give focus to created element
+				
+				el.innerHTML = str;
+	
+//				if(_useTableLinkDropdown && 
+//						colType.indexOf("ChildLink") == 0 &&
+//						colType.indexOf("ChildLinkGroupID") < 0 &&
+//						colType.indexOf("ChildLinkUID") < 0) //if column type is ChildLink, use dropdown
+//				{
+//					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+//					el.getElementsByTagName("select")[0].focus();
+//				}
+//				else if(colType.indexOf("ChildLinkUID") == 0 || )
+				if(colType.indexOf("ChildLink") == 0) //for all child link types, including ID and GroupID
+				{
+					if(el.getElementsByTagName("select").length)
+					{
+						el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+						el.getElementsByTagName("select")[0].focus();						
+					}
+					else //assume text box
+						ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+				}
+				else if(colType == "FixedChoiceData")
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else if(colType == "MultilineData")
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,_editingCellElOldValue.length);					
+				else if(colType == "YesNo" || 
+						colType == "TrueFalse" || 
+						colType == "OnOff")  //if column type is boolean, use dropdown
+				{
+					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
+					el.getElementsByTagName("select")[0].focus();				
+				}
+				else //select text box
+					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("input")[0],0,_editingCellElOldValue.length);
+			} //end localFinishUpSelectCell()
+			
 		}				
 		
 		//bodyMouseHandler ~~
@@ -7348,7 +8010,7 @@
 
 				var str = "<a id='" + 
 						"popUpDialog" + 
-						"-header' href='#' onclick='var el = document.getElementById(" +
+						"-header' onclick='var el = document.getElementById(" +
 						"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 				str += "<div id='popUpDialog-div'>";				
@@ -7415,7 +8077,7 @@
 
 			document.getElementById("display").appendChild(el); //add element to display div
 			el.style.display = "block";
-		}
+		} //end popUpGroupViewAliasForm
 		
 		//popUpGroupViewAliasFormSubmit ~~
 		function popUpGroupViewAliasFormSubmit(groupName,groupKey)
@@ -7532,7 +8194,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -7593,7 +8255,7 @@
 						modTblStr += ",";
 
 
-					modTblStr += "<a style='color:black' href='#' onclick='" +								
+					modTblStr += "<a style='color:black' onclick='" +								
 							"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 							" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 							"title='Click to edit the comment for this group' " +
@@ -7617,7 +8279,7 @@
 				str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 						"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 						"var forFirefox = (el.checked = !el.checked);" +
 						" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -7629,7 +8291,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -7730,7 +8392,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='" +
+						str += "<a onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -8687,15 +9349,20 @@
 							else
 								newValue = sel[0].options[sel[0].selectedIndex].value; //assume the first select dropbox in the cell is the one
 						}
+						else if(treeEditingNodeType_ == "delete-uid" && //take from old value if deleting this node programatically (not from user clicking directly)
+								(sel = _editingCellEl.getElementsByTagName("input")).length == 0)
+							newValue = treeEditingNodeInitValue_; 
 						else
 							newValue = _editingCellEl.getElementsByTagName("input")[0].value;
 
 						newValue = encodeURIComponent(newValue.trim());
-					}
+					} //end extraction of newValue based on type
 
 					Debug.log("CfgGUI editTreeNodeOK editing " + treeEditingNodeType_ + " node = " +
 							newValue);
 
+					//check if value was modified, and if it should have been
+					
 					if(encodeURIComponent(treeEditingNodeInitValue_) == newValue)
 					{
 						//some types allow no change
@@ -8992,9 +9659,16 @@
 						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
 								treeEditingNodeParentIdString_.split('-')[1],false);
 						pel.innerHTML = "";
+
+						//check if parent is now empty in treeViewHandler()
 						toggleTreeChildren(treeEditingNodeParentIdString_.split('-')[0],
 								treeEditingNodeParentIdString_.split('-')[1],true);
+						
+						Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
+						
 
+						
+						
 					}
 					else if(treeEditingNodeType_.indexOf("link-") == 0)
 					{
@@ -10838,7 +11512,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -10900,7 +11574,7 @@
 			
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -10955,7 +11629,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11007,7 +11681,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11097,7 +11771,7 @@
 			
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 			
 			str += "<div id='popUpDialog-div'>";
@@ -11118,7 +11792,7 @@
 				//Note: 1/13/2017 - changed to always using cached comment 
 				//give option to use cached comment
 				//			if(_cachedTableComment != "") 			
-				//				str += "<a href='#' onclick='" + 
+				//				str += "<a onclick='" + 
 				//					"var el = document.getElementById(" +
 				//					"\"popUpDialog-comment\"); el.value = _cachedTableComment; return false;' " +
 				//					"title='Load the cached comment associated with last persistent version " +
@@ -11179,7 +11853,7 @@
 							modTblStr += ",";
 						
 												
-						modTblStr += "<a style='color:black' href='#' onclick='" +								
+						modTblStr += "<a style='color:black' onclick='" +								
 								"var forFirefox = handleGroupCommentToggle(\"" + xmlGroupName + "\");" +								
 								" handlePopUpHeightToggle(" + h + "," + gh + ");' " +
 								"title='Click to edit the comment for this group' " +
@@ -11203,7 +11877,7 @@
 					str += "<input type='checkbox' id='popUpDialog-bumpGroupVersions' checked " +
 							"onclick='handlePopUpHeightToggle(" + h + "," + gh + ");'>";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='" +
+					str += "<a onclick='" +
 							"var el = document.getElementById(\"popUpDialog-bumpGroupVersions\");" +
 							"var forFirefox = (el.checked = !el.checked);" +
 							" handlePopUpHeightToggle(" + h + "," + gh + "); return false;'>";
@@ -11215,7 +11889,7 @@
 					str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 							">";
 					//add link so text toggles checkbox
-					str += "<a href='#' onclick='" +
+					str += "<a onclick='" +
 							"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 							"if(el.disabled) return false; " +
 							"var forFirefox = (el.checked = !el.checked);" +
@@ -11317,7 +11991,7 @@
 									(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 									">";
 							//add link so text toggles checkbox
-							str += "<a href='#' onclick='" +
+							str += "<a onclick='" +
 									"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 									"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 									" return false;'>";
@@ -11433,7 +12107,7 @@
 
 			var str = "<br><a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11463,7 +12137,7 @@
 				str += "<input type='checkbox' id='popUpDialog-activateBumpedGroupVersions' checked " +
 						">";
 				//add link so text toggles checkbox
-				str += "<a href='#' onclick='" +
+				str += "<a onclick='" +
 						"var el = document.getElementById(\"popUpDialog-activateBumpedGroupVersions\");" +
 						"if(el.disabled) return false; " +
 						"var forFirefox = (el.checked = !el.checked);" +
@@ -11543,7 +12217,7 @@
 								(groupOptionIndex[i][0] >= 0?"checked":"") + //check if has an alias already
 								">";
 						//add link so text toggles checkbox
-						str += "<a href='#' onclick='" +
+						str += "<a onclick='" +
 								"var el = document.getElementsByClassName(\"popUpDialog-setGroupAlias\");" +
 								"var forFirefox = (el[" + i + "].checked = !el[" + i + "].checked);" +
 								" return false;'>";
@@ -11656,7 +12330,7 @@
 			var defaultAlias = (myAlias && myAlias != "")? myAlias: "mySystemAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11751,7 +12425,7 @@
 			var defaultAlias = "myAlias";
 			var str = "<a id='" + 
 					"popUpDialog" + 
-					"-header' href='#' onclick='var el = document.getElementById(" +
+					"-header' onclick='var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";
@@ -11767,7 +12441,11 @@
 					"document.getElementById(\"popUpDialog-alias\").value" +
 					",\"" + 
 					_currentConfigName + "\",\"" + 
-					_version + "\"); ";
+					_version + "\",0,/*done handler*/ function()" +
+							"{setupSpecificConfig(\"" + 
+							_currentConfigName + "\",\"" + 
+							_version + "\");}" + 
+						"); ";
 			onmouseupJS += "var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
 			
@@ -11797,11 +12475,23 @@
 			editCellOK(); //editCellCancel();
 			Debug.log("CfgGUI uploadTableFromCSV _tableUploadStr = " + _tableUploadStr);
 
-			var doReplace = document.getElementById("popUpDialog-replaceData").checked;
-			var doAppend = document.getElementById("popUpDialog-appendData").checked;
+			var uploadStyle = document.getElementById("popUpDialog-uploadStyleSelect").value | 0;
+
+			Debug.log("CfgGUI uploadTableFromCSV uploadStyle = " + uploadStyle);
+			
+			var doReplace = uploadStyle == 0;
+			var doAppend = uploadStyle == 1 || uploadStyle == 2 || uploadStyle == 3;
 			Debug.log("CfgGUI uploadTableFromCSV doReplace = " + doReplace);
 			Debug.log("CfgGUI uploadTableFromCSV doAppend = " + doAppend);
 			
+			//			"Replace all current records with uploaded records", 			//0
+			//			"Append all uploaded records to current table", 				//1
+			//			"Append only uploaded records without conflicting UIDs",		//2
+			//			"Append all uploaded records and replace conflicting UIDs",		//3
+			//			"Prepend all uploaded records to current table",				//4
+			//			"Prepend only uploaded records without conflicting UIDs",		//5
+			//			"Prepend all uploaded records and replace conflicting UIDs"		//6
+						
 			//clean up [[ ]] from bitmap
 			// may only be necessary for backwards compatibility?
 			{
@@ -11943,26 +12633,151 @@
 			//FIRST, always get rows up to data offset
 			localInsertCurrentData(0,_CONFIG_DATA_ROW_OFFSET-1);
 			
+			var uploadStartRow = -1;
+			var existingStartRow = -1;
+			var uploadSize = -1;
+			var existingSize = -1;
+			
 			if(!doAppend) //prepending or replacing data, so add first
 			{
+				uploadStartRow = rowOffset;
 				localInsertSourceData();
+				uploadSize = rowOffset - uploadStartRow;
 			}
 			
 			if(!doReplace) //get current values from table
 			{
+				existingStartRow = rowOffset;
 				localInsertCurrentData(_CONFIG_DATA_ROW_OFFSET);
+				existingSize = rowOffset - existingStartRow;
 			}
 			
 			if(doAppend) //appending or replacing data, so add last
 			{
+				uploadStartRow = rowOffset;
 				localInsertSourceData();
+				uploadSize = rowOffset - uploadStartRow;
 			}
+			
+			
+			//now remove conflicting UIDs based on uploadStyle
+			Debug.log("CfgGUI uploadTableFromCSV uploadStartRow = " + uploadStartRow);
+			Debug.log("CfgGUI uploadTableFromCSV existingStartRow = " + existingStartRow);
+			Debug.log("CfgGUI uploadTableFromCSV uploadSize = " + uploadSize);
+			Debug.log("CfgGUI uploadTableFromCSV existingSize = " + existingSize);
+			var colUID = -1;
+			for(var j=0;j<colTypes.length;++j)
+				if(colTypes[j] == "UID")
+				{colUID = j; break;}
+			
+			if(colUID == -1)
+			{
+				Debug.log("Could not find UID column during upload!", Debug.HIGH_PRIORITY);
+				return;
+			}
+			
+			if(!_tableViewIsTransposed && uploadStyle != 1 &&
+					uploadStyle != 4)
+			{
+				//delete conficts
+				for(var j=0;j<uploadSize;++j)
+				{
+					//search for conflict
+					for(var r=0;r<existingSize;++r)
+					{
+						if(cols[r+existingStartRow][colUID] ==
+								cols[j+uploadStartRow][colUID])
+						{
+							Debug.log("Found conflict");							
+
+							if(uploadStyle == 2 || uploadStyle == 5)
+							{
+								//remove from upload
+								cols.splice(j+uploadStartRow,1);
+								if(uploadStartRow < existingStartRow)
+									--existingStartRow;								
+								--uploadSize;
+								--j;
+							}		
+							else if(uploadStyle == 3 || uploadStyle == 6)
+							{
+								//remove from existing table
+								cols.splice(r+existingStartRow,1);
+								if(uploadStartRow > existingStartRow)
+									--uploadStartRow;								
+								--existingSize;
+								--r;								
+							}
+
+							break; //stop search
+						}
+					}
+				}
+				
+			} //end non-transposed handling
+			else //transposed
+			{
+				//delete conficts
+				for(var j=0;j<uploadSize;++j)
+				{
+					//search for conflict
+					for(var r=0;r<existingSize;++r)
+					{
+						if(cols[colUID][r+existingStartRow] ==
+								cols[colUID][j+uploadStartRow])
+						{
+							Debug.log("Found conflict");							
+
+							if(uploadStyle == 2 || uploadStyle == 5)
+							{
+								//remove from upload
+								
+								//remove from every column
+								for(var c=0;c<cols.length;++c)
+									cols[c].splice(j+uploadStartRow,1);
+								
+								if(uploadStartRow < existingStartRow)
+									--existingStartRow;								
+								--uploadSize;
+								--j;
+							}		
+							else if(uploadStyle == 3 || uploadStyle == 6)
+							{
+								//remove from existing table
+								
+								//remove from every column
+								for(var c=0;c<cols.length;++c)
+									cols[c].splice(r+existingStartRow,1);
+								
+								if(uploadStartRow > existingStartRow)
+									--uploadStartRow;								
+								--existingSize;
+								--r;								
+							}
+
+							break; //stop search
+						}
+					}
+				}
+				
+			}  //end transposed handling
+						
 			
 
 			//create output string based on cols
-			str += createTableViewOutputStr(cols,colTypes,
+			try
+			{
+				str += createTableViewOutputStr(cols,colTypes,
 					false /*transpose output*/,true /*cols is array*/);
-			
+			}
+			catch(e)
+			{
+				Debug.log(e);
+				Debug.log("There was a problem importing the CSV file. There may have been a mismatch in the " +
+						"number of columns. Please check the compatibility of the imported data.", 
+						Debug.HIGH_PRIORITY);
+				return;
+			}
 			el.innerHTML = str;	
 			
 			//on succes remove popup
@@ -11990,12 +12805,12 @@
 
 			//set position and size
 			var w = 380;
-			var h = 305;
+			var h = 275;
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
 			
 			var str = "<a id='" + 
 					"popUpDialog" + //clear upload string on cancel!
-					"-header' href='#' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
+					"-header' onclick='_tableUploadStr = \"\"; var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
 
 			str += "<div id='popUpDialog-div'>";	
@@ -12010,43 +12825,122 @@
 					"accept='.csv' enctype='multipart/form-data' />";
 			str += "<br><br>";
 			
-			//add checkbox to replaceData
-			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
-					">";			
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +					
-					"return false;'>";
-			str += "Overwrite current data";
-			str += "</a>";
-			str +=	"</input><br>";
+//			//add checkbox to replaceData
+//			str += "<input type='checkbox' id='popUpDialog-replaceData' checked " +
+//					">";			
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +					
+//					"return false;'>";
+//			str += "Overwrite current data";
+//			str += "</a>";
+//			str +=	"</input><br>";
 			
 
-			//add append or prepend radop
-			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:110px;'> ";
-			str += "<input checked type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-appendData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +
-					"return false;'>";
-			str += "Append";
-			str += "</a>";
-			str +=	"</input><br>";
+			str += "Select your upload method: <br>";
+			str += "<select id='popUpDialog-uploadStyleSelect' style='width:360px'>";
 			
-			//add append or prepend radop
-			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
-			//add link so text toggles checkbox
-			str += "<a href='#' onclick='" +
-					"var el = document.getElementById(\"popUpDialog-prependData\");" +
-					"var forFirefox = (el.checked = !el.checked);" +
-					"return false;'>";
-			str += "Prepend";
-			str += "</a>";
-			str +=	"</input><br>";
+			var selectArr = [
+							 "Replace all current records with uploaded records", 			//0
+							 "Append all uploaded records to current table", 				//1
+							 "Append only uploaded records without conflicting UIDs",		//2
+							 "Append all uploaded records and replace conflicting UIDs",	//3
+							 "Prepend all uploaded records to current table",				//4
+							 "Prepend only uploaded records without conflicting UIDs",		//5
+							 "Prepend all uploaded records and replace conflicting UIDs"	//6
+							 ];
+			for(var j=0;j<selectArr.length;++j)
+			{
+				str += "<option value='" + j + "'>";
+				str += selectArr[j];	//can display however
+				str += "</option>";
+			}
+			str += "</select>";
 			
-			str += "</form>"; //close radio group
+			
+//			//start radio group
+//			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:200px; margin-left:0px;'> ";
+//			
+//			//add append or prepend radio
+//			str += "<input checked type='radio' id='popUpDialog-replaceData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Replace all current records with uploaded records";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append all uploaded records to current table";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append only uploaded records without conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-appendAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-appendAndReplaceNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Append all uploaded records and replace conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend all uploaded records to current table";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend only uploaded records without conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			//add append or prepend radio
+//			str += "<input type='radio' id='popUpDialog-prependAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
+//			//add link so text toggles checkbox
+//			str += "<a onclick='" +
+//					"var el = document.getElementById(\"popUpDialog-prependAndReplaceNewData\");" +
+//					"var forFirefox = (el.checked = !el.checked);" +
+//					"return false;'>";
+//			str += "Prepend all uploaded records and replace conflicting UIDs";
+//			str += "</a>";
+//			str +=	"</input><br>";
+//			
+//			str += "</form>"; //close radio group
 
 			// done with special handling
 			// continue with pop-up prompt
@@ -12082,8 +12976,8 @@
 		}
 		
 		//downloadTableAsCSV ~~
-		// online people complain that this doesn't work for big files.
-		// Note: if files are too big, could have server create csv file
+		// on the internet, people complain that this doesn't work for big files.
+		// Note: if files become too big, could have server create csv file
 		//	then link to <a href='/WebPath/download.csv' download></a>
 		//	Note: href must be  encodeURI(dataStr) if data not already encoded
 		function downloadTableAsCSV()
@@ -12744,7 +13638,7 @@
 					"&version=" + newVersion, 
 					"", 
 					function (req) {		
-				
+
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
 				{
@@ -13230,9 +14124,9 @@
 									 "Hide Table Details":
 									 "Show Table Details",
 							 "Transpose Table View",
-							 _useTableLinkDropdown?
-									 "Disable Table Link Drop-down Assistance":
-									 "Enable Table Link Drop-down Assistance",
+//							 _useTableLinkDropdown?
+//									 "Disable Table Link Drop-down Assistance":
+//									 "Enable Table Link Drop-down Assistance",
 							 "Download Data (CSV)",
 							 "Upload Data (CSV)"
 									 ];
@@ -13241,7 +14135,7 @@
 							 "setupCopyAndMoveRows()",
 							 "toggleTableDetails()",
 							 "transposeTableView()",
-							 "_useTableLinkDropdown = !_useTableLinkDropdown;",
+							 //"_useTableLinkDropdown = !_useTableLinkDropdown;",
 							 "downloadTableAsCSV()",
 							 "popUpUploadCSVTableForm()"													 
 									 ];
@@ -13254,9 +14148,436 @@
 					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
 					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
 			);
-		}
+		} //end createEditTableMenu
 		
-		//createEditTableMenu ~~
+		//createSystemViewMenu ~~
+		function createSystemViewMenu(event, groupAliasesName, groupAliasesVersion, backLinkStr)
+		{
+			var menuItems = [
+							 "Relaunch ots in Normal Mode",
+							 "Relaunch ots in Wiz Mode",
+							 _versionTrackingIsOn?"Turn Version Tracking OFF":"Turn Version Tracking ON",
+							 "Flatten Configuration to System Aliases ONLY",
+							 "Merge Configuration Groups",
+							 "Edit System Aliases",
+							 "Create System Alias for Latest Tables",
+							 "Create System Alias for Active Group"
+									 ];
+			var menuItemHandlers = [
+									"verifyRelaunchNormalMode()",
+									"verifyRelaunchWizMode()",
+									"toggleVersionTracking()",
+									"flattenToSystemAliases()",
+									"mergeGroupsDialog()",
+									"setupSpecificConfig(\"" + 
+									groupAliasesName + "\",\"" +
+									groupAliasesVersion + "\",\"" + backLinkStr + "\")",
+									"popUpGroupAliasForm(1)",
+									"popUpGroupAliasForm(0);"									
+									];
+			
+			Debug.log("createEditTableMenu()");
+			SimpleContextMenu.createMenu(
+					menuItems,
+					menuItemHandlers,
+					"editTableMenu",					//element ID
+					event.pageX-1,event.pageY-1, 		//top left position
+					_CONTEXT_MENU_PRIMARY_COLOR, 		//primary color
+					_CONTEXT_MENU_SECONDARY_COLOR		//secondary color
+			);
+		} //end createSystemViewMenu
+		
+		//mergeGroupsDialog ~~
+		function mergeGroupsDialog()
+		{
+			Debug.log("mergeGroupsDialog");
+			
+			var el = document.getElementById("popUpDialog");
+			if(!el)
+			{
+				el = document.createElement("div");			
+				el.setAttribute("id", "popUpDialog");
+			}
+			el.style.display = "none";
+
+			//set position and size
+			var w = 500;
+			var h = 295;
+			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/);
+			
+			//show choices for context and config groups
+			
+			var str = "<a id='" + 
+					"popUpDialog" + 
+					"-header' onclick='var el = document.getElementById(" +
+					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+			
+			
+			//get existing group aliases	
+			///////////////////////////////////////////////////////////
+			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups" +	
+					"",
+					"",
+					function(req) 
+					{
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					el.innerHTML = str;
+					return;
+				}
+				
+				var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
+				var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
+				var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+
+				var groupName, lastGroupName;
+				
+				//Two group types here:	"Context" "Configuration"
+			
+				str += "<div id='popUpDialog-div'>";
+				str += "Please select a pair of context and/or configuration groups to merge. (If you would like to target " + 
+						"just one pair of groups, then leave the other pair of group names blank.)" + 
+						"<br><br>";
+				str += "<center>";
+				
+				str += "<table>"+
+					"<tr><td></td><td>Name</td><td>Key</td></tr>";
+				
+				str += "<tr><td style='text-align:right'>Context Group-A: </td><td>";
+					
+				str += "<select id='select-ContextA' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Context")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ContextA-key-el'>" +
+						"<select id='select-ContextA-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				str += "<tr><td style='text-align:right'>Context Group-B: </td><td>";
+
+				str += "<select id='select-ContextB' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Context")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ContextB-key-el'>" +
+						"<select id='select-ContextB-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				
+				str += "<tr><td style='text-align:right'>Config Group-A: </td><td>";
+
+				str += "<select id='select-ConfigA' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Configuration")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ConfigA-key-el'>" +
+						"<select id='select-ConfigA-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				str += "<tr><td style='text-align:right'>Config Group-B: </td><td>";
+
+				str += "<select id='select-ConfigB' style='width:200px'>";
+				str += "<option value=''></option>"; //add blank option
+				lastGroupName = "";
+				for(var j=0;j<groupNames.length;++j)
+				{
+					if(types[j].getAttribute("value") == "Configuration")
+					{							
+						groupName = groupNames[j].getAttribute("value");
+						if(lastGroupName == groupName) continue;
+						str += "<option value='" + groupName + "'>";
+						str += groupName;	//can display however
+						str += "</option>";
+						lastGroupName = groupName;
+					}
+				}
+				str += "</select>";
+				str += "</td><td id='select-ConfigB-key-el'>" +
+						"<select id='select-ConfigB-key' style='width:85px'>";
+				str += "<option value=''></option>"; //add blank option
+				str += "</select>";
+				str += "</td></tr>";
+				
+				
+				//Merge approach
+				str += "<tr><td colspan='3' style='text-align:center' title='" +
+						"Choose the method for handling record conflicts when merging Group-B records into Group-A,\n" + 
+						"i.e. if a B record has the same UID as an A record, do you want to skip the B record, replace\n" + 
+						"the A record, or rename the B record." +
+						"'>Merge Conflict Approach: ";
+
+				str += "<select id='select-MergeApproach' style='width:85px'>";
+				var approaches = ["Skip", "Replace", "Rename"];
+				for(var j=0;j<approaches.length;++j)
+				{
+					str += "<option value='" + approaches[j] + "'>";
+					str += approaches[j];	//can display however
+					str += "</option>";				
+				}
+				str += "</select>";
+				str += "</td></tr>";
+				
+				str += "</table>";
+				
+				
+				
+				str += "</center>";
+
+				str += "</div><br>"; //close main popup div
+				
+				var onmouseupJS = "";
+				onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";				
+				onmouseupJS += "mergeGroups(" +
+						"document.getElementById(\"select-ContextA\").value," +
+						"document.getElementById(\"select-ContextA-key\").value," +
+						"document.getElementById(\"select-ContextB\").value," +
+						"document.getElementById(\"select-ContextB-key\").value," +
+						"document.getElementById(\"select-ConfigA\").value," +
+						"document.getElementById(\"select-ConfigA-key\").value," +
+						"document.getElementById(\"select-ConfigB\").value," +
+						"document.getElementById(\"select-ConfigB-key\").value," +
+						"document.getElementById(\"select-MergeApproach\").value," +
+						");";					
+
+				str += "<input id='popUpDialog-submitButton' type='button' onmouseup='" + 
+						onmouseupJS + "' " +
+						"value='Merge Groups' title='" +
+						"Merge Group-B records into Group-A using the record conflict handling method selected." +
+						"'/>";
+				el.innerHTML = str;
+
+				///////////////////////////////////////////
+				document.getElementById("select-ContextA").onchange = 
+						document.getElementById("select-ContextB").onchange = 
+								document.getElementById("select-ConfigA").onchange = 
+										document.getElementById("select-ConfigB").onchange= function() {					
+					
+					Debug.log(this.id + " changed to " + this.value);
+					var el = document.getElementById(this.id  + "-key-el");
+					var type = this.id.length > 14?"Context":"Configuration";
+					
+					var str = "";
+					str += "<select id='" + this.id  + "-key' style='width:85px'>";
+					for(var j=0;j<groupNames.length;++j)
+					{
+						if(groupNames[j].getAttribute("value") == this.value &&
+								types[j].getAttribute("value") == type)
+						{							
+							str += "<option value='" + keys[j].getAttribute("value") + "'>";
+							str += keys[j].getAttribute("value");	//can display however
+							str += "</option>";
+						}
+					}
+					str += "</select>";
+					
+					el.innerHTML = str;
+					
+				}  //end select-group change handler
+
+
+					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			); //end of getConfigurationGroups handler
+
+
+			document.getElementById("display").appendChild(el); //add element to display div
+			el.style.display = "block";
+			
+			
+		} //end mergeGroupsDialog
+		
+		//mergeGroups
+		function mergeGroups(groupANameContext, groupAKeyContext, groupBNameContext, groupBKeyContext, 
+				groupANameConfig, groupAKeyConfig, groupBNameConfig, groupBKeyConfig, mergeApproach)
+		{			
+			DesktopContent.XMLHttpRequest("Request?RequestType=mergeGroups" +
+					"&groupANameContext="+groupANameContext.trim() +
+					"&groupAKeyContext="+groupAKeyContext+
+					"&groupBNameContext="+groupBNameContext.trim() +
+					"&groupBKeyContext="+groupBKeyContext+
+					"&groupANameConfig="+groupANameConfig.trim() +
+					"&groupAKeyConfig="+groupAKeyConfig+
+					"&groupBNameConfig="+groupBNameConfig.trim() +
+					"&groupBKeyConfig="+groupBKeyConfig+
+					"&mergeApproach="+mergeApproach+
+					"", "", 
+								function (req)
+								{				
+							var err = DesktopContent.getXMLValue(req,"Error");
+							if(err) 
+							{
+								Debug.log(err,Debug.HIGH_PRIORITY);
+								Debug.log("Error! The merger of the two group pairs, " + 
+										groupANameContext + "(" + groupAKeyContext + ") & " +
+										groupBNameContext + "(" + groupBKeyContext + "), and " +
+										groupANameConfig + "(" + groupAKeyConfig + ") & " +
+										groupBNameConfig + "(" + groupBKeyConfig + "), " +
+										"failed...",Debug.HIGH_PRIORITY);
+								
+								try
+								{
+									//attempt to re-enable submit button in dialog (if there)
+									document.getElementById("popUpDialog-submitButton").disabled = false;
+								} catch(e){} //ignore error
+								
+								return;
+							}
+							
+							//open newly created group
+							var contextGroupName = DesktopContent.getXMLValue(req,"ContextGroupName");
+							var contextGroupKey = DesktopContent.getXMLValue(req,"ContextGroupKey");
+							var didContextMerge = contextGroupName && contextGroupName != "";
+
+							if(didContextMerge)
+							{
+								Debug.log("The context groups, " + groupANameContext + "(" + groupAKeyContext + ") & " +
+										groupBNameContext + "(" + groupBKeyContext + "), were successfully merged into a new group, " + 
+										contextGroupName + "(" + contextGroupKey + ")!",Debug.INFO_PRIORITY);
+								Debug.log("Click to <a onclick='activateSystemConfig(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>Activate " + 
+										contextGroupName + "(" + contextGroupKey + ")</a> (to avoid errors, activate the config group before the context group). or goto " + 
+										"<a onclick='setupSpecificConfigGroup(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>" + 
+										contextGroupName + "(" + contextGroupKey + ") Group-view</a> or " + 
+										"<a onclick='setupConfigGroupTreeView(\"" +
+										contextGroupName + "\",\"" + contextGroupKey + "\");'>" + 
+										contextGroupName + "(" + contextGroupKey + ") Tree-view</a>!"
+										,Debug.INFO_PRIORITY);
+							}
+							else
+								Debug.log("Skipped merger of context groups due to empty group name.", Debug.INFO_PRIORITY);
+							
+							var configGroupName = DesktopContent.getXMLValue(req,"ConfigGroupName");
+							var configGroupKey = DesktopContent.getXMLValue(req,"ConfigGroupKey");
+							var didConfigMerge = configGroupName && configGroupName != "";
+
+							if(didConfigMerge)
+							{
+								Debug.log("The config groups, " + groupANameConfig + "(" + groupAKeyConfig + ") & " +
+										groupBNameConfig + "(" + groupBKeyConfig + "), were successfully merged into a new group, " + 
+										configGroupName + "(" + configGroupKey + ")!",Debug.INFO_PRIORITY);
+								Debug.log("Click here to <a onclick='activateSystemConfig(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>Activate " + 
+										configGroupName + "(" + configGroupKey + ")</a> (to avoid errors, activate the config group before the context group), or goto " + 
+										"<a onclick='setupSpecificConfigGroup(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
+										configGroupName + "(" + configGroupKey + ") Group-view</a> or " + 
+										"<a onclick='setupConfigGroupTreeView(\"" +
+										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
+										configGroupName + "(" + configGroupKey + ") Tree-view</a>!"
+										,Debug.INFO_PRIORITY);
+							}
+							else
+								Debug.log("Skipped merger of config groups due to empty group name.", Debug.INFO_PRIORITY);
+							
+							//decide on next view
+//							if(didContextMerge && !didConfigMerge) //group view							
+//								setupSpecificConfigGroup(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
+//							else if(!didContextMerge && didConfigMerge) //group view							
+//								setupSpecificConfigGroup(configGroupName,configGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
+//							else //both, so tree view of contex
+//								setupConfigGroupTreeView(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/)
+							
+								}, //end handler
+							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					);							
+		} //end mergeGroups
+
+		//flattenToSystemAliases ~~
+		function flattenToSystemAliases()
+		{
+			Debug.log("flattenToSystemAliases");
+			DesktopContent.popUpVerification("Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=flattenToSystemAliases",
+						"",
+						handleFlattenSystemAliasesResponse,0);
+					},0,"#efeaea",0,"#770000");			
+		} //end flattenToSystemAliases
+		
+		//toggleVersionTracking ~~
+		function toggleVersionTracking()
+		{
+			Debug.log("toggleVersionTracking init=" + _versionTrackingIsOn);
+
+			DesktopContent.popUpVerification("Are you sure you want to turn " + 
+					(_versionTrackingIsOn?"OFF":"ON") + " your configuration version tracking?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=" +
+						(_versionTrackingIsOn?"OFF":"ON"),
+						"",
+						versionTrackingHandler,0);
+					},0,"#efeaea",0,"#770000");
+		} //end toggleVersionTracking
+
+		//verifyRelaunchWizMode ~~
+		function verifyRelaunchWizMode()
+		{
+			Debug.log("verifyRelaunchWizMode");
+			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Wiz Mode?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
+						"",
+						handleOtsRelaunchResponse,0);
+					},0,"#efeaea",0,"#770000");
+		} //end verifyRelaunchWizMode
+		
+		//verifyRelaunchNormalMode ~~
+		function verifyRelaunchNormalMode()
+		{
+			Debug.log("verifyRelaunchNormalMode");
+			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Normal Mode?",
+					function() 
+					{ 
+				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
+						"",
+						handleOtsRelaunchResponse,0);
+					},0,"#efeaea",0,"#770000");
+		} //end verifyRelaunchNormalMode
+		
+		//createTreeViewMenu ~~
 		function createTreeViewMenu(event)
 		{
 			var menuItems = [
@@ -13309,7 +14630,7 @@
 					_CONTEXT_MENU_PRIMARY_COLOR, 	//primary color
 					_CONTEXT_MENU_SECONDARY_COLOR	//secondary color
 			);
-		}
+		} //end createTreeViewMenu
 
 		//getTableViewColTypes ~~
 		//	returns column types for each column and specially indicates the columns 
@@ -13512,16 +14833,24 @@
 					//cell value
 					//first column is row numbers
 					if(c == 0 && r >= _CONFIG_DATA_ROW_OFFSET)
-					{							
+					{				
+						str += "<center>";
 						str += (_dataOffset + (r-_CONFIG_DATA_ROW_OFFSET));	//insert row index column
-
+						str += "<br>";
+						
 						//add +/- row controls
-						str += "<br><a href='#' onclick='addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "<a class='tableAddRowButton' " +
+								"title='Add a row before this row.' " +
+								"onclick='addRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "+";
 						str += "</a>";
-						str += "/<a href='#' onclick='deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
+						str += "/";
+						str += "<a  class='tableDeleteRowButton' " +
+								"title='Delete this row.' " +
+								"onclick='deleteRow(" + (r-_CONFIG_DATA_ROW_OFFSET) + "); return false;'>";
 						str += "-";
 						str += "</a>";	
+						str += "</center>";
 					}
 					else if(c == 0 && r == _CONFIG_DATA_ROW_OFFSET-1)
 						str += "Row";

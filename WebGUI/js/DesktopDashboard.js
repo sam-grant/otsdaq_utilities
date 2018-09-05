@@ -186,7 +186,7 @@ else {
 			var numOfWindows = Desktop.desktop.getNumberOfWindows();
 			
 			//cycle through different modes where the various windows get a bigger spot
-			if(++_windowOrganizeMode < 0 || _windowOrganizeMode >= numOfWindows)
+			if(++_windowOrganizeMode < 0 || _windowOrganizeMode > numOfWindows)
 				_windowOrganizeMode = 0; //wrap-around
 			
 			//for all modes, except 0, add a spot

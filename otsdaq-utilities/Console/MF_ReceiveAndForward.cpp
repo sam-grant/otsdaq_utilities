@@ -210,8 +210,10 @@ int main(int argc, char** argv)
 
 	time_t count = 0;
 
-	int mf_p,mf_i; //for extracting message
+	int mf_p,mf_i,mf_j; //for extracting message
+	const int MF_POS_OF_TYPE = 5;
 	const int MF_POS_OF_MSG = 11;
+	bool firstPartPresent;
 
 	//this should ip/port of Console xdaq app Receiver port
 	sendSockfd = makeSocket(myFwdIP_.c_str(), myFwdPort, p);
@@ -268,12 +270,38 @@ int main(int argc, char** argv)
 			//			}
 
 			//count markers to find message
-			for(mf_p=0,mf_i=0;mf_i<numbytes && mf_p<MF_POS_OF_MSG;++mf_i)
+
+			//std::cout << "|||" << buff << std::endl; // show all
+
+			for(mf_p=0,mf_i=0;mf_i<numbytes && mf_p<MF_POS_OF_TYPE;++mf_i)
 				if(buff[mf_i] == '|') ++mf_p; //count markers
 
+			for(mf_j=mf_i;mf_j<numbytes && mf_p<MF_POS_OF_TYPE+1;++mf_j)
+				if(buff[mf_j] == '|') ++mf_p; //count markers
+
+			//print first part (message type)
+			if(mf_i<mf_j && mf_j<numbytes)
+			{
+				buff[mf_j-1] = '\0';
+				std::cout << &buff[mf_i-1];
+
+				//tab for all types but Warning
+				if(strcmp(&buff[mf_i-1],"|Warning") != 0)
+					std::cout << "\t";
+
+				firstPartPresent = true;
+			}
+			else
+				firstPartPresent = false;
+
+			for(mf_i=mf_j;mf_i<numbytes && mf_p<MF_POS_OF_MSG;++mf_i)
+				if(buff[mf_i] == '|') ++mf_p; //count markers
+
+			//print second part
 			if(mf_i<numbytes) //if valid find, show message
-				std::cout << &buff[mf_i-1] << std::endl; // show leading '|' then msg
-			//std::cout << buff << std::endl; // show all
+				std::cout << &buff[mf_i-1] << std::endl; // show msg after '|'
+			else if(firstPartPresent)
+				std::cout << std::endl;
 
 
 
