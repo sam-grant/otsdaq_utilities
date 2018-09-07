@@ -293,7 +293,7 @@ Debug.errorPop = function(err,severity) {
 				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
-					"<div style='display: block; width: 0; height: 0; border-left: 6px dotted transparent; border-right: 6px dotted transparent; border-top: 8px solid white;'></div>" +
+					"<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid white;'></div>" +
 					"<div style='position: relative; top: 5px; width: 12px; height: 2px; display: block; background-color: white;'></div>" +				
 				"</div>" +
 				"</div><br>" +
