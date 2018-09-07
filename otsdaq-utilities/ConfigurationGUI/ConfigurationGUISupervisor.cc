@@ -1144,7 +1144,7 @@ try
 			__SUP_SS__ << "Failed to determine type of configuration group for " << rootGroupName << "(" <<
 					rootGroupKey << ")! " << e.what() << std::endl;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		//else assume it was the intention to just consider the active groups
@@ -1767,7 +1767,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 		}
 
 		if(fieldPaths.size() != fieldValues.size())
-			{__SUP_SS__; throw std::runtime_error(ss.str()+"Mismatch in fields and values array size!");}
+			{__SUP_SS__; __THROW__(ss.str()+"Mismatch in fields and values array size!");}
 
 		//extract record list
 		{
@@ -2011,7 +2011,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 		{
 			__SUP_SS__ << "Depth of search must be greater than 0." << __E__;
 			__SUP_COUT__ << ss.str();
-			throw std::runtime_error(ss.str()); //done if 0 depth, no fields
+			__SS_THROW__; //done if 0 depth, no fields
 		}
 
 		//do not allow traversing for common fields from root level
@@ -2028,7 +2028,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 			{
 				__SUP_SS__ << "Start path was a disconnected link node!" << std::endl;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 				return; //quietly ignore disconnected links at depth
 				//note: at the root level they will be flagged for the user
 			}
@@ -2215,7 +2215,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 		{
 			__SUP_SS__ << "Start path was a disconnected link node!" << std::endl;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		std::vector<std::string /*relative-path*/> records;
@@ -2628,7 +2628,7 @@ try
 				") is not the currently active version (" << config->getViewVersion()
 				<< ". Try refreshing the tree." << std::endl;
 		__SUP_COUT_WARN__ << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	__SUP_COUT__ << "Active version is " << config->getViewVersion() << std::endl;
@@ -2683,7 +2683,7 @@ try
 	{
 		__SUP_SS__ << "Unrecognized linkIdType '" << linkIdType
 				<< ".'" << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 
@@ -3144,7 +3144,7 @@ try
 						if(paramSubString != "type")
 						{
 							__SUP_SS__ << "Invalid command sequence" << std::endl;
-							throw std::runtime_error(ss.str());
+							__SS_THROW__;
 						}
 						//create command object
 						commands.push_back(IterateConfiguration::Command());
@@ -3523,7 +3523,7 @@ try
 		__SUP_SS__ << "Target table version (" << version <<
 				") is not the currently active version (" << config->getViewVersion()
 				<< ". Try refreshing the tree." << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	unsigned int col = -1;
@@ -3546,7 +3546,7 @@ try
 	else
 	{
 		__SUP_SS__ << "Impossible! Unrecognized edit type: " << type << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//check if the comment value is new before making temporary version
@@ -3559,7 +3559,7 @@ try
 			__SUP_SS__ << "Comment '" << newValue <<
 					"' is the same as the current comment. No need to save change." <<
 					std::endl;
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 	}
@@ -3665,7 +3665,7 @@ try
 				__SUP_SS__ << "Value '" << newValue <<
 						"' is the same as the current value. No need to save change to tree node." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 		}
 		else if(type == "link-UID" || type == "link-GroupID")
@@ -3678,7 +3678,7 @@ try
 				__SUP_SS__ << "Col '" << colName <<
 						"' is not a link column." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 
 			__SUP_COUT__ << "linkPair " << linkPair.first << "," <<
@@ -3800,7 +3800,7 @@ try
 					__SUP_SS__ << "Target table version (" << version <<
 							") is not the currently active version (" << config->getViewVersion()
 							<< ". Try refreshing the tree." << std::endl;
-					throw std::runtime_error(ss.str());
+					__SS_THROW__;
 				}
 
 
@@ -3919,7 +3919,7 @@ try
 							"', and selected group members are the same as the current value. " <<
 							"No need to save changes to tree." <<
 							std::endl;
-					throw std::runtime_error(ss.str());
+					__SS_THROW__;
 				}
 
 				return;	//exit since table inits were already tested
@@ -3930,7 +3930,7 @@ try
 						"' and linkID '" << newLinkId <<
 						"' are the same as the current values. No need to save change to tree node." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 		}
 
@@ -4393,7 +4393,7 @@ try
 	catch(std::runtime_error& e)
 	{
 		//append accumulated errors, because they may be most useful
-		throw std::runtime_error(e.what() + std::string("\n\n") + accumulatedErrors);
+		__THROW__(e.what() + std::string("\n\n") + accumulatedErrors);
 	}
 	catch(...)
 	{
@@ -4612,7 +4612,7 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 
 			//delete temporaryModifiedVersion
 			config->eraseView(temporaryModifiedVersion);
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		__SUP_COUT__ << "Check for duplicate tables complete." << std::endl;
@@ -4735,14 +4735,14 @@ try
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			//delete temporaryVersion
 			config->eraseView(temporaryVersion);
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 		else if(version.isInvalid())
 			__SUP_COUT__ << "This was interpreted as an attempt to create a blank table." << std::endl;
 		else if(version.isScratchVersion())
 			__SUP_COUT__ << "This was interpreted as an attempt to make a persistent version of the scratch table." << std::endl;
 		else
-		{__SUP_SS__; throw std::runtime_error(ss.str()+"impossible!");}
+		{__SUP_SS__; __THROW__(ss.str()+"impossible!");}
 	}
 	else if(retVal < 0 &&
 			(version.isTemporaryVersion() && !makeTemporary))
@@ -4759,7 +4759,7 @@ try
 		__SUP_SS__ << "This should not be possible! Fatal error." << std::endl;
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//note: if sourceTableAsIs, accept equivalent versions
@@ -4817,7 +4817,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	{
 		__SUP_SS__ << "Fatal error managing userLastUseTime_!" << std::endl;
 		__SUP_COUT_ERR__ << "\n" << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 	else if(refresh || (now - userLastUseTime_[mapKey]) >
 	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
@@ -4843,7 +4843,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 			{
 				__SUP_SS__ << "Fatal error erasing configuration manager by key!" << std::endl;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 			userLastUseTime_.erase(it);								//erase by iterator
 

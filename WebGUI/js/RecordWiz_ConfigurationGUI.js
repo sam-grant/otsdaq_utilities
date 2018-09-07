@@ -163,10 +163,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					"The only valid record aliases are as follows: ";
 
 			for(i=_validRecordTypes.length-1;i>=0;--i)
-				str += "<br>\t_validRecordTypes[i]";
+				str += "<br>\t" + _validRecordTypes[i];
 			Debug.log(str,Debug.HIGH_PRIORITY);
-			return;
+			return false;
 		}
+		return true;
 	} //end localParameterCheck()
 	
 	//global vars for creation
@@ -208,7 +209,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	RecordWiz.wiz = this; 
 	
 	
-	if(recordsAliasFastForward == "")
+	if(!recordsAliasFastForward || recordsAliasFastForward == "")
 	{
 		DesktopContent.tooltip("Record Wizard Introduction",
 				"Welcome to the Record Wizard GUI. Here you can create new records for "+
@@ -225,7 +226,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	else
 	{
 		_recordAlias = recordsAliasFastForward;
-		localParameterCheck();
+		if(!localParameterCheck())
+		{
+			Debug.log("Invalid parameters to the Record Creation Wizard!", Debug.HIGH_PRIORITY);
+			return;
+		}
 		
 
 		DesktopContent.tooltip(_recordAlias + " Wizard Introduction",

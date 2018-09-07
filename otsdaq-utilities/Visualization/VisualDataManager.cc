@@ -122,7 +122,7 @@ void VisualDataManager::start(std::string runNumber)
 								{
 								  __SS__ << "No valid visualizer consumer!" << __E__;
 								  __COUT_ERR__ << ss.str();
-								  throw std::runtime_error(ss.str());
+								  __SS_THROW__;
 								}
 							}
 						}

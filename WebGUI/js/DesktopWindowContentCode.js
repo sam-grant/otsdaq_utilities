@@ -735,7 +735,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 				Debug.log("Error: " + errStr,
-						(requestURL.indexOf("TooltipRequest?") >= 0)? 
+						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
 						Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
 						Debug.HIGH_PRIORITY);
 				//alert(errStr);

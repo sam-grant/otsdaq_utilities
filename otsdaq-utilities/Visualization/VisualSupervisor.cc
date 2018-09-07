@@ -770,7 +770,7 @@ void VisualSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 	}
 	//catch(...)
 	//{
-	//	{__SS__;throw std::runtime_error(ss.str()+"Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");}
+	//	{__SS__;__THROW__(ss.str()+"Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");}
 	//}
 }
 

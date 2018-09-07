@@ -69,17 +69,29 @@ SmartLaunch.create = function() {
 
 
 	//functions:			
+	//
 	//	init()
 	//	createElements()
 	//	redrawWindow()
 	//	readEnabledSubsystems()
+	//	getCurrentState()
+	//		- localGetStateHandler()
+	//	displayState()
+	//
 	//	this.launch()
-	//		localLaunch()
-	//		localSetSequenceOfRecords()
+	//		- localLaunch()
+	//		- localSetSequenceOfRecords()
 	//	this.gatewayLaunchOts()
+	//		- localDelayedLaunch()
+	//			-- localCountDown()
+	//	this.run()
+	//		- localStop()	
+	//		- localRun()
 	//
 	//	this.toggleCheckboxDiv(i)
 	//	this.handleCheckbox(c)
+	
+
 	
 	
 	//for display
@@ -96,6 +108,24 @@ SmartLaunch.create = function() {
 	var _systemStatusArray = [];
 	var _contextRecords = [];
 
+	
+
+	//for run state
+	var _state = "";
+	var _inTransition = false;
+	var _wasInTransition = false;
+	var _timeInState = 0;
+	var _transitionPercentComplete = 0;
+	var _runNumber;
+	var _transitionName = "";
+
+	var _fsmName, _fsmWindowName;
+	var _getStateTimer = 0;
+	var _runFSMTimer = 0;
+
+	var _running = false;
+	var _runStatusDiv;
+	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
 	// end variable declaration
@@ -121,6 +151,10 @@ SmartLaunch.create = function() {
 				"",//filterList,
 				localGetContextRecordsHandler
 		);
+
+		//get run state always
+		window.clearTimeout(_getStateTimer);
+		_getStateTimer = window.setTimeout(getCurrentState,1000); //in 1 sec
 		
 		return;
 		
@@ -143,8 +177,7 @@ SmartLaunch.create = function() {
 			//redrawWindow();
 			readEnabledSubsystems();
 		}
-		
-		
+				
 
 	} //end init()
 
@@ -157,44 +190,92 @@ SmartLaunch.create = function() {
 
 
 		//		<!-- body content populated by javascript -->
-		//		<div id='content'>	
-		//			
-		//			
+		//		<div id='content'>
+		//			<div id='refreshLink'><a onclick='init()'>Refresh</a></div>			
+		//				
 		//			<div id='subsystemDiv'><div id='subsystemDivContainer'></div></div>
-		//		
+		//
 		//			<a id='launchLink' onclick='SmartLaunch.launcher.launch()'>
 		//				<div id='launchDiv'>Launch</div>
-		//			</a>	
+		//			</a>
+		//			
+		//			<a id='runLink' onclick='SmartLaunch.launcher.run()'>
+		//				<div id='runDiv'>Run</div>
+		//			</a>
+		//			
+		//			<div id='runStatusDiv' style='top:10px;/*default to 10px for case when someone else has lock*/'></div>
 		//		
 		//		</div>
 		
 		var cel,el,al,sl;
 		
-		cel = document.createElement("div");
-		cel.setAttribute("id","content");
+		cel = document.getElementById("content");
+		if(!cel)
+		{
+			cel = document.createElement("div");
+			cel.setAttribute("id","content");
+		}
 
-		sl = document.createElement("div");
-		sl.setAttribute("id","subsystemDiv");
-		el = document.createElement("div");
-		el.setAttribute("id","subsystemDivContainer");
-		sl.appendChild(el);		
-		cel.appendChild(sl);
+		//clear all elements
+		cel.innerHTML = "";
 		
 		
-		al = document.createElement("a");
-		al.setAttribute("id","launchLink");
-		al.onclick = function()
-				{
-			Debug.log("clicked launch");
-			SmartLaunch.launcher.launch();
-				};
+		{ //content div		
+				
+			
+			//subsystem div
+			sl = document.createElement("div");
+			sl.setAttribute("id","subsystemDiv");
+			el = document.createElement("div");
+			el.setAttribute("id","subsystemDivContainer");
+			sl.appendChild(el);		
+			cel.appendChild(sl);
+			
+			
+			
+			//launch link
+			al = document.createElement("a");
+			al.setAttribute("id","launchLink");
+			al.onclick = function()
+					{
+				Debug.log("clicked launch");
+				SmartLaunch.launcher.launch();
+					};
+			
+			el = document.createElement("div");
+			el.setAttribute("id","launchDiv");
+			el.innerHTML = "Launch";
+			al.appendChild(el);
+			cel.appendChild(al);	
+			
+			//run link
+			al = document.createElement("a");
+			al.setAttribute("id","runLink");
+			al.onclick = function()
+					{
+				Debug.log("clicked run");
+				SmartLaunch.launcher.run();
+					};
+			
+			el = document.createElement("div");
+			el.setAttribute("id","runDiv");
+			el.innerHTML = "Run";
+			al.appendChild(el);
+			cel.appendChild(al);
+			
+			//run status
+			sl = document.createElement("div");
+			sl.setAttribute("id","runStatusDiv");
+			sl.style.top = "10px"; //default to 10px for case when someone else has lock
+			cel.appendChild(sl);
+			
+		}		
 		
-		el = document.createElement("div");
-		el.setAttribute("id","launchDiv");
-		el.innerHTML = "Launch";
-		al.appendChild(el);
 		
-		cel.appendChild(al);		
+		
+		
+		
+		
 		document.body.appendChild(cel);
 		
 
@@ -285,11 +366,15 @@ SmartLaunch.create = function() {
 
 		if(w < _LAUNCH_MIN_W)
 			w = _LAUNCH_MIN_W;
+		if(h < _LAUNCH_MIN_W)
+			h = _LAUNCH_MIN_W;
 
 		Debug.log("redrawWindow to " + w + " - " + h);	
 
 		var sdiv = document.getElementById("subsystemDiv");
 		var ldiv = document.getElementById("launchDiv");
+		var rdiv = document.getElementById("runDiv");
+		_runStatusDiv = runStatusDiv = document.getElementById("runStatusDiv");
 
 		var chkH = _CHECKBOX_H;
 		var chkW = _CHECKBOX_W;
@@ -313,13 +398,31 @@ SmartLaunch.create = function() {
 		if(sdivY < _MARGIN)
 			sdivY = _MARGIN;
 
+//		var ldivX = _MARGIN + chkW;
+//		var ldivSz = h;		
+//		if(ldivSz > w - ldivX - _MARGIN*3) //pick min of w/h
+//			ldivSz = w - ldivX - _MARGIN*3;
+//		if(ldivSz < 120) //clip min
+//			ldivSz = 120; 
+//		var ldivY = (h-ldivSz)/2;
+//		
+//		var rdivX = _MARGIN + chkW;
+//		var rdivSz = ldivSz;
+//		var rdivY = ldivY + ldivSz;
+//		var rratio = 180/300;
+
 		var ldivX = _MARGIN + chkW;
-		var ldivSz = h;		
+		var ldivSz = h/2;		
 		if(ldivSz > w - ldivX - _MARGIN*3) //pick min of w/h
 			ldivSz = w - ldivX - _MARGIN*3;
-		if(ldivSz < 120) //clip min
-			ldivSz = 120; 
-		var ldivY = (h-ldivSz)/2;
+		ldivSz *= 0.9;
+		var ldivY = (h-ldivSz)/2 - ldivSz/2;
+		var lratio = 180/300;
+
+		var rdivX = _MARGIN + chkW;
+		var rdivSz = ldivSz;
+		var rdivY = ldivY + ldivSz;
+		var rratio = 180/300;
 
 
 		//draw checkboxes
@@ -418,22 +521,219 @@ SmartLaunch.create = function() {
 		//draw launch button
 		{			
 
+//			ldiv.style.left = (ldivX + (w - ldivX - _MARGIN*2 - ldivSz)/2) + "px";
+//			ldiv.style.top = (ldivY+((ldivSz-ldivSz*200/300)/2)) + "px";
+//			
+//			ldiv.style.width = ldivSz + "px";
+//			var fontSize = ldivSz/10;
+//			if(fontSize < 30) fontSize = 30;
+//			ldiv.style.fontSize = (fontSize) + "px";
+//			ldiv.style.paddingTop = (ldivSz*200/300/2 - (fontSize+6)/2) + "px"; //ratio of size minus font size
+//			ldiv.style.paddingBottom = (ldivSz*200/300/2- (fontSize+6)/2) + "px";
+//			ldiv.style.borderRadius = (ldivSz*300/100) + "px/" + (ldivSz*200/100) + "px";
+//			
+//			ldiv.style.display = "block";
 			ldiv.style.left = (ldivX + (w - ldivX - _MARGIN*2 - ldivSz)/2) + "px";
-			ldiv.style.top = (ldivY+((ldivSz-ldivSz*200/300)/2)) + "px";
-			
+			ldiv.style.top = (ldivY+((ldivSz-ldivSz*lratio)/2)) + "px";
+			//ldiv.style.height = (ldivSz*200/300) + "px";
 			ldiv.style.width = ldivSz + "px";
-			var fontSize = ldivSz/10;
-			if(fontSize < 30) fontSize = 30;
-			ldiv.style.fontSize = (fontSize) + "px";
-			ldiv.style.paddingTop = (ldivSz*200/300/2 - (fontSize+6)/2) + "px"; //ratio of size minus font size
-			ldiv.style.paddingBottom = (ldivSz*200/300/2- (fontSize+6)/2) + "px";
-			ldiv.style.borderRadius = (ldivSz*300/100) + "px/" + (ldivSz*200/100) + "px";
-			
-			ldiv.style.display = "block";
+			ldiv.style.paddingTop = (ldivSz*lratio/2 - 36/2) + "px"; //ratio of size minus font size
+			ldiv.style.paddingBottom = (ldivSz*lratio/2- 36/2) + "px";
+			//ldiv.style.paddingLeft = (ldivSz/2) + "px";
+			//ldiv.style.paddingRight = (ldivSz/2) + "px";
+
+			ldiv.style.borderRadius = ldivSz + "px/" + (ldivSz*200/300) + "px";
+			ldiv.style.fontSize = ldivSz/10 + "px";
+
+			ldiv.style.display = "block"; 
 		}
 
-	} //end redrawWindow()
 
+		//draw run button
+		{			
+
+			rdiv.style.left = (rdivX + (w - rdivX - _MARGIN*2 - rdivSz)/2) + "px";
+			rdiv.style.top = (rdivY+((rdivSz-rdivSz*rratio)/2)) + "px";
+			//rdiv.style.height = (rdivSz*200/300) + "px";
+			rdiv.style.width = rdivSz + "px";
+			rdiv.style.paddingTop = (rdivSz*rratio/2 - 36/2) + "px"; //ratio of size minus font size
+			rdiv.style.paddingBottom = (rdivSz*rratio/2- 36/2) + "px";
+			//rdiv.style.paddingLeft = (rdivSz/2) + "px";
+			//rdiv.style.paddingRight = (rdivSz/2) + "px";
+			
+			rdiv.style.borderRadius = rdivSz + "px/" + (rdivSz*200/300) + "px";
+			rdiv.style.fontSize = rdivSz/10 + "px";
+			
+			rdiv.style.display = "block"; 
+			//ldiv.innerHTML = str;		
+			
+			runStatusDiv.style.left = (rdivX + _MARGIN + (w - rdivX - _MARGIN*2 - rdivSz)/2) + "px";
+			runStatusDiv.style.top = (h/2 - 50) + "px";
+			runStatusDiv.style.width = (rdivSz/15*40) + "px";
+			runStatusDiv.style.fontSize = rdivSz/15 + "px";
+		}
+		
+	} //end redrawWindow()
+	
+
+	//=====================================================================================
+	//getCurrentState ~~
+	function getCurrentState() 
+	{
+		window.clearTimeout(_getStateTimer);
+		
+		DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
+				"&fsmName=" + _fsmName, 
+				"", 
+				localGetStateHandler,
+				0, //handler param				
+				0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+				true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+
+		//===========
+		function localGetStateHandler(req,id,err)
+		{
+			if(!req) //error! stop handler
+			{            		
+				Debug.log("Error: " + err, Debug.HIGH_PRIORITY); 
+				return;
+			}            	
+			
+			
+			_state = DesktopContent.getXMLValue(req,"current_state");
+			_inTransition = DesktopContent.getXMLValue(req,"in_transition") == "1";
+			_timeInState = DesktopContent.getXMLValue(req,"time_in_state") | 0;
+			_runNumber = DesktopContent.getXMLValue(req,"run_number");			
+			_transitionPercentComplete = DesktopContent.getXMLValue(req,"transition_progress") | 0; 
+					
+			if(_transitionPercentComplete > 100) 
+			{
+				//Debug.log("???" + _transitionPercentComplete);
+				_transitionPercentComplete = 100;
+			}
+			
+			
+			//Debug.log("localGetStateHandler: " + _state + " -- " + _inTransition + 
+			//		" -- t" + _timeInState + " " + _transitionPercentComplete + "%");
+
+			
+			
+			displayState();
+			
+			
+			//on success, get state again
+			window.clearTimeout(_getStateTimer);
+			_getStateTimer = window.setTimeout(getCurrentState,1000); //in 1 sec
+		}
+	} //getCurrentState
+
+
+	//=====================================================================================
+	//displayState ~~
+	function displayState() 
+	{
+		//Debug.log("displayState");
+		
+		//update display
+
+		//indicate running if detected
+		if(_state == "Running")
+		{
+			if(!_running)
+			{
+				_running = true;
+				document.getElementById("runDiv").innerHTML = "Stop";
+			}
+		}
+		else //not running
+		{
+			if(_running)
+			{
+				_running = false;
+				document.getElementById("runDiv").innerHTML = "Run";
+			}
+		}	
+		
+
+		let str = "";
+		str += "<table cellspacing='0' cellpadding='0'>";
+
+		//current state display
+		if(_inTransition)
+			str += "<tr><td style='font-weight: bold; padding-right:20px;'>Transition:</td><td>" + 
+				_transitionName + "</td></tr>";
+		else
+			str += "<tr><td style='font-weight: bold; padding-right:20px;'>Current State:</td><td>" + 
+				_state + "</td></tr>";
+				
+		
+
+		//current run number display
+		if(//_state == "Running" && 
+				_runNumber) 
+		{
+			//extract run number components							
+			let i = _runNumber.lastIndexOf(' ');
+			if(i >= 0)
+			{
+				let hdr = _runNumber.substr(0,i);
+				let num = _runNumber.substr(i+1);
+				stateStr = "Running <br>&nbsp;&nbsp;&nbsp;&nbsp;" + _runNumber;
+				str += "<tr><td style='font-weight: bold; padding-right:20px;'>" + 
+						hdr + "</td><td>" + 
+						num + "</td></tr>";
+			}
+		}
+
+		
+
+		//transitioning display
+		let progressStr = "";
+		if(_inTransition)
+		{
+			progressStr = _transitionPercentComplete + " %";
+
+			str += "<tr><td style='font-weight: bold; padding-right:20px;'>Progress:</td><td>" +  
+					progressStr + "</td></tr>";
+
+			if(!_wasInTransition)
+				_wasInTransition = true;					
+		}
+		else if(_wasInTransition)
+		{
+			//show 100% once to show some display
+			_wasInTransition = false;
+			progressStr = 100 + " %";
+
+			str += "<tr><td style='font-weight: bold; padding-right:20px;'>Transitioning:</td><td>" +  
+					progressStr + "</td></tr>";
+		}
+		else 
+		{
+			//time in state display				
+			let tstr = "";
+			var hours = (_timeInState/60.0/60.0)|0;
+			var mins = ((_timeInState%(60*60))/60.0)|0;
+			var secs = _timeInState%60;
+
+			tstr += hours + ":";
+			if(mins < 10)	tstr += "0"; //keep to 2 digits
+			tstr += mins + ":";
+			if(secs < 10)	tstr += "0"; //keep to 2 digits
+			tstr += secs ;
+			
+			str += "<tr><td style='font-weight: bold; padding-right:20px;'>Time-in-State:</td><td>" + tstr + "</td></tr>";
+		}
+
+		try //in case no display
+		{
+			_runStatusDiv.innerHTML = str;
+	
+			_runStatusDiv.style.display = "block";
+		}
+		catch(e) {console.log(e);}
+	}	//end displayState()
+	
 	//=====================================================================================
 	//launch ~~
 	this.launch = function()
@@ -556,50 +856,222 @@ SmartLaunch.create = function() {
 	{
 		Debug.log("Relaunching otsdaq!",Debug.INFO_PRIORITY);
 
-		//block check
-
+		//block checks
+		window.clearTimeout(_getStateTimer);
 		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+		
+		window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
 
 		//now in all future requests must ignoreSystemBlock
 
-		DesktopContent.XMLHttpRequest("Request?" + 
-				"RequestType=gatewayLaunchOTS", //end get data 
-				"", //end post data
-				function(req) //start handler
-				{
-			Debug.log("gatewayLaunchOts handler ");
-
-
-			var countDown = 10;
-			localCountDown();
-			//=================
-			function localCountDown()
-			{
-				Debug.log("Waiting " + countDown + " seconds for startup sequence...",
-						Debug.INFO_PRIORITY);
-
-				window.setTimeout(function() {
-					Debug.log("localCountDown handler ");
-					--countDown;
-					if(countDown == 0)
+		//===========
+		function localDelayedLaunch()
+		{
+			DesktopContent.XMLHttpRequest("Request?" + 
+					"RequestType=gatewayLaunchOTS", //end get data 
+					"", //end post data
+					function(req) //start handler
 					{
-						//end blackout
-						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
-						init();
-						Debug.log("And we are back!",Debug.INFO_PRIORITY);
-						return;
-					}
-					localCountDown();
-				}, //end blackout-end handler 
-				1000/*ms*/);
-			}// end localCountDown
+				Debug.log("gatewayLaunchOts handler ");
 
-				}, //end gatewayLaunchOTS req handler
-				0, //handler param
-				0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-				true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+
+				var countDown = 10;
+				localCountDown();
+				//=================
+				function localCountDown()
+				{
+					Debug.log("Waiting " + countDown + " seconds for startup sequence...",
+							Debug.INFO_PRIORITY);
+
+					window.setTimeout(function() {
+						Debug.log("localCountDown handler ");
+						--countDown;
+						if(countDown == 0)
+						{
+							//end blackout
+							DesktopContent._blockSystemCheckMailbox.innerHTML = "";
+							init();
+							Debug.log("And we are back!",Debug.INFO_PRIORITY);
+							return;
+						}
+						localCountDown();
+					}, //end blackout-end handler 
+					1000/*ms*/);
+				}// end localCountDown
+
+					}, //end gatewayLaunchOTS req handler
+					0, //handler param
+					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+		} // end localDelayedLaunch()
+		
 	} //end gatewayLaunchOts()
 
+
+	//=====================================================================================
+	//run ~~
+	this.run = function()
+	{
+		Debug.log("run");
+
+		var timeoutCount = 0; //used to detect taking too long
+		var operativeWord = "starting";
+		var lastState = "";
+
+		if(_running)
+		{
+			DesktopContent.popUpVerification( 
+					"Are you sure you want to stop the run?",
+					localStop,
+					0,"#efeaea",0,"#770000");
+
+			//===========
+			function localStop()
+			{
+				Debug.log("localStop");
+				//just change operative word and run (to stop)
+				operativeWord = "stopping";
+				localRun();
+			}
+			return;
+		}
+
+		DesktopContent.popUpVerification( 
+				"Are you sure you want to start a run?",
+				localRun,
+				0,"#efeaea",0,"#770000");
+
+		//===========
+		function localRun()
+		{
+			Debug.log("localRun");
+
+			window.clearTimeout(_runFSMTimer);
+
+			++timeoutCount;			
+			if(timeoutCount > 60) //if it has been one minute, too long
+			{
+				Debug.log("Timeout reached! Giving up on " + operativeWord + " the run.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			if(_inTransition) //wait
+			{
+				window.clearTimeout(_getStateTimer);
+				_getStateTimer = window.setTimeout(getCurrentState,1000); //in 1 sec
+
+				window.clearTimeout(_runFSMTimer);
+				_runFSMTimer = window.setTimeout(localRun,1000); //wait a sec
+				return;
+			}
+
+			if(lastState == _state)
+			{
+				Debug.log("State machine is not progressing! Stuck in '" + 
+						_state + ".' Giving up on " + operativeWord + " the run.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			lastState = _state; 
+
+			let transitionPostData = "";
+			//keep transitioning to Run state
+			if(_state == "Initial")
+			{
+				_transitionName = "Initialize";
+			}
+			else if(_state == "Failed")
+			{
+				if(timeoutCount > 1)
+				{
+					//if localRun activity caused failure, give up
+					Debug.log("Fault encountered! Giving up on " + operativeWord + " the run.", Debug.HIGH_PRIORITY);
+					return;
+				}
+				_transitionName = "Halt";
+			}
+			else if(_state == "Halted")
+			{
+				_transitionName = "Configure";
+				//FIXME -- could get system alias from somewhere (e.g. first alias in list, or icon parameter)
+				transitionPostData = "ConfigurationAlias=" + "defaultSystemAlias";	
+			}			
+			else if(_state == "Configured")
+			{
+				if(operativeWord == "stopping")
+				{
+					//done!
+					Debug.log("<i>otsdaq</i> has now Stopped! " + 
+							_runNumber + ".", Debug.INFO_PRIORITY);
+					return;				
+				}
+
+				_transitionName = "Start";
+			}
+			else if(_state == "Paused")
+			{
+				_transitionName = "Start";	
+			}
+			else if(_state == "Running")
+			{
+				if(operativeWord == "stopping")
+				{
+					_transitionName = "Stop";					
+				}
+				else //starting
+				{				
+					//done!
+					Debug.log("<i>otsdaq</i> is now Running! " + 
+							_runNumber + ".", Debug.INFO_PRIORITY);
+					return;
+				}
+			}
+			else
+			{
+				Debug.log("Unknown action for current state '" + _state + "'..." + 
+						"Giving up on " + operativeWord + " the run.", Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			_inTransition = true;
+			_transitionPercentComplete = 0;
+
+			displayState();
+
+			Debug.log("_transitionName = " + _transitionName + 
+					" transitionPostData = " + transitionPostData);		
+
+			DesktopContent.XMLHttpRequest("StateMachineXgiHandler?StateMachine=" + 
+					_transitionName + 
+					"&fsmName=" + _fsmName + 
+					"&fsmWindowName=" + _fsmWindowName, 
+					transitionPostData, 
+					//===========
+					function(req)
+					{
+
+				var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
+				if(!success) 
+				{
+					var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+					if(err)
+						Debug.log(err,Debug.HIGH_PRIORITY);
+					Debug.log("Server indicated failure to attempt state transition. " + 
+							"Giving up on " + operativeWord + " the run.",Debug.HIGH_PRIORITY);
+					return;
+				}
+
+				//on success continue..
+				window.clearTimeout(_runFSMTimer);
+				_runFSMTimer = window.setTimeout(localRun,3000); //wait 3 seconds before doing anything
+					},	 // end handler				
+					0, //handler param				
+					0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					true /*targetSupervisor*/);
+
+		}
+
+	} //end run()
 
 	//=====================================================================================
 	//toggleCheckboxDiv(i) ~~

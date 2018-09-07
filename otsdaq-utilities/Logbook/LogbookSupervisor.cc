@@ -128,7 +128,7 @@ void LogbookSupervisor::init(void)
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
 			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		path = LOGBOOK_PATH + LOGBOOK_UPLOADS_PATH;
@@ -142,7 +142,7 @@ void LogbookSupervisor::init(void)
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path <<  std::endl;
 			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		path = LOGBOOK_PATH + LOGBOOK_LOGBOOKS_PATH;
@@ -156,7 +156,7 @@ void LogbookSupervisor::init(void)
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
 			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 	}
 

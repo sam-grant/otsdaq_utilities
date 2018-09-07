@@ -82,7 +82,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
 		__COUT__ << "\n" << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 	char tmp[100];
 	fgets(tmp,100,fp); //receive port (ignore)
@@ -332,7 +332,7 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 		__SUP_COUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
-			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
+			{__SS__;__THROW__(ss.str()+"Could not open file: " + fn);}
 		fprintf(fp,"colorIndex %d\n",colorIndex);
 		fprintf(fp,"showSideBar %d\n",showSideBar);
 		fprintf(fp,"noWrap %d\n",noWrap);
@@ -429,7 +429,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 	{
 		__SS__ << "Invalid lastUpdateIndex: " << lastUpdateIndex <<
 				" messagesArray size = " << messages_.size() << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//lockout the messages array for the remainder of the scope

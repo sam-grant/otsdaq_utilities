@@ -578,7 +578,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 			if(!fp)
 			{
 				__SS__ << "Big problem with macromaker history file: " << fileName << std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 			fwrite(&returnStr[i],fileSz-i,1,fp);
 			fclose(fp);
