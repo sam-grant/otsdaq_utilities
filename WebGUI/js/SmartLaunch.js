@@ -858,10 +858,10 @@ SmartLaunch.create = function() {
 
 		//block checks
 		window.clearTimeout(_getStateTimer);
-		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 		
+		//start blackout
+		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 		window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
-
 		//now in all future requests must ignoreSystemBlock
 
 		//===========
