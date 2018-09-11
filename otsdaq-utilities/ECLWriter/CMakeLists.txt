@@ -27,7 +27,7 @@ if(XSD_FOUND)
   set(XSD_INCLUDE_DIRS ${XSD_INCLUDE_DIR})
 
 
-find_package(CURL)
+#find_package(CURL)
 
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
