@@ -56,18 +56,21 @@ private:
 			fields[SEQID].set("SequenceID", 2, -1);
 			fields[LEVEL].set("Level", 5, -1);
 			fields[LABEL].set("Label", 6, -1);
-			fields[SOURCEID].set("SourceID", 8, -1); //number
-			fields[SOURCE].set("Source", 10, -1); //number
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
-			fields[MSG].set("Msg", 13, -1);
-#else
-			fields[MSG].set("Msg", 11, -1);
-#endif
+			fields[SOURCEID].set("SourceID", 7, -1); //number
+			fields[SOURCE].set("Source", 8, -1);
+			fields[MSG].set("Msg", 10, -1); //the message facility contents have changed!
+//#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
+//			fields[MSG].set("Msg", 13, -1);
+//#else
+//			fields[MSG].set("Msg", 11, -1);
+//#endif
 		}
 
 		void set(const std::string &msg, const time_t count)
 		{
 			buffer = (std::string)(msg.substr(0, BUFFER_SZ)); //clip to BUFFER_SZ
+
+			std::cout << ":::::" << buffer << "\n";
 
 			timeStamp = time(0); //get time of msg
 			countStamp = count; //get "unique" incrementing id for message
@@ -94,12 +97,12 @@ private:
 			}
 
 			//debug
-			//			std::cout << buffer << "\n";
-			//			for(auto &f: fields)
-			//			{
-			//				std::cout << f.fieldName << ": ";
-			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
-			//			}
+						std::cout << buffer << "\n";
+						for(auto &f: fields)
+						{
+							std::cout << f.fieldName << ": ";
+							std::cout << (char *)&buffer[f.posInString] << std::endl;
+						}
 		}
 
 		const char *  getMsg() { return  (char *)&buffer[fields[MSG].posInString]; }
