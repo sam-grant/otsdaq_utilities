@@ -1044,6 +1044,7 @@ DesktopContent.tooltip = function(id,tip) {
 	},0,0,0,true,true); //show loading, and target supervisor
 	
 }
+
 //=====================================================================================
 //setSecurityOne
 //       make server request to enable random security sequence for URL
@@ -1056,33 +1057,21 @@ DesktopContent.setSecurityOn = function(on) {
 			,DesktopContent.toggleSecurityCodeGenerationHandler
 			,0,0,0,true,true);
  }
-DesktopContent.toggleSecurityCodeGenerationHandler = function(req)
-{
-    var status = DesktopContent.getXMLValue(req,"Status");
-    Debug.log("Status: " + status);
-    if (status == "Generation_Success") {
-	Debug.log("Successfully switched to using authentication sequence!");
-	Debug.closeErrorPop();
-	Debug.log("If you wish to return to the default security generation, you can use the 'Reset User Information' in the " +
-		  "'Edit User Data' app.");
-	Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
-    }
-    
-    //var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-    //if(err) 
-    //	{
-    //	    Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-    //	    return;
-    //	}
-    
-    //if(reqParam = 0)
-    //	{ //... do something }
-    //	}else if(reqParam = 1)
-    //	{ //... do something else}
-    //	}else
-    //	{ //... do something else}	    
-    //	}   
+
+//=====================================================================================
+//toggleSecurityCodeGenerationHandler ~~
+DesktopContent.toggleSecurityCodeGenerationHandler = function(req) {
+	var status = DesktopContent.getXMLValue(req,"Status");
+	Debug.log("Status: " + status);
+	if (status == "Generation_Success") {
+		Debug.log("Successfully switched to using authentication sequence!");
+		Debug.closeErrorPop();
+		Debug.log("If you wish to return to the default security generation, you can use the 'Reset User Information' in the " +
+				"'Edit User Data' app.");
+		Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
+	}    
 }
+
 //=====================================================================================
 //tooltipSetNeverShow ~~
 //	set value of never show for target tip to 1/0 based on alwaysShow

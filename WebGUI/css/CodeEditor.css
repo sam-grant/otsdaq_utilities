@@ -1,0 +1,94 @@
+
+
+		body {	
+			background-color: 		rgb(141, 177, 197);
+			font-family: 			'Comfortaa', serif;
+		}
+
+		/* make links have a hand cursor */
+		a {
+			cursor: 				pointer;
+		}
+		
+		* {
+			font-family: 			"Comfortaa";
+		}
+		
+		#primaryPane {
+			background-color: 		red;
+			overflow: 				hidden;	
+		}
+		#secondaryPane {
+			background-color: 		green;
+			overflow: 				hidden;	
+		}
+		.controlsPane {
+			background-color: 		blue;
+			position: 				relative;
+			top:					-2px;
+		}
+		 
+		
+		.controlsButton {
+
+			-webkit-user-select: 	none;
+			-moz-user-select: 		none;
+			user-select:			none;
+			
+			overflow: 				hidden;				
+			cursor: 				pointer;
+			width: 					34px;
+			height: 				36px;
+			
+			background-color: 		rgb(202, 204, 210);
+			
+			
+			box-shadow: 			inset rgba(255,254,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgb(150,150,150) 0 .1em 3px,
+					rgb(175,175,175) 0 .2em 1px, /* color border */
+					rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+		}
+
+		.controlsButton:hover,
+		.controlsButton:focus {
+			background-color: 		rgb(225, 227, 233);
+		}
+
+		.controlsButton:active {
+			background-color: 		rgb(202, 204, 210);
+			-webkit-transform: 		translateY(.1em);
+			-moz-transform: 		translateY(.1em);
+			transform: 				translateY(.1em);
+		}
+		
+		#viewToggleRight {
+			background-color: 		white;
+			float: 					right;
+			width: 					10px;
+			height: 				23px;
+			margin: 				8px 3px 0px 0px;
+		}
+		#viewToggleLeftTop {
+			background-color: 		white;
+			float: 					left;
+			width: 					13px;
+			height: 				10px;
+			margin: 				8px 0px 0px 5px;
+		}
+		#viewToggleLeftBottom {
+			background-color: 		white;
+			float: 					left;
+			width: 					13px;
+			height: 				10px;
+			margin: 				3px 0px 0px 5px;
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
