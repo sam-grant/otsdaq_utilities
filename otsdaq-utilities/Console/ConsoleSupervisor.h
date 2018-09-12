@@ -97,12 +97,12 @@ private:
 			}
 
 			//debug
-						std::cout << buffer << "\n";
-						for(auto &f: fields)
-						{
-							std::cout << f.fieldName << ": ";
-							std::cout << (char *)&buffer[f.posInString] << std::endl;
-						}
+			//			std::cout << buffer << "\n";
+			//			for(auto &f: fields)
+			//			{
+			//				std::cout << f.fieldName << ": ";
+			//				std::cout << (char *)&buffer[f.posInString] << std::endl;
+			//			}
 		}
 
 		const char *  getMsg() { return  (char *)&buffer[fields[MSG].posInString]; }

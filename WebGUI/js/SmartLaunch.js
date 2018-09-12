@@ -62,7 +62,7 @@ SmartLaunch.systemToContextMap = {};
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-//call createWiz to create instance of a SmartLaunch
+//call create to create instance of a SmartLaunch
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 SmartLaunch.create = function() {
@@ -130,10 +130,11 @@ SmartLaunch.create = function() {
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
 	// end variable declaration
-	Debug.log("SmartLaunch.launcher constructed");
 	SmartLaunch.launcher = this; 
+	Debug.log("SmartLaunch.launcher constructed");
 
 	init();
+	Debug.log("SmartLaunch.launcher initialized");
 	
 
 	//=====================================================================================
