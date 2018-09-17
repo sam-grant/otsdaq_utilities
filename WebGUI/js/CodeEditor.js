@@ -79,10 +79,27 @@ CodeEditor.create = function() {
 
 	//functions:			
 	//
+	//	"private":
+	//	================
 	//	init()
-	//	createElements()
 	//	redrawWindow()
-		
+	//	createElements()
+	//		localCreatePaneControls()
+	//	createTextEditor(forPrimary)
+	//	createDirectoryNav(forPrimary)
+	
+	//  "public":
+	//	================
+	//	toggleDirectoryNav(forPrimary,v)
+	//	saveFile(forPrimary)
+	//	toggleView(v)
+	//	build(cleanBuild)
+	//	openDirectory(forPrimary,path)
+	//	handleDirectoryContent(forPrimary,req)
+	//	openFile(forPrimary,path,extension)
+	//	handleFileContent(forPrimary,req)
+	//	updateDecorations(forPrimary,inPlace)
+	
 	
 	//for display
 	var _CHECKBOX_H = 40;
@@ -95,6 +112,9 @@ CodeEditor.create = function() {
 	var _needEventListeners = true;
 	
 	var _viewMode = 0; //0: only primary, 1: vertical split, 2: horizontal split
+	var _navMode = [0,0]; //1 for showing directory nav
+	var _filePath = ["",""]; //file path for primary and secondary
+	var _fileExtension = ["",""]; //file extension for primary and secondary
 
 	
 	//////////////////////////////////////////////////
@@ -113,6 +133,22 @@ CodeEditor.create = function() {
 	{						
 		Debug.log("Code Editor init ");
 
+		//extract GET parameters
+		var parameterStartFile = [
+				"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
+								  //"/CMakeLists.txt", //DesktopContent.getParameter(0,"startFilePrimary"),
+		   DesktopContent.getParameter(0,"startFileSecondary")
+		   ];
+		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
+		if(parameterViewMode !== undefined) //set view mode if parameter
+		{
+			_viewMode = parameterViewMode|0;
+		}
+		console.log("parameterStartFile",parameterStartFile);
+		console.log("parameterViewMode",parameterViewMode);
+		
+		//proceed
+		
 		createElements();
 		redrawWindow();
 		
@@ -121,10 +157,13 @@ CodeEditor.create = function() {
 			window.addEventListener("resize",redrawWindow);
 			_needEventListeners = false;
 		}
-		
-		return;
+			
+	
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor&option=getFolders", "" /* data */,
+		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				"&option=getDirectoryContent" +
+				"&path=/"
+				, "" /* data */,
 				function(req)
 				{
 			 
@@ -134,6 +173,38 @@ CodeEditor.create = function() {
 				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
 				return;
 			}
+			
+			var fileSplit; 
+			
+			console.log("getDirectoryContent",req);
+			
+			CodeEditor.editor.handleDirectoryContent(1 /*forPrimary*/, req);
+			CodeEditor.editor.handleDirectoryContent(0 /*forPrimary*/, req);
+			
+			//decide how to start display(file or directory)
+			fileSplit = [];
+			if(parameterStartFile[0] && parameterStartFile[0] != "")
+				fileSplit = parameterStartFile[0].split('.');
+			
+			if(fileSplit.length == 2) //show shortcut file
+				CodeEditor.editor.openFile(1 /*forPrimary*/, 
+						fileSplit[0]	/*path*/,
+						fileSplit[1] /*extension*/);
+			else //show base directory nav
+				CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
+			
+			//for secondary pane
+			fileSplit = [];
+			if(parameterStartFile[1] && parameterStartFile[1] != "")
+				fileSplit = parameterStartFile[1].split('.');
+
+			if(fileSplit.length == 2) //show shortcut file
+				CodeEditor.editor.openFile(0 /*forPrimary*/, 
+						fileSplit[0]	/*path*/,
+						fileSplit[1] /*extension*/);
+			else //show base directory nav
+				CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
+			
 		    
 				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 					
@@ -175,51 +246,63 @@ CodeEditor.create = function() {
 				
 			//================
 			//primaryPane div
-			el = document.createElement("div");
-			el.setAttribute("id","primaryPane");	
+			el = document.createElement("div");	
+			el.setAttribute("class","editorPane");	
 			{
-				//add folder, and save buttons
-				//add directory nav and editor divs
-
-				str = "";
-				//local pane controls
-				str += htmlOpen("div",
-						{
-								"class":"controlsPane",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
+				function localCreatePaneControls(forPrimary)
 				{
-					//folder
-					str += htmlOpen("div",
-							{
-									"id":"directoryNavToggle",
-									"class":"controlsButton",
-									"style":"float:left",
-							},"" /*innerHTML*/, 0 /*doCloseTag*/);
-					{
-						str += htmlOpen("div",
-								{
-										"style":"margin:11px 0 0 12px;",
-								},"D" /*innerHTML*/, 1 /*doCloseTag*/);
-					} //end directoryNavToggle
-					str += "</div>"; //close directoryNavToggle
+					//add folder, and save buttons
+					//add directory nav and editor divs
 	
-					//save
+					str = "";
+					
+					//local pane controls
 					str += htmlOpen("div",
 							{
-									"id":"saveFile",
-									"class":"controlsButton",
-									"style":"float:left;",
+									"class":"controlsPane",
 							},"" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
+						//folder
 						str += htmlOpen("div",
 								{
-										"style":"margin:11px 0 0 12px;",
-								},"S" /*innerHTML*/, 1 /*doCloseTag*/);
-					} //end directoryNavToggle
-					str += "</div>"; //close saveFile
-					
-				} //end locals controlsPane
-				str += "</div>"; //close controlsPane
+										"id":"directoryNavToggle",
+										"class":"controlsButton",
+										"style":"float:left",
+										"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
+								},"" /*innerHTML*/, 0 /*doCloseTag*/);
+						{
+							str += htmlOpen("div",
+									{
+											"style":"margin:11px 0 0 12px;",
+									},"D" /*innerHTML*/, 1 /*doCloseTag*/);
+						} //end directoryNavToggle
+						str += "</div>"; //close directoryNavToggle
+		
+						//save
+						str += htmlOpen("div",
+								{
+										"id":"saveFile",
+										"class":"controlsButton",
+										"style":"float:left;",
+										"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
+								},"" /*innerHTML*/, 0 /*doCloseTag*/);
+						{
+							str += htmlOpen("div",
+									{
+											"style":"margin:11px 0 0 12px;",
+									},"S" /*innerHTML*/, 1 /*doCloseTag*/);
+						} //end directoryNavToggle
+						str += "</div>"; //close saveFile
+						
+					} //end locals controlsPane
+					str += "</div>"; //close controlsPane
+					return str;
+				} //end localCreatePaneControls
+				
+				var str = "";
+				str += createTextEditor(1 /*forPrimary*/);
+				str += createDirectoryNav(1 /*forPrimary*/);
+				str += localCreatePaneControls(1 /*forPrimary*/);				
 				el.innerHTML = str;
 			}				
 			cel.appendChild(el);
@@ -227,7 +310,13 @@ CodeEditor.create = function() {
 			//================
 			//secondaryPane div
 			el = document.createElement("div");
-			el.setAttribute("id","secondaryPane");
+			el.setAttribute("class","editorPane");	
+
+			var str = "";
+			str += createTextEditor(0 /*forPrimary*/);
+			str += createDirectoryNav(0 /*forPrimary*/);
+			str += localCreatePaneControls(0 /*forPrimary*/);	
+			el.innerHTML = str;
 			cel.appendChild(el);
 			
 			//================
@@ -273,6 +362,7 @@ CodeEditor.create = function() {
 								"id":"incrementalBuild",
 								"class":"controlsButton",
 								"style":"float:right",
+								"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -289,6 +379,7 @@ CodeEditor.create = function() {
 								"id":"cleanBuild",
 								"class":"controlsButton",
 								"style":"float:right",
+								"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -309,6 +400,44 @@ CodeEditor.create = function() {
 	} //end createElements()
 
 	//=====================================================================================
+	//createTextEditor ~~
+	function createTextEditor(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("createTextEditor forPrimary=" + forPrimary);
+		
+		var str = "";
+
+		str += htmlOpen("div",
+				{
+						"class":"textEditor",
+						"id":"textEditor" + forPrimary,
+						"style":"overflow:auto;",
+				},"Text" /*innerHTML*/, 1 /*doCloseTag*/);
+		
+		return str;		
+	} //end createTextEditor()
+	
+	//=====================================================================================
+	//createDirectoryNav ~~
+	function createDirectoryNav(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("createDirectoryNav forPrimary=" + forPrimary);	
+
+		var str = "";
+
+		str += htmlOpen("div",
+				{
+						"class":"directoryNav",
+						"id":"directoryNav" + forPrimary,
+				},"Directory" /*innerHTML*/, 1 /*doCloseTag*/);
+		
+		return str;
+		
+	} //end createDirectoryNav()
+	
+	//=====================================================================================
 	//redrawWindow ~~
 	//	called when page is resized
 	function redrawWindow()
@@ -326,48 +455,75 @@ CodeEditor.create = function() {
 
 		Debug.log("redrawWindow to " + w + " - " + h);	
 
-		var pp = document.getElementById("primaryPane");
-		var sp = document.getElementById("secondaryPane");
-		//var cp = document.getElementById("controlsPane");
+		var eps = document.getElementsByClassName("editorPane");
+		var dns = document.getElementsByClassName("directoryNav");
 		
-		pp.style.position = "absolute";
-		sp.style.position = "absolute";
+		eps[0].style.position = "absolute";
+		eps[1].style.position = "absolute";
 			
+		var DIR_NAV_MARGIN = 50;
 		switch(_viewMode)
 		{
 		case 0: //only primary
-			pp.style.left 		= 0 + "px";
-			pp.style.top 		= 0 + "px";
-			pp.style.height 	= h + "px";
-			pp.style.width 		= w + "px";	
+			eps[0].style.left 		= 0 + "px";
+			eps[0].style.top 		= 0 + "px";
+			eps[0].style.height 	= h + "px";
+			eps[0].style.width 		= w + "px";	
+
+			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
+			dns[0].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
 			
-			sp.style.display = "none";
+			eps[1].style.display = "none";
 			break;
 		case 1: //vertical split
-			pp.style.left 		= 0 + "px";
-			pp.style.top 		= 0 + "px";
-			pp.style.height 	= h + "px";
-			pp.style.width 		= ((w/2)|0) + "px";	
+			eps[0].style.left 		= 0 + "px";
+			eps[0].style.top 		= 0 + "px";
+			eps[0].style.height 	= h + "px";
+			eps[0].style.width 		= ((w/2)|0) + "px";	
+
+			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.width 	= (((w/2)|0) - 2*DIR_NAV_MARGIN) + "px";
+			dns[0].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
 			
-			sp.style.left 		= ((w/2)|0) + "px";			
-			sp.style.top 		= 0 + "px";
-			sp.style.height 	= h + "px";
+			eps[1].style.left 		= ((w/2)|0) + "px";			
+			eps[1].style.top 		= 0 + "px";
+			eps[1].style.height 	= h + "px";
 			w -= ((w/2)|0);
-			sp.style.width 		= w + "px";	
-			sp.style.display = "block";
+			eps[1].style.width 		= w + "px";	
+
+			dns[1].style.left 	= DIR_NAV_MARGIN + "px";
+			dns[1].style.top 	= DIR_NAV_MARGIN + "px";
+			dns[1].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
+			dns[1].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
+			
+			eps[1].style.display = "block";
 			break;
 		case 2: //horizontal split
-			pp.style.left 		= 0 + "px";
-			pp.style.top 		= 0 + "px";
-			pp.style.height 	= ((h/2)|0) + "px";
-			pp.style.width 		= w + "px";	
+			eps[0].style.left 		= 0 + "px";
+			eps[0].style.top 		= 0 + "px";
+			eps[0].style.height 	= ((h/2)|0) + "px";
+			eps[0].style.width 		= w + "px";	
+
+			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
+			dns[0].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
+			dns[0].style.height = (((h/2)|0) - 2*DIR_NAV_MARGIN) + "px";
 			
-			sp.style.left 		= 0 + "px";			
-			sp.style.top 		= ((h/2)|0) + "px";
+			eps[1].style.left 		= 0 + "px";			
+			eps[1].style.top 		= ((h/2)|0) + "px";
 			h -= ((h/2)|0);
-			sp.style.height 	= h + "px";
-			sp.style.width 		= w + "px";	
-			sp.style.display = "block";
+			eps[1].style.height 	= h + "px";
+			eps[1].style.width 		= w + "px";
+
+			dns[1].style.left 	= DIR_NAV_MARGIN + "px";
+			dns[1].style.top 	= DIR_NAV_MARGIN + "px";
+			dns[1].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
+			dns[1].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
+			
+			eps[1].style.display = "block";
 			break;
 		default:
 			Debug.log("Invalid view mode encountered: " + _viewMode);		
@@ -384,12 +540,463 @@ CodeEditor.create = function() {
 			_viewMode = v;
 		else		
 			_viewMode = (_viewMode+1)%3;
-		Debug.log("toggleView " + _viewMode);
+		Debug.log("toggleView _viewMode=" + _viewMode);
 		redrawWindow();
 	} //end toggleView()
+
+	//=====================================================================================
+	//toggleDirectoryNav ~~
+	//	toggles directory nav
+	this.toggleDirectoryNav = function(forPrimary, v)
+	{
+		forPrimary = forPrimary?1:0;				
+		Debug.log("toggleDirectoryNav forPrimary=" + forPrimary);
+
+		if(v !== undefined) //if being set, take value
+			_navMode[forPrimary] = v?1:0;
+		else				//else toggle
+			_navMode[forPrimary] = _navMode[forPrimary]?0:1;
+		Debug.log("toggleDirectoryNav _navMode=" + _navMode[forPrimary]);
+						
+		document.getElementById("directoryNav" + forPrimary).style.display =
+				_navMode[forPrimary]?"block":"none";				
+	} //end toggleDirectoryNav()
+
+	//=====================================================================================
+	//saveFile ~~
+	//	save file for pane
+	this.saveFile = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("saveFile forPrimary=" + forPrimary);
+
+		Debug.log("saveFile _filePath=" + _filePath[forPrimary]);
+		Debug.log("saveFile _fileExtension=" + _fileExtension[forPrimary]);
+		
+		var content = encodeURIComponent(
+				document.getElementById("editableBox" + forPrimary).innerText);
+		console.log(content);
+		
+		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				"&option=saveFileContent" +
+				"&path=" + _filePath[forPrimary] +
+				"&ext=" + _fileExtension[forPrimary]				
+				, "content=" + content /* data */,
+				function(req)
+				{
+
+			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+				return;
+			}
+
+			Debug.log("Successfully saved " +
+					_filePath[forPrimary] + "." + 
+					_fileExtension[forPrimary], Debug.INFO_PRIORITY);
+
+				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+
+	} //end saveFile()
+
+	//=====================================================================================
+	//build ~~
+	//	launch compile
+	this.build = function(cleanBuild)
+	{
+		cleanBuild = cleanBuild?1:0;
+		Debug.log("build cleanBuild=" + cleanBuild);
+		
+		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				"&option=build" +
+				"&clean=" + (cleanBuild?1:0)
+				, "" /* data */,
+				function(req)
+				{
+
+			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+				return;
+			}
+
+			Debug.log("Check console for result!", Debug.INFO_PRIORITY);
+
+				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+
+		
+	} //end build()
 	
 
+	//=====================================================================================
+	//handleDirectoryContent ~~
+	//	redraw directory content based on req response
+	this.handleDirectoryContent = function(forPrimary,req)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("handleDirectoryContent forPrimary=" + forPrimary);
+		console.log(req);
 
+		var path = DesktopContent.getXMLValue(req,"path");
+		var dirs = req.responseXML.getElementsByTagName("directory");
+		var files = req.responseXML.getElementsByTagName("file");
+
+		Debug.log("handleDirectoryContent path=" + path);
+		console.log(dirs);console.log(files);
+		
+		var str = "";
+		var i;
+		var name;
+		str += htmlOpen("div",
+				{
+			"style":"margin:20px;" 
+				,
+				});
+
+		/////////////
+		//show path with links
+		{
+			var pathSplit = path.split('/');
+			var buildPath = "";
+			var pathSplitName;			
+
+			str += "<a class='dirNavPath' onclick='CodeEditor.editor.openDirectory(" + 
+					forPrimary + ",\"" + 
+					"/" + "\"" + 
+					")'>" + 
+					"srcs</a>";
+			
+			for(i=0;i<pathSplit.length;++i)
+			{
+				pathSplitName = pathSplit[i].trim();
+				if(pathSplitName == "") continue; //skip blanks
+				Debug.log("pathSplitName " + pathSplitName);
+				
+				buildPath += "/" + pathSplitName;
+				
+				str += "/";
+				str += "<a class='dirNavPath' onclick='CodeEditor.editor.openDirectory(" + 
+						forPrimary + ",\"" + 
+						buildPath + "\"" + 
+						")'>" + 
+						pathSplitName + "</a>";
+				
+			}
+			str += "<br><br>";
+		}
+		
+		/////////////
+		//show folders
+		for(i=0;i<dirs.length;++i)
+		{
+			name = dirs[i].getAttribute('value');
+			
+			str += "<a class='dirNavFolder' onclick='CodeEditor.editor.openDirectory(" + 
+					forPrimary + ",\"" + 
+					path + "/" + name + "\"" + 
+					")'>" + 
+					name + "</a>";
+			str += "<br>";
+					
+		}/////////////
+		//show files
+		for(i=0;i<files.length;++i)
+		{
+			name = files[i].getAttribute('value');
+			
+			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
+					forPrimary + ",\"" + 
+					path + "/" + name + "\", \"" +
+					name.substr(name.indexOf('.')+1) + "\"" + //extension
+					")'>" + 
+					name + "</a>";
+			str += "<br>";
+					
+		}
+		str += "</div>";
+		document.getElementById("directoryNav" + forPrimary).innerHTML = str;		
+	} //end handleDirectoryContent()
+
+	//=====================================================================================
+	//openDirectory ~~
+	//	open directory to directory nav
+	this.openDirectory = function(forPrimary,path)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("openDirectory forPrimary=" + forPrimary +
+				" path=" + path);
+
+
+		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				"&option=getDirectoryContent" +
+				"&path=" + path
+				, "" /* data */,
+				function(req)
+				{
+
+			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+				return;
+			}
+
+			CodeEditor.editor.handleDirectoryContent(forPrimary, req);			
+			CodeEditor.editor.toggleDirectoryNav(forPrimary,1 /*set nav mode*/);
+
+				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+	} //end openDirectory()
+
+	//=====================================================================================
+	//openFile ~~
+	//	open the file to text editor
+	this.openFile = function(forPrimary,path,extension)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("openFile forPrimary=" + forPrimary +
+				" path=" + path);
+		var i = path.indexOf('.');
+		if(i > 0) //up to extension
+			path = path.substr(0,i);
+		
+		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+				"&option=getFileContent" +
+				"&path=" + path + 
+				"&ext=" + extension
+				, "" /* data */,
+				function(req)
+				{
+
+			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+			if(err) 
+			{
+				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+				return;
+			}
+
+			CodeEditor.editor.handleFileContent(forPrimary, req);			
+			CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
+			
+			
+				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+	} //end openFile()
+	
+
+	//=====================================================================================
+	//handleFileContent ~~
+	//	redraw text editor based on file content in req response
+	this.handleFileContent = function(forPrimary,req)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("handleFileContent forPrimary=" + forPrimary);
+		console.log(req);
+
+		var path = DesktopContent.getXMLValue(req,"path");
+		var extension = DesktopContent.getXMLValue(req,"ext");
+		var text = DesktopContent.getXMLValue(req,"content");
+		
+		console.log(text);
+		
+		_filePath[forPrimary] = path;
+		_fileExtension[forPrimary] = extension;
+		
+		var el = document.getElementById("textEditor" + forPrimary);
+		
+		var str = "";
+		
+		str += htmlOpen("div",
+				{
+						"class":"editableBox",
+						"id":"editableBox" + forPrimary,
+						"style":"margin: 50px 20px 20px 20px;",	
+						"contenteditable":"true",
+				});		
+		//str += localConvertForClient(text);
+		str += "</div>"; //close editableBox
+		
+		el.innerHTML = str;
+		
+		var box = document.getElementById("editableBox" + forPrimary);
+		box.textContent = text;
+		CodeEditor.editor.updateDecorations(forPrimary);	
+
+		var inputTimer = 0;
+		box.addEventListener("input",
+				function()
+				{
+			Debug.log("input forPrimary=" + forPrimary);
+			window.clearTimeout(inputTimer);
+			inputTimer = window.setTimeout(
+					function()
+					{
+				CodeEditor.editor.updateDecorations(forPrimary,1 /*inPlace*/);
+//				var el = document.getElementById("editableBox" + forPrimary);
+//				var orig = el.textContent;
+//				console.log(el.textContent);
+//				console.log(el.innerText);
+//				console.log(el.innerHTML);
+				
+					}, 1000); //end setTimeout
+				}); //end addEventListenr
+//		"onchange": "CodeEditor.editor.updateDecorations(" + 
+//			forPrimary + ");",
+		
+		//////////////////
+		//localConvertForClient
+		//	replace html/xhtml reserved characters with equivalent for client display.
+		//	reserved: ", ', &, <, >, newline, space
+		function localConvertForClient(s)
+		{
+			//steps:
+			//	convert tabs
+			//
+			
+			console.log(s);
+			
+			//is 8 spaces on linux console - do the same
+			var t;
+			var s;
+			var i,c;
+			var tabSz = 8;
+			while((t = str.indexOf("\t")) != -1)
+			{
+				s = ""; //determine the number of spaces to represent the tab as
+				c = (tabSz-(t%tabSz)); 
+				if(c<=1) c+=tabSz; //make sure tab space is > 1
+				for(i=0;i<c;++i)
+					s += "&nbsp;";
+				str = [str.slice(0, t), s, str.slice(t+1)].join('');
+			}
+
+//			s = encodeURIComponent(s);			
+//			console.log(s);
+//			s = s
+//				.replace(/%23/g, "&amp;")  			//&					
+//				.replace(/%26/g, "&amp;")  			//&
+//				.replace(/%3C/g, "&lt;") 				//<
+//				.replace(/%3E/g, "&gt;")				//>
+//				.replace(/%22/g, "&quot;")				//"
+//				.replace(/%27/g, "&#039;")				//'
+//				.replace(/%0A%0D/g, "<br>")			//newline
+//				.replace(/%20%20/g, "&nbsp;&nbsp;")		//double space
+//				.replace(/%20/g, " ");	//space
+//
+//			console.log(s);
+			return s;
+		} // end localDecorateText
+		
+	} //end handleFileContent()
+	
+	
+
+	//=====================================================================================
+	//updateDecorations ~~
+	//	redraw text editor based on file content in req response
+	var _DECORATION_RED = "rgb(202, 52, 52)";
+	var _DECORATION_BLUE = "rgb(64, 86, 206)";
+	var _DECORATION_GREEN = "rgb(33, 175, 60)";
+	var _DECORATION_BLACK = "rgb(5, 5, 5)";
+	var _DECORATIONS = {
+			"ADD_SUBDIRECTORY" 	: _DECORATION_BLUE,
+			"namespace" 		: _DECORATION_RED,
+			"const" 			: _DECORATION_RED,
+			"#define" 			: _DECORATION_RED,
+			"#undef" 			: _DECORATION_RED,
+			"#include" 			: _DECORATION_RED,
+			"#ifndef" 			: _DECORATION_RED,
+			"#else" 			: _DECORATION_RED,
+			"#endif" 			: _DECORATION_RED,
+			"void"	 			: _DECORATION_RED,
+			"std::" 			: _DECORATION_BLACK,
+			"string" 			: _DECORATION_GREEN,
+			"set" 				: _DECORATION_GREEN,
+			"map" 				: _DECORATION_GREEN,
+	};
+	this.updateDecorations = function(forPrimary,inPlace)
+	{
+		var el = document.getElementById("editableBox" + forPrimary);
+		var orig = inPlace?el.innerText:el.textContent;
+		var str = "";
+		
+
+		//manage tabs, is 8 spaces on linux console - do the same		
+		var s;
+		var i,j,c;
+		var lineStart = 0;
+		var tabSz = 8;
+		var t;
+		
+		for(i=0;i<orig.length;++i)
+		{
+			++t; //increment tab position
+						
+			if(orig[i] == '\n') 
+			{
+				s = "<br>";
+				t = 0; //reset tab start index				 		
+			}
+			else if(orig[i] == '\t')
+			{
+				//found tab
+				
+				//calculate number of spaces to add
+				s = ""; //determine the number of spaces to represent the tab as
+				c = tabSz - (t%tabSz); 
+				if(c <= 1) c+=tabSz; //make sure tab space is > 1				
+				for(j=0;j<c;++j)
+					s += "&nbsp;";
+				t += c;				
+			}
+			else if(orig[i] == '<')
+				s = "&lt;";
+			else if(orig[i] == '>')
+				s = "&gt;";
+			else if(orig[i] == '(' || orig[i] == ')'
+					 || orig[i] == '{' || orig[i] == '}'
+							 || orig[i] == '=') //single character special 
+				s = "<label style='" +
+				"font-weight:bold; " +
+				"color:" + 
+				_DECORATION_BLUE + "'>" + orig[i] + "</label>";
+			else
+			{
+				str += orig[i];
+				continue; //dont do special replace
+			}
+			
+			str += s;//[str.slice(0, i), s, str.slice(i + 1)].join('');
+			//i += s.length-1; //skip ahead by size of insert			
+		} //done modifying string
+			
+
+		for(var d in _DECORATIONS)
+		{				
+			str = str.replace(new RegExp(d, 'g'),"<label style='" +
+					"font-weight:bold; " +
+					"color:" + 
+					_DECORATIONS[d] + "'>" + d + "</label>");
+		}
+		
+		//console.log(str);
+		
+		//replace other characters
+//		str = str
+//						.replace(/\n/g, "<br>")  			//&
+//						;
+//						.replace(/%26/g, "&amp;")  			//&
+//						.replace(/%3C/g, "&lt;") 				//<
+//						.replace(/%3E/g, "&gt;")				//>
+//						.replace(/%22/g, "&quot;")				//"
+//						.replace(/%27/g, "&#039;")				//'
+//						.replace(/%0A%0D/g, "<br>")			//newline
+//						.replace(/%20%20/g, "&nbsp;&nbsp;")		//double space
+//						;
+		el.innerHTML = str;
+		
+	} //end updateDecorations()
+	
 } //end create() CodeEditor instance
 
 

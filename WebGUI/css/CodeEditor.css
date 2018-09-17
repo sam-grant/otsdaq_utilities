@@ -3,6 +3,7 @@
 		body {	
 			background-color: 		rgb(141, 177, 197);
 			font-family: 			'Comfortaa', serif;
+			overflow: 				auto; /* override ots.css */
 		}
 
 		/* make links have a hand cursor */
@@ -14,20 +15,18 @@
 			font-family: 			"Comfortaa";
 		}
 		
-		#primaryPane {
-			background-color: 		red;
-			overflow: 				hidden;	
-		}
-		#secondaryPane {
-			background-color: 		green;
-			overflow: 				hidden;	
-		}
 		.controlsPane {
 			background-color: 		blue;
 			position: 				relative;
 			top:					-2px;
 		}
-		 
+		.editorPane .controlsPane {
+			position: 				absolute;
+		}
+		.editorPane {
+			overflow: 				hidden;				
+		}
+				 
 		
 		.controlsButton {
 
@@ -84,8 +83,49 @@
 			margin: 				3px 0px 0px 5px;
 		}
 		
-		
-		
+		.textEditor {
+			background-color: 		white;
+			position:				absolute;
+			width:					100%;
+			height:					100%;
+			
+			/*inner shadow*/
+		   -moz-box-shadow:    inset 0 0 10px #000000;
+		   -webkit-box-shadow: inset 0 0 10px #000000;
+		   box-shadow:         inset 0 0 10px #000000;
+		}
+		.textEditor * {
+			color:					black;
+			font-family:			monospace;			
+		}
+		.editableBox {
+			white-space: 			nowrap;
+		}
+
+		.directoryNav {
+			background-color: 		yellow;
+			position:				absolute;
+			overflow:				auto;
+			
+			/*standoff shadow*/
+			-moz-box-shadow:    3px 3px 5px 6px rgba(100,100,100,0.8);
+			-webkit-box-shadow: 3px 3px 5px 6px rgba(100,100,100,0.8);
+			box-shadow:         3px 3px 5px 6px rgba(100,100,100,0.8);
+			
+		}
+		.directoryNav * {
+			color:					black;
+		}
+		.dirNavPath {
+			color:					black;
+		}
+		.dirNavFolder {
+			color:					red;
+		}
+		.dirNavFile {
+			color:					black;
+		}
+
 		
 		
 		
