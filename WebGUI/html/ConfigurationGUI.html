@@ -11763,7 +11763,7 @@
 			//set position and size
 			var gh = 85;
 			var w = 500;
-			var h = 395+30;
+			var h = 395;
 			ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/,
 					undefined /*padding*/,undefined /*border*/,undefined /*margin*/,undefined /*doNotResize*/,
 					gh*2 /*offsetUp*/);
@@ -14558,10 +14558,25 @@
 			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Wiz Mode?",
 					function() 
 					{ 
-				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
-						"",
-						handleOtsRelaunchResponse,0);
+
+				//start blackout
+				DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+				window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
+				//now in all future requests must ignoreSystemBlock
+
+				//===========
+				function localDelayedLaunch()
+				{
+					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
+							"",
+							handleOtsRelaunchResponse,
+							0, //handler param
+							0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+							true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+				} //end localDelayedLaunch		
+
 					},0,"#efeaea",0,"#770000");
+
 		} //end verifyRelaunchWizMode
 		
 		//verifyRelaunchNormalMode ~~
@@ -14571,9 +14586,24 @@
 			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Normal Mode?",
 					function() 
 					{ 
-				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
-						"",
-						handleOtsRelaunchResponse,0);
+				
+
+				//start blackout
+				DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+				window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
+				//now in all future requests must ignoreSystemBlock
+
+				//===========
+				function localDelayedLaunch()
+				{
+					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
+							"",
+							handleOtsRelaunchResponse,
+							0, //handler param
+							0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+							true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+				} //end localDelayedLaunch		
+				
 					},0,"#efeaea",0,"#770000");
 		} //end verifyRelaunchNormalMode
 		

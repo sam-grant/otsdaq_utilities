@@ -4166,7 +4166,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	if(margin === undefined) margin = 0;	
 
 	var x,y;
-
+	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//popupResize ~~
 	//	set position and size	
@@ -4238,6 +4238,8 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	el.addEventListener("keydown",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	el.addEventListener("mousemove",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	el.addEventListener("mousemove",DesktopContent.mouseMove);
+
+	el.style.overflow = "auto";
 	
 	return {"w" : w, "h" : h, "x" : x, "y" : y};
 }

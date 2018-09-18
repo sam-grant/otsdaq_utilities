@@ -133,10 +133,11 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 try
 {
 	//Commands
+
+	//	gatewayLaunchOTS -- and other StartOTS commands
+
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
-	//	launchOTS
-	// 	launchWiz
 	// 	flattenToSystemAliases
 	// 	versionTracking
 	//	getColumnTypes
@@ -224,7 +225,7 @@ try
 		__SUP_COUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmlOut,cfgMgr,configName);
 	}
-	else if(requestType == "gatewayLaunchOTS" || requestType == "gatewayLaunchWiz" ||//requestType == "launchOTS" || requestType == "launchWiz" ||
+	else if(requestType == "gatewayLaunchOTS" || requestType == "gatewayLaunchWiz" ||
 			requestType == "flattenToSystemAliases")
 	{
 		//NOTE: similar to Supervisor version but does not keep active sessions

@@ -62,7 +62,7 @@ SmartLaunch.systemToContextMap = {};
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
-//call createWiz to create instance of a SmartLaunch
+//call create to create instance of a SmartLaunch
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 SmartLaunch.create = function() {
@@ -96,7 +96,8 @@ SmartLaunch.create = function() {
 	
 	//for display
 	var _CHECKBOX_H = 40;
-	var _CHECKBOX_W = 240;
+	var _CHECKBOX_MIN_W = 240;
+	var _CHECKBOX_MAX_W = 540;
 	var _LAUNCH_MIN_W = 525;
 	var _MARGIN = 40;
 
@@ -129,10 +130,11 @@ SmartLaunch.create = function() {
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
 	// end variable declaration
-	Debug.log("SmartLaunch.launcher constructed");
 	SmartLaunch.launcher = this; 
+	Debug.log("SmartLaunch.launcher constructed");
 
 	init();
+	Debug.log("SmartLaunch.launcher initialized");
 	
 
 	//=====================================================================================
@@ -142,7 +144,9 @@ SmartLaunch.create = function() {
 		Debug.log("Smart Launch init ");
 		DesktopContent.tooltip("Smart Launch",
 				"Welcome to the Smart Launch user interface. "+
-				"Select which pieces of the configuration you want to enable, and then press the launch button!"
+				"Select which pieces of the configuration you want to enable, and then press the launch button!" +
+				"\n\n" +
+				"Once the pieces you want are enabled, press the run button!"
 		);
 
 		//get all existing contexts
@@ -377,8 +381,9 @@ SmartLaunch.create = function() {
 		_runStatusDiv = runStatusDiv = document.getElementById("runStatusDiv");
 
 		var chkH = _CHECKBOX_H;
-		var chkW = _CHECKBOX_W;
-
+		var chkW = (w/3)|0; 
+		if(chkW < _CHECKBOX_MIN_W) chkW = _CHECKBOX_MIN_W;
+		if(chkW > _CHECKBOX_MAX_W) chkW = _CHECKBOX_MAX_W;
 		
 		var sdivH = 66 + chkH*SmartLaunch.subsystems.length; //header + chkboxes
 		
@@ -858,10 +863,10 @@ SmartLaunch.create = function() {
 
 		//block checks
 		window.clearTimeout(_getStateTimer);
-		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 		
+		//start blackout
+		DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
 		window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
-
 		//now in all future requests must ignoreSystemBlock
 
 		//===========

@@ -3101,7 +3101,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	//=====================================================================================
 	//htmlOpen ~~		
 	//	tab name and attribute/value map object
-	function htmlOpen(tag,attObj,innerHTML,closeTag)
+	function htmlOpen(tag,attObj,innerHTML,doCloseTag)
 	{
 		var str = "";
 		var attKeys = Object.keys(attObj); 
@@ -3111,7 +3111,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 			attObj[attKeys[i]] + "' ";
 		str += ">";
 		if(innerHTML) str += innerHTML;
-		if(closeTag)
+		if(doCloseTag)
 			str += "</" + tag + ">";
 		return str;
 	} // end htmlOpen()

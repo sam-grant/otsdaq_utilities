@@ -602,7 +602,7 @@
 				var t;
 				var s;
 				var i,c;
-				var tabSz = 8;
+				var tabSz = 4;
 				while((t = str.indexOf("\t")) != -1)
 				{
 					s = ""; //determine the number of spaces to represent the tab as
@@ -652,6 +652,7 @@
 			
 			//handleRefreshConsole ~
 			// 	handle server response, even on error
+			var _localRefreshTimeout = _REFRESH_INTERVAL;
 			function handleRefreshConsole(req) {
 				
 				if(!req) 
@@ -677,7 +678,7 @@
 			    //Debug.log("Chat _lastUpdateIndex now is " + _lastUpdateIndex);	
 			    
 			    var msgs = req.responseXML.getElementsByTagName("messages")[0];
-			    if(msgs) //if messages list is present in req
+			    if(msgs && msgs.children.length) //if messages list is present in req
 			    {			    
 			    	_consoleMessageArray = new Array();
 				    
@@ -700,10 +701,20 @@
 					
 					updateConsoleHistory();	
 					updateSideBarCounts(); //must be called after console history update
+					
+					_localRefreshTimeout = 100; //ms, refresh more often if we just got data
+			    }
+			    else
+			    {
+			    	if(_localRefreshTimeout != _REFRESH_INTERVAL)
+			    		_localRefreshTimeout *= 2;
+			    	if(_localRefreshTimeout > _REFRESH_INTERVAL)
+			    		_localRefreshTimeout = _REFRESH_INTERVAL;
 			    }
 			    
 			    document.getElementById("consoleConnectionStatus").style.display = "none"; //hide DISCONNECTED
-			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_REFRESH_INTERVAL); //schedule next update			    
+			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_localRefreshTimeout); //schedule next update	
+			    //console.log("_localRefreshTimeout",_localRefreshTimeout);
 			}
 
 
@@ -912,8 +923,13 @@
 					
 					firstMsg = "";
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					secondMsgIndex = secondMsg.indexOf(']\t'); //find end of line number display
-					if(secondMsgIndex != -1)
+					if(secondMsg.indexOf(" --:0") == 0) //skip it
+						secondMsg = secondMsg.substr((" --:0").length);
+					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
+					
+					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
+							(secondMsgIndex + 1 < secondMsg.length && secondMsg[secondMsgIndex + 1] == '\t') ||
+							(secondMsgIndex + 1 == secondMsg.length)))
 					{
 						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
 						secondMsg = secondMsg.slice(secondMsgIndex+2);
