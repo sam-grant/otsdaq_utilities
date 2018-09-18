@@ -99,7 +99,8 @@
 			font-family:			monospace;			
 		}
 		.editableBox {
-			white-space: 			nowrap;
+			white-space: 			pre; /*nowrap;*/
+			tab-size: 				4;
 		}
 
 		.directoryNav {

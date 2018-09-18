@@ -602,7 +602,7 @@
 				var t;
 				var s;
 				var i,c;
-				var tabSz = 4;
+				var tabSz = 8;
 				while((t = str.indexOf("\t")) != -1)
 				{
 					s = ""; //determine the number of spaces to represent the tab as
@@ -765,11 +765,11 @@
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
 				{
 					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
-							"s: counts</u><br>";
+							" counts:</u><br>";
 					fieldStr = ""; countStr = "";
 					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])		
 					{
-						fieldStr += i + ": <br>";
+						fieldStr += i + " <br>";
 						countStr += _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";
 						//						str += "<tr><td>";
 						//						str += i + ": ";
@@ -778,11 +778,10 @@
 						//						str += "</td></tr>";
 					}
 
-					str += "<table class='countsTable' style='width:" + 
-							(_USERS_WIDTH - 2 - 2 - 17) + "px" + ";'>";
-					str += "<tr><td style='overflow-x:auto'>" + fieldStr + 
-							"</td><td style='width:50px;overflow-x:auto'>" + 
-							countStr + "</td></tr>";
+					str += "<table class='countsTable' >";
+					str += "<tr><td style='width:50px;overflow-x:auto'>" + countStr + 
+							"</td><td style='overflow-x:auto'>" + 
+							fieldStr + "</td></tr>";
 					str += "</table>"			
 				}			
 				el.innerHTML = str;
