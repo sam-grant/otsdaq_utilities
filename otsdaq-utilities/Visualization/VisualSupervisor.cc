@@ -80,16 +80,16 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 }
 
 //========================================================================================================================
-void VisualSupervisor::binaryBufferToHexString(char *buff, unsigned int len,  std::string& dest)
+void VisualSupervisor::binaryBufferToHexString(char* buffer, unsigned int length,  std::string& destination)
 {
-	dest = "";
-	dest.reserve(len*2);
+	destination = "";
+	destination.reserve(length*2);
 	char hexstr[3];
 
-	for(unsigned int i=0;i<len;++i)
+	for(unsigned int i=0; i<length; i++)
 	{
-		sprintf(hexstr,"%02X",(unsigned char)buff[i]);
-		dest += hexstr;
+		sprintf(hexstr,"%02X",(unsigned char)buffer[i]);
+		destination += hexstr;
 	}
 
 }
@@ -459,39 +459,31 @@ void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgi
 				//__COUT__ << "Getting object name: " << rootDirectoryName << std::endl;
 				TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
-				if(!histo)
-					__COUT__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
-				else //turns out was a root object path
+				if(histo != nullptr) //turns out was a root object path
 				{
-					//__COUT__ << "Converting histo to json: " << histo->GetName() << std::endl;
-					TString json = TBufferJSON::ConvertToJSON(histo);
-					//__COUT__ << "json " << json << std::endl;
-
-					TBufferFile tbuff(TBuffer::kWrite);
-
-					std::string rootType = histo->ClassName();
-					//__COUT__ << "rootType " << rootType << std::endl;
-
-					histo->Streamer(tbuff);
+					//Clone histo to avoid conflict when it is filled by other threads
+					TObject* histoClone = histo->Clone();
+					TString json = TBufferJSON::ConvertToJSON(histoClone);
+					TBufferFile tBuffer(TBuffer::kWrite);
+					histoClone->Streamer(tBuffer);
 
 					//__COUT__ << "histo length " << tbuff.Length() << std::endl;
 
-					std::string dest;
-					binaryBufferToHexString(tbuff.Buffer(), tbuff.Length(), dest);
+					std::string destination;
+					binaryBufferToHexString(tBuffer.Buffer(), tBuffer.Length(), destination);
 
-					//*out << json.Data() << std::endl;
-					//return;
-					xmlOut.addTextElementToData("rootType", rootType);
-					xmlOut.addTextElementToData("rootData", dest);
+					xmlOut.addTextElementToData("rootType", histoClone->ClassName());
+					xmlOut.addTextElementToData("rootData", destination);
 					xmlOut.addTextElementToData("rootJSON", json.Data());
-					//__COUT__ << "Done" << std::endl;
-
-					//std::cout << "\n\n" << json.Data() << "\n\n";
+					delete histoClone;
 				}
+				else
+				__MOUT__ << "Failed to access:-" << rootDirectoryName << "-" << std::endl;
+
 			}
 			else
 			{
-				//__COUT__ << "directory found getting the content!" << std::endl;
+				__COUT__ << "directory found getting the content!" << std::endl;
 				TRegexp re("*", kTRUE);
 				if (LDQM_pos == 0)
 				{
