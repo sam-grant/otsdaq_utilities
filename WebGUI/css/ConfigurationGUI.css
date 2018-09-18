@@ -62,7 +62,7 @@
 		
 
 		#SubSystemTable {
-			background-color : rgb(210, 193, 193);;
+			background-color : rgb(210, 193, 193);
 		}
 		#SubSystemTable td, #SubSystemTable th {
 			background-color : rgb(226, 216, 216);	
@@ -72,6 +72,18 @@
 			background-color : rgb(210, 193, 193); /*chrome does not color table unless after the td/th*/
 		}
 		
+		.tableAddRowButton, .tableDeleteRowButton {
+			background-color: rgb(210, 193, 193);
+			border: 1px solid grey;
+			padding: 0px 4px 0px 4px;
+			text-decoration: none;
+			margin: 2px;
+			width: 8px;
+		}
+		.tableAddRowButton:hover, .tableDeleteRowButton:hover {
+			text-decoration: none;
+			background-color: rgb(208, 209, 222);
+		}
 
 		.tableView-Menu {
 			float:				left;

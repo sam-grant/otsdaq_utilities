@@ -578,7 +578,7 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 			if(!fp)
 			{
 				__SS__ << "Big problem with macromaker history file: " << fileName << std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 			fwrite(&returnStr[i],fileSz-i,1,fp);
 			fclose(fp);
@@ -711,8 +711,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 		exportFile << "//Paste this whole file into an interface to transfer Macro functionality.\n";
 		exportFile << "{\n";
 
-		exportFile << "\n\tuint8_t addrs[universalAddressSize_];	//create address buffer of interface size";
-		exportFile << "\n\tuint8_t data[universalDataSize_];		//create data buffer of interface size";
+		exportFile << "\n\tuint8_t *addrs = new uint8_t[universalAddressSize_];	//create address buffer of interface size";
+		exportFile << "\n\tuint8_t *data = new uint8_t[universalDataSize_];		//create data buffer of interface size";
 
 		for(unsigned int i = 0; i < Commands.size(); i++)
 		{
@@ -814,6 +814,8 @@ void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 			exportFile << "\n\t}";
 		}
 
+		exportFile << "\n\tdelete[] addrs; //free the memory";
+		exportFile << "\n\tdelete[] data; //free the memory";
 		exportFile << "\n}";
 		exportFile.close();
 
