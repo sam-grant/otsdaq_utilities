@@ -1147,7 +1147,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"color: " + textColor + ";width: " + dialogWidth + "px; padding-bottom: 10px;" +
 			"}\n\n";
 	//..and anything in the text div
-	css += "#" + DesktopContent._verifyPopUpId + "-text *" +
+	css += "#" + DesktopContent._verifyPopUpId + " *" +
 			"{" +
 			"color: " + textColor + ";" +
 			"}\n\n";
