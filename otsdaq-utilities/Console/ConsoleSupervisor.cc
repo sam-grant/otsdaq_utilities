@@ -24,7 +24,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 #define USER_CONSOLE_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
-#define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarderGen.cfg"
+#define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarder.cfg"
 
 #undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
