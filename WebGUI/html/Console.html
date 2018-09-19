@@ -922,8 +922,8 @@
 					
 					firstMsg = "";
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					if(secondMsg.indexOf(" --:0") == 0) //skip it
-						secondMsg = secondMsg.substr((" --:0").length);
+					//if(secondMsg.indexOf(" --:0") == 0) //skip it
+					//	secondMsg = secondMsg.substr((" --:0").length);
 					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
 					
 					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
@@ -932,6 +932,15 @@
 					{
 						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
 						secondMsg = secondMsg.slice(secondMsgIndex+2);
+						
+						//skip all the mf line number insert
+						if((secondMsgIndex = firstMsg.indexOf(':')) >= 0)
+						{							
+							while(++secondMsgIndex < firstMsg.length && 
+									firstMsg[secondMsgIndex] >= '0' && 
+									firstMsg[secondMsgIndex] <= '9' );
+							firstMsg = firstMsg.substr(secondMsgIndex);
+						}
 					}
 					else
 					{						
@@ -1203,7 +1212,7 @@
 		</div>
 						
 		<div id='consoleHistoryContainer'>
-			<div id='consoleHistory'>
+			<div id='consoleHistory' class='consoleEntry' <!--to match nowrap --> >
 			<table height='100%'><td height='100%' valign='bottom'>
 			<div id='chatText'></div>
 			</td></table>
