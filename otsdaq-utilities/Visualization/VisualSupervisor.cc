@@ -452,7 +452,17 @@ void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgi
 				if(histo != nullptr) //turns out was a root object path
 				{
 					//Clone histo to avoid conflict when it is filled by other threads
-					TObject* histoClone = histo->Clone();
+					TObject* histoClone = nullptr;
+					try
+					{
+						histoClone = histo->Clone();
+					}
+					catch(...)
+					{
+						__SUP_COUT__ << "ERROR! Something went wrong trying to clone the histogram. Name: " << histo->GetName() << " Pointer: " << histoClone << __E__;
+						__SUP_COUT_INFO__ << "ERROR! Something went wrong trying to clone the histogram. Name: " << histo->GetName() << " Pointer: " << histoClone << __E__;
+						return;
+					}
 					TString json = TBufferJSON::ConvertToJSON(histoClone);
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
