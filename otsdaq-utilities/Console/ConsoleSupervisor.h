@@ -103,7 +103,7 @@ private:
 			}
 
 			//debug
-			//			std::cout << ":::::" << msg << "\n";
+						std::cout << ":::::" << msg << "\n";
 			//			for(auto &f: fields)
 			//			{
 			//				std::cout << f.fieldName << ": ";
