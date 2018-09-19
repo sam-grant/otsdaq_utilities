@@ -13,7 +13,7 @@ cet_make(LIBRARY_NAME Visualization
 		 CgiDataUtilities
 		 FiniteStateMachine
 		 WebUsersUtilities
-		 MonicelliInterface
+		 #MonicelliInterface
 		 SupervisorInfo
 		 ConfigurationInterface
 		 Macros
