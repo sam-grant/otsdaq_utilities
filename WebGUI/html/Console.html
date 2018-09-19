@@ -602,7 +602,7 @@
 				var t;
 				var s;
 				var i,c;
-				var tabSz = 4;
+				var tabSz = 8;
 				while((t = str.indexOf("\t")) != -1)
 				{
 					s = ""; //determine the number of spaces to represent the tab as
@@ -765,11 +765,11 @@
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
 				{
 					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
-							"s: counts</u><br>";
+							" counts:</u><br>";
 					fieldStr = ""; countStr = "";
 					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])		
 					{
-						fieldStr += i + ": <br>";
+						fieldStr += i + " <br>";
 						countStr += _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";
 						//						str += "<tr><td>";
 						//						str += i + ": ";
@@ -778,11 +778,10 @@
 						//						str += "</td></tr>";
 					}
 
-					str += "<table class='countsTable' style='width:" + 
-							(_USERS_WIDTH - 2 - 2 - 17) + "px" + ";'>";
-					str += "<tr><td style='overflow-x:auto'>" + fieldStr + 
-							"</td><td style='width:50px;overflow-x:auto'>" + 
-							countStr + "</td></tr>";
+					str += "<table class='countsTable' >";
+					str += "<tr><td style='width:50px;overflow-x:auto'>" + countStr + 
+							"</td><td style='overflow-x:auto'>" + 
+							fieldStr + "</td></tr>";
 					str += "</table>"			
 				}			
 				el.innerHTML = str;
@@ -923,8 +922,8 @@
 					
 					firstMsg = "";
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					if(secondMsg.indexOf(" --:0") == 0) //skip it
-						secondMsg = secondMsg.substr((" --:0").length);
+					//if(secondMsg.indexOf(" --:0") == 0) //skip it
+					//	secondMsg = secondMsg.substr((" --:0").length);
 					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
 					
 					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
@@ -933,6 +932,15 @@
 					{
 						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
 						secondMsg = secondMsg.slice(secondMsgIndex+2);
+						
+						//skip all the mf line number insert
+						if((secondMsgIndex = firstMsg.indexOf(':')) >= 0)
+						{							
+							while(++secondMsgIndex < firstMsg.length && 
+									firstMsg[secondMsgIndex] >= '0' && 
+									firstMsg[secondMsgIndex] <= '9' );
+							firstMsg = firstMsg.substr(secondMsgIndex);
+						}
 					}
 					else
 					{						
@@ -1204,7 +1212,7 @@
 		</div>
 						
 		<div id='consoleHistoryContainer'>
-			<div id='consoleHistory'>
+			<div id='consoleHistory' class='consoleEntry' <!--to match nowrap --> >
 			<table height='100%'><td height='100%' valign='bottom'>
 			<div id='chatText'></div>
 			</td></table>
