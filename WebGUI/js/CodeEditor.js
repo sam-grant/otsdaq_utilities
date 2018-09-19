@@ -942,14 +942,14 @@ CodeEditor.create = function() {
 							//handle tabbing selected lines
 							Debug.log("special key selected lines " + cursor.startNodeIndex + " - " +
 									cursor.endNodeIndex);
-							
-							/////////////////////////
-							// start block comment handling
-							if(blockCOMMENT)
-							{
-								Debug.log("Block COMMENT");
-								return;
-							} //end block comment handling
+//							
+//							/////////////////////////
+//							// start block comment handling
+//							if(blockCOMMENT)
+//							{
+//								Debug.log("Block COMMENT");
+//								return;
+//							} //end block comment handling
 							
 							
 							
@@ -1089,15 +1089,25 @@ CodeEditor.create = function() {
 								}
 								
 								return;
-							}
+							} //end rectangular TAB handling
 							
+							
+							
+							
+
+							/////////////////////////
+							// normal block TAB handling
 							//steps:
 							//	go backwards from start until a new line is found
 							//	then add tab after each new line until end of selection reached
 							
 							//reverse-find new line
 							var node,val;
-							var found = false;							
+							var found = false;	
+							var specialStr = '\t';
+							if(blockCOMMENT)
+								specialStr = "//"; //comment string
+								
 							for(n=cursor.startNodeIndex; !found && n>=0; --n)
 							{
 								node = el.childNodes[n];
@@ -1108,13 +1118,16 @@ CodeEditor.create = function() {
 								{
 									if(val[i] == '\n')
 									{
-										if(e.shiftKey) //delete leading tab
+										if(e.shiftKey) //delete leading special string
 										{
-											if(i+1 < val.length && val[i+1] == '\t')
-												node.textContent = val.substr(0,i+1) + val.substr(i+2);
+											if(i + specialStr.length < val.length &&
+													val.indexOf(specialStr,i+1) == i+1)
+												node.textContent = val.substr(0,i+1) + 
+													val.substr(i+1+specialStr.length);											
 										}
-										else //add leading tab
-											node.textContent = val.substr(0,i+1) + "\t" + val.substr(i+1);
+										else //add leading special string
+											node.textContent = val.substr(0,i+1) + 
+												specialStr + val.substr(i+1);
 										found = true;
 										break;
 									}
@@ -1146,10 +1159,12 @@ CodeEditor.create = function() {
 										if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
 										
 										if(e.shiftKey) //delete leading tab
-										{
-											if(i+1 < val.length && val[i+1] == '\t')
+										{											
+											if(i + specialStr.length < val.length &&
+													val.indexOf(specialStr,i+1) == i+1)
 											{
-												val = val.substr(0,i+1) + val.substr(i+2);
+												val = val.substr(0,i+1) + 
+														val.substr(i+1+specialStr.length);
 												node.textContent = val;
 												
 												//if running out of string to keep line selected.. jump to next node
@@ -1164,7 +1179,7 @@ CodeEditor.create = function() {
 										}
 										else //add leading tab
 										{
-											val = val.substr(0,i+1) + "\t" + val.substr(i+1);
+											val = val.substr(0,i+1) + specialStr + val.substr(i+1);
 											node.textContent = val;
 										}
 										
@@ -1193,7 +1208,7 @@ CodeEditor.create = function() {
 								return;
 							}
 						}
-						else //not tabbing a selection, just add or delete single tab in place
+						else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
 						{	
 							if(e.shiftKey)
 							{								
@@ -1458,7 +1473,7 @@ CodeEditor.create = function() {
 				//get rid of divs as soon as possible
 				//convert div to text node and then have it reevaluated
 				eatVal = node.innerHTML; //if html <br> then add another new line
-				console.log("div/br",eatVal,val);
+				//console.log("div/br",eatVal,val);
 				
 				i = 1;
 				if(node.nodeName == "DIV") 	//for DIV there may be more or less new lines to add					
