@@ -447,22 +447,13 @@ void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgi
 
 				//failed directory so assume it's file
 				//__SUP_COUT__ << "Getting object name: " << rootDirectoryName << std::endl;
+				TObject* histoClone = nullptr;
 				TObject* histo = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
 				if(histo != nullptr) //turns out was a root object path
 				{
 					//Clone histo to avoid conflict when it is filled by other threads
-					TObject* histoClone = nullptr;
-					try
-					{
-						histoClone = histo->Clone();
-					}
-					catch(...)
-					{
-						__SUP_COUT__ << "ERROR! Something went wrong trying to clone the histogram. Name: " << histo->GetName() << " Pointer: " << histoClone << __E__;
-						__SUP_COUT_INFO__ << "ERROR! Something went wrong trying to clone the histogram. Name: " << histo->GetName() << " Pointer: " << histoClone << __E__;
-						return;
-					}
+				    histoClone = histo->Clone();
 					TString json = TBufferJSON::ConvertToJSON(histoClone);
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
