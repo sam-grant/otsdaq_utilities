@@ -787,6 +787,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//handleFileContent ~~
 	//	redraw text editor based on file content in req response
+	var TABKEY = 9;
 	this.handleFileContent = function(forPrimary,req)
 	{
 		forPrimary = forPrimary?1:0;
@@ -824,24 +825,66 @@ CodeEditor.create = function() {
 
 		var inputTimer = 0;
 		box.addEventListener("input",
-				function()
+				function(e)
 				{
 			Debug.log("input forPrimary=" + forPrimary);
 			window.clearTimeout(inputTimer);
 			inputTimer = window.setTimeout(
 					function()
 					{
-				CodeEditor.editor.updateDecorations(forPrimary,1 /*inPlace*/);
-//				var el = document.getElementById("editableBox" + forPrimary);
-//				var orig = el.textContent;
-//				console.log(el.textContent);
-//				console.log(el.innerText);
-//				console.log(el.innerHTML);
-				
+				CodeEditor.editor.updateDecorations(forPrimary,1 /*inPlace*/);				
 					}, 1000); //end setTimeout
-				}); //end addEventListenr
-//		"onchange": "CodeEditor.editor.updateDecorations(" + 
-//			forPrimary + ");",
+				}); //end addEventListener
+		
+		box.addEventListener("keydown",
+						function(e)
+						{
+					Debug.log("keydown e=" + e.keyCode);
+					
+					window.clearTimeout(inputTimer);
+					inputTimer = window.setTimeout(
+							function()
+							{
+						CodeEditor.editor.updateDecorations(forPrimary,1 /*inPlace*/);				
+							}, 1000); //end setTimeout
+										
+					
+					if(e.keyCode == TABKEY)
+					{
+						//this.value
+						//manage tabs
+						document.execCommand('insertHTML', false, '&#009');
+
+						e.preventDefault();
+						return;
+						
+						
+						range= window.getSelection().getRangeAt(0);
+						start = range.startOffset;
+						end = range.endOffset;
+						startNode = range.startContainer;
+						endNode = range.endContainer;
+						selectedText = range.toString();
+						
+						var val = startNode.textContent;
+						console.log(val);
+						
+						startNode.textContent = val.substr(0,start) +
+								"T" + val.substr(start);
+						
+						
+					
+						
+						//var startPos = box.selectionStart;
+						//var endPos = box.selectionEnd;
+						//console.log("startPos",startPos,endPos,localGetCaretPosition(box));
+						console.log("sel.getRangeAt(0)",range);
+						var startPos = range.startOffset;
+						var endPos = range.endOffset;
+						e.preventDefault();
+					}
+					
+						}); //end addEventListener
 		
 		//////////////////
 		//localConvertForClient
@@ -887,6 +930,40 @@ CodeEditor.create = function() {
 			return s;
 		} // end localDecorateText
 		
+		
+		
+		function localGetCaretPosition(editableDiv) 
+		{
+			var caretPos = 0,
+					sel, range;
+			if (window.getSelection) 
+			{
+				sel = window.getSelection();
+				if (sel.rangeCount) 
+				{
+					range = sel.getRangeAt(0);
+					if (range.commonAncestorContainer.parentNode == editableDiv) 
+					{
+						caretPos = range.endOffset;
+					}
+				}
+			} 
+			else if (document.selection && document.selection.createRange) 
+			{
+				range = document.selection.createRange();
+				if (range.parentElement() == editableDiv) 
+				{
+					var tempEl = document.createElement("span");
+					editableDiv.insertBefore(tempEl, editableDiv.firstChild);
+					var tempRange = range.duplicate();
+					tempRange.moveToElementText(tempEl);
+					tempRange.setEndPoint("EndToEnd", range);
+					caretPos = tempRange.text.length;
+				}
+			}
+			return caretPos;
+		}
+		
 	} //end handleFileContent()
 	
 	
@@ -912,54 +989,177 @@ CodeEditor.create = function() {
 			"std::" 			: _DECORATION_BLACK,
 			"string" 			: _DECORATION_GREEN,
 			"set" 				: _DECORATION_GREEN,
+			"get" 				: _DECORATION_GREEN,
 			"map" 				: _DECORATION_GREEN,
 	};
 	this.updateDecorations = function(forPrimary,inPlace)
-	{
+	{	
+
 		var el = document.getElementById("editableBox" + forPrimary);
-		var orig = inPlace?el.innerText:el.textContent;
+		
+		//handle get cursor location
+		var cursor = {
+				"startNode":undefined,
+				"startNodeIndex":undefined,
+				"startPos":undefined,
+				"endNode":undefined,
+				"endNodeIndex":undefined,
+				"endPos":undefined,
+				//maybe not needed
+				"rangeValue":undefined,
+				"startNodeValue": undefined,
+				"endNodeValue": undefined,
+		};
+		
+		try
+		{
+			range = window.getSelection().getRangeAt(0);
+			
+			cursor.startPos = range.startOffset;
+			cursor.endPos = range.endOffset;
+			cursor.startNode = range.startContainer;
+			cursor.endNode = range.endContainer;
+			cursor.rangeValue = range.toString();
+			cursor.startNodeValue = cursor.startNode.textContent; //.nodeValue; //.wholeText
+			cursor.endNodeValue = cursor.endNode.textContent; //.nodeValue; //.wholeText
+			
+			//find start and end node index
+			for(var i=0;i<el.childNodes.length;++i)
+			{
+				if(el.childNodes[i] == cursor.startNode ||
+						el.childNodes[i] == cursor.startNode.parentNode||
+						el.childNodes[i] == cursor.startNode.parentNode.parentNode)
+				{
+					cursor.startNodeIndex = i;
+					var str =  el.childNodes[i].parentNode.innerHTML;
+					str += "<label id='startRangeNode'></label>" + str;
+					el.childNodes[i].parentNode.innerHTML = str;
+				}
+
+				if(el.childNodes[i] == cursor.endNode ||
+						el.childNodes[i] == cursor.endNode.parentNode||
+						el.childNodes[i] == cursor.endNode.parentNode.parentNode)
+					cursor.endNodeIndex = i;
+			}
+
+			console.log("cursor",cursor);
+		}
+		catch(err)
+		{
+			console.log("err",err);
+		}
+
+		
+		
+		
+		var orig = el.innerText;//el.textContent;//inPlace?el.innerText:el.textContent;
 		var str = "";
 		
-
+		console.log("orig", orig);
 		//manage tabs, is 8 spaces on linux console - do the same		
 		var s;
 		var i,j,c;
 		var lineStart = 0;
-		var tabSz = 8;
+		var tabSz = 4; //to match eclipse!
 		var t;
+		var decor;
+		
+		var startOfWord = -1;
+		var specialString;
+		var startOfString = -1;
+		
 		
 		for(i=0;i<orig.length;++i)
 		{
 			++t; //increment tab position
+			
+			//string handling
+			if(startOfString != -1 || orig[i] == '"')
+			{
+				if(startOfString == -1) //start string
+					startOfString = str.length;
+				else if(orig[i] == '"')	//end string
+				{
+					specialString = str.substr(startOfString);
+					//console.log("string",startOfString,str.length,specialString);
+					str = str.substr(0,startOfString) + 
+							"<label style='" +
+							"font-weight:bold; " +
+							"color:" + 
+							_DECORATION_BLUE + "'>" + 
+							specialString + "\"</label>";
+					startOfString = -1;
+					continue;
+				}					
+			}
+			//special word handling			
+			else if((orig[i] >= 'a' && orig[i] <= 'z') || 
+							(orig[i] >= 'A' && orig[i] <= 'Z') ||
+							(orig[i] >= '0' && orig[i] <= '9') || 
+							(orig[i] == '_' || orig[i] == '-') || 
+							orig[i] == '#')
+			{
+				if(startOfWord == -1)
+					startOfWord = i;
+				//else still within word
+			}
+			else if(startOfWord != -1) //found end of word, check for special word
+			{
+				specialString = orig.substr(startOfWord,i-startOfWord);
+				startOfWord = -1;
+				decor = _DECORATIONS[specialString];
+				//console.log(specialString);
+					
+				if(decor) //found special word
+				{
+					//console.log(specialString);
+					
+					str = str.substr(0,str.length - specialString.length) + 
+							"<label style='" +
+							"font-weight:bold; " +
+							"color:" + 
+							decor + "'>" + 
+							specialString + "</label>";	
+				}				
+			}
+			
+			
+			//continue here with current character
+			
 						
-			if(orig[i] == '\n') 
+			
+			//replace other characters, like white space and html-chars
+			if(0 && orig[i] == '\n') 
 			{
 				s = "<br>";
 				t = 0; //reset tab start index				 		
 			}
-			else if(orig[i] == '\t')
+			else if(0 && orig[i] == '\t')
 			{
 				//found tab
 				
 				//calculate number of spaces to add
 				s = ""; //determine the number of spaces to represent the tab as
-				c = tabSz - (t%tabSz); 
+				//s = "&emsp;";
+				c = tabSz - (t%tabSz) + 1; 
 				if(c <= 1) c+=tabSz; //make sure tab space is > 1				
 				for(j=0;j<c;++j)
 					s += "&nbsp;";
 				t += c;				
 			}
-			else if(orig[i] == '<')
+			else if(0 && orig[i] == '<')
 				s = "&lt;";
-			else if(orig[i] == '>')
+			else if(0 && orig[i] == '>')
 				s = "&gt;";
-			else if(orig[i] == '(' || orig[i] == ')'
-					 || orig[i] == '{' || orig[i] == '}'
-							 || orig[i] == '=') //single character special 
-				s = "<label style='" +
-				"font-weight:bold; " +
-				"color:" + 
-				_DECORATION_BLUE + "'>" + orig[i] + "</label>";
+			else if(0 && orig[i] == ' ')
+				s = "&nbsp;";
+//			else if(orig[i] == '(' || orig[i] == ')'
+//					 || orig[i] == '{' || orig[i] == '}'
+//							 || orig[i] == '=') //single character special 
+//				s = "<label style='" +
+//				"font-weight:bold; " +
+//				"color:" + 
+//				_DECORATION_BLACK + "'>" + orig[i] + "</label>";
 			else
 			{
 				str += orig[i];
@@ -970,16 +1170,16 @@ CodeEditor.create = function() {
 			//i += s.length-1; //skip ahead by size of insert			
 		} //done modifying string
 			
-
-		for(var d in _DECORATIONS)
-		{				
-			str = str.replace(new RegExp(d, 'g'),"<label style='" +
-					"font-weight:bold; " +
-					"color:" + 
-					_DECORATIONS[d] + "'>" + d + "</label>");
-		}
+//
+//		for(var d in _DECORATIONS)
+//		{				
+//			str = str.replace(new RegExp(d, 'g'),"<label style='" +
+//					"font-weight:bold; " +
+//					"color:" + 
+//					_DECORATIONS[d] + "'>" + d + "</label>");
+//		}
 		
-		//console.log(str);
+		console.log("str",str);
 		
 		//replace other characters
 //		str = str
@@ -994,6 +1194,50 @@ CodeEditor.create = function() {
 //						.replace(/%20%20/g, "&nbsp;&nbsp;")		//double space
 //						;
 		el.innerHTML = str;
+		
+		
+		
+		//handle set cursor placement
+		try
+		{
+			console.log("cursor",cursor);
+			
+			range = document.createRange();
+			
+//			cursor.startNodeIndex = 0;
+//			cursor.endNodeIndex = 0;
+//			cursor.startPos = 1;
+//			cursor.endPos = 3;
+			
+			var firstEl = el.childNodes[cursor.startNodeIndex];
+			if(firstEl.firstChild)
+				firstEl = firstEl.firstChild;
+
+			var secondEl = el.childNodes[cursor.endNodeIndex];
+			if(secondEl.firstChild)
+				secondEl = secondEl.firstChild;
+			
+			range.setStart(firstEl,
+					cursor.startPos);
+			range.setEnd(secondEl,
+					cursor.endPos);
+			
+//			selection = window.getSelection();
+//				if (selection.rangeCount > 0) {
+//					selection.removeAllRanges();
+//					selection.addRange(range);
+//				}
+//				
+			var selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+
+		}
+		catch(err)
+		{
+			console.log("err",err);
+		}
+
 		
 	} //end updateDecorations()
 	
