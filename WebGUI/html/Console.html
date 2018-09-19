@@ -652,6 +652,7 @@
 			
 			//handleRefreshConsole ~
 			// 	handle server response, even on error
+			var _localRefreshTimeout = _REFRESH_INTERVAL;
 			function handleRefreshConsole(req) {
 				
 				if(!req) 
@@ -677,7 +678,7 @@
 			    //Debug.log("Chat _lastUpdateIndex now is " + _lastUpdateIndex);	
 			    
 			    var msgs = req.responseXML.getElementsByTagName("messages")[0];
-			    if(msgs) //if messages list is present in req
+			    if(msgs && msgs.children.length) //if messages list is present in req
 			    {			    
 			    	_consoleMessageArray = new Array();
 				    
@@ -700,10 +701,20 @@
 					
 					updateConsoleHistory();	
 					updateSideBarCounts(); //must be called after console history update
+					
+					_localRefreshTimeout = 100; //ms, refresh more often if we just got data
+			    }
+			    else
+			    {
+			    	if(_localRefreshTimeout != _REFRESH_INTERVAL)
+			    		_localRefreshTimeout *= 2;
+			    	if(_localRefreshTimeout > _REFRESH_INTERVAL)
+			    		_localRefreshTimeout = _REFRESH_INTERVAL;
 			    }
 			    
 			    document.getElementById("consoleConnectionStatus").style.display = "none"; //hide DISCONNECTED
-			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_REFRESH_INTERVAL); //schedule next update			    
+			    _consoleUpdateTimer = window.setTimeout(getConsoleUpdates,_localRefreshTimeout); //schedule next update	
+			    //console.log("_localRefreshTimeout",_localRefreshTimeout);
 			}
 
 
@@ -754,11 +765,11 @@
 				for(var f in _FIELDS_TO_OBSERVE) //show accumulated field values and their counts
 				{
 					str += "<br><u>" + _FIELDS_TO_OBSERVE[f] +
-							"s: counts</u><br>";
+							" counts:</u><br>";
 					fieldStr = ""; countStr = "";
 					for(var i in _observed[_FIELDS_TO_OBSERVE[f]])		
 					{
-						fieldStr += i + ": <br>";
+						fieldStr += i + " <br>";
 						countStr += _observed[_FIELDS_TO_OBSERVE[f]][i] + "<br>";
 						//						str += "<tr><td>";
 						//						str += i + ": ";
@@ -767,11 +778,10 @@
 						//						str += "</td></tr>";
 					}
 
-					str += "<table class='countsTable' style='width:" + 
-							(_USERS_WIDTH - 2 - 2 - 17) + "px" + ";'>";
-					str += "<tr><td style='overflow-x:auto'>" + fieldStr + 
-							"</td><td style='width:50px;overflow-x:auto'>" + 
-							countStr + "</td></tr>";
+					str += "<table class='countsTable' >";
+					str += "<tr><td style='width:50px;overflow-x:auto'>" + countStr + 
+							"</td><td style='overflow-x:auto'>" + 
+							fieldStr + "</td></tr>";
 					str += "</table>"			
 				}			
 				el.innerHTML = str;
@@ -912,8 +922,13 @@
 					
 					firstMsg = "";
 					secondMsg = _consoleMessageArray[_MESSAGE_FIELD_MSG][i].getAttribute('value');
-					secondMsgIndex = secondMsg.indexOf(']\t'); //find end of line number display
-					if(secondMsgIndex != -1)
+					if(secondMsg.indexOf(" --:0") == 0) //skip it
+						secondMsg = secondMsg.substr((" --:0").length);
+					secondMsgIndex = secondMsg.indexOf(']'); //find end of line number display
+					
+					if(secondMsgIndex != -1 && ( //normal line number if tab follows, or is last character in string
+							(secondMsgIndex + 1 < secondMsg.length && secondMsg[secondMsgIndex + 1] == '\t') ||
+							(secondMsgIndex + 1 == secondMsg.length)))
 					{
 						firstMsg = secondMsg.slice(0,secondMsgIndex+2);
 						secondMsg = secondMsg.slice(secondMsgIndex+2);
