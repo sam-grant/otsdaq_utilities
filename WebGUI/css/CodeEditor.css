@@ -82,7 +82,7 @@
 			height: 				10px;
 			margin: 				3px 0px 0px 5px;
 		}
-		
+				
 		.textEditor {
 			background-color: 		white;
 			position:				absolute;
@@ -98,9 +98,27 @@
 			color:					black;
 			font-family:			monospace;			
 		}
+		.textEditorHeader {
+			position:				absolute;
+			text-align:				center;
+			white-space:			nowrap;
+			overflow-x:				auto;
+		}
+		.textEditorBody {
+			position:				absolute;
+			overflow:				auto;
+		}
 		.editableBox {
 			white-space: 			pre; /*nowrap;*/
 			tab-size: 				4;
+		}
+		.editableBoxLeftMargin {
+			white-space: 			pre; /*nowrap;*/
+		    text-align: 			right;
+		    margin: 				0px 6px 0 0;
+		    padding: 				0px 7px 0 7px;
+		    background-color: 		rgb(239, 239, 239);
+		    color: 					rgb(170, 171, 173);
 		}
 
 		.directoryNav {

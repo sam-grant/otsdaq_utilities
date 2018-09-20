@@ -96,7 +96,7 @@ CodeEditor.create = function() {
 	//	build(cleanBuild)
 	//	openDirectory(forPrimary,path)
 	//	handleDirectoryContent(forPrimary,req)
-	//	openFile(forPrimary,path,extension)
+	//	openFile(forPrimary,path,extension,doConfirm)
 	//	handleFileContent(forPrimary,req)
 	//	updateDecorations(forPrimary)
 	
@@ -407,13 +407,54 @@ CodeEditor.create = function() {
 		Debug.log("createTextEditor forPrimary=" + forPrimary);
 		
 		var str = "";
-
+		
 		str += htmlOpen("div",
 				{
 						"class":"textEditor",
 						"id":"textEditor" + forPrimary,
-						"style":"overflow:auto;",
-				},"Text" /*innerHTML*/, 1 /*doCloseTag*/);
+						"style":"overflow:hidden;",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		
+		//add header
+		//add body with overflow:auto
+			//add leftMargin
+			//add editorBox
+		
+
+		str += htmlOpen("div",
+				{
+						"class":"textEditorHeader",
+						"id":"textEditorHeader" + forPrimary,
+				},"<div>File</div><div>Save Date</div>" /*innerHTML*/, true /*doCloseTag*/);
+
+		str += htmlOpen("div",
+				{
+						"class":"textEditorBody",
+						"id":"textEditorBody" + forPrimary,
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		
+		str += "<table class='editableBoxTable'><tr><td valign='top'>";
+		str += htmlOpen("div",
+				{
+						"class":"editableBoxLeftMargin",
+						"id":"editableBoxLeftMargin" + forPrimary,
+				},"0\n1\n2" /*html*/,true /*closeTag*/);
+		str += "</td><td valign='top'>";
+		str += htmlOpen("div",
+				{
+						"class":"editableBox",
+						"id":"editableBox" + forPrimary,	
+						"contenteditable":"true",
+						"autocomplete":"off",
+						"autocorrect":"off",
+						"autocapitalize":"off", 
+						"spellcheck":"false",
+				},0 /*html*/,true /*closeTag*/);
+		str += "</td></tr></table>"; //close table
+
+		str += "</div>"; //close textEditorBody tag
+		
+		str += "</div>"; //close textEditor tag
 		
 		return str;		
 	} //end createTextEditor()
@@ -456,78 +497,74 @@ CodeEditor.create = function() {
 		Debug.log("redrawWindow to " + w + " - " + h);	
 
 		var eps = document.getElementsByClassName("editorPane");
+		var epHdrs = document.getElementsByClassName("textEditorHeader");
+		var epBdys = document.getElementsByClassName("textEditorBody");
 		var dns = document.getElementsByClassName("directoryNav");
+		var rect = [{},{}];
+		
 		
 		eps[0].style.position = "absolute";
 		eps[1].style.position = "absolute";
 			
 		var DIR_NAV_MARGIN = 50;
+		var EDITOR_MARGIN = 20;
+		var EDITOR_HDR_H = 40;
 		switch(_viewMode)
 		{
 		case 0: //only primary
-			eps[0].style.left 		= 0 + "px";
-			eps[0].style.top 		= 0 + "px";
-			eps[0].style.height 	= h + "px";
-			eps[0].style.width 		= w + "px";	
-
-			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
-			dns[0].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
 			
-			eps[1].style.display = "none";
+			rect = [{"left":0,"top":0,"w":w,"h":h},
+					undefined];			
 			break;
 		case 1: //vertical split
-			eps[0].style.left 		= 0 + "px";
-			eps[0].style.top 		= 0 + "px";
-			eps[0].style.height 	= h + "px";
-			eps[0].style.width 		= ((w/2)|0) + "px";	
 
-			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.width 	= (((w/2)|0) - 2*DIR_NAV_MARGIN) + "px";
-			dns[0].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
-			
-			eps[1].style.left 		= ((w/2)|0) + "px";			
-			eps[1].style.top 		= 0 + "px";
-			eps[1].style.height 	= h + "px";
-			w -= ((w/2)|0);
-			eps[1].style.width 		= w + "px";	
-
-			dns[1].style.left 	= DIR_NAV_MARGIN + "px";
-			dns[1].style.top 	= DIR_NAV_MARGIN + "px";
-			dns[1].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
-			dns[1].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
-			
-			eps[1].style.display = "block";
+			rect = [{"left":0,"top":0,"w":((w/2)|0),"h":h},
+					{"left":((w/2)|0),"top":0,"w":(w-((w/2)|0)),"h":h}];		
+						
 			break;
 		case 2: //horizontal split
-			eps[0].style.left 		= 0 + "px";
-			eps[0].style.top 		= 0 + "px";
-			eps[0].style.height 	= ((h/2)|0) + "px";
-			eps[0].style.width 		= w + "px";	
-
-			dns[0].style.left 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.top 	= DIR_NAV_MARGIN + "px";
-			dns[0].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
-			dns[0].style.height = (((h/2)|0) - 2*DIR_NAV_MARGIN) + "px";
 			
-			eps[1].style.left 		= 0 + "px";			
-			eps[1].style.top 		= ((h/2)|0) + "px";
-			h -= ((h/2)|0);
-			eps[1].style.height 	= h + "px";
-			eps[1].style.width 		= w + "px";
-
-			dns[1].style.left 	= DIR_NAV_MARGIN + "px";
-			dns[1].style.top 	= DIR_NAV_MARGIN + "px";
-			dns[1].style.width 	= (w - 2*DIR_NAV_MARGIN) + "px";
-			dns[1].style.height = (h - 2*DIR_NAV_MARGIN) + "px";
+			rect = [{"left":0,"top":0,"h":((h/2)|0),"w":w},
+					{"top":((h/2)|0),"left":0,"h":(h-((h/2)|0)),"w":w}];	
 			
-			eps[1].style.display = "block";
 			break;
 		default:
 			Debug.log("Invalid view mode encountered: " + _viewMode);		
-		}		
+		} //end switch
+		
+		//place all editor components
+		for(var i=0;i<2;++i)
+		{
+			if(!rect[i])
+			{
+				eps[i].style.display = "none";
+				continue;
+			}
+
+			dns[i].style.left 		= (rect[i].left + DIR_NAV_MARGIN) + "px";
+			dns[i].style.top 		= (rect[i].top + DIR_NAV_MARGIN) + "px";
+			dns[i].style.width 		= (rect[i].w - 2*DIR_NAV_MARGIN) + "px";
+			dns[i].style.height 	= (rect[i].h - 2*DIR_NAV_MARGIN) + "px";
+
+			eps[i].style.left 		= rect[i].left + "px";
+			eps[i].style.top 		= rect[i].top + "px";
+			eps[i].style.height 	= rect[i].h + "px";
+			eps[i].style.width 		= rect[i].w + "px";
+			
+			epHdrs[i].style.left 	= EDITOR_MARGIN + "px";
+			epHdrs[i].style.top 	= DIR_NAV_MARGIN + "px";
+			epHdrs[i].style.height 	= EDITOR_HDR_H + "px";
+			epHdrs[i].style.width 	= (rect[i].w - 2*EDITOR_MARGIN) + "px";
+			
+			//offset body by left and top, but extend to border and allow scroll
+			epBdys[i].style.left 	= 0 + "px";
+			epBdys[i].style.top 	= (DIR_NAV_MARGIN + EDITOR_HDR_H) + "px";
+			epBdys[i].style.height	= (rect[i].h - DIR_NAV_MARGIN - EDITOR_HDR_H) + "px";
+			epBdys[i].style.width	= (rect[i].w - 0) + "px";
+			
+			eps[i].style.display = "block";
+		} //end place editor components
+		
 	} //end redrawWindow()
 	
 
@@ -612,7 +649,7 @@ CodeEditor.create = function() {
 		{
 			DesktopContent.popUpVerification(
 					"Are you sure you want to do a clean build?!",
-					function(){console.log("done");}
+					localDoIt
 					);
 					return;
 		}
@@ -765,7 +802,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//openFile ~~
 	//	open the file to text editor
-	this.openFile = function(forPrimary,path,extension)
+	this.openFile = function(forPrimary,path,extension,doConfirm)
 	{
 		forPrimary = forPrimary?1:0;
 		Debug.log("openFile forPrimary=" + forPrimary +
@@ -774,26 +811,39 @@ CodeEditor.create = function() {
 		if(i > 0) //up to extension
 			path = path.substr(0,i);
 		
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
-				"&option=getFileContent" +
-				"&path=" + path + 
-				"&ext=" + extension
-				, "" /* data */,
-				function(req)
+		if(doConfirm)
+		{
+			DesktopContent.popUpVerification(
+					"Are you sure you want to discard changes and reload file?!",
+					localDoIt
+			);
+			return;
+		}
+		else localDoIt();
+
+		function localDoIt()
+		{
+			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+					"&option=getFileContent" +
+					"&path=" + path + 
+					"&ext=" + extension
+					, "" /* data */,
+					function(req)
+					{
+
+				var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+				if(err) 
 				{
+					Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+					return;
+				}
 
-			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-				return;
-			}
+				CodeEditor.editor.handleFileContent(forPrimary, req);			
+				CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
 
-			CodeEditor.editor.handleFileContent(forPrimary, req);			
-			CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
-			
-			
-				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+
+					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+		} //end localDoIt()
 	} //end openFile()
 	
 
@@ -815,22 +865,18 @@ CodeEditor.create = function() {
 		
 		_filePath[forPrimary] = path;
 		_fileExtension[forPrimary] = extension;
-		
-		var el = document.getElementById("textEditor" + forPrimary);
+
+		//set path and extension and last save to header
+		var el = document.getElementById("textEditorHeader" + forPrimary);
 		
 		var str = "";
-		
-		str += htmlOpen("div",
-				{
-						"class":"editableBox",
-						"id":"editableBox" + forPrimary,
-						"style":"margin: 50px 20px 20px 20px;",	
-						"contenteditable":"true",
-						"autocomplete":"off",
-						"autocorrect":"off",
-						"autocapitalize":"off", 
-						"spellcheck":"false",
-				},0 /*html*/,true /*closeTag*/);
+		str += "<div>";
+		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);'>" +
+				path + "." + extension + "</a>";
+		str += "</div>";
+		str += "<div>Unmodified</div>";
+				
 		el.innerHTML = str;
 		
 		var box = document.getElementById("editableBox" + forPrimary);
@@ -859,9 +905,17 @@ CodeEditor.create = function() {
 					//to avoid DIVs, ENTER should trigger updateDecorations immediately
 					if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 					{
-						//CodeEditor.editor.updateDecorations(forPrimary);
+						CodeEditor.editor.updateDecorations(forPrimary);
 						return;
 					}
+					
+					window.clearTimeout(inputTimer);
+					inputTimer = window.setTimeout(
+							function()
+							{
+						CodeEditor.editor.updateDecorations(forPrimary);				
+							}, 1000); //end setTimeout
+					
 									
 					var rectangularTAB = false;
 					var blockCOMMENT = false;
@@ -941,16 +995,7 @@ CodeEditor.create = function() {
 						{
 							//handle tabbing selected lines
 							Debug.log("special key selected lines " + cursor.startNodeIndex + " - " +
-									cursor.endNodeIndex);
-//							
-//							/////////////////////////
-//							// start block comment handling
-//							if(blockCOMMENT)
-//							{
-//								Debug.log("Block COMMENT");
-//								return;
-//							} //end block comment handling
-							
+									cursor.endNodeIndex);					
 							
 							
 							
@@ -1346,6 +1391,8 @@ CodeEditor.create = function() {
 		var eatVal;
 		var closedString;
 		
+		var lineCount = 0;
+		
 		/////////////////////////////////
 		function localInsertLabel(startPos)
 		{
@@ -1429,7 +1476,6 @@ CodeEditor.create = function() {
 			
 		} //end localInsertLabel
 		
-		var prevCharIsNewLine = false;
 		for(n=0;!done && n<el.childNodes.length;++n)
 		{		
 			node = el.childNodes[n];
@@ -1449,24 +1495,12 @@ CodeEditor.create = function() {
 					el.removeChild(node);
 					
 					//should have no effect on cursor
-					
-					
-					--n; //revisit this same node for text rules, now that it is not a special label			
+										
+					--n; //revisit this same node for text rules, now that it is not a special label					
 					continue;
 				}
 
 			}	//end LABEL type handling	
-//			else if(node.nodeName == "BR")
-//			{
-//				//ignore BRs (they seem to be generated with DIVs due to the handling of DIVs below)
-//				//console.log("br",val);
-//				//add text node and delete node
-//				newNode = document.createTextNode(""); //add new line to act like div
-//				el.insertBefore(newNode,node);
-//				el.removeChild(node);
-//				--n; //revisit this same node for text rules
-//				continue;
-//			}
 			else if(node.nodeName == "DIV" ||
 					node.nodeName == "BR") //adding new lines causes chrome to make DIVs and BRs
 			{
@@ -1477,10 +1511,16 @@ CodeEditor.create = function() {
 				
 				i = 1;
 				if(node.nodeName == "DIV") 	//for DIV there may be more or less new lines to add					
-				{							//	depending on previous new line and <br> tag
-					if(prevCharIsNewLine)
-						--i; //remove a new line, because DIV does not cause a new line if already done
-					if(eatVal.indexOf("<br>") == 0)
+				{							//	depending on previous new line and <br> tag					 
+					if(n > 0) //check for \n in previous node
+					{						
+						specialString = el.childNodes[n-1].textContent;
+						if(specialString[specialString.length-1] == '\n')
+							--i; //remove a new line, because DIV does not cause a new line if already done
+					}
+					//check for new line at start of this node
+					if(eatVal.indexOf("<br>") == 0 ||
+							eatVal[0] == '\n')
 						++i;
 				}
 				
@@ -1501,7 +1541,7 @@ CodeEditor.create = function() {
 				if(n == cursor.endNodeIndex)
 					cursor.endPos += i;
 
-				--n; //revisit this same node for text rules			
+				--n; //revisit this same node for text rules	
 				continue;
 				
 			}	//end DIV type handling
@@ -1552,7 +1592,7 @@ CodeEditor.create = function() {
 					newNode.textContent = val;
 					el.removeChild(node);
 					
-					--n; //revisit this same node for text rules, now that it is merged					
+					--n; //revisit this same node for text rules, now that it is merged
 					continue;
 				}
 				
@@ -1560,6 +1600,8 @@ CodeEditor.create = function() {
 
 				for(i=0;i<val.length;++i)
 				{
+					if(val[i] == '\n')
+						++lineCount;
 					
 					//string handling
 					if(startOfString != -1 || val[i] == '"')
@@ -1611,8 +1653,6 @@ CodeEditor.create = function() {
 				} //end node string value loop
 				
 
-				prevCharIsNewLine = (val.length && //handle last char newline case
-							val[val.length-1] == '\n');
 				
 				
 				
@@ -1714,6 +1754,13 @@ CodeEditor.create = function() {
 				console.log("err",err);
 			}
 		} //end set cursor placement	
+		
+		
+		//handle create line numbers
+		str = "";
+		for(i=0;i<lineCount;++i)
+			str += (i?'\n':'') + (i+1);
+		document.getElementById("editableBoxLeftMargin" + forPrimary).textContent = str;
 		
 	} //end updateDecorations()
 	
