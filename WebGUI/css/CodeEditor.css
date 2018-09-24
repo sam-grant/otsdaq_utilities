@@ -147,6 +147,13 @@
 		.dirNavFile {
 			color:					rgb(109, 108, 108);
 		}
+		.dirNavSpecial {
+			color:					red;
+		}
+		.directoryNav th {
+			text-align:				left;
+			color:					red;
+		}
 
 		
 		

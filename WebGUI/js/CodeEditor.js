@@ -736,8 +736,12 @@ CodeEditor.create = function() {
 		console.log(req);
 
 		var path = DesktopContent.getXMLValue(req,"path");
+		if(path == "/") path = ""; //default to empty to avoid //
+		
+		var specials = req.responseXML.getElementsByTagName("special");
 		var dirs = req.responseXML.getElementsByTagName("directory");
 		var files = req.responseXML.getElementsByTagName("file");
+		var specialFiles = req.responseXML.getElementsByTagName("specialFile");
 
 		Debug.log("handleDirectoryContent path=" + path);
 		console.log(dirs);console.log(files);
@@ -747,8 +751,8 @@ CodeEditor.create = function() {
 		var name;
 		str += htmlOpen("div",
 				{
-			"style":"margin:20px;" 
-				,
+			"style":"margin:20px;" +
+			"white-space: nowrap;",
 				});
 
 		/////////////
@@ -782,7 +786,47 @@ CodeEditor.create = function() {
 			}
 			str += "<br><br>";
 		}
-		
+
+		/////////////
+		//show specials
+		for(i=0;i<specials.length;++i)
+		{
+			name = specials[i].getAttribute('value');
+
+			str += "<a class='dirNavSpecial' onclick='CodeEditor.editor.openDirectory(" + 
+					forPrimary + ",\"" + 
+					path + "/" + name + "\"" + 
+					")'>" + 
+					name + "</a>";
+			str += "<br>";
+
+		}
+		/////////////
+		//show special files
+		if(specialFiles.length)
+		{
+			str += "<table>";
+			str += "<tr><th>" + path.substr(1,path.length-2) + " Files</th><th style='padding-left:20px'>Repository</th></tr>";
+		}
+		for(i=0;i<specialFiles.length;++i)
+		{
+			name = specialFiles[i].getAttribute('value');
+
+			str += "<tr><td>";
+			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
+					forPrimary + ",\"" + 
+					name + "\",\"" +
+					name.substr(name.indexOf('.')+1) + "\"" + //extension
+					")' title='srcs" + name + "' >";
+			name = name.split('/');			
+			str += name[name.length-1] + "</a>";
+			str += "</td><td style='padding-left:20px'>" + name[1] + "</td></tr>";
+
+		}
+		if(specialFiles.length)
+		{
+			str += "</table>";
+		}
 		/////////////
 		//show folders
 		for(i=0;i<dirs.length;++i)
@@ -792,11 +836,12 @@ CodeEditor.create = function() {
 			str += "<a class='dirNavFolder' onclick='CodeEditor.editor.openDirectory(" + 
 					forPrimary + ",\"" + 
 					path + "/" + name + "\"" + 
-					")'>" + 
+					")' title='srcs" + path + "/" + name + "' >" +
 					name + "</a>";
 			str += "<br>";
 					
-		}/////////////
+		}
+		/////////////
 		//show files
 		for(i=0;i<files.length;++i)
 		{
@@ -806,7 +851,7 @@ CodeEditor.create = function() {
 					forPrimary + ",\"" + 
 					path + "/" + name + "\", \"" +
 					name.substr(name.indexOf('.')+1) + "\"" + //extension
-					")'>" + 
+					")' title='srcs" + path + "/" + name + "' >" +
 					name + "</a>";
 			str += "<br>";
 					
@@ -945,20 +990,53 @@ CodeEditor.create = function() {
 	var _DECORATIONS = {
 			"ADD_SUBDIRECTORY" 		: _DECORATION_GREEN,
 			"include_directories"	: _DECORATION_GREEN,
-			"namespace" 			: _DECORATION_RED,
-			"const" 				: _DECORATION_RED,
+			
 			"#define" 				: _DECORATION_RED,
 			"#undef" 				: _DECORATION_RED,
 			"#include" 				: _DECORATION_RED,
 			"#ifndef" 				: _DECORATION_RED,
 			"#else" 				: _DECORATION_RED,
 			"#endif" 				: _DECORATION_RED,
+			"using"					: _DECORATION_RED,
+			"namespace" 			: _DECORATION_RED,
+			"class" 				: _DECORATION_RED,
+			"public" 				: _DECORATION_RED,
+			"private" 				: _DECORATION_RED,
+			"protected"				: _DECORATION_RED,
+			"virtual" 				: _DECORATION_RED,
+			"override" 				: _DECORATION_RED,
+			"const" 				: _DECORATION_RED,
 			"void"	 				: _DECORATION_RED,
+			"bool"	 				: _DECORATION_RED,
+			"unsigned" 				: _DECORATION_RED,
+			"int"	 				: _DECORATION_RED,
+			"float"	 				: _DECORATION_RED,
+			"double" 				: _DECORATION_RED,
+			"return" 				: _DECORATION_RED,
+			"char" 					: _DECORATION_RED,
+			"if" 					: _DECORATION_RED,
+			"else" 					: _DECORATION_RED,
+			"for" 					: _DECORATION_RED,
+			"while" 				: _DECORATION_RED,
+			"do"	 				: _DECORATION_RED,
+			"switch" 				: _DECORATION_RED,
+			"case" 					: _DECORATION_RED,
+			"default" 				: _DECORATION_RED,
+			"try" 					: _DECORATION_RED,
+			"catch"					: _DECORATION_RED,
+			
 			"std::" 				: _DECORATION_BLACK,
+			
 			"string" 				: _DECORATION_GREEN,
 			"set" 					: _DECORATION_GREEN,
+			"vector"				: _DECORATION_GREEN,
+			"pair"					: _DECORATION_GREEN,
 			"get" 					: _DECORATION_GREEN,
 			"map" 					: _DECORATION_GREEN,
+			"endl" 					: _DECORATION_GREEN,
+			"runtime_error"			: _DECORATION_GREEN,
+			"memcpy"				: _DECORATION_GREEN,
+			"cout"					: _DECORATION_GREEN,			
 	};
 	this.updateDecorations = function(forPrimary)
 	{	
@@ -1658,9 +1736,10 @@ CodeEditor.create = function() {
 				var specialStr = '\t';
 				if(blockCOMMENT)
 				{
-					if(_fileExtension[forPrimary][0] == "c" || 
-							_fileExtension[forPrimary][0] == "C" ||
-							_fileExtension[forPrimary] == "h")
+					if(_fileExtension[forPrimary][0] == 'c' || 
+							_fileExtension[forPrimary][0] == 'C' ||
+							_fileExtension[forPrimary][0] == 'h' ||
+							_fileExtension[forPrimary][0] == 'j')
 						specialStr = "//"; //comment string
 					else
 						specialStr = "#"; //comment string
