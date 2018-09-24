@@ -987,56 +987,72 @@ CodeEditor.create = function() {
 	var _DECORATION_BLUE = "rgb(64, 86, 206)";
 	var _DECORATION_GREEN = "rgb(33, 175, 60)";
 	var _DECORATION_BLACK = "rgb(5, 5, 5)";
+	var _DECORATION_GRAY = "rgb(162, 179, 158)";
 	var _DECORATIONS = {
-			"ADD_SUBDIRECTORY" 		: _DECORATION_GREEN,
-			"include_directories"	: _DECORATION_GREEN,
-			
-			"#define" 				: _DECORATION_RED,
-			"#undef" 				: _DECORATION_RED,
-			"#include" 				: _DECORATION_RED,
-			"#ifndef" 				: _DECORATION_RED,
-			"#else" 				: _DECORATION_RED,
-			"#endif" 				: _DECORATION_RED,
-			"using"					: _DECORATION_RED,
-			"namespace" 			: _DECORATION_RED,
-			"class" 				: _DECORATION_RED,
-			"public" 				: _DECORATION_RED,
-			"private" 				: _DECORATION_RED,
-			"protected"				: _DECORATION_RED,
-			"virtual" 				: _DECORATION_RED,
-			"override" 				: _DECORATION_RED,
-			"const" 				: _DECORATION_RED,
-			"void"	 				: _DECORATION_RED,
-			"bool"	 				: _DECORATION_RED,
-			"unsigned" 				: _DECORATION_RED,
-			"int"	 				: _DECORATION_RED,
-			"float"	 				: _DECORATION_RED,
-			"double" 				: _DECORATION_RED,
-			"return" 				: _DECORATION_RED,
-			"char" 					: _DECORATION_RED,
-			"if" 					: _DECORATION_RED,
-			"else" 					: _DECORATION_RED,
-			"for" 					: _DECORATION_RED,
-			"while" 				: _DECORATION_RED,
-			"do"	 				: _DECORATION_RED,
-			"switch" 				: _DECORATION_RED,
-			"case" 					: _DECORATION_RED,
-			"default" 				: _DECORATION_RED,
-			"try" 					: _DECORATION_RED,
-			"catch"					: _DECORATION_RED,
-			
-			"std::" 				: _DECORATION_BLACK,
-			
-			"string" 				: _DECORATION_GREEN,
-			"set" 					: _DECORATION_GREEN,
-			"vector"				: _DECORATION_GREEN,
-			"pair"					: _DECORATION_GREEN,
-			"get" 					: _DECORATION_GREEN,
-			"map" 					: _DECORATION_GREEN,
-			"endl" 					: _DECORATION_GREEN,
-			"runtime_error"			: _DECORATION_GREEN,
-			"memcpy"				: _DECORATION_GREEN,
-			"cout"					: _DECORATION_GREEN,			
+			"txt": {
+				"ADD_SUBDIRECTORY" 		: _DECORATION_RED,
+				"include_directories"	: _DECORATION_RED,
+				"simple_plugin"			: _DECORATION_RED,
+				"set" 					: _DECORATION_RED,
+			},
+			"c++": {
+				"#define" 				: _DECORATION_RED,
+				"#undef" 				: _DECORATION_RED,
+				"#include" 				: _DECORATION_RED,
+				"#ifndef" 				: _DECORATION_RED,
+				"#else" 				: _DECORATION_RED,
+				"#endif" 				: _DECORATION_RED,
+				"using"					: _DECORATION_RED,
+				"namespace" 			: _DECORATION_RED,
+				"class" 				: _DECORATION_RED,
+				"public" 				: _DECORATION_RED,
+				"private" 				: _DECORATION_RED,
+				"protected"				: _DECORATION_RED,
+				"virtual" 				: _DECORATION_RED,
+				"override" 				: _DECORATION_RED,
+				"const" 				: _DECORATION_RED,
+				"void"	 				: _DECORATION_RED,
+				"bool"	 				: _DECORATION_RED,
+				"unsigned" 				: _DECORATION_RED,
+				"int"	 				: _DECORATION_RED,
+				"float"	 				: _DECORATION_RED,
+				"double" 				: _DECORATION_RED,
+				"return" 				: _DECORATION_RED,
+				"char" 					: _DECORATION_RED,
+				"if" 					: _DECORATION_RED,
+				"else" 					: _DECORATION_RED,
+				"for" 					: _DECORATION_RED,
+				"while" 				: _DECORATION_RED,
+				"do"	 				: _DECORATION_RED,
+				"switch" 				: _DECORATION_RED,
+				"case" 					: _DECORATION_RED,
+				"default" 				: _DECORATION_RED,
+				"try" 					: _DECORATION_RED,
+				"catch"					: _DECORATION_RED,
+				
+				"std::" 				: _DECORATION_BLACK,
+				
+				"string" 				: _DECORATION_GREEN,
+				"set" 					: _DECORATION_GREEN,
+				"vector"				: _DECORATION_GREEN,
+				"pair"					: _DECORATION_GREEN,
+				"get" 					: _DECORATION_GREEN,
+				"map" 					: _DECORATION_GREEN,
+				"endl" 					: _DECORATION_GREEN,
+				"runtime_error"			: _DECORATION_GREEN,
+				"memcpy"				: _DECORATION_GREEN,
+				"cout"					: _DECORATION_GREEN,		
+			},
+			"sh" : {
+				"if" 					: _DECORATION_RED,
+				"else" 					: _DECORATION_RED,
+				"for" 					: _DECORATION_RED,
+				"while" 				: _DECORATION_RED,
+				"do"	 				: _DECORATION_RED,
+				"switch" 				: _DECORATION_RED,
+				"case" 					: _DECORATION_RED,
+				"default" 				: _DECORATION_RED,
+			}
 	};
 	this.updateDecorations = function(forPrimary)
 	{	
@@ -1087,14 +1103,31 @@ CodeEditor.create = function() {
 
 		var val;
 		var n;
-		var decor;
+		var decor, fontWeight;
 		var specialString;
+		var commentString = "#";
+		if(_fileExtension[forPrimary][0] == 'c' || 
+				_fileExtension[forPrimary][0] == 'C' ||
+				_fileExtension[forPrimary][0] == 'h' ||
+				_fileExtension[forPrimary][0] == 'j')
+			commentString = "//"; //comment string
+		
+		var fileDecorType = "txt";
+		if(_fileExtension[forPrimary][0] == 'c' || 
+				_fileExtension[forPrimary][0] == 'C' ||
+				_fileExtension[forPrimary][0] == 'h' ||
+				_fileExtension[forPrimary][0] == 'j')
+			fileDecorType = "c++"; //c++ style
+		else if(_fileExtension[forPrimary] == 'sh' || 
+				_fileExtension[forPrimary] == 'py')
+			fileDecorType = "sh"; //script style
 		
 		var newNode;
 		var node;
 		
 		var startOfWord = -1;
 		var startOfString = -1;
+		var startOfComment = -1;
 		
 		var done = false; //for debuggin
 		
@@ -1113,7 +1146,7 @@ CodeEditor.create = function() {
 			el.insertBefore(newNode,node);
 
 			newNode = document.createElement("label");
-			newNode.style.fontWeight = "bold";
+			newNode.style.fontWeight = fontWeight; //bold or normal
 			newNode.style.color = decor;
 			newNode.textContent = specialString; //special text
 			el.insertBefore(newNode,node);
@@ -1315,7 +1348,8 @@ CodeEditor.create = function() {
 						++lineCount;
 					
 					//string handling
-					if(startOfString != -1 || val[i] == '"')
+					if(startOfComment == -1 && (
+							startOfString != -1 || val[i] == '"'))
 					{
 						if(startOfString == -1 && val[i] == '"') //start string
 							startOfString = i;
@@ -1326,12 +1360,39 @@ CodeEditor.create = function() {
 							//console.log("string",startOfString,val.length,specialString);
 							
 							decor = _DECORATION_BLUE;
+							fontWeight = "normal";
 							localInsertLabel(startOfString);
 							startOfString = -1;							
 							//done = true; //for debugging
 							break;
 						}					
 					}
+					
+					//comment handling
+					if(startOfString == -1 && (
+							startOfComment != -1 || 
+							(i+commentString.length-1 < val.length && 
+									val.substr(i,commentString.length) == 
+											commentString)))
+					{
+						if(startOfComment == -1 && val[i] == commentString[0]) //start comment
+							startOfComment = i;
+						else if(val[i] == '\n')	//end comment
+						{	
+							//++i; //do not include \n in label
+							specialString = val.substr(startOfComment,i-startOfComment);
+							//console.log("comment",startOfComment,val.length,specialString);
+
+							decor = _DECORATION_GRAY;
+							fontWeight = "normal";
+							localInsertLabel(startOfComment);
+							startOfComment = -1;							
+							//done = true; //for debugging
+							break;
+						}					
+					}
+					
+					
 					//special word handling			
 					else if((val[i] >= 'a' && val[i] <= 'z') || 
 							(val[i] >= 'A' && val[i] <= 'Z') ||
@@ -1346,12 +1407,13 @@ CodeEditor.create = function() {
 					else if(startOfWord != -1) //found end of word, check for special word
 					{
 						specialString = val.substr(startOfWord,i-startOfWord);						
-						decor = _DECORATIONS[specialString];
+						decor = _DECORATIONS[fileDecorType][specialString];
 						//console.log(specialString);
 
 						if(decor) //found special word
 						{
 							//console.log(specialString);
+							fontWeight = "bold";
 							localInsertLabel(startOfWord);
 							startOfWord = -1;
 							//done = true; //for debugging							
@@ -1368,10 +1430,10 @@ CodeEditor.create = function() {
 				
 				
 				//////////////
-				//if still within string, handle crossing nodes
-				if(startOfString != -1)
+				//if still within string or comment, handle crossing nodes
+				if(startOfString != -1 || startOfComment != -1)
 				{
-					console.log("In string crossing Nodes!");
+					console.log("In string/comment crossing Nodes!");
 					//acquire nodes into string until a quote is encountered
 
 					closedString = false;
@@ -1385,11 +1447,11 @@ CodeEditor.create = function() {
 						el.removeChild(eatNode);
 						--n; //after removal, move back index for next node
 						
-						//look for quote close
+						//look for quote close or comment close 
 						for(i;i<val.length;++i)
 						{
 							//string handling
-							if(val[i] == '"') //end string
+							if(startOfString != -1 && val[i] == '"') //end string
 							{
 								Debug.log("Closing node crossed string.");
 								
@@ -1398,8 +1460,26 @@ CodeEditor.create = function() {
 								//console.log("string",startOfString,val.length,specialString);
 
 								decor = _DECORATION_BLUE;
+								fontWeight = "normal";
 								localInsertLabel(startOfString);
 								startOfString = -1;							
+								closedString = true;
+								break;
+							}
+							
+							//comment handling
+							if(startOfComment != -1 && val[i] == '\n') //end comment
+							{
+								Debug.log("Closing node crossed comment.");
+
+								++i; //include " in label
+								specialString = val.substr(startOfComment,i-startOfComment);
+								//console.log("string",startOfComment,val.length,specialString);
+
+								decor = _DECORATION_GRAY;
+								fontWeight = "normal";
+								localInsertLabel(startOfComment);
+								startOfComment = -1;							
 								closedString = true;
 								break;
 
@@ -1408,7 +1488,7 @@ CodeEditor.create = function() {
 					
 					} //end string node crossing node loop
 					
-					if(!closedString)
+					if(!closedString && startOfString != -1)
 					{
 						Debug.log("String is never closed!");
 						specialString = val.substr(startOfString,i-startOfString);
@@ -1417,6 +1497,16 @@ CodeEditor.create = function() {
 						decor = _DECORATION_BLUE;
 						localInsertLabel(startOfString);
 						startOfString = -1;			
+					}
+					if(!closedString && startOfComment != -1)
+					{
+						Debug.log("Comment is never closed!");
+						specialString = val.substr(startOfComment,i-startOfComment);
+						//console.log("string",startOfString,val.length,specialString);
+
+						decor = _DECORATION_GRAY;
+						localInsertLabel(startOfComment);
+						startOfComment = -1;			
 					}
 					
 					
