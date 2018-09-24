@@ -170,6 +170,9 @@ if [ "x$1" == "x" ]; then
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
+	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/
+		
 	#make sure permissions are usable
 	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 777 $USER_DATA/XDAQConfigurations/*.xml"
 	chmod 777 $USER_DATA/XDAQConfigurations/*.xml #*/ just resetting comment coloring
