@@ -99,6 +99,9 @@ CodeEditor.create = function() {
 	//	openFile(forPrimary,path,extension,doConfirm)
 	//	handleFileContent(forPrimary,req)
 	//	updateDecorations(forPrimary)
+	//		localInsertLabel(startPos)
+	//	updateLastSave(forPrimary)	
+	//	keyDownHandler(e,forPrimary)
 	
 	
 	//for display
@@ -115,7 +118,10 @@ CodeEditor.create = function() {
 	var _navMode = [0,0]; //1 for showing directory nav
 	var _filePath = ["",""]; //file path for primary and secondary
 	var _fileExtension = ["",""]; //file extension for primary and secondary
+	var _fileLastSave = [0,0]; //file last save time for primary and secondary
+	var _fileWasModified = [false,false]; //file wasModified for primary and secondary
 
+	var _inputTimerHandle = 0;
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -135,9 +141,10 @@ CodeEditor.create = function() {
 
 		//extract GET parameters
 		var parameterStartFile = [
-				"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
-								  //"/CMakeLists.txt", //DesktopContent.getParameter(0,"startFilePrimary"),
-		   DesktopContent.getParameter(0,"startFileSecondary")
+								  //"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
+								  //"/CMakeLists.txt", 
+								  DesktopContent.getParameter(0,"startFilePrimary"),
+								  DesktopContent.getParameter(0,"startFileSecondary")
 		   ];
 		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
 		if(parameterViewMode !== undefined) //set view mode if parameter
@@ -396,7 +403,41 @@ CodeEditor.create = function() {
 			
 		}					
 		
-		document.body.appendChild(cel);		
+		document.body.appendChild(cel);
+		
+		
+		/////////////
+		//add event listeners
+		for(var i=0;i<2;++i)
+		{
+			var box = document.getElementById("editableBox" + i);
+			box.addEventListener("input",
+					function(e)
+					{
+				var forPrimary = this.id[this.id.length-1]|0;
+				Debug.log("input forPrimary=" + forPrimary);
+
+				_fileWasModified[forPrimary] = true;
+				CodeEditor.editor.updateLastSave(forPrimary);
+
+				window.clearTimeout(_inputTimerHandle);
+				_inputTimerHandle = window.setTimeout(
+						function()
+						{
+					CodeEditor.editor.updateDecorations(forPrimary);				
+						}, 1000); //end setTimeout
+
+					}); //end addEventListener
+
+			box.addEventListener("keydown",
+							function(e)
+							{
+				var forPrimary = this.id[this.id.length-1]|0;
+				CodeEditor.editor.keyDownHandler(e,forPrimary);
+							}); //end addEventListener
+		} //end handler creation
+		
+		
 	} //end createElements()
 
 	//=====================================================================================
@@ -508,7 +549,7 @@ CodeEditor.create = function() {
 			
 		var DIR_NAV_MARGIN = 50;
 		var EDITOR_MARGIN = 20;
-		var EDITOR_HDR_H = 40;
+		var EDITOR_HDR_H = 50;
 		switch(_viewMode)
 		{
 		case 0: //only primary
@@ -537,12 +578,12 @@ CodeEditor.create = function() {
 		{
 			if(!rect[i])
 			{
-				eps[i].style.display = "none";
+				eps[i].style.display = "none";				
 				continue;
 			}
 
-			dns[i].style.left 		= (rect[i].left + DIR_NAV_MARGIN) + "px";
-			dns[i].style.top 		= (rect[i].top + DIR_NAV_MARGIN) + "px";
+			dns[i].style.left 		= (DIR_NAV_MARGIN) + "px";
+			dns[i].style.top 		= (DIR_NAV_MARGIN) + "px";
 			dns[i].style.width 		= (rect[i].w - 2*DIR_NAV_MARGIN) + "px";
 			dns[i].style.height 	= (rect[i].h - 2*DIR_NAV_MARGIN) + "px";
 
@@ -602,7 +643,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//saveFile ~~
 	//	save file for pane
-	this.saveFile = function(forPrimary)
+	this.saveFile = function(forPrimary, quiet)
 	{
 		forPrimary = forPrimary?1:0;
 		Debug.log("saveFile forPrimary=" + forPrimary);
@@ -631,7 +672,12 @@ CodeEditor.create = function() {
 
 			Debug.log("Successfully saved " +
 					_filePath[forPrimary] + "." + 
-					_fileExtension[forPrimary], Debug.INFO_PRIORITY);
+					_fileExtension[forPrimary],quiet?Debug.LOW_PRIORITY:Debug.INFO_PRIORITY);
+			
+			_fileWasModified[forPrimary] = false;
+			_fileLastSave[forPrimary] = new Date(); //record last Save time
+			//update last save field
+			CodeEditor.editor.updateLastSave(forPrimary);
 
 				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 
@@ -850,7 +896,6 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//handleFileContent ~~
 	//	redraw text editor based on file content in req response
-	var TABKEY = 9;	
 	this.handleFileContent = function(forPrimary,req)
 	{
 		forPrimary = forPrimary?1:0;
@@ -865,6 +910,8 @@ CodeEditor.create = function() {
 		
 		_filePath[forPrimary] = path;
 		_fileExtension[forPrimary] = extension;
+		_fileLastSave[forPrimary] = 0; //default time to 0
+		_fileWasModified[forPrimary] = false;
 
 		//set path and extension and last save to header
 		var el = document.getElementById("textEditorHeader" + forPrimary);
@@ -875,432 +922,14 @@ CodeEditor.create = function() {
 				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);'>" +
 				path + "." + extension + "</a>";
 		str += "</div>";
-		str += "<div>Unmodified</div>";
+		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
+				forPrimary + "'>Unmodified</div>";
 				
 		el.innerHTML = str;
 		
 		var box = document.getElementById("editableBox" + forPrimary);
 		box.textContent = text;
-		CodeEditor.editor.updateDecorations(forPrimary);	
-
-		var inputTimer = 0;
-		box.addEventListener("input",
-				function(e)
-				{
-			Debug.log("input forPrimary=" + forPrimary);
-			window.clearTimeout(inputTimer);
-			inputTimer = window.setTimeout(
-					function()
-					{
-				CodeEditor.editor.updateDecorations(forPrimary);				
-					}, 1000); //end setTimeout
-				}); //end addEventListener
-		
-		box.addEventListener("keydown",
-						function(e)
-						{
-					Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + 
-							" ctrl=" + e.ctrlKey);
-					
-					//to avoid DIVs, ENTER should trigger updateDecorations immediately
-					if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
-					{
-						CodeEditor.editor.updateDecorations(forPrimary);
-						return;
-					}
-					
-					window.clearTimeout(inputTimer);
-					inputTimer = window.setTimeout(
-							function()
-							{
-						CodeEditor.editor.updateDecorations(forPrimary);				
-							}, 1000); //end setTimeout
-					
-									
-					var rectangularTAB = false;
-					var blockCOMMENT = false;
-
-					if(e.ctrlKey && e.keyCode == 84) // T
-						rectangularTAB = true;
-					else if(e.keyCode == 191) 	// / for block comment
-						blockCOMMENT = true;
-					else if(e.ctrlKey)
-					{			
-						e.preventDefault();
-						
-						if(e.keyCode == 83) 		// S
-							CodeEditor.editor.saveFile(forPrimary);
-						else if(e.keyCode == 68) 	// D
-							CodeEditor.editor.toggleDirectoryNav(forPrimary);
-						else if(e.keyCode == 66) 	// B
-							CodeEditor.editor.build();
-						else if(e.keyCode == 67) 	// C for clean build
-							CodeEditor.editor.build(true /*clean*/);						
-						
-						return;
-					}
-					
-					if(e.keyCode == TABKEY || rectangularTAB ||
-							blockCOMMENT)
-					{					
-						e.preventDefault();
-						
-						//manage tabs
-						//	if selection, then tab selected lines
-						// 	else insert tab character
-						
-						//handle get cursor location
-						var el = document.getElementById("editableBox" + forPrimary);
-						var i, j;
-						var cursor = {
-								"startNodeIndex":undefined,
-								"startPos":undefined,
-								"endNodeIndex":undefined,
-								"endPos":undefined,
-						};
-
-						try
-						{
-							range = window.getSelection().getRangeAt(0);
-
-							cursor.startPos = range.startOffset;
-							cursor.endPos = range.endOffset;
-							
-							//find start and end node index
-							for(i=0;i<el.childNodes.length;++i)
-							{
-								if(el.childNodes[i] == range.startContainer ||
-										el.childNodes[i] == range.startContainer.parentNode||
-										el.childNodes[i] == range.startContainer.parentNode.parentNode)
-									cursor.startNodeIndex = i;
-
-								if(el.childNodes[i] == range.endContainer ||
-										el.childNodes[i] == range.endContainer.parentNode||
-										el.childNodes[i] == range.endContainer.parentNode.parentNode)
-									cursor.endNodeIndex = i;
-							}
-
-							console.log("cursor",cursor);
-						}
-						catch(err)
-						{
-							console.log("err",err);
-						}
-						
-						
-						
-						if(cursor.startNodeIndex !== undefined &&
-								(cursor.startNodeIndex != cursor.endNodeIndex ||
-										cursor.startPos != cursor.endPos))
-						{
-							//handle tabbing selected lines
-							Debug.log("special key selected lines " + cursor.startNodeIndex + " - " +
-									cursor.endNodeIndex);					
-							
-							
-							
-							/////////////////////////
-							//start rectangular tab handling
-							if(rectangularTAB)
-							{
-								Debug.log("Rectangular TAB");
-								
-								//steps:
-								//	determine x coordinate by 
-								//		going backwards from start until a new line is found
-								//		and counting spots
-								//	then for each line in selection
-								//		add a tab at that x coordinate (offset from newline)
-								
-								//reverse-find new line
-								var node,val;
-								var found = false;	
-								var x = 0;
-								var tabSz = 4; //to match eclipse!		
-								var firstCharEver = true;
-								for(n=cursor.startNodeIndex; !found && n>=0; --n)
-								{
-									node = el.childNodes[n];
-									val = node.textContent; //.nodeValue; //.wholeText
-
-									for(i=(n==cursor.startNodeIndex?cursor.startPos:
-											val.length-1); i>=0; --i)
-									{	
-										if(firstCharEver) //do the tab for first since we are there
-										{
-											firstCharEver = false;
-
-											var prelength = val.length;
-											
-											if(e.shiftKey) //delete leading tab
-											{
-												if(i-1 >= 0 && val[i-1] == '\t')
-													node.textContent = val.substr(0,i-1) + val.substr(i);
-											}
-											else //add leading tab
-											{
-												node.textContent = val.substr(0,i) + "\t" + val.substr(i);
-												
-											}
-											
-											//adjust selection to follow rectangular tabbing
-											//	so future rectangular tabbing works as expected
-											cursor.startPos += node.textContent.length - prelength;
-											continue;
-										}
-										
-										if(val[i] == '\n')
-										{
-											//found start of line
-											found = true;
-											break;
-										}
-										else if(val[i] == '\t')
-											x += tabSz; //add tab num of spots
-										else 
-											++x; //add single character spot
-									} //end node text character loop
-								} //end node loop
-								
-								console.log("x",x);
-								
-								//fast-forward to endPos through each line and handle tab at x coord								
-								
-								var xcnt = -1;
-								for(n=cursor.startNodeIndex; n<el.childNodes.length; ++n)
-								{
-									node = el.childNodes[n];
-									val = node.textContent; //.nodeValue; //.wholeText
-
-									for(i=(n==cursor.startNodeIndex?cursor.startPos:
-											0);i<val.length;++i)
-									{
-										console.log(xcnt," vs ",x,val[i]);
-										if(val[i] == '\n')
-										{
-											//reset x coord count
-											xcnt = 0;
-										}
-										else if(xcnt == x)
-										{											
-											console.log("x match at ",xcnt,val.substr(0,i),"TTT",val.substr(i));
-											xcnt = -1;
-											
-											if(e.shiftKey) //delete leading tab
-											{
-												if(i-1 < val.length && val[i-1] == '\t')
-												{
-													val = val.substr(0,i-1) + val.substr(i);
-													node.textContent = val;
-												}
-											}
-											else //add leading tab
-											{
-												val = val.substr(0,i) + "\t" + val.substr(i);
-												node.textContent = val;
-											}
-											
-										}
-										else if(xcnt != -1) //if counting, increase 
-										{
-											if(val[i] == '\t')
-												xcnt += tabSz; //add tab num of spots
-											else 
-												++xcnt; //add single character spot
-										}									
-									} //end node text character loop
-									
-									if(n == cursor.endNodeIndex)
-										break; //reached end of selection
-								} //end node loop
-
-								
-								
-								//need to set cursor
-								try
-								{
-									var range = document.createRange();
-									range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-									range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-
-									var selection = window.getSelection();
-									selection.removeAllRanges();
-									selection.addRange(range);
-								}
-								catch(err)
-								{
-									console.log(err);
-									return;
-								}
-								
-								return;
-							} //end rectangular TAB handling
-							
-							
-							
-							
-
-							/////////////////////////
-							// normal block TAB handling
-							//steps:
-							//	go backwards from start until a new line is found
-							//	then add tab after each new line until end of selection reached
-							
-							//reverse-find new line
-							var node,val;
-							var found = false;	
-							var specialStr = '\t';
-							if(blockCOMMENT)
-								specialStr = "//"; //comment string
-								
-							for(n=cursor.startNodeIndex; !found && n>=0; --n)
-							{
-								node = el.childNodes[n];
-								val = node.textContent; //.nodeValue; //.wholeText
-
-								for(i=(n==cursor.startNodeIndex?cursor.startPos:
-										val.length-1); i>=0; --i)
-								{
-									if(val[i] == '\n')
-									{
-										if(e.shiftKey) //delete leading special string
-										{
-											if(i + specialStr.length < val.length &&
-													val.indexOf(specialStr,i+1) == i+1)
-												node.textContent = val.substr(0,i+1) + 
-													val.substr(i+1+specialStr.length);											
-										}
-										else //add leading special string
-											node.textContent = val.substr(0,i+1) + 
-												specialStr + val.substr(i+1);
-										found = true;
-										break;
-									}
-								} //end node text character loop
-							} //end node loop
-							
-							//fast-forward to endPos and insert tab after each new line encountered
-							found = false;
-							var prevCharIsNewLine = false;
-							for(n=cursor.startNodeIndex; !found && n<el.childNodes.length &&
-								n <= cursor.endNodeIndex; ++n)
-							{								
-								node = el.childNodes[n];
-								val = node.textContent; //.nodeValue; //.wholeText
-								
-								for(i=(n==cursor.startNodeIndex?cursor.startPos:
-										0);i<val.length;++i)
-								{
-									if(n == cursor.endNodeIndex && i >= cursor.endPos)
-									{
-										//reached end of selection
-										found = true;
-										break;
-									}
-									
-									if(val[i] == '\n' || 
-											(i == 0 && prevCharIsNewLine))
-									{
-										if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
-										
-										if(e.shiftKey) //delete leading tab
-										{											
-											if(i + specialStr.length < val.length &&
-													val.indexOf(specialStr,i+1) == i+1)
-											{
-												val = val.substr(0,i+1) + 
-														val.substr(i+1+specialStr.length);
-												node.textContent = val;
-												
-												//if running out of string to keep line selected.. jump to next node
-												//	with selection
-												if(n == cursor.endNodeIndex && 
-														cursor.endPos >= val.length)
-												{
-													++cursor.endNodeIndex;
-													cursor.endPos = 0;
-												}
-											}
-										}
-										else //add leading tab
-										{
-											val = val.substr(0,i+1) + specialStr + val.substr(i+1);
-											node.textContent = val;
-										}
-										
-										if(i == -1 && prevCharIsNewLine) ++i; //so that loop continues properly
-									}									
-								} //end node text character loop
-								
-								prevCharIsNewLine = (val.length && //handle last char newline case
-											val[val.length-1] == '\n');
-							} //end node loop
-							
-							//need to set cursor
-							try
-							{
-								var range = document.createRange();
-								range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-								range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-
-								var selection = window.getSelection();
-								selection.removeAllRanges();
-								selection.addRange(range);
-							}
-							catch(err)
-							{
-								console.log(err);
-								return;
-							}
-						}
-						else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
-						{	
-							if(e.shiftKey)
-							{								
-								if(cursor.startNodeIndex !== undefined)
-								{
-									try
-									{
-										var node,val,i;
-										i = cursor.startPos;
-										node = el.childNodes[cursor.startNodeIndex];
-										val = node.textContent; //.nodeValue; //.wholeText
-										console.log(node,val,val[i-1]);
-										
-										if(val[i-1] == '\t')
-										{
-											node.textContent = val.substr(0,i-1) + val.substr(i);
-											
-											//need to set cursor
-											var range = document.createRange();
-											range.setStart(node,i-1);
-											range.setEnd(node,i-1);
-											
-											var selection = window.getSelection();
-											selection.removeAllRanges();
-											selection.addRange(range);
-										}
-									}
-									catch(err)
-									{
-										console.log(err);
-										return;
-									}
-								}
-								else
-									Debug.log("No cursor for reverse tab.");
-							}
-							else
-								document.execCommand('insertHTML', false, '&#009');
-						}
-
-						return;
-						
-					} //end handle tab key
-					
-						}); //end addEventListener
-		
-		
+		CodeEditor.editor.updateDecorations(forPrimary);		
 		
 	} //end handleFileContent()
 	
@@ -1333,6 +962,10 @@ CodeEditor.create = function() {
 	};
 	this.updateDecorations = function(forPrimary)
 	{	
+		
+		//update last save field
+		CodeEditor.editor.updateLastSave(forPrimary);
+		
 
 		var el = document.getElementById("editableBox" + forPrimary);
 		var i, j;
@@ -1763,6 +1396,475 @@ CodeEditor.create = function() {
 		document.getElementById("editableBoxLeftMargin" + forPrimary).textContent = str;
 		
 	} //end updateDecorations()
+
+	//=====================================================================================
+	//keyDownHandler ~~
+	var TABKEY = 9;	
+	this.keyDownHandler = function(e,forPrimary)
+	{
+		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + 
+				" ctrl=" + e.ctrlKey);
+
+		//to avoid DIVs, ENTER should trigger updateDecorations immediately
+		if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
+		{
+			_fileWasModified[forPrimary] = true;
+			CodeEditor.editor.updateDecorations(forPrimary);
+			return;
+		}
+
+		window.clearTimeout(_inputTimerHandle);
+		_inputTimerHandle = window.setTimeout(
+				function()
+				{
+			CodeEditor.editor.updateDecorations(forPrimary);				
+				}, 1000); //end setTimeout
+
+
+		var rectangularTAB = false;
+		var blockCOMMENT = false;
+
+		if(e.ctrlKey && e.keyCode == 84) // T
+			rectangularTAB = true;
+		else if(e.keyCode == 191) 	// / for block comment
+			blockCOMMENT = true;
+		else if(e.ctrlKey)
+		{			
+			e.preventDefault();
+
+			if(e.keyCode == 83) 		// S
+				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
+			else if(e.keyCode == 68) 	// D
+				CodeEditor.editor.toggleDirectoryNav(forPrimary);
+			else if(e.keyCode == 66) 	// B
+				CodeEditor.editor.build();
+			else if(e.keyCode == 67) 	// C for clean build
+				CodeEditor.editor.build(true /*clean*/);						
+
+			return;
+		}
+
+		if(e.keyCode == TABKEY || rectangularTAB ||
+				blockCOMMENT)
+		{					
+			_fileWasModified[forPrimary] = true;
+			CodeEditor.editor.updateLastSave(forPrimary);
+			e.preventDefault();
+
+			//manage tabs
+			//	if selection, then tab selected lines
+			// 	else insert tab character
+
+			//handle get cursor location
+			var el = document.getElementById("editableBox" + forPrimary);
+			var i;
+			var cursor = {
+					"startNodeIndex":undefined,
+					"startPos":undefined,
+					"endNodeIndex":undefined,
+					"endPos":undefined,
+			};
+
+			try
+			{
+				range = window.getSelection().getRangeAt(0);
+
+				cursor.startPos = range.startOffset;
+				cursor.endPos = range.endOffset;
+
+				//find start and end node index
+				for(i=0;i<el.childNodes.length;++i)
+				{
+					if(el.childNodes[i] == range.startContainer ||
+							el.childNodes[i] == range.startContainer.parentNode||
+							el.childNodes[i] == range.startContainer.parentNode.parentNode)
+						cursor.startNodeIndex = i;
+
+					if(el.childNodes[i] == range.endContainer ||
+							el.childNodes[i] == range.endContainer.parentNode||
+							el.childNodes[i] == range.endContainer.parentNode.parentNode)
+						cursor.endNodeIndex = i;
+				}
+
+				console.log("cursor",cursor);
+			}
+			catch(err)
+			{
+				console.log("err",err);
+			}
+
+
+
+			if(cursor.startNodeIndex !== undefined &&
+					(cursor.startNodeIndex != cursor.endNodeIndex ||
+							cursor.startPos != cursor.endPos))
+			{
+				//handle tabbing selected lines
+				Debug.log("special key selected lines " + cursor.startNodeIndex + " - " +
+						cursor.endNodeIndex);					
+
+
+
+				/////////////////////////
+				//start rectangular tab handling
+				if(rectangularTAB)
+				{
+					Debug.log("Rectangular TAB");
+
+					//steps:
+					//	determine x coordinate by 
+					//		going backwards from start until a new line is found
+					//		and counting spots
+					//	then for each line in selection
+					//		add a tab at that x coordinate (offset from newline)
+
+					//reverse-find new line
+					var node,val;
+					var found = false;	
+					var x = 0;
+					var tabSz = 4; //to match eclipse!		
+					var firstCharEver = true;
+					for(n=cursor.startNodeIndex; !found && n>=0; --n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent; //.nodeValue; //.wholeText
+
+						for(i=(n==cursor.startNodeIndex?cursor.startPos:
+								val.length-1); i>=0; --i)
+						{	
+							if(firstCharEver) //do the tab for first since we are there
+							{
+								firstCharEver = false;
+
+								var prelength = val.length;
+
+								if(e.shiftKey) //delete leading tab
+								{
+									if(i-1 >= 0 && val[i-1] == '\t')
+										node.textContent = val.substr(0,i-1) + val.substr(i);
+								}
+								else //add leading tab
+								{
+									node.textContent = val.substr(0,i) + "\t" + val.substr(i);
+
+								}
+
+								//adjust selection to follow rectangular tabbing
+								//	so future rectangular tabbing works as expected
+								cursor.startPos += node.textContent.length - prelength;
+								continue;
+							}
+
+							if(val[i] == '\n')
+							{
+								//found start of line
+								found = true;
+								break;
+							}
+							else if(val[i] == '\t')
+								x += tabSz; //add tab num of spots
+							else 
+								++x; //add single character spot
+						} //end node text character loop
+					} //end node loop
+
+					console.log("x",x);
+
+					//fast-forward to endPos through each line and handle tab at x coord								
+
+					var xcnt = -1;
+					for(n=cursor.startNodeIndex; n<el.childNodes.length; ++n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent; //.nodeValue; //.wholeText
+
+						for(i=(n==cursor.startNodeIndex?cursor.startPos:
+								0);i<val.length;++i)
+						{
+							console.log(xcnt," vs ",x,val[i]);
+							if(val[i] == '\n')
+							{
+								//reset x coord count
+								xcnt = 0;
+							}
+							else if(xcnt == x)
+							{											
+								console.log("x match at ",xcnt,val.substr(0,i),"TTT",val.substr(i));
+								xcnt = -1;
+
+								if(e.shiftKey) //delete leading tab
+								{
+									if(i-1 < val.length && val[i-1] == '\t')
+									{
+										val = val.substr(0,i-1) + val.substr(i);
+										node.textContent = val;
+									}
+								}
+								else //add leading tab
+								{
+									val = val.substr(0,i) + "\t" + val.substr(i);
+									node.textContent = val;
+								}
+
+							}
+							else if(xcnt != -1) //if counting, increase 
+							{
+								if(val[i] == '\t')
+									xcnt += tabSz; //add tab num of spots
+								else 
+									++xcnt; //add single character spot
+							}									
+						} //end node text character loop
+
+						if(n == cursor.endNodeIndex)
+							break; //reached end of selection
+					} //end node loop
+
+
+
+					//need to set cursor
+					try
+					{
+						var range = document.createRange();
+						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+
+						var selection = window.getSelection();
+						selection.removeAllRanges();
+						selection.addRange(range);
+					}
+					catch(err)
+					{
+						console.log(err);
+						return;
+					}
+
+					return;
+				} //end rectangular TAB handling
+
+
+
+
+
+				/////////////////////////
+				// normal block TAB handling
+				//steps:
+				//	go backwards from start until a new line is found
+				//	then add tab after each new line until end of selection reached
+
+				//reverse-find new line
+				var node,val;
+				var found = false;	
+				var specialStr = '\t';
+				if(blockCOMMENT)
+				{
+					if(_fileExtension[forPrimary][0] == "c" || 
+							_fileExtension[forPrimary][0] == "C" ||
+							_fileExtension[forPrimary] == "h")
+						specialStr = "//"; //comment string
+					else
+						specialStr = "#"; //comment string
+				}
+
+				for(n=cursor.startNodeIndex; !found && n>=0; --n)
+				{
+					node = el.childNodes[n];
+					val = node.textContent; //.nodeValue; //.wholeText
+
+					for(i=(n==cursor.startNodeIndex?cursor.startPos:
+							val.length-1); i>=0; --i)
+					{
+						if(val[i] == '\n')
+						{
+							if(e.shiftKey) //delete leading special string
+							{
+								if(i + specialStr.length < val.length &&
+										val.indexOf(specialStr,i+1) == i+1)
+									node.textContent = val.substr(0,i+1) + 
+									val.substr(i+1+specialStr.length);											
+							}
+							else //add leading special string
+								node.textContent = val.substr(0,i+1) + 
+								specialStr + val.substr(i+1);
+							found = true;
+							break;
+						}
+					} //end node text character loop
+				} //end node loop
+
+				//fast-forward to endPos and insert tab after each new line encountered
+				found = false;
+				var prevCharIsNewLine = false;
+				for(n=cursor.startNodeIndex; !found && n<el.childNodes.length &&
+				n <= cursor.endNodeIndex; ++n)
+				{								
+					node = el.childNodes[n];
+					val = node.textContent; //.nodeValue; //.wholeText
+
+					for(i=(n==cursor.startNodeIndex?cursor.startPos:
+							0);i<val.length;++i)
+					{
+						if(n == cursor.endNodeIndex && i >= cursor.endPos)
+						{
+							//reached end of selection
+							found = true;
+							break;
+						}
+
+						if(val[i] == '\n' || 
+								(i == 0 && prevCharIsNewLine))
+						{
+							if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
+
+							if(e.shiftKey) //delete leading tab
+							{											
+								if(i + specialStr.length < val.length &&
+										val.indexOf(specialStr,i+1) == i+1)
+								{
+									val = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);
+									node.textContent = val;
+
+									//if running out of string to keep line selected.. jump to next node
+									//	with selection
+									if(n == cursor.endNodeIndex && 
+											cursor.endPos >= val.length)
+									{
+										++cursor.endNodeIndex;
+										cursor.endPos = 0;
+									}
+								}
+							}
+							else //add leading tab
+							{
+								val = val.substr(0,i+1) + specialStr + val.substr(i+1);
+								node.textContent = val;
+							}
+
+							if(i == -1 && prevCharIsNewLine) ++i; //so that loop continues properly
+						}									
+					} //end node text character loop
+
+					prevCharIsNewLine = (val.length && //handle last char newline case
+							val[val.length-1] == '\n');
+				} //end node loop
+
+				//need to set cursor
+				try
+				{
+					var range = document.createRange();
+					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+
+					var selection = window.getSelection();
+					selection.removeAllRanges();
+					selection.addRange(range);
+				}
+				catch(err)
+				{
+					console.log(err);
+					return false;
+				}
+			}
+			else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
+			{	
+				if(e.shiftKey)
+				{								
+					if(cursor.startNodeIndex !== undefined)
+					{
+						try
+						{
+							var node,val,i;
+							i = cursor.startPos;
+							node = el.childNodes[cursor.startNodeIndex];
+							val = node.textContent; //.nodeValue; //.wholeText
+							console.log(node,val,val[i-1]);
+
+							if(val[i-1] == '\t')
+							{
+								node.textContent = val.substr(0,i-1) + val.substr(i);
+
+								//need to set cursor
+								var range = document.createRange();
+								range.setStart(node,i-1);
+								range.setEnd(node,i-1);
+
+								var selection = window.getSelection();
+								selection.removeAllRanges();
+								selection.addRange(range);
+							}
+						}
+						catch(err)
+						{
+							console.log(err);
+							return;
+						}
+					}
+					else
+						Debug.log("No cursor for reverse tab.");
+				}
+				else
+					document.execCommand('insertHTML', false, '&#009');
+			}
+
+			return;
+
+		} //end handle tab key
+
+	} //end keyDownHandler()
+
+	//=====================================================================================
+	//updateLastSave ~~
+	this.updateLastSave = function(forPrimary)
+	{
+		Debug.log("updateLastSave()");
+		var str = "";
+		if(_fileWasModified[forPrimary])
+			str += "<label style='color:red'>Unsaved changes!</label> ";
+		else
+			str += "Unmodified. ";
+		if(_fileLastSave[forPrimary])
+		{
+			var now = new Date();
+			var d = new Date(_fileLastSave[forPrimary]);				
+			var tstr = d.toLocaleTimeString();
+			tstr = tstr.substring(0,tstr.lastIndexOf(' ')) + //convert AM/PM to am/pm with no space
+					(tstr[tstr.length-2]=='A'?"am":"pm");
+			
+			var diff = ((now.getTime() - d.getTime())/1000)|0; //in seconds				
+			var diffStr = "";
+			
+			if(diff < 5)
+				diffStr = "(just now) ";
+			else if(diff < 10)
+				diffStr = "(5 seconds ago) ";
+			else if(diff < 20)
+				diffStr = "(15 seconds ago) ";
+			else if(diff < 40)
+				diffStr = "(30 seconds ago) ";
+			else if(diff < 50)
+				diffStr = "(45 seconds ago) ";
+			else if(diff < 120)
+				diffStr = "(one minute ago) ";
+			else if(diff < 15*60) 
+				diffStr = "(" + ((diff/60)|0) + " minutes ago) ";
+			else if(diff < 20*60) //about 15 minutes
+				diffStr = "(15 minutes ago) ";
+			else if(diff < 40*60) //about 30 minutes
+				diffStr = "(30 minutes ago) ";
+			else if(diff < 50*60) //about 45 minutes
+				diffStr = "(45 minutes ago) ";
+			else if(diff < 90*60) //about an hour
+				diffStr = "(an hour ago) ";
+			else	//hours
+				diffStr = "(" + (Math.round(diff/60/60)) + " hours ago) ";
+				
+			
+			str += "Last save was " + diffStr + tstr;
+		}
+		var el = document.getElementById("textEditorLastSave" + forPrimary); 
+		el.innerHTML = str;			
+	} //end updateLastSave()
 	
 } //end create() CodeEditor instance
 
