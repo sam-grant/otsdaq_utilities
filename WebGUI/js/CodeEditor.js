@@ -762,7 +762,7 @@ CodeEditor.create = function() {
 			var buildPath = "";
 			var pathSplitName;			
 
-			str += "<a class='dirNavPath' onclick='CodeEditor.editor.openDirectory(" + 
+			str += "Path: <a class='dirNavPath' onclick='CodeEditor.editor.openDirectory(" + 
 					forPrimary + ",\"" + 
 					"/" + "\"" + 
 					")'>" + 
@@ -784,7 +784,7 @@ CodeEditor.create = function() {
 						pathSplitName + "</a>";
 				
 			}
-			str += "<br><br>";
+			str += "/<br><br>";
 		}
 
 		/////////////
