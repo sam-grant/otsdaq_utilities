@@ -1010,6 +1010,7 @@ CodeEditor.create = function() {
 				"public" 				: _DECORATION_RED,
 				"private" 				: _DECORATION_RED,
 				"protected"				: _DECORATION_RED,
+				"static" 				: _DECORATION_RED,
 				"virtual" 				: _DECORATION_RED,
 				"override" 				: _DECORATION_RED,
 				"const" 				: _DECORATION_RED,
@@ -1017,6 +1018,11 @@ CodeEditor.create = function() {
 				"bool"	 				: _DECORATION_RED,
 				"unsigned" 				: _DECORATION_RED,
 				"int"	 				: _DECORATION_RED,
+				"uint64_t" 				: _DECORATION_RED,
+				"uint32_t" 				: _DECORATION_RED,
+				"uint16_t" 				: _DECORATION_RED,
+				"uint8_t" 				: _DECORATION_RED,
+				"long"	 				: _DECORATION_RED,
 				"float"	 				: _DECORATION_RED,
 				"double" 				: _DECORATION_RED,
 				"return" 				: _DECORATION_RED,
@@ -1043,7 +1049,7 @@ CodeEditor.create = function() {
 				"endl" 					: _DECORATION_GREEN,
 				"runtime_error"			: _DECORATION_GREEN,
 				"memcpy"				: _DECORATION_GREEN,
-				"cout"					: _DECORATION_GREEN,		
+				"cout"					: _DECORATION_GREEN,						
 			},
 			"sh" : {
 				"if" 					: _DECORATION_RED,
@@ -1248,12 +1254,15 @@ CodeEditor.create = function() {
 				//console.log("Label handling...",val);
 				
 				//if value is no longer a special word, quote, nor comment, then remove label
-				if(_DECORATIONS[fileDecorType][val] === undefined && 
-						val[0] != commentString[0] &&
-						val[0] != '"')
+				if((_DECORATIONS[fileDecorType][val] === undefined && 
+						(val[0] != commentString[0] || //break up comment if there is a new line
+								val.indexOf('\n') >= 0)	&& 
+								val[0] != '"') || 
+						//or if cursor is close
+						(n+1 >= cursor.startNodeIndex && n-1 <= cursor.endNodeIndex))
 				{
 					//Debug.log("val lost " + val);
-					
+
 					//add text node and delete node
 					newNode = document.createTextNode(val);
 					el.insertBefore(newNode,node);
@@ -1604,6 +1613,10 @@ CodeEditor.create = function() {
 	var TABKEY = 9;	
 	this.keyDownHandler = function(e,forPrimary)
 	{
+		//if just pressing shiftKey ignore
+		if(e.keyCode == 16 /*shift*/)
+			return;
+		
 		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + 
 				" ctrl=" + e.ctrlKey);
 
@@ -1611,6 +1624,10 @@ CodeEditor.create = function() {
 		if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 		{
 			_fileWasModified[forPrimary] = true;
+
+			document.execCommand('insertHTML', false, '&#010;&#013;');
+			e.preventDefault();
+			
 			CodeEditor.editor.updateDecorations(forPrimary);
 			return;
 		}
@@ -1628,7 +1645,7 @@ CodeEditor.create = function() {
 
 		if(e.ctrlKey && e.keyCode == 84) // T
 			rectangularTAB = true;
-		else if(e.keyCode == 191) 	// / for block comment
+		else if(!e.shiftKey && e.keyCode == 191) 	// / for block comment
 			blockCOMMENT = true;
 		else if(e.ctrlKey)
 		{			
