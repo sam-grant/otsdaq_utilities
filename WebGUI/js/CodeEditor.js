@@ -929,8 +929,8 @@ CodeEditor.create = function() {
 					return;
 				}
 
-				CodeEditor.editor.handleFileContent(forPrimary, req);			
 				CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
+				CodeEditor.editor.handleFileContent(forPrimary, req);			
 
 
 					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
@@ -994,6 +994,8 @@ CodeEditor.create = function() {
 				"include_directories"	: _DECORATION_RED,
 				"simple_plugin"			: _DECORATION_RED,
 				"set" 					: _DECORATION_RED,
+				"install_headers" 		: _DECORATION_RED,
+				"install_source"		: _DECORATION_RED,
 			},
 			"c++": {
 				"#define" 				: _DECORATION_RED,
@@ -1045,13 +1047,27 @@ CodeEditor.create = function() {
 			},
 			"sh" : {
 				"if" 					: _DECORATION_RED,
+				"then" 					: _DECORATION_RED,
 				"else" 					: _DECORATION_RED,
+				"fi" 					: _DECORATION_RED,
 				"for" 					: _DECORATION_RED,
+				"in" 					: _DECORATION_RED,
 				"while" 				: _DECORATION_RED,
 				"do"	 				: _DECORATION_RED,
+				"done"	 				: _DECORATION_RED,
 				"switch" 				: _DECORATION_RED,
 				"case" 					: _DECORATION_RED,
 				"default" 				: _DECORATION_RED,
+				"export" 				: _DECORATION_RED,
+				
+				"echo" 					: _DECORATION_GREEN,	
+				"cd"					: _DECORATION_GREEN,
+				"cp"					: _DECORATION_GREEN,
+				"rm"					: _DECORATION_GREEN,
+				"cat"					: _DECORATION_GREEN,
+				"wget"					: _DECORATION_GREEN,
+				"chmod"					: _DECORATION_GREEN,
+				"sleep"					: _DECORATION_GREEN,
 			}
 	};
 	this.updateDecorations = function(forPrimary)
@@ -1136,6 +1152,8 @@ CodeEditor.create = function() {
 		var closedString;
 		
 		var lineCount = 0;
+		
+		var prevChar;
 		
 		/////////////////////////////////
 		function localInsertLabel(startPos)
@@ -1229,7 +1247,10 @@ CodeEditor.create = function() {
 			{
 				//console.log("Label handling...",val);
 				
-				if(!_DECORATIONS[val])
+				//if value is no longer a special word, quote, nor comment, then remove label
+				if(_DECORATIONS[fileDecorType][val] === undefined && 
+						val[0] != commentString[0] &&
+						val[0] != '"')
 				{
 					//Debug.log("val lost " + val);
 					
@@ -1338,18 +1359,23 @@ CodeEditor.create = function() {
 					
 					--n; //revisit this same node for text rules, now that it is merged
 					continue;
-				}
+				} //end merge text nodes
 				
 				startOfWord = -1;
 
 				for(i=0;i<val.length;++i)
 				{
+					//FIXME -- seems to be some double counting going on, (when revisiting nodes?)
 					if(val[i] == '\n')
 						++lineCount;
 					
-					//string handling
-					if(startOfComment == -1 && (
-							startOfString != -1 || val[i] == '"'))
+					//for each character:
+					//	check if in quoted string
+					//	then if in comment
+					//	then if special word
+					if(startOfComment == -1 && ( //string handling
+							startOfString != -1 ||
+							(prevChar != '\\' && val[i] == '"')))
 					{
 						if(startOfString == -1 && val[i] == '"') //start string
 							startOfString = i;
@@ -1366,10 +1392,8 @@ CodeEditor.create = function() {
 							//done = true; //for debugging
 							break;
 						}					
-					}
-					
-					//comment handling
-					if(startOfString == -1 && (
+					}		
+					else if(startOfString == -1 && ( //comment handling
 							startOfComment != -1 || 
 							(i+commentString.length-1 < val.length && 
 									val.substr(i,commentString.length) == 
@@ -1390,11 +1414,9 @@ CodeEditor.create = function() {
 							//done = true; //for debugging
 							break;
 						}					
-					}
-					
-					
-					//special word handling			
-					else if((val[i] >= 'a' && val[i] <= 'z') || 
+					}		
+					else if(	//special word handling
+							(val[i] >= 'a' && val[i] <= 'z') || 
 							(val[i] >= 'A' && val[i] <= 'Z') ||
 							(val[i] >= '0' && val[i] <= '9') || 
 							(val[i] == '_' || val[i] == '-') || 
@@ -1423,6 +1445,8 @@ CodeEditor.create = function() {
 							startOfWord = -1;
 					}
 					
+					prevChar = val[i]; //save previous character (e.g. to check for quote escape)
+					
 				} //end node string value loop
 				
 
@@ -1450,8 +1474,13 @@ CodeEditor.create = function() {
 						//look for quote close or comment close 
 						for(i;i<val.length;++i)
 						{
+							//FIXME -- seems to be some double counting going on, (when revisiting nodes?)
+							if(val[i] == '\n')
+								++lineCount;
+
 							//string handling
-							if(startOfString != -1 && val[i] == '"') //end string
+							if(startOfString != -1 && 
+									(prevChar != '\\' && val[i] == '"')) //end string
 							{
 								Debug.log("Closing node crossed string.");
 								
@@ -1472,7 +1501,8 @@ CodeEditor.create = function() {
 							{
 								Debug.log("Closing node crossed comment.");
 
-								++i; //include " in label
+								++i; //include \n in label
+								
 								specialString = val.substr(startOfComment,i-startOfComment);
 								//console.log("string",startOfComment,val.length,specialString);
 
@@ -1484,6 +1514,8 @@ CodeEditor.create = function() {
 								break;
 
 							}
+							
+							prevChar = val[i]; //save previous character (e.g. to check for quote escape)
 						} //end node string value loop
 					
 					} //end string node crossing node loop
@@ -1495,6 +1527,7 @@ CodeEditor.create = function() {
 						//console.log("string",startOfString,val.length,specialString);
 
 						decor = _DECORATION_BLUE;
+						--n; //move back index (because it was incremented past bounds in end search)
 						localInsertLabel(startOfString);
 						startOfString = -1;			
 					}
@@ -1505,6 +1538,7 @@ CodeEditor.create = function() {
 						//console.log("string",startOfString,val.length,specialString);
 
 						decor = _DECORATION_GRAY;
+						--n; //move back index (because it was incremented past bounds in end search)
 						localInsertLabel(startOfComment);
 						startOfComment = -1;			
 					}
