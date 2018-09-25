@@ -82,6 +82,46 @@
 			height: 				10px;
 			margin: 				3px 0px 0px 5px;
 		}
+
+		#directoryNavToggleTop {
+			float: 					left;
+			width: 					10px;
+			height: 				4px;
+			margin: 				6px 3px 0px 6px;
+			border-right: 			3px solid transparent;
+			border-bottom: 			4px solid white;
+		}
+		#directoryNavToggleBottom {
+			background-color: 		white;
+			float: 					left;
+			width: 					24px;
+			height: 				15px;
+			margin: 				0px 3px 0px 5px;
+		}
+
+		#saveFileMain {
+			border:					1px solid white;
+			border-radius:			2px;
+			float: 					left;
+			width: 					21px;
+			height: 				21px;
+			margin: 				8px 3px 0px 6px;
+		}
+		#saveFileMainTop {
+			border:					1px solid white;
+			float: 					left;
+			width: 					13px;
+			height: 				10px;
+			margin: 				-23px 0px 0px 10px;
+		}
+		#saveFileMainBottom {
+			border:					1px solid white;
+			float: 					left;
+			width: 					7px;
+			height: 				5px;
+			margin: 				-7px 0px 0px 13px;
+		}
+		
 				
 		.textEditor {
 			background-color: 		white;
@@ -124,6 +164,7 @@
 		    color: 					rgb(170, 171, 173);
 		}
 
+		
 		.directoryNav {
 			background-color: 		rgb(241, 243, 247);
 			position:				absolute;

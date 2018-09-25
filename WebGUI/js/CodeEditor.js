@@ -280,8 +280,14 @@ CodeEditor.create = function() {
 						{
 							str += htmlOpen("div",
 									{
-											"style":"margin:11px 0 0 12px;",
-									},"D" /*innerHTML*/, 1 /*doCloseTag*/);
+											"id":"directoryNavToggleTop",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
+											"id":"directoryNavToggleBottom",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
 						} //end directoryNavToggle
 						str += "</div>"; //close directoryNavToggle
 		
@@ -296,8 +302,19 @@ CodeEditor.create = function() {
 						{
 							str += htmlOpen("div",
 									{
-											"style":"margin:11px 0 0 12px;",
-									},"S" /*innerHTML*/, 1 /*doCloseTag*/);
+											"id":"saveFileMain",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
+											"id":"saveFileMainTop",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
+											"id":"saveFileMainBottom",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
 						} //end directoryNavToggle
 						str += "</div>"; //close saveFile
 						
@@ -401,7 +418,7 @@ CodeEditor.create = function() {
 			}
 			cel.appendChild(el);
 			
-		}					
+		} //end content div					
 		
 		document.body.appendChild(cel);
 		
