@@ -670,7 +670,10 @@ CodeEditor.create = function() {
 		
 		var content = encodeURIComponent(
 				document.getElementById("editableBox" + forPrimary).innerText);
-		console.log(content);
+		console.log(content,content.length);
+		content = content.replace(/%C2/g,"").replace(/%A0/g,"");
+		console.log(content.length);
+		
 		
 		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
 				"&option=saveFileContent" +
