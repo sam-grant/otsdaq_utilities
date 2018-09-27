@@ -121,6 +121,58 @@
 			height: 				5px;
 			margin: 				-7px 0px 0px 13px;
 		}
+		.fileRenameButton {
+			width: 					26px;
+			height:					26px;
+			cursor:					pointer;
+			margin:					8px 0 -3px 0;
+		}		
+		.fileRenameButton:active {			
+			-webkit-transform: 		translateY(.1em);
+			-moz-transform: 		translateY(.1em);
+			transform: 				translateY(.1em);
+		}
+		#fileRenameButton0,#fileRenameButton1 {
+			display:				none;
+			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
+			width: 					24px;
+			height: 				20px;
+			border: 				0;
+		}
+		#fileRenameButton0:hover ,#fileRenameButton1:hover  {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);			
+		}	
+		.ConfigurationAPI-popUpDialog-preloadImage {			
+			width: 				24px;
+			height: 			20px;
+			position:			absolute;
+			left: 				-100000px;
+			top: 				-100000px;
+		}
+		#ConfigurationAPI-popUpDialog-preloadImage-editIconHover {
+			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);
+		}
+		
+		
+		.fileRenameButtonLeft {
+
+			
+			
+			border:					1px solid rgb(202, 204, 210);
+			border-radius:			2px;
+			float: 					left;
+			width: 					21px;
+			height: 				21px;
+			margin: 				0px;
+		}
+		.fileRenameButtonRight {
+			border:					1px solid rgb(202, 204, 210);
+			border-radius:			2px;
+			float: 					left;
+			width: 					21px;
+			height: 				21px;
+			margin: 				-18px 3px 0px 5px;
+		}
 		
 				
 		.textEditor {
@@ -193,7 +245,7 @@
 		}
 		.directoryNav th {
 			text-align:				left;
-			color:					red;
+			color:					rgb(193, 193, 193);
 		}
 
 		

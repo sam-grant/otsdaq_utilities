@@ -98,10 +98,14 @@ CodeEditor.create = function() {
 	//	handleDirectoryContent(forPrimary,req)
 	//	openFile(forPrimary,path,extension,doConfirm)
 	//	handleFileContent(forPrimary,req)
-	//	updateDecorations(forPrimary)
+	//	updateDecorations(forPrimary,insertNewLine)
 	//		localInsertLabel(startPos)
 	//	updateLastSave(forPrimary)	
 	//	keyDownHandler(e,forPrimary)
+	//	handleFileNameMouseMove(forPrimary,doNotStartTimer)
+	//	startEditFileName(forPrimary)	
+	//	editCellOK(forPrimary)
+	//	editCellCancel(forPrimary)
 	
 	
 	//for display
@@ -122,6 +126,9 @@ CodeEditor.create = function() {
 	var _fileWasModified = [false,false]; //file wasModified for primary and secondary
 
 	var _inputTimerHandle = 0;
+	var _fileNameMouseMoveTimerHandle = 0;
+	var _fileNameEditing = [false,false]; //for primary and secondary
+	
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -143,6 +150,7 @@ CodeEditor.create = function() {
 		var parameterStartFile = [
 								  //"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
 								  //"/CMakeLists.txt", 
+								  //"/CMakeLists.txt",
 								  DesktopContent.getParameter(0,"startFilePrimary"),
 								  DesktopContent.getParameter(0,"startFileSecondary")
 		   ];
@@ -153,6 +161,8 @@ CodeEditor.create = function() {
 		}
 		console.log("parameterStartFile",parameterStartFile);
 		console.log("parameterViewMode",parameterViewMode);
+		
+		//_viewMode = 2; for debugging
 		
 		//proceed
 		
@@ -462,6 +472,7 @@ CodeEditor.create = function() {
 	function createTextEditor(forPrimary)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("createTextEditor forPrimary=" + forPrimary);
 		
 		var str = "";
@@ -522,6 +533,7 @@ CodeEditor.create = function() {
 	function createDirectoryNav(forPrimary)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("createDirectoryNav forPrimary=" + forPrimary);	
 
 		var str = "";
@@ -610,8 +622,8 @@ CodeEditor.create = function() {
 			eps[i].style.width 		= rect[i].w + "px";
 			
 			epHdrs[i].style.left 	= EDITOR_MARGIN + "px";
-			epHdrs[i].style.top 	= DIR_NAV_MARGIN + "px";
-			epHdrs[i].style.height 	= EDITOR_HDR_H + "px";
+			epHdrs[i].style.top 	= (DIR_NAV_MARGIN - 2*EDITOR_MARGIN) + "px";
+			epHdrs[i].style.height 	= (EDITOR_HDR_H + 2*EDITOR_MARGIN) + "px";
 			epHdrs[i].style.width 	= (rect[i].w - 2*EDITOR_MARGIN) + "px";
 			
 			//offset body by left and top, but extend to border and allow scroll
@@ -644,7 +656,8 @@ CodeEditor.create = function() {
 	//	toggles directory nav
 	this.toggleDirectoryNav = function(forPrimary, v)
 	{
-		forPrimary = forPrimary?1:0;				
+		forPrimary = forPrimary?1:0;	
+		
 		Debug.log("toggleDirectoryNav forPrimary=" + forPrimary);
 
 		if(v !== undefined) //if being set, take value
@@ -653,8 +666,22 @@ CodeEditor.create = function() {
 			_navMode[forPrimary] = _navMode[forPrimary]?0:1;
 		Debug.log("toggleDirectoryNav _navMode=" + _navMode[forPrimary]);
 						
-		document.getElementById("directoryNav" + forPrimary).style.display =
-				_navMode[forPrimary]?"block":"none";				
+		var el = document.getElementById("directoryNav" + forPrimary);
+		var wasHidden = el.style.display == "none";
+		el.style.display =
+				_navMode[forPrimary]?"block":"none";
+		
+		if(_navMode[forPrimary] && wasHidden)
+		{
+			var paths = document.getElementById("directoryNav" + 
+					forPrimary).getElementsByClassName("dirNavPath");
+			var buildPath = "/";
+			for(var i=1;i<paths.length;++i)				
+				buildPath += (i>1?"/":"") + paths[i].textContent;
+			Debug.log("refresh " + buildPath);
+			
+			CodeEditor.editor.openDirectory(forPrimary,buildPath);
+		}
 	} //end toggleDirectoryNav()
 
 	//=====================================================================================
@@ -663,6 +690,7 @@ CodeEditor.create = function() {
 	this.saveFile = function(forPrimary, quiet)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("saveFile forPrimary=" + forPrimary);
 
 		Debug.log("saveFile _filePath=" + _filePath[forPrimary]);
@@ -671,6 +699,7 @@ CodeEditor.create = function() {
 		var content = encodeURIComponent(
 				document.getElementById("editableBox" + forPrimary).innerText);
 		console.log(content,content.length);
+		//remove crazy characters (or understand where they come from, they seem to be backwords (2C and 0A are real characters))
 		content = content.replace(/%C2/g,"").replace(/%A0/g,"");
 		console.log(content.length);
 		
@@ -698,6 +727,16 @@ CodeEditor.create = function() {
 			_fileLastSave[forPrimary] = new Date(); //record last Save time
 			//update last save field
 			CodeEditor.editor.updateLastSave(forPrimary);
+			
+			//if other pane is same path and extension, update it too
+			if(_filePath[0] == _filePath[1] &&
+					_fileExtension[0] == _fileExtension[1])
+			{
+				Debug.log("Update dual view for save");
+				_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
+				_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
+				CodeEditor.editor.updateLastSave(!forPrimary);
+			}
 
 				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 
@@ -709,6 +748,7 @@ CodeEditor.create = function() {
 	this.build = function(cleanBuild)
 	{
 		cleanBuild = cleanBuild?1:0;
+		
 		Debug.log("build cleanBuild=" + cleanBuild);
 		
 		if(cleanBuild)
@@ -752,6 +792,7 @@ CodeEditor.create = function() {
 	this.handleDirectoryContent = function(forPrimary,req)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("handleDirectoryContent forPrimary=" + forPrimary);
 		console.log(req);
 
@@ -886,6 +927,7 @@ CodeEditor.create = function() {
 	this.openDirectory = function(forPrimary,path)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("openDirectory forPrimary=" + forPrimary +
 				" path=" + path);
 
@@ -916,6 +958,7 @@ CodeEditor.create = function() {
 	this.openFile = function(forPrimary,path,extension,doConfirm)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("openFile forPrimary=" + forPrimary +
 				" path=" + path);
 		var i = path.indexOf('.');
@@ -964,6 +1007,7 @@ CodeEditor.create = function() {
 	this.handleFileContent = function(forPrimary,req)
 	{
 		forPrimary = forPrimary?1:0;
+		
 		Debug.log("handleFileContent forPrimary=" + forPrimary);
 		console.log(req);
 
@@ -982,11 +1026,51 @@ CodeEditor.create = function() {
 		var el = document.getElementById("textEditorHeader" + forPrimary);
 		
 		var str = "";
-		str += "<div>";
+
+		//add file name div		
+		str += htmlOpen("div",
+				{
+						"onmousemove" : 
+							"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + ");",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<center>";
+		
+		//add rename button		
+		str += htmlOpen("div", //this is place holder, that keeps height spacing
+				{
+						"class":"fileRenameButton",
+						"onmousemove": 
+							"event.stopPropagation(); " +
+							"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
+							",1 /*doNotStartTimer*/);",
+						"title": "Change the filename...",
+						"onclick":
+							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += htmlOpen("div", //this is el that gets hide/show toggle
+				{
+						"class":"fileRenameButton",
+						"id":"fileRenameButton" + forPrimary,
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		str += "</div>"; //end fileRenameButton
+		
+		str += htmlClearDiv();
+		
+		//add path div
+		str += htmlOpen("div",
+				{
+						"class":"fileNameDiv",
+						"id":"fileNameDiv" + forPrimary,
+				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
 				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);'>" +
 				path + "." + extension + "</a>";
-		str += "</div>";
+		str += "</div>"; //end fileNameDiv
+		
+		str += "</center>";
+		str += "</div>"; //end file name div
+		
+		
 		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
 				forPrimary + "'>Unmodified</div>";
 				
@@ -1016,6 +1100,10 @@ CodeEditor.create = function() {
 				"set" 					: _DECORATION_RED,
 				"install_headers" 		: _DECORATION_RED,
 				"install_source"		: _DECORATION_RED,
+				"enable_testing"		: _DECORATION_RED,
+				"CMAKE_MINIMUM_REQUIRED": _DECORATION_RED,
+				"include"				: _DECORATION_RED,
+				"create_doxygen_documentation": _DECORATION_RED,
 			},
 			"c++": {
 				"#define" 				: _DECORATION_RED,
@@ -1096,8 +1184,12 @@ CodeEditor.create = function() {
 				"sleep"					: _DECORATION_GREEN,
 			}
 	};
-	this.updateDecorations = function(forPrimary)
+	this.updateDecorations = function(forPrimary, insertNewLine)
 	{	
+		forPrimary = forPrimary?1:0;
+		
+		if(insertNewLine)
+			Debug.log("insertNewLine");
 		
 		//update last save field
 		CodeEditor.editor.updateLastSave(forPrimary);
@@ -1105,6 +1197,7 @@ CodeEditor.create = function() {
 
 		var el = document.getElementById("editableBox" + forPrimary);
 		var i, j;
+		var val;
 		
 		//handle get cursor location
 		var cursor = {
@@ -1135,7 +1228,63 @@ CodeEditor.create = function() {
 					cursor.endNodeIndex = i;
 			}
 
+//			//check if previous two are text and previous is empty
+//			//	if so, assume cursor was jumped ahead because of new line behavior			
+//			if(cursor.startNodeIndex == cursor.endNodeIndex && 
+//					cursor.startPos == 0 &&
+//					cursor.endPos == 0 &&
+//					(
+//							(
+//									cursor.startNodeIndex > 1 &&
+//									el.childNodes[cursor.startNodeIndex-1].nodeName == "#text" && 
+//									el.childNodes[cursor.startNodeIndex-1].textContent == "" &&
+//									el.childNodes[cursor.startNodeIndex-2].nodeName == "#text"
+//							) ||
+//							(
+//									el.childNodes[cursor.startNodeIndex].textContent[cursor.startPos] == '\r' 
+//							)
+//
+//					))
+//			{
+//				Debug.log("Recovering from new line behavior.");
+//				--cursor.startNodeIndex;
+//				--cursor.endNodeIndex;
+//			}
+
 			console.log("cursor",cursor);			
+			if(insertNewLine)
+			{
+				Debug.log("Inserting new line...");
+				
+				
+				//delete all nodes between endNode and startNode
+				if(cursor.endNodeIndex > cursor.startNodeIndex)
+				{
+					//handle end node first, which is a subset effect
+					val = el.childNodes[cursor.endNodeIndex].textContent;
+					val = val.substr(cursor.endPos);
+					el.childNodes[cursor.endNodeIndex].textContent = val;
+					--cursor.endNodeIndex;
+					while(cursor.endNodeIndex > cursor.startNodeIndex)
+					{
+						//delete node
+						el.removeChild(el.childNodes[cursor.endNodeIndex]);
+						--cursor.endNodeIndex;
+					}
+					//place end pos to delete the remainder of current node
+					cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
+				}
+				
+				val = el.childNodes[cursor.startNodeIndex].textContent;
+				val = val.substr(0,cursor.startPos) + '\n' + 
+						val.substr(cursor.endPos);
+				el.childNodes[cursor.startNodeIndex].textContent = val;
+				++cursor.startPos;
+				cursor.endNodeIndex = cursor.startNodeIndex;
+				cursor.endPos = cursor.startPos;
+
+				console.log("cursor",cursor);			
+			}
 		}
 		catch(err)
 		{
@@ -1143,7 +1292,6 @@ CodeEditor.create = function() {
 		}
 
 
-		var val;
 		var n;
 		var decor, fontWeight;
 		var specialString;
@@ -1231,6 +1379,7 @@ CodeEditor.create = function() {
 						{
 							//then in original last element, adjust Node and Pos
 							cursor.startNodeIndex += 2;
+							if(val[cursor.startPos-1] == '\r') --cursor.startPos; //get before any \r
 							cursor.startPos -= i;
 						}
 					} //end start handling
@@ -1254,7 +1403,9 @@ CodeEditor.create = function() {
 						{
 							//then in original last element, adjust Node and Pos
 							cursor.endNodeIndex += 2;
+							if(val[cursor.endPos-1] == '\r') --cursor.endPos; //get before any \r
 							cursor.endPos -= i;
+							
 						}
 					} //end end handling
 				}
@@ -1530,7 +1681,7 @@ CodeEditor.create = function() {
 							{
 								Debug.log("Closing node crossed comment.");
 
-								++i; //include \n in label
+								//++i; //do not include \n in label
 								
 								specialString = val.substr(startOfComment,i-startOfComment);
 								//console.log("string",startOfComment,val.length,specialString);
@@ -1626,6 +1777,41 @@ CodeEditor.create = function() {
 			str += (i?'\n':'') + (i+1);
 		document.getElementById("editableBoxLeftMargin" + forPrimary).textContent = str;
 		
+		
+		//if other pane is same path and extension, update it too
+		if(_filePath[0] == _filePath[1] &&
+				_fileExtension[0] == _fileExtension[1])
+		{
+			Debug.log("Update dual view");
+			_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
+			_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
+			CodeEditor.editor.updateLastSave(!forPrimary);
+			
+			//copy all elements over
+
+			var elAlt = document.getElementById("editableBox" + ((!forPrimary)?1:0));
+			elAlt.innerHTML = ""; //clear all children
+			for(i=0;i<el.childNodes.length;++i)
+			{
+				node = el.childNodes[i];
+				val = node.textContent;
+				if(node.nodeName == "LABEL")
+				{
+					newNode = document.createElement("label");
+					newNode.style.fontWeight = node.style.fontWeight; //bold or normal
+					newNode.style.color = node.style.color;
+					newNode.textContent = val; //special text
+				}
+				else if(node.nodeName == "#text")
+				{
+					newNode = document.createTextNode(val); 					
+				}
+				else
+					Debug.log("Skipping unknown node " + node.nodeName);
+				elAlt.appendChild(newNode);
+			}
+		}
+		
 	} //end updateDecorations()
 
 	//=====================================================================================
@@ -1645,10 +1831,12 @@ CodeEditor.create = function() {
 		{
 			_fileWasModified[forPrimary] = true;
 
-			document.execCommand('insertHTML', false, '&#010;&#013;');
+			//document.execCommand('insertHTML', false, '&#010;&#013;');
+			//document.execCommand('insertText', false, '\n');
+			CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/);
 			e.preventDefault();
 			
-			CodeEditor.editor.updateDecorations(forPrimary);
+			
 			return;
 		}
 
@@ -2055,8 +2243,14 @@ CodeEditor.create = function() {
 
 	//=====================================================================================
 	//updateLastSave ~~
+	//	update display based on lastSave and wasModified member variables
 	this.updateLastSave = function(forPrimary)
 	{
+		forPrimary = forPrimary?1:0;
+		
+		var el = document.getElementById("textEditorLastSave" + forPrimary);
+		if(!el) return; //if not displayed, quick exit
+		
 		Debug.log("updateLastSave()");
 		var str = "";
 		if(_fileWasModified[forPrimary])
@@ -2101,10 +2295,142 @@ CodeEditor.create = function() {
 				
 			
 			str += "Last save was " + diffStr + tstr;
-		}
-		var el = document.getElementById("textEditorLastSave" + forPrimary); 
+		} 
 		el.innerHTML = str;			
 	} //end updateLastSave()
+	
+	
+	//=====================================================================================
+	//handleFileNameMouseMove ~~
+	this.handleFileNameMouseMove = function(forPrimary,doNotStartTimer)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		//console.log("handleFileNameMouseMove " + forPrimary + " - " + doNotStartTimer);
+		
+		if(_fileNameEditing[forPrimary]) return;
+		
+		var el = document.getElementById("fileRenameButton" + forPrimary);
+		el.style.display = "block";
+		
+		window.clearTimeout(_fileNameMouseMoveTimerHandle);
+		
+		if(doNotStartTimer) return;
+		
+		_fileNameMouseMoveTimerHandle = window.setTimeout(
+				function()
+				{
+			el.style.display = "none";
+				} //end mouse move timeout handler
+				,1000);
+
+	} //end handleFileNameMouseMove()
+	
+	//=====================================================================================
+	//startEditFileName ~~
+	this.startEditFileName = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		if(_fileNameEditing[forPrimary]) return;
+		_fileNameEditing[forPrimary] = true;
+	
+		//hide edit button
+		document.getElementById("fileRenameButton" + forPrimary).style.display = "none";
+		
+		
+		console.log("startEditFileName " + forPrimary);
+
+		var el = document.getElementById("fileNameDiv" + forPrimary);
+		var initVal = el.textContent.trim();
+
+		var _OK_CANCEL_DIALOG_STR = "";
+
+		_OK_CANCEL_DIALOG_STR += "<div title='' style='padding:5px;background-color:#eeeeee;border:1px solid #555555;position:relative;z-index:2000;" + //node the expander nodes in tree-view are z-index:1000  
+				"width:105px;height:20px;margin: 4px -122px -32px -120px; font-size: 16px; white-space:nowrap; text-align:center;'>";
+		_OK_CANCEL_DIALOG_STR += "<a class='popUpOkCancel' onclick='" +
+				"CodeEditor.editor.editCellOK(" + forPrimary +
+				"); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Accept Changes' style='color:green'>" +
+				"<b style='color:green;font-size: 16px;'>OK</b></a> | " +
+				"<a class='popUpOkCancel' onclick='" +
+				"CodeEditor.editor.editCellCancel(" + forPrimary +
+				"); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
+				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
+		_OK_CANCEL_DIALOG_STR += "</div>";
+		
+		//create input box and ok | cancel
+		var str = "";
+		str += "<input type='text' style='text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
+				" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
+		str += initVal;
+		str += "' >";
+		str += _OK_CANCEL_DIALOG_STR;	
+
+		el.innerHTML = str;
+		
+		//select text in new input
+		el = el.getElementsByTagName("input")[0];
+		el.focus();
+		var startPos = initVal.lastIndexOf('/')+1;
+		var endPos = initVal.lastIndexOf('.');
+		if(endPos < 0) endPos = initVal.length;
+		el.setSelectionRange(startPos, endPos);
+		
+	} //end startEditFileName()
+	
+	//=====================================================================================
+	//editCellOK ~~
+	this.editCellOK = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		var val = document.getElementById("fileNameDiv" + forPrimary).getElementsByTagName("input")[0].value;
+		console.log("editCellOK " + forPrimary + " = " + val);
+		_fileNameEditing[forPrimary] = false;		
+
+		var extPos = val.lastIndexOf('.');
+		
+		//set path and extension
+		
+		_filePath[forPrimary] = val.substr(0,extPos);
+		_fileExtension[forPrimary] = extPos > 0?val.substr(extPos+1):"";
+				
+		var el = document.getElementById("fileNameDiv" + forPrimary);
+		
+		var str = "";
+		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
+				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
+		
+		el.innerHTML = str;
+
+		//indicate file was not saved
+		_fileWasModified[forPrimary] = true;
+		_fileLastSave[forPrimary] = 0; //reset
+		CodeEditor.editor.updateLastSave(forPrimary);
+
+	} //end editCellOK()
+	
+	//=====================================================================================
+	//editCellCancel ~~
+	this.editCellCancel = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		console.log("editCellCancel " + forPrimary);
+		_fileNameEditing[forPrimary] = false;
+
+		//revert to same path and extension
+		var el = document.getElementById("fileNameDiv" + forPrimary);
+		
+		var str = "";
+		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
+				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
+
+		el.innerHTML = str;
+
+	} //end editCellCancel()
 	
 } //end create() CodeEditor instance
 
