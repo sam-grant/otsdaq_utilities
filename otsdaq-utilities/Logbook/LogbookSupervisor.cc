@@ -127,7 +127,6 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss.str();
 			__SS_THROW__;
 		}
 
@@ -141,7 +140,6 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path <<  std::endl;
-			std::cout << ss.str();
 			__SS_THROW__;
 		}
 
@@ -155,7 +153,6 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss.str();
 			__SS_THROW__;
 		}
 	}

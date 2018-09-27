@@ -3,7 +3,7 @@
 		body {	
 			background-color: 		rgb(141, 177, 197);
 			font-family: 			'Comfortaa', serif;
-			overflow: 				auto; /* override ots.css */
+			overflow: 				hidden; /* override ots.css */
 		}
 
 		/* make links have a hand cursor */
