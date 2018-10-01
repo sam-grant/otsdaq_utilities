@@ -67,7 +67,9 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
+//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], 
+//			textColor [optional], borderColor [optional], getUserInput [optional], 
+//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
@@ -1107,7 +1109,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc) {		
+		dialogWidth, cancelFunc, yesButtonText) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1172,11 +1174,15 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput'> "; 
+				"<input type='text' id='DesktopContent_popUpUserInput' " + 
+				"onclick='event.stopPropagation(); '" +
+				">"; 
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
-			"<input type='submit' value='Yes' " +
+			"<input type='submit' value='" + 
+			(yesButtonText?yesButtonText:"Yes") + 
+			"' " +
 			"onclick='event.stopPropagation();' " + 
 			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
@@ -1186,17 +1192,42 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
-	el.getElementsByTagName('input')[0].onmouseup = 
+	el.getElementsByTagName('input')[0 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
 	//onmouseup for "Cancel" button
-	el.getElementsByTagName('input')[1].onmouseup = 
+	el.getElementsByTagName('input')[1 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(cancelFunc);};
 
+	
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;
 	el.style.left = "-1000px"; //set off page so actual dimensions can be determined, and then div relocated
 	body.appendChild(el);
 
+
+	if(getUserInput) //place cursor
+	{
+		el.getElementsByTagName('input')[0].focus();
+		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		
+		//accept enter to close
+		el.getElementsByTagName('input')[0].onkeydown = 
+				function(event) 
+				{
+			if(event.keyCode == 13) // ENTER
+			{	
+				Debug.log("Accepting enter key");
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(func);
+			}
+			else if(event.keyCode == 27) // ESC
+			{	
+				Debug.log("Accepting escape key");
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(cancelFunc);				
+			}
+				}; //end keydown handler
+	}
 
 	//determine position
 	var w = el.offsetWidth; 
@@ -1231,14 +1262,18 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 //clearPopUpVerification ~~
 //	call func after clearing, if exists
 DesktopContent.clearPopUpVerification = function(func) {
+	
+	//get parameter value if exists
+	
+	var userEl = document.getElementById("DesktopContent_popUpUserInput");
+	var param = userEl?userEl.value:undefined;
+	
 	//remove pop up if already exist
 	if(DesktopContent._verifyPopUp) DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
 	DesktopContent._verifyPopUp = 0;
-	if(func) 
-	{
-		var userEl = document.getElementById("DesktopContent_popUpUserInput");
-		func(userEl?userEl.value:undefined); //return user input value if present
-	}
+	
+	if(func)	
+		func(param); //return user input value if present
 }
 
 //=====================================================================================

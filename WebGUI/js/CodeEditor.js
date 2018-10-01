@@ -77,7 +77,7 @@ CodeEditor.create = function() {
 			"To compile, use the Incremmental Build or Clean Build icons in the top-right. "
 	);
 
-	//functions:			
+	//outline:			
 	//
 	//	"private":
 	//	================
@@ -100,6 +100,8 @@ CodeEditor.create = function() {
 	//	handleFileContent(forPrimary,req)
 	//	updateDecorations(forPrimary,insertNewLine)
 	//		localInsertLabel(startPos)
+	//	updateOutline(forPrimary)
+	//	handleOutlineSelect(forPrimary)
 	//	updateLastSave(forPrimary)	
 	//	keyDownHandler(e,forPrimary)
 	//	handleFileNameMouseMove(forPrimary,doNotStartTimer)
@@ -109,12 +111,7 @@ CodeEditor.create = function() {
 	
 	
 	//for display
-	var _CHECKBOX_H = 40;
-	var _CHECKBOX_MIN_W = 240;
-	var _CHECKBOX_MAX_W = 540;
 	var _WINDOW_MIN_SZ = 525;
-	var _MARGIN = 40;
-
 
 	var _needEventListeners = true;
 	
@@ -124,6 +121,7 @@ CodeEditor.create = function() {
 	var _fileExtension = ["",""]; //file extension for primary and secondary
 	var _fileLastSave = [0,0]; //file last save time for primary and secondary
 	var _fileWasModified = [false,false]; //file wasModified for primary and secondary
+	var _numberOfLines = [0,0];
 
 	var _inputTimerHandle = 0;
 	var _fileNameMouseMoveTimerHandle = 0;
@@ -149,9 +147,11 @@ CodeEditor.create = function() {
 		//extract GET parameters
 		var parameterStartFile = [
 								  //"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
+								  //"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface.h",
+								  "/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface_interface.cc",
 								  //"/CMakeLists.txt", 
 								  //"/CMakeLists.txt",
-								  DesktopContent.getParameter(0,"startFilePrimary"),
+								  //DesktopContent.getParameter(0,"startFilePrimary"),
 								  DesktopContent.getParameter(0,"startFileSecondary")
 		   ];
 		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
@@ -286,6 +286,7 @@ CodeEditor.create = function() {
 										"class":"controlsButton",
 										"style":"float:left",
 										"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
+										"title": "Open a file...",
 								},"" /*innerHTML*/, 0 /*doCloseTag*/);
 						{
 							str += htmlOpen("div",
@@ -308,6 +309,7 @@ CodeEditor.create = function() {
 										"class":"controlsButton",
 										"style":"float:left;",
 										"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
+										"title": "Save the file.",
 								},"" /*innerHTML*/, 0 /*doCloseTag*/);
 						{
 							str += htmlOpen("div",
@@ -502,7 +504,8 @@ CodeEditor.create = function() {
 						"id":"textEditorBody" + forPrimary,
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		
-		str += "<table class='editableBoxTable'><tr><td valign='top'>";
+		str += "<table class='editableBoxTable' style='margin-bottom:200px'>" + //add white space to bottom for expected scroll behavior
+				"<tr><td valign='top'>";
 		str += htmlOpen("div",
 				{
 						"class":"editableBoxLeftMargin",
@@ -519,7 +522,7 @@ CodeEditor.create = function() {
 						"autocapitalize":"off", 
 						"spellcheck":"false",
 				},0 /*html*/,true /*closeTag*/);
-		str += "</td></tr></table>"; //close table
+		str += "</td></tr></table>"; //close table	
 
 		str += "</div>"; //close textEditorBody tag
 		
@@ -578,7 +581,7 @@ CodeEditor.create = function() {
 			
 		var DIR_NAV_MARGIN = 50;
 		var EDITOR_MARGIN = 20;
-		var EDITOR_HDR_H = 50;
+		var EDITOR_HDR_H = 56;
 		switch(_viewMode)
 		{
 		case 0: //only primary
@@ -696,50 +699,68 @@ CodeEditor.create = function() {
 		Debug.log("saveFile _filePath=" + _filePath[forPrimary]);
 		Debug.log("saveFile _fileExtension=" + _fileExtension[forPrimary]);
 		
-		var content = encodeURIComponent(
-				document.getElementById("editableBox" + forPrimary).innerText);
-		console.log(content,content.length);
-		//remove crazy characters (or understand where they come from, they seem to be backwords (2C and 0A are real characters))
-		content = content.replace(/%C2/g,"").replace(/%A0/g,"");
-		console.log(content.length);
+		if(!quiet)
+		{
+			DesktopContent.popUpVerification(
+					"Are you sure you want to save...<br>" + 
+					_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "?",
+					localDoIt,
+					undefined,undefined,undefined,
+					undefined,undefined,//val, bgColor, textColor, borderColor, getUserInput, 
+					"90%" /*dialogWidth*/
+			);
+			return;
+		}
+		else 
+			localDoIt();
 		
-		
-		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
-				"&option=saveFileContent" +
-				"&path=" + _filePath[forPrimary] +
-				"&ext=" + _fileExtension[forPrimary]				
-				, "content=" + content /* data */,
-				function(req)
+		function localDoIt()
+		{		
+			var content = encodeURIComponent(
+					document.getElementById("editableBox" + forPrimary).innerText);
+			//console.log(content,content.length);
+			
+			//remove crazy characters (or understand where they come from, they seem to be backwards (i.e. 2C and 0A are real characters))
+			content = content.replace(/%C2/g,"").replace(/%A0/g,"");
+			//console.log(content.length);
+			
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+					"&option=saveFileContent" +
+					"&path=" + _filePath[forPrimary] +
+					"&ext=" + _fileExtension[forPrimary]				
+					, "content=" + content /* data */,
+					function(req)
+					{
+	
+				var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
+				if(err) 
 				{
-
-			var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-				return;
-			}
-
-			Debug.log("Successfully saved " +
-					_filePath[forPrimary] + "." + 
-					_fileExtension[forPrimary],quiet?Debug.LOW_PRIORITY:Debug.INFO_PRIORITY);
-			
-			_fileWasModified[forPrimary] = false;
-			_fileLastSave[forPrimary] = new Date(); //record last Save time
-			//update last save field
-			CodeEditor.editor.updateLastSave(forPrimary);
-			
-			//if other pane is same path and extension, update it too
-			if(_filePath[0] == _filePath[1] &&
-					_fileExtension[0] == _fileExtension[1])
-			{
-				Debug.log("Update dual view for save");
-				_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
-				_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
-				CodeEditor.editor.updateLastSave(!forPrimary);
-			}
-
-				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
-
+					Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+					return;
+				}
+	
+				Debug.log("Successfully saved " +
+						_filePath[forPrimary] + "." + 
+						_fileExtension[forPrimary],quiet?Debug.LOW_PRIORITY:Debug.INFO_PRIORITY);
+				
+				_fileWasModified[forPrimary] = false;
+				_fileLastSave[forPrimary] = new Date(); //record last Save time
+				//update last save field
+				CodeEditor.editor.updateLastSave(forPrimary);
+				
+				//if other pane is same path and extension, update it too
+				if(_filePath[0] == _filePath[1] &&
+						_fileExtension[0] == _fileExtension[1])
+				{
+					Debug.log("Update dual view for save");
+					_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
+					_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
+					CodeEditor.editor.updateLastSave(!forPrimary);
+				}
+	
+					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+		} //end localDoIt()
 	} //end saveFile()
 
 	//=====================================================================================
@@ -1063,7 +1084,9 @@ CodeEditor.create = function() {
 						"id":"fileNameDiv" + forPrimary,
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);'>" +
+				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
+				"title='Click to reload \n" + path + "." + extension + "' " +
+				">" +
 				path + "." + extension + "</a>";
 		str += "</div>"; //end fileNameDiv
 		
@@ -1073,6 +1096,8 @@ CodeEditor.create = function() {
 		
 		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
 				forPrimary + "'>Unmodified</div>";
+		str += "<div class='textEditorOutline' id='textEditorOutline" + 
+				forPrimary + "'>Outline:</div>";
 				
 		el.innerHTML = str;
 		
@@ -1228,29 +1253,6 @@ CodeEditor.create = function() {
 					cursor.endNodeIndex = i;
 			}
 
-//			//check if previous two are text and previous is empty
-//			//	if so, assume cursor was jumped ahead because of new line behavior			
-//			if(cursor.startNodeIndex == cursor.endNodeIndex && 
-//					cursor.startPos == 0 &&
-//					cursor.endPos == 0 &&
-//					(
-//							(
-//									cursor.startNodeIndex > 1 &&
-//									el.childNodes[cursor.startNodeIndex-1].nodeName == "#text" && 
-//									el.childNodes[cursor.startNodeIndex-1].textContent == "" &&
-//									el.childNodes[cursor.startNodeIndex-2].nodeName == "#text"
-//							) ||
-//							(
-//									el.childNodes[cursor.startNodeIndex].textContent[cursor.startPos] == '\r' 
-//							)
-//
-//					))
-//			{
-//				Debug.log("Recovering from new line behavior.");
-//				--cursor.startNodeIndex;
-//				--cursor.endNodeIndex;
-//			}
-
 			console.log("cursor",cursor);			
 			if(insertNewLine)
 			{
@@ -1324,9 +1326,7 @@ CodeEditor.create = function() {
 		var eatNode;
 		var eatVal;
 		var closedString;
-		
-		var lineCount = 0;
-		
+				
 		var prevChar;
 		
 		/////////////////////////////////
@@ -1545,9 +1545,6 @@ CodeEditor.create = function() {
 
 				for(i=0;i<val.length;++i)
 				{
-					//FIXME -- seems to be some double counting going on, (when revisiting nodes?)
-					if(val[i] == '\n')
-						++lineCount;
 					
 					//for each character:
 					//	check if in quoted string
@@ -1654,10 +1651,6 @@ CodeEditor.create = function() {
 						//look for quote close or comment close 
 						for(i;i<val.length;++i)
 						{
-							//FIXME -- seems to be some double counting going on, (when revisiting nodes?)
-							if(val[i] == '\n')
-								++lineCount;
-
 							//string handling
 							if(startOfString != -1 && 
 									(prevChar != '\\' && val[i] == '"')) //end string
@@ -1770,13 +1763,7 @@ CodeEditor.create = function() {
 			}
 		} //end set cursor placement	
 		
-		
-		//handle create line numbers
-		str = "";
-		for(i=0;i<lineCount;++i)
-			str += (i?'\n':'') + (i+1);
-		document.getElementById("editableBoxLeftMargin" + forPrimary).textContent = str;
-		
+		CodeEditor.editor.updateOutline(forPrimary);
 		
 		//if other pane is same path and extension, update it too
 		if(_filePath[0] == _filePath[1] &&
@@ -1815,16 +1802,184 @@ CodeEditor.create = function() {
 	} //end updateDecorations()
 
 	//=====================================================================================
+	//updateOutline ~~
+	this.updateOutline = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;	
+		
+		Debug.log("updateOutline " + forPrimary);
+		
+		var text = document.getElementById("editableBox" + forPrimary).textContent;
+		
+		var starti;
+		var endi;
+		var strLength;
+		var str;
+		var endPi, startCi;
+		var newLinei;
+		var localNewLineCount;
+		var newLineCount = 0;
+		var outline = []; //line number and name
+		outline.push([1,"Top"]); //always include top
+		var i,j;
+		var fail;
+		
+		var isCsource = _fileExtension[forPrimary] == "cc";
+		
+		for(i=0;i<text.length;++i)
+		{
+			if(text[i] == '\n') {++newLineCount; continue;}
+			
+			if(!isCsource) continue; // only look for functions in C++ source code
+			
+			if(i+1 >= text.length || 
+					text[i] != ':' ||
+					text[i+1] != ':') continue;
+			
+			starti = i; //text.indexOf("::",starti)
+			endi = text.indexOf('(',starti+3);
+			startCi = text.indexOf('{',endi+2);
+			endPi = text.lastIndexOf(')',startCi-1);
+			
+			if(endi < 0 || endPi < 0 || startCi < 0)
+			{
+				++i; //skip ahead of :'s
+				continue; //need all markers
+			}
+			fail = false;
+			
+			//consider string without parameters
+			str = text.substr(starti,endi-starti) + 
+					text.substr(endPi+1,startCi-(endPi+1));			
+			//strLength = str.length;
+			//str = str.replace(/\s+/g,''); //remove all whitespace
+			//console.log(str);
+
+			console.log("consider ", str);
+			
+			newLinei = 0;
+			localNewLineCount = 0; //count new lines in substr
+			for(j=0;!fail && j<str.length;++j)
+			{
+				if(str[j] == '\n')
+					++localNewLineCount;
+				else if(str[j] == ';')
+					fail = true;
+			}
+			if(localNewLineCount > 3 || //not too many new lines without params
+					fail) //and no ;'s
+			{
+				++i; //skip ahead of :'s
+				continue; //skip non candidates
+			} 
+			
+			//else check parameters
+			for(j=endi;!fail && j<endPi;++j)
+			{
+				if(text[j] == '\n')
+					++localNewLineCount;
+				else if(text[j] == ';')
+					fail = true;
+			}
+			if(fail)
+			{
+				++i; //skip ahead of :'s
+				continue; //skip non candidates
+			} 						
+			
+			
+			//else found a function, record line number and name
+			outline.push([newLineCount+1,
+						  text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
+						  "()"]);						
+			console.log("function", outline[outline.length-1],localNewLineCount);
+			
+			newLineCount += localNewLineCount;
+			i = startCi; //jump past function
+			
+		} // end text content char loop
+		
+		Debug.log("Number of lines " + newLineCount);
+		console.log("Done with outline", outline);
+		
+		//handle create line numbers
+		str = "";
+		for(i=0;i<newLineCount;++i)
+		{
+			str += "<a name='" + forPrimary + "L" + (i+1) + "'></a>"; //add anchor tag
+			str += (i+1);
+			str += "<br>";
+		}
+		document.getElementById("editableBoxLeftMargin" + forPrimary).innerHTML = str;
+		
+		_numberOfLines[forPrimary] = newLineCount;
+		//window.location.href = "#L220";
+		
+		if(!isCsource)
+		{
+			//generate simple outline for non C++ source
+			i = (newLineCount/2)|0;
+			i -= 10;
+			if(i > 10)
+			{
+				outline.push([i,"Middle"]);
+			}				
+		} //end simple outline generate
+		outline.push([newLineCount,"Bottom"]); //always include bottom
+
+		//handle create outline
+		str = "";
+		str += "Outline: ";
+		str += htmlOpen("select",
+				{
+						"class":"textEditorOutlineSelect",
+						"id":"textEditorOutlineSelect" + forPrimary,
+						"onchange":
+							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<option value='0'>Jump to a Line Number</option>"; //blank option
+		for(i=0;i<outline.length;++i)
+		{
+			str += "<option value='" + (outline[i][0]-2) + "'>";
+			text = "#" + outline[i][0];
+			str += text;
+			for(j=text.length;j<12;++j)
+				str += "&nbsp;"; //create fixed spacing for name
+			str += outline[i][1];
+			str += "</option>";							  
+		}
+		str += "</select>"; //end textEditorOutlineSelect
+		document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
+		
+	} //end updateOutline()
+
+	//=====================================================================================
+	//handleOutlineSelect ~~
+	this.handleOutlineSelect = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		Debug.log("handleOutlineSelect() " + forPrimary);
+		
+		var val = document.getElementById("textEditorOutlineSelect" + forPrimary).value | 0;
+		if(val < 1) val = 1;
+		console.log("val",val);		
+		
+		window.location.href = "#" + forPrimary + "L" + val;
+	} //end handleOutlineSelect()
+	
+	//=====================================================================================
 	//keyDownHandler ~~
 	var TABKEY = 9;	
 	this.keyDownHandler = function(e,forPrimary)
 	{
+		forPrimary = forPrimary?1:0;
+		
 		//if just pressing shiftKey ignore
 		if(e.keyCode == 16 /*shift*/)
 			return;
 		
-		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + 
-				" ctrl=" + e.ctrlKey);
+		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 
 		//to avoid DIVs, ENTER should trigger updateDecorations immediately
 		if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
@@ -1866,7 +2021,30 @@ CodeEditor.create = function() {
 			else if(e.keyCode == 66) 	// B
 				CodeEditor.editor.build();
 			else if(e.keyCode == 67) 	// C for clean build
-				CodeEditor.editor.build(true /*clean*/);						
+				CodeEditor.editor.build(true /*clean*/);	
+			else if(e.keyCode == 76 ||	// L or
+					e.keyCode == 71) 	// G for go to line number
+			{
+				DesktopContent.popUpVerification(
+						/*prompt*/ "Goto line number: ", 
+						/*func*/
+						function(line) 
+						{
+					line = line | 0;
+					if(line < 1) line = 1;
+					if(line > _numberOfLines[forPrimary])
+						line = _numberOfLines[forPrimary];
+					Debug.log("Goto line number " + line);
+					window.location.href = "#" + forPrimary + "L" + line;
+						}, /*val*/ undefined, 
+						/*bgColor*/ undefined,
+						/*textColor*/ undefined,
+						/*borderColor*/ undefined,
+						/*getUserInput*/ true,
+						/*dialogWidth*/ undefined,
+						/*cancelFunc*/ undefined,
+						/*yesButtonText*/ "Go");
+			}
 
 			return;
 		}

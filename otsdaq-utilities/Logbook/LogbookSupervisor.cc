@@ -137,8 +137,7 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir((path).c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::stringstream ss;
-			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
+			__SS__ << "Service directory creation failed: " <<
 					path <<  std::endl;
 			__SS_THROW__;
 		}
@@ -150,8 +149,7 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::stringstream ss;
-			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
+			__SS__ << "Service directory creation failed: " <<
 					path << std::endl;
 			__SS_THROW__;
 		}
