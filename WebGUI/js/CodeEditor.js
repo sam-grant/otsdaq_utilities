@@ -103,7 +103,7 @@ CodeEditor.create = function() {
 	//	updateOutline(forPrimary)
 	//	handleOutlineSelect(forPrimary)
 	//	updateLastSave(forPrimary)	
-	//	keyDownHandler(e,forPrimary)
+	//	keyDownHandler(e,forPrimary,shortcutsOnly)
 	//	handleFileNameMouseMove(forPrimary,doNotStartTimer)
 	//	startEditFileName(forPrimary)	
 	//	editCellOK(forPrimary)
@@ -127,6 +127,7 @@ CodeEditor.create = function() {
 	var _fileNameMouseMoveTimerHandle = 0;
 	var _fileNameEditing = [false,false]; //for primary and secondary
 	
+	var _activePaneIsPrimary = 1; //default to primary, and switch based on last click
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -148,10 +149,10 @@ CodeEditor.create = function() {
 		var parameterStartFile = [
 								  //"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
 								  //"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface.h",
-								  "/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface_interface.cc",
+								  //"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface_interface.cc",
 								  //"/CMakeLists.txt", 
 								  //"/CMakeLists.txt",
-								  //DesktopContent.getParameter(0,"startFilePrimary"),
+								  DesktopContent.getParameter(0,"startFilePrimary"),
 								  DesktopContent.getParameter(0,"startFileSecondary")
 		   ];
 		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
@@ -222,6 +223,8 @@ CodeEditor.create = function() {
 			else //show base directory nav
 				CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
 			
+
+			_activePaneIsPrimary = 1; //default active pane to primary
 		    
 				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 					
@@ -258,103 +261,98 @@ CodeEditor.create = function() {
 		//clear all elements
 		cel.innerHTML = "";
 		
-		
 		{ //content div		
-				
+
 			//================
-			//primaryPane div
-			el = document.createElement("div");	
-			el.setAttribute("class","editorPane");	
+			//primaryPane and secondaryPane div
+			var forPrimary = 1;
+			for(var forPrimary=0;forPrimary<2;++forPrimary)
 			{
-				function localCreatePaneControls(forPrimary)
+				el = document.createElement("div");	
+				el.setAttribute("class","editorPane");	
+				el.setAttribute("id","editorPane" + forPrimary);
 				{
-					//add folder, and save buttons
-					//add directory nav and editor divs
-	
-					str = "";
-					
-					//local pane controls
+					var str = "";
+					str += createTextEditor(forPrimary);
+					str += createDirectoryNav(forPrimary);
+					str += localCreatePaneControls(forPrimary);				
+					el.innerHTML = str;
+				} //end fill editor pane			
+				cel.appendChild(el);
+			}			
+
+			//================
+			function localCreatePaneControls(forPrimary)
+			{
+				//add folder, and save buttons
+				//add directory nav and editor divs
+
+				str = "";
+
+				//local pane controls
+				str += htmlOpen("div",
+						{
+								"class":"controlsPane",
+						},"" /*innerHTML*/, 0 /*doCloseTag*/);
+				{
+					//folder
 					str += htmlOpen("div",
 							{
-									"class":"controlsPane",
+									"id":"directoryNavToggle",
+									"class":"controlsButton",
+									"style":"float:left",
+									"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
+									"title": "Open a file... (Ctrl + D)",
 							},"" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
-						//folder
 						str += htmlOpen("div",
 								{
-										"id":"directoryNavToggle",
-										"class":"controlsButton",
-										"style":"float:left",
-										"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
-										"title": "Open a file...",
-								},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							str += htmlOpen("div",
-									{
-											"id":"directoryNavToggleTop",
+										"id":"directoryNavToggleTop",
 
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-							str += htmlOpen("div",
-									{
-											"id":"directoryNavToggleBottom",
-
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						} //end directoryNavToggle
-						str += "</div>"; //close directoryNavToggle
-		
-						//save
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
 						str += htmlOpen("div",
 								{
-										"id":"saveFile",
-										"class":"controlsButton",
-										"style":"float:left;",
-										"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
-										"title": "Save the file.",
-								},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							str += htmlOpen("div",
-									{
-											"id":"saveFileMain",
+										"id":"directoryNavToggleBottom",
 
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-							str += htmlOpen("div",
-									{
-											"id":"saveFileMainTop",
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+					} //end directoryNavToggle
+					str += "</div>"; //close directoryNavToggle
 
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-							str += htmlOpen("div",
-									{
-											"id":"saveFileMainBottom",
+					//save
+					str += htmlOpen("div",
+							{
+									"id":"saveFile",
+									"class":"controlsButton",
+									"style":"float:left;",
+									"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
+									"title": "Save the file (Ctrl + S)",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+						str += htmlOpen("div",
+								{
+										"id":"saveFileMain",
 
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						} //end directoryNavToggle
-						str += "</div>"; //close saveFile
-						
-					} //end locals controlsPane
-					str += "</div>"; //close controlsPane
-					return str;
-				} //end localCreatePaneControls
-				
-				var str = "";
-				str += createTextEditor(1 /*forPrimary*/);
-				str += createDirectoryNav(1 /*forPrimary*/);
-				str += localCreatePaneControls(1 /*forPrimary*/);				
-				el.innerHTML = str;
-			}				
-			cel.appendChild(el);
-			
-			//================
-			//secondaryPane div
-			el = document.createElement("div");
-			el.setAttribute("class","editorPane");	
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+						str += htmlOpen("div",
+								{
+										"id":"saveFileMainTop",
 
-			var str = "";
-			str += createTextEditor(0 /*forPrimary*/);
-			str += createDirectoryNav(0 /*forPrimary*/);
-			str += localCreatePaneControls(0 /*forPrimary*/);	
-			el.innerHTML = str;
-			cel.appendChild(el);
-			
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+						str += htmlOpen("div",
+								{
+										"id":"saveFileMainBottom",
+
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+					} //end directoryNavToggle
+					str += "</div>"; //close saveFile
+
+				} //end locals controlsPane
+				str += "</div>"; //close controlsPane
+				return str;
+			} //end localCreatePaneControls
+
+
+
 			//================
 			//controlsPane div
 			el = document.createElement("div");
@@ -363,17 +361,18 @@ CodeEditor.create = function() {
 				//add view toggle, incremental compile, and clean compile buttons
 
 				str = "";
-				
+
 				//view toggle
 				str += htmlOpen("div",
 						{
-						"id":"viewToggle",
-						"class":"controlsButton",
-						"style":"float:right",
-						"onclick":"CodeEditor.editor.toggleView();",
+								"id":"viewToggle",
+								"class":"controlsButton",
+								"style":"float:right",
+								"onclick":"CodeEditor.editor.toggleView();",
+								"title":"Toggle Verical/Horizontal Split-view",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
-					
+
 					str += htmlOpen("div",
 							{
 									"id":"viewToggleRight",
@@ -391,7 +390,7 @@ CodeEditor.create = function() {
 							},"" /*innerHTML*/, 1 /*doCloseTag*/);
 				}
 				str += "</div>"; //close viewToggle
-				
+
 				//incremental compile
 				str += htmlOpen("div",
 						{
@@ -399,6 +398,7 @@ CodeEditor.create = function() {
 								"class":"controlsButton",
 								"style":"float:right",
 								"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
+								"title":"Incremental Build... (Ctrl + B)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -408,7 +408,7 @@ CodeEditor.create = function() {
 							},"b" /*innerHTML*/, 1 /*doCloseTag*/);
 				}
 				str += "</div>"; //close incrementalBuild
-				
+
 				//clean compile
 				str += htmlOpen("div",
 						{
@@ -416,6 +416,7 @@ CodeEditor.create = function() {
 								"class":"controlsButton",
 								"style":"float:right",
 								"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
+								"title":"Clean Build... (Ctrl + C)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -425,11 +426,11 @@ CodeEditor.create = function() {
 							},"z" /*innerHTML*/, 1 /*doCloseTag*/);
 				}
 				str += "</div>"; //close cleanBuild
-				
+
 				el.innerHTML = str;	
 			}
 			cel.appendChild(el);
-			
+
 		} //end content div					
 		
 		document.body.appendChild(cel);
@@ -437,13 +438,16 @@ CodeEditor.create = function() {
 		
 		/////////////
 		//add event listeners
+		var box;
 		for(var i=0;i<2;++i)
 		{
-			var box = document.getElementById("editableBox" + i);
+			box = document.getElementById("editableBox" + i);
 			box.addEventListener("input",
 					function(e)
 					{
 				var forPrimary = this.id[this.id.length-1]|0;
+				forPrimary = forPrimary?1:0;
+				
 				Debug.log("input forPrimary=" + forPrimary);
 
 				_fileWasModified[forPrimary] = true;
@@ -461,11 +465,37 @@ CodeEditor.create = function() {
 			box.addEventListener("keydown",
 							function(e)
 							{
-				var forPrimary = this.id[this.id.length-1]|0;
+				var forPrimary = this.id[this.id.length-1]|0;				
+				Debug.log("keydown handler for editableBox" + forPrimary);
 				CodeEditor.editor.keyDownHandler(e,forPrimary);
+				e.stopPropagation();
 							}); //end addEventListener
+			
+
+			//add click handler to track active pane
+			box = document.getElementById("editorPane" + i);
+			box.addEventListener("click",
+							function(e)
+							{
+				var forPrimary = this.id[this.id.length-1]|0;
+				forPrimary = forPrimary?1:0;
+				
+				Debug.log("click handler for pane" + forPrimary);
+				_activePaneIsPrimary = forPrimary;
+							}); //end addEventListener
+			
+			
+			
 		} //end handler creation
-		
+		box = document.body;
+		box.addEventListener("keydown",
+				function(e)
+				{
+			var forPrimary = _activePaneIsPrimary; //take last active pane
+			Debug.log("keydown handler for body" + forPrimary);
+			CodeEditor.editor.keyDownHandler(e,forPrimary,true /*shortcutsOnly*/);
+			//e.stopPropagation();
+				}); //end addEventListener
 		
 	} //end createElements()
 
@@ -496,7 +526,8 @@ CodeEditor.create = function() {
 				{
 						"class":"textEditorHeader",
 						"id":"textEditorHeader" + forPrimary,
-				},"<div>File</div><div>Save Date</div>" /*innerHTML*/, true /*doCloseTag*/);
+				},0 /*"<div>File</div><div>Save Date</div>"*/ /*innerHTML*/, 
+				true /*doCloseTag*/);
 
 		str += htmlOpen("div",
 				{
@@ -660,6 +691,7 @@ CodeEditor.create = function() {
 	this.toggleDirectoryNav = function(forPrimary, v)
 	{
 		forPrimary = forPrimary?1:0;	
+		_activePaneIsPrimary = forPrimary;
 		
 		Debug.log("toggleDirectoryNav forPrimary=" + forPrimary);
 
@@ -698,6 +730,13 @@ CodeEditor.create = function() {
 
 		Debug.log("saveFile _filePath=" + _filePath[forPrimary]);
 		Debug.log("saveFile _fileExtension=" + _fileExtension[forPrimary]);
+		
+		if(_filePath[forPrimary] == "")
+		{
+			Debug.log("Error, can not save to empty file name!",
+					Debug.HIGH_PRIORITY);
+			return;
+		}
 		
 		if(!quiet)
 		{
@@ -1855,7 +1894,7 @@ CodeEditor.create = function() {
 			//str = str.replace(/\s+/g,''); //remove all whitespace
 			//console.log(str);
 
-			console.log("consider ", str);
+			//console.log("consider ", str);
 			
 			newLinei = 0;
 			localNewLineCount = 0; //count new lines in substr
@@ -1918,9 +1957,8 @@ CodeEditor.create = function() {
 		if(!isCsource)
 		{
 			//generate simple outline for non C++ source
-			i = (newLineCount/2)|0;
-			i -= 10;
-			if(i > 10)
+			i = (newLineCount/2)|0;			
+			if(i > 40)
 			{
 				outline.push([i,"Middle"]);
 			}				
@@ -1937,7 +1975,7 @@ CodeEditor.create = function() {
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
-		str += "<option value='0'>Jump to a Line Number</option>"; //blank option
+		str += "<option value='0'>Jump to a Line Number (Ctrl + L)</option>"; //blank option
 		for(i=0;i<outline.length;++i)
 		{
 			str += "<option value='" + (outline[i][0]-2) + "'>";
@@ -1971,7 +2009,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//keyDownHandler ~~
 	var TABKEY = 9;	
-	this.keyDownHandler = function(e,forPrimary)
+	this.keyDownHandler = function(e,forPrimary,shortcutsOnly)
 	{
 		forPrimary = forPrimary?1:0;
 		
@@ -1979,10 +2017,10 @@ CodeEditor.create = function() {
 		if(e.keyCode == 16 /*shift*/)
 			return;
 		
-		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 
 		//to avoid DIVs, ENTER should trigger updateDecorations immediately
-		if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
+		if(!shortcutsOnly &&
+				e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 		{
 			_fileWasModified[forPrimary] = true;
 
@@ -1994,6 +2032,42 @@ CodeEditor.create = function() {
 			
 			return;
 		}
+		
+		//Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		
+				
+		if(e.ctrlKey) //handle shortcuts
+		{			
+			if(e.keyCode == 83) 		// S
+			{
+				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 68) 	// D
+			{
+				CodeEditor.editor.toggleDirectoryNav(forPrimary);
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 66) 	// B
+			{
+				CodeEditor.editor.build();
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 67) 	// C for clean build
+			{
+				CodeEditor.editor.build(true /*clean*/);
+				e.preventDefault();
+				return;
+			}
+		} //end shortcut cases		
+		if(shortcutsOnly)		
+			return; //if only doing short-cuts, dont handle text
+		
+		
+				
 
 		window.clearTimeout(_inputTimerHandle);
 		_inputTimerHandle = window.setTimeout(
@@ -2001,27 +2075,22 @@ CodeEditor.create = function() {
 				{
 			CodeEditor.editor.updateDecorations(forPrimary);				
 				}, 1000); //end setTimeout
-
+		
 
 		var rectangularTAB = false;
 		var blockCOMMENT = false;
 
-		if(e.ctrlKey && e.keyCode == 84) // T
-			rectangularTAB = true;
-		else if(!e.shiftKey && e.keyCode == 191) 	// / for block comment
+		if(!e.shiftKey && e.keyCode == 191) 	// / for block comment
 			blockCOMMENT = true;
 		else if(e.ctrlKey)
 		{			
-			e.preventDefault();
 
-			if(e.keyCode == 83) 		// S
-				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
-			else if(e.keyCode == 68) 	// D
-				CodeEditor.editor.toggleDirectoryNav(forPrimary);
-			else if(e.keyCode == 66) 	// B
-				CodeEditor.editor.build();
-			else if(e.keyCode == 67) 	// C for clean build
-				CodeEditor.editor.build(true /*clean*/);	
+			if(e.keyCode == 84) // T for rectangular TAB
+			{
+				rectangularTAB = true;
+				e.preventDefault();
+				//continue to tab handling below
+			}	
 			else if(e.keyCode == 76 ||	// L or
 					e.keyCode == 71) 	// G for go to line number
 			{
@@ -2044,10 +2113,14 @@ CodeEditor.create = function() {
 						/*dialogWidth*/ undefined,
 						/*cancelFunc*/ undefined,
 						/*yesButtonText*/ "Go");
+				
+				e.preventDefault();
+				return;
 			}
+			else
+				return;
+		} //end ctrl key editor handling
 
-			return;
-		}
 
 		if(e.keyCode == TABKEY || rectangularTAB ||
 				blockCOMMENT)
