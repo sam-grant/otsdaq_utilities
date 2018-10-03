@@ -55,17 +55,14 @@ private:
 	void editMacro					(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 	void clearHistory				(const std::string &username);
 	void exportMacro				(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void exportFEMacro				(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 	void runFEMacro					(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 
 
 	std::string generateHexArray	(const std::string& sourceHexString,int &numOfBytes);
+	void createCode					(std::ostream& out, const std::vector<std::string>& commands, const std::string& tabOffset = "");
 
-    //AllSupervisorInfo 						allSupervisorInfo_;
-    //RemoteWebUsers							theRemoteWebUsers_;
-    //FESupervisor*			 				theFESupervisor_;
-	//ConfigurationManager*   				theConfigurationManager_;
-
-	SupervisorInfoMap						allFESupervisorInfo_;
+	SupervisorInfoMap				allFESupervisorInfo_;
 
 };
 

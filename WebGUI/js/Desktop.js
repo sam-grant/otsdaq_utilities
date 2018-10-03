@@ -159,6 +159,7 @@ Desktop.createDesktop = function(security) {
 	var _sysMsgCounter = 0;
 	var _SYS_MSG_MAX_COUNT = 10; //number of check mailbox timers to count through before checking for system messages
 	
+	var _firstCheckOfMailboxes = true;
 	
 	//------------------------------------------------------------------
 	//create public members variables ----------------------
@@ -248,6 +249,15 @@ Desktop.createDesktop = function(security) {
 	{		
 		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
 		
+		if(_firstCheckOfMailboxes)
+		{
+			Debug.log("First check of mailboxes!");
+
+			Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+			_firstCheckOfMailboxes = false;
+			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
+			
+		}
 		
 		//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
 		if(_blockSystemCheckMailbox.innerHTML == "1")
@@ -309,6 +319,7 @@ Desktop.createDesktop = function(security) {
 	    	if(requestingWindowId != "" && windowPath != "")
 	    	{
 	    		//have work to do!
+	    		// Note: similar to L1000 in actOnParameterAction() 
 	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 		    	Debug.log("requestingWindowId=" + requestingWindowId);
 		    	Debug.log("windowPath=" + windowPath);
@@ -316,12 +327,64 @@ Desktop.createDesktop = function(security) {
 		    	Debug.log("windowSubname=" + windowSubname);
 		    	Debug.log("windowUnique=" + windowUnique);
 
-		    	var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-		    			windowName, 
-						windowSubname,
-						windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
-						eval(windowUnique));			
+		    	var newWin;
+		    	
+		    	//if only windowName is defined, then attempt to open the icon on the 
+		    	//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+		    	if(windowSubname == "undefined" &&
+		    			windowUnique == "undefined") //the string undefined is what comes through
+		    	{
+		    		Debug.log("Opening desktop window... " + windowName);
+
+		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
+		    				Desktop.desktop.icons.iconNameToPathMap);
+
+		    		if(pathUniquePair ===
+		    				undefined)
+		    		{
+		    			Debug.log("An error occurred opening the window named '" + 
+		    					windowName + "' - it was not found in the Desktop icons. " +
+								"Do you have permissions to access this window? Notify admins if the problem persists.",
+								Debug.HIGH_PRIORITY);
 		    			
+		    			//respond done
+						var str = "requestingWindowId=" + requestingWindowId;
+						str += "&done=1";	
+						_openWindowMailbox.innerHTML = str; //indicate done
+						
+		    			return;
+		    		}
+
+					var pathStr = pathUniquePair[0];
+					
+					if(windowPath != "undefined") //add parameters if defined
+					{
+						Debug.log("Adding parameter path " + windowPath);
+						if(pathStr.indexOf('&') > 0) //then assume already parameters
+							pathStr += "&";
+						else if(pathStr.length && 
+								pathStr[pathStr.lengh-1] != '?') //then assume need ?
+							pathStr += '?';
+						windowPath = pathStr + windowPath;
+					}
+					else
+						windowPath = pathStr;
+					
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							"",
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(pathUniquePair[1]));	
+		    	}
+		    	else
+		    	{
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							windowSubname,
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(windowUnique));			
+		    	}
 
 		    	//delay the setting of the fore window
 				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
@@ -874,7 +937,8 @@ Desktop.createDesktop = function(security) {
 			Desktop.desktop.login.setupLogin();
 			
 			window.clearInterval(Desktop.desktop.checkMailboxTimer);
-			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,
+					_MAILBOX_TIMER_PERIOD);
 		}
 		//{
 			//re-start timer for checking foreground window changes due to iFrame content code
@@ -984,14 +1048,75 @@ Desktop.createDesktop = function(security) {
 			windowSubname = windowSubname.replace(/%20/g, " ");
 			Debug.log("windowSubname=" + windowSubname);
 			Debug.log("windowUnique=" + windowUnique);
+			
+			var newWin;
+			
+			//if only windowName is defined, then attempt to open the icon on the 
+			//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+			if(windowSubname == "undefined" &&
+					windowUnique == "undefined") //the string undefined is what comes through
+			{
+				Debug.log("Opening desktop window... " + windowName);
+				
+				
+				var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+				console.log("Desktop.desktop.icons.iconNameToPathMap",
+						Desktop.desktop.icons.iconNameToPathMap);
+				
+				if(pathUniquePair ===
+						undefined)
+				{
 
-			var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-					windowName, 
-					windowSubname,
-					windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
-					((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
-					((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
-					eval(windowUnique));			
+					if(_firstCheckOfMailboxes)
+					{
+						Debug.log("Perhaps icons have not been setup yet, try again at mailbox check.");
+						return;
+					}
+					
+					Debug.log("An error occurred opening the window named '" + 
+							windowName + "' - it was not found in the Desktop icons. " +
+							"Do you have permissions to access this window? Notify admins if the problem persists.",
+							Debug.HIGH_PRIORITY);
+
+	    			//respond done
+					//clear mailbox string since no window is listening for done when a new desktop begins			
+					_openWindowMailbox.innerHTML = "";//str; //indicate done
+					return;
+				}				
+				var pathStr = pathUniquePair[0];
+				
+				if(windowPath != "undefined") //add parameters if defined
+				{
+					Debug.log("Adding parameter path " + windowPath);
+					if(pathStr.indexOf('&') > 0) //then assume already parameters
+						pathStr += "&amp;";
+					else if(pathStr.length && 
+							pathStr[pathStr.lengh-1] != '?') //then assume need ?
+						pathStr += '?';
+					windowPath = pathStr + windowPath;
+				}
+				else
+					windowPath = pathStr;
+				
+				newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+						windowName, 
+						"",
+						windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
+						((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
+						((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
+						eval(pathUniquePair[1]));
+			} //end handling of opening desktop window
+			else
+			{
+				_firstCheckOfMailboxes = false; //no need to check at mailbox check time, we are good to go already!
+				newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+						windowName, 
+						windowSubname,
+						windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
+						((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
+						((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
+						eval(windowUnique));
+			}
 
 			//set to fore window and full screen
 			 
@@ -1007,7 +1132,7 @@ Desktop.createDesktop = function(security) {
 			//clear mailbox string since no window is listening for done when a new desktop begins			
 			_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
-	}
+	} //end actOnParameterAction()
 	
 	//------------------------------------------------------------------
 	//handle class construction ----------------------
@@ -1108,11 +1233,11 @@ Desktop.createDesktop = function(security) {
 	if(_login.loginDiv)
 		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
-	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
-	
+	Debug.log("Desktop Created",Debug.LOW_PRIORITY);	
+
 	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
-	this.actOnParameterAction();    
-}
+	Desktop.desktop.actOnParameterAction();  //first time, _firstCheckOfMailboxes is true (then it will try again in checkMailboxes)   
+} //end Desktop constructor
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////

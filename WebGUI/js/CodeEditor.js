@@ -265,8 +265,8 @@ CodeEditor.create = function() {
 
 			//================
 			//primaryPane and secondaryPane div
-			var forPrimary = 1;
-			for(var forPrimary=0;forPrimary<2;++forPrimary)
+			var forPrimary;
+			for(forPrimary=1;forPrimary >= 0;--forPrimary)
 			{
 				el = document.createElement("div");	
 				el.setAttribute("class","editorPane");	
@@ -838,7 +838,11 @@ CodeEditor.create = function() {
 					return;
 				}
 	
-				Debug.log("Build was launched! Check console for result!", Debug.INFO_PRIORITY);
+				Debug.log("Build was launched! Check " +
+						"<a onclick='DesktopContent.openNewBrowserTab(" +
+						"\"Console\");' " +
+						"title='Click to open the Console web app in a new browser tab.'>" +
+						"console</a> for result!", Debug.INFO_PRIORITY);
 	
 					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
@@ -1209,6 +1213,9 @@ CodeEditor.create = function() {
 				"default" 				: _DECORATION_RED,
 				"try" 					: _DECORATION_RED,
 				"catch"					: _DECORATION_RED,
+				"this"					: _DECORATION_RED,
+				"true"					: _DECORATION_RED,
+				"false"					: _DECORATION_RED,
 				
 				"std::" 				: _DECORATION_BLACK,
 				
@@ -1222,6 +1229,38 @@ CodeEditor.create = function() {
 				"runtime_error"			: _DECORATION_GREEN,
 				"memcpy"				: _DECORATION_GREEN,
 				"cout"					: _DECORATION_GREEN,						
+			},
+			"js": {
+				"this" 					: _DECORATION_RED,
+				"var" 					: _DECORATION_RED,
+				"return" 				: _DECORATION_RED,
+				"function"				: _DECORATION_RED,
+				"if" 					: _DECORATION_RED,
+				"else" 					: _DECORATION_RED,
+				"for" 					: _DECORATION_RED,
+				"while" 				: _DECORATION_RED,
+				"do"	 				: _DECORATION_RED,
+				"switch" 				: _DECORATION_RED,
+				"case" 					: _DECORATION_RED,
+				"default" 				: _DECORATION_RED,
+				"try" 					: _DECORATION_RED,
+				"catch"					: _DECORATION_RED,
+				"new" 					: _DECORATION_RED,
+				"instanceof" 			: _DECORATION_RED,
+				"true"					: _DECORATION_RED,
+				"false"					: _DECORATION_RED,
+
+				"Debug"					: _DECORATION_GREEN,
+				"DesktopContent"		: _DECORATION_GREEN,
+				"HIGH_PRIORITY"			: _DECORATION_GREEN,
+				"WARN_PRIORITY"			: _DECORATION_GREEN,
+				"INFO_PRIORITY"			: _DECORATION_GREEN,
+				"LOW_PRIORITY"			: _DECORATION_GREEN,
+				
+				"window"				: _DECORATION_GREEN,
+				"document"				: _DECORATION_GREEN,
+				"textContent"			: _DECORATION_GREEN,
+				"innerHTML"				: _DECORATION_GREEN,				
 			},
 			"sh" : {
 				"if" 					: _DECORATION_RED,
@@ -1344,6 +1383,9 @@ CodeEditor.create = function() {
 			commentString = "//"; //comment string
 		
 		var fileDecorType = "txt";
+		if(	_fileExtension[forPrimary] == 'html' ||
+				_fileExtension[forPrimary] == 'js')
+			fileDecorType = "js"; //js style
 		if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||

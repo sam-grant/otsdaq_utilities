@@ -1373,9 +1373,23 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	//get parameters
 	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
 	
+
+	var tryAgainCount = 0;
+
+	
 	if(paramsStr != "") //then wait
 	{
 		Debug.log("Window creation is busy, trying again soon!");
+		
+		++tryAgainCount;
+
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+
 		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
 		return;
 	}
@@ -1389,9 +1403,20 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	DesktopContent._openWindowMailbox.innerHTML = str;
 
 	Debug.log("Waiting for complete...");
-
+	
+	tryAgainCount = 0;
 	var timeoutHandler = function() { 
 		Debug.log("Checking for complete...");
+		
+		++tryAgainCount;
+		
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+		
 		//extract params from DesktopContent._openWindowMailbox
 		//get parameters
 		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
@@ -1432,31 +1457,44 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	setTimeout(timeoutHandler,
 			100); //end setTimeout
 
-}
+} // end openNewWindow
 
 //=====================================================================================
 //openNewBrowserTab ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
+//	
+// Note: to open a window just using the Desktop icon name, leave subname and unique undefined
+//	window path can optionially be used to send the window additional parameters, or left undefined.
 DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {	
 	
-	//for windowPath, need to check lid=## is terminated with /
-	// check from = that there is nothing but numbers
+	if(windowPath !== undefined)
 	{
-		var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
-		var isAllNumbers = true;
-		for(i;i<windowPath.length;++i)
+		//for windowPath, need to check lid=## is terminated with /
+		// check from = that there is nothing but numbers	
+		try
 		{
-			Debug.log(windowPath[i]);
-
-			if(windowPath[i] < "0" || windowPath[i] > "9")
+			var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+			var isAllNumbers = true;
+			for(i;i<windowPath.length;++i)
 			{
-				isAllNumbers = false;
-				break;
-			}				
+				//Debug.log(windowPath[i]);
+	
+				if(windowPath[i] < "0" || windowPath[i] > "9")
+				{
+					isAllNumbers = false;
+					break;
+				}				
+			}
+			if(isAllNumbers)
+				windowPath += "/";		
 		}
-		if(isAllNumbers)
-			windowPath += "/";		
+		catch(e)
+		{
+			Debug.log("An error occurred while trying to open the window. " +
+					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+			return;
+		}
 	}
 	Debug.log("DesktopWindow= " + windowPath);
 
@@ -1495,12 +1533,21 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-		url += search + "&" + str;
+	{
+		//remove, possibly recursive, former new windows through url
+		var i = search.indexOf("requestingWindowId");		
+		if(i >= 0)
+			search = search.substr(0,i);
+		//only add & if there are other parameters
+		if(search.length && search[search.length-1] != '?')
+			search += '&';
+		url += search + str;
+	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	
 	window.open(url,'_blank');	
-}
+} // end openNewBrowserTab()
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window

@@ -58,6 +58,8 @@
 		//setFieldToVariable
 		//dealWithVariables
 
+		//exportFEMacro(macroName,macroSequence)
+
 	var ADMIN_PERMISSION_THRESHOLD = 255;
     var userPermission = 10;
 	var CMDHISTDIVINDEX = 0;
@@ -1204,8 +1206,7 @@
 				CMDHISTDIVINDEX++;
 			}
 			else if(commandType=='r')
-			{
-				if (Number(convertedData)===0) convertedData = "<span class='red'>Time out Error</span>";
+			{				
 				out = "<div " + innerClass + " id = \"" + CMDHISTDIVINDEX + "\" title=\"" + "Entered: " 
 						+ arr.Time + "\nSelected interface: " + arr.Interfaces + "\" onclick=\"histCmdReadDivOnclick(" 
 						+ "'" + convertedAddress + "','" + addressFormat + "'" + ")\">Read [" + dataFormat + "]<b>" 
@@ -1399,10 +1400,117 @@
     		break;
     	case "Export":
     		DesktopContent.XMLHttpRequest("Request?RequestType=exportMacro&MacroName="
-    							+macroName+"&MacroSequence="+macroSequence,"",exportMacroHandler);
+    				+macroName,
+					MacroSequence="+macroSequence", //post data
+					exportMacroHandler);
     		break;
+    	case "FEExport":
+    		Debug.log("FE Macro Export...");
+    		exportFEMacro(macroName,macroSequence);
+    		break;
+    	default:
+    		Debug.log("Impossible!? macroAction=" + macroAction);
     	}
     }
+    
+    function exportFEMacro(macroName,macroSequence)
+    {
+    	Debug.log("exportFEMacro()");
+    	
+    	var targetFEPluginName = "";
+    	var targetCnt = 0;
+    	try
+    	{
+    		for (var i = 0; i < selected.length; i++) 
+    			if(selected[i] !== 0)
+    			{
+    				if(targetCnt == 0) 
+    				{
+    					targetFEPluginName = FEELEMENTS[i].getAttribute("value").split(":")[0];
+    				}
+
+    				++targetCnt;
+    			}
+    	}
+    	catch(e)
+    	{
+    		Debug.log("Error occured during FE Macro export: " + e, Debug.HIGH_PRIORITY);
+    		return;
+    	}
+    	if(targetCnt != 1)
+    	{
+    		Debug.log("Error! To export the Macro to a FE plugin, please select " +
+    				"a single FE target from FE list. There are currently " + 
+					targetCnt + " selected.", Debug.HIGH_PRIORITY);
+    		return;
+    	}
+    	
+    	//if here, then have plugin name
+    	Debug.log("Exporting to plugin " + targetFEPluginName);
+    	console.log("macroName",macroName);
+    	console.log("macroSequence",macroSequence);
+    	
+
+    	DesktopContent.XMLHttpRequest("Request?RequestType=exportFEMacro" + 
+    			"&MacroName=" + macroName +
+				"&PluginName=" + targetFEPluginName,
+				"MacroSequence=" + macroSequence,//post data
+				function(req)
+				{
+    		var err = DesktopContent.getXMLValue(req,"Error");
+    		if(err)
+    		{
+    			Debug.log("Error! Something went wrong with your FE Macro export: " +
+    					err,Debug.HIGH_PRIORITY);
+    			return;
+    		}
+    		
+    		var headerFile = DesktopContent.getXMLValue(req,"headerFile");
+    		var sourceFile = DesktopContent.getXMLValue(req,"sourceFile");
+    		if(headerFile && sourceFile)
+    		{
+    			Debug.log("Your FE Macro was succesfully exported to the front-end plugin " +
+    					"source code files...\n" + 
+						"(Click " +
+						"<a onclick='DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						headerFile + "&startFileSecondary=" +
+						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
+						"title='Click to open a new browser tab with both source files in the Code Editor'>" +
+						"here</a> to open them in the Code Editor)" +
+						"\n\n" + 
+												
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".h\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						headerFile + "\",0 /*unique*/);' " +
+						"title='Click to open this header file in the Code Editor'>" +
+						headerFile + "</a>\n\nand...\n\n" +  
+						
+						
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".cc\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						sourceFile + "\",0 /*unique*/);' " +
+						"title='Click to open this source file in the Code Editor'>" +
+						sourceFile + "</a>\n\n" +
+												
+						"Click the links above to open the source code files in the Code Editor.\n\n" +
+						
+						
+						"If you would like to run your new FE Macro, try doing so here:" + 
+						"FE Macro Test",
+						Debug.INFO_PRIORITY);
+    		}
+    		else    			
+    			Debug.log("Error! Something went wrong with your FE Macro export." +
+    					" Please check the logs to understand the error.",
+						Debug.HIGH_PRIORITY);
+
+				}); //end export FE Macro request handling
+
+    } //end exportFEMacro()
     
     function exportMacroHandler(req)
    	{
