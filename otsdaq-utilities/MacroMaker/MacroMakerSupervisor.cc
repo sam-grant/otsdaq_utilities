@@ -829,7 +829,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 				"__CFG_COUT__ << \"# of output args = \" << argsOut.size() << __E__; \n\t" +
 				"for(auto &argIn:argsIn) \n\t\t" +
 				"__CFG_COUT__ << argIn.first << \": \" << argIn.second << __E__; \n\n\t" +
-				"//macro commands section \n\n\t" +
+				"//macro commands section \n" +
 				codess.str() +
 				"\n\n\t" +
 				"for(auto &argOut:argsOut) \n\t\t" +
@@ -899,11 +899,15 @@ void MacroMakerSupervisor::createCode(std::ostream& out,
 	int numOfHexBytes;
 	std::string hexInitStr;
 
-	out << tabOffset << "{\n";
+	out << tabOffset << "{";
 
-	out << "\n" << tabOffset << "\t" << "char *addrs = new char[universalAddressSize_];	//create address buffer of interface size";
-	out << "\n" << tabOffset << "\t" << "char *data = new char[universalDataSize_];		//create data buffer of interface size";
+	out << "\n" << tabOffset << "\t" << "char *address \t= new char[universalAddressSize_]{0};	//create address buffer of interface size and init to all 0";
+	out << "\n" << tabOffset << "\t" << "char *data \t\t= new char[universalDataSize_]{0};		//create data buffer of interface size and init to all 0";
 
+	out << "\n" << tabOffset << "\t" << "uint64_t macroAddress;		//create macro address buffer (size 8 bytes)";
+	out << "\n" << tabOffset << "\t" << "uint64_t macroData;			//create macro address buffer (size 8 bytes)";
+
+	//loop through each macro command
 	for(unsigned int i = 0; i < commands.size(); i++)
 	{
 		std::stringstream sst(commands[i]);
@@ -915,14 +919,8 @@ void MacroMakerSupervisor::createCode(std::ostream& out,
 
 		//make this:
 		//			{
-		//				char addrs[universalAddressSize_];	//create address buffer of interface size
-		//				char macroAddrs[8] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09}; //create macro address buffer
-		//				for(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill
-		//					addrs[i] = (i < 8)?macroAddrs[i]:0;
-		//				char data[universalDataSize_];		//create data buffer of interface size
-		//				char macroData[8] = {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x09}; //create macro data buffer
-		//				for(unsigned int i=0;i<universalDataSize_;++i) //fill with macro data and 0 fill
-		//					data[i] = (i < 8)?macroData[i]:0;
+		//				uint64_t addrs = 0x1001;	//create address buffer
+		//				uint64_t data = 0x100203; 	//create data buffer
 		//
 		//				universalWrite(addrs,data);
 		//			}
@@ -952,60 +950,56 @@ void MacroMakerSupervisor::createCode(std::ostream& out,
 			continue;
 		}
 
-		hexInitStr = generateHexArray(oneCommand[2],numOfHexBytes);
+		//interpret address
+		hexInitStr = generateHexArray(oneCommand[2],numOfHexBytes); //interpret address
 
-		out << tabOffset << "\t{";
-		if(numOfHexBytes == -1) //handle as variable
+		//create address
+		if(numOfHexBytes == -1) //handle address as variable
 		{
-			out << "\n" << tabOffset << "\t\tuint64_t macroAddrs = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
-					"\n" << tabOffset << "\t\t\t\"" <<
+			out << tabOffset << "\t" <<
+					"macroAddress = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
+					"\n" << tabOffset << "\t\t\"" <<
 					oneCommand[2] << "\").getValue<uint64_t>();";
-			out << "\t//create macro address buffer";
-			out << "\n" << tabOffset << "\t\tfor(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill";
-			out << "\n" << tabOffset << "\t\t\t\taddrs[i] = (i < 8)?((char *)(&macroAddrs))[i]:0;";
+			out << "\t//get macro address from configuration tree";
+			out << "\n" << tabOffset << "\tmemcpy(address,&macroAddress,8); //copy macro address to buffer";
 		}
-		else	//handle as literal
+		else	//handle address as literal
 		{
-			out << "\n" << tabOffset << "\t\tchar macroAddrs" <<
-					hexInitStr <<
-					"\t//create macro address buffer";
-			out << "\n" << tabOffset << "\t\tfor(unsigned int i=0;i<universalAddressSize_;++i) //fill with macro address and 0 fill";
-			out << "\n" << tabOffset << "\t\t\t\taddrs[i] = (i < " << numOfHexBytes <<
-					")?macroAddrs[i]:0;";
+			out << tabOffset << "\t" <<
+					"macroAddress = 0x" << oneCommand[2] << "; memcpy(address,&macroAddress,8);" <<
+					"\t//copy macro address to buffer";
 		}
-		out << "\n";
 
 		if (oneCommand[1] == "w") //if write, handle data too
 		{
 
-			hexInitStr = generateHexArray(oneCommand[3],numOfHexBytes);
+			//interpret data
+			hexInitStr = generateHexArray(oneCommand[3],numOfHexBytes); //interpret data
 
-			if(numOfHexBytes == -1) //handle as variable
+			if(numOfHexBytes == -1) //handle data as variable
 			{
-				out << "\n" << tabOffset << "\t\tuint64_t macroData = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
-						"\n" << tabOffset << "\t\t\t\"" <<
+				out << "\n" << tabOffset << "\t" <<
+						"macroData = theXDAQContextConfigTree_.getNode(theConfigurationPath_).getNode(" <<
+						"\n" << tabOffset << "\t\t\"" <<
 						oneCommand[3] << "\").getValue<uint64_t>();";
-				out << "\t//create macro data buffer";
-				out << "\n" << tabOffset << "\t\tfor(unsigned int i=0;i<universalDataSize_;++i) //fill with macro address and 0 fill";
-				out << "\n" << tabOffset << "\t\t\t\tdata[i] = (i < 8)?((char *)(&macroData))[i]:0;";
+				out << "\t//get macro data from configuration tree";
+				out << "\n" << tabOffset << "\tmemcpy(data,&macroData,8); //copy macro data to buffer";
 			}
-			else //handle as literal
+			else //handle data as literal
 			{
-				out << "\n" << tabOffset << "\t\tchar macroData" <<
-						hexInitStr <<
-						"\t//create macro data buffer";
-				out << "\n" << tabOffset << "\t\tfor(unsigned int i=0;i<universalDataSize_;++i) //fill with macro address and 0 fill";
-				out << "\n" << tabOffset << "\t\t\t\tdata[i] = (i < " << numOfHexBytes <<
-						")?macroData[i]:0;";
+				out << "\n" << tabOffset << "\t" <<
+						"macroData = 0x" << oneCommand[3] << "; memcpy(data,&macroData,8);" <<
+						"\t//copy macro data to buffer";
 			}
-			out << "\n" << tabOffset << "\t\tuniversalWrite((char *)addrs,(char *)data);";
+			out << "\n" << tabOffset << "\t" <<
+					"universalWrite(address,data);";
 		}
 		else
-			out << "\n" << tabOffset << "\t\tuniversalRead((char *)addrs,(char *)data);";
-		out << "\n" << tabOffset << "\t}";
+			out << "\n" << tabOffset << "\t" <<
+				"universalRead(address,data);";
 	}
 
-	out << "\n" << tabOffset << "\tdelete[] addrs; //free the memory";
+	out << "\n\n" << tabOffset << "\tdelete[] address; //free the memory";
 	out << "\n" << tabOffset << "\tdelete[] data; //free the memory";
 	out << "\n" << tabOffset << "}";
 } // end createCode()
