@@ -60,7 +60,8 @@ private:
 
 
 	std::string generateHexArray	(const std::string& sourceHexString,int &numOfBytes);
-	void createCode					(std::ostream& out, const std::vector<std::string>& commands, const std::string& tabOffset = "");
+	bool isArgumentVariable			(const std::string& argumentString);
+	void createCode					(std::ostream& out, const std::vector<std::string>& commands, const std::string& tabOffset = "", bool forFeMacro = false, std::set<std::string>* inArgNames = 0, std::set<std::string>* outArgNames = 0);
 
 	SupervisorInfoMap				allFESupervisorInfo_;
 
