@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-<title>Supervisor</title>
+<title>State Machine</title>
 
 
 <script>
@@ -478,7 +478,7 @@
                 else
                 {
                     //get parameters from req
-                    Debug.log("Physics initTransitionParameters" + req.responseText);
+                	//Debug.log("Physics initTransitionParameters" + req.responseText);
         
                     _transParamsHtmlStr += "<tr><td>" + _TRANSITION_PARAMETERS[_parameterInitCount] +
                             "</td><td><select onchange='handleTransitionParameterChange(" +
@@ -545,7 +545,7 @@
                 if(_parameterInitCount >= _TRANSITION_PARAMETERS.length)
                 {
                     _transParamsHtmlStr += "</table>";
-                    Debug.log("Physics _transParamsHtmlStr " + _transParamsHtmlStr);
+                    //Debug.log("Physics _transParamsHtmlStr " + _transParamsHtmlStr);
                     _parameterSetup.innerHTML += _transParamsHtmlStr; 
                     return; //done
                 }
@@ -820,7 +820,7 @@
 			    var cs = DesktopContent.getXMLValue(req,"current_state");
 			    var inTrans = DesktopContent.getXMLValue(req,"in_transition") == "1";
 			    
-			    Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
+			    //Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
 
 			    //find current state in stateNames array
                 for(var i=0;i<_stateNames.length;++i)
@@ -948,7 +948,7 @@
             //  handle response to launch of physics state change
             function physicsLaunchHandler(req) {
             	
-                Debug.log("Physics physicsLaunchHandler " + req.responseText);
+            	//Debug.log("Physics physicsLaunchHandler " + req.responseText);
                 
                 var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
                 if(!success) 
@@ -1386,7 +1386,7 @@
 				
 				if(_currState < 0) return; //do nothing if current state not defined
 				
-			    Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    //Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
 			    
 			    if(window.innerWidth == 0) 
 			    {
@@ -1540,7 +1540,7 @@
 	                
 	                
 	                var transitionParameterData = getTransitionParameterData(_transitionParameters[_currStateTransArr[_selectedTransition]]);
-	                Debug.log("transitionParameterData..." + transitionParameterData);
+	                //Debug.log("transitionParameterData..." + transitionParameterData);
 	                if(transitionParameterData != "")
 	                {
 						transitionParameterData = transitionParameterData.split('=');	                

@@ -574,7 +574,7 @@ SmartLaunch.create = function() {
 			
 			runStatusDiv.style.left = (rdivX + _MARGIN + (w - rdivX - _MARGIN*2 - rdivSz)/2) + "px";
 			runStatusDiv.style.top = (h/2 - 50) + "px";
-			runStatusDiv.style.width = (rdivSz/15*40) + "px";
+			runStatusDiv.style.width = (rdivSz + _MARGIN) + "px";
 			runStatusDiv.style.fontSize = rdivSz/15 + "px";
 		}
 		

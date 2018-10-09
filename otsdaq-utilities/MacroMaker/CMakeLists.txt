@@ -9,6 +9,8 @@ cet_make(LIBRARY_NAME MacroMaker
 		 FiniteStateMachine
 		 XmlUtilities
          $ENV{XERCES_C_LIB}/libxerces-c.so
+         
+         CodeEditor
 )
 
 install_headers()

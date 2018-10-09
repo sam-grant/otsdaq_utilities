@@ -67,7 +67,9 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
+//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], 
+//			textColor [optional], borderColor [optional], getUserInput [optional], 
+//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
@@ -1107,7 +1109,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc) {		
+		dialogWidth, cancelFunc, yesButtonText) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1172,11 +1174,15 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput'> "; 
+				"<input type='text' id='DesktopContent_popUpUserInput' " + 
+				"onclick='event.stopPropagation(); '" +
+				">"; 
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
-			"<input type='submit' value='Yes' " +
+			"<input type='submit' value='" + 
+			(yesButtonText?yesButtonText:"Yes") + 
+			"' " +
 			"onclick='event.stopPropagation();' " + 
 			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
@@ -1186,17 +1192,42 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
-	el.getElementsByTagName('input')[0].onmouseup = 
+	el.getElementsByTagName('input')[0 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
 	//onmouseup for "Cancel" button
-	el.getElementsByTagName('input')[1].onmouseup = 
+	el.getElementsByTagName('input')[1 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(cancelFunc);};
 
+	
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;
 	el.style.left = "-1000px"; //set off page so actual dimensions can be determined, and then div relocated
 	body.appendChild(el);
 
+
+	if(getUserInput) //place cursor
+	{
+		el.getElementsByTagName('input')[0].focus();
+		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		
+		//accept enter to close
+		el.getElementsByTagName('input')[0].onkeydown = 
+				function(event) 
+				{
+			if(event.keyCode == 13) // ENTER
+			{	
+				Debug.log("Accepting enter key");
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(func);
+			}
+			else if(event.keyCode == 27) // ESC
+			{	
+				Debug.log("Accepting escape key");
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(cancelFunc);				
+			}
+				}; //end keydown handler
+	}
 
 	//determine position
 	var w = el.offsetWidth; 
@@ -1231,14 +1262,18 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 //clearPopUpVerification ~~
 //	call func after clearing, if exists
 DesktopContent.clearPopUpVerification = function(func) {
+	
+	//get parameter value if exists
+	
+	var userEl = document.getElementById("DesktopContent_popUpUserInput");
+	var param = userEl?userEl.value:undefined;
+	
 	//remove pop up if already exist
 	if(DesktopContent._verifyPopUp) DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
 	DesktopContent._verifyPopUp = 0;
-	if(func) 
-	{
-		var userEl = document.getElementById("DesktopContent_popUpUserInput");
-		func(userEl?userEl.value:undefined); //return user input value if present
-	}
+	
+	if(func)	
+		func(param); //return user input value if present
 }
 
 //=====================================================================================
@@ -1338,9 +1373,23 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	//get parameters
 	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
 	
+
+	var tryAgainCount = 0;
+
+	
 	if(paramsStr != "") //then wait
 	{
 		Debug.log("Window creation is busy, trying again soon!");
+		
+		++tryAgainCount;
+
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+
 		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
 		return;
 	}
@@ -1354,9 +1403,20 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	DesktopContent._openWindowMailbox.innerHTML = str;
 
 	Debug.log("Waiting for complete...");
-
+	
+	tryAgainCount = 0;
 	var timeoutHandler = function() { 
 		Debug.log("Checking for complete...");
+		
+		++tryAgainCount;
+		
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+		
 		//extract params from DesktopContent._openWindowMailbox
 		//get parameters
 		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
@@ -1397,31 +1457,44 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	setTimeout(timeoutHandler,
 			100); //end setTimeout
 
-}
+} // end openNewWindow
 
 //=====================================================================================
 //openNewBrowserTab ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
+//	
+// Note: to open a window just using the Desktop icon name, leave subname and unique undefined
+//	window path can optionially be used to send the window additional parameters, or left undefined.
 DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {	
 	
-	//for windowPath, need to check lid=## is terminated with /
-	// check from = that there is nothing but numbers
+	if(windowPath !== undefined)
 	{
-		var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
-		var isAllNumbers = true;
-		for(i;i<windowPath.length;++i)
+		//for windowPath, need to check lid=## is terminated with /
+		// check from = that there is nothing but numbers	
+		try
 		{
-			Debug.log(windowPath[i]);
-
-			if(windowPath[i] < "0" || windowPath[i] > "9")
+			var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+			var isAllNumbers = true;
+			for(i;i<windowPath.length;++i)
 			{
-				isAllNumbers = false;
-				break;
-			}				
+				//Debug.log(windowPath[i]);
+	
+				if(windowPath[i] < "0" || windowPath[i] > "9")
+				{
+					isAllNumbers = false;
+					break;
+				}				
+			}
+			if(isAllNumbers)
+				windowPath += "/";		
 		}
-		if(isAllNumbers)
-			windowPath += "/";		
+		catch(e)
+		{
+			Debug.log("An error occurred while trying to open the window. " +
+					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+			return;
+		}
 	}
 	Debug.log("DesktopWindow= " + windowPath);
 
@@ -1460,12 +1533,21 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-		url += search + "&" + str;
+	{
+		//remove, possibly recursive, former new windows through url
+		var i = search.indexOf("requestingWindowId");		
+		if(i >= 0)
+			search = search.substr(0,i);
+		//only add & if there are other parameters
+		if(search.length && search[search.length-1] != '?')
+			search += '&';
+		url += search + str;
+	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	
 	window.open(url,'_blank');	
-}
+} // end openNewBrowserTab()
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window
