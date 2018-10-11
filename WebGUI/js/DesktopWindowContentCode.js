@@ -749,16 +749,17 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			{
 				returnHandler(req, reqParam, errStr);
 				
-				if(errStr=="" && DesktopContent._arrayOfFailedHandlers.length)
-				{
-					//since we had success, search through failed handler and remove if there
-					for(var i = 0; i<DesktopContent._arrayOfFailedHandlers.length; ++i)
-						if(DesktopContent._arrayOfFailedHandlers[i] == returnHandler) 
-						{
-							DesktopContent._arrayOfFailedHandlers.splice(i,1); //remove that handler
-							break;
-						}
-				}
+				//RAR commented out.. not sure if it is working as intended (weird desktop behavior is occurring during disconnects)
+				//				if(errStr=="" && DesktopContent._arrayOfFailedHandlers.length)
+				//				{
+				//					//since we had success, search through failed handler and remove if there
+				//					for(var i = 0; i<DesktopContent._arrayOfFailedHandlers.length; ++i)
+				//						if(DesktopContent._arrayOfFailedHandlers[i] == returnHandler) 
+				//						{
+				//							DesktopContent._arrayOfFailedHandlers.splice(i,1); //remove that handler
+				//							break;
+				//						}
+				//				}
 			}
 				
 		}

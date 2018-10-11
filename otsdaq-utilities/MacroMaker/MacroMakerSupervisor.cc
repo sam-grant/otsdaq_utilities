@@ -751,6 +751,10 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 	CodeEditor::readFile(sourceFile,contents);
 	//__SUP_COUTV__(contents);
 
+	//return file locations, for the user to inspect on error
+	xmldoc.addTextElementToData("sourceFile",sourceFile);
+	xmldoc.addTextElementToData("headerFile",headerFile);
+
 	//check for duplicate functions
 	if(contents.find(pluginName + "::" + macroName) !=
 			std::string::npos)
@@ -863,7 +867,6 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 		CodeEditor::writeFile(sourceFile,contents,insertPos,insert);
 	}
 
-	xmldoc.addTextElementToData("sourceFile",sourceFile);
 
 
 	////////////////////////////
@@ -893,7 +896,6 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 		CodeEditor::writeFile(headerFile,contents,insertPos,insert);
 	}
 
-	xmldoc.addTextElementToData("headerFile",headerFile);
 
 } //end exportFEMacro ()
 
