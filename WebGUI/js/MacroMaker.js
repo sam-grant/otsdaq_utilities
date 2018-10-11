@@ -1558,7 +1558,8 @@
 						"title='Click to open this source file in the Code Editor.'>" +
 						sourceFile + "</a>\n\n" +
 												
-						"Click the links above to open the source code files in the Code Editor.\n\n" +
+						"Click the links above to open the source code files in the Code Editor.\n\n"
+						//+
 						
 						
 						//FIXME -- fix FE Macro Test and then uncomment
