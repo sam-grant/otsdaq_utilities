@@ -746,7 +746,21 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
+			{
 				returnHandler(req, reqParam, errStr);
+				
+				if(errStr=="" && DesktopContent._arrayOfFailedHandlers.length)
+				{
+					//since we had success, search through failed handler and remove if there
+					for(var i = 0; i<DesktopContent._arrayOfFailedHandlers.length; ++i)
+						if(DesktopContent._arrayOfFailedHandlers[i] == returnHandler) 
+						{
+							DesktopContent._arrayOfFailedHandlers.splice(i,1); //remove that handler
+							break;
+						}
+				}
+			}
+				
 		}
 	}
 

@@ -744,36 +744,22 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 	}
 
 	std::string contents;
-	CodeEditor::readFile(headerFile,contents);
-	//__COUTV__(contents);
-
 	std::string insert;
 
-	//find end of class by looking for last };
-	{
-		auto insertPos = contents.rfind("};");
-		if(insertPos == std::string::npos)
-		{
-			__SS__ << "Could not find the code insert position in the header file '" <<
-					headerFile << ".' The FE plugin class must end with a '};' - is this the case?" << __E__;
-			__SS_THROW__;
-		}
-
-		__COUTV__(insertPos);
-
-		insert = "\npublic: // FEMacro '" + macroName + "' generated, " +
-				timeBuffer + ", by '" + username + "' using MacroMaker.\n\t" +
-				"void " + macroName +
-				"\t(frontEndMacroInArgs_t argsIn, frontEndMacroOutArgs_t argsOut);\n";
-
-		__COUTV__(insert);
-		CodeEditor::writeFile(headerFile,contents,insertPos,insert);
-	}
-
-	xmldoc.addTextElementToData("headerFile",headerFile);
-
+	////////////////////////////
+	//handle source file modifications
 	CodeEditor::readFile(sourceFile,contents);
 	//__COUTV__(contents);
+
+	//check for duplicate functions
+	if(contents.find(pluginName + "::" + macroName) !=
+			std::string::npos)
+	{
+		__SS__ << "The function definition '" << (pluginName + "::" + macroName) <<
+				"(...)' already exists in the source file '" << sourceFile <<
+				".' Duplicate functions are not allowed - please rename the macro or modify the source file." << __E__;
+		__SS_THROW__;
+	}
 
 
 
@@ -878,6 +864,36 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 	}
 
 	xmldoc.addTextElementToData("sourceFile",sourceFile);
+
+
+	////////////////////////////
+	//handle include file insertions
+	CodeEditor::readFile(headerFile,contents);
+	//__COUTV__(contents);
+
+
+	//find end of class by looking for last };
+	{
+		auto insertPos = contents.rfind("};");
+		if(insertPos == std::string::npos)
+		{
+			__SS__ << "Could not find the code insert position in the header file '" <<
+					headerFile << ".' The FE plugin class must end with a '};' - is this the case?" << __E__;
+			__SS_THROW__;
+		}
+
+		__COUTV__(insertPos);
+
+		insert = "\npublic: // FEMacro '" + macroName + "' generated, " +
+				timeBuffer + ", by '" + username + "' using MacroMaker.\n\t" +
+				"void " + macroName +
+				"\t(frontEndMacroInArgs_t argsIn, frontEndMacroOutArgs_t argsOut);\n";
+
+		__COUTV__(insert);
+		CodeEditor::writeFile(headerFile,contents,insertPos,insert);
+	}
+
+	xmldoc.addTextElementToData("headerFile",headerFile);
 
 } //end exportFEMacro ()
 
@@ -1333,16 +1349,11 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::st
 	std::string oneInterface;
 	std::string rxFEMacros;
 
-	//get all FE specific macros
-	//		for each list of FE Supervisors,
-	//			loop through each FE Supervisors and get FE interfaces list
+
+	// for each list of FE Supervisors,
+	//			get all FE specific macros
 	for(auto &appInfo:allFESupervisorInfo_)
 	{
-		//		__COUT__ << "===== Number of " << listPair.first << " = " <<
-		//				listPair.second.size() << std::endl;
-		//
-		//		for (it = listPair.second.begin(); it != listPair.second.end(); it++)
-		//		{
 		__COUT__ << "FESupervisor LID = " << appInfo.second.getId() <<
 				" name = " << appInfo.second.getName() << std::endl;
 
@@ -1358,8 +1369,12 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::st
 
 		std::istringstream allInterfaces(rxFEMacros);
 		while (std::getline(allInterfaces, oneInterface))
-			xmldoc.addTextElementToData("FEMacros",appInfo.second.getId() + ":" + oneInterface);
-		//		}
+		{
+			//__COUT__ << oneInterface << __E__;
+			//__COUT__ << appInfo.second.getId() << __E__;
+			xmldoc.addTextElementToData("FEMacros",oneInterface);
+			//xmldoc.outputXmlDocument(0,true);
+		}
 	}
 
 	//add macros to response

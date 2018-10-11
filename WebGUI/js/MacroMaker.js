@@ -1561,14 +1561,16 @@
 						"Click the links above to open the source code files in the Code Editor.\n\n" +
 						
 						
-						"If you would like to run your new FE Macro, try doing so here:" +
-						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"FE Macro Test\",\".h\"," + 
-						"\"/WebPath/html/FEMacroTest.html?urn=" +
-						DesktopContent._localUrnLid + //same LID as MacroMaker
-						"\",0 /*unique*/);' " +
-						"title='Click to open the FE Macro Test web app.'>" +
-						"FE Macro Test" + "</a>",
+						//FIXME -- fix FE Macro Test and then uncomment
+//						"If you would like to run your new FE Macro, try doing so here: " +
+//						"<a onclick='DesktopContent.openNewWindow(" +
+//						"\"FE Macro Test\",\".h\"," + 
+//						"\"/WebPath/html/FEMacroTest.html?urn=" +
+//						DesktopContent._localUrnLid + //same LID as MacroMaker
+//						"\",0 /*unique*/);' " +
+//						"title='Click to open the FE Macro Test web app.'>" +
+//						"FE Macro Test" + "</a>"
+						,
 						Debug.INFO_PRIORITY);
     		}
     		else    			

@@ -76,8 +76,8 @@
 				
 				var str = "";
 				
-				var user = DesktopContent.getXMLValue(req,"UserDisplayName");
-				Debug.log("user = " + user);
+				//var user = DesktopContent.getXMLValue(req,"UserDisplayName");
+				//Debug.log("user = " + user);
 				
 				var macroVar;
 				var macroInArgs, macroOutArgs;
@@ -205,6 +205,8 @@
 						for(var j=0;j<arr.length;++j)
 						{
 							var splitArr = arr[j].split(":");
+							while(splitArr.length<4) splitArr.push(""); //force 4 parameters
+							
 							if(splitArr[2].length && //check if variable name
 									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
 								macroVariableNames[splitArr[2]] = 1;
@@ -258,6 +260,8 @@
 						for(var j=0;j<arr.length;++j)
 						{
 							var splitArr = arr[j].split(":");
+							while(splitArr.length<4) splitArr.push(""); //force 4 parameters
+							
 							if(splitArr[2].length && //check if variable name
 									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
 								macroVariableNames[splitArr[2]] = 1;
