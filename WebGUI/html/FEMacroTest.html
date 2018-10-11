@@ -49,7 +49,7 @@
 	
 		//functions:			
 			//init()	
-			//callFEMacro(feSupervisorType, supervisorLID, feUID, macroName, inputArgs)
+			//callFEMacro(feSupervisorID, feUID, macroName, inputArgs)
 			//callPublicMacro()
 			//callUserMacro()
 			//getDateString(date)
@@ -96,8 +96,8 @@
 					macroVar = macroVar.split(":");
 					
 					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so display name
-						str += "<b>Type:" + macroVar[1] + 
-						" Supervisor(" + macroVar[0] + ":" + macroVar[2] + 
+						str += "<b>Type:" + macroVar[2] + 
+						" Supervisor(" + macroVar[0] + ":" + macroVar[1] + 
 						") UID:" + macroVar[3] + "</b><br>" + 
 						"<div style='margin-left:30px;'>";
 
@@ -112,22 +112,28 @@
 						c += 2;
 						var inputArgs = [];
 						
-						str += "<table>";
-						for(var j=0;j<macroVar[c];++j)
-						{
-							inputArgs.push(macroVar[c+1+j]);
-							str += "<tr><td>";
-							str += macroVar[c+1+j];
-							str += "</td><td>";
-							str +=
-								" = <input type='text' id='" + 
-								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
-								"' class='" + 
-								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-in" +
-								"'value='Default'>";
-							str += "</td></tr>";
+						//create input text boxes
+						if(macroVar[c]|0)
+						{							
+							str += "<table>";
+							for(var j=0;j<(macroVar[c]|0);++j)
+							{
+								inputArgs.push(macroVar[c+1+j]);
+								str += "<tr><td>";
+								str += macroVar[c+1+j];
+								str += "</td><td>";
+								str +=
+									" = <input type='text' id='" + 
+									macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
+									"' class='" + 
+									macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-in" +
+									"'value='Default'>";
+								str += "</td></tr>";
+							}
+							str += "</table>";
 						}
-						str += "</table>";
+						else
+							str += " No inputs.";
 						
 						str += "</div>";	
 
@@ -135,23 +141,32 @@
 						
 						str += "&nbsp;&nbsp;&nbsp; Outputs:" +
 								"<div id='" +
-								macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-out" +								
+								macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-out" +								
 								"' style='margin-left:60px;'>";
-						for(var j=0;j<macroVar[c];++j)
-							str += macroVar[c+1+j] + "<br>";
+						
+						//create output place holders
+						if(macroVar[c]|0)
+						{		
+							for(var j=0;j<(macroVar[c]|0);++j)
+								str += macroVar[c+1+j] + "<br>";
+						}
+						else
+							str += " No outputs.<br>";
+						
 						str += "</div>";
 
 						//create hidden div that will have output args persistently
 						str += "<div id='" +
-						macroVar[2] + "-" + macroVar[3] + "-" + macroName + "-outArgs" +								
-						"' style='display:none'>";
-						for(var j=0;j<macroVar[c];++j)
+							macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-outArgs" +								
+							"' style='display:none'>";
+						
+						for(var j=0;j<(macroVar[c]|0);++j)
 							str += macroVar[c+1+j] + "<br>";
+						
 						str += "</div>";
 
-						str += "<a onclick='callFEMacro(\"" +
-								macroVar[0] + "\",\"" +
-								macroVar[2] + "\",\"" +
+						str += "<a onclick='callFEMacro(\"" +					
+								macroVar[1] + "\",\"" +
 								macroVar[3] + "\",\"" + 
 								macroName + "\",[";
 						//give array of input args
@@ -316,18 +331,18 @@
 		}
 	
 		//callFEMacro ~~
-		function callFEMacro(feSupervisorType,supervisorLID, feUID, macroName, inputArgs)
+		function callFEMacro(feSupervisorID, feUID, macroName, inputArgs)
 		{
-			Debug.log("supervisorLID " + supervisorLID);
+			Debug.log("feSupervisorID " + feSupervisorID);
 			Debug.log("feUID " + feUID);
 			Debug.log("macroName " + macroName);
 			Debug.log(inputArgs);
 
 			var inEls = document.getElementsByClassName(
-					supervisorLID + "-" + feUID + "-" + macroName + "-in"
+					feSupervisorID + "-" + feUID + "-" + macroName + "-in"
 			);
 			var outEl = document.getElementById(
-					supervisorLID + "-" + feUID + "-" + macroName + "-outArgs"
+					feSupervisorID + "-" + feUID + "-" + macroName + "-outArgs"
 			);
 			var postData = "";
 			
@@ -349,9 +364,16 @@
 				postData += outEls[i];
 			}
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +
-					"&feSupervisorType=" + feSupervisorType + 
-					"&supervisorLID=" + supervisorLID +
+
+			var str = "";
+			str += "Launched... " + getDateString(new Date) + 
+					".. waiting for response...";
+			var el = document.getElementById(
+					feSupervisorID + "-" + feUID + "-" + macroName + "-out");
+			el.innerHTML = str;
+
+			DesktopContent.XMLHttpRequest("Request?RequestType=runFEMacro" +					
+					"&feSupervisorID=" + feSupervisorID +
 					"&feUID=" + feUID +
 					"&macroName=" + macroName
 					, postData, 
@@ -373,8 +395,7 @@
 				for(var i=0;i<outputArgNames.length;++i)
 					str += outputArgNames[i].getAttribute("value") + " = " + 
 					outputArgValues[i].getAttribute("value") + "<br>";
-				var el = document.getElementById(
-						supervisorLID + "-" + feUID + "-" + macroName + "-out");
+				
 				el.innerHTML = str;
 			});
 		}
