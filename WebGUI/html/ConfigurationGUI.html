@@ -660,12 +660,12 @@
 				
 				//extract last config groups
 				_lastConfigGroups = [
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName"),
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey"),
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupName"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupKey"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupTime")
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName").trim(),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey").trim(),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupName").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupKey").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupTime").trim()
 									   ];
 				//console.log(_lastConfigGroups);
 				
@@ -760,6 +760,8 @@
 		//setupSpecificConfigGroup ~		
 		function setupSpecificConfigGroup(groupName, groupKey, backLinkStr, anchorTarget) {
 
+			Debug.log("setupSpecificConfigGroup");
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			var param = "";
@@ -981,7 +983,8 @@
 					}
 					else
 					{
-						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
+						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + 
+								_lastConfigGroups[i] +
 								"\",\"" + _lastConfigGroups[i+1] + "\"); return false;'>";
 						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i+1] + ")</a>";
 					}
