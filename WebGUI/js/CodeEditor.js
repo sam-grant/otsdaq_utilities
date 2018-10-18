@@ -2109,20 +2109,12 @@ CodeEditor.create = function() {
 			return; //if only doing short-cuts, dont handle text
 		
 		
-				
-
-		window.clearTimeout(_inputTimerHandle);
-		_inputTimerHandle = window.setTimeout(
-				function()
-				{
-			CodeEditor.editor.updateDecorations(forPrimary);				
-				}, 1000); //end setTimeout
-		
 
 		var rectangularTAB = false;
 		var blockCOMMENT = false;
 
-		if(!e.shiftKey && e.keyCode == 191) 	// / for block comment
+		if(!e.shiftKey && e.ctrlKey && 
+				e.keyCode == 191) 	// ctrl+/ for block comment
 			blockCOMMENT = true;
 		else if(e.ctrlKey)
 		{			
@@ -2163,6 +2155,8 @@ CodeEditor.create = function() {
 				return;
 		} //end ctrl key editor handling
 
+
+				
 
 		if(e.keyCode == TABKEY || rectangularTAB ||
 				blockCOMMENT)
@@ -2527,6 +2521,14 @@ CodeEditor.create = function() {
 				else
 					document.execCommand('insertHTML', false, '&#009');
 			}
+			
+			//set timeout for decoration update
+			window.clearTimeout(_inputTimerHandle);
+			_inputTimerHandle = window.setTimeout(
+					function()
+					{
+				CodeEditor.editor.updateDecorations(forPrimary);				
+					}, 1000); //end setTimeout
 
 			return;
 
