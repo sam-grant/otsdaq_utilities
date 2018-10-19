@@ -1488,7 +1488,12 @@ CodeEditor.create = function() {
 							cursor.endPos -= i;
 							
 						}
-					} //end end handling
+					}
+					else if(n < cursor.endNodeIndex)
+					{
+						cursor.endNodeIndex += 2; //two new elements were added in front
+					}//end end handling
+					
 				}
 			} //end cursor position update
 
@@ -1608,7 +1613,12 @@ CodeEditor.create = function() {
 								//then cursor is in second part of merger
 								--cursor.endNodeIndex;
 								cursor.endPos += val.length;	
-							} //end end handling
+							}
+							else if(n+1 < cursor.endNodeIndex)
+							{
+								//then cursor is in a later node
+								--cursor.endNodeIndex; //one node was removed
+							}//end end handling							
 						}
 					} //end cursor position update
 
@@ -1973,7 +1983,7 @@ CodeEditor.create = function() {
 			outline.push([newLineCount+1,
 						  text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
 						  "()"]);						
-			console.log("function", outline[outline.length-1],localNewLineCount);
+			//console.log("function", outline[outline.length-1],localNewLineCount);
 			
 			newLineCount += localNewLineCount;
 			i = startCi; //jump past function
@@ -2228,28 +2238,53 @@ CodeEditor.create = function() {
 					//steps:
 					//	determine x coordinate by 
 					//		going backwards from start until a new line is found
-					//		and counting spots
+					//		and then going forward and counting spots back to cursor
 					//	then for each line in selection
 					//		add a tab at that x coordinate (offset from newline)
 
-					//reverse-find new line
+					
 					var node,val;
 					var found = false;	
 					var x = 0;
-					var tabSz = 4; //to match eclipse!		
-					var firstCharEver = true;
-					for(n=cursor.startNodeIndex; !found && n>=0; --n)
+					var tabSz = 4; //to match eclipse!	
+					
+					//reverse-find new line
+					for(n=cursor.startNodeIndex;n>=0; --n)
 					{
 						node = el.childNodes[n];
 						val = node.textContent; //.nodeValue; //.wholeText
 
 						for(i=(n==cursor.startNodeIndex?cursor.startPos:
 								val.length-1); i>=0; --i)
-						{	
-							if(firstCharEver) //do the tab for first since we are there
+						{
+							if(val[i] == '\n')
 							{
-								firstCharEver = false;
+								//found start of line
+								found = true;
+								break;
+							}
+						}
+						if(found) break;
+					}
+					//assume at new line point (or start of file)
+					console.log("at leading newline - n",n,"i",i);
+					
+					//now return to cursor and count spots
+					found = false;
+					for(n; n<el.childNodes.length; ++n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent; //.nodeValue; //.wholeText
 
+						for(i;i<val.length;++i)
+						{
+							//exit loop when back to cursor start position
+							if(n == cursor.startNodeIndex &&
+									i == cursor.startPos)
+							{
+								found = true;
+								
+								//insert tab at first position
 								var prelength = val.length;
 
 								if(e.shiftKey) //delete leading tab
@@ -2266,23 +2301,68 @@ CodeEditor.create = function() {
 								//adjust selection to follow rectangular tabbing
 								//	so future rectangular tabbing works as expected
 								cursor.startPos += node.textContent.length - prelength;
-								continue;
-							}
-
-							if(val[i] == '\n')
-							{
-								//found start of line
-								found = true;
 								break;
 							}
-							else if(val[i] == '\t')
-								x += tabSz; //add tab num of spots
+								
+							//console.log(xcnt," vs ",x,val[i]);
+							if(val[i] == '\t')
+								x +=  tabSz - (x+tabSz)%tabSz; //jump to next multiple of tabSz
 							else 
 								++x; //add single character spot
-						} //end node text character loop
-					} //end node loop
+						}
+						
+						if(found) break;
+						
+						i = 0; //reset i for next loop
+					}
+					
+//					var firstCharEver = true;
+//					for(n=cursor.startNodeIndex; !found && n>=0; --n)
+//					{
+//						node = el.childNodes[n];
+//						val = node.textContent; //.nodeValue; //.wholeText
+//
+//						for(i=(n==cursor.startNodeIndex?cursor.startPos:
+//								val.length-1); i>=0; --i)
+//						{	
+//							if(firstCharEver) //do the tab for first since we are there
+//							{
+//								firstCharEver = false;
+//
+//								var prelength = val.length;
+//
+//								if(e.shiftKey) //delete leading tab
+//								{
+//									if(i-1 >= 0 && val[i-1] == '\t')
+//										node.textContent = val.substr(0,i-1) + val.substr(i);
+//								}
+//								else //add leading tab
+//								{
+//									node.textContent = val.substr(0,i) + "\t" + val.substr(i);
+//
+//								}
+//
+//								//adjust selection to follow rectangular tabbing
+//								//	so future rectangular tabbing works as expected
+//								cursor.startPos += node.textContent.length - prelength;
+//								continue;
+//							}
+//
+//							if(val[i] == '\n')
+//							{
+//								//found start of line
+//								found = true;
+//								break;
+//							}
+//							else if(val[i] == '\t')
+//								x += tabSz - (x+tabSz)%tabSz; //jump to next multiple of tabSz
+//							else 
+//								++x; //add single character spot
+//						} //end node text character loop
+//					} //end node loop
 
 					console.log("x",x);
+					
 
 					//fast-forward to endPos through each line and handle tab at x coord								
 
@@ -2295,7 +2375,7 @@ CodeEditor.create = function() {
 						for(i=(n==cursor.startNodeIndex?cursor.startPos:
 								0);i<val.length;++i)
 						{
-							console.log(xcnt," vs ",x,val[i]);
+							//console.log(xcnt," vs ",x,val[i]);
 							if(val[i] == '\n')
 							{
 								//reset x coord count
@@ -2323,8 +2403,8 @@ CodeEditor.create = function() {
 							}
 							else if(xcnt != -1) //if counting, increase 
 							{
-								if(val[i] == '\t')
-									xcnt += tabSz; //add tab num of spots
+								if(val[i] == '\t')									
+									xcnt += tabSz - (xcnt+tabSz)%tabSz; //jump to next multiple of tabSz
 								else 
 									++xcnt; //add single character spot
 							}									
@@ -2340,8 +2420,20 @@ CodeEditor.create = function() {
 					try
 					{
 						var range = document.createRange();
-						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+//						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+						var firstEl = el.childNodes[cursor.startNodeIndex];
+						if(firstEl.firstChild)
+							firstEl = firstEl.firstChild;
+
+						var secondEl = el.childNodes[cursor.endNodeIndex];
+						if(secondEl.firstChild)
+							secondEl = secondEl.firstChild;
+
+						range.setStart(firstEl,
+								cursor.startPos);
+						range.setEnd(secondEl,
+								cursor.endPos);
 
 						var selection = window.getSelection();
 						selection.removeAllRanges();
@@ -2468,8 +2560,21 @@ CodeEditor.create = function() {
 				try
 				{
 					var range = document.createRange();
-					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+//					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+
+					var firstEl = el.childNodes[cursor.startNodeIndex];
+					if(firstEl.firstChild)
+						firstEl = firstEl.firstChild;
+
+					var secondEl = el.childNodes[cursor.endNodeIndex];
+					if(secondEl.firstChild)
+						secondEl = secondEl.firstChild;
+
+					range.setStart(firstEl,
+							cursor.startPos);
+					range.setEnd(secondEl,
+							cursor.endPos);
 
 					var selection = window.getSelection();
 					selection.removeAllRanges();
