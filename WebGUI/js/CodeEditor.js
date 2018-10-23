@@ -2085,7 +2085,7 @@ CodeEditor.create = function() {
 			return;
 		}
 		
-		//Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 		
 				
 		if(e.ctrlKey) //handle shortcuts
@@ -2488,7 +2488,32 @@ CodeEditor.create = function() {
 								if(i + specialStr.length < val.length &&
 										val.indexOf(specialStr,i+1) == i+1)
 									node.textContent = val.substr(0,i+1) + 
-									val.substr(i+1+specialStr.length);											
+										val.substr(i+1+specialStr.length);	
+								else if(specialStr == '\t')
+								{
+									//for tab case also get rid of 4-3-2-1 spaces after new line									
+									if((specialStr = "    ") && //4 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);									
+									else if((specialStr = "   ") && //3 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);									
+									else if((specialStr = "  ") && //2 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);								
+									else if((specialStr = " ") && //1 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);	
+									specialStr = '\t'; //return special string value
+								}
 							}
 							else //add leading special string
 								node.textContent = val.substr(0,i+1) + 
@@ -2524,14 +2549,62 @@ CodeEditor.create = function() {
 							if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
 
 							if(e.shiftKey) //delete leading tab
-							{											
+							{						
+								var didDelete = false;
 								if(i + specialStr.length < val.length &&
 										val.indexOf(specialStr,i+1) == i+1)
 								{
 									val = val.substr(0,i+1) + 
 											val.substr(i+1+specialStr.length);
 									node.textContent = val;
-
+									didDelete = true;
+								}
+								else if(specialStr == '\t')
+								{
+									//for tab case also get rid of 4-3-2-1 spaces after new line									
+									if((specialStr = "    ") && //4 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}							
+									else if((specialStr = "   ") && //3 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}							
+									else if((specialStr = "  ") && //2 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}						
+									else if((specialStr = " ") && //1 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}
+									
+									specialStr = '\t'; //return special string value
+								}
+								
+								//fix cursor if deleted special string
+								if(didDelete)
+								{
 									//if running out of string to keep line selected.. jump to next node
 									//	with selection
 									if(n == cursor.endNodeIndex && 
@@ -2541,7 +2614,7 @@ CodeEditor.create = function() {
 										cursor.endPos = 0;
 									}
 								}
-							}
+							} //end delete leading tab
 							else //add leading tab
 							{
 								val = val.substr(0,i+1) + specialStr + val.substr(i+1);
