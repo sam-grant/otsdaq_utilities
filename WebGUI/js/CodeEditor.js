@@ -94,6 +94,7 @@ CodeEditor.create = function() {
 	//	saveFile(forPrimary)
 	//	toggleView(v)
 	//	build(cleanBuild)
+	//	undo(forPrimary,redo)
 	//	openDirectory(forPrimary,path)
 	//	handleDirectoryContent(forPrimary,req)
 	//	openFile(forPrimary,path,extension,doConfirm)
@@ -128,6 +129,10 @@ CodeEditor.create = function() {
 	var _fileNameEditing = [false,false]; //for primary and secondary
 	
 	var _activePaneIsPrimary = 1; //default to primary, and switch based on last click
+
+	var _undoStackLatestIndex = [-1,-1]; //when empty, -1, for secondary/primary
+	var _undoStack_MAX_SIZE = 10;
+	var _undoStack = [[],[]]; //newest are placed at _undoStackLatestIndex+1, for secondary/primary
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -416,7 +421,7 @@ CodeEditor.create = function() {
 								"class":"controlsButton",
 								"style":"float:right",
 								"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
-								"title":"Clean Build... (Ctrl + C)",
+								"title":"Clean Build... (Ctrl + N)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -482,6 +487,9 @@ CodeEditor.create = function() {
 				
 				Debug.log("click handler for pane" + forPrimary);
 				_activePaneIsPrimary = forPrimary;
+				
+				//focus on edit box
+				document.getElementById("editableBox" + forPrimary).focus();
 							}); //end addEventListener
 			
 			
@@ -851,6 +859,16 @@ CodeEditor.create = function() {
 		
 	} //end build()
 	
+	//=====================================================================================
+	//undo ~~
+	//	manage undo stack
+	this.undo = function(forPrimary,redo)
+	{
+		Debug.log("undo() forPrimary=" + forPrimary + " redo=" + redo);
+		Debug.logv(_undoStackLatestIndex[forPrimary]);
+		
+		console.log("undo stack",_undoStack[forPrimary]);
+	} //end undo()
 
 	//=====================================================================================
 	//handleDirectoryContent ~~
@@ -1091,6 +1109,8 @@ CodeEditor.create = function() {
 		_fileExtension[forPrimary] = extension;
 		_fileLastSave[forPrimary] = 0; //default time to 0
 		_fileWasModified[forPrimary] = false;
+		_undoStack[forPrimary] = []; //clear undo stack
+		_undoStackLatestIndex[forPrimary] = -1; //reset latest undo index
 
 		//set path and extension and last save to header
 		var el = document.getElementById("textEditorHeader" + forPrimary);
@@ -1407,6 +1427,9 @@ CodeEditor.create = function() {
 		var startOfWord = -1;
 		var startOfString = -1;
 		var startOfComment = -1;
+		var firstSpecialStringStartHandling = true;
+		var firstSpecialStringEndHandling = true;
+		var endPositionCache; //used to restore end position if special string not closed
 		
 		var done = false; //for debuggin
 		
@@ -1512,7 +1535,8 @@ CodeEditor.create = function() {
 			node = el.childNodes[n];
 			val = node.textContent; //.nodeValue; //.wholeText
 
-			if(node.nodeName == "LABEL")
+			if(node.nodeName == "LABEL" || 
+					node.nodeName == "FONT")
 			{
 				//console.log("Label handling...",val);
 				
@@ -1652,7 +1676,11 @@ CodeEditor.create = function() {
 							(prevChar != '\\' && val[i] == '"')))
 					{
 						if(startOfString == -1 && val[i] == '"') //start string
+						{
 							startOfString = i;
+							firstSpecialStringStartHandling = true;
+							firstSpecialStringEndHandling = true;
+						}
 						else if(val[i] == '"')	//end string
 						{	
 							++i; //include " in label
@@ -1674,7 +1702,11 @@ CodeEditor.create = function() {
 											commentString)))
 					{
 						if(startOfComment == -1 && val[i] == commentString[0]) //start comment
+						{
 							startOfComment = i;
+							firstSpecialStringStartHandling = true;
+							firstSpecialStringEndHandling = true;
+						}
 						else if(val[i] == '\n')	//end comment
 						{	
 							//++i; //do not include \n in label
@@ -1735,15 +1767,86 @@ CodeEditor.create = function() {
 					//acquire nodes into string until a quote is encountered
 
 					closedString = false;
-					for(++n;!closedString && n<el.childNodes.length;++n)
+					for(++n;n<el.childNodes.length;++n)
 					{		
 						eatNode = el.childNodes[n];
 						eatVal = eatNode.textContent; //.nodeValue; //.wholeText
+						
+						
+						//deleteing the node may have an effect on cursor!
+						//handle cursor position update
+						if(cursor.startNodeIndex !== undefined)
+						{
+							if(firstSpecialStringStartHandling)
+							{
+								//first time, add initial comment node string contribution to startPos
+								
+								cursor.startPos += val.length;
+								if(startOfString != -1)
+									cursor.startPos -= startOfString;
+								else if(startOfComment != -1)
+									cursor.startPos -= startOfComment;
+								
+								firstSpecialStringStartHandling = false;								
+							}
+							
+							if(firstSpecialStringEndHandling)
+							{
+								//first time, add initial comment node string contribution to endPos
+
+								endPositionCache = cursor.endPos; //cache end position in case this is not the last line
+								
+								cursor.endPos += val.length+1;
+								if(startOfString != -1)
+									cursor.endPos -= startOfString;
+								else if(startOfComment != -1)
+									cursor.endPos -= startOfComment;
+								
+								firstSpecialStringEndHandling = false;
+							}
+							
+							
+							if(n < cursor.startNodeIndex)
+							{
+								//cursor is in a later node
+								cursor.startNodeIndex -= 1; //one node was removed
+								cursor.endNodeIndex -= 1; //one node was removed															
+								
+								cursor.startPos += eatVal.length; //add cursor position	in preparation for concat text
+								cursor.endPos += eatVal.length;
+							}
+							else 
+							{
+								//handle start and stop independently
+
+								//handle start
+								if(n == cursor.startNodeIndex)
+								{
+									//then cursor is in second part of merger
+									--cursor.startNodeIndex;							
+								} //end start handling
+
+								//handle end									
+								if(n == cursor.endNodeIndex)
+								{
+									//then cursor is in second part of merger
+									--cursor.endNodeIndex;
+								}
+								else if(n < cursor.endNodeIndex)
+								{
+									//then cursor is in a later node
+									--cursor.endNodeIndex; //one node was removed
+									cursor.endPos += eatVal.length;
+								}//end end handling							
+							}
+						} //end cursor position update
+						
 
 						//eat text and delete node
 						val += eatVal;
 						el.removeChild(eatNode);
 						--n; //after removal, move back index for next node
+						
 						
 						//look for quote close or comment close 
 						for(i;i<val.length;++i)
@@ -1779,15 +1882,18 @@ CodeEditor.create = function() {
 								decor = _DECORATION_GRAY;
 								fontWeight = "normal";
 								localInsertLabel(startOfComment);
-								startOfComment = -1;							
+								startOfComment = -1;	
+								
 								closedString = true;
-								break;
+								break; //exit inner loop
 
 							}
 							
 							prevChar = val[i]; //save previous character (e.g. to check for quote escape)
 						} //end node string value loop
 					
+						if(closedString) break; //exit outer loop 
+						
 					} //end string node crossing node loop
 					
 					if(!closedString && startOfString != -1)
@@ -1811,6 +1917,14 @@ CodeEditor.create = function() {
 						--n; //move back index (because it was incremented past bounds in end search)
 						localInsertLabel(startOfComment);
 						startOfComment = -1;			
+					}
+					
+					if(n < cursor.endNodeIndex)
+					{
+						//if did not close string including the endNodeIndex,
+						//	then reset the end of string handling
+						firstSpecialStringEndHandling = true;
+						cursor.endPos = endPositionCache;
 					}
 					
 					
@@ -1908,6 +2022,34 @@ CodeEditor.create = function() {
 		
 		var text = document.getElementById("editableBox" + forPrimary).textContent;
 		
+		//localHandleStackManagement();
+		//================
+		//handle undo stack management
+		//	if new, then place in stack
+//		function localHandleStackManagement()
+//		{
+//			var addSnapshot = false;
+//			if(_undoStackLatestIndex != -1)
+//			{
+//				//compare with last to see if different
+//				if(_undoStack[forPrimary][_undoStackLatestIndex] == text)
+//			}
+//			else //else first, so add to stack
+//				addSnapshot = true;
+//			
+//			
+//			if(addSnapshot) 
+//			{ //add to stack
+//				++_undoStackLatestIndex[forPrimary];
+//				if(_undoStackLatestIndex[forPrimary] >= _undoStack_MAX_SIZE)
+//					_undoStackLatestIndex[forPrimary] = 0; //wrap around
+//				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]] = text;
+//				
+//				console.log("undo stack",_undoStack[forPrimary]);
+//			}
+//		} //end localHandleStackManagement()
+				
+		
 		var starti;
 		var endi;
 		var strLength;
@@ -1995,6 +2137,8 @@ CodeEditor.create = function() {
 			i = startCi; //jump past function
 			
 		} // end text content char loop
+		
+		++newLineCount; //always add 1 for good luck		
 		
 		Debug.log("Number of lines " + newLineCount);
 		console.log("Done with outline", outline);
@@ -2092,8 +2236,7 @@ CodeEditor.create = function() {
 		}
 		
 		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
-		
-				
+						
 		if(e.ctrlKey) //handle shortcuts
 		{			
 			if(e.keyCode == 83) 		// S
@@ -2114,12 +2257,19 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 67) 	// C for clean build
+			else if(e.keyCode == 78) 	// N for clean build
 			{
 				CodeEditor.editor.build(true /*clean*/);
 				e.preventDefault();
 				return;
 			}
+			else if(e.keyCode == 85) 	// U for undo
+			{
+				CodeEditor.editor.undo(forPrimary, e.shiftKey /*redo*/);
+				e.preventDefault();
+				return;
+			}
+			
 		} //end shortcut cases		
 		if(shortcutsOnly)		
 			return; //if only doing short-cuts, dont handle text
@@ -2129,15 +2279,21 @@ CodeEditor.create = function() {
 		var rectangularTAB = false;
 		var blockCOMMENT = false;
 
-		if(!e.shiftKey && e.ctrlKey && 
-				e.keyCode == 191) 	// ctrl+/ for block comment
-			blockCOMMENT = true;
-		else if(e.ctrlKey)
+//		if(!e.shiftKey && e.ctrlKey && 
+//				e.keyCode == 191) 	// ctrl+/ for block comment
+//			blockCOMMENT = true;
+		if(e.ctrlKey)//else if(e.ctrlKey)
 		{			
 
 			if(e.keyCode == 84) // T for rectangular TAB
 			{
 				rectangularTAB = true;
+				e.preventDefault();
+				//continue to tab handling below
+			}	
+			else if(e.keyCode == 191) 	// ctrl+/ for block comment
+			{
+				blockCOMMENT = true;
 				e.preventDefault();
 				//continue to tab handling below
 			}	
@@ -2344,7 +2500,7 @@ CodeEditor.create = function() {
 							}
 							else if(xcnt == x)
 							{											
-								console.log("x match at ",xcnt,val.substr(0,i),"TTT",val.substr(i));
+								//console.log("x match at ",xcnt,val.substr(0,i),"TTT",val.substr(i));
 								xcnt = -1;
 
 								if(e.shiftKey) //delete leading tab
@@ -2434,7 +2590,7 @@ CodeEditor.create = function() {
 						specialStr = "#"; //comment string
 				}
 
-				for(n=cursor.startNodeIndex; !found && n>=0; --n)
+				for(n=cursor.startNodeIndex; n>=0; --n)
 				{
 					node = el.childNodes[n];
 					val = node.textContent; //.nodeValue; //.wholeText
@@ -2444,91 +2600,102 @@ CodeEditor.create = function() {
 					{
 						if(val[i] == '\n')
 						{
-							if(e.shiftKey) //delete leading special string
-							{
-								var didDelete = false;
-								if(i + specialStr.length < val.length &&
-										val.indexOf(specialStr,i+1) == i+1)
-								{
-									node.textContent = val.substr(0,i+1) + 
-										val.substr(i+1+specialStr.length);
-									didDelete = true;
-								}
-								else if(specialStr == '\t')
-								{
-									//for tab case also get rid of 4-3-2-1 spaces after new line									
-									if((specialStr = "    ") && //4 spaces
-											i + specialStr.length < val.length &&
-											val.indexOf(specialStr,i+1) == i+1)
-									{
-										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);
-										didDelete = true;
-									}
-									else if((specialStr = "   ") && //3 spaces
-											i + specialStr.length < val.length &&
-											val.indexOf(specialStr,i+1) == i+1)
-									{
-										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);
-										didDelete = true;
-									}								
-									else if((specialStr = "  ") && //2 spaces
-											i + specialStr.length < val.length &&
-											val.indexOf(specialStr,i+1) == i+1)
-									{
-										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);
-										didDelete = true;
-									}							
-									else if((specialStr = " ") && //1 spaces
-											i + specialStr.length < val.length &&
-											val.indexOf(specialStr,i+1) == i+1)
-									{
-										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);
-										didDelete = true;
-									}
-									specialStr = '\t'; //return special string value
-								}
-								
-								//fix cursor if deleted special string
-								if(didDelete)
-								{
-									//if running out of string to keep line selected.. jump to next node
-									//	with selection
-									if(n < cursor.startNodeIndex)
-									{
-										cursor.startNodeIndex = n;
-										cursor.startPos = val.length-1;
-									}
-									else if(n == cursor.startNodeIndex && 
-											i < cursor.startPos)
-									{
-										cursor.startPos = i+1;
-									}
-								}
-							}
-							else //add leading special string
-								node.textContent = val.substr(0,i+1) + 
-								specialStr + val.substr(i+1);
+							//found new line, now continue forward to end
 							found = true;
 							break;
 						}
+					
+							
+//						{
+//							if(e.shiftKey) //delete leading special string
+//							{
+//								var didDelete = false;
+//								if(i + specialStr.length < val.length &&
+//										val.indexOf(specialStr,i+1) == i+1)
+//								{
+//									node.textContent = val.substr(0,i+1) + 
+//										val.substr(i+1+specialStr.length);
+//									didDelete = true;
+//								}
+//								else if(specialStr == '\t')
+//								{
+//									//for tab case also get rid of 4-3-2-1 spaces after new line									
+//									if((specialStr = "    ") && //4 spaces
+//											i + specialStr.length < val.length &&
+//											val.indexOf(specialStr,i+1) == i+1)
+//									{
+//										node.textContent = val.substr(0,i+1) + 
+//											val.substr(i+1+specialStr.length);
+//										didDelete = true;
+//									}
+//									else if((specialStr = "   ") && //3 spaces
+//											i + specialStr.length < val.length &&
+//											val.indexOf(specialStr,i+1) == i+1)
+//									{
+//										node.textContent = val.substr(0,i+1) + 
+//											val.substr(i+1+specialStr.length);
+//										didDelete = true;
+//									}								
+//									else if((specialStr = "  ") && //2 spaces
+//											i + specialStr.length < val.length &&
+//											val.indexOf(specialStr,i+1) == i+1)
+//									{
+//										node.textContent = val.substr(0,i+1) + 
+//											val.substr(i+1+specialStr.length);
+//										didDelete = true;
+//									}							
+//									else if((specialStr = " ") && //1 spaces
+//											i + specialStr.length < val.length &&
+//											val.indexOf(specialStr,i+1) == i+1)
+//									{
+//										node.textContent = val.substr(0,i+1) + 
+//											val.substr(i+1+specialStr.length);
+//										didDelete = true;
+//									}
+//									specialStr = '\t'; //return special string value
+//								}
+//								
+//								//fix cursor if deleted special string
+//								if(didDelete)
+//								{
+//									//if running out of string to keep line selected.. jump to next node
+//									//	with selection
+//									if(n < cursor.startNodeIndex)
+//									{
+//										cursor.startNodeIndex = n;
+//										cursor.startPos = val.length-1;
+//									}
+//									else if(n == cursor.startNodeIndex && 
+//											i < cursor.startPos)
+//									{
+//										cursor.startPos = i+1;
+//									}
+//								}
+//							}
+//							else //add leading special string
+//								node.textContent = val.substr(0,i+1) + 
+//									specialStr + val.substr(i+1);
+//							found = true;
+//							break;
+//						}
 					} //end node text character loop
+					
+					if(found) break; //exit outer loop
 				} //end node loop
 
 				//fast-forward to endPos and insert tab after each new line encountered
 				found = false;
 				var prevCharIsNewLine = false;
-				for(n=cursor.startNodeIndex; !found && n<el.childNodes.length &&
-				n <= cursor.endNodeIndex; ++n)
+				//for(n=cursor.startNodeIndex; !found && n<el.childNodes.length &&
+				for(; n<el.childNodes.length &&
+					n <= cursor.endNodeIndex; ++n)
 				{								
 					node = el.childNodes[n];
 					val = node.textContent; //.nodeValue; //.wholeText
 
-					for(i=(n==cursor.startNodeIndex?cursor.startPos:
-							0);i<val.length;++i)
+					//for(i=(n==cursor.startNodeIndex?cursor.startPos:					
+							//0);i<val.length;++i)
+					for(;i<val.length;++i)
 					{
 						if(n == cursor.endNodeIndex && i >= cursor.endPos)
 						{
@@ -2599,6 +2766,18 @@ CodeEditor.create = function() {
 								//fix cursor if deleted special string
 								if(didDelete)
 								{
+									//update position after text was removed
+									if(n == cursor.startNodeIndex && 
+											i < cursor.startPos)
+									{										
+										cursor.startPos -= specialStr.length;
+									}
+									if(n == cursor.endNodeIndex && 
+											i < cursor.endPos)
+									{										
+										cursor.endPos -= specialStr.length;
+									}
+									
 									//if running out of string to keep line selected.. jump to next node
 									//	with selection
 									if(n == cursor.endNodeIndex && 
@@ -2606,8 +2785,20 @@ CodeEditor.create = function() {
 									{
 										++cursor.endNodeIndex;
 										cursor.endPos = 0;
-									}
+									}									
+									
+//									if(n < cursor.startNodeIndex)
+//									{
+//										cursor.startNodeIndex = n;
+//										cursor.startPos = val.length-1;
+//									}
+//									else if(n == cursor.startNodeIndex && 
+//											i < cursor.startPos)
+//									{
+//										cursor.startPos = i+1;
+//									}
 								}
+								
 							} //end delete leading tab
 							else //add leading tab
 							{
@@ -2618,7 +2809,10 @@ CodeEditor.create = function() {
 							if(i == -1 && prevCharIsNewLine) ++i; //so that loop continues properly
 						}									
 					} //end node text character loop
-
+					i = 0; //reset i for next character loop
+					
+					if(found) break; //exit outer loop
+					
 					prevCharIsNewLine = (val.length && //handle last char newline case
 							val[val.length-1] == '\n');
 				} //end node loop
