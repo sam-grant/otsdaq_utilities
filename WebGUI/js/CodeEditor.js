@@ -759,8 +759,9 @@ CodeEditor.create = function() {
 					document.getElementById("editableBox" + forPrimary).innerText);
 			//console.log(content,content.length);
 			
-			//remove crazy characters (or understand where they come from, they seem to be backwards (i.e. 2C and 0A are real characters))
-			content = content.replace(/%C2/g,"").replace(/%A0/g,"");
+			//remove crazy characters 
+			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
+			content = content.replace(/%C2%A0/g,"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
 			//console.log(content.length);
 			
 			
