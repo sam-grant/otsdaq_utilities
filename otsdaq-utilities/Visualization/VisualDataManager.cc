@@ -15,11 +15,12 @@ using namespace ots;
 
 //========================================================================================================================
 VisualDataManager::VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree, const std::string& supervisorConfigurationPath)
-: DataManager               (theXDAQContextConfigTree, supervisorConfigurationPath)
-, theLiveDQMHistos_         (0)
-//, theFileDQMHistos_       (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos")
-//, theFileDQMHistos_       (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos",0)
-//, theFileDQMHistos_       ()
+: DataManager         (theXDAQContextConfigTree, supervisorConfigurationPath)
+, theLiveDQMHistos_   (nullptr)
+, theRawDataConsumer_ (nullptr)
+//, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos")
+//, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos",0)
+//, theFileDQMHistos_ ()
 {}
 
 //========================================================================================================================
@@ -35,7 +36,7 @@ void VisualDataManager::configure(void)
 //========================================================================================================================
 void VisualDataManager::halt(void)
 {
-	theLiveDQMHistos_ = 0;
+	theLiveDQMHistos_ = nullptr;
 	DataManager::halt();
 }
 
@@ -57,8 +58,8 @@ void VisualDataManager::start(std::string runNumber)
 {
 	__CFG_COUT__ << "Start!" << __E__;
 	
-	theLiveDQMHistos_ = NULL;
-	theRawDataConsumer_ = NULL;
+	theLiveDQMHistos_   = nullptr;
+	theRawDataConsumer_ = nullptr;
 
 	DataManager::start(runNumber);
 	
@@ -103,7 +104,7 @@ void VisualDataManager::start(std::string runNumber)
 								}
 								catch(...){} //ignore failures
 
-								if(!theLiveDQMHistos_)
+								if(theLiveDQMHistos_ == nullptr)
 								{
 									__CFG_COUT__ << "Trying for raw data consumer." << __E__;
 
@@ -135,7 +136,7 @@ void VisualDataManager::start(std::string runNumber)
 //========================================================================================================================
 void VisualDataManager::stop(void)
 {
-	theLiveDQMHistos_ = 0;
+	theLiveDQMHistos_ = nullptr;
 	DataManager::stop();
 }
 

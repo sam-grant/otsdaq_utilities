@@ -414,7 +414,7 @@ void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgi
 		std::string::size_type LDQM_pos = path.find("/" + LIVEDQM_DIR + ".root/");
 		TFile* rootFile;
 
-		if(theDataManager_->getLiveDQMHistos() != 0 && LDQM_pos == 0)
+		if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
 		{
 		  //__SUP_COUT__ << "Attempting to get LIVE file." << std::endl;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();

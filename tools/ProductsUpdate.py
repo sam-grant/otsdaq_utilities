@@ -10,7 +10,9 @@ otsdaqVersion = "s64-e15 prof";
 try:
 	os.path.isdir(os.environ['PRODUCTS']);
 except KeyError:
-	print "Products variable not set";
+	print "PRODUCTS variable not set.";
+	print "Example:";
+	print "export PRODUCTS=`pwd`";
 	exit(1);
 
 ########################################################################
