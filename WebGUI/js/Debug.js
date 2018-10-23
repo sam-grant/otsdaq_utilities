@@ -10,6 +10,7 @@
 // 		num is the priority number 0 being highest.
 //
 //	Debug.log() will print to console if Debug.mode = 1 and if num < Debug.level
+//	Debug.logv(var) will decorate a variable and print to console with Debug.log()
 //
 //	Note: An error pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
 //	Note: A warning pop up box will occur so that users see Debug.WARN_PRIORITY log messages.
@@ -219,11 +220,15 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				}
 			}
 	}
+	
+	//special quick decoration for a variable
+	Debug.logv = function(v,num) { Debug.log(varToString({v}) + ": " + v,	num); }
 }
 else	//IF DEBUG MODE IS OFF!
 {	//do nothing with log functions
-	console.log = function(){}
-	Debug.log = function(){}
+	console.log = function(){};
+	Debug.log = function(){};
+	Debug.logv = function(){};
 }
 
 // living and breathing examples:

@@ -1316,9 +1316,9 @@
     
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
     {
-    	Debug.log("macroName" + macroName+ " macroAction" +macroAction + 
-    			" macroSequence" + macroSequence+ " macroNotes" + macroNotes + 
-				" macroDate" +macroDate);
+    	Debug.log("macroName=" + macroName+ " macroAction=" +macroAction + 
+    			" macroSequence=" + macroSequence+ " macroNotes=" + macroNotes + 
+				" macroDate=" +macroDate);
     	var isMacroPublic = !isOnPrivateMacros;
     	switch(macroAction)
     	{
@@ -1374,9 +1374,13 @@
 							markColorData = "2";
 							disableData = "disabled";
 						}
-						var writeEdit = "<lable>Write <textarea  " + disableData + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",3)\">" + Command[3]
-							+ "</textarea><div class='variableMark" + markColorData + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
-							+ ",3)'>V</div> into address <textarea " + disable + " class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
+						var writeEdit = "<lable>Write <textarea  " + disableData + 
+								" class=\"JStextarea\" onchange=\"editCommands(this," + 
+								seqID + ",3)\">" + Command[3]
+							+ "</textarea><div class='variableMark" + markColorData + 
+							"' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
+							+ ",3)'>V</div> into address <textarea " + disable + 
+							" class=\"JStextarea\" onchange=\"editCommands(this," + seqID + ",2)\">" + Command[2] 
 							+ "</textarea><div class='variableMark" + markColor + "' title='Set field to variable' onclick='setFieldToVariable(this," + seqID 
 							+ ",2)'>V</div><br/></lable>";
 						seqID++;
@@ -1522,8 +1526,51 @@
     		var err = DesktopContent.getXMLValue(req,"Error");
     		if(err)
     		{
+    			Debug.log("To view your front-end plugin " +
+    					"source code files...\n" + 
+						"(Click " +
+						"<a onclick='DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						headerFile + "&startFileSecondary=" +
+						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
+						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
+						"here</a> to open them in the Code Editor)" +
+						"\n\n" + 
+
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".h\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						headerFile + "\",0 /*unique*/);' " +
+						"title='Click to open this header file in the Code Editor.'>" +
+						headerFile + "</a>\n\nand...\n\n" +  
+
+
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"Code Editor\",\".cc\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						sourceFile + "\",0 /*unique*/);' " +
+						"title='Click to open this source file in the Code Editor.'>" +
+						sourceFile + "</a>\n\n" +
+
+						"Click the links above to open the source code files in the Code Editor.\n\n"
+						+
+
+						"If you would like to run existing FE Macros, try doing so here...\n" +
+						"(You MUST compile the plugin, and reconfigure otsdaq for FE Macro changes to take effect!): " +
+						"<a onclick='DesktopContent.openNewWindow(" +
+						"\"FE Macro Test\",\".h\"," + 
+						"\"/WebPath/html/FEMacroTest.html?urn=" +
+						DesktopContent._localUrnLid + //same LID as MacroMaker
+						"\",0 /*unique*/);' " +
+						"title='Click to open the FE Macro Test web app.'>" +
+						"FE Macro Test" + "</a>\n\n"
+						,
+						Debug.HIGH_PRIORITY);
+
     			Debug.log("Error! Something went wrong with your FE Macro export: " +
     					err,Debug.HIGH_PRIORITY);
+    			
     			return;
     		}
     		
@@ -1558,17 +1605,19 @@
 						"title='Click to open this source file in the Code Editor.'>" +
 						sourceFile + "</a>\n\n" +
 												
-						"Click the links above to open the source code files in the Code Editor.\n\n" +
+						"Click the links above to open the source code files in the Code Editor.\n\n"
+						+
 						
-						
-						"If you would like to run your new FE Macro, try doing so here:" +
+						"If you would like to run your new FE Macro, try doing so here...\n" +
+						"(You MUST compile the plugin, and reconfigure otsdaq for your FE Macro changes to take effect!): " +
 						"<a onclick='DesktopContent.openNewWindow(" +
 						"\"FE Macro Test\",\".h\"," + 
 						"\"/WebPath/html/FEMacroTest.html?urn=" +
 						DesktopContent._localUrnLid + //same LID as MacroMaker
 						"\",0 /*unique*/);' " +
 						"title='Click to open the FE Macro Test web app.'>" +
-						"FE Macro Test" + "</a>",
+						"FE Macro Test" + "</a>\n\n"
+						,
 						Debug.INFO_PRIORITY);
     		}
     		else    			
@@ -1726,16 +1775,23 @@
     
     function setFieldToVariable(div, seqID, index,isReadResultField)
     {
+    	Debug.log("setFieldToVariable");
+    	
     	var popupNameVariableEl = document.getElementById("popupNameVariable");
     	popupNameVariableEl.style.display = "block";
+    	
     	var nameVariablePromptEl = document.getElementById("nameVariablePrompt");
     	var textareaEl = div.previousSibling;
-		document.getElementById('popupNameVariableCancelButton').onclick = function() {
-			popupNameVariableEl.style.display = "none";
-			document.getElementById("nameVariable").value = "";
-			return;
-		};
-		if(textareaEl.value != "..." && isReadResultField) //read result field! handle with caution
+    	var currentVal = textareaEl.value;
+    	
+    	document.getElementById('popupNameVariableCancelButton').onclick = function() 
+						{
+    		popupNameVariableEl.style.display = "none";
+    		document.getElementById("nameVariable").value = "";
+    		return;
+						};
+		
+		if(currentVal != "..." && isReadResultField) //read result field! handle with caution
 		{
 			document.getElementById('popupNameVariableSaveButton').style.display = "none";
 			document.getElementById('popupNameVariableYesButton').style.display = "inline-block";
@@ -1753,7 +1809,8 @@
 				popupNameVariableEl.style.display = "none";
 			};
 		}
-		else if(!isNaN("0x"+textareaEl.value) || isReadResultField)
+		else if(!isNaN("0x"+currentVal) || currentVal == "" || //if is a number or blank 
+				isReadResultField) // or read field.. set variable name
 		{
 			nameVariablePromptEl.innerHTML = "Setting field to variable! How would you like to name it?";
 			document.getElementById('popupNameVariableSaveButton').onclick = function() {

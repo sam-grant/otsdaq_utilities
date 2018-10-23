@@ -34,8 +34,10 @@
 		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
 
 		<script>
-			var urnLid = ((window.location.search.substr(1)).split('='))[1];
-			var securityType = ((window.location.search.substr(1)).split('='))[3];
+			var params = (window.location.search.substr(1)).split('&');
+			var urnLid = params[0].split('=')[1];
+			var securityType = params[1].split('=')[1];
+			
 			Debug.log("securityType: " +  securityType);
 			Debug.log("Application URN-LID #" + urnLid);
 

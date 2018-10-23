@@ -758,9 +758,11 @@ CodeEditor.create = function() {
 			var content = encodeURIComponent(
 					document.getElementById("editableBox" + forPrimary).innerText);
 			//console.log(content,content.length);
-			
-			//remove crazy characters (or understand where they come from, they seem to be backwards (i.e. 2C and 0A are real characters))
-			content = content.replace(/%C2/g,"").replace(/%A0/g,"");
+							
+			//remove crazy characters 
+			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
+			content = content.replace(/%C2%A0%C2%A0/g,"%09").replace(/%C2%A0/g, //convert two to tab, otherwise space
+					"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
 			//console.log(content.length);
 			
 			
@@ -1078,6 +1080,10 @@ CodeEditor.create = function() {
 		var path = DesktopContent.getXMLValue(req,"path");
 		var extension = DesktopContent.getXMLValue(req,"ext");
 		var text = DesktopContent.getXMLValue(req,"content");
+		
+		//replace emacs tab character two &#160's, with \t
+		text = text.replace(new RegExp(
+				String.fromCharCode(160,160),'g'),'\t');
 		
 		//console.log(text);
 		
@@ -1488,7 +1494,12 @@ CodeEditor.create = function() {
 							cursor.endPos -= i;
 							
 						}
-					} //end end handling
+					}
+					else if(n < cursor.endNodeIndex)
+					{
+						cursor.endNodeIndex += 2; //two new elements were added in front
+					}//end end handling
+					
 				}
 			} //end cursor position update
 
@@ -1608,7 +1619,12 @@ CodeEditor.create = function() {
 								//then cursor is in second part of merger
 								--cursor.endNodeIndex;
 								cursor.endPos += val.length;	
-							} //end end handling
+							}
+							else if(n+1 < cursor.endNodeIndex)
+							{
+								//then cursor is in a later node
+								--cursor.endNodeIndex; //one node was removed
+							}//end end handling							
 						}
 					} //end cursor position update
 
@@ -1973,7 +1989,7 @@ CodeEditor.create = function() {
 			outline.push([newLineCount+1,
 						  text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
 						  "()"]);						
-			console.log("function", outline[outline.length-1],localNewLineCount);
+			//console.log("function", outline[outline.length-1],localNewLineCount);
 			
 			newLineCount += localNewLineCount;
 			i = startCi; //jump past function
@@ -2075,7 +2091,7 @@ CodeEditor.create = function() {
 			return;
 		}
 		
-		//Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 		
 				
 		if(e.ctrlKey) //handle shortcuts
@@ -2109,20 +2125,12 @@ CodeEditor.create = function() {
 			return; //if only doing short-cuts, dont handle text
 		
 		
-				
-
-		window.clearTimeout(_inputTimerHandle);
-		_inputTimerHandle = window.setTimeout(
-				function()
-				{
-			CodeEditor.editor.updateDecorations(forPrimary);				
-				}, 1000); //end setTimeout
-		
 
 		var rectangularTAB = false;
 		var blockCOMMENT = false;
 
-		if(!e.shiftKey && e.keyCode == 191) 	// / for block comment
+		if(!e.shiftKey && e.ctrlKey && 
+				e.keyCode == 191) 	// ctrl+/ for block comment
 			blockCOMMENT = true;
 		else if(e.ctrlKey)
 		{			
@@ -2163,6 +2171,8 @@ CodeEditor.create = function() {
 				return;
 		} //end ctrl key editor handling
 
+
+				
 
 		if(e.keyCode == TABKEY || rectangularTAB ||
 				blockCOMMENT)
@@ -2234,28 +2244,53 @@ CodeEditor.create = function() {
 					//steps:
 					//	determine x coordinate by 
 					//		going backwards from start until a new line is found
-					//		and counting spots
+					//		and then going forward and counting spots back to cursor
 					//	then for each line in selection
 					//		add a tab at that x coordinate (offset from newline)
 
-					//reverse-find new line
+					
 					var node,val;
 					var found = false;	
 					var x = 0;
-					var tabSz = 4; //to match eclipse!		
-					var firstCharEver = true;
-					for(n=cursor.startNodeIndex; !found && n>=0; --n)
+					var tabSz = 4; //to match eclipse!	
+					
+					//reverse-find new line
+					for(n=cursor.startNodeIndex;n>=0; --n)
 					{
 						node = el.childNodes[n];
 						val = node.textContent; //.nodeValue; //.wholeText
 
-						for(i=(n==cursor.startNodeIndex?cursor.startPos:
+						for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 								val.length-1); i>=0; --i)
-						{	
-							if(firstCharEver) //do the tab for first since we are there
+						{
+							if(val[i] == '\n')
 							{
-								firstCharEver = false;
+								//found start of line
+								found = true;
+								break;
+							}
+						}
+						if(found) break;
+					}
+					//assume at new line point (or start of file)
+					console.log("at leading newline - n",n,"i",i);
+					
+					//now return to cursor and count spots
+					found = false;
+					for(n; n<el.childNodes.length; ++n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent; //.nodeValue; //.wholeText
 
+						for(i;i<val.length;++i)
+						{
+							//exit loop when back to cursor start position
+							if(n == cursor.startNodeIndex &&
+									i == cursor.startPos)
+							{
+								found = true;
+								
+								//insert tab at first position
 								var prelength = val.length;
 
 								if(e.shiftKey) //delete leading tab
@@ -2272,23 +2307,23 @@ CodeEditor.create = function() {
 								//adjust selection to follow rectangular tabbing
 								//	so future rectangular tabbing works as expected
 								cursor.startPos += node.textContent.length - prelength;
-								continue;
-							}
-
-							if(val[i] == '\n')
-							{
-								//found start of line
-								found = true;
 								break;
 							}
-							else if(val[i] == '\t')
-								x += tabSz; //add tab num of spots
+								
+							//console.log(xcnt," vs ",x,val[i]);
+							if(val[i] == '\t')
+								x +=  tabSz - (x+tabSz)%tabSz; //jump to next multiple of tabSz
 							else 
 								++x; //add single character spot
-						} //end node text character loop
-					} //end node loop
+						}
+						
+						if(found) break;
+						
+						i = 0; //reset i for next loop
+					}					
 
 					console.log("x",x);
+					
 
 					//fast-forward to endPos through each line and handle tab at x coord								
 
@@ -2301,7 +2336,7 @@ CodeEditor.create = function() {
 						for(i=(n==cursor.startNodeIndex?cursor.startPos:
 								0);i<val.length;++i)
 						{
-							console.log(xcnt," vs ",x,val[i]);
+							//console.log(xcnt," vs ",x,val[i]);
 							if(val[i] == '\n')
 							{
 								//reset x coord count
@@ -2329,8 +2364,8 @@ CodeEditor.create = function() {
 							}
 							else if(xcnt != -1) //if counting, increase 
 							{
-								if(val[i] == '\t')
-									xcnt += tabSz; //add tab num of spots
+								if(val[i] == '\t')									
+									xcnt += tabSz - (xcnt+tabSz)%tabSz; //jump to next multiple of tabSz
 								else 
 									++xcnt; //add single character spot
 							}									
@@ -2346,8 +2381,20 @@ CodeEditor.create = function() {
 					try
 					{
 						var range = document.createRange();
-						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+//						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+						var firstEl = el.childNodes[cursor.startNodeIndex];
+						if(firstEl.firstChild)
+							firstEl = firstEl.firstChild;
+
+						var secondEl = el.childNodes[cursor.endNodeIndex];
+						if(secondEl.firstChild)
+							secondEl = secondEl.firstChild;
+
+						range.setStart(firstEl,
+								cursor.startPos);
+						range.setEnd(secondEl,
+								cursor.endPos);
 
 						var selection = window.getSelection();
 						selection.removeAllRanges();
@@ -2392,17 +2439,75 @@ CodeEditor.create = function() {
 					node = el.childNodes[n];
 					val = node.textContent; //.nodeValue; //.wholeText
 
-					for(i=(n==cursor.startNodeIndex?cursor.startPos:
+					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 							val.length-1); i>=0; --i)
 					{
 						if(val[i] == '\n')
 						{
 							if(e.shiftKey) //delete leading special string
 							{
+								var didDelete = false;
 								if(i + specialStr.length < val.length &&
 										val.indexOf(specialStr,i+1) == i+1)
+								{
 									node.textContent = val.substr(0,i+1) + 
-									val.substr(i+1+specialStr.length);											
+										val.substr(i+1+specialStr.length);
+									didDelete = true;
+								}
+								else if(specialStr == '\t')
+								{
+									//for tab case also get rid of 4-3-2-1 spaces after new line									
+									if((specialStr = "    ") && //4 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}
+									else if((specialStr = "   ") && //3 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}								
+									else if((specialStr = "  ") && //2 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}							
+									else if((specialStr = " ") && //1 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										node.textContent = val.substr(0,i+1) + 
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}
+									specialStr = '\t'; //return special string value
+								}
+								
+								//fix cursor if deleted special string
+								if(didDelete)
+								{
+									//if running out of string to keep line selected.. jump to next node
+									//	with selection
+									if(n < cursor.startNodeIndex)
+									{
+										cursor.startNodeIndex = n;
+										cursor.startPos = val.length-1;
+									}
+									else if(n == cursor.startNodeIndex && 
+											i < cursor.startPos)
+									{
+										cursor.startPos = i+1;
+									}
+								}
 							}
 							else //add leading special string
 								node.textContent = val.substr(0,i+1) + 
@@ -2438,14 +2543,62 @@ CodeEditor.create = function() {
 							if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
 
 							if(e.shiftKey) //delete leading tab
-							{											
+							{						
+								var didDelete = false;
 								if(i + specialStr.length < val.length &&
 										val.indexOf(specialStr,i+1) == i+1)
 								{
 									val = val.substr(0,i+1) + 
 											val.substr(i+1+specialStr.length);
 									node.textContent = val;
-
+									didDelete = true;
+								}
+								else if(specialStr == '\t')
+								{
+									//for tab case also get rid of 4-3-2-1 spaces after new line									
+									if((specialStr = "    ") && //4 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}							
+									else if((specialStr = "   ") && //3 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}							
+									else if((specialStr = "  ") && //2 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}						
+									else if((specialStr = " ") && //1 spaces
+											i + specialStr.length < val.length &&
+											val.indexOf(specialStr,i+1) == i+1)
+									{
+										val = val.substr(0,i+1) + 
+												val.substr(i+1+specialStr.length);
+										node.textContent = val;
+										didDelete = true;
+									}
+									
+									specialStr = '\t'; //return special string value
+								}
+								
+								//fix cursor if deleted special string
+								if(didDelete)
+								{
 									//if running out of string to keep line selected.. jump to next node
 									//	with selection
 									if(n == cursor.endNodeIndex && 
@@ -2455,7 +2608,7 @@ CodeEditor.create = function() {
 										cursor.endPos = 0;
 									}
 								}
-							}
+							} //end delete leading tab
 							else //add leading tab
 							{
 								val = val.substr(0,i+1) + specialStr + val.substr(i+1);
@@ -2474,8 +2627,21 @@ CodeEditor.create = function() {
 				try
 				{
 					var range = document.createRange();
-					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+//					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+
+					var firstEl = el.childNodes[cursor.startNodeIndex];
+					if(firstEl.firstChild)
+						firstEl = firstEl.firstChild;
+
+					var secondEl = el.childNodes[cursor.endNodeIndex];
+					if(secondEl.firstChild)
+						secondEl = secondEl.firstChild;
+
+					range.setStart(firstEl,
+							cursor.startPos);
+					range.setEnd(secondEl,
+							cursor.endPos);
 
 					var selection = window.getSelection();
 					selection.removeAllRanges();
@@ -2527,6 +2693,14 @@ CodeEditor.create = function() {
 				else
 					document.execCommand('insertHTML', false, '&#009');
 			}
+			
+			//set timeout for decoration update
+			window.clearTimeout(_inputTimerHandle);
+			_inputTimerHandle = window.setTimeout(
+					function()
+					{
+				CodeEditor.editor.updateDecorations(forPrimary);				
+					}, 1000); //end setTimeout
 
 			return;
 
