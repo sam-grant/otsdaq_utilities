@@ -2260,7 +2260,7 @@ CodeEditor.create = function() {
 						node = el.childNodes[n];
 						val = node.textContent; //.nodeValue; //.wholeText
 
-						for(i=(n==cursor.startNodeIndex?cursor.startPos:
+						for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 								val.length-1); i>=0; --i)
 						{
 							if(val[i] == '\n')
@@ -2320,52 +2320,7 @@ CodeEditor.create = function() {
 						if(found) break;
 						
 						i = 0; //reset i for next loop
-					}
-					
-//					var firstCharEver = true;
-//					for(n=cursor.startNodeIndex; !found && n>=0; --n)
-//					{
-//						node = el.childNodes[n];
-//						val = node.textContent; //.nodeValue; //.wholeText
-//
-//						for(i=(n==cursor.startNodeIndex?cursor.startPos:
-//								val.length-1); i>=0; --i)
-//						{	
-//							if(firstCharEver) //do the tab for first since we are there
-//							{
-//								firstCharEver = false;
-//
-//								var prelength = val.length;
-//
-//								if(e.shiftKey) //delete leading tab
-//								{
-//									if(i-1 >= 0 && val[i-1] == '\t')
-//										node.textContent = val.substr(0,i-1) + val.substr(i);
-//								}
-//								else //add leading tab
-//								{
-//									node.textContent = val.substr(0,i) + "\t" + val.substr(i);
-//
-//								}
-//
-//								//adjust selection to follow rectangular tabbing
-//								//	so future rectangular tabbing works as expected
-//								cursor.startPos += node.textContent.length - prelength;
-//								continue;
-//							}
-//
-//							if(val[i] == '\n')
-//							{
-//								//found start of line
-//								found = true;
-//								break;
-//							}
-//							else if(val[i] == '\t')
-//								x += tabSz - (x+tabSz)%tabSz; //jump to next multiple of tabSz
-//							else 
-//								++x; //add single character spot
-//						} //end node text character loop
-//					} //end node loop
+					}					
 
 					console.log("x",x);
 					
@@ -2484,41 +2439,74 @@ CodeEditor.create = function() {
 					node = el.childNodes[n];
 					val = node.textContent; //.nodeValue; //.wholeText
 
-					for(i=(n==cursor.startNodeIndex?cursor.startPos:
+					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 							val.length-1); i>=0; --i)
 					{
 						if(val[i] == '\n')
 						{
 							if(e.shiftKey) //delete leading special string
 							{
+								var didDelete = false;
 								if(i + specialStr.length < val.length &&
 										val.indexOf(specialStr,i+1) == i+1)
+								{
 									node.textContent = val.substr(0,i+1) + 
-										val.substr(i+1+specialStr.length);	
+										val.substr(i+1+specialStr.length);
+									didDelete = true;
+								}
 								else if(specialStr == '\t')
 								{
 									//for tab case also get rid of 4-3-2-1 spaces after new line									
 									if((specialStr = "    ") && //4 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
+									{
 										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);									
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}
 									else if((specialStr = "   ") && //3 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
+									{
 										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);									
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}								
 									else if((specialStr = "  ") && //2 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
+									{
 										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);								
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}							
 									else if((specialStr = " ") && //1 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
+									{
 										node.textContent = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);	
+											val.substr(i+1+specialStr.length);
+										didDelete = true;
+									}
 									specialStr = '\t'; //return special string value
+								}
+								
+								//fix cursor if deleted special string
+								if(didDelete)
+								{
+									//if running out of string to keep line selected.. jump to next node
+									//	with selection
+									if(n < cursor.startNodeIndex)
+									{
+										cursor.startNodeIndex = n;
+										cursor.startPos = val.length-1;
+									}
+									else if(n == cursor.startNodeIndex && 
+											i < cursor.startPos)
+									{
+										cursor.startPos = i+1;
+									}
 								}
 							}
 							else //add leading special string
