@@ -758,10 +758,11 @@ CodeEditor.create = function() {
 			var content = encodeURIComponent(
 					document.getElementById("editableBox" + forPrimary).innerText);
 			//console.log(content,content.length);
-			
+							
 			//remove crazy characters 
 			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
-			content = content.replace(/%C2%A0/g,"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
+			content = content.replace(/%C2%A0%C2%A0/g,"%09").replace(/%C2%A0/g, //convert two to tab, otherwise space
+					"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
 			//console.log(content.length);
 			
 			
@@ -1079,6 +1080,10 @@ CodeEditor.create = function() {
 		var path = DesktopContent.getXMLValue(req,"path");
 		var extension = DesktopContent.getXMLValue(req,"ext");
 		var text = DesktopContent.getXMLValue(req,"content");
+		
+		//replace emacs tab character two &#160's, with \t
+		text = text.replace(new RegExp(
+				String.fromCharCode(160,160),'g'),'\t');
 		
 		//console.log(text);
 		
