@@ -330,7 +330,7 @@ CodeEditor.create = function() {
 									"class":"controlsButton",
 									"style":"float:left;",
 									"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
-									"title": "Save the file (Ctrl + S)",
+									"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
 							},"" /*innerHTML*/, 0 /*doCloseTag*/);
 					{
 						str += htmlOpen("div",
@@ -374,7 +374,7 @@ CodeEditor.create = function() {
 								"class":"controlsButton",
 								"style":"float:right",
 								"onclick":"CodeEditor.editor.toggleView();",
-								"title":"Toggle Verical/Horizontal Split-view",
+								"title":"Toggle Verical/Horizontal Split-view (Ctrl + W)",
 						},"" /*innerHTML*/, 0 /*doCloseTag*/);
 				{
 
@@ -2282,19 +2282,19 @@ CodeEditor.create = function() {
 						
 		if(e.ctrlKey) //handle shortcuts
 		{			
-			if(e.keyCode == 83) 		// S
+			if(e.keyCode == 83) 		// S for file save
 			{
 				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 68) 	// D
+			else if(e.keyCode == 68) 	// D for directory toggle
 			{
 				CodeEditor.editor.toggleDirectoryNav(forPrimary);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 66) 	// B
+			else if(e.keyCode == 66) 	// B for incremental build
 			{
 				CodeEditor.editor.build();
 				e.preventDefault();
@@ -2303,6 +2303,12 @@ CodeEditor.create = function() {
 			else if(e.keyCode == 78) 	// N for clean build
 			{
 				CodeEditor.editor.build(true /*clean*/);
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 87) 	// W for view toggle
+			{
+				CodeEditor.editor.toggleView();
 				e.preventDefault();
 				return;
 			}
