@@ -26,6 +26,10 @@
 	#clearDiv {
 		clear: both;
 	}
+	
+	input, select {
+		padding: 1px;
+	}	
 		
 	/*firefox seems to put an extra pixel of letter-spacing in bold words*/
 	@-moz-document url-prefix() {  /*target firefox*/

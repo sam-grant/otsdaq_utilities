@@ -222,7 +222,8 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 	}
 	
 	//special quick decoration for a variable
-	Debug.logv = function(v,num) { Debug.log(varToString({v}) + ": " + v,	num); }
+	//FIXME -- logv doesnt work because of varToString
+	//Debug.logv = function(v,num) { Debug.log(varToString({v}) + ": " + v,	num); }
 }
 else	//IF DEBUG MODE IS OFF!
 {	//do nothing with log functions

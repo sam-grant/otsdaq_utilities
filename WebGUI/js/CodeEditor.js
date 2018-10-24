@@ -132,7 +132,7 @@ CodeEditor.create = function() {
 
 	var _undoStackLatestIndex = [-1,-1]; //when empty, -1, for secondary/primary
 	var _undoStack_MAX_SIZE = 10;
-	var _undoStack = [[],[]]; //newest are placed at _undoStackLatestIndex+1, for secondary/primary
+	var _undoStack = [[],[]]; //newest,time are placed at _undoStackLatestIndex+1, for secondary/primary
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -471,7 +471,8 @@ CodeEditor.create = function() {
 							function(e)
 							{
 				var forPrimary = this.id[this.id.length-1]|0;				
-				Debug.log("keydown handler for editableBox" + forPrimary);
+				
+				//Debug.log("keydown handler for editableBox" + forPrimary);
 				CodeEditor.editor.keyDownHandler(e,forPrimary);
 				e.stopPropagation();
 							}); //end addEventListener
@@ -865,9 +866,45 @@ CodeEditor.create = function() {
 	this.undo = function(forPrimary,redo)
 	{
 		Debug.log("undo() forPrimary=" + forPrimary + " redo=" + redo);
-		Debug.logv(_undoStackLatestIndex[forPrimary]);
+		console.log("undo stack index",_undoStackLatestIndex[forPrimary]);
+		console.log("undo stack length",_undoStack[forPrimary].length);
 		
 		console.log("undo stack",_undoStack[forPrimary]);
+		
+		var newIndex = _undoStackLatestIndex[forPrimary];
+		newIndex += redo?1:-1;
+		if(newIndex >= _undoStack_MAX_SIZE)
+			newIndex = 0; //wrap around
+		else if(newIndex < 0)
+			newIndex = _undoStack[forPrimary].length-1; //wrap around
+		
+		console.log("new stack index",newIndex);
+		
+		//do not allow wrap around in time
+		if(!redo && //assert back in time
+				_undoStack[forPrimary][newIndex][1] >= 
+				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1])
+		{
+			Debug.log("Reached end of undo history...",Debug.WARN_PRIORITY);
+			return;
+		}		
+		if(redo && //assert forward in time
+				(newIndex >= _undoStack[forPrimary].length ||
+				_undoStack[forPrimary][newIndex][1] <= 
+				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1]))
+		{
+			Debug.log("Reached end of redo history...",Debug.WARN_PRIORITY);
+			return;
+		}
+		
+		//here, accept change!
+		_undoStackLatestIndex[forPrimary] = newIndex;
+		console.log("result stack index",newIndex);
+				
+		document.getElementById("editableBox" + forPrimary).textContent = 
+				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0];
+		CodeEditor.editor.updateDecorations(forPrimary);
+		
 	} //end undo()
 
 	//=====================================================================================
@@ -2022,32 +2059,38 @@ CodeEditor.create = function() {
 		
 		var text = document.getElementById("editableBox" + forPrimary).textContent;
 		
-		//localHandleStackManagement();
+		localHandleStackManagement();
 		//================
 		//handle undo stack management
 		//	if new, then place in stack
-//		function localHandleStackManagement()
-//		{
-//			var addSnapshot = false;
-//			if(_undoStackLatestIndex != -1)
-//			{
-//				//compare with last to see if different
-//				if(_undoStack[forPrimary][_undoStackLatestIndex] == text)
-//			}
-//			else //else first, so add to stack
-//				addSnapshot = true;
-//			
-//			
-//			if(addSnapshot) 
-//			{ //add to stack
-//				++_undoStackLatestIndex[forPrimary];
-//				if(_undoStackLatestIndex[forPrimary] >= _undoStack_MAX_SIZE)
-//					_undoStackLatestIndex[forPrimary] = 0; //wrap around
-//				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]] = text;
-//				
-//				console.log("undo stack",_undoStack[forPrimary]);
-//			}
-//		} //end localHandleStackManagement()
+		function localHandleStackManagement()
+		{
+			var addSnapshot = false;
+			var now = Date.now() /*milliseconds*/;
+			if(_undoStackLatestIndex[forPrimary] != -1)
+			{
+				//compare with last to see if different
+				//	and that it has been 2 seconds
+				if(2*1000 < now - _undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1] &&
+						_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0] != text)
+					addSnapshot = true;
+			}
+			else //else first, so add to stack
+				addSnapshot = true;
+			
+			
+			if(addSnapshot) 
+			{ //add to stack
+				++_undoStackLatestIndex[forPrimary];
+				if(_undoStackLatestIndex[forPrimary] >= _undoStack_MAX_SIZE)
+					_undoStackLatestIndex[forPrimary] = 0; //wrap around
+				
+				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]] = 
+						[text,now];
+				
+				console.log("snapshot added to stack",_undoStack[forPrimary]);
+			}
+		} //end localHandleStackManagement()
 				
 		
 		var starti;
@@ -2235,7 +2278,7 @@ CodeEditor.create = function() {
 			return;
 		}
 		
-		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		//Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 						
 		if(e.ctrlKey) //handle shortcuts
 		{			
@@ -2859,7 +2902,8 @@ CodeEditor.create = function() {
 							i = cursor.startPos;
 							node = el.childNodes[cursor.startNodeIndex];
 							val = node.textContent; //.nodeValue; //.wholeText
-							console.log(node,val,val[i-1]);
+							
+							//console.log(node,val,val[i-1]);
 
 							if(val[i-1] == '\t')
 							{

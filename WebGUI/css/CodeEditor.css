@@ -203,7 +203,12 @@
 		.editableBox {
 			white-space: 			pre; /*nowrap;*/
 			tab-size: 				4;
-		}
+			-moz-tab-size:			4;
+		}		
+		.editableBox * {
+			user-select: 			text; 
+			-moz-user-select: 		text; /*so that firefox allows highlighting decorated text*/			
+		}		
 		.editableBoxLeftMargin {
 			white-space: 			pre; /*nowrap;*/
 		    text-align: 			right;
