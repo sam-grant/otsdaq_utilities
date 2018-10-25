@@ -121,6 +121,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getParameter(index, name)
 //	DesktopContent.getDesktopParameter(index, name)
 //	DesktopContent.getDesktopWindowTitle()
+//	DesktopContent.showLoading()
+//	DesktopContent.hideLoading()
 
 //"private" function list:
 //	DesktopContent.init()
@@ -508,26 +510,40 @@ DesktopContent.showLoading = function()	{
 	//setup Loading.. animation
 	var loadBoxStr = "..";
 	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
+	
+	/////////////////////////
 	var loadBoxAnimationFunction = function() {
 		if(loadBoxStr.length > 3) loadBoxStr = "";
 		else
 			loadBoxStr += ".";
 		el.innerHTML = "Loading" + loadBoxStr;
-	}; 
+	};  //end loadBoxAnimationFunction
 	
 	window.clearInterval(DesktopContent._loadBoxTimer);
 	DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
-}
+} //end showLoading()
 //=====================================================================================
+DesktopContent._loadBoxHideTimer = 0;
 DesktopContent.hideLoading = function()	{
 	
 	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
 		return;
 	
-	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-	Debug.log("DesktopContent.hideLoading");
-	document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-}
+	//hide in a little bit, to provide more continuity to 
+	//	back to back loading box requests
+	window.clearInterval(DesktopContent._loadBoxHideTimer);
+	DesktopContent._loadBoxHideTimer = window.setInterval(
+			localHideLoadBox, 300);
+	
+	/////////////////////////
+	function localHideLoadBox()
+	{
+		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+		Debug.log("DesktopContent.hideLoading");
+		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+	} //end localHideLoadBox	
+	
+} //end hideLoading()
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data

@@ -97,11 +97,14 @@ CodeEditor.create = function() {
 	//	undo(forPrimary,redo)
 	//	openDirectory(forPrimary,path)
 	//	handleDirectoryContent(forPrimary,req)
-	//	openFile(forPrimary,path,extension,doConfirm)
+	//	openFile(forPrimary,path,extension,doConfirm,gotoLine)
+	//	gotoLine(forPrimary,line)
 	//	handleFileContent(forPrimary,req)
 	//	updateDecorations(forPrimary,insertNewLine)
+	//		localInsertNewLine()
 	//		localInsertLabel(startPos)
 	//	updateOutline(forPrimary)
+	//		localHandleJsOutline()
 	//	handleOutlineSelect(forPrimary)
 	//	updateLastSave(forPrimary)	
 	//	keyDownHandler(e,forPrimary,shortcutsOnly)
@@ -152,20 +155,25 @@ CodeEditor.create = function() {
 
 		//extract GET parameters
 		var parameterStartFile = [
-								  //"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
-								  //"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface.h",
-								  //"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface_interface.cc",
-								  //"/CMakeLists.txt", 
-								  //"/CMakeLists.txt",
-								  DesktopContent.getParameter(0,"startFilePrimary"),
-								  DesktopContent.getParameter(0,"startFileSecondary")
-		   ];
+									//"/otsdaq/otsdaq-core/CoreSupervisors/version.h",
+									//"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface.h",
+									//"/otsdaq_components/otsdaq-components/FEInterfaces/FEOtsUDPTemplateInterface_interface.cc",
+									//"/CMakeLists.txt", 
+									//"/CMakeLists.txt",
+									DesktopContent.getParameter(0,"startFilePrimary"),
+									DesktopContent.getParameter(0,"startFileSecondary")
+			 ];
+		var parameterGotoLine = [
+									DesktopContent.getParameter(0,"gotoLinePrimary"),
+									DesktopContent.getParameter(0,"gotoLineSecondary")
+			];
 		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
 		if(parameterViewMode !== undefined) //set view mode if parameter
 		{
 			_viewMode = parameterViewMode|0;
 		}
 		console.log("parameterStartFile",parameterStartFile);
+		console.log("parameterGotoLine",parameterGotoLine);
 		console.log("parameterViewMode",parameterViewMode);
 		
 		//_viewMode = 2; for debugging
@@ -199,7 +207,8 @@ CodeEditor.create = function() {
 			
 			var fileSplit; 
 			
-			console.log("getDirectoryContent",req);
+			//console.log("getDirectoryContent",req);
+			
 			
 			CodeEditor.editor.handleDirectoryContent(1 /*forPrimary*/, req);
 			CodeEditor.editor.handleDirectoryContent(0 /*forPrimary*/, req);
@@ -209,10 +218,15 @@ CodeEditor.create = function() {
 			if(parameterStartFile[0] && parameterStartFile[0] != "")
 				fileSplit = parameterStartFile[0].split('.');
 			
+			
+			
 			if(fileSplit.length == 2) //show shortcut file
-				CodeEditor.editor.openFile(1 /*forPrimary*/, 
+				CodeEditor.editor.openFile(
+						1 /*forPrimary*/, 
 						fileSplit[0]	/*path*/,
-						fileSplit[1] /*extension*/);
+						fileSplit[1] /*extension*/, 
+						false /*doConfirm*/,
+						parameterGotoLine[0 /*primary goto line*/] /*gotoLine*/);
 			else //show base directory nav
 				CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
 			
@@ -222,15 +236,18 @@ CodeEditor.create = function() {
 				fileSplit = parameterStartFile[1].split('.');
 
 			if(fileSplit.length == 2) //show shortcut file
-				CodeEditor.editor.openFile(0 /*forPrimary*/, 
+				CodeEditor.editor.openFile(
+						0 /*forPrimary*/, 
 						fileSplit[0]	/*path*/,
-						fileSplit[1] /*extension*/);
+						fileSplit[1] /*extension*/, 
+						false /*doConfirm*/,
+						parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
 			else //show base directory nav
 				CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
 			
 
 			_activePaneIsPrimary = 1; //default active pane to primary
-		    
+							
 				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 					
 
@@ -600,7 +617,7 @@ CodeEditor.create = function() {
 		//	use ratio of new-size/original-size to determine proper size
 
 		var w = window.innerWidth | 0;
-		var h = window.innerHeight | 0;	  
+		var h = window.innerHeight | 0;		
 
 		if(w < _WINDOW_MIN_SZ)
 			w = _WINDOW_MIN_SZ;
@@ -1076,7 +1093,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//openFile ~~
 	//	open the file to text editor
-	this.openFile = function(forPrimary,path,extension,doConfirm)
+	this.openFile = function(forPrimary,path,extension,doConfirm,gotoLine)
 	{
 		forPrimary = forPrimary?1:0;
 		
@@ -1113,14 +1130,37 @@ CodeEditor.create = function() {
 					return;
 				}
 
-				CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
-				CodeEditor.editor.handleFileContent(forPrimary, req);			
-
+				DesktopContent.showLoading();
+				try
+				{
+					CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
+					CodeEditor.editor.handleFileContent(forPrimary, req);		
+	
+					if(gotoLine !== undefined)
+						CodeEditor.editor.gotoLine(forPrimary,gotoLine);
+				}
+				catch(e)
+				{
+					Debug.log("Ignoring error handling file open: " + e);
+				}
+				console.log(DesktopContent._loadBox.style.display);
+				DesktopContent.hideLoading();
 
 					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
 	} //end openFile()
-	
+
+	//=====================================================================================
+	//gotoLine ~~
+	this.gotoLine = function(forPrimary,line)
+	{
+		line = line | 0;
+		if(line < 1) line = 1;
+		if(line > _numberOfLines[forPrimary])
+			line = _numberOfLines[forPrimary];
+		Debug.log("Goto line number " + line);
+		window.location.href = "#" + forPrimary + "L" + line;
+	} //end gotoLine
 
 	//=====================================================================================
 	//handleFileContent ~~
@@ -1320,6 +1360,8 @@ CodeEditor.create = function() {
 				"INFO_PRIORITY"			: _DECORATION_GREEN,
 				"LOW_PRIORITY"			: _DECORATION_GREEN,
 				
+				"Math"					: _DECORATION_GREEN,
+				"String"				: _DECORATION_GREEN,
 				"window"				: _DECORATION_GREEN,
 				"document"				: _DECORATION_GREEN,
 				"textContent"			: _DECORATION_GREEN,
@@ -1376,10 +1418,10 @@ CodeEditor.create = function() {
 		try
 		{
 			range = window.getSelection().getRangeAt(0);
-			
+
 			cursor.startPos = range.startOffset;
 			cursor.endPos = range.endOffset;
-			
+
 			//find start and end node index
 			for(i=0;i<el.childNodes.length;++i)
 			{
@@ -1394,45 +1436,122 @@ CodeEditor.create = function() {
 					cursor.endNodeIndex = i;
 			}
 
-			console.log("cursor",cursor);			
+			console.log("cursor",cursor);
+			
 			if(insertNewLine)
-			{
-				Debug.log("Inserting new line...");
-				
-				
-				//delete all nodes between endNode and startNode
-				if(cursor.endNodeIndex > cursor.startNodeIndex)
-				{
-					//handle end node first, which is a subset effect
-					val = el.childNodes[cursor.endNodeIndex].textContent;
-					val = val.substr(cursor.endPos);
-					el.childNodes[cursor.endNodeIndex].textContent = val;
-					--cursor.endNodeIndex;
-					while(cursor.endNodeIndex > cursor.startNodeIndex)
-					{
-						//delete node
-						el.removeChild(el.childNodes[cursor.endNodeIndex]);
-						--cursor.endNodeIndex;
-					}
-					//place end pos to delete the remainder of current node
-					cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
-				}
-				
-				val = el.childNodes[cursor.startNodeIndex].textContent;
-				val = val.substr(0,cursor.startPos) + '\n' + 
-						val.substr(cursor.endPos);
-				el.childNodes[cursor.startNodeIndex].textContent = val;
-				++cursor.startPos;
-				cursor.endNodeIndex = cursor.startNodeIndex;
-				cursor.endPos = cursor.startPos;
-
-				console.log("cursor",cursor);			
-			}
+				localInsertNewLine();
+			
 		}
 		catch(err)
 		{
 			console.log("err",err);
 		}
+		
+		
+		/////////////////////////////////
+		function localInsertNewLine(startPos)
+		{
+			Debug.log("Inserting new line...");
+			
+			var node,val;
+			var found = false;	
+			var x = 0;
+			var tabSz = 4; //to match eclipse!	
+			
+			//steps:
+			//	delete all text in selection (to be replaced by newline)
+			//	reverse find previous new line
+			//	capture previous line tabbing/whitespace
+			//	use previous line tabbing/whitespace to insert white space after newline
+			//		if { then give extra tab
+
+			//delete all nodes between endNode and startNode
+			if(cursor.endNodeIndex > cursor.startNodeIndex)
+			{
+				//handle end node first, which is a subset effect
+				val = el.childNodes[cursor.endNodeIndex].textContent;
+				val = val.substr(cursor.endPos);
+				el.childNodes[cursor.endNodeIndex].textContent = val;
+				--cursor.endNodeIndex;
+				while(cursor.endNodeIndex > cursor.startNodeIndex)
+				{
+					//delete node
+					el.removeChild(el.childNodes[cursor.endNodeIndex]);
+					--cursor.endNodeIndex;
+				}
+				//place end pos to delete the remainder of current node
+				cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
+			}
+
+			//reverse-find new line
+			for(n=cursor.startNodeIndex;n>=0; --n)
+			{
+				node = el.childNodes[n];
+				val = node.textContent; //.nodeValue; //.wholeText
+
+				for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+						val.length-1); i>=0; --i)
+				{
+					if(val[i] == '\n')
+					{
+						//found start of line
+						found = true;
+						break;
+					}
+				}
+				if(found) break;
+			} //end reverse find new line loop
+			
+			//assume at new line point (or start of file)
+			console.log("at leading newline - n",n,"i",i);
+			
+			//now return to cursor and aggregate white space
+			found = false;
+			var whiteSpaceString = "";
+			++i; //skip past new line
+			for(n; n<el.childNodes.length; ++n)
+			{
+				node = el.childNodes[n];
+				val = node.textContent;
+
+				for(i;i<val.length;++i)
+				{
+					//exit loop when not white space found
+					if(val[i] != '\t' && val[i] != ' ')
+					{
+						found = true;
+						break;
+					}
+
+					whiteSpaceString += val[i];
+				}
+
+				if(found) break;
+
+				i = 0; //reset i for next loop
+			} //end white non-white space loop					
+
+			
+			console.log("val[i]",val[i]);
+			if(val[i] == '{')
+				whiteSpaceString += '\t';
+			
+			console.log("whiteSpaceString",whiteSpaceString.length);
+
+			val = el.childNodes[cursor.startNodeIndex].textContent;
+			val = val.substr(0,cursor.startPos) + '\n' + 
+					whiteSpaceString +
+					val.substr(cursor.endPos);
+			el.childNodes[cursor.startNodeIndex].textContent = val;
+			
+			cursor.startPos += 1 + whiteSpaceString.length;
+			cursor.endNodeIndex = cursor.startNodeIndex;
+			cursor.endPos = cursor.startPos;
+
+			console.log("cursor after newline",cursor);	
+			
+		} //end localInsertNewLine()
+			
 
 
 		var n;
@@ -1449,7 +1568,7 @@ CodeEditor.create = function() {
 		if(	_fileExtension[forPrimary] == 'html' ||
 				_fileExtension[forPrimary] == 'js')
 			fileDecorType = "js"; //js style
-		if(_fileExtension[forPrimary][0] == 'c' || 
+		else if(_fileExtension[forPrimary][0] == 'c' || 
 				_fileExtension[forPrimary][0] == 'C' ||
 				_fileExtension[forPrimary][0] == 'h' ||
 				_fileExtension[forPrimary][0] == 'j')
@@ -1463,6 +1582,8 @@ CodeEditor.create = function() {
 		
 		var startOfWord = -1;
 		var startOfString = -1;
+		var stringQuoteChar; // " or '
+		var escapeCount; //to identify escape \\ even number
 		var startOfComment = -1;
 		var firstSpecialStringStartHandling = true;
 		var firstSpecialStringEndHandling = true;
@@ -1710,15 +1831,20 @@ CodeEditor.create = function() {
 					//	then if special word
 					if(startOfComment == -1 && ( //string handling
 							startOfString != -1 ||
-							(prevChar != '\\' && val[i] == '"')))
-					{
-						if(startOfString == -1 && val[i] == '"') //start string
+							(prevChar != '\\' && val[i] == '"') ||
+							(prevChar != '\\' && val[i] == "'")
+							))
+					{						
+						if(startOfString == -1 && //start string
+								(val[i] == '"' || val[i] == "'")) 
 						{
 							startOfString = i;
+							stringQuoteChar = val[i];
+							
 							firstSpecialStringStartHandling = true;
 							firstSpecialStringEndHandling = true;
 						}
-						else if(val[i] == '"')	//end string
+						else if(prevChar != '\\' && val[i] == stringQuoteChar)	//end string
 						{	
 							++i; //include " in label
 							specialString = val.substr(startOfString,i-startOfString);
@@ -1788,8 +1914,20 @@ CodeEditor.create = function() {
 							startOfWord = -1;
 					}
 					
-					prevChar = val[i]; //save previous character (e.g. to check for quote escape)
-					
+					//track previous character and handle escape count
+					if(prevChar == '\\' && val[i] == '\\')
+					{
+						++escapeCount; //increase escape count
+						if(escapeCount%2 == 0) //if even, then not an escape
+							prevChar = ''; //clear escape
+						else //if odd, then treat as an escape
+							prevChar = '\\';
+					}
+					else
+					{
+						escapeCount = 1;
+						prevChar = val[i]; //save previous character (e.g. to check for quote escape)
+					}
 				} //end node string value loop
 				
 
@@ -1926,7 +2064,21 @@ CodeEditor.create = function() {
 
 							}
 							
-							prevChar = val[i]; //save previous character (e.g. to check for quote escape)
+							//track previous character and handle escape count
+							if(prevChar == '\\' && val[i] == '\\')
+							{
+								++escapeCount; //increase escape count
+								if(escapeCount%2 == 0) //if even, then not an escape
+									prevChar = ''; //clear escape
+								else //if odd, then treat as an escape
+									prevChar = '\\';
+							}
+							else
+							{
+								escapeCount = 1;
+								prevChar = val[i]; //save previous character (e.g. to check for quote escape)
+							}
+							
 						} //end node string value loop
 					
 						if(closedString) break; //exit outer loop 
@@ -2107,12 +2259,19 @@ CodeEditor.create = function() {
 		var fail;
 		
 		var isCsource = _fileExtension[forPrimary] == "cc";
+		var isJsSource = _fileExtension[forPrimary] == "js";
+
+		if(isJsSource)
+			localHandleJsOutline();
 		
 		for(i=0;i<text.length;++i)
 		{
 			if(text[i] == '\n') {++newLineCount; continue;}
 			
-			if(!isCsource) continue; // only look for functions in C++ source code
+			if(!isCsource) 
+			{
+				continue; // only look for functions in C++ source code
+			}
 			
 			if(i+1 >= text.length || 
 					text[i] != ':' ||
@@ -2172,8 +2331,8 @@ CodeEditor.create = function() {
 			
 			//else found a function, record line number and name
 			outline.push([newLineCount+1,
-						  text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
-						  "()"]);						
+							text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
+							"()"]);						
 			//console.log("function", outline[outline.length-1],localNewLineCount);
 			
 			newLineCount += localNewLineCount;
@@ -2219,6 +2378,8 @@ CodeEditor.create = function() {
 						"id":"textEditorOutlineSelect" + forPrimary,
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
+						"onclick": 
+							"event.stopPropagation();",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<option value='0'>Jump to a Line Number (Ctrl + L)</option>"; //blank option
 		for(i=0;i<outline.length;++i)
@@ -2229,10 +2390,23 @@ CodeEditor.create = function() {
 			for(j=text.length;j<12;++j)
 				str += "&nbsp;"; //create fixed spacing for name
 			str += outline[i][1];
-			str += "</option>";							  
+			str += "</option>";								
 		}
 		str += "</select>"; //end textEditorOutlineSelect
 		document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
+		
+		
+		///////////////////////////
+		// localHandleJsOutline
+		function localHandleJsOutline()
+		{
+			i = 0;
+			while((i=text.indexOf("function",i+10)) > 0)
+			{
+				console.log(text.substr(i-30,100));				
+			} //end function search
+			
+		} //end localHandleJsOutline
 		
 	} //end updateOutline()
 
@@ -2354,12 +2528,8 @@ CodeEditor.create = function() {
 						/*func*/
 						function(line) 
 						{
-					line = line | 0;
-					if(line < 1) line = 1;
-					if(line > _numberOfLines[forPrimary])
-						line = _numberOfLines[forPrimary];
-					Debug.log("Goto line number " + line);
-					window.location.href = "#" + forPrimary + "L" + line;
+					Debug.log("Going to line... " + line);
+					CodeEditor.editor.gotoLine(forPrimary,line);
 						}, /*val*/ undefined, 
 						/*bgColor*/ undefined,
 						/*textColor*/ undefined,
@@ -2669,7 +2839,7 @@ CodeEditor.create = function() {
 //								else if(specialStr == '\t')
 //								{
 //									//for tab case also get rid of 4-3-2-1 spaces after new line									
-//									if((specialStr = "    ") && //4 spaces
+//									if((specialStr = " 	 ") && //4 spaces
 //											i + specialStr.length < val.length &&
 //											val.indexOf(specialStr,i+1) == i+1)
 //									{
@@ -2677,7 +2847,7 @@ CodeEditor.create = function() {
 //											val.substr(i+1+specialStr.length);
 //										didDelete = true;
 //									}
-//									else if((specialStr = "   ") && //3 spaces
+//									else if((specialStr = " 	") && //3 spaces
 //											i + specialStr.length < val.length &&
 //											val.indexOf(specialStr,i+1) == i+1)
 //									{
@@ -2772,7 +2942,7 @@ CodeEditor.create = function() {
 								else if(specialStr == '\t')
 								{
 									//for tab case also get rid of 4-3-2-1 spaces after new line									
-									if((specialStr = "    ") && //4 spaces
+									if((specialStr = " 	 ") && //4 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
 									{
@@ -2781,7 +2951,7 @@ CodeEditor.create = function() {
 										node.textContent = val;
 										didDelete = true;
 									}							
-									else if((specialStr = "   ") && //3 spaces
+									else if((specialStr = " 	") && //3 spaces
 											i + specialStr.length < val.length &&
 											val.indexOf(specialStr,i+1) == i+1)
 									{
