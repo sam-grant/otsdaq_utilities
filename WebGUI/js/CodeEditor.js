@@ -104,6 +104,7 @@ CodeEditor.create = function() {
 	//		localInsertNewLine()
 	//		localInsertLabel(startPos)
 	//	updateOutline(forPrimary)
+	//		localHandleCcOutline()
 	//		localHandleJsOutline()
 	//	handleOutlineSelect(forPrimary)
 	//	updateLastSave(forPrimary)	
@@ -2389,91 +2390,56 @@ CodeEditor.create = function() {
 		var endPi, startCi;
 		var newLinei;
 		var localNewLineCount;
+
 		var newLineCount = 0;
 		var outline = []; //line number and name
 		outline.push([1,"Top"]); //always include top
-		var i,j;
-		var fail;
+		var i,j,k;
+		var fail, found;
 		
-		var isCsource = _fileExtension[forPrimary] == "cc";
+		var isCcSource = _fileExtension[forPrimary] == "cc";
 		var isJsSource = _fileExtension[forPrimary] == "js";
-
-		if(isJsSource)
-			localHandleJsOutline();
+		
+		var indicatorIndex = 0;
+		var indicator = "";
+		if(isCcSource) indicator = "::";
+		if(isJsSource) indicator = "function";
 		
 		for(i=0;i<text.length;++i)
 		{
-			if(text[i] == '\n') {++newLineCount; continue;}
-			
-			if(!isCsource) 
+			if(text[i] == '\n') 
 			{
-				continue; // only look for functions in C++ source code
+				++newLineCount;
+				indicatorIndex = 0; //reset
+				continue;
 			}
 			
-			if(i+1 >= text.length || 
-					text[i] != ':' ||
-					text[i+1] != ':') continue;
-			
-			starti = i; //text.indexOf("::",starti)
-			endi = text.indexOf('(',starti+3);
-			startCi = text.indexOf('{',endi+2);
-			endPi = text.lastIndexOf(')',startCi-1);
-			
-			if(endi < 0 || endPi < 0 || startCi < 0)
+			//find indicators
+			if(text[i] == indicator[indicatorIndex])
 			{
-				++i; //skip ahead of :'s
-				continue; //need all markers
+				++indicatorIndex;
+				if(indicatorIndex == indicator.length)
+				{
+					//found entire indicator!
+					//Debug.log("found indicator " + indicator + " i:" + i);
+					
+					//look for thing to outline					
+					if(isCcSource)
+						str = localHandleCcOutline();
+					else if(isJsSource)
+						str = localHandleJsOutline();
+					
+					if(str)
+					{
+						//have a new outline thing
+						outline.push([newLineCount+1,
+									  str + 
+									  "()"]);						
+					}
+				}
 			}
-			fail = false;
-			
-			//consider string without parameters
-			str = text.substr(starti,endi-starti) + 
-					text.substr(endPi+1,startCi-(endPi+1));			
-			//strLength = str.length;
-			//str = str.replace(/\s+/g,''); //remove all whitespace
-			//console.log(str);
-
-			//console.log("consider ", str);
-			
-			newLinei = 0;
-			localNewLineCount = 0; //count new lines in substr
-			for(j=0;!fail && j<str.length;++j)
-			{
-				if(str[j] == '\n')
-					++localNewLineCount;
-				else if(str[j] == ';')
-					fail = true;
-			}
-			if(localNewLineCount > 3 || //not too many new lines without params
-					fail) //and no ;'s
-			{
-				++i; //skip ahead of :'s
-				continue; //skip non candidates
-			} 
-			
-			//else check parameters
-			for(j=endi;!fail && j<endPi;++j)
-			{
-				if(text[j] == '\n')
-					++localNewLineCount;
-				else if(text[j] == ';')
-					fail = true;
-			}
-			if(fail)
-			{
-				++i; //skip ahead of :'s
-				continue; //skip non candidates
-			} 						
-			
-			
-			//else found a function, record line number and name
-			outline.push([newLineCount+1,
-							text.substr(starti+2,endi-starti-2).replace(/\s+/g,'') + 
-							"()"]);						
-			//console.log("function", outline[outline.length-1],localNewLineCount);
-			
-			newLineCount += localNewLineCount;
-			i = startCi; //jump past function
+			else
+				indicatorIndex = 0; //reset
 			
 		} // end text content char loop
 		
@@ -2495,7 +2461,7 @@ CodeEditor.create = function() {
 		_numberOfLines[forPrimary] = newLineCount;
 		//window.location.href = "#L220";
 		
-		if(!isCsource)
+		if(!isCcSource && !isJsSource)
 		{
 			//generate simple outline for non C++ source
 			i = (newLineCount/2)|0;			
@@ -2519,12 +2485,18 @@ CodeEditor.create = function() {
 							"event.stopPropagation();",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<option value='0'>Jump to a Line Number (Ctrl + L)</option>"; //blank option
+		
+		found = false;
 		for(i=0;i<outline.length;++i)
 		{
 			str += "<option value='" + (outline[i][0]-2) + "'>";
 			text = "#" + outline[i][0];
 			str += text;
-			for(j=text.length;j<12;++j)
+			
+			//if local then put more spacing
+			found = (outline[i][1].indexOf("local") == 0); 
+				
+			for(j=text.length;j<(found?20:12);++j)
 				str += "&nbsp;"; //create fixed spacing for name
 			str += outline[i][1];
 			str += "</option>";								
@@ -2532,18 +2504,129 @@ CodeEditor.create = function() {
 		str += "</select>"; //end textEditorOutlineSelect
 		document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
 		
+		///////////////////////////
+		// localHandleCcOutline
+		function localHandleCcOutline()
+		{		
+			if(startCi && i < startCi) 
+				return undefined; //reject if within last outlined thing
+			
+			starti = i-1; //text.indexOf("::",starti)+2
+			
+			endi = -1;
+			startCi = -1;
+			endPi = -1;
+
+			//do this:
+			//			endi = text.indexOf('(',starti+3);
+			//			startCi = text.indexOf('{',endi+2);
+			//			endPi = text.lastIndexOf(')',startCi-1);
+			
+			for(j=i+2;j<text.length;++j)
+			{
+				if(text[j] == ';') //any semi-colon is a deal killer
+					return undefined;
+				if(endi < 0) //first find end of name
+				{
+					if(text[j] == '(')
+						endi = j++; //found end of name, and skip ahead
+				}
+				else if(startCi < 0)
+				{
+					if(text[j] == '{')
+					{
+						startCi = j--; //found start of curly brackets, and exit loop
+						break;
+					}
+				}
+			}
+			
+			//have endi and startCi
+			
+			if(endi < 0 || startCi < 0)
+			{
+				return undefined;
+			}
+			
+			//find endPi
+			
+			for(j;j>endi;--j)
+			{
+				if(text[j] == ')')
+				{
+					endPi = j; //found end of parameters
+					break;
+				}
+			}
+
+			if(endPi < 0)
+			{
+				return undefined;
+			}
+			
+			//found key moments with no ';', done!
+
+			return text.substr(starti+2,endi-starti-2).replace(/\s+/g,'');			
+			
+		} //end localHandleCcOutline()
 		
 		///////////////////////////
 		// localHandleJsOutline
 		function localHandleJsOutline()
-		{
-			i = 0;
-			while((i=text.indexOf("function",i+10)) > 0)
+		{	
+			if(text[i + 1] == '(')
 			{
-				console.log(text.substr(i-30,100));				
-			} //end function search
+				//console.log("=style",text.substr(i-30,100));
+
+				found = false; //init
+
+				//look backward for =, and only accept \t or space					
+				for(j=i-1-("function").length;j>=0;--j)
+				{
+					if(text[j] == '=')
+					{
+						//found next phase
+						found = true;
+						k = j; //save = pos							
+					}
+					else if(!(text[j]== ' ' || text[j] == '\t' ||
+							(text[j] == '=' && !found)))
+						break; //give up on this function if not white space or =
+				}
+
+				if(found) 
+				{
+					//found = sign so now find last character
+					for(j;j>=0;--j)
+					{
+						if(text[j] == ' ' || text[j] == '\t' || 
+								text[j] == '\n')
+						{
+							//found white space on other side, so done!							
+							return text.substr(j+1,k-j-1).trim();
+						}
+					}
+				}
+			} //end handling for backward = style js function
+			else
+			{
+				//console.log("fwd style",text.substr(i,30));
+				
+				//look forward until new line or ( 				
+				for(j=i+2;j<text.length;++j)
+				{
+					if(text[j] == '\n')
+						break;
+					else if(text[j] == '(')
+					{
+						//found end
+						return text.substr(i+2,j-(i+2)).trim();
+					}
+				}
+			} //end handling for forward tyle js function
 			
-		} //end localHandleJsOutline
+			return undefined; //if no function found
+		} //end localHandleJsOutline()
 		
 	} //end updateOutline()
 
