@@ -112,6 +112,8 @@ CodeEditor.create = function() {
 	//	startEditFileName(forPrimary)	
 	//	editCellOK(forPrimary)
 	//	editCellCancel(forPrimary)
+	//	getCursor(el)
+	//	setCursor(el,cursor)
 	
 	
 	//for display
@@ -506,8 +508,16 @@ CodeEditor.create = function() {
 				Debug.log("click handler for pane" + forPrimary);
 				_activePaneIsPrimary = forPrimary;
 				
-				//focus on edit box
+				//focus on edit box				
+				var el = document.getElementById("textEditorBody" + forPrimary);
+				var scrollLeft = el.scrollLeft;
+				var scrollTop = el.scrollTop;
+				//var cursor = CodeEditor.editor.getCursor(el);
 				document.getElementById("editableBox" + forPrimary).focus();
+				//CodeEditor.editor.setCursor(el,cursor);
+				el.scrollLeft = scrollLeft;
+				el.scrollTop = scrollTop;
+				
 							}); //end addEventListener
 			
 			
@@ -1160,6 +1170,10 @@ CodeEditor.create = function() {
 			line = _numberOfLines[forPrimary];
 		Debug.log("Goto line number " + line);
 		window.location.href = "#" + forPrimary + "L" + line;
+		
+		//then set cursor, so moving the cursor does not lose position
+		
+		
 	} //end gotoLine
 
 	//=====================================================================================
@@ -1253,7 +1267,85 @@ CodeEditor.create = function() {
 		
 	} //end handleFileContent()
 	
+	//=====================================================================================
+	//setCursor ~~	
+	CodeEditor.editor.setCursor = function(el,cursor)
+	{
+		if(cursor.startNodeIndex !== undefined)
+		{
+			try
+			{
+				console.log("cursor",cursor);
+
+				var range = document.createRange();
+
+				var firstEl = el.childNodes[cursor.startNodeIndex];
+				if(firstEl.firstChild)
+					firstEl = firstEl.firstChild;
+
+				var secondEl = el.childNodes[cursor.endNodeIndex];
+				if(secondEl.firstChild)
+					secondEl = secondEl.firstChild;
+
+				range.setStart(firstEl,
+						cursor.startPos);
+				range.setEnd(secondEl,
+						cursor.endPos);
+
+				var selection = window.getSelection();
+				selection.removeAllRanges();
+				selection.addRange(range);
+
+			}
+			catch(err)
+			{
+				console.log("set cursor err:",err);
+			}
+		} //end set cursor placement
+	} //end setCursor()
 	
+	//=====================================================================================
+	//getCursor ~~	
+	CodeEditor.editor.getCursor = function(el)
+	{
+		//handle get cursor location
+		var cursor = {
+				"startNodeIndex":undefined,
+				"startPos":undefined,				
+				"endNodeIndex":undefined,
+				"endPos":undefined,
+		};
+
+		try
+		{
+			range = window.getSelection().getRangeAt(0);
+
+			cursor.startPos = range.startOffset;
+			cursor.endPos = range.endOffset;
+
+			//find start and end node index
+			for(i=0;i<el.childNodes.length;++i)
+			{
+				if(el.childNodes[i] == range.startContainer ||
+						el.childNodes[i] == range.startContainer.parentNode||
+						el.childNodes[i] == range.startContainer.parentNode.parentNode)
+					cursor.startNodeIndex = i;
+
+				if(el.childNodes[i] == range.endContainer ||
+						el.childNodes[i] == range.endContainer.parentNode||
+						el.childNodes[i] == range.endContainer.parentNode.parentNode)
+					cursor.endNodeIndex = i;
+			}
+
+			console.log("cursor",cursor);
+
+		}
+		catch(err)
+		{
+			console.log("get cursor err:",err);
+		}
+		return cursor;
+	} //end getCursor()
 
 	//=====================================================================================
 	//updateDecorations ~~
@@ -1407,45 +1499,47 @@ CodeEditor.create = function() {
 		var i, j;
 		var val;
 		
-		//handle get cursor location
-		var cursor = {
-				"startNodeIndex":undefined,
-				"startPos":undefined,				
-				"endNodeIndex":undefined,
-				"endPos":undefined,
-		};
+		//get cursor location
+		var cursor = CodeEditor.editor.getCursor(el);
 		
-		try
-		{
-			range = window.getSelection().getRangeAt(0);
-
-			cursor.startPos = range.startOffset;
-			cursor.endPos = range.endOffset;
-
-			//find start and end node index
-			for(i=0;i<el.childNodes.length;++i)
-			{
-				if(el.childNodes[i] == range.startContainer ||
-						el.childNodes[i] == range.startContainer.parentNode||
-						el.childNodes[i] == range.startContainer.parentNode.parentNode)
-					cursor.startNodeIndex = i;
-
-				if(el.childNodes[i] == range.endContainer ||
-						el.childNodes[i] == range.endContainer.parentNode||
-						el.childNodes[i] == range.endContainer.parentNode.parentNode)
-					cursor.endNodeIndex = i;
-			}
-
-			console.log("cursor",cursor);
+//		{
+//				"startNodeIndex":undefined,
+//				"startPos":undefined,				
+//				"endNodeIndex":undefined,
+//				"endPos":undefined,
+//		};
+//		
+//		try
+//		{
+//			range = window.getSelection().getRangeAt(0);
+//
+//			cursor.startPos = range.startOffset;
+//			cursor.endPos = range.endOffset;
+//
+//			//find start and end node index
+//			for(i=0;i<el.childNodes.length;++i)
+//			{
+//				if(el.childNodes[i] == range.startContainer ||
+//						el.childNodes[i] == range.startContainer.parentNode||
+//						el.childNodes[i] == range.startContainer.parentNode.parentNode)
+//					cursor.startNodeIndex = i;
+//
+//				if(el.childNodes[i] == range.endContainer ||
+//						el.childNodes[i] == range.endContainer.parentNode||
+//						el.childNodes[i] == range.endContainer.parentNode.parentNode)
+//					cursor.endNodeIndex = i;
+//			}
+//
+//			console.log("cursor",cursor);
 			
-			if(insertNewLine)
-				localInsertNewLine();
+		if(insertNewLine)
+			localInsertNewLine();
 			
-		}
-		catch(err)
-		{
-			console.log("err",err);
-		}
+//		}
+//		catch(err)
+//		{
+//			console.log("err",err);
+//		}
 		
 		
 		/////////////////////////////////
@@ -2130,38 +2224,40 @@ CodeEditor.create = function() {
 		
 		
 
-		//handle set cursor placement
-		if(cursor.startNodeIndex !== undefined)
-		{
-			try
-			{
-				console.log("cursor",cursor);
-				
-				range = document.createRange();
-				
-				var firstEl = el.childNodes[cursor.startNodeIndex];
-				if(firstEl.firstChild)
-					firstEl = firstEl.firstChild;
-	
-				var secondEl = el.childNodes[cursor.endNodeIndex];
-				if(secondEl.firstChild)
-					secondEl = secondEl.firstChild;
-				
-				range.setStart(firstEl,
-						cursor.startPos);
-				range.setEnd(secondEl,
-						cursor.endPos);
-				
-				var selection = window.getSelection();
-				selection.removeAllRanges();
-				selection.addRange(range);
-	
-			}
-			catch(err)
-			{
-				console.log("err",err);
-			}
-		} //end set cursor placement	
+		//set cursor placement
+		CodeEditor.editor.setCursor(el,cursor);
+		
+//		if(cursor.startNodeIndex !== undefined)
+//		{
+//			try
+//			{
+//				console.log("cursor",cursor);
+//				
+//				range = document.createRange();
+//				
+//				var firstEl = el.childNodes[cursor.startNodeIndex];
+//				if(firstEl.firstChild)
+//					firstEl = firstEl.firstChild;
+//	
+//				var secondEl = el.childNodes[cursor.endNodeIndex];
+//				if(secondEl.firstChild)
+//					secondEl = secondEl.firstChild;
+//				
+//				range.setStart(firstEl,
+//						cursor.startPos);
+//				range.setEnd(secondEl,
+//						cursor.endPos);
+//				
+//				var selection = window.getSelection();
+//				selection.removeAllRanges();
+//				selection.addRange(range);
+//	
+//			}
+//			catch(err)
+//			{
+//				console.log("err",err);
+//			}
+//		} //end set cursor placement	
 		
 		CodeEditor.editor.updateOutline(forPrimary);
 		
