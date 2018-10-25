@@ -1248,12 +1248,14 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			if(event.keyCode == 13) // ENTER
 			{	
 				Debug.log("Accepting enter key");
+				event.preventDefault();
 				event.stopPropagation(); 
 				DesktopContent.clearPopUpVerification(func);
 			}
 			else if(event.keyCode == 27) // ESC
 			{	
 				Debug.log("Accepting escape key");
+				event.preventDefault();
 				event.stopPropagation(); 
 				DesktopContent.clearPopUpVerification(cancelFunc);				
 			}

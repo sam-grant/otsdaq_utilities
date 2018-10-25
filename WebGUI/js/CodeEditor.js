@@ -1172,7 +1172,48 @@ CodeEditor.create = function() {
 		window.location.href = "#" + forPrimary + "L" + line;
 		
 		//then set cursor, so moving the cursor does not lose position
+		// steps:
+		//	count new lines while going through elements, then set cursor there
 		
+		if(line < 2) return; //cursor is placed at line 1 by default
+
+		var el = document.getElementById("editableBox" + forPrimary);
+		var i,n,node,el,val;
+		var lineCount = 1;
+		var found = false;
+		for(n=0; n<el.childNodes.length; ++n)
+		{
+			node = el.childNodes[n];
+			val = node.textContent; 
+
+			
+			for(i=0;i<val.length;++i)
+			{
+				//want to be one character past new line
+				if(line == lineCount)
+				{
+
+					Debug.log("Found line " + line);
+					found = true;
+					break;
+				}
+
+				if(val[i] == '\n')
+					++lineCount;
+			}
+			if(found) break;
+		} //end line count loop
+		
+		if(!found) {--n; i=0;} //set to last node if not found
+		
+		//have element in index, set cursor
+		var cursor = {
+				"startNodeIndex":n,
+				"startPos":i,				
+				"endNodeIndex":n,
+				"endPos":i,
+		};
+		CodeEditor.editor.setCursor(el,cursor);
 		
 	} //end gotoLine
 
@@ -2516,9 +2557,10 @@ CodeEditor.create = function() {
 		
 		var val = document.getElementById("textEditorOutlineSelect" + forPrimary).value | 0;
 		if(val < 1) val = 1;
-		console.log("val",val);		
+		console.log("line val",val);		
 		
-		window.location.href = "#" + forPrimary + "L" + val;
+		CodeEditor.editor.gotoLine(forPrimary,val);
+		
 	} //end handleOutlineSelect()
 	
 	//=====================================================================================
@@ -2751,7 +2793,7 @@ CodeEditor.create = function() {
 					for(n; n<el.childNodes.length; ++n)
 					{
 						node = el.childNodes[n];
-						val = node.textContent; //.nodeValue; //.wholeText
+						val = node.textContent;
 
 						for(i;i<val.length;++i)
 						{
