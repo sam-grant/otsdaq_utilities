@@ -532,7 +532,7 @@ DesktopContent.hideLoading = function()	{
 	//hide in a little bit, to provide more continuity to 
 	//	back to back loading box requests
 	window.clearInterval(DesktopContent._loadBoxHideTimer);
-	DesktopContent._loadBoxHideTimer = window.setInterval(
+	DesktopContent._loadBoxHideTimer = window.setTimeout(
 			localHideLoadBox, 300);
 	
 	/////////////////////////
