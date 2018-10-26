@@ -2759,23 +2759,160 @@ CodeEditor.create = function() {
 		if(e.keyCode == 16 /*shift*/)
 			return;
 		
-
-		//to avoid DIVs, ENTER should trigger updateDecorations immediately
-		if(!shortcutsOnly &&
-				e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
-		{
-			_fileWasModified[forPrimary] = true;
-
-			//document.execCommand('insertHTML', false, '&#010;&#013;');
-			//document.execCommand('insertText', false, '\n');
-			CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/);
-			e.preventDefault();
-			
-			
-			return;
-		}
-		
 		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		
+		//handle preempt keys
+		if(!shortcutsOnly) 
+		{
+			if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
+			{
+				//to avoid DIVs, ENTER should trigger updateDecorations immediately
+				_fileWasModified[forPrimary] = true;
+
+				//document.execCommand('insertHTML', false, '&#010;&#013;');
+				//document.execCommand('insertText', false, '\n');
+				CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/);
+				e.preventDefault();
+
+				return;
+			}
+			else if(e.keyCode == 36) // HOME -- should trigger updateDecorations immediately
+			{
+				//to position the cursor at text, rather than line start								
+				e.preventDefault();
+				
+				//Steps:
+				//	get cursor
+				//	reverse find new line
+				//		track last non-whitespace
+				// 	set cursor
+				
+				var i,n,node,el,val;
+				var found = false;
+	
+				el = document.getElementById("editableBox" + forPrimary);
+				cursor = CodeEditor.editor.getCursor(el);
+
+				var lastNonWhitespacePos = cursor.startPos;
+				var lastNonWhitespaceNodeIndex = cursor.startNodeIndex;
+				var lastPos = cursor.startPos;
+				var lastNodeIndex = cursor.startNodeIndex;
+				
+				//reverse find new line
+				for(n=cursor.startNodeIndex; n>=0; --n)
+				{
+					node = el.childNodes[n];
+					val = node.textContent; 
+
+					for(i=(n==cursor.startNodeIndex?
+							cursor.startPos-1:val.length);i>=0;--i)
+					{
+						if(val[i] == '\n')
+						{
+							found = true;
+							break;
+						}
+						else if(!(val[i] == ' ' || 
+								val[i] == '\t'))
+						{
+							lastNonWhitespacePos = i;
+							lastNonWhitespaceNodeIndex = n;
+						}
+						
+						lastPos = i;
+						lastNodeIndex = n;						
+					}
+					if(found) break;
+				}
+				console.log("lastNonWhitespacePos",lastNonWhitespacePos);
+				console.log("lastNonWhitespaceNodeIndex",lastNonWhitespaceNodeIndex);
+				
+				if(lastNonWhitespacePos == cursor.startPos && 
+						lastNonWhitespaceNodeIndex == cursor.startNodeIndex)
+				{
+					//if already at non-whitespace character, go to the new line
+					lastNonWhitespacePos = lastPos;
+					lastNonWhitespaceNodeIndex = lastNodeIndex;
+				}
+				
+				cursor.endNodeIndex = cursor.startNodeIndex = lastNonWhitespaceNodeIndex
+				cursor.endPos = cursor.startPos = lastNonWhitespacePos;
+
+				CodeEditor.editor.setCursor(el,cursor);
+				
+				return;
+			}	
+			else if(e.keyCode == 35) // END -- should trigger updateDecorations immediately
+			{
+				//to position the cursor at end of line, rather than end of file
+				
+				e.preventDefault();
+				
+
+				//Steps:
+				//	get cursor
+				//	forward find new line
+				//		track last non-whitespace
+				// 	set cursor
+				
+				var i,n,node,el,val;
+				var found = false;
+	
+				el = document.getElementById("editableBox" + forPrimary);
+				cursor = CodeEditor.editor.getCursor(el);
+
+				var wantNext = false;
+				var lastNonWhitespacePos = cursor.startPos;
+				var lastNonWhitespaceNodeIndex = cursor.startNodeIndex;
+								
+				//reverse find new line
+				for(n=cursor.startNodeIndex; n<el.childNodes.length; ++n)
+				{
+					node = el.childNodes[n];
+					val = node.textContent; 
+
+					for(i=(n==cursor.startNodeIndex?
+							cursor.startPos:0);i<val.length;++i)
+					{
+						if(wantNext)
+						{
+							lastNonWhitespacePos = i;
+							lastNonWhitespaceNodeIndex = n;
+						}
+						
+						if(val[i] == '\n')
+						{		
+							found = true;
+							break;				
+						}
+						else if(!(val[i] == ' ' || 
+								val[i] == '\t'))
+							wantNext = true;	
+						else 
+							wantNext = false;
+					}
+					if(found) break;
+				}
+				console.log("lastNonWhitespacePos",lastNonWhitespacePos);
+				console.log("lastNonWhitespaceNodeIndex",lastNonWhitespaceNodeIndex);
+				
+				if(lastNonWhitespacePos == cursor.startPos && 
+						lastNonWhitespaceNodeIndex == cursor.startNodeIndex)
+				{
+					//if already at non-whitespace character, go to the new line
+					lastNonWhitespacePos = i;
+					lastNonWhitespaceNodeIndex = n;
+				}
+				
+				cursor.endNodeIndex = cursor.startNodeIndex = lastNonWhitespaceNodeIndex
+				cursor.endPos = cursor.startPos = lastNonWhitespacePos;
+
+				CodeEditor.editor.setCursor(el,cursor);
+				return;
+			}					
+			
+		} //end preempt key handling		
+		
 						
 		if(e.ctrlKey) //handle shortcuts
 		{			
