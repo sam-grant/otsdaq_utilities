@@ -862,9 +862,9 @@ CodeEditor.create = function() {
 							
 			//remove crazy characters 
 			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
-			//content = content.replace(/%C2%A0%C2%A0/g,"%09").replace(/%C2%A0/g, //convert two to tab, otherwise space
-			//		"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
-			content.replace(/%C2%A0/g,"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
+			content = content.replace(/%C2%A0%C2%A0/g,"%20%20").replace(/%C2%A0/g, //convert two to tab, otherwise space
+					"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
+			//content.replace(/%C2%A0/g,"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
 			//console.log(content.length);
 			
 			
