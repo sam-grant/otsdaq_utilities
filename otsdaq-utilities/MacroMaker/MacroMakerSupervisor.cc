@@ -362,12 +362,13 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	__SUP_COUT__<< "MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
-	std::string Name = CgiDataUtilities::getData(cgi, "Name");
-	std::string Sequence = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Sequence"));
-	std::string Time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Time"));
-	std::string Notes = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Notes"));
-	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
-	std::string isMacroLSBF = CgiDataUtilities::getData(cgi, "isLSBF");
+	std::string Name 			= CgiDataUtilities::postData(cgi, "Name");
+	std::string Sequence 		= CgiDataUtilities::postData(cgi, "Sequence");
+	std::string Time 			= CgiDataUtilities::postData(cgi, "Time");
+	std::string Notes 			= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::postData(cgi, "Notes"));
+	std::string isMacroPublic 	= CgiDataUtilities::getData(cgi, "isPublic");
+	std::string isMacroLSBF 	= CgiDataUtilities::getData(cgi, "isLSBF");
 
 	__SUP_COUTV__(Name);
 	__SUP_COUTV__(Sequence);

@@ -974,9 +974,15 @@
         	}
         	else
         	{
-				DesktopContent.XMLHttpRequest("Request?RequestType=createMacro&isPublic="+isMacroPublic
-						+"&isLSBF="+isMacroLSBF+"&Name="+macroName+"&Sequence="+tempString+"&Time="+Date().toString()+"&Notes="
-						+macroNotes,"",createMacroHandler);		
+				DesktopContent.XMLHttpRequest("Request?RequestType=createMacro" +
+						"&isPublic="+isMacroPublic+
+						"&isLSBF="+isMacroLSBF,
+						//post data						
+						"Name=" + macroName +
+						"&Sequence=" + tempString +
+						"&Time=" + Date().toString() +
+						"&Notes=" + encodeURIComponent(macroNotes),
+						createMacroHandler);		
 				loadExistingMacros();
 				hidePopupSaveMacro(); 
 				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 

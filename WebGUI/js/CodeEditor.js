@@ -2560,7 +2560,10 @@ CodeEditor.create = function() {
 			
 			for(j=i+2;j<text.length;++j)
 			{
-				if(text[j] == ';') //any semi-colon is a deal killer
+				if(text[j] == ';' || //any semi-colon is a deal killer
+						text[j] == '+' || //or non-function name characters
+						text[j] == '"' ||
+						text[j] == "'") 					
 					return undefined;
 				if(endi < 0) //first find end of name
 				{
