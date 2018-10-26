@@ -1194,10 +1194,10 @@
 						+ "\" data-LSBF=\"" + arr.LSBF
 						+ "\" onclick='dealWithVariables(stringOfAllMacros[" 
 						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
-				finalOutput = decodeURI(out);
+				//finalOutput = decodeURI(out);
 				MACROINDEX++;
 			}
-			document.getElementById("listOfPublicMacros").innerHTML = finalOutput;
+			document.getElementById("listOfPublicMacros").innerHTML = out; //finalOutput;
 		}
 		else 
 			document.getElementById("listOfPublicMacros").innerHTML = "";
