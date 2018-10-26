@@ -61,6 +61,55 @@ function htmlClearDiv()
 } //end htmlClearDiv()
 
 
+//=====================================================================================
+//showTooltip ~~
+CodeEditor.showTooltip = function(alwaysShow)
+{
+	DesktopContent.tooltip(
+			(alwaysShow?"ALWAYS":"Code Editor"),
+			"Welcome to the Code Editor user interface. "+
+			"Edit your code, save it, and compile!\n\n" +
+			"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
+			"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +
+			"<b>Save:</b>\n<INDENT>Use the save icon in the top-left to save your changes.</INDENT>\n" +
+			"<b>Compile:</b>\n<INDENT>Use the Incremmental Build or Clean Build icons in the top-right.</INDENT>\n" +
+			
+			
+			"<b>Global Hot Keys:</b>\n<INDENT>" +
+			
+			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + B </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Incremental Build</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + N </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Clean Build</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + W </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +			
+			"</table></INDENT>\n" +
+			
+			
+			"<b>Editor Pane Hot Keys:</b>\n<INDENT>" +
+			
+			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + L or Ctrl + G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + Q </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+			"</table></INDENT>\n" +
+			
+			
+			"<b>Selected-Text Hot Keys:</b>\n<INDENT>" +
+			
+			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> TAB</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading TAB character to all highlighted lines.</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + TAB </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading TAB character from all highlighted lines.</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
+			"</table></INDENT>\n"
+	);
+} //end showTooltip()
+
+
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 //call create to create instance of a SmartLaunch
@@ -68,15 +117,10 @@ function htmlClearDiv()
 ////////////////////////////////////////////////////////////////////
 CodeEditor.create = function() {
 
-	DesktopContent.tooltip("Code Editor",
-			"Welcome to the Code Editor user interface. "+
-			"Edit your code, save it, and compile!\n\n" +
-			"To open a file, use the folder icon in the top-left to navigate to a code file to edit.\n\n" +
-			"To toggle view, use the split-pane icon in the top-right to toggle another code editor in the same window.\n\n" +
-			"To save, use the save icon in the top-left to save your changes.\n\n" +
-			"To compile, use the Incremmental Build or Clean Build icons in the top-right. "
-	);
-
+	
+	
+	CodeEditor.showTooltip();
+	
 	//outline:			
 	//
 	//	"private":
@@ -86,10 +130,11 @@ CodeEditor.create = function() {
 	//	createElements()
 	//		localCreatePaneControls()
 	//	createTextEditor(forPrimary)
-	//	createDirectoryNav(forPrimary)
+	//	createDirectoryNav(forPrimary)	
 	
 	//  "public":
 	//	================
+	//	showTooltip(alwaysShow)
 	//	toggleDirectoryNav(forPrimary,v)
 	//	saveFile(forPrimary)
 	//	toggleView(v)
@@ -452,6 +497,24 @@ CodeEditor.create = function() {
 							},"z" /*innerHTML*/, 1 /*doCloseTag*/);
 				}
 				str += "</div>"; //close cleanBuild
+
+				//help
+				str += htmlOpen("div",
+						{
+								"id":"displayHelp",
+								"class":"controlsButton",
+								"style":"float:right",
+								"onclick":"CodeEditor.showTooltip(1 /*alwaysShow*/);",
+								"title":"Click for help, short-cuts, etc.",
+						},"" /*innerHTML*/, 0 /*doCloseTag*/);
+				{
+
+					str += htmlOpen("div",
+							{
+									"style":"margin:12px 0 0 13px;",
+							},"?" /*innerHTML*/, 1 /*doCloseTag*/);
+				}
+				str += "</div>"; //close help
 
 				el.innerHTML = str;	
 			}

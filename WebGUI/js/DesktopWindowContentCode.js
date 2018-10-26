@@ -1039,6 +1039,8 @@ DesktopContent.tooltip = function(id,tip) {
 				str += "<br><br>";
 				str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
 			}
+			else
+				str += "<br><br>";
 			
 			str += DesktopContent.tooltipConditionString(tip);
 			
