@@ -2,10 +2,10 @@
 #define _ots_VisualDataManager_h_
 
 #include "otsdaq-core/DataManager/DataManager.h"
-#include "otsdaq-core/MonicelliInterface/Visual3DEvent.h"
-#include "otsdaq-core/MonicelliInterface/Visual3DGeometry.h"
-#include "otsdaq-core/MonicelliInterface/MonicelliEventAnalyzer.h"
-#include "otsdaq-core/MonicelliInterface/MonicelliGeometryConverter.h"
+//#include "otsdaq-core/MonicelliInterface/Visual3DEvent.h"
+//#include "otsdaq-core/MonicelliInterface/Visual3DGeometry.h"
+//#include "otsdaq-core/MonicelliInterface/MonicelliEventAnalyzer.h"
+//#include "otsdaq-core/MonicelliInterface/MonicelliGeometryConverter.h"
 #include "otsdaq-core/RootUtilities/DQMHistosBase.h"
 
 #include <map>
