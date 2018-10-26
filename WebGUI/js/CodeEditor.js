@@ -115,6 +115,7 @@ CodeEditor.create = function() {
 	//	editCellCancel(forPrimary)
 	//	getCursor(el)
 	//	setCursor(el,cursor)
+	//	openRelatedFile(forPrimary)
 	
 	
 	//for display
@@ -1102,8 +1103,43 @@ CodeEditor.create = function() {
 	} //end openDirectory()
 
 	//=====================================================================================
+	//openRelatedFile ~~
+	//	open the related file in text editor
+	this.openRelatedFile = function(forPrimary)
+	{
+		Debug.log("openRelatedFile forPrimary=" + forPrimary +
+				" path=" + _filePath[forPrimary]);
+		
+		var relatedPath = _filePath[forPrimary];
+		var relatedExtension = _fileExtension[forPrimary];
+		if(relatedExtension == "h")
+		{
+			relatedExtension = "cc";
+
+			var i = relatedPath.indexOf("/FEInterfaces/");
+			relatedPath += "_interface";
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+			return;
+		}
+		else if(relatedExtension == "cc")
+		{
+			relatedExtension = "h";
+			var i = relatedPath.indexOf("_interface");
+			if(i > 0 && i == relatedPath.length-("_interface").length)
+				relatedPath = relatedPath.substr(0,i); //remove interface
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+			return;
+		}
+		
+		Debug.log("Giving up on attempt to open a related file for " +
+				relatedPath + "." + relatedExtension + 
+				"... no known related file.", Debug.HIGH_PRIORITY);
+				
+	} //end openRelatedFile ()
+	
+	//=====================================================================================
 	//openFile ~~
-	//	open the file to text editor
+	//	open the file in text editor
 	this.openFile = function(forPrimary,path,extension,doConfirm,gotoLine)
 	{
 		forPrimary = forPrimary?1:0;
@@ -2673,7 +2709,7 @@ CodeEditor.create = function() {
 			return;
 		}
 		
-		//Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
 						
 		if(e.ctrlKey) //handle shortcuts
 		{			
@@ -2713,6 +2749,34 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
+			else if(e.keyCode == 76 ||	// L or
+					e.keyCode == 71) 	// G for go to line number
+			{
+				DesktopContent.popUpVerification(
+						/*prompt*/ "Goto line number: ", 
+						/*func*/
+						function(line) 
+						{
+					Debug.log("Going to line... " + line);
+					CodeEditor.editor.gotoLine(forPrimary,line);
+						}, /*val*/ undefined, 
+						/*bgColor*/ undefined,
+						/*textColor*/ undefined,
+						/*borderColor*/ undefined,
+						/*getUserInput*/ true,
+						/*dialogWidth*/ undefined,
+						/*cancelFunc*/ undefined,
+						/*yesButtonText*/ "Go");
+				
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 81) 	// Q for switch to related file
+			{
+				CodeEditor.editor.openRelatedFile(forPrimary);
+				e.preventDefault();
+				return;
+			}
 			
 		} //end shortcut cases		
 		if(shortcutsOnly)		
@@ -2740,29 +2804,7 @@ CodeEditor.create = function() {
 				blockCOMMENT = true;
 				e.preventDefault();
 				//continue to tab handling below
-			}	
-			else if(e.keyCode == 76 ||	// L or
-					e.keyCode == 71) 	// G for go to line number
-			{
-				DesktopContent.popUpVerification(
-						/*prompt*/ "Goto line number: ", 
-						/*func*/
-						function(line) 
-						{
-					Debug.log("Going to line... " + line);
-					CodeEditor.editor.gotoLine(forPrimary,line);
-						}, /*val*/ undefined, 
-						/*bgColor*/ undefined,
-						/*textColor*/ undefined,
-						/*borderColor*/ undefined,
-						/*getUserInput*/ true,
-						/*dialogWidth*/ undefined,
-						/*cancelFunc*/ undefined,
-						/*yesButtonText*/ "Go");
-				
-				e.preventDefault();
-				return;
-			}
+			}				
 			else
 				return;
 		} //end ctrl key editor handling
