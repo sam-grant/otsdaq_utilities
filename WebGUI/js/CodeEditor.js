@@ -104,7 +104,7 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading comment character(s) to all highlighted lines.</td></tr>" +
 			"</table></INDENT>\n"
 	);
 } //end showTooltip()
