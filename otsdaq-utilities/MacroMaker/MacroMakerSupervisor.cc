@@ -361,22 +361,29 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 //========================================================================================================================
 void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
-	__SUP_COUT__<< "¡¡¡¡¡¡MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
+	__SUP_COUT__<< "MacroMaker wants to create a macro!!!!!!!!!" << std::endl;
 	std::string Name = CgiDataUtilities::getData(cgi, "Name");
-	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
+	std::string Sequence = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Sequence"));
 	std::string Time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Time"));
 	std::string Notes = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Notes"));
 	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
 	std::string isMacroLSBF = CgiDataUtilities::getData(cgi, "isLSBF");
 
-
-	__SUP_COUT__<< MACROS_DB_PATH << std::endl;
+	__SUP_COUTV__(Name);
+	__SUP_COUTV__(Sequence);
+	__SUP_COUTV__(Notes);
+	__SUP_COUTV__(Time);
+	__SUP_COUTV__(isMacroPublic);
+	__SUP_COUTV__(isMacroLSBF);
+	
+	__SUP_COUTV__(MACROS_DB_PATH);
 
 	std::string fileName = Name + ".dat";
 	std::string fullPath;
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
-	__SUP_COUT__ << fullPath << std::endl;
+	
+	__SUP_COUTV__(fullPath);
 
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())
@@ -526,8 +533,8 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 		read.seekg(0, std::ios::beg);
 
 
-	    // read data as a block:
-	    read.read(returnStr,fileSz);
+			// read data as a block:
+			read.read(returnStr,fileSz);
 		read.close();
 
 
