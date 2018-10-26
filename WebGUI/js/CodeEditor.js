@@ -1333,8 +1333,8 @@ CodeEditor.create = function() {
 		var text = DesktopContent.getXMLValue(req,"content");
 		
 		//replace emacs tab character two &#160's, with \t
-		text = text.replace(new RegExp(
-				String.fromCharCode(160,160),'g'),'\t');
+		//text = text.replace(new RegExp(
+		//		String.fromCharCode(160,160),'g'),'\t');
 		
 		//console.log(text);
 		
