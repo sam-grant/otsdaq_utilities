@@ -222,14 +222,19 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 {
 	__SUP_COUT__<< "MacroMaker writing..." << std::endl;
 
-	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-	std::string Data = CgiDataUtilities::getData(cgi, "Data");
-	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
-	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
-	std::string time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
-	std::string interfaces = CgiDataUtilities::getData(cgi, "interfaces");
-	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
-	std::string dataFormatStr = CgiDataUtilities::getData(cgi, "dataFormatStr");
+	std::string Address 				= CgiDataUtilities::getData(cgi, "Address");
+	std::string Data 					= CgiDataUtilities::getData(cgi, "Data");
+	std::string interfaceIndexArray 	= CgiDataUtilities::getData(cgi, "interfaceIndex");
+	std::string supervisorIndexArray 	= CgiDataUtilities::getData(cgi, "supervisorIndex");
+	std::string time 					= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::getData(cgi, "time"));
+	std::string addressFormatStr 		= CgiDataUtilities::getData(cgi, "addressFormatStr");
+	std::string dataFormatStr 			= CgiDataUtilities::getData(cgi, "dataFormatStr");
+
+	std::string interfaces 				= CgiDataUtilities::postData(cgi, "interfaces");
+
+	__SUP_COUT__<< "Write Address: " << Address << " Data: " << Data << std::endl;
+	__SUP_COUTV__(interfaces);
 
 	std::string command = "w:" + Address + ":" + Data;
 	std::string format = addressFormatStr + ":" + dataFormatStr;
@@ -240,7 +245,6 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 	txParameters.addParameter("Address",Address);
 	txParameters.addParameter("Data",Data);
 
-	__SUP_COUT__<< "Address: " << Address << " Data: " << Data << std::endl;
 
 	__SUP_COUT__<< "Here comes the array from multiselect box for WRITE, behold: \n"
 			<< supervisorIndexArray << "\n" << interfaceIndexArray << std::endl;
@@ -285,13 +289,19 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
 	__SUP_COUT__<< "@@@@@@@ MacroMaker wants to read data @@@@@@@@" << std::endl;
-	std::string Address = CgiDataUtilities::getData(cgi, "Address");
-	std::string interfaceIndexArray = CgiDataUtilities::getData(cgi, "interfaceIndex");
-	std::string supervisorIndexArray = CgiDataUtilities::getData(cgi, "supervisorIndex");
-	std::string time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "time"));
-	std::string interfaces = CgiDataUtilities::getData(cgi, "interfaces");
-	std::string addressFormatStr = CgiDataUtilities::getData(cgi, "addressFormatStr");
-	std::string dataFormatStr = CgiDataUtilities::getData(cgi, "dataFormatStr");
+	std::string Address 				= CgiDataUtilities::getData(cgi, "Address");
+	std::string interfaceIndexArray 	= CgiDataUtilities::getData(cgi, "interfaceIndex");
+	std::string supervisorIndexArray 	= CgiDataUtilities::getData(cgi, "supervisorIndex");
+	std::string time 					= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::getData(cgi, "time"));
+	std::string addressFormatStr 		= CgiDataUtilities::getData(cgi, "addressFormatStr");
+	std::string dataFormatStr 			= CgiDataUtilities::getData(cgi, "dataFormatStr");
+
+	std::string interfaces 				= CgiDataUtilities::postData(cgi, "interfaces");
+
+
+	__SUP_COUT__<< "Read Address: " << Address << std::endl;
+	__SUP_COUTV__(interfaces);
 
 	SOAPParameters txParameters; //params for xoap to send
 	txParameters.addParameter("Request", "UniversalRead");
@@ -580,8 +590,8 @@ void MacroMakerSupervisor::loadHistory(HttpXmlDocument& xmldoc, const std::strin
 //========================================================================================================================
 void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi, const std::string &username)
 {
-	std::string MacroName = CgiDataUtilities::getData(cgi, "MacroName");
-	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
+	std::string MacroName 		= CgiDataUtilities::getData(cgi, "MacroName");
+	std::string isMacroPublic 	= CgiDataUtilities::getData(cgi, "isPublic");
 
 
 	std::string fileName = MacroName + ".dat";
@@ -599,20 +609,32 @@ void MacroMakerSupervisor::deleteMacro(HttpXmlDocument& xmldoc,cgicc::Cgicc& cgi
 //========================================================================================================================
 void MacroMakerSupervisor::editMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
-	std::string oldMacroName = CgiDataUtilities::getData(cgi, "oldMacroName");
-	std::string newMacroName = CgiDataUtilities::getData(cgi, "newMacroName");
-	std::string Sequence = CgiDataUtilities::getData(cgi, "Sequence");
-	std::string Time = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Time"));
-	std::string Notes = CgiDataUtilities::decodeURIComponent(CgiDataUtilities::getData(cgi, "Notes"));
-	std::string isMacroPublic = CgiDataUtilities::getData(cgi, "isPublic");
-	std::string isMacroLSBF = CgiDataUtilities::getData(cgi, "isLSBF");
+	std::string oldMacroName 		= CgiDataUtilities::postData(cgi, "oldMacroName");
+	std::string newMacroName 		= CgiDataUtilities::postData(cgi, "newMacroName");
+	std::string Sequence 			= CgiDataUtilities::postData(cgi, "Sequence");
+	std::string Time 				= CgiDataUtilities::postData(cgi, "Time");
+	std::string Notes 				= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::postData(cgi, "Notes"));
+
+	std::string isMacroPublic 		= CgiDataUtilities::getData(cgi, "isPublic");
+	std::string isMacroLSBF 		= CgiDataUtilities::getData(cgi, "isLSBF");
+
+	__SUP_COUTV__(oldMacroName);
+	__SUP_COUTV__(newMacroName);
+	__SUP_COUTV__(Sequence);
+	__SUP_COUTV__(Notes);
+	__SUP_COUTV__(Time);
+	__SUP_COUTV__(isMacroPublic);
+	__SUP_COUTV__(isMacroLSBF);
+
+	__SUP_COUTV__(MACROS_DB_PATH);
 
 	std::string fileName = oldMacroName + ".dat";
 	std::string fullPath;
 	if (isMacroPublic == "true")  fullPath = (std::string)MACROS_DB_PATH + "publicMacros/" + fileName;
 	else fullPath = (std::string)MACROS_DB_PATH + username + "/" + fileName;
 
-	__SUP_COUT__<<  fullPath << std::endl;
+	__SUP_COUTV__(fullPath);
 
 	std::ofstream macrofile (fullPath.c_str());
 	if (macrofile.is_open())
@@ -654,10 +676,12 @@ void MacroMakerSupervisor::clearHistory(const std::string &username)
 void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 		const std::string &username)
 {
-	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");
-	std::string pluginName = CgiDataUtilities::getData(cgi, "PluginName");
-	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes = CgiDataUtilities::postData(cgi, "MacroNotes");
+	std::string macroName 			= CgiDataUtilities::getData(cgi, "MacroName");
+	std::string pluginName 			= CgiDataUtilities::getData(cgi, "PluginName");
+	std::string macroSequence 		= CgiDataUtilities::postData(cgi, "MacroSequence");
+	std::string macroNotes 			= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::postData(cgi, "MacroNotes"));
+
 	__SUP_COUTV__(pluginName);
 	__SUP_COUTV__(macroName);
 	__SUP_COUTV__(macroSequence);
@@ -910,9 +934,13 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 //========================================================================================================================
 void MacroMakerSupervisor::exportMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
 {
-	std::string macroName = CgiDataUtilities::getData(cgi, "MacroName");
-	std::string macroSequence = CgiDataUtilities::postData(cgi, "MacroSequence");
-	std::string macroNotes = CgiDataUtilities::postData(cgi, "MacroNotes");
+	std::string macroName 			= CgiDataUtilities::getData(cgi, "MacroName");
+	std::string macroSequence 		= CgiDataUtilities::postData(cgi, "MacroSequence");
+	std::string macroNotes 			= CgiDataUtilities::decodeURIComponent(
+			CgiDataUtilities::postData(cgi, "MacroNotes"));
+
+	__SUP_COUTV__(macroName);
+	__SUP_COUTV__(macroSequence);
 
 	//replace all special characters with white space
 	for(unsigned int i=0;i<macroNotes.length();++i)
@@ -1264,11 +1292,11 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 {
 	__SUP_COUT__<< std::endl;
 
-	unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
-	std::string feUID = CgiDataUtilities::getData(cgi, "feUID");
-	std::string macroName = CgiDataUtilities::getData(cgi, "macroName");
-	std::string inputArgs = CgiDataUtilities::postData(cgi, "inputArgs");
-	std::string outputArgs = CgiDataUtilities::postData(cgi, "outputArgs");
+	unsigned int feSupervisorID 	= CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
+	std::string feUID 				= CgiDataUtilities::getData(cgi, "feUID");
+	std::string macroName 			= CgiDataUtilities::getData(cgi, "macroName");
+	std::string inputArgs 			= CgiDataUtilities::postData(cgi, "inputArgs");
+	std::string outputArgs 			= CgiDataUtilities::postData(cgi, "outputArgs");
 
 	__SUP_COUTV__(feSupervisorID);
 	__SUP_COUTV__(feUID);

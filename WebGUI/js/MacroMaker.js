@@ -363,11 +363,17 @@
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,addressStr),reverse);
 			var convertedData = reverseLSB(convertToHex(dataFormatStr,dataStr),reverse);
 					
-			DesktopContent.XMLHttpRequest("Request?RequestType=writeData&Address="
-					+convertedAddress+"&Data="+convertedData+"&supervisorIndex="+supervisorIndexArray
-					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
-					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",writeHandler);
+			DesktopContent.XMLHttpRequest("Request?RequestType=writeData" + 
+					"&Address=" + convertedAddress + 
+					"&Data=" + convertedData + 
+					"&supervisorIndex=" + supervisorIndexArray +
+					"&interfaceIndex=" + interfaceIndexArray + 
+					"&time=" + Date().toString() +
+					"&addressFormatStr=" + addressFormatStr +
+					"&dataFormatStr=" + dataFormatStr,
+					//post data
+					"interfaces=" + selectionStrArray, 
+					writeHandler);
 			contentEl.innerHTML += update;
 			CMDHISTDIVINDEX++;
 			contentEl.scrollTop = contentEl.scrollHeight;
@@ -418,11 +424,15 @@
 	    	
 			var convertedAddress = reverseLSB(convertToHex(addressFormatStr,theAddressStrForRead),reverse);
 
-			DesktopContent.XMLHttpRequest("Request?RequestType=readData&Address="
-					+convertedAddress+"&supervisorIndex="+supervisorIndexArray
-					+"&interfaceIndex="+interfaceIndexArray+"&time="+Date().toString()
-					+"&interfaces="+selectionStrArray+"&addressFormatStr="+addressFormatStr
-					+"&dataFormatStr="+dataFormatStr,"",
+			DesktopContent.XMLHttpRequest("Request?RequestType=readData" + 
+					"&Address=" + convertedAddress + 
+					"&supervisorIndex=" + supervisorIndexArray +
+					"&interfaceIndex=" + interfaceIndexArray + 
+					"&time=" + Date().toString() +					 
+					"&addressFormatStr=" + addressFormatStr +
+					"&dataFormatStr=" + dataFormatStr,
+					//post data
+					"interfaces=" + selectionStrArray,
 					readHandler);
 		}
     }
@@ -960,11 +970,16 @@
     				return;
     			};
     			document.getElementById('popupMacroAlreadyExistsOverwrite').onclick = function(){ //call edit
-    				DesktopContent.XMLHttpRequest("Request?RequestType=editMacro&isPublic="
-    								+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
-    								+macroName+"&newMacroName="+macroName+"&Sequence="
-    								+tempString+"&Time="+Date().toString()+"&Notes="
-    								+macroNotes,"",saveChangedMacroHandler);
+    				DesktopContent.XMLHttpRequest("Request?RequestType=editMacro" + 
+    						"&isPublic=" + isMacroPublic +
+							"&isLSBF=" + isMacroLSBF + 
+							//post data
+							"oldMacroName=" + macroName +
+							"&newMacroName=" + macroName +
+							"&Sequence=" + tempString +
+							"&Time=" + Date().toString() +
+							"&Notes=" + encodeURIComponent(macroNotes),
+							saveChangedMacroHandler);
     				hideSmallPopup(this);
     				loadExistingMacros();
     				hidePopupSaveMacro();   
@@ -1151,8 +1166,8 @@
 						+ MACROINDEX + "],\"" + arr.name + "\",\"" + arr.LSBF + "\")'><b>" + arr.name + "</b></br></div>"; 
 				MACROINDEX++;
 			}
-			finalOutput = decodeURI(out);
-			document.getElementById("listOfPrivateMacros").innerHTML = finalOutput;
+			//finalOutput = decodeURI(out);
+			document.getElementById("listOfPrivateMacros").innerHTML = out;//finalOutput;
     	}
     	else 
     		document.getElementById("listOfPrivateMacros").innerHTML = "";
@@ -1322,9 +1337,9 @@
     
     function macroActionOnRightClick(macroName, macroAction, macroSequence, macroNotes, macroDate, macroLSBF)
     {
-    	Debug.log("macroName=" + macroName+ " macroAction=" +macroAction + 
-    			" macroSequence=" + macroSequence+ " macroNotes=" + macroNotes + 
-				" macroDate=" +macroDate);
+    	Debug.log("macroName=" + macroName + " macroAction=" + macroAction + 
+    			" macroSequence=" + macroSequence + " macroNotes=" + macroNotes + 
+				" macroDate=" + macroDate);
     	var isMacroPublic = !isOnPrivateMacros;
     	switch(macroAction)
     	{
@@ -1336,8 +1351,12 @@
     			document.getElementById('popupDeleteMacroConfirm').style.display = "block";
     			document.getElementById('macroNameForDelete').innerHTML = macroName;
     			document.getElementById('popupDeleteMacroConfirmYes').onclick = function(){
-    				DesktopContent.XMLHttpRequest("Request?RequestType=deleteMacro&isPublic="+isMacroPublic+"&MacroName="
-    						+macroName,"",deleteMacroHandler);
+    				DesktopContent.XMLHttpRequest("Request?RequestType=deleteMacro" +
+    						"&isPublic=" + isMacroPublic +
+							"&MacroName=" + macroName,
+							//post data
+							"",
+							deleteMacroHandler);
     				hideSmallPopup(this);
     			}; 
     			document.getElementById('popupDeleteMacroConfirmCancel').onclick = function(){hideSmallPopup(this)};
@@ -1469,9 +1488,10 @@
     		break;
     	case "Export":
     		DesktopContent.XMLHttpRequest("Request?RequestType=exportMacro" +
-    				"&MacroName=" + macroName, //get data
+    				"&MacroName=" + macroName, 
+					 //post data
 					"MacroSequence=" + macroSequence + 
-					"&MacroNotes=" + macroNotes, //post data
+					"&MacroNotes=" + encodeURIComponent(macroNotes),
 					exportMacroHandler);
     		break;
     	case "FEExport":
@@ -1524,9 +1544,10 @@
 
     	DesktopContent.XMLHttpRequest("Request?RequestType=exportFEMacro" + 
     			"&MacroName=" + macroName +
-				"&PluginName=" + targetFEPluginName, //get data
+				"&PluginName=" + targetFEPluginName, 
+				//post data
 				"MacroSequence=" + macroSequence + 
-				"&MacroNotes=" + macroNotes,//post data
+				"&MacroNotes=" + encodeURIComponent(macroNotes),
 				function(req)
 				{
     		var err = DesktopContent.getXMLValue(req,"Error");
@@ -1720,11 +1741,16 @@
 			}
 			var isMacroLSBF = document.getElementById('isMacroEditLSBF').checked;
 			var isMacroPublic = !isOnPrivateMacros;
-			DesktopContent.XMLHttpRequest("Request?RequestType=editMacro&isPublic="
-							+isMacroPublic+"&isLSBF="+isMacroLSBF+"&oldMacroName="
-							+oldMacroNameForEdit+"&newMacroName="+newMacroNameForEdit+"&Sequence="
-							+arrayOfCommandsForEdit+"&Time="+macroDateForEdit+"&Notes="
-							+macroNotesForEdit,"",saveChangedMacroHandler);
+			DesktopContent.XMLHttpRequest("Request?RequestType=editMacro" +
+					"&isPublic=" + isMacroPublic + 
+					"&isLSBF=" + isMacroLSBF,
+					//post data
+					"Sequence=" + arrayOfCommandsForEdit + 
+					"&oldMacroName=" + oldMacroNameForEdit + 
+					"&newMacroName=" + newMacroNameForEdit + 					 
+					"&Time=" + macroDateForEdit + 
+					"&Notes=" + encodeURIComponent(macroNotesForEdit),
+					saveChangedMacroHandler);
 			hidePopupEditMacro();
 		}
     }
