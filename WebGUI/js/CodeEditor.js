@@ -149,15 +149,17 @@ CodeEditor.create = function() {
 	//		localInsertNewLine()
 	//		localInsertLabel(startPos)
 	//	updateOutline(forPrimary)
+	//		localHandleStackManagement()
 	//		localHandleCcOutline()
 	//		localHandleJsOutline()
 	//	handleOutlineSelect(forPrimary)
-	//	updateLastSave(forPrimary)	
+	//	updateLastSave(forPrimary)
 	//	keyDownHandler(e,forPrimary,shortcutsOnly)
 	//	handleFileNameMouseMove(forPrimary,doNotStartTimer)
 	//	startEditFileName(forPrimary)	
 	//	editCellOK(forPrimary)
 	//	editCellCancel(forPrimary)
+	//	getLine(forPrimary)
 	//	getCursor(el)
 	//	setCursor(el,cursor)
 	//	openRelatedFile(forPrimary)
@@ -185,6 +187,8 @@ CodeEditor.create = function() {
 	var _undoStackLatestIndex = [-1,-1]; //when empty, -1, for secondary/primary
 	var _undoStack_MAX_SIZE = 10;
 	var _undoStack = [[],[]]; //newest,time are placed at _undoStackLatestIndex+1, for secondary/primary
+	
+	var _fileHistoryStack = {}; //filename => content map
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -301,9 +305,6 @@ CodeEditor.create = function() {
 					
 
 	} //end init()
-
-
-	
 	
 	//=====================================================================================
 	//createElements ~~
@@ -1262,6 +1263,52 @@ CodeEditor.create = function() {
 	} //end openFile()
 
 	//=====================================================================================
+	//getLine ~~
+	//	returns current cursor line number
+	this.getLine = function(forPrimary)
+	{
+		Debug.log("getLine() forPrimary=" + forPrimary);
+		var lineCount = 1;
+		
+		var el = document.getElementById("editableBox" + forPrimary);
+		var cursor = CodeEditor.editor.getCursor(el);
+		if(!cursor.startNodeIndex)
+		{
+			Debug.log("No cursor, so defaulting to top");
+			return lineCount;
+		}
+		
+		
+		var el = document.getElementById("editableBox" + forPrimary);
+		var i,n,node,el,val;
+		var found = false;
+		for(n=0; n<el.childNodes.length; ++n)
+		{
+			node = el.childNodes[n];
+			val = node.textContent; 
+
+
+			for(i=0;i<val.length;++i)
+			{
+				//want to be one character past new line
+				if(n == cursor.startNodeIndex &&
+						i == cursor.startPos)
+				{
+					Debug.log("Found cursor at line " + lineCount);
+					found = true;
+					break;
+				}
+
+				if(val[i] == '\n')
+					++lineCount;
+			}
+			if(found) break;
+		} //end line count loop
+
+		return lineCount;		
+	} //end getLine()
+	
+	//=====================================================================================
 	//gotoLine ~~
 	this.gotoLine = function(forPrimary,line)
 	{
@@ -1275,13 +1322,31 @@ CodeEditor.create = function() {
 		//then set cursor, so moving the cursor does not lose position
 		// steps:
 		//	count new lines while going through elements, then set cursor there
-		
-		if(line < 2) return; //cursor is placed at line 1 by default
 
 		var el = document.getElementById("editableBox" + forPrimary);
+		
+		if(line < 2)
+		{
+			//cursor is placed at line 1			
+			//0 element and index, set cursor
+			var cursor = {
+					"startNodeIndex": 0,
+					"startPos":0,				
+					"endNodeIndex":0,
+					"endPos":0,
+			};		
+			CodeEditor.editor.setCursor(el,cursor);
+
+			return; 
+		}
+
 		var i,n,node,el,val;
 		var lineCount = 1;
 		var found = false;
+		var newLine = false;
+		
+		var lastNode = 0;
+		var lastPos = 0;
 		for(n=0; n<el.childNodes.length; ++n)
 		{
 			node = el.childNodes[n];
@@ -1290,6 +1355,12 @@ CodeEditor.create = function() {
 			
 			for(i=0;i<val.length;++i)
 			{
+				if(newLine)
+				{
+					lastNode = n;
+					lastPos = i;
+				}
+				
 				//want to be one character past new line
 				if(line == lineCount)
 				{
@@ -1299,21 +1370,24 @@ CodeEditor.create = function() {
 					break;
 				}
 
+				newLine = false;
 				if(val[i] == '\n')
+				{
 					++lineCount;
+					newLine = true;
+				}
 			}
 			if(found) break;
 		} //end line count loop
 		
-		if(!found) {--n; i=0;} //set to last node if not found
 		
 		//have element in index, set cursor
 		var cursor = {
-				"startNodeIndex":n,
-				"startPos":i,				
-				"endNodeIndex":n,
-				"endPos":i,
-		};
+				"startNodeIndex":lastNode,
+				"startPos":lastPos,				
+				"endNodeIndex":lastNode,
+				"endPos":lastPos,
+		};		
 		CodeEditor.editor.setCursor(el,cursor);
 		
 	} //end gotoLine
@@ -1434,10 +1508,12 @@ CodeEditor.create = function() {
 				range.setEnd(secondEl,
 						cursor.endPos);
 
+				el.focus();
 				var selection = window.getSelection();
 				selection.removeAllRanges();
 				selection.addRange(range);
 
+				el.focus();
 			}
 			catch(err)
 			{
@@ -2479,6 +2555,16 @@ CodeEditor.create = function() {
 						[text,now];
 				
 				console.log("snapshot added to stack",_undoStack[forPrimary]);
+				
+
+				//	update file history stack to be displayed 
+				//	in dropdown at filename position
+				//	place them in by time, so they are in time order
+				//	and in case we want to remove old ones
+				
+				_fileHistoryStack[_filePath[forPrimary] + "." +
+								  _fileExtension[forPrimary]] = [text,now];
+				console.log("_fileHistoryStack",_fileHistoryStack);
 			}
 		} //end localHandleStackManagement()
 				
@@ -2777,7 +2863,7 @@ CodeEditor.create = function() {
 
 				return;
 			}
-			else if(e.keyCode == 36) // HOME -- should trigger updateDecorations immediately
+			else if(e.keyCode == 36) // HOME
 			{
 				//to position the cursor at text, rather than line start								
 				e.preventDefault();
@@ -2843,7 +2929,7 @@ CodeEditor.create = function() {
 				
 				return;
 			}	
-			else if(e.keyCode == 35) // END -- should trigger updateDecorations immediately
+			else if(e.keyCode == 35) // END
 			{
 				//to position the cursor at end of line, rather than end of file
 				
@@ -2910,9 +2996,50 @@ CodeEditor.create = function() {
 
 				CodeEditor.editor.setCursor(el,cursor);
 				return;
-			}					
+			}	
+		}
+		
+		//handle page-up and down for shortcut or not shortcut
+		//	because it can cause body to become selected
+		if(e.keyCode == 33) // PAGE-UP
+		{
+			//to position the cursor at text, rather than only moving scroll bar								
+			e.preventDefault();
+			e.stopPropagation();
 			
-		} //end preempt key handling		
+			//Steps:
+			//	get cursor line
+			// 	goto line-N
+							
+			
+			var N = 50; //number of lines for page up
+			var line = CodeEditor.editor.getLine(forPrimary);
+			
+			CodeEditor.editor.gotoLine(forPrimary,line-N);
+							
+			return;
+		}
+		else if(e.keyCode == 34) // PAGE-DOWN
+		{
+			//to position the cursor at text, rather than only moving scroll bar								
+			e.preventDefault();
+			e.stopPropagation();
+
+			//Steps:
+			//	get cursor line
+			// 	goto line-N
+
+
+			var N = 50; //number of lines for page up
+			var line = CodeEditor.editor.getLine(forPrimary);
+
+			CodeEditor.editor.gotoLine(forPrimary,line+N);
+
+			return;
+		}
+		
+		//end preempt key handling	
+		
 		
 						
 		if(e.ctrlKey) //handle shortcuts
@@ -3646,8 +3773,7 @@ CodeEditor.create = function() {
 		} 
 		el.innerHTML = str;			
 	} //end updateLastSave()
-	
-	
+		
 	//=====================================================================================
 	//handleFileNameMouseMove ~~
 	this.handleFileNameMouseMove = function(forPrimary,doNotStartTimer)
