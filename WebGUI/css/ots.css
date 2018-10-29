@@ -1,12 +1,10 @@
 
-
-
 	* {
-		margin: 0;
-		spacing: 0;
-		padding: 0;
-		color:white;
-		font-family: 'Comfortaa', serif; /*'Donegal One', serif;*/		
+		margin: 			0;
+		spacing: 			0;
+		padding: 			0;
+		color:				white;
+		font-family: 		'Comfortaa', serif; /*'Donegal One', serif;*/		
 	}
 	
 	body {
@@ -16,19 +14,20 @@
 	}
 	
 	a {
-		color:white;
-		text-decoration:none;
-		outline: none;  /* to stop firefox selection*/	
+		color:				white;
+		text-decoration:	none;
+		outline: 			none;  /* to stop firefox selection*/	
 	}
 	
 	a:hover {text-decoration:underline;}
 	
 	#clearDiv {
-		clear: both;
+		clear: 				both;
 	}
 	
 	input, select {
-		padding: 1px;
+		padding: 			1px;
+		cursor: 			pointer;
 	}	
 		
 	/*firefox seems to put an extra pixel of letter-spacing in bold words*/

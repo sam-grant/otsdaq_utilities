@@ -143,8 +143,12 @@ CodeEditor.create = function() {
 	//	openDirectory(forPrimary,path)
 	//	handleDirectoryContent(forPrimary,req)
 	//	openFile(forPrimary,path,extension,doConfirm,gotoLine)
+	//	openRelatedFile(forPrimary)
 	//	gotoLine(forPrimary,line)
-	//	handleFileContent(forPrimary,req)
+	//	handleFileContent(forPrimary,req,fileObj)
+	//	getLine(forPrimary)
+	//	getCursor(el)
+	//	setCursor(el,cursor)
 	//	updateDecorations(forPrimary,insertNewLine)
 	//		localInsertNewLine()
 	//		localInsertLabel(startPos)
@@ -159,10 +163,8 @@ CodeEditor.create = function() {
 	//	startEditFileName(forPrimary)	
 	//	editCellOK(forPrimary)
 	//	editCellCancel(forPrimary)
-	//	getLine(forPrimary)
-	//	getCursor(el)
-	//	setCursor(el,cursor)
-	//	openRelatedFile(forPrimary)
+	//	updateFileHistoryDropdowns(forPrimarySelect)
+	//	handleFileNameHistorySelect(forPrimary)
 	
 	
 	//for display
@@ -188,7 +190,7 @@ CodeEditor.create = function() {
 	var _undoStack_MAX_SIZE = 10;
 	var _undoStack = [[],[]]; //newest,time are placed at _undoStackLatestIndex+1, for secondary/primary
 	
-	var _fileHistoryStack = {}; //filename => content map
+	var _fileHistoryStack = {}; //map of filename => [content,timestamp ms,fileWasModified,fileLastSave] 
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -1205,6 +1207,8 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//openFile ~~
 	//	open the file in text editor
+	//
+	//	Before opening on disk, check the file history stack.
 	this.openFile = function(forPrimary,path,extension,doConfirm,gotoLine)
 	{
 		forPrimary = forPrimary?1:0;
@@ -1214,7 +1218,7 @@ CodeEditor.create = function() {
 		var i = path.indexOf('.');
 		if(i > 0) //up to extension
 			path = path.substr(0,i);
-		
+				
 		if(doConfirm)
 		{
 			DesktopContent.popUpVerification(
@@ -1223,7 +1227,34 @@ CodeEditor.create = function() {
 			);
 			return;
 		}
-		else localDoIt();
+		else 
+		{
+			//check the file history stack first
+			var keys = Object.keys(_fileHistoryStack);
+			var filename = path + "." + extension;
+			for(i;i<keys.length;++i)
+				if(filename == keys[i])
+				{
+					Debug.log("Found " + filename + " in file history.");
+
+					//do not open file, just cut to the existing content in stack
+					
+					var fileObj = {};
+					fileObj.path 			= path;
+					fileObj.extension 		= extension;
+					fileObj.text 			= _fileHistoryStack[filename][0];
+					fileObj.fileWasModified = _fileHistoryStack[filename][2];
+					fileObj.fileLastSave 	= _fileHistoryStack[filename][3];
+
+					console.log("fileObj",fileObj);
+					
+					CodeEditor.editor.handleFileContent(forPrimary,0,fileObj);		
+					
+					return;
+				}			
+						
+			localDoIt();
+		}
 
 		function localDoIt()
 		{
@@ -1395,16 +1426,37 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//handleFileContent ~~
 	//	redraw text editor based on file content in req response
-	this.handleFileContent = function(forPrimary,req)
+	//	
+	//	if req is undefined, attempts to use 
+	//		fileObj:={path, extension, text, fileWasModified, fileLastSave}
+	this.handleFileContent = function(forPrimary,req,fileObj)
 	{
 		forPrimary = forPrimary?1:0;
 		
 		Debug.log("handleFileContent forPrimary=" + forPrimary);
 		console.log(req);
 
-		var path = DesktopContent.getXMLValue(req,"path");
-		var extension = DesktopContent.getXMLValue(req,"ext");
-		var text = DesktopContent.getXMLValue(req,"content");
+		var path;
+		var extension;
+		var text;
+		var fileWasModified, fileLastSave;
+		
+		if(req)
+		{
+			path 				= DesktopContent.getXMLValue(req,"path");
+			extension 			= DesktopContent.getXMLValue(req,"ext");
+			text 				= DesktopContent.getXMLValue(req,"content");
+			fileWasModified 	= false;
+			fileLastSave 		= 0; //default time to 0
+		}
+		else
+		{
+			path 				= fileObj.path;
+			extension 			= fileObj.extension;
+			text 				= fileObj.text;
+			fileWasModified 	= fileObj.fileWasModified;
+			fileLastSave 		= fileObj.fileLastSave;
+		}
 		
 		//replace emacs tab character two &#160's, with \t
 		//text = text.replace(new RegExp(
@@ -1414,8 +1466,9 @@ CodeEditor.create = function() {
 		
 		_filePath[forPrimary] = path;
 		_fileExtension[forPrimary] = extension;
-		_fileLastSave[forPrimary] = 0; //default time to 0
-		_fileWasModified[forPrimary] = false;
+		_fileWasModified[forPrimary] = fileWasModified;
+		_fileLastSave[forPrimary] = fileLastSave;
+		
 		_undoStack[forPrimary] = []; //clear undo stack
 		_undoStackLatestIndex[forPrimary] = -1; //reset latest undo index
 
@@ -1440,8 +1493,9 @@ CodeEditor.create = function() {
 							"event.stopPropagation(); " +
 							"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
 							",1 /*doNotStartTimer*/);",
-						"title": "Change the filename...",
+						"title": "Change the filename\n" + path + "." + extension,
 						"onclick":
+							"event.stopPropagation(); " + 
 							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += htmlOpen("div", //this is el that gets hide/show toggle
@@ -1480,6 +1534,8 @@ CodeEditor.create = function() {
 		var box = document.getElementById("editableBox" + forPrimary);
 		box.textContent = text;
 		CodeEditor.editor.updateDecorations(forPrimary);		
+
+		CodeEditor.editor.updateFileHistoryDropdowns();	
 		
 	} //end handleFileContent()
 	
@@ -2563,8 +2619,14 @@ CodeEditor.create = function() {
 				//	and in case we want to remove old ones
 				
 				_fileHistoryStack[_filePath[forPrimary] + "." +
-								  _fileExtension[forPrimary]] = [text,now];
+								  _fileExtension[forPrimary]] = [
+																 text,
+																 now,
+																 _fileWasModified[forPrimary],
+																 _fileLastSave[forPrimary]];
 				console.log("_fileHistoryStack",_fileHistoryStack);
+				
+				CodeEditor.editor.updateFileHistoryDropdowns();	
 			}
 		} //end localHandleStackManagement()
 				
@@ -2665,6 +2727,7 @@ CodeEditor.create = function() {
 				{
 						"class":"textEditorOutlineSelect",
 						"id":"textEditorOutlineSelect" + forPrimary,
+						"title":"Jump to a section of code.",
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
 						"onclick": 
@@ -3816,7 +3879,10 @@ CodeEditor.create = function() {
 		console.log("startEditFileName " + forPrimary);
 
 		var el = document.getElementById("fileNameDiv" + forPrimary);
-		var initVal = el.textContent.trim();
+		
+		var keys = Object.keys(_fileHistoryStack);		
+		var initVal = keys[document.getElementById("fileNameHistorySelect" + 
+				forPrimary).value|0].trim();//el.textContent.trim();
 
 		var _OK_CANCEL_DIALOG_STR = "";
 
@@ -3834,21 +3900,31 @@ CodeEditor.create = function() {
 		
 		//create input box and ok | cancel
 		var str = "";
-		str += "<input type='text' style='text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
-				" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
-		str += initVal;
-		str += "' >";
+		str += htmlOpen("input",
+				{
+						"style":"text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
+							" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px",
+						"value": initVal,
+						"onclick":"event.stopPropagation();",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		
+		
+		//		"<input type='text' style='text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
+		//				" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px' value='";
+		//		str += initVal;
+		//		str += "' >";
+		
 		str += _OK_CANCEL_DIALOG_STR;	
 
 		el.innerHTML = str;
 		
 		//select text in new input
 		el = el.getElementsByTagName("input")[0];
-		el.focus();
 		var startPos = initVal.lastIndexOf('/')+1;
 		var endPos = initVal.lastIndexOf('.');
 		if(endPos < 0) endPos = initVal.length;
 		el.setSelectionRange(startPos, endPos);
+		el.focus();
 		
 	} //end startEditFileName()
 	
@@ -3868,20 +3944,42 @@ CodeEditor.create = function() {
 		
 		_filePath[forPrimary] = val.substr(0,extPos);
 		_fileExtension[forPrimary] = extPos > 0?val.substr(extPos+1):"";
+		
 				
-		var el = document.getElementById("fileNameDiv" + forPrimary);
+//		var el = document.getElementById("fileNameDiv" + forPrimary);
+//		
+//		var str = "";
+//		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+//				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
+//				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
+//		
+//		el.innerHTML = str;
+
 		
-		var str = "";
-		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
-				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
-		
-		el.innerHTML = str;
 
 		//indicate file was not saved
 		_fileWasModified[forPrimary] = true;
 		_fileLastSave[forPrimary] = 0; //reset
 		CodeEditor.editor.updateLastSave(forPrimary);
+
+		
+		
+		
+		//	update file history stack to be displayed 
+		//	in dropdown at filename position
+		//	place them in by time, so they are in time order
+		//	and in case we want to remove old ones
+
+		var text = document.getElementById("editableBox" + forPrimary).textContent;
+		_fileHistoryStack[_filePath[forPrimary] + "." +
+						  _fileExtension[forPrimary]] = [
+														 text,
+														 Date.now(),
+														 _fileWasModified[forPrimary],
+														 _fileLastSave[forPrimary]];
+		console.log("_fileHistoryStack",_fileHistoryStack);
+
+		CodeEditor.editor.updateFileHistoryDropdowns(); //both
 
 	} //end editCellOK()
 	
@@ -3891,20 +3989,125 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
-		console.log("editCellCancel " + forPrimary);
+		Debug.log("editCellCancel " + forPrimary);
 		_fileNameEditing[forPrimary] = false;
 
 		//revert to same path and extension
-		var el = document.getElementById("fileNameDiv" + forPrimary);
+		CodeEditor.editor.updateFileHistoryDropdowns(forPrimary);
 		
-		var str = "";
-		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
-				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
-
-		el.innerHTML = str;
+	//		var el = document.getElementById("fileNameDiv" + forPrimary);
+	//		
+	//		var str = "";
+	//		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+	//				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
+	//				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
+	//
+	//		el.innerHTML = str;
 
 	} //end editCellCancel()
+	
+	
+
+	//=====================================================================================
+	//updateFileHistoryDropdowns ~~
+	//	if forPrimarySelect is undefined, do both
+	this.updateFileHistoryDropdowns = function(forPrimarySelect)
+	{
+		Debug.log("updateFileHistoryDropdowns");
+		
+		var el;
+		var str = "";
+		var i;
+				
+		//_fileHistoryStack is map from filename to [content,time]
+		var keys = Object.keys(_fileHistoryStack);
+		
+		var currentFile;
+		for(var forPrimary=0;forPrimary<2;++forPrimary) //for primary and secondary
+		{
+			if(forPrimarySelect !== undefined && //target forPrimarySelect unless undefined
+					forPrimarySelect != forPrimary) continue;
+			
+			currentFile = _filePath[forPrimary] + "." + _fileExtension[forPrimary];
+			str = "";
+			str += htmlOpen("select",
+					{
+							"class":"fileNameHistorySelect",
+							"id":"fileNameHistorySelect" + forPrimary,
+							"style":"width:100%;",
+							"title":"The current file is\n" + currentFile,
+							"onchange":
+							"CodeEditor.editor.handleFileNameHistorySelect(" + 
+								forPrimary + ");",
+							"onclick": 
+							"event.stopPropagation();",
+					},0 /*innerHTML*/, false /*doCloseTag*/);
+
+			//insert filename options
+			for(i=0;i<keys.length;++i)
+			{
+				//Debug.log("key " + keys[i]);
+								
+				str += "<option value='" + i + "' ";
+				
+				if(currentFile == 
+						keys[i])
+					str += "selected";
+				str += ">";
+				if(_fileHistoryStack[keys[i]][2])
+					str += "*MODIFIED* "; 
+				str += keys[i];
+				str += "</option>";
+			} //end filaname option loop
+			
+			str += "</select>";
+			
+			try
+			{
+				el = document.getElementById("fileNameDiv" + forPrimary);
+				el.innerHTML = str;
+			}
+			catch(e)
+			{
+				Debug.log("Ignoring error since file is probably not opened: " + 
+						e);
+			}
+		} // end primary and secondary loop
+		
+	} //end updateFileHistoryDropdowns()
+	
+
+	//=====================================================================================
+	//handleFileNameHistorySelect ~~
+	this.handleFileNameHistorySelect = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		var selectedFileIndex = document.getElementById("fileNameHistorySelect" + forPrimary).value | 0;
+		Debug.log("updateFileHistoryDropdowns " + forPrimary + 
+				"selected=" + selectedFileIndex);
+		
+		var keys = Object.keys(_fileHistoryStack);
+		var selectedFileName = keys[selectedFileIndex];
+		
+		Debug.log("selectedFileName " + selectedFileName);
+		
+		
+		//do not open file, just cut to the existing content in stack
+		
+		var fileObj = {};
+		var fileArr = selectedFileName.split('.');
+		fileObj.path 			= fileArr[0];
+		fileObj.extension 		= fileArr[1];
+		fileObj.text 			= _fileHistoryStack[selectedFileName][0];
+		fileObj.fileWasModified = _fileHistoryStack[selectedFileName][2];
+		fileObj.fileLastSave 	= _fileHistoryStack[selectedFileName][3];
+
+		console.log("fileObj",fileObj);
+		
+		CodeEditor.editor.handleFileContent(forPrimary,0,fileObj);		
+		
+	} //end handleFileNameHistorySelect()
 	
 } //end create() CodeEditor instance
 
