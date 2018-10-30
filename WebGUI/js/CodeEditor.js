@@ -192,11 +192,14 @@ CodeEditor.create = function() {
 	
 	var _fileHistoryStack = {}; //map of filename => [content,timestamp ms,fileWasModified,fileLastSave] 
 	
+	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
 	// end variable declaration
 	CodeEditor.editor = this;
 	Debug.log("CodeEditor.editor constructed");
+	
+	CodeEditor.editor.lastFileNameHistorySelectIndex = -1;
 	
 	init();	
 	Debug.log("CodeEditor.editor initialized");
@@ -222,6 +225,15 @@ CodeEditor.create = function() {
 									DesktopContent.getParameter(0,"gotoLinePrimary"),
 									DesktopContent.getParameter(0,"gotoLineSecondary")
 			];
+		var parameterOpenDirectory = [
+										  DesktopContent.getParameter(0,"openDirectoryPrimary"),
+										  DesktopContent.getParameter(0,"openDirectorySecondary")
+										  ];
+		if(parameterOpenDirectory[0] === undefined)
+			parameterOpenDirectory[0] = "/";
+		if(parameterOpenDirectory[1] === undefined)
+			parameterOpenDirectory[1] = "/";
+		
 		var parameterViewMode = DesktopContent.getParameter(0,"startViewMode");
 		if(parameterViewMode !== undefined) //set view mode if parameter
 		{
@@ -230,6 +242,7 @@ CodeEditor.create = function() {
 		console.log("parameterStartFile",parameterStartFile);
 		console.log("parameterGotoLine",parameterGotoLine);
 		console.log("parameterViewMode",parameterViewMode);
+		console.log("parameterOpenDirectory",parameterOpenDirectory);
 		
 		//_viewMode = 2; for debugging
 		
@@ -283,7 +296,13 @@ CodeEditor.create = function() {
 						false /*doConfirm*/,
 						parameterGotoLine[0 /*primary goto line*/] /*gotoLine*/);
 			else //show base directory nav
-				CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
+			{
+				CodeEditor.editor.openDirectory(
+						1 /*forPrimary*/,
+						parameterOpenDirectory[0] /*path*/
+						);				
+				//CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
+			}
 			
 			//for secondary pane
 			fileSplit = [];
@@ -297,8 +316,15 @@ CodeEditor.create = function() {
 						fileSplit[1] /*extension*/, 
 						false /*doConfirm*/,
 						parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
-			else //show base directory nav
-				CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
+			else //show base directory nav				
+			{
+
+				CodeEditor.editor.openDirectory(
+						0 /*forPrimary*/,
+						parameterOpenDirectory[1] /*path*/
+						);				
+				//CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
+			}
 			
 
 			_activePaneIsPrimary = 1; //default active pane to primary
@@ -1045,6 +1071,8 @@ CodeEditor.create = function() {
 					"/" + "\"" + 
 					")'>" + 
 					"srcs</a>";
+
+			
 			
 			for(i=0;i<pathSplit.length;++i)
 			{
@@ -1058,11 +1086,42 @@ CodeEditor.create = function() {
 				str += "<a class='dirNavPath' onclick='CodeEditor.editor.openDirectory(" + 
 						forPrimary + ",\"" + 
 						buildPath + "\"" + 
-						")'>" + 
+						")' title='Open folder: \nsrcs" + buildPath + 
+						"' >" + 
 						pathSplitName + "</a>";
 				
 			}
-			str += "/<br><br>";
+			str += "/"; 
+			
+			//open in other pane
+			str += htmlOpen("a",
+					{	
+						"title":"Open folder in the other editor pane of the split-view: \n" +
+						"srcs" + buildPath,
+						"onclick":"CodeEditor.editor.openDirectory(" + 
+						(!forPrimary) + ",\"" + 
+						buildPath+ "\");", //end onclick
+					},
+					"<img class='dirNavFileNewWindowImgNewPane' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+			
+			//open in new window
+			str += htmlOpen("a",
+					{
+						"title":"Open file in a new browser tab: \n" +
+						"srcs" + buildPath,	
+						"onclick":"DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+						buildPath + "\",0 /*unique*/);' ", //end onclick
+					},   
+					"<img class='dirNavFileNewWindowImgNewWindow' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+
+
+			str += "<br><br>";
 		}
 
 		/////////////
@@ -1071,16 +1130,47 @@ CodeEditor.create = function() {
 		{
 			name = specials[i].getAttribute('value');
 
+			//open in new window
+			str += htmlOpen("a",
+					{
+							"title":"Open file in a new browser tab: \n" +
+							"srcs" + path + "/" + name,	
+							"onclick":"DesktopContent.openNewBrowserTab(" +
+							"\"Code Editor\",\"\"," + 
+							"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+							path + "/" + name + "\",0 /*unique*/);' ", //end onclick
+					},   
+					"<img class='dirNavFileNewWindowImgNewWindow' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+			
+			//open in other pane
+			str += htmlOpen("a",
+					{	
+						"title":"Open folder in the other editor pane of the split-view: \n" +
+							"srcs" + path + "/" + name,
+						"onclick":"CodeEditor.editor.openDirectory(" + 
+							(!forPrimary) + ",\"" + 
+							path + "/" + name + "\");", //end onclick
+					},
+					"<img class='dirNavFileNewWindowImgNewPane' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);			
+
+			//open in this pane
 			str += "<a class='dirNavSpecial' onclick='CodeEditor.editor.openDirectory(" + 
 					forPrimary + ",\"" + 
 					path + "/" + name + "\"" + 
-					")'>" + 
+					")' title='Open folder: \nsrcs" + path + "/" + name + "' >" + 
 					name + "</a>";
+
+			
 			str += "<br>";
 
 		}
 		/////////////
 		//show special files
+		var nameSplit;
 		if(specialFiles.length)
 		{
 			str += "<table>";
@@ -1091,14 +1181,48 @@ CodeEditor.create = function() {
 			name = specialFiles[i].getAttribute('value');
 
 			str += "<tr><td>";
+			
+			//open in new window
+			str += htmlOpen("a",
+					{
+							"title":"Open file in a new browser tab: \n" +
+							"srcs" + name,	
+							"onclick":"DesktopContent.openNewBrowserTab(" +
+							"\"Code Editor\",\"\"," + 
+							"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+							name + "\",0 /*unique*/);' ", //end onclick
+					},   
+					"<img class='dirNavFileNewWindowImgNewWindow' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);			
+
+			//open in other pane
+			str += htmlOpen("a",
+					{	
+							"title":"Open file in the other editor pane of the split-view: \n" +
+							"srcs" + name,
+							"onclick":"CodeEditor.editor.openFile(" + 
+							(!forPrimary) + ",\"" + 
+							name + "\", \"" +
+							name.substr(name.indexOf('.')+1) + "\"" + //extension
+							");", //end onclick
+					},
+					"<img class='dirNavFileNewWindowImgNewPane' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+
+			//open in this pane
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 					forPrimary + ",\"" + 
 					name + "\",\"" +
 					name.substr(name.indexOf('.')+1) + "\"" + //extension
-					")' title='srcs" + name + "' >";
-			name = name.split('/');			
-			str += name[name.length-1] + "</a>";
-			str += "</td><td style='padding-left:20px'>" + name[1] + "</td></tr>";
+					")' title='Open file: \nsrcs" + name + "' >";
+			nameSplit = name.split('/');			
+			str += nameSplit[nameSplit.length-1] + "</a>";			
+
+			
+			
+			str += "</td><td style='padding-left:20px'>" + nameSplit[1] + "</td></tr>";
 
 		}
 		if(specialFiles.length)
@@ -1111,11 +1235,41 @@ CodeEditor.create = function() {
 		{
 			name = dirs[i].getAttribute('value');
 			
+			//open in new window
+			str += htmlOpen("a",
+					{
+							"title":"Open file in a new browser tab: \n" +
+							"srcs" + path + "/" + name,	
+							"onclick":"DesktopContent.openNewBrowserTab(" +
+							"\"Code Editor\",\"\"," + 
+							"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+							path + "/" + name + "\",0 /*unique*/);' ", //end onclick
+					},   
+					"<img class='dirNavFileNewWindowImgNewWindow' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+
+			//open in other pane
+			str += htmlOpen("a",
+					{	
+						"title":"Open folder in the other editor pane of the split-view: \n" +
+							"srcs" + path + "/" + name,
+						"onclick":"CodeEditor.editor.openDirectory(" + 
+							(!forPrimary) + ",\"" + 
+							path + "/" + name + "\");", //end onclick
+					},
+					"<img class='dirNavFileNewWindowImgNewPane' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+			
+			//open in this pane
 			str += "<a class='dirNavFolder' onclick='CodeEditor.editor.openDirectory(" + 
 					forPrimary + ",\"" + 
 					path + "/" + name + "\"" + 
-					")' title='srcs" + path + "/" + name + "' >" +
+					")' title='Open folder: \nsrcs" + path + "/" + name + "' >" +
 					name + "</a>";
+
+			
 			str += "<br>";
 					
 		}
@@ -1124,13 +1278,47 @@ CodeEditor.create = function() {
 		for(i=0;i<files.length;++i)
 		{
 			name = files[i].getAttribute('value');
+
+			//open in new window
+			str += htmlOpen("a",
+					{
+							"title":"Open file in a new browser tab: \n" +
+							"srcs" + path + "/" + name,	
+							"onclick":"DesktopContent.openNewBrowserTab(" +
+							"\"Code Editor\",\"\"," + 
+							"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+							path + "/" + name + "\",0 /*unique*/);' ", //end onclick
+					},   
+					"<img class='dirNavFileNewWindowImgNewWindow' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
+
+			//open in other pane
+			str += htmlOpen("a",
+					{	
+						"title":"Open file in the other editor pane of the split-view: \n" +
+							"srcs" + path + "/" + name,
+						"onclick":"CodeEditor.editor.openFile(" + 
+							(!forPrimary) + ",\"" + 
+							path + "/" + name + "\", \"" +
+							name.substr(name.indexOf('.')+1) + "\"" + //extension
+							");", //end onclick
+					},
+					"<img class='dirNavFileNewWindowImgNewPane' " +
+					"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+					/*innerHTML*/, true /*doCloseTag*/);
 			
+			
+			//open in this pane
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 					forPrimary + ",\"" + 
 					path + "/" + name + "\", \"" +
 					name.substr(name.indexOf('.')+1) + "\"" + //extension
-					")' title='srcs" + path + "/" + name + "' >" +
+					")' title='Open file: \nsrcs" + path + "/" + name + "' >" +
 					name + "</a>";
+
+
+			
 			str += "<br>";
 					
 		}
@@ -1145,6 +1333,7 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
+		if(!path || path == "") path = "/"; //defualt to root
 		Debug.log("openDirectory forPrimary=" + forPrimary +
 				" path=" + path);
 
@@ -1222,7 +1411,7 @@ CodeEditor.create = function() {
 		if(doConfirm)
 		{
 			DesktopContent.popUpVerification(
-					"Are you sure you want to discard changes and reload file?!",
+					"Do you want to reload the file from the server (and discard your changes)?",
 					localDoIt
 			);
 			return;
@@ -2727,6 +2916,7 @@ CodeEditor.create = function() {
 				{
 						"class":"textEditorOutlineSelect",
 						"id":"textEditorOutlineSelect" + forPrimary,
+						"style":"text-align-last: center;",
 						"title":"Jump to a section of code.",
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
@@ -4034,13 +4224,18 @@ CodeEditor.create = function() {
 					{
 							"class":"fileNameHistorySelect",
 							"id":"fileNameHistorySelect" + forPrimary,
-							"style":"width:100%;",
+							"style":"width:100%;" + 
+								"text-align-last: center;",
 							"title":"The current file is\n" + currentFile,
 							"onchange":
 							"CodeEditor.editor.handleFileNameHistorySelect(" + 
 								forPrimary + ");",
-							"onclick": 
-							"event.stopPropagation();",
+							"onclick":"event.stopPropagation();",
+							"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
+								"this.value = -1; console.log(\"hi\");",
+							"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;" +
+								"console.log(\"bye\");",
+							//"onfocusout":"this.value = CodeEditor.editor.fileHistoryLastIndex;",
 					},0 /*innerHTML*/, false /*doCloseTag*/);
 
 			//insert filename options
@@ -4048,10 +4243,8 @@ CodeEditor.create = function() {
 			{
 				//Debug.log("key " + keys[i]);
 								
-				str += "<option value='" + i + "' ";
-				
-				if(currentFile == 
-						keys[i])
+				str += "<option value='" + i + "' ";								
+				if(currentFile == keys[i])
 					str += "selected";
 				str += ">";
 				if(_fileHistoryStack[keys[i]][2])
@@ -4097,6 +4290,18 @@ CodeEditor.create = function() {
 		
 		var fileObj = {};
 		var fileArr = selectedFileName.split('.');
+		
+		//if same file, ask if user wants to reload
+		if(fileArr[0] == _filePath[forPrimary] &&
+				fileArr[1] == _fileExtension[forPrimary])
+		{
+			CodeEditor.editor.openFile(forPrimary,
+					_filePath[forPrimary],
+					_fileExtension[forPrimary],
+					true /*doConfirm*/);
+			return;
+		}
+		
 		fileObj.path 			= fileArr[0];
 		fileObj.extension 		= fileArr[1];
 		fileObj.text 			= _fileHistoryStack[selectedFileName][0];

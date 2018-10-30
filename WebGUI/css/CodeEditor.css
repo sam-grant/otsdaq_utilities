@@ -244,6 +244,7 @@
 		}
 		.dirNavFile {
 			color:					rgb(108, 108, 108);
+			margin-right:			10px;
 		}
 		.dirNavSpecial {
 			color:					red;
@@ -254,8 +255,14 @@
 		}
 
 		
-		
-		
+		.dirNavFileNewWindowImgNewWindow {
+			width: 					11px;
+			margin: 				0 0 0 0;
+		}
+		.dirNavFileNewWindowImgNewPane {
+			width: 					16px;
+			margin: 				0 10px 0 10px;
+		}
 		
 		
 		
