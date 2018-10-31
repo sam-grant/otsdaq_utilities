@@ -510,6 +510,7 @@ DesktopContent.showLoading = function()	{
 	//setup Loading.. animation
 	var loadBoxStr = "..";
 	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
+	el.innerHTML = "Loading" + loadBoxStr;
 	
 	/////////////////////////
 	var loadBoxAnimationFunction = function() {

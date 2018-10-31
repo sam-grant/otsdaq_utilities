@@ -32,6 +32,7 @@ CodeEditor.MENU_SECONDARY_COLOR = "rgb(130, 51, 51)";
 CodeEditor.editor; //this is THE CodeEditor variable
 
 
+
 //htmlOpen(tag,attObj,innerHTML,closeTag)
 //htmlClearDiv()
 
@@ -92,7 +93,7 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + L or Ctrl + G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + Q </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
 			"</table></INDENT>\n" +
 			
@@ -102,8 +103,8 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> TAB</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading TAB character to all highlighted lines.</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + TAB </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading TAB character from all highlighted lines.</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + T or Y </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add TAB character at starting cursor position of all highlighted line (i.e. Block Tab effect).</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T or Y</td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading comment character(s) to all highlighted lines.</td></tr>" +
 			"</table></INDENT>\n" +
@@ -200,8 +201,8 @@ CodeEditor.create = function() {
 	var _fileHistoryStack = {}; //map of filename => [content,timestamp ms,fileWasModified,fileLastSave] 
 	
 	var _findAndReplaceCursorInContent = [undefined,undefined];	
-	var _findAndReplaceLastButton = [-1,-1]; //1,2,3,4 := Find, Replace, Find&Replace, Replace All
 	
+	var _UPDATE_DECOR_TIMEOUT = 2000; //ms
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -217,6 +218,7 @@ CodeEditor.create = function() {
 	CodeEditor.editor.findAndReplaceDirection = [0,0]; //save find & replace state
 	CodeEditor.editor.findAndReplaceCaseSensitive = [0,0]; //save find & replace state
 	CodeEditor.editor.findAndReplaceWholeWord = [1,1]; //save find & replace state
+	CodeEditor.editor.findAndReplaceLastButton = [-1,-1]; //1,2,3,4 := Find, Replace, Find&Replace, Replace All //save find & replace state
 	// end "public" members
 	
 	init();	
@@ -590,11 +592,11 @@ CodeEditor.create = function() {
 				CodeEditor.editor.updateLastSave(forPrimary);
 
 				window.clearTimeout(_inputTimerHandle);
-				_inputTimerHandle = window.setTimeout(
-						function()
-						{
-					CodeEditor.editor.updateDecorations(forPrimary);				
-						}, 1000); //end setTimeout
+				//				_inputTimerHandle = window.setTimeout(
+				//						function()
+				//						{
+				//					CodeEditor.editor.updateDecorations(forPrimary);				
+				//						}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
 
 					}); //end addEventListener
 
@@ -611,9 +613,36 @@ CodeEditor.create = function() {
 			box.addEventListener("click",
 					function(e)
 					{
+				e.stopPropagation(); //to stop click body behavior
+					}); //end addEventListener
+					
+			box.addEventListener("mousedown",
+					function(e)
+					{
 				e.stopPropagation();
+				
+				var forPrimary = this.id[this.id.length-1]|0;
+				forPrimary = forPrimary?1:0;
+				
+				Debug.log("mousedown handler for editor" + forPrimary);
+				
+				_activePaneIsPrimary = forPrimary;
+				
+				window.clearTimeout(_inputTimerHandle);
+				
 					}); //end addEventListener
 			
+			box.addEventListener("mouseup",
+				function(e)
+					{
+						Debug.log("mouseup handler for editor" + forPrimary);
+						window.clearTimeout(_inputTimerHandle);
+						_inputTimerHandle = window.setTimeout(
+								function()
+								{
+							CodeEditor.editor.updateDecorations(forPrimary);				
+								}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
+					}); //end addEventListener
 
 			//add click handler to track active pane
 			box = document.getElementById("editorPane" + i);
@@ -1161,7 +1190,7 @@ CodeEditor.create = function() {
 			//open in new window
 			str += htmlOpen("a",
 					{
-							"title":"Open file in a new browser tab: \n" +
+							"title":"Open folder in a new browser tab: \n" +
 							"srcs" + path + "/" + name,	
 							"onclick":"DesktopContent.openNewBrowserTab(" +
 							"\"Code Editor\",\"\"," + 
@@ -1451,7 +1480,8 @@ CodeEditor.create = function() {
 			var filename = path + "." + extension;
 			for(i;i<keys.length;++i)
 				if(filename == keys[i])
-				{
+				{					
+					DesktopContent.showLoading();
 					Debug.log("Found " + filename + " in file history.");
 
 					//do not open file, just cut to the existing content in stack
@@ -1467,6 +1497,9 @@ CodeEditor.create = function() {
 					
 					CodeEditor.editor.handleFileContent(forPrimary,0,fileObj);		
 					
+					CodeEditor.editor.toggleDirectoryNav(forPrimary, false /*set val*/);
+					
+					DesktopContent.hideLoading();
 					return;
 				}			
 						
@@ -1475,6 +1508,9 @@ CodeEditor.create = function() {
 
 		function localDoIt()
 		{
+			CodeEditor.editor.toggleDirectoryNav(forPrimary,false /*set val*/);
+			
+			DesktopContent.showLoading();
 			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
 					"&option=getFileContent" +
 					"&path=" + path + 
@@ -1487,10 +1523,11 @@ CodeEditor.create = function() {
 				if(err) 
 				{
 					Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+					DesktopContent.hideLoading();
 					return;
 				}
 
-				DesktopContent.showLoading();
+				
 				try
 				{
 					CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
@@ -1690,13 +1727,22 @@ CodeEditor.create = function() {
 		_undoStackLatestIndex[forPrimary] = -1; //reset latest undo index
 
 		var box = document.getElementById("editableBox" + forPrimary);
-		box.textContent = text;
-		
-		CodeEditor.editor.displayFileHeader(forPrimary);
 				
+		DesktopContent.showLoading();		
+		//do decor in timeout to show loading
+		window.setTimeout(function()
+			{
+				try
+				{	
+					box.textContent = text;
+					CodeEditor.editor.displayFileHeader(forPrimary);
+				}
+				catch(e)
+				{ Debug.log("Ignoring error: " + e); }
+					
+				DesktopContent.hideLoading();	
+			},10);	
 		
-//		CodeEditor.editor.updateDecorations(forPrimary);
-//		CodeEditor.editor.updateFileHistoryDropdowns();	
 		
 	} //end handleFileContent()
 	
@@ -2138,7 +2184,11 @@ CodeEditor.create = function() {
 //			console.log("cursor",cursor);
 			
 		if(insertNewLine)
+		{
 			localInsertNewLine();
+			CodeEditor.editor.setCursor(el,cursor);
+			return;
+		}
 			
 //		}
 //		catch(err)
@@ -2395,7 +2445,8 @@ CodeEditor.create = function() {
 			val = node.textContent; //.nodeValue; //.wholeText
 
 			if(node.nodeName == "LABEL" || 
-					node.nodeName == "FONT")
+					node.nodeName == "FONT" || 
+					node.nodeName == "SPAN")
 			{
 				//console.log("Label handling...",val);
 				
@@ -2467,6 +2518,14 @@ CodeEditor.create = function() {
 			}	//end DIV type handling
 			else if(node.nodeName == "#text")
 			{
+				if(n > 0 && 
+					el.childNodes[n-1].nodeName == "#text")
+				{
+					//if prev child is text, go back!
+					n -= 2;
+					continue;	
+				}	
+					
 				//merge text nodes
 				if(n + 1 < el.childNodes.length &&
 						el.childNodes[n+1].nodeName == "#text")
@@ -3247,6 +3306,15 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
+		//set timeout for decoration update
+		window.clearTimeout(_inputTimerHandle);
+		_inputTimerHandle = window.setTimeout(
+			function()
+			{
+		CodeEditor.editor.updateDecorations(forPrimary);				
+			}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
+			
+		
 		//if just pressing shiftKey ignore
 		if(e.keyCode == 16 /*shift*/)
 			return;
@@ -3265,7 +3333,8 @@ CodeEditor.create = function() {
 				//document.execCommand('insertText', false, '\n');
 				CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/);
 				e.preventDefault();
-
+				e.stopPropagation();
+				
 				return;
 			}
 			else if(e.keyCode == 36) // HOME
@@ -3453,15 +3522,15 @@ CodeEditor.create = function() {
 			//	and we want to act.
 			//e.g. Find and Replace
 			
-			if(_findAndReplaceLastButton[forPrimary] > 0)
+			if(CodeEditor.editor.findAndReplaceLastButton[forPrimary] > 0)
 			{
 				e.preventDefault();
 				e.stopPropagation();
 							
 				Debug.log("Launch find and replace action " + 
-						_findAndReplaceLastButton[forPrimary]);
+						CodeEditor.editor.findAndReplaceLastButton[forPrimary]);
 				CodeEditor.editor.doFindAndReplaceAction(forPrimary,
-						_findAndReplaceLastButton[forPrimary]);				
+						CodeEditor.editor.findAndReplaceLastButton[forPrimary]);				
 				return;
 			}
 		}
@@ -3470,7 +3539,8 @@ CodeEditor.create = function() {
 			//ESCAPE may be hit when doing something in header
 			//	and we want to act.
 			//e.g. Find and Replace
-			if(_findAndReplaceLastButton[forPrimary] > 0)
+			console.log(CodeEditor.editor.findAndReplaceLastButton,forPrimary);
+			if(CodeEditor.editor.findAndReplaceLastButton[forPrimary] > 0)
 			{
 				e.preventDefault();
 				e.stopPropagation();
@@ -3573,7 +3643,8 @@ CodeEditor.create = function() {
 		if(e.ctrlKey)//else if(e.ctrlKey)
 		{			
 
-			if(e.keyCode == 84) // T for rectangular TAB
+			if(e.keyCode == 84 || 
+				e.keyCode == 89) // T or Y for rectangular TAB
 			{
 				rectangularTAB = true;
 				e.preventDefault();
@@ -4151,13 +4222,13 @@ CodeEditor.create = function() {
 					document.execCommand('insertHTML', false, '&#009');
 			}
 			
-			//set timeout for decoration update
-			window.clearTimeout(_inputTimerHandle);
-			_inputTimerHandle = window.setTimeout(
-					function()
-					{
-				CodeEditor.editor.updateDecorations(forPrimary);				
-					}, 1000); //end setTimeout
+//			//set timeout for decoration update
+//			window.clearTimeout(_inputTimerHandle);
+//			_inputTimerHandle = window.setTimeout(
+//					function()
+//					{
+//				CodeEditor.editor.updateDecorations(forPrimary);				
+//					}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
 
 			return;
 
@@ -4516,10 +4587,11 @@ CodeEditor.create = function() {
 	this.showFindAndReplace = function(forPrimary)
 	{
 		forPrimary = forPrimary?1:0;
+		_activePaneIsPrimary = forPrimary;
 				
-		Debug.log("showFindAndReplace forPrimary=" + forPrimary);
+		Debug.log("showFindAndReplace forPrimary=" + forPrimary + " activePane=" + _activePaneIsPrimary);
 		
-		_findAndReplaceLastButton[forPrimary] = 1; //default action is find
+		CodeEditor.editor.findAndReplaceLastButton[forPrimary] = 1;//default action is find
 
 		//get cursor selection to use as starting point for action
 		var el = document.getElementById("editableBox" + forPrimary);
@@ -4797,7 +4869,7 @@ CodeEditor.create = function() {
 		forPrimary = forPrimary?1:0;
 		action = action | 0; //force integer
 		
-		_findAndReplaceLastButton[forPrimary] = action; //record last action
+		CodeEditor.editor.findAndReplaceLastButton[forPrimary] = action; //record last action
 		
 		var find = document.getElementById("findAndReplaceFind" + forPrimary).value;//CodeEditor.editor.findAndReplaceFind[forPrimary];
 		var originalFind = find;
@@ -5052,7 +5124,7 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
-		_findAndReplaceLastButton[forPrimary] = -1; //clear default find and replace action
+		CodeEditor.editor.findAndReplaceLastButton[forPrimary] = -1; //clear default find and replace action
 		
 		Debug.log("displayFileHeader forPrimary=" + forPrimary);
 		
@@ -5098,10 +5170,12 @@ CodeEditor.create = function() {
 		str += htmlClearDiv();
 
 		//add path div
+		str += "<table><tr><td>";
 		str += htmlOpen("div",
 				{
 						"class":"fileNameDiv",
 						"id":"fileNameDiv" + forPrimary,
+						"style":"margin: 0 5px 0 5px",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
 				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
@@ -5109,8 +5183,38 @@ CodeEditor.create = function() {
 				">" +
 				path + "." + extension + "</a>";
 		str += "</div>"; //end fileNameDiv
+		str += "</td><td>";
+		//open in new window
+		str += htmlOpen("a",
+				{
+						"title":"Open file in a new browser tab: \n" +
+						"srcs" + path + "." + extension,	
+						"onclick":"DesktopContent.openNewBrowserTab(" +
+						"\"Code Editor\",\"\"," + 
+						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						path + "." + extension + "\",0 /*unique*/);' ", //end onclick
+				},   
+				"<img class='dirNavFileNewWindowImgNewWindow' " +
+				"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+				/*innerHTML*/, true /*doCloseTag*/);			
 
-		str += "</center>";
+		//open in other pane
+		str += htmlOpen("a",
+				{	
+						"title":"Open file in the other editor pane of the split-view: \n" +
+						"srcs" + path + "." + extension,
+						"onclick":"CodeEditor.editor.openFile(" + 
+						(!forPrimary) + ",\"" + 
+						path + "\", \"" +
+						extension + "\"" + //extension
+						");", //end onclick
+				},
+				"<img class='dirNavFileNewWindowImgNewPane' " +
+				"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+				/*innerHTML*/, true /*doCloseTag*/);
+		str += "</td></tr></table>";
+
+		str += "</center>";		
 		str += "</div>"; //end file name div
 
 
