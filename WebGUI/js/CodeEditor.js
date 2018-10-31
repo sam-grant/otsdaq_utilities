@@ -69,12 +69,12 @@ CodeEditor.showTooltip = function(alwaysShow)
 			(alwaysShow?"ALWAYS":"Code Editor"),
 			"Welcome to the Code Editor user interface. "+
 			"Edit your code, save it, and compile!\n\n" +
+			"<INDENT>" +
 			"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
 			"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +
 			"<b>Save:</b>\n<INDENT>Use the save icon in the top-left to save your changes.</INDENT>\n" +
 			"<b>Compile:</b>\n<INDENT>Use the Incremmental Build or Clean Build icons in the top-right.</INDENT>\n" +
-			
-			
+						
 			"<b>Global Hot Keys:</b>\n<INDENT>" +
 			
 			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
@@ -89,10 +89,11 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + L or Ctrl + G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + Q </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + L or Ctrl + G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + Q </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
 			"</table></INDENT>\n" +
 			
 			
@@ -105,7 +106,8 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + T </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove TAB character from starting cursor position of all highlighted line (i.e. reverse Block Tab effect).</td></tr>" +
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Add leading comment character(s) to all highlighted lines.</td></tr>" +
 			"<tr><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + / </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Remove leading comment character(s) to all highlighted lines.</td></tr>" +
-			"</table></INDENT>\n"
+			"</table></INDENT>\n" +
+			"</INDENT>"
 	);
 } //end showTooltip()
 
