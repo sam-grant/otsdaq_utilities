@@ -147,8 +147,9 @@ CodeEditor.create = function() {
 	//	gotoLine(forPrimary,line)
 	//	handleFileContent(forPrimary,req,fileObj)
 	//	getLine(forPrimary)
-	//	getCursor(el)
-	//	setCursor(el,cursor)
+	//	setCursor(el,cursor,scrollIntoView)
+	//	createCursorFromContentPosition(el,startPos,endPos)
+	//	getCursor(el)	
 	//	updateDecorations(forPrimary,insertNewLine)
 	//		localInsertNewLine()
 	//		localInsertLabel(startPos)
@@ -165,6 +166,10 @@ CodeEditor.create = function() {
 	//	editCellCancel(forPrimary)
 	//	updateFileHistoryDropdowns(forPrimarySelect)
 	//	handleFileNameHistorySelect(forPrimary)
+	//	showFindAndReplace(forPrimary)
+	//	showFindAndReplaceSelection(forPrimary)
+	//	doFindAndReplaceAction(forPrimary,action)
+	//	displayFileHeader(forPrimary)
 	
 	
 	//for display
@@ -192,6 +197,9 @@ CodeEditor.create = function() {
 	
 	var _fileHistoryStack = {}; //map of filename => [content,timestamp ms,fileWasModified,fileLastSave] 
 	
+	var _findAndReplaceCursorInContent = [undefined,undefined];	
+	var _findAndReplaceLastButton = [-1,-1]; //1,2,3,4 := Find, Replace, Find&Replace, Replace All
+	
 	
 	//////////////////////////////////////////////////
 	//////////////////////////////////////////////////
@@ -199,7 +207,15 @@ CodeEditor.create = function() {
 	CodeEditor.editor = this;
 	Debug.log("CodeEditor.editor constructed");
 	
+	// start "public" members
 	CodeEditor.editor.lastFileNameHistorySelectIndex = -1;
+	CodeEditor.editor.findAndReplaceFind = ["",""];	 //save find & replace state
+	CodeEditor.editor.findAndReplaceReplace = ["",""]; //save find & replace state
+	CodeEditor.editor.findAndReplaceScope = [0,0]; //save find & replace state
+	CodeEditor.editor.findAndReplaceDirection = [0,0]; //save find & replace state
+	CodeEditor.editor.findAndReplaceCaseSensitive = [0,0]; //save find & replace state
+	CodeEditor.editor.findAndReplaceWholeWord = [1,1]; //save find & replace state
+	// end "public" members
 	
 	init();	
 	Debug.log("CodeEditor.editor initialized");
@@ -590,6 +606,12 @@ CodeEditor.create = function() {
 				e.stopPropagation();
 							}); //end addEventListener
 			
+			box.addEventListener("click",
+					function(e)
+					{
+				e.stopPropagation();
+					}); //end addEventListener
+			
 
 			//add click handler to track active pane
 			box = document.getElementById("editorPane" + i);
@@ -602,6 +624,9 @@ CodeEditor.create = function() {
 				Debug.log("click handler for pane" + forPrimary);
 				_activePaneIsPrimary = forPrimary;
 				
+
+				CodeEditor.editor.showFindAndReplaceSelection(forPrimary);
+				
 				//focus on edit box				
 				var el = document.getElementById("textEditorBody" + forPrimary);
 				var scrollLeft = el.scrollLeft;
@@ -611,6 +636,7 @@ CodeEditor.create = function() {
 				//CodeEditor.editor.setCursor(el,cursor);
 				el.scrollLeft = scrollLeft;
 				el.scrollTop = scrollTop;
+				
 				
 							}); //end addEventListener
 			
@@ -1661,79 +1687,32 @@ CodeEditor.create = function() {
 		_undoStack[forPrimary] = []; //clear undo stack
 		_undoStackLatestIndex[forPrimary] = -1; //reset latest undo index
 
-		//set path and extension and last save to header
-		var el = document.getElementById("textEditorHeader" + forPrimary);
-		
-		var str = "";
-
-		//add file name div		
-		str += htmlOpen("div",
-				{
-						"onmousemove" : 
-							"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + ");",
-				},0 /*innerHTML*/, false /*doCloseTag*/);
-		str += "<center>";
-		
-		//add rename button		
-		str += htmlOpen("div", //this is place holder, that keeps height spacing
-				{
-						"class":"fileRenameButton",
-						"onmousemove": 
-							"event.stopPropagation(); " +
-							"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
-							",1 /*doNotStartTimer*/);",
-						"title": "Change the filename\n" + path + "." + extension,
-						"onclick":
-							"event.stopPropagation(); " + 
-							"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
-				},0 /*innerHTML*/, false /*doCloseTag*/);
-		str += htmlOpen("div", //this is el that gets hide/show toggle
-				{
-						"class":"fileRenameButton",
-						"id":"fileRenameButton" + forPrimary,
-				},0 /*innerHTML*/, true /*doCloseTag*/);
-		str += "</div>"; //end fileRenameButton
-		
-		str += htmlClearDiv();
-		
-		//add path div
-		str += htmlOpen("div",
-				{
-						"class":"fileNameDiv",
-						"id":"fileNameDiv" + forPrimary,
-				},0 /*innerHTML*/, false /*doCloseTag*/);
-		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
-				"title='Click to reload \n" + path + "." + extension + "' " +
-				">" +
-				path + "." + extension + "</a>";
-		str += "</div>"; //end fileNameDiv
-		
-		str += "</center>";
-		str += "</div>"; //end file name div
-		
-		
-		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
-				forPrimary + "'>Unmodified</div>";
-		str += "<div class='textEditorOutline' id='textEditorOutline" + 
-				forPrimary + "'>Outline:</div>";
-				
-		el.innerHTML = str;
-		
 		var box = document.getElementById("editableBox" + forPrimary);
 		box.textContent = text;
-		CodeEditor.editor.updateDecorations(forPrimary);		
-
-		CodeEditor.editor.updateFileHistoryDropdowns();	
+		
+		CodeEditor.editor.displayFileHeader(forPrimary);
+				
+		
+//		CodeEditor.editor.updateDecorations(forPrimary);
+//		CodeEditor.editor.updateFileHistoryDropdowns();	
 		
 	} //end handleFileContent()
 	
 	//=====================================================================================
 	//setCursor ~~	
-	CodeEditor.editor.setCursor = function(el,cursor)
+	CodeEditor.editor.setCursor = function(el,inCursor,scrollIntoView)
 	{
-		if(cursor.startNodeIndex !== undefined)
+		if(inCursor.startNodeIndex !== undefined)
 		{
+			//make a copy of cursor, in case modifications are needed
+			var cursor = {
+							"startNodeIndex":	inCursor.startNodeIndex,
+							"startPos":			inCursor.startPos,				
+							"endNodeIndex":		inCursor.endNodeIndex,
+							"endPos":			inCursor.endPos
+					};
+					
+					
 			try
 			{
 				console.log("cursor",cursor);
@@ -1741,24 +1720,116 @@ CodeEditor.create = function() {
 				var range = document.createRange();
 
 				var firstEl = el.childNodes[cursor.startNodeIndex];
-				if(firstEl.firstChild)
-					firstEl = firstEl.firstChild;
+				//if(firstEl.firstChild)
+				//	firstEl = firstEl.firstChild;
 
 				var secondEl = el.childNodes[cursor.endNodeIndex];
+				//if(secondEl.firstChild)
+				//	secondEl = secondEl.firstChild;
+
+				if(1 || scrollIntoView)
+				{					
+					Debug.log("scrollIntoView");
+
+					//try to scroll end element and then first element, 
+					//	but if it fails then it is likely text
+					//Note: for scrollIntoView() to work, it seems 
+					//	browser requires at least one character in the 
+					//	scrolling element.
+					try
+					{
+						secondEl.scrollIntoViewIfNeeded();
+					}
+					catch(e)
+					{
+						Debug.log("inserting scroll 2nd element");
+
+						try
+						{
+							//add an element to scroll into view and then remove it
+							var val = secondEl.textContent;					
+							var newNode = document.createTextNode(
+									val.substr(0,cursor.endPos)); //pre-special text
+
+							el.insertBefore(newNode,secondEl);
+
+							newNode = document.createElement("label");
+							newNode.textContent = val[cursor.endPos]; //special text
+							el.insertBefore(newNode,secondEl);
+
+							secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
+
+							newNode.scrollIntoViewIfNeeded();							
+							//el.removeChild(newNode);
+							
+							//fix cursor to point to middle single character node
+							cursor.endPos = 0;
+							secondEl = newNode;
+						}
+						catch(e)
+						{
+							Debug.log("Failed to scroll 2nd element: " + e);
+						}
+					}
+
+					try
+					{
+						firstEl.scrollIntoViewIfNeeded();
+					}
+					catch(e)
+					{
+						Debug.log("inserting scroll 1st element");
+
+						try
+						{
+							//add an element to scroll into view and then remove it
+							firstEl = el.childNodes[cursor.startNodeIndex];
+							var val = firstEl.textContent;					
+							var newNode = document.createTextNode(
+									val.substr(0,cursor.startPos)); //pre-special text
+
+							el.insertBefore(newNode,firstEl);
+
+							newNode = document.createElement("label");
+							newNode.textContent = val[cursor.startPos]; //special text
+							el.insertBefore(newNode,firstEl);
+
+							firstEl.textContent = val.substr(cursor.startPos+1); //post-special text
+
+							newNode.scrollIntoViewIfNeeded();
+							//el.removeChild(newNode);
+							
+							//fix cursor to point to middle single character node
+							cursor.startPos = 0;
+							firstEl = newNode;
+						}
+						catch(e)
+						{
+							Debug.log("Failed to scroll 2nd element: " + e);
+						}
+					}
+				} //end scrollIntoView
+				
+				if(firstEl.firstChild)
+					firstEl = firstEl.firstChild;
 				if(secondEl.firstChild)
 					secondEl = secondEl.firstChild;
-
+				
 				range.setStart(firstEl,
 						cursor.startPos);
 				range.setEnd(secondEl,
 						cursor.endPos);
 
-				el.focus();
+				//el.focus();
 				var selection = window.getSelection();
 				selection.removeAllRanges();
 				selection.addRange(range);
 
 				el.focus();
+				
+								
+				
+				
 			}
 			catch(err)
 			{
@@ -1766,6 +1837,60 @@ CodeEditor.create = function() {
 			}
 		} //end set cursor placement
 	} //end setCursor()
+	
+	//=====================================================================================
+	//createCursorFromContentPosition ~~	
+	CodeEditor.editor.createCursorFromContentPosition = function(el,startPos,endPos)
+	{
+		//handle get cursor location
+		var cursor = {
+				"startNodeIndex":undefined,
+				"startPos":undefined,				
+				"endNodeIndex":undefined,
+				"endPos":undefined
+		};
+
+
+		var sum = 0;
+		var oldSum = 0;
+		
+		try
+		{			
+			//find start and end node index
+			for(i=0;i<el.childNodes.length;++i)
+			{				
+				sum += el.childNodes[i].textContent.length;
+				
+				if(cursor.startNodeIndex === undefined &&
+						startPos >= oldSum && 
+						startPos < sum)
+				{
+					//found start node
+					cursor.startNodeIndex = i;
+					cursor.startPos = startPos - oldSum;					
+				}
+				if(endPos >= oldSum && 
+						endPos < sum)
+				{
+					//found start node
+					cursor.endNodeIndex = i;
+					cursor.endPos = endPos - oldSum;	
+					break; //done!
+				}
+				
+				oldSum = sum;
+			}
+
+			console.log("createCursorFromContentPosition:",cursor);
+
+		}
+		catch(err)
+		{
+			console.log("get cursor err:",err);
+		}
+		return cursor;
+		
+	} //end createCursorFromContentPosition()
 	
 	//=====================================================================================
 	//getCursor ~~	
@@ -1777,27 +1902,40 @@ CodeEditor.create = function() {
 				"startPos":undefined,				
 				"endNodeIndex":undefined,
 				"endPos":undefined,
+				"startPosInContent":undefined,
+				"endPosInContent":undefined,
 		};
-
+		
+		var sum = 0;
 		try
 		{
 			range = window.getSelection().getRangeAt(0);
 
 			cursor.startPos = range.startOffset;
 			cursor.endPos = range.endOffset;
-
+			
 			//find start and end node index
 			for(i=0;i<el.childNodes.length;++i)
 			{
 				if(el.childNodes[i] == range.startContainer ||
 						el.childNodes[i] == range.startContainer.parentNode||
 						el.childNodes[i] == range.startContainer.parentNode.parentNode)
+				{
 					cursor.startNodeIndex = i;
+					cursor.startPosInContent = sum + cursor.startPos;
+					
+				}
 
 				if(el.childNodes[i] == range.endContainer ||
 						el.childNodes[i] == range.endContainer.parentNode||
 						el.childNodes[i] == range.endContainer.parentNode.parentNode)
+				{
 					cursor.endNodeIndex = i;
+					cursor.endPosInContent = sum + cursor.endPos;
+					break; //done!
+				}
+				
+				sum += el.childNodes[i].textContent.length;
 			}
 
 			console.log("cursor",cursor);
@@ -1875,8 +2013,10 @@ CodeEditor.create = function() {
 				"true"					: _DECORATION_RED,
 				"false"					: _DECORATION_RED,
 				
-				"std::" 				: _DECORATION_BLACK,
-				
+				//"std::" 				: _DECORATION_BLACK,
+
+				"std"					: _DECORATION_GREEN,
+				"ots"					: _DECORATION_GREEN,	
 				"string" 				: _DECORATION_GREEN,
 				"set" 					: _DECORATION_GREEN,
 				"vector"				: _DECORATION_GREEN,
@@ -2061,6 +2201,8 @@ CodeEditor.create = function() {
 			
 			//assume at new line point (or start of file)
 			console.log("at leading newline - n",n,"i",i);
+			if(n < 0) n = 0;
+			if(i < 0) i = 0;
 			
 			//now return to cursor and aggregate white space
 			found = false;
@@ -2941,7 +3083,15 @@ CodeEditor.create = function() {
 			str += "</option>";								
 		}
 		str += "</select>"; //end textEditorOutlineSelect
-		document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
+		try
+		{
+			document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
+		}
+		catch(e)
+		{
+			Debug.log("Ignoring missing outline element. Assuming header not shown.");
+			return;
+		}
 		
 		///////////////////////////
 		// localHandleCcOutline
@@ -3145,7 +3295,7 @@ CodeEditor.create = function() {
 					val = node.textContent; 
 
 					for(i=(n==cursor.startNodeIndex?
-							cursor.startPos-1:val.length);i>=0;--i)
+							cursor.startPos-1:val.length-1);i>=0;--i)
 					{
 						if(val[i] == '\n')
 						{
@@ -3174,6 +3324,11 @@ CodeEditor.create = function() {
 					lastNonWhitespacePos = lastPos;
 					lastNonWhitespaceNodeIndex = lastNodeIndex;
 				}
+				
+				//if to edge, force view to go all the way left
+				if(lastNonWhitespacePos == lastPos && 
+						lastNonWhitespaceNodeIndex == lastNodeIndex)										
+					document.getElementById("textEditorBody" + forPrimary).scrollLeft = 0;
 				
 				cursor.endNodeIndex = cursor.startNodeIndex = lastNonWhitespaceNodeIndex
 				cursor.endPos = cursor.startPos = lastNonWhitespacePos;
@@ -3250,7 +3405,7 @@ CodeEditor.create = function() {
 				CodeEditor.editor.setCursor(el,cursor);
 				return;
 			}	
-		}
+		} //end non-shortcuts early handling
 		
 		//handle page-up and down for shortcut or not shortcut
 		//	because it can cause body to become selected
@@ -3290,6 +3445,39 @@ CodeEditor.create = function() {
 
 			return;
 		}
+		else if(e.keyCode == 13) // ENTER
+		{
+			//ENTER may be hit when doing something in header
+			//	and we want to act.
+			//e.g. Find and Replace
+			
+			if(_findAndReplaceLastButton[forPrimary] > 0)
+			{
+				e.preventDefault();
+				e.stopPropagation();
+							
+				Debug.log("Launch find and replace action " + 
+						_findAndReplaceLastButton[forPrimary]);
+				CodeEditor.editor.doFindAndReplaceAction(forPrimary,
+						_findAndReplaceLastButton[forPrimary]);				
+				return;
+			}
+		}
+		else if(e.keyCode == 27) // ESCAPE
+		{
+			//ESCAPE may be hit when doing something in header
+			//	and we want to act.
+			//e.g. Find and Replace
+			if(_findAndReplaceLastButton[forPrimary] > 0)
+			{
+				e.preventDefault();
+				e.stopPropagation();
+				
+				//close find and replace
+				CodeEditor.editor.displayFileHeader(forPrimary);		
+				return;
+			}			
+		}
 		
 		//end preempt key handling	
 		
@@ -3312,6 +3500,12 @@ CodeEditor.create = function() {
 			else if(e.keyCode == 66) 	// B for incremental build
 			{
 				CodeEditor.editor.build();
+				e.preventDefault();
+				return;
+			}
+			else if(e.keyCode == 70) 	// F for Find and Replace
+			{
+				CodeEditor.editor.showFindAndReplace(forPrimary);
 				e.preventDefault();
 				return;
 			}
@@ -4092,6 +4286,7 @@ CodeEditor.create = function() {
 		var str = "";
 		str += htmlOpen("input",
 				{
+						"type":"text",
 						"style":"text-align:center;margin:-4px -2px -4px -1px;width:90%;" + 
 							" height:" + (el.offsetHeight>20?el.offsetHeight:20) + "px",
 						"value": initVal,
@@ -4232,10 +4427,9 @@ CodeEditor.create = function() {
 								forPrimary + ");",
 							"onclick":"event.stopPropagation();",
 							"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
-								"this.value = -1; console.log(\"hi\");",
-							"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;" +
-								"console.log(\"bye\");",
-							//"onfocusout":"this.value = CodeEditor.editor.fileHistoryLastIndex;",
+								"this.value = -1;", //force action even if same selected
+							"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
+							
 					},0 /*innerHTML*/, false /*doCloseTag*/);
 
 			//insert filename options
@@ -4313,6 +4507,622 @@ CodeEditor.create = function() {
 		CodeEditor.editor.handleFileContent(forPrimary,0,fileObj);		
 		
 	} //end handleFileNameHistorySelect()
+	
+
+	//=====================================================================================
+	//showFindAndReplace ~~
+	this.showFindAndReplace = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+				
+		Debug.log("showFindAndReplace forPrimary=" + forPrimary);
+		
+		_findAndReplaceLastButton[forPrimary] = 1; //default action is find
+
+		//get cursor selection to use as starting point for action
+		var el = document.getElementById("editableBox" + forPrimary);
+		var cursor = _findAndReplaceCursorInContent[forPrimary] = 
+				CodeEditor.editor.getCursor(el);
+				
+		//replace header with find and replace dialog
+		el = document.getElementById("textEditorHeader" + forPrimary);
+		var str = "";
+		
+		str += "<center>";
+		
+		str += "<table style='margin-top: 2px;'>";
+		
+		
+		//row 1 -- Find
+		str += "<tr><td style='text-align:right'>"; //col 1
+		str += "Find:";
+		str += "</td><td>"; //col 2
+		str += htmlOpen("input",
+				{
+						"type":"text",
+						"id":"findAndReplaceFind" + forPrimary,
+						"style":"text-align:left; width:90%;" + 
+						" height:" + (20) + "px",
+						"value": CodeEditor.editor.findAndReplaceFind[forPrimary],
+						"onclick":"event.stopPropagation();",
+						"onchange":"CodeEditor.editor.findAndReplaceFind[" + 
+							forPrimary + "] = this.value;" + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+
+		str += "</td><td>"; //col 3
+
+		//Scope options
+		str += htmlOpen("select",
+				{
+						"id":"findAndReplaceScope" + forPrimary,
+						"style":"width:100%;" + 
+						"text-align-last: center;",
+						"title":"Choose the scope for Replace All",
+						"onclick":"event.stopPropagation();" ,				
+						"onchange":"CodeEditor.editor.findAndReplaceScope[" + 
+							forPrimary + "] = this.value;" + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",		
+				
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<option value='0'>All Lines</option>";
+		str += "<option value='1' " + (CodeEditor.editor.findAndReplaceScope[forPrimary] == 
+				1?"selected":"") + ">Selected Lines</option>";
+		str += "</select>";
+		
+		str += "</td><td>"; //col 4
+		
+		//Option case-sensitive
+		str += htmlOpen("input",
+				{
+						"type":"checkbox",
+						"id":"findAndReplaceCaseSensitive" + forPrimary,
+						"title":"Toggle case sensitive search",
+						"onclick":"event.stopPropagation();",	
+						"style":"margin-left:10px;",
+						"onchange":"CodeEditor.editor.findAndReplaceCaseSensitive[" + 
+							forPrimary + "] = this.checked;" + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",
+						
+				},
+				htmlOpen("a",
+						{
+							"title":"Toggle case sensitive search",
+							"style":"margin-left:5px;",
+							"onclick":"event.stopPropagation();" +
+								"var el = document.getElementById(\"findAndReplaceCaseSensitive" +
+								forPrimary + "\"); el.checked = !el.checked;" + 
+								"CodeEditor.editor.findAndReplaceCaseSensitive[" + 
+								forPrimary + "] = el.checked;" + 
+								"CodeEditor.editor.showFindAndReplaceSelection(" + 
+								forPrimary + ");",
+							
+						},
+						"Case sensitive" /*innerHTML*/, true /*doCloseTag*/					
+						)/*innerHTML*/, true /*doCloseTag*/);
+				
+		str += "</td></tr>";
+		
+		//row 2 -- Replace
+		str += "<tr><td style='text-align:right'>"; //col 1
+		str += "Replace with:";
+		str += "</td><td>"; //col 2
+		str += htmlOpen("input",
+				{
+						"type":"text",
+						"id":"findAndReplaceReplace" + forPrimary,
+						"style":"text-align:left; width:90%;" + 
+						" height:" + (20) + "px",
+						"value": CodeEditor.editor.findAndReplaceReplace[forPrimary],
+						"onclick":"event.stopPropagation();",
+						"onchange":"CodeEditor.editor.findAndReplaceReplace[" + 
+							forPrimary + "] = this.value; " + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+
+		str += "</td><td>"; //col 3
+		
+		//Direction options
+		str += htmlOpen("select",
+				{
+						"id":"findAndReplaceDirection" + forPrimary,
+						"style":"width:100%;" + 
+						"text-align-last: center;",
+						"title":"Choose the search direction for the Find & Replace",
+						"onclick":"event.stopPropagation();",	
+						"onchange":"CodeEditor.editor.findAndReplaceDirection[" + 
+							forPrimary + "] = this.value;" + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",
+
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<option value='0'>Search Forward</option>";
+		str += "<option value='1' " + (CodeEditor.editor.findAndReplaceDirection[forPrimary] == 
+				1?"selected":"") + 
+				">Search Backward</option>";
+		str += "</select>";
+		
+		str += "</td><td>"; //col 4
+
+		//Option whole word
+		str += htmlOpen("input",
+				{
+						"type":"checkbox",
+						"id":"findAndReplaceWholeWord" + forPrimary,
+						"title":"Toggle whole word search",
+						"onclick":"event.stopPropagation();",	
+						"style":"margin-left:10px;",
+						"onchange":"CodeEditor.editor.findAndReplaceWholeWord[" + 
+							forPrimary + "] = this.checked;" + 
+							"CodeEditor.editor.showFindAndReplaceSelection(" + 
+							forPrimary + ");",
+
+				},
+				htmlOpen("a",
+						{
+								"style":"margin-left:5px;",
+								"title":"Toggle whole word search",
+								"onclick":"event.stopPropagation();" +
+									"var el = document.getElementById(\"findAndReplaceWholeWord" +
+									forPrimary + "\"); el.checked = !el.checked;" +
+									"CodeEditor.editor.findAndReplaceWholeWord[" + 
+									forPrimary + "] = el.checked;" + 
+									"CodeEditor.editor.showFindAndReplaceSelection(" + 
+									forPrimary + ");",	
+						},
+						"Whole word" /*innerHTML*/, true /*doCloseTag*/					
+				)/*innerHTML*/, true /*doCloseTag*/);
+
+		str += "</td></tr>";
+		
+
+		//Buttons row
+		str += "<tr><td colspan='4' style='text-align:center'>";
+		str += htmlOpen("div",
+				{
+						"id":		"findAndReplaceWrapped" + forPrimary,
+						"style":	"text-align:right; margin: 4px; width:115px;" +
+							"color: red; float: left;",						
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		str += "<div style='float:left;'>";
+		str += htmlOpen("input",
+				{
+						"type":		"button",
+						"value": 	"Find",
+						
+						"style":	"text-align:center; margin: 4px;" ,
+						"onclick":	"event.stopPropagation();" + 
+						"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",1)",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+
+		str += htmlOpen("input",
+				{
+						"type":		"button",
+						"value": 	"Replace",
+						
+						"style":	"text-align:center; margin: 4px;" ,
+						"onclick":	"event.stopPropagation();" + 
+						"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",2)",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		
+		str += htmlOpen("input",
+				{
+						"type":		"button",
+						"value": 	"Replace & Find",
+						
+						"style":	"text-align:center; margin: 4px;" ,
+						"onclick":	"event.stopPropagation();" + 
+						"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",3)",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+
+		str += htmlOpen("input",
+				{
+						"type":		"button",
+						"value": 	"Replace All",
+						
+						"style":	"text-align:center; margin: 4px;" ,
+						"onclick":	"event.stopPropagation();" + 
+						"CodeEditor.editor.doFindAndReplaceAction(" + forPrimary + ",4)",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		
+		str += htmlOpen("input",
+				{
+						"type":		"button",
+						"value": 	"Cancel",
+						"title":	"Close find and replace controls.", 
+						"style":	"text-align:center; margin: 4px;" ,
+						
+						"onclick":	"event.stopPropagation();" + 
+							"CodeEditor.editor.displayFileHeader(" + forPrimary + ")",
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		
+		str += "</div>";
+		str += "</td></tr>";
+		
+		str += "</table>";
+		str += "</center>";
+		
+		el.innerHTML = str;
+		
+		el = document.getElementById("findAndReplaceFind" + forPrimary);
+		el.setSelectionRange(0, el.value.length);
+		el.focus();
+		
+		el = document.getElementById("findAndReplaceCaseSensitive" + forPrimary);
+		el.checked = CodeEditor.editor.findAndReplaceCaseSensitive[forPrimary];
+		
+		el = document.getElementById("findAndReplaceWholeWord" + forPrimary);
+		el.checked = CodeEditor.editor.findAndReplaceWholeWord[forPrimary];
+				
+	} //end showFindAndReplace()
+
+
+	//=====================================================================================
+	//showFindAndReplaceSelection ~~
+	this.showFindAndReplaceSelection = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		Debug.log("showFindAndReplaceSelection forPrimary=" + forPrimary);
+
+		var el = document.getElementById("editableBox" + forPrimary);
+		var cursor = CodeEditor.editor.getCursor(el);
+		
+		if(cursor.startPosInContent !== undefined)
+			CodeEditor.editor.setCursor(el,
+					cursor,
+					true /*scrollIntoView*/);
+		else if(_findAndReplaceCursorInContent[forPrimary] !== undefined)
+			CodeEditor.editor.setCursor(el,
+					_findAndReplaceCursorInContent[forPrimary],
+					true /*scrollIntoView*/);
+		
+		
+	} //end showFindAndReplaceSelection()
+	
+	//=====================================================================================
+	//doFindAndReplaceAction ~~
+	//	actions: 
+	//		1 := Find
+	//		2 := Replace
+	//		3 := Replace & Find
+	//		4 := Replace All
+	this.doFindAndReplaceAction = function(forPrimary,action)
+	{
+		forPrimary = forPrimary?1:0;
+		action = action | 0; //force integer
+		
+		_findAndReplaceLastButton[forPrimary] = action; //record last action
+		
+		var find = document.getElementById("findAndReplaceFind" + forPrimary).value;//CodeEditor.editor.findAndReplaceFind[forPrimary];
+		var originalFind = find;
+		if(!find || find == "")
+		{
+			Debug.log("Illegal empty string to find.", Debug.HIGH_PRIORITY);
+			return;
+		}
+		var replace = CodeEditor.editor.findAndReplaceReplace[forPrimary];
+		var scope = CodeEditor.editor.findAndReplaceScope[forPrimary]|0;
+		var direction = CodeEditor.editor.findAndReplaceDirection[forPrimary]|0; 
+		if(action == 4) //always go forward for Replace All
+			direction = 0; 
+		var caseSensitive = CodeEditor.editor.findAndReplaceCaseSensitive[forPrimary]?1:0; 
+		var wholeWord = CodeEditor.editor.findAndReplaceWholeWord[forPrimary]?1:0;
+		
+		Debug.log("doFindAndReplaceAction forPrimary=" + forPrimary + 
+				" action=" + action + 
+				" find=" + find + 
+				" replace=" + replace +
+				" scope=" + scope + 
+				" direction=" + direction + 
+				" caseSensitive=" + caseSensitive + 
+				" wholeWord=" + wholeWord);
+		
+		//Steps:
+		//	loop
+		//		if 2, 3, 4
+		//			replace current found word
+		//		if 1, 3, 4
+		//			find a word based on criteria
+		//		if 4 and found a word
+		//			continue loop, else done!
+
+		var el = document.getElementById("editableBox" + forPrimary);
+		var originalText = el.textContent;
+		
+		if(caseSensitive) 
+			text = originalText;
+		else //case insensitive, so force lower case
+		{
+			text = originalText.toLowerCase();
+			find = find.toLowerCase();
+		}
+				
+		var i = direction?text.length:-1; //init to 1 off the end
+		var j = text.length-1;
+		//,n,node,el,val;
+		var cursor = CodeEditor.editor.getCursor(el);
+		
+		//if there is a cursor and havent wrapped around, use the cursor
+		if(cursor.startPosInContent !== undefined &&
+				(action == 4 ||
+				document.getElementById("findAndReplaceWrapped" + forPrimary).textContent == ""))
+			i = cursor.startPosInContent;
+		else if(_findAndReplaceCursorInContent[forPrimary] !== undefined &&
+				_findAndReplaceCursorInContent[forPrimary].startPosInContent !== undefined &&
+				_findAndReplaceCursorInContent[forPrimary].startPosInContent >= 0 &&
+				(action == 4 ||
+				document.getElementById("findAndReplaceWrapped" + forPrimary).textContent == ""))
+		{
+			i = _findAndReplaceCursorInContent[forPrimary].startPosInContent;
+			
+			if(action == 4)
+				CodeEditor.editor.setCursor(el,
+						_findAndReplaceCursorInContent[forPrimary],
+						true /*scrollIntoView*/);
+		}
+			
+		//clear wrapped
+		document.getElementById("findAndReplaceWrapped" + forPrimary).innerHTML = "";
+		
+		Debug.log("Starting position: " + i);
+		
+		if(scope == 1) //only selected lines
+		{
+			if(cursor.endPosInContent !== undefined)
+				j = cursor.endPosInContent;		
+			else if(_findAndReplaceCursorInContent[forPrimary] !== undefined &&
+					_findAndReplaceCursorInContent[forPrimary].endPosInContent != undefined &&
+					_findAndReplaceCursorInContent[forPrimary].endPosInContent >= 0)
+				j = _findAndReplaceCursorInContent[forPrimary].endPosInContent;
+			
+			Debug.log("Ending position: " + j);
+		}
+		else if(action ==  4) //if all lines, replace all, then start i at beginning
+			i = -1;
+		
+		var replaceCount = 0;
+		var done;
+		var found = false;
+		do
+		{
+			done = true; //init to one time through
+			
+			/////////////////////
+			//replace current found word
+			switch(action)
+			{
+			case 2: //Replace
+			case 3: //Replace & Find
+				if(i > 0 && i + find.length <= text.length)
+					found = true; //replace first time through
+			case 4: //Replace All
+				
+				if(found)
+				{
+					Debug.log("Replacing");
+					++replaceCount;
+					
+					//do replace
+					originalText = 
+							originalText.substr(0,i) +
+							replace + 
+							originalText.substr(i+find.length);
+									
+					//update text, so indices still matchup
+					if(caseSensitive)  
+						text = originalText;
+					else //case insensitive, so force lower case
+						text = originalText.toLowerCase();
+				}
+				
+				break;
+			case 1: //Find
+				break; //do nothing
+			default:
+				Debug.log("Unrecognized action! " + action, Debug.HIGH_PRIORITY);
+				return;
+			} //end replace word
+			
+			
+			//////////////////////////
+			//find a word based on criteria
+			switch(action)
+			{
+			case 1: //Find
+			case 3: //Replace & Find
+			case 4: //Replace All
+							
+				if(direction == 0) //forward
+					i = text.indexOf(find,i+1);
+				else if(direction == 1) //reverse
+					i = text.lastIndexOf(find,i-1);
+						
+				if(wholeWord)
+				{
+					//confirm non-alpha-numeric before and after
+					if(i>0 && (
+							(text[i-1] >= 'a' && text[i-1] <= 'z') || 
+							(text[i-1] >= 'A' && text[i-1] <= 'Z') || 
+							(text[i-1] >= '0' && text[i-1] <= '9') 
+							)) //if leading character is alpha-numeric 
+					{
+						//invalidate find!
+						done = false; //look for next
+					}
+					else if(i>0 && i+find.length<text.length && (
+							(text[i+find.length] >= 'a' && text[i+find.length] <= 'z') || 
+							(text[i+find.length] >= 'A' && text[i+find.length] <= 'Z') || 
+							(text[i+find.length] >= '0' && text[i+find.length] <= '9') 
+							)) //if trailing character is alpha-numeric 
+					{
+						//invalidate find!
+						done = false; //look for next
+					}
+				}
+				
+				console.log(i);//,text.substr(i,find.length));
+				
+				if(done) //handle end game, done overloaded to handle wholeWord functionality
+				{
+					if(i >= 0) //found something
+					{
+						found = true;
+						
+						//if Replace All, then keep going
+						if(action == 4)
+						{
+							//keep going if within selection
+							if(i + find.length < j)
+								done = false;
+							//else outside of selected lines
+						}
+					}
+					else //found nothing
+					{
+						found = false; 
+						document.getElementById("findAndReplaceWrapped" + forPrimary).innerHTML = "Reached end";
+					}
+				} //end end game handling
+				else
+					found = false;
+				
+				break;
+			case 2: //Replace
+				break; //do nothing
+			default:
+				Debug.log("Unrecognized action! " + action, Debug.HIGH_PRIORITY);
+				return;
+			} //end find word
+			
+			//Debug.log("done " + done);
+		} while(!done); //end main replace & find loop
+		
+		
+		/////////////////////
+		//wrap it up
+		switch(action)
+		{
+		case 2: //Replace
+		case 3: //Replace & Find			
+		case 4: //Replace All
+
+			//set to modified original text
+			//	then re-decorate
+			el.textContent = originalText;
+			CodeEditor.editor.updateDecorations(forPrimary);
+			
+			//select the find
+			if(action == 3)
+				CodeEditor.editor.setCursor(el,
+						CodeEditor.editor.createCursorFromContentPosition(el,
+								i, i + find.length),true /*scrollIntoView*/);
+			
+			
+			break;
+		case 1: //Find
+			//select the find
+			CodeEditor.editor.setCursor(el,
+					CodeEditor.editor.createCursorFromContentPosition(el,
+							i, i + find.length),true /*scrollIntoView*/);
+			break; //do nothing
+		default:
+			Debug.log("Unrecognized action! " + action, Debug.HIGH_PRIORITY);
+			return;
+		} //end wrap it up
+				
+		
+		
+		//display replace count for Replace All
+		if(action == 4)
+			document.getElementById("findAndReplaceWrapped" + forPrimary).innerHTML = 
+					replaceCount + " Replaced";
+		
+		
+	} //end doFindAndReplaceAction()
+	
+	//=====================================================================================
+	//displayFileHeader ~~
+	this.displayFileHeader = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		_findAndReplaceLastButton[forPrimary] = -1; //clear default find and replace action
+		
+		Debug.log("displayFileHeader forPrimary=" + forPrimary);
+		
+		//set path and extension and last save to header
+		var el = document.getElementById("textEditorHeader" + forPrimary);
+
+
+		var path = _filePath[forPrimary];
+		var extension = _fileExtension[forPrimary];
+		//		var fileWasModified = _fileWasModified[forPrimary];
+		//		var fileLastSave = _fileLastSave[forPrimary];
+		
+		var str = "";
+
+		//add file name div		
+		str += htmlOpen("div",
+				{
+						"onmousemove" : 
+						"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + ");",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<center>";
+
+		//add rename button		
+		str += htmlOpen("div", //this is place holder, that keeps height spacing
+				{
+						"class":"fileRenameButton",
+						"onmousemove": 
+						"event.stopPropagation(); " +
+						"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
+						",1 /*doNotStartTimer*/);",
+						"title": "Change the filename\n" + path + "." + extension,
+						"onclick":
+						"event.stopPropagation(); " + 
+						"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += htmlOpen("div", //this is el that gets hide/show toggle
+				{
+						"class":"fileRenameButton",
+						"id":"fileRenameButton" + forPrimary,
+				},0 /*innerHTML*/, true /*doCloseTag*/);
+		str += "</div>"; //end fileRenameButton
+
+		str += htmlClearDiv();
+
+		//add path div
+		str += htmlOpen("div",
+				{
+						"class":"fileNameDiv",
+						"id":"fileNameDiv" + forPrimary,
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
+				"title='Click to reload \n" + path + "." + extension + "' " +
+				">" +
+				path + "." + extension + "</a>";
+		str += "</div>"; //end fileNameDiv
+
+		str += "</center>";
+		str += "</div>"; //end file name div
+
+
+		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
+				forPrimary + "'>Unmodified</div>";
+		str += "<div class='textEditorOutline' id='textEditorOutline" + 
+				forPrimary + "'>Outline:</div>";
+
+		el.innerHTML = str;
+
+		CodeEditor.editor.updateDecorations(forPrimary);
+		CodeEditor.editor.updateFileHistoryDropdowns();	
+		
+	} //end displayFileHeader()
 	
 } //end create() CodeEditor instance
 

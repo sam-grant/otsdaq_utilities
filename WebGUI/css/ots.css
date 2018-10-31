@@ -16,7 +16,10 @@
 	a {
 		color:				white;
 		text-decoration:	none;
-		outline: 			none;  /* to stop firefox selection*/	
+		outline: 			none;  /* to stop firefox selection*/
+		-webkit-user-select: 	none; /* to stop text highlights */
+		-moz-user-select: 		none;
+		user-select: 			none;	
 	}
 	
 	a:hover {text-decoration:underline;}

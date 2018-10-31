@@ -336,6 +336,23 @@ Debug.errorPop = function(err,severity) {
 					"></div>";
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
+			el.focus();
+			
+			/////////////
+			function localDebugKeyDownListener(e)
+			{
+				console.log("Debug keydown e=" + e.keyCode);
+				if(e.keyCode == 27) //ESCAPE key, close popup
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					Debug.closeErrorPop();	
+									
+				}
+			} //end localDebugKeyDownListener()
+			
+			document.body.removeEventListener("keydown",localDebugKeyDownListener);
+			document.body.addEventListener("keydown",localDebugKeyDownListener);							
 			
 			
 			//add style for error to page HEAD tag			
