@@ -173,6 +173,7 @@ CodeEditor.create = function() {
 	//	showFindAndReplaceSelection(forPrimary)
 	//	doFindAndReplaceAction(forPrimary,action)
 	//	displayFileHeader(forPrimary)
+	//	updateFileSnapshot(forPrimary,{text,time},ignoreTimeDelta)
 	
 	
 	//for display
@@ -942,23 +943,26 @@ CodeEditor.create = function() {
 		
 		function localDoIt()
 		{		
-			var content = encodeURIComponent(
-					document.getElementById("editableBox" + forPrimary).innerText);
+			//Note: innerText is the same as textContent, except it is the only
+			//	the human readable text (ignores hidden elements, scripts, etc.)
+			var textObj = {"text":encodeURIComponent(
+					document.getElementById("editableBox" + forPrimary).innerText),
+							"time":undefined};
+			
 			//console.log(content,content.length);
 							
 			//remove crazy characters 
 			// (looks like they come from emacs tabbing -- they seem to be backwards (i.e. 2C and 0A are real characters))
-			content = content.replace(/%C2%A0%C2%A0/g,"%20%20").replace(/%C2%A0/g, //convert two to tab, otherwise space
+			textObj.text = textObj.text.replace(/%C2%A0%C2%A0/g,"%20%20").replace(/%C2%A0/g, //convert two to tab, otherwise space
 					"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
-			//content.replace(/%C2%A0/g,"%20").replace(/%C2/g,"%20").replace(/%A0/g,"%20");
-			//console.log(content.length);
+			
 			
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
 					"&option=saveFileContent" +
 					"&path=" + _filePath[forPrimary] +
 					"&ext=" + _fileExtension[forPrimary]				
-					, "content=" + content /* data */,
+					, "content=" + textObj.text /* data */,
 					function(req)
 					{
 	
@@ -974,7 +978,9 @@ CodeEditor.create = function() {
 						_fileExtension[forPrimary],quiet?Debug.LOW_PRIORITY:Debug.INFO_PRIORITY);
 				
 				_fileWasModified[forPrimary] = false;
-				_fileLastSave[forPrimary] = new Date(); //record last Save time
+				textObj.time = Date.now();
+				_fileLastSave[forPrimary] = textObj.time; //record last Save time
+				
 				//update last save field
 				CodeEditor.editor.updateLastSave(forPrimary);
 				
@@ -987,6 +993,12 @@ CodeEditor.create = function() {
 					_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
 					CodeEditor.editor.updateLastSave(!forPrimary);
 				}
+				
+
+				//capture right now if different, ignore time delta
+				CodeEditor.editor.updateFileSnapshot(forPrimary,
+						textObj,
+						true /*ignoreTimeDelta*/);
 	
 					}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
@@ -1044,11 +1056,21 @@ CodeEditor.create = function() {
 	//	manage undo stack
 	this.undo = function(forPrimary,redo)
 	{
+		forPrimary = forPrimary?1:0;
+		
 		Debug.log("undo() forPrimary=" + forPrimary + " redo=" + redo);
 		console.log("undo stack index",_undoStackLatestIndex[forPrimary]);
 		console.log("undo stack length",_undoStack[forPrimary].length);
 		
 		console.log("undo stack",_undoStack[forPrimary]);
+		
+		var el = document.getElementById("editableBox" + forPrimary);
+		
+		//capture right now if different, ignore time delta
+		CodeEditor.editor.updateFileSnapshot(forPrimary,
+				{"text":el.textContent,
+						"time":Date.now()},
+				true /*ignoreTimeDelta*/);
 		
 		var newIndex = _undoStackLatestIndex[forPrimary];
 		newIndex += redo?1:-1;
@@ -1080,9 +1102,13 @@ CodeEditor.create = function() {
 		_undoStackLatestIndex[forPrimary] = newIndex;
 		console.log("result stack index",newIndex);
 				
+		var cursor = CodeEditor.editor.getCursor(el);
+		
 		document.getElementById("editableBox" + forPrimary).textContent = 
 				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0];
 		CodeEditor.editor.updateDecorations(forPrimary);
+		
+		CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 		
 	} //end undo()
 
@@ -2973,54 +2999,9 @@ CodeEditor.create = function() {
 		
 		var text = document.getElementById("editableBox" + forPrimary).textContent;
 		
-		localHandleStackManagement();
-		//================
-		//handle undo stack management
-		//	if new, then place in stack
-		function localHandleStackManagement()
-		{
-			var addSnapshot = false;
-			var now = Date.now() /*milliseconds*/;
-			if(_undoStackLatestIndex[forPrimary] != -1)
-			{
-				//compare with last to see if different
-				//	and that it has been 2 seconds
-				if(2*1000 < now - _undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1] &&
-						_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0] != text)
-					addSnapshot = true;
-			}
-			else //else first, so add to stack
-				addSnapshot = true;
-			
-			
-			if(addSnapshot) 
-			{ //add to stack
-				++_undoStackLatestIndex[forPrimary];
-				if(_undoStackLatestIndex[forPrimary] >= _undoStack_MAX_SIZE)
-					_undoStackLatestIndex[forPrimary] = 0; //wrap around
-				
-				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]] = 
-						[text,now];
-				
-				console.log("snapshot added to stack",_undoStack[forPrimary]);
-				
-
-				//	update file history stack to be displayed 
-				//	in dropdown at filename position
-				//	place them in by time, so they are in time order
-				//	and in case we want to remove old ones
-				
-				_fileHistoryStack[_filePath[forPrimary] + "." +
-								  _fileExtension[forPrimary]] = [
-																 text,
-																 now,
-																 _fileWasModified[forPrimary],
-																 _fileLastSave[forPrimary]];
-				console.log("_fileHistoryStack",_fileHistoryStack);
-				
-				CodeEditor.editor.updateFileHistoryDropdowns();	
-			}
-		} //end localHandleStackManagement()
+		CodeEditor.editor.updateFileSnapshot(forPrimary,
+				{"text":text,"time":Date.now()});
+		
 				
 		
 		var starti;
@@ -4252,6 +4233,7 @@ CodeEditor.create = function() {
 			str += "<label style='color:red'>Unsaved changes!</label> ";
 		else
 			str += "Unmodified. ";
+		
 		if(_fileLastSave[forPrimary])
 		{
 			var now = new Date();
@@ -4452,15 +4434,6 @@ CodeEditor.create = function() {
 
 		//revert to same path and extension
 		CodeEditor.editor.updateFileHistoryDropdowns(forPrimary);
-		
-	//		var el = document.getElementById("fileNameDiv" + forPrimary);
-	//		
-	//		var str = "";
-	//		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-	//				",\"" + _filePath[forPrimary] + "\",\"" + _fileExtension[forPrimary] + "\",true /*doConfirm*/);'>" +
-	//				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + "</a>";
-	//
-	//		el.innerHTML = str;
 
 	} //end editCellCancel()
 	
@@ -4471,7 +4444,7 @@ CodeEditor.create = function() {
 	//	if forPrimarySelect is undefined, do both
 	this.updateFileHistoryDropdowns = function(forPrimarySelect)
 	{
-		Debug.log("updateFileHistoryDropdowns");
+		Debug.log("updateFileHistoryDropdowns forPrimarySelect=" + forPrimarySelect);
 		
 		var el;
 		var str = "";
@@ -5169,21 +5142,8 @@ CodeEditor.create = function() {
 
 		str += htmlClearDiv();
 
-		//add path div
-		str += "<table><tr><td>";
-		str += htmlOpen("div",
-				{
-						"class":"fileNameDiv",
-						"id":"fileNameDiv" + forPrimary,
-						"style":"margin: 0 5px 0 5px",
-				},0 /*innerHTML*/, false /*doCloseTag*/);
-		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
-				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
-				"title='Click to reload \n" + path + "." + extension + "' " +
-				">" +
-				path + "." + extension + "</a>";
-		str += "</div>"; //end fileNameDiv
-		str += "</td><td>";
+		//table for open icons and filename select
+		str += "<table><tr><td>";	
 		//open in new window
 		str += htmlOpen("a",
 				{
@@ -5212,14 +5172,34 @@ CodeEditor.create = function() {
 				"<img class='dirNavFileNewWindowImgNewPane' " +
 				"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
 				/*innerHTML*/, true /*doCloseTag*/);
-		str += "</td></tr></table>";
+		str += "</td><td>";	
 
-		str += "</center>";		
+		//add path div		
+		str += htmlOpen("div",
+				{
+						"class":"fileNameDiv",
+						"id":"fileNameDiv" + forPrimary,
+						"style":"margin: 0 5px 0 5px",
+				},0 /*innerHTML*/, false /*doCloseTag*/);
+		str += "<a onclick='CodeEditor.editor.openFile(" + forPrimary + 
+				",\"" + path + "\",\"" + extension + "\",true /*doConfirm*/);' " +
+				"title='Click to reload \n" + path + "." + extension + "' " +
+				">" +
+				path + "." + extension + "</a>";
+		str += "</div>"; //end fileNameDiv
+
+		str += "</td></tr></table>";
+		str += "</center>";	
 		str += "</div>"; //end file name div
 
-
+		str += htmlClearDiv();		
+		
+		//last modified div
 		str += "<div class='textEditorLastSave' id='textEditorLastSave" + 
 				forPrimary + "'>Unmodified</div>";
+		
+		str += htmlClearDiv();
+		//outline div
 		str += "<div class='textEditorOutline' id='textEditorOutline" + 
 				forPrimary + "'>Outline:</div>";
 
@@ -5229,6 +5209,66 @@ CodeEditor.create = function() {
 		CodeEditor.editor.updateFileHistoryDropdowns();	
 		
 	} //end displayFileHeader()
+
+	//=====================================================================================
+	//updateFileSnapshot ~~
+	//	handle undo stack and file history stack management
+	//		if new, then place in stacks
+	//
+	//	Note: pass text as object to avoid copy of giant string
+	this.updateFileSnapshot = function(forPrimary,textObj /*{text,time}*/, ignoreTimeDelta)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		Debug.log("updateFileSnapshot forPrimary=" + forPrimary);
+		
+
+		var addSnapshot = false;
+		//var now = textObj.time;//Date.now() /*milliseconds*/;
+		if(_undoStackLatestIndex[forPrimary] != -1)
+		{
+			//compare with last to see if different
+			//	and that it has been 2 seconds
+			if((ignoreTimeDelta || 
+					2*1000 < textObj.time - _undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1]) &&
+					_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0] != textObj.text)
+				addSnapshot = true;
+		}
+		else //else first, so add to stack
+			addSnapshot = true;
+		
+		
+		if(addSnapshot) 
+		{ //add to stack
+			++_undoStackLatestIndex[forPrimary];
+			if(_undoStackLatestIndex[forPrimary] >= _undoStack_MAX_SIZE)
+				_undoStackLatestIndex[forPrimary] = 0; //wrap around
+			
+			_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]] = 
+					[textObj.text,
+					 textObj.time];
+			
+			console.log("snapshot added to stack",_undoStack[forPrimary]);
+			
+
+			//	update file history stack to be displayed 
+			//	in dropdown at filename position
+			//	place them in by time, so they are in time order
+			//	and in case we want to remove old ones
+			
+			_fileHistoryStack[_filePath[forPrimary] + "." +
+							  _fileExtension[forPrimary]] = [
+															 textObj.text,
+															 textObj.time,
+															 _fileWasModified[forPrimary],
+															 _fileLastSave[forPrimary]];
+			console.log("_fileHistoryStack",_fileHistoryStack);
+			
+			CodeEditor.editor.updateFileHistoryDropdowns();	
+		}
+	
+		
+	} //end updateFileSnapshot()
 	
 } //end create() CodeEditor instance
 
