@@ -605,8 +605,9 @@ CodeEditor.create = function() {
 							function(e)
 							{
 				var forPrimary = this.id[this.id.length-1]|0;				
+				forPrimary = forPrimary?1:0;
 				
-				//Debug.log("keydown handler for editableBox" + forPrimary);
+				Debug.log("keydown handler for editableBox" + forPrimary);
 				CodeEditor.editor.keyDownHandler(e,forPrimary);
 				e.stopPropagation();
 							}); //end addEventListener
@@ -636,7 +637,11 @@ CodeEditor.create = function() {
 			box.addEventListener("mouseup",
 				function(e)
 					{
+						var forPrimary = this.id[this.id.length-1]|0;
+						forPrimary = forPrimary?1:0;
+				
 						Debug.log("mouseup handler for editor" + forPrimary);
+						
 						window.clearTimeout(_inputTimerHandle);
 						_inputTimerHandle = window.setTimeout(
 								function()
@@ -1525,6 +1530,10 @@ CodeEditor.create = function() {
 					
 					CodeEditor.editor.toggleDirectoryNav(forPrimary, false /*set val*/);
 					
+					//if secondary and not shown, show
+					if(!forPrimary && _viewMode == 0)
+						CodeEditor.editor.toggleView();
+						
 					DesktopContent.hideLoading();
 					return;
 				}			
@@ -1557,7 +1566,11 @@ CodeEditor.create = function() {
 				try
 				{
 					CodeEditor.editor.toggleDirectoryNav(forPrimary,0 /*set nav mode*/);
-					CodeEditor.editor.handleFileContent(forPrimary, req);		
+					CodeEditor.editor.handleFileContent(forPrimary, req);	
+					
+					//if secondary and not shown, show
+					if(!forPrimary && _viewMode == 0)
+						CodeEditor.editor.toggleView();	
 	
 					if(gotoLine !== undefined)
 						CodeEditor.editor.gotoLine(forPrimary,gotoLine);
@@ -1801,7 +1814,7 @@ CodeEditor.create = function() {
 				//if(secondEl.firstChild)
 				//	secondEl = secondEl.firstChild;
 
-				if(1 || scrollIntoView)
+				if(scrollIntoView)
 				{					
 					Debug.log("scrollIntoView");
 
@@ -1991,9 +2004,12 @@ CodeEditor.create = function() {
 			//find start and end node index
 			for(i=0;i<el.childNodes.length;++i)
 			{
-				if(el.childNodes[i] == range.startContainer ||
-						el.childNodes[i] == range.startContainer.parentNode||
-						el.childNodes[i] == range.startContainer.parentNode.parentNode)
+				if(cursor.startNodeIndex === undefined &&
+					(
+						el.childNodes[i] == range.startContainer ||
+						el.childNodes[i] == range.startContainer.parentNode ||
+						el.childNodes[i] == range.startContainer.parentNode.parentNode ||
+						el.childNodes[i] == range.startContainer.parentNode.parentNode.parentNode) )
 				{
 					cursor.startNodeIndex = i;
 					cursor.startPosInContent = sum + cursor.startPos;
@@ -2001,8 +2017,9 @@ CodeEditor.create = function() {
 				}
 
 				if(el.childNodes[i] == range.endContainer ||
-						el.childNodes[i] == range.endContainer.parentNode||
-						el.childNodes[i] == range.endContainer.parentNode.parentNode)
+						el.childNodes[i] == range.endContainer.parentNode ||
+						el.childNodes[i] == range.endContainer.parentNode.parentNode ||
+						el.childNodes[i] == range.startContainer.parentNode.parentNode.parentNode)
 				{
 					cursor.endNodeIndex = i;
 					cursor.endPosInContent = sum + cursor.endPos;
@@ -2999,9 +3016,14 @@ CodeEditor.create = function() {
 		
 		var text = document.getElementById("editableBox" + forPrimary).textContent;
 		
-		CodeEditor.editor.updateFileSnapshot(forPrimary,
+		var wasSnapshot = CodeEditor.editor.updateFileSnapshot(forPrimary,
 				{"text":text,"time":Date.now()});
 		
+		if(!wasSnapshot)
+		{
+			Debug.log("unchanged, skipping outline");
+			return;
+		}
 				
 		
 		var starti;
@@ -3382,8 +3404,15 @@ CodeEditor.create = function() {
 						lastNonWhitespaceNodeIndex == lastNodeIndex)										
 					document.getElementById("textEditorBody" + forPrimary).scrollLeft = 0;
 				
-				cursor.endNodeIndex = cursor.startNodeIndex = lastNonWhitespaceNodeIndex
-				cursor.endPos = cursor.startPos = lastNonWhitespacePos;
+				cursor.startNodeIndex = lastNonWhitespaceNodeIndex
+				cursor.startPos = lastNonWhitespacePos;
+				
+				if(!e.shiftKey)
+				{
+					cursor.endNodeIndex = cursor.startNodeIndex;
+					cursor.endPos = cursor.startPos;
+				}
+				//else leave end position for highlight effect
 
 				CodeEditor.editor.setCursor(el,cursor);
 				
@@ -3451,9 +3480,16 @@ CodeEditor.create = function() {
 					lastNonWhitespaceNodeIndex = n;
 				}
 				
-				cursor.endNodeIndex = cursor.startNodeIndex = lastNonWhitespaceNodeIndex
-				cursor.endPos = cursor.startPos = lastNonWhitespacePos;
+				cursor.endNodeIndex = lastNonWhitespaceNodeIndex
+				cursor.endPos = lastNonWhitespacePos;
 
+				if(!e.shiftKey)
+				{
+					cursor.startNodeIndex = cursor.endNodeIndex;
+					cursor.startPos = cursor.endPos;
+				}
+				//else leave end position for highlight effect
+				
 				CodeEditor.editor.setCursor(el,cursor);
 				return;
 			}	
@@ -3657,7 +3693,7 @@ CodeEditor.create = function() {
 
 			//handle get cursor location
 			var el = document.getElementById("editableBox" + forPrimary);
-			var i;
+			var i,j,k;
 			var cursor = {
 					"startNodeIndex":undefined,
 					"startPos":undefined,
@@ -3907,7 +3943,7 @@ CodeEditor.create = function() {
 				for(n=cursor.startNodeIndex; n>=0; --n)
 				{
 					node = el.childNodes[n];
-					val = node.textContent; //.nodeValue; //.wholeText
+					val = node.textContent;
 
 					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 							val.length-1); i>=0; --i)
@@ -3918,80 +3954,7 @@ CodeEditor.create = function() {
 							found = true;
 							break;
 						}
-					
-							
-//						{
-//							if(e.shiftKey) //delete leading special string
-//							{
-//								var didDelete = false;
-//								if(i + specialStr.length < val.length &&
-//										val.indexOf(specialStr,i+1) == i+1)
-//								{
-//									node.textContent = val.substr(0,i+1) + 
-//										val.substr(i+1+specialStr.length);
-//									didDelete = true;
-//								}
-//								else if(specialStr == '\t')
-//								{
-//									//for tab case also get rid of 4-3-2-1 spaces after new line									
-//									if((specialStr = " 	 ") && //4 spaces
-//											i + specialStr.length < val.length &&
-//											val.indexOf(specialStr,i+1) == i+1)
-//									{
-//										node.textContent = val.substr(0,i+1) + 
-//											val.substr(i+1+specialStr.length);
-//										didDelete = true;
-//									}
-//									else if((specialStr = " 	") && //3 spaces
-//											i + specialStr.length < val.length &&
-//											val.indexOf(specialStr,i+1) == i+1)
-//									{
-//										node.textContent = val.substr(0,i+1) + 
-//											val.substr(i+1+specialStr.length);
-//										didDelete = true;
-//									}								
-//									else if((specialStr = "  ") && //2 spaces
-//											i + specialStr.length < val.length &&
-//											val.indexOf(specialStr,i+1) == i+1)
-//									{
-//										node.textContent = val.substr(0,i+1) + 
-//											val.substr(i+1+specialStr.length);
-//										didDelete = true;
-//									}							
-//									else if((specialStr = " ") && //1 spaces
-//											i + specialStr.length < val.length &&
-//											val.indexOf(specialStr,i+1) == i+1)
-//									{
-//										node.textContent = val.substr(0,i+1) + 
-//											val.substr(i+1+specialStr.length);
-//										didDelete = true;
-//									}
-//									specialStr = '\t'; //return special string value
-//								}
-//								
-//								//fix cursor if deleted special string
-//								if(didDelete)
-//								{
-//									//if running out of string to keep line selected.. jump to next node
-//									//	with selection
-//									if(n < cursor.startNodeIndex)
-//									{
-//										cursor.startNodeIndex = n;
-//										cursor.startPos = val.length-1;
-//									}
-//									else if(n == cursor.startNodeIndex && 
-//											i < cursor.startPos)
-//									{
-//										cursor.startPos = i+1;
-//									}
-//								}
-//							}
-//							else //add leading special string
-//								node.textContent = val.substr(0,i+1) + 
-//									specialStr + val.substr(i+1);
-//							found = true;
-//							break;
-//						}
+				
 					} //end node text character loop
 					
 					if(found) break; //exit outer loop
@@ -4000,15 +3963,15 @@ CodeEditor.create = function() {
 				//fast-forward to endPos and insert tab after each new line encountered
 				found = false;
 				var prevCharIsNewLine = false;
-				//for(n=cursor.startNodeIndex; !found && n<el.childNodes.length &&
+				var lookForNewLineIndex; //index into string
+				
 				for(; n<el.childNodes.length &&
 					n <= cursor.endNodeIndex; ++n)
 				{								
 					node = el.childNodes[n];
-					val = node.textContent; //.nodeValue; //.wholeText
-
-					//for(i=(n==cursor.startNodeIndex?cursor.startPos:					
-							//0);i<val.length;++i)
+					val = node.textContent;
+					
+					lookForNewLineIndex = 0;
 					for(;i<val.length;++i)
 					{
 						if(n == cursor.endNodeIndex && i >= cursor.endPos)
@@ -4023,16 +3986,32 @@ CodeEditor.create = function() {
 						{
 							if(i == 0 && prevCharIsNewLine) --i; //so that tab goes in the right place
 
-							if(e.shiftKey) //delete leading tab
+							if(e.shiftKey) //delete leading special string
 							{						
 								var didDelete = false;
 								if(i + specialStr.length < val.length &&
-										val.indexOf(specialStr,i+1) == i+1)
+										(
+											//if special string is found, or 
+											//only white space between new line and special string
+											(j=val.indexOf(specialStr,i+1)) == i+1 ||
+											(
+												(
+													(k=val.indexOf('\n',i+1)) < 0 ||
+													k > j
+												) &&
+												(
+													j >= 0 &&
+													val.substr(i+1,j-(i+1)).trim().length == 0
+												)
+											) 
+										)
+									)
 								{
-									val = val.substr(0,i+1) + 
-											val.substr(i+1+specialStr.length);
+									val = val.substr(0,j) + 
+											val.substr(j+specialStr.length);
 									node.textContent = val;
 									didDelete = true;
+									lookForNewLineIndex = j+specialStr.length;									
 								}
 								else if(specialStr == '\t')
 								{
@@ -4127,7 +4106,24 @@ CodeEditor.create = function() {
 					
 					if(found) break; //exit outer loop
 					
-					prevCharIsNewLine = (val.length && //handle last char newline case
+					if(e.shiftKey)
+					{ //for reverse special string, except prev newline
+						//if white space after 
+						j = val.lastIndexOf('\n');
+						if(j > lookForNewLineIndex && 
+							(
+								j == val[val.length-1] || 
+								val.substr(j+1).trim().length == 0
+							))
+							prevCharIsNewLine = true;
+						else if(j < 0 && prevCharIsNewLine &&
+							val.trim().length == 0)
+							prevCharIsNewLine = true; //last new line persists
+						else 
+							prevCharIsNewLine = false;
+					}
+					else
+						prevCharIsNewLine = (val.length && //handle last char newline case
 							val[val.length-1] == '\n');
 				} //end node loop
 
@@ -5267,6 +5263,7 @@ CodeEditor.create = function() {
 			CodeEditor.editor.updateFileHistoryDropdowns();	
 		}
 	
+		return addSnapshot;
 		
 	} //end updateFileSnapshot()
 	
