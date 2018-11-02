@@ -28,8 +28,7 @@
 		clear: 				both;
 	}
 	
-	input, select {
-		padding: 			1px;
+	input, select {		
 		cursor: 			pointer;
 		font-size:			11px;
 		height:				18px;
