@@ -1815,7 +1815,7 @@ CodeEditor.create = function() {
 					
 			try
 			{
-				console.log("cursor",cursor);
+				console.log("set cursor",cursor,"scrollIntoView=",scrollIntoView);
 
 				var range = document.createRange();
 
@@ -2045,7 +2045,7 @@ CodeEditor.create = function() {
 				sum += el.childNodes[i].textContent.length;
 			}
 
-			console.log("cursor",cursor);
+			console.log("get cursor",cursor);
 
 		}
 		catch(err)
@@ -3415,7 +3415,7 @@ CodeEditor.create = function() {
 				}
 				//else leave end position for highlight effect
 
-				CodeEditor.editor.setCursor(el,cursor);
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 				
 				return;
 			}	
@@ -3488,7 +3488,7 @@ CodeEditor.create = function() {
 				}
 				//else leave end position for highlight effect
 				
-				CodeEditor.editor.setCursor(el,cursor);
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 				return;
 			}	
 		} //end non-shortcuts early handling
