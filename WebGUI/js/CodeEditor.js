@@ -2993,12 +2993,15 @@ CodeEditor.create = function() {
 
 		//handle create outline
 		str = "";
+		str += "<center>";
+		str += "<table><td>"
 		str += "Outline: ";
+		str += "</td><td>"; //do select in table so that width plays nice
 		str += htmlOpen("select",
 				{
 						"class":"textEditorOutlineSelect",
 						"id":"textEditorOutlineSelect" + forPrimary,
-						"style":"text-align-last: center;",
+						"style":"text-align-last: center; width: 100%;",
 						"title":"Jump to a section of code.",
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
@@ -3023,6 +3026,8 @@ CodeEditor.create = function() {
 			str += "</option>";								
 		}
 		str += "</select>"; //end textEditorOutlineSelect
+		str += "</td></table>";
+		str += "</center>";
 		try
 		{
 			document.getElementById("textEditorOutline" + forPrimary).innerHTML = str;
