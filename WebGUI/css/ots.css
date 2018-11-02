@@ -32,6 +32,7 @@
 		padding: 			1px;
 		cursor: 			pointer;
 		font-size:			11px;
+		height:				18px;
 	}	
 		
 	/*firefox seems to put an extra pixel of letter-spacing in bold words*/
