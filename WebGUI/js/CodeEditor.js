@@ -79,22 +79,40 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<b>Global Hot Keys:</b>\n<INDENT>" +
 			
 			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + B </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Incremental Build</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + N </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Clean Build</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + W </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + B </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Incremental Build</td></tr>" +
+			"<tr><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + N </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Clean Build</td></tr>" +
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + 2 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Split-View Mode (single, dual-vertical, dual-horizontal)</td></tr>" +			
 			"</table></INDENT>\n" +
 			
 			
 			"<b>Editor Pane Hot Keys:</b>\n<INDENT>" +
 			
 			"<table border=0 cellspacing=0 cellpadding=0 style='border: 1px solid grey;'>" +			
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
-			"<tr><td style='white-space: nowrap; padding:5px;'> Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
-			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> Ctrl + Q </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + S </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Save File</td></tr>" +
+			
+			"<tr><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + D </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Toggle Directory Navigation</td></tr>" +
+			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + F </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Find & Replace</td></tr>" +
+			
+			"<tr><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Undo Text Editing</td></tr>" +
+			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Shift + Ctrl + U </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Redo Text Editing</td></tr>" +
+			
+			"<tr><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
+			
+			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + 1 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+			
 			"</table></INDENT>\n" +
 			
 			
@@ -3579,7 +3597,7 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(keyCode == 87) 	// W for view toggle
+			else if(keyCode == 50) 	// 2 for view toggle
 			{
 				CodeEditor.editor.toggleView();
 				e.preventDefault();
@@ -3613,7 +3631,7 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(keyCode == 81) 	// Q for switch to related file
+			else if(keyCode == 49) 	// 1 for switch to related file
 			{
 				CodeEditor.editor.openRelatedFile(forPrimary);
 				e.preventDefault();
