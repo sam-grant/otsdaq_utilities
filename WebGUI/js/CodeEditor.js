@@ -153,8 +153,7 @@ CodeEditor.create = function() {
 	//	setCursor(el,cursor,scrollIntoView)
 	//	createCursorFromContentPosition(el,startPos,endPos)
 	//	getCursor(el)	
-	//	updateDecorations(forPrimary,insertNewLine)
-	//		localInsertNewLine()
+	//	updateDecorations(forPrimary)
 	//		localInsertLabel(startPos)
 	//	updateOutline(forPrimary)
 	//		localHandleStackManagement()
@@ -163,6 +162,7 @@ CodeEditor.create = function() {
 	//	handleOutlineSelect(forPrimary)
 	//	updateLastSave(forPrimary)
 	//	keyDownHandler(e,forPrimary,shortcutsOnly)
+	//		localInsertCharacter(c)
 	//	handleFileNameMouseMove(forPrimary,doNotStartTimer)
 	//	startEditFileName(forPrimary)	
 	//	editCellOK(forPrimary)
@@ -174,6 +174,8 @@ CodeEditor.create = function() {
 	//	doFindAndReplaceAction(forPrimary,action)
 	//	displayFileHeader(forPrimary)
 	//	updateFileSnapshot(forPrimary,{text,time},ignoreTimeDelta)
+	//	startUpdateHandling(forPrimary)
+	//	stopUpdateHandling(event)
 	
 	
 	//for display
@@ -189,7 +191,9 @@ CodeEditor.create = function() {
 	var _fileWasModified = [false,false]; //file wasModified for primary and secondary
 	var _numberOfLines = [0,0];
 
-	var _inputTimerHandle = 0;
+	var _updateTimerHandle = 0;
+	var _updateHandlerTargetPane = [false,false];
+	
 	var _fileNameMouseMoveTimerHandle = 0;
 	var _fileNameEditing = [false,false]; //for primary and secondary
 	
@@ -212,14 +216,14 @@ CodeEditor.create = function() {
 	Debug.log("CodeEditor.editor constructed");
 	
 	// start "public" members
-	CodeEditor.editor.lastFileNameHistorySelectIndex = -1;
-	CodeEditor.editor.findAndReplaceFind = ["",""];	 //save find & replace state
-	CodeEditor.editor.findAndReplaceReplace = ["",""]; //save find & replace state
-	CodeEditor.editor.findAndReplaceScope = [0,0]; //save find & replace state
-	CodeEditor.editor.findAndReplaceDirection = [0,0]; //save find & replace state
-	CodeEditor.editor.findAndReplaceCaseSensitive = [0,0]; //save find & replace state
-	CodeEditor.editor.findAndReplaceWholeWord = [1,1]; //save find & replace state
-	CodeEditor.editor.findAndReplaceLastButton = [-1,-1]; //1,2,3,4 := Find, Replace, Find&Replace, Replace All //save find & replace state
+	this.lastFileNameHistorySelectIndex = -1;
+	this.findAndReplaceFind = ["",""];	 //save find & replace state
+	this.findAndReplaceReplace = ["",""]; //save find & replace state
+	this.findAndReplaceScope = [0,0]; //save find & replace state
+	this.findAndReplaceDirection = [0,0]; //save find & replace state
+	this.findAndReplaceCaseSensitive = [0,0]; //save find & replace state
+	this.findAndReplaceWholeWord = [1,1]; //save find & replace state
+	this.findAndReplaceLastButton = [-1,-1]; //1,2,3,4 := Find, Replace, Find&Replace, Replace All //save find & replace state
 	// end "public" members
 	
 	init();	
@@ -584,6 +588,8 @@ CodeEditor.create = function() {
 			box.addEventListener("input",
 					function(e)
 					{
+				e.stopPropagation();
+						
 				var forPrimary = this.id[this.id.length-1]|0;
 				forPrimary = forPrimary?1:0;
 				
@@ -592,12 +598,7 @@ CodeEditor.create = function() {
 				_fileWasModified[forPrimary] = true;
 				CodeEditor.editor.updateLastSave(forPrimary);
 
-				window.clearTimeout(_inputTimerHandle);
-				//				_inputTimerHandle = window.setTimeout(
-				//						function()
-				//						{
-				//					CodeEditor.editor.updateDecorations(forPrimary);				
-				//						}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
+				CodeEditor.editor.startUpdateHandling(forPrimary);
 
 					}); //end addEventListener
 
@@ -620,17 +621,15 @@ CodeEditor.create = function() {
 					
 			box.addEventListener("mousedown",
 					function(e)
-					{
-				e.stopPropagation();
+					{			
+				CodeEditor.editor.stopUpdateHandling(e);
 				
 				var forPrimary = this.id[this.id.length-1]|0;
 				forPrimary = forPrimary?1:0;
 				
 				Debug.log("mousedown handler for editor" + forPrimary);
 				
-				_activePaneIsPrimary = forPrimary;
-				
-				window.clearTimeout(_inputTimerHandle);
+				_activePaneIsPrimary = forPrimary;				
 				
 					}); //end addEventListener
 			
@@ -641,13 +640,9 @@ CodeEditor.create = function() {
 						forPrimary = forPrimary?1:0;
 				
 						Debug.log("mouseup handler for editor" + forPrimary);
+
+						CodeEditor.editor.startUpdateHandling(forPrimary);
 						
-						window.clearTimeout(_inputTimerHandle);
-						_inputTimerHandle = window.setTimeout(
-								function()
-								{
-							CodeEditor.editor.updateDecorations(forPrimary);				
-								}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
 					}); //end addEventListener
 
 			//add click handler to track active pane
@@ -1787,7 +1782,7 @@ CodeEditor.create = function() {
 	
 	//=====================================================================================
 	//setCursor ~~	
-	CodeEditor.editor.setCursor = function(el,inCursor,scrollIntoView)
+	this.setCursor = function(el,inCursor,scrollIntoView)
 	{
 		if(inCursor.startNodeIndex !== undefined)
 		{
@@ -1895,6 +1890,10 @@ CodeEditor.create = function() {
 							Debug.log("Failed to scroll 2nd element: " + e);
 						}
 					}
+					
+					
+
+					el.focus();					
 				} //end scrollIntoView
 				
 				if(firstEl.firstChild)
@@ -1912,7 +1911,6 @@ CodeEditor.create = function() {
 				selection.removeAllRanges();
 				selection.addRange(range);
 
-				el.focus();
 				
 								
 				
@@ -2178,15 +2176,12 @@ CodeEditor.create = function() {
 				"sleep"					: _DECORATION_GREEN,
 			}
 	};
-	this.updateDecorations = function(forPrimary, insertNewLine)
+	this.updateDecorations = function(forPrimary)//, insertNewLine, deleteSelection)
 	{	
 		forPrimary = forPrimary?1:0;
 		
-		if(insertNewLine)
-			Debug.log("insertNewLine");
+		Debug.log("updateDecorations forPrimary=" + forPrimary);// + " insertNewLine=" + insertNewLine);
 		
-		//update last save field
-		CodeEditor.editor.updateLastSave(forPrimary);
 		
 
 		var el = document.getElementById("editableBox" + forPrimary);
@@ -2194,157 +2189,20 @@ CodeEditor.create = function() {
 		var val;
 		
 		//get cursor location
-		var cursor = CodeEditor.editor.getCursor(el);
-		
-//		{
-//				"startNodeIndex":undefined,
-//				"startPos":undefined,				
-//				"endNodeIndex":undefined,
-//				"endPos":undefined,
-//		};
-//		
-//		try
-//		{
-//			range = window.getSelection().getRangeAt(0);
-//
-//			cursor.startPos = range.startOffset;
-//			cursor.endPos = range.endOffset;
-//
-//			//find start and end node index
-//			for(i=0;i<el.childNodes.length;++i)
-//			{
-//				if(el.childNodes[i] == range.startContainer ||
-//						el.childNodes[i] == range.startContainer.parentNode||
-//						el.childNodes[i] == range.startContainer.parentNode.parentNode)
-//					cursor.startNodeIndex = i;
-//
-//				if(el.childNodes[i] == range.endContainer ||
-//						el.childNodes[i] == range.endContainer.parentNode||
-//						el.childNodes[i] == range.endContainer.parentNode.parentNode)
-//					cursor.endNodeIndex = i;
-//			}
-//
-//			console.log("cursor",cursor);
+		var cursor = CodeEditor.editor.getCursor(el);	
 			
-		if(insertNewLine)
-		{
-			localInsertNewLine();
-			CodeEditor.editor.setCursor(el,cursor);
-			return;
-		}
-			
+//		if(insertNewLine || deleteSelection)
+//		{
+//			localInsertNewLine(deleteSelection);
+//			CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+//			return;
 //		}
-//		catch(err)
-//		{
-//			console.log("err",err);
-//		}
+			
+
+		//update last save field
+		CodeEditor.editor.updateLastSave(forPrimary);
 		
 		
-		/////////////////////////////////
-		function localInsertNewLine(startPos)
-		{
-			Debug.log("Inserting new line...");
-			
-			var node,val;
-			var found = false;	
-			var x = 0;
-			var tabSz = 4; //to match eclipse!	
-			
-			//steps:
-			//	delete all text in selection (to be replaced by newline)
-			//	reverse find previous new line
-			//	capture previous line tabbing/whitespace
-			//	use previous line tabbing/whitespace to insert white space after newline
-			//		if { then give extra tab
-
-			//delete all nodes between endNode and startNode
-			if(cursor.endNodeIndex > cursor.startNodeIndex)
-			{
-				//handle end node first, which is a subset effect
-				val = el.childNodes[cursor.endNodeIndex].textContent;
-				val = val.substr(cursor.endPos);
-				el.childNodes[cursor.endNodeIndex].textContent = val;
-				--cursor.endNodeIndex;
-				while(cursor.endNodeIndex > cursor.startNodeIndex)
-				{
-					//delete node
-					el.removeChild(el.childNodes[cursor.endNodeIndex]);
-					--cursor.endNodeIndex;
-				}
-				//place end pos to delete the remainder of current node
-				cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
-			}
-
-			//reverse-find new line
-			for(n=cursor.startNodeIndex;n>=0; --n)
-			{
-				node = el.childNodes[n];
-				val = node.textContent; //.nodeValue; //.wholeText
-
-				for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
-						val.length-1); i>=0; --i)
-				{
-					if(val[i] == '\n')
-					{
-						//found start of line
-						found = true;
-						break;
-					}
-				}
-				if(found) break;
-			} //end reverse find new line loop
-			
-			//assume at new line point (or start of file)
-			console.log("at leading newline - n",n,"i",i);
-			if(n < 0) n = 0;
-			if(i < 0) i = 0;
-			
-			//now return to cursor and aggregate white space
-			found = false;
-			var whiteSpaceString = "";
-			++i; //skip past new line
-			for(n; n<el.childNodes.length; ++n)
-			{
-				node = el.childNodes[n];
-				val = node.textContent;
-
-				for(i;i<val.length;++i)
-				{
-					//exit loop when not white space found
-					if(val[i] != '\t' && val[i] != ' ')
-					{
-						found = true;
-						break;
-					}
-
-					whiteSpaceString += val[i];
-				}
-
-				if(found) break;
-
-				i = 0; //reset i for next loop
-			} //end white non-white space loop					
-
-			
-			console.log("val[i]",val[i]);
-			if(val[i] == '{')
-				whiteSpaceString += '\t';
-			
-			console.log("whiteSpaceString",whiteSpaceString.length);
-
-			val = el.childNodes[cursor.startNodeIndex].textContent;
-			val = val.substr(0,cursor.startPos) + '\n' + 
-					whiteSpaceString +
-					val.substr(cursor.endPos);
-			el.childNodes[cursor.startNodeIndex].textContent = val;
-			
-			cursor.startPos += 1 + whiteSpaceString.length;
-			cursor.endNodeIndex = cursor.startNodeIndex;
-			cursor.endPos = cursor.startPos;
-
-			console.log("cursor after newline",cursor);	
-			
-		} //end localInsertNewLine()
 			
 
 
@@ -3309,38 +3167,161 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
+		var keyCode = e.keyCode;
+		
 		//set timeout for decoration update
-		window.clearTimeout(_inputTimerHandle);
-		_inputTimerHandle = window.setTimeout(
-			function()
-			{
-		CodeEditor.editor.updateDecorations(forPrimary);				
-			}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
-			
+		CodeEditor.editor.startUpdateHandling(forPrimary);			
 		
 		//if just pressing shiftKey ignore
-		if(e.keyCode == 16 /*shift*/)
+		if(keyCode == 16 /*shift*/)
 			return;
 		
-		Debug.log("keydown e=" + e.keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		Debug.log("keydown e=" + keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		
+		
+		var el = document.getElementById("editableBox" + forPrimary);
+		var cursor;
+		var cursorSelection = false;
+		
 		
 		//handle preempt keys
 		if(!shortcutsOnly) 
-		{
-			if(e.keyCode == 13) // ENTER -- should trigger updateDecorations immediately
+		{	
+			cursor = CodeEditor.editor.getCursor(el);
+			
+			cursorSelection = (cursor.startNodeIndex !== undefined &&
+								(cursor.startNodeIndex != cursor.endNodeIndex ||
+										cursor.startPos != cursor.endPos));
+			
+			/////////////////////////////////
+			function localInsertCharacter(c)
+			{
+				Debug.log("Inserting character... " + c);
+
+				var node,val;
+				var found = false;	
+				var x = 0;
+				var tabSz = 4; //to match eclipse!	
+
+				//steps:
+				//	delete all text in selection (to be replaced by newline)
+				//	reverse find previous new line
+				//	capture previous line tabbing/whitespace
+				//	use previous line tabbing/whitespace to insert white space after newline
+				//		if { then give extra tab
+
+				//delete all nodes between endNode and startNode
+				if(cursor.endNodeIndex > cursor.startNodeIndex)
+				{
+					//handle end node first, which is a subset effect
+					val = el.childNodes[cursor.endNodeIndex].textContent;
+					val = val.substr(cursor.endPos);
+					el.childNodes[cursor.endNodeIndex].textContent = val;
+					--cursor.endNodeIndex;
+					while(cursor.endNodeIndex > cursor.startNodeIndex)
+					{
+						//delete node
+						el.removeChild(el.childNodes[cursor.endNodeIndex]);
+						--cursor.endNodeIndex;
+					}
+					//place end pos to delete the remainder of current node
+					cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
+				}
+				
+
+				//reverse-find new line
+				for(n=cursor.startNodeIndex;n>=0; --n)
+				{
+					node = el.childNodes[n];
+					val = node.textContent; //.nodeValue; //.wholeText
+
+					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+							val.length-1); i>=0; --i)
+					{
+						if(val[i] == '\n')
+						{
+							//found start of line
+							found = true;
+							break;
+						}
+					}
+					if(found) break;
+				} //end reverse find new line loop
+
+				//assume at new line point (or start of file)
+				console.log("at leading newline - n",n,"i",i);
+				if(n < 0) n = 0;
+				if(i < 0) i = 0;
+
+				//now return to cursor and aggregate white space
+				found = false;
+				var whiteSpaceString = "";
+				++i; //skip past new line
+				for(n; n<el.childNodes.length; ++n)
+				{
+					node = el.childNodes[n];
+					val = node.textContent;
+
+					for(i;i<val.length;++i)
+					{
+						//exit loop when not white space found
+						if(val[i] != '\t' && val[i] != ' ')
+						{
+							found = true;
+							break;
+						}
+
+						whiteSpaceString += val[i];
+					}
+
+					if(found) break;
+
+					i = 0; //reset i for next loop
+				} //end white non-white space loop					
+
+
+				console.log("val[i]",val[i]);
+				if(val[i] == '{')
+					whiteSpaceString += '\t';
+
+				console.log("whiteSpaceString",whiteSpaceString.length);
+
+				val = el.childNodes[cursor.startNodeIndex].textContent;
+				val = val.substr(0,cursor.startPos) + c + 
+						whiteSpaceString +
+						val.substr(cursor.endPos);
+				el.childNodes[cursor.startNodeIndex].textContent = val;
+
+				cursor.startPos += 1 + whiteSpaceString.length;
+				cursor.endNodeIndex = cursor.startNodeIndex;
+				cursor.endPos = cursor.startPos;
+
+				console.log("cursor after newline",cursor);	
+				
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+
+				_fileWasModified[forPrimary] = true;
+			} //end localInsertNewLine()
+
+
+			// || keyCode == 46
+			if(keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 			{
 				//to avoid DIVs, ENTER should trigger updateDecorations immediately
-				_fileWasModified[forPrimary] = true;
+				
 
 				//document.execCommand('insertHTML', false, '&#010;&#013;');
 				//document.execCommand('insertText', false, '\n');
-				CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/);
+				//CodeEditor.editor.updateDecorations(forPrimary, true /*insertNewLine*/, 
+				//	keyCode == 46 /*delete highlight*/);
+				
+				localInsertCharacter('\n');				
 				e.preventDefault();
-				e.stopPropagation();
+				//CodeEditor.editor.stopUpdateHandling(e);
 				
 				return;
 			}
-			else if(e.keyCode == 36) // HOME
+			else if(keyCode == 36) // HOME
 			{
 				//to position the cursor at text, rather than line start								
 				e.preventDefault();
@@ -3351,12 +3332,9 @@ CodeEditor.create = function() {
 				//		track last non-whitespace
 				// 	set cursor
 				
-				var i,n,node,el,val;
+				var i,n,node,val;
 				var found = false;
-	
-				el = document.getElementById("editableBox" + forPrimary);
-				cursor = CodeEditor.editor.getCursor(el);
-
+					
 				var lastNonWhitespacePos = cursor.startPos;
 				var lastNonWhitespaceNodeIndex = cursor.startNodeIndex;
 				var lastPos = cursor.startPos;
@@ -3418,7 +3396,7 @@ CodeEditor.create = function() {
 				
 				return;
 			}	
-			else if(e.keyCode == 35) // END
+			else if(keyCode == 35) // END
 			{
 				//to position the cursor at end of line, rather than end of file
 				
@@ -3431,12 +3409,9 @@ CodeEditor.create = function() {
 				//		track last non-whitespace
 				// 	set cursor
 				
-				var i,n,node,el,val;
+				var i,n,node,val;
 				var found = false;
-	
-				el = document.getElementById("editableBox" + forPrimary);
-				cursor = CodeEditor.editor.getCursor(el);
-
+					
 				var wantNext = false;
 				var lastNonWhitespacePos = cursor.startPos;
 				var lastNonWhitespaceNodeIndex = cursor.startNodeIndex;
@@ -3497,7 +3472,7 @@ CodeEditor.create = function() {
 		
 		//handle page-up and down for shortcut or not shortcut
 		//	because it can cause body to become selected
-		if(e.keyCode == 33) // PAGE-UP
+		if(keyCode == 33) // PAGE-UP
 		{
 			//to position the cursor at text, rather than only moving scroll bar								
 			e.preventDefault();
@@ -3515,7 +3490,7 @@ CodeEditor.create = function() {
 							
 			return;
 		}
-		else if(e.keyCode == 34) // PAGE-DOWN
+		else if(keyCode == 34) // PAGE-DOWN
 		{
 			//to position the cursor at text, rather than only moving scroll bar								
 			e.preventDefault();
@@ -3533,7 +3508,7 @@ CodeEditor.create = function() {
 
 			return;
 		}
-		else if(e.keyCode == 13) // ENTER
+		else if(keyCode == 13) // ENTER
 		{
 			//ENTER may be hit when doing something in header
 			//	and we want to act.
@@ -3551,7 +3526,7 @@ CodeEditor.create = function() {
 				return;
 			}
 		}
-		else if(e.keyCode == 27) // ESCAPE
+		else if(keyCode == 27) // ESCAPE
 		{
 			//ESCAPE may be hit when doing something in header
 			//	and we want to act.
@@ -3574,50 +3549,50 @@ CodeEditor.create = function() {
 						
 		if(e.ctrlKey) //handle shortcuts
 		{			
-			if(e.keyCode == 83) 		// S for file save
+			if(keyCode == 83) 		// S for file save
 			{
 				CodeEditor.editor.saveFile(forPrimary,true /*quiet*/);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 68) 	// D for directory toggle
+			else if(keyCode == 68) 	// D for directory toggle
 			{
 				CodeEditor.editor.toggleDirectoryNav(forPrimary);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 66) 	// B for incremental build
+			else if(keyCode == 66) 	// B for incremental build
 			{
 				CodeEditor.editor.build();
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 70) 	// F for Find and Replace
+			else if(keyCode == 70) 	// F for Find and Replace
 			{
 				CodeEditor.editor.showFindAndReplace(forPrimary);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 78) 	// N for clean build
+			else if(keyCode == 78) 	// N for clean build
 			{
 				CodeEditor.editor.build(true /*clean*/);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 87) 	// W for view toggle
+			else if(keyCode == 87) 	// W for view toggle
 			{
 				CodeEditor.editor.toggleView();
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 85) 	// U for undo
+			else if(keyCode == 85) 	// U for undo
 			{
 				CodeEditor.editor.undo(forPrimary, e.shiftKey /*redo*/);
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 76 ||	// L or
-					e.keyCode == 71) 	// G for go to line number
+			else if(keyCode == 76 ||	// L or
+					keyCode == 71) 	// G for go to line number
 			{
 				DesktopContent.popUpVerification(
 						/*prompt*/ "Goto line number: ", 
@@ -3638,7 +3613,7 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(e.keyCode == 81) 	// Q for switch to related file
+			else if(keyCode == 81) 	// Q for switch to related file
 			{
 				CodeEditor.editor.openRelatedFile(forPrimary);
 				e.preventDefault();
@@ -3655,19 +3630,19 @@ CodeEditor.create = function() {
 		var blockCOMMENT = false;
 
 //		if(!e.shiftKey && e.ctrlKey && 
-//				e.keyCode == 191) 	// ctrl+/ for block comment
+//				keyCode == 191) 	// ctrl+/ for block comment
 //			blockCOMMENT = true;
 		if(e.ctrlKey)//else if(e.ctrlKey)
 		{			
 
-			if(e.keyCode == 84 || 
-				e.keyCode == 89) // T or Y for rectangular TAB
+			if(keyCode == 84 || 
+				keyCode == 89) // T or Y for rectangular TAB
 			{
 				rectangularTAB = true;
 				e.preventDefault();
 				//continue to tab handling below
 			}	
-			else if(e.keyCode == 191) 	// ctrl+/ for block comment
+			else if(keyCode == 191) 	// ctrl+/ for block comment
 			{
 				blockCOMMENT = true;
 				e.preventDefault();
@@ -3680,7 +3655,7 @@ CodeEditor.create = function() {
 
 				
 
-		if(e.keyCode == TABKEY || rectangularTAB ||
+		if(keyCode == TABKEY || rectangularTAB ||
 				blockCOMMENT)
 		{					
 			_fileWasModified[forPrimary] = true;
@@ -3691,54 +3666,13 @@ CodeEditor.create = function() {
 			//	if selection, then tab selected lines
 			// 	else insert tab character
 
-			//handle get cursor location
-			var el = document.getElementById("editableBox" + forPrimary);
 			var i,j,k;
-			var cursor = {
-					"startNodeIndex":undefined,
-					"startPos":undefined,
-					"endNodeIndex":undefined,
-					"endPos":undefined,
-			};
 
-			try
-			{
-				range = window.getSelection().getRangeAt(0);
-
-				cursor.startPos = range.startOffset;
-				cursor.endPos = range.endOffset;
-
-				//find start and end node index
-				for(i=0;i<el.childNodes.length;++i)
-				{
-					if(el.childNodes[i] == range.startContainer ||
-							el.childNodes[i] == range.startContainer.parentNode||
-							el.childNodes[i] == range.startContainer.parentNode.parentNode)
-						cursor.startNodeIndex = i;
-
-					if(el.childNodes[i] == range.endContainer ||
-							el.childNodes[i] == range.endContainer.parentNode||
-							el.childNodes[i] == range.endContainer.parentNode.parentNode)
-						cursor.endNodeIndex = i;
-				}
-
-				console.log("cursor",cursor);
-			}
-			catch(err)
-			{
-				console.log("err",err);
-			}
-
-
-
-			if(cursor.startNodeIndex !== undefined &&
-					(cursor.startNodeIndex != cursor.endNodeIndex ||
-							cursor.startPos != cursor.endPos))
+			if(cursorSelection)
 			{
 				//handle tabbing selected lines
 				Debug.log("special key selected lines " + cursor.startNodeIndex + " - " +
 						cursor.endNodeIndex);					
-
 
 
 				/////////////////////////
@@ -3884,33 +3818,34 @@ CodeEditor.create = function() {
 
 
 					//need to set cursor
-					try
-					{
-						var range = document.createRange();
-//						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-//						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-						var firstEl = el.childNodes[cursor.startNodeIndex];
-						if(firstEl.firstChild)
-							firstEl = firstEl.firstChild;
-
-						var secondEl = el.childNodes[cursor.endNodeIndex];
-						if(secondEl.firstChild)
-							secondEl = secondEl.firstChild;
-
-						range.setStart(firstEl,
-								cursor.startPos);
-						range.setEnd(secondEl,
-								cursor.endPos);
-
-						var selection = window.getSelection();
-						selection.removeAllRanges();
-						selection.addRange(range);
-					}
-					catch(err)
-					{
-						console.log(err);
-						return;
-					}
+					CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+//					try
+//					{
+//						var range = document.createRange();
+////						range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+////						range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//						var firstEl = el.childNodes[cursor.startNodeIndex];
+//						if(firstEl.firstChild)
+//							firstEl = firstEl.firstChild;
+//
+//						var secondEl = el.childNodes[cursor.endNodeIndex];
+//						if(secondEl.firstChild)
+//							secondEl = secondEl.firstChild;
+//
+//						range.setStart(firstEl,
+//								cursor.startPos);
+//						range.setEnd(secondEl,
+//								cursor.endPos);
+//
+//						var selection = window.getSelection();
+//						selection.removeAllRanges();
+//						selection.addRange(range);
+//					}
+//					catch(err)
+//					{
+//						console.log(err);
+//						return;
+//					}
 
 					return;
 				} //end rectangular TAB handling
@@ -4110,7 +4045,7 @@ CodeEditor.create = function() {
 					{ //for reverse special string, except prev newline
 						//if white space after 
 						j = val.lastIndexOf('\n');
-						if(j > lookForNewLineIndex && 
+						if(j >= lookForNewLineIndex && 
 							(
 								j == val[val.length-1] || 
 								val.substr(j+1).trim().length == 0
@@ -4128,34 +4063,35 @@ CodeEditor.create = function() {
 				} //end node loop
 
 				//need to set cursor
-				try
-				{
-					var range = document.createRange();
-//					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
-//					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
-
-					var firstEl = el.childNodes[cursor.startNodeIndex];
-					if(firstEl.firstChild)
-						firstEl = firstEl.firstChild;
-
-					var secondEl = el.childNodes[cursor.endNodeIndex];
-					if(secondEl.firstChild)
-						secondEl = secondEl.firstChild;
-
-					range.setStart(firstEl,
-							cursor.startPos);
-					range.setEnd(secondEl,
-							cursor.endPos);
-
-					var selection = window.getSelection();
-					selection.removeAllRanges();
-					selection.addRange(range);
-				}
-				catch(err)
-				{
-					console.log(err);
-					return false;
-				}
+				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+//				try
+//				{
+//					var range = document.createRange();
+////					range.setStart(el.childNodes[cursor.startNodeIndex],cursor.startPos);
+////					range.setEnd(el.childNodes[cursor.endNodeIndex],cursor.endPos);
+//
+//					var firstEl = el.childNodes[cursor.startNodeIndex];
+//					if(firstEl.firstChild)
+//						firstEl = firstEl.firstChild;
+//
+//					var secondEl = el.childNodes[cursor.endNodeIndex];
+//					if(secondEl.firstChild)
+//						secondEl = secondEl.firstChild;
+//
+//					range.setStart(firstEl,
+//							cursor.startPos);
+//					range.setEnd(secondEl,
+//							cursor.endPos);
+//
+//					var selection = window.getSelection();
+//					selection.removeAllRanges();
+//					selection.addRange(range);
+//				}
+//				catch(err)
+//				{
+//					console.log(err);
+//					return false;
+//				}
 			}
 			else if(!blockCOMMENT) //not tabbing a selection, just add or delete single tab in place
 			{	
@@ -4199,17 +4135,35 @@ CodeEditor.create = function() {
 					document.execCommand('insertHTML', false, '&#009');
 			}
 			
-//			//set timeout for decoration update
-//			window.clearTimeout(_inputTimerHandle);
-//			_inputTimerHandle = window.setTimeout(
-//					function()
-//					{
-//				CodeEditor.editor.updateDecorations(forPrimary);				
-//					}, _UPDATE_DECOR_TIMEOUT); //end setTimeout
-
 			return;
 
 		} //end handle tab key
+		else if(cursorSelection)
+		{
+			Debug.log("cursorSelection handling for speed-up");
+			//Note: the default browser behavior really struggles
+			//	editing many elements in a selection when there are 
+			//	a lot of elements (e.g. when the file is large)
+			//	so... let's be smarter.
+			
+			
+			//Note: looks like the browser gives character in a e.key
+			//	but then there is also "Backspace" and "Delete"
+			var c = e.key;
+			console.log("cursorSelection char",keyCode,c);
+			
+			if(e.key.length > 1)
+			{
+				if( keyCode != 46 && //delete
+					keyCode != 8)  //backspace
+					return; //do default handling for other special characters
+				c = ''; //default weird characters to blanks
+			}	
+
+			e.preventDefault();
+			e.stopPropagation();
+			localInsertCharacter(c);
+		}
 
 	} //end keyDownHandler()
 
@@ -4498,7 +4452,8 @@ CodeEditor.create = function() {
 			}
 			catch(e)
 			{
-				Debug.log("Ignoring error since file is probably not opened: " + 
+				Debug.log("Ignoring error since file forPrimary=" + 
+						forPrimary + " is probably not opened: " + 
 						e);
 			}
 		} // end primary and secondary loop
@@ -5266,6 +5221,46 @@ CodeEditor.create = function() {
 		return addSnapshot;
 		
 	} //end updateFileSnapshot()
+	
+	//=====================================================================================
+	//startUpdateHandling ~~
+	//	unify update handling
+	this.startUpdateHandling = function(forPrimary)
+	{
+		_updateHandlerTargetPane[forPrimary] = true; //mark need to update
+		
+		window.clearTimeout(_updateTimerHandle);
+		_updateTimerHandle = window.setTimeout(
+				CodeEditor.editor.updateTimeoutHandler,
+				_UPDATE_DECOR_TIMEOUT /*ms*/);
+		
+	} //end startUpdateHandling()
+
+	//=====================================================================================
+	//stopUpdateHandling ~~
+	//	unify update handling
+	this.stopUpdateHandling = function(event)
+	{
+		if(event) event.stopPropagation();
+		window.clearTimeout(_updateTimerHandle);
+	} //end stopUpdateHandling()
+
+	//=====================================================================================
+	//updateTimeoutHandler ~~
+	//	unify update handling
+	this.updateTimeoutHandler = function()
+	{
+		if(_updateHandlerTargetPane[0])
+		{
+			CodeEditor.editor.updateDecorations(0 /*forPrimary*/);
+			_updateHandlerTargetPane[0] = false;
+		}
+		if(_updateHandlerTargetPane[1])
+		{
+			CodeEditor.editor.updateDecorations(1 /*forPrimary*/);
+			_updateHandlerTargetPane[1] = false;
+		}
+	} //end updateTimeoutHandler()
 	
 } //end create() CodeEditor instance
 
