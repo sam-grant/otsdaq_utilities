@@ -165,15 +165,15 @@ CodeEditor.create = function() {
 	//	handleDirectoryContent(forPrimary,req)
 	//	openFile(forPrimary,path,extension,doConfirm,gotoLine)
 	//	openRelatedFile(forPrimary)
-	//	gotoLine(forPrimary,line)
+	//	gotoLine(forPrimary,line,selectionCursor)
 	//	handleFileContent(forPrimary,req,fileObj)
 	//	getLine(forPrimary)
 	//	setCursor(el,cursor,scrollIntoView)
 	//	createCursorFromContentPosition(el,startPos,endPos)
 	//	getCursor(el)	
-	//	updateDecorations(forPrimary)
+	//	updateDecorations(forPrimary,forceDisplayComplete)
 	//		localInsertLabel(startPos)
-	//	updateOutline(forPrimary)
+	//	updateOutline(forPrimary,{text,time})
 	//		localHandleStackManagement()
 	//		localHandleCcOutline()
 	//		localHandleJsOutline()
@@ -208,9 +208,13 @@ CodeEditor.create = function() {
 	var _fileLastSave = [0,0]; //file last save time for primary and secondary
 	var _fileWasModified = [false,false]; //file wasModified for primary and secondary
 	var _numberOfLines = [0,0];
+	
+	var _eel = [undefined,undefined]; //editor elements for primary and secondary 
 
 	var _updateTimerHandle = 0;
 	var _updateHandlerTargetPane = [false,false];
+	var _commandKeyDown = false;
+	var _lastPageUpDownLine = -1;
 	
 	var _fileNameMouseMoveTimerHandle = 0;
 	var _fileNameEditing = [false,false]; //for primary and secondary
@@ -595,15 +599,16 @@ CodeEditor.create = function() {
 		} //end content div					
 		
 		document.body.appendChild(cel);
+		_eel = [document.getElementById("editableBox" + 0),
+				document.getElementById("editableBox" + 1)];
 		
 		
 		/////////////
 		//add event listeners
 		var box;
 		for(var i=0;i<2;++i)
-		{
-			box = document.getElementById("editableBox" + i);
-			box.addEventListener("input",
+		{			
+			_eel[i].addEventListener("input",
 					function(e)
 					{
 				e.stopPropagation();
@@ -620,9 +625,13 @@ CodeEditor.create = function() {
 
 					}); //end addEventListener
 
-			box.addEventListener("keydown",
+			_eel[i].addEventListener("keydown",
 							function(e)
 							{
+				if(e.keyCode == 91 || e.keyCode == 93 ||
+						e.keyCode == 224) //apple command keys chrome left/right and firefox
+					_commandKeyDown = true;
+				
 				var forPrimary = this.id[this.id.length-1]|0;				
 				forPrimary = forPrimary?1:0;
 				
@@ -630,14 +639,22 @@ CodeEditor.create = function() {
 				CodeEditor.editor.keyDownHandler(e,forPrimary);
 				e.stopPropagation();
 							}); //end addEventListener
+
+			_eel[i].addEventListener("keyup",
+							function(e)
+							{
+				if(e.keyCode == 91 || e.keyCode == 93 ||
+						e.keyCode == 224) //apple command keys chrome left/right and firefox
+					_commandKeyDown = false;
+							}); //end addEventListener
 			
-			box.addEventListener("click",
+			_eel[i].addEventListener("click",
 					function(e)
 					{
 				e.stopPropagation(); //to stop click body behavior
 					}); //end addEventListener
 					
-			box.addEventListener("mousedown",
+			_eel[i].addEventListener("mousedown",
 					function(e)
 					{			
 				CodeEditor.editor.stopUpdateHandling(e);
@@ -651,7 +668,7 @@ CodeEditor.create = function() {
 				
 					}); //end addEventListener
 			
-			box.addEventListener("mouseup",
+			_eel[i].addEventListener("mouseup",
 				function(e)
 					{
 						var forPrimary = this.id[this.id.length-1]|0;
@@ -682,7 +699,7 @@ CodeEditor.create = function() {
 				var scrollLeft = el.scrollLeft;
 				var scrollTop = el.scrollTop;
 				//var cursor = CodeEditor.editor.getCursor(el);
-				document.getElementById("editableBox" + forPrimary).focus();
+				_eel[forPrimary].focus();
 				//CodeEditor.editor.setCursor(el,cursor);
 				el.scrollLeft = scrollLeft;
 				el.scrollTop = scrollTop;
@@ -697,10 +714,21 @@ CodeEditor.create = function() {
 		box.addEventListener("keydown",
 				function(e)
 				{
+			if(e.keyCode == 91 || e.keyCode == 93 ||
+					e.keyCode == 224) //apple command keys chrome left/right and firefox
+				_commandKeyDown = true;
+
 			var forPrimary = _activePaneIsPrimary; //take last active pane
 			Debug.log("keydown handler for body" + forPrimary);
 			CodeEditor.editor.keyDownHandler(e,forPrimary,true /*shortcutsOnly*/);
 			//e.stopPropagation();
+				}); //end addEventListener
+		box.addEventListener("keyup",
+				function(e)
+				{
+			if(e.keyCode == 91 || e.keyCode == 93 ||
+					e.keyCode == 224) //apple command keys chrome left/right and firefox
+				_commandKeyDown = false;
 				}); //end addEventListener
 		
 	} //end createElements()
@@ -964,7 +992,7 @@ CodeEditor.create = function() {
 			//Note: innerText is the same as textContent, except it is the only
 			//	the human readable text (ignores hidden elements, scripts, etc.)
 			var textObj = {"text":encodeURIComponent(
-					document.getElementById("editableBox" + forPrimary).innerText),
+					_eel[forPrimary].innerText),
 							"time":undefined};
 			
 			//console.log(content,content.length);
@@ -1002,16 +1030,15 @@ CodeEditor.create = function() {
 				//update last save field
 				CodeEditor.editor.updateLastSave(forPrimary);
 				
-				//if other pane is same path and extension, update it too
 				if(_filePath[0] == _filePath[1] &&
-						_fileExtension[0] == _fileExtension[1])
+								_fileExtension[0] == _fileExtension[1])
 				{
-					Debug.log("Update dual view for save");
-					_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
-					_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
-					CodeEditor.editor.updateLastSave(!forPrimary);
+					CodeEditor.editor.updateDualView(forPrimary);
+					//capture right now if different, ignore time delta
+					CodeEditor.editor.updateFileSnapshot(!forPrimary,
+							textObj,
+							true /*ignoreTimeDelta*/);
 				}
-				
 
 				//capture right now if different, ignore time delta
 				CodeEditor.editor.updateFileSnapshot(forPrimary,
@@ -1082,7 +1109,7 @@ CodeEditor.create = function() {
 		
 		console.log("undo stack",_undoStack[forPrimary]);
 		
-		var el = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 		
 		//capture right now if different, ignore time delta
 		CodeEditor.editor.updateFileSnapshot(forPrimary,
@@ -1122,7 +1149,7 @@ CodeEditor.create = function() {
 				
 		var cursor = CodeEditor.editor.getCursor(el);
 		
-		document.getElementById("editableBox" + forPrimary).textContent = 
+		_eel[forPrimary].textContent = 
 				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0];
 		CodeEditor.editor.updateDecorations(forPrimary);
 		
@@ -1601,24 +1628,23 @@ CodeEditor.create = function() {
 
 	//=====================================================================================
 	//getLine ~~
-	//	returns current cursor line number
+	//	returns current cursor with line number
 	this.getLine = function(forPrimary)
 	{
 		Debug.log("getLine() forPrimary=" + forPrimary);
-		var lineCount = 1;
 		
-		var el = document.getElementById("editableBox" + forPrimary);
+		
+		var el = _eel[forPrimary];
 		var cursor = CodeEditor.editor.getCursor(el);
-		if(!cursor.startNodeIndex)
+		cursor.line = 1;
+		if(cursor.startNodeIndex === undefined)
 		{
 			Debug.log("No cursor, so defaulting to top");
-			return lineCount;
+			return cursor;
 		}
 		
 		
-		var el = document.getElementById("editableBox" + forPrimary);
-		var i,n,node,el,val;
-		var found = false;
+		var i,n,node,val;
 		for(n=0; n<el.childNodes.length; ++n)
 		{
 			node = el.childNodes[n];
@@ -1628,39 +1654,53 @@ CodeEditor.create = function() {
 			for(i=0;i<val.length;++i)
 			{
 				//want to be one character past new line
-				if(n == cursor.startNodeIndex &&
+				if(!cursor.focusAtEnd && 
+						n == cursor.startNodeIndex &&
 						i == cursor.startPos)
-				{
-					Debug.log("Found cursor at line " + lineCount);
-					found = true;
-					break;
-				}
+					break; //done counting lines in this value
+				else if(cursor.focusAtEnd && 
+						n == cursor.endNodeIndex &&
+						i == cursor.endPos)
+					break; //done counting lines in this value
 
 				if(val[i] == '\n')
-					++lineCount;
+					++cursor.line;
 			}
-			if(found) break;
+			
+			//when completed start node, done
+			if(!cursor.focusAtEnd &&
+					n == cursor.startNodeIndex) 
+			{
+				Debug.log("Found cursor at line " + cursor.line);
+				break; //done!
+			}
+			else if(cursor.focusAtEnd &&
+					n == cursor.endNodeIndex) 
+			{
+				Debug.log("Found cursor at line " + cursor.line);
+				break; //done!
+			}
 		} //end line count loop
 
-		return lineCount;		
+		return cursor;		
 	} //end getLine()
 	
 	//=====================================================================================
 	//gotoLine ~~
-	this.gotoLine = function(forPrimary,line)
+	this.gotoLine = function(forPrimary,line,selectionCursor)
 	{
 		line = line | 0;
 		if(line < 1) line = 1;
 		if(line > _numberOfLines[forPrimary])
 			line = _numberOfLines[forPrimary];
-		Debug.log("Goto line number " + line);
-		window.location.href = "#" + forPrimary + "L" + line;
+		console.log("Goto line number ",line,selectionCursor);
+		//window.location.href = "#" + forPrimary + "L" + line;
 		
 		//then set cursor, so moving the cursor does not lose position
 		// steps:
 		//	count new lines while going through elements, then set cursor there
 
-		var el = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 		
 		if(line < 2)
 		{
@@ -1672,7 +1712,14 @@ CodeEditor.create = function() {
 					"endNodeIndex":0,
 					"endPos":0,
 			};		
-			CodeEditor.editor.setCursor(el,cursor);
+			
+			//if selection cursor, handle highlighting
+			if(selectionCursor)
+			{
+				cursor.endNodeIndex = selectionCursor.endNodeIndex;
+				cursor.endPos = selectionCursor.endPos;
+			}
+			CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 
 			return; 
 		}
@@ -1725,7 +1772,32 @@ CodeEditor.create = function() {
 				"endNodeIndex":lastNode,
 				"endPos":lastPos,
 		};		
-		CodeEditor.editor.setCursor(el,cursor);
+		
+
+		//if selection cursor, handle highlighting
+		if(selectionCursor)
+		{
+			if(lastNode < selectionCursor.startNodeIndex || 
+					(	lastNode == selectionCursor.startNodeIndex &&
+						lastPos < selectionCursor.startPos))
+			{
+				cursor.endNodeIndex = selectionCursor.endNodeIndex;
+				cursor.endPos = selectionCursor.endPos;				
+			}
+			else
+			{
+				cursor.startNodeIndex = selectionCursor.startNodeIndex;
+				cursor.startPos = selectionCursor.startPos;
+			}
+			
+			cursor.focusAtEnd = selectionCursor.focusAtEnd;
+			CodeEditor.editor.setCursor(el,cursor,
+					true /*scrollIntoView*/);
+			return;
+		}
+		
+
+		CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 		
 	} //end gotoLine
 
@@ -1778,7 +1850,7 @@ CodeEditor.create = function() {
 		_undoStack[forPrimary] = []; //clear undo stack
 		_undoStackLatestIndex[forPrimary] = -1; //reset latest undo index
 
-		var box = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 				
 		DesktopContent.showLoading();		
 		//do decor in timeout to show loading
@@ -1786,7 +1858,7 @@ CodeEditor.create = function() {
 			{
 				try
 				{	
-					box.textContent = text;
+					el.textContent = text;
 					CodeEditor.editor.displayFileHeader(forPrimary);
 				}
 				catch(e)
@@ -1809,13 +1881,17 @@ CodeEditor.create = function() {
 							"startNodeIndex":	inCursor.startNodeIndex,
 							"startPos":			inCursor.startPos,				
 							"endNodeIndex":		inCursor.endNodeIndex,
-							"endPos":			inCursor.endPos
+							"endPos":			inCursor.endPos,
+							"focusAtEnd":		inCursor.focusAtEnd,
 					};
-					
+				
+			//if focus is at end, set scrollEndIntoView
+			var scrollEndIntoView = cursor.focusAtEnd?true:false;			
 					
 			try
 			{
-				console.log("set cursor",cursor,"scrollIntoView=",scrollIntoView);
+				console.log("set cursor",cursor,"scrollIntoView=",scrollIntoView,
+						"scrollEndIntoView=",scrollEndIntoView);
 
 				var range = document.createRange();
 
@@ -1829,52 +1905,58 @@ CodeEditor.create = function() {
 
 				if(scrollIntoView)
 				{					
-					Debug.log("scrollIntoView");
+					Debug.log("scrollIntoView");	
 
 					//try to scroll end element and then first element, 
 					//	but if it fails then it is likely text
 					//Note: for scrollIntoView() to work, it seems 
 					//	browser requires at least one character in the 
 					//	scrolling element.
+					
+					
+					Debug.log("inserting scroll 2nd element");
 					try
 					{
-						secondEl.scrollIntoViewIfNeeded();
+						//add an element to scroll into view and then remove it
+						var val = secondEl.textContent;					
+						var newNode = document.createTextNode(
+								val.substr(0,cursor.endPos)); //pre-special text
+
+						el.insertBefore(newNode,secondEl);
+
+						newNode = document.createElement("label");
+						newNode.textContent = val[cursor.endPos]; //special text
+						el.insertBefore(newNode,secondEl);
+
+						secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
+
+						newNode.scrollIntoViewIfNeeded();							
+						//el.removeChild(newNode);
+
+						//fix cursor to point to middle single character node
+						cursor.endPos = 0;
+						secondEl = newNode;
 					}
 					catch(e)
 					{
-						Debug.log("inserting scroll 2nd element");
-
+						Debug.log("Failed to scroll to inserted 2nd element: " + e);
 						try
 						{
-							//add an element to scroll into view and then remove it
-							var val = secondEl.textContent;					
-							var newNode = document.createTextNode(
-									val.substr(0,cursor.endPos)); //pre-special text
-
-							el.insertBefore(newNode,secondEl);
-
-							newNode = document.createElement("label");
-							newNode.textContent = val[cursor.endPos]; //special text
-							el.insertBefore(newNode,secondEl);
-
-							secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
-
-							newNode.scrollIntoViewIfNeeded();							
-							//el.removeChild(newNode);
-							
-							//fix cursor to point to middle single character node
-							cursor.endPos = 0;
-							secondEl = newNode;
+							secondEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
 							Debug.log("Failed to scroll 2nd element: " + e);
 						}
 					}
+					
 
 					try
-					{
-						firstEl.scrollIntoViewIfNeeded();
+					{						
+						if(!scrollEndIntoView)
+							firstEl.scrollIntoViewIfNeeded();
+						else
+							Debug.log("scrollEndIntoView only");
 					}
 					catch(e)
 					{
@@ -1911,7 +1993,7 @@ CodeEditor.create = function() {
 					
 					
 
-					el.focus();					
+									
 				} //end scrollIntoView
 				
 				if(firstEl.firstChild)
@@ -1928,8 +2010,15 @@ CodeEditor.create = function() {
 				var selection = window.getSelection();
 				selection.removeAllRanges();
 				selection.addRange(range);
-
 				
+				//if selecting forward, then place focus on end element
+				if(scrollEndIntoView)
+					selection.extend(secondEl,cursor.endPos);
+				//else
+				//	selection.extend(firstEl,cursor.startPos);
+
+				if(scrollIntoView)
+					el.focus();	
 								
 				
 				
@@ -1943,7 +2032,7 @@ CodeEditor.create = function() {
 	
 	//=====================================================================================
 	//createCursorFromContentPosition ~~	
-	CodeEditor.editor.createCursorFromContentPosition = function(el,startPos,endPos)
+	this.createCursorFromContentPosition = function(el,startPos,endPos)
 	{
 		//handle get cursor location
 		var cursor = {
@@ -1997,7 +2086,7 @@ CodeEditor.create = function() {
 	
 	//=====================================================================================
 	//getCursor ~~	
-	CodeEditor.editor.getCursor = function(el)
+	this.getCursor = function(el)
 	{
 		//handle get cursor location
 		var cursor = {
@@ -2007,12 +2096,16 @@ CodeEditor.create = function() {
 				"endPos":undefined,
 				"startPosInContent":undefined,
 				"endPosInContent":undefined,
+				"focusAtEnd":undefined
 		};
 		
 		var sum = 0;
 		try
 		{
-			range = window.getSelection().getRangeAt(0);
+			var selection = window.getSelection();
+			var range = selection.getRangeAt(0);
+			var focusNode = selection.focusNode;
+			var extentNode = selection.extentNode;
 
 			cursor.startPos = range.startOffset;
 			cursor.endPos = range.endOffset;
@@ -2030,6 +2123,9 @@ CodeEditor.create = function() {
 					cursor.startNodeIndex = i;
 					cursor.startPosInContent = sum + cursor.startPos;
 					
+					if(focusNode == range.startContainer || 
+							extentNode == range.startContainer)
+						cursor.focusAtEnd = false; //focus is at start
 				}
 
 				if(el.childNodes[i] == range.endContainer ||
@@ -2039,6 +2135,12 @@ CodeEditor.create = function() {
 				{
 					cursor.endNodeIndex = i;
 					cursor.endPosInContent = sum + cursor.endPos;
+					
+					if(cursor.focusAtEnd == undefined && 
+							(focusNode == range.endContainer || 
+							extentNode == range.endContainer))
+						cursor.focusAtEnd = true; //focus is at end
+						
 					break; //done!
 				}
 				
@@ -2046,6 +2148,7 @@ CodeEditor.create = function() {
 			}
 
 			console.log("get cursor",cursor);
+			
 
 		}
 		catch(err)
@@ -2194,28 +2297,34 @@ CodeEditor.create = function() {
 				"sleep"					: _DECORATION_GREEN,
 			}
 	};
-	this.updateDecorations = function(forPrimary)//, insertNewLine, deleteSelection)
+	this.updateDecorations = function(forPrimary,forceDisplayComplete)
 	{	
 		forPrimary = forPrimary?1:0;
 		
-		Debug.log("updateDecorations forPrimary=" + forPrimary);// + " insertNewLine=" + insertNewLine);
+		Debug.log("updateDecorations forPrimary=" + forPrimary + " forceDisplayComplete=" + forceDisplayComplete);
 		
+		var el = _eel[forPrimary];
+		var elTextObj = {"text":el.textContent,"time":Date.now()};
+		var wasSnapshot = CodeEditor.editor.updateFileSnapshot(forPrimary,
+				elTextObj);
 		
-
-		var el = document.getElementById("editableBox" + forPrimary);
+		if(wasSnapshot || forceDisplayComplete)
+			CodeEditor.editor.updateOutline(forPrimary,elTextObj);
+			
+		if(!wasSnapshot)
+		{
+			Debug.log("unchanged, skipping decorations");
+			
+			return;
+		}
+				
+		
 		var i, j;
 		var val;
 		
 		//get cursor location
 		var cursor = CodeEditor.editor.getCursor(el);	
-			
-//		if(insertNewLine || deleteSelection)
-//		{
-//			localInsertNewLine(deleteSelection);
-//			CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-//			return;
-//		}
-			
+					
 
 		//update last save field
 		CodeEditor.editor.updateLastSave(forPrimary);
@@ -2805,52 +2914,33 @@ CodeEditor.create = function() {
 				throw("node error!");
 			}
 		} //end node loop
-		
-		
-		
 
 		//set cursor placement
 		CodeEditor.editor.setCursor(el,cursor);
 		
-//		if(cursor.startNodeIndex !== undefined)
-//		{
-//			try
-//			{
-//				console.log("cursor",cursor);
-//				
-//				range = document.createRange();
-//				
-//				var firstEl = el.childNodes[cursor.startNodeIndex];
-//				if(firstEl.firstChild)
-//					firstEl = firstEl.firstChild;
-//	
-//				var secondEl = el.childNodes[cursor.endNodeIndex];
-//				if(secondEl.firstChild)
-//					secondEl = secondEl.firstChild;
-//				
-//				range.setStart(firstEl,
-//						cursor.startPos);
-//				range.setEnd(secondEl,
-//						cursor.endPos);
-//				
-//				var selection = window.getSelection();
-//				selection.removeAllRanges();
-//				selection.addRange(range);
-//	
-//			}
-//			catch(err)
-//			{
-//				console.log("err",err);
-//			}
-//		} //end set cursor placement	
+		CodeEditor.editor.updateDualView(forPrimary);
 		
-		CodeEditor.editor.updateOutline(forPrimary);
+	} //end updateDecorations()
+
+
+	//=====================================================================================
+	//updateDualView ~~
+	this.updateDualView = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;	
+		
+		Debug.log("updateDualView " + forPrimary);
+		
 		
 		//if other pane is same path and extension, update it too
 		if(_filePath[0] == _filePath[1] &&
 				_fileExtension[0] == _fileExtension[1])
 		{
+			var val,node, newNode;
+			var el = _eel[forPrimary];
+			
 			Debug.log("Update dual view");
+			
 			_fileLastSave[(!forPrimary)?1:0] = _fileLastSave[forPrimary];
 			_fileWasModified[(!forPrimary)?1:0] = _fileWasModified[forPrimary];
 			CodeEditor.editor.updateLastSave(!forPrimary);
@@ -2880,27 +2970,16 @@ CodeEditor.create = function() {
 			}
 		}
 		
-	} //end updateDecorations()
-
+	} //end updateDualView()
+	
 	//=====================================================================================
 	//updateOutline ~~
-	this.updateOutline = function(forPrimary)
+	//	elTextObj := {text,time}
+	this.updateOutline = function(forPrimary,elTextObj)
 	{
 		forPrimary = forPrimary?1:0;	
 		
 		Debug.log("updateOutline " + forPrimary);
-		
-		var text = document.getElementById("editableBox" + forPrimary).textContent;
-		
-		var wasSnapshot = CodeEditor.editor.updateFileSnapshot(forPrimary,
-				{"text":text,"time":Date.now()});
-		
-		if(!wasSnapshot)
-		{
-			Debug.log("unchanged, skipping outline");
-			return;
-		}
-				
 		
 		var starti;
 		var endi;
@@ -2924,9 +3003,9 @@ CodeEditor.create = function() {
 		if(isCcSource) indicator = "::";
 		if(isJsSource) indicator = "function";
 		
-		for(i=0;i<text.length;++i)
+		for(i=0;i<elTextObj.text.length;++i)
 		{
-			if(text[i] == '\n') 
+			if(elTextObj.text[i] == '\n') 
 			{
 				++newLineCount;
 				indicatorIndex = 0; //reset
@@ -2934,7 +3013,7 @@ CodeEditor.create = function() {
 			}
 			
 			//find indicators
-			if(text[i] == indicator[indicatorIndex])
+			if(elTextObj.text[i] == indicator[indicatorIndex])
 			{
 				++indicatorIndex;
 				if(indicatorIndex == indicator.length)
@@ -2991,6 +3070,7 @@ CodeEditor.create = function() {
 		} //end simple outline generate
 		outline.push([newLineCount,"Bottom"]); //always include bottom
 
+		var text;
 		//handle create outline
 		str = "";
 		str += "<center>";
@@ -3006,7 +3086,7 @@ CodeEditor.create = function() {
 						"onchange":
 							"CodeEditor.editor.handleOutlineSelect(" + forPrimary + ");",
 						"onclick": 
-							"event.stopPropagation();",
+							"CodeEditor.editor.stopUpdateHandling(event);",
 				},0 /*innerHTML*/, false /*doCloseTag*/);
 		str += "<option value='0'>Jump to a Line Number (Ctrl + L)</option>"; //blank option
 		
@@ -3052,25 +3132,25 @@ CodeEditor.create = function() {
 			endPi = -1;
 
 			//do this:
-			//			endi = text.indexOf('(',starti+3);
-			//			startCi = text.indexOf('{',endi+2);
-			//			endPi = text.lastIndexOf(')',startCi-1);
+			//			endi = elTextObj.text.indexOf('(',starti+3);
+			//			startCi = elTextObj.text.indexOf('{',endi+2);
+			//			endPi = elTextObj.text.lastIndexOf(')',startCi-1);
 			
-			for(j=i+2;j<text.length;++j)
+			for(j=i+2;j<elTextObj.text.length;++j)
 			{
-				if(text[j] == ';' || //any semi-colon is a deal killer
-						text[j] == '+' || //or non-function name characters
-						text[j] == '"' ||
-						text[j] == "'") 					
+				if(elTextObj.text[j] == ';' || //any semi-colon is a deal killer
+						elTextObj.text[j] == '+' || //or non-function name characters
+						elTextObj.text[j] == '"' ||
+						elTextObj.text[j] == "'") 					
 					return undefined;
 				if(endi < 0) //first find end of name
 				{
-					if(text[j] == '(')
+					if(elTextObj.text[j] == '(')
 						endi = j++; //found end of name, and skip ahead
 				}
 				else if(startCi < 0)
 				{
-					if(text[j] == '{')
+					if(elTextObj.text[j] == '{')
 					{
 						startCi = j--; //found start of curly brackets, and exit loop
 						break;
@@ -3089,7 +3169,7 @@ CodeEditor.create = function() {
 			
 			for(j;j>endi;--j)
 			{
-				if(text[j] == ')')
+				if(elTextObj.text[j] == ')')
 				{
 					endPi = j; //found end of parameters
 					break;
@@ -3103,7 +3183,7 @@ CodeEditor.create = function() {
 			
 			//found key moments with no ';', done!
 
-			return text.substr(starti+2,endi-starti-2).replace(/\s+/g,'');			
+			return elTextObj.text.substr(starti+2,endi-starti-2).replace(/\s+/g,'');			
 			
 		} //end localHandleCcOutline()
 		
@@ -3111,7 +3191,7 @@ CodeEditor.create = function() {
 		// localHandleJsOutline
 		function localHandleJsOutline()
 		{	
-			if(text[i + 1] == '(')
+			if(elTextObj.text[i + 1] == '(')
 			{
 				//console.log("=style",text.substr(i-30,100));
 
@@ -3120,14 +3200,14 @@ CodeEditor.create = function() {
 				//look backward for =, and only accept \t or space					
 				for(j=i-1-("function").length;j>=0;--j)
 				{
-					if(text[j] == '=')
+					if(elTextObj.text[j] == '=')
 					{
 						//found next phase
 						found = true;
 						k = j; //save = pos							
 					}
-					else if(!(text[j]== ' ' || text[j] == '\t' ||
-							(text[j] == '=' && !found)))
+					else if(!(elTextObj.text[j] == ' ' || elTextObj.text[j] == '\t' ||
+							(elTextObj.text[j] == '=' && !found)))
 						break; //give up on this function if not white space or =
 				}
 
@@ -3136,11 +3216,11 @@ CodeEditor.create = function() {
 					//found = sign so now find last character
 					for(j;j>=0;--j)
 					{
-						if(text[j] == ' ' || text[j] == '\t' || 
-								text[j] == '\n')
+						if(elTextObj.text[j] == ' ' || elTextObj.text[j] == '\t' || 
+								elTextObj.text[j] == '\n')
 						{
 							//found white space on other side, so done!							
-							return text.substr(j+1,k-j-1).trim();
+							return elTextObj.text.substr(j+1,k-j-1).trim();
 						}
 					}
 				}
@@ -3150,14 +3230,14 @@ CodeEditor.create = function() {
 				//console.log("fwd style",text.substr(i,30));
 				
 				//look forward until new line or ( 				
-				for(j=i+2;j<text.length;++j)
+				for(j=i+2;j<elTextObj.text.length;++j)
 				{
-					if(text[j] == '\n')
+					if(elTextObj.text[j] == '\n')
 						break;
-					else if(text[j] == '(')
+					else if(elTextObj.text[j] == '(')
 					{
 						//found end
-						return text.substr(i+2,j-(i+2)).trim();
+						return elTextObj.text.substr(i+2,j-(i+2)).trim();
 					}
 				}
 			} //end handling for forward tyle js function
@@ -3192,17 +3272,23 @@ CodeEditor.create = function() {
 		
 		var keyCode = e.keyCode;
 		
-		//set timeout for decoration update
-		CodeEditor.editor.startUpdateHandling(forPrimary);			
+		CodeEditor.editor.stopUpdateHandling();
 		
-		//if just pressing shiftKey ignore
+		//if just pressing shiftKey, ignore
 		if(keyCode == 16 /*shift*/)
 			return;
 		
-		Debug.log("keydown e=" + keyCode + " shift=" + e.shiftKey + " ctrl=" + e.ctrlKey);
+		//if command key pressed, ignore
+		if(_commandKeyDown)
+			return;
 		
-		
-		var el = document.getElementById("editableBox" + forPrimary);
+		Debug.log("keydown e=" + keyCode + " shift=" + e.shiftKey + 
+				" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
+
+		//set timeout for decoration update
+		CodeEditor.editor.startUpdateHandling(forPrimary);			
+				
+		var el = _eel[forPrimary];
 		var cursor;
 		var cursorSelection = false;
 		
@@ -3215,6 +3301,9 @@ CodeEditor.create = function() {
 			cursorSelection = (cursor.startNodeIndex !== undefined &&
 								(cursor.startNodeIndex != cursor.endNodeIndex ||
 										cursor.startPos != cursor.endPos));
+
+			if(!cursorSelection)
+				_lastPageUpDownLine = -1;
 			
 			/////////////////////////////////
 			function localInsertCharacter(c)
@@ -3250,64 +3339,68 @@ CodeEditor.create = function() {
 					//place end pos to delete the remainder of current node
 					cursor.endPos = el.childNodes[cursor.startNodeIndex].textContent.length;
 				}
-				
 
-				//reverse-find new line
-				for(n=cursor.startNodeIndex;n>=0; --n)
-				{
-					node = el.childNodes[n];
-					val = node.textContent; //.nodeValue; //.wholeText
-
-					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
-							val.length-1); i>=0; --i)
-					{
-						if(val[i] == '\n')
-						{
-							//found start of line
-							found = true;
-							break;
-						}
-					}
-					if(found) break;
-				} //end reverse find new line loop
-
-				//assume at new line point (or start of file)
-				console.log("at leading newline - n",n,"i",i);
-				if(n < 0) n = 0;
-				if(i < 0) i = 0;
-
-				//now return to cursor and aggregate white space
-				found = false;
 				var whiteSpaceString = "";
-				++i; //skip past new line
-				for(n; n<el.childNodes.length; ++n)
-				{
-					node = el.childNodes[n];
-					val = node.textContent;
-
-					for(i;i<val.length;++i)
+				if(c == '\n')
+				{ //for newline case, determine whitespace before cursor to add
+	
+					//reverse-find new line
+					for(n=cursor.startNodeIndex;n>=0; --n)
 					{
-						//exit loop when not white space found
-						if(val[i] != '\t' && val[i] != ' ')
+						node = el.childNodes[n];
+						val = node.textContent; //.nodeValue; //.wholeText
+	
+						for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+								val.length-1); i>=0; --i)
 						{
-							found = true;
-							break;
+							if(val[i] == '\n')
+							{
+								//found start of line
+								found = true;
+								break;
+							}
 						}
-
-						whiteSpaceString += val[i];
-					}
-
-					if(found) break;
-
-					i = 0; //reset i for next loop
-				} //end white non-white space loop					
-
-
-				console.log("val[i]",val[i]);
-				if(val[i] == '{')
-					whiteSpaceString += '\t';
-
-				console.log("whiteSpaceString",whiteSpaceString.length);
+						if(found) break;
+					} //end reverse find new line loop
+	
+					//assume at new line point (or start of file)
+					console.log("at leading newline - n",n,"i",i);
+					if(n < 0) n = 0;
+					if(i < 0) i = 0;
+	
+					//now return to cursor and aggregate white space
+					found = false;
+					++i; //skip past new line
+					for(n; n<el.childNodes.length; ++n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent;
+	
+						for(i;i<val.length;++i)
+						{
+							//exit loop when not white space found
+							if(val[i] != '\t' && val[i] != ' ')
+							{
+								found = true;
+								break;
+							}
+	
+							whiteSpaceString += val[i];
+						}
+	
+						if(found) break;
+	
+						i = 0; //reset i for next loop
+					} //end white non-white space loop					
+	
+	
+					console.log("val[i]",val[i]);
+					if(val[i] == '{')
+						whiteSpaceString += '\t';
+	
+					console.log("whiteSpaceString",whiteSpaceString.length);
+				} //end new-line whitespace grab
+				
 
 				val = el.childNodes[cursor.startNodeIndex].textContent;
 				val = val.substr(0,cursor.startPos) + c + 
@@ -3325,9 +3418,7 @@ CodeEditor.create = function() {
 
 				_fileWasModified[forPrimary] = true;
 			} //end localInsertNewLine()
-
-
-			// || keyCode == 46
+			
 			if(keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 			{
 				//to avoid DIVs, ENTER should trigger updateDecorations immediately
@@ -3507,9 +3598,26 @@ CodeEditor.create = function() {
 							
 			
 			var N = 50; //number of lines for page up
-			var line = CodeEditor.editor.getLine(forPrimary);
+			var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
+						
+			Debug.log("Page up from line " + _lastPageUpDownLine + " vs " +
+					cursorWithLine.line);
 			
-			CodeEditor.editor.gotoLine(forPrimary,line-N);
+			if(_lastPageUpDownLine != -1 &&
+					_lastPageUpDownLine <= cursorWithLine.line - N)
+			{
+				//fix mistake on focus node
+				cursorWithLine.focusAtEnd = false;
+				cursorWithLine.line = _lastPageUpDownLine;
+
+				Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
+						cursorWithLine.line);
+			}
+			
+			CodeEditor.editor.gotoLine(forPrimary,cursorWithLine.line - N,
+					e.shiftKey?cursorWithLine:undefined);
+			
+			_lastPageUpDownLine = cursorWithLine.line - N;
 							
 			return;
 		}
@@ -3525,9 +3633,40 @@ CodeEditor.create = function() {
 
 
 			var N = 50; //number of lines for page up
-			var line = CodeEditor.editor.getLine(forPrimary);
+			var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
+						
+			Debug.log("Page down from line " + _lastPageUpDownLine + " vs " +
+					cursorWithLine.line);
+			
+			if(_lastPageUpDownLine != -1)
+			{
+				 if(_lastPageUpDownLine <= cursorWithLine.line - N)
+				 {
+					//fix mistake on focus node
+					cursorWithLine.focusAtEnd = false;
+					cursorWithLine.line = _lastPageUpDownLine;
+	
+					Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
+							cursorWithLine.line);
+				 }
+				 else
+				 {
+					//fix mistake on focus node
+					cursorWithLine.focusAtEnd = true;
+					cursorWithLine.line = _lastPageUpDownLine;
+	
+					Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
+							cursorWithLine.line);					 
+				 }
+			}
+			else
+				cursorWithLine.focusAtEnd = true;
 
-			CodeEditor.editor.gotoLine(forPrimary,line+N);
+			
+			CodeEditor.editor.gotoLine(forPrimary,cursorWithLine.line + N,
+					e.shiftKey?cursorWithLine:undefined);
+			
+			_lastPageUpDownLine = cursorWithLine.line + N;
 
 			return;
 		}
@@ -4200,7 +4339,7 @@ CodeEditor.create = function() {
 		var el = document.getElementById("textEditorLastSave" + forPrimary);
 		if(!el) return; //if not displayed, quick exit
 		
-		Debug.log("updateLastSave()");
+		Debug.log("updateLastSave() forPrimary=" + forPrimary);
 		var str = "";
 		if(_fileWasModified[forPrimary])
 			str += "<label style='color:red'>Unsaved changes!</label> ";
@@ -4383,13 +4522,13 @@ CodeEditor.create = function() {
 		//	place them in by time, so they are in time order
 		//	and in case we want to remove old ones
 
-		var text = document.getElementById("editableBox" + forPrimary).textContent;
+		
 		_fileHistoryStack[_filePath[forPrimary] + "." +
 						  _fileExtension[forPrimary]] = [
-														 text,
-														 Date.now(),
-														 _fileWasModified[forPrimary],
-														 _fileLastSave[forPrimary]];
+								 _eel[forPrimary].textContent,
+								 Date.now(),
+								 _fileWasModified[forPrimary],
+								 _fileLastSave[forPrimary]];
 		console.log("_fileHistoryStack",_fileHistoryStack);
 
 		CodeEditor.editor.updateFileHistoryDropdowns(); //both
@@ -4444,7 +4583,7 @@ CodeEditor.create = function() {
 							"onchange":
 							"CodeEditor.editor.handleFileNameHistorySelect(" + 
 								forPrimary + ");",
-							"onclick":"event.stopPropagation();",
+							"onclick":"CodeEditor.editor.stopUpdateHandling(event);",
 							"onfocus":"CodeEditor.editor.lastFileNameHistorySelectIndex = this.value;" +
 								"this.value = -1;", //force action even if same selected
 							"onblur":"this.value = CodeEditor.editor.lastFileNameHistorySelectIndex;",
@@ -4541,7 +4680,7 @@ CodeEditor.create = function() {
 		CodeEditor.editor.findAndReplaceLastButton[forPrimary] = 1;//default action is find
 
 		//get cursor selection to use as starting point for action
-		var el = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 		var cursor = _findAndReplaceCursorInContent[forPrimary] = 
 				CodeEditor.editor.getCursor(el);
 				
@@ -4789,7 +4928,7 @@ CodeEditor.create = function() {
 		forPrimary = forPrimary?1:0;
 		Debug.log("showFindAndReplaceSelection forPrimary=" + forPrimary);
 
-		var el = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 		var cursor = CodeEditor.editor.getCursor(el);
 		
 		if(cursor.startPosInContent !== undefined)
@@ -4851,7 +4990,7 @@ CodeEditor.create = function() {
 		//		if 4 and found a word
 		//			continue loop, else done!
 
-		var el = document.getElementById("editableBox" + forPrimary);
+		var el = _eel[forPrimary];
 		var originalText = el.textContent;
 		
 		if(caseSensitive) 
@@ -5071,7 +5210,12 @@ CodeEditor.create = function() {
 	{
 		forPrimary = forPrimary?1:0;
 		
-		CodeEditor.editor.findAndReplaceLastButton[forPrimary] = -1; //clear default find and replace action
+		var forceDisplayComplete = false;
+		if(CodeEditor.editor.findAndReplaceLastButton[forPrimary] != -1)
+		{
+			CodeEditor.editor.findAndReplaceLastButton[forPrimary] = -1; //clear default find and replace action
+			forceDisplayComplete = true;
+		}
 		
 		Debug.log("displayFileHeader forPrimary=" + forPrimary);
 		
@@ -5179,7 +5323,7 @@ CodeEditor.create = function() {
 
 		el.innerHTML = str;
 
-		CodeEditor.editor.updateDecorations(forPrimary);
+		CodeEditor.editor.updateDecorations(forPrimary,forceDisplayComplete);
 		CodeEditor.editor.updateFileHistoryDropdowns();	
 		
 	} //end displayFileHeader()
