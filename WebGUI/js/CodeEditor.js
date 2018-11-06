@@ -215,6 +215,9 @@ CodeEditor.create = function() {
 	var _updateHandlerTargetPane = [false,false];
 	var _commandKeyDown = false;
 	var _lastPageUpDownLine = -1;
+	var _startPageUpDownLine = -1;
+	var _startPageUpDownNodeIndex = -1;
+	var _startPageUpDownPos = -1;
 	
 	var _fileNameMouseMoveTimerHandle = 0;
 	var _fileNameEditing = [false,false]; //for primary and secondary
@@ -1716,12 +1719,13 @@ CodeEditor.create = function() {
 			//if selection cursor, handle highlighting
 			if(selectionCursor)
 			{
-				cursor.endNodeIndex = selectionCursor.endNodeIndex;
-				cursor.endPos = selectionCursor.endPos;
+				cursor.endNodeIndex = selectionCursor.startNodeIndex;
+				cursor.endPos = selectionCursor.startPos;
+				cursor.focusAtEnd = selectionCursor.focusAtEnd;
 			}
 			CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 
-			return; 
+			return line; 
 		}
 
 		var i,n,node,el,val;
@@ -1777,12 +1781,14 @@ CodeEditor.create = function() {
 		//if selection cursor, handle highlighting
 		if(selectionCursor)
 		{
+			cursor.focusAtEnd = selectionCursor.focusAtEnd;
+			
 			if(lastNode < selectionCursor.startNodeIndex || 
 					(	lastNode == selectionCursor.startNodeIndex &&
 						lastPos < selectionCursor.startPos))
 			{
-				cursor.endNodeIndex = selectionCursor.endNodeIndex;
-				cursor.endPos = selectionCursor.endPos;				
+				cursor.endNodeIndex = selectionCursor.startNodeIndex;
+				cursor.endPos = selectionCursor.startPos;				
 			}
 			else
 			{
@@ -1790,14 +1796,16 @@ CodeEditor.create = function() {
 				cursor.startPos = selectionCursor.startPos;
 			}
 			
-			cursor.focusAtEnd = selectionCursor.focusAtEnd;
+			
 			CodeEditor.editor.setCursor(el,cursor,
 					true /*scrollIntoView*/);
-			return;
+			return line;
 		}
 		
 
 		CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+		
+		return line;
 		
 	} //end gotoLine
 
@@ -1919,23 +1927,33 @@ CodeEditor.create = function() {
 					{
 						//add an element to scroll into view and then remove it
 						var val = secondEl.textContent;					
-						var newNode = document.createTextNode(
+						var newNode1 = document.createTextNode(
 								val.substr(0,cursor.endPos)); //pre-special text
 
-						el.insertBefore(newNode,secondEl);
+						el.insertBefore(newNode1,secondEl);
 
-						newNode = document.createElement("label");
+						var newNode = document.createElement("label");
 						newNode.textContent = val[cursor.endPos]; //special text
 						el.insertBefore(newNode,secondEl);
 
 						secondEl.textContent = val.substr(cursor.endPos+1); //post-special text
 
 						newNode.scrollIntoViewIfNeeded();							
-						//el.removeChild(newNode);
+						
+						el.removeChild(newNode);
+						el.removeChild(newNode1);
+						secondEl.textContent = val;
 
 						//fix cursor to point to middle single character node
-						cursor.endPos = 0;
-						secondEl = newNode;
+						//						cursor.endPos = 0;
+						//						secondEl = newNode;
+						//						
+						//						//maintain page up/down start position
+						//						if(_startPageUpDownNodeIndex == cursor.endNodeIndex)
+						//						{
+						//							_startPageUpDownNodeIndex += 2;
+						//							_startPageUpDownPos = 0;
+						//						}
 					}
 					catch(e)
 					{
@@ -1967,23 +1985,34 @@ CodeEditor.create = function() {
 							//add an element to scroll into view and then remove it
 							firstEl = el.childNodes[cursor.startNodeIndex];
 							var val = firstEl.textContent;					
-							var newNode = document.createTextNode(
+							var newNode1 = document.createTextNode(
 									val.substr(0,cursor.startPos)); //pre-special text
 
-							el.insertBefore(newNode,firstEl);
+							el.insertBefore(newNode1,firstEl);
 
-							newNode = document.createElement("label");
+							var newNode = document.createElement("label");
 							newNode.textContent = val[cursor.startPos]; //special text
 							el.insertBefore(newNode,firstEl);
 
 							firstEl.textContent = val.substr(cursor.startPos+1); //post-special text
 
 							newNode.scrollIntoViewIfNeeded();
-							//el.removeChild(newNode);
 							
-							//fix cursor to point to middle single character node
-							cursor.startPos = 0;
-							firstEl = newNode;
+							//now remove new nodes
+							el.removeChild(newNode);
+							el.removeChild(newNode1);
+							firstEl.textContent = val;
+							
+							//							//fix cursor to point to middle single character node
+							//							cursor.startPos = 0;
+							//							firstEl = newNode;
+							//							
+							//							//maintain page up/down start position
+							//							if(_startPageUpDownNodeIndex == cursor.startNodeIndex)
+							//							{
+							//								_startPageUpDownNodeIndex += 2;
+							//								_startPageUpDownPos = 0;
+							//							}
 						}
 						catch(e)
 						{
@@ -3598,26 +3627,33 @@ CodeEditor.create = function() {
 							
 			
 			var N = 50; //number of lines for page up
-			var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
-						
-			Debug.log("Page up from line " + _lastPageUpDownLine + " vs " +
-					cursorWithLine.line);
 			
-			if(_lastPageUpDownLine != -1 &&
-					_lastPageUpDownLine <= cursorWithLine.line - N)
+			var gotoLineCursor = {};	
+			
+			//manage start and last line
+			if(_lastPageUpDownLine == -1)
 			{
-				//fix mistake on focus node
-				cursorWithLine.focusAtEnd = false;
-				cursorWithLine.line = _lastPageUpDownLine;
-
-				Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
-						cursorWithLine.line);
+				var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
+				
+				_startPageUpDownNodeIndex = cursorWithLine.startNodeIndex;
+				_startPageUpDownPos = cursorWithLine.startPos;
+				
+				_startPageUpDownLine = cursorWithLine.line;
+				_lastPageUpDownLine = _startPageUpDownLine;
 			}
 			
-			CodeEditor.editor.gotoLine(forPrimary,cursorWithLine.line - N,
-					e.shiftKey?cursorWithLine:undefined);
+			gotoLineCursor.startNodeIndex = _startPageUpDownNodeIndex;
+			gotoLineCursor.startPos = _startPageUpDownPos;
+						
 			
-			_lastPageUpDownLine = cursorWithLine.line - N;
+			_lastPageUpDownLine -= N;
+			gotoLineCursor.focusAtEnd = (_lastPageUpDownLine > _startPageUpDownLine);
+
+			Debug.log("Page up to line " + _lastPageUpDownLine + " dir=" +
+					gotoLineCursor.focusAtEnd);
+						
+			_lastPageUpDownLine = CodeEditor.editor.gotoLine(forPrimary,_lastPageUpDownLine,
+					e.shiftKey?gotoLineCursor:undefined);			
 							
 			return;
 		}
@@ -3633,40 +3669,33 @@ CodeEditor.create = function() {
 
 
 			var N = 50; //number of lines for page up
-			var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
-						
-			Debug.log("Page down from line " + _lastPageUpDownLine + " vs " +
-					cursorWithLine.line);
-			
-			if(_lastPageUpDownLine != -1)
-			{
-				 if(_lastPageUpDownLine <= cursorWithLine.line - N)
-				 {
-					//fix mistake on focus node
-					cursorWithLine.focusAtEnd = false;
-					cursorWithLine.line = _lastPageUpDownLine;
-	
-					Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
-							cursorWithLine.line);
-				 }
-				 else
-				 {
-					//fix mistake on focus node
-					cursorWithLine.focusAtEnd = true;
-					cursorWithLine.line = _lastPageUpDownLine;
-	
-					Debug.log("Fixed Page up from line " + _lastPageUpDownLine + " vs " +
-							cursorWithLine.line);					 
-				 }
-			}
-			else
-				cursorWithLine.focusAtEnd = true;
 
-			
-			CodeEditor.editor.gotoLine(forPrimary,cursorWithLine.line + N,
-					e.shiftKey?cursorWithLine:undefined);
-			
-			_lastPageUpDownLine = cursorWithLine.line + N;
+			var gotoLineCursor = {};	
+
+			//manage start and last line
+			if(_lastPageUpDownLine == -1)
+			{
+				var cursorWithLine = CodeEditor.editor.getLine(forPrimary);
+
+				_startPageUpDownNodeIndex = cursorWithLine.startNodeIndex;
+				_startPageUpDownPos = cursorWithLine.startPos;
+
+				_startPageUpDownLine = cursorWithLine.line;
+				_lastPageUpDownLine = _startPageUpDownLine;
+			}
+
+			gotoLineCursor.startNodeIndex = _startPageUpDownNodeIndex;
+			gotoLineCursor.startPos = _startPageUpDownPos;
+
+
+			_lastPageUpDownLine += N;
+			gotoLineCursor.focusAtEnd = (_lastPageUpDownLine > _startPageUpDownLine);
+
+			Debug.log("Page down to line " + _lastPageUpDownLine + " dir=" +
+					gotoLineCursor.focusAtEnd);
+
+			_lastPageUpDownLine = CodeEditor.editor.gotoLine(forPrimary,_lastPageUpDownLine,
+					e.shiftKey?gotoLineCursor:undefined);	
 
 			return;
 		}
