@@ -3140,7 +3140,7 @@ CodeEditor.create = function() {
 				} //end main loop looking for next newline
 				
 				//handle tabStr before putting together string
-				if(lastChar == ':' ||  //ends with : }					
+				if((lastChar == ':' && firstChar == 'p') ||  //ends with : }, and start with public/private/protected					
 						firstChar == '}')
 				{
 					
@@ -3275,7 +3275,7 @@ CodeEditor.create = function() {
 			
 			//copy all elements over
 			
-			var elAlt = document.getElementById("editableBox" + ((!forPrimary)?1:0));
+			var elAlt = __eel[(!forPrimary)?1:0];
 			elAlt.innerHTML = ""; //clear all children
 			for(i=0;i<el.childNodes.length;++i)
 			{
@@ -3610,7 +3610,8 @@ CodeEditor.create = function() {
 		if(_commandKeyDown)
 			return;
 		
-		Debug.log("keydown e=" + keyCode + " shift=" + e.shiftKey + 
+		var c = e.key;
+		Debug.log("keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
 				" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 		
 		//set timeout for decoration update
@@ -3669,6 +3670,8 @@ CodeEditor.create = function() {
 				var whiteSpaceString = "";	
 				var postWhiteSpaceString = "";
 				var text = el.childNodes[cursor.startNodeIndex].textContent;
+				var preCharString = text.substr(0,cursor.startPos);
+				var cursorPosDelta = 0;
 				
 				if(c == '\n')
 				{ 
@@ -3682,26 +3685,26 @@ CodeEditor.create = function() {
 					for(n=cursor.startNodeIndex;n>=0; --n)
 					{
 						node = el.childNodes[n];
-						val = node.textContent; //.nodeValue; //.wholeText
+						val = node.textContent;
 						
-					for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+						for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
 							val.length-1); i>=0; --i)
+						{
+							if(val[i] == '\n')
 							{
-								if(val[i] == '\n')
-								{
-									//found start of line
-									found = true;
-									break;
-								}
-								else if(firstChar == '' &&
-										val[i] != '\t' && val[i] != ' ')
-									firstChar = val[i]; //found first encountered character
+								//found start of line
+								found = true;
+								break;
 							}
-							if(found) break;
-							} //end reverse find new line loop
+							else if(firstChar == '' &&
+									val[i] != '\t' && val[i] != ' ')
+								firstChar = val[i]; //found first encountered character
+						}
+						if(found) break;
+					} //end reverse find new line loop
 							
-							//assume at new line point (or start of file)
-							console.log("at leading newline - n",n,"i",i,"firstChar",firstChar);
+					//assume at new line point (or start of file)
+					console.log("at leading newline - n",n,"i",i,"firstChar",firstChar);
 					if(n < 0) n = 0;
 					if(i < 0) i = 0;
 					else ++i; //skip past new line
@@ -3751,21 +3754,145 @@ CodeEditor.create = function() {
 						}
 						else //else remove all leading white space
 							postWhiteSpaceString += val.trimLeft();
+					}					
+										
+				} //end special newline handling
+				else if(c == '}') //start special closing bracket handling
+				{
+					//determine the white space before previous open bracket
+					//	and match it
+					
+					//reverse find matching bracket
+					var openCount = 1; //init to 1, when 0 done
+					var foundFirstNewLine = false;
+					
+					//reverse-find new line
+					found = false;
+					for(n=cursor.startNodeIndex;n>=0; --n)
+					{
+						node = el.childNodes[n];
+						val = node.textContent; 
+
+						for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+								val.length-1); i>=0; --i)
+						{
+							if(val[i] == '{')
+							{
+								//close bracket
+								--openCount;
+								
+								if(openCount == 0)
+								{
+									Debug.log("Found matching bracket n=" + n +
+											" i=" + i);
+									found = true;
+									break;
+								}
+								//else keep looking for closing bracket
+							}
+							else if(val[i] == '}')
+								++openCount;
+							else if(!foundFirstNewLine &&
+									val[i] == '\n')
+							{
+								foundFirstNewLine = true;
+								
+								Debug.log("pre-deleted white space preCharString=" +  
+										preCharString.length + " " + preCharString);
+								
+								//delete all white space forward until start position
+								var nn = n;
+								var ii = i+1;
+								for(nn;nn<el.childNodes.length;++nn)
+								{									
+									if(nn < cursor.startNodeIndex)
+									{
+										//completely delete text										
+										el.childNodes[nn].textContent = "";
+									}
+									else if(nn == cursor.startNodeIndex)
+									{
+										//partially delete text by clearing preCharString
+										preCharString = el.childNodes[nn].textContent.substr(
+												0,ii);
+										break; //done
+									}
+									ii = 0;
+								} //end of delete white space to newline loop
+								
+								Debug.log("deleted white space preCharString=" +  
+										preCharString.length + " " + preCharString);
+							}
+							else if(!foundFirstNewLine && val[i] != ' ' &&
+									val[i] != '\t')
+							{
+								Debug.log("Found character between } and new line, so doing nothing.");
+								return;
+							}
+						}
+						if(found) break;
+					} //end reverse find matching bracket loop
+					
+					
+					//assume at matching bracket (or start of file)
+					console.log("at closing bracket - n",n,"i",i);
+					
+					if(n < 0 || i < 0) //at beginning, so kill leading white space 
+						preCharString = preCharString.trimRight();
+					else 
+					{
+						//find previous new line to determine white space to match
+						var matchingWhiteSpace = "";
+						found = false;
+						var firstTime = true;
+						
+						for(n;n>=0; --n)
+						{
+							node = el.childNodes[n];
+							val = node.textContent; 
+
+							for(i=(firstTime?i:
+									val.length-1); i>=0; --i)
+							{
+								if(val[i] == '\n')
+								{
+									//fully defined matching white space
+									found = true;
+									break;
+								}
+								else if(val[i] == ' ' || 
+										val[i] == '\t')
+									matchingWhiteSpace += val[i];
+								else //clear white space if not white space encountered
+									matchingWhiteSpace = "";
+							}
+							if(found) break;
+							
+							firstTime = false;
+						} //end reverse find new line loop
 					}
 					
-					console.log("whiteSpaceString",whiteSpaceString.length);
 					
-				} //end new-line whitespace grab
+					preCharString += matchingWhiteSpace;
+					Debug.log("matching white space preCharString=" + 
+							preCharString.length + " " + preCharString);
+
+					postWhiteSpaceString += text.substr(cursor.endPos);
+					
+				} //end special closing bracket handling
 				else							
 					postWhiteSpaceString += text.substr(cursor.endPos);
 				
-				val = text.substr(0,cursor.startPos) + c + 
+				val = preCharString + c + 
 					whiteSpaceString +
 					postWhiteSpaceString;
 				
 				el.childNodes[cursor.startNodeIndex].textContent = val;
 				
-				cursor.startPos += 1 + whiteSpaceString.length;
+
+				console.log("cursorPosDelta",cursorPosDelta);
+				
+				cursor.startPos = 1 + preCharString.length + whiteSpaceString.length;
 				cursor.endNodeIndex = cursor.startNodeIndex;
 				cursor.endPos = cursor.startPos;
 				
@@ -4673,7 +4800,7 @@ CodeEditor.create = function() {
 			
 			//Note: looks like the browser gives character in a e.key
 			//	but then there is also "Backspace" and "Delete"
-			var c = e.key;
+			
 			console.log("cursorSelection char",keyCode,c);
 			
 			if(e.key.length > 1)
@@ -4687,6 +4814,15 @@ CodeEditor.create = function() {
 			e.preventDefault();
 			e.stopPropagation();
 			localInsertCharacter(c);
+		}
+		else //special single key handling
+		{
+			if(c == '}')
+			{
+				e.preventDefault();
+				e.stopPropagation();
+				localInsertCharacter(c);
+			}
 		}
 		
 	} //end keyDownHandler()
@@ -5297,7 +5433,9 @@ CodeEditor.create = function() {
 			CodeEditor.editor.setCursor(el,
 				cursor,
 				true /*scrollIntoView*/);
-		else if(_findAndReplaceCursorInContent[forPrimary] !== undefined)
+		else if( //if find is open, then go to find cursor
+				CodeEditor.editor.findAndReplaceLastButton[forPrimary] > 0 &&
+				_findAndReplaceCursorInContent[forPrimary] !== undefined)
 			CodeEditor.editor.setCursor(el,
 				_findAndReplaceCursorInContent[forPrimary],
 				true /*scrollIntoView*/);
@@ -5539,18 +5677,30 @@ CodeEditor.create = function() {
 			
 			//select the find
 			if(action == 3)
-				CodeEditor.editor.setCursor(el,
-					CodeEditor.editor.createCursorFromContentPosition(el,
-						i, i + find.length),true /*scrollIntoView*/);
+			{
+				_findAndReplaceCursorInContent[forPrimary] = 
+						CodeEditor.editor.createCursorFromContentPosition(el,
+												i, i + find.length);
+				CodeEditor.editor.setCursor(
+						el,
+						_findAndReplaceCursorInContent[forPrimary],
+						true /*scrollIntoView*/);
+			}
 			
 			
 			break;
 		case 1: //Find
+			
 			//select the find
-			CodeEditor.editor.setCursor(el,
+			_findAndReplaceCursorInContent[forPrimary] = 
 					CodeEditor.editor.createCursorFromContentPosition(el,
-						i, i + find.length),true /*scrollIntoView*/);
-			break; //do nothing
+									i, i + find.length)
+			CodeEditor.editor.setCursor(
+					el,
+					_findAndReplaceCursorInContent[forPrimary],
+					true /*scrollIntoView*/);
+			
+			break; 
 		default:
 			Debug.log("Unrecognized action! " + action, Debug.HIGH_PRIORITY);
 			return;
