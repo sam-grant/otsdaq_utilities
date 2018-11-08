@@ -3275,7 +3275,7 @@ CodeEditor.create = function() {
 			
 			//copy all elements over
 			
-			var elAlt = __eel[(!forPrimary)?1:0];
+			var elAlt = _eel[(!forPrimary)?1:0];
 			elAlt.innerHTML = ""; //clear all children
 			for(i=0;i<el.childNodes.length;++i)
 			{
