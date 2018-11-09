@@ -688,6 +688,10 @@ CodeEditor.create = function() {
 					
 					Debug.log("mousedown handler for editor" + forPrimary);
 					
+					//update dual view in case other has been modified
+					if(_activePaneIsPrimary != forPrimary)
+						CodeEditor.editor.updateDualView(!forPrimary);
+					
 					_activePaneIsPrimary = forPrimary;				
 					
 				}); //end addEventListener
@@ -713,6 +717,12 @@ CodeEditor.create = function() {
 					forPrimary = forPrimary?1:0;
 					
 					Debug.log("click handler for pane" + forPrimary);
+					
+
+					//update dual view in case other has been modified
+					if(_activePaneIsPrimary != forPrimary)
+						CodeEditor.editor.updateDualView(!forPrimary);
+					
 					_activePaneIsPrimary = forPrimary;
 					
 					
