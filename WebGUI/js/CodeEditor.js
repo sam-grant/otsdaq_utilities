@@ -686,7 +686,7 @@ CodeEditor.create = function() {
 					var forPrimary = this.id[this.id.length-1]|0;
 					forPrimary = forPrimary?1:0;
 					
-					Debug.log("mousedown handler for editor" + forPrimary);
+					Debug.log("mousedown handler for editor" + forPrimary + " " + e.which);
 					
 					//update dual view in case other has been modified
 					if(_activePaneIsPrimary != forPrimary)
@@ -6093,28 +6093,37 @@ CodeEditor.create = function() {
 			return;
 		
 		var n = cursor.startNodeIndex;
-		var c;
-		if(cursor.startPos == 0)
+		var c = el.childNodes[n].textContent[
+			cursor.startPos];
+
+		var openCount = 0; //init
+		
+		if(c != '{' && c != '}') 
 		{
-			//find character in previous node
-			do
+			if(cursor.startPos == 0)
 			{
-				--n;
-			} while(n >= 0 && el.childNodes[n].textContent.length);
+				//find character in previous node
+				do
+				{
+					--n;
+				} while(n >= 0 && el.childNodes[n].textContent.length);
+				
+				if(n < 0) return;
+				c = el.childNodes[n].textContent[
+					el.childNodes[n].textContent.length-1];
+			}
+			else
+				c = el.childNodes[n].textContent[
+					cursor.startPos-1];
 			
-			if(n < 0) return;
-			c = el.childNodes[n].textContent[
-				el.childNodes[n].textContent.length-1];
+			if(c == '{')
+				openCount = 1; //already counted the 1
 		}
-		else
-			c = el.childNodes[n].textContent[
-			cursor.startPos-1];
 		
 		Debug.log("character before cursor " + c);
 		
 		if(c != '{' && c != '}') return;
-		
-		var openCount;		
+			
 		var i;
 		var found = false;
 		var foundDoubleQuote = false;
@@ -6127,7 +6136,6 @@ CodeEditor.create = function() {
 			cursor.endNodeIndex = -1;
 			cursor.endPos = -1;
 			
-			openCount = 0; //init
 			
 			//if a comment is found, restore start of line
 			//	openCount value
@@ -6209,7 +6217,6 @@ CodeEditor.create = function() {
 		{
 			//go forwards looking for matching bracket		
 			
-			openCount = 1; //init
 			i = cursor.startPos;
 			for(n=cursor.startNodeIndex;n<el.childNodes.length; ++n)
 			{
