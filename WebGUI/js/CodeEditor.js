@@ -47,7 +47,7 @@ function htmlOpen(tag,attObj,innerHTML,doCloseTag)
 	for(var i=0;i<attKeys.length;++i)
 		str += " " + attKeys[i] + "='" +
 		attObj[attKeys[i]] + "' ";
-		str += ">";
+	str += ">";
 	if(innerHTML) str += innerHTML;
 	if(doCloseTag)
 		str += "</" + tag + ">";
@@ -197,6 +197,9 @@ CodeEditor.create = function() {
 	//	updateFileSnapshot(forPrimary,{text,time},ignoreTimeDelta)
 	//	startUpdateHandling(forPrimary)
 	//	stopUpdateHandling(event)
+	//	updateTimeoutHandler()
+	//	doubleClickHandler(forPrimary)
+		
 	
 	
 	//for display
@@ -395,29 +398,29 @@ CodeEditor.create = function() {
 		function createElements()
 		{
 			Debug.log("createElements");
-			
-			
+
+
 			//		<!-- body content populated by javascript -->
 			//		<div id='content'>
 			//			<div id='primaryPane'></div>	<!-- for primary view -->
 			//			<div id='secondaryPane'></div>	<!-- for horiz/vert split view -->	
 			//			<div id='controlsPane'></div>  	<!-- for view toggle and compile -->
 			//		</div>
-			
+
 			var cel,el,al,sl,str;
-			
+
 			cel = document.getElementById("content");
 			if(!cel)
 			{
 				cel = document.createElement("div");
 				cel.setAttribute("id","content");
 			}
-			
+
 			//clear all elements
 			cel.innerHTML = "";
-			
+
 			{ //content div		
-				
+
 				//================
 				//primaryPane and secondaryPane div
 				var forPrimary;
@@ -435,182 +438,182 @@ CodeEditor.create = function() {
 					} //end fill editor pane			
 					cel.appendChild(el);
 				}			
-				
+
 				//================
 				function localCreatePaneControls(forPrimary)
 				{
 					//add folder, and save buttons
 					//add directory nav and editor divs
-					
+
 					str = "";
-					
+
 					//local pane controls
 					str += htmlOpen("div",
-						{
-							"class":"controlsPane",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							//folder
-							str += htmlOpen("div",
+							{
+									"class":"controlsPane",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+						//folder
+						str += htmlOpen("div",
 								{
-									"id":"directoryNavToggle",
+										"id":"directoryNavToggle",
 										"class":"controlsButton",
 										"style":"float:left",
 										"onclick":"CodeEditor.editor.toggleDirectoryNav(" + forPrimary + ");",
 										"title": "Open a file... (Ctrl + D)",
 								},"" /*innerHTML*/, 0 /*doCloseTag*/);
-								{
-									str += htmlOpen("div",
-										{
-											"id":"directoryNavToggleTop",
-												
-										},"" /*innerHTML*/, 1 /*doCloseTag*/);
-										str += htmlOpen("div",
-											{
-											"id":"directoryNavToggleBottom",
-												
-											},"" /*innerHTML*/, 1 /*doCloseTag*/);
-								} //end directoryNavToggle
-								str += "</div>"; //close directoryNavToggle
-							
-							//save
+						{
 							str += htmlOpen("div",
+									{
+											"id":"directoryNavToggleTop",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
+											"id":"directoryNavToggleBottom",
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+						} //end directoryNavToggle
+						str += "</div>"; //close directoryNavToggle
+
+						//save
+						str += htmlOpen("div",
 								{
-									"id":"saveFile",
+										"id":"saveFile",
 										"class":"controlsButton",
 										"style":"float:left;",
 										"onclick":"CodeEditor.editor.saveFile(" + forPrimary + ");",
 										"title": "Click to Save the File (Ctrl + S)\nUndo changes (Ctrl + U)\nRedo changes (Shift + Ctrl + U)",
 								},"" /*innerHTML*/, 0 /*doCloseTag*/);
-								{
-									str += htmlOpen("div",
-										{
+						{
+							str += htmlOpen("div",
+									{
 											"id":"saveFileMain",
-												
-										},"" /*innerHTML*/, 1 /*doCloseTag*/);
-										str += htmlOpen("div",
-											{
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
 											"id":"saveFileMainTop",
-												
-											},"" /*innerHTML*/, 1 /*doCloseTag*/);
-											str += htmlOpen("div",
-												{
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+							str += htmlOpen("div",
+									{
 											"id":"saveFileMainBottom",
-												
-												},"" /*innerHTML*/, 1 /*doCloseTag*/);
-								} //end directoryNavToggle
-								str += "</div>"; //close saveFile
-							
-						} //end locals controlsPane
-						str += "</div>"; //close controlsPane
+
+									},"" /*innerHTML*/, 1 /*doCloseTag*/);
+						} //end directoryNavToggle
+						str += "</div>"; //close saveFile
+
+					} //end locals controlsPane
+					str += "</div>"; //close controlsPane
 					return str;
 				} //end localCreatePaneControls
-				
-				
-				
+
+
+
 				//================
 				//controlsPane div
 				el = document.createElement("div");
 				el.setAttribute("class","controlsPane");	
 				{
 					//add view toggle, incremental compile, and clean compile buttons
-					
+
 					str = "";
-					
+
 					//view toggle
 					str += htmlOpen("div",
-						{
-							"id":"viewToggle",
-								"class":"controlsButton",
-								"style":"float:right",
-								"onclick":"CodeEditor.editor.toggleView();",
-								"title":"Toggle Verical/Horizontal Split-view (Ctrl + W)",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							
-							str += htmlOpen("div",
+							{
+									"id":"viewToggle",
+									"class":"controlsButton",
+									"style":"float:right",
+									"onclick":"CodeEditor.editor.toggleView();",
+									"title":"Toggle Verical/Horizontal Split-view (Ctrl + W)",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+
+						str += htmlOpen("div",
 								{
-									"id":"viewToggleRight",
-										
+										"id":"viewToggleRight",
+
 								},"" /*innerHTML*/, 1 /*doCloseTag*/);
-								str += htmlOpen("div",
-									{
-									"id":"viewToggleLeftTop",
-										
-									},"" /*innerHTML*/, 1 /*doCloseTag*/);
-									str += htmlOpen("div",
-										{
-									"id":"viewToggleLeftBottom",
-										
-										},"" /*innerHTML*/, 1 /*doCloseTag*/);
-						}
-						str += "</div>"; //close viewToggle
-					
+						str += htmlOpen("div",
+								{
+										"id":"viewToggleLeftTop",
+
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+						str += htmlOpen("div",
+								{
+										"id":"viewToggleLeftBottom",
+
+								},"" /*innerHTML*/, 1 /*doCloseTag*/);
+					}
+					str += "</div>"; //close viewToggle
+
 					//incremental compile
 					str += htmlOpen("div",
-						{
-							"id":"incrementalBuild",
-								"class":"controlsButton",
-								"style":"float:right",
-								"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
-								"title":"Incremental Build... (Ctrl + B)",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							
-							str += htmlOpen("div",
+							{
+									"id":"incrementalBuild",
+									"class":"controlsButton",
+									"style":"float:right",
+									"onclick":"CodeEditor.editor.build(0 /*cleanBuild*/);",
+									"title":"Incremental Build... (Ctrl + B)",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+
+						str += htmlOpen("div",
 								{
-									"style":"margin:11px 0 0 13px;",
+										"style":"margin:11px 0 0 13px;",
 								},"b" /*innerHTML*/, 1 /*doCloseTag*/);
-						}
-						str += "</div>"; //close incrementalBuild
-					
+					}
+					str += "</div>"; //close incrementalBuild
+
 					//clean compile
 					str += htmlOpen("div",
-						{
-							"id":"cleanBuild",
-								"class":"controlsButton",
-								"style":"float:right",
-								"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
-								"title":"Clean Build... (Ctrl + N)",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							
-							str += htmlOpen("div",
+							{
+									"id":"cleanBuild",
+									"class":"controlsButton",
+									"style":"float:right",
+									"onclick":"CodeEditor.editor.build(1 /*cleanBuild*/);",
+									"title":"Clean Build... (Ctrl + N)",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+
+						str += htmlOpen("div",
 								{
-									"style":"margin:10px 0 0 13px;",
+										"style":"margin:10px 0 0 13px;",
 								},"z" /*innerHTML*/, 1 /*doCloseTag*/);
-						}
-						str += "</div>"; //close cleanBuild
-					
+					}
+					str += "</div>"; //close cleanBuild
+
 					//help
 					str += htmlOpen("div",
-						{
-							"id":"displayHelp",
-								"class":"controlsButton",
-								"style":"float:right",
-								"onclick":"CodeEditor.showTooltip(1 /*alwaysShow*/);",
-								"title":"Click for help, short-cuts, etc.",
-						},"" /*innerHTML*/, 0 /*doCloseTag*/);
-						{
-							
-							str += htmlOpen("div",
+							{
+									"id":"displayHelp",
+									"class":"controlsButton",
+									"style":"float:right",
+									"onclick":"CodeEditor.showTooltip(1 /*alwaysShow*/);",
+									"title":"Click for help, short-cuts, etc.",
+							},"" /*innerHTML*/, 0 /*doCloseTag*/);
+					{
+
+						str += htmlOpen("div",
 								{
-									"style":"margin:12px 0 0 13px;",
+										"style":"margin:12px 0 0 13px;",
 								},"?" /*innerHTML*/, 1 /*doCloseTag*/);
-						}
-						str += "</div>"; //close help
-					
+					}
+					str += "</div>"; //close help
+
 					el.innerHTML = str;	
 				}
 				cel.appendChild(el);
-				
+
 			} //end content div					
-			
+
 			document.body.appendChild(cel);
 			_eel = [document.getElementById("editableBox" + 0),
-				document.getElementById("editableBox" + 1)];
-			
-			
+					document.getElementById("editableBox" + 1)];
+
+
 			/////////////
 			//add event listeners
 			var box;
@@ -618,127 +621,140 @@ CodeEditor.create = function() {
 			{			
 				_eel[i].addEventListener("input",
 						function(e)
-					{
-						e.stopPropagation();
-						
-						var forPrimary = this.id[this.id.length-1]|0;
-						forPrimary = forPrimary?1:0;
-						
-						Debug.log("input forPrimary=" + forPrimary);
-						
-						_fileWasModified[forPrimary] = true;
-						CodeEditor.editor.updateLastSave(forPrimary);
-						
-						CodeEditor.editor.startUpdateHandling(forPrimary);
-						
-					}); //end addEventListener
-					
-					_eel[i].addEventListener("keydown",
-							function(e)
 						{
-						if(e.keyCode == 91 || e.keyCode == 93 ||
-								e.keyCode == 224) //apple command keys chrome left/right and firefox
-							_commandKeyDown = true;
-						
-						var forPrimary = this.id[this.id.length-1]|0;				
-						forPrimary = forPrimary?1:0;
-						
-						Debug.log("keydown handler for editableBox" + forPrimary);
-						CodeEditor.editor.keyDownHandler(e,forPrimary);
-						e.stopPropagation();
+					e.stopPropagation();
+
+					var forPrimary = this.id[this.id.length-1]|0;
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("input forPrimary=" + forPrimary);
+
+					_fileWasModified[forPrimary] = true;
+					CodeEditor.editor.updateLastSave(forPrimary);
+
+					CodeEditor.editor.startUpdateHandling(forPrimary);
+
 						}); //end addEventListener
-						
-						_eel[i].addEventListener("keyup",
-								function(e)
-							{
-						if(e.keyCode == 91 || e.keyCode == 93 ||
-								e.keyCode == 224) //apple command keys chrome left/right and firefox
-							_commandKeyDown = false;
-							}); //end addEventListener
-							
-							_eel[i].addEventListener("click",
-									function(e)
-								{
-						e.stopPropagation(); //to stop click body behavior
-								}); //end addEventListener
-								
-								_eel[i].addEventListener("mousedown",
-										function(e)
-									{			
-						CodeEditor.editor.stopUpdateHandling(e);
-						
-						var forPrimary = this.id[this.id.length-1]|0;
-						forPrimary = forPrimary?1:0;
-						
-						Debug.log("mousedown handler for editor" + forPrimary);
-						
-						_activePaneIsPrimary = forPrimary;				
-						
-									}); //end addEventListener
-									
-									_eel[i].addEventListener("mouseup",
-											function(e)
-										{
-						var forPrimary = this.id[this.id.length-1]|0;
-						forPrimary = forPrimary?1:0;
-						
-						Debug.log("mouseup handler for editor" + forPrimary);
-						
-						CodeEditor.editor.startUpdateHandling(forPrimary);
-						
-										}); //end addEventListener
-										
-										//add click handler to track active pane
-										box = document.getElementById("editorPane" + i);
-				box.addEventListener("click",
+
+				_eel[i].addEventListener("keydown",
 						function(e)
-					{
-						var forPrimary = this.id[this.id.length-1]|0;
-						forPrimary = forPrimary?1:0;
-						
-						Debug.log("click handler for pane" + forPrimary);
-						_activePaneIsPrimary = forPrimary;
-						
-						
-						CodeEditor.editor.showFindAndReplaceSelection(forPrimary);
-						
-						//focus on edit box				
-						var el = document.getElementById("textEditorBody" + forPrimary);
-						var scrollLeft = el.scrollLeft;
-						var scrollTop = el.scrollTop;
-						//var cursor = CodeEditor.editor.getCursor(el);
-						_eel[forPrimary].focus();
-						//CodeEditor.editor.setCursor(el,cursor);
-						el.scrollLeft = scrollLeft;
-						el.scrollTop = scrollTop;
-						
-						
-					}); //end addEventListener
-					
-					
-					
-				} //end handler creation
-				box = document.body;
-			box.addEventListener("keydown",
-					function(e)
-				{
+						{
 					if(e.keyCode == 91 || e.keyCode == 93 ||
 							e.keyCode == 224) //apple command keys chrome left/right and firefox
 						_commandKeyDown = true;
-					
-					var forPrimary = _activePaneIsPrimary; //take last active pane
-					Debug.log("keydown handler for body" + forPrimary);
-					CodeEditor.editor.keyDownHandler(e,forPrimary,true /*shortcutsOnly*/);
-					//e.stopPropagation();
-				}); //end addEventListener
-				box.addEventListener("keyup",
+
+					var forPrimary = this.id[this.id.length-1]|0;				
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("keydown handler for editableBox" + forPrimary);
+					CodeEditor.editor.keyDownHandler(e,forPrimary);
+					e.stopPropagation();
+						}); //end addEventListener
+
+				_eel[i].addEventListener("keyup",
 						function(e)
-					{
+						{
 					if(e.keyCode == 91 || e.keyCode == 93 ||
 							e.keyCode == 224) //apple command keys chrome left/right and firefox
 						_commandKeyDown = false;
-					}); //end addEventListener
+						}); //end addEventListener
+
+				_eel[i].addEventListener("click",
+						function(e)
+						{
+					e.stopPropagation(); //to stop click body behavior
+						}); //end addEventListener
+				
+				_eel[i].addEventListener("dblclick",
+						function(e)
+						{
+
+					var forPrimary = this.id[this.id.length-1]|0;
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("dblclick handler for editor" + forPrimary);
+					e.stopPropagation(); //to stop click body behavior
 					
+					CodeEditor.editor.doubleClickHandler(forPrimary);
+						}); //end addEventListener
+
+				_eel[i].addEventListener("mousedown",
+						function(e)
+						{			
+					CodeEditor.editor.stopUpdateHandling(e);
+
+					var forPrimary = this.id[this.id.length-1]|0;
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("mousedown handler for editor" + forPrimary);
+
+					_activePaneIsPrimary = forPrimary;				
+
+						}); //end addEventListener
+
+				_eel[i].addEventListener("mouseup",
+						function(e)
+						{
+					var forPrimary = this.id[this.id.length-1]|0;
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("mouseup handler for editor" + forPrimary);
+
+					CodeEditor.editor.startUpdateHandling(forPrimary);
+
+						}); //end addEventListener
+
+				//add click handler to track active pane
+				box = document.getElementById("editorPane" + i);
+				box.addEventListener("click",
+						function(e)
+						{
+					var forPrimary = this.id[this.id.length-1]|0;
+					forPrimary = forPrimary?1:0;
+
+					Debug.log("click handler for pane" + forPrimary);
+					_activePaneIsPrimary = forPrimary;
+
+
+					CodeEditor.editor.showFindAndReplaceSelection(forPrimary);
+
+					//focus on edit box				
+					var el = document.getElementById("textEditorBody" + forPrimary);
+					var scrollLeft = el.scrollLeft;
+					var scrollTop = el.scrollTop;
+					//var cursor = CodeEditor.editor.getCursor(el);
+					_eel[forPrimary].focus();
+					//CodeEditor.editor.setCursor(el,cursor);
+					el.scrollLeft = scrollLeft;
+					el.scrollTop = scrollTop;
+
+
+						}); //end addEventListener
+
+
+
+			} //end handler creation
+			box = document.body;
+			box.addEventListener("keydown",
+					function(e)
+					{
+				if(e.keyCode == 91 || e.keyCode == 93 ||
+						e.keyCode == 224) //apple command keys chrome left/right and firefox
+					_commandKeyDown = true;
+
+				var forPrimary = _activePaneIsPrimary; //take last active pane
+				Debug.log("keydown handler for body" + forPrimary);
+				CodeEditor.editor.keyDownHandler(e,forPrimary,true /*shortcutsOnly*/);
+				//e.stopPropagation();
+					}); //end addEventListener
+			box.addEventListener("keyup",
+					function(e)
+					{
+				if(e.keyCode == 91 || e.keyCode == 93 ||
+						e.keyCode == 224) //apple command keys chrome left/right and firefox
+					_commandKeyDown = false;
+					}); //end addEventListener
+
 		} //end createElements()
 		
 		//=====================================================================================
@@ -1706,7 +1722,7 @@ CodeEditor.create = function() {
 			if(line > _numberOfLines[forPrimary])
 				line = _numberOfLines[forPrimary];
 			console.log("Goto line number ",line,selectionCursor);
-			//window.location.href = "#" + forPrimary + "L" + line;
+			window.location.href = "#" + forPrimary + "L" + line;
 			
 			//then set cursor, so moving the cursor does not lose position
 			// steps:
@@ -2965,30 +2981,47 @@ CodeEditor.create = function() {
 	//autoIndent ~~
 	this.autoIndent = function(forPrimary, cursor)
 	{
+		if(!cursor || cursor.startNodeIndex === undefined)
+		{
+			Debug.log("Invalid text selection for auto-indent. Please select text in the text editor.",
+					Debug.HIGH_PRIORITY);
+			return;
+		}
 		forPrimary = forPrimary?1:0;	
 		
-		Debug.log("autoIndent " + forPrimary);
+		Debug.log("autoIndent " + forPrimary);		
+
+		DesktopContent.showLoading();
+		window.setTimeout(function()
+				{
+			localDoIt();
+			DesktopContent.hideLoading();
+				},100);
 		
-		//steps:
-		//	get text content for selection back to start of previous new line
-		//	tab it properly
-		//	replace selected lines with modified text
-		
-		
-		
-		var el = _eel[forPrimary];
-		var node,val;
-		var found = false;	
-		var n,i;
-		
-		//reverse-find new line
-		for(n=cursor.startNodeIndex;n>=0; --n)
+		/////////////////
+		function localDoIt()
 		{
-			node = el.childNodes[n];
-			val = node.textContent;
-			
-		for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
-				val.length-1); i>=0; --i)
+
+			//steps:
+			//	get text content for selection back to start of previous new line
+			//	tab it properly
+			//	replace selected lines with modified text
+
+
+
+			var el = _eel[forPrimary];
+			var node,val;
+			var found = false;	
+			var n,i;
+
+			//reverse-find new line
+			for(n=cursor.startNodeIndex;n>=0; --n)
+			{
+				node = el.childNodes[n];
+				val = node.textContent;
+
+				for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+						val.length-1); i>=0; --i)
 				{
 					if(val[i] == '\n')
 					{
@@ -2998,257 +3031,325 @@ CodeEditor.create = function() {
 					}
 				}
 				if(found) break;
-				} //end reverse find new line loop
-				
-				//assume at new line point (or start of file)
-				console.log("at leading newline - n",n,"i",i);		
-		
-		if(n < 0) n = 0;
-		if(i < 0) i = 0;
-		else ++i; //skip past new line
-		
-		cursor.startNodeIndex = n;
-		cursor.startPos = i;
-		
-		//preText and postText are to be left unchanged
-		//	text is to be auto-indented
-		var preText = "";
-		var text = "";
-		var postText = "";
-		
-		for(n=0; n<el.childNodes.length; ++n)
-		{
-			val = el.childNodes[n].textContent;
-			if(n < cursor.startNodeIndex)
-				preText += val;
-			else if(n == cursor.startNodeIndex)
+			} //end reverse find new line loop
+
+			//assume at new line point (or start of file)
+			console.log("at leading newline - n",n,"i",i);		
+
+			if(n < 0) n = 0;
+			if(i < 0) i = 0;
+			else ++i; //skip past new line
+
+			cursor.startNodeIndex = n;
+			cursor.startPos = i;
+
+			//preText and postText are to be left unchanged
+			//	text is to be auto-indented
+			var preText = "";
+			var text = "";
+			var postText = "";
+
+			for(n=0; n<el.childNodes.length; ++n)
 			{
-				preText += val.substr(0,cursor.startPos);
-				
-				if(n < cursor.endNodeIndex)
-					text += val.substr(cursor.startPos);
-				else //n == cursor.endNodeIndex
+				val = el.childNodes[n].textContent;
+				if(n < cursor.startNodeIndex)
+					preText += val;
+				else if(n == cursor.startNodeIndex)
 				{
-					text += val.substr(cursor.startPos, 
-							cursor.endPos-cursor.startPos);
-					postText += val.substr(cursor.endPos);
+					preText += val.substr(0,cursor.startPos);
+
+					if(n < cursor.endNodeIndex)
+						text += val.substr(cursor.startPos);
+					else //n == cursor.endNodeIndex
+					{
+						text += val.substr(cursor.startPos, 
+								cursor.endPos-cursor.startPos);
+						postText += val.substr(cursor.endPos);
+					}
 				}
-			}
-			else if(n < cursor.endNodeIndex)
-				text += val;
-			else if(n == cursor.endNodeIndex)
-			{
-				text += val.substr(0,cursor.endPos);
-				postText += val.substr(cursor.endPos);				
-			}
-			else // n > cursor.endNodeIndex
-				postText += val;
-		}
-		
-		//Debug.log("preText " + preText);
-		//Debug.log("postText " + postText);
-		//Debug.log("text " + text);
-		
-		var fileExtension = _fileExtension[forPrimary];
-		if(fileExtension == "cc" || 
-				fileExtension == "h" ||
-				fileExtension == "js")
-		{
-			// find leading whitespace count
-			var x = 0;
-			for(i=0;i<text.length;++i)
-				if(text[i] == ' ')
-				++x;
-			else if(text[i] == '\t')
-				x += _TAB_SIZE - (x+_TAB_SIZE)%_TAB_SIZE;
-			else
-				break; //found white space
-			Debug.log("Whitespace size =" + x + " tabs=" + ((x/_TAB_SIZE)|0));
-			
-			//have starting point in units of number of tabs
-			var tabStr = "";
-			for(n=0;n<((x/_TAB_SIZE)|0);++n)
-				tabStr += '\t';
-			
-			//continue through text string, setting leading whitespace as tabStr
-			newText = "";
-			i = -1; //start at beginning
-			var lastChar,firstChar;	
-			var inCmdTabStr = "";
-			var nextInCmdTabStr = "";			
-			var isCmdTabStr = "";
-			var nextIsCmdTabStr = "";
-			var foundComment;
-			var colonCommand = false;
-			var foundDoubleQuote,foundSingleQuote;
-			var tradeInCmdStack = [];
-			var tradeIsCmdStack = [];
-			
-			do
-			{
-				//start of each loop text[i] is \n
-				//find next newline and last char
-				
-				lastChar = '';
-				firstChar = '';
-				
-				foundComment = false;
-				foundDoubleQuote = false;
-				foundSingleQuote = false;
-				
-				for(n=i+1;n<text.length;++n)
+				else if(n < cursor.endNodeIndex)
+					text += val;
+				else if(n == cursor.endNodeIndex)
 				{
-					if(text[n] == '\n')
-						break;
-					
-					if(foundComment) 
-						continue; //do not proceed with command tabbing if in comment
-					
-					if(text[n] == '"')
+					text += val.substr(0,cursor.endPos);
+					postText += val.substr(cursor.endPos);				
+				}
+				else // n > cursor.endNodeIndex
+					postText += val;
+			}
+
+			//Debug.log("preText " + preText);
+			//Debug.log("postText " + postText);
+			//Debug.log("text " + text);
+
+			var fileExtension = _fileExtension[forPrimary];
+			if(fileExtension == "cc" || 
+					fileExtension == "h" ||
+					fileExtension == "js")
+			{
+				// find leading whitespace count
+				var x = 0;
+				for(i=0;i<text.length;++i)
+					if(text[i] == ' ')
+						++x;
+					else if(text[i] == '\t')
+						x += _TAB_SIZE - (x+_TAB_SIZE)%_TAB_SIZE;
+					else
+						break; //found white space
+				Debug.log("Whitespace size =" + x + " tabs=" + ((x/_TAB_SIZE)|0));
+
+				//have starting point in units of number of tabs
+				var tabStr = "";
+				for(n=0;n<((x/_TAB_SIZE)|0);++n)
+					tabStr += '\t';
+
+				//continue through text string, setting leading whitespace as tabStr
+				newText = "";
+				i = -1; //start at beginning
+				var lastChar,firstChar;	
+				var prevLastChar,prevFirstChar;	
+				
+				var inCmdTabStr = "";
+				var nextInCmdTabStr = "";			
+				var isCmdTabStr = "";
+				var nextIsCmdTabStr = "";
+				
+				var foundComment;
+				var firstColonCommand = false;
+				var lastColonCommand = false;
+				var foundDoubleQuote,foundSingleQuote;
+				var tradeInCmdStack = [];
+				var tradeIsCmdStack = [];
+
+				do
+				{
+					//start of each loop text[i] is \n
+					//find next newline and last char
+
+					lastChar = '';
+					firstChar = '';
+
+					foundComment = false;
+					foundDoubleQuote = false;
+					foundSingleQuote = false;
+
+					for(n=i+1;n<text.length;++n)
+					{
+						if(text[n] == '\n')
+							break;
+
+						if(foundComment) 
+							continue; //do not proceed with command tabbing if in comment
+
+						if(!foundSingleQuote && text[n] == '"')
 							foundDoubleQuote = !foundDoubleQuote;
-					else if(text[n] == "'")
+						else if(!foundDoubleQuote && text[n] == "'")
 							foundSingleQuote = !foundSingleQuote;
-					else if(text[n] == '/' && n+1 < text.length &&
-							text[n+1] == '/')
+						else if(text[n] == '/' && n+1 < text.length &&
+								text[n+1] == '/')
+						{
+							foundComment = true;
+							continue; //do not proceed with command tabbing if in comment
+						}
+
+						if(foundDoubleQuote || foundSingleQuote)
+							continue; //skip if in quote
+
+						if(text[n] != ' ' && text[n] != '\t')
+						{
+							lastChar = text[n];
+							if(firstChar == '')
+								firstChar = text[n];
+						}
+
+
+						if(text[n] == '(') //add in-command tab
+							inCmdTabStr += '\t';
+						else if(text[n] == ')') //remove in-command tab
+							inCmdTabStr = inCmdTabStr.substr(0, inCmdTabStr.length-1);
+						else if(inCmdTabStr.length == 0 &&
+								text[n] == ';') //clear all in-command tabs
+						{
+							inCmdTabStr = "";
+							isCmdTabStr = "";
+							firstColonCommand = false;
+							lastColonCommand = false;
+						}
+
+					} //end main loop looking for next newline
+
+					//handle tabStr before putting together string
+					if(firstChar == '}')
 					{
-						foundComment = true;
-						continue; //do not proceed with command tabbing if in comment
+						nextIsCmdTabStr = ""; 
+
+						//trade back if closing } at traded tab point
+						if(tradeInCmdStack.length && 
+								tradeInCmdStack[tradeInCmdStack.length-1][0] == 
+										tabStr.length)
+						{
+							//remove a tab
+							inCmdTabStr = tradeInCmdStack.pop()[1];
+							nextInCmdTabStr = inCmdTabStr;
+							isCmdTabStr = tradeIsCmdStack.pop();
+							tabStr = tabStr.substr(0,tabStr.length-1);
+						}
+
+						//remove a tab
+						isCmdTabStr = "";
+						firstColonCommand = false;
+						//lastColonCommand = false;
+						tabStr = tabStr.substr(0,tabStr.length-1);
 					}
-					
-					if(foundDoubleQuote || foundSingleQuote)
-						continue; //skip if in quote
-					
-					if(text[n] != ' ' && text[n] != '\t')
+					else if(lastChar == ':' && //ends with :
+							(firstChar == 'p' || 	//and start with public/private/protected
+							firstChar == 'd' ||  	//or default
+							firstChar == 'c'))		//or case	
 					{
-						lastChar = text[n];
-						if(firstChar == '')
-							firstChar = text[n];
+						nextIsCmdTabStr = ""; 
+						
+						//remove a tab
+						isCmdTabStr = "";
+						firstColonCommand = false;
+						lastColonCommand = false;
+						tabStr = tabStr.substr(0,tabStr.length-1);
 					}
-					
-					
-					if(text[n] == '(') //add in-command tab
-						inCmdTabStr += '\t';
-					else if(text[n] == ')') //remove in-command tab
-						inCmdTabStr = inCmdTabStr.substr(0, inCmdTabStr.length-1);
-					else if(text[n] == ';') //clear all in-command tabs
+					else if(firstChar == ':') //starts with : 
+					{
+						//remove cmd tab
+						nextIsCmdTabStr = "";
+						isCmdTabStr = "";
+						firstColonCommand = true;
+					}
+					else if(firstChar == '#' || //starts with #, i.e. pragma 
+							firstChar == '{') 	//starts with {
+					{
+						//remove a tab, if no open (), things were lined up
+						if(lastColonCommand)
+							tabStr = tabStr.substr(0,tabStr.length-1);
+						
+						//only remove command tab, if we think we are not in a command
+						//	ending in comma previously, seems like an array
+						if(nextInCmdTabStr.length != 0 ||
+								nextIsCmdTabStr.length != 1 ||
+								prevLastChar != ',')
+						{
+							//remove cmd tab
+							nextIsCmdTabStr = "";
+							isCmdTabStr = "";
+						}
+					}
+					else if(!firstColonCommand && 
+							!lastColonCommand &&
+							lastChar != '' && 
+							lastChar != ';' &&
+							firstChar != '"' && 
+							firstChar != "'") //do one and only tab for a command content that should stack up
+						isCmdTabStr = '\t';
+					else if(lastColonCommand && 
+							prevLastChar == ',' && 
+							inCmdTabStr.length == 0)
+					{
+						//remove a tab for json style definition
+						lastColonCommand = false;
+						tabStr = tabStr.substr(0,tabStr.length-1);
+						isCmdTabStr = "\t";
+						nextIsCmdTabStr = "\t";
+					}
+					else
+						firstColonCommand = false;
+
+					//if command ended
+					if(lastChar == ';') //clear all in-command tabs
 					{
 						inCmdTabStr = "";
 						isCmdTabStr = "";
-						colonCommand = false;
+						firstColonCommand = false;
+						lastColonCommand = false;
 					}
-					
-				} //end main loop looking for next newline
-				
-				//handle tabStr before putting together string
-				if((lastChar == ':' && firstChar == 'p') ||  //ends with : }, and start with public/private/protected					
-						firstChar == '}')
-				{
-					
-					nextIsCmdTabStr = ""; 
-					
-					//trade back if closing } at traded tab point
-					if(tradeInCmdStack.length && 
-							tradeInCmdStack[tradeInCmdStack.length-1][0] == 
-							tabStr.length)
-					{
-						//remove a tab
-						inCmdTabStr = tradeInCmdStack.pop()[1];
-						nextInCmdTabStr = inCmdTabStr;
-						isCmdTabStr = tradeIsCmdStack.pop();
-						tabStr = tabStr.substr(0,tabStr.length-1);
-					}
-					
-					//remove a tab
-					isCmdTabStr = "";
-					colonCommand = false;
-					tabStr = tabStr.substr(0,tabStr.length-1);
-				}
-				else if(firstChar == ':') //starts with : 
-				{
-					//remove cmd tab
-					nextIsCmdTabStr = "";
-					isCmdTabStr = "";
-					colonCommand = true;
-				}
-				else if(firstChar == '#' || //starts with #, i.e. pragma 
-						firstChar == '{') 	//starts with {
-				{
-					//remove cmd tab
-					nextIsCmdTabStr = "";
-					isCmdTabStr = "";
-				}
-				else if(!colonCommand && 
-						lastChar != '' && 
-						lastChar != ';') //do one and only tab for a command content that should stack up
-					isCmdTabStr = '\t';
-				
-				Debug.log("lastChar = " + lastChar + 
-						" ... tabStr = " + tabStr.length + 
-						" ... nextTab = " + 
-						inCmdTabStr.length + 
-						" + " + 
-						isCmdTabStr.length + 
-						" ... nowTab = " + 
-						nextInCmdTabStr.length + 
-						" + " + 
-						nextIsCmdTabStr.length + 
-						" stack=" + 
-						tradeInCmdStack.length);
-				
-				if(i >= 0)
-					newText += text[i];					
-				newText += tabStr + nextInCmdTabStr + nextIsCmdTabStr;
-				//add up to next newline
-				newText += text.substr(i+1,n-(i+1)).trimLeft();
-				
-				
-				//handle tabStr after putting together string				
-				if(lastChar == '{' ||					 
-						lastChar == ':')	//add a tab
-				{
-					tabStr += '\t';
-					isCmdTabStr = "";
-					
-					if(inCmdTabStr.length) //if in command then trade to tabStr
+
+					Debug.log("lastChar = " + lastChar + 
+							" ... tabStr = " + tabStr.length + 
+							" ... nextTab = " + 
+							inCmdTabStr.length + 
+							" + " + 
+							isCmdTabStr.length + 
+							" ... nowTab = " + 
+							nextInCmdTabStr.length + 
+							" + " + 
+							nextIsCmdTabStr.length + 
+							" stack=" + 
+							tradeInCmdStack.length);
+
+					if(i >= 0)
+						newText += text[i];					
+					newText += tabStr + nextInCmdTabStr + nextIsCmdTabStr;
+					//add up to next newline
+					newText += text.substr(i+1,n-(i+1)).trimLeft();
+
+
+					//handle tabStr after putting together string				
+					if(lastChar == '{')	//add a tab
 					{
 						tabStr += '\t';
-						
-						tradeInCmdStack.push([tabStr.length,inCmdTabStr]); //push to stack
-						tradeIsCmdStack.push(isCmdTabStr); //push to stack
-						
-						inCmdTabStr = ""; //clear
-						isCmdTabStr = ""; //clear
+						isCmdTabStr = "";
+
+						if(inCmdTabStr.length) //if in command then trade to tabStr
+						{
+							tabStr += '\t';
+
+							tradeInCmdStack.push([tabStr.length,inCmdTabStr]); //push to stack
+							tradeIsCmdStack.push(isCmdTabStr); //push to stack
+
+							inCmdTabStr = ""; //clear
+							isCmdTabStr = ""; //clear
+						}
 					}
-				}
+					else if(lastChar == ':')
+					{
+						if(inCmdTabStr.length == 0)
+							tabStr += '\t';
+						isCmdTabStr = "";	
+						lastColonCommand = true;
+					}
+//					else
+//						lastColonCommand = false;
+
+					nextInCmdTabStr = inCmdTabStr;
+					nextIsCmdTabStr = isCmdTabStr;
+					
+					if(lastChar != '')
+						prevLastChar = lastChar;
+					if(firstChar != '')
+						prevFirstChar = firstChar;
+
+					i = n;
+
+				} while(i+1<text.length);			
+
+				//if last character is new line, then add it
+				//  otherwise, all characters before next new line were added already
+				if(text[i] == '\n') newText += '\n';
 				
-				//if(inCmdTabStr.length)
-				nextInCmdTabStr = inCmdTabStr;
-				nextIsCmdTabStr = isCmdTabStr;
-				//else 
-				//	nextInCmdTabStr = isCmdTabStr;
-				
-				i = n;
-				
-			} while(i+1<text.length);			
-			
-			//Debug.log("Done newText\n" + newText);
-		}
-		else
-		{
-			Debug.log("Unknown operation to auto-indent file with extension " + 
-					fileExtension,Debug.HIGH_PRIORITY);
-			return;
-		}
-		
-		//place text back
-		el.textContent = preText + newText + postText;		
-		
-		_fileWasModified[forPrimary] = true;
-		
-		CodeEditor.editor.updateDecorations(forPrimary,
-				false /*forceDisplayComplete*/, 
-				true /*forceDecorations*/);
-		
+				//Debug.log("Done newText\n" + newText);
+			}
+			else
+			{
+				Debug.log("Unknown operation to auto-indent file with extension " + 
+						fileExtension,Debug.HIGH_PRIORITY);
+				return;
+			}
+
+			//place text back
+			el.textContent = preText + newText + postText;		
+
+			_fileWasModified[forPrimary] = true;
+
+			CodeEditor.editor.updateDecorations(forPrimary,
+					false /*forceDisplayComplete*/, 
+					true /*forceDecorations*/);
+
+		} //end localDoIt()
 	} //end autoIndent
 	
 	//=====================================================================================
@@ -3901,7 +4002,7 @@ CodeEditor.create = function() {
 				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 				
 				_fileWasModified[forPrimary] = true;
-			} //end localInsertNewLine()
+			} //end localInsertCharacter()
 			
 			if(keyCode == 13) // ENTER -- should trigger updateDecorations immediately
 			{
@@ -5940,6 +6041,170 @@ CodeEditor.create = function() {
 			_updateHandlerTargetPane[1] = false;
 		}
 	} //end updateTimeoutHandler()
+	
+
+	//=====================================================================================
+	//doubleClickHandler ~~
+	this.doubleClickHandler = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		Debug.log("doubleClickHandler forPrimary=" + forPrimary);
+		
+		//get character before cursor
+		//	if { or }
+		//	then highlight entire section
+		
+		var el = _eel[forPrimary];
+		var cursor = CodeEditor.editor.getCursor(el);
+		
+		if(!cursor || cursor.startNodeIndex === undefined)
+			return;
+		
+		var n = cursor.startNodeIndex;
+		var c;
+		if(cursor.startPos == 0)
+		{
+			//find character in previous node
+			do
+			{
+				--n;
+			} while(n >= 0 && el.childNodes[n].textContent.length);
+			
+			if(n < 0) return;
+			c = el.childNodes[n].textContent[
+					 el.childNodes[n].textContent.length-1];
+		}
+		else
+			c = el.childNodes[n].textContent[
+				 cursor.startPos-1];
+		
+		Debug.log("character before cursor " + c);
+		
+		if(c != '{' && c != '}') return;
+		
+		var openCount;		
+		var i;
+		var found = false;
+		var foundDoubleQuote = false;
+		var foundSingleQuote = false;
+		var foundComment = false;
+		
+		if(c == '}')
+		{
+			//go backwards looking for matching bracket		
+			cursor.endNodeIndex = -1;
+			cursor.endPos = -1;
+			
+			openCount = 0; //init
+			
+			for(n;n>=0; --n)
+			{
+				node = el.childNodes[n];
+				val = node.textContent;
+				for(i=(n==cursor.startNodeIndex?cursor.startPos-1:
+						val.length-1); i>=0; --i)
+				{
+					if(cursor.endNodeIndex == -1) //first time take first position
+					{	
+						cursor.endNodeIndex = n;
+						cursor.endPos = i;						
+					}
+					
+					if(!foundSingleQuote && val[n] == '"')
+						foundDoubleQuote = !foundDoubleQuote;
+					else if(!foundDoubleQuote && val[n] == "'")
+						foundSingleQuote = !foundSingleQuote;
+
+					if(foundDoubleQuote || foundSingleQuote)
+						continue; //skip if in quote
+					
+					if(val[i] == '}')
+						++openCount;
+					else if(val[i] == '{')
+					{
+						--openCount;
+						if(openCount <= 0)
+						{
+							found = true;
+							Debug.log("found open count match ni " + n + " " + i);
+							break;
+						}
+					}
+					//take second to last position as start
+					cursor.startNodeIndex = n;
+					cursor.startPos = i;
+				}
+				
+				if(found) break;
+			} // end matching bracket search loop
+			
+		} //done handling } case
+		else // c == '{'
+		{
+			//go forwards looking for matching bracket		
+			
+			openCount = 1; //init
+			i = cursor.startPos;
+			for(n=cursor.startNodeIndex;n<el.childNodes.length; ++n)
+			{
+				node = el.childNodes[n];
+				val = node.textContent;
+				
+				for(; i<val.length; ++i)
+				{	
+					if(val[i] == '\n')
+					{
+						foundSingleQuote = false;
+						foundDoubleQuote = false;
+						foundComment = false;
+					}
+					
+					if(foundComment)
+						continue;					
+					
+					if(!foundSingleQuote && val[i] == '"')
+						foundDoubleQuote = !foundDoubleQuote;
+					else if(!foundDoubleQuote && val[i] == "'")
+						foundSingleQuote = !foundSingleQuote;
+					else if(val[i]== '/' && i+1 < val.length &&
+							val[i+1] == '/')
+					{
+						foundComment = true;
+						continue; //do not proceed with command tabbing if in comment
+					}
+					
+					if(foundDoubleQuote || foundSingleQuote)
+						continue; //skip if in quote
+					
+					if(val[i] == '{')
+						++openCount;
+					else if(val[i] == '}')
+					{
+						--openCount;
+						if(openCount <= 0)
+						{
+							found = true;
+							Debug.log("found open count match ni " + n + " " + i);
+							break;
+						}
+					}
+					//take second to last position as end
+					cursor.endNodeIndex = n;
+					cursor.endPos = i;
+				}
+
+				if(found) break;
+				
+				i = 0; //reset
+				
+			} // end matching bracket search loop
+		} //done handling { case
+				
+		//set cursor selection
+		CodeEditor.editor.setCursor(el,cursor);
+				
+	} //end doubleClickHandler()
 	
 } //end create() CodeEditor instance
 
