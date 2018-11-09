@@ -1263,7 +1263,29 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 				DesktopContent.clearPopUpVerification(cancelFunc);				
 			}
 				}; //end keydown handler
-	}
+	}	
+	else //focus on button, since no text
+		el.getElementsByTagName('input')[0].focus(); 
+	
+	//add key handler to body too for enter & esc
+	el.onkeydown = 
+			function(event) 
+			{
+		if(event.keyCode == 13) // ENTER
+		{	
+			Debug.log("Accepting enter key");
+			event.preventDefault();
+			event.stopPropagation(); 
+			DesktopContent.clearPopUpVerification(func);
+		}
+		else if(event.keyCode == 27) // ESC
+		{	
+			Debug.log("Accepting escape key");
+			event.preventDefault();
+			event.stopPropagation(); 
+			DesktopContent.clearPopUpVerification(cancelFunc);				
+		}
+			}; //end keydown handler
 
 	//determine position
 	var w = el.offsetWidth; 

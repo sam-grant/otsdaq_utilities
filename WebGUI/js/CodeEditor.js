@@ -113,6 +113,9 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
 			"Ctrl + 1 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
 			
+			"<tr><td style='white-space: nowrap; padding:5px;'> " +
+			"Ctrl + 0 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Reload Current File from Server</td></tr>" +
+						
 			"</table></INDENT>\n" +
 			
 			
@@ -4360,6 +4363,15 @@ CodeEditor.create = function() {
 			else if(keyCode == 78) 	// N for clean build
 			{
 				CodeEditor.editor.build(true /*clean*/);
+				e.preventDefault();
+				return;
+			}
+			else if(keyCode == 48) 	// 0 for refresh file
+			{
+				CodeEditor.editor.openFile(forPrimary,
+						_filePath[forPrimary],
+						_fileExtension[forPrimary],
+						true /*doConfirm*/);
 				e.preventDefault();
 				return;
 			}
