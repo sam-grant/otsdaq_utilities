@@ -188,7 +188,8 @@
 		}
 		.textEditor * {
 			color:					black;
-			font-family:			monospace;			
+			font-family:			monospace;	
+			caret-color: 			black;
 		}
 		.textEditorHeader {
 			position:				absolute;

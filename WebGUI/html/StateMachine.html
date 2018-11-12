@@ -252,7 +252,7 @@
 
 			var _CANVAS_COLOR = "rgb(5,10,50)";
 			var _MARGIN = 0;
-            var _MIN_WIN_SZ_FOR_BIG_STATES = 600;  //canvas must be at least this size for big state drawing
+            var _MIN_WIN_SZ_FOR_BIG_STATES = 540;  //canvas must be at least this size for big state drawing
             var _MIN_WIN_SZ_FOR_ALT_BIG_STATES = 750;  //canvas must be at least this size for big state drawing
             var _MIN_WIN_SZ = 350;  //canvas is forced to at least this size
             var _SM_MODE_STATE_SZ = 40;
@@ -1386,7 +1386,7 @@
 				
 				if(_currState < 0) return; //do nothing if current state not defined
 				
-			    //Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
+			    Debug.log("Physics redrawPhysics to " + window.innerWidth + " - " + window.innerHeight);
 			    
 			    if(window.innerWidth == 0) 
 			    {
