@@ -70,21 +70,25 @@ if (!Element.prototype.scrollIntoViewIfNeeded) {
 		centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
 
 		var parent = this.parentNode,
+				tdParent = parent.parentNode,
+				editorParent = parent.parentNode.parentNode.parentNode.parentNode.parentNode, //"textEditorBody" which limits view
 				parentComputedStyle = window.getComputedStyle(parent, null),
 				parentBorderTopWidth = parseInt(parentComputedStyle.getPropertyValue('border-top-width')),
 				parentBorderLeftWidth = parseInt(parentComputedStyle.getPropertyValue('border-left-width')),
-				overTop = this.offsetTop - parent.offsetTop < parent.scrollTop,
-				overBottom = (this.offsetTop - parent.offsetTop + this.clientHeight - parentBorderTopWidth) > (parent.scrollTop + parent.clientHeight),
-				overLeft = this.offsetLeft - parent.offsetLeft < parent.scrollLeft,
-				overRight = (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + parent.clientWidth),
+				overTop = this.offsetTop - tdParent.offsetTop < editorParent.scrollTop,//this.offsetTop - parent.offsetTop < parent.scrollTop,
+				overBottom = (this.offsetTop - tdParent.offsetTop + this.clientHeight - parentBorderTopWidth) > (editorParent.scrollTop + editorParent.clientHeight), //(this.offsetTop - parent.offsetTop + this.clientHeight - parentBorderTopWidth) > (parent.scrollTop + parent.clientHeight),
+				overLeft = this.offsetLeft - tdParent.offsetLeft < editorParent.scrollLeft, //this.offsetLeft - parent.offsetLeft < parent.scrollLeft,
+				overRight = (this.offsetLeft + tdParent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (editorParent.scrollLeft + editorParent.clientWidth), // (parent.scrollLeft + parent.clientWidth),// (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + editorParent.clientWidth - tdParent.offsetLeft), // (parent.scrollLeft + parent.clientWidth),
 				alignWithTop = overTop && !overBottom;
 
 		if ((overTop || overBottom) && centerIfNeeded) {
-			parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
+			editorParent.scrollTop = this.offsetTop - tdParent.offsetTop - editorParent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
+			//parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
 		}
 
 		if ((overLeft || overRight) && centerIfNeeded) {
-			parent.scrollLeft = this.offsetLeft - parent.offsetLeft - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
+			editorParent.scrollLeft = this.offsetLeft + tdParent.offsetLeft - editorParent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2; 
+			//parent.scrollLeft = this.offsetLeft - parent.offsetLeft  - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
 		}
 
 		if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) {
@@ -2045,18 +2049,7 @@ CodeEditor.create = function() {
 						
 						el.removeChild(newNode);
 						el.removeChild(newNode1);
-						secondEl.textContent = val;
-						
-						//fix cursor to point to middle single character node
-						//						cursor.endPos = 0;
-						//						secondEl = newNode;
-						//						
-						//						//maintain page up/down start position
-						//						if(_startPageUpDownNodeIndex == cursor.endNodeIndex)
-						//						{
-						//							_startPageUpDownNodeIndex += 2;
-						//							_startPageUpDownPos = 0;
-						//						}
+						secondEl.textContent = val;						
 					}
 					catch(e)
 					{
@@ -2071,19 +2064,13 @@ CodeEditor.create = function() {
 						}
 					}
 					
-					
+
+					Debug.log("inserting scroll 1st element");
 					try
-					{						
-						if(!scrollEndIntoView)
-							firstEl.scrollIntoViewIfNeeded();
-						else
-							Debug.log("scrollEndIntoView only");
-					}
-					catch(e)
-					{
-						Debug.log("inserting scroll 1st element");
-						
-						try
+					{				
+
+
+						if(!scrollEndIntoView)							
 						{
 							//add an element to scroll into view and then remove it
 							firstEl = el.childNodes[cursor.startNodeIndex];
@@ -2104,22 +2091,21 @@ CodeEditor.create = function() {
 							//now remove new nodes
 							el.removeChild(newNode);
 							el.removeChild(newNode1);
-							firstEl.textContent = val;
-							
-							//							//fix cursor to point to middle single character node
-							//							cursor.startPos = 0;
-							//							firstEl = newNode;
-							//							
-							//							//maintain page up/down start position
-							//							if(_startPageUpDownNodeIndex == cursor.startNodeIndex)
-							//							{
-							//								_startPageUpDownNodeIndex += 2;
-							//								_startPageUpDownPos = 0;
-							//							}
+							firstEl.textContent = val;							
+						}
+						else
+							Debug.log("scrollEndIntoView only");
+					}
+					catch(e)
+					{
+						Debug.log("Failed to scroll to inserted 1st element: " + e);							
+						try
+						{
+							firstEl.scrollIntoViewIfNeeded();
 						}
 						catch(e)
 						{
-							Debug.log("Failed to scroll 2nd element: " + e);
+							Debug.log("Failed to scroll 1st element: " + e);
 						}
 					}
 					
