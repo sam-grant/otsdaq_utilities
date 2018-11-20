@@ -527,22 +527,37 @@ DesktopContent.showLoading = function()	{
 DesktopContent._loadBoxHideTimer = 0;
 DesktopContent.hideLoading = function()	{
 	
-	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
-		return;
+//	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+//		return;
 	
 	//hide in a little bit, to provide more continuity to 
 	//	back to back loading box requests
-	window.clearInterval(DesktopContent._loadBoxHideTimer);
-	DesktopContent._loadBoxHideTimer = window.setTimeout(
-			localHideLoadBox, 300);
+//	window.clearInterval(DesktopContent._loadBoxHideTimer);
+//	DesktopContent._loadBoxHideTimer = window.setTimeout(
+//			localHideLoadBox, 300);
 	
+	
+	
+//	/////////////////////////
+//	function localHideLoadBox()
+//	{
+//		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+//		Debug.log("DesktopContent.hideLoading");
+//		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+//	} //end localHideLoadBox
+
+	window.setTimeout(localHideLoadBox, 300);
 	/////////////////////////
 	function localHideLoadBox()
 	{
+		if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+			return;
+		
 		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
 		Debug.log("DesktopContent.hideLoading");
 		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-	} //end localHideLoadBox	
+		
+	} //end localHideLoadBox
 	
 } //end hideLoading()
 //=====================================================================================
