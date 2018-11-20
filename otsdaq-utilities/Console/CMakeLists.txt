@@ -1,4 +1,4 @@
-cet_make_exec(mf_rcv_n_fwd SOURCE MF_ReceiveAndForward.cpp)
+cet_make_exec(otsConsoleFwd SOURCE MF_ReceiveAndForward.cpp)
 
 
 #For Console Supervisor
