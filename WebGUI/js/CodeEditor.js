@@ -4014,7 +4014,7 @@ CodeEditor.create = function() {
 									val[i] != '\t')
 							{
 								Debug.log("Found character between } and new line, so doing nothing.");
-								return;
+								return false;
 							}
 						}
 						if(found) break;
@@ -4088,6 +4088,8 @@ CodeEditor.create = function() {
 				CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
 				
 				_fileWasModified[forPrimary] = true;
+				
+				return true; //character was inserted
 			} //end localInsertCharacter()
 			
 			if(keyCode == 13) // ENTER -- should trigger updateDecorations immediately
@@ -5015,9 +5017,12 @@ CodeEditor.create = function() {
 		{
 			if(c == '}')
 			{
-				e.preventDefault();
-				e.stopPropagation();
-				localInsertCharacter(c);
+				if(localInsertCharacter(c))
+				{
+					//if true, then character was added, otherwise do default
+					e.preventDefault();
+					e.stopPropagation();					
+				}
 			}
 		}
 		
