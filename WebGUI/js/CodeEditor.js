@@ -203,7 +203,7 @@ CodeEditor.create = function() {
 	//	undo(forPrimary,redo)
 	//	openDirectory(forPrimary,path)
 	//	handleDirectoryContent(forPrimary,req)
-	//	openFile(forPrimary,path,extension,doConfirm,gotoLine)
+	//	openFile(forPrimary,path,extension,doConfirm,gotoLine,altPaths,altExtensions,propagateErr)
 	//	openRelatedFile(forPrimary)
 	//	gotoLine(forPrimary,line,selectionCursor,topOfView)
 	//	handleFileContent(forPrimary,req,fileObj)
@@ -1573,16 +1573,56 @@ CodeEditor.create = function() {
 		
 		var relatedPath = _filePath[forPrimary];
 		var relatedExtension = _fileExtension[forPrimary];
+
+		var altPaths = [];
+		var altExtensions = []; 
+		
 		if(relatedExtension == "h")
 		{
 			relatedExtension = "cc";
 			
 			var i = relatedPath.indexOf("/FEInterfaces/");
-			relatedPath += "_interface";
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+			
+			altPaths.push(relatedPath);
+			altExtensions.push("cc");
+			altPaths.push(relatedPath);
+			altExtensions.push("cpp");
+			altPaths.push(relatedPath);
+			altExtensions.push("CC");
+			
+			relatedPath += "_interface";			
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
 		}
-		else if(relatedExtension[0] == 'c' || relatedExtension[0] == 'C')
+		else if(relatedExtension == "css")
+		{
+			relatedExtension = "js";	
+			var i = relatedPath.indexOf("/css/");
+			
+			if(i >= 0)
+			{
+				altPaths.push(relatedPath.substr(0,i) + "/html/" + 
+						relatedPath.substr(i + ("/css/").length));
+				altExtensions.push("html");
+				
+				relatedPath = relatedPath.substr(0,i) + "/js/" + 
+						relatedPath.substr(i + ("/css/").length);
+			}
+			else
+			{
+				altPaths.push(relatedPath);
+				altExtensions.push("html");
+			}
+			
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
+			return;
+		}
+		else if(relatedExtension[0] == 'c' || 
+				relatedExtension[0] == 'C')
 		{
 			relatedExtension = "h";
 			var i = relatedPath.indexOf("_interface");
@@ -1595,20 +1635,25 @@ CodeEditor.create = function() {
 		{
 			relatedExtension = "css";		
 			var i = relatedPath.indexOf("/js/");
+						
 			if(i >= 0)
+			{
+				altPaths.push(relatedPath.substr(0,i) + "/html/" + 
+						relatedPath.substr(i + ("/js/").length));
+				altExtensions.push("html");
+				
 				relatedPath = relatedPath.substr(0,i) + "/css/" + 
 					relatedPath.substr(i + ("/js/").length);
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
-			return;
-		}
-		else if(relatedExtension == "css")
-		{
-			relatedExtension = "js";	
-			var i = relatedPath.indexOf("/css/");
-			if(i >= 0)
-				relatedPath = relatedPath.substr(0,i) + "/js/" + 
-					relatedPath.substr(i + ("/css/").length);		
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+			}
+			else
+			{
+				altPaths.push(relatedPath);
+				altExtensions.push("html");
+			}
+			
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
 		}
 		else if(relatedExtension == "html")
@@ -1616,9 +1661,23 @@ CodeEditor.create = function() {
 			relatedExtension = "js";			
 			var i = relatedPath.indexOf("/html/");
 			if(i >= 0)
+			{
+				altPaths.push(relatedPath.substr(0,i) + "/css/" + 
+						relatedPath.substr(i + ("/html/").length));
+				altExtensions.push("css");
+				
 				relatedPath = relatedPath.substr(0,i) + "/js/" + 
-					relatedPath.substr(i + ("/html/").length);	
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+					relatedPath.substr(i + ("/html/").length);
+			}
+			else
+			{
+				altPaths.push(relatedPath);
+				altExtensions.push("css");
+			}
+			
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
 		}
 		
@@ -1633,7 +1692,10 @@ CodeEditor.create = function() {
 	//	open the file in text editor
 	//
 	//	Before opening on disk, check the file history stack.
-	this.openFile = function(forPrimary,path,extension,doConfirm,gotoLine)
+	//	
+	//	If altPaths provided, they are tried on error
+	this.openFile = function(forPrimary,path,extension,doConfirm,gotoLine,
+			altPaths,altExtensions,propagateErr)
 	{
 		forPrimary = forPrimary?1:0;
 		
@@ -1642,6 +1704,8 @@ CodeEditor.create = function() {
 		var i = path.indexOf('.');
 		if(i > 0) //up to extension
 			path = path.substr(0,i);
+	
+		if(!propagateErr) propagateErr = "";
 		
 		if(doConfirm)
 		{
@@ -1704,8 +1768,22 @@ CodeEditor.create = function() {
 					var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
 					if(err) 
 					{
-						Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
 						DesktopContent.hideLoading();
+						
+						if(altPaths && altExtensions) //if other files to try, try them
+						{
+							//Debug.log(err,Debug.INFO_PRIORITY);	//do not call error until final attempt
+							CodeEditor.editor.openFile(forPrimary,
+									altPaths.splice(0,1), //try first alt path
+									altExtensions.splice(0,1), //try first alt extension
+									undefined /*doConfirm*/, undefined/*gotoLine*/,
+									altPaths /*altPaths*/, altExtensions/*altExtensions*/, 
+									propagateErr + err /* propagateErr */ );
+						}
+						else //not alt files, so this is an error
+							Debug.log(propagateErr + err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
+							
+						
 						return;
 					}
 					
