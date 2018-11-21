@@ -1577,7 +1577,31 @@ CodeEditor.create = function() {
 		var altPaths = [];
 		var altExtensions = []; 
 		
-		if(relatedExtension == "h")
+		if(relatedExtension == "html")
+		{
+			relatedExtension = "js";			
+			var i = relatedPath.indexOf("/html/");
+			if(i >= 0)
+			{
+				altPaths.push(relatedPath.substr(0,i) + "/css/" + 
+						relatedPath.substr(i + ("/html/").length));
+				altExtensions.push("css");
+
+				relatedPath = relatedPath.substr(0,i) + "/js/" + 
+						relatedPath.substr(i + ("/html/").length);
+			}
+			else
+			{
+				altPaths.push(relatedPath);
+				altExtensions.push("css");
+			}
+
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
+			return;
+		}
+		else if(relatedExtension[0] == "h")
 		{
 			relatedExtension = "cc";
 			
@@ -1649,30 +1673,6 @@ CodeEditor.create = function() {
 			{
 				altPaths.push(relatedPath);
 				altExtensions.push("html");
-			}
-			
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
-					undefined /*doConfirm*/, undefined/*gotoLine*/,
-					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
-			return;
-		}
-		else if(relatedExtension == "html")
-		{
-			relatedExtension = "js";			
-			var i = relatedPath.indexOf("/html/");
-			if(i >= 0)
-			{
-				altPaths.push(relatedPath.substr(0,i) + "/css/" + 
-						relatedPath.substr(i + ("/html/").length));
-				altExtensions.push("css");
-				
-				relatedPath = relatedPath.substr(0,i) + "/js/" + 
-					relatedPath.substr(i + ("/html/").length);
-			}
-			else
-			{
-				altPaths.push(relatedPath);
-				altExtensions.push("css");
 			}
 			
 			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
