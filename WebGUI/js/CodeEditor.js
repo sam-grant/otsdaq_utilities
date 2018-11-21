@@ -426,7 +426,7 @@ CodeEditor.create = function() {
 				
 				_activePaneIsPrimary = 1; //default active pane to primary
 				
-			}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+			}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		
 		
 	} //end init()
@@ -1118,7 +1118,7 @@ CodeEditor.create = function() {
 							textObj,
 							true /*ignoreTimeDelta*/);
 					
-				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
 	} //end saveFile()
 	
@@ -1164,7 +1164,7 @@ CodeEditor.create = function() {
 							"title='Click to open the Console web app in a new browser tab.'>" +
 							"console</a> for result!", Debug.INFO_PRIORITY);
 					
-				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
 		
 	} //end build()
@@ -1560,7 +1560,7 @@ CodeEditor.create = function() {
 				CodeEditor.editor.handleDirectoryContent(forPrimary, req);			
 				CodeEditor.editor.toggleDirectoryNav(forPrimary,1 /*set nav mode*/);
 				
-			}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+			}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 	} //end openDirectory()
 	
 	//=====================================================================================
@@ -1807,7 +1807,7 @@ CodeEditor.create = function() {
 					console.log(DesktopContent._loadBox.style.display);
 					DesktopContent.hideLoading();
 					
-				}, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
 	} //end openFile()
 	
@@ -2526,9 +2526,6 @@ CodeEditor.create = function() {
 		CodeEditor.editor.updateLastSave(forPrimary);
 		
 		
-		
-		
-		
 		var n;
 		var decor, fontWeight;
 		var specialString;
@@ -2587,8 +2584,7 @@ CodeEditor.create = function() {
 			el.insertBefore(newNode,node);
 			
 			node.textContent = val.substr(i); //post-special text
-			
-			
+						
 			
 			//handle cursor position update
 			if(cursor.startNodeIndex !== undefined)
