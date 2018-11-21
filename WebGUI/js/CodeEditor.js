@@ -1582,7 +1582,7 @@ CodeEditor.create = function() {
 			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
 			return;
 		}
-		else if(relatedExtension == "cc")
+		else if(relatedExtension[0] == 'c' || relatedExtension[0] == 'C')
 		{
 			relatedExtension = "h";
 			var i = relatedPath.indexOf("_interface");
@@ -3147,6 +3147,7 @@ CodeEditor.create = function() {
 			
 			var fileExtension = _fileExtension[forPrimary];
 			if(fileExtension == "cc" || 
+				fileExtension == "cpp" || 
 					fileExtension == "h" ||
 					fileExtension == "js" || 
 					fileExtension == "html")
@@ -3505,7 +3506,8 @@ CodeEditor.create = function() {
 		var i,j,k;
 		var fail, found;
 		
-		var isCcSource = _fileExtension[forPrimary] == "cc";
+		var isCcSource = _fileExtension[forPrimary][0] == 'c' || 
+			_fileExtension[forPrimary][0] == 'C';
 		var isJsSource = _fileExtension[forPrimary] == "js" || 
 			_fileExtension[forPrimary] == "html";
 		
