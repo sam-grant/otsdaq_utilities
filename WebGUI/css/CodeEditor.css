@@ -235,9 +235,9 @@
 			overflow:				auto;
 			
 			/*standoff shadow*/
-			-moz-box-shadow:    3px 3px 5px 6px rgba(100,100,100,0.8);
-			-webkit-box-shadow: 3px 3px 5px 6px rgba(100,100,100,0.8);
-			box-shadow:         3px 3px 5px 6px rgba(100,100,100,0.8);
+			-moz-box-shadow:    	3px 3px 5px 6px rgba(100,100,100,0.8);
+			-webkit-box-shadow: 	3px 3px 5px 6px rgba(100,100,100,0.8);
+			box-shadow:         	3px 3px 5px 6px rgba(100,100,100,0.8);
 			
 		}
 		.directoryNav * {
@@ -270,6 +270,31 @@
 			width: 					16px;
 			margin: 				0 10px 0 10px;
 		}
+		
+		#fileStringHoverEl {
+
+			outline: 				none;  /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* to stop text highlights */
+			-moz-user-select: 		none;
+			user-select: 			none;	
+			padding: 				1px 0px 0px 13px;
+			position:				absolute;
+			width:					70px;
+			height:					14px;
+
+			background-color: 		rgb(241, 241, 241);
+			
+			/*standoff shadow*/
+			-moz-box-shadow:    	1px 2px 3px 2px rgba(100,100,100,0.8);
+			-webkit-box-shadow: 	1px 2px 3px 2px rgba(100,100,100,0.8);
+			box-shadow:         	1px 2px 3px 2px rgba(100,100,100,0.8);
+		}
+		
+		
+		
+		
+		
+		
 		
 		
 		

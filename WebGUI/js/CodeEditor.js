@@ -277,6 +277,9 @@ CodeEditor.create = function() {
 	
 	var _findAndReplaceCursorInContent = [undefined,undefined];	
 	
+	var _fileStringHoverEl = 0; //element for hoverable buttons to open file
+	var _fileStringHoverTimeout = 0; //timeout to remove hoverable buttons to open file
+	
 	var _UPDATE_DECOR_TIMEOUT = 2000; //ms
 	
 	var _TAB_SIZE = 4; //to match eclipse!
@@ -803,6 +806,23 @@ CodeEditor.create = function() {
 						e.keyCode == 224) //apple command keys chrome left/right and firefox
 					_commandKeyDown = false;
 			}); //end addEventListener
+		box.addEventListener("mouseover",
+				function()
+				{
+			//Debug.log("body onmouseover");
+			if(_fileStringHoverEl.parentNode) //then delete the element
+			{
+				Debug.log("body removing string hover");
+				window.clearTimeout(_fileStringHoverTimeout);
+				_fileStringHoverTimeout = window.setTimeout(
+						function()
+						{
+					Debug.log("body removed string hover");
+					_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);
+						}, 1000 /* 1 sec*/);
+			}
+
+				}); //end addEventListener
 		
 	} //end createElements()
 	
@@ -1174,64 +1194,69 @@ CodeEditor.create = function() {
 	//	manage undo stack
 	this.undo = function(forPrimary,redo)
 	{
-		forPrimary = forPrimary?1:0;
+		DesktopContent.showLoading(localDoIt);
+		return;
 		
-		Debug.log("undo() forPrimary=" + forPrimary + " redo=" + redo);
-		console.log("undo stack index",_undoStackLatestIndex[forPrimary]);
-		console.log("undo stack length",_undoStack[forPrimary].length);
-		
-		console.log("undo stack",_undoStack[forPrimary]);
-		
-		var el = _eel[forPrimary];
-		
-		//capture right now if different, ignore time delta
-		CodeEditor.editor.updateFileSnapshot(forPrimary,
-			{"text":el.textContent,
-			"time":Date.now()},
-			true /*ignoreTimeDelta*/);
-		
-		var newIndex = _undoStackLatestIndex[forPrimary];
-		newIndex += redo?1:-1;
-		if(newIndex >= _undoStack_MAX_SIZE)
-			newIndex = 0; //wrap around
-		else if(newIndex < 0)
-			newIndex = _undoStack[forPrimary].length-1; //wrap around
-		
-		console.log("new stack index",newIndex);
-		
-		//do not allow wrap around in time
-		if(!redo && //assert back in time
-				_undoStack[forPrimary][newIndex][1] >= 
-				_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1])
+		function localDoIt()
 		{
-			Debug.log("Reached end of undo history...",Debug.WARN_PRIORITY);
-			return;
-		}		
-		if(redo && //assert forward in time
-				(newIndex >= _undoStack[forPrimary].length ||
-					_undoStack[forPrimary][newIndex][1] <= 
-					_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1]))
-		{
-			Debug.log("Reached end of redo history...",Debug.WARN_PRIORITY);
-			return;
-		}
-		
-		//here, accept change!
-		_undoStackLatestIndex[forPrimary] = newIndex;
-		console.log("result stack index",newIndex);
-		
-		var cursor = CodeEditor.editor.getCursor(el);
-		
-		el.textContent = 
-			_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0];
-		_fileWasModified[forPrimary] = true;
-		
-		CodeEditor.editor.updateDecorations(forPrimary,
-				false /*forceDisplayComplete*/,
-				true /*forceDecorations*/);
-		
-		CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
-		
+			forPrimary = forPrimary?1:0;
+
+			Debug.log("undo() forPrimary=" + forPrimary + " redo=" + redo);
+			console.log("undo stack index",_undoStackLatestIndex[forPrimary]);
+			console.log("undo stack length",_undoStack[forPrimary].length);
+
+			console.log("undo stack",_undoStack[forPrimary]);
+
+			var el = _eel[forPrimary];
+
+			//capture right now if different, ignore time delta
+			CodeEditor.editor.updateFileSnapshot(forPrimary,
+					{"text":el.textContent,
+							"time":Date.now()},
+							true /*ignoreTimeDelta*/);
+
+			var newIndex = _undoStackLatestIndex[forPrimary];
+			newIndex += redo?1:-1;
+			if(newIndex >= _undoStack_MAX_SIZE)
+				newIndex = 0; //wrap around
+			else if(newIndex < 0)
+				newIndex = _undoStack[forPrimary].length-1; //wrap around
+
+			console.log("new stack index",newIndex);
+
+			//do not allow wrap around in time
+			if(!redo && //assert back in time
+					_undoStack[forPrimary][newIndex][1] >= 
+					_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1])
+			{
+				Debug.log("Reached end of undo history...",Debug.WARN_PRIORITY);
+				return;
+			}		
+			if(redo && //assert forward in time
+					(newIndex >= _undoStack[forPrimary].length ||
+							_undoStack[forPrimary][newIndex][1] <= 
+							_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][1]))
+			{
+				Debug.log("Reached end of redo history...",Debug.WARN_PRIORITY);
+				return;
+			}
+
+			//here, accept change!
+			_undoStackLatestIndex[forPrimary] = newIndex;
+			console.log("result stack index",newIndex);
+
+			var cursor = CodeEditor.editor.getCursor(el);
+
+			el.textContent = 
+					_undoStack[forPrimary][_undoStackLatestIndex[forPrimary]][0];
+			_fileWasModified[forPrimary] = true;
+
+			CodeEditor.editor.updateDecorations(forPrimary,
+					false /*forceDisplayComplete*/,
+					true /*forceDecorations*/);
+
+			CodeEditor.editor.setCursor(el,cursor,true /*scrollIntoView*/);
+		} //end localDoIt()
 	} //end undo()
 	
 	//=====================================================================================
@@ -1314,7 +1339,7 @@ CodeEditor.create = function() {
 			//open in new window
 			str += htmlOpen("a",
 				{
-					"title":"Open file in a new browser tab: \n" +
+					"title":"Open folder in a new browser tab: \n" +
 					"srcs" + buildPath,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
@@ -1723,7 +1748,6 @@ CodeEditor.create = function() {
 			for(i;i<keys.length;++i)
 				if(filename == keys[i])
 			{					
-				DesktopContent.showLoading();
 				Debug.log("Found " + filename + " in file history.");
 				
 				//do not open file, just cut to the existing content in stack
@@ -1745,7 +1769,6 @@ CodeEditor.create = function() {
 				if(!forPrimary && _viewMode == 0)
 					CodeEditor.editor.toggleView();
 				
-				DesktopContent.hideLoading();
 				return;
 			}			
 			
@@ -1756,7 +1779,6 @@ CodeEditor.create = function() {
 		{
 			CodeEditor.editor.toggleDirectoryNav(forPrimary,false /*set val*/);
 			
-			DesktopContent.showLoading();
 			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
 					"&option=getFileContent" +
 					"&path=" + path + 
@@ -1767,9 +1789,7 @@ CodeEditor.create = function() {
 					
 					var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
 					if(err) 
-					{
-						DesktopContent.hideLoading();
-						
+					{						
 						if(altPaths && altExtensions) //if other files to try, try them
 						{
 							//Debug.log(err,Debug.INFO_PRIORITY);	//do not call error until final attempt
@@ -1805,8 +1825,7 @@ CodeEditor.create = function() {
 						Debug.log("Ignoring error handling file open: " + e);
 					}
 					console.log(DesktopContent._loadBox.style.display);
-					DesktopContent.hideLoading();
-					
+										
 				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
 		} //end localDoIt()
 	} //end openFile()
@@ -2045,21 +2064,17 @@ CodeEditor.create = function() {
 		
 		var el = _eel[forPrimary];
 		
-		DesktopContent.showLoading();		
 		//do decor in timeout to show loading
-		window.setTimeout(function()
-			{
-				try
-				{	
-					el.textContent = text;
-					CodeEditor.editor.displayFileHeader(forPrimary);
-				}
-				catch(e)
-				{ Debug.log("Ignoring error: " + e); }
-				
-				DesktopContent.hideLoading();	
-			},10);	
-		
+		DesktopContent.showLoading(function()
+				{
+					try
+					{	
+						el.textContent = text;
+						CodeEditor.editor.displayFileHeader(forPrimary);
+					}
+					catch(e)
+					{ Debug.log("Ignoring error: " + e); }
+				});	 //end show loading
 		
 	} //end handleFileContent()
 	
@@ -2570,7 +2585,7 @@ CodeEditor.create = function() {
 		var prevChar;
 		
 		/////////////////////////////////
-		function localInsertLabel(startPos)
+		function localInsertLabel(startPos, isQuote)
 		{
 			//split text node into 3 nodes.. text | label | text
 			
@@ -2580,8 +2595,157 @@ CodeEditor.create = function() {
 			newNode = document.createElement("label");
 			newNode.style.fontWeight = fontWeight; //bold or normal
 			newNode.style.color = decor;
-			newNode.textContent = specialString; //special text
+			newNode.textContent = specialString; //special text								
+			
 			el.insertBefore(newNode,node);
+			
+			if(isQuote)
+			{
+				var str = newNode.textContent;	
+				str = str.substr(str.indexOf('.')+1);
+				
+				
+				if(str.length > 0 && str.length <= 4 && 
+						(
+								str[0] == 'c' || 
+								str[0] == 'C' ||
+								str[0] == 'h' ||
+								str == "txt" || 
+								str == "py" ||
+								str == "sh"
+						))
+				{
+					Debug.log("is quote " + str);
+				
+					newNode.onmouseover = function(e)
+					{
+						window.clearTimeout(_fileStringHoverTimeout);
+						
+						var x = this.offsetWidth + this.offsetLeft + 64;
+						var y = this.offsetTop;
+						e.stopPropagation();//to stop body behavior
+						//Debug.log("loc " + x + " " + y);	
+						
+						if(_fileStringHoverEl.parentNode)
+						{ //then delete the element						
+							_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);						
+						}
+						else
+						{
+							//make the element
+							_fileStringHoverEl = document.createElement("div");
+							_fileStringHoverEl.setAttribute("id","fileStringHoverEl");
+							_fileStringHoverEl.setAttribute("contentEditable","false");
+							_fileStringHoverEl.onmouseover = function(e)
+								{ //prevent body mouseover handling							
+								window.clearTimeout(_fileStringHoverTimeout);
+								e.stopPropagation();				
+								};
+						}
+	
+						_fileStringHoverEl.style.display = 'none';
+						
+						var str = "";
+						var name = this.textContent;
+						
+						//translate to proper path
+						name = name.substr(1,name.length-2); //remove quotes
+						var nameArr = name.split('/');
+						if(nameArr.length == 0)
+						{
+							Debug.log("empty name array, error! name = " + name);
+							return;
+						}
+						else if(nameArr.length > 1 && nameArr[0] == "" &&
+								nameArr[1] == "WebPath")
+						{
+							name = "/otsdaq_utilities/WebGUI" +
+									name.substr(("/WebPath").length);							
+						}
+						else if(nameArr[0] != "")
+						{
+							//look-up first entry
+							var i = nameArr[0].indexOf('-');
+							if(i > 0)
+							{
+								var repo = "";
+								if(nameArr[0] != "otsdaq-core")
+								{
+									nameArr[0][i] = '_'; //change - to _									
+								}
+								else
+									nameArr[0] = "otsdaq";
+								
+								name = "/" + nameArr[0] + "/" + name;									
+							}
+							else
+							{
+								Debug.log("Confused by name array, error! name = " + name);
+								return;
+							}
+						}
+						
+						
+						Debug.log("name " + name);
+	
+							
+						//open in this pane
+						str += htmlOpen("a",
+								{	
+										"title":"Open file in this editor pane: \n" +
+										"srcs" + name,
+										"onclick":"CodeEditor.editor.openFile(" + 
+										(forPrimary) + ",\"" + 
+										name + "\", \"" +
+										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										");", //end onclick
+								},
+								"<div class='dirNavFileNewWindowImgNewWindow' " +
+								"style='border:1px solid rgb(99, 98, 98); border-radius: 2px; width: 9px;" +
+								"height: 9px;  float: left; margin: 1px 0 0 0;'></div>" 
+								/*innerHTML*/, true /*doCloseTag*/);
+						//open in other pane
+						str += htmlOpen("a",
+								{	
+										"title":"Open file in the other editor pane of the split-view: \n" +
+										"srcs" + name,
+										"onclick":"CodeEditor.editor.openFile(" + 
+										(!forPrimary) + ",\"" + 
+										name + "\", \"" +
+										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										");", //end onclick
+								},
+								"<img class='dirNavFileNewWindowImgNewPane' " +
+								"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+								/*innerHTML*/, true /*doCloseTag*/);
+						//open in new window
+						str += htmlOpen("a",
+								{
+										"title":"Open file in a new browser tab: \n" +
+										"srcs" + name,
+										"onclick":"DesktopContent.openNewBrowserTab(" +
+										"\"Code Editor\",\"\"," + 
+										"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+										name + "\",0 /*unique*/);' ", //end onclick
+								},   
+								"<img class='dirNavFileNewWindowImgNewWindow' " +
+								"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+								/*innerHTML*/, true /*doCloseTag*/);
+	
+						_fileStringHoverEl.innerHTML = str;
+						
+						this.parentNode.appendChild(_fileStringHoverEl);
+							
+						//position + left for line numbers
+						_fileStringHoverEl.style.left = x + "px";
+						_fileStringHoverEl.style.top = y + "px";
+						
+						_fileStringHoverEl.style.display = 'block';
+						
+					} //end special file name string mouseover
+				} //end special file string handling
+			} //end quote handling
+			
 			
 			node.textContent = val.substr(i); //post-special text
 						
@@ -2832,7 +2996,7 @@ CodeEditor.create = function() {
 							
 							decor = _DECORATION_BLUE;
 							fontWeight = "normal";
-							localInsertLabel(startOfString);
+							localInsertLabel(startOfString, true /*isQuote*/);
 							startOfString = -1;							
 							//done = true; //for debugging
 							break;
@@ -2927,74 +3091,121 @@ CodeEditor.create = function() {
 						eatNode = el.childNodes[n];
 						eatVal = eatNode.textContent; //.nodeValue; //.wholeText
 						
-						
-						//deleteing the node may have an effect on cursor!
+						//merging may have an effect on cursor!
 						//handle cursor position update
 						if(cursor.startNodeIndex !== undefined)
 						{
-							if(firstSpecialStringStartHandling)
-							{
-								//first time, add initial comment node string contribution to startPos
-								
-								cursor.startPos += val.length;
-								if(startOfString != -1)
-									cursor.startPos -= startOfString;
-								else if(startOfComment != -1)
-									cursor.startPos -= startOfComment;
-								
-								firstSpecialStringStartHandling = false;								
-							}
+							if(firstSpecialStringStartHandling) //do nothing, for now
+								firstSpecialStringStartHandling = false;
 							
 							if(firstSpecialStringEndHandling)
 							{
 								//first time, add initial comment node string contribution to endPos
-								
+
 								endPositionCache = cursor.endPos; //cache end position in case this is not the last line
-								
-								cursor.endPos += val.length+1;
-								if(startOfString != -1)
-									cursor.endPos -= startOfString;
-								else if(startOfComment != -1)
-									cursor.endPos -= startOfComment;
-								
 								firstSpecialStringEndHandling = false;
 							}
-							
 							
 							if(n < cursor.startNodeIndex)
 							{
 								//cursor is in a later node
 								cursor.startNodeIndex -= 1; //one node was removed
-								cursor.endNodeIndex -= 1; //one node was removed															
-								
-								cursor.startPos += eatVal.length; //add cursor position	in preparation for concat text
-								cursor.endPos += eatVal.length;
+								cursor.endNodeIndex -= 1; //one node was removed
 							}
 							else 
 							{
 								//handle start and stop independently
-								
+
 								//handle start
 								if(n == cursor.startNodeIndex)
 								{
 									//then cursor is in second part of merger
-									--cursor.startNodeIndex;							
+									--cursor.startNodeIndex;
+									cursor.startPos += val.length;								
 								} //end start handling
-								
+
 								//handle end									
 								if(n == cursor.endNodeIndex)
 								{
 									//then cursor is in second part of merger
 									--cursor.endNodeIndex;
+									cursor.endPos += val.length;	
 								}
 								else if(n < cursor.endNodeIndex)
 								{
 									//then cursor is in a later node
 									--cursor.endNodeIndex; //one node was removed
-									cursor.endPos += eatVal.length;
 								}//end end handling							
 							}
 						} //end cursor position update
+						
+//						//deleteing the node may have an effect on cursor!
+//						//handle cursor position update
+//						if(cursor.startNodeIndex !== undefined)
+//						{
+//							if(firstSpecialStringStartHandling)
+//							{
+//								//first time, add initial comment node string contribution to startPos
+//								
+//								cursor.startPos += val.length;
+//								if(startOfString != -1)
+//									cursor.startPos -= startOfString;
+//								else if(startOfComment != -1)
+//									cursor.startPos -= startOfComment;
+//								
+//								firstSpecialStringStartHandling = false;								
+//							}
+//							
+//							if(firstSpecialStringEndHandling)
+//							{
+//								//first time, add initial comment node string contribution to endPos
+//								
+//								endPositionCache = cursor.endPos; //cache end position in case this is not the last line
+//								
+//								cursor.endPos += val.length+1;
+//								if(startOfString != -1)
+//									cursor.endPos -= startOfString;
+//								else if(startOfComment != -1)
+//									cursor.endPos -= startOfComment;
+//								
+//								firstSpecialStringEndHandling = false;
+//							}
+//							
+//							
+//							if(n < cursor.startNodeIndex)
+//							{
+//								//cursor is in a later node
+//								cursor.startNodeIndex -= 1; //one node was removed
+//								cursor.endNodeIndex -= 1; //one node was removed															
+//								
+//								cursor.startPos += eatVal.length; //add cursor position	in preparation for concat text
+//								cursor.endPos += eatVal.length;
+//							}
+//							else 
+//							{
+//								//handle start and stop independently
+//								
+//								//handle start
+//								if(n == cursor.startNodeIndex)
+//								{
+//									//then cursor is in second part of merger
+//									--cursor.startNodeIndex;							
+//								} //end start handling
+//								
+//								//handle end									
+//								if(n == cursor.endNodeIndex)
+//								{
+//									//then cursor is in second part of merger
+//									--cursor.endNodeIndex;
+//								}
+//								else if(n < cursor.endNodeIndex)
+//								{
+//									//then cursor is in a later node
+//									--cursor.endNodeIndex; //one node was removed
+//									cursor.endPos += eatVal.length;
+//								}//end end handling							
+//							}
+//						} //end cursor position update
 						
 						
 						//eat text and delete node
@@ -3018,7 +3229,7 @@ CodeEditor.create = function() {
 								
 								decor = _DECORATION_BLUE;
 								fontWeight = "normal";
-								localInsertLabel(startOfString);
+								localInsertLabel(startOfString,true /*isQuote*/);
 								startOfString = -1;							
 								closedString = true;
 								break;
@@ -3073,7 +3284,7 @@ CodeEditor.create = function() {
 						
 						decor = _DECORATION_BLUE;
 						--n; //move back index (because it was incremented past bounds in end search)
-						localInsertLabel(startOfString);
+						localInsertLabel(startOfString, true /*isQuote*/);
 						startOfString = -1;			
 					}
 					if(!closedString && startOfComment != -1)
@@ -3128,12 +3339,13 @@ CodeEditor.create = function() {
 		
 		Debug.log("autoIndent " + forPrimary);		
 		
-		DesktopContent.showLoading();
-		window.setTimeout(function()
-			{
-				localDoIt();
-				DesktopContent.hideLoading();
-			},100);
+		DesktopContent.showLoading(localDoIt);
+		return;
+//		window.setTimeout(function()
+//			{
+//				localDoIt();
+//				DesktopContent.hideLoading();
+//			},100);
 		
 		/////////////////
 		function localDoIt()
@@ -4153,7 +4365,7 @@ CodeEditor.create = function() {
 				
 				console.log("cursorPosDelta",cursorPosDelta);
 				
-				cursor.startPos = 1 + preCharString.length + whiteSpaceString.length;
+				cursor.startPos = c.length + preCharString.length + whiteSpaceString.length;
 				cursor.endNodeIndex = cursor.startNodeIndex;
 				cursor.endPos = cursor.startPos;
 				

@@ -399,129 +399,147 @@ DesktopContent._loadBoxTimer = 0;
 DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to 0
 
 //=====================================================================================
-DesktopContent.showLoading = function()	{
+//DesktopContent.showLoading
+//	Pass nextFunction to launch something immediately after showing load box
+//	with hideLoading() called after the function
+DesktopContent.showLoading = function(nextFunction)	{
 	
-	Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+	localDoIt();
+	if(nextFunction)
+	{
+		window.setTimeout(function()
+				{
+			nextFunction();
+			DesktopContent.hideLoading();
+				},10);		
+	}
+	return;
 	
-	if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
-		return;
-	
-	//check if DesktopContent._loadBox has been set
-	if(!DesktopContent._loadBox)
-	{	
-		//check if there is already an error box with same id and share
-		var el = document.getElementById(DesktopContent._loadBoxId);
-		if(!el) //element doesn't already exist, so we need to create the element
-		{
-			var body = document.getElementsByTagName("BODY")[0];
-			if(!body) //maybe page not loaded yet.. so wait to report
+	/////////////
+	function localDoIt()
+	{
+		Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+
+		if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
+			return;
+
+		//check if DesktopContent._loadBox has been set
+		if(!DesktopContent._loadBox)
+		{	
+			//check if there is already an error box with same id and share
+			var el = document.getElementById(DesktopContent._loadBoxId);
+			if(!el) //element doesn't already exist, so we need to create the element
 			{
-				//try again in 1 second
-				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
-				return;
+				var body = document.getElementsByTagName("BODY")[0];
+				if(!body) //maybe page not loaded yet.. so wait to report
+				{
+					//try again in 1 second
+					window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+					return;
+				}
+
+				//create the element
+				el = document.createElement("div");			
+				el.setAttribute("id", DesktopContent._loadBoxId);
+				el.style.display = "none";
+				var str = "";
+
+				str += "<table height='100%' width='100%'><td id='" + 
+						DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
+				el.innerHTML = str;
+				body.appendChild(el); //add element to body of page
+
+
+				//add style for loading to page HEAD tag			
+				var css = "";
+
+
+				//load box style
+				css += "#" + DesktopContent._loadBoxId +
+						"{" +
+						"position: absolute; display: none; border: 2px solid gray;" +
+						"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
+						"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
+						"-webkit-border-radius: 2px;	border-radius: 2px;" +
+						"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
+						"color: white; " +
+						"font-family: 'Comfortaa', arial; text-align: left;" +
+						"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
+						"}\n\n";	
+				css += "#" + DesktopContent._loadBoxId + " table" +		
+						"{" +
+						"background-color: rgba(0,0,0,0.8);" +
+						"border: 0;" +
+						"}\n\n";
+
+				//load box text style
+				//			css += "#" + DesktopContent._loadBoxId + "-td" +
+				//					"{" +					
+				//					"color: white; font-size: 18px;" +
+				//					"font-family: 'Comfortaa', arial;" +
+				//					"text-align: center;" +
+				//					"}\n\n";
+
+				//add style element to HEAD tag
+				var style = document.createElement('style');
+
+				if (style.styleSheet) {
+					style.styleSheet.cssText = css;
+				} else {
+					style.appendChild(document.createTextNode(css));
+				}
+
+				document.getElementsByTagName('head')[0].appendChild(style);
 			}
+			DesktopContent._loadBox = el;	
+		}	
 
-			//create the element
-			el = document.createElement("div");			
-			el.setAttribute("id", DesktopContent._loadBoxId);
-			el.style.display = "none";
-			var str = "";
-			
-			str += "<table height='100%' width='100%'><td id='" + 
-					DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
-			el.innerHTML = str;
-			body.appendChild(el); //add element to body of page
+		//have load popup element now, so display it at center of page
 
+		var W = 100;
+		var H = 60;
 
-			//add style for loading to page HEAD tag			
-			var css = "";
-
-			
-			//load box style
-			css += "#" + DesktopContent._loadBoxId +
-					"{" +
-					"position: absolute; display: none; border: 2px solid gray;" +
-					"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
-					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
-					"-webkit-border-radius: 2px;	border-radius: 2px;" +
-					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
-					"color: white; " +
-					"font-family: 'Comfortaa', arial; text-align: left;" +
-					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
-					"}\n\n";	
-			css += "#" + DesktopContent._loadBoxId + " table" +		
-					"{" +
-					"background-color: rgba(0,0,0,0.8);" +
-					"border: 0;" +
-					"}\n\n";
-
-			//load box text style
-			//			css += "#" + DesktopContent._loadBoxId + "-td" +
-			//					"{" +					
-			//					"color: white; font-size: 18px;" +
-			//					"font-family: 'Comfortaa', arial;" +
-			//					"text-align: center;" +
-			//					"}\n\n";
-
-			//add style element to HEAD tag
-			var style = document.createElement('style');
-
-			if (style.styleSheet) {
-				style.styleSheet.cssText = css;
-			} else {
-				style.appendChild(document.createTextNode(css));
-			}
-
-			document.getElementsByTagName('head')[0].appendChild(style);
+		var WW,WH; //window width and height
+		//get width and height properly 
+		if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+		{
+			WW = DesktopContent.getWindowWidth();
+			WH = DesktopContent.getWindowHeight();
 		}
-		DesktopContent._loadBox = el;	
-	}	
-	
-	//have load popup element now, so display it at center of page
-	
-	var W = 100;
-	var H = 60;
-	
-	var WW,WH; //window width and height
-	//get width and height properly 
-	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
-	{
-		WW = DesktopContent.getWindowWidth();
-		WH = DesktopContent.getWindowHeight();
-	}
-	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
-	{
-		WW = DesktopContent.getDesktopWidth();
-		WH = DesktopContent.getDesktopHeight();
-	}
-	
-	var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
-	var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
-	
-	//show the load box whereever the current scroll is	
-	DesktopContent._loadBox.style.left = (X) + "px";	
-	DesktopContent._loadBox.style.top = (Y) + "px";
-	DesktopContent._loadBox.style.width = (W) + "px";
-	DesktopContent._loadBox.style.height = (H) + "px";
+		else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+		{
+			WW = DesktopContent.getDesktopWidth();
+			WH = DesktopContent.getDesktopHeight();
+		}
 
-	DesktopContent._loadBox.style.display = "block";
-	
-	//===================
-	//setup Loading.. animation
-	var loadBoxStr = "..";
-	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
-	el.innerHTML = "Loading" + loadBoxStr;
-	
-	/////////////////////////
-	var loadBoxAnimationFunction = function() {
-		if(loadBoxStr.length > 3) loadBoxStr = "";
-		else
-			loadBoxStr += ".";
+		var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
+		var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
+
+		//show the load box whereever the current scroll is	
+		DesktopContent._loadBox.style.left = (X) + "px";	
+		DesktopContent._loadBox.style.top = (Y) + "px";
+		DesktopContent._loadBox.style.width = (W) + "px";
+		DesktopContent._loadBox.style.height = (H) + "px";
+
+		DesktopContent._loadBox.style.display = "block";
+
+		//===================
+		//setup Loading.. animation
+		var loadBoxStr = "..";
+		var el = document.getElementById(DesktopContent._loadBoxId + "-td");
 		el.innerHTML = "Loading" + loadBoxStr;
-	};  //end loadBoxAnimationFunction
-	
-	window.clearInterval(DesktopContent._loadBoxTimer);
-	DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
+
+		/////////////////////////
+		var loadBoxAnimationFunction = function() {
+			if(loadBoxStr.length > 3) loadBoxStr = "";
+			else
+				loadBoxStr += ".";
+			el.innerHTML = "Loading" + loadBoxStr;
+		};  //end loadBoxAnimationFunction
+
+		window.clearInterval(DesktopContent._loadBoxTimer);
+		DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
+	} //end localDoIt()
 } //end showLoading()
 //=====================================================================================
 DesktopContent._loadBoxHideTimer = 0;
