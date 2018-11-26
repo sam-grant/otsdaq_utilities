@@ -190,6 +190,10 @@
 			color:					black;
 			font-family:			monospace;	
 			caret-color: 			black;
+			cursor:					text;
+		}
+		.textEditor a {
+			cursor:					pointer;
 		}
 		.textEditorHeader {
 			position:				absolute;
@@ -277,9 +281,9 @@
 			-webkit-user-select: 	none; /* to stop text highlights */
 			-moz-user-select: 		none;
 			user-select: 			none;	
-			padding: 				1px 0px 0px 13px;
+			padding: 				1px 0px 0px 1px;
 			position:				absolute;
-			width:					70px;
+			width:					71px;
 			height:					14px;
 
 			background-color: 		rgb(241, 241, 241);
@@ -290,6 +294,14 @@
 			box-shadow:         	1px 2px 3px 2px rgba(100,100,100,0.8);
 		}
 		
+		#fileStringHoverEl * {
+	
+			outline: 				none;  /* to stop firefox selection*/
+			-webkit-user-select: 	none; /* to stop text highlights */
+			-moz-user-select: 		none;
+			user-select: 			none;	
+			cursor:					pointer;
+		}
 		
 		
 		

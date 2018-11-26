@@ -688,7 +688,7 @@ CodeEditor.create = function() {
 					var forPrimary = this.id[this.id.length-1]|0;				
 					forPrimary = forPrimary?1:0;
 					
-					Debug.log("keydown handler for editableBox" + forPrimary);
+					//Debug.log("keydown handler for editableBox" + forPrimary);
 					CodeEditor.editor.keyDownHandler(e,forPrimary);
 					e.stopPropagation();
 				}); //end addEventListener
@@ -704,6 +704,16 @@ CodeEditor.create = function() {
 			_eel[i].addEventListener("click",
 					function(e)
 				{
+					
+					if(e.which > 1)
+					{
+						Debug.log("Special mouse click handling");
+					
+						e.preventDefault();
+						e.stopPropagation();
+						return;
+					}
+					
 					e.stopPropagation(); //to stop click body behavior
 				}); //end addEventListener
 			
@@ -720,9 +730,33 @@ CodeEditor.create = function() {
 					CodeEditor.editor.doubleClickHandler(forPrimary);
 				}); //end addEventListener
 			
+			_eel[i].addEventListener("contextmenu",
+					function(e)
+				{
+					
+					if(e.which > 1)
+					{
+						Debug.log("Special context menu handling");
+					
+						e.preventDefault();
+						e.stopPropagation();
+						return;
+					}
+					
+				}); //end addEventListener
+				
 			_eel[i].addEventListener("mousedown",
 					function(e)
 				{			
+					if(e.which > 1)
+					{
+						Debug.log("Special mouse down handling");
+					
+						e.preventDefault();
+						e.stopPropagation();
+						return;
+					}
+					
 					CodeEditor.editor.stopUpdateHandling(e);
 					
 					var forPrimary = this.id[this.id.length-1]|0;
@@ -734,7 +768,8 @@ CodeEditor.create = function() {
 					if(_activePaneIsPrimary != forPrimary)
 						CodeEditor.editor.updateDualView(!forPrimary);
 					
-					_activePaneIsPrimary = forPrimary;				
+					_activePaneIsPrimary = forPrimary;
+					
 					
 				}); //end addEventListener
 			
@@ -746,6 +781,15 @@ CodeEditor.create = function() {
 					
 					Debug.log("mouseup handler for editor" + forPrimary);
 					
+					if(e.which > 1)
+					{
+						Debug.log("Special mouse up handling");
+					
+						e.preventDefault();
+						e.stopPropagation();
+						return;
+					}
+								
 					CodeEditor.editor.startUpdateHandling(forPrimary);
 					
 				}); //end addEventListener
@@ -818,7 +862,7 @@ CodeEditor.create = function() {
 						function()
 						{
 					Debug.log("body removed string hover");
-					_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);
+					//_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);
 						}, 1000 /* 1 sec*/);
 			}
 
@@ -2358,7 +2402,7 @@ CodeEditor.create = function() {
 				sum += el.childNodes[i].textContent.length;
 			}
 			
-			console.log("get cursor",cursor);
+			//console.log("get cursor",cursor);
 			
 			
 		}
@@ -2700,9 +2744,11 @@ CodeEditor.create = function() {
 										name.substr(name.indexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
-								"<div class='dirNavFileNewWindowImgNewWindow' " +
+								"<div " +
+								"style='float: left; padding: 1px 0 1px 6px;'>" +
+								"<div " +
 								"style='border:1px solid rgb(99, 98, 98); border-radius: 2px; width: 9px;" +
-								"height: 9px;  float: left; margin: 1px 0 0 0;'></div>" 
+								"height: 9px;  '></div></div>" 
 								/*innerHTML*/, true /*doCloseTag*/);
 						//open in other pane
 						str += htmlOpen("a",
@@ -2715,8 +2761,10 @@ CodeEditor.create = function() {
 										name.substr(name.indexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
+								"<div " +
+								"style='float: left; padding: 0;'>" +
 								"<img class='dirNavFileNewWindowImgNewPane' " +
-								"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'>" 
+								"src='/WebPath/images/windowContentImages/CodeEditor-openInOtherPane.png'></div>" 
 								/*innerHTML*/, true /*doCloseTag*/);
 						//open in new window
 						str += htmlOpen("a",
@@ -2728,8 +2776,10 @@ CodeEditor.create = function() {
 										"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
 										name + "\",0 /*unique*/);' ", //end onclick
 								},   
+								"<div " +
+								"style='float: left; padding: 0 6px 0 0;'>" +
 								"<img class='dirNavFileNewWindowImgNewWindow' " +
-								"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'>" 
+								"src='/WebPath/images/windowContentImages/CodeEditor-openInNewWindow.png'></div>" 
 								/*innerHTML*/, true /*doCloseTag*/);
 	
 						_fileStringHoverEl.innerHTML = str;
@@ -4084,8 +4134,8 @@ CodeEditor.create = function() {
 			return;
 		
 		var c = e.key;
-		Debug.log("keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
-				" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
+		//Debug.log("keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
+		//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 		
 		//set timeout for decoration update
 		CodeEditor.editor.startUpdateHandling(forPrimary);			
