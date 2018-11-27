@@ -2881,7 +2881,8 @@ CodeEditor.create = function() {
 			
 			if(node.nodeName == "LABEL" || 
 					node.nodeName == "FONT" || 
-					node.nodeName == "SPAN")
+					node.nodeName == "SPAN" || 
+					node.nodeName == "PRE")
 			{
 				//console.log("Label handling...",val);
 				

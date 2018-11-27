@@ -15,6 +15,14 @@
 			font-family: 			"Comfortaa";
 		}
 		
+		select	{			
+			padding: 0px;
+		}
+		
+		option { 
+			padding: 0px;
+		}
+		
 		.controlsPane {
 			background-color: 		blue;
 			position: 				relative;
