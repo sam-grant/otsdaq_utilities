@@ -1834,12 +1834,13 @@ CodeEditor.create = function() {
 					var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
 					if(err) 
 					{						
-						if(altPaths && altExtensions) //if other files to try, try them
+						if(altPaths && altPaths.length &&
+								altExtensions && altExtensions.length) //if other files to try, try them
 						{
 							//Debug.log(err,Debug.INFO_PRIORITY);	//do not call error until final attempt
 							CodeEditor.editor.openFile(forPrimary,
-									altPaths.splice(0,1), //try first alt path
-									altExtensions.splice(0,1), //try first alt extension
+									altPaths.splice(0,1)[0], //try first alt path
+									altExtensions.splice(0,1)[0], //try first alt extension
 									undefined /*doConfirm*/, undefined/*gotoLine*/,
 									altPaths /*altPaths*/, altExtensions/*altExtensions*/, 
 									propagateErr + err /* propagateErr */ );
