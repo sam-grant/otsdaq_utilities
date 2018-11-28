@@ -4648,8 +4648,15 @@
 						"You can try to activate " + 
 						"with warnings ignored " + 
 						"<label style='font-weight:bold;text-decoration:underline;font-size:inherit;'>" +
-						"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
-						name + "(" + key + ") w/warnings ignored</u>' " +
+						"(MAKE SURE YOU KNOW WHY!)</label> by clicking " +
+
+						//add ignore warnings Activate link
+						"'<a onclick='activateSystemConfig(\"" + 
+								name +
+								"\",\"" + key + "\",1/*ignoreWarnings*/); return false;'>" + 
+						"Activate " + 
+						name + "(" + key + ") w/warnings ignored</a>' " +
+						
 						"at the top of the page.",Debug.HIGH_PRIORITY);
 				//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				
