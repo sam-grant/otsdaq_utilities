@@ -397,7 +397,31 @@
 				"<a class='popUpOkCancel' onclick='editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
-		
+				
+		var _OTS_RELAUNCH_STR =  
+				//Normal mode
+				"Click here to relaunch ots in " +
+				"<a onclick='" +
+				"verifyRelaunchNormalMode();" +
+				"'>Normal Mode</a>" +
+				" or " +
+				//Wiz Mode
+				"<a onclick='" +
+				"verifyRelaunchWizMode();" +
+				"'>Wiz Mode</a>." +
+				"<br>" +
+				//Toggle Version Tracking
+				"Click here to " +
+				"<a id='versionTrackingSystemLink' onclick='" +
+				"toggleVersionTracking();" +
+				"'>Turn Version Tracking OFF</a>." +
+				//Flatten Versions
+				"<br>" +
+				"Click here to " +
+				"<a onclick='" +
+				"flattenToSystemAliases();" +
+				"'>Flatten to System Aliases</a>."
+				;
 //		var _OTS_RELAUNCH_STR =  
 //				//Normal mode
 //				"Click here to relaunch ots in " +
