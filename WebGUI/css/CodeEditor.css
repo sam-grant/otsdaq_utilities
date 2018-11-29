@@ -198,7 +198,6 @@
 			color:					black;
 			font-family:			monospace;	
 			caret-color: 			black;
-			cursor:					text;
 		}
 		.textEditor a {
 			cursor:					pointer;
@@ -226,7 +225,8 @@
 		}		
 		.editableBox * {
 			user-select: 			text; 
-			-moz-user-select: 		text; /*so that firefox allows highlighting decorated text*/			
+			-moz-user-select: 		text; /*so that firefox allows highlighting decorated text*/
+			cursor:					text;
 		}		
 		.editableBoxLeftMargin {
 			white-space: 			pre; /*nowrap;*/

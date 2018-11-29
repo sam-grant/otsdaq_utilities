@@ -238,7 +238,8 @@ CodeEditor.create = function() {
 	//	stopUpdateHandling(event)
 	//	updateTimeoutHandler()
 	//	doubleClickHandler(forPrimary)
-	
+	//	download(forPrimary)
+	//	upload(forPrimary)
 	
 	
 	//for display
@@ -6686,6 +6687,31 @@ CodeEditor.create = function() {
 		CodeEditor.editor.setCursor(el,cursor);
 		
 	} //end doubleClickHandler()
+	
+
+	//=====================================================================================
+	//download ~~
+	this.download = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		Debug.log("download forPrimary=" + forPrimary);
+		
+		var text = _eel[forPrimary].textContent;
+		
+	} //end download()
+	
+	//=====================================================================================
+	//upload ~~
+	this.upload = function(forPrimary)
+	{
+		forPrimary = forPrimary?1:0;
+		
+		Debug.log("upload forPrimary=" + forPrimary);
+		
+		var text = _eel[forPrimary].textContent;
+		
+	} //end upload()
 	
 } //end create() CodeEditor instance
 
