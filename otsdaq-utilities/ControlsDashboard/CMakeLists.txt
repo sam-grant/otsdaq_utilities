@@ -13,7 +13,6 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 FiniteStateMachine
 		 
 		 CoreSupervisors
-         $ENV{XERCES_C_LIB}/libxerces-c.so     
          
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}

@@ -11,7 +11,6 @@ cet_make(LIBRARY_NAME Chat
 		 WebUsersUtilities
          SOAPUtilities
 #	 MessageFacility
-         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 install_headers()

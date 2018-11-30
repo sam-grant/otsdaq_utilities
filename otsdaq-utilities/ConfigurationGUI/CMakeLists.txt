@@ -17,7 +17,6 @@ cet_make(LIBRARY_NAME ConfigurationGUI
          Macros
 		 #MessageFacility
 		 cetlib
-         $ENV{XERCES_C_LIB}/libxerces-c.so
 	 ${MF_MESSAGELOGGER}
 )
 

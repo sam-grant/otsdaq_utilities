@@ -1,6 +1,3 @@
-include_directories($ENV{XERCES_C_INC})
-
-
 # Look for the header file.
 find_path(XSD_INCLUDE_DIR NAMES xsd/cxx/config.hxx)
 mark_as_advanced(XSD_INCLUDE_DIR)
@@ -46,7 +43,6 @@ cet_make( LIBRARY_NAME ECLWriter
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
-    $ENV{XERCES_C_LIB}/libxerces-c.so
     crypto
     ${CURL_LIBRARIES}
 	)

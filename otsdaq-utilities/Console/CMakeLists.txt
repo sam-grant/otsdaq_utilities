@@ -18,7 +18,6 @@ cet_make(LIBRARY_NAME Console
 		 WebUsersUtilities
 #		 MessageFacility
 		 NetworkUtilities
-         $ENV{XERCES_C_LIB}/libxerces-c.so
 )
 
 install_headers()
