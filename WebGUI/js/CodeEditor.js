@@ -5436,7 +5436,7 @@ CodeEditor.create = function() {
 		
 		if(_fileNameEditing[forPrimary]) return;
 		
-		var el = document.getElementById("fileRenameButton" + forPrimary);
+		var el = document.getElementById("fileButtonContainerShowHide" + forPrimary);
 		el.style.display = "block";
 		
 		window.clearTimeout(_fileNameMouseMoveTimerHandle);
@@ -5446,7 +5446,7 @@ CodeEditor.create = function() {
 		_fileNameMouseMoveTimerHandle = window.setTimeout(
 				function()
 			{
-				el.style.display = "none";
+				//el.style.display = "none";
 			} //end mouse move timeout handler
 			,1000);
 		
@@ -5462,7 +5462,7 @@ CodeEditor.create = function() {
 		_fileNameEditing[forPrimary] = true;
 		
 		//hide edit button
-		document.getElementById("fileRenameButton" + forPrimary).style.display = "none";
+		document.getElementById("fileButtonContainerShowHide" + forPrimary).style.display = "none";
 		
 		
 		console.log("startEditFileName " + forPrimary);
@@ -6295,7 +6295,20 @@ CodeEditor.create = function() {
 		//add rename button		
 		str += htmlOpen("div", //this is place holder, that keeps height spacing
 			{
-				"class":"fileRenameButton",
+				"class":"fileButtonContainer",
+				"id":"fileButtonContainer" + forPrimary,
+				
+			},0 /*innerHTML*/, false /*doCloseTag*/);		
+		str += htmlOpen("div", //this is el that gets hide/show toggle
+			{
+				"class":"fileButtonContainerShowHide",
+				"id":"fileButtonContainerShowHide" + forPrimary,
+				
+			},0 /*innerHTML*/, false /*doCloseTag*/);		
+		str += htmlOpen("div", 
+			{
+				"class":"fileButton",
+				"id":"fileRenameButton" + forPrimary,
 				"onmousemove": 
 				"event.stopPropagation(); " +
 				"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
@@ -6304,13 +6317,29 @@ CodeEditor.create = function() {
 				"onclick":
 				"event.stopPropagation(); " + 
 				"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
-			},0 /*innerHTML*/, false /*doCloseTag*/);
+			},0 /*innerHTML*/, true /*doCloseTag*/);
 		str += htmlOpen("div", //this is el that gets hide/show toggle
 			{
-				"class":"fileRenameButton",
-				"id":"fileRenameButton" + forPrimary,
-			},0 /*innerHTML*/, true /*doCloseTag*/);
-		str += "</div>"; //end fileRenameButton
+				"class":"fileButton",
+				"id":"fileDownloadButton" + forPrimary,
+			},
+			//make download arrow
+			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; margin-top: 1px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
+			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(202, 204, 210);'></div>" +
+			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
+			/*innerHTML*/, true /*doCloseTag*/);
+		str += htmlOpen("div", //this is el that gets hide/show toggle
+			{
+				"class":"fileButton",
+				"id":"fileUploadButton" + forPrimary,
+			},
+			//make upload arrow
+			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 8px solid rgb(202, 204, 210);'></div>" +
+			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
+			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 3px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
+			/*innerHTML*/, true /*doCloseTag*/);
+		str += "</div>"; //end fileButtonContainerShowHide
+		str += "</div>"; //end fileButtonContainer
 		
 		str += htmlClearDiv();
 		

@@ -5811,7 +5811,7 @@ try
 					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
 					row, col);
 
-			col = configView->findCol("VersionAliasId");
+			col = configView->getColUID();
 			configView->setValue(memberPair.first.substr(
 					0,memberPair.first.rfind("Configuration")) +
 					versionAlias, row, col);

@@ -129,19 +129,24 @@
 			height: 				5px;
 			margin: 				-7px 0px 0px 13px;
 		}
-		.fileRenameButton {
-			width: 					26px;
+		.fileButtonContainer {
+			width: 					84px;
 			height:					26px;
-			cursor:					pointer;
 			margin:					8px 0 -3px 0;
 		}		
-		.fileRenameButton:active {			
+		.fileButtonContainerShowHide {
+			display:				none;
+		}
+		.fileButton {			
+			cursor:					pointer;
+			float:					left;
+		}
+		.fileButton:active {			
 			-webkit-transform: 		translateY(.1em);
 			-moz-transform: 		translateY(.1em);
 			transform: 				translateY(.1em);
 		}
 		#fileRenameButton0,#fileRenameButton1 {
-			display:				none;
 			background-image: 		url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEdit.png);
 			width: 					24px;
 			height: 				20px;
@@ -149,7 +154,7 @@
 		}
 		#fileRenameButton0:hover ,#fileRenameButton1:hover  {
 			background-image: 	url(/WebPath/images/windowContentImages/ConfigurationGUI-pencilEditHover.png);			
-		}	
+		}
 		.ConfigurationAPI-popUpDialog-preloadImage {			
 			width: 				24px;
 			height: 			20px;
@@ -163,9 +168,6 @@
 		
 		
 		.fileRenameButtonLeft {
-
-			
-			
 			border:					1px solid rgb(202, 204, 210);
 			border-radius:			2px;
 			float: 					left;
@@ -181,6 +183,25 @@
 			height: 				21px;
 			margin: 				-18px 3px 0px 5px;
 		}
+		
+
+		#fileDownloadButton0,#fileDownloadButton1 {
+			width: 					24px;
+			height: 				20px;
+			border: 				0;
+		}
+		#fileUploadButton0,#fileUploadButton1 {	
+			width: 					24px;
+			height: 				20px;
+			border: 				0;
+		}
+		.fileButton:hover .fileDownloadButtonBgChild {
+			background-color: 		red !important;			
+		}	
+		.fileButton:hover .fileDownloadButtonBorderChild {
+			border-top-color: 		red !important;	
+			border-bottom-color: 	red !important;	
+		}	
 		
 				
 		.textEditor {

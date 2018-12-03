@@ -341,7 +341,7 @@ Debug.errorPop = function(err,severity) {
 			/////////////
 			function localDebugKeyDownListener(e)
 			{
-				console.log("Debug keydown e=" + e.keyCode);
+				//console.log("Debug keydown e=" + e.keyCode);
 				if(e.keyCode == 27) //ESCAPE key, close popup
 				{
 					e.preventDefault();
