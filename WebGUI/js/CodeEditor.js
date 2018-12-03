@@ -863,7 +863,12 @@ CodeEditor.create = function() {
 						function()
 						{
 					Debug.log("body removed string hover");
-					_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);
+					try
+					{
+						_fileStringHoverEl.parentNode.removeChild(_fileStringHoverEl);
+					}
+					catch(e)
+					{} //ignore error
 						}, 1000 /* 1 sec*/);
 			}
 
