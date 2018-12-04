@@ -824,9 +824,9 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				for(var i=0;i<errArr.length;++i)
 				{
 					errStr += (i?"\n\n":"") + errArr[i];
-				
-					Debug.log("Initial request location: " + callerLocation +
-							"\nError: " + errArr[i],
+
+					console.log("Initial request location: \n" + callerLocation);
+					Debug.log("Error: " + errArr[i],
 						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
 								Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
 								Debug.HIGH_PRIORITY);
@@ -836,9 +836,11 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
 
-				Debug.log("Initial request location: " + callerLocation +
-						"\nError: " + errStr,
-						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
+				console.log("Initial request location: \n" + callerLocation);
+				Debug.log("Error: " + errStr,
+						(callHandlerOnErr || 
+								ignoreSystemBlock || 
+								requestURL.indexOf("TooltipRequest?") >= 0)? 
 						Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
 						Debug.HIGH_PRIORITY);
 				//alert(errStr);
