@@ -4,26 +4,12 @@
 # that script attempts to install an existing repo
 # this script attempts to create a new repo directory.. check-in handling is not handled
 
-if ! [ -e setup_ots.sh ]; then
-  echo "You must run this script from an OTSDAQ installation directory!"
-  exit 1
-fi
+#first run setup_ots.sh
+# usage: ./create_ots_repo.sh <repo_name>
+#
+# use underscores in name
 
 Base=$PWD
-#commenting out unique filename generation
-# no need to keep more than one past log for standard users 
-#alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
-#stderr_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4"_stderr.script"}' )
-#exec  > >(tee "$Base/log/$alloutput_file")
-mkdir "$Base/script_log"  &>/dev/null #hide output
-rm "$Base/script_log/$(basename $0).script"
-rm "$Base/script_log/$(basename $0)_stderr.script"
-exec  > >(tee "$Base/script_log/$(basename $0).script")
-#exec 2> >(tee "$Base/script_log/$stderr_file")
-exec 2> >(tee "$Base/script_log/$(basename $0)_stderr.script")
-
-source setup_ots.sh
-
 
 #Steps:
 #	ask user for repo name
@@ -36,73 +22,81 @@ if [ "x$repo" == "x" ];then
   exit
 fi
 
-echo "repo=$repo"
+repoName=${repo//_/-}
 
-
-
-repoFullName=""
-repoInstallDir=""
-writeAccess=0
-
-
-if [ "$repo" == "prep" ]; then
-  echo "installing $repo..."
-  repoFullName="prepmodernization"
-  repoInstallDir="otsdaq_prepmodernization"
-elif [ "$repo" == "prep-dev" ]; then
-  echo "installing $repo..."
-  repoFullName="prepmodernization"
-  repoInstallDir="otsdaq_prepmodernization"
-  writeAccess=1
-else  
-  kdialog --sorry "Repository name $repo was not recognized. Please enter a valid repository name."
-  exit
-fi
-
-
-kdialog --yesno "Are you sure you want to install the $repo repository?"
-if [[ $? -eq 1 ]];then
-  kdialog --msgbox "User decided not to proceed. Exiting."
-  exit
-fi
-
-echo
-echo
-
-#at this point, we are going for it
-#mrb install
-#run tools/ots_repo_install.sh
+echo "repo = $repo"
+echo "repoName = $repoName"
 
 # download tutorial database
 echo 
 echo "*****************************************************"
-echo "Running mrb install.."
+echo "Downloading template..."
 echo
 
-if [[ $writeAccess -eq 1 ]];then
-  echo "...with Write access."
-  echo "mrb gitCheckout -d ${repoInstallDir} ssh://p-prepmodernization@cdcvs.fnal.gov/cvs/projects/${repoFullName}"
-  cd $MRB_SOURCE # this is the 'srcs' directory that will be set in the course of setting up OTS-DAQ
-  mrb gitCheckout -d ${repoInstallDir} ssh://p-prepmodernization@cdcvs.fnal.gov/cvs/projects/${repoFullName}
-else
-  echo "...with Read access."
-  echo "mrb gitCheckout -d ${repoInstallDir} http://cdcvs.fnal.gov/projects/${repoFullName}"
-  cd $MRB_SOURCE # this is the 'srcs' directory that will be set in the course of setting up OTS-DAQ
-  mrb gitCheckout -d ${repoInstallDir} http://cdcvs.fnal.gov/projects/${repoFullName}
-fi
+cd $MRB_SOURCE # this is the 'srcs' directory that will be set in the course of setting up OTS-DAQ
 
-echo
-echo "running the repo specific install script..."
-echo
+echo "mrb gitCheckout -d ${repo} http://cdcvs.fnal.gov/projects/otsdaq-demo"
+mrb gitCheckout -d ${repo} http://cdcvs.fnal.gov/projects/otsdaq-demo
+
+echo "mrb uc"
+mrb uc
+
+
+echo 
+echo "*****************************************************"
+echo "Modifying template..."
 echo
 
-echo "${MRB_SOURCE}/${repoInstallDir}/tools/install_ots_repo.sh"
-chmod 755 ${MRB_SOURCE}/${repoInstallDir}/tools/install_ots_repo.sh
-(cd $Base; ${MRB_SOURCE}/${repoInstallDir}/tools/install_ots_repo.sh) #run script as if in base directory
+#kill repository actions
+echo "rm -rf ${MRB_SOURCE}/otsdaq-demo/.git"
+rm -rf ${MRB_SOURCE}/otsdaq-demo/.git
 
+echo "sed -i s/otsdaq-demo/${repoName}/g                            ${repo}/CMakeLists.txt"
+sed -i s/otsdaq-demo/${repoName}/g 	${repo}/CMakeLists.txt
+echo "sed -i s/add_subdirectory(tools)/#add_subdirectory(tools)/g   ${repo}/CMakeLists.txt"
+sed -i s/add_subdirectory\(tools\)/#add_subdirectory\(tools\)/g 		${repo}/CMakeLists.txt
+echo "sed -i s/add_subdirectory(test)/#add_subdirectory(test)/g     ${repo}/CMakeLists.txt"
+sed -i s/add_subdirectory\(test\)/#add_subdirectory\(test\)/g 		${repo}/CMakeLists.txt
+
+echo "sed -i s/otsdaq_demo/${repo}/g                                ${repo}/ups/product_deps"
+sed -i s/otsdaq_demo/${repo}/g 		${repo}/ups/product_deps
+
+echo "mv ${repo}/otsdaq-demo ${repo}/${repoName}"
+mv ${repo}/otsdaq-demo ${repo}/${repoName} 
+
+echo "sed -i s/add_subdirectory/#add_subdirectory/g                 ${repo}/${repoName}/CMakeLists.txt"
+sed -i s/add_subdirectory/#add_subdirectory/g 		${repo}/${repoName}/CMakeLists.txt
+
+
+
+cd ${Base} #return to starting directory
+
+
+echo 
+echo "*****************************************************"
+echo "Wrapping up..."
+echo
+echo
+
+echo "Now, if you have an empty repository and want to fill it, do this:"
+echo "  download your repo with write access (make sure to use a different temporary folder name):"
+echo "    mrb gitCheckout -d <folder name> ssh://p-<main-repo-name>@cdcvs.fnal.gov/cvs/projects/<target-repo-name>  #target and main are often the same" 
+echo 
+echo "... then you can copy the .git folder from your repo into ${repo}"
+echo
+echo "...   cp -r <folder name>/.git ${repo}/.git"
+echo "...   rm -rf <folder name> # you do not need temporary folder anymore"
+echo "...   cd ${repo}/; git status  # to check status from your repo perspective"
+echo 
+echo "...   mrb uc #to clean up top level CMake based on resulting folders in srcs"
+echo
+echo "... and you will need to uncomment any add_subdirectory lines that you want to revive."
+echo
+echo "p.s. You may need to do... mrb z"
 
 echo
 echo
 echo "Complete!"
-kdialog --msgbox "$repo repository installation complete!"  
+
+
 
