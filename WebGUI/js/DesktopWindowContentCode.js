@@ -1698,7 +1698,8 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		if(i >= 0)
 			search = search.substr(0,i);
 		//only add & if there are other parameters
-		if(search.length && search[search.length-1] != '?')
+		if(search.length && search[search.length-1] != '?'
+				&& search[search.length-1] != '&')
 			search += '&';
 		url += search + str;
 	}
