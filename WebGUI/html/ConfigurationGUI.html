@@ -747,16 +747,29 @@
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleOtsRelaunchResponse(req,isWiz) {
+			if(req) //if supervisor is killed, then req will be 0, which is a good sign of progress
+			{ 	//else check error response
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+			}
+
+			var countDown = 10;
 			if(isWiz)
 				Debug.log("Attempting to restart your system in Wiz Mode... " +
-					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
+			{
+				countDown = 20;
 				Debug.log("Attempting to restart your system in Normal Mode... " +
-					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
+			}
 			
-			var countDown = 10;
 			localCountDown();
 			//=================
 			function localCountDown()
@@ -14604,9 +14617,12 @@
 					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
 							"",
 							handleOtsRelaunchResponse,
-							0, //handler param
-							0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-							true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+							true /*for wiz mode, handler param*/,
+							0 /*progressHandler*/,
+							true /*callHandlerOnErr*/,
+							true /*showLoadingOverlay*/,
+							true /*targetSupervisor*/, 
+							true /*ignoreSystemBlock*/);
 				} //end localDelayedLaunch		
 
 					},0,"#efeaea",0,"#770000");
@@ -14633,9 +14649,12 @@
 					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
 							"",
 							handleOtsRelaunchResponse,
-							0, //handler param
-							0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-							true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+							0 /*handler param*/,
+							0 /*progressHandler*/,
+							true /*callHandlerOnErr*/,
+							true /*showLoadingOverlay*/,
+							true /*targetSupervisor*/, 
+							true /*ignoreSystemBlock*/);
 				} //end localDelayedLaunch		
 				
 					},0,"#efeaea",0,"#770000");
