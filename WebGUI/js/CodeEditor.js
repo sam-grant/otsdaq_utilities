@@ -365,15 +365,7 @@ CodeEditor.create = function() {
 				"&path=/"
 				, "" /* data */,
 				function(req)
-			{
-				
-				var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-					return;
-				}
-				
+			{	
 				var fileSplit; 
 				
 				//console.log("getDirectoryContent",req);
@@ -430,7 +422,7 @@ CodeEditor.create = function() {
 				
 				_activePaneIsPrimary = 1; //default active pane to primary
 				
-			}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+			});
 		
 		
 	} //end init()
@@ -1153,15 +1145,7 @@ CodeEditor.create = function() {
 					"&ext=" + _fileExtension[forPrimary]				
 					, "content=" + textObj.text /* data */,
 					function(req)
-				{
-					
-					var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-					if(err) 
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-						return;
-					}
-					
+				{					
 					Debug.log("Successfully saved " +
 							_filePath[forPrimary] + "." + 
 							_fileExtension[forPrimary],quiet?Debug.LOW_PRIORITY:Debug.INFO_PRIORITY);
@@ -1188,7 +1172,8 @@ CodeEditor.create = function() {
 							textObj,
 							true /*ignoreTimeDelta*/);
 					
-				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}); // end codeEditor saveFileContent handler
+			
 		} //end localDoIt()
 	} //end saveFile()
 	
@@ -1220,21 +1205,13 @@ CodeEditor.create = function() {
 					, "" /* data */,
 					function(req)
 				{
-					
-					var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-					if(err) 
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-						return;
-					}
-					
 					Debug.log("Build was launched! Check " +
 							"<a onclick='DesktopContent.openNewBrowserTab(" +
 							"\"Console\");' " +
 							"title='Click to open the Console web app in a new browser tab.'>" +
 							"console</a> for result!", Debug.INFO_PRIORITY);
 					
-				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}); //end codeEditor build handler
 		} //end localDoIt()
 		
 	} //end build()
@@ -1623,19 +1600,11 @@ CodeEditor.create = function() {
 				"&path=" + path
 				, "" /* data */,
 				function(req)
-			{
-				
-				var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-					return;
-				}
-				
+			{				
 				CodeEditor.editor.handleDirectoryContent(forPrimary, req);			
 				CodeEditor.editor.toggleDirectoryNav(forPrimary,1 /*set nav mode*/);
 				
-			}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+			}); // end codeEditor getDirectoryContent handler
 	} //end openDirectory()
 	
 	//=====================================================================================
@@ -1877,7 +1846,8 @@ CodeEditor.create = function() {
 					}
 					console.log(DesktopContent._loadBox.style.display);
 										
-				}, 0 /*reqParam*/, 0 /*progressHandler*/, 0 /*callHandlerOnErr*/, 1 /*showLoadingOverlay*/);
+				}, //end codeEditor getFileContent handler
+				0 /*reqParam*/, 0 /*progressHandler*/, 1 /*callHandlerOnErr*/);
 		} //end localDoIt()
 	} //end openFile()
 	

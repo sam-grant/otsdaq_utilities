@@ -66,23 +66,18 @@
 	
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getFEMacroList", "", 
-					function (req) {				
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
+					function (req) 
+					{			
 				
 				var str = "";
-				
+
 				//var user = DesktopContent.getXMLValue(req,"UserDisplayName");
 				//Debug.log("user = " + user);
-				
+
 				var macroVar;
 				var macroInArgs, macroOutArgs;
 				var FEMACROS_HEADER_FIELDS = 4;
-				
+
 				/////////////////////
 				//FE Macros				
 				var feMacros = req.responseXML.getElementsByTagName("FEMacros");
@@ -94,7 +89,7 @@
 					macroVar = feMacros[i].getAttribute("value");
 					Debug.log(macroVar);
 					macroVar = macroVar.split(":");
-					
+
 					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so display name
 						str += "<b>Type:" + macroVar[2] + 
 						" Supervisor(" + macroVar[0] + ":" + macroVar[1] + 
@@ -111,7 +106,7 @@
 								"<div style='margin-left:60px;'>";
 						c += 2;
 						var inputArgs = [];
-						
+
 						//create input text boxes
 						if(macroVar[c]|0)
 						{							
@@ -123,27 +118,27 @@
 								str += macroVar[c+1+j];
 								str += "</td><td>";
 								str +=
-									" = <input type='text' id='" + 
-									macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
-									"' class='" + 
-									macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-in" +
-									"'value='Default'>";
+										" = <input type='text' id='" + 
+										macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-" + macroVar[c+1+j] +
+										"' class='" + 
+										macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-in" +
+										"'value='Default'>";
 								str += "</td></tr>";
 							}
 							str += "</table>";
 						}
 						else
 							str += " No inputs.";
-						
+
 						str += "</div>";	
 
 						c += 1 + (macroVar[c]|0);
-						
+
 						str += "&nbsp;&nbsp;&nbsp; Outputs:" +
 								"<div id='" +
 								macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-out" +								
 								"' style='margin-left:60px;'>";
-						
+
 						//create output place holders
 						if(macroVar[c]|0)
 						{		
@@ -152,17 +147,17 @@
 						}
 						else
 							str += " No outputs.<br>";
-						
+
 						str += "</div>";
 
 						//create hidden div that will have output args persistently
 						str += "<div id='" +
-							macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-outArgs" +								
-							"' style='display:none'>";
-						
+								macroVar[1] + "-" + macroVar[3] + "-" + macroName + "-outArgs" +								
+								"' style='display:none'>";
+
 						for(var j=0;j<(macroVar[c]|0);++j)
 							str += macroVar[c+1+j] + "<br>";
-						
+
 						str += "</div>";
 
 						str += "<a onclick='callFEMacro(\"" +					
@@ -177,22 +172,22 @@
 							str += "\"" + inputArgs[j] + "\"";
 						}
 						str += "])'>Run</a>";
-								
+
 						str += "<br><br>";
 						c += 1 + (macroVar[c]|0);
 					}
-					
+
 					if(macroVar.length > FEMACROS_HEADER_FIELDS) //at least one function, so close div
 						str += "</div>"; 
 				}
 				str += "<br><br>";
-				
-				
+
+
 				/////////////////////
 				//Public Macros
 				str += "<b>Public Macros</b>";	
 				str += "<br><br>";	
-				
+
 				var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
 				var namesOfAllMacros = [];
 				if (hugeStringOfPublicMacros && hugeStringOfPublicMacros.length > 0)
@@ -221,7 +216,7 @@
 						{
 							var splitArr = arr[j].split(":");
 							while(splitArr.length<4) splitArr.push(""); //force 4 parameters
-							
+
 							if(splitArr[2].length && //check if variable name
 									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
 								macroVariableNames[splitArr[2]] = 1;
@@ -229,7 +224,7 @@
 									(splitArr[3][0] == '$' || isNaN("0x"+splitArr[3])))
 								macroVariableNames[splitArr[3]] = 1;
 						}
-						
+
 						str += "<div style='margin-left:30px;'>";
 						for(var varName in macroVariableNames)
 						{
@@ -246,17 +241,17 @@
 				}
 				else 
 					str += "No Public Macros found.";
-				
-				
-				
-				
-				
+
+
+
+
+
 				/////////////////////
 				//User Macros
 				str += "<b>User Macros</b>";	
 				str += "<br><br>";	
 				var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
-				
+
 				if (hugeStringOfMacros && hugeStringOfMacros.length > 0)
 				{
 					var macrosArray = hugeStringOfMacros.split("@");
@@ -268,7 +263,7 @@
 						console.log(arr);
 						namesOfAllMacros.push(arr.name);
 						str += arr.name + "<br>";
-						
+
 						arr = arr.sequence.split(",");
 						var macroVariableNames = []; //holds unique names for the variable names in macro
 						//for each command get variable names
@@ -276,7 +271,7 @@
 						{
 							var splitArr = arr[j].split(":");
 							while(splitArr.length<4) splitArr.push(""); //force 4 parameters
-							
+
 							if(splitArr[2].length && //check if variable name
 									(splitArr[2][0] == '$' || isNaN("0x"+splitArr[2])))
 								macroVariableNames[splitArr[2]] = 1;
@@ -284,7 +279,7 @@
 									(splitArr[3][0] == '$' || isNaN("0x"+splitArr[3])))
 								macroVariableNames[splitArr[3]] = 1;
 						}
-						
+
 						str += "<div style='margin-left:30px;'>";
 						for(var varName in macroVariableNames)
 						{
@@ -297,7 +292,7 @@
 									"<br>";
 						}
 						str += "</div><br><br>";
-						
+
 						//						var macroString = arr.sequence.split(",");
 						//						var forDisplay = []; //getting rid of the first element (macroIndex) for all and the last ";" of reads for display 
 						//						for (var j = 0; j < macroString.length; j++) //because users don't need to see that
@@ -320,15 +315,14 @@
 					str += "No User Macros found.";	
 
 				Debug.log(namesOfAllMacros);
-				
+
 				// done, finish up
-				
+
 				var el = document.getElementById("display");
 				el.innerHTML = str;
-						
-			}
-			);
-		}
+
+					}); //end getFEMacroList handler
+		} //end init()
 	
 		//callFEMacro ~~
 		function callFEMacro(feSupervisorID, feUID, macroName, inputArgs)
@@ -377,13 +371,7 @@
 					"&feUID=" + feUID +
 					"&macroName=" + macroName
 					, postData, 
-					function (req) {	
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
+					function (req) {
 				
 				var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
 				var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");

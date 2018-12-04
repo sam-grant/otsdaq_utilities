@@ -38,8 +38,8 @@
 		//saveMacro
 		//hidePopupSaveMacro
 		//hidePopupEditMacro
-		//saveAsMacro
-		//createMacroHandler
+		//saveAsMacro()
+		//createMacroHandler(req,macroName)
 		//runMacro
 		//loadExistingMacros
 		//loadUserHistory
@@ -53,7 +53,7 @@
 		//editCommands
 		//deleteMacroHandler
 		//saveChangedMacro
-		//saveChangedMacroHandler
+		//saveChangedMacroHandler(req,macroName)
 		//reloadMacroSequence
 		//setFieldToVariable
 		//dealWithVariables
@@ -204,6 +204,7 @@
 	function FElistHandler(req) 
 	{
 		Debug.log("FElistHandler() was called. ");//Req: " + req.responseText);
+		
 	    FEELEMENTS = req.responseXML.getElementsByTagName("FE");
 	    var listoffecs = document.getElementById('list');  
 	    if(FEELEMENTS.length === 0)
@@ -281,6 +282,7 @@
 	function getPermissionHandler(req)
 	{
 		Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
+				
 		userPermission = DesktopContent.getXMLValue(req, "Permission");
 		console.log("User Permission: " + userPermission);
 	}
@@ -451,7 +453,8 @@
     
     function writeHandler(req)
 	{
-		Debug.log("writeHandler() was called.");// Req: ");//" + req.responseText);
+		Debug.log("writeHandler() was called.");// Req: ");//" + req.responseText);	
+						
 		var runningPercentageEl = document.getElementById('macroRunningPercentage');
 		var barEl = document.getElementById('macroRunningBar');
 		barWidth += barIncrement;
@@ -463,6 +466,7 @@
     function readHandler(req)
 	{
 		Debug.log("readHandler() was called.");// Req: " + req.responseText);
+		
     	var addressFormatStr = document.getElementById("addressFormat").value;
     	var dataFormatStr = document.getElementById("dataFormat").value;
     	var extractBitField = document.getElementById("enableReadBitField").checked && !isMacroRunning;
@@ -903,6 +907,7 @@
     function clearHistoryHandler(req)
 	{
 		Debug.log("clearHistoryHandler() was called.");// Req: " + req.responseText);
+		
 		loadUserHistory();
 	}
     
@@ -979,12 +984,12 @@
 							"&Sequence=" + tempString +
 							"&Time=" + Date().toString() +
 							"&Notes=" + encodeURIComponent(macroNotes),
-							saveChangedMacroHandler);
-    				hideSmallPopup(this);
-    				loadExistingMacros();
+							saveChangedMacroHandler /*handler*/,
+							macroName /*parameter*/);
+    				
+    				hideSmallPopup(this);    				
     				hidePopupSaveMacro();   
-    				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
-    				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
+    				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight;
     			};
         	}
         	else
@@ -997,19 +1002,23 @@
 						"&Sequence=" + tempString +
 						"&Time=" + Date().toString() +
 						"&Notes=" + encodeURIComponent(macroNotes),
-						createMacroHandler);		
-				loadExistingMacros();
+						createMacroHandler /*handler*/,
+						macroName /*parameter*/);	
+				
 				hidePopupSaveMacro(); 
-				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight; 
-				Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
+				macroLibEl.scrollTop = macroLibEl.scrollHeight - macroLibEl.clientHeight;				
         	}
     	}
-    }
+    } //end saveAsMacro() 
     
-    function createMacroHandler(req)
+    function createMacroHandler(req,macroName)
 	{
-		Debug.log("createMacroHandler() was called.");// Req: " + req.responseText);
-	}
+		Debug.log("createMacroHandler() was called for " + macroName);// Req: " + req.responseText);
+				
+		Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
+		loadExistingMacros();
+				
+	} //end createMacroHandler()
     
     function runMacro(stringOfCommands,macroName)
     {
@@ -1139,6 +1148,7 @@
     function loadingMacrosHandler(req)
     {
     	Debug.log("loadingMacrosHandler() was called.");// Req: " + req.responseText);
+    	
     	var hugeStringOfMacros = DesktopContent.getXMLValue(req,"returnMacroStr");
     	var hugeStringOfPublicMacros = DesktopContent.getXMLValue(req,"returnPublicStr");
     	namesOfAllMacros = [];
@@ -1207,6 +1217,7 @@
     function loadingHistHandler(req)
     {
     	Debug.log("loadingHistHandler() was called.");// Req: " + req.responseText);
+    	    	
 		var hugeStringOfHistory = DesktopContent.getXMLValue(req,"returnHistStr");
 		var contentEl = document.getElementById('historyContent');
 		if ( !hugeStringOfHistory ) return; //this happens when history doesn't exist
@@ -1652,14 +1663,15 @@
     					" Please check the logs to understand the error.",
 						Debug.HIGH_PRIORITY);
 
-				}); //end export FE Macro request handling
+				}, //end export FE Macro request handling
+				0 /*reqParam*/, 0 /*progressHandler*/, true /*callHandlerOnErr*/);
 
     } //end exportFEMacro()
     
     function exportMacroHandler(req)
    	{
    		Debug.log("exportMacroHandler() was called. ");//Req: " + req.responseText);   		
-
+    	
 		var exportFile = DesktopContent.getXMLValue(req,"ExportFile");
 		if(exportFile)
 			Debug.log("Your Macro was succesfully exported!" +
@@ -1685,10 +1697,12 @@
     function deleteMacroHandler(req)
 	{
 		Debug.log("deleteMacroHandler() was called. ");//Req: " + req.responseText);
+		
+		loadExistingMacros();  
+				
 		var deletedMacroName = DesktopContent.getXMLValue(req,"deletedMacroName");
 		var reminderEl = document.getElementById('reminder');
-		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);
-		loadExistingMacros();  
+		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);		
 	}
     
     function saveChangedMacro()
@@ -1755,9 +1769,11 @@
 		}
     }
     
-    function saveChangedMacroHandler()
+    function saveChangedMacroHandler(req,macroName)
     {
     	Debug.log("saveChangedMacroHandler() was called.");
+		
+		Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
 		loadExistingMacros();  
     }
     

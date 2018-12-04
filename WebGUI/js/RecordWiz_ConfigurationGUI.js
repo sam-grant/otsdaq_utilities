@@ -1643,13 +1643,6 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 									"&modifiedTables=" + modifiedTablesListStr, //end post data
 									function(req)
 									{
-								var err = DesktopContent.getXMLValue(req,"Error");
-								if(err) 
-								{
-									Debug.log(err,Debug.HIGH_PRIORITY);
-									return;
-								}
-
 
 								var tree = DesktopContent.getXMLNode(req,"tree");
 								console.log(tree);
@@ -1708,9 +1701,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 								}
 
 
-									}, //handler
-									0, //handler param
-									0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+									}); //end getTreeView handler									
 
 						}
 					} //end localPromptAndHandleRecordDeletion()

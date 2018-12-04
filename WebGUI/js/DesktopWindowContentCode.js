@@ -31,8 +31,31 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			showLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
-//			... to make server request, returnHandler is called with response in req and reqParam if user defined
+//			doNoShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//
+//			... here is an example request:
+//
+//			DesktopContent.XMLHttpRequest("Request?" +
+//
+//					//get data
+//					"RequestType=exportFEMacro" + 
+//					"&MacroName=" + macroName +
+//					"&PluginName=" + targetFEPluginName, 
+//
+//					//post data
+//					"MacroSequence=" + macroSequence + 
+//					"&MacroNotes=" + encodeURIComponent(macroNotes),
+//
+//					//request handler
+//					function(req)
+//					{
+//						//..do something on successful response
+//						Debug.log("Success!",Debug.INFO_PRIORITY);
+//					}, //end request handler
+//					0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+//					false /*doNoShowLoadingOverlay*/);  //end XMLHttpRequest() call
+//
+//			... after a server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
 //					function returnHandler(req,reqParam,errStr)
@@ -95,12 +118,13 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor, ignoreSystemBlock)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay, targetSupervisor, ignoreSystemBlock)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.getXMLChildren(req, nodeName)
+//	DesktopContent.getXMLRequestErrors(req)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
 //	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
@@ -601,7 +625,7 @@ DesktopContent.hideLoading = function()	{
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay,
+		reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay,
 		targetSupervisor, ignoreSystemBlock) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
@@ -609,6 +633,16 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var errStr = "";
 	var req;
 	
+	var callerLocation = "";
+	try
+	{
+		callerLocation = (new Error).stack.split("\n")[2];
+		var tmpCallerLocation = callerLocation.slice(0,callerLocation.indexOf(' ('));
+		callerLocation = callerLocation.slice(tmpCallerLocation.length+2,
+				callerLocation.length-1);
+	}
+	catch(e) {} //ignore error
+			
 	
 	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
 			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
@@ -669,7 +703,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
 			
-			if(showLoadingOverlay)
+			if(!doNoShowLoadingOverlay)
 				DesktopContent.hideLoading();
 			
 			if(req.status==200)
@@ -782,11 +816,28 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 				if(found) return; //do not call handler for failed server for user code multiple times..
 			}
-
-			if(errStr != "")
+			
+			//if not calling handler on error, then get and display errors for user
+			var errArr = callHandlerOnErr?[]:DesktopContent.getXMLRequestErrors(req);
+			if(errArr.length && !callHandlerOnErr)
+			{
+				for(var i=0;i<errArr.length;++i)
+				{
+					errStr += (i?"\n\n":"") + errArr[i];
+				
+					Debug.log("Initial request location: " + callerLocation +
+							"\nError: " + errArr[i],
+						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
+								Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
+								Debug.HIGH_PRIORITY);
+				}
+			}
+			else if(errStr != "")
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
-				Debug.log("Error: " + errStr,
+
+				Debug.log("Initial request location: " + callerLocation +
+						"\nError: " + errStr,
 						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
 						Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
 						Debug.HIGH_PRIORITY);
@@ -838,7 +889,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	
 
-	if(showLoadingOverlay)
+	if(!doNoShowLoadingOverlay)
 		DesktopContent.showLoading();
 	
 	
@@ -860,6 +911,21 @@ DesktopContent.checkCookieCodeRace = function() {
 		DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
 	}
 }
+
+//=====================================================================================
+//returns an array of error strings from xml request response
+DesktopContent.getXMLRequestErrors = function(req) {
+	//make sure to give an error if the response is bad
+	if(!req || !req.responseXML) 
+		return ["Unknown error occured " +
+				"(XML response may have been illegal)!"];
+	
+	var errNodes = DesktopContent.getXMLChildren(req,"Error");
+	var errArr = [];
+	for(var i=0;i<errNodes.length;++i)
+		errArr.push(errNodes[i].getAttribute("value"));
+	return errArr;
+} //end getXMLRequestErrors()
 
 //=====================================================================================
 //returns xml entry value for an attribute
@@ -1009,7 +1075,7 @@ DesktopContent.tooltip = function(id,tip) {
 			, function(req) {
 
 		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
-		Debug.log("showTooltip: " + showTooltip);
+		//Debug.log("showTooltip: " + showTooltip);
 		
 		if(showTooltip|0)
 		{			

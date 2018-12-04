@@ -2024,10 +2024,7 @@
 					console.log("_configGroupAliases",_configGroupAliases);
 	
 	
-						}, //handler
-						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-						false /*targetSupervisor*/);
+						}); //end getGroupAliases handler
 				
 				
 				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
@@ -2053,10 +2050,8 @@
 					
 					console.log("_configGroups",_configGroups);
 					
-						}, //handler
-						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-						false /*targetSupervisor*/);
+						}); //end getConfigurationGroups handler
+						
 			} //end localGetGroups()
 			localGetGroups();
 			
@@ -2084,7 +2079,7 @@
 
 						}, //handler
 						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						0,false,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 						true /*targetSupervisor*/);
 			} //end localGetNamesOfFSMs()
 			localGetNamesOfFSMs(); 
@@ -4087,8 +4082,7 @@
 
 					}, //handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-					false /*targetSupervisor*/);
+					0,true); //progressHandler, callHandlerOnErr
 			
 		}	//end savePlanCommandSequence()
 		
@@ -4164,7 +4158,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end startTargetIterationPlan
 		
@@ -4209,7 +4203,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end pauseTargetIterationPlan
 		
@@ -4244,7 +4238,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end haltTargetIterationPlan
 
@@ -4468,7 +4462,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,true,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end updateIterateStatus
 		

@@ -169,7 +169,10 @@
 			Debug.log("CfgTableEditor init");
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
-					setupTableEditor);
+					setupTableEditor,
+					0 /*handler param*/,
+					0 /*progressHandler*/,
+					true /*callHandlerOnErr*/);
 			DesktopContent.XMLHttpRequest("Request?RequestType=getColumnTypes", "",
 					function(req) {
 
@@ -235,10 +238,8 @@
 									  = dVal;						
 					}
 				}
-				Debug.log("default array = " + _defaultArray);
-				
-			},0,0,0,true  //parameter, progressHandler, callHandlerOnErr, showLoadingOverlay
-			);
+				Debug.log("default array = " + _defaultArray);				
+			});
 			
 			setupEmptyTable();
 
@@ -399,7 +400,11 @@
 				"&allowOverwrite="+allowOverwrite, 
 				"columnCSV=" + data + 
 				"&tableDescription=" + tableDescription +
-				"&columnChoicesCSV=" + colChoicesData, specificConfigRequestHandler, 1);	
+				"&columnChoicesCSV=" + colChoicesData, 
+				specificConfigRequestHandler, 
+				1 /*handler param*/,
+				0 /*progressHandler*/,
+				true /*callHandlerOnErr*/);	
 		}
 		
 
@@ -432,17 +437,13 @@
 				"&configName=" + configName, "",
 				function(req)
 				{
-					var err = DesktopContent.getXMLValue(req,"Error");
-					if(err) 
-					{	
-						Debug.log(err,Debug.HIGH_PRIORITY);
-						return;
-					}
-
 					//on success reload all configurations
 					DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations" +
 							"&refresh=1&allowIllegalColumns=1", "",
-							setupTableEditor);					
+							setupTableEditor,
+							0 /*handler param*/,
+							0 /*progressHandler*/,
+							true /*callHandlerOnErr*/);					
 				} //end of delete handler		
 			);
 		}
@@ -458,7 +459,10 @@
 					"&configName=" + configName + 
 					v, 
 					"", 
-					specificConfigRequestHandler);		
+					specificConfigRequestHandler, 
+					0 /*handler param*/,
+					0 /*progressHandler*/,
+					true /*callHandlerOnErr*/);		
 		}		
 		
 		//setupEmptyTable

@@ -647,7 +647,8 @@
 										handleRefreshConsole,
 										0, //reqParam
 										0, //progressHandler
-										true); //callHandlerOnErr);
+										true /*callHandlerOnErr*/,
+										true /*doNotShowLoadingOverlay*/);
 			}			
 			
 			//handleRefreshConsole ~
@@ -1098,13 +1099,7 @@
 						
 			//handleLoadUserPreferences(req) ~
 			function handleLoadUserPreferences(req) {
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err)
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
-				
+								
 				Debug.log("handleLoadUserPreferences");
 				if(!DesktopContent.getXMLValue(req,"colorIndex") || 
 						DesktopContent.getXMLValue(req,"colorIndex") == "")
