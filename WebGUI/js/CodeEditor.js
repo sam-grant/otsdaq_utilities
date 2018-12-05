@@ -2692,7 +2692,8 @@ CodeEditor.create = function() {
 								var repo = "";
 								if(nameArr[0] != "otsdaq-core")
 								{
-									nameArr[0][i] = '_'; //change - to _									
+									nameArr[0] = nameArr[0].substr(0,i) + '_'
+											+ nameArr[0].substr(i+1); //change - to _									
 								}
 								else
 									nameArr[0] = "otsdaq";

@@ -76,7 +76,7 @@
 			}
 			
 			.winLayoutText {
-				width: 400px;			
+				white-space: nowrap;			
 			}
 			
 			td {
@@ -144,11 +144,12 @@
 		
 		<script>		
 				
-			var _selectedLayout = -1; //hold index of selected layout, if any
+			var _selectedLayout = -2; //hold index of selected layout, if any
 			var _mailbox,_settingsLayoutMailbox; //pass messages to Desktop
 			var _layoutArray,_sysLayoutArray,_accountsArray;
 			var _NUM_USER_LAYOUTS = 3; //has to match the explicit html in body (Changing this number alone will not work,.. there is a lot of hardcoding)
-			var _NUM_SYS_LAYOUTS = 2;  //has to match the explicit html in body	(Changing this number alone will not work,.. there is a lot of hardcoding)		
+			var _NUM_SYS_LAYOUTS = 2;  //has to match the explicit html in body	(Changing this number alone will not work,.. there is a lot of hardcoding)
+			var _NUM_OF_LAYOUT_FIELDS = 8;
 			var _accountFields = ["username","useremail","display_name","permissions","nac"];
 			var _theDeleteIndex = -1;
 			
@@ -272,7 +273,8 @@
 				}
 				
 				//get current settings from server
-				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", "", settingsRequestHandler);				
+				DesktopContent.XMLHttpRequest("Request?RequestType=getSettings&accounts=1", 
+						"", settingsRequestHandler);				
 			}
 			
 			//called to extract color string into form
@@ -290,7 +292,9 @@
 				}
 			}
 			
-			function extractLayoutToForm() {
+			//extractLayoutToForm ~~
+			function extractLayoutToForm() 
+			{
 				var el;
 				for(var i=0;i<_layoutArray.length && i<_NUM_USER_LAYOUTS;++i) //_NUM_USER_LAYOUTS user layouts
 				{
@@ -298,7 +302,8 @@
 					if(_layoutArray[i] == "0") //then unset
 						el.innerHTML = "Currently: no layout set";
 					else
-						el.innerHTML = "Currently: <a href='#' onmouseup='showLayoutText("+(i+1)+",true,event); return false;'>show</a>";		
+						el.innerHTML = "Currently: <a href='#' onmouseup='showLayoutText(" +
+							(i+1) + ",true,event); return false;'>show</a>";		
 				}
 				
 				//if user has privileges _sysLayoutArray is populated
@@ -315,10 +320,11 @@
 					if(_sysLayoutArray[i] == "0") //then unset
 						el.innerHTML = "Currently: no layout set";
 					else
-						el.innerHTML = "Currently: <a href='#' onmouseup='showLayoutText("+(i+1)+",true,event,1); return false;'>show</a>";		
+						el.innerHTML = "Currently: <a href='#' onmouseup='showLayoutText(" +
+							(i+1) + ",true,event,1); return false;'>show</a>";		
 				}
 				
-			}				
+			} //end extractLayoutToForm()			
 
 			//handle request for current settings
 			function settingsRequestHandler(req) {
@@ -344,11 +350,35 @@
 				
 				//get layout array
 				_layoutArray = DesktopContent.getXMLValue(req,"pref_layout").split(";");	
-				Debug.log("Settings layout array " + _layoutArray);		
+				Debug.log("Settings layout array " + _layoutArray);
+				
+				while(_layoutArray.length < _NUM_USER_LAYOUTS)
+				{
+					Debug.log("_layoutArray received invalid. Attempting to fix.");
+					_layoutArray.push("0");
+				}
+				//for array to proper size for sever communication (just in case)								
+				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS+1);
+
+				//cleanse layoutArray
+				for(var i=0;i<_layoutArray.length;++i)
+				{
+					console.log("_layoutArray[i]",_layoutArray[i]);
+					var layoutEntry = _layoutArray[i].split(',');
+					console.log("layoutEntry",layoutEntry);
+					if(_layoutArray[i] != "0" &&
+							layoutEntry.length%_NUM_OF_LAYOUT_FIELDS != 0)
+					{
+						Debug.log("Error invalid user layout found. Clearing invalid layout: " + 
+								_layoutArray[i], Debug.HIGH_PRIORITY);
+						_layoutArray[i] = "0";
+					}
+				}
 				
 				//get system layout array (only populated if user has sufficient privileges)
 				_sysLayoutArray = [];
-				if(255 == DesktopContent.getXMLValue(req,"desktop_user_permissions"))
+				if(DesktopContent.getXMLValue(req,"desktop_user_permissions").indexOf(
+								"allUsers: 255") >= 0)
 				{
 					//we have a super user then 
 					_sysLayoutArray = DesktopContent.getXMLValue(req,"pref_syslayout").split(";");
@@ -359,10 +389,30 @@
 						Debug.log("_sysLayoutArray received invalid. Attempting to fix.");
 						_sysLayoutArray.push("0");
 					}
-				}
-	
-				Debug.log("Settings system layout array " + _sysLayoutArray);
+					//for array to proper size for sever communication (just in case)
+					_sysLayoutArray = _sysLayoutArray.slice(0,_NUM_SYS_LAYOUTS);
+					
+					//cleanse _sysLayoutArray
+					for(var i=0;i<_sysLayoutArray.length;++i)
+					{
+						console.log("_sysLayoutArray[i]",_sysLayoutArray[i]);
+						var layoutEntry = _sysLayoutArray[i].split(',');
+						console.log("layoutEntry",layoutEntry);
+						if(_sysLayoutArray[i] != "0" &&
+								layoutEntry.length%_NUM_OF_LAYOUT_FIELDS != 0)
+						{
+							Debug.log("Error invalid system layout found. Clearing invalid layout: " + 
+									_sysLayoutArray[i], Debug.HIGH_PRIORITY);
+							_sysLayoutArray[i] = "0";
+						}
+					}
+				} //end admin layouts handling
+
 				
+				Debug.log("Settings system layout array " + _sysLayoutArray);
+				console.log("_layoutArray",_layoutArray);
+				console.log("_sysLayoutArray",_sysLayoutArray);
+
 				setLayout(-1); //reset layout selection		
 				
 				//get user accounts
@@ -563,17 +613,17 @@
 				
 				htmlStr += _AccountsOrderArray.length + " accounts found (" + _AccountsPageSize + " per page).<br>";
 				htmlStr += "<div id='accountsPageNav'>Navigate: ";
-				htmlStr += "<a onmouseup='setAccountsPage("+ (_AccountsPageIndex-1) + ")';event.cancelBubble=true; return false;'>&nbsp;Prev </a>";				
+				htmlStr += "<a onmouseup='setAccountsPage("+ (_AccountsPageIndex-1) + ")'; event.stopPropagation(); return false;'>&nbsp;Prev </a>";				
 				
 				for(i=(_AccountsPageIndex-_AccountsPageNavWidth < 0)?0:(_AccountsPageIndex-_AccountsPageNavWidth);
 					i < _AccountsPageIndex+_AccountsPageNavWidth && i < numOfPages; ++i) 
 				{				
-					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a onmouseup='Javascript:setAccountsPage("+ i + ")';event.cancelBubble=true; return false;'> " +
+					htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;<a onmouseup='Javascript:setAccountsPage("+ i + ")';event.stopPropagation(); return false;'> " +
 						(i==_AccountsPageIndex?"<b>":"") + (i+1) + (i==_AccountsPageIndex?"</b>":"") + " </a>";					
 				}
 				
 				htmlStr += "&nbsp;&nbsp;&nbsp;&nbsp;";
-				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';event.cancelBubble=true; return false;'> Next&nbsp;</a>";
+				htmlStr += "<a onmouseup='Javascript:setAccountsPage("+ (_AccountsPageIndex+1) + ")';event.stopPropagation(); return false;'> Next&nbsp;</a>";
 				htmlStr += "</div>";
 				
 				htmlStr += "<div id='accountsPermNote'>Permissions Note: 0 := Inactive, 10 := Standard User, 100 := Expert, 255 := Super User</div>"; 
@@ -584,7 +634,7 @@
 				htmlStr += "<table><tr>";
 				for(j=0;j<_accountFields.length-1;++j) //exclude NAC column, and place at end
 					htmlStr += "<td class='accountsHeaderFld'>" + 
-						"<a onmouseup='sortAccountsBy("+ j + ")';event.cancelBubble=true; return false;'" +
+						"<a onmouseup='sortAccountsBy("+ j + ")';event.stopPropagation(); return false;'" +
 						" title='Sort by " + _accountFields[j] + "'>" + 
 						_accountFields[j] + "<a/></td>";
 				htmlStr += "<td class='accountsHeaderFld' title='Make Account Changes'>Update</td>" +
@@ -609,9 +659,9 @@
 						_accountsArray[3][_AccountsOrderArray[i]].getAttribute('value') + "' " +
 						"onkeydown='return handleAccountsInputKeyDown(event)'" +
 						"></td>";
-					htmlStr += "<td><a onmouseup='updateAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" + 
+					htmlStr += "<td><a onmouseup='updateAccount("+ _AccountsOrderArray[i] + "); event.stopPropagation(); return false;'" + 
 						" title='Make Account Changes'>Update</a></td>";
-					htmlStr += "<td><a onmouseup='deleteAccount("+ _AccountsOrderArray[i] + "); event.cancelBubble=true; return false;'" +
+					htmlStr += "<td><a onmouseup='deleteAccount("+ _AccountsOrderArray[i] + "); event.stopPropagation(); return false;'" +
 						" title='Delete Account'>X</a></td>";
 					htmlStr += "<td class='accountsNac' title='New Account Code'>"+
 						_accountsArray[4][_AccountsOrderArray[i]].getAttribute('value')+"</td>";
@@ -626,7 +676,7 @@
 
 					if(lockModeTmp != 2) //only output something if mode 0 or 1
 						htmlStr += "<a onmouseup='lockToUsername("+ _AccountsOrderArray[i] + "," + 
-							lockModeTmp + ")'; event.cancelBubble=true; return false;' title='Lock ots to single user'>" +
+							lockModeTmp + ")'; event.stopPropagation(); return false;' title='Lock ots to single user'>" +
 							"<img src='/WebPath/images/dashboardImages/icon-Settings-" + 
 							(lockModeTmp?"Unl":"L") + "ock.png'></a>";
 					
@@ -718,33 +768,39 @@
 			
 			function checkSettingsMailbox() {
 				Debug.log("Settings checkSettingsMailbox");
-				if(_settingsLayoutMailbox.innerHTML == "") { //still dont have layout, try again
+				if(_settingsLayoutMailbox.innerHTML == "") 
+				{ //still dont have layout, try again
 					setTimeout(checkSettingsMailbox,500);
 					return;
 				}
-				setServerSettings();
+				else
+					setServerSettings();
 			}
 			
+			//saveGenPreferences ~~
 			function saveGenPreferences(mouseEvent) {
 			
 				if(mouseEvent)
-					mouseEvent.cancelBubble=true; //do nothing but eat event away from body, so body mouseup doesn't cancel
+					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
 					
 				Debug.log("Settings Save Preferences. Selected layout=" + _selectedLayout);
 				
 				_settingsLayoutMailbox.innerHTML = "";
-				if(_selectedLayout > 0) { //if selected, then get current layout from mailbox
+				
+				if(_selectedLayout > 0) 
+				{ //if selected, then get current layout from mailbox
 
 					Debug.log("_selectedLayout " + _selectedLayout);
 					_mailbox.innerHTML = "LAYOUT";  
 					setTimeout(checkSettingsMailbox,500);
 					return;
 				}
-				setServerSettings();
-			}
+				else //else go straight to set settings				
+					setServerSettings();
+			} // end saveGenPreferences()
 			
 
-			//setServerSettings
+			//setServerSettings ~~
 			//	This saves the user pref to server.
 			//	
 			//	Note: this is very similar to what happens in DesktopLogin.js/_updateLayoutTimeoutHandler()
@@ -760,11 +816,16 @@
 				
 				////////////////////////
 				//layout
+
+				console.log("_layoutArray",_layoutArray);
+				console.log("_sysLayoutArray",_sysLayoutArray);
+				
+				Debug.log("_selectedLayout " + _selectedLayout);
 				if(_selectedLayout >= 1 && _selectedLayout <= _NUM_USER_LAYOUTS) //set new  default layout from desktop mailbox
 				{
 					_layoutArray[_selectedLayout-1] = _settingsLayoutMailbox.innerHTML;
 					_layoutArray[_NUM_USER_LAYOUTS] = _settingsLayoutMailbox.innerHTML; //add extra layout for most recent layout checkpoint
-					//adding "most recent" layout could be unnecessary in the future if the current layout is periodically automatically saved
+					//adding "most recent" layout could be unnecessary in the future if the current layout is periodically automatically saved (Note: automatic saving in DesktopLogin.resetCurrentLayoutUpdateTimer was disabled, because multiple tabs happens so often)
 				}				
 				//for array to proper size for sever communication (just in case)								
 				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS+1);				
@@ -792,7 +853,9 @@
 				////////////////////////
 				//send save req
 				Debug.log("Settings Save Preferences -- " + data);
-				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=setSettings", 
+						data,
+						settingsRequestHandler);
 			}
 			
 			function defaultColors() {
@@ -810,8 +873,11 @@
 				return true;
 			}
 			
+			//setLayout ~~
 			function setLayout(i,mouseEvent) {
-				//Debug.log("Settings default layout-" + i);	
+				if(_selectedLayout == i) return;
+				
+				Debug.log("Settings default layout " + i);	
 							
 				for(var j=1;j<=3;++j) { //correct field and display result
 					el = document.getElementById("winLayoutLink"+j);	
@@ -842,14 +908,27 @@
 				}
 				else 
 					_selectedLayout = -1; //no layout selected
+				
+				Debug.log("_selectedLayout = " + _selectedLayout);
 					
 				if(mouseEvent)
-					mouseEvent.cancelBubble=true; //do nothing but eat event away from body, so body mouseup doesn't cancel
-			}		
+					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
+			} // end setLayout(	
 			
-			function showLayoutText(i,show,mouseEvent,isSystemLayout) {
+			//showLayoutText ~~
+			//	layout window fields:
+			//		0: _windows[i].getWindowName() 
+			//		1: _windows[i].getWindowSubName() 
+			//		2: _windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
+			//		3: (((_windows[i].getWindowX()-dx)/dw)|0)
+			//		4: (((_windows[i].getWindowY()-dy)/dh)|0)
+			//		5: ((_windows[i].getWindowWidth()/dw)|0)
+			//		6: ((_windows[i].getWindowHeight()/dh)|0)
+			//		7: (_windows[i].isMinimized()?"0":"1")
+			function showLayoutText(i,show,mouseEvent,isSystemLayout) 
+			{
 				if(mouseEvent)
-					mouseEvent.cancelBubble=true; //do nothing but eat event away from body, so body mouseup doesn't cancel
+					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
 				
 				var str = "";
 				var sysTxt = isSystemLayout?"Sys":"";	
@@ -858,23 +937,32 @@
 				{
 					str = "Currently: <a href='#' onmouseup='showLayoutText("+i+",false,event," + 
 							(isSystemLayout?1:0) + "); return false;'>hide</a><br>";
+					console.log(_layoutArray);
 					var winLayArr = (isSystemLayout?
 							_sysLayoutArray:_layoutArray)[i-1].split(",");
-					var numOfFields = ((winLayArr.length-1)%8==0)?8:7; //hack to be backwards compatible with 7 fields (new way adds the 8th field for isMinimized)
+					var numOfFields = 8; 
+					
+					//destroy 7 field approach (new way adds the 8th field for isMinimized)
 					var num = parseInt(winLayArr.length/numOfFields); //numOfFields fields per window
 					str += "~ Layout of " + num + " Window" + ((num==1)?"":"s") + " ~<br>";
 					
 					var fieldArr = ["X","Y","W","H",""];
 					for(var i=0;i<num;++i) 
 					{
-						str += "&nbsp;&nbsp;&nbsp;&nbsp;" + winLayArr[i*numOfFields].substr(1) + " - " + winLayArr[i*numOfFields+1] 
-							+ " - ";
+						str += "&nbsp;&nbsp;&nbsp;&nbsp;" + 
+								decodeURIComponent(winLayArr[i*numOfFields]) + 
+								" - " + 
+								decodeURIComponent(winLayArr[i*numOfFields+1]) + 
+								" - ";
+						
 						for(var j=3;j<numOfFields;++j)
 							if(j < 7)
 								str += ((j-3)?", ":"") + fieldArr[j-3] + ":" + 
 								(Math.round(winLayArr[i*numOfFields+j]/100)|0) + "%"; 
 							else if(winLayArr[i*numOfFields+j] == "0") //then minimized
 								str += ", Minimized";
+							else if(winLayArr[i*numOfFields+j] == "2") //then maximized
+								str += ", Maximized";
 						str += "<br>";
 					}
 				}
@@ -883,7 +971,7 @@
 							(isSystemLayout?1:0) + "); return false;'>show</a>";
 
 				el.innerHTML = str;
-			}
+			} //end showLayoutText()
 			
 			function updateAccount(i) {		
 				Debug.log("Settings updateAccount-" + i);	
@@ -902,7 +990,8 @@
 				data += "displayname=" + dnEl.value + "&";
 				data += "permissions=" + pEl.value + "&";				
 					
-				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
+						data, settingsRequestHandler);
 				
 			}
 			
@@ -916,7 +1005,7 @@
 			}
 			
 			function createNewAccount(event) {
-				if(event) event.cancelBubble=true;	
+				if(event) event.stopPropagation();	
 				Debug.log("Settings createNewAccount");
 				
 				var elField = ["username","useremail","displayname"];
@@ -939,14 +1028,15 @@
 				
 			}
 			function reallyDelete(event) {	
-				if(event) event.cancelBubble=true;	
+				if(event) event.stopPropagation();	
 				Debug.log("Settings Really Deleted! Delete Index: " + _theDeleteIndex);
 				
 				var data = "";
 				data += "type=deleteAccount&";
 				data += "username=" + _accountsArray[0][_theDeleteIndex].getAttribute('value') + "&";
 				data += "displayname=" + _accountsArray[2][_theDeleteIndex].getAttribute('value') + "&";
-				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1", data, settingsRequestHandler);
+				DesktopContent.XMLHttpRequest("Request?RequestType=accountSettings&accounts=1",
+						data, settingsRequestHandler);
 			}
 			
 			function lockToUsername(i, lock) {
@@ -984,7 +1074,8 @@
 		<div id='jumpToAccounts'></div>
 		<h1>General Preferences</h1>
 		
-		<input id='prefBtn' type='submit' value='Save Preferences' onmouseup='saveGenPreferences(); return false;' />
+		<input id='prefBtn' type='submit' value='Save Preferences' 
+				onmouseup='saveGenPreferences(); event.stopPropagation(); return false;' />
 		<br>
 		
 		<h3>Color Scheme:</h3>

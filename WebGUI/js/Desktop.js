@@ -204,22 +204,23 @@ Desktop.createDesktop = function(security) {
 		var dx = Desktop.desktop.getDesktopContentX();
 		var dy = Desktop.desktop.getDesktopContentY();
 		
-		var layout = "[";				
+		var layout = ""; //"[";				
 		for(var i=0;i<_windows.length;++i) 
 		{		
 			if(_windows[i].getWindowName() == "Settings") continue; //skip settings window
 						
-			layout += _windows[i].getWindowName() 
-										+ "," + _windows[i].getWindowSubName() 
-										+ "," + _windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
-										+ "," + (((_windows[i].getWindowX()-dx)/dw)|0)
-										+ "," + (((_windows[i].getWindowY()-dy)/dh)|0)
-										+ "," + ((_windows[i].getWindowWidth()/dw)|0)
-										+ "," + ((_windows[i].getWindowHeight()/dh)|0)
-										+ "," + (_windows[i].isMinimized()?"0":"1")
-										+ ", "; //last comma (with space for settings display)					
+			layout += (i?",":"") + 
+					encodeURIComponent(_windows[i].getWindowName()) 
+					+ "," + encodeURIComponent(_windows[i].getWindowSubName()) 
+					+ "," + encodeURIComponent(_windows[i].getWindowUrl()) //_windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
+					+ "," + (((_windows[i].getWindowX()-dx)/dw)|0)
+					+ "," + (((_windows[i].getWindowY()-dy)/dh)|0)
+					+ "," + ((_windows[i].getWindowWidth()/dw)|0)
+					+ "," + ((_windows[i].getWindowHeight()/dh)|0)
+					+ "," + (_windows[i].isMinimized()?"0":(_windows[i].isMaximized()?"2":"1"));
+					//+ ", "; //last comma (with space for settings display)					
 		}
-		layout += "]";
+		//layout += "]";
 		return layout;
 	}
 	
@@ -868,10 +869,13 @@ Desktop.createDesktop = function(security) {
 	  	else //invalid
 	  		return;
 		var layoutArr = layoutStr.split(",");
-		var numOfFields = ((layoutArr.length-1)%8==0)?8:7; //hack to be backwards compatible with 7 fields (new way adds the 8th field for isMinimized)
+		
+		var numOfFields = 8;
 		var numOfWins = parseInt(layoutArr.length/numOfFields);
+		
 		Debug.log("Desktop defaultLayoutSelect layout numOfFields=" + numOfFields);
-		Debug.log("Desktop defaultLayoutSelect layout " + numOfWins + " windows - " + layoutStr,Debug.LOW_PRIORITY);	
+		Debug.log("Desktop defaultLayoutSelect layout " + numOfWins + 
+				" windows - " + layoutStr);	
 		
 		//clear all current windows
 		Desktop.desktop.closeAllWindows();
@@ -888,7 +892,7 @@ Desktop.createDesktop = function(security) {
 		//		4: (((_windows[i].getWindowY()-dy)/dh)|0)
 		//		5: ((_windows[i].getWindowWidth()/dw)|0)
 		//		6: ((_windows[i].getWindowHeight()/dh)|0)
-		//		7: (_windows[i].isMinimized()?"0":"1")
+		//		7: (_windows[i].isMinimized()?"0":(_windows[i].isMinimized()?"2":"1"))
 		var dw = Desktop.desktop.getDesktopContentWidth()/10000.0; //to calc int % 0-10000
 		var dh = Desktop.desktop.getDesktopContentHeight()/10000.0;//to calc int % 0-10000
 		var dx = Desktop.desktop.getDesktopContentX();
@@ -897,18 +901,20 @@ Desktop.createDesktop = function(security) {
 		{		
 			Debug.log("adding " + layoutArr[i*numOfFields].substr(1) + "-" + layoutArr[i*numOfFields+1],Debug.LOW_PRIORITY);	
 			this.addWindow(	//(name,subname,url,unique)
-				layoutArr[i*numOfFields].substr(1), 
-				layoutArr[i*numOfFields+1],
-				layoutArr[i*numOfFields+2].replace(/%38/g,"&").replace(/%61/g,"="), //replace back = and &
+				decodeURIComponent(layoutArr[i*numOfFields]), 
+				decodeURIComponent(layoutArr[i*numOfFields+1]),
+				decodeURIComponent(layoutArr[i*numOfFields+2]),//.replace(/%38/g,"&").replace(/%61/g,"="), //replace back = and &
 				false);				
 			_windows[_windows.length-1].setWindowSizeAndPosition(		//(x,y,w,h)		
 				layoutArr[i*numOfFields+3]*dw + dx,
 				layoutArr[i*numOfFields+4]*dh + dy,
 				layoutArr[i*numOfFields+5]*dw,
 				layoutArr[i*numOfFields+6]*dh);
-			if(numOfFields == 8 && 
-					!(layoutArr[i*numOfFields+7]|0)) //convert to integer, if 0 then minimize
+			
+			if((layoutArr[i*numOfFields+7]|0) == 0) //convert to integer, if 0 then minimize
 				_windows[_windows.length-1].minimize();
+			else if((layoutArr[i*numOfFields+7]|0) == 2) //convert to integer, if 0 then maximize
+				_windows[_windows.length-1].maximize();
 		}	  	
 	}
 	
