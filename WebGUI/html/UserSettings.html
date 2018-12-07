@@ -147,8 +147,8 @@
 			var _selectedLayout = -2; //hold index of selected layout, if any
 			var _mailbox,_settingsLayoutMailbox; //pass messages to Desktop
 			var _layoutArray,_sysLayoutArray,_accountsArray;
-			var _NUM_USER_LAYOUTS = 3; //has to match the explicit html in body (Changing this number alone will not work,.. there is a lot of hardcoding)
-			var _NUM_SYS_LAYOUTS = 2;  //has to match the explicit html in body	(Changing this number alone will not work,.. there is a lot of hardcoding)
+			var _NUM_USER_LAYOUTS = 5; //changing this number alone should work... but also have to change Desktop (this.defaultLayoutSelect) and DesktopDashboard (_layoutMenuItems) handling!
+			var _NUM_SYS_LAYOUTS = 5;  //changing this number alone should work... but also have to change Desktop (this.defaultLayoutSelect) and DesktopDashboard (_layoutMenuItems) handling!
 			var _NUM_OF_LAYOUT_FIELDS = 8;
 			var _accountFields = ["username","useremail","display_name","permissions","nac"];
 			var _theDeleteIndex = -1;
@@ -210,6 +210,30 @@
 				document.body.onmouseup = handleBodyMouseUp;
 				_mailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-updateSettingsMailbox");	
 				_settingsLayoutMailbox  = DesktopContent._theWindow.parent.document.getElementById("DesktopContent-settingsLayoutMailbox");	
+				
+				
+				var str = "";
+				//create windows layout div				
+				for(var i=0;i<_NUM_USER_LAYOUTS;++i)
+				{
+					if(i) str += "<br>";
+					str += "<a onmouseup='Javascript:setLayout(" + (i+1) + 
+							",event)' class='winLayoutLink' id='winLayoutLink" + (i+1) + "'>" +
+							"<li>User Preset-" + (i+1) + " (Click to set)</li></a>" +
+							"<div class='winLayoutText' id='winLayoutText" + (i+1) + "'></div>";
+				}
+				str += "<div id='windSystemLayoutDiv' style='display:none; white-space:nowrap;'>" +
+						"<hr width='100%'/>";			
+				for(var i=0;i<_NUM_SYS_LAYOUTS;++i)
+				{
+					if(i) str += "<br>";
+					str += "<a onmouseup='Javascript:setLayout(" + (_NUM_USER_LAYOUTS+i+1) + 
+							",event)' class='winLayoutLink' id='winSysLayoutLink" + (i+1) + "'>" +
+							"<li>System Preset-" + (i+1) + " (Click to set)</li></a>" +
+							"<div class='winLayoutText' id='winSysLayoutText" + (i+1) + "'></div>";
+				}
+				str += "</div>";
+				document.getElementById("windLayoutDiv").innerHTML = str;
 				
 				settingsRequest();
 				
@@ -823,12 +847,10 @@
 				Debug.log("_selectedLayout " + _selectedLayout);
 				if(_selectedLayout >= 1 && _selectedLayout <= _NUM_USER_LAYOUTS) //set new  default layout from desktop mailbox
 				{
-					_layoutArray[_selectedLayout-1] = _settingsLayoutMailbox.innerHTML;
-					_layoutArray[_NUM_USER_LAYOUTS] = _settingsLayoutMailbox.innerHTML; //add extra layout for most recent layout checkpoint
-					//adding "most recent" layout could be unnecessary in the future if the current layout is periodically automatically saved (Note: automatic saving in DesktopLogin.resetCurrentLayoutUpdateTimer was disabled, because multiple tabs happens so often)
+					_layoutArray[_selectedLayout-1] = _settingsLayoutMailbox.innerHTML;					
 				}				
 				//for array to proper size for sever communication (just in case)								
-				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS+1);				
+				_layoutArray = _layoutArray.slice(0,_NUM_USER_LAYOUTS);				
 				
 				var layoutStr = "";
 				for(var j=0;j<_layoutArray.length;++j)
@@ -838,8 +860,10 @@
 				////////////////////////
 				//system layout
 				if(_selectedLayout >= _NUM_USER_LAYOUTS+1 && //set new  default layout from desktop mailbox
-						_selectedLayout <= _NUM_USER_LAYOUTS+_NUM_SYS_LAYOUTS) 
-					_sysLayoutArray[_selectedLayout-1-_NUM_USER_LAYOUTS] = _settingsLayoutMailbox.innerHTML;				
+						_selectedLayout <= _NUM_USER_LAYOUTS+_NUM_SYS_LAYOUTS)
+				{
+					_sysLayoutArray[_selectedLayout-1-_NUM_USER_LAYOUTS] = _settingsLayoutMailbox.innerHTML;
+				}
 				//for array to proper size for sever communication (just in case)
 				_sysLayoutArray = _sysLayoutArray.slice(0,_NUM_SYS_LAYOUTS);
 
@@ -874,23 +898,27 @@
 			}
 			
 			//setLayout ~~
-			function setLayout(i,mouseEvent) {
+			function setLayout(i,mouseEvent) 
+			{
 				if(_selectedLayout == i) return;
 				
 				Debug.log("Settings default layout " + i);	
 							
-				for(var j=1;j<=3;++j) { //correct field and display result
+				for(var j=1;j<=_NUM_USER_LAYOUTS;++j) 
+				{ //correct field and display result
 					el = document.getElementById("winLayoutLink"+j);	
 					el.style.color = 'black';
 				}
 
-				for(var j=1;j<=2;++j) { //correct field and display result
+				for(var j=1;j<=_NUM_SYS_LAYOUTS;++j)
+				{ //correct field and display result
 					el = document.getElementById("winSysLayoutLink"+j);	
 					el.style.color = 'black';
 				}
+				
 				extractLayoutToForm();	
 				
-				if(i >= 1 && i <= 3) //user presets 
+				if(i >= 1 && i <= _NUM_USER_LAYOUTS) //user presets 
 				{ 
 					el = document.getElementById("winLayoutLink"+i);	
 					el.style.color = 'rgb(0,155,0)';	
@@ -898,11 +926,12 @@
 					el.innerHTML = "Click Save Preferences to confirm";
 					_selectedLayout = i;
 				}	
-				else if(i >= 4 && i <= 5)	//system presets 
+				else if(i >= _NUM_USER_LAYOUTS+1 && 
+						i <= _NUM_USER_LAYOUTS+_NUM_SYS_LAYOUTS)	//system presets 
 				{
-					el = document.getElementById("winSysLayoutLink"+(i-3));	
+					el = document.getElementById("winSysLayoutLink"+(i-_NUM_USER_LAYOUTS));	
 					el.style.color = 'rgb(0,155,0)';	
-					el = document.getElementById("winSysLayoutText"+(i-3));	
+					el = document.getElementById("winSysLayoutText"+(i-_NUM_USER_LAYOUTS));	
 					el.innerHTML = "Click Save Preferences to confirm";
 					_selectedLayout = i;					
 				}
@@ -913,7 +942,7 @@
 					
 				if(mouseEvent)
 					mouseEvent.stopPropagation(); //do nothing but eat event away from body, so body mouseup doesn't cancel
-			} // end setLayout(	
+			} // end setLayout()	
 			
 			//showLayoutText ~~
 			//	layout window fields:
@@ -1087,7 +1116,7 @@
 		</td></table>
 		<h3>Desktop Window Arrangement Presets:</h3>		
 		<div id='windLayoutDiv'>
-			<a onmouseup='Javascript:setLayout(1,event)' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as User Preset-1</li></a>		
+			<!-- <a onmouseup='Javascript:setLayout(1,event)' class='winLayoutLink' id='winLayoutLink1'><li>Set Current Window Layout as User Preset-1</li></a>		
 			<div class='winLayoutText' id='winLayoutText1'></div>
 			<br>
 			<a onmouseup='Javascript:setLayout(2,event)' class='winLayoutLink' id='winLayoutLink2'><li>Set Current Window Layout as User Preset-2</li></a>		
@@ -1103,7 +1132,7 @@
 					<br>
 					<a onmouseup='Javascript:setLayout(5,event)' class='winLayoutLink' id='winSysLayoutLink2'><li>Set Current Window Layout as System Preset-2</li></a>		
 					<div class='winLayoutText' id='winSysLayoutText2'></div>
-			</div>
+			</div> -->
 		</div>
 		
 		

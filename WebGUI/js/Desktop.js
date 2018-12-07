@@ -862,12 +862,18 @@ Desktop.createDesktop = function(security) {
 		Debug.log("Desktop defaultLayoutSelect " + i,Debug.LOW_PRIORITY);
 			
 		var layoutStr;
-	  	if(i >= 3 && i <= 6) //user default or current checkpoint
-	  		layoutStr = _login.getUserDefaultLayout(i-3);
-	  	else if(i >= 0 && i <= 1) //system defaults
+		var numOfUserLayouts = 5;
+		var numOfSystemLayouts = 5;
+	  	if(i >= numOfSystemLayouts+1 && //user layouts
+	  			i <= numOfSystemLayouts+1+numOfUserLayouts) 
+	  		layoutStr = _login.getUserDefaultLayout(i-(numOfSystemLayouts+1));
+	  	else if(i >= 0 && i <= numOfSystemLayouts) //system layouts
 	  		layoutStr = _login.getSystemDefaultLayout(i);
 	  	else //invalid
+	  	{
+	  		Debug.log("Invalid layout index: " + i, Debug.HIGH_PRIORITY); 
 	  		return;
+	  	}
 		var layoutArr = layoutStr.split(",");
 		
 		var numOfFields = 8;
@@ -1056,6 +1062,33 @@ Desktop.createDesktop = function(security) {
 			Debug.log("windowUnique=" + windowUnique);
 			
 			var newWin;
+			
+			
+			//check if opening layout 
+			if(windowName.indexOf("Desktop.openLayout(") == 0)
+			{
+				var layoutIndex = windowName.substr(("Desktop.openLayout(").length, 
+						windowName.length-1-("Desktop.openLayout(").length) | 0;
+				Debug.log("Opening layout... " + layoutIndex);
+				
+				if(pathUniquePair ===
+						undefined)
+				{
+
+					if(_firstCheckOfMailboxes)
+					{
+						Debug.log("Perhaps user layout preferences have not been setup yet, try again at mailbox check.");
+						return;
+					}
+				}		
+				
+				
+				_firstCheckOfMailboxes = false; //no need to check at mailbox check time, we are good to go already!
+
+				Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
+				Desktop.desktop.defaultLayoutSelect(layoutIndex);				
+				return;
+			} //end openLayout handling
 			
 			//if only windowName is defined, then attempt to open the icon on the 
 			//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
@@ -1828,7 +1861,9 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else// if(Desktop.isWizardMode())
+	{
 		url += search.split('&')[0] + "&" + str; //take first parameter (for wiz mode)
+	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	

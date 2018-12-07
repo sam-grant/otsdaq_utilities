@@ -704,7 +704,7 @@ Debug.handleErrorResize = function() {
 	}
 	w += Debug._errBoxOffW;
 	
-	var h = 400 + Debug._errBoxOffH;
+	var h = screenh + Debug._errBoxOffH;
 	if(h < 200) //clip to minimum height
 	{
 		Debug._errBoxOffH = -200;

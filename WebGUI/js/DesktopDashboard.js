@@ -72,7 +72,14 @@ else {
         var _windowDashboardWindowCSSRule;  //e.g. _var.style.width = "100px"
         
         var _layoutDropDownDisplayed = false;
-		var _layoutMenuItems = ["System Preset-1","System Preset-2","---","User Preset-1","User Preset-2","User Preset-3"];
+		var _layoutMenuItems = [];
+		var numOfUserLayouts = 5;
+		var numOfSystemLayouts = 5;
+		for(var i=0;i<numOfSystemLayouts;++i)
+			_layoutMenuItems.push("System Preset-" + (i+1));
+		_layoutMenuItems.push("---");
+		for(var i=0;i<numOfUserLayouts;++i)
+			_layoutMenuItems.push("User Preset-" + (i+1));
         
         var _dashboardElement, _dashboardColorPostbox;
         
@@ -316,7 +323,8 @@ else {
 		//	toggles default layout drop down menu
 		var _windowDashboardLayoutsDropDown = function() {		
 			_layoutDropDownDisplayed = !_layoutDropDownDisplayed;
-			Debug.log("Desktop _windowDashboardDefaultsDropDown " + _layoutDropDownDisplayed,Debug.LOW_PRIORITY);
+			Debug.log("Desktop _windowDashboardDefaultsDropDown " + 
+					_layoutDropDownDisplayed,Debug.LOW_PRIORITY);
 			
 			var el;
 			//remove drop down if already present
@@ -332,18 +340,29 @@ else {
 	        el = document.createElement("div");	        
 			el.setAttribute("id", "DesktopDashboard-defaults-dropdown");
         	el.style.backgroundColor = _defaultDashboardColor;
-        	el.innerHTML = "";
+        	var str = "";
         	for(var i=0;i<_layoutMenuItems.length;++i) 
         		if(_layoutMenuItems[i] == "---") //horizontal line
-	        		el.innerHTML += "<center><hr width='75%' style='border:1px solid; margin-top:5px'/></center>";
+        			str += "<center><hr width='75%' style='border:1px solid; margin-top:5px'/></center>";
 	        	else {
-	        		el.innerHTML += "<a href='#' onmouseup='Desktop.desktop.dashboard.windowDashboardLayoutsDropDown(); "
+	        		str += "<a href='#' onmouseup='Desktop.desktop.dashboard.windowDashboardLayoutsDropDown(); "
 	        			+ "Desktop.desktop.defaultLayoutSelect("+i+"); return false;'>"
 	        			+ _layoutMenuItems[i] + "</a>";
+	        		
+	        		str += "<a onclick='Desktop.openNewBrowserTab(" +
+										"\"Desktop.openLayout(" + i + ")\",\"\"," + 
+										"\"\",0 /*unique*/);' " + //end onclick
+										"title='Click to open the layout in a new tab' " +
+										">"
+	        		str += "<img style='width:11px;margin-left:10px;' " +
+							"src='/WebPath/images/dashboardImages/icon-New-Tab.png'>";
+	        		str += "</a>";
 	        	   
 	        	   	if(i<_layoutMenuItems.length-1) 
-	        			el.innerHTML += "<br/>";        		
+	        	   		str += "<br/>";        		
         		}
+        	
+        	el.innerHTML = str;
 			_dashboardElement.appendChild(el);
 		}
 		
@@ -426,17 +445,13 @@ else {
         }
 
         this.redrawRefreshButton = function() {
-        	_fullScreenRefreshBtn.innerHTML = "<a href='#' title='Click to refresh the server'> ↻ </a>";
-        	var hght = "16px";//_fullScreenBtn.style.height;
-        	_fullScreenRefreshBtn.style.height = hght;//"16px";
-        	//console.log(hght);//"16px";
-        	//_fullScreenRefreshBtn.style.visibility = "" +
-        	//((Desktop.desktop.getForeWindow() &&
-        	//          Desktop.desktop.getForeWindow().isMaximized())?"visible":"hidden");
+        	_fullScreenRefreshBtn.innerHTML = "<a href='#' style='font-size:16px' title='Click to reload the desktop and all windows'> ↻ </a>";        	
+        	_fullScreenRefreshBtn.style.height = "16px";
+        	_fullScreenRefreshBtn.style.padding = "3px 10px 7px 10px";
         }
 
         this.redrawShowDesktopButton = function() {
-        	_showDesktopBtn.innerHTML = "<a href='#' title='Click to 43toggle minimize/restore all windows'>" +
+        	_showDesktopBtn.innerHTML = "<a href='#' title='Click to toggle minimize/restore all windows'>" +
         			((Desktop.desktop.getForeWindow() &&
         					Desktop.desktop.getForeWindow().isMinimized())?
         							"Restore Windows":"Show Desktop") + "</a>"; 
@@ -603,8 +618,8 @@ else {
 
         var tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopDashboard-button DesktopDashboard-button-left");
-        tmpBtn.innerHTML = "<a href='#' title='Click to show/hide Window Bar'>" + 
-        	"<img id='dashboard_bi_arrow' src='/WebPath/images/dashboardImages/icon-Bi-arrow.png'></a>";
+        tmpBtn.innerHTML = "<a href='#' title='Click to toggle side Window Bar'>" + 
+        	"<img id='dashboard_bi_arrow' src='/WebPath/images/dashboardImages/icon-Bi-arrow-gray.png'></a>";
         tmpBtn.onmouseup = _toggleWindowDashboard;
         _topBar.appendChild(tmpBtn);
         
