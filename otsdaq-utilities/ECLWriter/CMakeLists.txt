@@ -22,12 +22,14 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(XSD
 
 if(XSD_FOUND)
   set(XSD_INCLUDE_DIRS ${XSD_INCLUDE_DIR})
+#endif(XSD_FOUND)
 
 
-#find_package(CURL)
+find_package(CURL)
 
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
+#endif(CURL_FOUND)
 
 cet_make( LIBRARY_NAME ECLWriter
 	LIBRARIES
