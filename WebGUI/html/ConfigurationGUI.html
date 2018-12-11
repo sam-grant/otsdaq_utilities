@@ -8339,6 +8339,12 @@
 						h += gh;
 						el.style.height = h + "px";						
 					}
+					if(groups.length == 0) //add some height for no groups case
+					{
+						h += gh;
+						el.style.height = h + "px";
+						
+					}
 
 					str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
 

@@ -410,9 +410,7 @@
 				//get state machine from server
 				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine" + 
 						"&fsmName=" + _fsmName, "", 
-						smRequestHandler,
-						0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				);	
+						smRequestHandler);	
 				
 				//delay redraw a bit to gaurantee font (and possibly other things?) has loaded				
 				window.setTimeout(redrawPhysics,1000); 
@@ -427,9 +425,8 @@
 						toggleViewMode(altViewMode|0);  //treat as integer
 					else //default to js default
 						toggleViewMode(_altStateDrawingMode);
-				},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				);
-			}
+				});
+			} //end init()
 
 			//toggleViewMode ~~
 			function toggleViewMode(setVal) {				
@@ -557,7 +554,9 @@
                 case 0: //ConfigurationAlias
                     DesktopContent.XMLHttpRequest("Request?RequestType=getAliasList" +
                     		"&fsmName=" + _fsmName, "", 
-                    		initTransitionParameters);	
+                    		initTransitionParameters, //end request handler
+							0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+							true /*doNoShowLoadingOverlay*/);	
                     break;
                 default:;
                 }
@@ -799,7 +798,9 @@
 			{
 				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 						"&fsmName=" + _fsmName, 
-						"", currStateRequestHandler);				
+						"", currStateRequestHandler, //end request handler
+						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);				
 			}
 			
 
@@ -861,7 +862,7 @@
 							    		var err = DesktopContent.getXMLValue(req,"FSM_Error");
 					            		Debug.log("State Machine Error:\n\n" + err, 
 					            				Debug.HIGH_PRIORITY);
-							    	}	); //end handler	
+							    	});
 							    }
 							}
 								
@@ -1017,7 +1018,9 @@
 						_transitionActions[_currStateTransArr[_selectedTransition]] + 
 						"&fsmName=" + _fsmName + 
 						"&fsmWindowName=" + _fsmWindowName, 
-						transitionPostData, physicsLaunchHandler);
+						transitionPostData, physicsLaunchHandler, //end request handler
+						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);
             }
                     
             //getTransitionParameterData
@@ -1045,10 +1048,9 @@
     			    	_transitionProgress = 0;
     			    	DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
     			    			"&fsmName=" + _fsmName, 
-    			    			"", handleCheckTransitionProgress,
-								0, //reqParam
-								0, //progressHandler
-								true); //callHandlerOnErr	
+    			    			"", handleCheckTransitionProgress, //end request handler
+								0 /*reqParam*/, 0 /*progressHandler*/, true /*callHandlerOnErr*/, 
+								true /*doNoShowLoadingOverlay*/	); 	
     			    }
 
                     //Debug.log("Physics _transitionProgress to state " + _transitionProgress);
@@ -1071,7 +1073,10 @@
                             {
                             	Debug.log("Error! State result not anticipated. Attempting to re-align with server.",Debug.HIGH_PRIORITY);
                             	//alert("Error! State result not anticipated. Attempting to re-align with server.");
-                				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", smRequestHandler);                            	
+                				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine", "", 
+                						smRequestHandler, //end request handler
+										0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+										true /*doNoShowLoadingOverlay*/);                            	
                             }
                             _selectedTransition = -1;
                             _context.clearRect(0, 0, _canvas.width, _canvas.height);
@@ -1182,7 +1187,9 @@
             		window.setTimeout(function(){
             			DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
     			    			"&fsmName=" + _fsmName,  
-            					"", handleCheckTransitionProgress);
+            					"", handleCheckTransitionProgress, //end request handler
+								0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+								true /*doNoShowLoadingOverlay*/);
             		},10); //attempt to get current state again in 10ms
 			    	
             }
@@ -1487,7 +1494,9 @@
 										aliasGroupArr[i].getAttribute('value');
 							
 		                    drawHudForMouseHover(); //display text description for mouse hover
-								});
+								}, //end request handler
+								0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+								true /*doNoShowLoadingOverlay*/);
 		            }
 			    	else  //if not configure transition do simple display
 			    		drawHudForMouseHover(); //display text description for mouse hover
