@@ -667,6 +667,7 @@ else {
 		tmpBtn.setAttribute("class", "DesktopDashboard-button-right");
 		tmpBtn.setAttribute("id", "DesktopDashboard-userWithLock");
 		tmpBtn.style.display = "none";
+		tmpBtn.style.marginTop = "4px";
 		_topBar.appendChild(tmpBtn);
                 
         tmpBtn = document.createElement("div");
@@ -675,7 +676,7 @@ else {
         	"https://cdcvs.fnal.gov/redmine/projects/otsdaq/wiki/Otsdaq_User_Manual" +
         	" 'title='Click to open ots documentation in a new tab' ><img src='/WebPath/images/dashboardImages/icon-Help.png'></a>";
         _topBar.appendChild(tmpBtn);
-        
+               
         if(Desktop.desktop.security == Desktop.SECURITY_TYPE_DIGEST_ACCESS || 
         		Desktop.desktop.security == Desktop.SECURITY_TYPE_NONE) //dont show features if in wizard mode
         {   

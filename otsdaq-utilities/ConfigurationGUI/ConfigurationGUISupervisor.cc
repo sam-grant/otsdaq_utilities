@@ -1121,6 +1121,47 @@ try
 	std::map<std::string, std::pair<std::string, ConfigurationGroupKey>> consideredGroups =
 			cfgMgr->getActiveConfigurationGroups();
 
+	//check that there is a context and config group to consider
+	//	if there is not, then pull from failed list
+	if(consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT].second.isInvalid())
+	{
+		__SUP_COUT__ << "Finding a context group to consider..." << __E__;
+		if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT);
+		}
+		else if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
+				cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
+		}
+	}
+	if(consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION].second.isInvalid())
+	{
+		__SUP_COUT__ << "Finding a configuration group to consider..." << __E__;
+		if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION);
+		}
+		else if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
+		}
+	}
+
+	__SUP_COUTV__(StringMacros::mapToString(consideredGroups));
+
 
 	//determine the type of configuration group
 	try
@@ -1141,7 +1182,6 @@ try
 		//if actual group name was attempted re-throw
 		if(rootGroupName.size())
 		{
-
 			__SUP_SS__ << "Failed to determine type of configuration group for " << rootGroupName << "(" <<
 					rootGroupKey << ")! " << e.what() << std::endl;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
