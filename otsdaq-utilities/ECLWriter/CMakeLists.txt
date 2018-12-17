@@ -30,9 +30,17 @@ find_package(CURL)
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
 #endif(CURL_FOUND)
-
-cet_make( LIBRARY_NAME ECLWriter
+cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc
 	LIBRARIES
+	artdaq-core_Utilities
+        ${XDAQ_XERCES-C}
+        pthread
+    crypto
+    ${CURL_LIBRARIES}
+	)
+cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
+	LIBRARIES
+	ECLWriterCore
 	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
