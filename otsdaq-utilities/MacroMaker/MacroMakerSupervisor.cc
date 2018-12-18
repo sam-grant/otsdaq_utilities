@@ -343,6 +343,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 
 	SOAPParameters rxParameters;
 	rxParameters.addParameter("dataResult");
+	rxParameters.addParameter("Error");
 	__SUP_COUT__<< "Here comes the array from multiselect box for READ, behold: "
 			<< supervisorIndexArray << "," << interfaceIndexArray << __E__;
 
@@ -387,8 +388,8 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 			__SUP_COUT__ << "Response received: " <<
 					SOAPUtilities::translate(retMsg) << __E__;
 
-			SOAPParameters rxParameters;
-			rxParameters.addParameter("Error");
+			//SOAPParameters rxParameters;
+			//rxParameters.addParameter("Error");
 			receive(retMsg,rxParameters);
 
 			std::string error = rxParameters.getValue("Error");
