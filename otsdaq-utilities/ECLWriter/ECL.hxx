@@ -329,7 +329,7 @@ class Tag_t: public ::xml_schema::type
   ::xsd::cxx::tree::one< name_type > name_;
 };
 
-class Attachment_t: public ::xml_schema::type
+class Attachment_t: public ::xml_schema::base64_binary
 {
   public:
   // type
@@ -371,6 +371,10 @@ class Attachment_t: public ::xml_schema::type
   Attachment_t ();
 
   Attachment_t (const type_type&,
+                const filename_type&);
+
+  Attachment_t (const ::xml_schema::base64_binary&,
+                const type_type&,
                 const filename_type&);
 
   Attachment_t (const ::xercesc::DOMElement& e,
