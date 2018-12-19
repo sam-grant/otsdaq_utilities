@@ -26,9 +26,9 @@ public:
 	bool Get(std::string, std::string&);
 	bool Search(std::string);
 
-	Attachment_t MakeAttachmentImage(std::string const& imageFileName);
+	static Attachment_t MakeAttachmentImage(std::string const& imageFileName);
 
-	Attachment_t MakeAttachmentFile(std::string const& fileName);
+	static Attachment_t MakeAttachmentFile(std::string const& fileName);
 
 private:
 	std::string MakeSaltString();
