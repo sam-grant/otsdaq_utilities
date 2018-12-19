@@ -26,6 +26,8 @@ public:
 	bool Get(std::string, std::string&);
 	bool Search(std::string);
 
+	Attachment_t const& MakeAttachment(std::string const& imageFileName);
+
 private:
 	std::string MakeSaltString();
 	static size_t WriteMemoryCallback(char*, size_t, size_t, std::string*);

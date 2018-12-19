@@ -3,6 +3,7 @@
 #include <openssl/md5.h>
 #include <sstream>
 #include <cstring>
+#include <ifstream>
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 
@@ -197,3 +198,26 @@ bool ECLConnection::Post(ECLEntry_t& e)
 
 }
 
+
+Attachment_t const& ECLConnection::MakeAttachment(std::string const& imageFileName) {
+	Attachment_t attachment;
+	std::string fileNameShort = imageFileName;
+	if (fileNameShort.rfind('/') != std::string::npos) {
+		fileNameShort = fileNameShort.substr(imageFileName.rfind('/'));
+	}
+	std::ifstream fin(imageFileName, std::ios::in | std::ios::binary);
+	fin.seekg(0, std::ios::end);
+	std::streamsize size = fin.tellg();
+	fin.seekg(0, std::ios::beg);
+
+	std::vector<char> buffer(size);
+	if (!fin.read(buffer.data(), size))
+	{
+		TLOG_ERROR("WireChamberDQMECL") << "Error reading file: " << imageFileName;
+		attachment = Attachment_t("Image=none", fileNameShort);
+	}
+	else {
+		attachment = Attachment_t(::xml_schema::base64_binary(&buffer[0], size), "image", fileNameShort);
+	}
+	return attachment;
+}
