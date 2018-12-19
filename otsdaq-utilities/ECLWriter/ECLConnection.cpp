@@ -8,8 +8,8 @@
 #include "otsdaq-core/Macros/CoutMacros.h"
 
 ECLConnection::ECLConnection(std::string user,
-							 std::string pwd,
-							 std::string url)
+	std::string pwd,
+	std::string url)
 {
 	_user = user;
 	_pwd = pwd;
@@ -20,7 +20,7 @@ ECLConnection::ECLConnection(std::string user,
 }
 
 size_t ECLConnection::WriteMemoryCallback(char *data, size_t size,
-										  size_t nmemb, std::string* buffer)
+	size_t nmemb, std::string* buffer)
 {
 	size_t realsize = 0;
 
@@ -91,8 +91,8 @@ std::string ECLConnection::MakeSaltString()
 	std::string rndString = "";
 
 	std::string chars("abcdefghijklmnopqrstuvwxyz"
-					  //			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-					  "1234567890");
+		//			"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+		"1234567890");
 	for (int i = 0; i < 10; ++i) {
 		rndString += chars[rand() % chars.size()];
 	}
@@ -122,29 +122,29 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	//std::string eclString = e.entry();
 	eclString = eclString.substr(eclString.find_first_of(">") + 2);
 
-	while(eclString.find('\n') != std::string::npos)
-	  {
+	while (eclString.find('\n') != std::string::npos)
+	{
 		eclString = eclString.erase(eclString.find('\n'), 1);
-	  }
-	while(eclString.find('\r') != std::string::npos)
-	  {
+	}
+	while (eclString.find('\r') != std::string::npos)
+	{
 		eclString = eclString.erase(eclString.find('\r'), 1);
-	  }
-	while(eclString.find(" <") != std::string::npos)
-	  {
+	}
+	while (eclString.find(" <") != std::string::npos)
+	{
 		eclString = eclString.erase(eclString.find(" <"), 1);
-	  }
-		boost::trim(eclString);
+	}
+	boost::trim(eclString);
 	myData += eclString;
- __COUT__ << "ECL Hash string is: " << myData << std::endl;
+	__COUT__ << "ECL Hash string is: " << myData << std::endl;
 	unsigned char resultMD5[MD5_DIGEST_LENGTH];
 	MD5((unsigned char*)myData.c_str(), myData.size(), resultMD5);
 
 	std::string xSig;
 	char buf[3];
-	for (auto i=0;i<MD5_DIGEST_LENGTH;i++){
-	  sprintf(buf, "%02x", resultMD5[i]);
-	  xSig.append( buf );
+	for (auto i = 0; i < MD5_DIGEST_LENGTH; i++) {
+		sprintf(buf, "%02x", resultMD5[i]);
+		xSig.append(buf);
 	}
 	__COUT__ << "ECL MD5 Signature is: " << xSig << std::endl;
 
@@ -199,7 +199,7 @@ bool ECLConnection::Post(ECLEntry_t& e)
 }
 
 
-Attachment_t const& ECLConnection::MakeAttachmentImage(std::string const& imageFileName) {
+Attachment_t ECLConnection::MakeAttachmentImage(std::string const& imageFileName) {
 	Attachment_t attachment;
 	std::string fileNameShort = imageFileName;
 	if (fileNameShort.rfind('/') != std::string::npos) {
@@ -213,7 +213,7 @@ Attachment_t const& ECLConnection::MakeAttachmentImage(std::string const& imageF
 	std::vector<char> buffer(size);
 	if (!fin.read(buffer.data(), size))
 	{
-		TLOG_ERROR("WireChamberDQMECL") << "Error reading file: " << imageFileName;
+		__COUT__ << "ECLConnection: Error reading file: " << imageFileName;
 		attachment = Attachment_t("Image=none", fileNameShort);
 	}
 	else {
@@ -223,7 +223,7 @@ Attachment_t const& ECLConnection::MakeAttachmentImage(std::string const& imageF
 }
 
 
-Attachment_t const& ECLConnection::MakeAttachmentFile(std::string const& fileName) {
+Attachment_t ECLConnection::MakeAttachmentFile(std::string const& fileName) {
 	Attachment_t attachment;
 	std::string fileNameShort = fileName;
 	if (fileNameShort.rfind('/') != std::string::npos) {
@@ -237,7 +237,7 @@ Attachment_t const& ECLConnection::MakeAttachmentFile(std::string const& fileNam
 	std::vector<char> buffer(size);
 	if (!fin.read(buffer.data(), size))
 	{
-		TLOG_ERROR("WireChamberDQMECL") << "Error reading file: " << fileName;
+		__COUT__ << "ECLConnection: Error reading file: " << fileName;
 		attachment = Attachment_t("File=none", fileNameShort);
 	}
 	else {
