@@ -3,7 +3,7 @@
 #include <openssl/md5.h>
 #include <sstream>
 #include <cstring>
-#include <ifstream>
+#include <fstream>
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 
