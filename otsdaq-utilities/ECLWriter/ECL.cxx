@@ -38,7 +38,7 @@
 
 #include <xsd/cxx/pre.hxx>
 
-#include <ECL.hxx>
+#include <otsdaq-utilities/ECLWriter/ECL.hxx>
 
 // Tag_t
 // 
