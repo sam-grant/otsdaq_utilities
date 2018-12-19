@@ -209,11 +209,10 @@ Attachment_t ECLConnection::MakeAttachmentImage(std::string const& imageFileName
 	fin.seekg(0, std::ios::end);
 	std::streamsize size = fin.tellg();
 	fin.seekg(0, std::ios::beg);
-
 	std::vector<char> buffer(size);
 	if (!fin.read(buffer.data(), size))
 	{
-		__COUT__ << "ECLConnection: Error reading file: " << imageFileName;
+		__COUT__ << "ECLConnection: Error reading file: " << imageFileName << std::endl;
 		attachment = Attachment_t("Image=none", fileNameShort);
 	}
 	else {
