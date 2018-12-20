@@ -4235,12 +4235,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 
 
 //=====================================================================================
-//setPopUpPosition ~~
-//	centers element based on width and height constraint
-//	
-//	Note: assumes a padding and border size if not specified
-//  Note: if w,h not specified then fills screen (minus margin)
-//
+//getOnePixelPngData ~~
 //	alpha is optional, will assume full 255 alpha
 ConfigurationAPI.getOnePixelPngData = function(rgba)
 {
@@ -4263,8 +4258,6 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
 	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
 }
-
-
 
 
 //=====================================================================================

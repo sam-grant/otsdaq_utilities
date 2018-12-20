@@ -126,6 +126,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getXMLChildren(req, nodeName)
 //	DesktopContent.getXMLRequestErrors(req)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
+//	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
@@ -1416,7 +1417,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//var 
 	el.style.left = (DesktopContent.getWindowScrollLeft() + x) + "px";
 	el.style.top = (DesktopContent.getWindowScrollTop() + y) + "px";
-}
+} //end popUpVerification()
 //=====================================================================================
 //clearPopUpVerification ~~
 //	call func after clearing, if exists
@@ -1433,7 +1434,133 @@ DesktopContent.clearPopUpVerification = function(func) {
 	
 	if(func)	
 		func(param); //return user input value if present
-}
+} //end clearPopUpVerification()
+
+
+//=====================================================================================
+//setPopUpPosition ~~
+//	centers element based on width and height constraint
+//	
+//	Note: assumes a padding and border size if not specified
+//  Note: if w,h not specified then fills screen (minus margin)
+//	Note: offsetUp and can be used to position the popup vertically (for example if the dialog is expected to grow, then give positive offsetUp to compensate)
+//
+// 	Note: the input element el will need local styling, e.g.:
+//		#popUpDialog * {
+//			color: black;
+//		}
+//		#popUpDialog a {
+//			color: rgb(44, 44, 187);
+//			font-size: 13px;
+//		}
+DesktopContent.setPopUpPosition = function(el,w,h,padding,border,
+		margin,doNotResize,offsetUp) {	
+
+	Debug.log("DesktopContent.setPopUpPosition");
+	
+	if(padding === undefined) padding = 10;
+	if(border === undefined) border = 1;	
+	if(margin === undefined) margin = 0;	
+
+	var x,y;
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	//	set position and size	
+	DesktopContent.setPopUpPosition.stopPropagation = function(event) {
+		//Debug.log("DesktopContent.setPopUpPosition stop propagation");
+		event.stopPropagation();
+	}
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	//	set position and size	
+	DesktopContent.setPopUpPosition.popupResize = function() {
+		
+		try //check if element still exists
+		{
+			if(!el) //if element no longer exists.. then remove listener and exit
+			{
+				window.removeEventListener("resize",DesktopContent.setPopUpPosition.popupResize);
+				window.removeEventListener("scroll",DesktopContent.setPopUpPosition.popupResize);								
+				return;
+			}
+		}
+		catch(err) {return;} //do nothing on errors
+		
+		//else resize el		
+		//Debug.log("DesktopContent.setPopUpPosition.popupResize");
+
+
+		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;
+		var wh = DesktopContent.getWindowHeight()-(padding+border)*2;
+
+		//ww & wh are max window size at this point
+		
+		var ah = el.offsetHeight;//actual height, in case of adjustments
+
+		if(w === undefined || h === undefined)
+		{
+			w = ww - (margin)*2;
+			h = wh - (margin)*2;
+		}
+		//else w,h are inputs and margin is ignored
+
+		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		
+		if(y < DesktopContent.getWindowScrollTop() + 
+				margin + padding) 
+			y = DesktopContent.getWindowScrollTop() + margin + 
+				padding; //don't let it bottom out though
+
+		//if dialog is smaller than window, allow scrolling to see the whole thing 
+		if(w > ww-margin-padding)			
+			x = -DesktopContent.getWindowScrollLeft();
+		if(ah > wh-margin-padding)
+			y = -DesktopContent.getWindowScrollTop();
+			
+		el.style.left = x + "px";
+		el.style.top = y + "px"; 
+	}; 
+	DesktopContent.setPopUpPosition.popupResize();
+	
+	//window width and height are not manipulated on resize, only setup once
+	el.style.width = w + "px";
+	el.style.height = h + "px";
+	
+	
+	//#popUpDialog {
+	//	position: absolute;
+	//	z-index: 10000;    
+	//	border: 1px solid #770000;
+	//	background-color: #efeaea;
+	//	text-align: center;
+	//	padding: 10px;
+	//	color: black;
+	//}
+	el.style.position = "absolute";
+	el.style.zIndex = "10000";
+	el.style.border = "1px solid #770000";
+	el.style.backgroundColor = "#efeaea";
+	el.style.textAlign = "center";
+	el.style.padding = "10px";
+	el.style.color = "black";
+	
+	if(!doNotResize)
+	{
+		window.addEventListener("resize",DesktopContent.setPopUpPosition.popupResize);
+		window.addEventListener("scroll",DesktopContent.setPopUpPosition.popupResize);
+	}
+	el.addEventListener("keydown",DesktopContent.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",DesktopContent.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",DesktopContent.mouseMove);
+
+	el.style.overflow = "auto";
+	
+	return {"w" : w, "h" : h, "x" : x, "y" : y};
+
+} //end setPopUpPosition()
 
 //=====================================================================================
 //parseColor ~~

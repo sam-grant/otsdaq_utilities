@@ -240,6 +240,7 @@ CodeEditor.create = function() {
 	//	doubleClickHandler(forPrimary)
 	//	download(forPrimary)
 	//	upload(forPrimary)
+	//	uploadTextFromFile(forPrimary)
 	
 	
 	//for display
@@ -267,6 +268,7 @@ CodeEditor.create = function() {
 	
 	var _fileNameMouseMoveTimerHandle = 0;
 	var _fileNameEditing = [false,false]; //for primary and secondary
+	var _fileUploadString;
 	
 	var _activePaneIsPrimary = 1; //default to primary, and switch based on last click
 	
@@ -5422,7 +5424,7 @@ CodeEditor.create = function() {
 		_fileNameMouseMoveTimerHandle = window.setTimeout(
 				function()
 			{
-				//el.style.display = "none";
+				el.style.display = "none";
 			} //end mouse move timeout handler
 			,1000);
 		
@@ -6279,41 +6281,84 @@ CodeEditor.create = function() {
 			{
 				"class":"fileButtonContainerShowHide",
 				"id":"fileButtonContainerShowHide" + forPrimary,
+				"onmousemove": 
+				"event.stopPropagation(); " +
+				"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
+				",1 /*doNotStartTimer*/);",
 				
 			},0 /*innerHTML*/, false /*doCloseTag*/);		
 		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
 				"id":"fileRenameButton" + forPrimary,
-				"onmousemove": 
-				"event.stopPropagation(); " +
-				"CodeEditor.editor.handleFileNameMouseMove(" + forPrimary + 
-				",1 /*doNotStartTimer*/);",
 				"title": "Change the filename\n" + path + "." + extension,
 				"onclick":
 				"event.stopPropagation(); " + 
 				"CodeEditor.editor.startEditFileName(" + forPrimary + ");",
 			},0 /*innerHTML*/, true /*doCloseTag*/);
-		str += htmlOpen("div", //this is el that gets hide/show toggle
+		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
 				"id":"fileDownloadButton" + forPrimary,
+				"title": "Download the file content from\n" + path + "." + extension,
+				"onclick":
+				"event.stopPropagation(); " + 
+				"CodeEditor.editor.download(" + forPrimary + ");",
 			},
 			//make download arrow
 			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; margin-top: 1px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
-		str += htmlOpen("div", //this is el that gets hide/show toggle
+		str += htmlOpen("div", 
 			{
 				"class":"fileButton",
 				"id":"fileUploadButton" + forPrimary,
+				"title": "Upload file content to\n" + path + "." + extension,
+				"onclick":
+				"event.stopPropagation(); " + 
+				"CodeEditor.editor.upload(" + forPrimary + ");",
 			},
 			//make upload arrow
 			"<div class='fileDownloadButtonBorderChild' style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 8px solid rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='display: block; margin-left: 0px; height:7px; width: 6px; background-color: rgb(202, 204, 210);'></div>" +
 			"<div class='fileDownloadButtonBgChild' style='position: relative; top: 3px; width: 12px; height: 2px; display: block; background-color: rgb(202, 204, 210);'></div>"
 			/*innerHTML*/, true /*doCloseTag*/);
+		str += htmlOpen("div",
+			{
+				"class":"fileButton fileUndoButton",
+				"id":"fileUndoButton" + forPrimary,
+				"title": "Undo to rewind to last recorded checkpoint for\n" + path + "." + extension,
+				"style": "color: rgb(202, 204, 210);" +
+					"padding: 0 5px 0;" +
+					"font-size: 17px;" +
+					"font-weight: bold;",
+				"onclick":
+				"event.stopPropagation(); " + 
+				"CodeEditor.editor.undo(" + forPrimary + ");",
+			},
+			//make undo arrow
+			"&#8617;"
+			/*innerHTML*/, true /*doCloseTag*/);
+		str += htmlOpen("div",
+			{
+				"class":"fileButton fileUndoButton",
+				"id":"fileRedoButton" + forPrimary,
+				"title": "Redo to fast-forward to last recorded checkpoint for\n" + path + "." + extension,
+				"style": "color: rgb(202, 204, 210);" +
+					"padding: 0 5px 0;" +
+					"font-size: 17px;" +
+					"font-weight: bold;",
+				"onclick":
+				"event.stopPropagation(); " + 
+				"CodeEditor.editor.undo(" + forPrimary + ",1 /*redo*/);",
+			},
+			//make redo arrow
+			"&#8618;"
+			/*innerHTML*/, true /*doCloseTag*/);
+		
+		
+		
 		str += "</div>"; //end fileButtonContainerShowHide
 		str += "</div>"; //end fileButtonContainer
 		
@@ -6702,21 +6747,146 @@ CodeEditor.create = function() {
 		
 		Debug.log("download forPrimary=" + forPrimary);
 		
-		var text = _eel[forPrimary].textContent;
+		var dataStr = "data:text/plain;charset=utf-8," + 
+				encodeURIComponent(_eel[forPrimary].textContent);
+		
+		var filename = _filePath[forPrimary];
+		var i = filename.lastIndexOf('/');
+		if(i >= 0)
+			filename = filename.substr(i+1); //only keep file name, discard path
+		filename += "." + _fileExtension[forPrimary];
+		
+		Debug.log("Downloading to filename " + filename);
+		
+		var link = document.createElement("a");
+		link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+		link.setAttribute("style", "display:none");
+		link.setAttribute("download", filename);
+		document.body.appendChild(link); // Required for FF
+
+		link.click(); // This will download the data file named "my_data.csv"
+
+		link.parentNode.removeChild(link);
 		
 	} //end download()
 	
 	//=====================================================================================
 	//upload ~~
-	this.upload = function(forPrimary)
+	this.upload = function(forPrimary) 
 	{
 		forPrimary = forPrimary?1:0;
-		
+
 		Debug.log("upload forPrimary=" + forPrimary);
+
+		_fileUploadString = ""; //clear upload string
+
+		var str = "";
+
+		var el = document.getElementById("popUpDialog");
+		if(!el)
+		{
+			el = document.createElement("div");			
+			el.setAttribute("id", "popUpDialog");
+		}
+		el.style.display = "none";
+
+		//set position and size
+		var w = 280;
+		var h = 205;
+		DesktopContent.setPopUpPosition(el,w /*w*/,h /*h*/);
+
+		var str = "<a id='" + 
+				"popUpDialog" + //clear upload string on cancel!
+				"-header' onclick='var el = document.getElementById(" +
+				"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); return false;'>Cancel</a><br><br>";
+
+		str += "<div id='popUpDialog-div'>";	
+
+		str += "Please choose the file to upload which has the text content to place in the open source file:<br><br>" +
+				_filePath[forPrimary] + "." + _fileExtension[forPrimary] + 
+				"<br><br>";
+
+		str += "<center>";
+
+		str += "<input type='file' id='popUpDialog-fileUpload' " + 
+				"accept='.txt, .c, .cc, .cpp, .h, .hh, .html, .css, .js, .py, .htm, .sh' " + 
+				"enctype='multipart/form-data' />";
+		str += "<br><br>";
 		
-		var text = _eel[forPrimary].textContent;
-		
+		var onmouseupJS = "";
+		onmouseupJS += "document.getElementById(\"popUpDialog-submitButton\").disabled = true;";
+		onmouseupJS += "CodeEditor.editor.uploadTextFromFile(" + forPrimary + ");";			
+
+		str += "<input id='popUpDialog-submitButton' disabled type='button' onmouseup='" + 
+				onmouseupJS + "' " +
+				"value='Upload File' title='" +
+				"Upload the chosen file text content to\n" +
+				_filePath[forPrimary] + "." + _fileExtension[forPrimary] +					
+				"'/>";
+
+		el.innerHTML = str;
+		document.body.appendChild(el); //add element to display div
+		el.style.display = "block";
+
+		document.getElementById('popUpDialog-fileUpload').addEventListener(
+				'change', function(evt) {
+			var files = evt.target.files;
+			var file = files[0];           
+			var reader = new FileReader();
+			reader.onload = function() {
+				//store uploaded file and enable button
+				_fileUploadString = this.result;
+				Debug.log("_fileUploadString = " + _fileUploadString);							
+				document.getElementById('popUpDialog-submitButton').disabled = false;
+			}
+			reader.readAsText(file);
+		}, false);
 	} //end upload()
+
+	//=====================================================================================
+	//uploadTextFromFile ~~	
+	this.uploadTextFromFile = function(forPrimary) 
+	{
+		forPrimary = forPrimary?1:0;
+
+		Debug.log("uploadTextFromFile forPrimary=" + forPrimary);
+		
+		//enable button so can retry if failure
+		document.getElementById('popUpDialog-submitButton').disabled = false;
+
+		Debug.log("uploadTextFromFile _fileUploadString = " + _fileUploadString);
+		
+		
+		//do decor in timeout to show loading
+		DesktopContent.showLoading(function()
+				{
+			try
+			{	
+				//replace weird space characters (e.g. from emacs tab character two &#160's)
+				//	with spaces		
+				_fileUploadString = _fileUploadString.replace(new RegExp(
+						String.fromCharCode(160),'g'),' ');
+				_fileUploadString = "hi";
+				var el = _eel[forPrimary];
+				el.textContent = _fileUploadString;
+				CodeEditor.editor.displayFileHeader(forPrimary);
+			}
+			catch(e)
+			{ 				
+				Debug.log("There was an error uploading the text: " + e,
+						Debug.HIGH_PRIORITY); 
+				return;
+			}
+			Debug.log("Source upload complete! (You can use undo to go back) ",
+					Debug.INFO_PRIORITY);
+
+			//on succes remove popup
+			var el = document.getElementById("popUpDialog"); 
+			if(el) el.parentNode.removeChild(el);	
+			
+				});	 //end show loading
+
+	} //end uploadTextFromFile()
 	
 } //end create() CodeEditor instance
 
