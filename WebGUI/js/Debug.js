@@ -346,8 +346,13 @@ Debug.errorPop = function(err,severity) {
 				{
 					e.preventDefault();
 					e.stopPropagation();
-					Debug.closeErrorPop();	
-									
+					Debug.closeErrorPop();										
+				}
+				else if(e.keyCode == 49) //1 key, bring back popup
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					Debug.bringBackErrorPop();										
 				}
 			} //end localDebugKeyDownListener()
 			
@@ -558,12 +563,19 @@ Debug.errorPop = function(err,severity) {
 	els[1].innerHTML = el.innerHTML;	
 }
 
-
+Debug._errBoxLastContent = "";
 //=====================================================================================
 //Close the error popup on the window
 Debug.closeErrorPop = function() {
 	document.getElementById(Debug._errBoxId).style.display = "none";
+	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
+}
+//=====================================================================================
+//Bring the error popup back
+Debug.bringBackErrorPop = function() {
+	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
+	document.getElementById(Debug._errBoxId).style.display = "block";
 }
 
 

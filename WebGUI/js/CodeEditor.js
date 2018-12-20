@@ -4683,7 +4683,7 @@ CodeEditor.create = function() {
 			//ESCAPE may be hit when doing something in header
 			//	and we want to act.
 			//e.g. Find and Replace
-			console.log(CodeEditor.editor.findAndReplaceLastButton,forPrimary);
+			//console.log(CodeEditor.editor.findAndReplaceLastButton,forPrimary);
 			if(CodeEditor.editor.findAndReplaceLastButton[forPrimary] > 0)
 			{
 				e.preventDefault();
