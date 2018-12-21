@@ -106,6 +106,8 @@ CodeEditor.showTooltip = function(alwaysShow)
 			(alwaysShow?"ALWAYS":"Code Editor"),
 			"Welcome to the Code Editor user interface. "+
 			"Edit your code, save it, and compile!\n\n" +
+			"Hover your mouse over the icons and buttons to see what they do. " + 
+			"If you hover your mouse over the filename additional icons will appear for changing the filename, downloading, uploading, undo, and redo. The buttons in the top corners are described below followed by hot-keys:\n\n" +
 			"<INDENT>" +
 			"<b>Open a file:</b>\n<INDENT>Use the folder icon in the top-left to navigate to a code file to edit.</INDENT>\n" +
 			"<b>Toggle view:</b>\n<INDENT>Use the split-pane icon in the top-right to toggle another code editor in the same window.</INDENT>\n" +

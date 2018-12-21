@@ -295,7 +295,9 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top." +
+				"<div style='color:white;font-size:16px;'>" +
+				"Note: Newest messages are at the top." +
+				"<label style='color:white;font-size:11px;'><br>(Press ESC to close and 1 to re-open)</font>" +
 				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
