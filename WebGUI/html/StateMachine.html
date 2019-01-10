@@ -14,7 +14,7 @@
 	//getCurrentState() 
 	//currStateRequestHandler(req)
 	//updateTimeInState(t)
-	//physicsLaunchHandler(req)
+	//physicsLaunchHandler(req,transitionAttempted)
     //handleMouseUp(mouseEvent)
 	//getTransitionParameterData(param)
 	//transitionTimerHandler(mouseEvent)
@@ -153,6 +153,26 @@
 				font-size: 20px;
 				font-family: 'Donegal One', arial;
 			}
+			
+			#blackout-cancel-progress-btn {
+				color: 					white;
+				font-size: 				16px;
+				font-family: 			'Donegal One', arial;
+				width: 					16px;
+				height:					16px;
+			    padding: 				9px 10px 10px 11px;
+				border:					3px solid white;
+				border-radius:			20px;
+				text-align:				center;
+				background-color: rgb(111, 14, 14);
+				
+				-moz-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
+				-webkit-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
+				box-shadow: 0 1px 5px #fff 
+							inset, 0 1px 0 #444;
+				
+				
+			}
 						
 			.progress-bar {
 				background-color: #1a1a1a;
@@ -164,6 +184,8 @@
 				-webkit-border-radius: 5px;
 				border-radius: 5px;
 				border: 1px solid white;
+			    
+			    
 				-moz-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
 				-webkit-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
 				box-shadow: 0 1px 5px #fff 
@@ -823,6 +845,8 @@
 			    
 			    //Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
 
+			    
+			    
 			    //find current state in stateNames array
                 for(var i=0;i<_stateNames.length;++i)
                 	if(_stateNames[i] == cs) 
@@ -875,6 +899,19 @@
                 		
                 		window.clearTimeout(_verifyStateTimeout);
 						_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
+						
+						
+						//if in transition and not animating, then this is a surprise, try to adjust
+						if(inTrans && (_transitionProgress === undefined ||
+								_transitionProgress == 100))
+						{
+							Debug.log("Server indicates in state transition. Attempting to refresh state machine...");
+
+							//refresh FSM
+							physicsLaunchHandler(0,false /*transitionAttempted*/);
+							return;
+						}
+						
                 		return;
                 	}
 			    _currState = -1; //no current state found
@@ -947,25 +984,27 @@
 
             //physicsLaunchHandler ~~
             //  handle response to launch of physics state change
-            function physicsLaunchHandler(req) {
+            function physicsLaunchHandler(req,transitionAttempted) {
             	
             	//Debug.log("Physics physicsLaunchHandler " + req.responseText);
-                
-                var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
-                if(!success) 
+                if(transitionAttempted)
                 {
-                	var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
-                	if(err)
-                		Debug.log(err,Debug.HIGH_PRIORITY);
-                	Debug.log("Server indicated failure to attempt state transition. Attempting to refresh state machine...",Debug.HIGH_PRIORITY);
-                	//alert("Server indicated failure to attempt state transition.");                	
-                	_inAnimation = false;
-                	
-                	//refresh FSM
-                	_transitionProgress = -1; 
-                	window.clearInterval(_transitionTimer);
-                	_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
-                	return;
+					var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
+					if(!success) 
+					{
+						var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+						if(err)
+							Debug.log(err,Debug.HIGH_PRIORITY);
+						Debug.log("Server indicated failure to attempt state transition. Attempting to refresh state machine...",Debug.HIGH_PRIORITY);
+						//alert("Server indicated failure to attempt state transition.");                	
+						_inAnimation = false;
+						
+						//refresh FSM
+						_transitionProgress = -1; 
+						window.clearInterval(_transitionTimer);
+						_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+						return;
+					}
                 }
                 
                 //setup canvas for transition (states, no HUD)
@@ -988,12 +1027,24 @@
 			    _blackoutReveal.style.width = _canvas.width + "px";
 			    _blackoutReveal.style.height = _canvas.height + "px";
 			    
-                var bstr = _transitionNames[_currStateTransArr[_selectedTransition]] + " from " + 
+			    var transitionString = "Transitioning";	 //to avoid showing undefined in strange cases
+			    try
+			    {
+			    	transitionString = _transitionNames[_currStateTransArr[_selectedTransition]];
+			    }
+			    catch(e)
+			    {Debug.log("Ignoring error: " + e);} //ignore error
+			    if(transitionString === undefined)
+			    	transitionString = "Transitioning";	 //to avoid showing undefined in strange cases
+			    	
+			    
+                var bstr = transitionString + " from " + 
                 	_states[_currState];
                 if(_transitions[_currStateTransArr[_selectedTransition]] && //sometimes this error happens (not sure how!?) so catch it 
                 		_transitions[_currStateTransArr[_selectedTransition]][1])
                 	bstr += " to " + _states[_transitions[_currStateTransArr[_selectedTransition]][1]];
                 _blackoutRevealText.innerHTML = bstr;
+                
                 _transitionProgress = -1; //use -1 to indicate need to check
                 _transitionFadeAlpha = 0;
                 _transitionFadeAlphaInc =  _TRANS_TRANSLATE_PERIOD/_TRANS_TRANSLATE_DURATION/1000.0;
@@ -2358,6 +2409,10 @@
 				    	<span id='progress-bar' style="width: 100%"></span>
 				    </div>			    
 			    </div>
+				<div id='blackout-cancel-progress'>
+					<a onclick='alert("hi");'>
+					<div id=id='blackout-cancel-progress-btn'>X</div></a>
+				</div>
 			</td>
 		</table>	
 	</div>
