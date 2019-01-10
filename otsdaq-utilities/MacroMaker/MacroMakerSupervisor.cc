@@ -46,6 +46,8 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	mkdir(((std::string)MACROS_HIST_PATH).c_str(), 0755);
 	mkdir(((std::string)MACROS_EXPORT_PATH).c_str(), 0755);
 
+	xoap::bind(this, &MacroMakerSupervisor::frontEndCommunicationRequest,
+			"FECommunication",    		XDAQ_NS_URI );
 
 	init();
 }
@@ -158,10 +160,161 @@ void MacroMakerSupervisor::handleRequest(const std::string Command,
 		xmldoc.addTextElementToData("Error","Unrecognized command '" + Command + "'");
 }
 
+
+//========================================================================================================================
+xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(xoap::MessageReference message)
+try
+{
+	__SUP_COUT__<< "FE Request received: " << SOAPUtilities::translate(message) << __E__;
+	
+	SOAPParameters typeParameter, rxParameters;  //params for xoap to recv
+	typeParameter.addParameter("type");
+	SOAPUtilities::receive(message, typeParameter);
+
+	std::string type = typeParameter.getValue("type");
+
+	std::string error = "";
+
+
+	if(type == "initFElist") //gateway initializes during configure
+	{
+		__SUP_COUTV__(type);
+
+		rxParameters.addParameter("groupName");
+		rxParameters.addParameter("groupKey");
+		SOAPUtilities::receive(message, rxParameters);
+
+		std::string groupName = rxParameters.getValue("groupName");
+		std::string groupKey = rxParameters.getValue("groupKey");
+
+		__SUP_COUTV__(groupName);
+		__SUP_COUTV__(groupKey);
+
+		ConfigurationManager cfgMgr;
+		cfgMgr.loadConfigurationGroup(
+				groupName, ConfigurationGroupKey(groupKey), true);
+
+		//for each FESupervisor
+		// get all front end children
+
+		const SupervisorInfoMap& feTypeSupervisors =
+				CorePropertySupervisorBase::allSupervisorInfo_.getAllFETypeSupervisorInfo();
+
+		ConfigurationTree appsNode =
+					cfgMgr.getNode("XDAQApplicationConfiguration");
+
+		for(auto& feApp:feTypeSupervisors)
+		{
+			__SUP_COUT__ << "FEs for app " << feApp.first << ":" <<
+					feApp.second.getName() << __E__;
+
+			std::vector<std::string> feChildren =
+					appsNode.getNode(feApp.second.getName()).
+					getNode("LinkToSupervisorConfiguration").
+					getNode("LinkToFEInterfaceConfiguration").getChildrenNames();
+
+			for(auto& fe:feChildren)
+			{
+				__COUTV__(fe);
+				FEtoSupervisorMap_[fe] = feApp.first;
+			}
+		}
+
+		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
+	}
+	else if(type == "feSend" ||
+			type == "feMacro")
+	{
+		__SUP_COUTV__(type);
+
+		rxParameters.addParameter("targetInterfaceID");
+		SOAPUtilities::receive(message, rxParameters);
+
+		std::string targetInterfaceID = rxParameters.getValue("targetInterfaceID");
+
+		__SUP_COUTV__(targetInterfaceID);
+
+		auto feIt = FEtoSupervisorMap_.find(targetInterfaceID);
+		if(feIt == FEtoSupervisorMap_.end())
+		{
+			__SUP_SS__ << "Destination front end interface ID '" <<
+					targetInterfaceID << "' was not found in the list of front ends." << __E__;
+			__SUP_SS_THROW__;
+		}
+
+		unsigned int FESupervisorIndex = feIt->second;
+		__SUP_COUT__ << "Found supervisor index: " << FESupervisorIndex << __E__;
+
+		SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FESupervisorIndex);
+		if (it == allFESupervisorInfo_.end())
+		{
+			__SUP_SS__ << "Error transmitting request to FE Supervisor '" <<
+					targetInterfaceID << ":" << FESupervisorIndex << ".' \n\n" <<
+					"The FE Index doesn't exist. Have you configured the state machine properly?" << __E__;
+			__SUP_SS_THROW__;
+		}
+
+		try
+		{
+			__SUP_COUT__ << "Forwarding request: " <<
+					SOAPUtilities::translate(message) << __E__;
+
+			xoap::MessageReference replyMessage = SOAPMessenger::sendWithSOAPReply(
+					it->second.getDescriptor(),
+					message);
+
+			if(type == "feMacro")
+			{
+				__SUP_COUT__ << "Forwarding FE Macro response: " <<
+						SOAPUtilities::translate(replyMessage) << __E__;
+
+				return replyMessage;
+			}
+		}
+		catch(const xdaq::exception::Exception& e)
+		{
+			__SUP_SS__ << "Error forwarding FE Communication request to FE Supervisor '" <<
+					targetInterfaceID << ":" << FESupervisorIndex << ".' " <<
+					"Have you configured the state machine properly?\n\n" <<
+					e.what() << __E__;
+			__SUP_SS_THROW__;
+		}
+	}
+	else
+	{
+		__SUP_SS__ << "Unrecognized FE Communication type: " << type << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	return SOAPUtilities::makeSOAPMessageReference("Received");
+}
+catch(const std::runtime_error& e)
+{
+	xoap::MessageReference returnMessage =
+			SOAPUtilities::makeSOAPMessageReference("Error");
+
+	SOAPParameters parameters;
+	parameters.addParameter("Error", e.what());
+	return returnMessage;
+}
+catch(...)
+{
+	xoap::MessageReference returnMessage =
+			SOAPUtilities::makeSOAPMessageReference("Error");
+
+	__SUP_SS__ << "Unknown error processing FE communication request." << __E__;
+	__SUP_COUT_ERR__ << ss.str();
+
+	SOAPParameters parameters;
+	parameters.addParameter("Error", ss.str());
+	return returnMessage;
+}
+
 //========================================================================================================================
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
 	__SUP_COUT__<< "Getting FE list!!!!!!!!!" << __E__;
+	FEtoSupervisorMap_.clear();
 
 	SOAPParameters txParameters; //params for xoap to send
 	txParameters.addParameter("Request", "GetInterfaces");
@@ -172,6 +325,8 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 	SupervisorInfoMap::const_iterator it;
 	std::string oneInterface;
 	std::string rxFEList;
+
+	size_t lastColonIndex;
 
 	//for each list of FE Supervisors,
 	//	loop through each FE Supervisors and get FE interfaces list
@@ -192,7 +347,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 					appInfo.second.getDescriptor(),
 					"MacroMakerSupervisorRequest",
 					txParameters);
-			receive(retMsg, rxParameters);
+			SOAPUtilities::receive(retMsg, rxParameters);
 		}
 		catch(const xdaq::exception::Exception& e)
 		{
@@ -209,12 +364,25 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		std::istringstream allInterfaces(rxFEList);
 		while (std::getline(allInterfaces, oneInterface))
 		{
-			//interfaceList.push_back(oneInterface);
+			__SUP_COUTV__(oneInterface);
 			xmldoc.addTextElementToData("FE",oneInterface);
-		}
 
-	}
-}
+			lastColonIndex = oneInterface.rfind(':');
+			if(lastColonIndex == std::string::npos)
+			{
+				__SUP_SS__ << "Last colon could not be found in " << oneInterface << __E__;
+				__SS_THROW__;
+			}
+			oneInterface = oneInterface.substr(lastColonIndex);
+
+			__SUP_COUTV__(oneInterface);
+
+			FEtoSupervisorMap_[oneInterface] = appInfo.second.getId();
+		} //end FE extract loop
+
+	} //end ask Supervisors for their FE list loop
+
+} //end getFEList()
 
 
 //========================================================================================================================
@@ -281,17 +449,17 @@ void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
 
 		try
 		{
-			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+			xoap::MessageReference replyMessage = SOAPMessenger::sendWithSOAPReply(
 					it->second.getDescriptor(),
 					"MacroMakerSupervisorRequest",
 					txParameters);
 
 			__SUP_COUT__ << "Response received: " <<
-								SOAPUtilities::translate(retMsg) << __E__;
+								SOAPUtilities::translate(replyMessage) << __E__;
 
 			SOAPParameters rxParameters;
 			rxParameters.addParameter("Error");
-			receive(retMsg,rxParameters);
+			SOAPUtilities::receive(replyMessage,rxParameters);
 
 			std::string error = rxParameters.getValue("Error");
 			__SUP_COUTV__(error);
@@ -390,7 +558,7 @@ void MacroMakerSupervisor::readData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, 
 
 			//SOAPParameters rxParameters;
 			//rxParameters.addParameter("Error");
-			receive(retMsg,rxParameters);
+			SOAPUtilities::receive(retMsg,rxParameters);
 
 			std::string error = rxParameters.getValue("Error");
 			__SUP_COUTV__(error);
@@ -886,7 +1054,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 
 		insert = "\n\t//registration of FEMacro '" + macroName + "' generated, " +
 				timeBuffer + ", by '" + username + "' using MacroMaker.\n\t" +
-				"registerFEMacroFunction(\"" + macroName + "\",//feMacroName \n\t\t" +
+				"FEVInterface::registerFEMacroFunction(\"" + macroName + "\",//feMacroName \n\t\t" +
 				"static_cast<FEVInterface::frontEndMacroFunction_t>(&" +
 				pluginName + "::" + macroName + "), //feMacroFunction \n\t\t" +
 				"std::vector<std::string>{";
@@ -977,7 +1145,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& 
 		insert = "\npublic: // FEMacro '" + macroName + "' generated, " +
 				timeBuffer + ", by '" + username + "' using MacroMaker.\n\t" +
 				"void " + macroName +
-				"\t(frontEndMacroInArgs_t argsIn, frontEndMacroOutArgs_t argsOut);\n";
+				"\t(__ARGS__);\n";
 
 		__SUP_COUTV__(insert);
 		CodeEditor::writeFile(headerFile,contents,insertPos,insert);
@@ -1389,7 +1557,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 			supervisorDescriptorPairIt->second.getDescriptor(), //supervisor descriptor
 			"MacroMakerSupervisorRequest",
 			txParameters);
-	SOAPMessenger::receive(retMsg, rxParameters);
+	SOAPUtilities::receive(retMsg, rxParameters);
 
 	__SUP_COUT__ << "Received it " << __E__;
 
@@ -1454,7 +1622,7 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument& xmldoc, const std::st
 				appInfo.second.getDescriptor(),
 				"MacroMakerSupervisorRequest",
 				txParameters);
-		SOAPMessenger::receive(retMsg, rxParameters);
+		SOAPUtilities::receive(retMsg, rxParameters);
 
 		rxFEMacros = rxParameters.getValue("FEMacros");
 

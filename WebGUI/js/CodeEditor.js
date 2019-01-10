@@ -248,6 +248,8 @@ CodeEditor.create = function() {
 	//for display
 	var _WINDOW_MIN_SZ = 525;
 	
+	var _ALLOWED_FILE_EXTENSIONS = [];
+	
 	var _needEventListeners = true;
 	
 	var _viewMode = 0; //0: only primary, 1: vertical split, 2: horizontal split
@@ -363,71 +365,83 @@ CodeEditor.create = function() {
 		}
 		
 		
-		
+
 		DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
-				"&option=getDirectoryContent" +
-				"&path=/"
+				"&option=getAllowedExtensions" 
 				, "" /* data */,
 				function(req)
-			{	
+				{	
+			console.log("getAllowedExtensions",req);
+
+			_ALLOWED_FILE_EXTENSIONS = DesktopContent.getXMLValue(req,"AllowedExtensions");
+			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
+			_ALLOWED_FILE_EXTENSIONS = _ALLOWED_FILE_EXTENSIONS.split(',');
+			console.log("_ALLOWED_FILE_EXTENSIONS",_ALLOWED_FILE_EXTENSIONS);
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=codeEditor" + 
+					"&option=getDirectoryContent" +
+					"&path=/"
+					, "" /* data */,
+					function(req)
+					{	
 				var fileSplit; 
-				
+
 				//console.log("getDirectoryContent",req);
-				
-				
+
+
 				CodeEditor.editor.handleDirectoryContent(1 /*forPrimary*/, req);
 				CodeEditor.editor.handleDirectoryContent(0 /*forPrimary*/, req);
-				
+
 				//decide how to start display(file or directory)
 				fileSplit = [];
 				if(parameterStartFile[0] && parameterStartFile[0] != "")
 					fileSplit = parameterStartFile[0].split('.');
-				
-				
-				
+
+
+
 				if(fileSplit.length == 2) //show shortcut file
 					CodeEditor.editor.openFile(
-						1 /*forPrimary*/, 
-						fileSplit[0]	/*path*/,
-						fileSplit[1] /*extension*/, 
-						false /*doConfirm*/,
-						parameterGotoLine[0 /*primary goto line*/] /*gotoLine*/);
+							1 /*forPrimary*/, 
+							fileSplit[0]	/*path*/,
+							fileSplit[1] /*extension*/, 
+							false /*doConfirm*/,
+							parameterGotoLine[0 /*primary goto line*/] /*gotoLine*/);
 				else //show base directory nav
 				{
 					CodeEditor.editor.openDirectory(
 							1 /*forPrimary*/,
 							parameterOpenDirectory[0] /*path*/
-							);				
+					);				
 					//CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
 				}
-				
+
 				//for secondary pane
 				fileSplit = [];
 				if(parameterStartFile[1] && parameterStartFile[1] != "")
 					fileSplit = parameterStartFile[1].split('.');
-				
+
 				if(fileSplit.length == 2) //show shortcut file
 					CodeEditor.editor.openFile(
-						0 /*forPrimary*/, 
-						fileSplit[0]	/*path*/,
-						fileSplit[1] /*extension*/, 
-						false /*doConfirm*/,
-						parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
+							0 /*forPrimary*/, 
+							fileSplit[0]	/*path*/,
+							fileSplit[1] /*extension*/, 
+							false /*doConfirm*/,
+							parameterGotoLine[1 /*secondary goto line*/] /*gotoLine*/);
 				else //show base directory nav				
 				{
-					
+
 					CodeEditor.editor.openDirectory(
 							0 /*forPrimary*/,
 							parameterOpenDirectory[1] /*path*/
-							);				
+					);				
 					//CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
 				}
-				
-				
+
+
 				_activePaneIsPrimary = 1; //default active pane to primary
-				
-			});
-		
+
+					}); //end get directory contents
+				}); //end get allowed file extensions
 		
 	} //end init()
 	
@@ -1130,8 +1144,8 @@ CodeEditor.create = function() {
 		{		
 			//Note: innerText is the same as textContent, except it is the only
 			//	the human readable text (ignores hidden elements, scripts, etc.)
-			var textObj = {"text":encodeURIComponent(
-					_eel[forPrimary].innerText),
+			var textObj = {"text":
+					_eel[forPrimary].innerText,
 				"time":undefined};
 			
 			//console.log(content,content.length);
@@ -1147,7 +1161,7 @@ CodeEditor.create = function() {
 					"&option=saveFileContent" +
 					"&path=" + _filePath[forPrimary] +
 					"&ext=" + _fileExtension[forPrimary]				
-					, "content=" + textObj.text /* data */,
+					, "content=" + encodeURIComponent(textObj.text) /* data */,
 					function(req)
 				{					
 					Debug.log("Successfully saved " +
@@ -1661,6 +1675,12 @@ CodeEditor.create = function() {
 			altExtensions.push("cpp");
 			altPaths.push(relatedPath);
 			altExtensions.push("CC");
+			altPaths.push(relatedPath);
+			altExtensions.push("cxx");
+			altPaths.push(relatedPath);
+			altExtensions.push("c");
+			altPaths.push(relatedPath);
+			altExtensions.push("C");
 			
 			relatedPath += "_interface";			
 			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
@@ -1697,10 +1717,26 @@ CodeEditor.create = function() {
 				relatedExtension[0] == 'C')
 		{
 			relatedExtension = "h";
+
+			altPaths.push(relatedPath); //with _interface left in
+			altExtensions.push("h");
+			
 			var i = relatedPath.indexOf("_interface");
 			if(i > 0 && i == relatedPath.length-("_interface").length)
 				relatedPath = relatedPath.substr(0,i); //remove interface
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension);
+			
+			altPaths.push(relatedPath);
+			altExtensions.push("hh");
+			altPaths.push(relatedPath);
+			altExtensions.push("hpp");
+			altPaths.push(relatedPath);
+			altExtensions.push("hxx");
+			altPaths.push(relatedPath);
+			altExtensions.push("H");
+						
+			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+					undefined /*doConfirm*/, undefined/*gotoLine*/,
+					altPaths /*altPaths*/, altExtensions/*altExtensions*/);			
 			return;
 		}
 		else if(relatedExtension == "js")
@@ -3465,11 +3501,13 @@ CodeEditor.create = function() {
 			//Debug.log("text " + text);
 			
 			var fileExtension = _fileExtension[forPrimary];
-			if(fileExtension == "cc" || 
-				fileExtension == "cpp" || 
-					fileExtension == "h" ||
-					fileExtension == "js" || 
-					fileExtension == "html")
+			if(1 
+//					fileExtension == "cc" || 
+//					fileExtension == "cpp" || 
+//					fileExtension == "h" ||
+//					fileExtension == "js" || 
+//					fileExtension == "html"
+					)
 			{
 				// find leading whitespace count
 				var x = 0;
@@ -5037,6 +5075,7 @@ CodeEditor.create = function() {
 					if(_fileExtension[forPrimary][0] == 'c' || 
 							_fileExtension[forPrimary][0] == 'C' ||
 							_fileExtension[forPrimary][0] == 'h' ||
+							_fileExtension[forPrimary][0] == 'H' ||
 							_fileExtension[forPrimary][0] == 'j')
 						specialStr = "//"; //comment string
 						else
@@ -6793,7 +6832,7 @@ CodeEditor.create = function() {
 		el.style.display = "none";
 
 		//set position and size
-		var w = 280;
+		var w = 400;
 		var h = 205;
 		DesktopContent.setPopUpPosition(el,w /*w*/,h /*h*/);
 
@@ -6811,8 +6850,10 @@ CodeEditor.create = function() {
 		str += "<center>";
 
 		str += "<input type='file' id='popUpDialog-fileUpload' " + 
-				"accept='.txt, .c, .cc, .cpp, .h, .hh, .html, .css, .js, .py, .htm, .sh' " + 
-				"enctype='multipart/form-data' />";
+				"accept='";
+		for(var i=0;i<_ALLOWED_FILE_EXTENSIONS.length;++i)
+			str += (i?", ":"") + "." + _ALLOWED_FILE_EXTENSIONS[i];
+		str += "' enctype='multipart/form-data' />";
 		str += "<br><br>";
 		
 		var onmouseupJS = "";

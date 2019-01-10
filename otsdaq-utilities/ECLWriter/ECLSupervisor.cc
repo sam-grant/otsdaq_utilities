@@ -215,7 +215,7 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
 	//	parameters[0].setName("EntryText");
-	receive(msg, parameters);
+	SOAPUtilities::receive(msg, parameters);
 	std::string EntryText = parameters.getValue("EntryText");
 
 	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;
