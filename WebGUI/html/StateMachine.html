@@ -345,6 +345,7 @@
 			
 			var _timeUpdateTimeout = 0;
 			var _verifyStateTimeout = 0;
+			var _VERIFY_STATE_PERIOD = 2000;
 			var _timeInState = 0;
 			var _alarmRunning = false;
 			var _alarmTimeLeft = 0;
@@ -881,6 +882,22 @@
 									Debug.log("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
 											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+								else if(_stateNames[i] == "Paused")
+								{
+									var softError = DesktopContent.getXMLValue(req,"soft_error"); 
+									
+									if(softError && softError != "")
+									{
+										Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". There was a State Machine Soft Error:\n\n" + softError, 
+				            				Debug.HIGH_PRIORITY);									
+									}
+									else										
+										Debug.log("State was changed unexpectedly from " + 
+											_stateNames[_currState] + " to " + _stateNames[i] +
+											". (Likely there was a error transitioning a Supervisor)",Debug.HIGH_PRIORITY);
+								}
 								else
 									Debug.log("State was changed unexpectedly from " + 
 											_stateNames[_currState] + " to " + _stateNames[i] +
@@ -907,7 +924,7 @@
 						}
                 		
                 		window.clearTimeout(_verifyStateTimeout);
-						_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
+						_verifyStateTimeout = window.setTimeout(getCurrentState,_VERIFY_STATE_PERIOD); //verify current state every 10 seconds (and resync time elapse)
 						
 						
 						//if in transition and not animating, then this is a surprise, try to adjust
@@ -1234,7 +1251,7 @@
                     
                     //resume verifying state
             		window.clearTimeout(_verifyStateTimeout);
-					_verifyStateTimeout = window.setTimeout(getCurrentState,10000); //verify current state every 10 seconds (and resync time elapse)
+					_verifyStateTimeout = window.setTimeout(getCurrentState,_VERIFY_STATE_PERIOD); //verify current state every 10 seconds (and resync time elapse)
                     return;
                 }
             	else 														//normal fade in or fade out -------------------

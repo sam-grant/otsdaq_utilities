@@ -61,7 +61,7 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 void ConsoleSupervisor::init(void)
 {
 	//start mf msg listener
-	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
+	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::messageFacilityReceiverWorkLoop(cs); },this).detach();
 }
 
 //========================================================================================================================
@@ -70,12 +70,11 @@ void ConsoleSupervisor::destroy(void)
 	//called by destructor
 }
 
-
 //========================================================================================================================
-//MFReceiverWorkLoop ~~
+//messageFacilityReceiverWorkLoop ~~
 //	Thread for printing Message Facility messages without decorations
 //	Note: Uses std::mutex to avoid conflict with reading thread.
-void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
+void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor *cs)
 {
 	__COUT__ << std::endl;
 
@@ -253,12 +252,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
 		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			__COUT__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
+			__COUT__ << "No messages received at Console Supervisor. Exiting Console messageFacilityReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}
 
-}
+} //end messageFacilityReceiverWorkLoop
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
