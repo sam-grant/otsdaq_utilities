@@ -49,6 +49,10 @@
 			body {
 				background-color: transparent;/*rgb(5,10,50);*/
 			}
+
+			a, input[type=submit] {
+				cursor: pointer;
+			}
 			
 			#clearDiv {
 				clear: both;
@@ -154,25 +158,6 @@
 				font-family: 'Donegal One', arial;
 			}
 			
-			#blackout-cancel-progress-btn {
-				color: 					white;
-				font-size: 				16px;
-				font-family: 			'Donegal One', arial;
-				width: 					16px;
-				height:					16px;
-			    padding: 				9px 10px 10px 11px;
-				border:					3px solid white;
-				border-radius:			20px;
-				text-align:				center;
-				background-color: rgb(111, 14, 14);
-				
-				-moz-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
-				-webkit-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
-				box-shadow: 0 1px 5px #fff 
-							inset, 0 1px 0 #444;
-				
-				
-			}
 						
 			.progress-bar {
 				background-color: #1a1a1a;
@@ -188,8 +173,7 @@
 			    
 				-moz-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
 				-webkit-box-shadow: 0 1px 5px #000 inset, 0 1px 0 #444;
-				box-shadow: 0 1px 5px #fff 
-							inset, 0 1px 0 #444;	    
+				box-shadow: 0 1px 5px #fff inset, 0 1px 0 #444;	    
 				text-align: left;
 			}
 
@@ -205,8 +189,31 @@
 		        -webkit-transition: width .1s ease-in-out;
 		        /*-moz-transition: width .1s ease-in-out;	        
 		        transition: width .1s ease-in-out;    */	
+			}			
+
+			#blackout-cancel-progress-btn {
+				color: 					white;
+				font-size: 				16px;
+				font-family: 			'Donegal One', arial;
+				width: 					16px;
+				height:					16px;
+				padding: 				8px 10px 10px 10px;
+				border:					3px solid white;
+				border-radius:			20px;
+				text-align:				center;
+				background-color: 		rgb(111, 14, 14);
+				
+				-moz-box-shadow: 		0 1px 5px #000 inset, 0 1px 0 #444;
+				-webkit-box-shadow: 	0 1px 5px #000 inset, 0 1px 0 #444;
+				box-shadow: 			0 1px 5px #fff inset, 0 1px 0 #444;				
 			}
-			
+			#blackout-cancel-progress-btn-text {
+				color: 					white;
+				font-size: 				16px;
+				height:					0;
+				font-family: 			'Donegal One', arial;
+			}
+
 			.blue span {				
 				background-color: #34c2e3;   
 			}
@@ -430,7 +437,8 @@
 				document.body.onmouseup = handleMouseUp;
 
 				//get state machine from server
-				DesktopContent.XMLHttpRequest("Request?RequestType=getStateMachine" + 
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=getStateMachine" + 
 						"&fsmName=" + _fsmName, "", 
 						smRequestHandler);	
 				
@@ -439,7 +447,8 @@
 				window.setTimeout(redrawPhysics,5000); 			
 				
 				//get view mode preferences for user
-				DesktopContent.XMLHttpRequest("Request?RequestType=stateMatchinePreferences" + 
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=stateMatchinePreferences" + 
 						"", "", 
 						function(req) {
 					var altViewMode = DesktopContent.getXMLValue(req,"Default_FSM_View");
@@ -907,7 +916,18 @@
 						{
 							Debug.log("Server indicates in state transition. Attempting to refresh state machine...");
 
-							//refresh FSM
+							//refresh FSM			                
+							physicsLaunchHandler(0,false /*transitionAttempted*/);
+							return;
+						}
+						
+						//if in transition and not animating, then this is a surprise, try to adjust
+						if(!inTrans && _transitionProgress !== undefined &&
+								_transitionProgress < 100)
+						{
+							Debug.log("Server indicates NOT in state transition. Attempting to refresh state machine...");
+
+							//refresh FSM			                
 							physicsLaunchHandler(0,false /*transitionAttempted*/);
 							return;
 						}
@@ -985,7 +1005,7 @@
             //physicsLaunchHandler ~~
             //  handle response to launch of physics state change
             function physicsLaunchHandler(req,transitionAttempted) {
-            	
+            	            	
             	//Debug.log("Physics physicsLaunchHandler " + req.responseText);
                 if(transitionAttempted)
                 {
@@ -1006,7 +1026,9 @@
 						return;
 					}
                 }
-                
+
+            	_inAnimation = true; //indicates transition animation starting
+            	
                 //setup canvas for transition (states, no HUD)
                 _context.clearRect(0, 0, _canvas.width, _canvas.height);
 			    drawCurrentStateAndTransitions();
@@ -1048,14 +1070,59 @@
                 _transitionProgress = -1; //use -1 to indicate need to check
                 _transitionFadeAlpha = 0;
                 _transitionFadeAlphaInc =  _TRANS_TRANSLATE_PERIOD/_TRANS_TRANSLATE_DURATION/1000.0;
-                _transitionTimer = setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
-            }
+                
+				window.clearInterval(_transitionTimer);
+                _transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+            } //end physicsLaunchHandler()
             
             //handleMouseUp ~~
             //  handle mouse click events
             //  if mouse is over a transition, execute transition
             function handleMouseUp(mouseEvent) {
-                if(_selectedTransition == -1 || _inAnimation) return;
+                if(_selectedTransition == -1 || _inAnimation)
+                {
+                	//if in transition, then allow for mouse click of cancel button                
+                	if(_transitionProgress !== undefined &&
+                			_transitionProgress >= 0 &&
+							_transitionProgress < 100)
+                	{
+                		//then cancelling allowed
+                		var locX = mouseEvent.clientX - this.offsetLeft - _MARGIN - 2;
+                		var locY = mouseEvent.clientY - this.offsetTop - _MARGIN - 2;
+
+                		var cancelW = 45;
+                		var cancelH = cancelW;
+
+                		var cancelRect = [
+										  _canvas.width/2 - cancelW/2,
+										  _canvas.width/2 + cancelW/2,
+										  _canvas.height/2 - cancelH/2 + 40,
+										  _canvas.height/2 + cancelH/2 + 40						
+										  ];
+
+                		//console.log(locX,locY,cancelRect);
+                		if(locX >= cancelRect[0] && locX <= cancelRect[1] &&
+                				locY >= cancelRect[2] && locY <= cancelRect[3])
+                		{
+                			//over cancel button
+                			Debug.log("Cancelling transition!");
+                			DesktopContent.popUpVerification("Are you sure you want to " +
+                					"cancel the transition?!",
+                					function() 
+									{ 
+                				DesktopContent.XMLHttpRequest(
+                						"Request?RequestType=cancelStateMachineTransition",
+                						""/*post data*/,
+										0 /*no handler*/);
+									},0,"#efeaea",0,"#770000");	
+                			
+                			return;
+                		}
+                	}
+                	getCurrentState(); //in case things get stuck, user likely will click                 	
+                	
+                	return;
+                }
                     
                 _inAnimation = true; //indicates transition animation starting
                 
@@ -1119,8 +1186,19 @@
             			    _blackoutRevealContent.style.display = 'none'; //remove progress completely
             			    _blackoutReveal.style.display = 'none'; //remove progress completely
             			    _prevState = _currState;
-                            _currState = _transitions[_currStateTransArr[_selectedTransition]][1];
-                            if(_transitionResultingState != _stateNames[_currState]) 
+            			    
+            			    var unanticipated = false;
+            			    try
+            			    {
+            			    	_currState = _transitions[_currStateTransArr[_selectedTransition]][1];
+            			    }
+            			    catch(e)
+            			    {
+            			    	Debug.log("Ignoring error: " + e);
+            			    	unanticipated = true;
+            			    }
+            			    
+                            if(unanticipated || _transitionResultingState != _stateNames[_currState]) 
                             {
                             	Debug.log("Error! State result not anticipated. Attempting to re-align with server.",Debug.HIGH_PRIORITY);
                             	//alert("Error! State result not anticipated. Attempting to re-align with server.");
@@ -1250,7 +1328,53 @@
             function handleMouseMove(mouseEvent) {
                 
             	//do nothing if in transition or current state not defined
-                if(_inAnimation || _currState < 0) {this.style.cursor = "default"; return;}
+                if(_inAnimation || _currState < 0) {
+                	
+                	//if in transition, then decorate mouse hover for cancel button
+                	if(_transitionProgress !== undefined &&
+                			_transitionProgress >= 0 &&
+							_transitionProgress < 100)
+                	{
+                		//then cancelling allowed
+                		
+                		var locX = mouseEvent.clientX - this.offsetLeft - _MARGIN - 2;
+                		var locY = mouseEvent.clientY - this.offsetTop - _MARGIN - 2;
+
+                		var cancelW = 45;
+                		var cancelH = cancelW;
+
+                		var cancelRect = [
+										  _canvas.width/2 - cancelW/2,
+										  _canvas.width/2 + cancelW/2,
+										  _canvas.height/2 - cancelH/2 + 40,
+										  _canvas.height/2 + cancelH/2 + 40						
+										  ];
+
+                		//console.log(locX,locY,cancelRect);
+                		if(locX >= cancelRect[0] && locX <= cancelRect[1] &&
+                				locY >= cancelRect[2] && locY <= cancelRect[3])
+                		{
+                			//over cancel button
+                			var el = document.getElementById("blackout-cancel-progress-btn");
+                			el.style.backgroundColor = "rgb(212, 22, 22)";
+                			el = document.getElementById("blackout-cancel-progress-btn-text");
+                			el.style.display = "block";
+                			this.style.cursor = "pointer";
+                			return;
+                		}
+                	} //end cancel hover handling
+                	
+                	//else nothing
+
+            		var el = document.getElementById("blackout-cancel-progress-btn");
+            		el.style.backgroundColor = "rgb(111, 14, 14)";
+            		el = document.getElementById("blackout-cancel-progress-btn-text");
+            		el.style.display = "none";
+
+            		this.style.cursor = "default";
+            		return;
+                	
+                }
             
                 //get mouse location on canvas
                 var locX = mouseEvent.clientX - this.offsetLeft - _MARGIN - 2;
@@ -2409,10 +2533,9 @@
 				    	<span id='progress-bar' style="width: 100%"></span>
 				    </div>			    
 			    </div>
-				<div id='blackout-cancel-progress'>
-					<a onclick='alert("hi");'>
-					<div id=id='blackout-cancel-progress-btn'>X</div></a>
-				</div>
+				
+				<div id='blackout-cancel-progress-btn'>X</div>
+				<div id='blackout-cancel-progress-btn-text'>Cancel Transition</div>
 			</td>
 		</table>	
 	</div>
