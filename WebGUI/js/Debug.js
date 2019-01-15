@@ -295,7 +295,9 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top." +
+				"<div style='color:white;font-size:16px;'>" +
+				"Note: Newest messages are at the top." +
+				"<label style='color:white;font-size:11px;'><br>(Press ESC to close and 1 to re-open)</font>" +
 				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
@@ -346,8 +348,13 @@ Debug.errorPop = function(err,severity) {
 				{
 					e.preventDefault();
 					e.stopPropagation();
-					Debug.closeErrorPop();	
-									
+					Debug.closeErrorPop();										
+				}
+				else if(e.keyCode == 49) //1 key, bring back popup
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					Debug.bringBackErrorPop();										
 				}
 			} //end localDebugKeyDownListener()
 			
@@ -558,12 +565,19 @@ Debug.errorPop = function(err,severity) {
 	els[1].innerHTML = el.innerHTML;	
 }
 
-
+Debug._errBoxLastContent = "";
 //=====================================================================================
 //Close the error popup on the window
 Debug.closeErrorPop = function() {
 	document.getElementById(Debug._errBoxId).style.display = "none";
+	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
+}
+//=====================================================================================
+//Bring the error popup back
+Debug.bringBackErrorPop = function() {
+	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
+	document.getElementById(Debug._errBoxId).style.display = "block";
 }
 
 

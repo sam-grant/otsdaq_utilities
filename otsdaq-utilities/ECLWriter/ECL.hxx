@@ -51,7 +51,7 @@
 //
 // End prologue.
 
-#include <xsd/cxx/config.hxx>
+#include <xsd/cxx/config.hxx> // if missing: ksu; yum install xsd;
 
 #if (XSD_INT_VERSION != 4000000L)
 #error XSD runtime version mismatch

@@ -12762,90 +12762,6 @@
 			}
 			str += "</select>";
 			
-			
-//			//start radio group
-//			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:200px; margin-left:0px;'> ";
-//			
-//			//add append or prepend radio
-//			str += "<input checked type='radio' id='popUpDialog-replaceData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Replace all current records with uploaded records";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append all uploaded records to current table";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append only uploaded records without conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendAndReplaceNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append all uploaded records and replace conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend all uploaded records to current table";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend only uploaded records without conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependAndReplaceNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend all uploaded records and replace conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			str += "</form>"; //close radio group
-
 			// done with special handling
 			// continue with pop-up prompt
 			str += "</center></div><br><br>"; //close main popup div
@@ -12944,7 +12860,7 @@
 			link.setAttribute("download", _currentConfigName + "_download.csv");
 			document.body.appendChild(link); // Required for FF
 
-			link.click(); // This will download the data file named "my_data.csv"
+			link.click(); // This will download the data file with filename *_download.csv
 			
 			link.parentNode.removeChild(link);
 		}

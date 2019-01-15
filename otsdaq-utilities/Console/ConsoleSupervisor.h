@@ -36,7 +36,7 @@ public:
 
 private:
 
-	static void				MFReceiverWorkLoop				(ConsoleSupervisor *cs);
+	static void				messageFacilityReceiverWorkLoop	(ConsoleSupervisor *cs);
 	void					insertMessageRefresh			(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
 
 
