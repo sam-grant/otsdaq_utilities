@@ -12447,25 +12447,64 @@
 			{
 				if(_tableViewIsTransposed) 
 				{
+
 					for(var r=0;r<src.length;++r)
-					{
-						for(var c=0;c<src[r].length;++c)
+					{			
+						var srcc = 0;			
+
+ 						//do not let go past special 3 columns of current column types (-1 for the c+1)
+						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
+
+						//fill any missing columns up to special columns
+						for(c;c<colTypes.length-3-1;++c)
+						{
+							if(rowOffset + r == 0) cols[c] = [];
+							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
+							cols[c+1][rowOffset + r] = ""; //blank
+						}
+
+						//finish last special 3
+						for(c;srcc<src[r].length;++c)
+						{
+							if(rowOffset + r == 0) cols[c] = [];
+							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+						}
+						
 					}
 				}
 				else
 				{
 					for(var r=0;r<src.length;++r)
 					{
+						var srcc = 0;
+						
 						cols[rowOffset + r] = [];
-						for(var c=0;c<src[r].length;++c)
+
+						//do not let go past special 3 columns of current column types (-1 for the c+1)
+						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+						}
+
+						//fill any missing columns up to special columns
+						for(c;c<colTypes.length-3-1;++c)
+						{
+							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
+							cols[rowOffset + r][c+1] = ""; //blank
+						}
+
+						//finish last special 3
+						for(c;srcc<src[r].length;++c)
+						{
+							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
