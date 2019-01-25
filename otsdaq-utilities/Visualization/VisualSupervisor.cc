@@ -1,6 +1,7 @@
 #include "otsdaq-utilities/Visualization/VisualSupervisor.h"
 //#include "otsdaq-core/RootUtilities/DQMHistos.h"
 #include "otsdaq-core/DataManager/DataManagerSingleton.h"
+#include "otsdaq-core/Macros/BinaryStringMacros.h"
 
 
 //ROOT documentation
@@ -461,7 +462,7 @@ void VisualSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgi
 					//__SUP_COUT__ << "histo length " << tbuff.Length() << std::endl;
 
 					std::string destination =
-							StringMacros::binaryToHexString(tBuffer.Buffer(), tBuffer.Length());
+							BinaryStringMacros::binaryToHexString(tBuffer.Buffer(), tBuffer.Length());
 
 					xmlOut.addTextElementToData("rootType", histoClone->ClassName());
 					xmlOut.addTextElementToData("rootData", destination);

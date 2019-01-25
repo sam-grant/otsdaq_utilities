@@ -86,17 +86,18 @@ void VisualDataManager::start(std::string runNumber)
 				{
 						__CFG_COUT__ << "Consumer Plugin Type = " << bufferConfiguration.second.getNode("ProcessorPluginName") << __E__;
 						
-						for(const auto& itConsumer: buffers_[buffer.first].consumers_)
+						auto bufferIt = buffers_.at(buffer.first);
+						for(const auto& consumer: bufferIt.consumers_)
 						{
-							__CFG_COUT__ << "CONSUMER PROCESSOR: " << itConsumer->getProcessorID() << std::endl;
-							if(itConsumer->getProcessorID() == bufferConfiguration.second.getNode("ProcessorUID").getValue<std::string>())
+							__CFG_COUT__ << "CONSUMER PROCESSOR: " << consumer->getProcessorID() << std::endl;
+							if(consumer->getProcessorID() == bufferConfiguration.second.getNode("ProcessorUID").getValue<std::string>())
 							{
-								__CFG_COUT__ << "CONSUMER: " << itConsumer->getProcessorID() << std::endl;
+								__CFG_COUT__ << "CONSUMER: " << consumer->getProcessorID() << std::endl;
 
 								try
 								{
 									__CFG_COUT__ << "Trying for DQMHistosConsumerBase." << __E__;
-									theLiveDQMHistos_ = dynamic_cast<DQMHistosConsumerBase*>(itConsumer.get());
+									theLiveDQMHistos_ = dynamic_cast<DQMHistosConsumerBase*>(consumer);
 									
 									
 									__CFG_COUT__ << "Did we succeed? " << theLiveDQMHistos_ <<
@@ -110,7 +111,7 @@ void VisualDataManager::start(std::string runNumber)
 
 									try
 									{
-										theRawDataConsumer_ = dynamic_cast<RawDataVisualizerConsumer*>(itConsumer.get());
+										theRawDataConsumer_ = dynamic_cast<RawDataVisualizerConsumer*>(consumer);
 									}
 									catch(...){}
 

@@ -25,6 +25,8 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t You are using $0"
 echo
 echo
 
+#replace StartOTS.sh in any setup file!
+sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
 if [ "x$1" == "x" ]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t Usage Error: parameter 1 is the comment for git commit"
@@ -139,8 +141,8 @@ if [ "x$1" == "x" ]; then
 		while read line; do
 			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
 			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/	&>/dev/null #hide output	
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
 			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
 			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
@@ -148,8 +150,8 @@ if [ "x$1" == "x" ]; then
 		#do one more time after loop to make sure last line is read (even if user did not put new line) 
 		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
 		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
 	else
@@ -162,8 +164,8 @@ if [ "x$1" == "x" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/"
 		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/
 		# undo c++ style comment for Eclipse viewing*/
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/CORE/*Info.xml $USER_DATA/ConfigurationInfo/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/"
+		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/
 		# undo c++ style comment for Eclipse viewing*/
 	fi
 	

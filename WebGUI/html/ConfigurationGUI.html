@@ -2662,6 +2662,26 @@
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");			
 			
+			
+			//always update tree names
+			var activeTableNames = req.responseXML.getElementsByTagName("ActiveTableName");
+			var activeTableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
+			var activeTableComments = req.responseXML.getElementsByTagName("ActiveTableComment");
+			treeMemberNames_ = [];
+			treeMemberVersions_ = [];
+			treeMemberComments_ = [];
+
+			_tableLinkDropdownChoices = [];			
+			_tableLinkDropdownChoices.push(DesktopContent.getXMLValue(req,"DefaultNoLink"));
+			for(var i=0;i<activeTableNames.length;++i)
+			{
+				treeMemberNames_.push(activeTableNames[i].getAttribute("value"));
+				_tableLinkDropdownChoices.push(treeMemberNames_[i]);
+				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
+				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
+			}
+			
+
 			if(!parentId && 
 					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
 					treeGroupName_ == configGroupName &&
@@ -2737,22 +2757,7 @@
 			treeGroupName_ = configGroupName;
 			treeGroupKey_ = configGroupKey;
 			
-			var activeTableNames = req.responseXML.getElementsByTagName("ActiveTableName");
-			var activeTableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
-			var activeTableComments = req.responseXML.getElementsByTagName("ActiveTableComment");
-			treeMemberNames_ = [];
-			treeMemberVersions_ = [];
-			treeMemberComments_ = [];
 			
-			_tableLinkDropdownChoices = [];			
-			_tableLinkDropdownChoices.push(DesktopContent.getXMLValue(req,"DefaultNoLink"));
-			for(var i=0;i<activeTableNames.length;++i)
-			{
-				treeMemberNames_.push(activeTableNames[i].getAttribute("value"));
-				_tableLinkDropdownChoices.push(treeMemberNames_[i]);
-				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
-				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
-			}
 			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
 			
 			
@@ -6799,7 +6804,11 @@
 						//if there is no valid table name, 
 						//	then jump to html creation
 						
-						Debug.log("Invalid tree member table targeted!");//,Debug.HIGH_PRIORITY);
+						Debug.log("Invalid tree member table targeted, could not find able '" +
+								treeEditingTargetTable_ + "' in the list of tree tables. " +
+								"Perhaps the tree needs to be refreshed? " + 
+								"Or the table needs to be added to one of the active groups?");//,Debug.HIGH_PRIORITY);
+
 						localCreateLinkEditHTML([],[],[]);						
 						return;					
 					}
@@ -9314,7 +9323,10 @@
 						}
 					if(tableIndex == -1)
 					{
-						Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+						Debug.log("Invalid tree member table targeted, could not find able '" +
+								treeEditingTargetTable_ + "' in the list of tree tables. " +
+								"Perhaps the tree needs to be refreshed? " + 
+								"Or the table needs to be added to one of the active groups?",Debug.HIGH_PRIORITY);
 						return;					
 					}
 
