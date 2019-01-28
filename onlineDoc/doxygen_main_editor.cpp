@@ -128,17 +128,17 @@ int main(int argc, char** argv)
 			case 1:
 			{
 				//get one more line and modify it, ie, clip ugly start and delete close tag for content div
-				fgets(line,1000,mainSrc);
-				__COUT__ << "MOD " << line << (line[strlen(line)-1] == '\n'?"":"\n");
-				line[strlen(line)-7] = '\0';
-				for(countdown=strlen(line)-16;countdown<strlen(line);++countdown)
-					if(line[countdown]=='v') break;
-
-				//keep version number
-				fputs("<h3>",mainDest);
-				__COUT__ << "<h3>" << __E__;
-				fputs(&line[countdown],mainDest); //output main line to file
-				__COUT__ << &line[countdown] << __E__;
+//				fgets(line,1000,mainSrc);
+//				__COUT__ << "MOD " << line << (line[strlen(line)-1] == '\n'?"":"\n");
+//				line[strlen(line)-7] = '\0';
+//				for(countdown=strlen(line)-16;countdown<strlen(line);++countdown)
+//					if(line[countdown]=='v') break;
+//
+//				//keep version number
+//				fputs("<h3>",mainDest);
+//				__COUT__ << "<h3>" << __E__;
+//				fputs(&line[countdown],mainDest); //output main line to file
+//				__COUT__ << &line[countdown] << __E__;
 
 				while(fgets(line,1000,injectSrc))
 				{
@@ -147,8 +147,8 @@ int main(int argc, char** argv)
 				}
 
 				//add close content div
-				fputs("</div>",mainDest);
-				__COUT__ << "</div>" << __E__;
+//				fputs("</div>",mainDest);
+//				__COUT__ << "</div>" << __E__;
 
 				break;
 			}
