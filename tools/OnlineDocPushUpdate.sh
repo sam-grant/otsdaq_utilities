@@ -101,10 +101,18 @@ for p in ${REPO_DIR[@]}; do
 			#cp $p/doc/html/main.html $p/doc/html/main.html.bk
 			cp $p/doc/html/index.html $p/doc/html/index.html.bk
 		fi
-		#doxygen_main_editor $p/doc/html/main.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p)_head.html
-		doxygen_main_editor $p/doc/html/index.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p)_head.html
+
+		echo
+		echo -e "OnlineDoc [${LINENO}]  \t =================="
+		echo -e "OnlineDoc [${LINENO}]  \t Refining content..."
+		echo
+		echo
+		
+		#doxygen_main_editor $p/doc/html/main.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_otsdaq_head.html
+		doxygen_main_editor $p/doc/html/index.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_otsdaq_head.html
 
 		if [ $ONLY_MAIN == 1 ]; then
+			echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/"
 			#scp -r $p/doc/html/main.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/
 			scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/
 			continue
@@ -118,16 +126,7 @@ for p in ${REPO_DIR[@]}; do
 		
 		echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)"
 		scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)
-
-		echo
-		echo -e "OnlineDoc [${LINENO}]  \t =================="
-		echo -e "OnlineDoc [${LINENO}]  \t Refining content..."
-		echo
-		echo
-		
-		echo -e "OnlineDoc [${LINENO}]  \t scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/index.html"
-		#scp -r $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/doxygen_index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/index.html
-
+		echo -e "OnlineDoc [${LINENO}]  \t Done with .... scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)"
 	fi
     fi	   
 done
