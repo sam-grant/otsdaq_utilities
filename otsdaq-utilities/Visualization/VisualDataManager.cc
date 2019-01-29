@@ -64,7 +64,7 @@ void VisualDataManager::start(std::string runNumber)
 	DataManager::start(runNumber);
 	
 	
-	auto buffers = theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataManagerConfiguration").getChildren();
+	auto buffers = theXDAQContextConfigTree_.getNode(theConfigurationPath_+"/LinkToDataBufferTable").getChildren();
 	
 	__CFG_COUT__ << "Buffer count " << buffers.size() << __E__;
 	
@@ -76,7 +76,7 @@ void VisualDataManager::start(std::string runNumber)
 		{
 			std::vector<std::string> producers;
 			std::vector<std::string> consumers;
-			auto bufferConfigurationMap = buffer.second.getNode("LinkToDataBufferConfiguration").getChildren();
+			auto bufferConfigurationMap = buffer.second.getNode("LinkToDataProcessorTable").getChildren();
 			for(const auto& bufferConfiguration: bufferConfigurationMap)
 			{
 				__CFG_COUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
