@@ -130,6 +130,11 @@ if [ "x$1" == "x" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
 		echo
+		
+
+		#replace TheSupervisorConfiguration with GatewaySupervisorConfiguration for updating
+		sed -i s/TheSupervisorConfiguration/GatewaySupervisorConfiguration/g $USER_DATA/ServiceData/CoreTableInfoNames.dat
+		
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
 		

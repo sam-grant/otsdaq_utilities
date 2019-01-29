@@ -1333,11 +1333,16 @@ try
 	}
 	else
 	{
+		__SUP_COUT__ << "Loading group '" << groupName <<
+				"(" << groupKey << ")'" << std::endl;
+
 		std::string groupComment, groupAuthor, configGroupCreationTime;
 
 		//only same member map if object pointer was passed
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-								0,returnMemberMap,0,0,
+								false /*doActivate*/,
+								returnMemberMap,0 /*progressBar*/,
+								accumulatedErrors,
 								doGetGroupInfo?&groupComment:0,
 								doGetGroupInfo?&groupAuthor:0,
 								doGetGroupInfo?&configGroupCreationTime:0);
@@ -2419,17 +2424,17 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 		{
 			//then consider the configurationManager the root node
 
+			std::string accumulateTreeErrs;
+
 			if(usingActiveGroups)
-				rootMap = cfgMgr->getChildren();
+				rootMap = cfgMgr->getChildren(0,&accumulateTreeErrs);
 			else
-			{
-				std::string accumulateTreeErrs;
 				rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
-				__SUP_COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
-				if(accumulateTreeErrs != "")
-					xmlOut.addTextElementToData("TreeErrors",
-							accumulateTreeErrs);
-			}
+
+			__SUP_COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
+			if(accumulateTreeErrs != "")
+				xmlOut.addTextElementToData("TreeErrors",
+						accumulateTreeErrs);
 		}
 		else
 		{
@@ -2446,27 +2451,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 			StringMacros::getMapFromString(filterList,filterMap,
 					std::set<char>({';'})/*pair delimiters*/,
 					std::set<char>({'='})/*name/value delimiters*/);
-			//			if(filterList != "")
-			//			{
-			//				//extract filter list
-			//				{
-			//					std::istringstream f(filterList);
-			//					std::string filterPath,filterValue;
-			//					while (getline(f, filterPath, '='))
-			//					{
-			//						getline(f, filterValue, ';');
-			//						filterMap.insert(
-			//								std::pair<std::string,std::string>(
-			//										filterPath,
-			//										filterValue));
-			//					}
-			//					__SUP_COUT__ << filterList << std::endl;
-			//					for(auto& pair:filterMap)
-			//						__SUP_COUT__ << "filterMap " <<
-			//						pair.first << "=" <<
-			//						pair.second << std::endl;
-			//				}
-			//			}
+
 			__COUTV__(StringMacros::mapToString(filterMap));
 
 			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
@@ -4090,16 +4075,22 @@ try
 
 	//load group so comments can be had
 	//	and also group metadata (author, comment, createTime)
-	//bool commentsLoaded = false;
 	try
 	{
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
+		std::string accumulateErrors;
+
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				false /*doActivate*/,&memberMap,0 /*progressBar*/,0 /*accumulateErrors*/,
+				false /*doActivate*/,&memberMap,0 /*progressBar*/,
+				&accumulateErrors /*accumulateErrors*/,
 				&groupComment, &groupAuthor, &groupCreationTime,
 				false /*doNotLoadMember*/, &groupTypeString, &groupMemberAliases);
 
-		//commentsLoaded = true;
+		if(accumulateErrors != "")
+		{
+			__SUP_SS__ << accumulateErrors;
+			__SUP_SS_THROW__;
+		}
 
 		xmlOut.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
 		xmlOut.addTextElementToData("ConfigurationGroupComment", groupComment);
