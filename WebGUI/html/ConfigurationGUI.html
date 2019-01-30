@@ -525,6 +525,7 @@
 		var treeViewHideInfo_ = true;
 		var treeFilter_ = "";
 		var lastTreeFilter_ = "";
+		var lastTreeWarnStr_ = "";
 		
 		var treeHasChanged_ = false;	
 		var treeEditingNodeType_ = "";		
@@ -2650,12 +2651,20 @@
 			}
 			
 			var warn = DesktopContent.getXMLValue(req,"Warning");
-			if(warn) 
+			if(warn)
 			{
-				Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
-				Debug.log(warn,Debug.WARN_PRIORITY);	
+				if(warn != lastTreeWarnStr_) 
+				{
+					Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
+					Debug.log(warn,Debug.WARN_PRIORITY);	
+				}
+				else
+					Debug.log(warn);
 			}
-						
+			lastTreeWarnStr_ = warn;
+			 
+			
+					
 			
 			//draw tree		
 			
