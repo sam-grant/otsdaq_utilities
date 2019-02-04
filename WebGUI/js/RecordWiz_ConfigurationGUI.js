@@ -1889,7 +1889,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 							fieldArr = [
 										"Status",
 										"DataManagerGroupID",
-										"LinkToDataBufferConfiguration",
+										"LinkToDataProcessorTable",
 										"LinkToDataBufferGroupID",
 										"CommentDescription"
 										];
@@ -1897,7 +1897,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 							valueArr = [
 										"1",//"Status",
 										recordGroupId,//"DataManagerGroupID",
-										getRecordConfiguration(),//"LinkToDataBufferConfiguration",
+										getRecordConfiguration(),//"LinkToDataProcessorTable",
 										name+"ProcessorGroup",//"LinkToDataBufferGroupID",
 										_DEFAULT_WIZ_COMMENT//"CommentDescription"
 										];
@@ -2089,14 +2089,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					if(_recordAlias == _RECORD_TYPE_FE)
 					{
 						fieldArr = [
-									"LinkToFEInterfaceConfiguration",
+									"LinkToFEInterfaceTable",
 									"LinkToFEInterfaceGroupID",
 									"CommentDescription"
 									];
 						groupSuffix = "FEGroup";
 
 						valueArr = [
-									getRecordConfiguration(),//"LinkToFEInterfaceConfiguration",
+									getRecordConfiguration(),//"LinkToFEInterfaceTable",
 									name+groupSuffix,//"LinkToFEInterfaceGroupID",									
 									_DEFAULT_WIZ_COMMENT//"CommentDescription"
 									];
@@ -2106,7 +2106,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					{
 
 						fieldArr = [
-									"LinkToDataManagerConfiguration",
+									"LinkToDataBufferTable",
 									"LinkToDataManagerGroupID",
 									"CommentDescription"
 									];
@@ -2114,7 +2114,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 						groupSuffix = "DMGroup";
 						
 						valueArr = [
-									getIntermediateTable(),//"LinkToFEInterfaceConfiguration",
+									getIntermediateTable(),//"LinkToFEInterfaceTable",
 									name+groupSuffix,//"LinkToFEInterfaceGroupID",									
 									_DEFAULT_WIZ_COMMENT//"CommentDescription"
 									];
@@ -3038,16 +3038,16 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 		if(_recordAlias == _RECORD_TYPE_FE)
 		{
 			if(generationsBack == 1)
-				retVal = "LinkToFEInterfaceConfiguration";
+				retVal = "LinkToFEInterfaceTable";
 			else if(generationsBack == 2)
 				retVal = "LinkToSupervisorConfiguration";
 		}
 		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 		{
 			if(generationsBack == 1)
-				retVal = "LinkToDataBufferConfiguration";
+				retVal = "LinkToDataProcessorTable";
 			else if(generationsBack == 2)
-				retVal = "LinkToDataManagerConfiguration";
+				retVal = "LinkToDataBufferTable";
 			else if(generationsBack == 3)
 				retVal = "LinkToSupervisorConfiguration";
 		}

@@ -2496,7 +2496,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
 				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			__COUT__ << t.getValueType() << std::endl;
+			//__COUT__ << t.getValueType() << std::endl;
 
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto& choice:choices)

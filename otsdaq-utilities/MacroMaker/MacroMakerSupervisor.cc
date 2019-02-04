@@ -211,7 +211,7 @@ try
 			std::vector<std::string> feChildren =
 					appsNode.getNode(feApp.second.getName()).
 					getNode("LinkToSupervisorConfiguration").
-					getNode("LinkToFEInterfaceConfiguration").getChildrenNames();
+					getNode("LinkToFEInterfaceTable").getChildrenNames();
 
 			for(auto& fe:feChildren)
 			{
@@ -222,8 +222,10 @@ try
 
 		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
 	}
-	else if(type == "feSend" ||
-			type == "feMacro")
+	else if(type == "feSend" || //from front-ends
+			type == "feMacro" || //from front-ends
+			type == "feMacroMultiDimensionalStart" || //from iterator
+			type == "feMacroMultiDimensionalCheck")//from iterator
 	{
 		__SUP_COUTV__(type);
 
@@ -263,7 +265,7 @@ try
 					it->second.getDescriptor(),
 					message);
 
-			if(type == "feMacro")
+			if(type != "feSend")
 			{
 				__SUP_COUT__ << "Forwarding FE Macro response: " <<
 						SOAPUtilities::translate(replyMessage) << __E__;
@@ -279,6 +281,12 @@ try
 					e.what() << __E__;
 			__SUP_SS_THROW__;
 		}
+	}
+	else if(type == "macroMultiDimensional")  //from iterator
+	{
+		//TODO launch Macro run in thread with multi-dimensional loop
+		__SUP_SS__ << "TODO. Unrecognized FE Communication type: " << type << __E__;
+		__SUP_SS_THROW__;
 	}
 	else
 	{
