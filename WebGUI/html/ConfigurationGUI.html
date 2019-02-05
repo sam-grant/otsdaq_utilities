@@ -689,7 +689,7 @@
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
 					versionTrackingHandler);
-		}
+		} //end setupSystemViewMode()
 		
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) {
@@ -701,7 +701,7 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
 					configGroupsRequestHandler, anchorTarget,
 					0/*progressHandler*/,true /*callHandlerOnErr*/);		
-		}
+		} //end setupGroupViewMode()
 		
 		//setupTableViewMode ~
 		function setupTableViewMode(anchorTarget) {
@@ -712,14 +712,14 @@
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
 					tableViewRequestHandler,anchorTarget);
-		}
+		} //end setupTableViewMode()
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleFlattenSystemAliasesResponse(req) {
 			Debug.log("Attempting to Flatten System Aliases... " +
 					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
-		}
+		} //end handleFlattenSystemAliasesResponse()
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleOtsRelaunchResponse(req,isWiz) {
@@ -1204,10 +1204,10 @@
 
 			str += "<h3 style='margin-top:-10px'><u>Group View</u></h3>";
 			
-			var typeName = ["All","Contexts","Backbones","Configurations"];
-			var typeFilterIndex = [-1,0,1,2];
+			var typeName = ["All","Context","Backbone","Configuration","Iterate"];
+			var typeFilterIndex = [-1,0,1,2,3];
 			
-			str += "Showing:";
+			str += "Showing groups of type:";
 			for(var i=0;i<typeName.length;++i)
 			{
 				if(_groupViewFilterIndex == typeFilterIndex[i])
@@ -1224,7 +1224,7 @@
 			str += "<br>";
 			str += "<label id='filteredGroupCount'></label> of " +
 					groupNames.length + " groups. ";
-			str += "Don't see what you need: ";
+			str += "Do not see what you need? ";
 			str += "<a href='#' onclick='" +
 					"setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 					"\");' title='" +
@@ -1289,29 +1289,33 @@
 				var filteredGroupCount = 0;
 				backLinkStr = "setupGroupViewMode();";
 				
+				var filterOutGroup;
+				
 				for(var i=0;i<groupNames.length;++i)
 				{	
 					groupName = groupNames[i].getAttribute("value");
 					key = keys[i].getAttribute("value");
 
-					if(_groupViewFilterIndex == 0 && //context only
-							types[i].getAttribute("value") != "Context")
+					filterOutGroup = false;
+					//filter based on selected filter index
+					if(_groupViewFilterIndex >= 0)
+						for(var j=0;j<typeName.length;++j)
+						{
+							if(_groupViewFilterIndex == typeFilterIndex[j] && 
+									types[i].getAttribute("value") != typeName[j])
+							{
+								filterOutGroup = true;
+								break;
+							}
+						}
+					
+					if(filterOutGroup)
 					{
 						Debug.log("Filtering out " + groupName + "_v" + key);
 						continue;
 					}
-					else if(_groupViewFilterIndex == 1 && //context only
-							types[i].getAttribute("value") != "Backbone")
-					{
-						Debug.log("Filtering out " + groupName + "_v" + key);
-						continue;
-					}
-					else if(_groupViewFilterIndex == 2 && //context only
-							types[i].getAttribute("value") != "Configuration")
-					{
-						Debug.log("Filtering out " + groupName + "_v" + key);
-						continue;
-					}
+					
+					//if here, group is to be shown
 
 					++filteredGroupCount;
 					skipRepeat = false;
@@ -1389,7 +1393,7 @@
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		}
+		} //end configGroupsRequestHandler()
 		
 		//groupSearchSelectionHandler ~~
 		//	make group search selection handler

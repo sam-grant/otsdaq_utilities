@@ -715,7 +715,8 @@
 		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
 		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
 		_COMMAND_PARAM_FIELDS.RelativePathToField				= "RelativePathToField";
-		_COMMAND_PARAM_FIELDS.LinkToMacroParameters				= "LinkToMacroParameters";
+		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoops";
+		_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile			= "EnableSavingOutputsToFile";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
 		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
@@ -723,8 +724,8 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP] 	= [];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ALIAS] 		= [_COMMAND_PARAM_FIELDS.SystemAlias];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroParameters,"LinkToMacroParametersGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroParameters,"LinkToMacroParametersGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,_COMMAND_PARAM_FIELDS.RelativePathToField,"FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
@@ -1110,7 +1111,7 @@
 
                 											params.push(targetCSVStr);
                 										}
-                										else if(parameterName == "LinkToMacroParameters" )
+                										else if(parameterName == _COMMAND_PARAM_FIELDS.LinkToMacroDimensions )
                 										{
                 											//for execute FEMacro and Macro commands
                 											
@@ -2924,10 +2925,15 @@
 											"onclick":"showParamPathToFieldWizDialog(" + i + ");"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
 						}
-						else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
-								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+						else if(
 								_COMMAND_PARAMS[commandKey][i] ==  //booleans
-										_COMMAND_PARAM_FIELDS.DoTrackGroupChanges)
+								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+								
+								_COMMAND_PARAMS[commandKey][i] ==  //booleans
+								_COMMAND_PARAM_FIELDS.DoTrackGroupChanges ||
+								
+								_COMMAND_PARAMS[commandKey][i] ==  //booleans
+								_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile)
 						{
 							//boolean field, show select box and set value to 1/0
 
@@ -2968,10 +2974,10 @@
 							str += "</select>";	
 						}		
 						else if(_COMMAND_PARAMS[commandKey][i] == // Macro Parameter table link
-								_COMMAND_PARAM_FIELDS.LinkToMacroParameters)
+								_COMMAND_PARAM_FIELDS.LinkToMacroDimensions)
 						{
 							if(initValue == "") //set default table name
-								initValue = "IterationCommandMacroParameterConfiguration";
+								initValue = "IterationCommandMacroDimensionalLoopConfiguration";
 							str += htmlOpen("input",
 									{
 											"id":("popUp-param-" + i),
