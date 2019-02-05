@@ -2352,7 +2352,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
 //		- fields/value pairs separated by ; for AND
 //			- Note: limitation here is there is no OR among fields/value pairs (in future, could separate field/value pairs by : for OR)
-//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
+//		e.g. "LinkToFETypeTable=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr,
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,

@@ -37,7 +37,7 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s)
 		getApplicationContext()->getContextDescriptor()->getURL(),
 		getApplicationDescriptor()->getLocalId()
 	))
-	, supervisorConfigurationPath_("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
+	, supervisorConfigurationPath_("/" + supervisorContextUID_ + "/LinkToApplicationTable/" + supervisorApplicationUID_ + "/LinkToSupervisorTable")
 {
 	INIT_MF("ECLSupervisor");
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;

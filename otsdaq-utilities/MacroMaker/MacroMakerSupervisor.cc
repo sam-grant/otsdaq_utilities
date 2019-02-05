@@ -210,8 +210,8 @@ try
 
 			std::vector<std::string> feChildren =
 					appsNode.getNode(feApp.second.getName()).
-					getNode("LinkToSupervisorConfiguration").
-					getNode("LinkToFEInterfaceConfiguration").getChildrenNames();
+					getNode("LinkToSupervisorTable").
+					getNode("LinkToFEInterfaceTable").getChildrenNames();
 
 			for(auto& fe:feChildren)
 			{
