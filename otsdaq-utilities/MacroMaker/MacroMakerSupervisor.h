@@ -34,6 +34,8 @@ private:
 	void 					handleRequest					(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 
 	xoap::MessageReference 	frontEndCommunicationRequest   	(xoap::MessageReference message);
+	xoap::MessageReference 	startMacroMultiDimensional   	(xoap::MessageReference message);
+	xoap::MessageReference 	checkMacroMultiDimensional   	(xoap::MessageReference message);
 
 	void 					getFElist						(HttpXmlDocument& xmldoc);
 	void 					getFEMacroList					(HttpXmlDocument& xmldoc, const std::string &username);

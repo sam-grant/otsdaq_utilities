@@ -1194,7 +1194,10 @@
 					str += "<input id='selectCellTypeSelect' value='UID' style='display:none'></input>";
 				}
 				str += "<input type='text' id='selectCellSpecTypeID' onkeydown='keyHandler(event)' " +
-						"style='display:none; width:40px; float:left; height: 13px' value='" + 
+						"style='display:none; width:" + 
+						(40 > (el.offsetWidth-8-160 /*160=width of type-dropdown*/)?40: //min of 40
+								(el.offsetWidth-8-160 /*160=width of type-dropdown*/)) +
+						"px; float:left; height: 13px; font-size: 14px;' value='" + 
 						startingLinkId;
 				str += "' onmousedown='_mouseIsSelecting = true; Debug.log(_mouseIsSelecting);' " +
 						"onmouseup='_mouseIsSelecting = false; Debug.log(_mouseIsSelecting);' " +

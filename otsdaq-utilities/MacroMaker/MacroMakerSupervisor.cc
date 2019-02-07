@@ -282,11 +282,17 @@ try
 			__SUP_SS_THROW__;
 		}
 	}
-	else if(type == "macroMultiDimensional")  //from iterator
+	else if(type == "macroMultiDimensionalStart")  //from iterator
 	{
-		//TODO launch Macro run in thread with multi-dimensional loop
-		__SUP_SS__ << "TODO. Unrecognized FE Communication type: " << type << __E__;
-		__SUP_SS_THROW__;
+		//launch Macro run in thread with multi-dimensional loop
+		//a la FEVInterfacesManager::startFEMacroMultiDimensional
+		return startMacroMultiDimensional(message);
+	}
+	else if(type == "macroMultiDimensionalCheck")  //from iterator
+	{
+		//check Macro run multi-dimensional loop completion
+		//a la FEVInterfacesManager::checkFEMacroMultiDimensional
+		return checkMacroMultiDimensional(message);
 	}
 	else
 	{
@@ -295,7 +301,7 @@ try
 	}
 
 	return SOAPUtilities::makeSOAPMessageReference("Received");
-}
+} //end frontEndCommunicationRequest()
 catch(const std::runtime_error& e)
 {
 	xoap::MessageReference returnMessage =
@@ -303,6 +309,7 @@ catch(const std::runtime_error& e)
 
 	SOAPParameters parameters;
 	parameters.addParameter("Error", e.what());
+	SOAPUtilities::addParameters(returnMessage, parameters);
 	return returnMessage;
 }
 catch(...)
@@ -315,8 +322,32 @@ catch(...)
 
 	SOAPParameters parameters;
 	parameters.addParameter("Error", ss.str());
+	SOAPUtilities::addParameters(returnMessage, parameters);
 	return returnMessage;
 }
+
+//========================================================================================================================
+//launch Macro run in thread with multi-dimensional loop
+//a la FEVInterfacesManager::startFEMacroMultiDimensional
+xoap::MessageReference MacroMakerSupervisor::startMacroMultiDimensional(xoap::MessageReference message)
+{
+	__SUP_COUT__ << "Received multi-dimensional Macro launch request: " <<
+			SOAPUtilities::translate(message) << __E__;
+
+	return message; //FIXME
+
+} //end startMacroMultiDimensional()
+
+//========================================================================================================================
+//check Macro run multi-dimensional loop completion
+//a la FEVInterfacesManager::checkFEMacroMultiDimensional
+xoap::MessageReference MacroMakerSupervisor::checkMacroMultiDimensional(xoap::MessageReference message)
+{
+	__SUP_COUT__ << "Received multi-dimensional Macro check request: " <<
+			SOAPUtilities::translate(message) << __E__;
+
+	return message; //FIXME
+} //end checkMacroMultiDimensional()
 
 //========================================================================================================================
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)

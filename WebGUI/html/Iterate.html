@@ -715,7 +715,7 @@
 		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
 		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
 		_COMMAND_PARAM_FIELDS.RelativePathToField				= "RelativePathToField";
-		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoops";
+		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoopTable";
 		_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile			= "EnableSavingOutputsToFile";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
@@ -2637,7 +2637,7 @@
 				_popUpParamsModified = false; //reset
 
 				//set position and size
-				var w = 520;
+				var w = 550;
 				var h = 250; //+32 for each parameter
 				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/,
 						undefined /*padding*/,
