@@ -4738,6 +4738,14 @@ try
 	{
 		//returns -1 on error that data was unchanged
 		retVal = sourceTableAsIs?0:cfgView->fillFromCSV(data,dataOffset,author);
+
+		if(retVal == 1) //data was same but columns are different!
+		{
+			__SUP_COUT__ << "Data was the same, but columns have changed!" << __E__;
+			__SUP_COUTV__(sourceTableAsIs);
+			lookForEquivalent = false; //clear
+		}
+
 		cfgView->setURIEncodedComment(comment);
 		__SUP_COUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
 
