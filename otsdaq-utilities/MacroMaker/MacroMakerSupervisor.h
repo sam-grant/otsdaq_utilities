@@ -34,8 +34,6 @@ private:
 	void 					handleRequest					(const std::string Command, HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 
 	xoap::MessageReference 	frontEndCommunicationRequest   	(xoap::MessageReference message);
-	xoap::MessageReference 	startMacroMultiDimensional   	(xoap::MessageReference message);
-	xoap::MessageReference 	checkMacroMultiDimensional   	(xoap::MessageReference message);
 
 	void 					getFElist						(HttpXmlDocument& xmldoc);
 	void 					getFEMacroList					(HttpXmlDocument& xmldoc, const std::string &username);
@@ -43,6 +41,7 @@ private:
 	void 					writeData						(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 	void 					readData						(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
 	void 					createMacro						(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username);
+	void 					loadMacro						(const std::string& macroName, std::string& macroString, const std::string& username = "");
 	void 					loadMacros						(HttpXmlDocument& xmldoc, const std::string &username);
 	void 					appendCommandToHistory			(std::string command, std::string Format, std::string time, std::string interfaces, const std::string &username);
 	void 					loadHistory						(HttpXmlDocument& xmldoc, const std::string &username);
@@ -54,6 +53,7 @@ private:
 	void 					runFEMacro						(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
 
 
+
 	std::string 			generateHexArray				(const std::string& sourceHexString,int &numOfBytes);
 	bool 					isArgumentVariable				(const std::string& argumentString);
 	void 					createCode						(std::ostream& out, const std::vector<std::string>& commands, const std::string& tabOffset = "", bool forFeMacro = false, std::set<std::string>* inArgNames = 0, std::set<std::string>* outArgNames = 0);
@@ -61,9 +61,8 @@ private:
 	SupervisorInfoMap		allFESupervisorInfo_;
 	std::map<std::string /*FE UID*/, unsigned int /*superivisor index*/> FEtoSupervisorMap_;
 
+}; //end MacroMakerSupervisor declaration
 
-};
-
-}
+} //end ots namespace
 
 #endif

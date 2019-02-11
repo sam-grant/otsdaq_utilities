@@ -1,28 +1,32 @@
 #include "otsdaq-utilities/MacroMaker/MacroMakerSupervisor.h"
 
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
-#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
-#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
+//#include "otsdaq-core/MessageFacility/MessageFacility.h"
+//#include "otsdaq-core/Macros/CoutMacros.h"
+//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
+//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
+//#include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
+//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
 #include "otsdaq-core/ConfigurationDataFormats/ConfigurationGroupKey.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
+//#include "otsdaq-core/Macros/CoutMacros.h"
+
+
+#include "otsdaq-core/FECore/FEVInterface.h"
 
 
 #include "otsdaq-core/CodeEditor/CodeEditor.h"
 
-#include <xdaq/NamespaceURI.h>
-#include <string>
-#include <vector>
-#include <iostream>
+//#include <xdaq/NamespaceURI.h>
+//#include <string>
+//#include <vector>
+//#include <iostream>
 #include <fstream>
-#include <sstream>
+//#include <sstream>
 #include <cstdio>
 #include <stdio.h> //for file rename
 #include <dirent.h> //for DIR
 #include <sys/stat.h> //for mkdir
+#include <thread>       //for std::thread
 
 #define MACROS_DB_PATH 					std::string(getenv("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH 				std::string(getenv("SERVICE_DATA_PATH")) + "/MacroHistory/"
@@ -222,10 +226,12 @@ try
 
 		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
 	}
-	else if(type == "feSend" || //from front-ends
-			type == "feMacro" || //from front-ends
-			type == "feMacroMultiDimensionalStart" || //from iterator
-			type == "feMacroMultiDimensionalCheck")//from iterator
+	else if(type == "feSend" || 	//from front-ends
+			type == "feMacro" || 	//from front-ends
+			type == "feMacroMultiDimensionalStart" || 	//from iterator
+			type == "feMacroMultiDimensionalCheck" || 	//from iterator
+			type == "macroMultiDimensionalStart" || 	//from iterator
+			type == "macroMultiDimensionalCheck")  		//from iterator
 	{
 		__SUP_COUTV__(type);
 
@@ -252,9 +258,30 @@ try
 		{
 			__SUP_SS__ << "Error transmitting request to FE Supervisor '" <<
 					targetInterfaceID << ":" << FESupervisorIndex << ".' \n\n" <<
-					"The FE Index doesn't exist. Have you configured the state machine properly?" << __E__;
+					"The FE Supervisor Index does not exist. Have you configured the state machine properly?" << __E__;
 			__SUP_SS_THROW__;
 		}
+
+		if(type == "macroMultiDimensionalStart")
+		{
+			//add Macro sequence (and check macro exists)
+
+
+			SOAPParameters rxParameters;
+			rxParameters.addParameter("macroName");
+			SOAPUtilities::receive(message, rxParameters);
+			std::string macroName = rxParameters.getValue("macroName");
+			__SUP_COUTV__(macroName);
+
+			//MacroMakerSupervisor::macroStruct_t macro;
+			std::string macroString;
+			loadMacro(macroName,macroString);
+
+			SOAPParameters parameters;
+			parameters.addParameter("macroString", macroString);
+			SOAPUtilities::addParameters(message, parameters);
+		}
+
 
 		try
 		{
@@ -281,18 +308,6 @@ try
 					e.what() << __E__;
 			__SUP_SS_THROW__;
 		}
-	}
-	else if(type == "macroMultiDimensionalStart")  //from iterator
-	{
-		//launch Macro run in thread with multi-dimensional loop
-		//a la FEVInterfacesManager::startFEMacroMultiDimensional
-		return startMacroMultiDimensional(message);
-	}
-	else if(type == "macroMultiDimensionalCheck")  //from iterator
-	{
-		//check Macro run multi-dimensional loop completion
-		//a la FEVInterfacesManager::checkFEMacroMultiDimensional
-		return checkMacroMultiDimensional(message);
 	}
 	else
 	{
@@ -324,30 +339,7 @@ catch(...)
 	parameters.addParameter("Error", ss.str());
 	SOAPUtilities::addParameters(returnMessage, parameters);
 	return returnMessage;
-}
-
-//========================================================================================================================
-//launch Macro run in thread with multi-dimensional loop
-//a la FEVInterfacesManager::startFEMacroMultiDimensional
-xoap::MessageReference MacroMakerSupervisor::startMacroMultiDimensional(xoap::MessageReference message)
-{
-	__SUP_COUT__ << "Received multi-dimensional Macro launch request: " <<
-			SOAPUtilities::translate(message) << __E__;
-
-	return message; //FIXME
-
-} //end startMacroMultiDimensional()
-
-//========================================================================================================================
-//check Macro run multi-dimensional loop completion
-//a la FEVInterfacesManager::checkFEMacroMultiDimensional
-xoap::MessageReference MacroMakerSupervisor::checkMacroMultiDimensional(xoap::MessageReference message)
-{
-	__SUP_COUT__ << "Received multi-dimensional Macro check request: " <<
-			SOAPUtilities::translate(message) << __E__;
-
-	return message; //FIXME
-} //end checkMacroMultiDimensional()
+} //end frontEndCommunicationRequest() catch
 
 //========================================================================================================================
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
@@ -425,7 +417,10 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 
 //========================================================================================================================
-void MacroMakerSupervisor::writeData(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string &username)
+void MacroMakerSupervisor::writeData(
+		HttpXmlDocument& xmldoc,
+		cgicc::Cgicc& cgi,
+		const std::string &username)
 {
 	__SUP_COUT__<< "MacroMaker writing..." << __E__;
 
@@ -672,7 +667,67 @@ void MacroMakerSupervisor::createMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cg
 	}
 	else
 		__SUP_COUT__<<  "Unable to open file" << __E__;
-}
+} //end createMacro()
+
+//========================================================================================================================
+//loadMacro
+//	Load macro string from file.
+//	look in public macros and username (if given)
+//	for the macroName.
+//
+//	If found, return by reference
+//	Else, throw exception
+void MacroMakerSupervisor::loadMacro(
+		const std::string& macroName,
+		std::string& macroString,
+		const std::string &username /*=""*/)
+{
+	__SUP_COUTV__(macroName);
+
+	//first check public folder, then user
+	std::string fullPath, line;
+	macroString = "";
+	for(unsigned int i=0;i<2;++i)
+	{
+		if(i == 1)
+			fullPath = (std::string)MACROS_DB_PATH + username + "/";
+		else
+			fullPath = (std::string)MACROS_DB_PATH + "publicMacros/";
+
+		fullPath += macroName + ".dat";
+		__SUP_COUTV__(fullPath);
+
+		std::ifstream read (fullPath.c_str());//reading a file
+		if (read.is_open())
+		{
+			while (! read.eof() )
+			{
+				getline (read,line);
+				macroString += line;
+			}
+
+			read.close();
+		}
+		else //file does not exist
+		{
+			__SUP_COUT__<< "Unable to open file: " << fullPath << __E__;
+			continue;
+		}
+
+		if(macroString != "") break; //macro has been found!
+	} //end load from path loop
+
+	if(macroString == "")
+	{
+		__SUP_SS__<< "Unable to locate file for macro '" << macroName <<
+				"'... does it exist?" << __E__;
+		if(username != "")
+			ss << " Attempted username was '" << username << ".'" << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	__SUP_COUTV__(macroString);
+} //end loadMacro()
 
 //========================================================================================================================
 void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc, const std::string &username)
@@ -758,7 +813,7 @@ void MacroMakerSupervisor::loadMacros(HttpXmlDocument& xmldoc, const std::string
 		__SUP_COUT__<<  "Looping through MacroData folder failed! Wrong directory" << __E__;
 
 	}
-}
+} //end loadMacros()
 
 //========================================================================================================================
 void MacroMakerSupervisor::appendCommandToHistory(std::string Command,
