@@ -4174,6 +4174,9 @@
 				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
 				
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(!error_message || error_message == "")
+					error_message		= DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+					
 				if(error_message && error_message != "")
 					Debug.log(error_message,Debug.HIGH_PRIORITY);
 				else
