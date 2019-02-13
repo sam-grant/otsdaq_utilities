@@ -10,7 +10,7 @@ cet_make(LIBRARY_NAME Chat
 		 XmlUtilities
 		 WebUsersUtilities
          SOAPUtilities
-#	 MessageFacility
+	 MF_MessageLogger
 )
 
 install_headers()

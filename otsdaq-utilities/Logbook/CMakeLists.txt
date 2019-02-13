@@ -11,6 +11,7 @@ cet_make(LIBRARY_NAME Logbook
 		 SupervisorInfo
 		 WebUsersUtilities
 		 FiniteStateMachine
+		 MF_MessageLogger
 )
 
 install_headers()
