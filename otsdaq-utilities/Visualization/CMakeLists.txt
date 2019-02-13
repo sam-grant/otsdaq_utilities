@@ -24,7 +24,7 @@ cet_make(LIBRARY_NAME Visualization
 		 otsdaq-core_DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 XmlUtilities
 		 SOAPUtilities
-		 #MessageFacility
+		 MF_MessageLogger
 
 )
 
