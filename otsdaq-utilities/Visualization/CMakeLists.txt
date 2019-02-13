@@ -13,7 +13,7 @@ cet_make(LIBRARY_NAME Visualization
 		 CgiDataUtilities
 		 FiniteStateMachine
 		 WebUsersUtilities
-		 MonicelliInterface
+		 #MonicelliInterface
 		 SupervisorInfo
 		 ConfigurationInterface
 		 Macros
@@ -25,7 +25,6 @@ cet_make(LIBRARY_NAME Visualization
 		 XmlUtilities
 		 SOAPUtilities
 		 #MessageFacility
-         $ENV{XERCES_C_LIB}/libxerces-c.so
 
 )
 

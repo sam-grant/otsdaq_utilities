@@ -37,7 +37,7 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub * s)
 		getApplicationContext()->getContextDescriptor()->getURL(),
 		getApplicationDescriptor()->getLocalId()
 	))
-	, supervisorConfigurationPath_("/" + supervisorContextUID_ + "/LinkToApplicationConfiguration/" + supervisorApplicationUID_ + "/LinkToSupervisorConfiguration")
+	, supervisorConfigurationPath_("/" + supervisorContextUID_ + "/LinkToApplicationTable/" + supervisorApplicationUID_ + "/LinkToSupervisorTable")
 {
 	INIT_MF("ECLSupervisor");
 	__COUT__ << __PRETTY_FUNCTION__ << std::endl;
@@ -122,7 +122,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 	}
 	//catch(...)
 	//{
-	//	{__SS__;throw std::runtime_error(ss.str()+"Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");}
+	//	{__SS__;__THROW__(ss.str()+"Error configuring the visual supervisor most likely a plugin name is wrong or your configuration table is outdated and doesn't match the new plugin definition!");}
 	//}
 }
 
@@ -215,7 +215,7 @@ xoap::MessageReference ECLSupervisor::MakeSystemLogbookEntry(xoap::MessageRefere
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
 	//	parameters[0].setName("EntryText");
-	receive(msg, parameters);
+	SOAPUtilities::receive(msg, parameters);
 	std::string EntryText = parameters.getValue("EntryText");
 
 	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;

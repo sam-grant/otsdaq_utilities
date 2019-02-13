@@ -17,9 +17,10 @@
 				
 		#subsystemDiv div, #refreshLink a {
 			color: rgb(136, 102, 102);
-			text-size: 20px;
+			font-size: 20px;
 			font-family: "Comfortaa";
 		}
+
 		
 		.linkDiv {
 			border: 0;
@@ -27,13 +28,11 @@
 			position: absolute;
 		}
 
-		
-		#subsystemDiv, #launchDiv {
+
+		#subsystemDiv, #launchDiv, #runDiv, #runStatusDiv {
 			position: absolute;
 			display: none;
-			/*border: 1px solid blue;*/
-		}
-		
+		}		
 		#subsystemDivContainer {
 
 			overflow: auto;
@@ -79,3 +78,51 @@
 			user-select:			none;
 			outline: none;  /* to stop firefox selection*/	
 		}	
+		
+		#runDiv {
+			background-color: rgb(48, 191, 48);
+			box-shadow: inset rgba(254,255,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgb(76, 141, 76) 0 .1em 3px,
+					0px 10px 0px rgb(23, 107, 23);
+			border-radius: 300px/200px;
+			text-align:center;
+			font-size: 30px;
+			font-family: arial;
+			color: white;
+			text-shadow: 0px 1px 0px rgba(255,255,255,.3), 0px -1px 0px rgba(0,0,0,.7);
+		}
+		
+		#runDiv:active {
+			margin-top:	10px;
+			box-shadow: inset rgba(255,254,255,0.6) 0 0.3em .3em,
+					inset rgba(0,0,0,0.15) 0 -0.1em .3em, /* inner shadow */
+					rgb(100,100,100) 0 .1em 3px;
+		}
+		
+		#runLink  {
+			position: absolute;
+			border: 0;
+			-webkit-user-select: 	auto; /* prevent highlight selection (does not stop ghost images, must use el.ondragstart = function() {return false;}; */
+			-moz-user-select: 		none;
+			user-select:			none;
+			outline: none;  /* to stop firefox selection*/	
+		}	
+		
+		#runStatusDiv {
+			text-align:left;
+		
+			padding: 20px 0px 20px 20px;
+			color: rgb(136, 102, 102);			
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

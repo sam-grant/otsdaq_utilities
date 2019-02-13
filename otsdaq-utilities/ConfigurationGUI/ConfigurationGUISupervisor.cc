@@ -133,10 +133,11 @@ void ConfigurationGUISupervisor::request(const std::string& requestType, cgicc::
 try
 {
 	//Commands
+
+	//	gatewayLaunchOTS -- and other StartOTS commands
+
 	//	saveConfigurationInfo
 	//	deleteConfigurationInfo
-	//	launchOTS
-	// 	launchWiz
 	// 	flattenToSystemAliases
 	// 	versionTracking
 	//	getColumnTypes
@@ -224,7 +225,7 @@ try
 		__SUP_COUT__ << "configName: " << configName << std::endl;
 		handleDeleteConfigurationInfoXML(xmlOut,cfgMgr,configName);
 	}
-	else if(requestType == "gatewayLaunchOTS" || requestType == "gatewayLaunchWiz" ||//requestType == "launchOTS" || requestType == "launchWiz" ||
+	else if(requestType == "gatewayLaunchOTS" || requestType == "gatewayLaunchWiz" ||
 			requestType == "flattenToSystemAliases")
 	{
 		//NOTE: similar to Supervisor version but does not keep active sessions
@@ -1120,6 +1121,47 @@ try
 	std::map<std::string, std::pair<std::string, ConfigurationGroupKey>> consideredGroups =
 			cfgMgr->getActiveConfigurationGroups();
 
+	//check that there is a context and config group to consider
+	//	if there is not, then pull from failed list
+	if(consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT].second.isInvalid())
+	{
+		__SUP_COUT__ << "Finding a context group to consider..." << __E__;
+		if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT);
+		}
+		else if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
+				cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
+		}
+	}
+	if(consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION].second.isInvalid())
+	{
+		__SUP_COUT__ << "Finding a configuration group to consider..." << __E__;
+		if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION);
+		}
+		else if(cfgMgr->getFailedConfigurationGroups().find(
+				ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
+						cfgMgr->getFailedConfigurationGroups().end())
+		{
+			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
+					cfgMgr->getFailedConfigurationGroups().at(ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
+		}
+	}
+
+	__SUP_COUTV__(StringMacros::mapToString(consideredGroups));
+
 
 	//determine the type of configuration group
 	try
@@ -1140,11 +1182,10 @@ try
 		//if actual group name was attempted re-throw
 		if(rootGroupName.size())
 		{
-
 			__SUP_SS__ << "Failed to determine type of configuration group for " << rootGroupName << "(" <<
 					rootGroupKey << ")! " << e.what() << std::endl;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		//else assume it was the intention to just consider the active groups
@@ -1292,11 +1333,16 @@ try
 	}
 	else
 	{
+		__SUP_COUT__ << "Loading group '" << groupName <<
+				"(" << groupKey << ")'" << std::endl;
+
 		std::string groupComment, groupAuthor, configGroupCreationTime;
 
 		//only same member map if object pointer was passed
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-								0,returnMemberMap,0,0,
+								false /*doActivate*/,
+								returnMemberMap,0 /*progressBar*/,
+								accumulatedErrors,
 								doGetGroupInfo?&groupComment:0,
 								doGetGroupInfo?&groupAuthor:0,
 								doGetGroupInfo?&configGroupCreationTime:0);
@@ -1767,7 +1813,7 @@ void ConfigurationGUISupervisor::handleFillSetTreeNodeFieldValuesXML(HttpXmlDocu
 		}
 
 		if(fieldPaths.size() != fieldValues.size())
-			{__SUP_SS__; throw std::runtime_error(ss.str()+"Mismatch in fields and values array size!");}
+			{__SUP_SS__; __THROW__(ss.str()+"Mismatch in fields and values array size!");}
 
 		//extract record list
 		{
@@ -2011,7 +2057,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 		{
 			__SUP_SS__ << "Depth of search must be greater than 0." << __E__;
 			__SUP_COUT__ << ss.str();
-			throw std::runtime_error(ss.str()); //done if 0 depth, no fields
+			__SS_THROW__; //done if 0 depth, no fields
 		}
 
 		//do not allow traversing for common fields from root level
@@ -2028,7 +2074,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(HttpXmlDocume
 			{
 				__SUP_SS__ << "Start path was a disconnected link node!" << std::endl;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 				return; //quietly ignore disconnected links at depth
 				//note: at the root level they will be flagged for the user
 			}
@@ -2215,7 +2261,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 		{
 			__SUP_SS__ << "Start path was a disconnected link node!" << std::endl;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		std::vector<std::string /*relative-path*/> records;
@@ -2306,7 +2352,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(HttpXm
 //		- can accept multiple values per field (values separated by commas) (i.e. OR)
 //		- fields/value pairs separated by ; for AND
 //			- Note: limitation here is there is no OR among fields/value pairs (in future, could separate field/value pairs by : for OR)
-//		e.g. "LinkToFETypeConfiguration=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
+//		e.g. "LinkToFETypeTable=NIMPlus,TemplateUDP;FEInterfacePluginName=NIMPlusPlugin"
 //
 void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr,
 		const std::string& groupName, const ConfigurationGroupKey& groupKey,
@@ -2378,17 +2424,17 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 		{
 			//then consider the configurationManager the root node
 
+			std::string accumulateTreeErrs;
+
 			if(usingActiveGroups)
-				rootMap = cfgMgr->getChildren();
+				rootMap = cfgMgr->getChildren(0,&accumulateTreeErrs);
 			else
-			{
-				std::string accumulateTreeErrs;
 				rootMap = cfgMgr->getChildren(&memberMap,&accumulateTreeErrs);
-				__SUP_COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
-				if(accumulateTreeErrs != "")
-					xmlOut.addTextElementToData("TreeErrors",
-							accumulateTreeErrs);
-			}
+
+			__SUP_COUT__ << "accumulateTreeErrs = " << accumulateTreeErrs << std::endl;
+			if(accumulateTreeErrs != "")
+				xmlOut.addTextElementToData("TreeErrors",
+						accumulateTreeErrs);
 		}
 		else
 		{
@@ -2405,27 +2451,7 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument& xmlOut, 
 			StringMacros::getMapFromString(filterList,filterMap,
 					std::set<char>({';'})/*pair delimiters*/,
 					std::set<char>({'='})/*name/value delimiters*/);
-			//			if(filterList != "")
-			//			{
-			//				//extract filter list
-			//				{
-			//					std::istringstream f(filterList);
-			//					std::string filterPath,filterValue;
-			//					while (getline(f, filterPath, '='))
-			//					{
-			//						getline(f, filterValue, ';');
-			//						filterMap.insert(
-			//								std::pair<std::string,std::string>(
-			//										filterPath,
-			//										filterValue));
-			//					}
-			//					__SUP_COUT__ << filterList << std::endl;
-			//					for(auto& pair:filterMap)
-			//						__SUP_COUT__ << "filterMap " <<
-			//						pair.first << "=" <<
-			//						pair.second << std::endl;
-			//				}
-			//			}
+
 			__COUTV__(StringMacros::mapToString(filterMap));
 
 			rootMap = cfgMgr->getNode(startPath).getChildren(filterMap);
@@ -2470,7 +2496,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t, 
 		if(t.getValueType() == ViewColumnInfo::TYPE_FIXED_CHOICE_DATA ||
 				t.getValueType() == ViewColumnInfo::TYPE_BITMAP_DATA)
 		{
-			__COUT__ << t.getValueType() << std::endl;
+			//__COUT__ << t.getValueType() << std::endl;
 
 			std::vector<std::string> choices = t.getFixedChoices();
 			for(const auto& choice:choices)
@@ -2628,7 +2654,7 @@ try
 				") is not the currently active version (" << config->getViewVersion()
 				<< ". Try refreshing the tree." << std::endl;
 		__SUP_COUT_WARN__ << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	__SUP_COUT__ << "Active version is " << config->getViewVersion() << std::endl;
@@ -2683,7 +2709,7 @@ try
 	{
 		__SUP_SS__ << "Unrecognized linkIdType '" << linkIdType
 				<< ".'" << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 
@@ -3144,7 +3170,7 @@ try
 						if(paramSubString != "type")
 						{
 							__SUP_SS__ << "Invalid command sequence" << std::endl;
-							throw std::runtime_error(ss.str());
+							__SS_THROW__;
 						}
 						//create command object
 						commands.push_back(IterateConfiguration::Command());
@@ -3523,7 +3549,7 @@ try
 		__SUP_SS__ << "Target table version (" << version <<
 				") is not the currently active version (" << config->getViewVersion()
 				<< ". Try refreshing the tree." << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	unsigned int col = -1;
@@ -3546,7 +3572,7 @@ try
 	else
 	{
 		__SUP_SS__ << "Impossible! Unrecognized edit type: " << type << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//check if the comment value is new before making temporary version
@@ -3559,7 +3585,7 @@ try
 			__SUP_SS__ << "Comment '" << newValue <<
 					"' is the same as the current comment. No need to save change." <<
 					std::endl;
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 	}
@@ -3665,7 +3691,7 @@ try
 				__SUP_SS__ << "Value '" << newValue <<
 						"' is the same as the current value. No need to save change to tree node." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 		}
 		else if(type == "link-UID" || type == "link-GroupID")
@@ -3678,7 +3704,7 @@ try
 				__SUP_SS__ << "Col '" << colName <<
 						"' is not a link column." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 
 			__SUP_COUT__ << "linkPair " << linkPair.first << "," <<
@@ -3800,7 +3826,7 @@ try
 					__SUP_SS__ << "Target table version (" << version <<
 							") is not the currently active version (" << config->getViewVersion()
 							<< ". Try refreshing the tree." << std::endl;
-					throw std::runtime_error(ss.str());
+					__SS_THROW__;
 				}
 
 
@@ -3919,7 +3945,7 @@ try
 							"', and selected group members are the same as the current value. " <<
 							"No need to save changes to tree." <<
 							std::endl;
-					throw std::runtime_error(ss.str());
+					__SS_THROW__;
 				}
 
 				return;	//exit since table inits were already tested
@@ -3930,7 +3956,7 @@ try
 						"' and linkID '" << newLinkId <<
 						"' are the same as the current values. No need to save change to tree node." <<
 						std::endl;
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 		}
 
@@ -4049,16 +4075,22 @@ try
 
 	//load group so comments can be had
 	//	and also group metadata (author, comment, createTime)
-	//bool commentsLoaded = false;
 	try
 	{
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
+		std::string accumulateErrors;
+
 		cfgMgr->loadConfigurationGroup(groupName,groupKey,
-				false /*doActivate*/,&memberMap,0 /*progressBar*/,0 /*accumulateErrors*/,
+				false /*doActivate*/,&memberMap,0 /*progressBar*/,
+				&accumulateErrors /*accumulateErrors*/,
 				&groupComment, &groupAuthor, &groupCreationTime,
 				false /*doNotLoadMember*/, &groupTypeString, &groupMemberAliases);
 
-		//commentsLoaded = true;
+		if(accumulateErrors != "")
+		{
+			__SUP_SS__ << accumulateErrors;
+			__SUP_SS_THROW__;
+		}
 
 		xmlOut.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
 		xmlOut.addTextElementToData("ConfigurationGroupComment", groupComment);
@@ -4393,7 +4425,7 @@ try
 	catch(std::runtime_error& e)
 	{
 		//append accumulated errors, because they may be most useful
-		throw std::runtime_error(e.what() + std::string("\n\n") + accumulatedErrors);
+		__THROW__(e.what() + std::string("\n\n") + accumulatedErrors);
 	}
 	catch(...)
 	{
@@ -4612,7 +4644,7 @@ ConfigurationVersion ConfigurationGUISupervisor::saveModifiedVersionXML(HttpXmlD
 
 			//delete temporaryModifiedVersion
 			config->eraseView(temporaryModifiedVersion);
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		__SUP_COUT__ << "Check for duplicate tables complete." << std::endl;
@@ -4706,6 +4738,14 @@ try
 	{
 		//returns -1 on error that data was unchanged
 		retVal = sourceTableAsIs?0:cfgView->fillFromCSV(data,dataOffset,author);
+
+		if(retVal == 1) //data was same but columns are different!
+		{
+			__SUP_COUT__ << "Data was the same, but columns have changed!" << __E__;
+			__SUP_COUTV__(sourceTableAsIs);
+			lookForEquivalent = false; //clear
+		}
+
 		cfgView->setURIEncodedComment(comment);
 		__SUP_COUT__ << "Table comment was set to:\n\t" << cfgView->getComment() << std::endl;
 
@@ -4735,14 +4775,14 @@ try
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			//delete temporaryVersion
 			config->eraseView(temporaryVersion);
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 		else if(version.isInvalid())
 			__SUP_COUT__ << "This was interpreted as an attempt to create a blank table." << std::endl;
 		else if(version.isScratchVersion())
 			__SUP_COUT__ << "This was interpreted as an attempt to make a persistent version of the scratch table." << std::endl;
 		else
-		{__SUP_SS__; throw std::runtime_error(ss.str()+"impossible!");}
+		{__SUP_SS__; __THROW__(ss.str()+"impossible!");}
 	}
 	else if(retVal < 0 &&
 			(version.isTemporaryVersion() && !makeTemporary))
@@ -4759,7 +4799,7 @@ try
 		__SUP_SS__ << "This should not be possible! Fatal error." << std::endl;
 		//delete temporaryVersion
 		config->eraseView(temporaryVersion);
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//note: if sourceTableAsIs, accept equivalent versions
@@ -4817,7 +4857,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 	{
 		__SUP_SS__ << "Fatal error managing userLastUseTime_!" << std::endl;
 		__SUP_COUT_ERR__ << "\n" << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 	else if(refresh || (now - userLastUseTime_[mapKey]) >
 	CONFIGURATION_MANAGER_REFRESH_THRESHOLD) //check if should refresh all config info
@@ -4843,7 +4883,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(std::stri
 			{
 				__SUP_SS__ << "Fatal error erasing configuration manager by key!" << std::endl;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
-				throw std::runtime_error(ss.str());
+				__SS_THROW__;
 			}
 			userLastUseTime_.erase(it);								//erase by iterator
 
@@ -5810,7 +5850,7 @@ try
 					"ConfigurationGUISupervisor::setVersionAliasInActiveBackbone()." ,
 					row, col);
 
-			col = configView->findCol("VersionAliasId");
+			col = configView->getColUID();
 			configView->setValue(memberPair.first.substr(
 					0,memberPair.first.rfind("Configuration")) +
 					versionAlias, row, col);

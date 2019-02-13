@@ -163,10 +163,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					"The only valid record aliases are as follows: ";
 
 			for(i=_validRecordTypes.length-1;i>=0;--i)
-				str += "<br>\t_validRecordTypes[i]";
+				str += "<br>\t" + _validRecordTypes[i];
 			Debug.log(str,Debug.HIGH_PRIORITY);
-			return;
+			return false;
 		}
+		return true;
 	} //end localParameterCheck()
 	
 	//global vars for creation
@@ -208,7 +209,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	RecordWiz.wiz = this; 
 	
 	
-	if(recordsAliasFastForward == "")
+	if(!recordsAliasFastForward || recordsAliasFastForward == "")
 	{
 		DesktopContent.tooltip("Record Wizard Introduction",
 				"Welcome to the Record Wizard GUI. Here you can create new records for "+
@@ -225,7 +226,11 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	else
 	{
 		_recordAlias = recordsAliasFastForward;
-		localParameterCheck();
+		if(!localParameterCheck())
+		{
+			Debug.log("Invalid parameters to the Record Creation Wizard!", Debug.HIGH_PRIORITY);
+			return;
+		}
 		
 
 		DesktopContent.tooltip(_recordAlias + " Wizard Introduction",
@@ -1638,13 +1643,6 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 									"&modifiedTables=" + modifiedTablesListStr, //end post data
 									function(req)
 									{
-								var err = DesktopContent.getXMLValue(req,"Error");
-								if(err) 
-								{
-									Debug.log(err,Debug.HIGH_PRIORITY);
-									return;
-								}
-
 
 								var tree = DesktopContent.getXMLNode(req,"tree");
 								console.log(tree);
@@ -1703,9 +1701,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 								}
 
 
-									}, //handler
-									0, //handler param
-									0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+									}); //end getTreeView handler									
 
 						}
 					} //end localPromptAndHandleRecordDeletion()
@@ -1893,7 +1889,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 							fieldArr = [
 										"Status",
 										"DataManagerGroupID",
-										"LinkToDataBufferConfiguration",
+										"LinkToDataProcessorTable",
 										"LinkToDataBufferGroupID",
 										"CommentDescription"
 										];
@@ -1901,7 +1897,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 							valueArr = [
 										"1",//"Status",
 										recordGroupId,//"DataManagerGroupID",
-										getRecordConfiguration(),//"LinkToDataBufferConfiguration",
+										getRecordConfiguration(),//"LinkToDataProcessorTable",
 										name+"ProcessorGroup",//"LinkToDataBufferGroupID",
 										_DEFAULT_WIZ_COMMENT//"CommentDescription"
 										];
@@ -2093,14 +2089,14 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					if(_recordAlias == _RECORD_TYPE_FE)
 					{
 						fieldArr = [
-									"LinkToFEInterfaceConfiguration",
+									"LinkToFEInterfaceTable",
 									"LinkToFEInterfaceGroupID",
 									"CommentDescription"
 									];
 						groupSuffix = "FEGroup";
 
 						valueArr = [
-									getRecordConfiguration(),//"LinkToFEInterfaceConfiguration",
+									getRecordConfiguration(),//"LinkToFEInterfaceTable",
 									name+groupSuffix,//"LinkToFEInterfaceGroupID",									
 									_DEFAULT_WIZ_COMMENT//"CommentDescription"
 									];
@@ -2110,7 +2106,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 					{
 
 						fieldArr = [
-									"LinkToDataManagerConfiguration",
+									"LinkToDataBufferTable",
 									"LinkToDataManagerGroupID",
 									"CommentDescription"
 									];
@@ -2118,7 +2114,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 						groupSuffix = "DMGroup";
 						
 						valueArr = [
-									getIntermediateTable(),//"LinkToFEInterfaceConfiguration",
+									getIntermediateTable(),//"LinkToFEInterfaceTable",
 									name+groupSuffix,//"LinkToFEInterfaceGroupID",									
 									_DEFAULT_WIZ_COMMENT//"CommentDescription"
 									];
@@ -3042,16 +3038,16 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 		if(_recordAlias == _RECORD_TYPE_FE)
 		{
 			if(generationsBack == 1)
-				retVal = "LinkToFEInterfaceConfiguration";
+				retVal = "LinkToFEInterfaceTable";
 			else if(generationsBack == 2)
 				retVal = "LinkToSupervisorConfiguration";
 		}
 		else if(_recordAlias == _RECORD_TYPE_PROCESSOR)
 		{
 			if(generationsBack == 1)
-				retVal = "LinkToDataBufferConfiguration";
+				retVal = "LinkToDataProcessorTable";
 			else if(generationsBack == 2)
-				retVal = "LinkToDataManagerConfiguration";
+				retVal = "LinkToDataBufferTable";
 			else if(generationsBack == 3)
 				retVal = "LinkToSupervisorConfiguration";
 		}
@@ -3096,7 +3092,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 	//=====================================================================================
 	//htmlOpen ~~		
 	//	tab name and attribute/value map object
-	function htmlOpen(tag,attObj,innerHTML,closeTag)
+	function htmlOpen(tag,attObj,innerHTML,doCloseTag)
 	{
 		var str = "";
 		var attKeys = Object.keys(attObj); 
@@ -3106,7 +3102,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 			attObj[attKeys[i]] + "' ";
 		str += ">";
 		if(innerHTML) str += innerHTML;
-		if(closeTag)
+		if(doCloseTag)
 			str += "</" + tag + ">";
 		return str;
 	} // end htmlOpen()

@@ -36,7 +36,7 @@ public:
 
 private:
 
-	static void				MFReceiverWorkLoop				(ConsoleSupervisor *cs);
+	static void				messageFacilityReceiverWorkLoop	(ConsoleSupervisor *cs);
 	void					insertMessageRefresh			(HttpXmlDocument *xmldoc, const clock_t lastUpdateClock, const unsigned int lastUpdateIndex);
 
 
@@ -56,13 +56,14 @@ private:
 			fields[SEQID].set("SequenceID", 2, -1);
 			fields[LEVEL].set("Level", 5, -1);
 			fields[LABEL].set("Label", 6, -1);
-			fields[SOURCEID].set("SourceID", 8, -1); //number
-			fields[SOURCE].set("Source", 10, -1); //number
-#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
-			fields[MSG].set("Msg", 13, -1);
-#else
-			fields[MSG].set("Msg", 11, -1);
-#endif
+			fields[SOURCEID].set("SourceID", 7, -1); //number
+			fields[SOURCE].set("Source", 9, -1);
+			fields[MSG].set("Msg", 10, -1); //the message facility contents have changed!
+//#if MESSAGEFACILITY_HEX_VERSION >= 0x20201
+//			fields[MSG].set("Msg", 13, -1);
+//#else
+//			fields[MSG].set("Msg", 11, -1);
+//#endif
 		}
 
 		void set(const std::string &msg, const time_t count)
@@ -91,10 +92,18 @@ private:
 
 				//change all | to \0 so strings are terminated
 				buffer[p] = '\0';
+
+				//handle special Level/Label case (where | is missing)
+				if(i == LABEL && p + 1 + strlen(&buffer[p+1]) != msg.length())
+				{
+					//std::cout << "LEN = " << strlen(&buffer[p+1]) << __E__;
+					//std::cout << "buff = " <<(&buffer[p+1]) << __E__;
+					fields[i++].posInString = p + 2 + strlen(&buffer[p+1]);
+				}
 			}
 
 			//debug
-			//			std::cout << buffer << "\n";
+			//			std::cout << ":::::" << msg << "\n";
 			//			for(auto &f: fields)
 			//			{
 			//				std::cout << f.fieldName << ": ";
@@ -106,10 +115,11 @@ private:
 		const char *  getLabel() { return  (char *)&buffer[fields[LABEL].posInString]; }
 		const char *  getLevel() { return  (char *)&buffer[fields[LEVEL].posInString]; }
 		const char *  getSourceID() { return  (char *)&buffer[fields[SOURCEID].posInString]; }
-		const unsigned int  getSourceIDAsNumber()
+		const long long  getSourceIDAsNumber()
 		{
-			unsigned int srcid;
-			sscanf((char *)&buffer[fields[SOURCEID].posInString], "%u", &srcid); //unsigned int
+			//signed to allow -1 to ignore sequence number
+			long long srcid;
+			sscanf((char *)&buffer[fields[SOURCEID].posInString], "%lld", &srcid); //signed long long
 			return srcid;
 		}
 		const char *  getSource() { return  (char *)&buffer[fields[SOURCE].posInString]; }

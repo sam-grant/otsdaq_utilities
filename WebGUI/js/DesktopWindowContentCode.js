@@ -31,8 +31,31 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			showLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
-//			... to make server request, returnHandler is called with response in req and reqParam if user defined
+//			doNoShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//
+//			... here is an example request:
+//
+//			DesktopContent.XMLHttpRequest("Request?" +
+//
+//					//get data
+//					"RequestType=exportFEMacro" + 
+//					"&MacroName=" + macroName +
+//					"&PluginName=" + targetFEPluginName, 
+//
+//					//post data
+//					"MacroSequence=" + macroSequence + 
+//					"&MacroNotes=" + encodeURIComponent(macroNotes),
+//
+//					//request handler
+//					function(req)
+//					{
+//						//..do something on successful response
+//						Debug.log("Success!",Debug.INFO_PRIORITY);
+//					}, //end request handler
+//					0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+//					false /*doNoShowLoadingOverlay*/);  //end XMLHttpRequest() call
+//
+//			... after a server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
 //		
 //					function returnHandler(req,reqParam,errStr)
@@ -67,7 +90,9 @@
 //
 //
 //	Additional Functionality:
-//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], textColor [optional], borderColor [optional])
+//		DesktopContent.popUpVerification(prompt, func [optional], val [optional], bgColor [optional], 
+//			textColor [optional], borderColor [optional], getUserInput [optional], 
+//			dialogWidth [optional], cancelFunc [optional], yesButtonText [optional])
 //		DesktopContent.tooltip(uid,tip)
 //		DesktopContent.getWindowWidth()
 //		DesktopContent.getWindowHeight()
@@ -93,13 +118,15 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay, targetSupervisor, ignoreSystemBlock)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay, targetSupervisor, ignoreSystemBlock)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
 //	DesktopContent.getXMLAttributeValue(req, name, attribute)
 //	DesktopContent.getXMLChildren(req, nodeName)
+//	DesktopContent.getXMLRequestErrors(req)
 //	DesktopContent.popUpVerification(prompt, func, val, bgColor, textColor, borderColor, getUserInput, dialogWidth, cancelFunc)
+//	DesktopContent.setPopUpPosition(el,w,h,padding,border,margin,doNotResize,offsetUp)
 //	DesktopContent.tooltip(uid,tip)
 //	DesktopContent.getWindowWidth()
 //	DesktopContent.getWindowHeight()
@@ -119,6 +146,8 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.getParameter(index, name)
 //	DesktopContent.getDesktopParameter(index, name)
 //	DesktopContent.getDesktopWindowTitle()
+//	DesktopContent.showLoading()
+//	DesktopContent.hideLoading()
 
 //"private" function list:
 //	DesktopContent.init()
@@ -395,137 +424,185 @@ DesktopContent._loadBoxTimer = 0;
 DesktopContent._loadBoxRequestStack = 0; //load box is not removed until back to 0
 
 //=====================================================================================
-DesktopContent.showLoading = function()	{
+//DesktopContent.showLoading
+//	Pass nextFunction to launch something immediately after showing load box
+//	with hideLoading() called after the function
+DesktopContent.showLoading = function(nextFunction)	{
 	
-	Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+	localDoIt();
+	if(nextFunction)
+	{
+		window.setTimeout(function()
+				{
+			nextFunction();
+			DesktopContent.hideLoading();
+				},10);		
+	}
+	return;
 	
-	if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
-		return;
-	
-	//check if DesktopContent._loadBox has been set
-	if(!DesktopContent._loadBox)
-	{	
-		//check if there is already an error box with same id and share
-		var el = document.getElementById(DesktopContent._loadBoxId);
-		if(!el) //element doesn't already exist, so we need to create the element
-		{
-			var body = document.getElementsByTagName("BODY")[0];
-			if(!body) //maybe page not loaded yet.. so wait to report
+	/////////////
+	function localDoIt()
+	{
+		Debug.log("DesktopContent.showLoading " + DesktopContent._loadBoxRequestStack);
+
+		if(DesktopContent._loadBoxRequestStack++) //box should still be open, add to stack
+			return;
+
+		//check if DesktopContent._loadBox has been set
+		if(!DesktopContent._loadBox)
+		{	
+			//check if there is already an error box with same id and share
+			var el = document.getElementById(DesktopContent._loadBoxId);
+			if(!el) //element doesn't already exist, so we need to create the element
 			{
-				//try again in 1 second
-				window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
-				return;
+				var body = document.getElementsByTagName("BODY")[0];
+				if(!body) //maybe page not loaded yet.. so wait to report
+				{
+					//try again in 1 second
+					window.setTimeout(function() { Debug.errorPop(err,severity)}, 1000);
+					return;
+				}
+
+				//create the element
+				el = document.createElement("div");			
+				el.setAttribute("id", DesktopContent._loadBoxId);
+				el.style.display = "none";
+				var str = "";
+
+				str += "<table height='100%' width='100%'><td id='" + 
+						DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
+				el.innerHTML = str;
+				body.appendChild(el); //add element to body of page
+
+
+				//add style for loading to page HEAD tag			
+				var css = "";
+
+
+				//load box style
+				css += "#" + DesktopContent._loadBoxId +
+						"{" +
+						"position: absolute; display: none; border: 2px solid gray;" +
+						"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
+						"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
+						"-webkit-border-radius: 2px;	border-radius: 2px;" +
+						"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
+						"color: white; " +
+						"font-family: 'Comfortaa', arial; text-align: left;" +
+						"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
+						"}\n\n";	
+				css += "#" + DesktopContent._loadBoxId + " table" +		
+						"{" +
+						"background-color: rgba(0,0,0,0.8);" +
+						"border: 0;" +
+						"}\n\n";
+
+				//load box text style
+				//			css += "#" + DesktopContent._loadBoxId + "-td" +
+				//					"{" +					
+				//					"color: white; font-size: 18px;" +
+				//					"font-family: 'Comfortaa', arial;" +
+				//					"text-align: center;" +
+				//					"}\n\n";
+
+				//add style element to HEAD tag
+				var style = document.createElement('style');
+
+				if (style.styleSheet) {
+					style.styleSheet.cssText = css;
+				} else {
+					style.appendChild(document.createTextNode(css));
+				}
+
+				document.getElementsByTagName('head')[0].appendChild(style);
 			}
+			DesktopContent._loadBox = el;	
+		}	
 
-			//create the element
-			el = document.createElement("div");			
-			el.setAttribute("id", DesktopContent._loadBoxId);
-			el.style.display = "none";
-			var str = "";
-			
-			str += "<table height='100%' width='100%'><td id='" + 
-					DesktopContent._loadBoxId + "-td'>Loading...</td></table>";
-			el.innerHTML = str;
-			body.appendChild(el); //add element to body of page
+		//have load popup element now, so display it at center of page
 
+		var W = 100;
+		var H = 60;
 
-			//add style for loading to page HEAD tag			
-			var css = "";
-
-			
-			//load box style
-			css += "#" + DesktopContent._loadBoxId +
-					"{" +
-					"position: absolute; display: none; border: 2px solid gray;" +
-					"background-color: rgba(0,0,0,0.8); overflow-y: auto;" +
-					"overflow-x: auto;	padding: 5px; -moz-border-radius: 2px;" +
-					"-webkit-border-radius: 2px;	border-radius: 2px;" +
-					"font-size: 18px; z-index: 2147483647;" + //max 32 bit number z-index
-					"color: white; " +
-					"font-family: 'Comfortaa', arial; text-align: left;" +
-					"left: 8px; top: 8px; margin-right: 8px; height:400px; " +
-					"}\n\n";	
-			css += "#" + DesktopContent._loadBoxId + " table" +		
-					"{" +
-					"background-color: rgba(0,0,0,0.8);" +
-					"border: 0;" +
-					"}\n\n";
-
-			//load box text style
-			//			css += "#" + DesktopContent._loadBoxId + "-td" +
-			//					"{" +					
-			//					"color: white; font-size: 18px;" +
-			//					"font-family: 'Comfortaa', arial;" +
-			//					"text-align: center;" +
-			//					"}\n\n";
-
-			//add style element to HEAD tag
-			var style = document.createElement('style');
-
-			if (style.styleSheet) {
-				style.styleSheet.cssText = css;
-			} else {
-				style.appendChild(document.createTextNode(css));
-			}
-
-			document.getElementsByTagName('head')[0].appendChild(style);
+		var WW,WH; //window width and height
+		//get width and height properly 
+		if(typeof DesktopContent != 'undefined') //define width using DesktopContent
+		{
+			WW = DesktopContent.getWindowWidth();
+			WH = DesktopContent.getWindowHeight();
 		}
-		DesktopContent._loadBox = el;	
-	}	
-	
-	//have load popup element now, so display it at center of page
-	
-	var W = 100;
-	var H = 60;
-	
-	var WW,WH; //window width and height
-	//get width and height properly 
-	if(typeof DesktopContent != 'undefined') //define width using DesktopContent
-	{
-		WW = DesktopContent.getWindowWidth();
-		WH = DesktopContent.getWindowHeight();
-	}
-	else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
-	{
-		WW = DesktopContent.getDesktopWidth();
-		WH = DesktopContent.getDesktopHeight();
-	}
-	
-	var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
-	var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
-	
-	//show the load box whereever the current scroll is	
-	DesktopContent._loadBox.style.left = (X) + "px";	
-	DesktopContent._loadBox.style.top = (Y) + "px";
-	DesktopContent._loadBox.style.width = (W) + "px";
-	DesktopContent._loadBox.style.height = (H) + "px";
+		else if(typeof Desktop != 'undefined' && Desktop.desktop) //define width using Desktop
+		{
+			WW = DesktopContent.getDesktopWidth();
+			WH = DesktopContent.getDesktopHeight();
+		}
 
-	DesktopContent._loadBox.style.display = "block";
-	
-	//===================
-	//setup Loading.. animation
-	var loadBoxStr = "..";
-	var el = document.getElementById(DesktopContent._loadBoxId + "-td");
-	var loadBoxAnimationFunction = function() {
-		if(loadBoxStr.length > 3) loadBoxStr = "";
-		else
-			loadBoxStr += ".";
+		var X = DesktopContent.getWindowScrollLeft() + (WW - W - 4)/2; //for 2px borders
+		var Y = DesktopContent.getWindowScrollTop() + (WH - H -4)/2; //for 2px borders
+
+		//show the load box whereever the current scroll is	
+		DesktopContent._loadBox.style.left = (X) + "px";	
+		DesktopContent._loadBox.style.top = (Y) + "px";
+		DesktopContent._loadBox.style.width = (W) + "px";
+		DesktopContent._loadBox.style.height = (H) + "px";
+
+		DesktopContent._loadBox.style.display = "block";
+
+		//===================
+		//setup Loading.. animation
+		var loadBoxStr = "..";
+		var el = document.getElementById(DesktopContent._loadBoxId + "-td");
 		el.innerHTML = "Loading" + loadBoxStr;
-	}; 
-	
-	window.clearInterval(DesktopContent._loadBoxTimer);
-	DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
-}
+
+		/////////////////////////
+		var loadBoxAnimationFunction = function() {
+			if(loadBoxStr.length > 3) loadBoxStr = "";
+			else
+				loadBoxStr += ".";
+			el.innerHTML = "Loading" + loadBoxStr;
+		};  //end loadBoxAnimationFunction
+
+		window.clearInterval(DesktopContent._loadBoxTimer);
+		DesktopContent._loadBoxTimer = window.setInterval(loadBoxAnimationFunction, 300);
+	} //end localDoIt()
+} //end showLoading()
 //=====================================================================================
+DesktopContent._loadBoxHideTimer = 0;
 DesktopContent.hideLoading = function()	{
 	
-	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
-		return;
+//	if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+//		return;
 	
-	window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
-	Debug.log("DesktopContent.hideLoading");
-	document.getElementById(DesktopContent._loadBoxId).style.display = "none";
-}
+	//hide in a little bit, to provide more continuity to 
+	//	back to back loading box requests
+//	window.clearInterval(DesktopContent._loadBoxHideTimer);
+//	DesktopContent._loadBoxHideTimer = window.setTimeout(
+//			localHideLoadBox, 300);
+	
+	
+	
+//	/////////////////////////
+//	function localHideLoadBox()
+//	{
+//		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+//		Debug.log("DesktopContent.hideLoading");
+//		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+//	} //end localHideLoadBox
+
+	window.setTimeout(localHideLoadBox, 300);
+	/////////////////////////
+	function localHideLoadBox()
+	{
+		if(--DesktopContent._loadBoxRequestStack) //subtract from stack, but dont hide if stack remains
+			return;
+		
+		window.clearInterval(DesktopContent._loadBoxTimer); //kill loading animation
+		Debug.log("DesktopContent.hideLoading");
+		document.getElementById(DesktopContent._loadBoxId).style.display = "none";
+		
+	} //end localHideLoadBox
+	
+} //end hideLoading()
 //=====================================================================================
 //DesktopContent.XMLHttpRequest
 // forms request properly for ots server, POSTs data
@@ -549,7 +626,7 @@ DesktopContent.hideLoading = function()	{
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay,
+		reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay,
 		targetSupervisor, ignoreSystemBlock) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
@@ -557,6 +634,16 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	var errStr = "";
 	var req;
 	
+	var callerLocation = "";
+	try
+	{
+		callerLocation = (new Error).stack.split("\n")[2];
+		var tmpCallerLocation = callerLocation.slice(0,callerLocation.indexOf(' ('));
+		callerLocation = callerLocation.slice(tmpCallerLocation.length+2,
+				callerLocation.length-1);
+	}
+	catch(e) {} //ignore error
+			
 	
 	if((!ignoreSystemBlock && DesktopContent._blockSystemCheckMailbox &&  //we expect the system to be down during system block
 			DesktopContent._blockSystemCheckMailbox.innerHTML != "") ||
@@ -617,7 +704,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
 			
-			if(showLoadingOverlay)
+			if(!doNoShowLoadingOverlay)
 				DesktopContent.hideLoading();
 			
 			if(req.status==200)
@@ -730,12 +817,31 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 				if(!found) DesktopContent._arrayOfFailedHandlers.push(returnHandler);
 				if(found) return; //do not call handler for failed server for user code multiple times..
 			}
+			
+			//if not calling handler on error, then get and display errors for user
+			var errArr = callHandlerOnErr?[]:DesktopContent.getXMLRequestErrors(req);
+			if(errArr.length && !callHandlerOnErr)
+			{
+				for(var i=0;i<errArr.length;++i)
+				{
+					errStr += (i?"\n\n":"") + errArr[i];
 
-			if(errStr != "")
+					console.log("Initial request location: \n" + callerLocation);
+					Debug.log("Error: " + errArr[i],
+						(ignoreSystemBlock || requestURL.indexOf("TooltipRequest?") >= 0)? 
+								Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
+								Debug.HIGH_PRIORITY);
+				}
+			}
+			else if(errStr != "")
 			{
 				errStr += "\n\n(Try refreshing the page, or alert ots admins if problem persists.)";
+
+				console.log("Initial request location: \n" + callerLocation);
 				Debug.log("Error: " + errStr,
-						(requestURL.indexOf("TooltipRequest?") >= 0)? 
+						(callHandlerOnErr || 
+								ignoreSystemBlock || 
+								requestURL.indexOf("TooltipRequest?") >= 0)? 
 						Debug.LOW_PRIORITY: //do not alert if tooltip (auto request) - problematic when not logged-in and causing unnecessary alerts
 						Debug.HIGH_PRIORITY);
 				//alert(errStr);
@@ -744,7 +850,22 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 
 			//success, call return handler
 			if(returnHandler && (errStr=="" || callHandlerOnErr)) 
+			{
 				returnHandler(req, reqParam, errStr);
+				
+				//RAR commented out.. not sure if it is working as intended (weird desktop behavior is occurring during disconnects)
+				//				if(errStr=="" && DesktopContent._arrayOfFailedHandlers.length)
+				//				{
+				//					//since we had success, search through failed handler and remove if there
+				//					for(var i = 0; i<DesktopContent._arrayOfFailedHandlers.length; ++i)
+				//						if(DesktopContent._arrayOfFailedHandlers[i] == returnHandler) 
+				//						{
+				//							DesktopContent._arrayOfFailedHandlers.splice(i,1); //remove that handler
+				//							break;
+				//						}
+				//				}
+			}
+				
 		}
 	}
 
@@ -771,7 +892,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	
 
-	if(showLoadingOverlay)
+	if(!doNoShowLoadingOverlay)
 		DesktopContent.showLoading();
 	
 	
@@ -793,6 +914,21 @@ DesktopContent.checkCookieCodeRace = function() {
 		DesktopContent._cookieCodeMailbox.innerHTML = DesktopContent._lastCookieCode;
 	}
 }
+
+//=====================================================================================
+//returns an array of error strings from xml request response
+DesktopContent.getXMLRequestErrors = function(req) {
+	//make sure to give an error if the response is bad
+	if(!req || !req.responseXML) 
+		return ["Unknown error occured " +
+				"(XML response may have been illegal)!"];
+	
+	var errNodes = DesktopContent.getXMLChildren(req,"Error");
+	var errArr = [];
+	for(var i=0;i<errNodes.length;++i)
+		errArr.push(errNodes[i].getAttribute("value"));
+	return errArr;
+} //end getXMLRequestErrors()
 
 //=====================================================================================
 //returns xml entry value for an attribute
@@ -942,7 +1078,7 @@ DesktopContent.tooltip = function(id,tip) {
 			, function(req) {
 
 		var showTooltip = DesktopContent.getXMLValue(req,"ShowTooltip");
-		Debug.log("showTooltip: " + showTooltip);
+		//Debug.log("showTooltip: " + showTooltip);
 		
 		if(showTooltip|0)
 		{			
@@ -1006,6 +1142,8 @@ DesktopContent.tooltip = function(id,tip) {
 				str += "<br><br>";
 				str += "<center><b>'" + oldId + "' Tooltip</b></center><br>";
 			}
+			else
+				str += "<br><br>";
 			
 			str += DesktopContent.tooltipConditionString(tip);
 			
@@ -1044,6 +1182,7 @@ DesktopContent.tooltip = function(id,tip) {
 	},0,0,0,true,true); //show loading, and target supervisor
 	
 }
+
 //=====================================================================================
 //setSecurityOne
 //       make server request to enable random security sequence for URL
@@ -1056,33 +1195,21 @@ DesktopContent.setSecurityOn = function(on) {
 			,DesktopContent.toggleSecurityCodeGenerationHandler
 			,0,0,0,true,true);
  }
-DesktopContent.toggleSecurityCodeGenerationHandler = function(req)
-{
-    var status = DesktopContent.getXMLValue(req,"Status");
-    Debug.log("Status: " + status);
-    if (status == "Generation_Success") {
-	Debug.log("Successfully switched to using authentication sequence!");
-	Debug.closeErrorPop();
-	Debug.log("If you wish to return to the default security generation, you can use the 'Reset User Information' in the " +
-		  "'Edit User Data' app.");
-	Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
-    }
-    
-    //var err = DesktopContent.getXMLValue(req,"Error"); //example application level error
-    //if(err) 
-    //	{
-    //	    Debug.log(err,Debug.HIGH_PRIORITY);	//log error and create pop-up error box
-    //	    return;
-    //	}
-    
-    //if(reqParam = 0)
-    //	{ //... do something }
-    //	}else if(reqParam = 1)
-    //	{ //... do something else}
-    //	}else
-    //	{ //... do something else}	    
-    //	}   
+
+//=====================================================================================
+//toggleSecurityCodeGenerationHandler ~~
+DesktopContent.toggleSecurityCodeGenerationHandler = function(req) {
+	var status = DesktopContent.getXMLValue(req,"Status");
+	Debug.log("Status: " + status);
+	if (status == "Generation_Success") {
+		Debug.log("Successfully switched to using authentication sequence!");
+		Debug.closeErrorPop();
+		Debug.log("If you wish to return to the default security generation, you can use the 'Reset User Information' in the " +
+				"'Edit User Data' app.");
+		Debug.log("Plase refer to the console for the new link!", Debug.INFO_PRIORITY);
+	}    
 }
+
 //=====================================================================================
 //tooltipSetNeverShow ~~
 //	set value of never show for target tip to 1/0 based on alwaysShow
@@ -1118,7 +1245,7 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 //	Can change background color and text color with strings bgColor and textColor (e.g. "rgb(255,0,0)" or "red")
 //		Default is yellow bg with black text if nothing passed.
 DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColor, borderColor, getUserInput, 
-		dialogWidth, cancelFunc) {		
+		dialogWidth, cancelFunc, yesButtonText) {		
 
 	//	Debug.log("X: " + DesktopContent._mouseOverXmailbox.innerHTML + 
 	//			" Y: " + DesktopContent._mouseOverYmailbox.innerHTML + 
@@ -1158,7 +1285,7 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 			"color: " + textColor + ";width: " + dialogWidth + "px; padding-bottom: 10px;" +
 			"}\n\n";
 	//..and anything in the text div
-	css += "#" + DesktopContent._verifyPopUpId + "-text *" +
+	css += "#" + DesktopContent._verifyPopUpId + " *" +
 			"{" +
 			"color: " + textColor + ";" +
 			"}\n\n";
@@ -1183,11 +1310,15 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	var userInputStr = "";
 	if(getUserInput)
 		userInputStr +=
-				"<input type='text' id='DesktopContent_popUpUserInput'> "; 
+				"<input type='text' id='DesktopContent_popUpUserInput' " + 
+				"onclick='event.stopPropagation(); '" +
+				">"; 
 							
 	var str = "<div id='" + DesktopContent._verifyPopUpId + "-text'>" + 
 			prompt + "<br>" + userInputStr + "</div>" +
-			"<input type='submit' value='Yes' " +
+			"<input type='submit' value='" + 
+			(yesButtonText?yesButtonText:"Yes") + 
+			"' " +
 			"onclick='event.stopPropagation();' " + 
 			"> " + //onmouseup added below so func can be a function object (and not a string)
 			"&nbsp;&nbsp;&nbsp;" + 
@@ -1197,17 +1328,66 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	el.innerHTML = str;
 
 	//onmouseup for "Yes" button
-	el.getElementsByTagName('input')[0].onmouseup = 
+	el.getElementsByTagName('input')[0 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(func);};
 	//onmouseup for "Cancel" button
-	el.getElementsByTagName('input')[1].onmouseup = 
+	el.getElementsByTagName('input')[1 + (getUserInput?1:0)].onmouseup = 
 			function(event){event.stopPropagation(); DesktopContent.clearPopUpVerification(cancelFunc);};
 
+	
 	Debug.log(prompt);
 	DesktopContent._verifyPopUp = el;
 	el.style.left = "-1000px"; //set off page so actual dimensions can be determined, and then div relocated
 	body.appendChild(el);
 
+
+	if(getUserInput) //place cursor
+	{
+		el.getElementsByTagName('input')[0].focus();
+		el.getElementsByTagName('input')[0].setSelectionRange(0,0);	
+		
+		//accept enter to close
+		el.getElementsByTagName('input')[0].onkeydown = 
+				function(event) 
+				{
+			if(event.keyCode == 13) // ENTER
+			{	
+				Debug.log("Accepting enter key");
+				event.preventDefault();
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(func);
+			}
+			else if(event.keyCode == 27) // ESC
+			{	
+				Debug.log("Accepting escape key");
+				event.preventDefault();
+				event.stopPropagation(); 
+				DesktopContent.clearPopUpVerification(cancelFunc);				
+			}
+				}; //end keydown handler
+	}	
+	else //focus on button, since no text
+		el.getElementsByTagName('input')[0].focus(); 
+	
+	//add key handler to body too for enter & esc
+	el.onkeydown = 
+			function(event) 
+			{
+		if(event.keyCode == 13) // ENTER
+		{	
+			Debug.log("Accepting enter key");
+			event.preventDefault();
+			event.stopPropagation(); 
+			DesktopContent.clearPopUpVerification(func);
+		}
+		else if(event.keyCode == 27) // ESC
+		{	
+			Debug.log("Accepting escape key");
+			event.preventDefault();
+			event.stopPropagation(); 
+			DesktopContent.clearPopUpVerification(cancelFunc);				
+		}
+			}; //end keydown handler
 
 	//determine position
 	var w = el.offsetWidth; 
@@ -1237,20 +1417,150 @@ DesktopContent.popUpVerification = function(prompt, func, val, bgColor, textColo
 	//var 
 	el.style.left = (DesktopContent.getWindowScrollLeft() + x) + "px";
 	el.style.top = (DesktopContent.getWindowScrollTop() + y) + "px";
-}
+} //end popUpVerification()
 //=====================================================================================
 //clearPopUpVerification ~~
 //	call func after clearing, if exists
 DesktopContent.clearPopUpVerification = function(func) {
+	
+	//get parameter value if exists
+	
+	var userEl = document.getElementById("DesktopContent_popUpUserInput");
+	var param = userEl?userEl.value:undefined;
+	
 	//remove pop up if already exist
 	if(DesktopContent._verifyPopUp) DesktopContent._verifyPopUp.parentNode.removeChild(DesktopContent._verifyPopUp);
 	DesktopContent._verifyPopUp = 0;
-	if(func) 
-	{
-		var userEl = document.getElementById("DesktopContent_popUpUserInput");
-		func(userEl?userEl.value:undefined); //return user input value if present
+	
+	if(func)	
+		func(param); //return user input value if present
+} //end clearPopUpVerification()
+
+
+//=====================================================================================
+//setPopUpPosition ~~
+//	centers element based on width and height constraint
+//	
+//	Note: assumes a padding and border size if not specified
+//  Note: if w,h not specified then fills screen (minus margin)
+//	Note: offsetUp and can be used to position the popup vertically (for example if the dialog is expected to grow, then give positive offsetUp to compensate)
+//
+// 	Note: the input element el will need local styling, e.g.:
+//		#popUpDialog * {
+//			color: black;
+//		}
+//		#popUpDialog a {
+//			color: rgb(44, 44, 187);
+//			font-size: 13px;
+//		}
+DesktopContent.setPopUpPosition = function(el,w,h,padding,border,
+		margin,doNotResize,offsetUp) {	
+
+	Debug.log("DesktopContent.setPopUpPosition");
+	
+	if(padding === undefined) padding = 10;
+	if(border === undefined) border = 1;	
+	if(margin === undefined) margin = 0;	
+
+	var x,y;
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	//	set position and size	
+	DesktopContent.setPopUpPosition.stopPropagation = function(event) {
+		//Debug.log("DesktopContent.setPopUpPosition stop propagation");
+		event.stopPropagation();
 	}
-}
+	
+	//:::::::::::::::::::::::::::::::::::::::::
+	//popupResize ~~
+	//	set position and size	
+	DesktopContent.setPopUpPosition.popupResize = function() {
+		
+		try //check if element still exists
+		{
+			if(!el) //if element no longer exists.. then remove listener and exit
+			{
+				window.removeEventListener("resize",DesktopContent.setPopUpPosition.popupResize);
+				window.removeEventListener("scroll",DesktopContent.setPopUpPosition.popupResize);								
+				return;
+			}
+		}
+		catch(err) {return;} //do nothing on errors
+		
+		//else resize el		
+		//Debug.log("DesktopContent.setPopUpPosition.popupResize");
+
+
+		var ww = DesktopContent.getWindowWidth()-(padding+border)*2;
+		var wh = DesktopContent.getWindowHeight()-(padding+border)*2;
+
+		//ww & wh are max window size at this point
+		
+		var ah = el.offsetHeight;//actual height, in case of adjustments
+
+		if(w === undefined || h === undefined)
+		{
+			w = ww - (margin)*2;
+			h = wh - (margin)*2;
+		}
+		//else w,h are inputs and margin is ignored
+
+		x = (DesktopContent.getWindowScrollLeft() + ((ww-w)/2));
+		y = (DesktopContent.getWindowScrollTop() + ((wh-h)/2)) - (offsetUp|0) - 100; //bias up (looks nicer)
+		
+		if(y < DesktopContent.getWindowScrollTop() + 
+				margin + padding) 
+			y = DesktopContent.getWindowScrollTop() + margin + 
+				padding; //don't let it bottom out though
+
+		//if dialog is smaller than window, allow scrolling to see the whole thing 
+		if(w > ww-margin-padding)			
+			x = -DesktopContent.getWindowScrollLeft();
+		if(ah > wh-margin-padding)
+			y = -DesktopContent.getWindowScrollTop();
+			
+		el.style.left = x + "px";
+		el.style.top = y + "px"; 
+	}; 
+	DesktopContent.setPopUpPosition.popupResize();
+	
+	//window width and height are not manipulated on resize, only setup once
+	el.style.width = w + "px";
+	el.style.height = h + "px";
+	
+	
+	//#popUpDialog {
+	//	position: absolute;
+	//	z-index: 10000;    
+	//	border: 1px solid #770000;
+	//	background-color: #efeaea;
+	//	text-align: center;
+	//	padding: 10px;
+	//	color: black;
+	//}
+	el.style.position = "absolute";
+	el.style.zIndex = "10000";
+	el.style.border = "1px solid #770000";
+	el.style.backgroundColor = "#efeaea";
+	el.style.textAlign = "center";
+	el.style.padding = "10px";
+	el.style.color = "black";
+	
+	if(!doNotResize)
+	{
+		window.addEventListener("resize",DesktopContent.setPopUpPosition.popupResize);
+		window.addEventListener("scroll",DesktopContent.setPopUpPosition.popupResize);
+	}
+	el.addEventListener("keydown",DesktopContent.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",DesktopContent.setPopUpPosition.stopPropagation);
+	el.addEventListener("mousemove",DesktopContent.mouseMove);
+
+	el.style.overflow = "auto";
+	
+	return {"w" : w, "h" : h, "x" : x, "y" : y};
+
+} //end setPopUpPosition()
 
 //=====================================================================================
 //parseColor ~~
@@ -1349,9 +1659,23 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	//get parameters
 	var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
 	
+
+	var tryAgainCount = 0;
+
+	
 	if(paramsStr != "") //then wait
 	{
 		Debug.log("Window creation is busy, trying again soon!");
+		
+		++tryAgainCount;
+
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+
 		setTimeout(function(){ DesktopContent.openNewWindow(windowPath); }, 100);
 		return;
 	}
@@ -1365,9 +1689,20 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	DesktopContent._openWindowMailbox.innerHTML = str;
 
 	Debug.log("Waiting for complete...");
-
+	
+	tryAgainCount = 0;
 	var timeoutHandler = function() { 
 		Debug.log("Checking for complete...");
+		
+		++tryAgainCount;
+		
+		if(tryAgainCount > 50)
+		{
+			Debug.log("It looks like the window failed to open. Perhaps the Desktop is disconnected from the server; " +
+					"please reconnect and try again.", Debug.WARN_PRIORITY);
+			return;
+		}
+		
 		//extract params from DesktopContent._openWindowMailbox
 		//get parameters
 		var paramsStr = DesktopContent._openWindowMailbox.innerHTML;
@@ -1408,31 +1743,44 @@ DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeH
 	setTimeout(timeoutHandler,
 			100); //end setTimeout
 
-}
+} // end openNewWindow
 
 //=====================================================================================
 //openNewBrowserTab ~~
 //	first wait for mailbox to be clear
 //	then take mailbox
+//	
+// Note: to open a window just using the Desktop icon name, leave subname and unique undefined
+//	window path can optionially be used to send the window additional parameters, or left undefined.
 DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {	
 	
-	//for windowPath, need to check lid=## is terminated with /
-	// check from = that there is nothing but numbers
+	if(windowPath !== undefined)
 	{
-		var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
-		var isAllNumbers = true;
-		for(i;i<windowPath.length;++i)
+		//for windowPath, need to check lid=## is terminated with /
+		// check from = that there is nothing but numbers	
+		try
 		{
-			Debug.log(windowPath[i]);
-
-			if(windowPath[i] < "0" || windowPath[i] > "9")
+			var i = windowPath.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+			var isAllNumbers = true;
+			for(i;i<windowPath.length;++i)
 			{
-				isAllNumbers = false;
-				break;
-			}				
+				//Debug.log(windowPath[i]);
+	
+				if(windowPath[i] < "0" || windowPath[i] > "9")
+				{
+					isAllNumbers = false;
+					break;
+				}				
+			}
+			if(isAllNumbers)
+				windowPath += "/";		
 		}
-		if(isAllNumbers)
-			windowPath += "/";		
+		catch(e)
+		{
+			Debug.log("An error occurred while trying to open the window. " +
+					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+			return;
+		}
 	}
 	Debug.log("DesktopWindow= " + windowPath);
 
@@ -1471,12 +1819,22 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else
-		url += search + "&" + str;
+	{
+		//remove, possibly recursive, former new windows through url
+		var i = search.indexOf("requestingWindowId");		
+		if(i >= 0)
+			search = search.substr(0,i);
+		//only add & if there are other parameters
+		if(search.length && search[search.length-1] != '?'
+				&& search[search.length-1] != '&')
+			search += '&';
+		url += search + str;
+	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	
 	window.open(url,'_blank');	
-}
+} // end openNewBrowserTab()
 
 //getDesktopWindowTitle ~~
 //	returns the text in header of the current desktop window

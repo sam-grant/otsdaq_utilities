@@ -159,6 +159,7 @@ Desktop.createDesktop = function(security) {
 	var _sysMsgCounter = 0;
 	var _SYS_MSG_MAX_COUNT = 10; //number of check mailbox timers to count through before checking for system messages
 	
+	var _firstCheckOfMailboxes = true;
 	
 	//------------------------------------------------------------------
 	//create public members variables ----------------------
@@ -203,22 +204,23 @@ Desktop.createDesktop = function(security) {
 		var dx = Desktop.desktop.getDesktopContentX();
 		var dy = Desktop.desktop.getDesktopContentY();
 		
-		var layout = "[";				
+		var layout = ""; //"[";				
 		for(var i=0;i<_windows.length;++i) 
 		{		
 			if(_windows[i].getWindowName() == "Settings") continue; //skip settings window
 						
-			layout += _windows[i].getWindowName() 
-										+ "," + _windows[i].getWindowSubName() 
-										+ "," + _windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
-										+ "," + (((_windows[i].getWindowX()-dx)/dw)|0)
-										+ "," + (((_windows[i].getWindowY()-dy)/dh)|0)
-										+ "," + ((_windows[i].getWindowWidth()/dw)|0)
-										+ "," + ((_windows[i].getWindowHeight()/dh)|0)
-										+ "," + (_windows[i].isMinimized()?"0":"1")
-										+ ", "; //last comma (with space for settings display)					
+			layout += (i?",":"") + 
+					encodeURIComponent(_windows[i].getWindowName()) 
+					+ "," + encodeURIComponent(_windows[i].getWindowSubName()) 
+					+ "," + encodeURIComponent(_windows[i].getWindowUrl()) //_windows[i].getWindowUrl().replace(/&/g,'%38').replace(/=/g,'%61')  //global replace & and =
+					+ "," + (((_windows[i].getWindowX()-dx)/dw)|0)
+					+ "," + (((_windows[i].getWindowY()-dy)/dh)|0)
+					+ "," + ((_windows[i].getWindowWidth()/dw)|0)
+					+ "," + ((_windows[i].getWindowHeight()/dh)|0)
+					+ "," + (_windows[i].isMinimized()?"0":(_windows[i].isMaximized()?"2":"1"));
+					//+ ", "; //last comma (with space for settings display)					
 		}
-		layout += "]";
+		//layout += "]";
 		return layout;
 	}
 	
@@ -248,6 +250,15 @@ Desktop.createDesktop = function(security) {
 	{		
 		//Debug.log("_checkMailboxes sysMsgCounter=" +_sysMsgCounter);
 		
+		if(_firstCheckOfMailboxes)
+		{
+			Debug.log("First check of mailboxes!");
+
+			Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
+			_firstCheckOfMailboxes = false;
+			Desktop.desktop.actOnParameterAction();    //this should be the second running and will always work (first time is at end of Desktop instance creation.. and may fail for opening icon by name)
+			
+		}
 		
 		//windows can request a blackout, to avoid logging out (attempt to stop all other tabs by using browser cookie)
 		if(_blockSystemCheckMailbox.innerHTML == "1")
@@ -309,6 +320,7 @@ Desktop.createDesktop = function(security) {
 	    	if(requestingWindowId != "" && windowPath != "")
 	    	{
 	    		//have work to do!
+	    		// Note: similar to L1000 in actOnParameterAction() 
 	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 		    	Debug.log("requestingWindowId=" + requestingWindowId);
 		    	Debug.log("windowPath=" + windowPath);
@@ -316,12 +328,64 @@ Desktop.createDesktop = function(security) {
 		    	Debug.log("windowSubname=" + windowSubname);
 		    	Debug.log("windowUnique=" + windowUnique);
 
-		    	var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-		    			windowName, 
-						windowSubname,
-						windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
-						eval(windowUnique));			
+		    	var newWin;
+		    	
+		    	//if only windowName is defined, then attempt to open the icon on the 
+		    	//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+		    	if(windowSubname == "undefined" &&
+		    			windowUnique == "undefined") //the string undefined is what comes through
+		    	{
+		    		Debug.log("Opening desktop window... " + windowName);
+
+		    		var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+		    		console.log("Desktop.desktop.icons.iconNameToPathMap",
+		    				Desktop.desktop.icons.iconNameToPathMap);
+
+		    		if(pathUniquePair ===
+		    				undefined)
+		    		{
+		    			Debug.log("An error occurred opening the window named '" + 
+		    					windowName + "' - it was not found in the Desktop icons. " +
+								"Do you have permissions to access this window? Notify admins if the problem persists.",
+								Debug.HIGH_PRIORITY);
 		    			
+		    			//respond done
+						var str = "requestingWindowId=" + requestingWindowId;
+						str += "&done=1";	
+						_openWindowMailbox.innerHTML = str; //indicate done
+						
+		    			return;
+		    		}
+
+					var pathStr = pathUniquePair[0];
+					
+					if(windowPath != "undefined") //add parameters if defined
+					{
+						Debug.log("Adding parameter path " + windowPath);
+						if(pathStr.indexOf('&') > 0) //then assume already parameters
+							pathStr += "&";
+						else if(pathStr.length && 
+								pathStr[pathStr.lengh-1] != '?') //then assume need ?
+							pathStr += '?';
+						windowPath = pathStr + windowPath;
+					}
+					else
+						windowPath = pathStr;
+					
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							"",
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(pathUniquePair[1]));	
+		    	}
+		    	else
+		    	{
+		    		newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+		    				windowName, 
+							windowSubname,
+							windowPath,		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",						
+							eval(windowUnique));			
+		    	}
 
 		    	//delay the setting of the fore window
 				setTimeout(function(){ Desktop.desktop.setForeWindow(newWin); }, 200);
@@ -798,17 +862,26 @@ Desktop.createDesktop = function(security) {
 		Debug.log("Desktop defaultLayoutSelect " + i,Debug.LOW_PRIORITY);
 			
 		var layoutStr;
-	  	if(i >= 3 && i <= 6) //user default or current checkpoint
-	  		layoutStr = _login.getUserDefaultLayout(i-3);
-	  	else if(i >= 0 && i <= 1) //system defaults
+		var numOfUserLayouts = 5;
+		var numOfSystemLayouts = 5;
+	  	if(i >= numOfSystemLayouts+1 && //user layouts
+	  			i <= numOfSystemLayouts+1+numOfUserLayouts) 
+	  		layoutStr = _login.getUserDefaultLayout(i-(numOfSystemLayouts+1));
+	  	else if(i >= 0 && i <= numOfSystemLayouts) //system layouts
 	  		layoutStr = _login.getSystemDefaultLayout(i);
 	  	else //invalid
+	  	{
+	  		Debug.log("Invalid layout index: " + i, Debug.HIGH_PRIORITY); 
 	  		return;
+	  	}
 		var layoutArr = layoutStr.split(",");
-		var numOfFields = ((layoutArr.length-1)%8==0)?8:7; //hack to be backwards compatible with 7 fields (new way adds the 8th field for isMinimized)
+		
+		var numOfFields = 8;
 		var numOfWins = parseInt(layoutArr.length/numOfFields);
+		
 		Debug.log("Desktop defaultLayoutSelect layout numOfFields=" + numOfFields);
-		Debug.log("Desktop defaultLayoutSelect layout " + numOfWins + " windows - " + layoutStr,Debug.LOW_PRIORITY);	
+		Debug.log("Desktop defaultLayoutSelect layout " + numOfWins + 
+				" windows - " + layoutStr);	
 		
 		//clear all current windows
 		Desktop.desktop.closeAllWindows();
@@ -825,7 +898,7 @@ Desktop.createDesktop = function(security) {
 		//		4: (((_windows[i].getWindowY()-dy)/dh)|0)
 		//		5: ((_windows[i].getWindowWidth()/dw)|0)
 		//		6: ((_windows[i].getWindowHeight()/dh)|0)
-		//		7: (_windows[i].isMinimized()?"0":"1")
+		//		7: (_windows[i].isMinimized()?"0":(_windows[i].isMinimized()?"2":"1"))
 		var dw = Desktop.desktop.getDesktopContentWidth()/10000.0; //to calc int % 0-10000
 		var dh = Desktop.desktop.getDesktopContentHeight()/10000.0;//to calc int % 0-10000
 		var dx = Desktop.desktop.getDesktopContentX();
@@ -834,18 +907,20 @@ Desktop.createDesktop = function(security) {
 		{		
 			Debug.log("adding " + layoutArr[i*numOfFields].substr(1) + "-" + layoutArr[i*numOfFields+1],Debug.LOW_PRIORITY);	
 			this.addWindow(	//(name,subname,url,unique)
-				layoutArr[i*numOfFields].substr(1), 
-				layoutArr[i*numOfFields+1],
-				layoutArr[i*numOfFields+2].replace(/%38/g,"&").replace(/%61/g,"="), //replace back = and &
+				decodeURIComponent(layoutArr[i*numOfFields]), 
+				decodeURIComponent(layoutArr[i*numOfFields+1]),
+				decodeURIComponent(layoutArr[i*numOfFields+2]),//.replace(/%38/g,"&").replace(/%61/g,"="), //replace back = and &
 				false);				
 			_windows[_windows.length-1].setWindowSizeAndPosition(		//(x,y,w,h)		
 				layoutArr[i*numOfFields+3]*dw + dx,
 				layoutArr[i*numOfFields+4]*dh + dy,
 				layoutArr[i*numOfFields+5]*dw,
 				layoutArr[i*numOfFields+6]*dh);
-			if(numOfFields == 8 && 
-					!(layoutArr[i*numOfFields+7]|0)) //convert to integer, if 0 then minimize
+			
+			if((layoutArr[i*numOfFields+7]|0) == 0) //convert to integer, if 0 then minimize
 				_windows[_windows.length-1].minimize();
+			else if((layoutArr[i*numOfFields+7]|0) == 2) //convert to integer, if 0 then maximize
+				_windows[_windows.length-1].maximize();
 		}	  	
 	}
 	
@@ -874,7 +949,8 @@ Desktop.createDesktop = function(security) {
 			Desktop.desktop.login.setupLogin();
 			
 			window.clearInterval(Desktop.desktop.checkMailboxTimer);
-			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,_MAILBOX_TIMER_PERIOD);
+			Desktop.desktop.checkMailboxTimer = setInterval(_checkMailboxes,
+					_MAILBOX_TIMER_PERIOD);
 		}
 		//{
 			//re-start timer for checking foreground window changes due to iFrame content code
@@ -984,14 +1060,102 @@ Desktop.createDesktop = function(security) {
 			windowSubname = windowSubname.replace(/%20/g, " ");
 			Debug.log("windowSubname=" + windowSubname);
 			Debug.log("windowUnique=" + windowUnique);
+			
+			var newWin;
+			
+			
+			//check if opening layout 
+			if(windowName.indexOf("Desktop.openLayout(") == 0)
+			{
+				var layoutIndex = windowName.substr(("Desktop.openLayout(").length, 
+						windowName.length-1-("Desktop.openLayout(").length) | 0;
+				Debug.log("Opening layout... " + layoutIndex);
+				
+				if(pathUniquePair ===
+						undefined)
+				{
 
-			var newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
-					windowName, 
-					windowSubname,
-					windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
-					((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
-					((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
-					eval(windowUnique));			
+					if(_firstCheckOfMailboxes)
+					{
+						Debug.log("Perhaps user layout preferences have not been setup yet, try again at mailbox check.");
+						return;
+					}
+				}		
+				
+				
+				_firstCheckOfMailboxes = false; //no need to check at mailbox check time, we are good to go already!
+
+				Desktop.desktop.dashboard.toggleWindowDashboard(0,false);
+				Desktop.desktop.defaultLayoutSelect(layoutIndex);				
+				return;
+			} //end openLayout handling
+			
+			//if only windowName is defined, then attempt to open the icon on the 
+			//	Desktop with that name (this helps resolve supervisor LIDs, etc.)
+			if(windowSubname == "undefined" &&
+					windowUnique == "undefined") //the string undefined is what comes through
+			{
+				Debug.log("Opening desktop window... " + windowName);
+				
+				
+				var pathUniquePair = Desktop.desktop.icons.iconNameToPathMap[windowName];
+				console.log("Desktop.desktop.icons.iconNameToPathMap",
+						Desktop.desktop.icons.iconNameToPathMap);
+				
+				if(pathUniquePair ===
+						undefined)
+				{
+
+					if(_firstCheckOfMailboxes)
+					{
+						Debug.log("Perhaps icons have not been setup yet, try again at mailbox check.");
+						return;
+					}
+					
+					Debug.log("An error occurred opening the window named '" + 
+							windowName + "' - it was not found in the Desktop icons. " +
+							"Do you have permissions to access this window? Notify admins if the problem persists.",
+							Debug.HIGH_PRIORITY);
+
+	    			//respond done
+					//clear mailbox string since no window is listening for done when a new desktop begins			
+					_openWindowMailbox.innerHTML = "";//str; //indicate done
+					return;
+				}				
+				var pathStr = pathUniquePair[0];
+				
+				if(windowPath != "undefined") //add parameters if defined
+				{
+					Debug.log("Adding parameter path " + windowPath);
+					if(pathStr.indexOf('&') > 0) //then assume already parameters
+						pathStr += "&amp;";
+					else if(pathStr.length && 
+							pathStr[pathStr.lengh-1] != '?') //then assume need ?
+						pathStr += '?';
+					windowPath = pathStr + windowPath;
+				}
+				else
+					windowPath = pathStr;
+				
+				newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+						windowName, 
+						"",
+						windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
+						((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
+						((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
+						eval(pathUniquePair[1]));
+			} //end handling of opening desktop window
+			else
+			{
+				_firstCheckOfMailboxes = false; //no need to check at mailbox check time, we are good to go already!
+				newWin = Desktop.desktop.addWindow(	//(name,subname,url,unique)
+						windowName, 
+						windowSubname,
+						windowPath +		//e.g. "http://rulinux03.dhcp.fnal.gov:1983/WebPath/html/ConfigurationGUI.html?urn=280",
+						((windowPath.indexOf('?') < 0)? "?":"&amp;") + //add ? start of get parameters if necessary
+						((newWindowOps)?"newWindowOps=" + newWindowOps:""), //add get parameter to path for further operations
+						eval(windowUnique));
+			}
 
 			//set to fore window and full screen
 			 
@@ -1007,7 +1171,7 @@ Desktop.createDesktop = function(security) {
 			//clear mailbox string since no window is listening for done when a new desktop begins			
 			_openWindowMailbox.innerHTML = "";//str; //indicate done
 		}
-	}
+	} //end actOnParameterAction()
 	
 	//------------------------------------------------------------------
 	//handle class construction ----------------------
@@ -1108,11 +1272,11 @@ Desktop.createDesktop = function(security) {
 	if(_login.loginDiv)
 		_desktopElement.appendChild(_login.loginDiv); //add to desktop element for login to display things
     
-	Debug.log("Desktop Created",Debug.LOW_PRIORITY);
-	
+	Debug.log("Desktop Created",Debug.LOW_PRIORITY);	
+
 	Debug.log("Checking for any shortcut work from get parameters...",Debug.LOW_PRIORITY);
-	this.actOnParameterAction();    
-}
+	Desktop.desktop.actOnParameterAction();  //first time, _firstCheckOfMailboxes is true (then it will try again in checkMailboxes)   
+} //end Desktop constructor
 
 ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////
@@ -1697,7 +1861,9 @@ Desktop.openNewBrowserTab = function(name,subname,windowPath,unique) {
 		url += "?" + str;
 	}
 	else// if(Desktop.isWizardMode())
+	{
 		url += search.split('&')[0] + "&" + str; //take first parameter (for wiz mode)
+	}
 	
 	Debug.log("DesktopContent.openNewBrowserTab= " + url);
 	

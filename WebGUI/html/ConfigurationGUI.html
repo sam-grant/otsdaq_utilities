@@ -397,7 +397,31 @@
 				"<a class='popUpOkCancel' onclick='editCellCancel(); event.stopPropagation();' onmouseup='event.stopPropagation();' title='Discard Changes' style='color:red'>" + 
 				"<b style='color:red;font-size: 16px;'>Cancel</b></a>";
 		_OK_CANCEL_DIALOG_STR += "</div>";	
-		
+				
+		var _OTS_RELAUNCH_STR =  
+				//Normal mode
+				"Click here to relaunch ots in " +
+				"<a onclick='" +
+				"verifyRelaunchNormalMode();" +
+				"'>Normal Mode</a>" +
+				" or " +
+				//Wiz Mode
+				"<a onclick='" +
+				"verifyRelaunchWizMode();" +
+				"'>Wiz Mode</a>." +
+				"<br>" +
+				//Toggle Version Tracking
+				"Click here to " +
+				"<a id='versionTrackingSystemLink' onclick='" +
+				"toggleVersionTracking();" +
+				"'>Turn Version Tracking OFF</a>." +
+				//Flatten Versions
+				"<br>" +
+				"Click here to " +
+				"<a onclick='" +
+				"flattenToSystemAliases();" +
+				"'>Flatten to System Aliases</a>."
+				;
 //		var _OTS_RELAUNCH_STR =  
 //				//Normal mode
 //				"Click here to relaunch ots in " +
@@ -501,6 +525,7 @@
 		var treeViewHideInfo_ = true;
 		var treeFilter_ = "";
 		var lastTreeFilter_ = "";
+		var lastTreeWarnStr_ = "";
 		
 		var treeHasChanged_ = false;	
 		var treeEditingNodeType_ = "";		
@@ -554,13 +579,7 @@
 			//get context and backbone member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
 					function (req) 
-					{				
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
+					{	
 				var memberNames = req.responseXML.getElementsByTagName("ContextMember");
 				_contextMemberNames = []; //reset
 				for(var i=0;i<memberNames.length;++i)
@@ -568,19 +587,11 @@
 				Debug.log(_contextMemberNames);
 				if(_contextMemberNames.length == 0) 
 					Debug.log("Empty context member list found!",Debug.HIGH_PRIORITY);
-					},
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-			);
+					}); //end request handler
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getBackboneMemberNames", "", 
 					function (req)
-					{				
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
+					{		
 				var memberNames = req.responseXML.getElementsByTagName("BackboneMember");
 				_backboneMemberNames = []; //reset
 				for(var i=0;i<memberNames.length;++i)
@@ -588,9 +599,7 @@
 				Debug.log(_backboneMemberNames);
 				if(_backboneMemberNames.length == 0) 
 					Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
-					},
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-			);
+					}); //end request handler
 
 			//============================
 			//		for debugging
@@ -660,12 +669,12 @@
 				
 				//extract last config groups
 				_lastConfigGroups = [
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName"),
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey"),
-									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupName"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupKey"),
-									   DesktopContent.getXMLValue(req,"LastStartedGroupTime")
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupName").trim(),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupKey").trim(),
+									   DesktopContent.getXMLValue(req,"LastConfiguredGroupTime").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupName").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupKey").trim(),
+									   DesktopContent.getXMLValue(req,"LastStartedGroupTime").trim()
 									   ];
 				//console.log(_lastConfigGroups);
 				
@@ -674,19 +683,13 @@
 						"reloadActiveGroups=1", //reload persistent active groups (persistent active config group will be modified when state machine configures) 
 						"", 
 						groupAliasesRequestHandler,anchorTarget,
-						0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-				);	
-								},
-								0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-								);	
-			
-					
+						0/*progressHandler*/,true /*callHandlerOnErr*/);	
+								}); //end getLastConfigGroups
+								
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=versionTracking&Type=Get","",
-					versionTrackingHandler,
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-			);
-		}
+					versionTrackingHandler);
+		} //end setupSystemViewMode()
 		
 		//setupGroupViewMode ~
 		function setupGroupViewMode(anchorTarget) {
@@ -697,9 +700,8 @@
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
 					configGroupsRequestHandler, anchorTarget,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);		
-		}
+					0/*progressHandler*/,true /*callHandlerOnErr*/);		
+		} //end setupGroupViewMode()
 		
 		//setupTableViewMode ~
 		function setupTableViewMode(anchorTarget) {
@@ -709,30 +711,41 @@
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations", "", 
-					tableViewRequestHandler,anchorTarget,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-					);		
-		}
+					tableViewRequestHandler,anchorTarget);
+		} //end setupTableViewMode()
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleFlattenSystemAliasesResponse(req) {
 			Debug.log("Attempting to Flatten System Aliases... " +
 					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
-		}
+		} //end handleFlattenSystemAliasesResponse()
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleOtsRelaunchResponse(req,isWiz) {
+			if(req) //if supervisor is killed, then req will be 0, which is a good sign of progress
+			{ 	//else check error response
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err) 
+				{					
+					Debug.log(err,Debug.HIGH_PRIORITY);
+					return;
+				}
+			}
+
+			var countDown = 10;
 			if(isWiz)
 				Debug.log("Attempting to restart your system in Wiz Mode... " +
-					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
+			{
+				countDown = 20;
 				Debug.log("Attempting to restart your system in Normal Mode... " +
-					"\n\n Please wait 10 seconds and then reload the System View to verify changes.",
+					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
+			}
 			
-			var countDown = 10;
 			localCountDown();
 			//=================
 			function localCountDown()
@@ -760,6 +773,8 @@
 		//setupSpecificConfigGroup ~		
 		function setupSpecificConfigGroup(groupName, groupKey, backLinkStr, anchorTarget) {
 
+			Debug.log("setupSpecificConfigGroup");
+			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			var param = "";
@@ -772,7 +787,7 @@
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey,
 					"", specificGroupRequestHandler, param,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true  //progressHandler, callHandlerOnErr
 					);		
 		}
 		
@@ -799,7 +814,7 @@
 				"&configName=" + configName + 
 				v, 
 				"", specificConfigRequestHandler, backLinkStr,
-				0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+				0,true  //progressHandler, callHandlerOnErr
 				);		
 		}
 		//setupSpecificConfigInRight ~
@@ -981,7 +996,8 @@
 					}
 					else
 					{
-						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + _lastConfigGroups[i] +
+						str += "<a href='#' onclick='setupSpecificConfigGroup(\"" + 
+								_lastConfigGroups[i] +
 								"\",\"" + _lastConfigGroups[i+1] + "\"); return false;'>";
 						str += _lastConfigGroups[i] + " (" + _lastConfigGroups[i+1] + ")</a>";
 					}
@@ -1188,10 +1204,10 @@
 
 			str += "<h3 style='margin-top:-10px'><u>Group View</u></h3>";
 			
-			var typeName = ["All","Contexts","Backbones","Configurations"];
-			var typeFilterIndex = [-1,0,1,2];
+			var typeName = ["All","Context","Backbone","Configuration","Iterate"];
+			var typeFilterIndex = [-1,0,1,2,3];
 			
-			str += "Showing:";
+			str += "Showing groups of type:";
 			for(var i=0;i<typeName.length;++i)
 			{
 				if(_groupViewFilterIndex == typeFilterIndex[i])
@@ -1208,7 +1224,7 @@
 			str += "<br>";
 			str += "<label id='filteredGroupCount'></label> of " +
 					groupNames.length + " groups. ";
-			str += "Don't see what you need: ";
+			str += "Do not see what you need? ";
 			str += "<a href='#' onclick='" +
 					"setupConfigCreator(\"&backLinkStr=" + backLinkStr + 
 					"\");' title='" +
@@ -1273,29 +1289,33 @@
 				var filteredGroupCount = 0;
 				backLinkStr = "setupGroupViewMode();";
 				
+				var filterOutGroup;
+				
 				for(var i=0;i<groupNames.length;++i)
 				{	
 					groupName = groupNames[i].getAttribute("value");
 					key = keys[i].getAttribute("value");
 
-					if(_groupViewFilterIndex == 0 && //context only
-							types[i].getAttribute("value") != "Context")
+					filterOutGroup = false;
+					//filter based on selected filter index
+					if(_groupViewFilterIndex >= 0)
+						for(var j=0;j<typeName.length;++j)
+						{
+							if(_groupViewFilterIndex == typeFilterIndex[j] && 
+									types[i].getAttribute("value") != typeName[j])
+							{
+								filterOutGroup = true;
+								break;
+							}
+						}
+					
+					if(filterOutGroup)
 					{
 						Debug.log("Filtering out " + groupName + "_v" + key);
 						continue;
 					}
-					else if(_groupViewFilterIndex == 1 && //context only
-							types[i].getAttribute("value") != "Backbone")
-					{
-						Debug.log("Filtering out " + groupName + "_v" + key);
-						continue;
-					}
-					else if(_groupViewFilterIndex == 2 && //context only
-							types[i].getAttribute("value") != "Configuration")
-					{
-						Debug.log("Filtering out " + groupName + "_v" + key);
-						continue;
-					}
+					
+					//if here, group is to be shown
 
 					++filteredGroupCount;
 					skipRepeat = false;
@@ -1373,7 +1393,7 @@
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		}
+		} //end configGroupsRequestHandler()
 		
 		//groupSearchSelectionHandler ~~
 		//	make group search selection handler
@@ -1517,13 +1537,6 @@
 		//tableViewRequestHandler ~~
 		function tableViewRequestHandler(req, anchorTarget)
 		{					
-			var err = DesktopContent.getXMLValue(req,"Error");
-			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
-			}
-			
 			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
 			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 			
@@ -1803,7 +1816,7 @@
 							"&groupKey=" + groupKey + "\", \"\"," +
 							"ConfigurationAPI.newWizBackboneMemberHandler," +
 							"[\"MemberVersionAliasWizBackbone\",undefined]," +
-							"0,0,true" +  //progressHandler, callHandlerOnErr, showLoadingOverlay
+							"0,true" +  //progressHandler, callHandlerOnErr
 							");";
 					
 			str += "<a href='#' onclick='" + setMembersToDefaultReq + "; return false;' title='Make all member versions" + 
@@ -1842,7 +1855,7 @@
 				if (configComments[i])			
 				    configComment = configComments[i].getAttribute("value");
 				else
-				    configComment = "UNKOWN";
+				    configComment = "UNKNOWN";
 
 
 				backLinkStr = "setupSpecificConfigGroup(\\\"" + groupName + "\\\",\\\"" +
@@ -2617,7 +2630,7 @@
 					"&version=" + version, "", 
 					ConfigurationAPI.newWizBackboneMemberHandler,
 					[("VersionAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true  //progressHandler, callHandlerOnErr
 					);
 		}
 		
@@ -2642,18 +2655,46 @@
 			}
 			
 			var warn = DesktopContent.getXMLValue(req,"Warning");
-			if(warn) 
+			if(warn)
 			{
-				Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
-				Debug.log(warn,Debug.WARN_PRIORITY);	
+				if(warn != lastTreeWarnStr_) 
+				{
+					Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
+					Debug.log(warn,Debug.WARN_PRIORITY);	
+				}
+				else
+					Debug.log(warn);
 			}
-						
+			lastTreeWarnStr_ = warn;
+			 
+			
+					
 			
 			//draw tree		
 			
 			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
 			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");			
 			
+			
+			//always update tree names
+			var activeTableNames = req.responseXML.getElementsByTagName("ActiveTableName");
+			var activeTableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
+			var activeTableComments = req.responseXML.getElementsByTagName("ActiveTableComment");
+			treeMemberNames_ = [];
+			treeMemberVersions_ = [];
+			treeMemberComments_ = [];
+
+			_tableLinkDropdownChoices = [];			
+			_tableLinkDropdownChoices.push(DesktopContent.getXMLValue(req,"DefaultNoLink"));
+			for(var i=0;i<activeTableNames.length;++i)
+			{
+				treeMemberNames_.push(activeTableNames[i].getAttribute("value"));
+				_tableLinkDropdownChoices.push(treeMemberNames_[i]);
+				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
+				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
+			}
+			
+
 			if(!parentId && 
 					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
 					treeGroupName_ == configGroupName &&
@@ -2729,22 +2770,7 @@
 			treeGroupName_ = configGroupName;
 			treeGroupKey_ = configGroupKey;
 			
-			var activeTableNames = req.responseXML.getElementsByTagName("ActiveTableName");
-			var activeTableVersions = req.responseXML.getElementsByTagName("ActiveTableVersion");
-			var activeTableComments = req.responseXML.getElementsByTagName("ActiveTableComment");
-			treeMemberNames_ = [];
-			treeMemberVersions_ = [];
-			treeMemberComments_ = [];
 			
-			_tableLinkDropdownChoices = [];			
-			_tableLinkDropdownChoices.push(DesktopContent.getXMLValue(req,"DefaultNoLink"));
-			for(var i=0;i<activeTableNames.length;++i)
-			{
-				treeMemberNames_.push(activeTableNames[i].getAttribute("value"));
-				_tableLinkDropdownChoices.push(treeMemberNames_[i]);
-				treeMemberVersions_.push(activeTableVersions[i].getAttribute("value"));		
-				treeMemberComments_.push(activeTableComments[i].getAttribute("value"));				
-			}
 			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
 			
 			
@@ -4418,7 +4444,7 @@
 						"&modifiedTables=" + modifiedTables,
 						treeViewHandler,
 						idString,
-						0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+						0,true); //progressHandler, callHandlerOnErr 
 				return true;
 			}
 			return false;
@@ -4437,8 +4463,7 @@
 					"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 					"&depth=1", 
 					"startPath=/",treeViewHandler,
-					0, 0, 0, //reqIndex, progressHandler, callHandlerOnErr
-					true); //showLoadingOverlay
+					0, 0, true); //reqIndex, progressHandler, callHandlerOnErr					
 		}
 		
 		//activateSystemConfig ~
@@ -4456,8 +4481,7 @@
 				activateSystemConfigHandler(req,true /*display errors*/);
 				if(doneHandler !== undefined) doneHandler(req);
 					},
-					0, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
-					true); //showLoadingOverlay
+					0, 0 , true); //reqIndex, progressHandler, callHandlerOnErr					
 		}
 		
 
@@ -4499,7 +4523,7 @@
 				else if(versionTracking != "ON" &&
 						versionTracking != "OFF")
 				{				
-					Debug.prependMessage = "Version TRACKING UNKOWN:::";
+					Debug.prependMessage = "Version TRACKING UNKNOWN:::";
 					if(versionTrackingSystemLink) versionTrackingSystemLink.innerHTML = "Turn Version Tracking ON";
 					_versionTrackingIsOn = false;
 				}
@@ -4621,8 +4645,15 @@
 						"You can try to activate " + 
 						"with warnings ignored " + 
 						"<label style='font-weight:bold;text-decoration:underline;font-size:inherit;'>" +
-						"(MAKE SURE YOU KNOW WHY!)</label> by clicking '<u>Activate " + 
-						name + "(" + key + ") w/warnings ignored</u>' " +
+						"(MAKE SURE YOU KNOW WHY!)</label> by clicking " +
+
+						//add ignore warnings Activate link
+						"'<a onclick='activateSystemConfig(\"" + 
+								name +
+								"\",\"" + key + "\",1/*ignoreWarnings*/); return false;'>" + 
+						"Activate " + 
+						name + "(" + key + ") w/warnings ignored</a>' " +
+						
 						"at the top of the page.",Debug.HIGH_PRIORITY);
 				//Debug.log(_OTS_RELAUNCH_STR,Debug.INFO_PRIORITY);
 				
@@ -4670,48 +4701,7 @@
 			{;}
 			
 		}
-		
-//		//setGroupAliasInActiveBackbone ~~
-//		//	Used to set a group alias.
-//		//	This function will activate the resulting backbone group and 
-//		//		call a done handler	
-//		//
-//		//      if doReturnParms
-//		//          then the handler is called with an object 
-//		//          describing the new backbone group object:
-//		//                 retParams.newBackbone //true if successfully activated
-//		//                 retParams.groupName   //backbone group name 
-//		//                 retParams.groupKey    //backbone group key
-//		//               
-//		function setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,
-//				newBackboneNameAdd,doneHandler,doReturnParams)
-//		{
-//			Debug.log("setGroupAliasInActiveBackbone groupAlias=" + groupAlias);
-//			Debug.log("setGroupAliasInActiveBackbone groupName=" + groupName);
-//			Debug.log("setGroupAliasInActiveBackbone groupKey=" + groupKey);
-//			
-//			if(!groupName || groupName == "" || !groupKey || groupKey == "")
-//			{
-//				Debug.log("Process interrupted. Invalid group name and key given!",Debug.HIGH_PRIORITY);
-//				doneHandler(); //error so call done handler
-//				return;
-//			}
-//			
-//			if(!newBackboneNameAdd || newBackboneNameAdd == "")
-//				newBackboneNameAdd = "Wiz";
-//			newBackboneNameAdd += "Backbone";
-//			Debug.log("setGroupAliasInActiveBackbone newBackboneNameAdd=" + newBackboneNameAdd);
-//			
-//			DesktopContent.XMLHttpRequest("Request?RequestType=setGroupAliasInActiveBackbone" +
-//					"&groupAlias=" + groupAlias + 
-//					"&groupName=" + groupName +
-//					"&groupKey=" + groupKey, "", 
-//					newWizBackboneMemberHandler,
-//					[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
-//					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
-//					);					
-//		}
-		
+				
 		//wizToActiveConfigGroup ~~
 		//	groupType := 0-context, 1-backbone, 2-configuration
 		function wizToActiveConfigGroup(groupAlias,groupType)
@@ -4751,7 +4741,7 @@
 				ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,name,key,0,setupSystemViewMode);				
 				
 					},
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,true  //reqParam, progressHandler, callHandlerOnErr
 			); //end of getActiveConfigGroups handler
 		}
 		
@@ -4778,12 +4768,6 @@
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
 					"", function(req) 
 					{
-				var err = DesktopContent.getXMLValue(req,"Error");
-				if(err) 
-				{
-					Debug.log(err,Debug.HIGH_PRIORITY);
-					return;
-				}
 				
 				var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
 				var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
@@ -4921,13 +4905,11 @@
 
 
 						},
-						0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						0,0,true  //reqParam, progressHandler, callHandlerOnErr
 				); //end of saveNewConfigurationGroup handler
 
 
-					},
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-			);	//end of getConfigurations handler
+					});	//end of getConfigurations handler
 		}
 
 		//saveGroupAndActivate
@@ -4976,13 +4958,7 @@
 						"&groupKey=" + key, "", 
 						function(req)
 						{
-					var err = DesktopContent.getXMLValue(req,"Error");
-					if(err) 
-					{
-						Debug.log(err,Debug.HIGH_PRIORITY);
-						return;
-					}
-
+					
 					activateSystemConfigHandler(req);
 
 					if(doneHandler)
@@ -5001,62 +4977,12 @@
 						}
 					}
 
-						},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-				);	//end of activate new backbone handler
+						});	//end of activate new backbone handler
 
-					},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},0,0,true  //reqParam, progressHandler, callHandlerOnErr
 			); //end of backbone saveNewConfigurationGroup handler
 		}
-				
-//		//newWizBackboneMemberHandler
-//		//	Used to handle the response from modifying a member of the backbone.
-//		//	This handler will activate the resulting backbone group and
-//		//		call a done handler.
-//		//
-//		//	params = [newBackboneGroupName, doneHandler, doReturnParams]
-//		function newWizBackboneMemberHandler(req,params)
-//		{
-//			var err = DesktopContent.getXMLValue(req,"Error");
-//			if(err) 
-//			{
-//				Debug.log(err,Debug.HIGH_PRIORITY);
-//				Debug.log("Process interrupted. Failed to modify the currently active Backbone!",Debug.HIGH_PRIORITY);
-//
-//				if(params[1])
-//					params[1](); //error so call done handler
-//				return;
-//			}		
-//
-//			var groupAliasName = DesktopContent.getXMLValue(req,"savedName");
-//			var groupAliasVersion = DesktopContent.getXMLValue(req,"savedVersion");
-//
-//			Debug.log("groupAliasName=" + groupAliasName);
-//			Debug.log("groupAliasVersion=" + groupAliasVersion);
-//
-//			var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-//			var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
-//
-//			//make a new backbone with old versions of everything except Group Alias 
-//			var configMap = "configList=";
-//			var name;
-//			for(var i=0;i<configNames.length;++i)
-//			{		
-//				name = configNames[i].getAttribute("value");
-//
-//				if(name == groupAliasName)
-//				{
-//					configMap += name + "," + 
-//							groupAliasVersion + ",";
-//					continue;
-//				}
-//				//else use old member
-//				configMap += name + "," + 
-//						configVersions[i].getAttribute("value") + ",";							
-//			}
-//
-//			saveGroupAndActivate(params[0],configMap,params[1],params[2]);			
-//		}
-		
+			
 		//setupConfigCreator ~
 		function setupConfigCreator(preSelectStr)
 		{
@@ -5064,7 +4990,7 @@
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations",
 					"", setupConfigCreatorHandler, preSelectStr,
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true  //progressHandler, callHandlerOnErr
 					);			
 		}
 		
@@ -5538,7 +5464,7 @@
 					"&configName=" + _currentConfigName +
 					"&sourceVersion=" + src,
 					"", specificConfigRequestHandler,
-					0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,true  //reqParam, progressHandler, callHandlerOnErr
 					);
 		}
 		
@@ -6106,7 +6032,7 @@
 				
 				el.innerHTML = str;
 					},
-					0,0,0,true); //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,true); //reqParam, progressHandler, callHandlerOnErr
 		}
 
 		//selectThisTreeNode ~~
@@ -6873,7 +6799,7 @@
 
 								uel.innerHTML = str;
 									},
-									0,0,0,true); //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+									0,0,true); //reqParam, progressHandler, callHandlerOnErr
 						}
 						
 					} //end of localCreateLinkEditHTML definition
@@ -6891,7 +6817,11 @@
 						//if there is no valid table name, 
 						//	then jump to html creation
 						
-						Debug.log("Invalid tree member table targeted!");//,Debug.HIGH_PRIORITY);
+						Debug.log("Invalid tree member table targeted, could not find able '" +
+								treeEditingTargetTable_ + "' in the list of tree tables. " +
+								"Perhaps the tree needs to be refreshed? " + 
+								"Or the table needs to be added to one of the active groups?");//,Debug.HIGH_PRIORITY);
+
 						localCreateLinkEditHTML([],[],[]);						
 						return;					
 					}
@@ -6941,7 +6871,7 @@
 						localCreateLinkEditHTML(linkToChoices,groupMembers,groupChoices);
 
 
-							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},0,0,true //reqParam, progressHandler, callHandlerOnErr
 					); //end of getLinkToChoices handler
 				}; //end of localGetLinkToChoices definition
 				
@@ -7320,7 +7250,7 @@
 						
 					}	//end localFinishGroupIdDropdown
 						}, //end getSpecificConfiguration request handler
-				0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				0,0,true  //reqParam, progressHandler, callHandlerOnErr
 				); //end XML Request for getSpecificConfiguration		
 
 				//successfully requested groupID values
@@ -8072,7 +8002,7 @@
 					document.getElementById("popUpDialog-editAliasSelect-" + 
 							i).selectedIndex = groupOptionIndex[i][0];
 
-					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},0,0,true //reqParam, progressHandler, callHandlerOnErr
 			); //end of getGroupAliases handler
 
 			document.getElementById("display").appendChild(el); //add element to display div
@@ -8431,6 +8361,12 @@
 						h += gh;
 						el.style.height = h + "px";						
 					}
+					if(groups.length == 0) //add some height for no groups case
+					{
+						h += gh;
+						el.style.height = h + "px";
+						
+					}
 
 					str += "</center></div>"; //close id='popUpDialog-groupAliasArea'
 
@@ -8460,10 +8396,10 @@
 							document.getElementById("popUpDialog-editAliasSelect-" + 
 									i).selectedIndex = groupOptionIndex[i][0];
 
-						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						},0,0,true //reqParam, progressHandler, callHandlerOnErr
 				); //end of getGroupAliases handler
 
-					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},0,0,true //reqParam, progressHandler, callHandlerOnErr
 			); //end of getActiveConfigGroups handler			
 
 
@@ -8557,7 +8493,7 @@
 						{
 							localHandleAffectedGroups();							
 						}
-							},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},j,0,true  //reqParam, progressHandler, callHandlerOnErr
 					);	//end save new table request
 				}	//end modified table for loop
 			
@@ -8699,10 +8635,8 @@
 							localSaveAndActivateGroups();
 						}
 							
-							},
-							i, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
-							true); //showLoadingOverlay
-					
+							}, //end req handler
+							i, 0 , true); //reqIndex, progressHandler, callHandlerOnErr
 				}
 				
 				allRequestsSent = true; //indicate last request was sent
@@ -9096,7 +9030,7 @@
 								}
 																
 
-									},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+									},0,0,true  //reqParam, progressHandler, callHandlerOnErr
 							); //end save new group request
 						} //end else case for saving group i 
 					} //localSaveAndActivateGroup()
@@ -9402,7 +9336,10 @@
 						}
 					if(tableIndex == -1)
 					{
-						Debug.log("Invalid tree member table targeted!",Debug.HIGH_PRIORITY);
+						Debug.log("Invalid tree member table targeted, could not find able '" +
+								treeEditingTargetTable_ + "' in the list of tree tables. " +
+								"Perhaps the tree needs to be refreshed? " + 
+								"Or the table needs to be added to one of the active groups?",Debug.HIGH_PRIORITY);
 						return;					
 					}
 
@@ -9525,7 +9462,7 @@
 						//recover (possibly) modified target table
 						treeEditingTargetTable_ = initTargetTable;
 
-							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},0,0,true //reqParam, progressHandler, callHandlerOnErr
 					); //end of getActiveConfigGroups handler
 				}
 				else	//unrecognized type!?
@@ -11529,7 +11466,7 @@
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey + "\", \"\"," +
 					"ConfigurationAPI.newWizBackboneMemberHandler,[\"MemberVersionAliasWizBackbone\",undefined]," +
-					"0,0,true" +  //progressHandler, callHandlerOnErr, showLoadingOverlay
+					"0,true" +  //progressHandler, callHandlerOnErr
 					");";			
 			onmouseupJS += "var el = document.getElementById(" +
 					"\"popUpDialog\"); if(el) el.parentNode.removeChild(el); ";
@@ -11707,25 +11644,17 @@
 				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
 					"\"Request?RequestType=clearConfigurationTemporaryVersions" + 
 					"&configName=" + _currentConfigName + "\",\"\"," +
-					" function(req) { " +
-					"var err = DesktopContent.getXMLValue(req,\"Error\");" +
-					"if(err && err != \"\")" +
-					"{ Debug.log(err,Debug.HIGH_PRIORITY);	return;	}" +
+					" function(req) { " +					
 					refreshLinkStr +
-					"}" + //end handler function
-					",0,0,0,true" +  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					"}" + //end handler function					
 					");"; 
 			else
 				clearLinkStr = "DesktopContent.XMLHttpRequest(" +
 					"\"Request?RequestType=clearConfigurationCachedVersions" + 
 					"&configName=" + _currentConfigName + "\",\"\"," +
-					" function(req) { " +
-					"var err = DesktopContent.getXMLValue(req,\"Error\");" +
-					"if(err && err != \"\")" +
-					"{ Debug.log(err,Debug.HIGH_PRIORITY);	return;	}" +
+					" function(req) { " +					
 					refreshLinkStr +
-					"}" + //end handler function
-					",0,0,0,true" +  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					"}" + //end handler function					
 					");"; 
 			
 			str += "<input style='margin-top: 20px;' " +
@@ -12063,10 +11992,10 @@
 						ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-comment"),
 								0,comment.length);
 
-							},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},0,0,true //reqParam, progressHandler, callHandlerOnErr
 					); //end of getGroupAliases handler
 
-						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						},0,0,true //reqParam, progressHandler, callHandlerOnErr
 				); //end of getActiveConfigGroups handler			
 
 			}			
@@ -12294,7 +12223,7 @@
 					ConfigurationAPI.setCaretPosition(document.getElementById("popUpDialog-comment"),
 							0,comment.length);
 
-						},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						},0,0,true //reqParam, progressHandler, callHandlerOnErr
 				); //end of getGroupAliases handler							
 
 			}			
@@ -12543,25 +12472,64 @@
 			{
 				if(_tableViewIsTransposed) 
 				{
+
 					for(var r=0;r<src.length;++r)
-					{
-						for(var c=0;c<src[r].length;++c)
+					{			
+						var srcc = 0;			
+
+ 						//do not let go past special 3 columns of current column types (-1 for the c+1)
+						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
+
+						//fill any missing columns up to special columns
+						for(c;c<colTypes.length-3-1;++c)
+						{
+							if(rowOffset + r == 0) cols[c] = [];
+							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
+							cols[c+1][rowOffset + r] = ""; //blank
+						}
+
+						//finish last special 3
+						for(c;srcc<src[r].length;++c)
+						{
+							if(rowOffset + r == 0) cols[c] = [];
+							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
+							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+						}
+						
 					}
 				}
 				else
 				{
 					for(var r=0;r<src.length;++r)
 					{
+						var srcc = 0;
+						
 						cols[rowOffset + r] = [];
-						for(var c=0;c<src[r].length;++c)
+
+						//do not let go past special 3 columns of current column types (-1 for the c+1)
+						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][c].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+						}
+
+						//fill any missing columns up to special columns
+						for(c;c<colTypes.length-3-1;++c)
+						{
+							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
+							cols[rowOffset + r][c+1] = ""; //blank
+						}
+
+						//finish last special 3
+						for(c;srcc<src[r].length;++c)
+						{
+							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
+							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -12858,90 +12826,6 @@
 			}
 			str += "</select>";
 			
-			
-//			//start radio group
-//			str += "<form id='popUpDialog-appendOrPrependForm' style='text-align:left; width:200px; margin-left:0px;'> ";
-//			
-//			//add append or prepend radio
-//			str += "<input checked type='radio' id='popUpDialog-replaceData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-replaceData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Replace all current records with uploaded records";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append all uploaded records to current table";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append only uploaded records without conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-appendAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-appendAndReplaceNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Append all uploaded records and replace conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend all uploaded records to current table";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend only uploaded records without conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			//add append or prepend radio
-//			str += "<input type='radio' id='popUpDialog-prependAndReplaceNewData'  name='popUpDialog-appendOrPrepend' value='0'>";
-//			//add link so text toggles checkbox
-//			str += "<a onclick='" +
-//					"var el = document.getElementById(\"popUpDialog-prependAndReplaceNewData\");" +
-//					"var forFirefox = (el.checked = !el.checked);" +
-//					"return false;'>";
-//			str += "Prepend all uploaded records and replace conflicting UIDs";
-//			str += "</a>";
-//			str +=	"</input><br>";
-//			
-//			str += "</form>"; //close radio group
-
 			// done with special handling
 			// continue with pop-up prompt
 			str += "</center></div><br><br>"; //close main popup div
@@ -13040,7 +12924,7 @@
 			link.setAttribute("download", _currentConfigName + "_download.csv");
 			document.body.appendChild(link); // Required for FF
 
-			link.click(); // This will download the data file named "my_data.csv"
+			link.click(); // This will download the data file with filename *_download.csv
 			
 			link.parentNode.removeChild(link);
 		}
@@ -13111,7 +12995,7 @@
 				Debug.log(reqStr);
 				DesktopContent.XMLHttpRequest(reqStr, "data=" + dataStr, 
 						saveConfigAsNewVersionHandler, backLinkStr,
-						0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+						0,true  //progressHandler, callHandlerOnErr
 				);
 				return; //done handling temporary version save
 			}
@@ -13443,9 +13327,9 @@
 										"&groupName=" + groupName +
 										"&groupKey=" + groupKey, "",
 										localNextAliasHandler,
-										0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+										0,0,true  //reqParam, progressHandler, callHandlerOnErr
 								);
-							}
+							} //end localNextAliasHandler()
 
 							localNextAliasHandler();
 
@@ -13454,7 +13338,7 @@
 							return;
 						}
 
-							},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},0,0,true  //reqParam, progressHandler, callHandlerOnErr
 					); //end save new group request								
 				} //end affected group for loop
 
@@ -13534,7 +13418,7 @@
 						
 				
 					},0, 		//parameter
-					0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true  //progressHandler, callHandlerOnErr
 			);
 			
 			//done with initial call..
@@ -13637,7 +13521,8 @@
 					"&configName=" + configName + 
 					"&version=" + newVersion, 
 					"", 
-					function (req) {		
+					function (req) 
+					{		
 
 				var err = DesktopContent.getXMLValue(req,"Error");
 				if(err) 
@@ -13661,8 +13546,8 @@
 
 				document.getElementById(configName + "-comment").innerHTML =
 						"//" + tableComment;
-			},
-			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},
+			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 			);
 			
 			
@@ -14036,9 +13921,9 @@
 										"&groupName=" + groupName +
 										"&groupKey=" + groupKey, "",
 										localNextAliasHandler,
-										0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+										0,0,true  //reqParam, progressHandler, callHandlerOnErr
 								);
-							}
+							} //end localNextAliasHandler()
 
 							localNextAliasHandler();
 
@@ -14047,7 +13932,7 @@
 							return;
 						}
 
-							},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							},0,0,true  //reqParam, progressHandler, callHandlerOnErr
 					); //end save new group request								
 				} //end affected group for loop
 
@@ -14415,7 +14300,7 @@
 				}  //end select-group change handler
 
 
-					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},0,0,true //reqParam, progressHandler, callHandlerOnErr
 			); //end of getConfigurationGroups handler
 
 
@@ -14518,7 +14403,7 @@
 //								setupConfigGroupTreeView(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/)
 							
 								}, //end handler
-							0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+							0,0,true  //reqParam, progressHandler, callHandlerOnErr
 					);							
 		} //end mergeGroups
 
@@ -14558,10 +14443,28 @@
 			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Wiz Mode?",
 					function() 
 					{ 
-				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
-						"",
-						handleOtsRelaunchResponse,0);
+
+				//start blackout
+				DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+				window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
+				//now in all future requests must ignoreSystemBlock
+
+				//===========
+				function localDelayedLaunch()
+				{
+					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchWiz",
+							"",
+							handleOtsRelaunchResponse,
+							true /*for wiz mode, handler param*/,
+							0 /*progressHandler*/,
+							true /*callHandlerOnErr*/,
+							false /*doNotShowLoadingOverlay*/,
+							true /*targetSupervisor*/, 
+							true /*ignoreSystemBlock*/);
+				} //end localDelayedLaunch		
+
 					},0,"#efeaea",0,"#770000");
+
 		} //end verifyRelaunchWizMode
 		
 		//verifyRelaunchNormalMode ~~
@@ -14571,9 +14474,27 @@
 			DesktopContent.popUpVerification("Are you sure you want to relaunch otsdaq in Normal Mode?",
 					function() 
 					{ 
-				DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
-						"",
-						handleOtsRelaunchResponse,0);
+				
+
+				//start blackout
+				DesktopContent._blockSystemCheckMailbox.innerHTML = "1";
+				window.setTimeout(localDelayedLaunch,1000); //gaurantee blackout starts
+				//now in all future requests must ignoreSystemBlock
+
+				//===========
+				function localDelayedLaunch()
+				{
+					DesktopContent.XMLHttpRequest("Request?RequestType=gatewayLaunchOTS",
+							"",
+							handleOtsRelaunchResponse,
+							0 /*handler param*/,
+							0 /*progressHandler*/,
+							true /*callHandlerOnErr*/,
+							false /*doNotShowLoadingOverlay*/,
+							true /*targetSupervisor*/, 
+							true /*ignoreSystemBlock*/);
+				} //end localDelayedLaunch		
+				
 					},0,"#efeaea",0,"#770000");
 		} //end verifyRelaunchNormalMode
 		

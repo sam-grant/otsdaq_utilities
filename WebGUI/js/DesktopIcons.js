@@ -69,14 +69,17 @@ else {
         					//		so that subfolders can easily navigate
 		var _openFolderPath = "";
 		var _openFolderElement;
-        
+		
+		var _iconNameToPathMap = {/* "name": [path,unique] */}; //used to open icons programatically
+		
+		
 		//------------------------------------------------------------------
 		//create public members variables ----------------------
 		//------------------------------------------------------------------
 		this.iconsElement;
 		this.folders = _folders;
 		this.deepClickTimer = _deepClickTimer;
-		
+		this.iconNameToPathMap = _iconNameToPathMap; 
 		
 		
 		//------------------------------------------------------------------
@@ -108,13 +111,15 @@ else {
 
 			if(!Desktop.isWizardMode()) 
 		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
-		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "", iconRequestHandler);
+		    	Desktop.XMLHttpRequest("Request?RequestType=getDesktopIcons", "",
+		    			iconRequestHandler);
 		    	return;
 	      	}
 		    else //it is the sequence for OtsWizardConfiguration
 			{
 		    	Debug.log("OtsWizardConfiguration");
-		    	Desktop.XMLHttpRequest("requestIcons", "sequence="+Desktop.desktop.security, iconRequestHandler);
+		    	Desktop.XMLHttpRequest("requestIcons", "sequence=" +
+		    			Desktop.desktop.security, iconRequestHandler);
 	      		if(!_permissions) _permissions = 1;
 		    	return;
 			}
@@ -127,6 +132,7 @@ else {
 
       		//clear folder object
       		Desktop.desktop.icons.folders = [{},[]];
+      		Desktop.desktop.icons.iconNameToPathMap = {} ; //clear map
       		
       		_iconsElement.innerHTML = ""; //clear existing icons
       		_numOfIcons = 0;
@@ -183,7 +189,6 @@ else {
            			Desktop.desktop.icons.addIcon(iconArray[i],iconArray[i+1],iconArray[i+5],iconArray[i+2]|0,iconArray[i+4],iconArray[i+6]);       
       		}
      		
-     		//_permissions = 0; //RAR why were we setting to 0? this messes up multiple asyn reset requests
      		
       	}
       	
@@ -192,6 +197,36 @@ else {
       	this.addIcon = function(subtext, altText, linkurl, uniqueWin, picfn, folderPath) {
       	      		
       		//Debug.log("this.addIcon");
+      		      		
+      		//same as in DesktopContent.openNewBrowserTab
+      		//for linkurl, need to check lid=## is terminated with /
+      		// check from = that there is nothing but numbers	
+      		try
+      		{
+      			var i = linkurl.indexOf("urn:xdaq-application:lid=") + ("urn:xdaq-application:lid=").length;
+      			var isAllNumbers = true;
+      			for(i;i<linkurl.length;++i)
+      			{
+      				//Debug.log(linkurl[i]);
+
+      				if(linkurl[i] < "0" || linkurl[i] > "9")
+      				{
+      					isAllNumbers = false;
+      					break;
+      				}				
+      			}
+      			if(isAllNumbers)
+      				linkurl += "/";		
+      		}
+      		catch(e)
+      		{
+      			Debug.log("An error occurred while trying to parse the window url. " +
+      					"The window path seems to be invalid: " + e, Debug.HIGH_PRIORITY);
+      			return;
+      		}
+
+      		this.iconNameToPathMap[subtext] = [linkurl,uniqueWin];
+      		
       		var iconContainer = document.createElement("div");			
 			iconContainer.setAttribute("class", "DesktopIcons-iconContainer");
 						

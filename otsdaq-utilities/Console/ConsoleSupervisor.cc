@@ -22,9 +22,13 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 
-#define USER_CONSOLE_PREF_PATH	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
+#define USER_CONSOLE_PREF_PATH			std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE 		"pref"
-#define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarderGen.cfg"
+
+#define QUIET_CFG_FILE		std::string(getenv("USER_DATA")) + "/MessageFacilityConfigurations/QuietForwarder.cfg"
+
+#define CONSOLE_SPECIAL_ERROR 			std::string("||0|||Error|Console|-1||ConsoleSupervisor|")
+#define CONSOLE_SPECIAL_WARNING 		std::string("||0|||Warning|Console|-1||ConsoleSupervisor|")
 
 #undef 	__MF_SUBJECT__
 #define __MF_SUBJECT__ "Console"
@@ -57,7 +61,7 @@ ConsoleSupervisor::~ConsoleSupervisor(void)
 void ConsoleSupervisor::init(void)
 {
 	//start mf msg listener
-	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::MFReceiverWorkLoop(cs); },this).detach();
+	std::thread([](ConsoleSupervisor *cs){ ConsoleSupervisor::messageFacilityReceiverWorkLoop(cs); },this).detach();
 }
 
 //========================================================================================================================
@@ -66,12 +70,11 @@ void ConsoleSupervisor::destroy(void)
 	//called by destructor
 }
 
-
 //========================================================================================================================
-//MFReceiverWorkLoop ~~
+//messageFacilityReceiverWorkLoop ~~
 //	Thread for printing Message Facility messages without decorations
 //	Note: Uses std::mutex to avoid conflict with reading thread.
-void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
+void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor *cs)
 {
 	__COUT__ << std::endl;
 
@@ -82,7 +85,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		__SS__ << "File with port info could not be loaded: " <<
 				QUIET_CFG_FILE << std::endl;
 		__COUT__ << "\n" << ss.str();
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 	char tmp[100];
 	fgets(tmp,100,fp); //receive port (ignore)
@@ -122,7 +125,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		__COUT__ << ss.str();
 
 
-		cs->messages_[cs->writePointer_].set("||0|||Error|Console|||0||ConsoleSupervisor|" +
+		cs->messages_[cs->writePointer_].set(CONSOLE_SPECIAL_ERROR +
 				ss.str(),
 				cs->messageCount_++);
 
@@ -139,7 +142,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 	int selfGeneratedMessageCount = 0;
 
 	std::map<unsigned int, unsigned int> sourceLastSequenceID; //map from sourceID to lastSequenceID to identify missed messages
-	unsigned int newSourceId;
+	long long newSourceId;
 	unsigned int newSequenceId;
 
 	while(1)
@@ -154,10 +157,21 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 				__COUT__ << "Console has first message." << std::endl;
 				i = 200; //mark so things are good for all time. (this indicates things are configured to be sent here)
 
-				mf::LogDebug (__MF_SUBJECT__) << __COUT_HDR_FL__ << "DEBUG messages look like this." << std::endl;
-				mf::LogInfo (__MF_SUBJECT__) << __COUT_HDR_FL__ << "INFO messages look like this." << std::endl;
-				mf::LogWarning (__MF_SUBJECT__) << __COUT_HDR_FL__ << "WARNING messages look like this." << std::endl;
-				mf::LogError (__MF_SUBJECT__) << __COUT_HDR_FL__ << "ERROR messages look like this." << std::endl;
+				__MOUT__ << "DEBUG messages look like this." << std::endl;
+				__MOUT_INFO__ << "INFO messages look like this." << std::endl;
+				__MOUT_WARN__ << "WARNING messages look like this." << std::endl;
+				__MOUT_ERR__ << "ERROR messages look like this." << std::endl;
+
+
+
+			//				//to debug special packets
+			//				__SS__ << "???";
+			//				cs->messages_[cs->writePointer_].set(CONSOLE_SPECIAL_ERROR +
+			//						ss.str(),
+			//						cs->messageCount_++);
+			//
+			//				if(++cs->writePointer_ == cs->messages_.size()) //handle wrap-around
+			//					cs->writePointer_ = 0;
 			}
 
 			if(selfGeneratedMessageCount)
@@ -181,7 +195,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 			//__COUT__ << "newSourceId: " << newSourceId << std::endl;
 			//__COUT__ << "newSequenceId: " << newSequenceId << std::endl;
 
-			if(sourceLastSequenceID.find(newSourceId) !=
+			if(newSourceId != -1 && sourceLastSequenceID.find(newSourceId) !=
 					sourceLastSequenceID.end() && //ensure not first packet received
 					((newSequenceId == 0 &&
 							sourceLastSequenceID[newSourceId] != (unsigned int)-1) ||  //wrap around case
@@ -198,7 +212,7 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 					cs->writePointer_ = 0;
 
 				//generate special message to indicate missed packets
-				cs->messages_[cs->writePointer_].set("||0|||Warning|Console|||0||ConsoleSupervisor|" +
+				cs->messages_[cs->writePointer_].set(CONSOLE_SPECIAL_WARNING +
 						ss.str(),
 						cs->messageCount_++);
 			}
@@ -222,12 +236,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 					(heartbeatCount < 60*5 && heartbeatCount%60 == 59)) //every ~2 min for first 5 messages
 			{
 				++selfGeneratedMessageCount; //increment internal message count
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting... (if no messages, next heartbeat is in approximately two minutes)" << std::endl;
+				__MOUT__ << "Console is alive and waiting... (if no messages, next heartbeat is in approximately two minutes)" << std::endl;
 			}
 			else if(heartbeatCount%(60*30) == 59) //approx every hour
 			{
 				++selfGeneratedMessageCount; //increment internal message count
-				mf::LogDebug (__MF_SUBJECT__) << "Console is alive and waiting a long time... (if no messages, next heartbeat is in approximately one hour)" << std::endl;
+				__MOUT__ << "Console is alive and waiting a long time... (if no messages, next heartbeat is in approximately one hour)" << std::endl;
 			}
 
 			++heartbeatCount;
@@ -238,12 +252,12 @@ void ConsoleSupervisor::MFReceiverWorkLoop(ConsoleSupervisor *cs)
 		//	OR if 5 generated messages and never cleared.. then the forwarding is not working.
 		if(i==120 || selfGeneratedMessageCount == 5)
 		{
-			__COUT__ << "No messages received at Console Supervisor. Exiting Console MFReceiverWorkLoop" << std::endl;
+			__COUT__ << "No messages received at Console Supervisor. Exiting Console messageFacilityReceiverWorkLoop" << std::endl;
 			break; //assume something wrong, and break loop
 		}
 	}
 
-}
+} //end messageFacilityReceiverWorkLoop
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
@@ -332,7 +346,7 @@ void ConsoleSupervisor::request(const std::string& requestType, cgicc::Cgicc& cg
 		__SUP_COUT__ << "Save preferences: " << fn << std::endl;
 		FILE *fp = fopen(fn.c_str(),"w");
 		if(!fp)
-			{__SS__;throw std::runtime_error(ss.str()+"Could not open file: " + fn);}
+			{__SS__;__THROW__(ss.str()+"Could not open file: " + fn);}
 		fprintf(fp,"colorIndex %d\n",colorIndex);
 		fprintf(fp,"showSideBar %d\n",showSideBar);
 		fprintf(fp,"noWrap %d\n",noWrap);
@@ -429,7 +443,7 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 	{
 		__SS__ << "Invalid lastUpdateIndex: " << lastUpdateIndex <<
 				" messagesArray size = " << messages_.size() << std::endl;
-		throw std::runtime_error(ss.str());
+		__SS_THROW__;
 	}
 
 	//lockout the messages array for the remainder of the scope
@@ -453,7 +467,8 @@ void ConsoleSupervisor::insertMessageRefresh(HttpXmlDocument *xmlOut,
 		refreshReadPointer_ = (lastUpdateIndex+1) % messages_.size();
 	else if(messages_[writePointer_].getTime()) //check that writePointer_ message has been initialized, therefore has wrapped around at least once already
 	{
-		//This means we have had many messages and that some were missed since last update (give as many messages as we can!)
+		//This means we have had many messages and that some were missed since last update
+		//	(give as many messages as we can!)
 		xmlOut->addTextElementToData("message_overflow","1");
 		__SUP_COUT__ << "Overflow was detected!" << std::endl;
 		refreshReadPointer_ = (writePointer_+1) % messages_.size();

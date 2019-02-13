@@ -1,6 +1,3 @@
-include_directories($ENV{XERCES_C_INC})
-
-
 # Look for the header file.
 find_path(XSD_INCLUDE_DIR NAMES xsd/cxx/config.hxx)
 mark_as_advanced(XSD_INCLUDE_DIR)
@@ -25,15 +22,25 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(XSD
 
 if(XSD_FOUND)
   set(XSD_INCLUDE_DIRS ${XSD_INCLUDE_DIR})
+#endif(XSD_FOUND)
 
 
 find_package(CURL)
 
 if(CURL_FOUND)
   include_directories(${CURL_INCLUDE_DIRS})
-
-cet_make( LIBRARY_NAME ECLWriter
+#endif(CURL_FOUND)
+cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc
 	LIBRARIES
+	artdaq-core_Utilities
+        ${XDAQ_XERCES-C}
+        pthread
+    crypto
+    ${CURL_LIBRARIES}
+	)
+cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
+	LIBRARIES
+	ECLWriterCore
 	artdaq-core_Utilities
 	${XDAQ_BASIC_LIB_LIST}
 	#XmlUtilities
@@ -46,7 +53,6 @@ cet_make( LIBRARY_NAME ECLWriter
 		 ConfigurationInterface
 		 ConfigurationDataFormats
 		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
-    $ENV{XERCES_C_LIB}/libxerces-c.so
     crypto
     ${CURL_LIBRARIES}
 	)

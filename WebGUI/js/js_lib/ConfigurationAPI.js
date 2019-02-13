@@ -147,7 +147,7 @@ ConfigurationAPI.getActiveGroups = function(responseHandler)
 			{
 		responseHandler(ConfigurationAPI.extractActiveGroups(req));
 			},
-			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end of getActiveConfigGroups handler
 }
 ConfigurationAPI.extractActiveGroups = function(req)
@@ -276,10 +276,10 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 				responseHandler(retObj);
 			}
 	
-				}, //handler
+				}, //end getGroupAliases handler
 				0, //handler param
-				0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-				false /*targetSupervisor*/); //end get aliases
+				0,true, //progressHandler, callHandlerOnErr
+				); //end get aliases
 	
 
 	//get aliases
@@ -340,8 +340,7 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 		}
 				}, //handler
 				0, //handler param
-				0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-				false /*targetSupervisor*/);
+				0,true); //progressHandler, callHandlerOnErr
 	
 } // end getAliasesAndGroups
 
@@ -411,7 +410,7 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 }
 
 //=====================================================================================
@@ -470,7 +469,7 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 } // end getTree()
 
 
@@ -722,7 +721,7 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 }
 
 //=====================================================================================
@@ -833,7 +832,7 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 }
 
 
@@ -917,7 +916,7 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 }
 
 //=====================================================================================
@@ -1047,7 +1046,7 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 }
 
 //=====================================================================================
@@ -1449,10 +1448,10 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 					document.getElementById("" + ConfigurationAPI._POP_UP_DIALOG_ID + "-editAliasSelect-" + 
 							i).selectedIndex = groupOptionIndex[i][0];
 
-				},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+				},0,0,true //reqParam, progressHandler, callHandlerOnErr
 		); //end of getGroupAliases handler
 
-			},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			},0,0,true //reqParam, progressHandler, callHandlerOnErr
 	); //end of getActiveConfigGroups handler			
 
 
@@ -1777,7 +1776,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				}
 				
 				localHandleSavingAffectedGroups();
-					},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},0,0,true //reqParam, progressHandler, callHandlerOnErr
 			); //end of getAffectedActiveGroups req
 		}
 		else
@@ -2059,7 +2058,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								localNextAliasHandler();
 								Debug.log("Aliases set in motion");
 
-									},0,0,0,true //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+									},0,0,true //reqParam, progressHandler, callHandlerOnErr
 							); //end of getGroupAliases handler
 						
 						} //end of catch scope
@@ -2187,7 +2186,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						
 					} // end of if statement to check if done with group saving
 
-						},i,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+						},i,0,true  //reqParam, progressHandler, callHandlerOnErr
 				); //end save new group request								
 			} //end affected group for loop
 
@@ -2270,7 +2269,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					if(!doNotSaveAffectedGroups)
 						localHandleAffectedGroups();							
 				}
-					},j,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+					},j,0,true  //reqParam, progressHandler, callHandlerOnErr
 			);	//end save new table request
 		}	//end modified table for loop
 
@@ -2322,8 +2321,7 @@ ConfigurationAPI.activateGroup = function(groupName, groupKey,
 		
 		if(doneHandler) doneHandler();
 			},
-			true, 0 ,0, //reqIndex, progressHandler, callHandlerOnErr
-			true); //showLoadingOverlay
+			true, 0 , true); //reqIndex, progressHandler, callHandlerOnErr
 }
 
 //=====================================================================================
@@ -2371,7 +2369,7 @@ ConfigurationAPI.setGroupAliasInActiveBackbone = function(groupAlias,groupName,g
 			"&groupKey=" + groupKey, "", 
 			ConfigurationAPI.newWizBackboneMemberHandler,
 			[("GroupAlias" + newBackboneNameAdd),doneHandler,doReturnParams],
-			0,0,true  //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true  //progressHandler, callHandlerOnErr
 	);					
 }
 
@@ -2473,13 +2471,6 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 				"&groupKey=" + key, "", 
 				function(req)
 				{
-			var err = DesktopContent.getXMLValue(req,"Error");
-			if(err) 
-			{
-				Debug.log(err,Debug.HIGH_PRIORITY);
-				return;
-			}
-
 			try
 			{
 				activateSystemConfigHandler(req);
@@ -2501,11 +2492,9 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 					doneHandler(retParams); 	 //(and indicate success)
 				}
 			}
+				});	//end of activate new backbone handler
 
-				},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
-		);	//end of activate new backbone handler
-
-			},0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			},0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end of backbone saveNewConfigurationGroup handler
 } //end ConfigurationAPI.saveGroupAndActivate
 
@@ -2541,7 +2530,7 @@ ConfigurationAPI.getGroupTypeMemberNames = function(groupType,responseHandler)
 		if(responseHandler)	responseHandler(retArr);
 		
 			}, //end request handler
-			0,0,0,true  //reqParam, progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,0,true  //reqParam, progressHandler, callHandlerOnErr
 	); //end request
 	
 }
@@ -4166,7 +4155,7 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	if(margin === undefined) margin = 0;	
 
 	var x,y;
-
+	
 	//:::::::::::::::::::::::::::::::::::::::::
 	//popupResize ~~
 	//	set position and size	
@@ -4238,18 +4227,15 @@ ConfigurationAPI.setPopUpPosition = function(el,w,h,padding,border,margin,doNotR
 	el.addEventListener("keydown",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	el.addEventListener("mousemove",ConfigurationAPI.setPopUpPosition.stopPropagation);
 	el.addEventListener("mousemove",DesktopContent.mouseMove);
+
+	el.style.overflow = "auto";
 	
 	return {"w" : w, "h" : h, "x" : x, "y" : y};
 }
 
 
 //=====================================================================================
-//setPopUpPosition ~~
-//	centers element based on width and height constraint
-//	
-//	Note: assumes a padding and border size if not specified
-//  Note: if w,h not specified then fills screen (minus margin)
-//
+//getOnePixelPngData ~~
 //	alpha is optional, will assume full 255 alpha
 ConfigurationAPI.getOnePixelPngData = function(rgba)
 {
@@ -4272,8 +4258,6 @@ ConfigurationAPI.getOnePixelPngData = function(rgba)
 			ConfigurationAPI.getOnePixelPngData.bmpOverlayData,0,0);
 	return ConfigurationAPI.getOnePixelPngData.canvas.toDataURL();
 }
-
-
 
 
 //=====================================================================================
@@ -5385,7 +5369,7 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 	
 } // end ConfigurationAPI.addSubsetRecords()
 
@@ -5472,7 +5456,7 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 
 			}, //handler
 			0, //handler param
-			0,0,true); //progressHandler, callHandlerOnErr, showLoadingOverlay
+			0,true); //progressHandler, callHandlerOnErr
 	
 } // end ConfigurationAPI.deleteSubsetRecords()
 

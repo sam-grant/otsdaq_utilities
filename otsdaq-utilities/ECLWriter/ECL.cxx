@@ -408,7 +408,7 @@ Tag_t::
 
 Attachment_t::
 Attachment_t ()
-: ::xml_schema::type (),
+: ::xml_schema::base64_binary (),
   type_ (this),
   filename_ (this)
 {
@@ -417,7 +417,17 @@ Attachment_t ()
 Attachment_t::
 Attachment_t (const type_type& type,
               const filename_type& filename)
-: ::xml_schema::type (),
+: ::xml_schema::base64_binary (),
+  type_ (type, this),
+  filename_ (filename, this)
+{
+}
+
+Attachment_t::
+Attachment_t (const ::xml_schema::base64_binary& _xsd_base64_binary_base,
+              const type_type& type,
+              const filename_type& filename)
+: ::xml_schema::base64_binary (_xsd_base64_binary_base),
   type_ (type, this),
   filename_ (filename, this)
 {
@@ -427,7 +437,7 @@ Attachment_t::
 Attachment_t (const Attachment_t& x,
               ::xml_schema::flags f,
               ::xml_schema::container* c)
-: ::xml_schema::type (x, f, c),
+: ::xml_schema::base64_binary (x, f, c),
   type_ (x.type_, f, this),
   filename_ (x.filename_, f, this)
 {
@@ -437,7 +447,7 @@ Attachment_t::
 Attachment_t (const ::xercesc::DOMElement& e,
               ::xml_schema::flags f,
               ::xml_schema::container* c)
-: ::xml_schema::type (e, f | ::xml_schema::flags::base, c),
+: ::xml_schema::base64_binary (e, f | ::xml_schema::flags::base, c),
   type_ (this),
   filename_ (this)
 {
@@ -498,7 +508,7 @@ operator= (const Attachment_t& x)
 {
   if (this != &x)
   {
-    static_cast< ::xml_schema::type& > (*this) = x;
+    static_cast< ::xml_schema::base64_binary& > (*this) = x;
     this->type_ = x.type_;
     this->filename_ = x.filename_;
   }
@@ -918,6 +928,8 @@ operator<< (::std::ostream& o, const Tag_t& i)
 ::std::ostream&
 operator<< (::std::ostream& o, const Attachment_t& i)
 {
+  o << static_cast< const ::xml_schema::base64_binary& > (i);
+
   o << ::std::endl << "type: " << i.type ();
   o << ::std::endl << "filename: " << i.filename ();
   return o;
@@ -1415,7 +1427,7 @@ operator<< (::xercesc::DOMElement& e, const Tag_t& i)
 void
 operator<< (::xercesc::DOMElement& e, const Attachment_t& i)
 {
-  e << static_cast< const ::xml_schema::type& > (i);
+  e << static_cast< const ::xml_schema::base64_binary& > (i);
 
   // type
   //

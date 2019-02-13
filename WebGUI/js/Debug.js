@@ -10,6 +10,7 @@
 // 		num is the priority number 0 being highest.
 //
 //	Debug.log() will print to console if Debug.mode = 1 and if num < Debug.level
+//	Debug.logv(var) will decorate a variable and print to console with Debug.log()
 //
 //	Note: An error pop up box will occur so that users see Debug.HIGH_PRIORITY log messages.
 //	Note: A warning pop up box will occur so that users see Debug.WARN_PRIORITY log messages.
@@ -219,11 +220,16 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 				}
 			}
 	}
+	
+	//special quick decoration for a variable
+	//FIXME -- logv doesnt work because of varToString
+	//Debug.logv = function(v,num) { Debug.log(varToString({v}) + ": " + v,	num); }
 }
 else	//IF DEBUG MODE IS OFF!
 {	//do nothing with log functions
-	console.log = function(){}
-	Debug.log = function(){}
+	console.log = function(){};
+	Debug.log = function(){};
+	Debug.logv = function(){};
 }
 
 // living and breathing examples:
@@ -289,14 +295,16 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>Note: Newest messages are at the top." +
+				"<div style='color:white;font-size:16px;padding-bottom:5px;'>" +
+				"Note: Newest messages are at the top." +
+				"<label style='color:white;font-size:11px;'><br>(Press [ESC] to close and [SHIFT + ESC] to re-open)</font>" +
 				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
-					"<div style='display: block; width: 0; height: 0; border-left: 6px dotted transparent; border-right: 6px dotted transparent; border-top: 8px solid white;'></div>" +
+					"<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid white;'></div>" +
 					"<div style='position: relative; top: 5px; width: 12px; height: 2px; display: block; background-color: white;'></div>" +				
 				"</div>" +
-				"</div><br>" +
+				"</div>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err' class='" + 
@@ -330,6 +338,33 @@ Debug.errorPop = function(err,severity) {
 					"></div>";
 			el.innerHTML = str;
 			body.appendChild(el); //add element to body of page
+			el.focus();
+			
+			/////////////
+			function localDebugKeyDownListener(e)
+			{
+				
+				
+				
+				//Debug.log("Debug keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
+				//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
+				
+				if(!e.shiftKey && e.keyCode == 27) //ESCAPE key, close popup
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					Debug.closeErrorPop();										
+				}
+				else if(e.shiftKey && e.keyCode == 27) //SHIFT+ESCAPE key, bring back popup
+				{
+					e.preventDefault();
+					e.stopPropagation();
+					Debug.bringBackErrorPop();										
+				}
+			} //end localDebugKeyDownListener()
+			
+			document.body.removeEventListener("keydown",localDebugKeyDownListener);
+			document.body.addEventListener("keydown",localDebugKeyDownListener);							
 			
 			
 			//add style for error to page HEAD tag			
@@ -535,12 +570,19 @@ Debug.errorPop = function(err,severity) {
 	els[1].innerHTML = el.innerHTML;	
 }
 
-
+Debug._errBoxLastContent = "";
 //=====================================================================================
 //Close the error popup on the window
 Debug.closeErrorPop = function() {
 	document.getElementById(Debug._errBoxId).style.display = "none";
+	Debug._errBoxLastContent = document.getElementById(Debug._errBoxId + "-err").innerHTML;
 	document.getElementById(Debug._errBoxId + "-err").innerHTML = ""; //clear string
+}
+//=====================================================================================
+//Bring the error popup back
+Debug.bringBackErrorPop = function() {
+	document.getElementById(Debug._errBoxId + "-err").innerHTML = Debug._errBoxLastContent; //bring back string
+	document.getElementById(Debug._errBoxId).style.display = "block";
 }
 
 
@@ -681,7 +723,7 @@ Debug.handleErrorResize = function() {
 	}
 	w += Debug._errBoxOffW;
 	
-	var h = 400 + Debug._errBoxOffH;
+	var h = (screenh - 20) + Debug._errBoxOffH;
 	if(h < 200) //clip to minimum height
 	{
 		Debug._errBoxOffH = -200;

@@ -81,7 +81,7 @@
 </script>
 <head>
 	
-	<title>ConfigurationGUI</title>
+	<title>Iterator</title>
 
 	<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
 		
@@ -168,7 +168,8 @@
 		#topPane-targetPlan { 
 	    	float: 				left; 
 	    	width: 				246px;
-	        margin: 			6px 0 -6px 0;
+	        margin: 			-1px 0 -6px 0;
+	        white-space:		nowrap;
 		}
 		
 		#topPane-controls-playButton {
@@ -714,6 +715,8 @@
 		_COMMAND_PARAM_FIELDS.ServerTargetTablesName			= "CSVTargetTables";
 		_COMMAND_PARAM_FIELDS.ServerTargetUIDsName				= "CSVTargetUIDs";
 		_COMMAND_PARAM_FIELDS.RelativePathToField				= "RelativePathToField";
+		_COMMAND_PARAM_FIELDS.LinkToMacroDimensions				= "LinkToMacroDimensionalLoopTable";
+		_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile			= "EnableSavingOutputsToFile";
 		
 		var _COMMAND_PARAMS = {}; //NOTE!!! Fields must be in same order as the tables (in the future could ask server for this order, or not) 
 		_COMMAND_PARAMS[_COMMAND_TYPES.BEGIN_LABEL] 			= ["Label"];
@@ -721,8 +724,8 @@
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP] 	= [];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_ALIAS] 		= [_COMMAND_PARAM_FIELDS.SystemAlias];
 		_COMMAND_PARAMS[_COMMAND_TYPES.CONFIGURE_GROUP] 		= ["GroupName","GroupKey"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"FEMacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
-		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName","LinkToFEMacroParameterGroup","LinkToFEMacroParameterGroupID"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_FE_MACRO] 		= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
+		_COMMAND_PARAMS[_COMMAND_TYPES.EXECUTE_MACRO] 			= [_COMMAND_PARAM_FIELDS.Targets,"MacroName",_COMMAND_PARAM_FIELDS.LinkToMacroDimensions,"LinkToMacroDimensionalLoopGroupID","EnableSavingOutputsToFile","OutputFilePath","OutputFileRadix"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.MODIFY_ACTIVE_GROUP] 	= [_COMMAND_PARAM_FIELDS.Targets,_COMMAND_PARAM_FIELDS.DoTrackGroupChanges,_COMMAND_PARAM_FIELDS.RelativePathToField,"FieldStartValue","FieldIterationStepSize"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.REPEAT_LABEL] 			= ["Label","NumberOfRepetitions"];
 		_COMMAND_PARAMS[_COMMAND_TYPES.RUN] 					= [_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread,"DurationInSeconds"];
@@ -1063,7 +1066,7 @@
                 								type = commandChildren[k].children[0].getAttribute("value");
                 								params = [];
                 							}
-                							else if(commandChildren[k].getAttribute("value") == "LinkToCommandConfiguration")
+                							else if(commandChildren[k].getAttribute("value") == "LinkToCommandTable")
                 							{
                 								parameterChildren = commandChildren[k].children;
 
@@ -1107,6 +1110,14 @@
                 											} //end target loop
 
                 											params.push(targetCSVStr);
+                										}
+                										else if(parameterName == _COMMAND_PARAM_FIELDS.LinkToMacroDimensions )
+                										{
+                											//for execute FEMacro and Macro commands
+                											
+                											//first push table, then groupID value
+                											params.push(parameterChildren[l].children[1].getAttribute("value"));
+                											params.push(parameterChildren[l].children[0].getAttribute("value"));
                 										}
                 										else                                                
                 											params.push(parameterChildren[l].children[0].getAttribute("value"));
@@ -2024,10 +2035,7 @@
 					console.log("_configGroupAliases",_configGroupAliases);
 	
 	
-						}, //handler
-						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-						false /*targetSupervisor*/);
+						}); //end getGroupAliases handler
 				
 				
 				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
@@ -2053,10 +2061,8 @@
 					
 					console.log("_configGroups",_configGroups);
 					
-						}, //handler
-						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-						false /*targetSupervisor*/);
+						}); //end getConfigurationGroups handler
+						
 			} //end localGetGroups()
 			localGetGroups();
 			
@@ -2084,7 +2090,7 @@
 
 						}, //handler
 						0, //handler param
-						0,false,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+						0,false,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 						true /*targetSupervisor*/);
 			} //end localGetNamesOfFSMs()
 			localGetNamesOfFSMs(); 
@@ -2355,13 +2361,13 @@
 					_modifiedTables = modifiedTables;
 
 					var fieldArr = ["Status",
-									"LinkToIterationPlanConfiguration",
+									"LinkToIterationPlanTable",
 									"LinkToIterationPlanGroupID",
 									"CommentDescription"
 									];
 
 					var valueArr = ["1",//"Status",
-									_PLAN_BASE_PATH,//"LinkToIterationPlanConfiguration",
+									_PLAN_BASE_PATH,//"LinkToIterationPlanTable",
 									planName+"-Plan",//"LinkToIterationPlanGroupID",
 									"Generated by Iterate app"//"CommentDescription"
 									];
@@ -2431,7 +2437,7 @@
 									 "FEInterfaceConfiguration",//"Tables":params[0],
 									 "ExampleInterface0",//"UIDs":params[1],
 									 0,//"DoTrackGroupChanges":params[2], 
-									 "LinkToFETypeConfiguration/FirmwareVersion",//"RelativePathToField":params[3],
+									 "LinkToFETypeTable/FirmwareVersion",//"RelativePathToField":params[3],
 									 5,//"FieldStartValue":params[4],
 									 3]);//"FieldIterationStepSize":params[5]);
 							addCommand(_COMMAND_TYPES.CONFIGURE_ACTIVE_GROUP);
@@ -2631,7 +2637,7 @@
 				_popUpParamsModified = false; //reset
 
 				//set position and size
-				var w = 480;
+				var w = 550;
 				var h = 250; //+32 for each parameter
 				ConfigurationAPI.setPopUpPosition(el,w /*w*/,h /*h*/,
 						undefined /*padding*/,
@@ -2919,10 +2925,15 @@
 											"onclick":"showParamPathToFieldWizDialog(" + i + ");"
 									}, 0 /*innerHTML*/, true /*closeTag*/);
 						}
-						else if(_COMMAND_PARAMS[commandKey][i] ==  //booleans
-								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+						else if(
 								_COMMAND_PARAMS[commandKey][i] ==  //booleans
-										_COMMAND_PARAM_FIELDS.DoTrackGroupChanges)
+								_COMMAND_PARAM_FIELDS.WaitForAllFrontEndsRunningThread ||
+								
+								_COMMAND_PARAMS[commandKey][i] ==  //booleans
+								_COMMAND_PARAM_FIELDS.DoTrackGroupChanges ||
+								
+								_COMMAND_PARAMS[commandKey][i] ==  //booleans
+								_COMMAND_PARAM_FIELDS.EnableSavingOutputsToFile)
 						{
 							//boolean field, show select box and set value to 1/0
 
@@ -2961,7 +2972,21 @@
 
 
 							str += "</select>";	
-						}						
+						}		
+						else if(_COMMAND_PARAMS[commandKey][i] == // Macro Parameter table link
+								_COMMAND_PARAM_FIELDS.LinkToMacroDimensions)
+						{
+							if(initValue == "") //set default table name
+								initValue = "IterationCommandMacroDimensionalLoopConfiguration";
+							str += htmlOpen("input",
+									{
+											"id":("popUp-param-" + i),
+											"class":"popUp-param",
+											"type":"text",
+											"value":initValue,
+											"onchange":"_popUpParamsModified = true;"
+									}, 0 /*innerHTML*/, true /*closeTag*/);
+						}
 						else //default field input	
 							str += htmlOpen("input",
 									{
@@ -3665,7 +3690,7 @@
 								MultiSelectBox.getSelectionElementByIndex(
 										sel,i).innerText) + 
 								(feMode?
-								"/LinkToFEInterfaceConfiguration":""),
+								"/LinkToFEInterfaceTable":""),
 								1, //down through command parameters
 								_modifiedTables,
 								localExtractTargetTree,
@@ -3687,7 +3712,7 @@
 						
 			path += "/" + sel.innerText;
 			path += feMode?
-					"/LinkToFEInterfaceConfiguration":"";
+					"/LinkToFEInterfaceTable":"";
 			
 			ConfigurationAPI.getTree(path,
 					1, //down through command parameters
@@ -3897,8 +3922,6 @@
 			if(_COMMAND_PARAMS.hasOwnProperty(type))
 			{
 				//if targets field, reduce to single field
-				if(params)
-				
 				if(params.length != _COMMAND_PARAMS[type].length)
 				{
 					Debug.log("Fatal error. Mismatch in number of parameters at command " +
@@ -4087,8 +4110,7 @@
 
 					}, //handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
-					false /*targetSupervisor*/);
+					0,true); //progressHandler, callHandlerOnErr
 			
 		}	//end savePlanCommandSequence()
 		
@@ -4152,6 +4174,9 @@
 				_updateTimer = window.setTimeout(updateIterateStatus,_UPDATE_TIMER_PERIOD);
 				
 				var error_message		= DesktopContent.getXMLValue(req,"error_message");
+				if(!error_message || error_message == "")
+					error_message		= DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+					
 				if(error_message && error_message != "")
 					Debug.log(error_message,Debug.HIGH_PRIORITY);
 				else
@@ -4164,7 +4189,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end startTargetIterationPlan
 		
@@ -4209,7 +4234,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end pauseTargetIterationPlan
 		
@@ -4244,7 +4269,7 @@
 				
 					}, //end handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 		} //end haltTargetIterationPlan
 
@@ -4264,8 +4289,8 @@
 				{
 					Debug.log("getIterationPlanStatus ERROR handler ");
 					var str = "";
-					str += "Disconnected. Click Refresh to attempt to reconnect.";
-					document.getElementById('topPane-header').innerHTML = str;
+					str += "Disconnected. Click <a onclick='initIterateData()'>Refresh</a> to attempt to reconnect.";
+					document.getElementById('topPane-status-field').innerHTML = str;
 					return;
 				} //end error case handler
 				
@@ -4468,9 +4493,9 @@
 				
 					}, //end handler
 					0, //handler param
-					0,true,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,true,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
-		} //end updateIterateStatus
+		} //end updateIterateStatus()
 		
 		
 		

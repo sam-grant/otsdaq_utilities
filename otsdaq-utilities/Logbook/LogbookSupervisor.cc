@@ -127,8 +127,7 @@ void LogbookSupervisor::init(void)
 			std::stringstream ss;
 			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		path = LOGBOOK_PATH + LOGBOOK_UPLOADS_PATH;
@@ -138,11 +137,9 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir((path).c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::stringstream ss;
-			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
+			__SS__ << "Service directory creation failed: " <<
 					path <<  std::endl;
-			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 
 		path = LOGBOOK_PATH + LOGBOOK_LOGBOOKS_PATH;
@@ -152,11 +149,9 @@ void LogbookSupervisor::init(void)
 		else if(-1 == mkdir(path.c_str(),0755))
 		{
 			//lets create the service folder (for first time)
-			std::stringstream ss;
-			ss << __COUT_HDR_FL__ << "Service directory creation failed: " <<
+			__SS__ << "Service directory creation failed: " <<
 					path << std::endl;
-			std::cout << ss.str();
-			throw std::runtime_error(ss.str());
+			__SS_THROW__;
 		}
 	}
 
@@ -443,7 +438,7 @@ xoap::MessageReference LogbookSupervisor::MakeSystemLogbookEntry (xoap::MessageR
 	SOAPParameters parameters("EntryText");
 	//	SOAPParametersV parameters(1);
 	//	parameters[0].setName("EntryText");
-	receive(msg, parameters);
+	SOAPUtilities::receive(msg, parameters);
 	std::string EntryText = parameters.getValue("EntryText");
 
 	__COUT__ << "Received External Supervisor System Entry " << EntryText << std::endl;
