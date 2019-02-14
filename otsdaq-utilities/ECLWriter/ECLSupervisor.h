@@ -1,70 +1,85 @@
 #ifndef _ots_ECLSupervisor_h
 #define _ots_ECLSupervisor_h
 
-#include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
 #include "otsdaq-core/SOAPUtilities/SOAPMessenger.h"
+#include "otsdaq-core/FiniteStateMachine/RunControlStateMachine.h"
 #include "otsdaq-core/WebUsersUtilities/RemoteWebUsers.h"
 
 #include <xdaq/Application.h>
-#include <xgi/Method.h>
 #include "otsdaq-core/Macros/XDAQApplicationMacros.h"
+#include <xgi/Method.h>
 
 #include <cgicc/HTMLClasses.h>
-#include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPCookie.h>
+#include <cgicc/HTMLDoctype.h>
 #include <cgicc/HTTPHeader.h>
 
-#include <chrono>
-#include <map>
 #include <string>
+#include <map>
+#include <chrono>
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 
-namespace ots {
+
+
+namespace ots
+{
 
 class ConfigurationManager;
 class ConfigurationGroupKey;
 
-class ECLSupervisor : public CoreSupervisorBase {
- public:
-  XDAQ_INSTANTIATOR();
+class ECLSupervisor: public CoreSupervisorBase
+{
 
-  ECLSupervisor(xdaq::ApplicationStub* s);
-  virtual ~ECLSupervisor(void);
-  void init(void);
-  void destroy(void);
+public:
 
-  void defaultPage(xgi::Input* in, xgi::Output* out);
+    XDAQ_INSTANTIATOR();
 
-  void transitionConfiguring(toolbox::Event::Reference e);
-  void transitionStarting(toolbox::Event::Reference e);
-  void transitionStopping(toolbox::Event::Reference e);
-  void transitionPausing(toolbox::Event::Reference e);
-  void transitionResuming(toolbox::Event::Reference e);
-  void enteringError(toolbox::Event::Reference e);
+    ECLSupervisor            	(xdaq::ApplicationStub * s) ;
+    virtual ~ECLSupervisor   	(void);
+    void init                  		(void);
+    void destroy               		(void);
 
-  xoap::MessageReference MakeSystemLogbookEntry(xoap::MessageReference msg);
+    void 						defaultPage                 (xgi::Input* in, xgi::Output* out) ;
 
- private:
-  ConfigurationManager* theConfigurationManager_;
-  const std::string supervisorContextUID_;
-  const std::string supervisorApplicationUID_;
-  const std::string supervisorConfigurationPath_;
+    void 						transitionConfiguring 		(toolbox::Event::Reference e) ;
+    void 						transitionStarting    		(toolbox::Event::Reference e) ;
+    void 						transitionStopping    		(toolbox::Event::Reference e) ;
+    void 						transitionPausing	  		(toolbox::Event::Reference e) ;
+    void 						transitionResuming	  		(toolbox::Event::Reference e) ;
+    void 						enteringError	  		(toolbox::Event::Reference e) ;
 
-  std::string ECLUser;
-  std::string ECLHost;
-  std::string ECLPwd;
-  std::string ExperimentName;
-  std::string run;
-  std::chrono::steady_clock::time_point run_start;
-  int duration_ms;  // For paused runs, don't count time spend in pause state
+	xoap::MessageReference 		MakeSystemLogbookEntry(xoap::MessageReference msg) 			;
 
-  std::string EscapeECLString(std::string input = "");
+private:
 
-  enum class WriteState { kStart, kStop, kPause, kResume, kError };
+    ConfigurationManager*                	theConfigurationManager_;
+ 	const std::string                    	supervisorContextUID_;
+	const std::string                    	supervisorApplicationUID_;
+	const std::string                    	supervisorConfigurationPath_;
 
-  int Write(WriteState state);
+
+	std::string ECLUser;
+	std::string ECLHost;
+	std::string ECLPwd;
+	std::string ExperimentName;
+	std::string run;
+	std::chrono::steady_clock::time_point run_start;
+	int duration_ms; // For paused runs, don't count time spend in pause state
+
+	std::string EscapeECLString(std::string input = "");
+
+	enum class WriteState
+	{
+	  kStart,
+	  kStop,
+	  kPause,
+	  kResume,
+	  kError
+	};
+
+	int Write(WriteState state);
 };
 
-}  // namespace ots
+}
 
 #endif

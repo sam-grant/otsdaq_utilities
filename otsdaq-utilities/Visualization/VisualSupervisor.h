@@ -1,57 +1,61 @@
 #ifndef _ots_VisualSupervisor_h
 #define _ots_VisualSupervisor_h
 
+
 #include "otsdaq-core/CoreSupervisors/CoreSupervisorBase.h"
 #include "otsdaq-utilities/Visualization/VisualDataManager.h"
 
-namespace ots {
+namespace ots
+{
 
-// VisualSupervisor
+//VisualSupervisor
 //	This class handles the web user interface to a VisualDataManager with reqgard to the web desktop Visualizer.
 //	The Visualizer can display ROOT object in real-time, as well as 2D and 3D displays of streaming data.
-class VisualSupervisor : public CoreSupervisorBase {
- public:
-  XDAQ_INSTANTIATOR();
+class VisualSupervisor: public CoreSupervisorBase
+{
 
-  VisualSupervisor(xdaq::ApplicationStub* s);
-  virtual ~VisualSupervisor(void);
+public:
 
-  void destroy(void);
+    XDAQ_INSTANTIATOR();
 
-  // virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out)
-  // override;
-  // void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out)
-  // ;
+    VisualSupervisor            	(xdaq::ApplicationStub * s) ;
+    virtual ~VisualSupervisor   	(void);
 
-  virtual void request(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut,
-                       const WebUsers::RequestUserInfo& userInfo) override;
 
-  virtual void setSupervisorPropertyDefaults(void) override;
-  virtual void forceSupervisorPropertyValues(
-      void) override;  // override to force supervisor property values (and ignore user settings)
+    void 					destroy               			(void);
 
-  // RAR commented out below.. better/safer handling (of errors) done by CoreSupervisorBase
 
-  // void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm)
-  // ;
+    //virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
+    //void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out) ;
 
-  // virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) ;
-  // virtual void 			transitionHalting     			(toolbox::Event::Reference e) ;
-  // virtual void 			transitionInitializing			(toolbox::Event::Reference e) ;
-  //    virtual void 			transitionPausing     			(toolbox::Event::Reference e) ;
-  //    virtual void 			transitionResuming    			(toolbox::Event::Reference e) ;
-  //    virtual void 			transitionStarting    			(toolbox::Event::Reference e) ;
-  //    virtual void 			transitionStopping    			(toolbox::Event::Reference e) ;
-  // virtual void 			enteringError         			(toolbox::Event::Reference e) ;
+    virtual void			request         	 			(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)  override;
 
- private:
-  // void						binaryBufferToHexString		(char *buff, unsigned int len, std::string&
-  // dest);
+    virtual void			setSupervisorPropertyDefaults	(void) override;
+    virtual void			forceSupervisorPropertyValues	(void) override; //override to force supervisor property values (and ignore user settings)
 
-  VisualDataManager* theDataManager_;
-  unsigned int loadedRunNumber_;
+
+    // RAR commented out below.. better/safer handling (of errors) done by CoreSupervisorBase
+
+    //void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) ;
+
+    //virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) ;
+    //virtual void 			transitionHalting     			(toolbox::Event::Reference e) ;
+    //virtual void 			transitionInitializing			(toolbox::Event::Reference e) ;
+//    virtual void 			transitionPausing     			(toolbox::Event::Reference e) ;
+//    virtual void 			transitionResuming    			(toolbox::Event::Reference e) ;
+//    virtual void 			transitionStarting    			(toolbox::Event::Reference e) ;
+//    virtual void 			transitionStopping    			(toolbox::Event::Reference e) ;
+    //virtual void 			enteringError         			(toolbox::Event::Reference e) ;
+
+private:
+
+    //void						binaryBufferToHexString		(char *buff, unsigned int len, std::string& dest);
+
+    VisualDataManager*          theDataManager_;
+    unsigned int 			    loadedRunNumber_;
+
 };
 
-}  // namespace ots
+}
 
 #endif

@@ -12,42 +12,46 @@
 #include <string>
 #include <vector>
 
-namespace ots {
+namespace ots
+{
 
 class ConfigurationManager;
 class RawDataVisualizerConsumer;
 
-class VisualDataManager : public DataManager {
- public:
-  VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree, const std::string& supervisorConfigurationPath);
-  virtual ~VisualDataManager(void);
+class VisualDataManager : public DataManager
+{
+public:
+    VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree, const std::string& supervisorConfigurationPath);
+    virtual ~VisualDataManager(void);
 
-  void configure(void) override;
-  void halt(void) override;
-  void pause(void) override;
-  void resume(void) override;
-  void start(std::string runNumber) override;
-  void stop(void) override;
 
-  void load(std::string fileName, std::string type);
-  // Getters
-  DQMHistosBase* getLiveDQMHistos(void);
-  DQMHistosBase& getFileDQMHistos(void);
-  // const Visual3DEvents&   getVisual3DEvents   (void);
-  // const Visual3DGeometry& getVisual3DGeometry (void);
+    void configure(void)                  override;
+    void halt     (void)                  override;
+    void pause    (void)				  override;
+    void resume   (void)  				  override;
+    void start    (std::string runNumber) override;
+    void stop     (void)                  override;
 
-  const std::string& getRawData(void);
 
- private:
-  DQMHistosBase* theLiveDQMHistos_;
-  DQMHistosBase theFileDQMHistos_;
-  // MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
-  // MonicelliGeometryConverter theMonicelliGeometryConverter_;
-  // Visual3DData           the3DData_;
+    void load(std::string fileName, std::string type);
+    //Getters
+    DQMHistosBase*          getLiveDQMHistos    (void);
+    DQMHistosBase&          getFileDQMHistos    (void);
+    //const Visual3DEvents&   getVisual3DEvents   (void);
+    //const Visual3DGeometry& getVisual3DGeometry (void);
 
-  RawDataVisualizerConsumer* theRawDataConsumer_;
+    const std::string&		getRawData			(void);
+
+private:
+    DQMHistosBase*             theLiveDQMHistos_;
+    DQMHistosBase              theFileDQMHistos_;
+    //MonicelliEventAnalyzer     theMonicelliEventAnalyzer_;
+    //MonicelliGeometryConverter theMonicelliGeometryConverter_;
+    //Visual3DData           the3DData_;
+
+    RawDataVisualizerConsumer* theRawDataConsumer_;
 };
 
-}  // namespace ots
+}
 
 #endif
