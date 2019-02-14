@@ -3,26 +3,24 @@
 #include <xdaq/version.h>
 #include "otsdaq-utilities/Console/version.h"
 
-
-GETPACKAGEINFO(Console)
-
+GETPACKAGEINFO (Console)
 
 //========================================================================================================================
-void Console::checkPackageDependencies() 
+void Console::checkPackageDependencies ()
 {
-	CHECKDEPENDENCY(config);
-	CHECKDEPENDENCY(xcept );
-	CHECKDEPENDENCY(xdaq  );
+	CHECKDEPENDENCY (config);
+	CHECKDEPENDENCY (xcept);
+	CHECKDEPENDENCY (xdaq);
 }
 
 //========================================================================================================================
-std::set<std::string, std::less<std::string> > Console::getPackageDependencies()
+std::set<std::string, std::less<std::string> > Console::getPackageDependencies ()
 {
 	std::set<std::string, std::less<std::string> > dependencies;
 
-	ADDDEPENDENCY(dependencies,config);
-	ADDDEPENDENCY(dependencies,xcept );
-	ADDDEPENDENCY(dependencies,xdaq  );
+	ADDDEPENDENCY (dependencies, config);
+	ADDDEPENDENCY (dependencies, xcept);
+	ADDDEPENDENCY (dependencies, xdaq);
 
 	return dependencies;
 }

@@ -1,7 +1,7 @@
 #include "otsdaq-utilities/Chat/ChatSupervisor.h"
-#include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
+#include "otsdaq-core/Macros/CoutMacros.h"
+#include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #include <xdaq/NamespaceURI.h>
@@ -10,56 +10,53 @@
 
 using namespace ots;
 
-#undef 	__MF_SUBJECT__
+#undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "Chat"
 
-XDAQ_INSTANTIATOR_IMPL(ChatSupervisor)
+XDAQ_INSTANTIATOR_IMPL (ChatSupervisor)
 
 //========================================================================================================================
-ChatSupervisor::ChatSupervisor(xdaq::ApplicationStub* stub)
+ChatSupervisor::ChatSupervisor (xdaq::ApplicationStub* stub)
 
-: CoreSupervisorBase	(stub)
+    : CoreSupervisorBase (stub)
 {
-	INIT_MF("ChatSupervisor");
+	INIT_MF ("ChatSupervisor");
 
-	ChatLastUpdateIndex = 1; //skip 0
+	ChatLastUpdateIndex = 1;  //skip 0
 }
 
 //========================================================================================================================
-ChatSupervisor::~ChatSupervisor(void)
+ChatSupervisor::~ChatSupervisor (void)
 {
-	destroy();
+	destroy ();
 }
 
 //========================================================================================================================
-void ChatSupervisor::destroy(void)
+void ChatSupervisor::destroy (void)
 {
 	//called by destructor
-
 }
 
 //========================================================================================================================
-void ChatSupervisor::defaultPage(xgi::Input * cgiIn, xgi::Output * out )
+void ChatSupervisor::defaultPage (xgi::Input* cgiIn, xgi::Output* out)
 {
-	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << 
-			this->getApplicationDescriptor()->getLocalId() <<"'></frameset></html>";
+	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame src='/WebPath/html/Chat.html?urn=" << this->getApplicationDescriptor ()->getLocalId () << "'></frameset></html>";
 }
 
 //========================================================================================================================
 //forceSupervisorPropertyValues
 //		override to force supervisor property values (and ignore user settings)
-void ChatSupervisor::forceSupervisorPropertyValues()
+void ChatSupervisor::forceSupervisorPropertyValues ()
 {
-	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
-			"RefreshChat");
+	CorePropertySupervisorBase::setSupervisorProperty (CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.AutomatedRequestTypes,
+	                                                   "RefreshChat");
 }
 
 //========================================================================================================================
 //	request
 //		Handles Web Interface requests to chat supervisor.
 //		Does not refresh cookie for automatic update checks.
-void ChatSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
-		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
+void ChatSupervisor::request (const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 {
 	//__COUT__ << "requestType: " << requestType << std::endl;
 
@@ -68,52 +65,53 @@ void ChatSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn
 	//RefreshUsers
 	//SendChat
 
-	cleanupExpiredChats();
+	cleanupExpiredChats ();
 
-	if(requestType == "RefreshChat")
+	if (requestType == "RefreshChat")
 	{
-		std::string lastUpdateIndexString = CgiDataUtilities::postData(cgiIn,"lastUpdateIndex");
-		std::string user = CgiDataUtilities::postData(cgiIn,"user");
-		uint64_t lastUpdateIndex;
-		sscanf(lastUpdateIndexString.c_str(),"%lu",&lastUpdateIndex);
+		std::string lastUpdateIndexString = CgiDataUtilities::postData (cgiIn, "lastUpdateIndex");
+		std::string user                  = CgiDataUtilities::postData (cgiIn, "user");
+		uint64_t    lastUpdateIndex;
+		sscanf (lastUpdateIndexString.c_str (), "%lu", &lastUpdateIndex);
 
-		insertChatRefresh(&xmlOut,lastUpdateIndex,user);
+		insertChatRefresh (&xmlOut, lastUpdateIndex, user);
 	}
-	else if(requestType == "RefreshUsers")
+	else if (requestType == "RefreshUsers")
 	{
-		insertActiveUsers(&xmlOut);
+		insertActiveUsers (&xmlOut);
 	}
-	else if(requestType == "SendChat")
+	else if (requestType == "SendChat")
 	{
-		std::string chat = CgiDataUtilities::postData(cgiIn,"chat");
-		std::string user = CgiDataUtilities::postData(cgiIn,"user");
+		std::string chat = CgiDataUtilities::postData (cgiIn, "chat");
+		std::string user = CgiDataUtilities::postData (cgiIn, "user");
 
-		escapeChat(chat);
+		escapeChat (chat);
 
-		newChat(chat, user);
+		newChat (chat, user);
 	}
-	else if(requestType == "PageUser")
+	else if (requestType == "PageUser")
 	{
-		std::string topage = CgiDataUtilities::postData(cgiIn,"topage");
-		std::string user = CgiDataUtilities::postData(cgiIn,"user");
+		std::string topage = CgiDataUtilities::postData (cgiIn, "topage");
+		std::string user   = CgiDataUtilities::postData (cgiIn, "user");
 
-		__COUT__ << "Paging = " << topage.substr(0,10) << "... from user = " << user.substr(0,10) << std::endl;
+		__COUT__ << "Paging = " << topage.substr (0, 10) << "... from user = " << user.substr (0, 10) << std::endl;
 
-		theRemoteWebUsers_.sendSystemMessage(allSupervisorInfo_.getGatewayDescriptor(),
-				topage, user + " is paging you to come chat.");
+		theRemoteWebUsers_.sendSystemMessage (allSupervisorInfo_.getGatewayDescriptor (),
+		                                      topage,
+		                                      user + " is paging you to come chat.");
 	}
 	else
 		__COUT__ << "requestType request not recognized." << std::endl;
-//
-//	//return xml doc holding server response
-//	xmlOut.outputXmlDocument((std::ostringstream*)out);
+	//
+	//	//return xml doc holding server response
+	//	xmlOut.outputXmlDocument((std::ostringstream*)out);
 }
 
 //========================================================================================================================
 //ChatSupervisor::escapeChat()
 //	replace html/xhtml reserved characters with equivalent.
 //	reserved: ", ', &, <, >
-void ChatSupervisor::escapeChat(std::string &chat)
+void ChatSupervisor::escapeChat (std::string& chat)
 {
 	//	char reserved[] = {'"','\'','&','<','>'};
 	//std::string replace[] = {"&#34;","&#39;","&#38;","&#60;","&#62;"};
@@ -124,10 +122,10 @@ void ChatSupervisor::escapeChat(std::string &chat)
 
 //========================================================================================================================
 //ChatSupervisor::insertActiveUsers()
-void ChatSupervisor::insertActiveUsers(HttpXmlDocument *xmlOut)
+void ChatSupervisor::insertActiveUsers (HttpXmlDocument* xmlOut)
 {
-	xmlOut->addTextElementToData("active_users",
-			theRemoteWebUsers_.getActiveUserList(allSupervisorInfo_.getGatewayDescriptor()));
+	xmlOut->addTextElementToData ("active_users",
+	                              theRemoteWebUsers_.getActiveUserList (allSupervisorInfo_.getGatewayDescriptor ()));
 }
 
 //========================================================================================================================
@@ -137,140 +135,132 @@ void ChatSupervisor::insertActiveUsers(HttpXmlDocument *xmlOut)
 //	if lastUpdateIndex is current, return nothing
 //	else return full chat user list and new chats
 //	(note: lastUpdateIndex==0 first time and returns only user list. no chats)
-void ChatSupervisor::insertChatRefresh(HttpXmlDocument *xmlOut, uint64_t lastUpdateIndex, std::string user)
+void ChatSupervisor::insertChatRefresh (HttpXmlDocument* xmlOut, uint64_t lastUpdateIndex, std::string user)
 {
-	newUser(user);
+	newUser (user);
 
-	if(!isLastUpdateIndexStale(lastUpdateIndex)) return; 	//	if lastUpdateIndex is current, return nothing
+	if (!isLastUpdateIndexStale (lastUpdateIndex)) return;  //	if lastUpdateIndex is current, return nothing
 
 	//return new update index, full chat user list, and new chats!
 
 	char tempStr[50];
-	sprintf(tempStr,"%lu",ChatLastUpdateIndex);
-	xmlOut->addTextElementToData("last_update_index",tempStr);
+	sprintf (tempStr, "%lu", ChatLastUpdateIndex);
+	xmlOut->addTextElementToData ("last_update_index", tempStr);
 
 	//get all users
-	xmlOut->addTextElementToData("chat_users","");
-	for(uint64_t i=0;i<ChatUsers_.size();++i)
-		xmlOut->addTextElementToParent("chat_user",ChatUsers_[i],"chat_users");
+	xmlOut->addTextElementToData ("chat_users", "");
+	for (uint64_t i = 0; i < ChatUsers_.size (); ++i)
+		xmlOut->addTextElementToParent ("chat_user", ChatUsers_[i], "chat_users");
 
-	if(!lastUpdateIndex) //lastUpdateIndex == 0, so just give the <user> entered chat message only
-		lastUpdateIndex = ChatHistoryIndex_[ChatHistoryIndex_.size()-1]-1; //new user will then get future chats
+	if (!lastUpdateIndex)                                                        //lastUpdateIndex == 0, so just give the <user> entered chat message only
+		lastUpdateIndex = ChatHistoryIndex_[ChatHistoryIndex_.size () - 1] - 1;  //new user will then get future chats
 
 	//get all accounts
-	xmlOut->addTextElementToData("chat_history","");
-	for(uint64_t i=0;i<ChatHistoryEntry_.size();++i) //output oldest to new
+	xmlOut->addTextElementToData ("chat_history", "");
+	for (uint64_t i = 0; i < ChatHistoryEntry_.size (); ++i)  //output oldest to new
 	{
-		if(isChatOld(ChatHistoryIndex_[i],lastUpdateIndex)) continue;
+		if (isChatOld (ChatHistoryIndex_[i], lastUpdateIndex)) continue;
 
-		xmlOut->addTextElementToParent("chat_entry",ChatHistoryEntry_[i],"chat_history");
-		xmlOut->addTextElementToParent("chat_author",ChatHistoryAuthor_[i],"chat_history");
-		sprintf(tempStr,"%lu",ChatHistoryTime_[i]);
-		xmlOut->addTextElementToParent("chat_time",tempStr,"chat_history");
+		xmlOut->addTextElementToParent ("chat_entry", ChatHistoryEntry_[i], "chat_history");
+		xmlOut->addTextElementToParent ("chat_author", ChatHistoryAuthor_[i], "chat_history");
+		sprintf (tempStr, "%lu", ChatHistoryTime_[i]);
+		xmlOut->addTextElementToParent ("chat_time", tempStr, "chat_history");
 	}
 }
 
 //========================================================================================================================
 //ChatSupervisor::newUser()
 //	create new user if needed, and increment update
-void ChatSupervisor::newUser(std::string user)
+void ChatSupervisor::newUser (std::string user)
 {
-	for(uint64_t i=0;i<ChatUsers_.size();++i)
-		if(ChatUsers_[i] == user)
+	for (uint64_t i = 0; i < ChatUsers_.size (); ++i)
+		if (ChatUsers_[i] == user)
 		{
-			ChatUsersTime_[i] = time(0); //update time
-			return; //do not add new if found
+			ChatUsersTime_[i] = time (0);  //update time
+			return;                        //do not add new if found
 		}
 
 	__COUT__ << "New user: " << user << std::endl;
 	//add and increment
-	ChatUsers_.push_back(user);
-	ChatUsersTime_.push_back(time(0));
-	newChat(user + " joined the chat.","ots");	//add status message to chat, increment update
+	ChatUsers_.push_back (user);
+	ChatUsersTime_.push_back (time (0));
+	newChat (user + " joined the chat.", "ots");  //add status message to chat, increment update
 }
 
 //========================================================================================================================
 //ChatSupervisor::newChat()
 //	create new chat, and increment update
-void ChatSupervisor::newChat(std::string chat, std::string user)
+void ChatSupervisor::newChat (std::string chat, std::string user)
 {
-	ChatHistoryEntry_.push_back(chat);
-	ChatHistoryAuthor_.push_back(user);
-	ChatHistoryTime_.push_back(time(0));
-	ChatHistoryIndex_.push_back(incrementAndGetLastUpdate());
+	ChatHistoryEntry_.push_back (chat);
+	ChatHistoryAuthor_.push_back (user);
+	ChatHistoryTime_.push_back (time (0));
+	ChatHistoryIndex_.push_back (incrementAndGetLastUpdate ());
 }
 
 //========================================================================================================================
 //ChatSupervisor::isChatNew()
 //	return true if chatIndex is older than lastUpdateIndex
-bool ChatSupervisor::isChatOld(uint64_t chatIndex, uint64_t last)
+bool ChatSupervisor::isChatOld (uint64_t chatIndex, uint64_t last)
 {
-	return (last - chatIndex < (uint64_t(1) << 62));
+	return (last - chatIndex < (uint64_t (1) << 62));
 }
 
 //========================================================================================================================
 //ChatSupervisor::isLastUpdateIndexStale()
-bool ChatSupervisor::isLastUpdateIndexStale(uint64_t last)
+bool ChatSupervisor::isLastUpdateIndexStale (uint64_t last)
 {
 	return ChatLastUpdateIndex != last;
 }
 
 //========================================================================================================================
 //ChatSupervisor::incrementAndGetLastUpdate()
-uint64_t ChatSupervisor::incrementAndGetLastUpdate()
+uint64_t ChatSupervisor::incrementAndGetLastUpdate ()
 {
-	if(!++ChatLastUpdateIndex) ++ChatLastUpdateIndex; //skip 0
+	if (!++ChatLastUpdateIndex) ++ChatLastUpdateIndex;  //skip 0
 	return ChatLastUpdateIndex;
 }
 
 //========================================================================================================================
 //ChatSupervisor::cleanupExpiredChats()
 //	remove expired entries from Chat history and user list
-void ChatSupervisor::cleanupExpiredChats()
+void ChatSupervisor::cleanupExpiredChats ()
 {
-	for(uint64_t i=0;i<ChatHistoryEntry_.size();++i)
-		if(i >= CHAT_HISTORY_MAX_ENTRIES ||
-				ChatHistoryTime_[i] + CHAT_HISTORY_EXPIRATION_TIME < time(0)) //expired
+	for (uint64_t i = 0; i < ChatHistoryEntry_.size (); ++i)
+		if (i >= CHAT_HISTORY_MAX_ENTRIES ||
+		    ChatHistoryTime_[i] + CHAT_HISTORY_EXPIRATION_TIME < time (0))  //expired
 		{
-			removeChatHistoryEntry(i);
-			--i; //rewind loop
+			removeChatHistoryEntry (i);
+			--i;  //rewind loop
 		}
 		else
-			break; //chronological order, so first encountered that is still valid exit loop
+			break;  //chronological order, so first encountered that is still valid exit loop
 
-	for(uint64_t i=0;i<ChatUsers_.size();++i)
-		if(ChatUsersTime_[i] + CHAT_HISTORY_EXPIRATION_TIME < time(0)) //expired
+	for (uint64_t i = 0; i < ChatUsers_.size (); ++i)
+		if (ChatUsersTime_[i] + CHAT_HISTORY_EXPIRATION_TIME < time (0))  //expired
 		{
-			removeChatUserEntry(i);
-			--i; //rewind loop
+			removeChatUserEntry (i);
+			--i;  //rewind loop
 		}
 		else
-			break; //chronological order, so first encountered that is still valid exit loop
+			break;  //chronological order, so first encountered that is still valid exit loop
 }
 
 //========================================================================================================================
 //ChatSupervisor::removeChatHistoryEntry()
-void ChatSupervisor::removeChatHistoryEntry(uint64_t i)
+void ChatSupervisor::removeChatHistoryEntry (uint64_t i)
 {
-	ChatHistoryEntry_.erase (ChatHistoryEntry_.begin()+i);
-	ChatHistoryTime_.erase (ChatHistoryTime_.begin()+i);
-	ChatHistoryAuthor_.erase (ChatHistoryAuthor_.begin()+i);
-	ChatHistoryIndex_.erase (ChatHistoryIndex_.begin()+i);
+	ChatHistoryEntry_.erase (ChatHistoryEntry_.begin () + i);
+	ChatHistoryTime_.erase (ChatHistoryTime_.begin () + i);
+	ChatHistoryAuthor_.erase (ChatHistoryAuthor_.begin () + i);
+	ChatHistoryIndex_.erase (ChatHistoryIndex_.begin () + i);
 }
 
 //========================================================================================================================
 //ChatSupervisor::removeChatHistoryEntry()
-void ChatSupervisor::removeChatUserEntry(uint64_t i)
+void ChatSupervisor::removeChatUserEntry (uint64_t i)
 {
-	newChat(ChatUsers_[i] + " left the chat.","ots");	//add status message to chat, increment update
-	ChatUsers_.erase (ChatUsers_.begin()+i);
-	ChatUsersTime_.erase (ChatUsersTime_.begin()+i);
+	newChat (ChatUsers_[i] + " left the chat.", "ots");  //add status message to chat, increment update
+	ChatUsers_.erase (ChatUsers_.begin () + i);
+	ChatUsersTime_.erase (ChatUsersTime_.begin () + i);
 }
-
-
-
-
-
-
-
-
