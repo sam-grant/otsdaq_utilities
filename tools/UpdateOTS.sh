@@ -123,8 +123,8 @@ if [ "x$1" == "x" ]; then
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo
 	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/"
-	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ConfigurationInfo.xsd $USER_DATA/ConfigurationInfo/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/TableInfo.xsd $USER_DATA/ConfigurationInfo/"
+	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/TableInfo.xsd $USER_DATA/ConfigurationInfo/
 			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"

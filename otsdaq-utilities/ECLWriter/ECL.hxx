@@ -53,7 +53,7 @@
 
 #include <xsd/cxx/config.hxx>  // if missing: ksu; yum install xsd;
 
-#if (XSD_INT_VERSION != 4000000L)
+#if(XSD_INT_VERSION != 4000000L)
 #error XSD runtime version mismatch
 #endif
 
@@ -282,47 +282,37 @@ class Tag_t : public ::xml_schema::type
 	typedef ::xml_schema::string                      name_type;
 	typedef ::xsd::cxx::tree::traits<name_type, char> name_traits;
 
-	const name_type&
-	name () const;
+	const name_type& name() const;
 
-	name_type&
-	name ();
+	name_type& name();
 
-	void
-	name (const name_type& x);
+	void name(const name_type& x);
 
-	void
-	name (::std::unique_ptr<name_type> p);
+	void name(::std::unique_ptr<name_type> p);
 
 	// Constructors.
 	//
-	Tag_t ();
+	Tag_t();
 
-	Tag_t (const name_type&);
+	Tag_t(const name_type&);
 
-	Tag_t (const ::xercesc::DOMElement& e,
-	       ::xml_schema::flags          f = 0,
-	       ::xml_schema::container*     c = 0);
+	Tag_t(const ::xercesc::DOMElement& e,
+	      ::xml_schema::flags          f = 0,
+	      ::xml_schema::container*     c = 0);
 
-	Tag_t (const Tag_t&             x,
-	       ::xml_schema::flags      f = 0,
-	       ::xml_schema::container* c = 0);
+	Tag_t(const Tag_t& x, ::xml_schema::flags f = 0, ::xml_schema::container* c = 0);
 
-	virtual Tag_t*
-	_clone (::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0) const;
+	virtual Tag_t* _clone(::xml_schema::flags      f = 0,
+	                      ::xml_schema::container* c = 0) const;
 
-	Tag_t&
-	operator= (const Tag_t& x);
+	Tag_t& operator=(const Tag_t& x);
 
-	virtual ~Tag_t ();
+	virtual ~Tag_t();
 
 	// Implementation.
 	//
   protected:
-	void
-	parse (::xsd::cxx::xml::dom::parser<char>&,
-	       ::xml_schema::flags);
+	void parse(::xsd::cxx::xml::dom::parser<char>&, ::xml_schema::flags);
 
   protected:
 	::xsd::cxx::tree::one<name_type> name_;
@@ -336,69 +326,56 @@ class Attachment_t : public ::xml_schema::base64_binary
 	typedef ::xml_schema::string                      type_type;
 	typedef ::xsd::cxx::tree::traits<type_type, char> type_traits;
 
-	const type_type&
-	type () const;
+	const type_type& type() const;
 
-	type_type&
-	type ();
+	type_type& type();
 
-	void
-	type (const type_type& x);
+	void type(const type_type& x);
 
-	void
-	type (::std::unique_ptr<type_type> p);
+	void type(::std::unique_ptr<type_type> p);
 
 	// filename
 	//
 	typedef ::xml_schema::string                          filename_type;
 	typedef ::xsd::cxx::tree::traits<filename_type, char> filename_traits;
 
-	const filename_type&
-	filename () const;
+	const filename_type& filename() const;
 
-	filename_type&
-	filename ();
+	filename_type& filename();
 
-	void
-	filename (const filename_type& x);
+	void filename(const filename_type& x);
 
-	void
-	filename (::std::unique_ptr<filename_type> p);
+	void filename(::std::unique_ptr<filename_type> p);
 
 	// Constructors.
 	//
-	Attachment_t ();
+	Attachment_t();
 
-	Attachment_t (const type_type&,
-	              const filename_type&);
+	Attachment_t(const type_type&, const filename_type&);
 
-	Attachment_t (const ::xml_schema::base64_binary&,
-	              const type_type&,
-	              const filename_type&);
+	Attachment_t(const ::xml_schema::base64_binary&,
+	             const type_type&,
+	             const filename_type&);
 
-	Attachment_t (const ::xercesc::DOMElement& e,
-	              ::xml_schema::flags          f = 0,
-	              ::xml_schema::container*     c = 0);
+	Attachment_t(const ::xercesc::DOMElement& e,
+	             ::xml_schema::flags          f = 0,
+	             ::xml_schema::container*     c = 0);
 
-	Attachment_t (const Attachment_t&      x,
-	              ::xml_schema::flags      f = 0,
-	              ::xml_schema::container* c = 0);
+	Attachment_t(const Attachment_t&      x,
+	             ::xml_schema::flags      f = 0,
+	             ::xml_schema::container* c = 0);
 
-	virtual Attachment_t*
-	_clone (::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0) const;
+	virtual Attachment_t* _clone(::xml_schema::flags      f = 0,
+	                             ::xml_schema::container* c = 0) const;
 
-	Attachment_t&
-	operator= (const Attachment_t& x);
+	Attachment_t& operator=(const Attachment_t& x);
 
-	virtual ~Attachment_t ();
+	virtual ~Attachment_t();
 
 	// Implementation.
 	//
   protected:
-	void
-	parse (::xsd::cxx::xml::dom::parser<char>&,
-	       ::xml_schema::flags);
+	void parse(::xsd::cxx::xml::dom::parser<char>&, ::xml_schema::flags);
 
   protected:
 	::xsd::cxx::tree::one<type_type>     type_;
@@ -413,56 +390,43 @@ class Field_t : public ::xml_schema::string
 	typedef ::xml_schema::string                      name_type;
 	typedef ::xsd::cxx::tree::traits<name_type, char> name_traits;
 
-	const name_type&
-	name () const;
+	const name_type& name() const;
 
-	name_type&
-	name ();
+	name_type& name();
 
-	void
-	name (const name_type& x);
+	void name(const name_type& x);
 
-	void
-	name (::std::unique_ptr<name_type> p);
+	void name(::std::unique_ptr<name_type> p);
 
 	// Constructors.
 	//
-	Field_t ();
+	Field_t();
 
-	Field_t (const name_type&);
+	Field_t(const name_type&);
 
-	Field_t (const char*,
-	         const name_type&);
+	Field_t(const char*, const name_type&);
 
-	Field_t (const ::std::string&,
-	         const name_type&);
+	Field_t(const ::std::string&, const name_type&);
 
-	Field_t (const ::xml_schema::string&,
-	         const name_type&);
+	Field_t(const ::xml_schema::string&, const name_type&);
 
-	Field_t (const ::xercesc::DOMElement& e,
-	         ::xml_schema::flags          f = 0,
-	         ::xml_schema::container*     c = 0);
+	Field_t(const ::xercesc::DOMElement& e,
+	        ::xml_schema::flags          f = 0,
+	        ::xml_schema::container*     c = 0);
 
-	Field_t (const Field_t&           x,
-	         ::xml_schema::flags      f = 0,
-	         ::xml_schema::container* c = 0);
+	Field_t(const Field_t& x, ::xml_schema::flags f = 0, ::xml_schema::container* c = 0);
 
-	virtual Field_t*
-	_clone (::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0) const;
+	virtual Field_t* _clone(::xml_schema::flags      f = 0,
+	                        ::xml_schema::container* c = 0) const;
 
-	Field_t&
-	operator= (const Field_t& x);
+	Field_t& operator=(const Field_t& x);
 
-	virtual ~Field_t ();
+	virtual ~Field_t();
 
 	// Implementation.
 	//
   protected:
-	void
-	parse (::xsd::cxx::xml::dom::parser<char>&,
-	       ::xml_schema::flags);
+	void parse(::xsd::cxx::xml::dom::parser<char>&, ::xml_schema::flags);
 
   protected:
 	::xsd::cxx::tree::one<name_type> name_;
@@ -479,61 +443,48 @@ class Form_t : public ::xml_schema::type
 	typedef field_sequence::const_iterator             field_const_iterator;
 	typedef ::xsd::cxx::tree::traits<field_type, char> field_traits;
 
-	const field_sequence&
-	field () const;
+	const field_sequence& field() const;
 
-	field_sequence&
-	field ();
+	field_sequence& field();
 
-	void
-	field (const field_sequence& s);
+	void field(const field_sequence& s);
 
 	// name
 	//
 	typedef ::xml_schema::string                      name_type;
 	typedef ::xsd::cxx::tree::traits<name_type, char> name_traits;
 
-	const name_type&
-	name () const;
+	const name_type& name() const;
 
-	name_type&
-	name ();
+	name_type& name();
 
-	void
-	name (const name_type& x);
+	void name(const name_type& x);
 
-	void
-	name (::std::unique_ptr<name_type> p);
+	void name(::std::unique_ptr<name_type> p);
 
 	// Constructors.
 	//
-	Form_t ();
+	Form_t();
 
-	Form_t (const name_type&);
+	Form_t(const name_type&);
 
-	Form_t (const ::xercesc::DOMElement& e,
-	        ::xml_schema::flags          f = 0,
-	        ::xml_schema::container*     c = 0);
+	Form_t(const ::xercesc::DOMElement& e,
+	       ::xml_schema::flags          f = 0,
+	       ::xml_schema::container*     c = 0);
 
-	Form_t (const Form_t&            x,
-	        ::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0);
+	Form_t(const Form_t& x, ::xml_schema::flags f = 0, ::xml_schema::container* c = 0);
 
-	virtual Form_t*
-	_clone (::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0) const;
+	virtual Form_t* _clone(::xml_schema::flags      f = 0,
+	                       ::xml_schema::container* c = 0) const;
 
-	Form_t&
-	operator= (const Form_t& x);
+	Form_t& operator=(const Form_t& x);
 
-	virtual ~Form_t ();
+	virtual ~Form_t();
 
 	// Implementation.
 	//
   protected:
-	void
-	parse (::xsd::cxx::xml::dom::parser<char>&,
-	       ::xml_schema::flags);
+	void parse(::xsd::cxx::xml::dom::parser<char>&, ::xml_schema::flags);
 
   protected:
 	field_sequence                   field_;
@@ -551,14 +502,11 @@ class ECLEntry_t : public ::xml_schema::type
 	typedef tag_sequence::const_iterator             tag_const_iterator;
 	typedef ::xsd::cxx::tree::traits<tag_type, char> tag_traits;
 
-	const tag_sequence&
-	tag () const;
+	const tag_sequence& tag() const;
 
-	tag_sequence&
-	tag ();
+	tag_sequence& tag();
 
-	void
-	tag (const tag_sequence& s);
+	void tag(const tag_sequence& s);
 
 	// attachment
 	//
@@ -568,14 +516,11 @@ class ECLEntry_t : public ::xml_schema::type
 	typedef attachment_sequence::const_iterator             attachment_const_iterator;
 	typedef ::xsd::cxx::tree::traits<attachment_type, char> attachment_traits;
 
-	const attachment_sequence&
-	attachment () const;
+	const attachment_sequence& attachment() const;
 
-	attachment_sequence&
-	attachment ();
+	attachment_sequence& attachment();
 
-	void
-	attachment (const attachment_sequence& s);
+	void attachment(const attachment_sequence& s);
 
 	// form
 	//
@@ -583,85 +528,67 @@ class ECLEntry_t : public ::xml_schema::type
 	typedef ::xsd::cxx::tree::optional<form_type>     form_optional;
 	typedef ::xsd::cxx::tree::traits<form_type, char> form_traits;
 
-	const form_optional&
-	form () const;
+	const form_optional& form() const;
 
-	form_optional&
-	form ();
+	form_optional& form();
 
-	void
-	form (const form_type& x);
+	void form(const form_type& x);
 
-	void
-	form (const form_optional& x);
+	void form(const form_optional& x);
 
-	void
-	form (::std::unique_ptr<form_type> p);
+	void form(::std::unique_ptr<form_type> p);
 
 	// author
 	//
 	typedef ::xml_schema::string                        author_type;
 	typedef ::xsd::cxx::tree::traits<author_type, char> author_traits;
 
-	const author_type&
-	author () const;
+	const author_type& author() const;
 
-	author_type&
-	author ();
+	author_type& author();
 
-	void
-	author (const author_type& x);
+	void author(const author_type& x);
 
-	void
-	author (::std::unique_ptr<author_type> p);
+	void author(::std::unique_ptr<author_type> p);
 
 	// category
 	//
 	typedef ::xml_schema::string                          category_type;
 	typedef ::xsd::cxx::tree::traits<category_type, char> category_traits;
 
-	const category_type&
-	category () const;
+	const category_type& category() const;
 
-	category_type&
-	category ();
+	category_type& category();
 
-	void
-	category (const category_type& x);
+	void category(const category_type& x);
 
-	void
-	category (::std::unique_ptr<category_type> p);
+	void category(::std::unique_ptr<category_type> p);
 
 	// Constructors.
 	//
-	ECLEntry_t ();
+	ECLEntry_t();
 
-	ECLEntry_t (const author_type&,
-	            const category_type&);
+	ECLEntry_t(const author_type&, const category_type&);
 
-	ECLEntry_t (const ::xercesc::DOMElement& e,
-	            ::xml_schema::flags          f = 0,
-	            ::xml_schema::container*     c = 0);
+	ECLEntry_t(const ::xercesc::DOMElement& e,
+	           ::xml_schema::flags          f = 0,
+	           ::xml_schema::container*     c = 0);
 
-	ECLEntry_t (const ECLEntry_t&        x,
-	            ::xml_schema::flags      f = 0,
-	            ::xml_schema::container* c = 0);
+	ECLEntry_t(const ECLEntry_t&        x,
+	           ::xml_schema::flags      f = 0,
+	           ::xml_schema::container* c = 0);
 
-	virtual ECLEntry_t*
-	_clone (::xml_schema::flags      f = 0,
-	        ::xml_schema::container* c = 0) const;
+	virtual ECLEntry_t* _clone(::xml_schema::flags      f = 0,
+	                           ::xml_schema::container* c = 0) const;
 
-	ECLEntry_t&
-	operator= (const ECLEntry_t& x);
+	ECLEntry_t& operator=(const ECLEntry_t& x);
 
-	virtual ~ECLEntry_t ();
+	virtual ~ECLEntry_t();
 
 	// Implementation.
 	//
   protected:
-	void
-	parse (::xsd::cxx::xml::dom::parser<char>&,
-	       ::xml_schema::flags);
+	void parse(::xsd::cxx::xml::dom::parser<char>&, ::xml_schema::flags);
 
   protected:
 	tag_sequence                         tag_;
@@ -673,20 +600,15 @@ class ECLEntry_t : public ::xml_schema::type
 
 #include <iosfwd>
 
-::std::ostream&
-operator<< (::std::ostream&, const Tag_t&);
+::std::ostream& operator<<(::std::ostream&, const Tag_t&);
 
-::std::ostream&
-operator<< (::std::ostream&, const Attachment_t&);
+::std::ostream& operator<<(::std::ostream&, const Attachment_t&);
 
-::std::ostream&
-operator<< (::std::ostream&, const Field_t&);
+::std::ostream& operator<<(::std::ostream&, const Field_t&);
 
-::std::ostream&
-operator<< (::std::ostream&, const Form_t&);
+::std::ostream& operator<<(::std::ostream&, const Form_t&);
 
-::std::ostream&
-operator<< (::std::ostream&, const ECLEntry_t&);
+::std::ostream& operator<<(::std::ostream&, const ECLEntry_t&);
 
 #include <iosfwd>
 
@@ -697,95 +619,95 @@ operator<< (::std::ostream&, const ECLEntry_t&);
 // Parse a URI or a local file.
 //
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (const ::std::string&            uri,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    const ::std::string&            uri,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (const ::std::string&            uri,
-       ::xml_schema::error_handler&    eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    const ::std::string&            uri,
+    ::xml_schema::error_handler&    eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (const ::std::string&            uri,
-       ::xercesc::DOMErrorHandler&     eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    const ::std::string&            uri,
+    ::xercesc::DOMErrorHandler&     eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
 // Parse std::istream.
 //
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       ::xml_schema::error_handler&    eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    ::xml_schema::error_handler&    eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       ::xercesc::DOMErrorHandler&     eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    ::xercesc::DOMErrorHandler&     eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       const ::std::string&            id,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    const ::std::string&            id,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       const ::std::string&            id,
-       ::xml_schema::error_handler&    eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    const ::std::string&            id,
+    ::xml_schema::error_handler&    eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::std::istream&                 is,
-       const ::std::string&            id,
-       ::xercesc::DOMErrorHandler&     eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::std::istream&                 is,
+    const ::std::string&            id,
+    ::xercesc::DOMErrorHandler&     eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
 // Parse xercesc::InputSource.
 //
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::xercesc::InputSource&         is,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::xercesc::InputSource&         is,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::xercesc::InputSource&         is,
-       ::xml_schema::error_handler&    eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::xercesc::InputSource&         is,
+    ::xml_schema::error_handler&    eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::xercesc::InputSource&         is,
-       ::xercesc::DOMErrorHandler&     eh,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::xercesc::InputSource&         is,
+    ::xercesc::DOMErrorHandler&     eh,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
 // Parse xercesc::DOMDocument.
 //
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (const ::xercesc::DOMDocument&   d,
-       ::xml_schema::flags             f = 0,
-       const ::xml_schema::properties& p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    const ::xercesc::DOMDocument&   d,
+    ::xml_schema::flags             f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
-::std::unique_ptr< ::ECLEntry_t>
-entry (::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument> d,
-       ::xml_schema::flags                                    f = 0,
-       const ::xml_schema::properties&                        p = ::xml_schema::properties ());
+::std::unique_ptr< ::ECLEntry_t> entry(
+    ::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument> d,
+    ::xml_schema::flags                                    f = 0,
+    const ::xml_schema::properties& p = ::xml_schema::properties());
 
 #include <iosfwd>
 
@@ -798,73 +720,71 @@ entry (::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument> d,
 // Serialize to std::ostream.
 //
 
-void entry (::std::ostream&                        os,
-            const ::ECLEntry_t&                    x,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::std::ostream&                        os,
+           const ::ECLEntry_t&                    x,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
-void entry (::std::ostream&                        os,
-            const ::ECLEntry_t&                    x,
-            ::xml_schema::error_handler&           eh,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::std::ostream&                        os,
+           const ::ECLEntry_t&                    x,
+           ::xml_schema::error_handler&           eh,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
-void entry (::std::ostream&                        os,
-            const ::ECLEntry_t&                    x,
-            ::xercesc::DOMErrorHandler&            eh,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::std::ostream&                        os,
+           const ::ECLEntry_t&                    x,
+           ::xercesc::DOMErrorHandler&            eh,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
 // Serialize to xercesc::XMLFormatTarget.
 //
 
-void entry (::xercesc::XMLFormatTarget&            ft,
-            const ::ECLEntry_t&                    x,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::xercesc::XMLFormatTarget&            ft,
+           const ::ECLEntry_t&                    x,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
-void entry (::xercesc::XMLFormatTarget&            ft,
-            const ::ECLEntry_t&                    x,
-            ::xml_schema::error_handler&           eh,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::xercesc::XMLFormatTarget&            ft,
+           const ::ECLEntry_t&                    x,
+           ::xml_schema::error_handler&           eh,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
-void entry (::xercesc::XMLFormatTarget&            ft,
-            const ::ECLEntry_t&                    x,
-            ::xercesc::DOMErrorHandler&            eh,
-            const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-            const ::std::string&                   e = "UTF-8",
-            ::xml_schema::flags                    f = 0);
+void entry(::xercesc::XMLFormatTarget&            ft,
+           const ::ECLEntry_t&                    x,
+           ::xercesc::DOMErrorHandler&            eh,
+           const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+           const ::std::string&                   e = "UTF-8",
+           ::xml_schema::flags                    f = 0);
 
 // Serialize to an existing xercesc::DOMDocument.
 //
 
-void entry (::xercesc::DOMDocument& d,
-            const ::ECLEntry_t&     x,
-            ::xml_schema::flags     f = 0);
+void entry(::xercesc::DOMDocument& d, const ::ECLEntry_t& x, ::xml_schema::flags f = 0);
 
 // Serialize to a new xercesc::DOMDocument.
 //
 
-::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument>
-entry (const ::ECLEntry_t&                    x,
-       const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
-       ::xml_schema::flags                    f = 0);
+::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument> entry(
+    const ::ECLEntry_t&                    x,
+    const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap(),
+    ::xml_schema::flags                    f = 0);
 
-void operator<< (::xercesc::DOMElement&, const Tag_t&);
+void operator<<(::xercesc::DOMElement&, const Tag_t&);
 
-void operator<< (::xercesc::DOMElement&, const Attachment_t&);
+void operator<<(::xercesc::DOMElement&, const Attachment_t&);
 
-void operator<< (::xercesc::DOMElement&, const Field_t&);
+void operator<<(::xercesc::DOMElement&, const Field_t&);
 
-void operator<< (::xercesc::DOMElement&, const Form_t&);
+void operator<<(::xercesc::DOMElement&, const Form_t&);
 
-void operator<< (::xercesc::DOMElement&, const ECLEntry_t&);
+void operator<<(::xercesc::DOMElement&, const ECLEntry_t&);
 
 #include <xsd/cxx/post.hxx>
 

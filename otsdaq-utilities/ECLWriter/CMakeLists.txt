@@ -52,7 +52,7 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
 		 SOAPUtilities
 		 FiniteStateMachine
 		 ConfigurationInterface
-		 ConfigurationDataFormats
+		 TableCore
 		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
 		 MF_MessageLogger
     crypto

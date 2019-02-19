@@ -17,20 +17,20 @@
 class ECLConnection
 {
   public:
-	ECLConnection (std::string user, std::string password, std::string url);
-	~ECLConnection (){};
+	ECLConnection(std::string user, std::string password, std::string url);
+	~ECLConnection(){};
 
-	bool Post (ECLEntry_t& e);
-	bool Get (std::string, std::string&);
-	bool Search (std::string);
+	bool Post(ECLEntry_t& e);
+	bool Get(std::string, std::string&);
+	bool Search(std::string);
 
-	static Attachment_t MakeAttachmentImage (std::string const& imageFileName);
+	static Attachment_t MakeAttachmentImage(std::string const& imageFileName);
 
-	static Attachment_t MakeAttachmentFile (std::string const& fileName);
+	static Attachment_t MakeAttachmentFile(std::string const& fileName);
 
   private:
-	std::string   MakeSaltString ();
-	static size_t WriteMemoryCallback (char*, size_t, size_t, std::string*);
+	std::string   MakeSaltString();
+	static size_t WriteMemoryCallback(char*, size_t, size_t, std::string*);
 
 	std::string _user;
 	std::string _pwd;

@@ -22,28 +22,28 @@
 namespace ots
 {
 class ConfigurationManager;
-class ConfigurationGroupKey;
+class TableGroupKey;
 
 class ECLSupervisor : public CoreSupervisorBase
 {
   public:
-	XDAQ_INSTANTIATOR ();
+	XDAQ_INSTANTIATOR();
 
-	ECLSupervisor (xdaq::ApplicationStub* s);
-	virtual ~ECLSupervisor (void);
-	void init (void);
-	void destroy (void);
+	ECLSupervisor(xdaq::ApplicationStub* s);
+	virtual ~ECLSupervisor(void);
+	void init(void);
+	void destroy(void);
 
-	void defaultPage (xgi::Input* in, xgi::Output* out);
+	void defaultPage(xgi::Input* in, xgi::Output* out);
 
-	void transitionConfiguring (toolbox::Event::Reference e);
-	void transitionStarting (toolbox::Event::Reference e);
-	void transitionStopping (toolbox::Event::Reference e);
-	void transitionPausing (toolbox::Event::Reference e);
-	void transitionResuming (toolbox::Event::Reference e);
-	void enteringError (toolbox::Event::Reference e);
+	void transitionConfiguring(toolbox::Event::Reference e);
+	void transitionStarting(toolbox::Event::Reference e);
+	void transitionStopping(toolbox::Event::Reference e);
+	void transitionPausing(toolbox::Event::Reference e);
+	void transitionResuming(toolbox::Event::Reference e);
+	void enteringError(toolbox::Event::Reference e);
 
-	xoap::MessageReference MakeSystemLogbookEntry (xoap::MessageReference msg);
+	xoap::MessageReference MakeSystemLogbookEntry(xoap::MessageReference msg);
 
   private:
 	ConfigurationManager* theConfigurationManager_;
@@ -57,9 +57,9 @@ class ECLSupervisor : public CoreSupervisorBase
 	std::string                           ExperimentName;
 	std::string                           run;
 	std::chrono::steady_clock::time_point run_start;
-	int                                   duration_ms;  // For paused runs, don't count time spend in pause state
+	int duration_ms;  // For paused runs, don't count time spend in pause state
 
-	std::string EscapeECLString (std::string input = "");
+	std::string EscapeECLString(std::string input = "");
 
 	enum class WriteState
 	{
@@ -70,7 +70,7 @@ class ECLSupervisor : public CoreSupervisorBase
 		kError
 	};
 
-	int Write (WriteState state);
+	int Write(WriteState state);
 };
 }
 

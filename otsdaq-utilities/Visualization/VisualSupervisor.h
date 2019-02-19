@@ -6,42 +6,56 @@
 
 namespace ots
 {
-//VisualSupervisor
-//	This class handles the web user interface to a VisualDataManager with reqgard to the web desktop Visualizer.
-//	The Visualizer can display ROOT object in real-time, as well as 2D and 3D displays of streaming data.
+// VisualSupervisor
+//	This class handles the web user interface to a VisualDataManager with reqgard to the
+// web desktop Visualizer. 	The Visualizer can display ROOT object in real-time, as well
+// as 2D and 3D displays of streaming data.
 class VisualSupervisor : public CoreSupervisorBase
 {
   public:
-	XDAQ_INSTANTIATOR ();
+	XDAQ_INSTANTIATOR();
 
-	VisualSupervisor (xdaq::ApplicationStub* s);
-	virtual ~VisualSupervisor (void);
+	VisualSupervisor(xdaq::ApplicationStub* s);
+	virtual ~VisualSupervisor(void);
 
-	void destroy (void);
+	void destroy(void);
 
-	//virtual void 			defaultPage      				(xgi::Input* in, xgi::Output* out) override;
-	//void 					safariDefaultPage     			(xgi::Input* in, xgi::Output* out) ;
+	// virtual void 			defaultPage      				(xgi::Input* in,
+	// xgi::Output* out) override;  void 					safariDefaultPage (xgi::Input*
+	// in, xgi::Output* out) ;
 
-	virtual void request (const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
+	virtual void request(const std::string&               requestType,
+	                     cgicc::Cgicc&                    cgiIn,
+	                     HttpXmlDocument&                 xmlOut,
+	                     const WebUsers::RequestUserInfo& userInfo) override;
 
-	virtual void setSupervisorPropertyDefaults (void) override;
-	virtual void forceSupervisorPropertyValues (void) override;  //override to force supervisor property values (and ignore user settings)
+	virtual void setSupervisorPropertyDefaults(void) override;
+	virtual void forceSupervisorPropertyValues(void) override;  // override to force
+	                                                            // supervisor property
+	                                                            // values (and ignore user
+	                                                            // settings)
 
-	// RAR commented out below.. better/safer handling (of errors) done by CoreSupervisorBase
+	// RAR commented out below.. better/safer handling (of errors) done by
+	// CoreSupervisorBase
 
-	//void 					stateRunning         			(toolbox::fsm::FiniteStateMachine& fsm) ;
+	// void 					stateRunning (toolbox::fsm::FiniteStateMachine&
+	// fsm)
+	// ;
 
-	//virtual void 			transitionConfiguring 			(toolbox::Event::Reference e) ;
-	//virtual void 			transitionHalting     			(toolbox::Event::Reference e) ;
-	//virtual void 			transitionInitializing			(toolbox::Event::Reference e) ;
-	//    virtual void 			transitionPausing     			(toolbox::Event::Reference e) ;
-	//    virtual void 			transitionResuming    			(toolbox::Event::Reference e) ;
-	//    virtual void 			transitionStarting    			(toolbox::Event::Reference e) ;
-	//    virtual void 			transitionStopping    			(toolbox::Event::Reference e) ;
-	//virtual void 			enteringError         			(toolbox::Event::Reference e) ;
+	// virtual void 			transitionConfiguring 			(toolbox::Event::Reference
+	// e) ;  virtual void 			transitionHalting (toolbox::Event::Reference e) ;
+	// virtual void 			transitionInitializing (toolbox::Event::Reference e) ;
+	//    virtual void 			transitionPausing     			(toolbox::Event::Reference
+	//    e) ; virtual void 			transitionResuming (toolbox::Event::Reference e) ;
+	//    virtual void 			transitionStarting (toolbox::Event::Reference e) ; virtual
+	//    void 			transitionStopping (toolbox::Event::Reference e) ;
+	// virtual void 			enteringError         			(toolbox::Event::Reference
+	// e)
+	// ;
 
   private:
-	//void						binaryBufferToHexString		(char *buff, unsigned int len, std::string& dest);
+	// void						binaryBufferToHexString		(char *buff, unsigned int len,
+	// std::string& dest);
 
 	VisualDataManager* theDataManager_;
 	unsigned int       loadedRunNumber_;

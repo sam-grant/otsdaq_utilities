@@ -13,111 +13,126 @@
 using namespace ots;
 
 //========================================================================================================================
-VisualDataManager::VisualDataManager (const ConfigurationTree& theXDAQContextConfigTree, const std::string& supervisorConfigurationPath)
-    : DataManager (theXDAQContextConfigTree, supervisorConfigurationPath)
-    , theLiveDQMHistos_ (nullptr)
-    , theRawDataConsumer_ (nullptr)
-//, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos")
-//, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer", "FileDQMHistos",0)
-//, theFileDQMHistos_ ()
+VisualDataManager::VisualDataManager(const ConfigurationTree& theXDAQContextConfigTree,
+                                     const std::string&       supervisorConfigurationPath)
+    : DataManager(theXDAQContextConfigTree, supervisorConfigurationPath)
+    , theLiveDQMHistos_(nullptr)
+    , theRawDataConsumer_(nullptr)
+//, theFileDQMHistos_ (supervisorType, supervisorInstance, "VisualBuffer",
+//"FileDQMHistos") , theFileDQMHistos_ (supervisorType, supervisorInstance,
+//"VisualBuffer", "FileDQMHistos",0) , theFileDQMHistos_ ()
 {
 }
 
 //========================================================================================================================
-VisualDataManager::~VisualDataManager (void)
-{
-}
+VisualDataManager::~VisualDataManager(void) {}
 
 //========================================================================================================================
-void VisualDataManager::configure (void)
-{
-	DataManager::configure ();
-}
+void VisualDataManager::configure(void) { DataManager::configure(); }
 
 //========================================================================================================================
-void VisualDataManager::halt (void)
+void VisualDataManager::halt(void)
 {
 	theLiveDQMHistos_ = nullptr;
-	DataManager::halt ();
+	DataManager::halt();
 }
 
 //========================================================================================================================
-void VisualDataManager::pause (void)
+void VisualDataManager::pause(void)
 {
 	__CFG_COUT__ << "Pausing..." << std::endl;
-	DataManager::pause ();
+	DataManager::pause();
 }
 
 //========================================================================================================================
-void VisualDataManager::resume (void)
-{
-	DataManager::resume ();
-}
+void VisualDataManager::resume(void) { DataManager::resume(); }
 
 //========================================================================================================================
-void VisualDataManager::start (std::string runNumber)
+void VisualDataManager::start(std::string runNumber)
 {
 	__CFG_COUT__ << "Start!" << __E__;
 
 	theLiveDQMHistos_   = nullptr;
 	theRawDataConsumer_ = nullptr;
 
-	DataManager::start (runNumber);
+	DataManager::start(runNumber);
 
-	auto buffers = theXDAQContextConfigTree_.getNode (theConfigurationPath_ + "/LinkToDataBufferTable").getChildren ();
+	auto buffers = theXDAQContextConfigTree_
+	                   .getNode(theConfigurationPath_ + "/LinkToDataBufferTable")
+	                   .getChildren();
 
-	__CFG_COUT__ << "Buffer count " << buffers.size () << __E__;
+	__CFG_COUT__ << "Buffer count " << buffers.size() << __E__;
 
-	for (const auto& buffer : buffers)
+	for(const auto& buffer : buffers)
 	{
 		__CFG_COUT__ << "Data Buffer Name: " << buffer.first << std::endl;
-		if (buffer.second.getNode (ViewColumnInfo::COL_NAME_STATUS).getValue<bool> ())
+		if(buffer.second.getNode(TableViewColumnInfo::COL_NAME_STATUS).getValue<bool>())
 		{
 			std::vector<std::string> producers;
 			std::vector<std::string> consumers;
-			auto                     bufferConfigurationMap = buffer.second.getNode ("LinkToDataProcessorTable").getChildren ();
-			for (const auto& bufferConfiguration : bufferConfigurationMap)
+			auto                     bufferConfigurationMap =
+			    buffer.second.getNode("LinkToDataProcessorTable").getChildren();
+			for(const auto& bufferConfiguration : bufferConfigurationMap)
 			{
-				__CFG_COUT__ << "Processor id: " << bufferConfiguration.first << std::endl;
-				if (bufferConfiguration.second.getNode (ViewColumnInfo::COL_NAME_STATUS).getValue<bool> () && (bufferConfiguration.second.getNode ("ProcessorType").getValue<std::string> () == "Consumer"))
+				__CFG_COUT__ << "Processor id: " << bufferConfiguration.first
+				             << std::endl;
+				if(bufferConfiguration.second
+				       .getNode(TableViewColumnInfo::COL_NAME_STATUS)
+				       .getValue<bool>() &&
+				   (bufferConfiguration.second.getNode("ProcessorType")
+				        .getValue<std::string>() == "Consumer"))
 				{
-					__CFG_COUT__ << "Consumer Plugin Type = " << bufferConfiguration.second.getNode ("ProcessorPluginName") << __E__;
+					__CFG_COUT__
+					    << "Consumer Plugin Type = "
+					    << bufferConfiguration.second.getNode("ProcessorPluginName")
+					    << __E__;
 
-					auto bufferIt = buffers_.at (buffer.first);
-					for (const auto& consumer : bufferIt.consumers_)
+					auto bufferIt = buffers_.at(buffer.first);
+					for(const auto& consumer : bufferIt.consumers_)
 					{
-						__CFG_COUT__ << "CONSUMER PROCESSOR: " << consumer->getProcessorID () << std::endl;
-						if (consumer->getProcessorID () == bufferConfiguration.second.getNode ("ProcessorUID").getValue<std::string> ())
+						__CFG_COUT__
+						    << "CONSUMER PROCESSOR: " << consumer->getProcessorID()
+						    << std::endl;
+						if(consumer->getProcessorID() ==
+						   bufferConfiguration.second.getNode("ProcessorUID")
+						       .getValue<std::string>())
 						{
-							__CFG_COUT__ << "CONSUMER: " << consumer->getProcessorID () << std::endl;
+							__CFG_COUT__ << "CONSUMER: " << consumer->getProcessorID()
+							             << std::endl;
 
 							try
 							{
-								__CFG_COUT__ << "Trying for DQMHistosConsumerBase." << __E__;
-								theLiveDQMHistos_ = dynamic_cast<DQMHistosConsumerBase*> (consumer);
+								__CFG_COUT__ << "Trying for DQMHistosConsumerBase."
+								             << __E__;
+								theLiveDQMHistos_ =
+								    dynamic_cast<DQMHistosConsumerBase*>(consumer);
 
-								__CFG_COUT__ << "Did we succeed? " << theLiveDQMHistos_ << __E__;
+								__CFG_COUT__ << "Did we succeed? " << theLiveDQMHistos_
+								             << __E__;
 							}
-							catch (...)
+							catch(...)
 							{
-							}  //ignore failures
+							}  // ignore failures
 
-							if (theLiveDQMHistos_ == nullptr)
+							if(theLiveDQMHistos_ == nullptr)
 							{
 								__CFG_COUT__ << "Trying for raw data consumer." << __E__;
 
 								try
 								{
-									theRawDataConsumer_ = dynamic_cast<RawDataVisualizerConsumer*> (consumer);
+									theRawDataConsumer_ =
+									    dynamic_cast<RawDataVisualizerConsumer*>(
+									        consumer);
 								}
-								catch (...)
+								catch(...)
 								{
 								}
 
-								__CFG_COUT__ << "Did we succeed? " << theRawDataConsumer_ << __E__;
+								__CFG_COUT__ << "Did we succeed? " << theRawDataConsumer_
+								             << __E__;
 							}
 
-							if (!theLiveDQMHistos_ && !theRawDataConsumer_)
+							if(!theLiveDQMHistos_ && !theRawDataConsumer_)
 							{
 								__CFG_SS__ << "No valid visualizer consumer!" << __E__;
 								__CFG_SS_THROW__;
@@ -131,17 +146,17 @@ void VisualDataManager::start (std::string runNumber)
 }
 
 //========================================================================================================================
-void VisualDataManager::stop (void)
+void VisualDataManager::stop(void)
 {
 	theLiveDQMHistos_ = nullptr;
-	DataManager::stop ();
+	DataManager::stop();
 }
 
 //========================================================================================================================
-void VisualDataManager::load (std::string fileName, std::string type)
+void VisualDataManager::load(std::string fileName, std::string type)
 {
-	if (type == "Histograms")
-		theFileDQMHistos_.load (fileName);
+	if(type == "Histograms")
+		theFileDQMHistos_.load(fileName);
 	//	else if(type == "Monicelli")
 	//		theMonicelliEventAnalyzer_.load(fileName);
 	//	else if(type == "Geometry")
@@ -149,32 +164,26 @@ void VisualDataManager::load (std::string fileName, std::string type)
 }
 
 //========================================================================================================================
-DQMHistosBase* VisualDataManager::getLiveDQMHistos (void)
-{
-	return theLiveDQMHistos_;
-}
+DQMHistosBase* VisualDataManager::getLiveDQMHistos(void) { return theLiveDQMHistos_; }
 
 //========================================================================================================================
-DQMHistosBase& VisualDataManager::getFileDQMHistos (void)
-{
-	return theFileDQMHistos_;
-}
+DQMHistosBase& VisualDataManager::getFileDQMHistos(void) { return theFileDQMHistos_; }
 //========================================================================================================================
-const std::string& VisualDataManager::getRawData (void)
+const std::string& VisualDataManager::getRawData(void)
 {
 	//__CFG_COUT__ << __E__;
 
-	return theRawDataConsumer_->getLastRawDataBuffer ();
+	return theRawDataConsumer_->getLastRawDataBuffer();
 }
 
 ////========================================================================================================================
-//const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)
+// const Visual3DEvents& VisualDataManager::getVisual3DEvents(void)
 //{
 //	return theMonicelliEventAnalyzer_.getEvents();
 //}
 //
 ////========================================================================================================================
-//const Visual3DGeometry& VisualDataManager::getVisual3DGeometry(void)
+// const Visual3DGeometry& VisualDataManager::getVisual3DGeometry(void)
 //{
 //	return theMonicelliGeometryConverter_.getGeometry();
 //}

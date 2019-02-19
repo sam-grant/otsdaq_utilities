@@ -1,4 +1,4 @@
-//MF_ReceiveAndForward.cpp
+// MF_ReceiveAndForward.cpp
 //    by rrivera at fnal dot gov
 //	  created Feb 2016
 //
@@ -10,13 +10,13 @@
 //
 //
 //
-//compile with:
-//g++ MF_ReceiveAndForward.cpp -o MF_ReceiveAndForward.o
+// compile with:
+// g++ MF_ReceiveAndForward.cpp -o MF_ReceiveAndForward.o
 //
-//if developing, consider appending -D_GLIBCXX_DEBUG to get more
-//descriptive error messages
+// if developing, consider appending -D_GLIBCXX_DEBUG to get more
+// descriptive error messages
 //
-//run with:
+// run with:
 //./MF_ReceiveAndForward.o <optional port file name>
 //
 //
@@ -43,16 +43,17 @@ using namespace std;
 #define MAXBUFLEN 5000
 
 // get sockaddr, IPv4 or IPv6:
-void *get_in_addr (struct sockaddr *sa)
+void* get_in_addr(struct sockaddr* sa)
 {
-	if (sa->sa_family == AF_INET) {
-		return &(((struct sockaddr_in *)sa)->sin_addr);
+	if(sa->sa_family == AF_INET)
+	{
+		return &(((struct sockaddr_in*)sa)->sin_addr);
 	}
 
-	return &(((struct sockaddr_in6 *)sa)->sin6_addr);
+	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int makeSocket (const char *ip, int port, struct addrinfo *&p)
+int makeSocket(const char* ip, int port, struct addrinfo*& p)
 {
 	int                     sockfd;
 	struct addrinfo         hints, *servinfo;
@@ -62,77 +63,81 @@ int makeSocket (const char *ip, int port, struct addrinfo *&p)
 	socklen_t               addr_len;
 	char                    s[INET6_ADDRSTRLEN];
 
-	memset (&hints, 0, sizeof hints);
+	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
 	char portStr[10];
-	sprintf (portStr, "%d", port);
-	if ((rv = getaddrinfo (ip, portStr, &hints, &servinfo)) != 0) {
-		fprintf (stderr, "getaddrinfo: %s\n", gai_strerror (rv));
+	sprintf(portStr, "%d", port);
+	if((rv = getaddrinfo(ip, portStr, &hints, &servinfo)) != 0)
+	{
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
 	// loop through all the results and make a socket
-	for (p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket (p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			perror ("sw: socket");
+	for(p = servinfo; p != NULL; p = p->ai_next)
+	{
+		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+		{
+			perror("sw: socket");
 			continue;
 		}
 
 		break;
 	}
 
-	if (p == NULL) {
-		fprintf (stderr, "sw: failed to create socket\n");
+	if(p == NULL)
+	{
+		fprintf(stderr, "sw: failed to create socket\n");
 		return 2;
 	}
 
-	freeaddrinfo (servinfo);
+	freeaddrinfo(servinfo);
 
 	return sockfd;
 }
 
-int main (int argc, char **argv)
+int main(int argc, char** argv)
 {
-	std::cout << "\n\n"
-	          << __FILE__ << "\tStarting...\n\n"
-	          << std::endl;
+	std::cout << "\n\n" << __FILE__ << "\tStarting...\n\n" << std::endl;
 
-	std::string myPort_ ("3000");        //set default
-	std::string myFwdPort_ ("3001");     //set default
-	std::string myFwdIP_ ("127.0.0.1");  //set default
-	if (argc >= 2)
+	std::string myPort_("3000");        // set default
+	std::string myFwdPort_("3001");     // set default
+	std::string myFwdIP_("127.0.0.1");  // set default
+	if(argc >= 2)
 	{
 		std::cout << "\n\n"
 		          << __FILE__ << "\t port parameter file:" << argv[1] << "\n\n"
 		          << std::endl;
-		FILE *fp = fopen (argv[1], "r");
-		if (fp)
+		FILE* fp = fopen(argv[1], "r");
+		if(fp)
 		{
 			char tmp[100];
 			char tmpParamStr[100];
-			fgets (tmp, 100, fp);
-			sscanf (tmp, "%*s %s", tmpParamStr);
+			fgets(tmp, 100, fp);
+			sscanf(tmp, "%*s %s", tmpParamStr);
 			myPort_ = tmpParamStr;
-			fgets (tmp, 100, fp);
-			sscanf (tmp, "%*s %s", tmpParamStr);
+			fgets(tmp, 100, fp);
+			sscanf(tmp, "%*s %s", tmpParamStr);
 			myFwdPort_ = tmpParamStr;
-			fgets (tmp, 100, fp);
-			sscanf (tmp, "%*s %s", tmpParamStr);
+			fgets(tmp, 100, fp);
+			sscanf(tmp, "%*s %s", tmpParamStr);
 			myFwdIP_ = tmpParamStr;
-			fclose (fp);
+			fclose(fp);
 		}
-		else  //else use defaults
+		else  // else use defaults
 			std::cout << "\n\n"
-			          << __FILE__ << "\t port parameter file failed to open: " << argv[1] << "\n\n"
+			          << __FILE__ << "\t port parameter file failed to open: " << argv[1]
+			          << "\n\n"
 			          << std::endl;
 	}
 	std::cout << "\n\n"
-	          << __FILE__ << "\t Forwarding from: " << myPort_ << " to: " << myFwdIP_ << ":" << myFwdPort_ << "\n\n"
+	          << __FILE__ << "\t Forwarding from: " << myPort_ << " to: " << myFwdIP_
+	          << ":" << myFwdPort_ << "\n\n"
 	          << std::endl;
 
 	int myFwdPort;
-	sscanf (myFwdPort_.c_str (), "%d", &myFwdPort);
+	sscanf(myFwdPort_.c_str(), "%d", &myFwdPort);
 
 	int sockfd;
 	int sendSockfd = 0;
@@ -145,49 +150,49 @@ int main (int argc, char **argv)
 	socklen_t               addr_len;
 	char                    s[INET6_ADDRSTRLEN];
 
-	memset (&hints, 0, sizeof hints);
+	memset(&hints, 0, sizeof hints);
 	hints.ai_family   = AF_UNSPEC;  // set to AF_INET to force IPv4
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags    = AI_PASSIVE;  // use my IP
 
-	if ((rv = getaddrinfo (
-	         NULL,
-	         myPort_.c_str (),
-	         &hints,
-	         &servinfo)) != 0)
+	if((rv = getaddrinfo(NULL, myPort_.c_str(), &hints, &servinfo)) != 0)
 	{
-		fprintf (stderr, "getaddrinfo: %s\n", gai_strerror (rv));
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
 	// loop through all the results and bind to the first we can
-	for (p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket (p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-			perror ("listener: socket");
+	for(p = servinfo; p != NULL; p = p->ai_next)
+	{
+		if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+		{
+			perror("listener: socket");
 			continue;
 		}
 
-		if (bind (sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close (sockfd);
-			perror ("listener: bind");
+		if(bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+		{
+			close(sockfd);
+			perror("listener: bind");
 			continue;
 		}
 
 		break;
 	}
 
-	if (p == NULL) {
-		fprintf (stderr, "listener: failed to bind socket\n");
+	if(p == NULL)
+	{
+		fprintf(stderr, "listener: failed to bind socket\n");
 		return 2;
 	}
 
-	freeaddrinfo (servinfo);
+	freeaddrinfo(servinfo);
 
 	//////////////////////////////////////////////////////////////////////
 	////////////// ready to go //////////////
 	//////////////////////////////////////////////////////////////////////
 
-	//hardware "registers"
+	// hardware "registers"
 	uint64_t data_gen_cnt  = 0;
 	uint64_t data_gen_rate = 1 << 16;
 	uint8_t  dataEnabled   = 0;
@@ -198,38 +203,44 @@ int main (int argc, char **argv)
 
 	unsigned int packetSz;
 
-	//for timeout/select
+	// for timeout/select
 	struct timeval tv;
 	fd_set         readfds, masterfds;
 	tv.tv_sec  = 0;
 	tv.tv_usec = 500000;
-	FD_ZERO (&masterfds);
-	FD_SET (sockfd, &masterfds);
+	FD_ZERO(&masterfds);
+	FD_SET(sockfd, &masterfds);
 
 	time_t count = 0;
 
-	int       mf_p, mf_i, mf_j;  //for extracting message
+	int       mf_p, mf_i, mf_j;  // for extracting message
 	const int MF_POS_OF_TYPE = 5;
 	const int MF_POS_OF_MSG  = 11;
 	bool      firstPartPresent;
 
-	//this should ip/port of Console xdaq app Receiver port
-	sendSockfd = makeSocket (myFwdIP_.c_str (), myFwdPort, p);
+	// this should ip/port of Console xdaq app Receiver port
+	sendSockfd = makeSocket(myFwdIP_.c_str(), myFwdPort, p);
 
-	while (1)
+	while(1)
 	{
-		readfds = masterfds;  //copy to reset timeout select
-		select (sockfd + 1, &readfds, NULL, NULL, &tv);
+		readfds = masterfds;  // copy to reset timeout select
+		select(sockfd + 1, &readfds, NULL, NULL, &tv);
 
-		if (FD_ISSET (sockfd, &readfds))
+		if(FD_ISSET(sockfd, &readfds))
 		{
-			//packet received
-			//cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
+			// packet received
+			// cout << "hw: Line " << __LINE__ << ":::" << "Packet Received!" << endl;
 
 			addr_len = sizeof their_addr;
-			if ((numbytes = recvfrom (sockfd, buff, MAXBUFLEN - 1, 0, (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-				perror ("recvfrom");
-				exit (1);
+			if((numbytes = recvfrom(sockfd,
+			                        buff,
+			                        MAXBUFLEN - 1,
+			                        0,
+			                        (struct sockaddr*)&their_addr,
+			                        &addr_len)) == -1)
+			{
+				perror("recvfrom");
+				exit(1);
 			}
 
 			//			printf("hw: got packet from %s\n",
@@ -246,39 +257,41 @@ int main (int argc, char **argv)
 			//			}
 			//			printf("\n");
 
-			//print message without decoration
-			//find position of message and save to p
-			//by jumping to the correct '|' marker
-			buff[numbytes] = '\0';  //make sure it is null terminated
+			// print message without decoration
+			// find position of message and save to p
+			// by jumping to the correct '|' marker
+			buff[numbytes] = '\0';  // make sure it is null terminated
 
-			//DEBUG -- for indentifying strange MessageFacility bug with clipped messages
-			//std::cout << "+" << ((int)strlen(buff)==numbytes?1:0) << " " << buff << std::endl;
-			//			if((int)strlen(buff)!=numbytes)
+			// DEBUG -- for indentifying strange MessageFacility bug with clipped messages
+			// std::cout << "+" << ((int)strlen(buff)==numbytes?1:0) << " " << buff <<
+			// std::endl; 			if((int)strlen(buff)!=numbytes)
 			//			{
 			//				for(int iii=strlen(buff)-3;iii<numbytes;++iii)
-			//					std::cout << (int)buff[iii] << "-" << (char)buff[iii] << " ";
-			//				std::cout << numbytes << " " << strlen(buff) << std::endl;
+			//					std::cout << (int)buff[iii] << "-" << (char)buff[iii] << "
+			//"; 				std::cout << numbytes << " " << strlen(buff) << std::endl;
 			//				std::cout << std::endl;
 			//			}
 
-			//count markers to find message
+			// count markers to find message
 
-			//std::cout << "|||" << buff << std::endl; // show all
+			// std::cout << "|||" << buff << std::endl; // show all
 
-			for (mf_p = 0, mf_i = 0; mf_i < numbytes && mf_p < MF_POS_OF_TYPE; ++mf_i)
-				if (buff[mf_i] == '|') ++mf_p;  //count markers
+			for(mf_p = 0, mf_i = 0; mf_i < numbytes && mf_p < MF_POS_OF_TYPE; ++mf_i)
+				if(buff[mf_i] == '|')
+					++mf_p;  // count markers
 
-			for (mf_j = mf_i; mf_j < numbytes && mf_p < MF_POS_OF_TYPE + 1; ++mf_j)
-				if (buff[mf_j] == '|') ++mf_p;  //count markers
+			for(mf_j = mf_i; mf_j < numbytes && mf_p < MF_POS_OF_TYPE + 1; ++mf_j)
+				if(buff[mf_j] == '|')
+					++mf_p;  // count markers
 
-			//print first part (message type)
-			if (mf_i < mf_j && mf_j < numbytes)
+			// print first part (message type)
+			if(mf_i < mf_j && mf_j < numbytes)
 			{
 				buff[mf_j - 1] = '\0';
 				std::cout << &buff[mf_i - 1];
 
-				//tab for all types but Warning
-				if (strcmp (&buff[mf_i - 1], "|Warning") != 0)
+				// tab for all types but Warning
+				if(strcmp(&buff[mf_i - 1], "|Warning") != 0)
 					std::cout << "\t";
 
 				firstPartPresent = true;
@@ -286,29 +299,32 @@ int main (int argc, char **argv)
 			else
 				firstPartPresent = false;
 
-			for (mf_i = mf_j; mf_i < numbytes && mf_p < MF_POS_OF_MSG; ++mf_i)
-				if (buff[mf_i] == '|') ++mf_p;  //count markers
+			for(mf_i = mf_j; mf_i < numbytes && mf_p < MF_POS_OF_MSG; ++mf_i)
+				if(buff[mf_i] == '|')
+					++mf_p;  // count markers
 
-			//print second part
-			if (mf_i < numbytes)                            //if valid find, show message
+			// print second part
+			if(mf_i < numbytes)                             // if valid find, show message
 				std::cout << &buff[mf_i - 1] << std::endl;  // show msg after '|'
-			else if (firstPartPresent)
+			else if(firstPartPresent)
 				std::cout << std::endl;
 
-			//forward packet onto sendSockfd
+			// forward packet onto sendSockfd
 
-			if ((numbytes = sendto (sendSockfd, buff, numbytes, 0, p->ai_addr, p->ai_addrlen)) == -1) {
-				perror ("hw: sendto");
-				exit (1);
+			if((numbytes = sendto(
+			        sendSockfd, buff, numbytes, 0, p->ai_addr, p->ai_addrlen)) == -1)
+			{
+				perror("hw: sendto");
+				exit(1);
 			}
-			//printf("hw: sent %d bytes on\n", numbytes);
+			// printf("hw: sent %d bytes on\n", numbytes);
 		}
 		else
-			sleep (1);  //one second
+			sleep(1);  // one second
 	}
 
-	close (sockfd);
-	close (sendSockfd);
+	close(sockfd);
+	close(sendSockfd);
 
 	return 0;
 }
