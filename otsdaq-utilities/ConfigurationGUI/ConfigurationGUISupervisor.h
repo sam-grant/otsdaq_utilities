@@ -63,17 +63,17 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                                          TableGroupKey           groupKey,
 	                                          const std::string&      author);
 	void handleVersionAliasesXML(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
-	void handleConfigurationGroupsXML(HttpXmlDocument&        xmldoc,
+	void handleTableGroupsXML(HttpXmlDocument&        xmldoc,
 	                                  ConfigurationManagerRW* cfgMgr,
 	                                  bool                    returnMembers);
-	void handleGetConfigurationGroupXML(HttpXmlDocument&        xmldoc,
+	void handleGetTableGroupXML(HttpXmlDocument&        xmldoc,
 	                                    ConfigurationManagerRW* cfgMgr,
 	                                    const std::string&      groupName,
 	                                    TableGroupKey           groupKey);
-	void handleGetConfigurationGroupTypeXML(HttpXmlDocument&        xmldoc,
+	void handleGetTableGroupTypeXML(HttpXmlDocument&        xmldoc,
 	                                        ConfigurationManagerRW* cfgMgr,
 	                                        const std::string&      configList);
-	void handleCreateConfigurationGroupXML(HttpXmlDocument&        xmldoc,
+	void handleCreateTableGroupXML(HttpXmlDocument&        xmldoc,
 	                                       ConfigurationManagerRW* cfgMgr,
 	                                       const std::string&      groupName,
 	                                       const std::string&      configList,

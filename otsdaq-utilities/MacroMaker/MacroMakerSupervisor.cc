@@ -193,7 +193,7 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 		__SUP_COUTV__(groupKey);
 
 		ConfigurationManager cfgMgr;
-		cfgMgr.loadConfigurationGroup(groupName, TableGroupKey(groupKey), true);
+		cfgMgr.loadTableGroup(groupName, TableGroupKey(groupKey), true);
 
 		// for each FESupervisor
 		// get all front end children

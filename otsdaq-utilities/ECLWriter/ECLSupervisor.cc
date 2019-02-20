@@ -97,22 +97,22 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 {
 	// try
 	{
-		// theTableGroupKey_ =
+		// theConfigurationTableGroupKey_ =
 		// theConfigurationManager_->makeTheTableGroupKey(atoi(SOAPUtilities::translate(theStateMachine_.getCurrentMessage()).getParameters().getValue("TableGroupKey").c_str()));
-		// theConfigurationManager_->activateTableGroupKey(theTableGroupKey_,0);
+		// theConfigurationManager_->activateTableGroupKey(theConfigurationTableGroupKey_,0);
 
 		std::pair<std::string /*group name*/, TableGroupKey> theGroup(
 		    SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
 		        .getParameters()
-		        .getValue("ConfigurationGroupName"),
+		        .getValue("ConfigurationTableGroupName"),
 		    TableGroupKey(SOAPUtilities::translate(theStateMachine_.getCurrentMessage())
 		                      .getParameters()
-		                      .getValue("TableGroupKey")));
+		                      .getValue("ConfigurationTableGroupKey")));
 
 		__COUT__ << "Configuration group name: " << theGroup.first
 		         << " key: " << theGroup.second << std::endl;
 
-		theConfigurationManager_->loadConfigurationGroup(
+		theConfigurationManager_->loadTableGroup(
 		    theGroup.first, theGroup.second, true);
 
 		ConfigurationTree configLinkNode =

@@ -284,20 +284,20 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 
 	//get aliases
 	if(!optionForNoGroups)
-		DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+		DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups"
 				+"&doNotReturnMembers=1", //end get data 
 				"", //end post data
 				function(req)
 				{
-		Debug.log("getConfigurationGroups handler");
+		Debug.log("getTableGroups handler");
 
 		retObj.activeGroups = {}; //clear
 		retObj.activeGroups = ConfigurationAPI.extractActiveGroups(req);
 		
-		var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-		var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-		var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
-		var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+		var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+		var groupKeys = req.responseXML.getElementsByTagName("TableGroupKey");
+		var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
+		var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 
 		retObj.groups = {}; //clear
 		
@@ -540,7 +540,7 @@ ConfigurationAPI.getTreeRecordLinks = function(node)
 		
 		for(var j=0;j<subchildren.length;++j)
 		{
-			if(subchildren[j].nodeName == "LinkConfigurationName")
+			if(subchildren[j].nodeName == "LinkTableName")
 			{
 				retArr.push(children[i]);
 				break;
@@ -608,7 +608,7 @@ ConfigurationAPI.getTreeLinkTable = function(link)
 {
 	var children = link.children;	
 	for(var i=0;i<children.length;++i)
-		if(children[i].nodeName == "LinkConfigurationName")
+		if(children[i].nodeName == "LinkTableName")
 			return children[i].getAttribute("value");
 	throw("Table name not found!");	
 } //end getTreeLinkTable
@@ -1832,7 +1832,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			for(var i=0;i<affectedGroupNames.length;++i)
 			{	
 				reqStr = ""; //reuse
-				reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+				reqStr = "Request?RequestType=saveNewTableGroup" +
 						"&groupName=" + affectedGroupNames[i] +
 						"&allowDuplicates=0" +
 						"&lookForEquivalent=1" + 
@@ -1908,7 +1908,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					++numberOfReturns;
 
-					var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+					var newGroupKey = DesktopContent.getXMLValue(req,"TableGroupKey");									
 					affectedGroupKeys.push(newGroupKey);
 
 					{
@@ -2429,7 +2429,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
 		lookForEquivalent)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +
 			groupName + 
 			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
 			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
@@ -2438,8 +2438,8 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");
-		var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-		var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+		var name = DesktopContent.getXMLValue(req,"TableGroupName");
+		var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 		var newGroupCreated = true;
 		if(err) 
 		{
@@ -2495,7 +2495,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 				});	//end of activate new backbone handler
 
 			},0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of backbone saveNewConfigurationGroup handler
+	); //end of backbone saveNewTableGroup handler
 } //end ConfigurationAPI.saveGroupAndActivate
 
 //=====================================================================================

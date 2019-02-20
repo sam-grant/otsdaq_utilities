@@ -260,7 +260,7 @@
 				//attemp to power through
 			}
 
-			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configNames = req.responseXML.getElementsByTagName("TableName");
 			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 
 			//Save Column Info as...
@@ -479,7 +479,7 @@
 		//specificConfigRequestHandler
 		function specificConfigRequestHandler(req, isFromSaveReq) {
 
-			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			var configName = DesktopContent.getXMLValue(req,"TableName");
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{				

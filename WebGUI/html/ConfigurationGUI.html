@@ -698,7 +698,7 @@
 			
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups", "", 
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups", "", 
 					configGroupsRequestHandler, anchorTarget,
 					0/*progressHandler*/,true /*callHandlerOnErr*/);		
 		} //end setupGroupViewMode()
@@ -783,7 +783,7 @@
 			if(anchorTarget && anchorTarget != "")
 				param += "&anchorTarget=" + anchorTarget;
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfigurationGroup" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTableGroup" +
 					"&groupName=" + groupName +
 					"&groupKey=" + groupKey,
 					"", specificGroupRequestHandler, param,
@@ -897,7 +897,7 @@
 			var groupAliasesVersion = 
 					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationVersion");		
 			var groupAliasesName = 
-					DesktopContent.getXMLValue(req,"GroupAliasesConfigurationName");		
+					DesktopContent.getXMLValue(req,"GroupAliasesTableName");		
 
 			var str = ""; //string for html content			
 			str += "<div style='display:none'>System View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
@@ -1184,10 +1184,10 @@
 			
 			activateSystemConfigHandler(req);
 
-			var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-			var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-			var membersHdr = req.responseXML.getElementsByTagName("ConfigurationGroupMembers");
-			var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+			var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+			var keys = req.responseXML.getElementsByTagName("TableGroupKey");
+			var membersHdr = req.responseXML.getElementsByTagName("TableGroupMembers");
+			var types = req.responseXML.getElementsByTagName("TableGroupType");
 					
 			var groupName, key;
 			
@@ -1537,7 +1537,7 @@
 		//tableViewRequestHandler ~~
 		function tableViewRequestHandler(req, anchorTarget)
 		{					
-			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configNames = req.responseXML.getElementsByTagName("TableName");
 			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 			
 			var el = document.getElementById("display");
@@ -1607,8 +1607,8 @@
 			
 			var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 
-			var groupName = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-			var groupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var groupName = DesktopContent.getXMLValue(req,"TableGroupName");
+			var groupKey = DesktopContent.getXMLValue(req,"TableGroupKey");
 			
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
@@ -1691,8 +1691,8 @@
 				}			
 			}
 			
-			var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
-			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalConfigurationGroupKey");
+			var groupType = DesktopContent.getXMLValue(req,"TableGroupType");
+			var historicalKeys = req.responseXML.getElementsByTagName("HistoricalTableGroupKey");
 
 			var configNames = req.responseXML.getElementsByTagName("MemberName");
 			var configVersions = req.responseXML.getElementsByTagName("MemberVersion");
@@ -1760,11 +1760,11 @@
 			{
 				str += "<div id='clearDiv'></div>";
 				str += "<div id='groupDetails' style='display:block'>Group Details:";
-				var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
+				var groupComment = DesktopContent.getXMLValue(req,"TableGroupComment");
 				groupComment = decodeURIComponent(groupComment);
 				_cachedGroupComment = groupComment;
-				var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-				var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
+				var groupAuthor = DesktopContent.getXMLValue(req,"TableGroupAuthor");
+				var groupCreationTime = DesktopContent.getXMLValue(req,"TableGroupCreationTime");
 				groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
 				
 				str += "<table border='0' style='" +
@@ -2056,10 +2056,10 @@
 						
 			activateSystemConfigHandler(req); //display active config groups
 			
-			var configName = DesktopContent.getXMLValue(req,"ConfigurationName");
+			var configName = DesktopContent.getXMLValue(req,"TableName");
 			var version = DesktopContent.getXMLValue(req,"ConfigurationVersion");
 									
-			var existingNames = req.responseXML.getElementsByTagName("ExistingConfigurationNames");	
+			var existingNames = req.responseXML.getElementsByTagName("ExistingTableNames");	
 			_tableLinkDropdownChoices = [];
 			for(var i=0;i<existingNames.length;++i)
 				_tableLinkDropdownChoices.push(existingNames[i].getAttribute("value"));
@@ -3419,7 +3419,7 @@
 							"DISCONNECTED" +
 							"</label>";
 					
-					tableLinkName = nodes[i].children[offset++].getAttribute("value"); //LinkConfigurationName node
+					tableLinkName = nodes[i].children[offset++].getAttribute("value"); //LinkTableName node
 					--childrenLength; //subtract the tableLinkName name node from children length
 					childLinkIndex = nodes[i].children[offset++].getAttribute("value"); //LinkIndex node					
 					--childrenLength; //subtract the childLinkIndex node from children length
@@ -4769,7 +4769,7 @@
 					"", function(req) 
 					{
 				
-				var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+				var configNames = req.responseXML.getElementsByTagName("TableName");
 				var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 				
 				var name;
@@ -4829,8 +4829,8 @@
 						function(req)
 						{
 					var err = DesktopContent.getXMLValue(req,"Error");
-					var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-					var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+					var name = DesktopContent.getXMLValue(req,"TableGroupName");
+					var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 					if(err) 
 					{
 						if(!name || !key)
@@ -4906,7 +4906,7 @@
 
 						},
 						0,0,true  //reqParam, progressHandler, callHandlerOnErr
-				); //end of saveNewConfigurationGroup handler
+				); //end of saveNewTableGroup handler
 
 
 					});	//end of getConfigurations handler
@@ -4915,7 +4915,7 @@
 		//saveGroupAndActivate
 		function saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
 		{
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup" +
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup" +
 					"&groupName=" +	groupName +
 					"&allowDuplicates=0" +
 					"&lookForEquivalent=1" +
@@ -4924,8 +4924,8 @@
 					function(req)
 					{
 				var err = DesktopContent.getXMLValue(req,"Error");
-				var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-				var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+				var name = DesktopContent.getXMLValue(req,"TableGroupName");
+				var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 				var newBackbone = true;
 				if(err) 
 				{
@@ -4980,7 +4980,7 @@
 						});	//end of activate new backbone handler
 
 					},0,0,true  //reqParam, progressHandler, callHandlerOnErr
-			); //end of backbone saveNewConfigurationGroup handler
+			); //end of backbone saveNewTableGroup handler
 		}
 			
 		//setupConfigCreator ~
@@ -5060,7 +5060,7 @@
 			str += "Group Name: <input id='newConfigName'/>";
 			str += "<br><br>";
 			
-			var configNames = req.responseXML.getElementsByTagName("ConfigurationName");
+			var configNames = req.responseXML.getElementsByTagName("TableName");
 			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
 			var name;
 			var configVersions, version;
@@ -5389,8 +5389,8 @@
 				return;
 			}
 			
-			var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-			var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+			var name = DesktopContent.getXMLValue(req,"TableGroupName");
+			var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 			var str = "";
 			
 			str += "<br>";
@@ -8582,7 +8582,7 @@
 					affectedGroupMemberMaps.push(configMap);
 					
 					reqStr = ""; //reuse
-					reqStr = "Request?RequestType=getConfigurationGroupType";
+					reqStr = "Request?RequestType=getTableGroupType";
 							
 					Debug.log(reqStr);
 					Debug.log(configMap);
@@ -8605,7 +8605,7 @@
 
 						++numberOfReturns;
 						
-						var groupType = DesktopContent.getXMLValue(req,"ConfigurationGroupType");
+						var groupType = DesktopContent.getXMLValue(req,"TableGroupType");
 						Debug.log("groupType = " + groupType);
 						
 						if(groupType == "Configuration")
@@ -8889,7 +8889,7 @@
 							var configMap = affectedGroupMemberMaps[i];
 	
 							reqStr = ""; //reuse
-							reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+							reqStr = "Request?RequestType=saveNewTableGroup" +
 									"&groupName=" + affectedGroupNames[i] +
 									"&allowDuplicates=0" +
 									"&lookForEquivalent=1" +
@@ -8946,7 +8946,7 @@
 
 								++numberOfReturns;
 
-								var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+								var newGroupKey = DesktopContent.getXMLValue(req,"TableGroupKey");									
 								affectedGroupKeys.push(newGroupKey);
 
 								var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
@@ -8997,10 +8997,10 @@
 									{
 										str = "";
 										str += "Root-Group Details:";
-										var groupComment = DesktopContent.getXMLValue(req,"ConfigurationGroupComment");
+										var groupComment = DesktopContent.getXMLValue(req,"TableGroupComment");
 										groupComment = decodeURIComponent(groupComment);								
-										var groupAuthor = DesktopContent.getXMLValue(req,"ConfigurationGroupAuthor");
-										var groupCreationTime = DesktopContent.getXMLValue(req,"ConfigurationGroupCreationTime");
+										var groupAuthor = DesktopContent.getXMLValue(req,"TableGroupAuthor");
+										var groupCreationTime = DesktopContent.getXMLValue(req,"TableGroupCreationTime");
 										groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
 
 										str += "<table border='0' style='" +
@@ -13080,7 +13080,7 @@
 
 					affectedGroupNames.push(affectedArr[0]);		
 					reqStr = ""; //reuse
-					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+					reqStr = "Request?RequestType=saveNewTableGroup" +
 							"&groupName=" + affectedArr[0] +
 							"&allowDuplicates=0" +
 							"&lookForEquivalent=1" +
@@ -13137,7 +13137,7 @@
 
 						++numberOfReturns;
 
-						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+						var newGroupKey = DesktopContent.gTableGroupnfigurationGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
 						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
@@ -13674,7 +13674,7 @@
 					affectedGroupNames.push(groupName);
 					
 					reqStr = ""; //reuse
-					reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+					reqStr = "Request?RequestType=saveNewTableGroup" +
 							"&groupName=" + affectedGroupNames[i] +
 							"&allowDuplicates=0" +
 							"&lookForEquivalent=1" +
@@ -13729,7 +13729,7 @@
 
 						++numberOfReturns;
 
-						var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+						var newGroupKey = DesktopContent.getXMLValue(req,"TableGroupKey");									
 						affectedGroupKeys.push(newGroupKey);
 
 						var foundEquivalentKey = DesktopContent.getXMLValue(req,"foundEquivalentKey")|0; //as int
@@ -14100,7 +14100,7 @@
 			
 			//get existing group aliases	
 			///////////////////////////////////////////////////////////
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups" +	
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups" +	
 					"",
 					"",
 					function(req) 
@@ -14113,9 +14113,9 @@
 					return;
 				}
 				
-				var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-				var keys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-				var types = req.responseXML.getElementsByTagName("ConfigurationGroupType");
+				var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+				var keys = req.responseXML.getElementsByTagName("TableGroupKey");
+				var types = req.responseXML.getElementsByTagName("TableGroupType");
 
 				var groupName, lastGroupName;
 				
@@ -14301,7 +14301,7 @@
 
 
 					},0,0,true //reqParam, progressHandler, callHandlerOnErr
-			); //end of getConfigurationGroups handler
+			); //end of getTableGroups handler
 
 
 			document.getElementById("display").appendChild(el); //add element to display div

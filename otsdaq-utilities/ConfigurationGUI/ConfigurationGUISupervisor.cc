@@ -157,13 +157,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	setVersionAliasInActiveBackbone
 	//	setAliasOfGroupMembers
 	//	getVersionAliases
-	//	getConfigurationGroups
-	//	getConfigurationGroupType
-	//	getConfigurations
+	//	getTableGroups
+	//	getTableGroupType
+	//	getTables
 	//	getContextMemberNames
 	//	getBackboneMemberNames
 	//	getIterateMemberNames
-	//	getSpecificConfigurationGroup
+	//	getSpecificTableGroup
 	//	saveNewTableGroup
 	//	getSpecificConfiguration
 	//	saveSpecificConfiguration
@@ -422,7 +422,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			try
 			{
 				cfgMgr->clearAllCachedVersions();
-				cfgMgr->restoreActiveConfigurationGroups(true);
+				cfgMgr->restoreActiveTableGroups(true);
 			}
 			catch(std::runtime_error& e)
 			{
@@ -504,7 +504,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	{
 		handleVersionAliasesXML(xmlOut, cfgMgr);
 	}
-	else if(requestType == "getConfigurationGroups")
+	else if(requestType == "getTableGroups")
 	{
 		bool doNotReturnMembers =
 		    CgiDataUtilities::getDataAsInt(cgiIn, "doNotReturnMembers") == 1
@@ -512,17 +512,17 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		        : false;  // from GET
 
 		__SUP_COUT__ << "doNotReturnMembers: " << doNotReturnMembers << __E__;
-		handleConfigurationGroupsXML(xmlOut, cfgMgr, !doNotReturnMembers);
+		handleTableGroupsXML(xmlOut, cfgMgr, !doNotReturnMembers);
 	}
-	else if(requestType == "getConfigurationGroupType")
+	else if(requestType == "getTableGroupType")
 	{
 		std::string configList =
 		    CgiDataUtilities::postData(cgiIn, "configList");  // from POST
 		__SUP_COUT__ << "configList: " << configList << __E__;
 
-		handleGetConfigurationGroupTypeXML(xmlOut, cfgMgr, configList);
+		handleGetTableGroupTypeXML(xmlOut, cfgMgr, configList);
 	}
-	else if(requestType == "getConfigurations")
+	else if(requestType == "getTables")
 	{
 		std::string allowIllegalColumns =
 		    CgiDataUtilities::getData(cgiIn, "allowIllegalColumns");  // from GET
@@ -552,7 +552,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		for(auto& member : members)
 			xmlOut.addTextElementToData("IterateMember", member);
 	}
-	else if(requestType == "getSpecificConfigurationGroup")
+	else if(requestType == "getSpecificTableGroup")
 	{
 		std::string groupName = CgiDataUtilities::getData(cgiIn, "groupName");  // from
 		                                                                        // GET
@@ -561,7 +561,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "groupName: " << groupName << __E__;
 		__SUP_COUT__ << "groupKey: " << groupKey << __E__;
 
-		handleGetConfigurationGroupXML(
+		handleGetTableGroupXML(
 		    xmlOut, cfgMgr, groupName, TableGroupKey(groupKey));
 	}
 	else if(requestType == "saveNewTableGroup")
@@ -586,7 +586,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "lookForEquivalent: " << lookForEquivalent << __E__;
 		__SUP_COUT__ << "comment: " << comment << __E__;
 
-		handleCreateConfigurationGroupXML(xmlOut,
+		handleCreateTableGroupXML(xmlOut,
 		                                  cfgMgr,
 		                                  groupName,
 		                                  configList,
@@ -1011,7 +1011,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		std::string accumulatedTreeErrors;
 		try
 		{
-			cfgMgr->activateConfigurationGroup(
+			cfgMgr->activateTableGroup(
 			    groupName,
 			    TableGroupKey(groupKey),
 			    ignoreWarnings
@@ -1032,7 +1032,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			                 << " (" << groupKey << ")" << __E__;
 			try  // just in case any lingering pieces, lets deactivate
 			{
-				cfgMgr->destroyConfigurationGroup(groupName, true);
+				cfgMgr->destroyTableGroup(groupName, true);
 			}
 			catch(...)
 			{
@@ -1053,7 +1053,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			                 << " (" << groupKey << ")" << __E__;
 			try  // just in case any lingering pieces, lets deactivate
 			{
-				cfgMgr->destroyConfigurationGroup(groupName, true);
+				cfgMgr->destroyTableGroup(groupName, true);
 			}
 			catch(...)
 			{
@@ -1219,7 +1219,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 	// always add active config groups to xml response
 	std::map<std::string /*type*/, std::pair<std::string /*groupName*/, TableGroupKey>>
-	    activeGroupMap = cfgMgr->getActiveConfigurationGroups();
+	    activeGroupMap = cfgMgr->getActiveTableGroups();
 
 	for(auto& type : activeGroupMap)
 	{
@@ -1303,7 +1303,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 	//		make xml entry pair
 
 	std::map<std::string, std::pair<std::string, TableGroupKey>> consideredGroups =
-	    cfgMgr->getActiveConfigurationGroups();
+	    cfgMgr->getActiveTableGroups();
 
 	// check that there is a context and config group to consider
 	//	if there is not, then pull from failed list
@@ -1311,20 +1311,20 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 	       .second.isInvalid())
 	{
 		__SUP_COUT__ << "Finding a context group to consider..." << __E__;
-		if(cfgMgr->getFailedConfigurationGroups().find(
+		if(cfgMgr->getFailedTableGroups().find(
 		       ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT) !=
-		   cfgMgr->getFailedConfigurationGroups().end())
+		   cfgMgr->getFailedTableGroups().end())
 		{
 			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
-			    cfgMgr->getFailedConfigurationGroups().at(
+			    cfgMgr->getFailedTableGroups().at(
 			        ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT);
 		}
-		else if(cfgMgr->getFailedConfigurationGroups().find(
+		else if(cfgMgr->getFailedTableGroups().find(
 		            ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
-		        cfgMgr->getFailedConfigurationGroups().end())
+		        cfgMgr->getFailedTableGroups().end())
 		{
 			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONTEXT] =
-			    cfgMgr->getFailedConfigurationGroups().at(
+			    cfgMgr->getFailedTableGroups().at(
 			        ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
 		}
 	}
@@ -1332,20 +1332,20 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 	       .second.isInvalid())
 	{
 		__SUP_COUT__ << "Finding a configuration group to consider..." << __E__;
-		if(cfgMgr->getFailedConfigurationGroups().find(
+		if(cfgMgr->getFailedTableGroups().find(
 		       ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION) !=
-		   cfgMgr->getFailedConfigurationGroups().end())
+		   cfgMgr->getFailedTableGroups().end())
 		{
 			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
-			    cfgMgr->getFailedConfigurationGroups().at(
+			    cfgMgr->getFailedTableGroups().at(
 			        ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION);
 		}
-		else if(cfgMgr->getFailedConfigurationGroups().find(
+		else if(cfgMgr->getFailedTableGroups().find(
 		            ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN) !=
-		        cfgMgr->getFailedConfigurationGroups().end())
+		        cfgMgr->getFailedTableGroups().end())
 		{
 			consideredGroups[ConfigurationManager::ACTIVE_GROUP_NAME_CONFIGURATION] =
-			    cfgMgr->getFailedConfigurationGroups().at(
+			    cfgMgr->getFailedTableGroups().at(
 			        ConfigurationManager::ACTIVE_GROUP_NAME_UNKNOWN);
 		}
 	}
@@ -1357,7 +1357,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 	{
 		std::map<std::string /*name*/, TableVersion /*version*/> rootGroupMemberMap;
 
-		cfgMgr->loadConfigurationGroup(rootGroupName,
+		cfgMgr->loadTableGroup(rootGroupName,
 		                               rootGroupKey,
 		                               0,
 		                               &rootGroupMemberMap,
@@ -1439,7 +1439,7 @@ void ConfigurationGUISupervisor::handleGetAffectedGroupsXML(
 		affected = false;
 
 		std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
-		cfgMgr->loadConfigurationGroup(group.second.first,
+		cfgMgr->loadTableGroup(group.second.first,
 		                               group.second.second,
 		                               0,
 		                               &memberMap,
@@ -1546,7 +1546,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 		std::string groupComment, groupAuthor, configGroupCreationTime;
 
 		// only same member map if object pointer was passed
-		cfgMgr->loadConfigurationGroup(groupName,
+		cfgMgr->loadTableGroup(groupName,
 		                               groupKey,
 		                               false /*doActivate*/,
 		                               returnMemberMap,
@@ -2748,7 +2748,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 				    t.getDisconnectedLinkID(),
 				    parentEl);
 				xmlOut.addTextElementToParent(
-				    "LinkConfigurationName", t.getDisconnectedTableName(), parentEl);
+				    "LinkTableName", t.getDisconnectedTableName(), parentEl);
 				xmlOut.addTextElementToParent(
 				    "LinkIndex", t.getChildLinkIndex(), parentEl);
 
@@ -2780,7 +2780,7 @@ void ConfigurationGUISupervisor::recursiveTreeToXML(const ConfigurationTree& t,
 			    parentEl);
 
 			xmlOut.addTextElementToParent(
-			    "LinkConfigurationName", t.getTableName(), parentEl);
+			    "LinkTableName", t.getTableName(), parentEl);
 
 			xmlOut.addTextElementToParent("LinkIndex", t.getChildLinkIndex(), parentEl);
 
@@ -3008,7 +3008,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 	// get context group member maps
 	if(!skippingContextPair)
 	{
-		cfgMgr->loadConfigurationGroup(groupANameContext,
+		cfgMgr->loadTableGroup(groupANameContext,
 		                               groupAKeyContext,
 		                               false /*doActivate*/,
 		                               &memberMapAContext,
@@ -3022,7 +3022,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 		);
 		__SUP_COUTV__(StringMacros::mapToString(memberMapAContext));
 
-		cfgMgr->loadConfigurationGroup(groupBNameContext,
+		cfgMgr->loadTableGroup(groupBNameContext,
 		                               groupBKeyContext,
 		                               false /*doActivate*/,
 		                               &memberMapBContext,
@@ -3041,7 +3041,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 	// get config group member maps
 	if(!skippingConfigPair)
 	{
-		cfgMgr->loadConfigurationGroup(groupANameConfig,
+		cfgMgr->loadTableGroup(groupANameConfig,
 		                               groupAKeyConfig,
 		                               false /*doActivate*/,
 		                               &memberMapAConfig,
@@ -3055,7 +3055,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 		);
 		__SUP_COUTV__(StringMacros::mapToString(memberMapAConfig));
 
-		cfgMgr->loadConfigurationGroup(groupBNameConfig,
+		cfgMgr->loadTableGroup(groupBNameConfig,
 		                               groupBKeyConfig,
 		                               false /*doActivate*/,
 		                               &memberMapBConfig,
@@ -4290,7 +4290,7 @@ catch(...)
 }
 
 //========================================================================================================================
-// handleGetConfigurationGroupXML
+// handleGetTableGroupXML
 //
 //	give the detail of specific System Configuration specified
 //		groupKey=-1 returns latest
@@ -4312,7 +4312,7 @@ catch(...)
 //		<config name=xxx version=xxx>
 //		...
 //	</configuration>
-void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(
+void ConfigurationGUISupervisor::handleGetTableGroupXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      groupName,
@@ -4329,7 +4329,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(
 	//	get all groups to find historical keys
 
 	//	std::set<std::string /*name+version*/> allGroups =
-	//			cfgMgr->getConfigurationInterface()->getAllConfigurationGroupNames(groupName);
+	//			cfgMgr->getConfigurationInterface()->getAllTableGroupNames(groupName);
 	//	std::string name;
 	//	TableGroupKey key;
 	//	//put them in a set to sort them as TableGroupKey defines for operator<
@@ -4354,14 +4354,14 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(
 		             << groupKey << __E__;
 	}
 
-	xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
+	xmlOut.addTextElementToData("TableGroupName", groupName);
 	xmlOut.addTextElementToData("TableGroupKey", groupKey.toString());
 
 	// add all other sorted keys for this groupName
 	for(auto& keyInOrder : sortedKeys)
 		xmlOut.addTextElementToData("HistoricalTableGroupKey", keyInOrder.toString());
 
-	parentEl = xmlOut.addTextElementToData("ConfigurationGroupMembers", "");
+	parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
 
 	//	get specific group with key
 	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
@@ -4380,7 +4380,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
 		std::string accumulateErrors;
 
-		cfgMgr->loadConfigurationGroup(groupName,
+		cfgMgr->loadTableGroup(groupName,
 		                               groupKey,
 		                               false /*doActivate*/,
 		                               &memberMap,
@@ -4399,10 +4399,10 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupXML(
 			__SUP_SS_THROW__;
 		}
 
-		xmlOut.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
-		xmlOut.addTextElementToData("ConfigurationGroupComment", groupComment);
-		xmlOut.addTextElementToData("ConfigurationGroupCreationTime", groupCreationTime);
-		xmlOut.addTextElementToData("ConfigurationGroupType", groupTypeString);
+		xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
+		xmlOut.addTextElementToData("TableGroupComment", groupComment);
+		xmlOut.addTextElementToData("TableGroupCreationTime", groupCreationTime);
+		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
 	catch(const std::runtime_error& e)
 	{
@@ -4590,11 +4590,11 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 
 	// send all config names along with
 	//	and check for specific version
-	xmlOut.addTextElementToData("ExistingConfigurationNames",
+	xmlOut.addTextElementToData("ExistingTableNames",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
 	for(auto& configPair : allTableInfo)
 	{
-		xmlOut.addTextElementToData("ExistingConfigurationNames", configPair.first);
+		xmlOut.addTextElementToData("ExistingTableNames", configPair.first);
 		if(configPair.first == tableName &&  // check that version exists
 		   configPair.second.versions_.find(version) == configPair.second.versions_.end())
 		{
@@ -4603,7 +4603,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 		}
 	}
 
-	xmlOut.addTextElementToData("ConfigurationName", tableName);  // table name
+	xmlOut.addTextElementToData("TableName", tableName);  // table name
 	xmlOut.addTextElementToData("ConfigurationDescription",
 	                            config->getTableDescription());  // table name
 
@@ -5272,10 +5272,10 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 }
 
 //========================================================================================================================
-//	handleCreateConfigurationGroupXML
+//	handleCreateTableGroupXML
 //
-//		Save a new ConfigurationGroup:
-//			Search for existing TableGroupKeys for this ConfigurationGroup
+//		Save a new TableGroup:
+//			Search for existing TableGroupKeys for this TableGroup
 //			Append a "bumped" system key to name
 //			Save based on list of configuration name/TableVersion
 //
@@ -5290,7 +5290,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 // time.
 //
 //
-void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
+void ConfigurationGUISupervisor::handleCreateTableGroupXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      groupName,
@@ -5300,7 +5300,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
     const std::string&      groupComment,
     bool                    lookForEquivalent) try
 {
-	__SUP_COUT__ << "handleCreateConfigurationGroupXML \n";
+	__SUP_COUT__ << "handleCreateTableGroupXML \n";
 
 	xmlOut.addTextElementToData("AttemptedNewGroupName", groupName);
 
@@ -5443,7 +5443,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 		if(!foundKey.isInvalid())
 		{
 			// return found equivalent key
-			xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
+			xmlOut.addTextElementToData("TableGroupName", groupName);
 			xmlOut.addTextElementToData("TableGroupKey", foundKey.toString());
 
 			if(lookForEquivalent)
@@ -5454,7 +5454,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 				xmlOut.addTextElementToData("foundEquivalentKey", "1");  // indicator
 
 				// insert get configuration info
-				handleGetConfigurationGroupXML(xmlOut, cfgMgr, groupName, foundKey);
+				handleGetTableGroupXML(xmlOut, cfgMgr, groupName, foundKey);
 				return;
 			}
 			else  // treat as error, if not looking for equivalent
@@ -5578,7 +5578,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationGroupXML(
 
 	// insert get configuration info
 	__COUT__ << "Loading new group..." << __E__;
-	handleGetConfigurationGroupXML(xmlOut, cfgMgr, groupName, newKey);
+	handleGetTableGroupXML(xmlOut, cfgMgr, groupName, newKey);
 }
 catch(std::runtime_error& e)
 {
@@ -5657,7 +5657,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 		if(fp)
 		{
 			fclose(fp);
-			xmlOut.addTextElementToData("ConfigurationName", configName);
+			xmlOut.addTextElementToData("TableName", configName);
 			xmlOut.addTextElementToData("OverwriteError", "1");
 			xmlOut.addTextElementToData(
 			    "Error",
@@ -6062,7 +6062,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 
 		unsigned int col;
 		unsigned int col2 = configView->findCol("VersionAlias");
-		unsigned int col3 = configView->findCol("ConfigurationName");
+		unsigned int col3 = configView->findCol("TableName");
 
 		// only make a new version if we are changing compared to active backbone
 
@@ -6236,7 +6236,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
 	try
 	{
-		cfgMgr->loadConfigurationGroup(groupName,
+		cfgMgr->loadTableGroup(groupName,
 		                               groupKey,
 		                               false /*doActivate*/,
 		                               &memberMap,
@@ -6259,7 +6259,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 
 	unsigned int col;
 	unsigned int col2 = configView->findCol("VersionAlias");
-	unsigned int col3 = configView->findCol("ConfigurationName");
+	unsigned int col3 = configView->findCol("TableName");
 
 	for(auto& memberPair : memberMap)
 	{
@@ -6398,7 +6398,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 	}
 	__SUP_COUT__ << "activeVersions[\"" << groupAliasesTableName
 	             << "\"]=" << activeVersions[groupAliasesTableName] << __E__;
-	xmlOut.addTextElementToData("GroupAliasesConfigurationName", groupAliasesTableName);
+	xmlOut.addTextElementToData("GroupAliasesTableName", groupAliasesTableName);
 	xmlOut.addTextElementToData("GroupAliasesTableVersion",
 	                            activeVersions[groupAliasesTableName].toString());
 
@@ -6423,7 +6423,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		groupType    = "Invalid";
 		try
 		{
-			cfgMgr->loadConfigurationGroup(groupName,
+			cfgMgr->loadTableGroup(groupName,
 			                               TableGroupKey(groupKey),
 			                               0,
 			                               0,
@@ -6482,13 +6482,13 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 	for(auto& aliasNodePair : aliasNodePairs)
 	{
 		// note : these are column names in the versionAliasesTableName table
-		// VersionAlias, ConfigurationName, Version, CommentDescription
+		// VersionAlias, TableName, Version, CommentDescription
 		xmlOut.addTextElementToData(
 		    "VersionAlias",
 		    aliasNodePair.second.getNode("VersionAlias").getValueAsString());
 		xmlOut.addTextElementToData(
-		    "ConfigurationName",
-		    aliasNodePair.second.getNode("ConfigurationName").getValueAsString());
+		    "TableName",
+		    aliasNodePair.second.getNode("TableName").getValueAsString());
 		xmlOut.addTextElementToData(
 		    "Version", aliasNodePair.second.getNode("Version").getValueAsString());
 		xmlOut.addTextElementToData(
@@ -6498,12 +6498,12 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 }
 
 //========================================================================================================================
-//	handleGetConfigurationGroupTypeXML
+//	handleGetTableGroupTypeXML
 //
 //		return this information based on member table list
-//		<ConfigurationGroupType value=xxx>
+//		<TableGroupType value=xxx>
 //
-void ConfigurationGUISupervisor::handleGetConfigurationGroupTypeXML(
+void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      configList)
@@ -6540,26 +6540,26 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupTypeXML(
 	{
 		// determine the type configuration group
 		groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
-		xmlOut.addTextElementToData("ConfigurationGroupType", groupTypeString);
+		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
 	catch(std::runtime_error& e)
 	{
 		__SUP_SS__ << "Configuration group has invalid type! " << e.what() << __E__;
 		__SUP_COUT__ << "\n" << ss.str();
 		groupTypeString = "Invalid";
-		xmlOut.addTextElementToData("ConfigurationGroupType", groupTypeString);
+		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
 	catch(...)
 	{
 		__SUP_SS__ << "Configuration group has invalid type! " << __E__;
 		__SUP_COUT__ << "\n" << ss.str();
 		groupTypeString = "Invalid";
-		xmlOut.addTextElementToData("ConfigurationGroupType", groupTypeString);
+		xmlOut.addTextElementToData("TableGroupType", groupTypeString);
 	}
 }
 
 //========================================================================================================================
-//	handleConfigurationGroupsXML
+//	handleTableGroupsXML
 //
 //		if returnMembers then
 //			return type, comment and members
@@ -6574,7 +6574,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationGroupTypeXML(
 //		<group name=xxx key=xxx>...</group>
 //		...
 //
-void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
+void ConfigurationGUISupervisor::handleTableGroupsXML(
     HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr, bool returnMembers)
 {
 	DOMElement* parentEl;
@@ -6592,7 +6592,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 
 	//	ConfigurationInterface* theInterface = cfgMgr->getConfigurationInterface();
 	//	std::set<std::string /*name*/>  configGroups =
-	// theInterface->getAllConfigurationGroupNames();
+	// theInterface->getAllTableGroupNames();
 	//	__SUP_COUT__ << "Number of Config groups: " << configGroups.size() << __E__;
 	//
 	//	TableGroupKey groupKey;
@@ -6624,17 +6624,17 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 
 		groupKey = *(groupInfo.second.keys_.rbegin());
 
-		xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
+		xmlOut.addTextElementToData("TableGroupName", groupName);
 		xmlOut.addTextElementToData("TableGroupKey", groupKey.toString());
 
 		// trusting the cache!
-		xmlOut.addTextElementToData("ConfigurationGroupType",
+		xmlOut.addTextElementToData("TableGroupType",
 		                            groupInfo.second.latestKeyGroupTypeString_);
-		xmlOut.addTextElementToData("ConfigurationGroupComment",
+		xmlOut.addTextElementToData("TableGroupComment",
 		                            groupInfo.second.latestKeyGroupComment_);
-		xmlOut.addTextElementToData("ConfigurationGroupAuthor",
+		xmlOut.addTextElementToData("TableGroupAuthor",
 		                            groupInfo.second.latestKeyGroupAuthor_);
-		xmlOut.addTextElementToData("ConfigurationGroupCreationTime",
+		xmlOut.addTextElementToData("TableGroupCreationTime",
 		                            groupInfo.second.latestKeyGroupCreationTime_);
 
 		if(returnMembers)
@@ -6648,7 +6648,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 			//<<
 			//		"(" << groupKey << ")" << __E__;
 
-			parentEl = xmlOut.addTextElementToData("ConfigurationGroupMembers", "");
+			parentEl = xmlOut.addTextElementToData("TableGroupMembers", "");
 			//
 			//			std::map<std::string /*name*/, TableVersion /*version*/>
 			// memberMap;
@@ -6656,13 +6656,13 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 			//			try
 			//			{
 			//				//determine the type configuration group
-			//				memberMap = cfgMgr->loadConfigurationGroup(groupName,groupKey,
+			//				memberMap = cfgMgr->loadTableGroup(groupName,groupKey,
 			//						0,0,0,&groupComment,0,0, //mostly defaults
 			//						true /*doNotLoadMembers*/,&groupTypeString);
 			//				//groupTypeString = cfgMgr->getTypeNameOfGroup(memberMap);
-			//				xmlOut.addTextElementToData("ConfigurationGroupType",
+			//				xmlOut.addTextElementToData("TableGroupType",
 			// groupTypeString);
-			//				xmlOut.addTextElementToData("ConfigurationGroupComment",
+			//				xmlOut.addTextElementToData("TableGroupComment",
 			// groupComment);
 			//			}
 			//			catch(std::runtime_error& e)
@@ -6671,9 +6671,9 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 			//						"\" has invalid type! " + e.what() << __E__;
 			//				__SUP_COUT__ << "\n" << ss.str();
 			//				groupTypeString = "Invalid";
-			//				xmlOut.addTextElementToData("ConfigurationGroupType",
+			//				xmlOut.addTextElementToData("TableGroupType",
 			// groupTypeString);
-			//				xmlOut.addTextElementToData("ConfigurationGroupComment",
+			//				xmlOut.addTextElementToData("TableGroupComment",
 			// groupComment); 				continue;
 			//			}
 			//			catch(...)
@@ -6682,9 +6682,9 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 			//						"\" has invalid type! " << __E__;
 			//				__SUP_COUT__ << "\n" << ss.str();
 			//				groupTypeString = "Invalid";
-			//				xmlOut.addTextElementToData("ConfigurationGroupType",
+			//				xmlOut.addTextElementToData("TableGroupType",
 			// groupTypeString);
-			//				xmlOut.addTextElementToData("ConfigurationGroupComment",
+			//				xmlOut.addTextElementToData("TableGroupComment",
 			// groupComment); 				continue;
 			//			}
 
@@ -6704,22 +6704,22 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 		{
 			if(keyInSet == groupKey)
 				continue;  // skip the lastest
-			xmlOut.addTextElementToData("ConfigurationGroupName", groupName);
+			xmlOut.addTextElementToData("TableGroupName", groupName);
 			xmlOut.addTextElementToData("TableGroupKey", keyInSet.toString());
 
 			// assume latest in cache reflects others (for speed)
-			xmlOut.addTextElementToData("ConfigurationGroupType",
+			xmlOut.addTextElementToData("TableGroupType",
 			                            groupInfo.second.latestKeyGroupTypeString_);
-			xmlOut.addTextElementToData("ConfigurationGroupComment",
+			xmlOut.addTextElementToData("TableGroupComment",
 			                            groupInfo.second.latestKeyGroupComment_);
-			xmlOut.addTextElementToData("ConfigurationGroupAuthor",
+			xmlOut.addTextElementToData("TableGroupAuthor",
 			                            groupInfo.second.latestKeyGroupAuthor_);
-			xmlOut.addTextElementToData("ConfigurationGroupCreationTime",
+			xmlOut.addTextElementToData("TableGroupCreationTime",
 			                            groupInfo.second.latestKeyGroupCreationTime_);
 
 			if(returnMembers)
 			{
-				xmlOut.addTextElementToData("ConfigurationGroupMembers", "");
+				xmlOut.addTextElementToData("TableGroupMembers", "");
 
 				// TODO -- make loadingHistoricalInfo an input parameter
 				bool loadingHistoricalInfo = false;
@@ -6728,7 +6728,7 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 					groupComment = "";  // clear just in case failure
 					try
 					{
-						cfgMgr->loadConfigurationGroup(groupName,
+						cfgMgr->loadTableGroup(groupName,
 						                               keyInSet,
 						                               0,
 						                               0,
@@ -6748,12 +6748,12 @@ void ConfigurationGUISupervisor::handleConfigurationGroupsXML(
 						    << ")' to extract group comment and type." << __E__;
 					}
 
-					xmlOut.addTextElementToData("ConfigurationGroupType",
+					xmlOut.addTextElementToData("TableGroupType",
 					                            groupTypeString);
-					xmlOut.addTextElementToData("ConfigurationGroupComment",
+					xmlOut.addTextElementToData("TableGroupComment",
 					                            groupComment);
-					xmlOut.addTextElementToData("ConfigurationGroupAuthor", groupAuthor);
-					xmlOut.addTextElementToData("ConfigurationGroupCreationTime",
+					xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
+					xmlOut.addTextElementToData("TableGroupCreationTime",
 					                            groupCreationTime);
 				}
 			}
@@ -6804,7 +6804,7 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument&       
 		// it->second.versions_.size() << __E__;
 
 		// add system subconfiguration name
-		xmlOut.addTextElementToData("ConfigurationName", it->first);
+		xmlOut.addTextElementToData("TableName", it->first);
 		parentEl = xmlOut.addTextElementToData("TableVersions", "");
 
 		// include aliases for this table (if the versions exist)

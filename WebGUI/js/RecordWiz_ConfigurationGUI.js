@@ -2283,7 +2283,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 										"GroupID")
 									throw("Invalid GroupID location in tree.");
 								if(tree.children[1].children[1].nodeName !=
-										"LinkConfigurationName")
+										"LinkTableName")
 									throw("Invalid Link Table location in tree.");
 
 								groupId =
@@ -2344,7 +2344,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 									"GroupID")
 								throw("Invalid GroupID location in tree.");
 							if(tree.children[1].children[4].children[1].nodeName !=
-									"LinkConfigurationName")
+									"LinkTableName")
 								throw("Invalid Link Table location in tree.");
 
 							groupId =

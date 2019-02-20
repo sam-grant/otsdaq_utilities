@@ -1102,7 +1102,7 @@
                 													//		first two nodes are uid and table
                 													targetCSVStr += 
                 															targetChildren[m].children[1].getElementsByTagName(
-                																	"LinkConfigurationName")[0].getAttribute("value") +
+                																	"LinkTableName")[0].getAttribute("value") +
 																					"/" + 
 																					targetChildren[m].children[1].getElementsByTagName(
 																							"UID")[0].getAttribute("value");                                                            	
@@ -2038,17 +2038,17 @@
 						}); //end getGroupAliases handler
 				
 				
-				DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+				DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups"
 						+"&doNotReturnMembers=1", //end get data 
 						"", //end post data
 						function(req)
 						{
-					Debug.log("getConfigurationGroups handler");
+					Debug.log("getTableGroups handler");
 					
-					var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-					var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-					var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
-					var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+					var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+					var groupKeys = req.responseXML.getElementsByTagName("TableGroupKey");
+					var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
+					var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 					
 					_configGroups = [];
 					for(var i=0;i<groupNames.length;++i) 
@@ -2061,7 +2061,7 @@
 					
 					console.log("_configGroups",_configGroups);
 					
-						}); //end getConfigurationGroups handler
+						}); //end getTableGroups handler
 						
 			} //end localGetGroups()
 			localGetGroups();
