@@ -12,7 +12,7 @@
 //#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 //#include "otsdaq-core/WebUsersUtilities/WebUsers.h"
 //#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-//#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
+//#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"
 //
 //#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
 //
@@ -174,7 +174,7 @@ void ControlsDashboardSupervisor::init(void)
 	__COUT__ << std::endl;
 	std::string t = "test";
 	std::string nodeName =
-	    theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)
+	    theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
 	        ->getTableName();
 	__COUT__ << nodeName << std::endl;
 	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);

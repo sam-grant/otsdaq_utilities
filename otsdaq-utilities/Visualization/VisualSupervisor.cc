@@ -59,7 +59,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 	    theConfigurationManager_->getNode(
-	        theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)
+	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
 	            ->getTableName()),
 	    supervisorConfigurationPath_,
 	    supervisorApplicationUID_);

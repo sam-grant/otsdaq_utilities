@@ -6,7 +6,7 @@ cet_make(LIBRARY_NAME ConfigurationGUI
 		 ${CETLIB_EXCEPT}
 		 ConfigurationInterface
 		 TableCore
-		 otsdaq-core_ConfigurationPluginDataFormats_IterateConfiguration_configuration
+		 otsdaq-core_TablePluginDataFormats_IterateTable_table
 		 FiniteStateMachine
 		 CoreSupervisors
 		 SupervisorInfo

@@ -1,7 +1,7 @@
 #include "otsdaq-utilities/ECLWriter/ECLSupervisor.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"
+#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
@@ -36,10 +36,10 @@ ECLSupervisor::ECLSupervisor(xdaq::ApplicationStub* s)
                                      // load a partial configuration (new
                                      // ConfigurationManager)
     , supervisorContextUID_(
-          theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)
+          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
               ->getContextUID(getApplicationContext()->getContextDescriptor()->getURL()))
     , supervisorApplicationUID_(
-          theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)
+          theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
               ->getApplicationUID(
                   getApplicationContext()->getContextDescriptor()->getURL(),
                   getApplicationDescriptor()->getLocalId()))
@@ -116,7 +116,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 		    theGroup.first, theGroup.second, true);
 
 		ConfigurationTree configLinkNode =
-		    theConfigurationManager_->getSupervisorConfigurationNode(
+		    theConfigurationManager_->getSupervisorTableNode(
 		        supervisorContextUID_, supervisorApplicationUID_);
 
 		ECLUser        = configLinkNode.getNode("ECLUserName").getValue<std::string>();

@@ -1,6 +1,6 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/ConfigurationPluginDataFormats/IterateConfiguration.h"
+#include "otsdaq-core/TablePluginDataFormats/IterateTable.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
@@ -9,7 +9,7 @@
 #include <boost/stacktrace.hpp>
 #endif
 
-#include "otsdaq-core/ConfigurationPluginDataFormats/XDAQContextConfiguration.h"  //for context relaunch
+#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"  //for context relaunch
 
 #include <xdaq/NamespaceURI.h>
 
@@ -260,8 +260,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		{
 			cfgMgr->init();  // completely reset to re-align with any changes
 
-			const XDAQContextConfiguration* contextConfiguration =
-			    cfgMgr->__GET_CONFIG__(XDAQContextConfiguration);
+			const XDAQContextTable* contextConfiguration =
+			    cfgMgr->__GET_CONFIG__(XDAQContextTable);
 
 			auto         contexts = contextConfiguration->getContexts();
 			unsigned int i, j;
@@ -3280,14 +3280,14 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 	                     0 /* returnMemberMap */,
 	                     false /* outputActiveTables */);
 
-	TableEditStruct planTable(IterateConfiguration::PLAN_TABLE,
+	TableEditStruct planTable(IterateTable::PLAN_TABLE,
 	                          cfgMgr);  // Table ready for editing!
-	TableEditStruct targetTable(IterateConfiguration::TARGET_TABLE,
+	TableEditStruct targetTable(IterateTable::TARGET_TABLE,
 	                            cfgMgr);  // Table ready for editing!
 
 	// create table-edit struct for each iterate command type
 	std::map<std::string, TableEditStruct> commandTypeToCommandTableMap;
-	for(const auto& commandPair : IterateConfiguration::commandToTableMap_)
+	for(const auto& commandPair : IterateTable::commandToTableMap_)
 		if(commandPair.second != "")  // skip tables with no parameters
 			commandTypeToCommandTableMap.emplace(std::pair<std::string, TableEditStruct>(
 			    commandPair.first, TableEditStruct(commandPair.second, cfgMgr)));
@@ -3310,16 +3310,16 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 		__SUP_COUT__ << "Handling commands for group " << groupName << __E__;
 
 		unsigned int groupIdCol =
-		    planTable.tableView_->findCol(IterateConfiguration::planTableCols_.GroupID_);
+		    planTable.tableView_->findCol(IterateTable::planTableCols_.GroupID_);
 		unsigned int cmdTypeCol = planTable.tableView_->findCol(
-		    IterateConfiguration::planTableCols_.CommandType_);
+		    IterateTable::planTableCols_.CommandType_);
 
 		unsigned int targetGroupIdCol =
-		    targetTable.tableView_->findCol(IterateConfiguration::targetCols_.GroupID_);
+		    targetTable.tableView_->findCol(IterateTable::targetCols_.GroupID_);
 		unsigned int targetTableCol = targetTable.tableView_->findCol(
-		    IterateConfiguration::targetCols_.TargetLink_);
+		    IterateTable::targetCols_.TargetLink_);
 		unsigned int targetUIDCol = targetTable.tableView_->findCol(
-		    IterateConfiguration::targetCols_.TargetLinkUID_);
+		    IterateTable::targetCols_.TargetLinkUID_);
 
 		std::string groupLinkIndex =
 		    planTable.tableView_->getColumnInfo(groupIdCol).getChildLinkIndex();
@@ -3330,7 +3330,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 			bool isGroup;  // local because we know is uid link
 			planTable.tableView_->getChildLink(
 			    planTable.tableView_->findCol(
-			        IterateConfiguration::planTableCols_.CommandLink_),
+			        IterateTable::planTableCols_.CommandLink_),
 			    isGroup,
 			    commandUidLink);
 		}
@@ -3375,7 +3375,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 						{
 							cmdCol =
 							    commandTypeToCommandTableMap[cmdType].tableView_->findCol(
-							        IterateConfiguration::commandTargetCols_
+							        IterateTable::commandTargetCols_
 							            .TargetsLinkGroupID_);
 							targetGroupName =
 							    commandTypeToCommandTableMap[cmdType]
@@ -3428,7 +3428,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 		// Done resetting existing plan
 		// Now save new commands
 
-		std::vector<IterateConfiguration::Command> commands;
+		std::vector<IterateTable::Command> commands;
 
 		// extract command sequence and add to table
 		//	into vector with type, and params
@@ -3453,7 +3453,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 							__SS_THROW__;
 						}
 						// create command object
-						commands.push_back(IterateConfiguration::Command());
+						commands.push_back(IterateTable::Command());
 
 						getline(g, paramValue, ',');
 						++i;
@@ -3494,7 +3494,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 		{
 			__SUP_COUT__ << "command " << command.type_ << __E__;
 			__SUP_COUT__ << "table "
-			             << IterateConfiguration::commandToTableMap_.at(command.type_)
+			             << IterateTable::commandToTableMap_.at(command.type_)
 			             << __E__;
 
 			// create command entry at plan level
@@ -3532,7 +3532,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 					__SUP_COUT__ << "\t param " << param.first << " : " << param.second
 					             << __E__;
 
-					if(param.first == IterateConfiguration::targetParams_.Tables_)
+					if(param.first == IterateTable::targetParams_.Tables_)
 					{
 						__SUP_COUT__ << "\t\t found target tables" << __E__;
 						std::istringstream f(param.second);
@@ -3557,7 +3557,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 						continue;  // go to next parameter
 					}
 
-					if(param.first == IterateConfiguration::targetParams_.UIDs_)
+					if(param.first == IterateTable::targetParams_.UIDs_)
 					{
 						__SUP_COUT__ << "\t\t found target UIDs" << __E__;
 						std::istringstream f(param.second);
@@ -3605,14 +3605,14 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 					// create link from command table to target
 					cmdCol =
 					    commandTypeToCommandTableMap[command.type_].tableView_->findCol(
-					        IterateConfiguration::commandTargetCols_.TargetsLink_);
+					        IterateTable::commandTargetCols_.TargetsLink_);
 					commandTypeToCommandTableMap[command.type_]
 					    .tableView_->setValueAsString(
-					        IterateConfiguration::TARGET_TABLE, cmdRow, cmdCol);
+					        IterateTable::TARGET_TABLE, cmdRow, cmdCol);
 
 					cmdCol =
 					    commandTypeToCommandTableMap[command.type_].tableView_->findCol(
-					        IterateConfiguration::commandTargetCols_.TargetsLinkGroupID_);
+					        IterateTable::commandTargetCols_.TargetsLinkGroupID_);
 					commandTypeToCommandTableMap[command.type_]
 					    .tableView_->setValueAsString(
 					        cmdUID + "_Targets", cmdRow, cmdCol);
