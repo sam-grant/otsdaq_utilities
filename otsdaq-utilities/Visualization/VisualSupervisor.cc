@@ -59,8 +59,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 	    theConfigurationManager_->getNode(
-	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
-	            ->getTableName()),
+	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
 	    supervisorConfigurationPath_,
 	    supervisorApplicationUID_);
 
@@ -580,7 +579,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
 		//				sprintf(str,"%f",itHits->z);
 		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
-		//				//__SUP_COUT__ << "X: " << itHits->x << " Y: " << itHits->y << " Z:
+		//				//__SUP_COUT__ << "X: " << itHits->x << " Y: " << itHits->y << "
+		//Z:
 		//"
 		//<<  itHits->z << std::endl;
 		//			}

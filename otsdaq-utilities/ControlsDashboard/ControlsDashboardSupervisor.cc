@@ -106,7 +106,7 @@ void ControlsDashboardSupervisor::request(const std::string&               reque
 	// pointer) 				!automaticCommand,			//true/false refresh cookie
 	// code 				1, //set access level requirement to pass gateway
 	//				checkLock,					//true/false enable check that system is
-	//unlocked  or  this user has the lock 				requireLock,
+	// unlocked  or  this user has the lock 				requireLock,
 	// //true/false  requires this user has the lock to  proceed
 	// 0,//&userWithLock,
 	////acquire username with lock (optionally null  pointer)
@@ -174,8 +174,7 @@ void ControlsDashboardSupervisor::init(void)
 	__COUT__ << std::endl;
 	std::string t = "test";
 	std::string nodeName =
-	    theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)
-	        ->getTableName();
+	    theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName();
 	__COUT__ << nodeName << std::endl;
 	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);
 	__COUT__ << node << std::endl;

@@ -267,7 +267,7 @@ void LogbookSupervisor::request(const std::string&               requestType,
 	// pointer) 				!automaticCommand,			//true/false refresh cookie
 	// code 				1, //set access level requirement to pass gateway
 	//				checkLock,					//true/false enable check that system is
-	//unlocked  or  this user has the lock 				requireLock,
+	// unlocked  or  this user has the lock 				requireLock,
 	// //true/false  requires this user has the lock to  proceed
 	// 0,//&userWithLock,
 	////acquire username with lock (optionally null  pointer)
@@ -276,7 +276,7 @@ void LogbookSupervisor::request(const std::string&               requestType,
 	// null  pointer) 				,0//,&displayName			//acquire user's Display
 	// Name
 	//				,&activeSessionIndex		//acquire user's session index associated
-	//with  the  cookieCode
+	// with  the  cookieCode
 	//				))
 	//		{	//failure
 	//			__COUT__ << "Failed Login Gateway: " <<

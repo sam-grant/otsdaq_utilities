@@ -1,8 +1,8 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-#include "otsdaq-core/TablePluginDataFormats/IterateTable.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq-core/TablePluginDataFormats/IterateTable.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #if MESSAGEFACILITY_HEX_VERSION > 0x20100
@@ -3155,7 +3155,7 @@ void ConfigurationGUISupervisor::handleMergeGroupsXML(
 					    config->getTableName() ==
 					        ConfigurationManager::
 					            XDAQ_APPLICATION_TABLE_NAME /* generateUniqueDataColumns
-					                                          */
+					                                         */
 					);  // dont make destination version the first time
 
 					if(i == 1)
@@ -3311,15 +3311,15 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 
 		unsigned int groupIdCol =
 		    planTable.tableView_->findCol(IterateTable::planTableCols_.GroupID_);
-		unsigned int cmdTypeCol = planTable.tableView_->findCol(
-		    IterateTable::planTableCols_.CommandType_);
+		unsigned int cmdTypeCol =
+		    planTable.tableView_->findCol(IterateTable::planTableCols_.CommandType_);
 
 		unsigned int targetGroupIdCol =
 		    targetTable.tableView_->findCol(IterateTable::targetCols_.GroupID_);
-		unsigned int targetTableCol = targetTable.tableView_->findCol(
-		    IterateTable::targetCols_.TargetLink_);
-		unsigned int targetUIDCol = targetTable.tableView_->findCol(
-		    IterateTable::targetCols_.TargetLinkUID_);
+		unsigned int targetTableCol =
+		    targetTable.tableView_->findCol(IterateTable::targetCols_.TargetLink_);
+		unsigned int targetUIDCol =
+		    targetTable.tableView_->findCol(IterateTable::targetCols_.TargetLinkUID_);
 
 		std::string groupLinkIndex =
 		    planTable.tableView_->getColumnInfo(groupIdCol).getChildLinkIndex();
@@ -3329,8 +3329,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 		{
 			bool isGroup;  // local because we know is uid link
 			planTable.tableView_->getChildLink(
-			    planTable.tableView_->findCol(
-			        IterateTable::planTableCols_.CommandLink_),
+			    planTable.tableView_->findCol(IterateTable::planTableCols_.CommandLink_),
 			    isGroup,
 			    commandUidLink);
 		}
@@ -3375,8 +3374,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 						{
 							cmdCol =
 							    commandTypeToCommandTableMap[cmdType].tableView_->findCol(
-							        IterateTable::commandTargetCols_
-							            .TargetsLinkGroupID_);
+							        IterateTable::commandTargetCols_.TargetsLinkGroupID_);
 							targetGroupName =
 							    commandTypeToCommandTableMap[cmdType]
 							        .tableView_->getDataView()[cmdRow][cmdCol];
@@ -3493,8 +3491,7 @@ void ConfigurationGUISupervisor::handleSavePlanCommandSequenceXML(
 		for(auto& command : commands)
 		{
 			__SUP_COUT__ << "command " << command.type_ << __E__;
-			__SUP_COUT__ << "table "
-			             << IterateTable::commandToTableMap_.at(command.type_)
+			__SUP_COUT__ << "table " << IterateTable::commandToTableMap_.at(command.type_)
 			             << __E__;
 
 			// create command entry at plan level
@@ -4645,7 +4642,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 				// check if this version has one or many aliases
 				for(const auto& aliasPair : tableIterator->second)
 				{
-					//					__SUP_COUT__ << "Checking " << aliasPair.second << "
+					//					__SUP_COUT__ << "Checking " << aliasPair.second <<
+					//"
 					//-->
 					//"
 					//<< 							aliasPair.first << " for " << v <<

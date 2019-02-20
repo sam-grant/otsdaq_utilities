@@ -1,12 +1,12 @@
 #include "otsdaq-utilities/ECLWriter/ECLSupervisor.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 #include "otsdaq-core/SOAPUtilities/SOAPCommand.h"
 #include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
 #include "otsdaq-core/SOAPUtilities/SOAPUtilities.h"
+#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #include "otsdaq-utilities/ECLWriter/ECLConnection.h"
@@ -116,8 +116,8 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 		    theGroup.first, theGroup.second, true);
 
 		ConfigurationTree configLinkNode =
-		    theConfigurationManager_->getSupervisorTableNode(
-		        supervisorContextUID_, supervisorApplicationUID_);
+		    theConfigurationManager_->getSupervisorTableNode(supervisorContextUID_,
+		                                                     supervisorApplicationUID_);
 
 		ECLUser        = configLinkNode.getNode("ECLUserName").getValue<std::string>();
 		ECLHost        = configLinkNode.getNode("ECLInstanceURL").getValue<std::string>();
