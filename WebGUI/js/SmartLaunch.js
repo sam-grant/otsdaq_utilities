@@ -104,7 +104,7 @@ SmartLaunch.create = function() {
 
 	var _needEventListeners = true;
 
-	var _subsetBasePath = "XDAQContextConfiguration";
+	var _subsetBasePath = "XDAQContextTable";
 
 	var _systemStatusArray = [];
 	var _contextRecords = [];

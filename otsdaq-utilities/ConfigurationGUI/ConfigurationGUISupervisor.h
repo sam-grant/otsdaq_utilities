@@ -32,16 +32,16 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                                                            // settings)
 
   private:
-	void handleSaveConfigurationInfoXML(HttpXmlDocument&        xmldoc,
+	void handleSaveTableInfoXML(HttpXmlDocument&        xmldoc,
 	                                    ConfigurationManagerRW* cfgMgr,
-	                                    std::string&            configName,
+	                                    std::string&            tableName,
 	                                    const std::string&      columnCSV,
 	                                    const std::string&      tableDescription,
 	                                    const std::string&      columnChoicesCSV,
 	                                    bool                    allowOverwrite = false);
-	void handleDeleteConfigurationInfoXML(HttpXmlDocument&        xmldoc,
+	void handleDeleteTableInfoXML(HttpXmlDocument&        xmldoc,
 	                                      ConfigurationManagerRW* cfgMgr,
-	                                      std::string&            configName);
+	                                      std::string&            tableName);
 
 	void handleGroupAliasesXML(HttpXmlDocument& xmldoc, ConfigurationManagerRW* cfgMgr);
 	void handleSetGroupAliasInBackboneXML(HttpXmlDocument&        xmldoc,
@@ -53,7 +53,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	void handleSetVersionAliasInBackboneXML(HttpXmlDocument&        xmldoc,
 	                                        ConfigurationManagerRW* cfgMgr,
 	                                        const std::string&      versionAlias,
-	                                        const std::string&      configName,
+	                                        const std::string&      tableName,
 	                                        TableVersion            version,
 	                                        const std::string&      author);
 	void handleAliasGroupMembersInBackboneXML(HttpXmlDocument&        xmldoc,
@@ -82,17 +82,17 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                                       const std::string& groupComment      = "",
 	                                       bool               lookForEquivalent = false);
 
-	void handleConfigurationsXML(HttpXmlDocument&        xmldoc,
+	void handleTablesXML(HttpXmlDocument&        xmldoc,
 	                             ConfigurationManagerRW* cfgMgr,
 	                             bool                    allowIllegalColumns);
-	void handleGetConfigurationXML(HttpXmlDocument&        xmldoc,
+	void handleGetTableXML(HttpXmlDocument&        xmldoc,
 	                               ConfigurationManagerRW* cfgMgr,
-	                               const std::string&      configName,
+	                               const std::string&      tableName,
 	                               TableVersion            version,
 	                               bool                    allowIllegalColumns = false);
-	void handleCreateConfigurationXML(HttpXmlDocument&        xmldoc,
+	void handleCreateTableXML(HttpXmlDocument&        xmldoc,
 	                                  ConfigurationManagerRW* cfgMgr,
-	                                  const std::string&      configName,
+	                                  const std::string&      tableName,
 	                                  TableVersion            version,
 	                                  bool                    makeTemporary,
 	                                  const std::string&      data,
@@ -182,7 +182,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 
 	void handleSaveTreeNodeEditXML(HttpXmlDocument&        xmldoc,
 	                               ConfigurationManagerRW* cfgMgr,
-	                               const std::string&      configName,
+	                               const std::string&      tableName,
 	                               TableVersion            version,
 	                               const std::string&      type,
 	                               const std::string&      uid,
@@ -226,7 +226,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 
 	TableVersion saveModifiedVersionXML(HttpXmlDocument&        xmldoc,
 	                                    ConfigurationManagerRW* cfgMgr,
-	                                    const std::string&      configName,
+	                                    const std::string&      tableName,
 	                                    TableVersion            originalVersion,
 	                                    bool                    makeTemporary,
 	                                    TableBase*              config,

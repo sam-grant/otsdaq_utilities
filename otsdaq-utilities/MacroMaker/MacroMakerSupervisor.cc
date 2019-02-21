@@ -24,7 +24,7 @@
 #include <sys/stat.h>  //for mkdir
 #include <cstdio>
 #include <thread>  //for std::thread
-#include "../../../otsdaq/otsdaq-core/TableCore/TableGroupKey.h"
+#include "otsdaq-core/TableCore/TableGroupKey.h"
 
 #define MACROS_DB_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroData/"
 #define MACROS_HIST_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroHistory/"

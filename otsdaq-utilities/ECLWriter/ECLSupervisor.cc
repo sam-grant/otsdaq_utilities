@@ -18,7 +18,7 @@
 
 #include <iomanip>
 #include <iostream>
-#include "../../../otsdaq/otsdaq-core/TableCore/TableGroupKey.h"
+#include "otsdaq-core/TableCore/TableGroupKey.h"
 
 using namespace ots;
 
@@ -109,7 +109,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 		                      .getParameters()
 		                      .getValue("ConfigurationTableGroupKey")));
 
-		__COUT__ << "Configuration group name: " << theGroup.first
+		__COUT__ << "Configuration table group name: " << theGroup.first
 		         << " key: " << theGroup.second << std::endl;
 
 		theConfigurationManager_->loadTableGroup(

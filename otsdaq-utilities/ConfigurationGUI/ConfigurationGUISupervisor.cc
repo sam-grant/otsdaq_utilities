@@ -94,13 +94,13 @@ void ConfigurationGUISupervisor::destroy(void)
 void ConfigurationGUISupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 {
 	cgicc::Cgicc cgiIn(in);
-	std::string  configName =
+	std::string  configWindowName =
 	    CgiDataUtilities::getData(cgiIn, "configWindowName");  // from GET
-	if(configName == "tableEditor")
+	if(configWindowName == "tableEditor")
 		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 		        "src='/WebPath/html/ConfigurationTableEditor.html?urn="
 		     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-	if(configName == "iterate")
+	if(configWindowName == "iterate")
 		*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 		        "src='/WebPath/html/Iterate.html?urn="
 		     << this->getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
@@ -117,8 +117,8 @@ void ConfigurationGUISupervisor::setSupervisorPropertyDefaults(void)
 {
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.UserPermissionsThreshold,
-	    "*=10 | deleteTreeNodeRecords=255 | saveConfigurationInfo=255 | "
-	    "deleteConfigurationInfo=255");  // experienced users to edit, admins to delete
+	    "*=10 | deleteTreeNodeRecords=255 | saveTableInfo=255 | "
+	    "deleteTableInfo=255");  // experienced users to edit, admins to delete
 	CorePropertySupervisorBase::setSupervisorProperty(
 	    CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.RequireUserLockRequestTypes,
 	    "*");  // all
@@ -147,8 +147,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 	//	gatewayLaunchOTS -- and other StartOTS commands
 
-	//	saveConfigurationInfo
-	//	deleteConfigurationInfo
+	//	saveTableInfo
+	//	deleteTableInfo
 	// 	flattenToSystemAliases
 	// 	versionTracking
 	//	getColumnTypes
@@ -165,10 +165,10 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	getIterateMemberNames
 	//	getSpecificTableGroup
 	//	saveNewTableGroup
-	//	getSpecificConfiguration
-	//	saveSpecificConfiguration
-	//	clearConfigurationTemporaryVersions
-	//	clearConfigurationCachedVersions
+	//	getSpecificTable
+	//	saveSpecificTable
+	//	clearTableTemporaryVersions
+	//	clearTableCachedVersions
 	//
 	//		---- associated with JavaScript Config API
 	//	getTreeView
@@ -180,13 +180,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	deleteTreeNodeRecords
 	//		---- end associated with JavaScript Config API
 	//
-	//	activateConfigGroup
-	//	getActiveConfigGroups
+	//	activateTableGroup
+	//	getActiveTableGroups
 	//  copyViewToCurrentColumns
 	//	saveTreeNodeEdit
 	//	getAffectedActiveGroups
 	// 	getLinkToChoices
-	//	getLastConfigGroups
+	//	getLastTableGroups
 	//	mergeGroups
 	//
 	//		---- associated with JavaScript Iterate App
@@ -201,10 +201,10 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	ConfigurationManagerRW* cfgMgr = refreshUserSession(
 	    userInfo.username_, userInfo.activeUserSessionIndex_, (refresh == "1"));
 
-	if(requestType == "saveConfigurationInfo")
+	if(requestType == "saveTableInfo")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");  // from GET
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");  // from GET
 		std::string columnCSV =
 		    CgiDataUtilities::postData(cgiIn, "columnCSV");  // from POST
 		std::string allowOverwrite =
@@ -217,7 +217,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		// columnCSV = CgiDataUtilities::decodeURIComponent(columnCSV);
 		// tableDescription = CgiDataUtilities::decodeURIComponent(tableDescription);
 
-		__SUP_COUT__ << "configName: " << configName << __E__;
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "columnCSV: " << columnCSV << __E__;
 		__SUP_COUT__ << "tableDescription: " << tableDescription << __E__;
 		__SUP_COUT__ << "columnChoicesCSV: " << columnChoicesCSV << __E__;
@@ -229,20 +229,20 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			xmlOut.addTextElementToData("Error", ss.str());
 		}
 		else
-			handleSaveConfigurationInfoXML(xmlOut,
+			handleSaveTableInfoXML(xmlOut,
 			                               cfgMgr,
-			                               configName,
+			                               tableName,
 			                               columnCSV,
 			                               tableDescription,
 			                               columnChoicesCSV,
 			                               allowOverwrite == "1");
 	}
-	else if(requestType == "deleteConfigurationInfo")
+	else if(requestType == "deleteTableInfo")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");  // from GET
-		__SUP_COUT__ << "configName: " << configName << __E__;
-		handleDeleteConfigurationInfoXML(xmlOut, cfgMgr, configName);
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");  // from GET
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
+		handleDeleteTableInfoXML(xmlOut, cfgMgr, tableName);
 	}
 	else if(requestType == "gatewayLaunchOTS" || requestType == "gatewayLaunchWiz" ||
 	        requestType == "flattenToSystemAliases")
@@ -260,10 +260,10 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		{
 			cfgMgr->init();  // completely reset to re-align with any changes
 
-			const XDAQContextTable* contextConfiguration =
+			const XDAQContextTable* contextTable =
 			    cfgMgr->__GET_CONFIG__(XDAQContextTable);
 
-			auto         contexts = contextConfiguration->getContexts();
+			auto         contexts = contextTable->getContexts();
 			unsigned int i, j;
 			for(const auto& context : contexts)
 			{
@@ -466,18 +466,18 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	{
 		std::string versionAlias =
 		    CgiDataUtilities::getData(cgiIn, "versionAlias");  // from GET
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");                 // from GET
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");                 // from GET
 		std::string version = CgiDataUtilities::getData(cgiIn, "version");  // from GET
 
 		__SUP_COUT__ << "versionAlias: " << versionAlias << __E__;
-		__SUP_COUT__ << "configName: " << configName << __E__;
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "version: " << version << __E__;
 
 		handleSetVersionAliasInBackboneXML(xmlOut,
 		                                   cfgMgr,
 		                                   versionAlias,
-		                                   configName,
+		                                   tableName,
 		                                   TableVersion(version),
 		                                   userInfo.username_);
 	}
@@ -529,7 +529,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		__SUP_COUT__ << "allowIllegalColumns: " << allowIllegalColumns << __E__;
 
-		handleConfigurationsXML(xmlOut, cfgMgr, allowIllegalColumns == "1");
+		handleTablesXML(xmlOut, cfgMgr, allowIllegalColumns == "1");
 	}
 	else if(requestType == "getContextMemberNames")
 	{
@@ -595,10 +595,10 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                                  comment,
 		                                  lookForEquivalent);
 	}
-	else if(requestType == "getSpecificConfiguration")
+	else if(requestType == "getSpecificTable")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");                    // from GET
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");                    // from GET
 		std::string versionStr = CgiDataUtilities::getData(cgiIn, "version");  // from GET
 		int dataOffset = CgiDataUtilities::getDataAsInt(cgiIn, "dataOffset");  // from GET
 		int chunkSize  = CgiDataUtilities::getDataAsInt(cgiIn, "chunkSize");   // from GET
@@ -607,7 +607,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    CgiDataUtilities::getData(cgiIn, "allowIllegalColumns");  // from GET
 		__SUP_COUT__ << "allowIllegalColumns: " << (allowIllegalColumns == "1") << __E__;
 
-		__SUP_COUT__ << "getSpecificConfiguration: " << configName
+		__SUP_COUT__ << "getSpecificTable: " << tableName
 		             << " versionStr: " << versionStr << " chunkSize: " << chunkSize
 		             << " dataOffset: " << dataOffset << __E__;
 
@@ -615,11 +615,11 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo();
 		std::string                             versionAlias;
 
-		if(allTableInfo.find(configName) != allTableInfo.end())
+		if(allTableInfo.find(tableName) != allTableInfo.end())
 		{
 			if(versionStr == "" &&  // take latest version if no version specified
-			   allTableInfo.at(configName).versions_.size())
-				version = *(allTableInfo.at(configName).versions_.rbegin());
+			   allTableInfo.at(tableName).versions_.size())
+				version = *(allTableInfo.at(tableName).versions_.rbegin());
 			else if(versionStr.find(ConfigurationManager::ALIAS_VERSION_PREAMBLE) == 0)
 			{
 				// convert alias to version
@@ -639,12 +639,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 				//__E__;
 				//			}
 				//			else
-				if(versionAliases.find(configName) != versionAliases.end() &&
-				   versionAliases[configName].find(versionStr.substr(
+				if(versionAliases.find(tableName) != versionAliases.end() &&
+				   versionAliases[tableName].find(versionStr.substr(
 				       ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())) !=
-				       versionAliases[configName].end())
+				       versionAliases[tableName].end())
 				{
-					version = versionAliases[configName][versionStr.substr(
+					version = versionAliases[tableName][versionStr.substr(
 					    ConfigurationManager::ALIAS_VERSION_PREAMBLE.size())];
 					__SUP_COUT__ << "version alias translated to: " << version << __E__;
 				}
@@ -661,18 +661,18 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		__SUP_COUT__ << "version: " << version << __E__;
 
-		handleGetConfigurationXML(xmlOut,
+		handleGetTableXML(xmlOut,
 		                          cfgMgr,
-		                          configName,
+		                          tableName,
 		                          TableVersion(version),
 		                          (allowIllegalColumns == "1"));
 		// append author column default value
 		xmlOut.addTextElementToData("DefaultRowValue", userInfo.username_);
 	}
-	else if(requestType == "saveSpecificConfiguration")
+	else if(requestType == "saveSpecificTable")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");                    // from GET
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");                    // from GET
 		int version    = CgiDataUtilities::getDataAsInt(cgiIn, "version");     // from GET
 		int dataOffset = CgiDataUtilities::getDataAsInt(cgiIn, "dataOffset");  // from GET
 		bool sourceTableAsIs =
@@ -687,7 +687,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		// data format: commas and semi-colons indicate new row
 		// r0c0,r0c1,...,r0cN,;r1c0,...
 
-		__SUP_COUT__ << "configName: " << configName << " version: " << version
+		__SUP_COUT__ << "tableName: " << tableName << " version: " << version
 		             << " temporary: " << temporary << " dataOffset: " << dataOffset
 		             << __E__;
 		__SUP_COUT__ << "comment: " << comment << __E__;
@@ -695,9 +695,9 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "sourceTableAsIs: " << sourceTableAsIs << __E__;
 		__SUP_COUT__ << "lookForEquivalent: " << lookForEquivalent << __E__;
 
-		handleCreateConfigurationXML(xmlOut,
+		handleCreateTableXML(xmlOut,
 		                             cfgMgr,
-		                             configName,
+		                             tableName,
 		                             TableVersion(version),
 		                             temporary,
 		                             data,
@@ -707,15 +707,15 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                             sourceTableAsIs,
 		                             lookForEquivalent);
 	}
-	else if(requestType == "clearConfigurationTemporaryVersions")
+	else if(requestType == "clearTableTemporaryVersions")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");  // from GET
-		__SUP_COUT__ << "configName: " << configName << __E__;
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");  // from GET
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
 
 		try
 		{
-			cfgMgr->eraseTemporaryVersion(configName);
+			cfgMgr->eraseTemporaryVersion(tableName);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -729,15 +729,15 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			xmlOut.addTextElementToData("Error", "Error clearing temporary views! ");
 		}
 	}
-	else if(requestType == "clearConfigurationCachedVersions")
+	else if(requestType == "clearTableCachedVersions")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");  // from GET
-		__SUP_COUT__ << "configName: " << configName << __E__;
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");  // from GET
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
 
 		try
 		{
-			cfgMgr->clearCachedVersions(configName);
+			cfgMgr->clearCachedVersions(tableName);
 		}
 		catch(std::runtime_error& e)
 		{
@@ -993,7 +993,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		                          linkIndex,
 		                          linkInitId);
 	}
-	else if(requestType == "activateConfigGroup")
+	else if(requestType == "activateTableGroup")
 	{
 		std::string groupName = CgiDataUtilities::getData(cgiIn, "groupName");
 		std::string groupKey  = CgiDataUtilities::getData(cgiIn, "groupKey");
@@ -1072,15 +1072,15 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			                                "'! Please see details below:\n\n" +
 			                                accumulatedTreeErrors);
 	}
-	else if(requestType == "getActiveConfigGroups")
+	else if(requestType == "getActiveTableGroups")
 		;  // do nothing, since they are always returned
 	else if(requestType == "copyViewToCurrentColumns")
 	{
-		std::string configName =
-		    CgiDataUtilities::getData(cgiIn, "configName");  // from GET
+		std::string tableName =
+		    CgiDataUtilities::getData(cgiIn, "tableName");  // from GET
 		std::string sourceVersion = CgiDataUtilities::getData(cgiIn, "sourceVersion");
 
-		__SUP_COUT__ << "configName: " << configName << __E__;
+		__SUP_COUT__ << "tableName: " << tableName << __E__;
 		__SUP_COUT__ << "sourceVersion: " << sourceVersion << __E__;
 		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 
@@ -1090,13 +1090,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		{
 			// force emptying of cache for this configuration
 			newTemporaryVersion =
-			    cfgMgr->copyViewToCurrentColumns(configName, TableVersion(sourceVersion));
+			    cfgMgr->copyViewToCurrentColumns(tableName, TableVersion(sourceVersion));
 			//
-			//			getTableByName(configName)->reset();
+			//			getTableByName(tableName)->reset();
 			//
 			//			//make sure source version is loaded
 			//			//need to load with loose column rules!
-			//			config = cfgMgr->getVersionedTableByName(configName,
+			//			config = cfgMgr->getVersionedTableByName(tableName,
 			//					TableVersion(sourceVersion), true);
 			//
 			//			//copy from source version to a new temporary version
@@ -1109,7 +1109,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		{
 			__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
 			xmlOut.addTextElementToData("Error",
-			                            "Error copying view from '" + configName + "_v" +
+			                            "Error copying view from '" + tableName + "_v" +
 			                                sourceVersion + "'! " +
 			                                std::string(e.what()));
 		}
@@ -1118,12 +1118,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 			__SUP_COUT__ << "Error detected!\n\n " << __E__;
 			xmlOut.addTextElementToData(
 			    "Error",
-			    "Error copying view from '" + configName + "_v" + sourceVersion + "'! ");
+			    "Error copying view from '" + tableName + "_v" + sourceVersion + "'! ");
 		}
 
-		handleGetConfigurationXML(xmlOut, cfgMgr, configName, newTemporaryVersion);
+		handleGetTableXML(xmlOut, cfgMgr, tableName, newTemporaryVersion);
 	}
-	else if(requestType == "getLastConfigGroups")
+	else if(requestType == "getLastTableGroups")
 	{
 		XDAQ_CONST_CALL xdaq::ApplicationDescriptor* gatewaySupervisor =
 		    allSupervisorInfo_.isWizardMode() ? allSupervisorInfo_.getWizardDescriptor()
@@ -2856,9 +2856,9 @@ void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(
 
 	// get table and activate target version
 	//	rename to re-use code template
-	const std::string&  configName = linkToTableName;
+	const std::string&  tableName = linkToTableName;
 	const TableVersion& version    = linkToTableVersion;
-	TableBase*          config     = cfgMgr->getTableByName(configName);
+	TableBase*          config     = cfgMgr->getTableByName(tableName);
 	try
 	{
 		config->setActiveView(version);
@@ -2867,7 +2867,7 @@ void ConfigurationGUISupervisor::handleGetLinkToChoicesXML(
 	{
 		__SUP_COUT__ << "Failed to find stored version, so attempting to load version: "
 		             << version << __E__;
-		cfgMgr->getVersionedTableByName(configName, version);
+		cfgMgr->getVersionedTableByName(tableName, version);
 	}
 
 	if(version != config->getViewVersion())
@@ -3799,7 +3799,7 @@ catch(...)
 //	<resultingTargetTableVersion = xxx>
 void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&        xmlOut,
                                                            ConfigurationManagerRW* cfgMgr,
-                                                           const std::string& configName,
+                                                           const std::string& tableName,
                                                            TableVersion       version,
                                                            const std::string& type,
                                                            const std::string& uid,
@@ -3807,14 +3807,14 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
                                                            const std::string& newValue,
                                                            const std::string& author) try
 {
-	__SUP_COUT__ << "table " << configName << "(" << version << ")" << __E__;
+	__SUP_COUT__ << "table " << tableName << "(" << version << ")" << __E__;
 
 	// get the current table/version
 	// check if the value is new
 	// if new edit value (in a temporary version only)
 
 	// get table and activate target version
-	TableBase* config = cfgMgr->getTableByName(configName);
+	TableBase* config = cfgMgr->getTableByName(tableName);
 	try
 	{
 		config->setActiveView(version);
@@ -3823,7 +3823,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 	{
 		__SUP_COUT__ << "Failed to find stored version, so attempting to load version: "
 		             << version << __E__;
-		cfgMgr->getVersionedTableByName(configName, version);
+		cfgMgr->getVersionedTableByName(tableName, version);
 	}
 
 	__SUP_COUT__ << "Active version is " << config->getViewVersion() << __E__;
@@ -4039,7 +4039,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 						saveModifiedVersionXML(xmlOut,
 						                       cfgMgr,
-						                       configName,
+						                       tableName,
 						                       version,
 						                       true /*make temporary*/,
 						                       config,
@@ -4269,7 +4269,7 @@ void ConfigurationGUISupervisor::handleSaveTreeNodeEditXML(HttpXmlDocument&     
 
 	saveModifiedVersionXML(xmlOut,
 	                       cfgMgr,
-	                       configName,
+	                       tableName,
 	                       version,
 	                       true /*make temporary*/,
 	                       config,
@@ -4406,7 +4406,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 	}
 	catch(const std::runtime_error& e)
 	{
-		__SUP_SS__ << "Configuration group \"" + groupName + "(" + groupKey.toString() +
+		__SUP_SS__ << "Table group \"" + groupName + "(" + groupKey.toString() +
 		                  ")" + "\" members can not be loaded!\n\n" + e.what();
 		__SUP_COUT_ERR__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
@@ -4414,7 +4414,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 	}
 	catch(...)
 	{
-		__SUP_SS__ << "Configuration group \"" + groupName + "(" + groupKey.toString() +
+		__SUP_SS__ << "Table group \"" + groupName + "(" + groupKey.toString() +
 		                  ")" + "\" members can not be loaded!"
 		           << __E__;
 		__SUP_COUT_ERR__ << ss.str();
@@ -4450,14 +4450,14 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 		{
 			xmlOut.addTextElementToData(
 			    "Error",
-			    "Configuration \"" + memberPair.first + "\" can not be retrieved!");
+			    "Table \"" + memberPair.first + "\" can not be retrieved!");
 			continue;
 		}
 
 		if(versionAliases.find(it->first) != versionAliases.end())
 			for(auto& aliasVersion : versionAliases[it->first])
 				xmlOut.addTextElementToParent(
-				    "ConfigurationExistingVersion",
+				    "TableExistingVersion",
 				    ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
 				    configEl);
 
@@ -4465,7 +4465,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 			// if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016
 			// (might as well show all versions in list to avoid user confusion)  else
 			xmlOut.addTextElementToParent(
-			    "ConfigurationExistingVersion", version.toString(), configEl);
+			    "TableExistingVersion", version.toString(), configEl);
 	}
 	// Seperate loop just for getting the Member Comment
 	for(auto& memberPair : memberMap)
@@ -4491,7 +4491,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 		/*	it = allTableInfo.find(memberPair.first);
 		if(it == allTableInfo.end())
 		{
-		    xmlOut.addTextElementToData("Error","Configuration \"" +
+		    xmlOut.addTextElementToData("Error","Table \"" +
 		            memberPair.first +
 		            "\" can not be retrieved!");
 		    return;
@@ -4500,7 +4500,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 		// include aliases for this table
 		/*if(versionAliases.find(it->first) != versionAliases.end())
 		    for (auto& aliasVersion:versionAliases[it->first])
-		        xmlOut.addTextElementToParent("ConfigurationExistingVersion",
+		        xmlOut.addTextElementToParent("TableExistingVersion",
 		                ConfigurationManager::ALIAS_VERSION_PREAMBLE + aliasVersion.first,
 		                configEl);
 
@@ -4508,7 +4508,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(
 		    //if(version == memberPair.second) continue; //CHANGED by RAR on 11/14/2016
 		(might as well show all versions in list to avoid user confusion)
 		    //else
-		    xmlOut.addTextElementToParent("ConfigurationExistingVersion",
+		    xmlOut.addTextElementToParent("TableExistingVersion",
 		version.toString(), configEl);
 		*/
 	}
@@ -4529,12 +4529,12 @@ catch(...)
 }
 
 //========================================================================================================================
-// handleGetConfigurationXML
+// handleGetTableXML
 //
 //	if INVALID or version does not exists, default to mock-up
 //
 // give the detail of specific Sub-System Configuration specified
-//	by configName and version
+//	by tableName and version
 //
 // if no version selected, default to latest version
 // if no versions exists, default to mock-up
@@ -4546,7 +4546,7 @@ catch(...)
 // first CHUNK_SIZE rows
 //
 // return this information
-//<subconfiguration name=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
+//<table name=xxx version=xxx rowCount=xxx chunkReq=xxx chunkSz=xxx>
 //	<existing version=xxx>
 //	<existing version=xxx>
 //	....
@@ -4562,18 +4562,20 @@ catch(...)
 //		....
 //	</rowdata>
 //	....
-//</subconfiguration>
+//</table>
 //
 //
 // Note: options.. if allowIllegalColumns then attempts to load data to current mockup
 // column names
 //	if not allowIllegalColumns, then it is still ok if the source has more or less
 // columns: 	the client is notified through "TableWarnings" field in this case.
-void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&        xmlOut,
+void ConfigurationGUISupervisor::handleGetTableXML(
+		HttpXmlDocument&        xmlOut,
                                                            ConfigurationManagerRW* cfgMgr,
                                                            const std::string& tableName,
                                                            TableVersion       version,
-                                                           bool allowIllegalColumns) try
+                                                           bool allowIllegalColumns)
+try
 {
 	char        tmpIntStr[100];
 	DOMElement *parentEl, *subparentEl;
@@ -4586,9 +4588,9 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 	                            allowIllegalColumns ? &accumulatedErrors : 0,
 	                            tableName);  // filter errors by tableName
 
-	TableBase* config = cfgMgr->getTableByName(tableName);
+	TableBase* table = cfgMgr->getTableByName(tableName);
 
-	// send all config names along with
+	// send all table names along with
 	//	and check for specific version
 	xmlOut.addTextElementToData("ExistingTableNames",
 	                            TableViewColumnInfo::DATATYPE_LINK_DEFAULT);
@@ -4604,8 +4606,8 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 	}
 
 	xmlOut.addTextElementToData("TableName", tableName);  // table name
-	xmlOut.addTextElementToData("ConfigurationDescription",
-	                            config->getTableDescription());  // table name
+	xmlOut.addTextElementToData("TableDescription",
+	                            table->getTableDescription());  // table name
 
 	// existing table versions
 	{
@@ -4660,13 +4662,13 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 		}
 	}
 
-	// table columns and then rows (from config view)
+	// table columns and then rows (from table view)
 
 	// get view pointer
 	TableView* cfgViewPtr;
 	if(version.isInvalid())  // use mock-up
 	{
-		cfgViewPtr = config->getMockupViewP();
+		cfgViewPtr = table->getMockupViewP();
 	}
 	else  // use view version
 	{
@@ -4682,7 +4684,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			version    = TableVersion();
-			cfgViewPtr = config->getMockupViewP();
+			cfgViewPtr = table->getMockupViewP();
 
 			xmlOut.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -4699,7 +4701,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 			version    = TableVersion();
-			cfgViewPtr = config->getMockupViewP();
+			cfgViewPtr = table->getMockupViewP();
 
 			xmlOut.addTextElementToData("Error", "Error getting view! " + ss.str());
 		}
@@ -4858,7 +4860,7 @@ void ConfigurationGUISupervisor::handleGetConfigurationXML(HttpXmlDocument&     
 		__SUP_COUT__ << "\n" << ss.str();
 		xmlOut.addTextElementToData("TableWarnings", ss.str());
 	}
-}
+} //end handleGetTableXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -4878,7 +4880,7 @@ catch(...)
 TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      configName,
+    const std::string&      tableName,
     TableVersion            originalVersion,
     bool                    makeTemporary,
     TableBase*              config,
@@ -4905,11 +4907,11 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 			    cfgMgr->getAllTableInfo();  // do not refresh
 
 			auto versionReverseIterator =
-			    allTableInfo.at(configName).versions_.rbegin();  // get reverse iterator
+			    allTableInfo.at(tableName).versions_.rbegin();  // get reverse iterator
 			__SUP_COUT__ << "Filling up cached from " << config->getNumberOfStoredViews()
 			             << " to max count of " << config->MAX_VIEWS_IN_CACHE << __E__;
 			for(; config->getNumberOfStoredViews() < config->MAX_VIEWS_IN_CACHE &&
-			      versionReverseIterator != allTableInfo.at(configName).versions_.rend();
+			      versionReverseIterator != allTableInfo.at(tableName).versions_.rend();
 			    ++versionReverseIterator)
 			{
 				__SUP_COUT__ << "Versions in reverse order " << *versionReverseIterator
@@ -4917,7 +4919,7 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 				try
 				{
 					cfgMgr->getVersionedTableByName(
-					    configName, *versionReverseIterator);  // load to cache
+					    tableName, *versionReverseIterator);  // load to cache
 				}
 				catch(const std::runtime_error& e)
 				{
@@ -4957,13 +4959,13 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 				// erase and return equivalent version
 
 				// erase modified equivalent version
-				cfgMgr->eraseTemporaryVersion(configName, temporaryModifiedVersion);
+				cfgMgr->eraseTemporaryVersion(tableName, temporaryModifiedVersion);
 
 				// erase original if needed
 				if(needToEraseTemporarySource)
-					cfgMgr->eraseTemporaryVersion(configName, originalVersion);
+					cfgMgr->eraseTemporaryVersion(tableName, originalVersion);
 
-				xmlOut.addTextElementToData("savedName", configName);
+				xmlOut.addTextElementToData("savedName", tableName);
 				xmlOut.addTextElementToData("savedVersion", duplicateVersion.toString());
 				xmlOut.addTextElementToData("foundEquivalentVersion", "1");
 
@@ -4997,12 +4999,12 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 		             << __E__;
 
 	TableVersion newAssignedVersion =
-	    cfgMgr->saveNewTable(configName, temporaryModifiedVersion, makeTemporary);
+	    cfgMgr->saveNewTable(tableName, temporaryModifiedVersion, makeTemporary);
 
 	if(needToEraseTemporarySource)
-		cfgMgr->eraseTemporaryVersion(configName, originalVersion);
+		cfgMgr->eraseTemporaryVersion(tableName, originalVersion);
 
-	xmlOut.addTextElementToData("savedName", configName);
+	xmlOut.addTextElementToData("savedName", tableName);
 	xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
 
 	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
@@ -5010,17 +5012,17 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 }
 
 //========================================================================================================================
-// handleCreateConfigurationXML
+// handleCreateTableXML
 //
-//	Save the detail of specific Sub-System Configuration specified
-//		by configName and version
+//	Save the detail of specific table specified
+//		by tableName and version
 //		...starting from dataOffset
 //
 //	Note: if starting version is -1 start from mock-up
-void ConfigurationGUISupervisor::handleCreateConfigurationXML(
+void ConfigurationGUISupervisor::handleCreateTableXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      configName,
+    const std::string&      tableName,
     TableVersion            version,
     bool                    makeTemporary,
     const std::string&      data,
@@ -5030,7 +5032,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(
     bool                    sourceTableAsIs,
     bool                    lookForEquivalent) try
 {
-	//__SUP_COUT__ << "handleCreateConfigurationXML: " << configName << " version: " <<
+	//__SUP_COUT__ << "handleCreateTableXML: " << tableName << " version: " <<
 	// version
 	//		<< " dataOffset: " << dataOffset << __E__;
 
@@ -5042,7 +5044,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(
 	{
 		try
 		{
-			cfgMgr->getVersionedTableByName(configName, version);
+			cfgMgr->getVersionedTableByName(tableName, version);
 		}
 		catch(...)
 		{
@@ -5051,7 +5053,7 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(
 		}
 	}
 
-	TableBase* config = cfgMgr->getTableByName(configName);
+	TableBase* config = cfgMgr->getTableByName(tableName);
 
 	// check that the source version has the right number of columns
 	//	if there is a mismatch, start from mockup
@@ -5164,14 +5166,14 @@ void ConfigurationGUISupervisor::handleCreateConfigurationXML(
 	// note: if sourceTableAsIs, accept equivalent versions
 	saveModifiedVersionXML(xmlOut,
 	                       cfgMgr,
-	                       configName,
+	                       tableName,
 	                       version,
 	                       makeTemporary,
 	                       config,
 	                       temporaryVersion,
 	                       false /*ignoreDuplicates*/,
 	                       lookForEquivalent || sourceTableAsIs /*lookForEquivalent*/);
-}
+} //end handleCreateTableXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -5592,47 +5594,47 @@ catch(...)
 }
 
 //========================================================================================================================
-//	handleDeleteConfigurationInfoXML
+//	handleDeleteTableInfoXML
 //
 //		return nothing except Error in xmlOut
 //
-void ConfigurationGUISupervisor::handleDeleteConfigurationInfoXML(
-    HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr, std::string& configName)
+void ConfigurationGUISupervisor::handleDeleteTableInfoXML(
+    HttpXmlDocument& xmlOut, ConfigurationManagerRW* cfgMgr, std::string& tableName)
 {
-	if(0 == rename((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(),
-	               (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str()))
+	if(0 == rename((CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT).c_str(),
+	               (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT + ".unused").c_str()))
 		__SUP_COUT_INFO__ << ("Table Info File successfully renamed: " +
-		                      (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT +
+		                      (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT +
 		                       ".unused"))
 		                  << __E__;
 	else
 	{
-		__SUP_COUT_ERR__ << ("Error renaming file to " + (CONFIG_INFO_PATH + configName +
+		__SUP_COUT_ERR__ << ("Error renaming file to " + (CONFIG_INFO_PATH + tableName +
 		                                                  CONFIG_INFO_EXT + ".unused"))
 		                 << __E__;
 
 		xmlOut.addTextElementToData(
 		    "Error",
 		    ("Error renaming Table Info File to " +
-		     (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused")));
+		     (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT + ".unused")));
 		return;
 	}
 
 	// reload all with refresh to remove new configuration
 	cfgMgr->getAllTableInfo(true);
-}
+} //end handleDeleteTableInfoXML()
 
 //========================================================================================================================
-//	handleSaveConfigurationInfoXML
+//	handleSaveTableInfoXML
 //
-//		write new info file for configName based CSV column info
+//		write new info file for tableName based CSV column info
 //			data="type,name,dataType;type,name,dataType;..."
-//		return resulting handleGetConfigurationXML mock-up view
+//		return resulting handleGetTableXML mock-up view
 //
-void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
+void ConfigurationGUISupervisor::handleSaveTableInfoXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    std::string&            configName,
+    std::string&            tableName,
     const std::string&      data,
     const std::string&      tableDescription,
     const std::string&      columnChoicesCSV,
@@ -5643,7 +5645,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 	std::string capsName;
 	try
 	{
-		capsName = TableBase::convertToCaps(configName, true);
+		capsName = TableBase::convertToCaps(tableName, true);
 	}
 	catch(std::runtime_error& e)
 	{  // error! non-alpha
@@ -5653,22 +5655,22 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 
 	if(!allowOverwrite)
 	{
-		FILE* fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "r");
+		FILE* fp = fopen((CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT).c_str(), "r");
 		if(fp)
 		{
 			fclose(fp);
-			xmlOut.addTextElementToData("TableName", configName);
+			xmlOut.addTextElementToData("TableName", tableName);
 			xmlOut.addTextElementToData("OverwriteError", "1");
 			xmlOut.addTextElementToData(
 			    "Error",
 			    "File already exists! ('" +
-			        (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT) + "')");
+			        (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT) + "')");
 			return;
 		}
 	}
 
 	__SUP_COUT__ << "capsName=" << capsName << __E__;
-	__SUP_COUT__ << "configName=" << configName << __E__;
+	__SUP_COUT__ << "tableName=" << tableName << __E__;
 	__SUP_COUT__ << "tableDescription=" << tableDescription << __E__;
 	__SUP_COUT__ << "columnChoicesCSV=" << columnChoicesCSV << __E__;
 
@@ -5678,7 +5680,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 	outss << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>\n";
 	outss << "\t<ROOT xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
 	         "xsi:noNamespaceSchemaLocation=\"TableInfo.xsd\">\n";
-	outss << "\t\t<CONFIGURATION Name=\"" << configName << "\">\n";
+	outss << "\t\t<CONFIGURATION Name=\"" << tableName << "\">\n";
 	outss << "\t\t\t<VIEW Name=\"" << capsName
 	      << "\" Type=\"File,Database,DatabaseTest\" Description=\"" << tableDescription
 	      << "\">\n";
@@ -5748,13 +5750,13 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 
 	__SUP_COUT__ << outss.str() << __E__;
 
-	FILE* fp = fopen((CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(), "w");
+	FILE* fp = fopen((CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT).c_str(), "w");
 	if(!fp)
 	{
 		xmlOut.addTextElementToData(
 		    "Error",
 		    "Failed to open destination Configuration Info file:" +
-		        (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT));
+		        (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT));
 		return;
 	}
 
@@ -5762,17 +5764,17 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 	fclose(fp);
 
 	// reload all config info with refresh AND reset to pick up possibly new config
-	// check for errors related to this configName
+	// check for errors related to this tableName
 	std::string accumulatedErrors = "";
-	cfgMgr->getAllTableInfo(true, &accumulatedErrors, configName);
+	cfgMgr->getAllTableInfo(true, &accumulatedErrors, tableName);
 
 	// if errors associated with this config name stop and report
 	if(accumulatedErrors != "")
 	{
-		__SUP_SS__ << ("The new version of the '" + configName +
+		__SUP_SS__ << ("The new version of the '" + tableName +
 		               "' table column info was saved, however errors were detected "
 		               "reading back the configuration '" +
-		               configName + "' after the save attempt:\n\n" + accumulatedErrors)
+		               tableName + "' after the save attempt:\n\n" + accumulatedErrors)
 		           << __E__;
 
 		__SUP_COUT_ERR__ << ss.str() << __E__;
@@ -5789,17 +5791,17 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 			// if error detected //move file to ".unused"
 			if(0 ==
 			   rename(
-			       (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT).c_str(),
-			       (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused").c_str()))
+			       (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT).c_str(),
+			       (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT + ".unused").c_str()))
 				__SUP_COUT_INFO__
 				    << ("File successfully renamed: " +
-				        (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused"))
+				        (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT + ".unused"))
 				    << __E__;
 			else
 
 				__SUP_COUT_ERR__
 				    << ("Error renaming file to " +
-				        (CONFIG_INFO_PATH + configName + CONFIG_INFO_EXT + ".unused"))
+				        (CONFIG_INFO_PATH + tableName + CONFIG_INFO_EXT + ".unused"))
 				    << __E__;
 
 			// reload all with refresh to remove new configuration
@@ -5809,7 +5811,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 	}
 
 	// return the new configuration info
-	handleGetConfigurationXML(xmlOut, cfgMgr, configName, TableVersion());
+	handleGetTableXML(xmlOut, cfgMgr, tableName, TableVersion());
 
 	// debug all table column info
 	// FIXME -- possibly remove this debug feature in future
@@ -5833,7 +5835,7 @@ void ConfigurationGUISupervisor::handleSaveConfigurationInfoXML(
 			                  << __E__;
 		}
 	}
-}
+} // end handleSaveTableInfoXML()
 
 //========================================================================================================================
 //	handleSetGroupAliasInBackboneXML
@@ -6015,7 +6017,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      versionAlias,
-    const std::string&      configName,
+    const std::string&      tableName,
     TableVersion            version,
     const std::string&      author) try
 {
@@ -6067,14 +6069,14 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 		// only make a new version if we are changing compared to active backbone
 
 		unsigned int row = -1;
-		// find configName, versionAlias pair
+		// find tableName, versionAlias pair
 		//	NOTE: only accept the first pair, repeats are ignored.
 		try
 		{
 			unsigned int tmpRow = -1;
 			do
 			{  // start looking from beyond last find
-				tmpRow = configView->findRow(col3, configName, tmpRow + 1);
+				tmpRow = configView->findRow(col3, tableName, tmpRow + 1);
 			} while(configView->getDataView()[tmpRow][col2] != versionAlias);
 			// at this point the first pair was found! (else exception was thrown)
 			row = tmpRow;
@@ -6097,12 +6099,12 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 
 			col = configView->findCol("VersionAliasUID");
 			configView->setValue(
-			    configName.substr(0, configName.rfind("Configuration")) + versionAlias,
+			    tableName.substr(0, tableName.rfind("Configuration")) + versionAlias,
 			    row,
 			    col);
 
 			configView->setValue(versionAlias, row, col2);
-			configView->setValue(configName, row, col3);
+			configView->setValue(tableName, row, col3);
 		}
 
 		__SUP_COUT__ << "\t\t row: " << row << __E__;
@@ -6269,7 +6271,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 		__SUP_COUT__ << "Adding alias for " << memberPair.first << "_v"
 		             << memberPair.second << __E__;
 
-		// find configName, versionAlias pair
+		// find tableName, versionAlias pair
 		//	NOTE: only accept the first pair, repeats are ignored.
 		try
 		{
@@ -6763,18 +6765,18 @@ void ConfigurationGUISupervisor::handleTableGroupsXML(
 }
 
 //========================================================================================================================
-//	handleConfigurationsXML
+//	handleTablesXML
 //
 //		return this information
-//		<subconfiguration name=xxx>
+//		<table name=xxx>
 //			<version key=xxx />
 //			<version key=xxx />
 //			...
-//		</subconfiguration>
-//		<subconfiguration name=xxx>...</subconfiguration>
+//		</table>
+//		<table name=xxx>...</table>
 //		...
 //
-void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument&        xmlOut,
+void ConfigurationGUISupervisor::handleTablesXML(HttpXmlDocument&        xmlOut,
                                                          ConfigurationManagerRW* cfgMgr,
                                                          bool allowIllegalColumns)
 {
@@ -6797,13 +6799,13 @@ void ConfigurationGUISupervisor::handleConfigurationsXML(HttpXmlDocument&       
 
 	while(it != allTableInfo.end())
 	{
-		// for each subconfiguration name
+		// for each table name
 		// get existing version keys
 
 		//__SUP_COUT__ << "Name: " << it->first << " - #ofVersions: " <<
 		// it->second.versions_.size() << __E__;
 
-		// add system subconfiguration name
+		// add system table name
 		xmlOut.addTextElementToData("TableName", it->first);
 		parentEl = xmlOut.addTextElementToData("TableVersions", "");
 
@@ -6897,7 +6899,7 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	//		__SUP_COUT__ << "\t\tExisting Versions: " << mapIt.second.versions_.size() <<
 	//__E__;
 	//
-	//		//get version key for the current system subconfiguration key
+	//		//get version key for the current system table key
 	//		for (auto& v:mapIt.second.versions_)
 	//		{
 	//			__SUP_COUT__ << "\t\t" << v << __E__;

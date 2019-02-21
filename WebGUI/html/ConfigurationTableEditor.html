@@ -133,7 +133,7 @@
 			//loadTable()
 			//verifyDeleteTable()
 			//deleteTable()
-			//setupSpecificConfig(configName, version)		//setup editor for specific configuration table
+			//setupSpecificConfig(tableName, version)		//setup editor for specific configuration table
 			//specificConfigRequestHandler(req)
 			//setupEmptyTable();
 			//setupTable(srcName,colHdrs,colTypes,colDataTypes,colChoices,tableDescription)
@@ -168,7 +168,7 @@
 		function init() {			
 			Debug.log("CfgTableEditor init");
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations&refresh=1&allowIllegalColumns=1", "",
+			DesktopContent.XMLHttpRequest("Request?RequestType=getTables&refresh=1&allowIllegalColumns=1", "",
 					setupTableEditor,
 					0 /*handler param*/,
 					0 /*progressHandler*/,
@@ -261,7 +261,7 @@
 			}
 
 			var configNames = req.responseXML.getElementsByTagName("TableName");
-			var configVersionHdr = req.responseXML.getElementsByTagName("ConfigurationVersions");
+			var configVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
 
 			//Save Column Info as...
 			//	Configuration Name:
@@ -283,20 +283,20 @@
 					"onchange='document.getElementById(\"reallyDeleteButton\").style.display = \"none\";' " +
 					">";
 
-			var configName;
+			var tableName;
 
 			_tableName = [];
 			
 			Debug.log("CfgTableEditor requestHandler configNames.length " + configNames.length);
 			for(var i=0;i<configNames.length;++i)
 			{			
-				configName = configNames[i].getAttribute("value");
+				tableName = configNames[i].getAttribute("value");
 
-				str += "<option value='" + configName + "'>";
-				str += configName;	//can display however
+				str += "<option value='" + tableName + "'>";
+				str += tableName;	//can display however
 				str += "</option>";
 				
-				_tableName.push(configName); //keep list of table names for forcing link names
+				_tableName.push(tableName); //keep list of table names for forcing link names
 			}				
 			str += "</select>";
 
@@ -341,23 +341,23 @@
 		{
 			var sel = document.getElementById("loadFromConfigName");
 			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-			var configName = sel.options[sel.selectedIndex].value;
+			var tableName = sel.options[sel.selectedIndex].value;
 			
-			Debug.log("CfgTableEditor loadTable from " + configName);
+			Debug.log("CfgTableEditor loadTable from " + tableName);
 
 			//load mockup for chosen table
-			setupSpecificConfig(configName, -1);
+			setupSpecificConfig(tableName, -1);
 		}
 		
 		//saveTable ~
 		function saveTable(allowOverwrite)
 		{
-			var configName = document.getElementById("SaveAsConfigName").value;
+			var tableName = document.getElementById("SaveAsConfigName").value;
 			
-			Debug.log("CfgTableEditor saveTable=" + configName);
+			Debug.log("CfgTableEditor saveTable=" + tableName);
 			_colHdrArr, _colTypeArr, _colDataTypeArr;
 
-			//	write new info file for configName based CSV column info
+			//	write new info file for tableName based CSV column info
 			//			data="type,name,dataType;type,name,dataType;..."
 			
 			var data = "";
@@ -395,8 +395,8 @@
 			}
 			
 			
-			DesktopContent.XMLHttpRequest("Request?RequestType=saveConfigurationInfo" +
-				"&configName=" + configName + 
+			DesktopContent.XMLHttpRequest("Request?RequestType=saveTableInfo" +
+				"&tableName=" + tableName + 
 				"&allowOverwrite="+allowOverwrite, 
 				"columnCSV=" + data + 
 				"&tableDescription=" + tableDescription +
@@ -413,12 +413,12 @@
 		{
 			var sel = document.getElementById("loadFromConfigName");
 			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-			var configName = sel.options[sel.selectedIndex].value;
+			var tableName = sel.options[sel.selectedIndex].value;
 			
-			Debug.log("CfgTableEditor verifyDeleteTable from " + configName);
+			Debug.log("CfgTableEditor verifyDeleteTable from " + tableName);
 			
 			Debug.log("Are you sure you want to delete the " +
-					"configuration '" +  configName + 
+					"configuration '" +  tableName + 
 					"'? If so, click the 'Really Delete!' button.",
 					Debug.WARN_PRIORITY);
 			document.getElementById("reallyDeleteButton").style.display = "inline";			
@@ -429,16 +429,16 @@
 		{
 			var sel = document.getElementById("loadFromConfigName");
 			if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-			var configName = sel.options[sel.selectedIndex].value;			
-			Debug.log("CfgTableEditor deleteTable from " + configName);
+			var tableName = sel.options[sel.selectedIndex].value;			
+			Debug.log("CfgTableEditor deleteTable from " + tableName);
 
 			document.getElementById("reallyDeleteButton").style.display = "none";
-			DesktopContent.XMLHttpRequest("Request?RequestType=deleteConfigurationInfo" +
-				"&configName=" + configName, "",
+			DesktopContent.XMLHttpRequest("Request?RequestType=deleteTableInfo" +
+				"&tableName=" + tableName, "",
 				function(req)
 				{
 					//on success reload all configurations
-					DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurations" +
+					DesktopContent.XMLHttpRequest("Request?RequestType=getTables" +
 							"&refresh=1&allowIllegalColumns=1", "",
 							setupTableEditor,
 							0 /*handler param*/,
@@ -450,13 +450,13 @@
 
 		//setupSpecificConfig ~
 		//	undefined version gives latest
-		function setupSpecificConfig(configName,version) {
+		function setupSpecificConfig(tableName,version) {
 			var v = "";
 			if(version) v = "&version="+version;
-			document.getElementById("SaveAsConfigName").value = configName;
-			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificConfiguration&allowIllegalColumns=1" + 
+			document.getElementById("SaveAsConfigName").value = tableName;
+			DesktopContent.XMLHttpRequest("Request?RequestType=getSpecificTable&allowIllegalColumns=1" + 
 					"&dataOffset=0&chunkSize=0" +  
-					"&configName=" + configName + 
+					"&tableName=" + tableName + 
 					v, 
 					"", 
 					specificConfigRequestHandler, 
@@ -479,7 +479,7 @@
 		//specificConfigRequestHandler
 		function specificConfigRequestHandler(req, isFromSaveReq) {
 
-			var configName = DesktopContent.getXMLValue(req,"TableName");
+			var tableName = DesktopContent.getXMLValue(req,"TableName");
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
 			{				
@@ -488,7 +488,7 @@
 				{
 					Debug.log(err,Debug.WARN_PRIORITY);
 					Debug.log("Are you sure you want to overwrite the " +
-							"configuration '" +  configName + 
+							"configuration '" +  tableName + 
 							"'? If so, click the 'Overwrite' button.",
 							Debug.WARN_PRIORITY);
 					document.getElementById("overwriteButton").style.display = "inline";
@@ -500,14 +500,14 @@
 					//try to power through
 				}
 			}
-			else if(configName != "")
-				Debug.log("Column info for table '" + configName + "' was successfully loaded!",
+			else if(tableName != "")
+				Debug.log("Column info for table '" + tableName + "' was successfully loaded!",
 						Debug.INFO_PRIORITY);
 				
 			document.getElementById("overwriteButton").style.display = "none";						
 			
 			if(isFromSaveReq && !err)
-				Debug.log("Successful response to save request of Info for '" + configName + "'",Debug.INFO_PRIORITY);
+				Debug.log("Successful response to save request of Info for '" + tableName + "'",Debug.INFO_PRIORITY);
 			
 			if(!req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0])
 				return;
@@ -517,7 +517,7 @@
 			var colDataTypes = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnDataType");
 			var colChoices = req.responseXML.getElementsByTagName("CurrentVersionColumnHeaders")[0].getElementsByTagName("ColumnChoices");
 
-			var tableDescription = DesktopContent.getXMLValue(req,"ConfigurationDescription");
+			var tableDescription = DesktopContent.getXMLValue(req,"TableDescription");
 			
 			var colHdrsArr = [];
 			for(var i=0;i<colHdrs.length;++i)
@@ -553,10 +553,10 @@
 			}
 			
 			if(!isFromSaveReq)
-				document.getElementById('SaveAsConfigName').value = configName;
+				document.getElementById('SaveAsConfigName').value = tableName;
 			
 			Debug.log("tableDescription = " + tableDescription);
-			setupTable(configName,colHdrsArr,colTypesArr,colDataTypesArr,colChoicesArr,tableDescription);
+			setupTable(tableName,colHdrsArr,colTypesArr,colDataTypesArr,colChoicesArr,tableDescription);
 		}
 		
 		//setupTable ~
@@ -1903,7 +1903,7 @@
 			editCellOK(); //editCellCancel();
 			Debug.log("TableEditor downloadFixedChoices ");
 			
-			var configName = document.getElementById("SaveAsConfigName").value;
+			var tableName = document.getElementById("SaveAsConfigName").value;
 
 			var colChoicesArr = _colChoicesArr[c].split(',');
 			
@@ -1926,7 +1926,7 @@
 			var link = document.createElement("a");
 			link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
 			link.setAttribute("style", "display:none");
-			link.setAttribute("download", configName + "_" + 
+			link.setAttribute("download", tableName + "_" + 
 					_colHdrArr[c] + "_fixedChoices_download.csv");
 			document.body.appendChild(link); // Required for FF
 

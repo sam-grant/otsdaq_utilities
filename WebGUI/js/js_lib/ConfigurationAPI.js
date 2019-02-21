@@ -142,13 +142,13 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";
 ConfigurationAPI.getActiveGroups = function(responseHandler)
 {	
 	//get active configuration group
-	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
+	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
 			"", function(req) 
 			{
 		responseHandler(ConfigurationAPI.extractActiveGroups(req));
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler
+	); //end of getActiveTableGroups handler
 }
 ConfigurationAPI.extractActiveGroups = function(req)
 {
@@ -1452,7 +1452,7 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 		); //end of getGroupAliases handler
 
 			},0,0,true //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler			
+	); //end of getActiveTableGroups handler			
 
 
 	document.body.appendChild(el); //add element to display div
@@ -2211,9 +2211,9 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	for(var j=0;j<modifiedTables.length;++j)
 		if((modifiedTables[j].tableVersion|0) < -1) //for each modified table
 		{
-			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+			var reqStr = "Request?RequestType=saveSpecificTable" + 
 					"&dataOffset=0&chunkSize=0" +  
-					"&configName=" + modifiedTables[j].tableName + 
+					"&tableName=" + modifiedTables[j].tableName + 
 					"&version="+modifiedTables[j].tableVersion +	
 					"&temporary=0" +
 					"&tableComment=" + 
@@ -2241,21 +2241,21 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					return;
 				}						
 
-				var configName = DesktopContent.getXMLValue(req,"savedName");
+				var tableName = DesktopContent.getXMLValue(req,"savedName");
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
 				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion") | 0;
 
 				if(foundEquivalentVersion)
-					Debug.log("Using existing table '" + configName + "-v" + 
+					Debug.log("Using existing table '" + tableName + "-v" + 
 							version + "'",Debug.INFO_PRIORITY);
 				else
-					Debug.log("Successfully created new table '" + configName + "-v" + 
+					Debug.log("Successfully created new table '" + tableName + "-v" + 
 						version + "'",Debug.INFO_PRIORITY);
 				
 				//update saved table version based on result
 				{
 					var obj = {};
-					obj.tableName = configName;
+					obj.tableName = tableName;
 					obj.tableVersion = version;
 					obj.tableComment = modifiedTables[modifiedTableIndex].tableComment;
 					savedTables.push(obj);
@@ -2287,7 +2287,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 ConfigurationAPI.activateGroup = function(groupName, groupKey, 
 		ignoreWarnings, doneHandler)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 			"&groupName=" +	groupName + 
 			"&groupKey=" + groupKey +
 			"&ignoreWarnings=" + (ignoreWarnings?"1":"0") +
@@ -2466,7 +2466,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 
 		//now activate the new group
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+		DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 				"&groupName=" + name +
 				"&groupKey=" + key, "", 
 				function(req)
