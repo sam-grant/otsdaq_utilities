@@ -1471,7 +1471,9 @@
 								"The other field completing the pair must be of type ChildLinkUID or ChildLinkGroupID. " +
 								"The two fields are defined as being in the same pair by having the same Link ID. " +
 								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
-								"the Link ID can be a number or a string. \n\n" +
+								"the Link ID can be a number or a string. If you put a space in a Group Link ID, the characters after the first " +
+								"space will be considered for the target GroupID column in the child table (this allows for multiple Group Link fields " + 
+								"in the parent table to point to the same child table GroupID column, for example).\n\n" +
 								
 								"If the other field in the pair is of type ChildLinkUID, then you have created a unique-record table link (i.e. a link to one particular record in the target table).\n\n" +
 								"If the other field in the pair is of type ChildLinkGroupID, then you have created a group-of-records table link (i.e. a link to one or many child table records, which share the same Group ID).\n\n" +
@@ -1497,7 +1499,9 @@
 								"The other field completing the pair in this table must be of type ChildLink. " +
 								"The two fields are defined as being in the same pair by having the same Link ID. " +
 								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
-								"the Link ID can be a number or a string. \n\n" +
+								"the Link ID can be a number or a string. If you put a space in a Group Link ID, the characters after the first " +
+								"space will be considered for the target GroupID column in the child table (this allows for multiple Group Link fields " + 
+								"in the parent table to point to the same child table GroupID column, for example).\n\n" +
 								
 								"A group-of-records table link is a link to one or many child table records, which share the same Group ID. " +
 								"Note that a field of type GroupID is required in the target table for a valid group-of-records table link. " +
@@ -1509,7 +1513,9 @@
 								"A group-of-records table link is a link to one or many child table records, which share the same Group ID. " +
 								"The GroupID field has no special functionality unless there is a parent table targeting this child table with a link that has a corresponding Link ID. " +
 								"The Link ID is specified by entering a value in the input box next to the field type dropdown - " +
-								"the Link ID can be a number or a string. \n\n" +
+								"the Link ID can be a number or a string. If you put a space in the parent Group Link ID, the characters after the first " +
+								"space will be considered for the target GroupID column in the child table (this allows for multiple Group Link fields " + 
+								"in the parent table to point to the same child table GroupID column, for example).\n\n" +
 								
 								"Note that a field of type GroupID is required in the target table for a valid group-of-records table link. " +
 								"The GroupID field in the child table must have a Link ID which matches the Link ID of the pair of fields in the parent table."								
