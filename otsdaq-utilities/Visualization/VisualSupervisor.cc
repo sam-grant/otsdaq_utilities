@@ -580,7 +580,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		//				sprintf(str,"%f",itHits->z);
 		//				xmlOut.addTextElementToParent("xyz_point", str, eventParent);
 		//				//__SUP_COUT__ << "X: " << itHits->x << " Y: " << itHits->y << "
-		//Z:
+		// Z:
 		//"
 		//<<  itHits->z << std::endl;
 		//			}

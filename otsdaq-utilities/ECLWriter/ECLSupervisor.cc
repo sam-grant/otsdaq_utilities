@@ -112,8 +112,7 @@ void ECLSupervisor::transitionConfiguring(toolbox::Event::Reference e)
 		__COUT__ << "Configuration table group name: " << theGroup.first
 		         << " key: " << theGroup.second << std::endl;
 
-		theConfigurationManager_->loadTableGroup(
-		    theGroup.first, theGroup.second, true);
+		theConfigurationManager_->loadTableGroup(theGroup.first, theGroup.second, true);
 
 		ConfigurationTree configLinkNode =
 		    theConfigurationManager_->getSupervisorTableNode(supervisorContextUID_,
