@@ -6857,9 +6857,6 @@ void ConfigurationGUISupervisor::testXDAQContext()
 	{
 		__SUP_COUT__ << "Attempting test activation of the context group." << __E__;
 		ConfigurationManager cfgMgr;  // create instance to activate saved groups
-		__COUTV__(
-		    cfgMgr.getNode("/ROCInterfaceTable/test/ROCTypeLinkTable/p3/daqParameterKey")
-		        .getValueAsString());
 	}
 	catch(const std::runtime_error& e)
 	{
