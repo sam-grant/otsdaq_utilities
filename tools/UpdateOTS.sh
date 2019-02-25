@@ -118,17 +118,17 @@ if [ "x$1" == "x" ]; then
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating USER_DATA path $USER_DATA,"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t based on the list in $USER_DATA/ServiceData/CoreTableInfoNames.dat."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/ConfigurationInfo/ will be copied!"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/TableInfo/ will be copied!"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo
 	
-	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/TableInfo.xsd $USER_DATA/ConfigurationInfo/"
-	cp $OTSDAQ_DIR/data-core/ConfigurationInfo/TableInfo.xsd $USER_DATA/ConfigurationInfo/
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/TableInfo.xsd $USER_DATA/TableInfo/"
+	cp $OTSDAQ_DIR/data-core/TableInfo/TableInfo.xsd $USER_DATA/TableInfo/
 			
 	if [ -e "$USER_DATA/ServiceData/CoreTableInfoNames.dat" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t $USER_DATA/ServiceData/CoreTableInfoNames.dat exists!"
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/ConfigurationInfo/ ..."
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Loading updated info for core tables (relative paths and wildcards are allowed) from $OTSDAQ_DIR/data-core/TableInfo/ ..."
 		echo
 		
 
@@ -138,40 +138,36 @@ if [ "x$1" == "x" ]; then
 		cat $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		echo
 		
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk"
-		rm -rf $USER_DATA/ConfigurationInfo.updateots.bk
-		cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo.updateots.bk		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo.updateots.bk"
+		rm -rf $USER_DATA/TableInfo.updateots.bk
+		cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo.updateots.bk		
 		
-		#NOTE: relative paths are allowed from otsdaq/data-core/ConfigurationInfo
+		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
 		while read line; do
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/	&>/dev/null #hide output	
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-			cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
+			echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
-		#do one more time after loop to make sure last line is read (even if user did not put new line) 
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output		
-		#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/"						
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/${line}Info.xml $USER_DATA/ConfigurationInfo/ &>/dev/null #hide output
+		#do one more time after loop to make sure last line is read 
+		# (even if user did not put new line) 
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+		cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore ---&>/dev/null #hide output
 	else
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/ConfigurationInfo $USER_DATA/ConfigurationInfo_update_bk"
-		rm -rf $USER_DATA/ConfigurationInfo_update_bk
-		cp -r $USER_DATA/ConfigurationInfo/ $USER_DATA/ConfigurationInfo_update_bk
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/ARTDAQ/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/"
-		cp $OTSDAQ_DIR/data-core/ConfigurationInfo/Core/*Info.xml $USER_DATA/ConfigurationInfo/
-		# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo_update_bk"
+		rm -rf $USER_DATA/TableInfo_update_bk
+		cp -r $USER_DATA/TableInfo/ $USER_DATA/TableInfo_update_bk
+		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ARTDAQ/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ARTDAQ/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/BackboneGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/BackboneGroup/*Info.xml $USER_DATA/TableInfo/			# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ConfigCore/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ConfigCore/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/ContextGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/ContextGroup/*Info.xml $USER_DATA/TableInfo/			# undo c++ style comment for Eclipse viewing*/
+		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/IterateGroup/*Info.xml $USER_DATA/TableInfo/"
+		cp $OTSDAQ_DIR/data-core/TableInfo/IterateGroup/*Info.xml $USER_DATA/TableInfo/ 		# undo c++ style comment for Eclipse viewing*/
+		
 	fi
 	
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
@@ -183,10 +179,10 @@ if [ "x$1" == "x" ]; then
 	#make sure permissions are usable
 	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 777 $USER_DATA/XDAQConfigurations/*.xml"
 	chmod 777 $USER_DATA/XDAQConfigurations/*.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml"
-	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd"
-	chmod 755 $USER_DATA/ConfigurationInfo/*Info.xsd #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xml"
+	chmod 755 $USER_DATA/TableInfo/*Info.xml #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xsd"
+	chmod 755 $USER_DATA/TableInfo/*Info.xsd #*/ just resetting comment coloring
 	
 	#copy tutorial launching scripts
 	echo

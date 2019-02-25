@@ -122,7 +122,9 @@
 									 1,//"Snake Double Rows",
 									 1];//"Snake Double Columns"];
 
-		var _tableName;
+		var _tableName; //an array
+		var _lastTableNameUsed;
+		
 		/////////////////////////////////////////////////////////////////////////////////////////
 		/////////////////////////////////////////////////////////////////////////////////////////
 	
@@ -167,6 +169,15 @@
 		//	init called once body has loaded
 		function init() {			
 			Debug.log("CfgTableEditor init");
+			
+			//attempt to get last table name used.. to load after refresh
+			_lastTableNameUsed = "";
+			try
+			{
+				_lastTableNameUsed = document.getElementById("loadFromConfigName").value;
+				Debug.log("_lastTableNameUsed=" + _lastTableNameUsed);
+			}
+			catch(e) {} //ignore any errors
 			
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTables&refresh=1&allowIllegalColumns=1", "",
 					setupTableEditor,
@@ -240,9 +251,7 @@
 				}
 				Debug.log("default array = " + _defaultArray);				
 			});
-			
-			setupEmptyTable();
-
+						
 			window.onmouseup = function(event) {	
 				editCellOK();//editCellCancel();  
 				_mouseIsSelecting = false; 
@@ -288,11 +297,14 @@
 			_tableName = [];
 			
 			Debug.log("CfgTableEditor requestHandler configNames.length " + configNames.length);
+			Debug.log("_lastTableNameUsed=" + _lastTableNameUsed);
 			for(var i=0;i<configNames.length;++i)
 			{			
 				tableName = configNames[i].getAttribute("value");
 
-				str += "<option value='" + tableName + "'>";
+				str += "<option value='" + tableName + "' " +
+						(tableName == _lastTableNameUsed?"selected":"") +
+						">";
 				str += tableName;	//can display however
 				str += "</option>";
 				
@@ -314,7 +326,13 @@
 			var el = document.getElementById("controls");
 			el.innerHTML = str;
 			
-		}
+
+			if(_lastTableNameUsed && _lastTableNameUsed != "")
+				loadTable();
+			else
+				setupEmptyTable();
+			
+		} //end setupTableEditor
 
 		//handleTypeSelect ~
 		function handleTypeSelect()
@@ -432,6 +450,8 @@
 			var tableName = sel.options[sel.selectedIndex].value;			
 			Debug.log("CfgTableEditor deleteTable from " + tableName);
 
+			_lastTableNameUsed = "";
+			
 			document.getElementById("reallyDeleteButton").style.display = "none";
 			DesktopContent.XMLHttpRequest("Request?RequestType=deleteTableInfo" +
 				"&tableName=" + tableName, "",

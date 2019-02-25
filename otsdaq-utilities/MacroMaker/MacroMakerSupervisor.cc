@@ -1244,7 +1244,8 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 		    "} //end " + macroName + "()\n\n";
 
 		//__SUP_COUTV__(insert);
-		CodeEditor::writeFile(sourceFile, contents, insertPos, insert);
+		CodeEditor::writeFile(
+		    sourceFile, contents, "MacroMaker-" + username, insertPos, insert);
 	}
 
 	////////////////////////////
@@ -1271,7 +1272,8 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 		         "\t(__ARGS__);\n";
 
 		__SUP_COUTV__(insert);
-		CodeEditor::writeFile(headerFile, contents, insertPos, insert);
+		CodeEditor::writeFile(
+		    headerFile, contents, "MacroMaker-" + username, insertPos, insert);
 	}
 
 }  // end exportFEMacro ()

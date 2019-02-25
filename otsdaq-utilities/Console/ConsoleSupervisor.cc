@@ -65,13 +65,13 @@ void ConsoleSupervisor::init(void)
 	    },
 	    this)
 	    .detach();
-}
+}  // end init()
 
 //========================================================================================================================
 void ConsoleSupervisor::destroy(void)
 {
 	// called by destructor
-}
+}  // end destroy()
 
 //========================================================================================================================
 // messageFacilityReceiverWorkLoop ~~
@@ -275,7 +275,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
 		}
 	}
 
-}  // end messageFacilityReceiverWorkLoop
+}  // end messageFacilityReceiverWorkLoop()
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
@@ -285,7 +285,7 @@ void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
 	*out << "<!DOCTYPE HTML><html lang='en'><frameset col='100%' row='100%'><frame "
 	        "src='/WebPath/html/Console.html?urn="
 	     << getApplicationDescriptor()->getLocalId() << "'></frameset></html>";
-}
+}  // end defaultPage()
 
 //========================================================================================================================
 // forceSupervisorPropertyValues
@@ -297,7 +297,7 @@ void ConsoleSupervisor::forceSupervisorPropertyValues()
 	    "GetConsoleMsgs");
 	//	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
 	//			"SaveUserPreferences | LoadUserPreferences");
-}
+}  // end forceSupervisorPropertyValues()
 
 //========================================================================================================================
 //	Request
@@ -440,7 +440,13 @@ void ConsoleSupervisor::request(const std::string&               requestType,
 		sprintf(tmpStr, "%u", hideLineNumers);
 		xmlOut.addTextElementToData("hideLineNumers", tmpStr);
 	}
-}
+	else
+	{
+		__SUP_SS__ << "requestType Request, " << requestType << ", not recognized."
+		           << __E__;
+		__SUP_SS_THROW__;
+	}
+}  // end request()
 
 //========================================================================================================================
 // ConsoleSupervisor::insertMessageRefresh()
