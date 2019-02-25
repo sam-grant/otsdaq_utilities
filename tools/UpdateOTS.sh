@@ -29,7 +29,7 @@ echo
 sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
 if [ "x$1" == "x" ]; then
-    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage Error: parameter 1 is the comment for git commit"
+    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage Warning: parameter 1 is the comment for git commit"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: to use ! at the end of your message put a space between the ! and the closing \""
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
     echo -e "UpdateOTS.sh [${LINENO}]  \t WARNING: without comment, script will only do git pull and git status"
