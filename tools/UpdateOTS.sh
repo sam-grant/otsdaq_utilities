@@ -144,7 +144,7 @@ if [ "x$1" == "x" ]; then
 		
 		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
 		while read line; do
-			echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
 			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
