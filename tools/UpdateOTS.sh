@@ -143,15 +143,19 @@ if [ "x$1" == "x" ]; then
 		cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo.updateots.bk		
 		
 		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
+		LAST_LINE=
 		while read line; do
 			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
 			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
+			LAST_LINE=${line}
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
 		#do one more time after loop to make sure last line is read 
 		# (even if user did not put new line) 
-		echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
-		cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore ---&>/dev/null #hide output
+		if [[ "x${line}" != "x" && "${LAST_LINE}" != "${line}" ]]; then
+			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore ---&>/dev/null #hide output
+		fi
 	else
 		echo -e "UpdateOTS.sh [${LINENO}]  \t cp -r $USER_DATA/TableInfo $USER_DATA/TableInfo_update_bk"
 		rm -rf $USER_DATA/TableInfo_update_bk
@@ -174,13 +178,11 @@ if [ "x$1" == "x" ]; then
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
 	
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
-	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/
+	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/ # undo c++ style comment for Eclipse viewing*/
 		
 	#make sure permissions are usable
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 777 $USER_DATA/XDAQConfigurations/*.xml"
-	chmod 777 $USER_DATA/XDAQConfigurations/*.xml #*/ just resetting comment coloring
-	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xml"
-	chmod 755 $USER_DATA/TableInfo/*Info.xml #*/ just resetting comment coloring
+	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*.xml"
+	chmod 755 $USER_DATA/TableInfo/*.xml #*/ just resetting comment coloring
 	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xsd"
 	chmod 755 $USER_DATA/TableInfo/*Info.xsd #*/ just resetting comment coloring
 	
@@ -195,7 +197,8 @@ if [ "x$1" == "x" ]; then
 	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../	
 	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh
 	
-	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh
+	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
+	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so do not get script
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
