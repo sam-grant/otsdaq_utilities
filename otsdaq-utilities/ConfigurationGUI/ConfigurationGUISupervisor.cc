@@ -1562,6 +1562,10 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 			xmlOut.addTextElementToData("configGroupCreationTime",
 			                            configGroupCreationTime);
 		}
+		
+		if(accumulatedErrors)
+			__SUP_COUTV__(*accumulatedErrors);		
+		
 	}
 
 	// extract modified tables
