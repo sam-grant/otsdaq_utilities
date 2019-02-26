@@ -163,9 +163,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							if(!returnStr) //check if need to define for the first time
 								returnStr = "";
 							
-							//look for .cc and .h 
+							//look for icc, .cc and .h 
 							if((str[j-3] == '.' && str[j-2] == 'h') || 
-									(str[j-4] == '.' && str[j-3] == 'c' && str[j-2] == 'c'))
+									((str[j-4] == '.' || str[j-4] == 'i') &&
+											str[j-3] == 'c' && str[j-2] == 'c'))
 							{
 								//find beginning of blob (first non-file/c++ character)
 								for(l = j-3; l >= i; --l)
@@ -295,16 +296,16 @@ Debug.errorPop = function(err,severity) {
 					"></div>" + 
 					"<br>"+
 					str + "<br>" + 
-				"<div style='color:white;font-size:16px;'>" +
+				"<div style='color:white;font-size:16px;padding-bottom:5px;'>" +
 				"Note: Newest messages are at the top." +
-				"<label style='color:white;font-size:11px;'><br>(Press ESC to close and 1 to re-open)</font>" +
+				"<label style='color:white;font-size:11px;'><br>(Press [ESC] to close and [SHIFT + ESC] to re-open)</font>" +
 				"<div id='downloadIconDiv' onmouseup='Debug.downloadMessages()' title='Download messages to text file.' style='float: right; margin: -10px 30px -100px -100px; cursor: pointer'>" +
 				//make download arrow
 					"<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: white;'></div>" +
 					"<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid white;'></div>" +
 					"<div style='position: relative; top: 5px; width: 12px; height: 2px; display: block; background-color: white;'></div>" +				
 				"</div>" +
-				"</div><br>" +
+				"</div>" +
 				"<div id='" + 
 				Debug._errBoxId +
 				"-err' class='" + 
@@ -343,14 +344,19 @@ Debug.errorPop = function(err,severity) {
 			/////////////
 			function localDebugKeyDownListener(e)
 			{
-				//console.log("Debug keydown e=" + e.keyCode);
-				if(e.keyCode == 27) //ESCAPE key, close popup
+				
+				
+				
+				//Debug.log("Debug keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
+				//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
+				
+				if(!e.shiftKey && e.keyCode == 27) //ESCAPE key, close popup
 				{
 					e.preventDefault();
 					e.stopPropagation();
 					Debug.closeErrorPop();										
 				}
-				else if(e.keyCode == 49) //1 key, bring back popup
+				else if(e.shiftKey && e.keyCode == 27) //SHIFT+ESCAPE key, bring back popup
 				{
 					e.preventDefault();
 					e.stopPropagation();
@@ -718,7 +724,7 @@ Debug.handleErrorResize = function() {
 	}
 	w += Debug._errBoxOffW;
 	
-	var h = screenh + Debug._errBoxOffH;
+	var h = (screenh - 20) + Debug._errBoxOffH;
 	if(h < 200) //clip to minimum height
 	{
 		Debug._errBoxOffH = -200;

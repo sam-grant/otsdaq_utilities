@@ -822,10 +822,10 @@ DeleteWiz.createWiz = function(doneHandler) {
 
 							if(_recordAlias == _RECORD_TYPE_CONTEXT)
 							{
-								if( table == "XDAQContextConfiguration")
+								if( table == "XDAQContextTable")
 									continue; //skip off-limit table
 							}
-							else if(table == "XDAQContextConfiguration" || 
+							else if(table == "XDAQContextTable" || 
 									table == "XDAQApplicationConfiguration")
 								continue; //skip off-limit table
 
@@ -1231,7 +1231,7 @@ DeleteWiz.createWiz = function(doneHandler) {
 	{
 		var retVal = "";
 		if(_recordAlias == _RECORD_TYPE_CONTEXT)
-			retVal = "XDAQContextConfiguration";
+			retVal = "XDAQContextTable";
 		else if(_recordAlias == _RECORD_TYPE_APP)
 			retVal = "XDAQApplicationConfiguration";
 		else
