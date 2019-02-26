@@ -1,12 +1,8 @@
 #include "otsdaq-utilities/ControlsDashboard/ControlsDashboardSupervisor.h"
-<<<<<<< HEAD
 #include <sys/stat.h> //for stat() quickly checking if file exists
 #include <dirent.h> //for DIR
-=======
-
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
->>>>>>> 097b302f4a60d9ddd10ae5c495878cbf2a3b5d9c
 
 //
 //#include "otsdaq-core/MessageFacility/MessageFacility.h"
@@ -72,7 +68,6 @@ void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
 }
 
 //========================================================================================================================
-<<<<<<< HEAD
 void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 {		
@@ -159,68 +154,6 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 		const std::string &username)
 {
 	//return xml doc holding server response
-=======
-void ControlsDashboardSupervisor::request(const std::string&               requestType,
-                                          cgicc::Cgicc&                    cgiIn,
-                                          HttpXmlDocument&                 xmlOut,
-                                          const WebUsers::RequestUserInfo& userInfo)
-{
-	//	__COUT__ << std::endl;
-	//	cgicc::Cgicc cgi(in);
-	//	__COUT__ << std::endl;
-	//	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
-	//	__COUT__ << request << std::endl;
-	//	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << requestType
-	//<< " : end"<< std::endl;
-
-	//	if(requestType == "")
-	//	{
-	//		Default(in, out);
-	//		return;
-	//	}
-	//
-	//	HttpXmlDocument xmldoc;
-	//	uint64_t activeSessionIndex;
-	//	std::string user;
-	//	uint8_t userPermissions;
-	//
-	//	//**** start LOGIN GATEWAY CODE ***//
-	//	{
-	//		bool automaticCommand = requestType == "poll"; //automatic commands should not
-	// refresh cookie code.. only user initiated commands should! 		bool checkLock   =
-	// true; 		bool getUser     = false; 		bool requireLock = false;
-	//
-	//		if(!theRemoteWebUsers_.xmlRequestToGateway(
-	//				cgi,
-	//				out,
-	//				&xmldoc,
-	//				allSupervisorInfo_,
-	//				&userPermissions,  		//acquire user's access level (optionally null
-	// pointer) 				!automaticCommand,			//true/false refresh cookie
-	// code 				1, //set access level requirement to pass gateway
-	//				checkLock,					//true/false enable check that system is
-	// unlocked  or  this user has the lock 				requireLock,
-	// //true/false  requires this user has the lock to  proceed
-	// 0,//&userWithLock,
-	////acquire username with lock (optionally null  pointer)
-	//				//(getUser?&user:0),				//acquire username of this user
-	//(optionally  null  pointer) 				&username,
-	//				0,						//acquire user's Display Name
-	//				&activeSessionIndex		//acquire user's session index associated with
-	// the  cookieCode
-	//		))
-	//		{	//failure
-	//			__COUT__ << "Failed Login Gateway: " <<
-	//					out->str() << std::endl; //print out return string on failure
-	//			return;
-	//		}
-	//	}
-	//	//**** end LOGIN GATEWAY CODE ***//
-	//
-	//
-
-	// return xml doc holding server response
->>>>>>> 097b302f4a60d9ddd10ae5c495878cbf2a3b5d9c
 	__COUT__ << std::endl;
 
 	if(Command == "poll")
@@ -267,8 +200,7 @@ void ControlsDashboardSupervisor::init(void)
 	UID_ = 0;
 
 	__COUT__ << std::endl;
-<<<<<<< HEAD
-	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorConfigurationNode();
+	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
 	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
 	__COUTV__(pluginType);
 
@@ -284,24 +216,6 @@ void ControlsDashboardSupervisor::init(void)
 	//interface_->initialize();
 	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
-=======
-	std::string t = "test";
-	std::string nodeName =
-	    theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName();
-	__COUT__ << nodeName << std::endl;
-	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);
-	__COUT__ << node << std::endl;
-
-	interface_ = makeControls("ControlsOtsInterface",
-	                          t /*Key Value*/
-	                          ,
-	                          node,
-	                          nodeName);
-	__COUT__ << std::endl;
-	// interface_->initialize();
-	// std::thread([&](){interface_->initialize();}).detach(); //thread completes after
-	// creating, subscribing, and getting parameters for all pvs
->>>>>>> 097b302f4a60d9ddd10ae5c495878cbf2a3b5d9c
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::destroy(void)
@@ -501,7 +415,6 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
-<<<<<<< HEAD
 
 	if(interface_ != NULL)
     {
@@ -517,12 +430,6 @@ void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& 
         __COUT__ << "Interface undefined! Failed to get list!" << std::endl;
         xmlOut.addTextElementToData("JSON","[\"None\"]");
     }
-=======
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-	std::cout << " " << interface_->getList("JSON") << std::endl;
-
-	xmlOut.addTextElementToData("JSON", interface_->getList("JSON"));  // add to response
->>>>>>> 097b302f4a60d9ddd10ae5c495878cbf2a3b5d9c
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
