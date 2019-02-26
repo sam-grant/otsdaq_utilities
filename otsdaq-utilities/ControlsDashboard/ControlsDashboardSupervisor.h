@@ -31,6 +31,7 @@ public:
 
 
 	virtual void			request         	 						(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
+	virtual void 			handleRequest								(const std::string Command, HttpXmlDocument& xmlOut, cgicc::Cgicc& cgiIn, const std::string &username);
 
     virtual void			setSupervisorPropertyDefaults				(void) override;
     virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)

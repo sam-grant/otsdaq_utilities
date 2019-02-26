@@ -1,5 +1,4 @@
 #include "otsdaq-utilities/ControlsDashboard/ControlsDashboardSupervisor.h"
-
 #include <sys/stat.h> //for stat() quickly checking if file exists
 #include <dirent.h> //for DIR
 
@@ -75,7 +74,7 @@ void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
 //========================================================================================================================
 void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-{
+{		
 //	__COUT__ << std::endl;
 //	cgicc::Cgicc cgi(in);
 //	__COUT__ << std::endl;
@@ -127,36 +126,66 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 //	//**** end LOGIN GATEWAY CODE ***//
 //
 //
+	try
+	{
+		__SUP_COUT__ << "User name is " << userInfo.username_ << "." << __E__;
+		__SUP_COUT__ << "User permission level for request '" << requestType << "' is " <<
+				unsigned(userInfo.permissionLevel_) << "." << __E__;
+	
+	
+		//handle request per requestType
+		handleRequest(requestType,xmlOut,cgiIn,userInfo.username_);
+	}
+	catch(const std::runtime_error& e)
+	{
+		__SS__ << "Error occurred handling request '" << requestType <<
+				"': " << e.what() << __E__;
+		__SUP_COUT__ << ss.str();
+		xmlOut.addTextElementToData("Error",ss.str());
+	}
+	catch(...)
+	{
+		__SS__ << "Unknown error occurred handling request '" << requestType <<
+				"!'" << __E__;
+		__SUP_COUT__ << ss.str();
+		xmlOut.addTextElementToData("Error",ss.str());
+	}
 
-
+}
+//========================================================================================================================
+void ControlsDashboardSupervisor::handleRequest(const std::string Command,
+		HttpXmlDocument& xmlOut, cgicc::Cgicc& cgiIn,
+		const std::string &username)
+{
 	//return xml doc holding server response
 	__COUT__ << std::endl;
 
-	if(requestType == "poll")
+	if(Command == "poll")
 	{
 		std::string uid = CgiDataUtilities::getOrPostData(cgiIn,"uid");
 		Poll(cgiIn, xmlOut, uid);
 	}
-	else if(requestType == "generateUID")
+	else if(Command == "generateUID")
 	{
 		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn,"PVList");
 		GenerateUID(cgiIn, xmlOut, pvList);
 	}
-	else if(requestType == "GetPVSettings")
+	else if(Command == "GetPVSettings")
 	{
 		std::string pvList = CgiDataUtilities::getOrPostData(cgiIn,"PVList");
 		GetPVSettings(cgiIn, xmlOut, pvList);
 		xmlOut.addTextElementToData("id", CgiDataUtilities::getData(cgiIn,"id"));
 	}
-	else if(requestType == "getList")
+	else if(Command == "getList")
 	{
 		GetList(cgiIn, xmlOut);
 	}
-	else if(requestType == "getPages")
+	else if(Command == "getPages")
 	{
+		__COUT__ << "Requesting pages from server! " << std::endl;
 		GetPages(cgiIn, xmlOut);
 	}
-	else if(requestType == "loadPage")
+	else if(Command == "loadPage")
 	{
 		std::string page = CgiDataUtilities::getData(cgiIn,"Page");
 		__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page << std::endl;
@@ -177,18 +206,19 @@ void ControlsDashboardSupervisor::init(void)
 	UID_= 0;
 
 	__COUT__ << std::endl;
-	std::string t = "test";
-	std::string nodeName = theConfigurationManager_->__GET_CONFIG__(XDAQContextConfiguration)->getConfigurationName();
-	__COUT__ << nodeName << std::endl;
-	ConfigurationTree node = theConfigurationManager_->getNode(nodeName);
-	__COUT__ << node << std::endl;
+	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorConfigurationNode();
+	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
+	__COUTV__(pluginType);
 
 	interface_ = makeControls(
-			"ControlsOtsInterface"
-			, t /*Key Value*/
-			, node
-			, nodeName);
+			  pluginType
+			, node.getUIDAsString()
+			, CorePropertySupervisorBase::getContextTreeNode()
+			, CorePropertySupervisorBase::supervisorConfigurationPath_);
 	__COUT__ << std::endl;
+	
+	__COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
+
 	//interface_->initialize();
 	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
@@ -390,11 +420,20 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc& cgiIn, HttpXmlDocume
 void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
 
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-	std::cout << " "	<< interface_->getList("JSON") << std::endl;
+	if(interface_ != NULL)
+    {
+    	
+    	__COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
+        __COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+	    std::cout << " "	<< interface_->getList("JSON") << std::endl;
 
-	xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
-
+    	xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
+    }
+    else
+    {
+        __COUT__ << "Interface undefined! Failed to get list!" << std::endl;
+        xmlOut.addTextElementToData("JSON","[\"None\"]");
+    }
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
