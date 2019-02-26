@@ -1563,7 +1563,7 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 			                            configGroupCreationTime);
 		}
 		
-		if(accumulatedErrors)
+		if(accumulatedErrors && *accumulatedErrors != "")
 			__SUP_COUTV__(*accumulatedErrors);		
 		
 	}
