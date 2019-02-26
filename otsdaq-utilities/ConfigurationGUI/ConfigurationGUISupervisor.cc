@@ -2603,21 +2603,34 @@ void ConfigurationGUISupervisor::handleFillTreeViewXML(HttpXmlDocument&        x
 	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
 
-	std::string accumulatedErrors;
-	setupActiveTablesXML(
-	    xmlOut,
-	    cfgMgr,
-	    groupName,
-	    groupKey,
-	    modifiedTables,
-	    (startPath == "/"),  // refreshAll, if at root node, reload all
-	                         // tables so that partially loaded tables are
-	                         // not allowed
-	    (startPath == "/"),  // get group info
-	    &memberMap,          // get group member map
-	    true,                // output active tables (default)
-	    &accumulatedErrors   // accumulate errors
-	);
+	std::string accumulatedErrors = "";
+	try
+	{
+		setupActiveTablesXML(
+			xmlOut,
+			cfgMgr,
+			groupName,
+			groupKey,
+			modifiedTables,
+			(startPath == "/"),  // refreshAll, if at root node, reload all
+								 // tables so that partially loaded tables are
+								 // not allowed
+			(startPath == "/"),  // get group info
+			&memberMap,          // get group member map
+			true,                // output active tables (default)
+			&accumulatedErrors   // accumulate errors
+		);
+	}
+	catch(const std::runtime_error& e)
+	{
+		__SS__ << "Error occured setting up active tables: " << e.what() << __E__;
+		accumulatedErrors += ss.str();
+	}
+	catch(...)
+	{
+		__SS__ << "Unknown error occured setting up active tables." << __E__;
+		accumulatedErrors += ss.str();
+	}
 
 	if(accumulatedErrors != "")
 	{
