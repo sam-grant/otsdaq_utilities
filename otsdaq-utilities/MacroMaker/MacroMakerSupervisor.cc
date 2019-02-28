@@ -134,31 +134,31 @@ void MacroMakerSupervisor::handleRequest(const std::string  Command,
                                          cgicc::Cgicc&      cgi,
                                          const std::string& username)
 {
-	if(Command == "FElist")
+	if(Command == "FElist") //called by MacroMaker GUI
 		getFElist(xmldoc);
-	else if(Command == "writeData")
+	else if(Command == "writeData") //called by MacroMaker GUI
 		writeData(xmldoc, cgi, username);
-	else if(Command == "readData")
+	else if(Command == "readData") //called by MacroMaker GUI
 		readData(xmldoc, cgi, username);
-	else if(Command == "createMacro")
+	else if(Command == "createMacro") //called by MacroMaker GUI
 		createMacro(xmldoc, cgi, username);
-	else if(Command == "loadMacros")
+	else if(Command == "loadMacros") //called by MacroMaker GUI
 		loadMacros(xmldoc, username);
-	else if(Command == "loadHistory")
+	else if(Command == "loadHistory") //called by MacroMaker GUI
 		loadHistory(xmldoc, username);
-	else if(Command == "deleteMacro")
+	else if(Command == "deleteMacro") //called by MacroMaker GUI
 		deleteMacro(xmldoc, cgi, username);
-	else if(Command == "editMacro")
+	else if(Command == "editMacro") //called by MacroMaker GUI
 		editMacro(xmldoc, cgi, username);
-	else if(Command == "clearHistory")
+	else if(Command == "clearHistory") //called by MacroMaker GUI
 		clearHistory(username);
-	else if(Command == "exportMacro")
+	else if(Command == "exportMacro") //called by MacroMaker GUI
 		exportMacro(xmldoc, cgi, username);
-	else if(Command == "exportFEMacro")
+	else if(Command == "exportFEMacro") //called by MacroMaker GUI
 		exportFEMacro(xmldoc, cgi, username);
-	else if(Command == "getFEMacroList")
+	else if(Command == "getFEMacroList") //called by FE Macro Test and returns FE Macros and Macro Maker Macros
 		getFEMacroList(xmldoc, username);
-	else if(Command == "runFEMacro")
+	else if(Command == "runFEMacro") //called by FE Macro Test returns FE Macros and Macro Maker Macros
 		runFEMacro(xmldoc, cgi);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
@@ -201,26 +201,36 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 		const SupervisorInfoMap& feTypeSupervisors =
 		    CorePropertySupervisorBase::allSupervisorInfo_.getAllFETypeSupervisorInfo();
 
-		ConfigurationTree appsNode = cfgMgr.getNode("XDAQApplicationConfiguration");
+		ConfigurationTree appsNode = cfgMgr.getNode(ConfigurationManager::XDAQ_APPLICATION_TABLE_NAME);
 
+		__SUP_COUT__ << "Number of FE Supervisors found = " <<
+				feTypeSupervisors.size() << __E__;
+
+		FEPluginTypetoFEsMap_.clear(); //reset
+		FEtoSupervisorMap_.clear(); //reset
 		for(auto& feApp : feTypeSupervisors)
 		{
 			__SUP_COUT__ << "FEs for app " << feApp.first << ":" << feApp.second.getName()
 			             << __E__;
 
-			std::vector<std::string> feChildren = appsNode.getNode(feApp.second.getName())
+			auto feChildren = appsNode.getNode(feApp.second.getName())
 			                                          .getNode("LinkToSupervisorTable")
 			                                          .getNode("LinkToFEInterfaceTable")
-			                                          .getChildrenNames();
+			                                          .getChildren();
 
 			for(auto& fe : feChildren)
 			{
-				__COUTV__(fe);
-				FEtoSupervisorMap_[fe] = feApp.first;
+				__SUP_COUTV__(fe.first);
+				FEtoSupervisorMap_[fe.first] = feApp.first;
+
+				std::string pluginType =
+						fe.second.getNode("FEInterfacePluginName").getValue();
+				FEPluginTypetoFEsMap_[pluginType].emplace(fe.first);
 			}
 		}
 
 		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
+		__SUP_COUTV__(StringMacros::mapToString(FEPluginTypetoFEsMap_));
 	}
 	else if(type == "feSend" ||                        // from front-ends
 	        type == "feMacro" ||                       // from front-ends
@@ -270,7 +280,6 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 			std::string macroName = rxParameters.getValue("macroName");
 			__SUP_COUTV__(macroName);
 
-			// MacroMakerSupervisor::macroStruct_t macro;
 			std::string macroString;
 			loadMacro(macroName, macroString);
 
@@ -314,11 +323,14 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 }  // end frontEndCommunicationRequest()
 catch(const std::runtime_error& e)
 {
+	__SUP_SS__ << "Error processing FE communication request: " << e.what() << __E__;
+	__SUP_COUT_ERR__ << ss.str();
+
 	xoap::MessageReference returnMessage =
 	    SOAPUtilities::makeSOAPMessageReference("Error");
 
 	SOAPParameters parameters;
-	parameters.addParameter("Error", e.what());
+	parameters.addParameter("Error", ss.str());
 	SOAPUtilities::addParameters(returnMessage, parameters);
 	return returnMessage;
 }
@@ -340,7 +352,6 @@ catch(...)
 void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 {
 	__SUP_COUT__ << "Getting FE list!!!!!!!!!" << __E__;
-	FEtoSupervisorMap_.clear();
 
 	SOAPParameters txParameters;  // params for xoap to send
 	txParameters.addParameter("Request", "GetInterfaces");
@@ -405,8 +416,6 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 			oneInterface = oneInterface.substr(lastColonIndex);
 
 			__SUP_COUTV__(oneInterface);
-
-			FEtoSupervisorMap_[oneInterface] = appInfo.second.getId();
 		}  // end FE extract loop
 
 	}  // end ask Supervisors for their FE list loop
@@ -698,7 +707,9 @@ void MacroMakerSupervisor::loadMacro(const std::string& macroName,
 		else
 			fullPath = (std::string)MACROS_DB_PATH + "publicMacros/";
 
-		fullPath += macroName + ".dat";
+		fullPath += macroName;
+		if(macroName.find(".dat") != macroName.size() - 4)
+			fullPath += ".dat";
 		__SUP_COUTV__(fullPath);
 
 		std::ifstream read(fullPath.c_str());  // reading a file
@@ -733,6 +744,76 @@ void MacroMakerSupervisor::loadMacro(const std::string& macroName,
 
 	__SUP_COUTV__(macroString);
 }  // end loadMacro()
+
+//========================================================================================================================
+void MacroMakerSupervisor::loadMacroNames(
+			const std::string& username,
+			std::pair<std::vector<std::string> /*public macros*/,
+				std::vector<std::string> /*private macros*/>& returnMacroNames)
+{
+	DIR*           dir;
+	struct dirent* ent;
+	std::string    fullPath  = (std::string)MACROS_DB_PATH + username + "/";
+	if((dir = opendir(fullPath.c_str())) != NULL)
+	{
+		/* print all the files and directories within directory */
+		while((ent = readdir(dir)) != NULL)
+		{
+			/* File name validation check */
+			if((unsigned)strlen(ent->d_name) > 4)
+			{
+				std::string   line;
+				std::ifstream read(
+				    ((fullPath + (std::string)ent->d_name)).c_str());  // reading a file
+				if(read.is_open())
+				{
+					read.close();
+					//private macro found
+					returnMacroNames.second.push_back(ent->d_name);
+				}
+				else
+					__SUP_COUT__ << "Unable to open file" << __E__;
+			}
+		}
+		closedir(dir);
+	}
+	else
+	{
+		__SUP_COUT__ << "Looping through privateMacros folder failed! Wrong directory"
+		             << __E__;
+	}
+	fullPath  = (std::string)MACROS_DB_PATH + "publicMacros/";
+	if((dir = opendir(fullPath.c_str())) != NULL)
+	{
+		/* print all the files and directories within directory */
+		while((ent = readdir(dir)) != NULL)
+		{
+			/* File name validation check */
+			if((unsigned)strlen(ent->d_name) > 4)
+			{
+				std::string   line;
+				std::ifstream read(
+				    ((fullPath + (std::string)ent->d_name)).c_str());  // reading a file
+				if(read.is_open())
+				{
+					//public macro found
+					returnMacroNames.first.push_back(ent->d_name);
+					read.close();
+				}
+				else
+					__SUP_COUT__ << "Unable to open file" << __E__;
+			}
+		}
+		closedir(dir);
+	}
+	else
+	{
+		__SUP_COUT__ << fullPath << __E__;
+		__SUP_COUT__ << "Looping through MacroData folder failed! Wrong directory"
+		             << __E__;
+	}
+
+} //end loadMacroNames
 
 //========================================================================================================================
 void MacroMakerSupervisor::loadMacros(HttpXmlDocument&   xmldoc,
@@ -1671,26 +1752,60 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 
 //========================================================================================================================
 void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+try
 {
 	__SUP_COUT__ << __E__;
 
-	unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
+	//unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
+	std::string  feClassSelected= CgiDataUtilities::getData(cgi, "feClassSelected");
 	std::string  feUID          = CgiDataUtilities::getData(cgi, "feUID");
+	std::string  macroType      = CgiDataUtilities::getData(cgi, "macroType");
 	std::string  macroName      = CgiDataUtilities::getData(cgi, "macroName");
 	std::string  inputArgs      = CgiDataUtilities::postData(cgi, "inputArgs");
 	std::string  outputArgs     = CgiDataUtilities::postData(cgi, "outputArgs");
 
-	__SUP_COUTV__(feSupervisorID);
+	//__SUP_COUTV__(feSupervisorID);
+	__SUP_COUTV__(feClassSelected);
 	__SUP_COUTV__(feUID);
+	__SUP_COUTV__(macroType);
 	__SUP_COUTV__(macroName);
 	__SUP_COUTV__(inputArgs);
 	__SUP_COUTV__(outputArgs);
 
+	auto feIt = FEtoSupervisorMap_.find(feUID);
+	if(feIt == FEtoSupervisorMap_.end())
+	{
+		__SUP_SS__ << "Destination front end interface ID '" << feUID
+				<< "' was not found in the list of front ends." << __E__;
+		ss << "\n\nHere is the map:\n\n" << StringMacros::mapToString(FEtoSupervisorMap_) << __E__;
+		__SUP_SS_THROW__;
+	}
+
+	unsigned int FESupervisorIndex = feIt->second;
+	__SUP_COUT__ << "Found supervisor index: " << FESupervisorIndex << __E__;
+
+	SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FESupervisorIndex);
+	if(it == allFESupervisorInfo_.end())
+	{
+		__SUP_SS__ << "Error transmitting request to FE Supervisor '"
+				<< feUID << ":" << FESupervisorIndex << ".' \n\n"
+				<< "The FE Supervisor Index does not exist. Have you configured "
+				"the state machine properly?"
+				<< __E__;
+		__SUP_SS_THROW__;
+	}
+
 	// send command to chosen FE and await response
 	SOAPParameters txParameters;  // params for xoap to send
-	txParameters.addParameter("Request", "RunInterfaceMacro");
+	if(macroType == "fe")
+		txParameters.addParameter("Request", "RunInterfaceMacro");
+	else
+		txParameters.addParameter("Request", "RunMacroMakerMacro");
 	txParameters.addParameter("InterfaceID", feUID);
-	txParameters.addParameter("feMacroName", macroName);
+	if(macroType == "fe")
+		txParameters.addParameter("feMacroName", macroName);
+	else
+		txParameters.addParameter("mcroName", macroName);
 	txParameters.addParameter("inputArgs", inputArgs);
 	txParameters.addParameter("outputArgs", outputArgs);
 
@@ -1698,21 +1813,10 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	rxParameters.addParameter("success");
 	rxParameters.addParameter("outputArgs");
 
-	// find feSupervisorID in target list
-	auto supervisorDescriptorPairIt = allFESupervisorInfo_.find(feSupervisorID);
-	if(supervisorDescriptorPairIt == allFESupervisorInfo_.end())
-	{
-		__SS__ << "Targeted Supervisor Descriptor was not found. Attempted target "
-		       << "was UID=" << feUID << " at feSupervisorID=" << feSupervisorID << "."
-		       << __E__;
-		__SUP_COUT_ERR__ << "\n" << ss.str();
-		xmldoc.addTextElementToData("Error", ss.str());
-		return;
-	}
 
 	// have FE supervisor descriptor, so send
 	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-	    supervisorDescriptorPairIt->second.getDescriptor(),  // supervisor descriptor
+	    it->second.getDescriptor(),  // supervisor descriptor
 	    "MacroMakerSupervisorRequest",
 	    txParameters);
 	SOAPUtilities::receive(retMsg, rxParameters);
@@ -1728,7 +1832,7 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 	if(!success)
 	{
 		__SS__ << "Attempted FE Macro Failed. Attempted target "
-		       << "was UID=" << feUID << " at feSupervisorID=" << feSupervisorID << "."
+		       << "was UID=" << feUID << " at feSupervisorID=" << FESupervisorIndex << "."
 		       << __E__;
 		ss << "\n\n The error was:\n\n" << outputArgs << __E__;
 		__SUP_COUT_ERR__ << "\n" << ss.str();
@@ -1751,7 +1855,21 @@ void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi
 			__SUP_COUT__ << argName << ": " << argValue << __E__;
 		}
 	}
+} //end runFEMacro()
+catch(const std::runtime_error& e)
+{
+	__SUP_SS__ << "Error processing FE communication request: " <<
+			e.what() << __E__;
+	__SUP_COUT_ERR__ << ss.str();
+	xmldoc.addTextElementToData("Error", ss.str());
 }
+catch(...)
+{
+	__SUP_SS__ << "Unknown error processing FE communication request." << __E__;
+	__SUP_COUT_ERR__ << ss.str();
+
+	xmldoc.addTextElementToData("Error", ss.str());
+}  // end runFEMacro() catch
 
 //========================================================================================================================
 void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument&   xmldoc,
@@ -1794,7 +1912,45 @@ void MacroMakerSupervisor::getFEMacroList(HttpXmlDocument&   xmldoc,
 	}
 
 	// add macros to response
-	loadMacros(xmldoc, username);
+	std::pair<std::vector<std::string> /*public macros*/,
+					std::vector<std::string> /*private macros*/> macroNames;
+	loadMacroNames(username,macroNames);
+
+	__SUP_COUT__ << "Public macro count: " << macroNames.first.size() << __E__;
+	__SUP_COUT__ << "Private macro count: " << macroNames.second.size() << __E__;
+
+	std::string macroString;
+	//make xml ':' separated fields:
+	//	macro name
+	//	permissions string
+	//	number of inputs
+	//	inputs separated by :
+	//	number of outputs
+	//	outputs separated by :
+
+
+	for(int i=0;i<2;++i) //first is public, then private
+	for(auto& macroName:(i?macroNames.second:macroNames.first))
+	{
+		//get macro string
+		loadMacro(macroName,macroString,username);
+
+		// extract macro object
+		FEVInterface::macroStruct_t macro(macroString);
+
+		std::stringstream xmlMacroStream;
+		xmlMacroStream << macro.macroName_;
+		xmlMacroStream << ":" << "1"; //permissions string
+		xmlMacroStream << ":" << macro.namesOfInputArguments_.size();
+		for(auto& inputArg:macro.namesOfInputArguments_)
+			xmlMacroStream << ":" << inputArg;
+		xmlMacroStream << ":" << macro.namesOfOutputArguments_.size();
+		for(auto& inputArg:macro.namesOfOutputArguments_)
+			xmlMacroStream << ":" << inputArg;
+
+		xmldoc.addTextElementToData(i?"PrivateMacro":"PublicMacro", xmlMacroStream.str());
+	}
+
 
 	return;
 }

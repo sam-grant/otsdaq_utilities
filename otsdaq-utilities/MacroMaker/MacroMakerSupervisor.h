@@ -54,6 +54,10 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	               std::string&       macroString,
 	               const std::string& username = "");
 	void loadMacros(HttpXmlDocument& xmldoc, const std::string& username);
+	void loadMacroNames(
+			const std::string& username,
+			std::pair<std::vector<std::string> /*public macros*/,
+				std::vector<std::string> /*private macros*/>& returnMacroNames);
 	void appendCommandToHistory(std::string        command,
 	                            std::string        Format,
 	                            std::string        time,
@@ -87,6 +91,8 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	SupervisorInfoMap allFESupervisorInfo_;
 	std::map<std::string /*FE UID*/, unsigned int /*superivisor index*/>
 	    FEtoSupervisorMap_;
+	std::map<std::string /*FE Type*/, std::set<std::string> /*FE UIDs*/>
+	    FEPluginTypetoFEsMap_;
 
 };  // end MacroMakerSupervisor declaration
 

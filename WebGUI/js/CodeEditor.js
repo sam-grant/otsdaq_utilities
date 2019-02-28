@@ -42,7 +42,7 @@ CodeEditor.editor; //this is THE CodeEditor variable
 function htmlOpen(tag,attObj,innerHTML,doCloseTag)
 {
 	var str = "";
-	var attKeys = Object.keys(attObj); 
+	var attKeys = attObj?Object.keys(attObj):[]; 
 	str += "<" + tag + " ";
 	for(var i=0;i<attKeys.length;++i)
 		str += " " + attKeys[i] + "='" +
