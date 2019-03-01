@@ -93,6 +93,8 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	    FEtoSupervisorMap_;
 	std::map<std::string /*FE Type*/, std::set<std::string> /*FE UIDs*/>
 	    FEPluginTypetoFEsMap_;
+	std::map<std::string /*FE UID*/, std::string /*FE Type*/>
+	    FEtoPluginTypeMap_;
 
 };  // end MacroMakerSupervisor declaration
 

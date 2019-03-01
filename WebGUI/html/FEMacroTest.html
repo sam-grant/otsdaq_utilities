@@ -84,6 +84,7 @@
 			//handleSelectedFEUID(r,c)
 			//handleSelectedMacroType(r,c)
 			//handleSelectedMacroName(r,c)
+			//setCaretPosition(el, caretPos, endPos)
 
 		var feClassToFEsMap_; 	//map of FE Classes to FE UIDs
 		var feToMacrosMap_;		//map of FE UIDs to FE Macro structure 
@@ -399,15 +400,9 @@
 			var feMacroTypeSelected = macroModules_[r][c].feMacroTypeSelected;
 			var macroName = macroModules_[r][c].feMacroNameSelected;
 			
-			var macroObj = feMacroTypeSelected == MACRO_TYPE_FE_?
-								feToMacrosMap_[feUIDSelected][macroName]
-								:
-								(feMacroTypeSelected == MACRO_TYPE_PUBLIC_?
-										publicMacros_[macroName] 
-										:
-										privateMacros_[macroName]
-										 );
+			var macroObj = macroModules_[r][c].feMacroNameObject[macroName];
 			
+			var saveOutputs = document.getElementById("outputMacroToFile-row-" + r + "-col-" + c).checked?1:0;
 			var inputsArr 	= macroObj.inputs;
 			var outputsArr 	= macroObj.outputs;
 			
@@ -447,15 +442,32 @@
 					"&feClassSelected=" + feClassSelected +
 					"&feUID=" + feUIDSelected +
 					"&macroType=" + feMacroTypeSelected +
-					"&macroName=" + macroName
+					"&macroName=" + macroName + 
+					"&saveOutputs=" + saveOutputs
 					, postData, 
-					function (req) {
+					function (req, reqParam, errStr) {
+				
+				var str = "";
+				
+				if(!errStr) 
+					errStr = "";
+				var err = DesktopContent.getXMLValue(req,"Error");
+				if(err && err != "")
+					errStr += "\n" + err;				
+				if(errStr != "")
+				{
+					str += "Received error... " + getDateString(new Date);
+					str += "<br>";
+					Debug.log("Error while running FE Macro: " + errStr,
+							Debug.HIGH_PRIORITY);
+					el.innerHTML = str;
+					return;
+				}
 				
 				var outputArgNames = req.responseXML.getElementsByTagName("outputArgs_name");
 				var outputArgValues = req.responseXML.getElementsByTagName("outputArgs_value");
 				Debug.log("outputArgNames.length = " + outputArgNames.length);	
 				
-				var str = "";
 				str += "Last ran... " + getDateString(new Date);
 				str += "<br>";
 				for(var i=0;i<outputArgNames.length;++i)
@@ -463,7 +475,10 @@
 					outputArgValues[i].getAttribute("value") + "<br>";
 				
 				el.innerHTML = str;
-			});
+			},
+			0 /*reqParam*/, 0 /*progressHandler*/, 
+			true /*callHandlerOnErr*/
+			);
 		} //end runMacro()
 
 		//=====================================================================================
@@ -1056,6 +1071,10 @@
 								"-i-" + i,
 							"class":"macroInput " + "macroInput-row-" + r + "-col-" + c,
 							"value":"Default",
+							"onclick":"setCaretPosition(this,0,this.value.length);",
+							"autocomplete":"off",
+							"autocorrect":"off",
+							"autocapitalize":"off",
 					},"" /*innerHTML*/,true /*doCloseTag*/);							
 					str += "</td></tr>";
 				}
@@ -1119,12 +1138,12 @@
 						" &apos;" + macroName + "&apos; on " + targetString,
 			},"" /*innerHTML*/,true /*doCloseTag*/);
 			
-//			str += htmlOpen("input",{
-//					"id": "outputMacroToFile-row-" + r + "-col-" + c,
-//					"class":"outputMacroToFile",
-//					"type":"checkbox",
-//					"title": "When checked, output from Macro will be saved to file.",
-//			},"Save output to file" /*innerHTML*/,true /*doCloseTag*/);
+			str += htmlOpen("input",{
+					"id": "outputMacroToFile-row-" + r + "-col-" + c,
+					"class":"outputMacroToFile",
+					"type":"checkbox",
+					"title": "When checked, output from Macro will be saved to file.",
+			},"Save output to file" /*innerHTML*/,true /*doCloseTag*/);
 			
 			//end Run button
 			
@@ -1138,7 +1157,16 @@
 					r + "-col-" + c);
 			el.innerHTML = str;
 		} //end handleSelectedMacroName
+		
+		//=====================================================================================				
+		//setCaretPosition ~~
+		function setCaretPosition(el, caretPos, endPos) {
+			el.focus();
+			el.setSelectionRange(caretPos, endPos);
+		} //end setCaretPosition()
+		
 		</script>
+		
 </head>
 	
 

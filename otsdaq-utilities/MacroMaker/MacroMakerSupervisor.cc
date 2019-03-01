@@ -208,6 +208,7 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 
 		FEPluginTypetoFEsMap_.clear(); //reset
 		FEtoSupervisorMap_.clear(); //reset
+		FEtoPluginTypeMap_.clear(); //reset
 		for(auto& feApp : feTypeSupervisors)
 		{
 			__SUP_COUT__ << "FEs for app " << feApp.first << ":" << feApp.second.getName()
@@ -226,11 +227,13 @@ xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
 				std::string pluginType =
 						fe.second.getNode("FEInterfacePluginName").getValue();
 				FEPluginTypetoFEsMap_[pluginType].emplace(fe.first);
+				FEtoPluginTypeMap_[fe.first] = pluginType;
 			}
 		}
 
 		__SUP_COUTV__(StringMacros::mapToString(FEtoSupervisorMap_));
 		__SUP_COUTV__(StringMacros::mapToString(FEPluginTypetoFEsMap_));
+		__SUP_COUTV__(StringMacros::mapToString(FEtoPluginTypeMap_));
 	}
 	else if(type == "feSend" ||                        // from front-ends
 	        type == "feMacro" ||                       // from front-ends
@@ -1758,103 +1761,201 @@ try
 
 	//unsigned int feSupervisorID = CgiDataUtilities::getDataAsInt(cgi, "feSupervisorID");
 	std::string  feClassSelected= CgiDataUtilities::getData(cgi, "feClassSelected");
-	std::string  feUID          = CgiDataUtilities::getData(cgi, "feUID");
+	std::string  feUIDSelected  = CgiDataUtilities::getData(cgi, "feUIDSelected");
 	std::string  macroType      = CgiDataUtilities::getData(cgi, "macroType");
 	std::string  macroName      = CgiDataUtilities::getData(cgi, "macroName");
 	std::string  inputArgs      = CgiDataUtilities::postData(cgi, "inputArgs");
 	std::string  outputArgs     = CgiDataUtilities::postData(cgi, "outputArgs");
+	bool  saveOutputs     = CgiDataUtilities::postDataAsInt(cgi, "saveOutputs")==1;
 
 	//__SUP_COUTV__(feSupervisorID);
 	__SUP_COUTV__(feClassSelected);
-	__SUP_COUTV__(feUID);
+	__SUP_COUTV__(feUIDSelected);
 	__SUP_COUTV__(macroType);
 	__SUP_COUTV__(macroName);
 	__SUP_COUTV__(inputArgs);
 	__SUP_COUTV__(outputArgs);
+	__SUP_COUTV__(saveOutputs);
 
-	auto feIt = FEtoSupervisorMap_.find(feUID);
-	if(feIt == FEtoSupervisorMap_.end())
+	std::set<std::string /*feUID*/> feUIDs;
+
+	if(feUIDSelected == "") feUIDSelected = "*"; //treat empty as all
+	if(feClassSelected == "") feClassSelected = "*"; //treat empty as all
+
+	if(feClassSelected == "" || feUIDSelected == "" || macroType == "" ||
+			macroName == "")
 	{
-		__SUP_SS__ << "Destination front end interface ID '" << feUID
-				<< "' was not found in the list of front ends." << __E__;
-		ss << "\n\nHere is the map:\n\n" << StringMacros::mapToString(FEtoSupervisorMap_) << __E__;
+		__SUP_SS__ << "Illegal empty front-end parameter." << __E__;
 		__SUP_SS_THROW__;
 	}
-
-	unsigned int FESupervisorIndex = feIt->second;
-	__SUP_COUT__ << "Found supervisor index: " << FESupervisorIndex << __E__;
-
-	SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FESupervisorIndex);
-	if(it == allFESupervisorInfo_.end())
+	else if(feUIDSelected != "*")
+		feUIDs.emplace(feUIDSelected);
+	else // * all case
 	{
-		__SUP_SS__ << "Error transmitting request to FE Supervisor '"
-				<< feUID << ":" << FESupervisorIndex << ".' \n\n"
-				<< "The FE Supervisor Index does not exist. Have you configured "
-				"the state machine properly?"
-				<< __E__;
-		__SUP_SS_THROW__;
-	}
-
-	// send command to chosen FE and await response
-	SOAPParameters txParameters;  // params for xoap to send
-	if(macroType == "fe")
-		txParameters.addParameter("Request", "RunInterfaceMacro");
-	else
-		txParameters.addParameter("Request", "RunMacroMakerMacro");
-	txParameters.addParameter("InterfaceID", feUID);
-	if(macroType == "fe")
-		txParameters.addParameter("feMacroName", macroName);
-	else
-		txParameters.addParameter("mcroName", macroName);
-	txParameters.addParameter("inputArgs", inputArgs);
-	txParameters.addParameter("outputArgs", outputArgs);
-
-	SOAPParameters rxParameters;  // params for xoap to recv
-	rxParameters.addParameter("success");
-	rxParameters.addParameter("outputArgs");
-
-
-	// have FE supervisor descriptor, so send
-	xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
-	    it->second.getDescriptor(),  // supervisor descriptor
-	    "MacroMakerSupervisorRequest",
-	    txParameters);
-	SOAPUtilities::receive(retMsg, rxParameters);
-
-	__SUP_COUT__ << "Received it " << __E__;
-
-	bool success = rxParameters.getValue("success") == "1";
-	outputArgs   = rxParameters.getValue("outputArgs");
-
-	__SUP_COUT__ << "rx success = " << success << __E__;
-	__SUP_COUT__ << "outputArgs = " << outputArgs << __E__;
-
-	if(!success)
-	{
-		__SS__ << "Attempted FE Macro Failed. Attempted target "
-		       << "was UID=" << feUID << " at feSupervisorID=" << FESupervisorIndex << "."
-		       << __E__;
-		ss << "\n\n The error was:\n\n" << outputArgs << __E__;
-		__SUP_COUT_ERR__ << "\n" << ss.str();
-		xmldoc.addTextElementToData("Error", ss.str());
-		return;
-	}
-
-	// build output arguments
-	//	parse args, colon-separated pairs, and then comma-separated
-	{
-		std::istringstream inputStream(outputArgs);
-		std::string        splitVal, argName, argValue;
-		while(getline(inputStream, splitVal, ';'))
+		//add all FEs for type
+		if(feClassSelected == "*")
 		{
-			std::istringstream pairInputStream(splitVal);
-			getline(pairInputStream, argName, ',');
-			getline(pairInputStream, argValue, ',');
-			xmldoc.addTextElementToData("outputArgs_name", argName);
-			xmldoc.addTextElementToData("outputArgs_value", argValue);
-			__SUP_COUT__ << argName << ": " << argValue << __E__;
+			for(auto& feTypePair:FEPluginTypetoFEsMap_)
+				for(auto& feUID:feTypePair.second)
+					feUIDs.emplace(feUID);
+		}
+		else
+		{
+			auto typeIt = FEPluginTypetoFEsMap_.find(feClassSelected);
+			if(typeIt == FEPluginTypetoFEsMap_.end())
+			{
+				__SUP_SS__ << "Illegal front-end type parameter '" <<
+						feClassSelected << "' not in list of types." << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			for(auto& feUID:typeIt->second)
+				feUIDs.emplace(feUID);
 		}
 	}
+
+	__SUP_COUTV__(StringMacros::setToString(feUIDs));
+
+	FILE *fp = 0;
+	try
+	{
+		if(saveOutputs)
+		{
+			std::string filename = std::string(getenv("OTSDAQ_DATA")) + "/macroOutput_" +
+					std::to_string(time(0)) + "_" + std::to_string(clock()) + ".txt";
+
+			__SUP_COUTV__(filename);
+			fp = fopen(filename.c_str(),"w");
+			if(!fp)
+			{
+				__SUP_SS__ << "Failed to open file to save macro output '" <<
+						filename << "'..." << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			fprintf(fp,"############################\n");
+			fprintf(fp,"### Running '%s' at time %ld\n",macroName.c_str(),time(0));
+			fprintf(fp,"### \t Target front-end(s): %s\n",
+					StringMacros::setToString(feUIDs).c_str());
+			fprintf(fp,"### \t\t Inputs: %s\n",inputArgs.c_str());
+			fprintf(fp,"############################\n\n\n");
+		}
+
+
+		//do for all target front-ends
+		for(auto& feUID:feUIDs)
+		{
+
+			auto feIt = FEtoSupervisorMap_.find(feUID);
+			if(feIt == FEtoSupervisorMap_.end())
+			{
+				__SUP_SS__ << "Destination front end interface ID '" << feUID
+						<< "' was not found in the list of front ends." << __E__;
+				ss << "\n\nHere is the map:\n\n" << StringMacros::mapToString(FEtoSupervisorMap_) << __E__;
+				__SUP_SS_THROW__;
+			}
+
+			unsigned int FESupervisorIndex = feIt->second;
+			__SUP_COUT__ << "Found supervisor index: " << FESupervisorIndex << __E__;
+
+			SupervisorInfoMap::iterator it = allFESupervisorInfo_.find(FESupervisorIndex);
+			if(it == allFESupervisorInfo_.end())
+			{
+				__SUP_SS__ << "Error transmitting request to FE Supervisor '"
+						<< feUID << ":" << FESupervisorIndex << ".' \n\n"
+						<< "The FE Supervisor Index does not exist. Have you configured "
+						"the state machine properly?"
+						<< __E__;
+				__SUP_SS_THROW__;
+			}
+
+			// send command to chosen FE and await response
+			SOAPParameters txParameters;  // params for xoap to send
+			if(macroType == "fe")
+				txParameters.addParameter("Request", "RunInterfaceMacro");
+			else
+				txParameters.addParameter("Request", "RunMacroMakerMacro");
+			txParameters.addParameter("InterfaceID", feUID);
+			if(macroType == "fe")
+				txParameters.addParameter("feMacroName", macroName);
+			else
+				txParameters.addParameter("mcroName", macroName);
+			txParameters.addParameter("inputArgs", inputArgs);
+			txParameters.addParameter("outputArgs", outputArgs);
+
+			SOAPParameters rxParameters;  // params for xoap to recv
+			rxParameters.addParameter("success");
+			rxParameters.addParameter("outputArgs");
+
+			if(saveOutputs)
+			{
+				fprintf(fp,"Running '%s' at time %ld\n",macroName.c_str(),time(0));
+				fprintf(fp,"\t Target front-end: %s::%s\n",
+						FEtoPluginTypeMap_[feUID].c_str(),feUID.c_str());
+				fprintf(fp,"\t\t Inputs: %s\n",inputArgs.c_str());
+			}
+
+			// have FE supervisor descriptor, so send
+			xoap::MessageReference retMsg = SOAPMessenger::sendWithSOAPReply(
+					it->second.getDescriptor(),  // supervisor descriptor
+					"MacroMakerSupervisorRequest",
+					txParameters);
+			SOAPUtilities::receive(retMsg, rxParameters);
+
+			__SUP_COUT__ << "Received it " << __E__;
+
+			bool success = rxParameters.getValue("success") == "1";
+			outputArgs   = rxParameters.getValue("outputArgs");
+
+			__SUP_COUT__ << "rx success = " << success << __E__;
+			__SUP_COUT__ << "outputArgs = " << outputArgs << __E__;
+
+			if(!success)
+			{
+				__SS__ << "Attempted FE Macro Failed. Attempted target "
+						<< "was UID=" << feUID << " at feSupervisorID=" << FESupervisorIndex << "."
+						<< __E__;
+				ss << "\n\n The error was:\n\n" << outputArgs << __E__;
+				__SUP_COUT_ERR__ << "\n" << ss.str();
+				xmldoc.addTextElementToData("Error", ss.str());
+
+				return;
+			}
+
+			// build output arguments
+			//	parse args, colon-separated pairs, and then comma-separated
+			{
+				std::istringstream inputStream(outputArgs);
+				std::string        splitVal, argName, argValue;
+				while(getline(inputStream, splitVal, ';'))
+				{
+					std::istringstream pairInputStream(splitVal);
+					getline(pairInputStream, argName, ',');
+					getline(pairInputStream, argValue, ',');
+
+					if(saveOutputs)
+					{
+						fprintf(fp,"\t\t Output '%s' = %s\n",
+								argName.c_str(),argValue.c_str());
+					}
+					else
+					{
+						xmldoc.addTextElementToData("outputArgs_name", argName);
+						xmldoc.addTextElementToData("outputArgs_value", argValue);
+					}
+					__SUP_COUT__ << argName << ": " << argValue << __E__;
+				}
+			}
+		} //end target front-end loop
+	}
+	catch(...) //handle file close on error
+	{
+		if(fp) fclose(fp);
+		throw;
+	}
+
+	if(fp) fclose(fp);
+
 } //end runFEMacro()
 catch(const std::runtime_error& e)
 {
