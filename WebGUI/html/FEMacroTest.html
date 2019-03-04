@@ -471,8 +471,29 @@
 				str += "Last ran... " + getDateString(new Date);
 				str += "<br>";
 				for(var i=0;i<outputArgNames.length;++i)
-					str += outputArgNames[i].getAttribute("value") + " = " + 
-					outputArgValues[i].getAttribute("value") + "<br>";
+				{
+					var name = outputArgNames[i].getAttribute("value");
+					var value = outputArgValues[i].getAttribute("value");
+					if(name == "Filename" || name == "filename")
+						str += name + " = " +
+							//if filename, add link to CodeEditor
+							htmlOpen("a", //start macro module table
+								{
+									"title":"Open file in a new browser tab: \n" +
+									value,
+									"onclick":"DesktopContent.openNewBrowserTab(" +
+									"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+									"\"?" +
+									"startFilePrimary=" +
+									value + "\",undefined /*unique undefined for LID lookup*/);' ", //end onclick
+								},
+								value /*innerHTML*/,
+								true /*doCloseTag*/) + "<br>";
+							
+					else
+						str += name + " = " + 
+							value + "<br>";
+				}
 				
 				el.innerHTML = str;
 			},

@@ -159,7 +159,7 @@ void MacroMakerSupervisor::handleRequest(const std::string  Command,
 	else if(Command == "getFEMacroList") //called by FE Macro Test and returns FE Macros and Macro Maker Macros
 		getFEMacroList(xmldoc, username);
 	else if(Command == "runFEMacro") //called by FE Macro Test returns FE Macros and Macro Maker Macros
-		runFEMacro(xmldoc, cgi);
+		runFEMacro(xmldoc, cgi, username);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
 }
@@ -1206,7 +1206,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 
 	////////////////////////////
 	// handle source file modifications
-	CodeEditor::readFile(sourceFile, contents);
+	CodeEditor::readFile(CodeEditor::SOURCE_BASE_PATH,sourceFile, contents);
 	//__SUP_COUTV__(contents);
 
 	// return file locations, for the user to inspect on error
@@ -1328,13 +1328,13 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 		    "} //end " + macroName + "()\n\n";
 
 		//__SUP_COUTV__(insert);
-		CodeEditor::writeFile(
+		CodeEditor::writeFile(CodeEditor::SOURCE_BASE_PATH,
 		    sourceFile, contents, "MacroMaker-" + username, insertPos, insert);
 	}
 
 	////////////////////////////
 	// handle include file insertions
-	CodeEditor::readFile(headerFile, contents);
+	CodeEditor::readFile(CodeEditor::SOURCE_BASE_PATH, headerFile, contents);
 	//__SUP_COUTV__(contents);
 
 	// find end of class by looking for last };
@@ -1356,7 +1356,7 @@ void MacroMakerSupervisor::exportFEMacro(HttpXmlDocument&   xmldoc,
 		         "\t(__ARGS__);\n";
 
 		__SUP_COUTV__(insert);
-		CodeEditor::writeFile(
+		CodeEditor::writeFile(CodeEditor::SOURCE_BASE_PATH,
 		    headerFile, contents, "MacroMaker-" + username, insertPos, insert);
 	}
 
@@ -1754,7 +1754,8 @@ std::string MacroMakerSupervisor::generateHexArray(const std::string& sourceHexS
 }
 
 //========================================================================================================================
-void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi)
+void MacroMakerSupervisor::runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi,
+		const std::string& username)
 try
 {
 	__SUP_COUT__ << __E__;
@@ -1766,7 +1767,7 @@ try
 	std::string  macroName      = CgiDataUtilities::getData(cgi, "macroName");
 	std::string  inputArgs      = CgiDataUtilities::postData(cgi, "inputArgs");
 	std::string  outputArgs     = CgiDataUtilities::postData(cgi, "outputArgs");
-	bool  saveOutputs     = CgiDataUtilities::postDataAsInt(cgi, "saveOutputs")==1;
+	bool  saveOutputs     		= CgiDataUtilities::getDataAsInt(cgi, "saveOutputs")==1;
 
 	//__SUP_COUTV__(feSupervisorID);
 	__SUP_COUTV__(feClassSelected);
@@ -1816,36 +1817,50 @@ try
 
 	__SUP_COUTV__(StringMacros::setToString(feUIDs));
 
+	std::string macroString;
+	if(macroType == "public")
+		loadMacro(macroName,macroString);
+	else if(macroType == "private")
+		loadMacro(macroName,macroString,username);
+
+	__SUP_COUTV__(macroString);
+
 	FILE *fp = 0;
 	try
 	{
 		if(saveOutputs)
 		{
-			std::string filename = std::string(getenv("OTSDAQ_DATA")) + "/macroOutput_" +
+			std::string filename = "/macroOutput_" +
 					std::to_string(time(0)) + "_" + std::to_string(clock()) + ".txt";
 
 			__SUP_COUTV__(filename);
-			fp = fopen(filename.c_str(),"w");
+			fp = fopen((CodeEditor::OTSDAQ_DATA_PATH + filename).c_str(),"w");
 			if(!fp)
 			{
 				__SUP_SS__ << "Failed to open file to save macro output '" <<
+						CodeEditor::OTSDAQ_DATA_PATH <<
 						filename << "'..." << __E__;
 				__SUP_SS_THROW__;
 			}
 
 			fprintf(fp,"############################\n");
-			fprintf(fp,"### Running '%s' at time %ld\n",macroName.c_str(),time(0));
-			fprintf(fp,"### \t Target front-end(s): %s\n",
-					StringMacros::setToString(feUIDs).c_str());
+			fprintf(fp,"### Running '%s' at time %s\n",macroName.c_str(),
+					StringMacros::getTimestampString().c_str());
+			fprintf(fp,"### \t Target front-ends (count=%lu): %s\n",
+					feUIDs.size(),StringMacros::setToString(feUIDs).c_str());
 			fprintf(fp,"### \t\t Inputs: %s\n",inputArgs.c_str());
 			fprintf(fp,"############################\n\n\n");
+
+
+			xmldoc.addTextElementToData("outputArgs_name", "Filename");
+			xmldoc.addTextElementToData("outputArgs_value",
+					"$OTSDAQ_DATA/" + filename);
 		}
 
 
 		//do for all target front-ends
 		for(auto& feUID:feUIDs)
 		{
-
 			auto feIt = FEtoSupervisorMap_.find(feUID);
 			if(feIt == FEtoSupervisorMap_.end())
 			{
@@ -1879,18 +1894,23 @@ try
 			if(macroType == "fe")
 				txParameters.addParameter("feMacroName", macroName);
 			else
-				txParameters.addParameter("mcroName", macroName);
+			{
+				txParameters.addParameter("macroName", macroName);
+				txParameters.addParameter("macroString", macroString);
+			}
 			txParameters.addParameter("inputArgs", inputArgs);
 			txParameters.addParameter("outputArgs", outputArgs);
 
 			SOAPParameters rxParameters;  // params for xoap to recv
-			rxParameters.addParameter("success");
+			//rxParameters.addParameter("success");
 			rxParameters.addParameter("outputArgs");
+			rxParameters.addParameter("Error");
 
 			if(saveOutputs)
 			{
-				fprintf(fp,"Running '%s' at time %ld\n",macroName.c_str(),time(0));
-				fprintf(fp,"\t Target front-end: %s::%s\n",
+				fprintf(fp,"Running '%s' at time %s\n",macroName.c_str(),
+						StringMacros::getTimestampString().c_str());
+				fprintf(fp,"\t Target front-end: '%s::%s'\n",
 						FEtoPluginTypeMap_[feUID].c_str(),feUID.c_str());
 				fprintf(fp,"\t\t Inputs: %s\n",inputArgs.c_str());
 			}
@@ -1900,22 +1920,28 @@ try
 					it->second.getDescriptor(),  // supervisor descriptor
 					"MacroMakerSupervisorRequest",
 					txParameters);
+
+
+			__SUP_COUT__ << "Received response message: "
+			             << SOAPUtilities::translate(retMsg) << __E__;
+
 			SOAPUtilities::receive(retMsg, rxParameters);
 
 			__SUP_COUT__ << "Received it " << __E__;
 
-			bool success = rxParameters.getValue("success") == "1";
-			outputArgs   = rxParameters.getValue("outputArgs");
+			//bool success = rxParameters.getValue("success") == "1";
+			std::string outputResults   = rxParameters.getValue("outputArgs");
+			std::string error  = rxParameters.getValue("Error");
 
-			__SUP_COUT__ << "rx success = " << success << __E__;
-			__SUP_COUT__ << "outputArgs = " << outputArgs << __E__;
+			//__SUP_COUT__ << "rx success = " << success << __E__;
+			__SUP_COUT__ << "outputArgs = " << outputResults << __E__;
 
-			if(!success)
+			if(error != "")
 			{
 				__SS__ << "Attempted FE Macro Failed. Attempted target "
 						<< "was UID=" << feUID << " at feSupervisorID=" << FESupervisorIndex << "."
 						<< __E__;
-				ss << "\n\n The error was:\n\n" << outputArgs << __E__;
+				ss << "\n\n The error was:\n\n" << error << __E__;
 				__SUP_COUT_ERR__ << "\n" << ss.str();
 				xmldoc.addTextElementToData("Error", ss.str());
 
@@ -1925,7 +1951,7 @@ try
 			// build output arguments
 			//	parse args, colon-separated pairs, and then comma-separated
 			{
-				std::istringstream inputStream(outputArgs);
+				std::istringstream inputStream(outputResults);
 				std::string        splitVal, argName, argValue;
 				while(getline(inputStream, splitVal, ';'))
 				{

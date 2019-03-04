@@ -1487,7 +1487,7 @@ CodeEditor.create = function() {
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
 						name + "\", \"" +
-						name.substr(name.indexOf('.')+1) + "\"" + //extension
+						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1498,7 +1498,7 @@ CodeEditor.create = function() {
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
 				name + "\",\"" +
-				name.substr(name.indexOf('.')+1) + "\"" + //extension
+				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + name + "' >";
 			nameSplit = name.split('/');			
 			str += nameSplit[nameSplit.length-1] + "</a>";			
@@ -1588,7 +1588,7 @@ CodeEditor.create = function() {
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
 						path + "/" + name + "\", \"" +
-						name.substr(name.indexOf('.')+1) + "\"" + //extension
+						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1600,7 +1600,7 @@ CodeEditor.create = function() {
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
 				path + "/" + name + "\", \"" +
-				name.substr(name.indexOf('.')+1) + "\"" + //extension
+				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + path + "/" + name + "' >" +
 				name + "</a>";
 			
@@ -1833,7 +1833,7 @@ CodeEditor.create = function() {
 		
 		Debug.log("openFile forPrimary=" + forPrimary +
 				" path=" + path);
-		var i = path.indexOf('.');
+		var i = path.lastIndexOf('.');
 		if(i > 0) //up to extension
 			path = path.substr(0,i);
 	
@@ -2711,7 +2711,7 @@ CodeEditor.create = function() {
 			if(isQuote)
 			{
 				var str = newNode.textContent;	
-				str = str.substr(str.indexOf('.')+1);
+				str = str.substr(str.lastIndexOf('.')+1);
 				
 				
 				if(str.length > 0 && str.length <= 4 && 
@@ -2807,7 +2807,7 @@ CodeEditor.create = function() {
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(forPrimary) + ",\"" + 
 										name + "\", \"" +
-										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
 								"<div " +
@@ -2824,7 +2824,7 @@ CodeEditor.create = function() {
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(!forPrimary) + ",\"" + 
 										name + "\", \"" +
-										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
 								"<div " +

@@ -77,7 +77,7 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void exportFEMacro(HttpXmlDocument&   xmldoc,
 	                   cgicc::Cgicc&      cgi,
 	                   const std::string& username);
-	void runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi);
+	void runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string& username);
 
 	std::string generateHexArray(const std::string& sourceHexString, int& numOfBytes);
 	bool        isArgumentVariable(const std::string& argumentString);

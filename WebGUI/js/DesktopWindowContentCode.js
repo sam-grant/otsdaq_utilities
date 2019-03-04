@@ -1756,6 +1756,10 @@ DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique) {
 	
 	if(windowPath !== undefined)
 	{
+		//remove leading ? because Desktop.js handling expects no leading ?
+		if(windowPath[0] == '?')
+			windowPath = windowPath.substr(1);
+			
 		//for windowPath, need to check lid=## is terminated with /
 		// check from = that there is nothing but numbers	
 		try
