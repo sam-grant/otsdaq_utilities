@@ -49,6 +49,38 @@ ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* 
 ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void) { destroy(); }
 
 //========================================================================================================================
+void ControlsDashboardSupervisor::destroy(void)
+{
+	// called by destructor
+	delete interface_;
+} // end destroy()
+
+//========================================================================================================================
+void ControlsDashboardSupervisor::init(void)
+// called by constructor
+{
+	UID_ = 0;
+
+	__COUT__ << std::endl;
+	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
+	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
+	__COUTV__(pluginType);
+
+	interface_ = makeControls(
+			  pluginType
+			, node.getUIDAsString()
+			, CorePropertySupervisorBase::getContextTreeNode()
+			, CorePropertySupervisorBase::supervisorConfigurationPath_);
+	__COUT__ << std::endl;
+
+	__COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
+
+	//interface_->initialize();
+	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
+
+} //end init()
+
+//========================================================================================================================
 // setSupervisorPropertyDefaults
 //		override to set defaults for supervisor property values (before user settings
 // override)
@@ -147,7 +179,7 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 		xmlOut.addTextElementToData("Error",ss.str());
 	}
 
-}
+} //end request()
 //========================================================================================================================
 void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 		HttpXmlDocument& xmlOut, cgicc::Cgicc& cgiIn,
@@ -192,37 +224,8 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 	__COUT__ << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-}
-//========================================================================================================================
-void ControlsDashboardSupervisor::init(void)
-// called by constructor
-{
-	UID_ = 0;
+} //end handleRequest
 
-	__COUT__ << std::endl;
-	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
-	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
-	__COUTV__(pluginType);
-
-	interface_ = makeControls(
-			  pluginType
-			, node.getUIDAsString()
-			, CorePropertySupervisorBase::getContextTreeNode()
-			, CorePropertySupervisorBase::supervisorConfigurationPath_);
-	__COUT__ << std::endl;
-	
-	__COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
-
-	//interface_->initialize();
-	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
-
-}
-//========================================================================================================================
-void ControlsDashboardSupervisor::destroy(void)
-{
-	// called by destructor
-	delete interface_;
-}
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
