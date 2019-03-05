@@ -516,11 +516,11 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTableGroupType")
 	{
-		std::string configList =
-		    CgiDataUtilities::postData(cgiIn, "configList");  // from POST
-		__SUP_COUT__ << "configList: " << configList << __E__;
+		std::string tableList =
+		    CgiDataUtilities::postData(cgiIn, "tableList");  // from POST
+		__SUP_COUT__ << "tableList: " << tableList << __E__;
 
-		handleGetTableGroupTypeXML(xmlOut, cfgMgr, configList);
+		handleGetTableGroupTypeXML(xmlOut, cfgMgr, tableList);
 	}
 	else if(requestType == "getTables")
 	{
@@ -573,13 +573,13 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    CgiDataUtilities::getDataAsInt(cgiIn, "allowDuplicates");  // from GET
 		bool lookForEquivalent =
 		    CgiDataUtilities::getDataAsInt(cgiIn, "lookForEquivalent");  // from GET
-		std::string configList =
-		    CgiDataUtilities::postData(cgiIn, "configList");  // from POST
+		std::string tableList =
+		    CgiDataUtilities::postData(cgiIn, "tableList");  // from POST
 		std::string comment =
 		    CgiDataUtilities::getData(cgiIn, "groupComment");  // from GET
 
 		__SUP_COUT__ << "saveNewTableGroup: " << groupName << __E__;
-		__SUP_COUT__ << "configList: " << configList << __E__;
+		__SUP_COUT__ << "tableList: " << tableList << __E__;
 		__SUP_COUT__ << "ignoreWarnings: " << ignoreWarnings << __E__;
 		__SUP_COUT__ << "allowDuplicates: " << allowDuplicates << __E__;
 		__SUP_COUT__ << "lookForEquivalent: " << lookForEquivalent << __E__;
@@ -588,7 +588,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		handleCreateTableGroupXML(xmlOut,
 		                          cfgMgr,
 		                          groupName,
-		                          configList,
+		                          tableList,
 		                          allowDuplicates,
 		                          ignoreWarnings,
 		                          comment,
@@ -1178,11 +1178,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		    CgiDataUtilities::getData(cgiIn, "groupBKeyContext");
 		std::string groupANameConfig =
 		    CgiDataUtilities::getData(cgiIn, "groupANameConfig");
-		std::string groupAKeyConfig = CgiDataUtilities::getData(cgiIn, "groupAKeyConfig");
+		std::string groupAKeyConfig =
+			CgiDataUtilities::getData(cgiIn, "groupAKeyConfig");
 		std::string groupBNameConfig =
 		    CgiDataUtilities::getData(cgiIn, "groupBNameConfig");
-		std::string groupBKeyConfig = CgiDataUtilities::getData(cgiIn, "groupBKeyConfig");
-		std::string mergeApproach   = CgiDataUtilities::getData(cgiIn, "mergeApproach");
+		std::string groupBKeyConfig =
+			CgiDataUtilities::getData(cgiIn, "groupBKeyConfig");
+		std::string mergeApproach   =
+			CgiDataUtilities::getData(cgiIn, "mergeApproach");
 
 		__SUP_COUTV__(groupANameContext);
 		__SUP_COUTV__(groupAKeyContext);
@@ -5002,7 +5005,8 @@ TableVersion ConfigurationGUISupervisor::saveModifiedVersionXML(
 		if(!duplicateVersion.isInvalid())
 		{
 			__SUP_SS__
-			    << "This version is identical to another version currently cached v"
+			    << "This version of table '" << tableName <<
+				"' is identical to another version currently cached v"
 			    << duplicateVersion << ". No reason to save a duplicate." << __E__;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
 
@@ -5303,7 +5307,7 @@ ConfigurationManagerRW* ConfigurationGUISupervisor::refreshUserSession(
 //			Append a "bumped" system key to name
 //			Save based on list of tableName/TableVersion
 //
-//		configList parameter is comma separated table name and version
+//		tableList parameter is comma separated table name and version
 //
 //		Note: if version of -1 (INVALID/MOCKUP) is given and there are no other existing
 // table versions... 			a new table version is generated using the mockup table.
@@ -5318,7 +5322,7 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
     const std::string&      groupName,
-    const std::string&      configList,
+    const std::string&      tableList,
     bool                    allowDuplicates,
     bool                    ignoreWarnings,
     const std::string&      groupComment,
@@ -5346,15 +5350,15 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 
 	std::string  name, versionStr, alias;
 	TableVersion version;
-	auto         c = configList.find(',', 0);
+	auto         c = tableList.find(',', 0);
 	auto         i = c;
 	i              = 0;  // auto used to get proper index/length type
-	while(c < configList.length())
+	while(c < tableList.length())
 	{
 		// add the table and version pair to the map
-		name = configList.substr(i, c - i);
+		name = tableList.substr(i, c - i);
 		i    = c + 1;
-		c    = configList.find(',', i);
+		c    = tableList.find(',', i);
 		if(c == std::string::npos)  // missing version list entry?!
 		{
 			__SUP_SS__ << "Incomplete Table Name-Version pair!" << __E__;
@@ -5363,9 +5367,9 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 			return;
 		}
 
-		versionStr = configList.substr(i, c - i);
+		versionStr = tableList.substr(i, c - i);
 		i          = c + 1;
-		c          = configList.find(',', i);
+		c          = tableList.find(',', i);
 
 		//__SUP_COUT__ << "name: " << name << __E__;
 		//__SUP_COUT__ << "versionStr: " << versionStr << __E__;
@@ -6524,19 +6528,19 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
     HttpXmlDocument&        xmlOut,
     ConfigurationManagerRW* cfgMgr,
-    const std::string&      configList)
+    const std::string&      tableList)
 {
 	std::map<std::string /*name*/, TableVersion /*version*/> memberMap;
 	std::string                                              name, versionStr;
-	auto                                                     c = configList.find(',', 0);
+	auto                                                     c = tableList.find(',', 0);
 	auto                                                     i = c;
 	i = 0;  // auto used to get proper index/length type
-	while(c < configList.length())
+	while(c < tableList.length())
 	{
 		// add the table name and version pair to the map
-		name = configList.substr(i, c - i);
+		name = tableList.substr(i, c - i);
 		i    = c + 1;
-		c    = configList.find(',', i);
+		c    = tableList.find(',', i);
 		if(c == std::string::npos)  // missing version list entry?!
 		{
 			__SUP_SS__ << "Incomplete Table Name-Version pair!" << __E__;
@@ -6545,9 +6549,9 @@ void ConfigurationGUISupervisor::handleGetTableGroupTypeXML(
 			return;
 		}
 
-		versionStr = configList.substr(i, c - i);
+		versionStr = tableList.substr(i, c - i);
 		i          = c + 1;
-		c          = configList.find(',', i);
+		c          = tableList.find(',', i);
 
 		memberMap[name] = TableVersion(versionStr);
 	}
