@@ -130,7 +130,7 @@
 			margin: 				-7px 0px 0px 13px;
 		}
 		.fileButtonContainer {
-			width: 					128px;
+			width: 					148px;
 			height:					26px;
 			margin:					8px 0 -3px 0;
 		}		
@@ -202,7 +202,10 @@
 			border-top-color: 		red !important;	
 			border-bottom-color: 	red !important;	
 		}	
-		.fileUndoButton:hover {
+		.fileUndoButton {
+			margin-top: 3px;
+		}
+		.fileUndoButton:hover, .openRelatedFileButton:hover{
 			color: 		red !important;			
 		}	
 		

@@ -163,9 +163,10 @@ if (Debug.mode) //IF DEBUG MODE IS ON!
 							if(!returnStr) //check if need to define for the first time
 								returnStr = "";
 							
-							//look for .cc and .h 
+							//look for icc, .cc and .h 
 							if((str[j-3] == '.' && str[j-2] == 'h') || 
-									(str[j-4] == '.' && str[j-3] == 'c' && str[j-2] == 'c'))
+									((str[j-4] == '.' || str[j-4] == 'i') &&
+											str[j-3] == 'c' && str[j-2] == 'c'))
 							{
 								//find beginning of blob (first non-file/c++ character)
 								for(l = j-3; l >= i; --l)
@@ -723,7 +724,7 @@ Debug.handleErrorResize = function() {
 	}
 	w += Debug._errBoxOffW;
 	
-	var h = screenh + Debug._errBoxOffH;
+	var h = (screenh - 20) + Debug._errBoxOffH;
 	if(h < 200) //clip to minimum height
 	{
 		Debug._errBoxOffH = -200;

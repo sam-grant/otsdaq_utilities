@@ -1127,8 +1127,12 @@ Desktop.createDesktop = function(security) {
 				if(windowPath != "undefined") //add parameters if defined
 				{
 					Debug.log("Adding parameter path " + windowPath);
-					if(pathStr.indexOf('&') > 0) //then assume already parameters
+					
+					if(pathStr.indexOf('&amp;') > 0) //then assume already parameters
 						pathStr += "&amp;";
+					else if(pathStr.indexOf('?') > 0 &&  //then assume & for parameters is good
+							pathStr[pathStr.length-1] != '?')
+						pathStr += "&";
 					else if(pathStr.length && 
 							pathStr[pathStr.lengh-1] != '?') //then assume need ?
 						pathStr += '?';

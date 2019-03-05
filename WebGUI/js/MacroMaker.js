@@ -95,6 +95,7 @@
 	var barIncrement = 0;
 	
 
+	//=====================================================================================
 	function init() 
 	{			
 		Debug.log("init() was called");
@@ -122,7 +123,8 @@
 		toggleDisplay(0);
 		toggleMacroPublicity(0);
 	}
-	
+
+	//=====================================================================================
 	//This is what refresh button and redrawWindow() calls
 	function initLite() 
 	{
@@ -130,7 +132,8 @@
 				FElistHandler);
 		loadUserHistory();
 	}
-	
+
+	//=====================================================================================
 	//Handling window resizing
 	function redrawWindow() 
 	{
@@ -200,7 +203,8 @@
 		
 		initLite();
 	}
-			 
+
+	//=====================================================================================	 
 	function FElistHandler(req) 
 	{
 		Debug.log("FElistHandler() was called. ");//Req: " + req.responseText);
@@ -279,6 +283,7 @@
 	    MultiSelectBox.initMySelectBoxes();
 	}
 
+	//=====================================================================================
 	function getPermissionHandler(req)
 	{
 		Debug.log("getPermissionHandler() was called. ");//Req: " + req.responseText);
@@ -286,14 +291,16 @@
 		userPermission = DesktopContent.getXMLValue(req, "Permission");
 		console.log("User Permission: " + userPermission);
 	}
-	
+
+	//=====================================================================================
 	function listSelectionHandler(listoffecs)
 	{
 	 	 var splits = listoffecs.id.split('_');
 		 elementIndex = splits[splits.length-1] | 0;
 		 MultiSelectBox.dbg("Chosen element index:",elementIndex);
 	}
-    
+
+	//=====================================================================================
     function callWrite(address,data)
     {
     	var reminderEl = document.getElementById('reminder');
@@ -382,7 +389,8 @@
 			reminderEl.innerHTML = "Data successfully written!";
 		}
     }
-  
+
+	//=====================================================================================
     function callRead(address)
     {
 		var reminderEl = document.getElementById('reminder');
@@ -438,7 +446,8 @@
 					readHandler);
 		}
     }
-    
+
+	//=====================================================================================
     function toggleReadBitField(fromLink)
     {
     	var el = document.getElementById("enableReadBitField");
@@ -450,7 +459,8 @@
     	Debug.log("checkbox val " + val);
     	document.getElementById("readBitFieldTable").style.display = val?"block":"none";
     }
-    
+
+	//=====================================================================================
     function writeHandler(req)
 	{
 		Debug.log("writeHandler() was called.");// Req: ");//" + req.responseText);	
@@ -463,6 +473,8 @@
 		waitForCurrentCommandToComeBack = false;
 
     }
+    
+	//=====================================================================================
     function readHandler(req)
 	{
 		Debug.log("readHandler() was called.");// Req: " + req.responseText);
@@ -530,7 +542,8 @@
 		runningPercentageEl.innerHTML = Math.round(barWidth*10)/10 + '%';
 		waitForCurrentCommandToComeBack = false;
 	}
-    
+
+	//=====================================================================================
     function isArrayAllZero(arr)
     {
         for(var j = 0; j < arr.length; j++)
@@ -539,7 +552,8 @@
         }
         return true;
     }
-    
+
+	//=====================================================================================
     function convertToHex(format,target)
     {
 		switch (format) 
@@ -555,7 +569,8 @@
 				return output.join('');
 		}
     }
-    
+
+	//=====================================================================================
     function convertFromHex(format,target,extractBitField)
     {
     	if(extractBitField)
@@ -611,7 +626,8 @@
 			return str;
 		}
     }
-    
+
+	//=====================================================================================
     function reverseLSB(original, execute)
     {
     	if(execute)
@@ -625,13 +641,15 @@
 		}
     	else return original;
     }
-    
+
+	//=====================================================================================
     function LSBchecker(LSBF)
     {
     	if(LSBF) return "*";
     	else return "";
     }
-    
+
+	//=====================================================================================
     function toggleDisplay(onMacro)
     {
     	 var fecListEl = document.getElementById("fecList");
@@ -672,7 +690,8 @@
 
     	 }
     }
-   
+
+	//=====================================================================================
     function toggleMacroPublicity(onPublic)
     {
     	var privateEl = document.getElementById("listOfPrivateMacros");
@@ -699,7 +718,8 @@
     		isOnPrivateMacros = true;
     	}
     }
-	
+
+	//=====================================================================================
     function addCommand(command,address,data)//either has address+data, or have no address/data. # of parameters = 1 or 3
     {
 		var contentEl = document.getElementById('sequenceContent');
@@ -823,13 +843,15 @@
 		});//Works like magic!
 		getOrder();
     }
-    
+
+	//=====================================================================================
     function hideDeletex(seqIndex)
     {
     	var deleteID = "deletex"+seqIndex;
     	document.getElementById(deleteID).style.display = "none"; 
     }
-    
+
+	//=====================================================================================
     function showDeletex(seqIndex)
     {
     	var deleteID = "deletex"+seqIndex;
@@ -839,7 +861,8 @@
     			deleteEl.parentNode.offsetWidth - 20) + "px";
     	deleteEl.style.display = "block";    	
     }
-    
+
+	//=====================================================================================
     function getOrder()
     {
     	tempString = [];
@@ -852,7 +875,8 @@
 		for(var i = 0; i < macroString.length; i++)
 			tempString.push(macroString[sorting.indexOf(order[i])]);
     }
-    
+
+	//=====================================================================================
     function removeCommand(seqIndex)
     {
     	document.getElementById("undoDelete").disabled = false;
@@ -869,25 +893,29 @@
 		}
 		getOrder();
     }
-    
+
+	//=====================================================================================
     function undoDelete()
     {
     	addCommand(lastDeletedMacro.split(":")[1],lastDeletedMacro.split(":")[2],lastDeletedMacro.split(":")[3]);
     	document.getElementById("undoDelete").disabled = true;
     }
-    
+
+	//=====================================================================================
     function showPopupClearAllConfirm()
     {
 		var popupClearAllConfirm = document.getElementById("popupClearAllConfirm");
 		popupClearAllConfirm.style.display = "block";
     }
-    
+
+	//=====================================================================================
     function showPopupClearHistoryConfirm()
     {
 		var popupClearAllConfirm = document.getElementById("popupClearHistoryConfirm");
 		popupClearAllConfirm.style.display = "block";
     }
-	
+
+	//=====================================================================================
     function clearAll(el)
     {
 		var contentEl = document.getElementById('sequenceContent');
@@ -895,7 +923,8 @@
 		macroString = [];
 		hideSmallPopup(el);
     }
-    
+
+	//=====================================================================================
     function clearHistory(el)
     {
 		DesktopContent.XMLHttpRequest("Request?RequestType=clearHistory","",clearHistoryHandler);
@@ -903,20 +932,23 @@
 		contentEl.innerHTML = "";
 		hideSmallPopup(el);
     }
-    
+
+	//=====================================================================================
     function clearHistoryHandler(req)
 	{
 		Debug.log("clearHistoryHandler() was called.");// Req: " + req.responseText);
 		
 		loadUserHistory();
 	}
-    
+
+	//=====================================================================================
     function hideSmallPopup(el)
     {
     	var wholeDiv = el.parentNode.parentNode.parentNode;
     	wholeDiv.style.display = "none";
     }
-    
+
+	//=====================================================================================
     function saveMacro()
     {	
     	if (macroString.length === 0) 
@@ -928,7 +960,8 @@
 				document.getElementById("makeMacroPublic").style.display = "block";
     	}
     }
-    
+
+	//=====================================================================================
     function hidePopupSaveMacro()
     {
     	var popupSaveMacro = document.getElementById("popupSaveMacro");
@@ -938,13 +971,15 @@
 		document.getElementById('macroReminder').innerHTML = "Macro successfully saved!";
     }
 
+	//=====================================================================================
     function hidePopupEditMacro()
     {
     	var popupEditMacro = document.getElementById("popupEditMacro");
     	popupEditMacro.style.display = "none";
         arrayOfCommandsForEdit = [];        
     }
-   
+
+	//=====================================================================================
     function saveAsMacro()
     {
     	getOrder();
@@ -974,6 +1009,7 @@
     				hideSmallPopup(this);
     				return;
     			};
+    			
     			document.getElementById('popupMacroAlreadyExistsOverwrite').onclick = function(){ //call edit
     				DesktopContent.XMLHttpRequest("Request?RequestType=editMacro" + 
     						"&isPublic=" + isMacroPublic +
@@ -1010,7 +1046,8 @@
         	}
     	}
     } //end saveAsMacro() 
-    
+
+	//=====================================================================================
     function createMacroHandler(req,macroName)
 	{
 		Debug.log("createMacroHandler() was called for " + macroName);// Req: " + req.responseText);
@@ -1019,7 +1056,8 @@
 		loadExistingMacros();
 				
 	} //end createMacroHandler()
-    
+
+	//=====================================================================================
     function runMacro(stringOfCommands,macroName)
     {
 		var contentEl = document.getElementById('historyContent');
@@ -1134,17 +1172,20 @@
 			}
 		},200);
     }
-    
+
+	//=====================================================================================
     function loadExistingMacros()
     {
     	DesktopContent.XMLHttpRequest("Request?RequestType=loadMacros","",loadingMacrosHandler);
     }
-    
+
+	//=====================================================================================
     function loadUserHistory()
 	{
 		DesktopContent.XMLHttpRequest("Request?RequestType=loadHistory","",loadingHistHandler);
 	}
-    
+
+	//=====================================================================================
     function loadingMacrosHandler(req)
     {
     	Debug.log("loadingMacrosHandler() was called.");// Req: " + req.responseText);
@@ -1213,7 +1254,8 @@
 			document.getElementById("listOfPublicMacros").innerHTML = "";
     	console.log(namesOfAllMacros);
     }
-    
+
+	//=====================================================================================
     function loadingHistHandler(req)
     {
     	Debug.log("loadingHistHandler() was called.");// Req: " + req.responseText);
@@ -1305,7 +1347,8 @@
     		callWrite(addressStr, dataStr);
     	
     } //end histCmdWriteDivOnclick()
-    
+
+	//=====================================================================================
     function histCmdReadDivOnclick(addressStr, outputStr, 
     		addressFormatStr, outputFormatStr)
 	{
@@ -1513,7 +1556,8 @@
     		Debug.log("Impossible!? macroAction=" + macroAction);
     	}
     }
-    
+
+	//=====================================================================================
     function exportFEMacro(macroName,macroSequence,macroNotes)
     {
     	Debug.log("exportFEMacro()");
@@ -1568,26 +1612,26 @@
     					"source code files...\n" + 
 						"(Click " +
 						"<a onclick='DesktopContent.openNewBrowserTab(" +
-						"\"Code Editor\",\"\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
 						headerFile + "&startFileSecondary=" +
-						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
+						sourceFile + "&startViewMode=1\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
 						"here</a> to open them in the Code Editor)" +
 						"\n\n" + 
 
 						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",\".h\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
-						headerFile + "\",0 /*unique*/);' " +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
+						headerFile + "\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open this header file in the Code Editor.'>" +
 						headerFile + "</a>\n\nand...\n\n" +  
 
 
 						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",\".cc\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
-						sourceFile + "\",0 /*unique*/);' " +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
+						sourceFile + "\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open this source file in the Code Editor.'>" +
 						sourceFile + "</a>\n\n" +
 
@@ -1667,7 +1711,8 @@
 				0 /*reqParam*/, 0 /*progressHandler*/, true /*callHandlerOnErr*/);
 
     } //end exportFEMacro()
-    
+
+	//=====================================================================================
     function exportMacroHandler(req)
    	{
    		Debug.log("exportMacroHandler() was called. ");//Req: " + req.responseText);   		
@@ -1678,7 +1723,8 @@
 					" It was saved to...\n\n" + exportFile					
 					,Debug.INFO_PRIORITY);
    	} //end exportMacroHandler()
-       
+
+	//=====================================================================================
     function editCommands(textarea, seqID, index)
     {	
     	var x = arrayOfCommandsForEdit[seqID].split(":");
@@ -1693,7 +1739,8 @@
 			arrayOfCommandsForEdit[seqID] = x.join(":");
     	}
     }
-    
+
+	//=====================================================================================
     function deleteMacroHandler(req)
 	{
 		Debug.log("deleteMacroHandler() was called. ");//Req: " + req.responseText);
@@ -1704,7 +1751,8 @@
 		var reminderEl = document.getElementById('reminder');
 		reminderEl.innerHTML = "Successfully deleted " + decodeURI(deletedMacroName);		
 	}
-    
+
+	//=====================================================================================
     function saveChangedMacro()
     {
     	newMacroNameForEdit = document.getElementById("macroNameEdit").value;
@@ -1764,19 +1812,22 @@
 					"&newMacroName=" + newMacroNameForEdit + 					 
 					"&Time=" + macroDateForEdit + 
 					"&Notes=" + encodeURIComponent(macroNotesForEdit),
-					saveChangedMacroHandler);
+					saveChangedMacroHandler /*handler*/,
+					newMacroNameForEdit /*parameter*/);
 			hidePopupEditMacro();
 		}
     }
-    
+
+	//=====================================================================================
     function saveChangedMacroHandler(req,macroName)
     {
     	Debug.log("saveChangedMacroHandler() was called.");
 		
 		Debug.log("Your Macro '" + macroName + "' was succesfully saved!",Debug.INFO_PRIORITY);
 		loadExistingMacros();  
-    }
-    
+    } //end saveChangedMacroHandler()
+
+	//=====================================================================================
     function reloadMacroSequence()
 	{
 		var sequenceContentEl = document.getElementById("sequenceContent");
@@ -1791,6 +1842,7 @@
     	}
     }
 
+	//=====================================================================================
     function reloadEditSequence()
 	{
     	//FIXME: this function needs to know the old value before onchange!
@@ -1820,7 +1872,8 @@
 			}
 		}
     }
-    
+
+	//=====================================================================================
     function setFieldToVariable(div, seqID, index,isReadResultField)
     {
     	Debug.log("setFieldToVariable");
@@ -1865,12 +1918,14 @@
 				var variableName = document.getElementById("nameVariable").value.toString();
 				if(variableName === "")
 				{
-					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be empty.</span>";
+					nameVariablePromptEl.innerHTML = 
+							"<span class='red'>Name of the variable cannot be empty.</span>";
 					return;
 				}
 				else if(!isNaN("0x"+variableName))
 				{
-					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be a number.</span>";
+					nameVariablePromptEl.innerHTML = 
+							"<span class='red'>Name of the variable cannot be a valid hex number.</span>";
 					return;
 				}
 				div.style.backgroundColor = "#ff0101";
@@ -1890,12 +1945,14 @@
 				var variableName = document.getElementById("nameVariable").value.toString();
 				if(variableName === "")
 				{
-					nameVariablePromptEl.innerHTML = "<span class='red'>Name of the variable cannot be empty.</span>";
+					nameVariablePromptEl.innerHTML = 
+							"<span class='red'>Name of the variable cannot be empty.</span>";
 					return;
 				}
 				else if(isNaN("0x"+variableName)) 
 				{
-					nameVariablePromptEl.innerHTML = "<span class='red'>The value has to be a hex number.</span>";
+					nameVariablePromptEl.innerHTML = 
+							"<span class='red'>The value has to be a valid hex number.</span>";
 					return;
 				}
 				div.style.backgroundColor = "#002a52";
@@ -1910,7 +1967,7 @@
     	}
     }
 
-    
+	//=====================================================================================
     function dealWithVariables(stringOfCommands,macroName,LSBF)
     {
     	if (LSBF == "true") runningMacroLSBF = 1; 
@@ -2036,3 +2093,18 @@
     		}
     	};
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

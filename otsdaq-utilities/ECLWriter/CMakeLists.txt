@@ -37,6 +37,7 @@ cet_make( LIBRARY_NAME ECLWriterCore EXCLUDE ECLSupervisor.cc
         pthread
     crypto
     ${CURL_LIBRARIES}
+    MF_MessageLogger
 	)
 cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
 	LIBRARIES
@@ -51,8 +52,9 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
 		 SOAPUtilities
 		 FiniteStateMachine
 		 ConfigurationInterface
-		 ConfigurationDataFormats
-		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
+		 TableCore
+		 otsdaq-core_TablePluginDataFormats_XDAQContextTable_table
+		 MF_MessageLogger
     crypto
     ${CURL_LIBRARIES}
 	)
@@ -62,5 +64,5 @@ endif(CURL_FOUND)
 endif(XSD_FOUND)
 
 
-install_headers()
-install_source()
+install_headers(EXTRAS ECL.hxx)
+install_source(EXTRAS ECL.hxx)
