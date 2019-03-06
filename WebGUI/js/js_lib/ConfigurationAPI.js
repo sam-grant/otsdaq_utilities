@@ -91,7 +91,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-//	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+//	ConfigurationAPI.saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
@@ -1691,7 +1691,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 		var affectedGroupNames = []; //to be populated for use by alias setting
 		var affectedGroupComments = []; //to be populated for use by alias setting
-		var affectedGroupConfigMap = []; //to be populated for use by alias setting
+		var affectedGroupTableMap = []; //to be populated for use by alias setting
 		
 		var affectedGroupKeys = []; //to be populated after group save for use by alias setting
 		
@@ -1748,8 +1748,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					Debug.log("memberNames.length " + memberNames.length);
 
-					//build member config map
-					affectedGroupConfigMap[i] = "configList=";
+					//build member table map
+					affectedGroupTableMap[i] = "tableList=";
 					var memberVersion, memberName;
 					for(var j=0;j<memberNames.length;++j)		
 					{
@@ -1764,13 +1764,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								{
 									Debug.log("found " + savedTables[k].tableName + "-v" +
 											savedTables[k].tableVersion);
-									affectedGroupConfigMap[i] += memberName + "," + 
+									affectedGroupTableMap[i] += memberName + "," + 
 											savedTables[k].tableVersion + ",";
 									break;
 								}
 						}
 						else
-							affectedGroupConfigMap[i] += memberName + 
+							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
 					}
 				}
@@ -1799,8 +1799,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				affectedGroupComments.push(affectedGroupCommentEls[i].textContent);
 				affectedGroupNames.push(affectedArr[0]);	
 				
-				//build member config map
-				affectedGroupConfigMap[i] = "configList=";
+				//build member table map
+				affectedGroupTableMap[i] = "tableList=";
 				//member map starts after group name/key (i.e. [2])
 				for(var a=2;a<affectedArr.length;a+=2)								
 					if((affectedArr[a+1]|0) < -1) //there should be a new modified version
@@ -1812,13 +1812,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							{
 								Debug.log("found " + savedTables[k].tableName + "-v" +
 										savedTables[k].tableVersion);
-								affectedGroupConfigMap[i] += affectedArr[a] + "," + 
+								affectedGroupTableMap[i] += affectedArr[a] + "," + 
 										savedTables[k].tableVersion + ",";
 								break;
 							}
 					}
 					else //use existing version
-						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
+						affectedGroupTableMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
 			}
 			
 			localHandleSavingAffectedGroups();			
@@ -1839,11 +1839,11 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
 						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 				Debug.log(reqStr);
-				Debug.log(affectedGroupConfigMap[i]);
+				Debug.log(affectedGroupTableMap[i]);
 
 				++numberOfRequests;
 				///////////////////////////////////////////////////////////
-				DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
+				DesktopContent.XMLHttpRequest(reqStr, affectedGroupTableMap[i], 
 						function(req,affectedGroupIndex) 
 						{
 
@@ -2403,7 +2403,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 	//make a new backbone with old versions of everything except Group Alias 
-	var configMap = "configList=";
+	var tableMap = "tableList=";
 	var name;
 	for(var i=0;i<configNames.length;++i)
 	{		
@@ -2411,22 +2411,22 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 
 		if(name == groupAliasName)
 		{
-			configMap += name + "," + 
+			tableMap += name + "," + 
 					groupAliasVersion + ",";
 			continue;
 		}
 		//else use old member
-		configMap += name + "," + 
+		tableMap += name + "," + 
 				configVersions[i].getAttribute("value") + ",";							
 	}
 
-	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2],
+	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
+ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,doneHandler,doReturnParams,
 		lookForEquivalent)
 {
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +
@@ -2434,7 +2434,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
 			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
 			"", //end get data
-			configMap, //end post data
+			tableMap, //end post data
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");
