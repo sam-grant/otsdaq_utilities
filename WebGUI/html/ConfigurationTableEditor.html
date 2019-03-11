@@ -286,7 +286,7 @@
 			str += " <input type='button' onmouseup='verifyDeleteTable()' value='Delete'/>";
 			str += " <input id='reallyDeleteButton' type='button' style='display:none' onmouseup='deleteTable()' value='Really Delete!'/>";
 			
-			str += "<br>&nbsp;&nbsp;Configuration Name:";
+			str += "<br>&nbsp;&nbsp;Table Name:";
 
 			str += "<select id='loadFromConfigName' " +
 					"onchange='document.getElementById(\"reallyDeleteButton\").style.display = \"none\";' " +
@@ -315,7 +315,7 @@
 			str += "<br><br>";
 			str += "Save Column Info as...";
 			str += " <input id='overwriteButton' style='display:none' type='button' onmouseup='saveTable(1)' value='Overwrite'/>";
-			str += "<br>&nbsp;&nbsp;Configuration Name:";							
+			str += "<br>&nbsp;&nbsp;Table Name:";							
 			str += "<input type='text' id='SaveAsConfigName' " + 
 					"onchange='document.getElementById(\"overwriteButton\").style.display = \"none\";' " +
 					"style='margin:-4px -2px -4px -1px; width:310px' value=''>";

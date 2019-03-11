@@ -54,38 +54,47 @@ XDAQ_INSTANTIATOR_IMPL(VisualSupervisor)
 VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub), theDataManager_(0), loadedRunNumber_(-1)
 {
+	__SUP_COUT__ << "Constructor." << __E__;
 	INIT_MF("VisualSupervisor");
-	__SUP_COUT__ << std::endl;
 
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 	    theConfigurationManager_->getNode(
 	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
-	    supervisorConfigurationPath_,
-	    supervisorApplicationUID_);
+			CorePropertySupervisorBase::getSupervisorConfigurationPath(),
+			CorePropertySupervisorBase::getSupervisorUID());
 
 	CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
 
-	__SUP_COUT__ << "Done instantiating Visual data manager." << std::endl;
+	__SUP_COUT__ << "Done instantiating Visual data manager." << __E__;
 
 	// xgi::bind(this, &VisualSupervisor::safariDefaultPage, "safari" );
 
 	// make preferences directory in case they don't exist
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
-}
+
+	__SUP_COUT__ << "Constructed." << __E__;
+} //end constructor
 
 //========================================================================================================================
-VisualSupervisor::~VisualSupervisor(void) { destroy(); }
+VisualSupervisor::~VisualSupervisor(void)
+{
+	__SUP_COUT__ << "Destructor." << __E__;
+	destroy();
+	__SUP_COUT__ << "Destructed." << __E__;
+}  // end destructor()
 
 //========================================================================================================================
 void VisualSupervisor::destroy(void)
 {
+	__SUP_COUT__ << "Destroying..." << __E__;
+
 	// called by destructor
 	// delete theConfigurationManager_;
 
 	DataManagerSingleton::deleteInstance(
-	    CorePropertySupervisorBase::supervisorApplicationUID_);
+	    CorePropertySupervisorBase::getSupervisorUID());
 	theStateMachineImplementation_.pop_back();
-}
+} //end destroy()
 //
 ////========================================================================================================================
 // void VisualSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
@@ -195,10 +204,10 @@ void VisualSupervisor::request(const std::string&               requestType,
 	else if(requestType == "setUserPreferences" &&
 	        userInfo.username_ != "" /*from allow no user*/)
 	{
-		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << std::endl;
+		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
 		    (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
-		__SUP_COUT__ << "fullPath: " << fullPath << std::endl;
+		__SUP_COUT__ << "fullPath: " << fullPath << __E__;
 
 		std::string radioSelect = CgiDataUtilities::getData(cgiIn, "radioSelect");
 		std::string autoRefresh = CgiDataUtilities::getData(cgiIn, "autoRefresh");
@@ -207,11 +216,11 @@ void VisualSupervisor::request(const std::string&               requestType,
 		std::string autoRefreshPeriod =
 		    CgiDataUtilities::getData(cgiIn, "autoRefreshPeriod");
 
-		__SUP_COUT__ << "radioSelect: " << radioSelect << std::endl;
-		__SUP_COUT__ << "autoRefresh: " << autoRefresh << std::endl;
-		__SUP_COUT__ << "autoHide: " << autoHide << std::endl;
-		__SUP_COUT__ << "hardRefresh: " << hardRefresh << std::endl;
-		__SUP_COUT__ << "autoRefreshPeriod: " << autoRefreshPeriod << std::endl;
+		__SUP_COUT__ << "radioSelect: " << radioSelect << __E__;
+		__SUP_COUT__ << "autoRefresh: " << autoRefresh << __E__;
+		__SUP_COUT__ << "autoHide: " << autoHide << __E__;
+		__SUP_COUT__ << "hardRefresh: " << hardRefresh << __E__;
+		__SUP_COUT__ << "autoRefreshPeriod: " << autoRefreshPeriod << __E__;
 
 		// read existing
 		FILE* fp = fopen(fullPath.c_str(), "r");
@@ -261,14 +270,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 		}
 		else
 			__SUP_COUT_ERR__ << "Failure writing preferences to file: " << fullPath
-			                 << std::endl;
+			                 << __E__;
 	}
 	else if(requestType == "getUserPreferences")
 	{
-		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << std::endl;
+		__SUP_COUT__ << "userInfo.username_: " << userInfo.username_ << __E__;
 		std::string fullPath =
 		    (std::string)PREFERENCES_PATH + userInfo.username_ + PREFERENCES_FILE_EXT;
-		__SUP_COUT__ << "fullPath: " << fullPath << std::endl;
+		__SUP_COUT__ << "fullPath: " << fullPath << __E__;
 
 		FILE* fp = fopen(fullPath.c_str(), "r");
 		if(fp)
@@ -312,7 +321,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		std::string rootpath = std::string(ROOT_BROWSER_PATH) + "/";
 		std::string path     = CgiDataUtilities::postData(cgiIn, "Path");
-		__SUP_COUT__ << path << std::endl;
+		__SUP_COUT__ << path << __E__;
 
 		// return 1 if user has access to admin controls, else 0
 		char permStr[10];
@@ -332,7 +341,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			dirpath = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
 			          path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
 
-		__SUP_COUT__ << "full path: " << dirpath << std::endl;
+		__SUP_COUT__ << "full path: " << dirpath << __E__;
 
 		DIR*           pDIR;
 		struct dirent* entry;
@@ -361,7 +370,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					         S_IRWXU | (S_IRGRP | S_IXGRP) |
 					             (S_IROTH | S_IXOTH)))  // mode = drwx r-x r-x
 						__SUP_COUT__ << "Failed to make directory for pre made views: "
-						             << ROOT_DISPLAY_CONFIG_PATH << std::endl;
+						             << ROOT_DISPLAY_CONFIG_PATH << __E__;
 				}
 				else
 					closedir(pRtDIR);  // else close and display
@@ -378,7 +387,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			while((entry = readdir(pDIR)))
 			{
 				//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n" <<
-				// std::endl;
+				// __E__;
 				if(entry->d_name[0] != '.' &&
 				   (entry->d_type ==
 				        0 ||  // 0 == UNKNOWN (which can happen - seen in SL7 VM)
@@ -386,7 +395,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 				    entry->d_type == 8))
 				{
 					//__SUP_COUT__ << int(entry->d_type) << " " << entry->d_name << "\n"
-					//<< std::endl;
+					//<< __E__;
 					isNotRtCfg =
 					    std::string(entry->d_name).find(".rcfg") == std::string::npos;
 					isDir = false;
@@ -418,7 +427,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 			closedir(pDIR);
 		}
 		else
-			__SUP_COUT__ << "Failed to access directory contents!" << std::endl;
+			__SUP_COUT__ << "Failed to access directory contents!" << __E__;
 	}
 	else if(requestType == "getRoot")
 	{
@@ -427,7 +436,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		std::string path     = CgiDataUtilities::postData(cgiIn, "RootPath");
 		std::string fullPath = std::string(getenv("ROOT_BROWSER_PATH")) + path;
 
-		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << std::endl;
+		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
 
 		std::string rootFileName = fullPath.substr(0, fullPath.find(".root") + 5);
 		std::string rootDirectoryName =
@@ -440,13 +449,13 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		if(theDataManager_->getLiveDQMHistos() != nullptr && LDQM_pos == 0)
 		{
-			//__SUP_COUT__ << "Attempting to get LIVE file." << std::endl;
+			//__SUP_COUT__ << "Attempting to get LIVE file." << __E__;
 			rootFile = theDataManager_->getLiveDQMHistos()->getFile();
 			if(!rootFile)
-				__SUP_COUT__ << "File was closed." << std::endl;
+				__SUP_COUT__ << "File was closed." << __E__;
 			else
 			{
-				//__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << std::endl;
+				//__SUP_COUT__ << "LIVE file name: " << rootFile->GetName() << __E__;
 				rootDirectoryName = path.substr(("/" + LIVEDQM_DIR + ".root").length());
 			}
 		}
@@ -454,11 +463,11 @@ void VisualSupervisor::request(const std::string&               requestType,
 			rootFile = TFile::Open(rootFileName.c_str());
 
 		//__SUP_COUT__ << "FileName : " << rootFileName << " Object: " <<
-		// rootDirectoryName << std::endl;
+		// rootDirectoryName << __E__;
 
 		if(!rootFile || !rootFile->IsOpen())
 		{
-			__SUP_COUT__ << "Failed to access root file: " << rootFileName << std::endl;
+			__SUP_COUT__ << "Failed to access root file: " << rootFileName << __E__;
 		}
 		else
 		{
@@ -467,12 +476,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 			TDirectory* directory;
 			if((directory = rootFile->GetDirectory(rootDirectoryName.c_str())) == 0)
 			{
-				//__SUP_COUT__ << "This is not a directory!" << std::endl;
+				//__SUP_COUT__ << "This is not a directory!" << __E__;
 				directory = rootFile;
 
 				// failed directory so assume it's file
 				//__SUP_COUT__ << "Getting object name: " << rootDirectoryName <<
-				// std::endl;
+				// __E__;
 				TObject* histoClone = nullptr;
 				TObject* histo      = (TObject*)rootFile->Get(rootDirectoryName.c_str());
 
@@ -484,7 +493,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 					TBufferFile tBuffer(TBuffer::kWrite);
 					histoClone->Streamer(tBuffer);
 
-					//__SUP_COUT__ << "histo length " << tbuff.Length() << std::endl;
+					//__SUP_COUT__ << "histo length " << tbuff.Length() << __E__;
 
 					std::string destination = BinaryStringMacros::binaryToHexString(
 					    tBuffer.Buffer(), tBuffer.Length());
@@ -496,11 +505,11 @@ void VisualSupervisor::request(const std::string&               requestType,
 				}
 				else
 					__SUP_COUT_ERR__ << "Failed to access:-" << rootDirectoryName << "-"
-					                 << std::endl;
+					                 << __E__;
 			}
 			else
 			{
-				__SUP_COUT__ << "directory found getting the content!" << std::endl;
+				__SUP_COUT__ << "directory found getting the content!" << __E__;
 				TRegexp re("*", kTRUE);
 				if(LDQM_pos == 0)
 				{
@@ -512,7 +521,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						if(s.Index(re) == kNPOS)
 							continue;
 						__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName()
-						             << std::endl;
+						             << __E__;
 						xmlOut.addTextElementToData(
 						    (std::string(obj->IsA()->GetName()).find("Directory") !=
 						     std::string::npos)
@@ -531,7 +540,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						if(s.Index(re) == kNPOS)
 							continue;
 						__SUP_COUT__ << "Class Name: " << key->GetClassName()
-						             << std::endl;
+						             << __E__;
 						xmlOut.addTextElementToData(
 						    (std::string(key->GetClassName()).find("Directory") !=
 						     std::string::npos)
@@ -549,7 +558,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 	{
 		int Run = atoi(cgiIn("run").c_str());
 
-		__SUP_COUT__ << "getEvents for run " << Run << std::endl;
+		__SUP_COUT__ << "getEvents for run " << Run << __E__;
 
 		if(Run != (int)loadedRunNumber_ || loadedRunNumber_ == (unsigned int)-1)
 		{
@@ -562,12 +571,12 @@ void VisualSupervisor::request(const std::string&               requestType,
 		char        str[40];
 
 		//		const Visual3DEvents& events = theDataManager_->getVisual3DEvents();
-		//		__SUP_COUT__ << "Preparing hits xml" << std::endl;
+		//		__SUP_COUT__ << "Preparing hits xml" << __E__;
 		//		int numberOfEvents = 0;
 		//		for(Visual3DEvents::const_iterator it=events.begin(); it!=events.end() &&
 		// numberOfEvents < 10000; it++, numberOfEvents++)
 		//		{
-		//			//__SUP_COUT__ << "Event: " << numberOfEvents << std::endl;
+		//			//__SUP_COUT__ << "Event: " << numberOfEvents << __E__;
 		//			eventParent = xmlOut.addTextElementToParent("event", str,
 		// eventsParent); 			const VisualHits& hits = it->getHits();
 		//			for(VisualHits::const_iterator itHits=hits.begin();
@@ -582,7 +591,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		//				//__SUP_COUT__ << "X: " << itHits->x << " Y: " << itHits->y << "
 		// Z:
 		//"
-		//<<  itHits->z << std::endl;
+		//<<  itHits->z << __E__;
 		//			}
 		//			const VisualTracks& tracks = it->getTracks();
 		//			for(VisualTracks::const_iterator itTrks=tracks.begin();
@@ -600,22 +609,22 @@ void VisualSupervisor::request(const std::string&               requestType,
 		//			}
 		//
 		//		}
-		__SUP_COUT__ << "Done hits xml" << std::endl;
+		__SUP_COUT__ << "Done hits xml" << __E__;
 	}
 	else if(requestType == "getGeometry")
 	{
-		__SUP_COUT__ << "getGeometry" << std::endl;
+		__SUP_COUT__ << "getGeometry" << __E__;
 
 		// FIXME -- this crashes when the file doesn't exist!
 		theDataManager_->load("Run1684.geo", "Geometry");
 
-		__SUP_COUT__ << "getGeometry" << std::endl;
+		__SUP_COUT__ << "getGeometry" << __E__;
 
 		DOMElement* geometryParent = xmlOut.addTextElementToData("geometry", "");
 		//		const Visual3DShapes& shapes =
 		// theDataManager_->getVisual3DGeometry().getShapes();
 		//
-		//		__SUP_COUT__ << "getGeometry" << std::endl;
+		//		__SUP_COUT__ << "getGeometry" << __E__;
 		//
 		//
 		//		DOMElement* objectParent;
@@ -645,14 +654,14 @@ void VisualSupervisor::request(const std::string&               requestType,
 	else if(requestType == "getRootConfig")
 	{
 		std::string path = CgiDataUtilities::postData(cgiIn, "RootConfigPath");
-		__SUP_COUT__ << "path " << path << std::endl;
+		__SUP_COUT__ << "path " << path << __E__;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") ==
 		   0)  // ROOT config path must start the path
 		{
 			path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
 			       path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2);
-			__SUP_COUT__ << "mod path " << path << std::endl;
+			__SUP_COUT__ << "mod path " << path << __E__;
 		}
 
 		HttpXmlDocument cfgXml;
@@ -672,7 +681,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		//		{
 		//			__SUP_COUT__ << "Insufficient permissions for Root Viewer Admin
 		// Controls: " << userPermissions << " < " << ROOT_VIEWER_PERMISSIONS_THRESHOLD <<
-		// std::endl;
+		// __E__;
 		//			xmlOut.addTextElementToData("status", "Failed. Insufficient user
 		// permissions.");
 		//		}
@@ -685,16 +694,16 @@ void VisualSupervisor::request(const std::string&               requestType,
 
 		std::string path = CgiDataUtilities::postData(cgiIn, "path");
 		std::string name = CgiDataUtilities::postData(cgiIn, "name");
-		__SUP_COUT__ << "cmd " << cmd << std::endl;
-		__SUP_COUT__ << "path " << path << std::endl;
-		__SUP_COUT__ << "name " << name << std::endl;
+		__SUP_COUT__ << "cmd " << cmd << __E__;
+		__SUP_COUT__ << "path " << path << __E__;
+		__SUP_COUT__ << "name " << name << __E__;
 
 		if(path.find("/" + PRE_MADE_ROOT_CFG_DIR + "/") ==
 		   0)  // ROOT config path must start the path
 		{
 			path = std::string(ROOT_DISPLAY_CONFIG_PATH) + "/" +
 			       path.substr(PRE_MADE_ROOT_CFG_DIR.length() + 2) + name;
-			__SUP_COUT__ << "mod path " << path << std::endl;
+			__SUP_COUT__ << "mod path " << path << __E__;
 
 			if(cmd == "mkdir")
 			{
@@ -714,8 +723,8 @@ void VisualSupervisor::request(const std::string&               requestType,
 				    atoi(CgiDataUtilities::postData(cgiIn, "useRunWildCard")
 				             .c_str());  // 0 or 1
 				std::string config = CgiDataUtilities::postData(cgiIn, "config");
-				__SUP_COUT__ << "config " << config << std::endl;
-				__SUP_COUT__ << "useRunWildCard " << useRunWildCard << std::endl;
+				__SUP_COUT__ << "config " << config << __E__;
+				__SUP_COUT__ << "useRunWildCard " << useRunWildCard << __E__;
 
 				// check if file already exists
 				FILE* fp = fopen(path.c_str(), "r");
@@ -723,7 +732,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 				{
 					fclose(fp);
 					xmlOut.addTextElementToData("status", "Failed. File already exists.");
-					__SUP_COUT__ << " Failed. File already exists." << std::endl;
+					__SUP_COUT__ << " Failed. File already exists." << __E__;
 				}
 				else
 				{
@@ -751,7 +760,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						if(remove(path.c_str()) != 0)
 							__SUP_COUT__ << "Failed. Could not remove poorly formed Root "
 							                "config file!"
-							             << std::endl;
+							             << __E__;
 					}
 				}
 			}
@@ -775,7 +784,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 	}
 	else
 		__SUP_COUT__ << "requestType request, " << requestType << ", not recognized."
-		             << std::endl;
+		             << __E__;
 	// return xml doc holding server response
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, false);
 }
