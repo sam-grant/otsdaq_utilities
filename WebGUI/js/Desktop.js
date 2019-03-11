@@ -1642,7 +1642,15 @@ Desktop.handleWindowRefresh = function(mouseEvent){
 Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
         Debug.log("Refresh Full Screen Window");
         
-        var foreWindowId = Desktop.desktop.getForeWindow().getWindowId();
+        var foreWindowId = undefined;
+        try
+        {
+        	foreWindowId = Desktop.desktop.getForeWindow().getWindowId();
+        }
+        catch(e)
+        {
+        	Debug.log("Could not find foreground window, ignoring.");
+        }
         
         
         Desktop.desktop.resetDesktop();
@@ -1652,16 +1660,16 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
 		var isMaxWindow = undefined;
 			
 
-		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
-    	{
-			var window =  Desktop.desktop.getWindowByIndex(i);
-			var id = window.getWindowId();
-			var z = window.getWindowZ();
-			
-			Debug.log("name: " + i + " " + window.getWindowName());
-			Debug.log("ID: " + id + " z=" + z);
-			
-    	}
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
 		
 		//Note: refresh window takes foreground window
 		//	and deletes it, then makes a new one that ends up being the
@@ -1688,34 +1696,34 @@ Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
 				foreWindow = window;
 	    }
 
-		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
-    	{
-			var window =  Desktop.desktop.getWindowByIndex(i);
-			var id = window.getWindowId();
-			var z = window.getWindowZ();
-			
-			Debug.log("name: " + i + " " + window.getWindowName());
-			Debug.log("ID: " + id + " z=" + z);
-			
-    	}
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
+		
 		if(foreWindow)
 			Desktop.desktop.setForeWindow(foreWindow);
 		if(isMaxWindow)
 			Desktop.desktop.setForeWindow(foreWindow);
 
-		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
-    	{
-			var window =  Desktop.desktop.getWindowByIndex(i);
-			var id = window.getWindowId();
-			var z = window.getWindowZ();
-			
-			Debug.log("name: " + i + " " + window.getWindowName());
-			Debug.log("ID: " + id + " z=" + z);
-			
-    	}
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
     	return false;
-
-}
+} //end handleFullScreenWindowRefresh()
 
 Desktop.handleWindowMinimize = function(mouseEvent) {
 	Debug.log("minimize " + this.id.split('-')[1]);
