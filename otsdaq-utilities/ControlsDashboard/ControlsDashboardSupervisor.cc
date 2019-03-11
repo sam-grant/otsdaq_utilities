@@ -4,30 +4,8 @@
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
 
-//
-//#include "otsdaq-core/MessageFacility/MessageFacility.h"
-//#include "otsdaq-core/Macros/CoutMacros.h"
-//
-//#include <xdaq/NamespaceURI.h>
-//#include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
-//#include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
-//#include "otsdaq-core/WebUsersUtilities/WebUsers.h"
-//#include "otsdaq-core/SOAPUtilities/SOAPParameters.h"
-//#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"
-//
-//#include "otsdaq-core/ConfigurationInterface/ConfigurationManager.h"
-//
-//
-//#include <iostream>
-//#include <fstream>
-//#include <string>
-//#include <thread>         // std::this_thread::sleep_for
-//#include <chrono>         // std::chrono::seconds
-//#include <errno.h>
-
-//#include "EpicsInterface.h.bkup"
-#include "otsdaq-core/ControlsCore/ControlsVInterface.h"
-#include "otsdaq-core/PluginMakers/MakeControls.h"
+#include "otsdaq-core/SlowControlsCore/SlowControlsVInterface.h"
+#include "otsdaq-core/PluginMakers/MakeSlowControls.h"
 
 using namespace ots;
 
@@ -40,13 +18,22 @@ XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
 {
+	__SUP_COUT__ << "Constructor." << __E__;
+
 	INIT_MF("ControlsDashboardSupervisor");
 
 	init();
-}
+
+	__SUP_COUT__ << "Constructed." << __E__;
+} //end constructor
 
 //========================================================================================================================
-ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void) { destroy(); }
+ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void)
+{
+	__SUP_COUT__ << "Destructor." << __E__;
+	destroy();
+	__SUP_COUT__ << "Destructed." << __E__;
+}  // end destructor()
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::destroy(void)
@@ -66,11 +53,11 @@ void ControlsDashboardSupervisor::init(void)
 	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
 	__COUTV__(pluginType);
 
-	interface_ = makeControls(
+	interface_ = makeSlowControls(
 			  pluginType
 			, node.getUIDAsString()
 			, CorePropertySupervisorBase::getContextTreeNode()
-			, CorePropertySupervisorBase::supervisorConfigurationPath_);
+			, CorePropertySupervisorBase::getSupervisorConfigurationPath());
 	__COUT__ << std::endl;
 
 	__COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
