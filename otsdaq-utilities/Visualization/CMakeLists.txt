@@ -17,10 +17,10 @@ cet_make(LIBRARY_NAME Visualization
 		 SupervisorInfo
 		 ConfigurationInterface
 		 Macros
-		 ConfigurationDataFormats
-		 #otsdaq-core_ConfigurationPluginDataFormats_DataManagerConfiguration_configuration
-		 #otsdaq-core_ConfigurationPluginDataFormats_DataBufferConfiguration_configuration
-		 otsdaq-core_ConfigurationPluginDataFormats_XDAQContextConfiguration_configuration
+		 TableCore
+		 #otsdaq-core_TablePluginDataFormats_DataManagerConfiguration_table
+		 #otsdaq-core_TablePluginDataFormats_DataBufferConfiguration_table
+		 otsdaq-core_TablePluginDataFormats_XDAQContextTable_table
 		 otsdaq-core_DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 XmlUtilities
 		 SOAPUtilities

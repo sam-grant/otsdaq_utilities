@@ -6,17 +6,15 @@
 //#include "otsdaq-utilities/SlowControlsInterfacePlugins/EpicsInterface.h"
 //#include "EpicsInterface.h.bkup"
 
-
-
 namespace ots
 {
+class SlowControlsVInterface;
+class ConfigurationManager;
 
-	class ControlsVInterface;
-	class ConfigurationManager;
-
-//ControlsDashboardSupervisor
-//	This class handles the management of slow controls interface plugins, as well as the user web interface
-class ControlsDashboardSupervisor: public CoreSupervisorBase
+// ControlsDashboardSupervisor
+//	This class handles the management of slow controls interface plugins, as well as the
+// user web interface
+class ControlsDashboardSupervisor : public CoreSupervisorBase
 {
 
 public:
@@ -31,6 +29,7 @@ public:
 
 
 	virtual void			request         	 						(const std::string& requestType, cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo) override;
+	virtual void 			handleRequest								(const std::string Command, HttpXmlDocument& xmlOut, cgicc::Cgicc& cgiIn, const std::string &username);
 
     virtual void			setSupervisorPropertyDefaults				(void) override;
     virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)
@@ -56,7 +55,7 @@ private:
 	//SlowControlsInterface
     //AllSupervisorInfo 						allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
-    ControlsVInterface*                     interface_;
+    SlowControlsVInterface*                     interface_;
 //    ConfigurationManager*          			theConfigurationManager_;
 //    RemoteWebUsers							theRemoteWebUsers_;
 //	std::string                             username;
@@ -65,7 +64,6 @@ private:
 
 
 };
-
 }
 
 #endif

@@ -91,7 +91,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-//	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+//	ConfigurationAPI.saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
@@ -142,13 +142,13 @@ ConfigurationAPI._OK_CANCEL_DIALOG_STR += "</div>";
 ConfigurationAPI.getActiveGroups = function(responseHandler)
 {	
 	//get active configuration group
-	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveConfigGroups",
+	DesktopContent.XMLHttpRequest("Request?RequestType=getActiveTableGroups",
 			"", function(req) 
 			{
 		responseHandler(ConfigurationAPI.extractActiveGroups(req));
 			},
 			0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler
+	); //end of getActiveTableGroups handler
 }
 ConfigurationAPI.extractActiveGroups = function(req)
 {
@@ -284,20 +284,20 @@ ConfigurationAPI.getAliasesAndGroups = function(responseHandler,optionForNoAlias
 
 	//get aliases
 	if(!optionForNoGroups)
-		DesktopContent.XMLHttpRequest("Request?RequestType=getConfigurationGroups"
+		DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups"
 				+"&doNotReturnMembers=1", //end get data 
 				"", //end post data
 				function(req)
 				{
-		Debug.log("getConfigurationGroups handler");
+		Debug.log("getTableGroups handler");
 
 		retObj.activeGroups = {}; //clear
 		retObj.activeGroups = ConfigurationAPI.extractActiveGroups(req);
 		
-		var groupNames = req.responseXML.getElementsByTagName("ConfigurationGroupName");
-		var groupKeys = req.responseXML.getElementsByTagName("ConfigurationGroupKey");
-		var groupTypes = req.responseXML.getElementsByTagName("ConfigurationGroupType");
-		var groupComments = req.responseXML.getElementsByTagName("ConfigurationGroupComment");
+		var groupNames = req.responseXML.getElementsByTagName("TableGroupName");
+		var groupKeys = req.responseXML.getElementsByTagName("TableGroupKey");
+		var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
+		var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 
 		retObj.groups = {}; //clear
 		
@@ -540,7 +540,7 @@ ConfigurationAPI.getTreeRecordLinks = function(node)
 		
 		for(var j=0;j<subchildren.length;++j)
 		{
-			if(subchildren[j].nodeName == "LinkConfigurationName")
+			if(subchildren[j].nodeName == "LinkTableName")
 			{
 				retArr.push(children[i]);
 				break;
@@ -608,7 +608,7 @@ ConfigurationAPI.getTreeLinkTable = function(link)
 {
 	var children = link.children;	
 	for(var i=0;i<children.length;++i)
-		if(children[i].nodeName == "LinkConfigurationName")
+		if(children[i].nodeName == "LinkTableName")
 			return children[i].getAttribute("value");
 	throw("Table name not found!");	
 } //end getTreeLinkTable
@@ -1452,7 +1452,7 @@ ConfigurationAPI.popUpSaveModifiedTablesForm = function(modifiedTables,responseH
 		); //end of getGroupAliases handler
 
 			},0,0,true //reqParam, progressHandler, callHandlerOnErr
-	); //end of getActiveConfigGroups handler			
+	); //end of getActiveTableGroups handler			
 
 
 	document.body.appendChild(el); //add element to display div
@@ -1691,7 +1691,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 		var affectedGroupNames = []; //to be populated for use by alias setting
 		var affectedGroupComments = []; //to be populated for use by alias setting
-		var affectedGroupConfigMap = []; //to be populated for use by alias setting
+		var affectedGroupTableMap = []; //to be populated for use by alias setting
 		
 		var affectedGroupKeys = []; //to be populated after group save for use by alias setting
 		
@@ -1748,8 +1748,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					Debug.log("memberNames.length " + memberNames.length);
 
-					//build member config map
-					affectedGroupConfigMap[i] = "configList=";
+					//build member table map
+					affectedGroupTableMap[i] = "tableList=";
 					var memberVersion, memberName;
 					for(var j=0;j<memberNames.length;++j)		
 					{
@@ -1764,13 +1764,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								{
 									Debug.log("found " + savedTables[k].tableName + "-v" +
 											savedTables[k].tableVersion);
-									affectedGroupConfigMap[i] += memberName + "," + 
+									affectedGroupTableMap[i] += memberName + "," + 
 											savedTables[k].tableVersion + ",";
 									break;
 								}
 						}
 						else
-							affectedGroupConfigMap[i] += memberName + 
+							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
 					}
 				}
@@ -1799,8 +1799,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				affectedGroupComments.push(affectedGroupCommentEls[i].textContent);
 				affectedGroupNames.push(affectedArr[0]);	
 				
-				//build member config map
-				affectedGroupConfigMap[i] = "configList=";
+				//build member table map
+				affectedGroupTableMap[i] = "tableList=";
 				//member map starts after group name/key (i.e. [2])
 				for(var a=2;a<affectedArr.length;a+=2)								
 					if((affectedArr[a+1]|0) < -1) //there should be a new modified version
@@ -1812,13 +1812,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							{
 								Debug.log("found " + savedTables[k].tableName + "-v" +
 										savedTables[k].tableVersion);
-								affectedGroupConfigMap[i] += affectedArr[a] + "," + 
+								affectedGroupTableMap[i] += affectedArr[a] + "," + 
 										savedTables[k].tableVersion + ",";
 								break;
 							}
 					}
 					else //use existing version
-						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
+						affectedGroupTableMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
 			}
 			
 			localHandleSavingAffectedGroups();			
@@ -1832,18 +1832,18 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 			for(var i=0;i<affectedGroupNames.length;++i)
 			{	
 				reqStr = ""; //reuse
-				reqStr = "Request?RequestType=saveNewConfigurationGroup" +
+				reqStr = "Request?RequestType=saveNewTableGroup" +
 						"&groupName=" + affectedGroupNames[i] +
 						"&allowDuplicates=0" +
 						"&lookForEquivalent=1" + 
 						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
 						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 				Debug.log(reqStr);
-				Debug.log(affectedGroupConfigMap[i]);
+				Debug.log(affectedGroupTableMap[i]);
 
 				++numberOfRequests;
 				///////////////////////////////////////////////////////////
-				DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
+				DesktopContent.XMLHttpRequest(reqStr, affectedGroupTableMap[i], 
 						function(req,affectedGroupIndex) 
 						{
 
@@ -1908,7 +1908,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					++numberOfReturns;
 
-					var newGroupKey = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");									
+					var newGroupKey = DesktopContent.getXMLValue(req,"TableGroupKey");									
 					affectedGroupKeys.push(newGroupKey);
 
 					{
@@ -2211,9 +2211,9 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 	for(var j=0;j<modifiedTables.length;++j)
 		if((modifiedTables[j].tableVersion|0) < -1) //for each modified table
 		{
-			var reqStr = "Request?RequestType=saveSpecificConfiguration" + 
+			var reqStr = "Request?RequestType=saveSpecificTable" + 
 					"&dataOffset=0&chunkSize=0" +  
-					"&configName=" + modifiedTables[j].tableName + 
+					"&tableName=" + modifiedTables[j].tableName + 
 					"&version="+modifiedTables[j].tableVersion +	
 					"&temporary=0" +
 					"&tableComment=" + 
@@ -2241,21 +2241,21 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 					return;
 				}						
 
-				var configName = DesktopContent.getXMLValue(req,"savedName");
+				var tableName = DesktopContent.getXMLValue(req,"savedName");
 				var version = DesktopContent.getXMLValue(req,"savedVersion");
 				var foundEquivalentVersion = DesktopContent.getXMLValue(req,"foundEquivalentVersion") | 0;
 
 				if(foundEquivalentVersion)
-					Debug.log("Using existing table '" + configName + "-v" + 
+					Debug.log("Using existing table '" + tableName + "-v" + 
 							version + "'",Debug.INFO_PRIORITY);
 				else
-					Debug.log("Successfully created new table '" + configName + "-v" + 
+					Debug.log("Successfully created new table '" + tableName + "-v" + 
 						version + "'",Debug.INFO_PRIORITY);
 				
 				//update saved table version based on result
 				{
 					var obj = {};
-					obj.tableName = configName;
+					obj.tableName = tableName;
 					obj.tableVersion = version;
 					obj.tableComment = modifiedTables[modifiedTableIndex].tableComment;
 					savedTables.push(obj);
@@ -2287,7 +2287,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 ConfigurationAPI.activateGroup = function(groupName, groupKey, 
 		ignoreWarnings, doneHandler)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 			"&groupName=" +	groupName + 
 			"&groupKey=" + groupKey +
 			"&ignoreWarnings=" + (ignoreWarnings?"1":"0") +
@@ -2403,7 +2403,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 	//make a new backbone with old versions of everything except Group Alias 
-	var configMap = "configList=";
+	var tableMap = "tableList=";
 	var name;
 	for(var i=0;i<configNames.length;++i)
 	{		
@@ -2411,35 +2411,35 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 
 		if(name == groupAliasName)
 		{
-			configMap += name + "," + 
+			tableMap += name + "," + 
 					groupAliasVersion + ",";
 			continue;
 		}
 		//else use old member
-		configMap += name + "," + 
+		tableMap += name + "," + 
 				configVersions[i].getAttribute("value") + ",";							
 	}
 
-	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2],
+	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
+ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,doneHandler,doReturnParams,
 		lookForEquivalent)
 {
-	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewConfigurationGroup&groupName=" +
+	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +
 			groupName + 
 			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
 			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
 			"", //end get data
-			configMap, //end post data
+			tableMap, //end post data
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");
-		var name = DesktopContent.getXMLValue(req,"ConfigurationGroupName");
-		var key = DesktopContent.getXMLValue(req,"ConfigurationGroupKey");
+		var name = DesktopContent.getXMLValue(req,"TableGroupName");
+		var key = DesktopContent.getXMLValue(req,"TableGroupKey");
 		var newGroupCreated = true;
 		if(err) 
 		{
@@ -2466,7 +2466,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 
 		//now activate the new group
 
-		DesktopContent.XMLHttpRequest("Request?RequestType=activateConfigGroup" +
+		DesktopContent.XMLHttpRequest("Request?RequestType=activateTableGroup" +
 				"&groupName=" + name +
 				"&groupKey=" + key, "", 
 				function(req)
@@ -2495,7 +2495,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 				});	//end of activate new backbone handler
 
 			},0,0,true  //reqParam, progressHandler, callHandlerOnErr
-	); //end of backbone saveNewConfigurationGroup handler
+	); //end of backbone saveNewTableGroup handler
 } //end ConfigurationAPI.saveGroupAndActivate
 
 //=====================================================================================

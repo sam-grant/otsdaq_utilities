@@ -42,7 +42,7 @@ CodeEditor.editor; //this is THE CodeEditor variable
 function htmlOpen(tag,attObj,innerHTML,doCloseTag)
 {
 	var str = "";
-	var attKeys = Object.keys(attObj); 
+	var attKeys = attObj?Object.keys(attObj):[]; 
 	str += "<" + tag + " ";
 	for(var i=0;i<attKeys.length;++i)
 		str += " " + attKeys[i] + "='" +
@@ -149,10 +149,10 @@ CodeEditor.showTooltip = function(alwaysShow)
 			"Ctrl + L or G </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Goto Line Number</td></tr>" +
 			
 			"<tr style='background-color: rgb(106, 102, 119);'><td style='white-space: nowrap; padding:5px;'> " +
-			"Ctrl + 1 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
+			"Ctrl + 1 or ; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Switch to Related File (associated .h or .cc)</td></tr>" +
 			
 			"<tr><td style='white-space: nowrap; padding:5px;'> " +
-            "Ctrl + 0 </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Reload Current File from Server</td></tr>" +
+            "Ctrl + 0 or &apos; </td><td style='padding:5px'> ==> </td><td style='padding:5px'> Reload Current File from Server</td></tr>" +
 			
 			"</table></INDENT>\n" +
 			
@@ -203,10 +203,10 @@ CodeEditor.create = function() {
 	//	toggleView(v)
 	//	build(cleanBuild)
 	//	undo(forPrimary,redo)
-	//	openDirectory(forPrimary,path)
+	//	openDirectory(forPrimary,path,doNotOpenPane)
 	//	handleDirectoryContent(forPrimary,req)
 	//	openFile(forPrimary,path,extension,doConfirm,gotoLine,altPaths,altExtensions,propagateErr)
-	//	openRelatedFile(forPrimary)
+	//	openRelatedFile(forPrimary,inOtherPane)
 	//	gotoLine(forPrimary,line,selectionCursor,topOfView)
 	//	handleFileContent(forPrimary,req,fileObj)
 	//	getLine(forPrimary)
@@ -410,7 +410,8 @@ CodeEditor.create = function() {
 				{
 					CodeEditor.editor.openDirectory(
 							1 /*forPrimary*/,
-							parameterOpenDirectory[0] /*path*/
+							parameterOpenDirectory[0] /*path*/,
+							true /*doNotOpenPane*/
 					);				
 					//CodeEditor.editor.toggleDirectoryNav(1 /*forPrimary*/, 1 /*showNav*/);
 				}
@@ -432,7 +433,8 @@ CodeEditor.create = function() {
 
 					CodeEditor.editor.openDirectory(
 							0 /*forPrimary*/,
-							parameterOpenDirectory[1] /*path*/
+							parameterOpenDirectory[1] /*path*/,
+							true /*doNotOpenPane*/												   
 					);				
 					//CodeEditor.editor.toggleDirectoryNav(0 /*forPrimary*/, 1 /*showNav*/);
 				}
@@ -1388,7 +1390,9 @@ CodeEditor.create = function() {
 					"srcs" + buildPath,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
-					"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+					"\"/WebPath/html/CodeEditor.html?urn=" +
+					DesktopContent._localUrnLid + "&" +
+					"openDirectoryPrimary=" +
 					buildPath + "\",0 /*unique*/);' ", //end onclick
 				},   
 				"<img class='dirNavFileNewWindowImgNewWindow' " +
@@ -1412,7 +1416,9 @@ CodeEditor.create = function() {
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
-					"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+					"\"/WebPath/html/CodeEditor.html?urn=" +
+					DesktopContent._localUrnLid + "&" +
+					"openDirectoryPrimary=" +
 					path + "/" + name + "\",0 /*unique*/);' ", //end onclick
 				},   
 				"<img class='dirNavFileNewWindowImgNewWindow' " +
@@ -1464,7 +1470,9 @@ CodeEditor.create = function() {
 					"srcs" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
-					"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+					"\"/WebPath/html/CodeEditor.html?urn=" +
+					DesktopContent._localUrnLid + "&" +
+					"startFilePrimary=" +
 					name + "\",0 /*unique*/);' ", //end onclick
 				},   
 				"<img class='dirNavFileNewWindowImgNewWindow' " +
@@ -1479,7 +1487,7 @@ CodeEditor.create = function() {
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
 						name + "\", \"" +
-						name.substr(name.indexOf('.')+1) + "\"" + //extension
+						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1490,7 +1498,7 @@ CodeEditor.create = function() {
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
 				name + "\",\"" +
-				name.substr(name.indexOf('.')+1) + "\"" + //extension
+				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + name + "' >";
 			nameSplit = name.split('/');			
 			str += nameSplit[nameSplit.length-1] + "</a>";			
@@ -1517,7 +1525,9 @@ CodeEditor.create = function() {
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
-					"\"/WebPath/html/CodeEditor.html?openDirectoryPrimary=" +
+					"\"/WebPath/html/CodeEditor.html?urn=" +
+					DesktopContent._localUrnLid + "&" +
+					"openDirectoryPrimary=" +
 					path + "/" + name + "\",0 /*unique*/);' ", //end onclick
 				},   
 				"<img class='dirNavFileNewWindowImgNewWindow' " +
@@ -1561,7 +1571,9 @@ CodeEditor.create = function() {
 					"srcs" + path + "/" + name,	
 					"onclick":"DesktopContent.openNewBrowserTab(" +
 					"\"Code Editor\",\"\"," + 
-					"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+					"\"/WebPath/html/CodeEditor.html?urn=" +
+					DesktopContent._localUrnLid + "&" +
+					"startFilePrimary=" +
 					path + "/" + name + "\",0 /*unique*/);' ", //end onclick
 				},   
 				"<img class='dirNavFileNewWindowImgNewWindow' " +
@@ -1576,7 +1588,7 @@ CodeEditor.create = function() {
 					"onclick":"CodeEditor.editor.openFile(" + 
 					(!forPrimary) + ",\"" + 
 						path + "/" + name + "\", \"" +
-						name.substr(name.indexOf('.')+1) + "\"" + //extension
+						name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 						");", //end onclick
 				},
 				"<img class='dirNavFileNewWindowImgNewPane' " +
@@ -1588,7 +1600,7 @@ CodeEditor.create = function() {
 			str += "<a class='dirNavFile' onclick='CodeEditor.editor.openFile(" + 
 				forPrimary + ",\"" + 
 				path + "/" + name + "\", \"" +
-				name.substr(name.indexOf('.')+1) + "\"" + //extension
+				name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 				")' title='Open file: \nsrcs" + path + "/" + name + "' >" +
 				name + "</a>";
 			
@@ -1604,7 +1616,7 @@ CodeEditor.create = function() {
 	//=====================================================================================
 	//openDirectory ~~
 	//	open directory to directory nav
-	this.openDirectory = function(forPrimary,path)
+	this.openDirectory = function(forPrimary,path,doNotOpenPane)
 	{
 		forPrimary = forPrimary?1:0;
 		
@@ -1622,19 +1634,25 @@ CodeEditor.create = function() {
 				CodeEditor.editor.handleDirectoryContent(forPrimary, req);			
 				CodeEditor.editor.toggleDirectoryNav(forPrimary,1 /*set nav mode*/);
 				
+
+				//if secondary and not shown, show
+				if(!doNotOpenPane && !forPrimary && _viewMode == 0)
+					CodeEditor.editor.toggleView();
+				
 			}); // end codeEditor getDirectoryContent handler
 	} //end openDirectory()
 	
 	//=====================================================================================
 	//openRelatedFile ~~
 	//	open the related file in text editor
-	this.openRelatedFile = function(forPrimary)
+	this.openRelatedFile = function(forPrimary,inOtherPane)
 	{
 		Debug.log("openRelatedFile forPrimary=" + forPrimary +
 				" path=" + _filePath[forPrimary]);
 		
 		var relatedPath = _filePath[forPrimary];
 		var relatedExtension = _fileExtension[forPrimary];
+		var targetPane = inOtherPane?!forPrimary:forPrimary;
 
 		var altPaths = [];
 		var altExtensions = []; 
@@ -1658,7 +1676,7 @@ CodeEditor.create = function() {
 				altExtensions.push("css");
 			}
 
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+			CodeEditor.editor.openFile(targetPane,relatedPath,relatedExtension,
 					undefined /*doConfirm*/, undefined/*gotoLine*/,
 					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
@@ -1667,10 +1685,17 @@ CodeEditor.create = function() {
 		{
 			relatedExtension = "cc";
 			
-			var i = relatedPath.indexOf("/FEInterfaces/");
-			
 			altPaths.push(relatedPath);
 			altExtensions.push("cc");
+			
+			altPaths.push(relatedPath+"_interface");
+			altExtensions.push("cc");
+			altPaths.push(relatedPath+"_processor");
+			altExtensions.push("cc");
+			altPaths.push(relatedPath+"_controls");
+			altExtensions.push("cc");
+			altPaths.push(relatedPath+"_table");
+			
 			altPaths.push(relatedPath);
 			altExtensions.push("cpp");
 			altPaths.push(relatedPath);
@@ -1682,8 +1707,21 @@ CodeEditor.create = function() {
 			altPaths.push(relatedPath);
 			altExtensions.push("C");
 			
-			relatedPath += "_interface";			
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+			//try special plugin addons
+			if(relatedPath.indexOf("Interface") >= 0)
+				relatedPath += "_interface";			
+			else if(relatedPath.indexOf("Processor") >= 0)
+				relatedPath += "_processor";			
+			else if(relatedPath.indexOf("Consumer") >= 0)
+				relatedPath += "_processor";			
+			else if(relatedPath.indexOf("Producer") >= 0)
+				relatedPath += "_processor";			
+			else if(relatedPath.indexOf("Controls") >= 0)
+				relatedPath += "_controls";			
+			else if(relatedPath.indexOf("Table") >= 0)
+				relatedPath += "_table";				
+			
+			CodeEditor.editor.openFile(targetPane,relatedPath,relatedExtension,
 					undefined /*doConfirm*/, undefined/*gotoLine*/,
 					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
@@ -1708,7 +1746,7 @@ CodeEditor.create = function() {
 				altExtensions.push("html");
 			}
 			
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+			CodeEditor.editor.openFile(targetPane,relatedPath,relatedExtension,
 					undefined /*doConfirm*/, undefined/*gotoLine*/,
 					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
@@ -1721,9 +1759,19 @@ CodeEditor.create = function() {
 			altPaths.push(relatedPath); //with _interface left in
 			altExtensions.push("h");
 			
-			var i = relatedPath.indexOf("_interface");
-			if(i > 0 && i == relatedPath.length-("_interface").length)
+			var i;
+			if((i = relatedPath.indexOf("_interface")) > 0 &&
+					i == relatedPath.length-("_interface").length)
 				relatedPath = relatedPath.substr(0,i); //remove interface
+			if((i = relatedPath.indexOf("_processor")) > 0 &&
+					i == relatedPath.length-("_processor").length)
+				relatedPath = relatedPath.substr(0,i); //remove processor
+			if((i = relatedPath.indexOf("_controls")) > 0 &&
+					i == relatedPath.length-("_controls").length)
+				relatedPath = relatedPath.substr(0,i); //remove controls
+			if((i = relatedPath.indexOf("_table")) > 0 &&
+					i == relatedPath.length-("_table").length)
+				relatedPath = relatedPath.substr(0,i); //remove table
 			
 			altPaths.push(relatedPath);
 			altExtensions.push("hh");
@@ -1734,7 +1782,7 @@ CodeEditor.create = function() {
 			altPaths.push(relatedPath);
 			altExtensions.push("H");
 						
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+			CodeEditor.editor.openFile(targetPane,relatedPath,relatedExtension,
 					undefined /*doConfirm*/, undefined/*gotoLine*/,
 					altPaths /*altPaths*/, altExtensions/*altExtensions*/);			
 			return;
@@ -1759,7 +1807,7 @@ CodeEditor.create = function() {
 				altExtensions.push("html");
 			}
 			
-			CodeEditor.editor.openFile(forPrimary,relatedPath,relatedExtension,
+			CodeEditor.editor.openFile(targetPane,relatedPath,relatedExtension,
 					undefined /*doConfirm*/, undefined/*gotoLine*/,
 					altPaths /*altPaths*/, altExtensions/*altExtensions*/);
 			return;
@@ -1785,7 +1833,7 @@ CodeEditor.create = function() {
 		
 		Debug.log("openFile forPrimary=" + forPrimary +
 				" path=" + path);
-		var i = path.indexOf('.');
+		var i = path.lastIndexOf('.');
 		if(i > 0) //up to extension
 			path = path.substr(0,i);
 	
@@ -2663,7 +2711,7 @@ CodeEditor.create = function() {
 			if(isQuote)
 			{
 				var str = newNode.textContent;	
-				str = str.substr(str.indexOf('.')+1);
+				str = str.substr(str.lastIndexOf('.')+1);
 				
 				
 				if(str.length > 0 && str.length <= 4 && 
@@ -2759,7 +2807,7 @@ CodeEditor.create = function() {
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(forPrimary) + ",\"" + 
 										name + "\", \"" +
-										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
 								"<div " +
@@ -2776,7 +2824,7 @@ CodeEditor.create = function() {
 										"onclick":"CodeEditor.editor.openFile(" + 
 										(!forPrimary) + ",\"" + 
 										name + "\", \"" +
-										name.substr(name.indexOf('.')+1) + "\"" + //extension
+										name.substr(name.lastIndexOf('.')+1) + "\"" + //extension
 										");", //end onclick
 								},
 								"<div " +
@@ -2791,7 +2839,9 @@ CodeEditor.create = function() {
 										"srcs" + name,
 										"onclick":"DesktopContent.openNewBrowserTab(" +
 										"\"Code Editor\",\"\"," + 
-										"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+										"\"/WebPath/html/CodeEditor.html?urn=" +
+										DesktopContent._localUrnLid + "&" +
+										"startFilePrimary=" +
 										name + "\",0 /*unique*/);' ", //end onclick
 								},   
 								"<div " +
@@ -4155,8 +4205,8 @@ CodeEditor.create = function() {
 			return;
 		
 		var c = e.key;
-		//Debug.log("keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
-		//		" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
+		Debug.log("keydown c=" + keyCode + " " + c + " shift=" + e.shiftKey + 
+				" ctrl=" + e.ctrlKey + " command=" + _commandKeyDown);
 		
 		//set timeout for decoration update
 		CodeEditor.editor.startUpdateHandling(forPrimary);			
@@ -4777,7 +4827,8 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(keyCode == 48)  // 0 for refresh file
+			else if(keyCode == 222 || 	// ' or 
+					keyCode == 48)  // 0 for refresh file
 			{
 				CodeEditor.editor.openFile(forPrimary,
 						_filePath[forPrimary],
@@ -4820,7 +4871,8 @@ CodeEditor.create = function() {
 				e.preventDefault();
 				return;
 			}
-			else if(keyCode == 49) 	// 1 for switch to related file
+			else if(keyCode == 186 ||  // ; or
+					keyCode == 49) 	// 1 for switch to related file
 			{
 				CodeEditor.editor.openRelatedFile(forPrimary);
 				e.preventDefault();
@@ -6398,6 +6450,24 @@ CodeEditor.create = function() {
 			"&#8618;"
 			/*innerHTML*/, true /*doCloseTag*/);
 		
+		str += htmlOpen("div",
+			{
+				"class":"fileButton openRelatedFileButton",
+				"id":"openRelatedFileButton" + forPrimary,
+				"title": "Open related file in other pane for\n" + path + "." + extension,
+				"style": "color: rgb(202, 204, 210);" +
+					"padding: 0 5px 0;" +
+					"font-size: 17px;" +
+					"font-weight: bold;",
+				"onclick":
+				"event.stopPropagation(); " + 
+				"CodeEditor.editor.openRelatedFile(" + forPrimary + 
+					", true /*inOtherPane*/);",
+			},
+			//make redo arrow
+			":"
+			/*innerHTML*/, true /*doCloseTag*/);
+		
 		
 		
 		str += "</div>"; //end fileButtonContainerShowHide
@@ -6414,7 +6484,9 @@ CodeEditor.create = function() {
 				"srcs" + path + "." + extension,	
 				"onclick":"DesktopContent.openNewBrowserTab(" +
 				"\"Code Editor\",\"\"," + 
-				"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+				"\"/WebPath/html/CodeEditor.html?urn=" +
+				DesktopContent._localUrnLid + "&" +
+				"startFilePrimary=" +
 				path + "." + extension + "\",0 /*unique*/);' ", //end onclick
 			},   
 			"<img class='dirNavFileNewWindowImgNewWindow' " +

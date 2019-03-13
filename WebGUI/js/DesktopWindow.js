@@ -115,7 +115,10 @@ else {
 		this.isMaximized = function() {return _isMaximized && !_isMinimized;} //make sure the maximized window is visible
 		this.isMinimized = function() {return _isMinimized;}
 				
-		this.setWindowZ = function(z) { _z = z; this.windiv.style.zIndex = _z; }
+		this.setWindowZ = function(z) { 
+			//console.log("z",z,this.getWindowName());
+			_z = z; this.windiv.style.zIndex = _z; 
+		}
 		
 		this.showFrame = function() { _winfrm.style.display = "inline"; }
 		this.hideFrame = function() { _winfrm.style.display = "none"; }

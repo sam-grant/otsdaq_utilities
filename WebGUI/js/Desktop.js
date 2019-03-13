@@ -411,7 +411,7 @@ Desktop.createDesktop = function(security) {
 	    //	check if a window iFrame has taken focus and tampered with z mailbox. If so 'officially' set to fore window
 		if(_windowZmailbox.innerHTML > _defaultWindowMaxZindex) 
 		{
-			Desktop.desktop.setForeWindow(0); //use function just to standardize, do not change current foreground			
+			Desktop.desktop.setForeWindow(Desktop.desktop.getForeWindow()); //use function just to standardize, do not change current foreground			
 			//Debug.log("Desktop Foreground Window Refreshed by Timeout",Debug.LOW_PRIORITY);
 		}
 	    
@@ -796,6 +796,7 @@ Desktop.createDesktop = function(security) {
 	    
 	    var newWindow = this.addWindow(name,subname,url);
 	    newWindow.setWindowSizeAndPosition(x,y,width,height);
+	    newWindow.setWindowZ(z);
 	   
 	    if(isMax)
 	    	newWindow.maximize();
@@ -803,6 +804,8 @@ Desktop.createDesktop = function(security) {
 	    	newWindow.minimize();
 	   
 	    //Debug.log("Windows Length: " + _windows.length);
+	    
+	    return newWindow;
     }
 
         //minimizeWindowById ~~~
@@ -1127,8 +1130,12 @@ Desktop.createDesktop = function(security) {
 				if(windowPath != "undefined") //add parameters if defined
 				{
 					Debug.log("Adding parameter path " + windowPath);
-					if(pathStr.indexOf('&') > 0) //then assume already parameters
+					
+					if(pathStr.indexOf('&amp;') > 0) //then assume already parameters
 						pathStr += "&amp;";
+					else if(pathStr.indexOf('?') > 0 &&  //then assume & for parameters is good
+							pathStr[pathStr.length-1] != '?')
+						pathStr += "&";
 					else if(pathStr.length && 
 							pathStr[pathStr.lengh-1] != '?') //then assume need ?
 						pathStr += '?';
@@ -1634,26 +1641,89 @@ Desktop.handleWindowRefresh = function(mouseEvent){
 
 Desktop.handleFullScreenWindowRefresh = function(mouseEvent){
         Debug.log("Refresh Full Screen Window");
+        
+        var foreWindowId = undefined;
+        try
+        {
+        	foreWindowId = Desktop.desktop.getForeWindow().getWindowId();
+        }
+        catch(e)
+        {
+        	Debug.log("Could not find foreground window, ignoring.");
+        }
+        
+        
         Desktop.desktop.resetDesktop();
 		Desktop.desktop.refreshDesktop();
+		
+		var foreWindow = undefined;
+		var isMaxWindow = undefined;
+			
 
-		//for(var i = 0; i < Desktop.desktop.getNumberOfWindows()-1; i++)
-		//for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
+		
+		//Note: refresh window takes foreground window
+		//	and deletes it, then makes a new one that ends up being the
+		//	last window in the array... so always take index 0 to iterate through them
+		//	but save the encountered current foreWindow
 		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
     	{
-    		var zIndex = Desktop.desktop.getWindowByIndex(i).getWindowZ(); 
-			Debug.log(zIndex); 
-			Debug.log("I: " + i + " " + Desktop.desktop.getWindowByIndex(0).getWindowName());
-			Debug.log(Desktop.desktop.getWindowByIndex(0).getWindowId());
-			Desktop.desktop.setForeWindow(Desktop.desktop.getWindowByIndex(0));//.getWindowId());
-			Desktop.desktop.refreshWindow();            
-            //Desktop.desktop.getWindowByIndex(i).setWindowZ(zIndex); //done with refreshing window i
+			var window =  Desktop.desktop.getWindowByIndex(0);
+			var id = window.getWindowId();
 			
-	    }
-		//Desktop.desktop.toggleFullScreen();//Force full screen since Ryan's full screen properties aren't predictable
-    	return false;
+			Debug.log("name: " + i + " " + window.getWindowName());
+			Debug.log("ID: " + id);
+			
+			var maximized = window.isMaximized();
+				
+			
+			Desktop.desktop.setForeWindow(window);
+			window = Desktop.desktop.refreshWindow();            
+            
+			if(maximized)
+				isMaxWindow = window;
 
-}
+			if(foreWindowId == id)
+				foreWindow = window;
+	    }
+
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
+		
+		if(foreWindow)
+			Desktop.desktop.setForeWindow(foreWindow);
+		if(isMaxWindow)
+			Desktop.desktop.setForeWindow(foreWindow);
+
+		//		for(var i = 0; i < Desktop.desktop.getNumberOfWindows(); i++)
+		//    	{
+		//			var window =  Desktop.desktop.getWindowByIndex(i);
+		//			var id = window.getWindowId();
+		//			var z = window.getWindowZ();
+		//			
+		//			Debug.log("name: " + i + " " + window.getWindowName());
+		//			Debug.log("ID: " + id + " z=" + z);
+		//			
+		//    	}
+    	return false;
+} //end handleFullScreenWindowRefresh()
 
 Desktop.handleWindowMinimize = function(mouseEvent) {
 	Debug.log("minimize " + this.id.split('-')[1]);

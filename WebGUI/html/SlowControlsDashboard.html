@@ -678,6 +678,8 @@
 			}
 
 			function pvListReqHandler(req){
+				
+				console.log("pvListReqHandler: response received!");	
 				console.log(req.responseText);
 				var datalist = document.getElementById("pvDatalist");
 				datalist.innerHTML = "";

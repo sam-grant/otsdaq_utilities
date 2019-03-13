@@ -1612,26 +1612,26 @@
     					"source code files...\n" + 
 						"(Click " +
 						"<a onclick='DesktopContent.openNewBrowserTab(" +
-						"\"Code Editor\",\"\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
 						headerFile + "&startFileSecondary=" +
-						sourceFile + "&startViewMode=1\",0 /*unique*/);' " +
+						sourceFile + "&startViewMode=1\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open a new browser tab with both source files in the Code Editor.'>" +
 						"here</a> to open them in the Code Editor)" +
 						"\n\n" + 
 
 						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",\".h\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
-						headerFile + "\",0 /*unique*/);' " +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
+						headerFile + "\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open this header file in the Code Editor.'>" +
 						headerFile + "</a>\n\nand...\n\n" +  
 
 
 						"<a onclick='DesktopContent.openNewWindow(" +
-						"\"Code Editor\",\".cc\"," + 
-						"\"/WebPath/html/CodeEditor.html?startFilePrimary=" +
-						sourceFile + "\",0 /*unique*/);' " +
+						"\"Code Editor\",undefined /*subname undefined for LID lookup*/," + 
+						"\"?startFilePrimary=" +
+						sourceFile + "\",undefined /*unique undefined for LID lookup*/);' " +
 						"title='Click to open this source file in the Code Editor.'>" +
 						sourceFile + "</a>\n\n" +
 
