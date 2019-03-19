@@ -252,40 +252,62 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__MOUT_WARN__ << requestType << " command received! " << __E__;
 
 		// now launch
-		__SUP_COUT_INFO__ << "Launching... " << __E__;
+		__SUP_COUT_INFO__ << "Launching " << requestType << "... " << __E__;
 
 		__SUP_COUT__ << "Extracting target context hostnames... " << __E__;
 		std::vector<std::string> hostnames;
-		try
+
+		//flattenToSystemAliases should always work in wiz mode!
+		if(requestType == "flattenToSystemAliases" &&
+				CorePropertySupervisorBase::allSupervisorInfo_.isWizardMode())
 		{
-			cfgMgr->init();  // completely reset to re-align with any changes
-
-			const XDAQContextTable* contextTable =
-			    cfgMgr->__GET_CONFIG__(XDAQContextTable);
-
-			auto         contexts = contextTable->getContexts();
-			unsigned int i, j;
-			for(const auto& context : contexts)
+			hostnames.push_back(getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER"));
+			__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+		}
+		else
+		{
+			try
 			{
-				if(!context.status_)
-					continue;
+				cfgMgr->init();  // completely reset to re-align with any changes
 
-				// find last slash
-				j = 0;  // default to whole string
-				for(i = 0; i < context.address_.size(); ++i)
-					if(context.address_[i] == '/')
-						j = i + 1;
-				hostnames.push_back(context.address_.substr(j));
-				__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+				const XDAQContextTable* contextTable =
+						cfgMgr->__GET_CONFIG__(XDAQContextTable);
+
+				auto         contexts = contextTable->getContexts();
+				unsigned int i, j;
+				for(const auto& context : contexts)
+				{
+					if(!context.status_)
+						continue;
+
+					// find last slash
+					j = 0;  // default to whole string
+					for(i = 0; i < context.address_.size(); ++i)
+						if(context.address_[i] == '/')
+							j = i + 1;
+					hostnames.push_back(context.address_.substr(j));
+					__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+				}
+
+			}
+			catch(...)
+			{
+				__SUP_SS__ <<
+						"The Configuration Manager could not be initialized to extract contexts." << __E__;
+
+				__SUP_COUT_ERR__ << "\n" << ss.str();
+				return;
 			}
 		}
-		catch(...)
-		{
-			__SUP_SS__ << "\nTransition to Configuring interrupted! "
-			           << "The Configuration Manager could not be initialized." << __E__;
 
+
+		if(hostnames.size() == 0)
+		{
+			__SUP_SS__ << "No hostnames found to launch command '" +
+					requestType + "'... Is there a valid Context group activated?" << __E__;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			return;
+
+			xmlOut.addTextElementToData("Error", ss.str());
 		}
 
 		for(const auto& hostname : hostnames)
