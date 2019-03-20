@@ -5362,10 +5362,10 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 	std::map<std::string /*tableName*/,
 	         std::map<std::string /*aliasName*/, TableVersion /*version*/>>
 	    versionAliases = cfgMgr->getVersionAliases();
-	for(const auto& aliases : versionAliases)
-		for(const auto& alias : aliases.second)
-			__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second
-			             << __E__;
+//	for(const auto& aliases : versionAliases)
+//		for(const auto& alias : aliases.second)
+//			__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second
+//			             << __E__;
 
 	std::map<std::string /*name*/, TableVersion /*version*/> groupMembers;
 	std::map<std::string /*name*/, std::string /*alias*/>    groupAliases;
@@ -6205,12 +6205,12 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 
-		xmlOut.addTextElementToData("savedAlias", versionAliasesTableName);
+		xmlOut.addTextElementToData("savedName", versionAliasesTableName);
 		xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	}
 
 	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
-}
+} //end handleSetVersionAliasInBackboneXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -6221,7 +6221,7 @@ catch(...)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << __E__;
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
-}
+} //end handleSetVersionAliasInBackboneXML() catch
 
 //========================================================================================================================
 //	handleAliasGroupMembersInBackboneXML
@@ -6311,7 +6311,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 		unsigned int row                   = -1;
 
 		__SUP_COUT__ << "Adding alias for " << memberPair.first << "_v"
-		             << memberPair.second << __E__;
+		             << memberPair.second << " to " << versionAlias << __E__;
 
 		// find tableName, versionAlias pair
 		//	NOTE: only accept the first pair, repeats are ignored.
@@ -6321,7 +6321,8 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			do
 			{  // start looking from beyond last find
 				tmpRow = configView->findRow(col3, memberPair.first, tmpRow + 1);
-				__SUP_COUT__ << configView->getDataView()[tmpRow][col2] << __E__;
+
+				//__SUP_COUT__ << configView->getDataView()[tmpRow][col2] << __E__;
 			} while(configView->getDataView()[tmpRow][col2] != versionAlias);
 			// at this point the first pair was found! (else exception was thrown)
 			row = tmpRow;
@@ -6353,12 +6354,12 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			configView->setValue(memberPair.first, row, col3);
 		}
 
-		__SUP_COUT__ << "\t\t row: " << row << __E__;
+		//__SUP_COUT__ << "\t\t row: " << row << __E__;
 
 		col = configView->findCol("Version");
-		__SUP_COUT__ << "\t\t col: " << col << __E__;
-		__SUP_COUT__ << "\t\t version: " << memberPair.second << " vs "
-		             << configView->getDataView()[row][col] << __E__;
+		//__SUP_COUT__ << "\t\t col: " << col << __E__;
+		//__SUP_COUT__ << "\t\t version: " << memberPair.second << " vs "
+		//             << configView->getDataView()[row][col] << __E__;
 		if(memberPair.second.toString() != configView->getDataView()[row][col])
 		{
 			configView->setValue(memberPair.second.toString(), row, col);
@@ -6376,12 +6377,13 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			isDifferent = true;
 	}
 
-	// configView->print();
+	//configView->print();
 
 	TableVersion newAssignedVersion;
 	if(isDifferent)  // make new version if different
 	{
-		__SUP_COUT__ << "\t\t**************************** Save as new table version"
+		__SUP_COUT__ << "\t\t**************************** Save v" <<
+				temporaryVersion << " as new table version"
 		             << __E__;
 
 		newAssignedVersion =
@@ -6397,10 +6399,10 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 	}
 
-	xmlOut.addTextElementToData("savedAlias", versionAliasesTableName);
+	xmlOut.addTextElementToData("savedName", versionAliasesTableName);
 	xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
-	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
-}
+	__SUP_COUT__ << "\t\t Resulting Version: " << newAssignedVersion << __E__;
+} //end handleAliasGroupMembersInBackboneXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -6411,7 +6413,7 @@ catch(...)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << __E__;
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
-}
+} //end handleAliasGroupMembersInBackboneXML() catch
 
 //========================================================================================================================
 //	handleGroupAliasesXML

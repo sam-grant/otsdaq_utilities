@@ -2419,6 +2419,8 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 		tableMap += name + "," + 
 				configVersions[i].getAttribute("value") + ",";							
 	}
+	
+	console.log("backbone tableMap",tableMap);
 
 	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
