@@ -23,7 +23,9 @@ var selectedtargetBlue;
 
 
 
-function init(){
+//=====================================================================================
+function init()
+{
 	console.log("init()");
 	DesktopContent.tooltip("Security in the Wiz-Mode",
 			       "This is an introduction into the Wiz-Mode Security!" + 
@@ -56,48 +58,68 @@ function init(){
 	state_.innerHTML = "Loading...";
 
 	var setSelection=setTimeout(makeServerRequest, 1000);
-}
+} //end init()
 
 
-function colorFade(secondColor, which){
+//=====================================================================================
+function colorFade(secondColor, which)
+{
 
 
 	//Added all of the IDs into the selection_ array and position the selection at the end
 	
-	if(which == "selected" || which == "all"){
+	if(which == "selected" || which == "all")
+	{
 
-		if(secondColor == 'orange'){
+		if(secondColor == 'orange')
+		{
 			selectedTargetRed = 255;
 			selectedTargetGreen = 188;
 			selectedTargetBlue = 18;				
-		}else if(secondColor == 'red'){
+		}
+		else if(secondColor == 'red')
+		{
 			selectedTargetRed = 242;
 			selectedTargetGreen = 5;
 			selectedTargetBlue = 5;					
-		}else if(secondColor == 'green'){
+		}
+		else if(secondColor == 'green')
+		{
 			selectedTargetRed = 56;
 			selectedTargetGreen = 224;
 			selectedTargetBlue = 56;					
-		}else if(secondColor == 'current'){
+		}
+		else if(secondColor == 'current')
+		{
 			
 		}
 		
 	}
-	if(which == "notSelected" || which == "all"){
 	
-		if(secondColor == 'orange'){
+	
+	if(which == "notSelected" || which == "all")
+	{
+	
+		if(secondColor == 'orange')
+		{
 			nonSelectedTargetRed = 255;
 			nonSelectedTargetGreen = 188;
 			nonSelectedTargetBlue = 18;				
-		}else if(secondColor == 'red'){
+		}
+		else if(secondColor == 'red')
+		{
 			nonSelectedTargetRed = 242;
 			nonSelectedTargetGreen = 5;
 			nonSelectedTargetBlue = 5;					
-		}else if(secondColor == 'green'){
+		}
+		else if(secondColor == 'green')
+		{
 			nonSelectedTargetRed = 56;
 			nonSelectedTargetGreen = 224;
 			nonSelectedTargetBlue = 56;					
-		}else if(secondColor == 'current'){
+		}
+		else if(secondColor == 'current')
+		{
 			
 		}
 	}    
@@ -107,9 +129,12 @@ function colorFade(secondColor, which){
 	var colorChanger=setTimeout(decreaseColor, INTERVAL_);
 
 
-}
+} //end colorFade()
 
-function decreaseColor(){
+
+//=====================================================================================
+function decreaseColor()
+{
 	if(selectedRed > 0)
 		--selectedRed;
 	if(selectedGreen > 0)
@@ -125,16 +150,21 @@ function decreaseColor(){
 	//console.log("Called");
 	setDivGlow();
 	
-	if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) > 0)
+	if((selectedRed + selectedGreen + selectedBlue + 
+			nonSelectedRed + nonSelectedGreen + nonSelectedBlue) > 0)
 		colorChanger = setTimeout(decreaseColor, INTERVAL_);
-	else{
+	else
+	{
 		restructure();
 		colorChanger = setTimeout(increaseColor, INTERVAL_);
 
 	}
-}
+} //end decreaseColor()
 
-function increaseColor(){
+
+//=====================================================================================
+function increaseColor()
+{
 	if(selectedRed < selectedTargetRed)
 		++selectedRed;
 	if(selectedGreen < selectedTargetGreen)
@@ -149,32 +179,47 @@ function increaseColor(){
 		++nonSelectedBlue;	
 	setDivGlow();
 	
-	if((selectedRed + selectedGreen + selectedBlue + nonSelectedRed + nonSelectedGreen + nonSelectedBlue) < (selectedTargetRed + selectedTargetGreen + selectedTargetBlue + nonSelectedTargetRed + nonSelectedTargetGreen + nonSelectedTargetBlue))
+	if((selectedRed + selectedGreen + selectedBlue + 
+			nonSelectedRed + nonSelectedGreen + nonSelectedBlue) < 
+			(selectedTargetRed + selectedTargetGreen + selectedTargetBlue + 
+					nonSelectedTargetRed + nonSelectedTargetGreen + nonSelectedTargetBlue))
 		colorChanger = setTimeout(increaseColor, INTERVAL_);
 	
-}
+} //end increaseColor()
 
-function setDivGlow(){
-	
-	
+
+//=====================================================================================
+function setDivGlow()
+{	
 	for(var index = 0; index < (selection_.length); index++)
 	{
 		var div = document.getElementById(selection_[index]);
-		if(index < (selection_.length-1)){
-			div.style.boxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-			div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-			div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + "," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
-		}else{
-			div.style.boxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
-			div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";
-			div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + "," + selectedGreen + "," + selectedBlue + ",1)";	
+		if(index < (selection_.length-1))
+		{
+			div.style.boxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + 
+					"," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+			div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed +
+					"," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+			div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + nonSelectedRed + 
+					"," + nonSelectedGreen + "," + nonSelectedBlue + ",1)";
+		}
+		else
+		{
+			div.style.boxShadow = "0px 0px 64px 20px rgba(" + selectedRed + 
+					"," + selectedGreen + "," + selectedBlue + ",1)";
+			div.style.webkitBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + 
+					"," + selectedGreen + "," + selectedBlue + ",1)";
+			div.style.mozBoxShadow = "0px 0px 64px 20px rgba(" + selectedRed + 
+					"," + selectedGreen + "," + selectedBlue + ",1)";	
 		}
 	}
 	
-}
+} //end setDivGlow()
 
 
-function showVisualSelection(){
+//=====================================================================================
+function showVisualSelection()
+{
 
 	
 	state_.innerHTML = "&nbsp";
@@ -184,36 +229,52 @@ function showVisualSelection(){
 	//set selected to green
 	colorFade('red', 'notSelected');
 
-}
+} //end showVisualSelection()
 
-function confirm(description){
-        var randomNumber = Math.floor(Math.random() * 99999999)
-	if(prompt("Are you sure? "+ description + " Type " + randomNumber + " to continue:") == randomNumber)
-		if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do"){
+
+//=====================================================================================
+function confirm(description)
+{
+	var randomNumber = Math.floor(Math.random() * 99999999);
+	if(prompt("Are you sure? "+ description + " Type " + 
+			randomNumber + " to continue:") == randomNumber)
+	{
+		if(prompt("I know exactly what I'm doing. Type 'I Do':") == "I Do")
+		{
 			setSecurity('ResetSecurityUserData');
 		}
 		else
 			alert("You did not type 'I Do.' Mission aborted!");
-
+	}
 	else
 		alert("You did not type the correct number. Mission aborted!");
-}
+} //end confirm()
 
-function setSecurity(id){
+//=====================================================================================
+function setSecurity(id)
+{
 	
-	if(id == 'NoSecurity'){
+	if(id == 'NoSecurity')
+	{
 		console.log("No Security selected.")
 		selectedSecurityChoice_ = 'NoSecurity';
-	}else if(id == 'DigestAccessAuthentication'){
+	}
+	else if(id == 'DigestAccessAuthentication')
+	{
 		console.log("Digest Access Authentication selcted.")
 		selectedSecurityChoice_= 'DigestAccessAuthentication';
-	}else if(id == 'Kerberos'){
+	}
+	else if(id == 'Kerberos')
+	{
 		console.log("Kerberos selected.")
 		selectedSecurityChoice_= 'Kerberos';
-	}else if(id == 'ResetSecurityUserData'){
+	}
+	else if(id == 'ResetSecurityUserData')
+	{
 		console.log("Reset Data selected.")
 		selectedSecurityChoice_= 'ResetSecurityUserData';
-	}else{
+	}
+	else{
 		console.log("Selection not recognized!");
 		return;
 	}
@@ -222,14 +283,23 @@ function setSecurity(id){
 	var serverRequest = "selection=" + selectedSecurityChoice_;
 	console.log(serverRequest);
 	makeServerRequest(serverRequest);
-}
+} //end setSecurity()
 
-function makeServerRequest(data){
+
+//=====================================================================================
+function makeServerRequest(data)
+{
+	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, 
+			undefined /*reqParam*/, 
+			undefined /*progressHandler*/,
+			true /*callHandlerOnErr*/);
 	
-	DesktopContent.XMLHttpRequest("editSecurity", data, editSecurityHandler, undefined, undefined);
-}
+} //end makeServerRequest()
 
-function restructure(){
+
+//=====================================================================================
+function restructure()
+{
 
 	for(var index = 0; index < IDs_.length; index++)
 	{
@@ -242,23 +312,44 @@ function restructure(){
 	if(selectedSecurityChoice_ != "")
 		selection_[selection_.length] = selectedSecurityChoice_;
 	
-}
+} //end restructure()
 
-var editSecurityHandler = function(req){
+
+//=====================================================================================
+//Note: not an xml response, just text
+function editSecurityHandler(req)
+{
 	
-	if(!req || !req.responseText.length)
+	if(!req || !req.responseText.length || 
+			req.responseText.indexOf("Error") >= 0)
 	{
 		Debug.log("Action Failed. Invalid Verify Code!", Debug.HIGH_PRIORITY);
 		selectedSecurityChoice_ = "";
 		showVisualSelection();
 		return;
 	}
+
+	console.log("req.responseText",req.responseText);
 	
-	if(selectedSecurityChoice_ == "ResetSecurityUserData")
-		Debug.log("User Data was RESET successfully!", Debug.INFO_PRIORITY);
+	if(selectedSecurityChoice_ == "DigestAccessAuthentication")
+		Debug.log("Digest Access Authentication was enabled successfully!" + 
+				"\n\nIf this is the first time you are enabling users and passwords, " +
+				"then you must get the New Account Code for the admin account from " +
+				"the printouts in the linux console when you start ots in normal mode." +
+				"\n\nAfter the admin account has been setup, new accounts can be made and " +
+				"the admin account will have access to the New Account Codes in the settings " +
+				"web GUI.", 
+				Debug.INFO_PRIORITY);
+	else if(selectedSecurityChoice_ == "NoSecurity")
+		Debug.log("Security was disabled successfully! " +
+				"\n\nNow anyone with the ots normal mode URL will have admin privileges.", 
+				Debug.INFO_PRIORITY);
 	
 	selectedSecurityChoice_ = req.responseText; 
 	console.log(selectedSecurityChoice_);
 	showVisualSelection();
-	return;
-}
+	
+} //end editSecurityHandler()
+
+
+

@@ -269,9 +269,16 @@
 		}
 		
 		.ConfigurationAPI-EditableField-SelectedField {
-			background-color:red;
+			background-color:	red;
 		}
 		
+		.ConfigurationAPI-EditableField .editableFieldNode-ChildLink-SubConfigLink {
+			margin-top:			3px;
+			font-size: 			12px;
+			text-decoration:	underline;
+			color:				rgb(44, 44, 187);
+			cursor:				pointer;
+		}
 		
 		
 		

@@ -88,9 +88,11 @@ function updateUserData
 		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
 		LAST_LINE=
 		while read line; do
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
-			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
-			LAST_LINE=${line}
+			if [[ "x${line}" != "x" && "${LAST_LINE}" != "${line}" ]]; then
+				#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+				cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
+				LAST_LINE=${line}
+			fi
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
 		#do one more time after loop to make sure last line is read 

@@ -411,7 +411,7 @@
 					{				
 				_fields = recordFields;
 				Debug.log("recordFields found = " + recordFields.length);
-				console.log(recordFields);
+				console.log("recordFields", recordFields);
 
 				if(!recordFields.length)
 				{
@@ -466,16 +466,16 @@
 		function extractGETParameters() 
 		{
 			//extract get parameters
-			//		<subsetBasePath> 	= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
-			//		<groupingFieldList> = CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
-			//		<editableFieldList> = empty string or "DEFAULT" for all, or CSV list of fields to show for editing
+			//		<subsetBasePath> 		= Records at this path are the target of this GUI, e.g. "FEInterfaceConfiguration"
+			//		<groupingFieldList> 	= CSV list of tree paths relative to <baseTable>, e.g. "LinkToFETypeConfiguration,FEInterfacePluginName"
+			//		<editableFieldList> 	= empty string or "DEFAULT" for all, or CSV list of fields to show for editing
 			//		<recordPreFilterList> 	= semicolon-separated list (of forced filter) of tree paths relative to <baseTable> and = value (CSV for multiple values), e.g. "LinkToFETypeConfiguration=NIMPlus;FEInterfacePluginName=NIMPlusPlugin,FEOtsUDPTemplateInterface"
-			//		<recordsAlias> 		= Records display name, e.g. "Front-ends"
+			//		<recordsAlias> 			= Records display name, e.g. "Front-ends"
 			
 			_subsetBasePath		= DesktopContent.getParameter(0,"subsetBasePath");//"FEInterfaceConfiguration"; //DesktopContent.getParameter(0,"subsetBasePath");			
 			_groupingFieldList 	= DesktopContent.getParameter(0,"groupingFieldList"); //"LinkToFETypeConfiguration,FEInterfacePluginName"; //DesktopContent.getParameter(0,"groupingFieldList");			
 			_editableFieldList	= DesktopContent.getParameter(0,"editableFieldList");//"";//DesktopContent.getParameter(0,"editableFieldList");			
-			_recordPreFilterList 	= DesktopContent.getParameter(0,"recordPreFilterList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"recordPreFilterList");
+			_recordPreFilterList= DesktopContent.getParameter(0,"recordPreFilterList"); //"";//FEInterfacePluginName=myNewInterface";//DesktopContent.getParameter(0,"recordPreFilterList");
 			_recordsAlias		= DesktopContent.getParameter(0,"recordAlias"); //"Front-ends"; //default to records
 					
 			if(!_subsetBasePath)
@@ -542,6 +542,10 @@
 				Debug.log("records found = " + records.length);
 				console.log(records);
 				
+				//groupingFieldList = AUTO is special key word
+				//	if AUTO, then server picks filter fields (usually 3, with preference
+				//	for GroupID, On/Off, and FixedChoice fields.
+				console.log("_groupingFieldList = " + _groupingFieldList);
 				
 				ConfigurationAPI.getUniqueFieldValuesForRecords(
 						_subsetBasePath,
@@ -550,8 +554,23 @@
 						function(uniqueValues)
 						{
 					_filterValsObj = uniqueValues;
-					Debug.log("uniqueValues found = " + uniqueValues.length);
-					console.log(uniqueValues);
+					Debug.log("uniqueValue sets found = " + uniqueValues.length);
+					console.log("uniqueValues",uniqueValues);
+					
+					if(_groupingFieldList == "AUTO")
+					{
+						//groupingFieldList = AUTO is special key word
+						//need to extract the automatically chosen fields
+						//int the CSV list
+						Debug.log("Extracting auto fields...");
+						_groupingFieldList = "";
+						for(var i=0;i<uniqueValues.length;++i)
+						{
+							if(i) _groupingFieldList += ",";
+							_groupingFieldList += uniqueValues[i].fieldName;
+						}
+						Debug.log("_groupingFieldList converted from auto: " + _groupingFieldList);
+					}
 					
 					paint();
 					if(!eventListenersCreated)
@@ -593,9 +612,9 @@
 			str = "Targeting ";
 			
 			if(_recordPreFilterList != "")
-				str += _recordsAlias + " ";
+				str += "<b>" + _recordsAlias + "</b> ";
 			else
-				str += "all " + _recordsAlias + " ";
+				str += "all <b>" + _recordsAlias + "</b> ";
 		
 			str += "at path '/" + _subsetBasePath + ",' ";
 			
@@ -605,7 +624,7 @@
 				str += "";
 			
 			if(_groupingFieldList != "")
-				str += "organized by '" + _groupingFieldList + "' ";
+				str += "filtered by '" + _groupingFieldList + "' ";
 			else
 				str += "";
 			

@@ -2252,11 +2252,16 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				{
 					__SUP_COUT__ << "fieldPath " << fieldPath << __E__;
 
+					ConfigurationTree node =
+						cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath);
+
+
 					xmlOut.addTextElementToParent("FieldPath", fieldPath, parentEl);
+
 					xmlOut.addTextElementToParent(
 					    "FieldValue",
 					    cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath)
-					        .getValueAsString(),
+					        .getValueAsString(true /*returnLinkTableValue*/),
 					    parentEl);
 				}
 			}
@@ -2457,12 +2462,14 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
-//	starting node path
-//	modifiedTables := CSV of table/version pairs
-//	recordList := CSV of records to search for unique values
-//	fieldList := CSV of fields relative-to-record-path for which to get list of unique
-// values
+//		configGroupName (full name with key)
+//		starting node path
+//		modifiedTables := CSV of table/version pairs
+//		recordList := CSV of records to search for unique values
+//		fieldList := CSV of fields relative-to-record-path for which to get list of unique values
+//			fieldList = AUTO is a special keyword
+//				if AUTO, then server picks filter fields (usually 3, with preference
+//				for GroupID, On/Off, and FixedChoice fields.
 //
 void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
     HttpXmlDocument&        xmlOut,
@@ -2484,23 +2491,6 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		if(startPath == "/")
 			return;
 
-		std::vector<std::string /*relative-path*/> fieldsToGet;
-		if(fieldList != "")
-		{
-			// extract field filter list
-			{
-				std::istringstream f(fieldList);
-				std::string        fieldPath;
-				while(getline(f, fieldPath, ','))
-				{
-					fieldsToGet.push_back(StringMacros::decodeURIComponent(fieldPath));
-				}
-				__SUP_COUT__ << fieldList << __E__;
-				for(auto& field : fieldsToGet)
-					__SUP_COUT__ << "fieldsToGet " << field << __E__;
-			}
-		}
-
 		ConfigurationTree startNode = cfgMgr->getNode(startPath);
 		if(startNode.isLinkNode() && startNode.isDisconnected())
 		{
@@ -2509,6 +2499,8 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 			__SS_THROW__;
 		}
 
+
+		//extract records list
 		std::vector<std::string /*relative-path*/> records;
 		if(recordList == "*")  // handle all records case
 		{
@@ -2532,12 +2524,48 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 				for(auto& record : records)
 					__SUP_COUT__ << "recordList " << record << __E__;
 			}
-		}
+		} //end records extraction
+
+		//extract fields to get
+		std::vector<std::string /*relative-path*/> fieldsToGet;
+		if(fieldList != "")
+		{
+			// extract field filter list
+
+			if(fieldList == "AUTO")
+			{
+				//automatically choose 3 fields, with preference
+				//	for GroupID, On/Off, and FixedChoice fields.
+
+				__SUP_COUT__ << "Getting AUTO filter fields!" << __E__;
+
+				std::vector<ConfigurationTree::RecordField> retFieldList;
+				std::vector<std::string /*relative-path*/> fieldAcceptList, fieldRejectList;
+				fieldRejectList.push_back("*CommentDescription");
+				retFieldList = startNode.getCommonFields(
+				    records, fieldAcceptList, fieldRejectList, 5, true /*auto*/);
+
+				for(const auto& retField : retFieldList)
+					fieldsToGet.push_back(retField.columnName_);
+			}
+			else
+			{
+				std::istringstream f(fieldList);
+				std::string        fieldPath;
+				while(getline(f, fieldPath, ','))
+				{
+					fieldsToGet.push_back(StringMacros::decodeURIComponent(fieldPath));
+				}
+				__SUP_COUTV__(fieldList);
+			}
+		} //end fields extraction
+
+		__SUP_COUTV__(StringMacros::vectorToString(fieldsToGet));
 
 		// loop through each field and get unique values among records
 		for(auto& field : fieldsToGet)
 		{
-			__SUP_COUT__ << "fieldsToGet " << field << __E__;
+			__SUP_COUTV__(field);
 
 			DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
 
