@@ -3779,8 +3779,10 @@
 			
 			var DEFAULT_treeNavContextMenuItems = [
 					   "Go-to Table View",
-					   "Open in new Desktop Window",
-					   "Open in new Browser Tab",
+					   "Open Table View in new Desktop Window",
+					   "Open Table View in new Browser Tab",
+					   "Open Sub-Configuration Editor in new Desktop Window",
+					   "Open Sub-Configuration Editor in new Browser Tab",
 					   "Add new Record to Table"];
 			var treeNavContextMenuItems = []
 			var treeNavContextMenuItemHandlers = [];
@@ -3801,53 +3803,108 @@
 				
 
 				//make replace screen js
-				onmouseupJS = "setupSpecificTable(\"" + 
-						treeMemberNames_[j] + "\",\"" +
-						treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
-
-				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
-				treeNavContextMenuItemHandlers.push(onmouseupJS);
-				
-
-				//make new window link
-				newWindowStr = "setupSpecificTable(\"" + 
-						treeMemberNames_[j] + "\",\"" +
-						treeMemberVersions_[j] + "\")";
-				newWindowStr = newWindowStr.replace(/"/g, "\\\"");
-
-				newWindowStr = location.pathname + 
-						location.search +
-						"&newWindowOps=" + newWindowStr;
-
-				newwindowJS += "DesktopContent.openNewWindow(" +
-						"\"Configure\",\"\",\"" + 
-						newWindowStr + "\",false);";
-
-				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
-				treeNavContextMenuItemHandlers.push(newwindowJS);
-
-
-				//make new browser tab link
-				newtabJS += "DesktopContent.openNewBrowserTab(" +
-						"\"Configure\",\"\",\"" + 
-						newWindowStr + "\",false);";
-				
-				treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
-				treeNavContextMenuItemHandlers.push(newtabJS);
-				
-				
-				//make add new row js
-				onmouseupJS = "editTreeAddNewRow(\"" + 
-						treeMemberNames_[j] + "\");";
-
-				if(!isLink)
 				{
+					onmouseupJS = "setupSpecificTable(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\",\"" + backLinkStr + "\");";
+
 					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
 					treeNavContextMenuItemHandlers.push(onmouseupJS);
 				}
-				else
-					++menuIndex; //skip 1st menu item
+
+				//open table-view in new window link
+				{
+					newWindowStr = "setupSpecificTable(\"" + 
+							treeMemberNames_[j] + "\",\"" +
+							treeMemberVersions_[j] + "\")";
+					newWindowStr = newWindowStr.replace(/"/g, "\\\"");
+
+					newWindowStr = location.pathname + 
+							location.search +
+							"&newWindowOps=" + newWindowStr;
+
+					newwindowJS = "DesktopContent.openNewWindow(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newwindowJS);
+				}
+
+				//open table-view in new browser tab link
+				{
+					newtabJS = "DesktopContent.openNewBrowserTab(" +
+							"\"Configure\",\"\",\"" + 
+							newWindowStr + "\",false);";
+
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newtabJS);
+				}
 				
+				//open Sub-Configuration in new window link
+				{					
+					//make record alias with spaces instead of all one word
+					// and remove table
+					var recordAlias = "";
+					for(var c=0;c<treeMemberNames_[j].length - ("Table").length;++c)
+					{
+						if(c && c+1 < treeMemberNames_[j].length &&
+								(treeMemberNames_[j][c] >= 'A' && 
+								treeMemberNames_[j][c] <= 'Z') && 
+								(treeMemberNames_[j][c+1] >= 'a' && 
+								treeMemberNames_[j][c+1] <= 'z'))
+							recordAlias += ' ';
+						recordAlias += treeMemberNames_[j][c];
+					}	
+					
+					newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" + 
+							DesktopContent._localUrnLid + 
+							"&subsetBasePath=" + treeMemberNames_[j] +
+							"&groupingFieldList=AUTO" + 
+							"&recordAlias=" + recordAlias +
+							"&editableFieldList=" + "!*CommentDescription";
+					
+					
+					//DesktopContent.openNewWindow = function(name,subname,windowPath,unique,completeHandler) {
+					newwindowJS = "DesktopContent.openNewWindow(" +
+							"\"" + treeMemberNames_[j] +  
+							" Subset-Configuration\",\"\",\"" + 
+							//windowPath
+							newWindowStr +
+							"\",false /*unique*/);";
+
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newwindowJS);
+				}
+
+				//open Sub-Configuration in new browser tab link
+				{
+					//DesktopContent.openNewBrowserTab = function(name,subname,windowPath,unique)
+					newtabJS = "DesktopContent.openNewBrowserTab(" +
+							"\"" + treeMemberNames_[j] +  
+							" Subset-Configuration\",\"\",\"" + 
+							newWindowStr + "\",false /*unique*/);";
+
+					treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+					treeNavContextMenuItemHandlers.push(newtabJS);
+				}
+				
+				
+				
+				//make add new row js
+				{
+					onmouseupJS = "editTreeAddNewRow(\"" + 
+							treeMemberNames_[j] + "\");";
+
+					if(!isLink)
+					{
+						treeNavContextMenuItems.push(DEFAULT_treeNavContextMenuItems[menuIndex++]);
+						treeNavContextMenuItemHandlers.push(onmouseupJS);
+					}
+					else
+						++menuIndex; //skip 1st menu item
+
+				}
 
 				tableComment = treeMemberComments_[j];
 				//make comment html safe

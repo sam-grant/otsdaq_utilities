@@ -252,40 +252,62 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__MOUT_WARN__ << requestType << " command received! " << __E__;
 
 		// now launch
-		__SUP_COUT_INFO__ << "Launching... " << __E__;
+		__SUP_COUT_INFO__ << "Launching " << requestType << "... " << __E__;
 
 		__SUP_COUT__ << "Extracting target context hostnames... " << __E__;
 		std::vector<std::string> hostnames;
-		try
+
+		//flattenToSystemAliases should always work in wiz mode!
+		if(requestType == "flattenToSystemAliases" &&
+				CorePropertySupervisorBase::allSupervisorInfo_.isWizardMode())
 		{
-			cfgMgr->init();  // completely reset to re-align with any changes
-
-			const XDAQContextTable* contextTable =
-			    cfgMgr->__GET_CONFIG__(XDAQContextTable);
-
-			auto         contexts = contextTable->getContexts();
-			unsigned int i, j;
-			for(const auto& context : contexts)
+			hostnames.push_back(getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER"));
+			__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+		}
+		else
+		{
+			try
 			{
-				if(!context.status_)
-					continue;
+				cfgMgr->init();  // completely reset to re-align with any changes
 
-				// find last slash
-				j = 0;  // default to whole string
-				for(i = 0; i < context.address_.size(); ++i)
-					if(context.address_[i] == '/')
-						j = i + 1;
-				hostnames.push_back(context.address_.substr(j));
-				__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+				const XDAQContextTable* contextTable =
+						cfgMgr->__GET_CONFIG__(XDAQContextTable);
+
+				auto         contexts = contextTable->getContexts();
+				unsigned int i, j;
+				for(const auto& context : contexts)
+				{
+					if(!context.status_)
+						continue;
+
+					// find last slash
+					j = 0;  // default to whole string
+					for(i = 0; i < context.address_.size(); ++i)
+						if(context.address_[i] == '/')
+							j = i + 1;
+					hostnames.push_back(context.address_.substr(j));
+					__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
+				}
+
+			}
+			catch(...)
+			{
+				__SUP_SS__ <<
+						"The Configuration Manager could not be initialized to extract contexts." << __E__;
+
+				__SUP_COUT_ERR__ << "\n" << ss.str();
+				return;
 			}
 		}
-		catch(...)
-		{
-			__SUP_SS__ << "\nTransition to Configuring interrupted! "
-			           << "The Configuration Manager could not be initialized." << __E__;
 
+
+		if(hostnames.size() == 0)
+		{
+			__SUP_SS__ << "No hostnames found to launch command '" +
+					requestType + "'... Is there a valid Context group activated?" << __E__;
 			__SUP_COUT_ERR__ << "\n" << ss.str();
-			return;
+
+			xmlOut.addTextElementToData("Error", ss.str());
 		}
 
 		for(const auto& hostname : hostnames)
@@ -2230,11 +2252,16 @@ void ConfigurationGUISupervisor::handleFillGetTreeNodeFieldValuesXML(
 				{
 					__SUP_COUT__ << "fieldPath " << fieldPath << __E__;
 
+					ConfigurationTree node =
+						cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath);
+
+
 					xmlOut.addTextElementToParent("FieldPath", fieldPath, parentEl);
+
 					xmlOut.addTextElementToParent(
 					    "FieldValue",
 					    cfgMgr->getNode(startPath + "/" + recordUID + "/" + fieldPath)
-					        .getValueAsString(),
+					        .getValueAsString(true /*returnLinkTableValue*/),
 					    parentEl);
 				}
 			}
@@ -2435,12 +2462,14 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 //	 then do for active groups
 //
 // parameters
-//	configGroupName (full name with key)
-//	starting node path
-//	modifiedTables := CSV of table/version pairs
-//	recordList := CSV of records to search for unique values
-//	fieldList := CSV of fields relative-to-record-path for which to get list of unique
-// values
+//		configGroupName (full name with key)
+//		starting node path
+//		modifiedTables := CSV of table/version pairs
+//		recordList := CSV of records to search for unique values
+//		fieldList := CSV of fields relative-to-record-path for which to get list of unique values
+//			fieldList = AUTO is a special keyword
+//				if AUTO, then server picks filter fields (usually 3, with preference
+//				for GroupID, On/Off, and FixedChoice fields.
 //
 void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
     HttpXmlDocument&        xmlOut,
@@ -2462,23 +2491,6 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 		if(startPath == "/")
 			return;
 
-		std::vector<std::string /*relative-path*/> fieldsToGet;
-		if(fieldList != "")
-		{
-			// extract field filter list
-			{
-				std::istringstream f(fieldList);
-				std::string        fieldPath;
-				while(getline(f, fieldPath, ','))
-				{
-					fieldsToGet.push_back(StringMacros::decodeURIComponent(fieldPath));
-				}
-				__SUP_COUT__ << fieldList << __E__;
-				for(auto& field : fieldsToGet)
-					__SUP_COUT__ << "fieldsToGet " << field << __E__;
-			}
-		}
-
 		ConfigurationTree startNode = cfgMgr->getNode(startPath);
 		if(startNode.isLinkNode() && startNode.isDisconnected())
 		{
@@ -2487,6 +2499,8 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 			__SS_THROW__;
 		}
 
+
+		//extract records list
 		std::vector<std::string /*relative-path*/> records;
 		if(recordList == "*")  // handle all records case
 		{
@@ -2510,12 +2524,48 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 				for(auto& record : records)
 					__SUP_COUT__ << "recordList " << record << __E__;
 			}
-		}
+		} //end records extraction
+
+		//extract fields to get
+		std::vector<std::string /*relative-path*/> fieldsToGet;
+		if(fieldList != "")
+		{
+			// extract field filter list
+
+			if(fieldList == "AUTO")
+			{
+				//automatically choose 3 fields, with preference
+				//	for GroupID, On/Off, and FixedChoice fields.
+
+				__SUP_COUT__ << "Getting AUTO filter fields!" << __E__;
+
+				std::vector<ConfigurationTree::RecordField> retFieldList;
+				std::vector<std::string /*relative-path*/> fieldAcceptList, fieldRejectList;
+				fieldRejectList.push_back("*CommentDescription");
+				retFieldList = startNode.getCommonFields(
+				    records, fieldAcceptList, fieldRejectList, 5, true /*auto*/);
+
+				for(const auto& retField : retFieldList)
+					fieldsToGet.push_back(retField.columnName_);
+			}
+			else
+			{
+				std::istringstream f(fieldList);
+				std::string        fieldPath;
+				while(getline(f, fieldPath, ','))
+				{
+					fieldsToGet.push_back(StringMacros::decodeURIComponent(fieldPath));
+				}
+				__SUP_COUTV__(fieldList);
+			}
+		} //end fields extraction
+
+		__SUP_COUTV__(StringMacros::vectorToString(fieldsToGet));
 
 		// loop through each field and get unique values among records
 		for(auto& field : fieldsToGet)
 		{
-			__SUP_COUT__ << "fieldsToGet " << field << __E__;
+			__SUP_COUTV__(field);
 
 			DOMElement* parentEl = xmlOut.addTextElementToData("field", field);
 
@@ -5340,10 +5390,10 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 	std::map<std::string /*tableName*/,
 	         std::map<std::string /*aliasName*/, TableVersion /*version*/>>
 	    versionAliases = cfgMgr->getVersionAliases();
-	for(const auto& aliases : versionAliases)
-		for(const auto& alias : aliases.second)
-			__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second
-			             << __E__;
+//	for(const auto& aliases : versionAliases)
+//		for(const auto& alias : aliases.second)
+//			__SUP_COUT__ << aliases.first << " " << alias.first << " " << alias.second
+//			             << __E__;
 
 	std::map<std::string /*name*/, TableVersion /*version*/> groupMembers;
 	std::map<std::string /*name*/, std::string /*alias*/>    groupAliases;
@@ -6183,12 +6233,12 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 		config->eraseView(temporaryVersion);
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 
-		xmlOut.addTextElementToData("savedAlias", versionAliasesTableName);
+		xmlOut.addTextElementToData("savedName", versionAliasesTableName);
 		xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
 	}
 
 	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
-}
+} //end handleSetVersionAliasInBackboneXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -6199,7 +6249,7 @@ catch(...)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << __E__;
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
-}
+} //end handleSetVersionAliasInBackboneXML() catch
 
 //========================================================================================================================
 //	handleAliasGroupMembersInBackboneXML
@@ -6289,7 +6339,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 		unsigned int row                   = -1;
 
 		__SUP_COUT__ << "Adding alias for " << memberPair.first << "_v"
-		             << memberPair.second << __E__;
+		             << memberPair.second << " to " << versionAlias << __E__;
 
 		// find tableName, versionAlias pair
 		//	NOTE: only accept the first pair, repeats are ignored.
@@ -6299,7 +6349,8 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			do
 			{  // start looking from beyond last find
 				tmpRow = configView->findRow(col3, memberPair.first, tmpRow + 1);
-				__SUP_COUT__ << configView->getDataView()[tmpRow][col2] << __E__;
+
+				//__SUP_COUT__ << configView->getDataView()[tmpRow][col2] << __E__;
 			} while(configView->getDataView()[tmpRow][col2] != versionAlias);
 			// at this point the first pair was found! (else exception was thrown)
 			row = tmpRow;
@@ -6331,12 +6382,12 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			configView->setValue(memberPair.first, row, col3);
 		}
 
-		__SUP_COUT__ << "\t\t row: " << row << __E__;
+		//__SUP_COUT__ << "\t\t row: " << row << __E__;
 
 		col = configView->findCol("Version");
-		__SUP_COUT__ << "\t\t col: " << col << __E__;
-		__SUP_COUT__ << "\t\t version: " << memberPair.second << " vs "
-		             << configView->getDataView()[row][col] << __E__;
+		//__SUP_COUT__ << "\t\t col: " << col << __E__;
+		//__SUP_COUT__ << "\t\t version: " << memberPair.second << " vs "
+		//             << configView->getDataView()[row][col] << __E__;
 		if(memberPair.second.toString() != configView->getDataView()[row][col])
 		{
 			configView->setValue(memberPair.second.toString(), row, col);
@@ -6354,12 +6405,13 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			isDifferent = true;
 	}
 
-	// configView->print();
+	//configView->print();
 
 	TableVersion newAssignedVersion;
 	if(isDifferent)  // make new version if different
 	{
-		__SUP_COUT__ << "\t\t**************************** Save as new table version"
+		__SUP_COUT__ << "\t\t**************************** Save v" <<
+				temporaryVersion << " as new table version"
 		             << __E__;
 
 		newAssignedVersion =
@@ -6375,10 +6427,10 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 		newAssignedVersion = activeVersions[versionAliasesTableName];
 	}
 
-	xmlOut.addTextElementToData("savedAlias", versionAliasesTableName);
+	xmlOut.addTextElementToData("savedName", versionAliasesTableName);
 	xmlOut.addTextElementToData("savedVersion", newAssignedVersion.toString());
-	__SUP_COUT__ << "\t\t newAssignedVersion: " << newAssignedVersion << __E__;
-}
+	__SUP_COUT__ << "\t\t Resulting Version: " << newAssignedVersion << __E__;
+} //end handleAliasGroupMembersInBackboneXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -6389,7 +6441,7 @@ catch(...)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << __E__;
 	xmlOut.addTextElementToData("Error", "Error saving new Version Alias view! ");
-}
+} //end handleAliasGroupMembersInBackboneXML() catch
 
 //========================================================================================================================
 //	handleGroupAliasesXML

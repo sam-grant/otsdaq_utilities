@@ -200,8 +200,48 @@ bool ECLConnection::Post(ECLEntry_t& e)
 	return true;
 }
 
-Attachment_t ECLConnection::MakeAttachmentImage(std::string const& imageFileName)
+std::string ECLConnection::EscapeECLString(std::string input)
 {
+         std::string output = input;
+         size_t pos = output.find('&');
+         while (pos != std::string::npos)
+         {
+                output = output.replace(pos, 1, "&amp;");
+                pos = output.find('&', pos + 2);
+        }
+ 
+        pos = output.find('"');
+        while (pos != std::string::npos)
+        {
+                output = output.replace(pos, 1, "&quot;");
+                pos = output.find('"', pos + 1);
+        }
+ 
+        pos = output.find('\'');
+        while (pos != std::string::npos)
+        {
+                output = output.replace(pos, 1, "&apos;");
+                pos = output.find('\'', pos + 1);
+        }
+
+        pos = output.find('<');
+        while (pos != std::string::npos)
+        {
+                output = output.replace(pos, 1, "&lt;");
+                pos = output.find('<', pos + 1);
+        }
+ 
+        pos = output.find('>');
+        while (pos != std::string::npos)
+        {
+                output = output.replace(pos, 1, "&gt;");
+                pos = output.find('>', pos + 1);
+        }
+ 
+         return output;
+}
+
+Attachment_t ECLConnection::MakeAttachmentImage(std::string const& imageFileName) {
 	Attachment_t attachment;
 	std::string  fileNameShort = imageFileName;
 	if(fileNameShort.rfind('/') != std::string::npos)

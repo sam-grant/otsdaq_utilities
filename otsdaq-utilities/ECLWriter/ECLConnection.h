@@ -24,6 +24,8 @@ class ECLConnection
 	bool Get(std::string, std::string&);
 	bool Search(std::string);
 
+        static std::string EscapeECLString(std::string input="");
+
 	static Attachment_t MakeAttachmentImage(std::string const& imageFileName);
 
 	static Attachment_t MakeAttachmentFile(std::string const& fileName);
