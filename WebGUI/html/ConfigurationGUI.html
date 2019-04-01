@@ -1644,9 +1644,11 @@
 			var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
 			if(treeErr) 
 			{	
-				//As of 4/20/2017 tree errors are handled by the pop-up group save box
-				Debug.log(treeErr);
-				return;
+				Debug.log(treeErr,Debug.WARN_PRIORITY);
+
+				//don't power through if a new group was attempted
+				if(attemptedNewGroupName && attemptedNewGroupName != "")
+					return;
 			}			
 			
 			var err = DesktopContent.getXMLValue(req,"Error");
@@ -9023,6 +9025,7 @@
 
 								var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 								var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+								
 								if(treeErr) 
 								{	
 									Debug.log(treeErr,Debug.HIGH_PRIORITY);
@@ -14329,6 +14332,7 @@
 
 						var attemptedNewGroupName = DesktopContent.getXMLValue(req,"AttemptedNewGroupName");
 						var treeErr = DesktopContent.getXMLValue(req,"TreeErrors");
+												
 						if(treeErr) 
 						{	
 							Debug.log(treeErr,Debug.WARN_PRIORITY);

@@ -69,7 +69,8 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	void handleGetTableGroupXML(HttpXmlDocument&        xmldoc,
 	                            ConfigurationManagerRW* cfgMgr,
 	                            const std::string&      groupName,
-	                            TableGroupKey           groupKey);
+	                            TableGroupKey           groupKey,
+								bool					ignoreWarnings = false);
 	void handleGetTableGroupTypeXML(HttpXmlDocument&        xmldoc,
 	                                ConfigurationManagerRW* cfgMgr,
 	                                const std::string&      configList);

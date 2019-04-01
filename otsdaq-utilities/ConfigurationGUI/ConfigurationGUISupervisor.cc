@@ -4395,7 +4395,9 @@ catch(...)
 void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        xmlOut,
                                                         ConfigurationManagerRW* cfgMgr,
                                                         const std::string&      groupName,
-                                                        TableGroupKey groupKey) try
+                                                        TableGroupKey 			groupKey,
+														bool 					ignoreWarnings)
+try
 {
 	char        tmpIntStr[100];
 	DOMElement *parentEl, *configEl;
@@ -4457,14 +4459,16 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        
 	try
 	{
 		std::string groupAuthor, groupComment, groupCreationTime, groupTypeString;
-		std::string accumulateErrors;
+		std::string accumulateTreeErrors;
 
+		__SUP_COUTV__(ignoreWarnings);
 		cfgMgr->loadTableGroup(groupName,
 		                       groupKey,
 		                       false /*doActivate*/,
 		                       &memberMap,
 		                       0 /*progressBar*/,
-		                       &accumulateErrors /*accumulateErrors*/,
+							   ignoreWarnings?0: /*accumulateTreeErrors*/
+									   &accumulateTreeErrors,
 		                       &groupComment,
 		                       &groupAuthor,
 		                       &groupCreationTime,
@@ -4472,10 +4476,10 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        
 		                       &groupTypeString,
 		                       &groupMemberAliases);
 
-		if(accumulateErrors != "")
+		if(accumulateTreeErrors != "")
 		{
-			__SUP_SS__ << accumulateErrors;
-			__SUP_SS_THROW__;
+			__SUP_COUTV__(accumulateTreeErrors);
+			xmlOut.addTextElementToData("TreeErrors", accumulateTreeErrors);
 		}
 
 		xmlOut.addTextElementToData("TableGroupAuthor", groupAuthor);
@@ -4486,7 +4490,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        
 	catch(const std::runtime_error& e)
 	{
 		__SUP_SS__ << "Table group \"" + groupName + "(" + groupKey.toString() + ")" +
-		                  "\" members can not be loaded!\n\n" + e.what();
+		                  "\" members can not be loaded!\n\n" + e.what() << __E__;
 		__SUP_COUT_ERR__ << ss.str();
 		xmlOut.addTextElementToData("Error", ss.str());
 		// return;
@@ -4591,8 +4595,7 @@ void ConfigurationGUISupervisor::handleGetTableGroupXML(HttpXmlDocument&        
 		*/
 	}
 
-	return;
-}
+} //end handleGetTableGroupXML()
 catch(std::runtime_error& e)
 {
 	__SUP_SS__ << ("Error!\n\n" + std::string(e.what())) << __E__;
@@ -4604,7 +4607,7 @@ catch(...)
 	__SUP_SS__ << ("Error!\n\n") << __E__;
 	__SUP_COUT_ERR__ << "\n" << ss.str();
 	xmlOut.addTextElementToData("Error", ss.str());
-}
+} //end handleGetTableGroupXML() catch
 
 //========================================================================================================================
 // handleGetTableXML
@@ -5532,7 +5535,7 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 				xmlOut.addTextElementToData("foundEquivalentKey", "1");  // indicator
 
 				// insert get table info
-				handleGetTableGroupXML(xmlOut, cfgMgr, groupName, foundKey);
+				handleGetTableGroupXML(xmlOut, cfgMgr, groupName, foundKey, ignoreWarnings);
 				return;
 			}
 			else  // treat as error, if not looking for equivalent
@@ -5655,8 +5658,9 @@ void ConfigurationGUISupervisor::handleCreateTableGroupXML(
 
 	// insert get table info
 	__COUT__ << "Loading new table group..." << __E__;
-	handleGetTableGroupXML(xmlOut, cfgMgr, groupName, newKey);
-}
+	handleGetTableGroupXML(xmlOut, cfgMgr, groupName, newKey, ignoreWarnings);
+
+} // end handleCreateTableGroupXML()
 catch(std::runtime_error& e)
 {
 	__SUP_COUT__ << "Error detected!\n\n " << e.what() << __E__;
@@ -5667,7 +5671,7 @@ catch(...)
 {
 	__SUP_COUT__ << "Unknown Error detected!\n\n " << __E__;
 	xmlOut.addTextElementToData("Error", "Error saving table group! ");
-}
+} //end handleCreateTableGroupXML() catch
 
 //========================================================================================================================
 //	handleDeleteTableInfoXML
