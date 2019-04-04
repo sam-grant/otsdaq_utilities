@@ -35,6 +35,8 @@ if [ "x$1" == "x" ]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t WARNING: without comment, script will only do git pull and git status"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
 	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --tables will not pull or push; it will just update tables."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --all will pull or push all repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  "
 fi
 
 
@@ -146,8 +148,8 @@ function updateUserData
 } # end updateUserData function
 export -f updateUserData
 
-
-
+GIT_COMMENT=$1
+ALL_REPOS=0
 TABLES_ONLY=0
 if [ "$1"  == "--tables" ]; then
 	TABLES_ONLY=1
@@ -155,7 +157,15 @@ if [ "$1"  == "--tables" ]; then
 	updateUserData
 	exit
 fi
+if [ "$1"  == "--all" ]; then
+	ALL_REPOS=1
+	
+	#clear git comment to avoid push
+	GIT_COMMENT=$2
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating all repositories (i.e. not only otsdaq)!"
+fi
 
+echo -e "UpdateOTS.sh [${LINENO}]  \t REPO_FILTER = ${REPO_FILTER}"
 echo
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t Finding paths..."
@@ -166,10 +176,14 @@ SCRIPT_DIR="$(
 )"
 		
 echo -e "UpdateOTS.sh [${LINENO}]  \t Script directory found as: $SCRIPT_DIR"
-
+echo -e "UpdateOTS.sh [${LINENO}]  \t Finding target repositories..."
  
 #REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
-REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+if [ $ALL_REPOS = 1 ]; then
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname '*')"
+else
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+fi
 						
 
 for p in ${REPO_DIR[@]}; do
@@ -188,7 +202,7 @@ done
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Status will be logged here: $CHECKIN_LOG_PATH"
 
 
@@ -206,10 +220,10 @@ for p in ${REPO_DIR[@]}; do
 	pwd >> $CHECKIN_LOG_PATH
 	git status &>> $CHECKIN_LOG_PATH
 	
-	if [ "x$1" != "x" ]; then
+	if [ "x$GIT_COMMENT" != "x" ]; then
 		
 		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
-	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
+	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
 	    git push   
 	fi
 
@@ -229,7 +243,7 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 
 #######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
-if [ "x$1" == "x" ]; then
+if [ "x$GIT_COMMENT" == "x" ]; then
 
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update status will be logged here: $UPDATE_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update log start:" > $UPDATE_LOG_PATH
@@ -384,7 +398,7 @@ if [ "x$1" == "x" ]; then
 fi
 
 
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Update status was logged here: $UPDATE_LOG_PATH"
 echo
