@@ -15,8 +15,8 @@
 
 
 CURRENT_AWESOME_BASE=$PWD
-CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.checkinAll.log
-UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.updateAll.log
+CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.UpdateOTS_pull.log
+UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.UpdateOTS_push.log
 
 echo -e "UpdateOTS.sh [${LINENO}]  "
 echo -e "UpdateOTS.sh [${LINENO}]  \t ~~ UpdateOTS ~~ "
@@ -32,11 +32,11 @@ if [ "x$1" == "x" ] || [[ "$1" != "--pull" && "$1" != "--push" && "$1" != "--pul
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pull                \t #will pull otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --push \"comment\"    \t #will push otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pushall \"comment\" \t #will push all    repositories in srcs/ (i.e. not just otsdaq)."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --tables              \t #will not pull or push; it will just update tables."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushall \"comment\" \t #will push all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --tables              \t #will not pull or push; it will just update tables."
 		
 	echo -e "UpdateOTS.sh [${LINENO}]  "
 	exit
