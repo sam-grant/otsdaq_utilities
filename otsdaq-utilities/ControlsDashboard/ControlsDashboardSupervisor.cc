@@ -31,8 +31,10 @@
 
 using namespace ots;
 
+#define CONTROLS_SUPERVISOR_DATA_PATH \
+	std::string(getenv("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
 #define PAGES_DIRECTORY \
-	std::string(getenv("SERVICE_DATA_PATH")) + "/ControlsDashboardData/pages/";
+	CONTROLS_SUPERVISOR_DATA_PATH + "pages/"
 
 XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 
@@ -42,6 +44,10 @@ ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* 
 {
 	INIT_MF("ControlsDashboardSupervisor");
 
+	// make controls dashboard supervisor directories in case they don't exist
+	mkdir(((std::string)(CONTROLS_SUPERVISOR_DATA_PATH)).c_str(), 0755);
+	mkdir(((std::string)(PAGES_DIRECTORY)).c_str(), 0755);
+	
 	init();
 }
 
@@ -61,21 +67,21 @@ void ControlsDashboardSupervisor::init(void)
 {
 	UID_ = 0;
 
-	__COUT__ << std::endl;
+	__SUP_COUT__ << std::endl;
 	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
 	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
-	__COUTV__(pluginType);
+	__SUP_COUTV__(pluginType);
 
 	interface_ = makeControls(
 			  pluginType
 			, node.getUIDAsString()
 			, CorePropertySupervisorBase::getContextTreeNode()
 			, CorePropertySupervisorBase::supervisorConfigurationPath_);
-	__COUT__ << std::endl;
+	__SUP_COUT__ << std::endl;
 
-	__COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
+	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
-	//interface_->initialize();
+	interface_->initialize();
 	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
 } //end init()
@@ -103,12 +109,12 @@ void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
 void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
 		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
 {		
-//	__COUT__ << std::endl;
+//	__SUP_COUT__ << std::endl;
 //	cgicc::Cgicc cgi(in);
-//	__COUT__ << std::endl;
+//	__SUP_COUT__ << std::endl;
 //	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
-//	__COUT__ << request << std::endl;
-//	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << requestType << " : end"<< std::endl;
+//	__SUP_COUT__ << request << std::endl;
+//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << requestType << " : end"<< std::endl;
 
 
 //	if(requestType == "")
@@ -146,7 +152,7 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 //				&activeSessionIndex		//acquire user's session index associated with the cookieCode
 //		))
 //		{	//failure
-//			__COUT__ << "Failed Login Gateway: " <<
+//			__SUP_COUT__ << "Failed Login Gateway: " <<
 //					out->str() << std::endl; //print out return string on failure
 //			return;
 //		}
@@ -186,7 +192,7 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 		const std::string &username)
 {
 	//return xml doc holding server response
-	__COUT__ << std::endl;
+	__SUP_COUT__ << std::endl;
 
 	if(Command == "poll")
 	{
@@ -210,18 +216,18 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 	}
 	else if(Command == "getPages")
 	{
-		__COUT__ << "Requesting pages from server! " << std::endl;
+		__SUP_COUT__ << "Requesting pages from server! " << std::endl;
 		GetPages(cgiIn, xmlOut);
 	}
 	else if(Command == "loadPage")
 	{
 		std::string page = CgiDataUtilities::getData(cgiIn, "Page");
-		__COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page
 		         << std::endl;
 
 		loadPage(cgiIn, xmlOut, page);
 	}
-	__COUT__ << std::endl;
+	__SUP_COUT__ << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 } //end handleRequest
@@ -232,7 +238,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
                                        HttpXmlDocument& xmlOut,
                                        std::string      UID)
 {
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	         << "Polling on UID:" << UID << std::endl;
 
 	std::map<int, std::set<std::string>>::iterator mapReference;
@@ -245,18 +251,18 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 
 		for(auto pv : mapReference->second)
 		{
-			__COUT__ << pv << std::endl;
+			__SUP_COUT__ << pv << std::endl;
 			// PVInfo * pvInfo = interface_->mapOfPVInfo_.find(pv)->second;
-			//__COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
+			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			// interface_->getCurrentPVValue(pv);
 			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
 
-			__COUT__ << pv << ": " << pvInformation[1] << " : " << pvInformation[3]
+			__SUP_COUT__ << pv << ": " << pvInformation[1] << " : " << pvInformation[3]
 			         << std::endl;
 
 			if(pvInformation[0] != "NO_CHANGE")
 			{
-				//__COUT__ << "Reached" <<  std::endl;
+				//__SUP_COUT__ << "Reached" <<  std::endl;
 				JSONMessage += "\"" + pv + "\": {";
 
 				/*if(pvInfo->mostRecentBufferIndex - 1 < 0)
@@ -272,7 +278,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 			}
 			else
 			{
-				__COUT__ << "No change in value since last poll: " << pv << std::endl;
+				__SUP_COUT__ << "No change in value since last poll: " << pv << std::endl;
 			}
 
 			// Handle Channels that disconnect, etc
@@ -281,21 +287,21 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 				interface_->subscribe(pv);
 			}
 
-			//__COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
-			//__COUT__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
-			//__COUT__ << pv << " : " << pvInfo->dataCache[(pvInfo->mostRecentBufferIndex
+			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
+			//__SUP_COUT__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
+			//__SUP_COUT__ << pv << " : " << pvInfo->dataCache[(pvInfo->mostRecentBufferIndex
 			//-1)].second << std::endl;
 		}
 
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
 		JSONMessage += "}";
-		__COUT__ << JSONMessage << std::endl;
+		__SUP_COUT__ << JSONMessage << std::endl;
 		xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
 
 		/*for (std::set<unsigned long>::iterator it = mapReference->second->begin(); it !=
 		mapReference->second.end(); ++it)
 		{
-		    //__COUT__ << this->getApplicationDescriptor()->getLocalId() << it <<
+		    //__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << it <<
 		std::endl;
 
 
@@ -323,7 +329,7 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
                                                 HttpXmlDocument& xmlOut,
                                                 std::string      pvList)
 {
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	         << "Getting settings for " << pvList << std::endl;
 
 	std::string JSONMessage = "{ ";
@@ -339,7 +345,7 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
 		{
 			pv = pvList.substr(pos, nextPos - pos);
 
-			__COUT__ << pv << std::endl;
+			__SUP_COUT__ << pv << std::endl;
 
 			std::array<std::string, 9> pvSettings = interface_->getSettings(pv);
 
@@ -360,7 +366,7 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
 		JSONMessage += "}";
 
-		__COUT__ << JSONMessage << std::endl;
+		__SUP_COUT__ << JSONMessage << std::endl;
 		xmlOut.addTextElementToData("JSON", JSONMessage);  // add to response
 	}
 	else
@@ -374,7 +380,7 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
                                               HttpXmlDocument& xmlOut,
                                               std::string      pvlist)
 {
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
 	         << "Generating UID" << std::endl;
 
 	std::set<std::string> pvDependencies;
@@ -387,12 +393,12 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 	if(pvlist.size() > 0)
 	{
 		// pvlist.substr(2);
-		__COUT__ << pvlist << std::endl;
+		__SUP_COUT__ << pvlist << std::endl;
 
 		while((nextPos = pvlist.find(",", pos)) != std::string::npos)
 		{
 			pv = pvlist.substr(pos, nextPos - pos);
-			//__COUT__ << UID_ << ":" << pos << "-" << nextPos << " ->" << pv <<
+			//__SUP_COUT__ << UID_ << ":" << pos << "-" << nextPos << " ->" << pv <<
 			// std::endl;
 			pvDependencies.insert(pv);
 			pos = nextPos + 1;
@@ -405,12 +411,12 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 	}
 	else
 	{
-		__COUT__ << this->getApplicationDescriptor()->getLocalId()
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 		         << " PVList invalid: " << pvlist << std::endl;
 		uid = "{ \"message\": \"-1\"}";
 	}
 
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: " << UID_
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: " << UID_
 	         << std::endl;
 
 	xmlOut.addTextElementToData("JSON", uid);  // add to response
@@ -422,15 +428,15 @@ void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& 
 	if(interface_ != NULL)
     {
     	
-    	__COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
-        __COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+    	__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
+        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
 	    std::cout << " "	<< interface_->getList("JSON") << std::endl;
 
     	xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
     }
     else
     {
-        __COUT__ << "Interface undefined! Failed to get list!" << std::endl;
+        __SUP_COUT__ << "Interface undefined! Failed to get list!" << std::endl;
         xmlOut.addTextElementToData("JSON","[\"None\"]");
     }
 }
@@ -443,20 +449,20 @@ void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument&
 
 	std::vector<std::string> pages;
 
-	__COUT__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages: " <<
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Path to pages: " <<
 	pathToPages << std::endl; if((dir = opendir (pathToPages.c_str())) != NULL)
 	{
 	    while((ent = readdir(dir)) != NULL)
 	    {
 	        pages.push_back(ent->d_name);
-	        __COUT__ << this->getApplicationDescriptor()->getLocalId() << " GetPages"
+	        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " GetPages"
 	<< ent->d_name << std::endl;
 	    }
 	    closedir(dir);
 	}
 	else
 	{
-	    __COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not open
+	    __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << "Could not open
 	directory: " << pathToPages << std::endl; return;
 	}*/
 	std::vector<std::string> pages;
@@ -471,14 +477,14 @@ void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument&
 	}
 	if(returnJSON.size() > 2 && returnJSON.compare("[") != 0)
 	{
-		__COUT__ << "Found pages on server!" << std::endl;
+		__SUP_COUT__ << "Found pages on server!" << std::endl;
 		returnJSON.resize(returnJSON.size() - 2);
 		returnJSON += "]";
 	}
 	else
 	{
 		// No pages on the server
-		__COUT__ << "No pages found on server!" << std::endl;
+		__SUP_COUT__ << "No pages found on server!" << std::endl;
 		returnJSON = "[\"None\"]";
 	}
 	std::cout << returnJSON << std::endl;
@@ -494,24 +500,25 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 	struct stat buffer;
 	if(page.find("..") != std::string::npos)
 	{
-		__COUT__ << this->getApplicationDescriptor()->getLocalId()
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 		         << "Error! Request using '..': " << page << std::endl;
 	}
 	else if(page.find("~") != std::string::npos)
 	{
-		__COUT__ << this->getApplicationDescriptor()->getLocalId()
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 		         << "Error! Request using '~': " << page << std::endl;
 	}
 	else if(!(stat(page.c_str(), &buffer) == 0))
 	{
-		__COUT__ << this->getApplicationDescriptor()->getLocalId()
+		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 		         << "Error! File not found: " << page << std::endl;
 	}
 
-	std::string file = PAGES_DIRECTORY file += "/" + page;
-	__COUT__ << this->getApplicationDescriptor()->getLocalId()
+	std::string file = PAGES_DIRECTORY;
+	file += "/" + page;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	         << "Trying to load page: " << page << std::endl;
-	__COUT__ << this->getApplicationDescriptor()->getLocalId()
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
 	         << "Trying to load page: " << file << std::endl;
 	// read file
 	// for each line in file

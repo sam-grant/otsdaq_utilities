@@ -59,8 +59,6 @@ find_ups_boost( v1_50_0 filesystem
                         unit_test_framework
  )
 
-find_library( EPICS_CA NAMES ca PATHS $ENV{EPICS_LIBRARY} )
-find_library( EPICS_COM NAMES Com PATHS $ENV{EPICS_LIBRARY} )
 
 ##find_package(MPI QUIET)
 
