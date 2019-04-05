@@ -101,10 +101,12 @@
 	
 	#Desktop .DesktopDashboard-button {
 		font-family: arial;
+		font-weight: lighter;
 		font-weight: thin;
 		font-size: 14px;
 		color: #fff;
 		padding: 5px 10px 5px 10px;
+		height: 16px;
 		text-align: center;
 		cursor: pointer;
 		border-radius: 3px;
@@ -114,6 +116,11 @@
 							rgb(100,100,100) 0 .1em 3px,
 							rgb(150,150,150) 0 .2em 1px, /* color border */
 							rgba(0,0,0,0.2) 0 .5em 5px;	/* drop shadow */
+	}
+	
+	/*input button type seems to interpret text height differently than divs */
+	#Desktop input[type=submit] {
+		height: 28px !important;
 	}
 	
 	.DesktopDashboard-button a:hover {

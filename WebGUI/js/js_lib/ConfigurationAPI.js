@@ -91,7 +91,7 @@ ConfigurationAPI._POP_UP_DIALOG_ID = "ConfigurationAPI-popUpDialog";
 //	ConfigurationAPI.activateGroup(groupName, groupKey, ignoreWarnings, doneHandler)
 //	ConfigurationAPI.setGroupAliasInActiveBackbone(groupAlias,groupName,groupKey,newBackboneNameAdd,doneHandler,doReturnParams)
 //	ConfigurationAPI.newWizBackboneMemberHandler(req,params)
-//	ConfigurationAPI.saveGroupAndActivate(groupName,configMap,doneHandler,doReturnParams)
+//	ConfigurationAPI.saveGroupAndActivate(groupName,tableMap,doneHandler,doReturnParams)
 //	ConfigurationAPI.getOnePixelPngData(rgba)
 //	ConfigurationAPI.getGroupTypeMemberNames(groupType,responseHandler)
 //	ConfigurationAPI.getTree(treeBasePath,depth,modifiedTables,responseHandler,responseHandlerParam)
@@ -1691,7 +1691,7 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 		var affectedGroupNames = []; //to be populated for use by alias setting
 		var affectedGroupComments = []; //to be populated for use by alias setting
-		var affectedGroupConfigMap = []; //to be populated for use by alias setting
+		var affectedGroupTableMap = []; //to be populated for use by alias setting
 		
 		var affectedGroupKeys = []; //to be populated after group save for use by alias setting
 		
@@ -1748,8 +1748,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 
 					Debug.log("memberNames.length " + memberNames.length);
 
-					//build member config map
-					affectedGroupConfigMap[i] = "configList=";
+					//build member table map
+					affectedGroupTableMap[i] = "tableList=";
 					var memberVersion, memberName;
 					for(var j=0;j<memberNames.length;++j)		
 					{
@@ -1764,13 +1764,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 								{
 									Debug.log("found " + savedTables[k].tableName + "-v" +
 											savedTables[k].tableVersion);
-									affectedGroupConfigMap[i] += memberName + "," + 
+									affectedGroupTableMap[i] += memberName + "," + 
 											savedTables[k].tableVersion + ",";
 									break;
 								}
 						}
 						else
-							affectedGroupConfigMap[i] += memberName + 
+							affectedGroupTableMap[i] += memberName + 
 								"," + memberVersion + ",";
 					}
 				}
@@ -1799,8 +1799,8 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 				affectedGroupComments.push(affectedGroupCommentEls[i].textContent);
 				affectedGroupNames.push(affectedArr[0]);	
 				
-				//build member config map
-				affectedGroupConfigMap[i] = "configList=";
+				//build member table map
+				affectedGroupTableMap[i] = "tableList=";
 				//member map starts after group name/key (i.e. [2])
 				for(var a=2;a<affectedArr.length;a+=2)								
 					if((affectedArr[a+1]|0) < -1) //there should be a new modified version
@@ -1812,13 +1812,13 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 							{
 								Debug.log("found " + savedTables[k].tableName + "-v" +
 										savedTables[k].tableVersion);
-								affectedGroupConfigMap[i] += affectedArr[a] + "," + 
+								affectedGroupTableMap[i] += affectedArr[a] + "," + 
 										savedTables[k].tableVersion + ",";
 								break;
 							}
 					}
 					else //use existing version
-						affectedGroupConfigMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
+						affectedGroupTableMap[i] += affectedArr[a] + "," + affectedArr[a+1] + ",";
 			}
 			
 			localHandleSavingAffectedGroups();			
@@ -1839,11 +1839,11 @@ ConfigurationAPI.saveModifiedTables = function(modifiedTables,responseHandler,
 						"&ignoreWarnings=" + (doNotIgnoreWarnings?0:1) + 
 						"&groupComment=" + encodeURIComponent(affectedGroupComments[i]);
 				Debug.log(reqStr);
-				Debug.log(affectedGroupConfigMap[i]);
+				Debug.log(affectedGroupTableMap[i]);
 
 				++numberOfRequests;
 				///////////////////////////////////////////////////////////
-				DesktopContent.XMLHttpRequest(reqStr, affectedGroupConfigMap[i], 
+				DesktopContent.XMLHttpRequest(reqStr, affectedGroupTableMap[i], 
 						function(req,affectedGroupIndex) 
 						{
 
@@ -2403,7 +2403,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 	//make a new backbone with old versions of everything except Group Alias 
-	var configMap = "configList=";
+	var tableMap = "tableList=";
 	var name;
 	for(var i=0;i<configNames.length;++i)
 	{		
@@ -2411,22 +2411,24 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 
 		if(name == groupAliasName)
 		{
-			configMap += name + "," + 
+			tableMap += name + "," + 
 					groupAliasVersion + ",";
 			continue;
 		}
 		//else use old member
-		configMap += name + "," + 
+		tableMap += name + "," + 
 				configVersions[i].getAttribute("value") + ",";							
 	}
+	
+	console.log("backbone tableMap",tableMap);
 
-	ConfigurationAPI.saveGroupAndActivate(params[0],configMap,params[1],params[2],
+	ConfigurationAPI.saveGroupAndActivate(params[0],tableMap,params[1],params[2],
 			true /*lookForEquivalent*/);			
 } // end ConfigurationAPI.newWizBackboneMemberHandler()
 
 //=====================================================================================
 //saveGroupAndActivate
-ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler,doReturnParams,
+ConfigurationAPI.saveGroupAndActivate = function(groupName,tableMap,doneHandler,doReturnParams,
 		lookForEquivalent)
 {
 	DesktopContent.XMLHttpRequest("Request?RequestType=saveNewTableGroup&groupName=" +
@@ -2434,7 +2436,7 @@ ConfigurationAPI.saveGroupAndActivate = function(groupName,configMap,doneHandler
 			"&allowDuplicates=" + (lookForEquivalent?"0":"1") +
 			"&lookForEquivalent=" + (lookForEquivalent?"1":"0") +
 			"", //end get data
-			configMap, //end post data
+			tableMap, //end post data
 			function(req)
 			{
 		var err = DesktopContent.getXMLValue(req,"Error");
@@ -4404,8 +4406,16 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			pathHTML + //save path for future use.. and a central place to edit when changes occur
 			"</div>";
 
-	if(valueType == "FixedChoiceData")
+	//track if this is a child link with fixed choice
+	var childLinkFixedChoice = false; //init, but if it is, then change type handling to fixed choice style
+	var isChildLink = valueType.indexOf("ChildLink") == 0;
+	
+	if(valueType == "FixedChoiceData" ||
+			(isChildLink && choices.length > 1))
 	{
+		//track if this is a child link with fixed choice
+		childLinkFixedChoice = valueType.indexOf("ChildLink") == 0;
+		
 		//add CSV choices div
 		str += 
 				"<div class='editableFieldNode-FixedChoice-CSV' style='display:none' " + 
@@ -4418,6 +4428,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			str += choices[j];
 		}
 		str += "</div>";
+		
+		
 	}
 	else if(valueType == "BitMap")
 	{
@@ -4439,7 +4451,9 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	{
 		//start value node
 		str += 
-				"<div class='editableFieldNode-Value editableFieldNode-ValueType-" + valueType +
+				"<div class='editableFieldNode-Value editableFieldNode-ValueType-" + 
+				//if it is a fixed choice child link, then change type handling to fixed choice style
+				(childLinkFixedChoice?"ChildLinkFixedChoice":valueType) +
 				"' " +
 				"id='editableFieldNode-Value-" +
 				(depth + "-" + uid) + "' " +
@@ -4481,7 +4495,8 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 			"editableFieldNode-Value-leafNode-ColumnName-" + nodeName +
 			"' " +
 			">";
-
+	
+	
 	if(valueType == "OnOff" || 
 			valueType == "YesNo" || 
 			valueType == "TrueFalse")
@@ -4506,6 +4521,67 @@ ConfigurationAPI.fillEditableFieldElement = function(fieldEl,uid,
 	else					
 		str += value;
 
+	str += "</div>";
+	
+	//make links to child subset configuration editor
+	if(isChildLink && 
+			value.indexOf("Table") == value.length - ("Table").length)
+	{
+		//make record alias with spaces instead of all one word
+		// and remove table
+		var recordAlias = "";
+		for(var c=0;c<value.length - ("Table").length;++c)
+		{
+			if(c && c+1 < value.length &&
+					(value[c] >= 'A' && 
+							value[c] <= 'Z') && 
+							(value[c+1] >= 'a' && 
+									value[c+1] <= 'z'))
+				recordAlias += ' ';
+			recordAlias += value[c];
+		}	
+		
+		var newWindowStr = "/WebPath/html/ConfigurationGUI_subset.html?urn=" + 
+				DesktopContent._localUrnLid + 
+				"&subsetBasePath=" + value +
+				"&groupingFieldList=AUTO" + 
+				"&recordAlias=" + recordAlias +
+				"&editableFieldList=" + "!*CommentDescription";
+		
+		str += "<div style='float:left; margin-left:9px;' " +
+				" id='editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) + "' " +
+				" class='" +
+				"editableFieldNode-ChildLink-SubConfigLink" +
+				"' " +
+				"onclick='" + 
+				"DesktopContent.openNewWindow(" +
+				"\"" + value +  
+				" Subset-Configuration\",\"\",\"" + 
+				//windowPath
+				newWindowStr +
+				"\",false /*unique*/);" +
+				"'" +
+				" title='Open " + value + " subset configuration in a new desktop window.' " +  
+				">Open Window</div>";
+		
+		str += "<div style='float:left; margin-left:9px;' " +
+				" id='editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) + "' " +
+				" class='" +
+				"editableFieldNode-ChildLink-SubConfigLink" +
+				"' " +
+				"onclick='" + 
+				"DesktopContent.openNewBrowserTab(" +
+				"\"" + value +  
+				" Subset-Configuration\",\"\",\"" + 
+				//windowPath
+				newWindowStr +
+				"\",false /*unique*/);" +
+				"'" +
+				" title='Open " + value + " subset configuration in a new browser tab.' " +  
+				">Open Tab</div>";
+	}
 
 	//Debug.log(str);
 
@@ -4597,6 +4673,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 			Debug.log("edit value mode");
 
 			selectThisTreeNode(idString,type);
+			//==================
 			function selectThisTreeNode(idString,type)
 			{				
 				//edit column entry in record
@@ -4662,7 +4739,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					str += "</select>";
 					if(optionIndex == -1) optionIndex = 0; //use False option by default					
 				}
-				else if(colType == "FixedChoiceData")
+				else if(colType == "FixedChoiceData" || 
+						colType == "ChildLinkFixedChoice")
 				{
 					ConfigurationAPI.editableFieldEditingOldValue_ = el.textContent;
 					ConfigurationAPI.editableFieldEditingInitValue_ = ConfigurationAPI.editableFieldEditingOldValue_;
@@ -4694,17 +4772,42 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 							idString);
 					var choices = vel.textContent.split(',');					
 					
+					var isChildLinkFixedChoice = colType == "ChildLinkFixedChoice";
+					
+					if(isChildLinkFixedChoice)
+					{
+						try
+						{
+							document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+									(depth + "-" + uid) ).style.display = "none";
+							document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+									(depth + "-" + uid) ).style.display = "none";
+						}
+						catch(e) {} //ignore errors
+					}
+					
+					if(choices.length > 1 && 
+							choices[1].indexOf("arbitraryBool=") == 0)
+					{
+						//found arbitraryBool flag								
+						allowFixedChoiceArbitraryEdit = 
+								choices[1][("arbitraryBool=").length] == "1"?
+										true:false;
+						Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);						
+					}
+						
 					for(var i=0;i<choices.length;++i)
-					{			
-						if(i==1)//check for arbitraryBool flag
+					{	
+						if(i == 0 && isChildLinkFixedChoice && !allowFixedChoiceArbitraryEdit)  
+						{
+							//skip default if child link fixed choice does not allow arbitrary edit
+							continue;							
+						}
+						else if(i==1)//check for arbitraryBool flag
 						{
 							if(choices[i].indexOf("arbitraryBool=") == 0)
 							{
-								//found arbitraryBool flag								
-								allowFixedChoiceArbitraryEdit = 
-										choices[i][("arbitraryBool=").length] == "1"?
-												true:false;
-								Debug.log("allowFixedChoiceArbitraryEdit " + allowFixedChoiceArbitraryEdit);
+								//found arbitraryBool flag, skip it								
 								continue;
 							}
 							else
@@ -4715,7 +4818,7 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 						}		
 						else
 							++optionCount; //count as an option in dropdown
-						
+												
 						
 						str += "<option>";
 						str += decodeURIComponent(choices[i]);	//can display however
@@ -4833,10 +4936,12 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
 					el.getElementsByTagName("select")[0].focus();
 				}
-				else if(colType == "FixedChoiceData")
+				else if(colType == "FixedChoiceData" || 
+						colType == "ChildLinkFixedChoice")
 				{
 					el.getElementsByTagName("select")[0].selectedIndex = optionIndex;
-					el.getElementsByTagName("select")[0].focus();				
+					el.getElementsByTagName("select")[0].focus();	
+					
 				}
 				else if(colType == "MultilineData")
 					ConfigurationAPI.setCaretPosition(el.getElementsByTagName("textarea")[0],0,ConfigurationAPI.editableFieldEditingOldValue_.length);
@@ -5118,6 +5223,19 @@ ConfigurationAPI.handleEditableFieldEditCancel = function()
 	if(!ConfigurationAPI.editableFieldEditingCell_) return;
 	Debug.log("handleEditableFieldEditCancel type " + ConfigurationAPI.editableFieldEditingNodeType_);
 
+	try //try to return link visibility
+	{
+		var idSplit = ConfigurationAPI.editableFieldEditingCell_.id.split('-');
+		var depth = idSplit[idSplit.length-2];
+		var uid = idSplit[idSplit.length-1];
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) ).style.display = "block";
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) ).style.display = "block";
+	}
+	catch(e) {} //ignore error
+
+
 	if(ConfigurationAPI.editableFieldEditingNodeType_ == "value-bool") 
 	{
 		//take old value as HTML for bool values
@@ -5141,6 +5259,17 @@ ConfigurationAPI.handleEditableFieldEditOK = function()
 	if(!ConfigurationAPI.editableFieldEditingCell_) return;
 	Debug.log("handleEditableFieldEditOK type " + ConfigurationAPI.editableFieldEditingNodeType_);
 		
+	try //try to return link visibility
+	{
+		var idSplit = ConfigurationAPI.editableFieldEditingCell_.id.split('-');
+		var depth = idSplit[idSplit.length-2];
+		var uid = idSplit[idSplit.length-1];
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkTab-" +
+				(depth + "-" + uid) ).style.display = "block";
+		document.getElementById("editableFieldNode-ChildLink-SubConfigLinkWindow-" +
+				(depth + "-" + uid) ).style.display = "block";
+	}
+	catch(e) {} //ignore error
 
 	var el = ConfigurationAPI.editableFieldEditingCell_;
 	var type = ConfigurationAPI.editableFieldEditingNodeType_;

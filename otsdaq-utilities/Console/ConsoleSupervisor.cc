@@ -184,9 +184,8 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
 
 			if(selfGeneratedMessageCount)
 				--selfGeneratedMessageCount;  // decrement internal message count
-			else
-				heartbeatCount =
-				    0;  // reset heartbeat if external messages are coming through
+			else // reset heartbeat if external messages are coming through
+				heartbeatCount = 0;
 
 			//__COUT__ << buffer << std::endl;
 
@@ -268,6 +267,8 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
 		// the forwarding is not working.
 		if(i == 120 || selfGeneratedMessageCount == 5)
 		{
+			__COUTV__(i);
+			__COUTV__(selfGeneratedMessageCount);
 			__COUT__ << "No messages received at Console Supervisor. Exiting Console "
 			            "messageFacilityReceiverWorkLoop"
 			         << std::endl;

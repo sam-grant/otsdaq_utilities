@@ -185,7 +185,7 @@ else {
 			str += "<div id='loginInputRememberMeDiv'>" +
 					"<div style='float:left; margin: -5px 0 0 89px;'><input type='checkbox' id='loginInputRememberMe' " +
 					(rememberMeName?"checked":"") + " /></div>" + 
-					"<div style='float: left; margin: -3px -50px 0px 6px;'><a href='#' onclick='var el=document.getElementById(\"loginInputRememberMe\"); el.checked = !el.checked;'>Remember me</a></div></div>";
+					"<div style='float: left; margin: -7px -50px 0px 6px;'><a href='#' onclick='var el=document.getElementById(\"loginInputRememberMe\"); el.checked = !el.checked;'>Remember me</a></div></div>";
 			str += "Password: <input id='loginInput1' type='password' /><br />";
 			str += "<div id='loginRetypeDiv' style='display:none' >Re-type Password: <input id='loginInput2' type='password' /><br /></div>";
 			str += "<div id='newAccountCodeDiv' style='display:none' >New Account Code: <input id='loginInput3' type='text' /><br /></div>";

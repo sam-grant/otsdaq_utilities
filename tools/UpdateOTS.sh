@@ -33,95 +33,37 @@ if [ "x$1" == "x" ]; then
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: to use ! at the end of your message put a space between the ! and the closing \""
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
     echo -e "UpdateOTS.sh [${LINENO}]  \t WARNING: without comment, script will only do git pull and git status"
+	echo -e "UpdateOTS.sh [${LINENO}]  "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --tables will not pull or push; it will just update tables."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --all will pull or push all repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  "
 fi
 
-echo
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t Finding paths..."
-
-SCRIPT_DIR="$( 
-  cd "$(dirname "$(readlink "$0" || printf %s "$0")")"
-  pwd -P 
-)"
-		
-echo -e "UpdateOTS.sh [${LINENO}]  \t Script directory found as: $SCRIPT_DIR"
-
- 
-#REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
-REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
-						
-
-for p in ${REPO_DIR[@]}; do
-    if [ -d $p ]; then
-    if [ -d $p/.git ]; then
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $(basename $p)"
-	fi
-    fi	   
-done
 
 
-
- 
-#######################################################################################################################
-
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
-
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
-echo -e "UpdateOTS.sh [${LINENO}]  \t Status will be logged here: $CHECKIN_LOG_PATH"
-
-
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
-
-echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
-for p in ${REPO_DIR[@]}; do
-    if [ -d $p ]; then
-    if [ -d $p/.git ]; then
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
-	cd $p
-	git pull
-	echo -e "UpdateOTS.sh [${LINENO}]  \t ==================" >> $CHECKIN_LOG_PATH
-	pwd >> $CHECKIN_LOG_PATH
-	git status &>> $CHECKIN_LOG_PATH
-	
-	if [ "x$1" != "x" ]; then
-		
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
-	    git commit -m "$1 " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
-	    git push   
-	fi
-
-	cd $CURRENT_AWESOME_BASE
-	echo
-	echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
-
-    fi	   
-    fi	   
-done
-
-
-
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
-
-
-#######################################################################################################################
-#handle manual updates that should take place ONLY if it is UPDATING not committing
-if [ "x$1" == "x" ]; then
-
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Update status will be logged here: $UPDATE_LOG_PATH"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Update log start:" > $UPDATE_LOG_PATH
+#############################
+#############################
+# function to update USER DATA configuration files and table definitions
+function updateUserData 
+{	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables..."
+			
 	
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################" 
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating USER_DATA path $USER_DATA,"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t based on the list in..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t "
-	echo -e "UpdateOTS.sh [${LINENO}]  \t \t $USER_DATA/ServiceData/CoreTableInfoNames.dat"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating USER_DATA path ${USER_DATA}..."
 	echo -e "UpdateOTS.sh [${LINENO}]  \t "
-	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory $OTSDAQ_DIR/data-core/TableInfo/ will be copied!"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Table info is updated based on the list in..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t \t ${USER_DATA}/ServiceData/CoreTableInfoNames.dat"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ... each line will be copied into user data relative to path ${OTSDAQ_DIR}/data-core/TableInfo/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t If CoreTableInfoNames.dat doesn't exist the whole directory ${OTSDAQ_DIR}/data-core/TableInfo/ will be copied!"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
 	echo
@@ -148,9 +90,11 @@ if [ "x$1" == "x" ]; then
 		#NOTE: relative paths are allowed from otsdaq/data-core/TableInfo
 		LAST_LINE=
 		while read line; do
-			#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
-			cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
-			LAST_LINE=${line}
+			if [[ "x${line}" != "x" && "${LAST_LINE}" != "${line}" ]]; then
+				#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/"						
+				cp $OTSDAQ_DIR/data-core/TableInfo/${line}Info.xml $USER_DATA/TableInfo/ #do not hide failures anymore --- &>/dev/null #hide output		
+				LAST_LINE=${line}
+			fi
 		done < $USER_DATA/ServiceData/CoreTableInfoNames.dat
 		
 		#do one more time after loop to make sure last line is read 
@@ -188,6 +132,123 @@ if [ "x$1" == "x" ]; then
 	chmod 755 $USER_DATA/TableInfo/*.xml #*/ just resetting comment coloring
 	echo -e "UpdateOTS.sh [${LINENO}]  \t chmod 755 $USER_DATA/TableInfo/*Info.xsd"
 	chmod 755 $USER_DATA/TableInfo/*Info.xsd #*/ just resetting comment coloring
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Reminder, table info is updated based on the list in..."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	echo -e "UpdateOTS.sh [${LINENO}]  \t \t ${USER_DATA}/ServiceData/CoreTableInfoNames.dat"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t "
+	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Done updating USER DATA."
+			
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t #######################################################################################################################"
+	echo
+	
+} # end updateUserData function
+export -f updateUserData
+
+GIT_COMMENT=$1
+ALL_REPOS=0
+TABLES_ONLY=0
+if [ "$1"  == "--tables" ]; then
+	TABLES_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables only!"
+	updateUserData
+	exit
+fi
+if [ "$1"  == "--all" ]; then
+	ALL_REPOS=1
+	
+	#clear git comment to avoid push
+	GIT_COMMENT=$2
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating all repositories (i.e. not only otsdaq)!"
+fi
+
+echo -e "UpdateOTS.sh [${LINENO}]  \t REPO_FILTER = ${REPO_FILTER}"
+echo
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t Finding paths..."
+
+SCRIPT_DIR="$( 
+  cd "$(dirname "$(readlink "$0" || printf %s "$0")")"
+  pwd -P 
+)"
+		
+echo -e "UpdateOTS.sh [${LINENO}]  \t Script directory found as: $SCRIPT_DIR"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Finding target repositories..."
+ 
+#REPO_DIR="$(find $SCRIPT_DIR/../../../srcs -maxdepth 1 -iname 'otsdaq*')" #old way before using MRB path
+if [ $ALL_REPOS = 1 ]; then
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname '*')"
+else
+	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
+fi
+						
+
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+    if [ -d $p/.git ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $(basename $p)"
+	fi
+    fi	   
+done
+
+
+
+ 
+#######################################################################################################################
+
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
+
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Status will be logged here: $CHECKIN_LOG_PATH"
+
+
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
+
+echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+    if [ -d $p/.git ]; then
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
+	cd $p
+	git pull
+	echo -e "UpdateOTS.sh [${LINENO}]  \t ==================" >> $CHECKIN_LOG_PATH
+	pwd >> $CHECKIN_LOG_PATH
+	git status &>> $CHECKIN_LOG_PATH
+	
+	if [ "x$GIT_COMMENT" != "x" ]; then
+		
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Checking in $p"
+	    git commit -m "$GIT_COMMENT " .  &>> $CHECKIN_LOG_PATH  #add space in comment for user
+	    git push   
+	fi
+
+	cd $CURRENT_AWESOME_BASE
+	echo
+	echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
+
+    fi	   
+    fi	   
+done
+
+
+
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
+
+
+#######################################################################################################################
+#handle manual updates that should take place ONLY if it is UPDATING not committing
+if [ "x$GIT_COMMENT" == "x" ]; then
+
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Update status will be logged here: $UPDATE_LOG_PATH"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Update log start:" > $UPDATE_LOG_PATH
+
+	updateUserData #call function
 	
 	#copy tutorial launching scripts
 	echo
@@ -197,14 +258,14 @@ if [ "x$1" == "x" ]; then
 	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
-	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../	
+	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	
 	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh
 	
 	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
 	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so do not get script
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_artdaq_tutorial.sh $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
-	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../	
+	#wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_artdaq_tutorial.sh -P $OTSDAQ_DIR/../../ --no-check-certificate	
 	#chmod 755 $OTSDAQ_DIR/../../reset_ots_artdaq_tutorial.sh
 	
 	echo
@@ -337,7 +398,7 @@ if [ "x$1" == "x" ]; then
 fi
 
 
-echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$1'"
+echo -e "UpdateOTS.sh [${LINENO}]  \t Git comment '$GIT_COMMENT'"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Check-in status was logged here: $CHECKIN_LOG_PATH"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Update status was logged here: $UPDATE_LOG_PATH"
 echo
@@ -357,6 +418,8 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
 
+		
+		
 
 
 

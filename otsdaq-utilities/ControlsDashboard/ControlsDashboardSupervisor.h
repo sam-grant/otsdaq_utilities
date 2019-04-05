@@ -8,7 +8,7 @@
 
 namespace ots
 {
-class ControlsVInterface;
+class SlowControlsVInterface;
 class ConfigurationManager;
 
 // ControlsDashboardSupervisor
@@ -55,7 +55,7 @@ private:
 	//SlowControlsInterface
     //AllSupervisorInfo 						allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
-    ControlsVInterface*                     interface_;
+    SlowControlsVInterface*                     interface_;
 //    ConfigurationManager*          			theConfigurationManager_;
 //    RemoteWebUsers							theRemoteWebUsers_;
 //	std::string                             username;
