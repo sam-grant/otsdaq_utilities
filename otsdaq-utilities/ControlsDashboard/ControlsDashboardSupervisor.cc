@@ -63,13 +63,8 @@ void ControlsDashboardSupervisor::init(void)
 			  pluginType
 			, node.getUIDAsString()
 			, CorePropertySupervisorBase::getContextTreeNode()
-<<<<<<< HEAD
-			, CorePropertySupervisorBase::supervisorConfigurationPath_);
-	__SUP_COUT__ << std::endl;
-=======
 			, CorePropertySupervisorBase::getSupervisorConfigurationPath());
 	__COUT__ << std::endl;
->>>>>>> 242d82024eaa57bacfde401c45a49227d7d86316
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
