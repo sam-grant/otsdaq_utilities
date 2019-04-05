@@ -18,27 +18,31 @@ CURRENT_AWESOME_BASE=$PWD
 CHECKIN_LOG_PATH=$CURRENT_AWESOME_BASE/.checkinAll.log
 UPDATE_LOG_PATH=$CURRENT_AWESOME_BASE/.updateAll.log
 
-echo 
-echo
-echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Your shell must be bash. If you received 'Expression Syntax' errors, please type 'bash' to switch."
-echo -e "UpdateOTS.sh [${LINENO}]  \t You are using $0"
-echo
-echo
+echo -e "UpdateOTS.sh [${LINENO}]  "
+echo -e "UpdateOTS.sh [${LINENO}]  \t ~~ UpdateOTS ~~ "
+echo -e "UpdateOTS.sh [${LINENO}]  "
+echo -e "UpdateOTS.sh [${LINENO}]  "
 
 #replace StartOTS.sh in any setup file!
 sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
-if [ "x$1" == "x" ]; then
-    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage Warning: parameter 1 is the comment for git commit"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Note: to use ! at the end of your message put a space between the ! and the closing \""
+if [ "x$1" == "x" ] || [[ "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+    echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
+	echo -e "UpdateOTS.sh [${LINENO}]  "
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
-    echo -e "UpdateOTS.sh [${LINENO}]  \t WARNING: without comment, script will only do git pull and git status"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
-	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --tables will not pull or push; it will just update tables."
-	echo -e "UpdateOTS.sh [${LINENO}]  \t parameter 1 --all will pull or push all repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pull                \t #will pull otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --push \"comment\"    \t #will push otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --pushall \"comment\" \t #will push all    repositories in srcs/ (i.e. not just otsdaq)."
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t parameter 1 --tables              \t #will not pull or push; it will just update tables."
+		
 	echo -e "UpdateOTS.sh [${LINENO}]  "
+	exit
 fi
 
+# at this point, there must have been a valid option
 
 
 #############################
@@ -148,21 +152,41 @@ function updateUserData
 } # end updateUserData function
 export -f updateUserData
 
-GIT_COMMENT=$1
+#clear git comment to avoid push
+GIT_COMMENT=
+
 ALL_REPOS=0
 TABLES_ONLY=0
+
 if [ "$1"  == "--tables" ]; then
 	TABLES_ONLY=1
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables only!"
 	updateUserData
 	exit
 fi
-if [ "$1"  == "--all" ]; then
+if [ "$1"  == "--pullall" ]; then
 	ALL_REPOS=1
-	
-	#clear git comment to avoid push
-	GIT_COMMENT=$2
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--pushall" ]; then
+	ALL_REPOS=1
+	GIT_COMMENT=$2
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--push" ]; then
+	GIT_COMMENT=$2
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq repositories!"
+fi
+if [ "$1"  == "--pull" ]; then		
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq repositories!"
 fi
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t REPO_FILTER = ${REPO_FILTER}"
