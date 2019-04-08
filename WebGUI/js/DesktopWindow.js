@@ -308,48 +308,50 @@ else {
 	   	this.windiv.appendChild(_winhdr); //add header to window	   	
 	   	
 			//create buttons
-                var tmpBtn = document.createElement("div");
-                tmpBtn.setAttribute("class", "DesktopWindowButton");
-                tmpBtn.setAttribute("id", "DesktopWindowButtonRefresh-" + _id);
-                tmpBtn.style.width = (_defaultButtonSize) +"px";
-                tmpBtn.style.height = (_defaultButtonSize) +"px";
-                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";
-                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";
-                tmpBtn.onmouseup = Desktop.handleWindowRefresh;
-                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
-                var tmpEl = document.createElement("div");
-                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicRefresh");
-                tmpEl.innerHTML = "↻";
-                tmpBtn.appendChild(tmpEl);
-                this.windiv.appendChild(tmpBtn); //add button to window 
+		var tmpContainer = document.createElement("div");
+		tmpContainer.setAttribute("style", "float:right;white-space:nowrap;");
+		var tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopWindowButton");
+		tmpBtn.setAttribute("id", "DesktopWindowButtonRefresh-" + _id);
+		tmpBtn.style.width = (_defaultButtonSize) +"px";
+		tmpBtn.style.height = (_defaultButtonSize) +"px";
+		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";
+		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";
+		tmpBtn.onmouseup = Desktop.handleWindowRefresh;
+		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+		var tmpEl = document.createElement("div");
+		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicRefresh");
+		tmpEl.innerHTML = "↻";
+		tmpBtn.appendChild(tmpEl);
+		tmpContainer.appendChild(tmpBtn); //add button to window 
 
-                var tmpBtn = document.createElement("div");
-                tmpBtn.setAttribute("class", "DesktopWindowButton");
-                tmpBtn.setAttribute("id", "DesktopWindowButtonMin-" + _id);
-                tmpBtn.style.width = (_defaultButtonSize) +"px"; 
-                tmpBtn.style.height = (_defaultButtonSize) +"px";                         
-                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
-                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
+		var tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopWindowButton");
+		tmpBtn.setAttribute("id", "DesktopWindowButtonMin-" + _id);
+		tmpBtn.style.width = (_defaultButtonSize) +"px"; 
+		tmpBtn.style.height = (_defaultButtonSize) +"px";                         
+		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
+		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
 		tmpBtn.onmouseup = Desktop.handleWindowMinimize;         
-                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
-                var tmpEl = document.createElement("div");
-                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMin");
-                tmpBtn.appendChild(tmpEl);                
-		this.windiv.appendChild(tmpBtn); //add button to window 
+		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+		var tmpEl = document.createElement("div");
+		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMin");
+		tmpBtn.appendChild(tmpEl);                
+		tmpContainer.appendChild(tmpBtn); //add button to window 
 
-                tmpBtn = document.createElement("div");
-                tmpBtn.setAttribute("class", "DesktopWindowButton");
-                tmpBtn.setAttribute("id", "DesktopWindowButtonMax-" + _id);
-                tmpBtn.style.width = (_defaultButtonSize) +"px"; 
-                tmpBtn.style.height = (_defaultButtonSize) +"px";                         
-                tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
-                tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
+		tmpBtn = document.createElement("div");
+		tmpBtn.setAttribute("class", "DesktopWindowButton");
+		tmpBtn.setAttribute("id", "DesktopWindowButtonMax-" + _id);
+		tmpBtn.style.width = (_defaultButtonSize) +"px"; 
+		tmpBtn.style.height = (_defaultButtonSize) +"px";                         
+		tmpBtn.style.marginLeft = (_defaultButtonLeftMargin) +"px";         
+		tmpBtn.style.marginTop = (_defaultButtonTopMargin) +"px";  
 		tmpBtn.onmouseup = Desktop.handleWindowMaximize;         
-                tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
-                var tmpEl = document.createElement("div");
-                tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMax");
-                tmpBtn.appendChild(tmpEl);                
-		this.windiv.appendChild(tmpBtn); //add button to window   
+		tmpBtn.onmousedown = Desktop.handleWindowButtonDown;
+		var tmpEl = document.createElement("div");
+		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicMax");
+		tmpBtn.appendChild(tmpEl);                
+		tmpContainer.appendChild(tmpBtn); //add button to window   
 		
 		tmpBtn = document.createElement("div");
 		tmpBtn.setAttribute("class", "DesktopWindowButton");
@@ -364,7 +366,10 @@ else {
 		tmpEl.setAttribute("class", "DesktopWindowButtonGraphicClose");
 		tmpEl.innerHTML = "x";
 		tmpBtn.appendChild(tmpEl);		
-	   	this.windiv.appendChild(tmpBtn); //add button to window	     
+		tmpContainer.appendChild(tmpBtn); //add button to window	  
+	   	
+
+		this.windiv.appendChild(tmpContainer); //add button container to window 
 		  	
 	   		//create iframe holder for displaying during window manipulations
 	   	_winfrmHolder = document.createElement("div"); 

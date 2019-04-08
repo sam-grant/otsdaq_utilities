@@ -746,13 +746,13 @@
 		
 		//handleFlattenSystemAliasesResponse ~
 		function handleFlattenSystemAliasesResponse(req) {
-			Debug.log("Attempting to Flatten System Aliases... " +
-					"\n\n Please wait 5 seconds and then reload the System View to verify changes.",
+			Debug.log("Attempting to Flatten System Aliases... ",
 					Debug.INFO_PRIORITY);
+			handleOtsRelaunchResponse(req,undefined,true /*isOther*/);
 		} //end handleFlattenSystemAliasesResponse()
 		
 		//handleFlattenSystemAliasesResponse ~
-		function handleOtsRelaunchResponse(req,isWiz) {
+		function handleOtsRelaunchResponse(req,isWiz,isOther) {
 			if(req) //if supervisor is killed, then req will be 0, which is a good sign of progress
 			{ 	//else check error response
 				var err = DesktopContent.getXMLValue(req,"Error");
@@ -766,21 +766,28 @@
 			var countDown = 10;
 			if(isWiz)
 				Debug.log("Attempting to restart your system in Wiz Mode... " +
-					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
+					"\n\n Please wait " + countDown + 
+					" seconds and then reload the System View to verify changes.",
 					Debug.INFO_PRIORITY);
 			else
 			{
 				countDown = 20;
-				Debug.log("Attempting to restart your system in Normal Mode... " +
-					"\n\n Please wait " + countDown + " seconds and then reload the System View to verify changes.",
-					Debug.INFO_PRIORITY);
+				if(!isOther)
+					Debug.log("Attempting to restart your system in Normal Mode... " +
+						"\n\n Please wait " + countDown + 
+						" seconds and then reload the System View to verify changes.",
+						Debug.INFO_PRIORITY);
+				else
+					Debug.log("\n\n Please wait " + countDown + 
+							" seconds and then reload the System View to verify changes.",
+						Debug.INFO_PRIORITY);
 			}
 			
 			localCountDown();
 			//=================
 			function localCountDown()
 			{
-				Debug.log("Waiting " + countDown + " seconds for startup sequence...",
+				Debug.log("Waiting " + countDown + " seconds operation...",
 						Debug.INFO_PRIORITY);
 
 				window.setTimeout(function() {
