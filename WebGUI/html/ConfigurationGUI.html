@@ -2739,8 +2739,9 @@
 			{
 				if(warn != lastTreeWarnStr_) 
 				{
-					Debug.log("If you had made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
+					Debug.log("If you made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
 					Debug.log(warn,Debug.WARN_PRIORITY);	
+					Debug.log("If you made changes to this tree, they may have been lost.",Debug.WARN_PRIORITY);
 				}
 				else
 					Debug.log(warn);
