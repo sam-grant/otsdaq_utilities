@@ -1539,8 +1539,8 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
     bool                                                      outputActiveTables,
     std::string*                                              accumulatedErrors) try
 {
-	if(accumulatedErrors)
-		*accumulatedErrors = "";
+	//if(accumulatedErrors)
+	//	*accumulatedErrors = "";
 
 	xmlOut.addTextElementToData("configGroup", groupName);
 	xmlOut.addTextElementToData("configGroupKey", groupKey.toString());
@@ -1549,7 +1549,13 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 
 	// reload all tables so that partially loaded tables are not allowed
 	if(usingActiveGroups || refreshAll)
+	{
+	 	__SUP_COUT__ << "Refreshing all table info..." << __E__;
 		cfgMgr->getAllTableInfo(true, accumulatedErrors);  // do refresh
+		
+		if(accumulatedErrors && *accumulatedErrors != "")
+			__SUP_COUTV__(*accumulatedErrors);
+	}
 
 	const std::map<std::string, TableInfo>& allTableInfo = cfgMgr->getAllTableInfo(false);
 
@@ -1564,8 +1570,8 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	}
 	else
 	{
-		__SUP_COUT__ << "Loading group '" << groupName << "(" << groupKey << ")'"
-		             << __E__;
+		__SUP_COUT__ << "Loading group '" << groupName << "(" << 
+			groupKey << ")'" << __E__;
 
 		std::string groupComment, groupAuthor, configGroupCreationTime;
 
