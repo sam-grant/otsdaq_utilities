@@ -532,6 +532,7 @@
 
 		var _contextMemberNames = [];
 		var _backboneMemberNames = [];
+		var _iterateMemberNames = [];
 		
 
 		var _contextMenuEl = 0;
@@ -606,7 +607,7 @@
 			//be careful to not override the window.onmousemove DesktopContent action
 			DesktopContent.mouseMoveSubscriber(bodyMouseMoveHandler); 
 			
-			//get context and backbone member list 
+			//get context, backbone, and iterate member list 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getContextMemberNames", "", 
 					function (req) 
 					{	
@@ -629,6 +630,18 @@
 				Debug.log(_backboneMemberNames);
 				if(_backboneMemberNames.length == 0) 
 					Debug.log("Empty backbone member list found!",Debug.HIGH_PRIORITY);
+					}); //end request handler
+			
+			DesktopContent.XMLHttpRequest("Request?RequestType=getIterateMemberNames", "", 
+					function (req)
+					{		
+				var memberNames = req.responseXML.getElementsByTagName("IterateMember");
+				_iterateMemberNames = []; //reset
+				for(var i=0;i<memberNames.length;++i)
+					_iterateMemberNames[i] = memberNames[i].getAttribute("value");
+				Debug.log(_iterateMemberNames);
+				if(_iterateMemberNames.length == 0) 
+					Debug.log("Empty iterate member list found!",Debug.HIGH_PRIORITY);
 					}); //end request handler
 
 			//============================
@@ -4904,6 +4917,7 @@
 
 				var context = _contextMemberNames;
 				var backbone = _backboneMemberNames;
+				var iterate = _iterateMemberNames;
 				var tableMap = "tableList=";
 				var found;
 				for(var i=0;i<tableNames.length;++i)
@@ -4923,6 +4937,14 @@
 							(groupType == 1 || groupType == 2))
 						for(var c in backbone)
 							if(name == backbone[c])
+							{	
+								found = true;
+								break;
+							}
+					
+					if(!found && groupType == 2)
+						for(var c in iterate)
+							if(name == iterate[c])
 							{	
 								found = true;
 								break;
@@ -5310,7 +5332,9 @@
 			
 			//use list of context/backbone configuration from server
 			var context = _contextMemberNames;
-			var backbone = _backboneMemberNames
+			var backbone = _backboneMemberNames;
+			var iterate = _iterateMemberNames;
+			
 			switch(i)
 			{
 			case 1: //check all
@@ -5355,6 +5379,12 @@
 						}
 					for(var c in backbone)
 						if(els[el].value == backbone[c])
+						{	
+							els[el].checked = false;
+							break;
+						}
+					for(var c in iterate)
+						if(els[el].value == iterate[c])
 						{	
 							els[el].checked = false;
 							break;
