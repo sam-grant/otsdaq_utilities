@@ -199,6 +199,7 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 	}
 	else if(Command == "getList")
 	{
+                __SUP_COUT__ << "PV List requested from server! " << std::endl;
 		GetList(cgiIn, xmlOut);
 	}
 	else if(Command == "getPages")
@@ -413,19 +414,19 @@ void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& 
 {
 
 	if(interface_ != NULL)
-    {
+    	{
     	
-    	__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
-        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-	    std::cout << " "	<< interface_->getList("JSON") << std::endl;
+    		__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
+        //	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+	    	std::cout << " "	<< interface_->getList("JSON") << std::endl;
 
-    	xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
-    }
-    else
-    {
-        __SUP_COUT__ << "Interface undefined! Failed to get list!" << std::endl;
-        xmlOut.addTextElementToData("JSON","[\"None\"]");
-    }
+    		xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
+    	}
+    	else
+    	{
+        	__SUP_COUT__ << "Interface undefined! Failed to get list!" << std::endl;
+        	xmlOut.addTextElementToData("JSON","[\"None\"]");
+    	}
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
