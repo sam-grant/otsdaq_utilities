@@ -215,7 +215,7 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 
 		loadPage(cgiIn, xmlOut, page);
 	}
-	__SUP_COUT__ << std::endl;
+	__SUP_COUT__ << "" << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
 } //end handleRequest
@@ -244,7 +244,6 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			// interface_->getCurrentPVValue(pv);
 			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
-
 			__SUP_COUT__ << pv << ": " << pvInformation[1] << " : " << pvInformation[3]
 			         << std::endl;
 
@@ -259,10 +258,10 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 				std::string time =
 			}*/
 
-				JSONMessage += "\"Timestamp\" : \"" + pvInformation[0] + "\",";
-				JSONMessage += "\"Value\"     : \"" + pvInformation[1] + "\",";
-				JSONMessage += "\"Status\"    : \"" + pvInformation[2] + "\",";
-				JSONMessage += "\"Severity\"  : \"" + pvInformation[3] + "\"},";
+				JSONMessage += "\"Timestamp\":\"" + pvInformation[0] + "\",";
+				JSONMessage += "\"Value\":\"" + pvInformation[1] + "\",";
+				JSONMessage += "\"Status\":\"" + pvInformation[2] + "\",";
+				JSONMessage += "\"Severity\":\"" + pvInformation[3] + "\"},";
 			}
 			else
 			{

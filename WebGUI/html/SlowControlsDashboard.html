@@ -689,8 +689,8 @@
 				var pvListJSON;
 				
 				//if invalid JSON return
-				try { pvListJSON = JSON.parse(jsonStr); }
-				catch(e){return;}
+				try {pvListJSON = JSON.parse(jsonStr); }
+				catch(e){console.log("Invalid JSON!"); return;}
 				
 				console.log(pvListJSON);
 				for (var x in pvListJSON)
@@ -751,12 +751,29 @@
 			}
 		
 			function pollServerHandlerFunction(req) {
-				//Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
-				var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				Debug.log("pollServerHandlerFunction() was called. Req: " + req.responseText);
+				//var serverResponse = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				//Debug.log(serverResponse);
+
+ 				var jsonStr = DesktopContent.getXMLValue(req, "JSON");
+				jsonStr = jsonStr.replace(/\s/g, ''); //hack for removing whitespace 
+    				if(!jsonStr || jsonStr == "") 
+					return;                           
+
+				Debug.log(jsonStr);                        
+
+				var serverResponse;                              
+                                //if invalid JSON return
+                                //try {serverResponse = JSON.parse(jsonStr); }
+                                //catch(e){console.log("Invalid JSON!"); return;}
+				
+				serverResponse = JSON.parse(jsonStr);
+
+				Debug.log(serverResponse);
 
 				if(serverResponse.message == "NOT_FOUND")
 				{
-					//console.log("Have to generate new UID!");
+					console.log("Have to generate new UID!");
 					generateUID();
 					timeToPoll_ = true;
 				}
@@ -765,16 +782,16 @@
 
 					for(var pv in serverResponse)//have to use each pv and then loop through
 					{	
-						//console.log("pollServerHandlerFunction: pv" + pv);						
+						console.log("pollServerHandlerFunction: pv" + pv);						
 						for (var widget in page_.widgets)
 						{
-							//console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
+							console.log("pollServerHandlerFunction: " + page_.widgets[widget]);
 							for(var dependendentPV in page_.widgets[widget].PVList)
 							{
-								//console.log(dependendentPV);
+								console.log(dependendentPV);
 								if(pv == dependendentPV && page_.widgets[widget].loaded != "false")
 								{
-									//console.log("Widget*************", widget, pv);
+									console.log("Widget*************", widget, pv);
 									document.getElementById(widget).contentWindow.newValue(pv, serverResponse[pv].Value, serverResponse[pv].Timestamp, serverResponse[pv].Status, serverResponse[pv].Severity);
 								}
 							}
@@ -828,7 +845,7 @@
 			function pollServer()
 			{
 				timeToPoll_ = false;
-				//Debug.log("pollServer");
+				Debug.log("pollServer: polling server!");
 				//console.log("UID is ", UID_);
 				DesktopContent.XMLHttpRequest("Request?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
 
@@ -842,7 +859,7 @@
 				//console.log("page: ", page_);
 				for (var widget in page_.widgets)
 				{
-					//console.log("generateUID: " +  page_.widgets[widget]);
+					console.log("generateUID: " +  page_.widgets[widget]);
 
 					for(var pv in page_.widgets[widget].PVList)
 					{
@@ -850,6 +867,8 @@
 						pvList += pv + ",";
 					}
 				}
+					
+				console.log(pvList);
 				
 				//END Put all pvs in a JSON and send to server
 
@@ -862,7 +881,7 @@
 			{
 				console.log(refreshRate_);
 				window.clearInterval(timerVariable_);
-				timerVariable_ = setInterval(pollServer, 500);//refreshRate_);
+				timerVariable_ = setInterval(pollServer, 2000);//refreshRate_);
 			}
 			
 			function loadPage(page)
@@ -910,8 +929,9 @@
 //					{
 //						refreshRate_ = refreshRate
 //					}
-//				} 
-				document.getElementById(widgetID).contentWindow.init();
+//				}
+				page_.widgets[widgetID].el.contentWindow.init(); 
+				//4.15.19 document.getElementById(widgetID).contentWindow.init();
 
 			}
 			
@@ -1126,6 +1146,8 @@
 				
 				if(editBlock_.isHidden)
 				{
+					//Make sure pv list is up-to-date
+					DesktopContent.XMLHttpRequest("Request?RequestType=getList", "", pvListReqHandler);
 					//window.clearInterval(timerVariable_);
 					mainBlock_.el.classList.add("editMode");
 //					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
