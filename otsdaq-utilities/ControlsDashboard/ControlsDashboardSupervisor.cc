@@ -3,6 +3,7 @@
 #include <dirent.h> //for DIR
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
+#include <thread>  //for std::thread
 
 #include "otsdaq-core/SlowControlsCore/SlowControlsVInterface.h"
 #include "otsdaq-core/PluginMakers/MakeSlowControls.h"
@@ -68,8 +69,19 @@ void ControlsDashboardSupervisor::init(void)
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
-	interface_->initialize();
-	//std::thread([&](){interface_->initialize();}).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
+	//interface_->initialize();
+	std::thread([](ControlsDashboardSupervisor* cs)
+		{
+			
+			// lockout the messages array for the remainder of the scope
+			// this guarantees the reading thread can safely access the messages
+			std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+		
+			cs->interface_->initialize();
+			
+			
+			
+		}, this).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
 
 } //end init()
 
@@ -149,6 +161,14 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 //
 	try
 	{
+	
+		if (!pluginBusyMutex_.try_lock()) 
+		{
+			__SUP_SS__ << "Controls plugin is busy!" << __E__;
+			__SUP_SS_THROW__;
+		}
+		
+	
 		__SUP_COUT__ << "User name is " << userInfo.username_ << "." << __E__;
 		__SUP_COUT__ << "User permission level for request '" << requestType << "' is " <<
 				unsigned(userInfo.permissionLevel_) << "." << __E__;
@@ -159,7 +179,7 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 	}
 	catch(const std::runtime_error& e)
 	{
-		__SS__ << "Error occurred handling request '" << requestType <<
+		__SUP_SS__ << "Error occurred handling request '" << requestType <<
 				"': " << e.what() << __E__;
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error",ss.str());
@@ -171,6 +191,8 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 		__SUP_COUT__ << ss.str();
 		xmlOut.addTextElementToData("Error",ss.str());
 	}
+	   		
+    pluginBusyMutex_.unlock();
 
 } //end request()
 //========================================================================================================================
@@ -214,7 +236,13 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 		         << std::endl;
 
 		loadPage(cgiIn, xmlOut, page);
-	}
+	} 
+	else if(Command == "savePage")
+        {
+        	std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
+                std::string page = CgiDataUtilities::getOrPostData(cgiIn, "Page");
+                SavePage(cgiIn, xmlOut, pageName, page);
+        }
 	__SUP_COUT__ << "" << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
@@ -521,6 +549,31 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 	std::cout << "Finished reading file" << std::endl;
 
 	xmlOut.addTextElementToData("JSON", JSONpage);  // add to response
+}
+//========================================================================================================================
+void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
+                                           HttpXmlDocument& xmlOut,
+                                           std::string      pageName,
+					   std::string	    page)
+{
+	std::string file = PAGES_DIRECTORY;
+        file += "/" + pageName;
+        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+                 << "Trying to save page: " << page << std::endl;
+        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+                 << "Trying to save page as: " << file << std::endl;
+        // read file
+        // for each line in file
+
+        std::ofstream outputFile;
+	outputFile.open(file);
+
+        outputFile << page;
+	outputFile.close();
+
+	std::cout << "Finished writing file" << std::endl;
+	
+	return;
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::Subscribe(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)

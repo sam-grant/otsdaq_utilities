@@ -334,6 +334,21 @@
 				window.parent.toggleFileMenu();
 			}
 
+			function save()
+			{
+				Debug.log("Saving....");
+				Debug.log(window.parent.pvList_);
+                                window.parent.savePage();
+			}
+
+                        function saveAs()
+                        {
+	                	Debug.log("Saving As....");
+				Debug.log(window.parent.pvList_);
+				window.parent.savePageAs();
+
+                        }
+
 			function redrawWindow(clicked, hover) {
 				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
 				
@@ -390,7 +405,9 @@
 					closeButton.innerHTML = "Close";
 					
 					closeButton.onclick = function(){close();};
-					
+					saveButton.onclick = function(){save();};
+					saveAsButton.onclick = function(){saveAs();};
+	
 					document.getElementById("saveli").appendChild(saveButton);
 					document.getElementById("saveli").appendChild(saveAsButton);
 					document.getElementById("saveli").appendChild(closeButton);

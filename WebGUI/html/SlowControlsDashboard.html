@@ -527,7 +527,7 @@
 			var mainBlock_ = {name:"", isHidden:false, el:""};// = ["mainBlock", false ];
 			var editBlock_ = {name:"", isHidden:true, el:""};// = [false ];
 			var page_ = page_ || {}; //define the namespace
-			var refreshRate_ = -1;
+			var refreshRate_ = 15000;  //set default to refresh every 15 seconds (ms)
 			var timerVariable_;
 			var UID_ = 0;
 			var timeToPoll_ = false;
@@ -550,6 +550,7 @@
 			
 			page_.createPage = function(){
 				
+				this.name = "MyPage";
 				this.widgets = {};
 				this.addPV = function(pv){
 					console.log("Reached " + pv);
@@ -612,10 +613,25 @@
 				
 				//console.log("editBlock_.hidden : " + editBlock_.hidden);
 				//COMMENTED(4.8.19)DesktopContent.XMLHttpRequest("Request?RequestType=getPages", "", pagesReqHandler);//, undefined, undefined, "sequence");	
+			 	DesktopContent.XMLHttpRequest(
+                                	"Request?RequestType=getPages",
+                                         "", 
+                                         pagesReqHandler,
+                                         0 /*reqParam*/, 
+                                         0 /*progressHandler*/, 
+                                         0 /*callHandlerOnErr*/, 
+                                         true /*doNoShowLoadingOverlay*/);
 				pagesList_ = "Loading";
 				//get frame and set some text to loading
 
-				DesktopContent.XMLHttpRequest("Request?RequestType=getList", "", pvListReqHandler);
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=getList",
+					"", 
+					pvListReqHandler,
+					0 /*reqParam*/, 
+					0 /*progressHandler*/, 
+					0 /*callHandlerOnErr*/, 
+					true /*doNoShowLoadingOverlay*/);
 
 				var fileFrame = document.createElement("iframe");
 				fileFrame.id = "fileFrame";
@@ -731,20 +747,22 @@
 							if(page[widget].PVList[pv] < refreshRate_)
 							{
 								refreshRate_ = page[widget].PVList[pv];
-								updateRefreshInterval();
+								//updateRefreshInterval();
 							}
 							else if(refreshRate_ <= 0)
 							{
 								refreshRate_ = page[widget].PVList[pv];
-								updateRefreshInterval();
+								//updateRefreshInterval();
 							}
 						} 
 					}
 					//END Determine how quickly we have to poll the server
 					drawWidget(widget, false, page[widget].x, page[widget].y, page[widget].size_x, page[widget].size_y);	
 				}
+
+				updateRefreshInterval();
 				
-		    	pageOffSetX_ = 0;
+		    		pageOffSetX_ = 0;
 				pageOffSetY_ = 0;
 				redrawWindow();
 				turnOnWidgets();
@@ -829,7 +847,13 @@
 				page_.widgets[id].el.contentWindow.setupPVs(settings);
 
 			}
-			
+		
+			function savePageReqHandler(req) {
+				var response = req.responseText;
+				Debug.log(response);
+
+			}
+	
 			function handlerFunction(req) {
 				//Debug.log("handlerFunction() was called. Req: " + req.responseText);
 
@@ -847,7 +871,14 @@
 				timeToPoll_ = false;
 				Debug.log("pollServer: polling server!");
 				//console.log("UID is ", UID_);
-				DesktopContent.XMLHttpRequest("Request?RequestType=poll&uid=" + UID_, "", pollServerHandlerFunction);//, undefined, undefined, "sequence");	
+				DesktopContent.XMLHttpRequest(
+					"Request?RequestType=poll&uid=" + UID_,
+					"", 
+					pollServerHandlerFunction /*returnHandler*/, 
+					0 /*reqParam*/, 
+					0 /*progressHandler*/, 
+					0 /*callHandlerOnErr*/, 
+					true /*doNoShowLoadingOverlay*/);	
 
 			}
 			
@@ -881,7 +912,7 @@
 			{
 				console.log(refreshRate_);
 				window.clearInterval(timerVariable_);
-				timerVariable_ = setInterval(pollServer, 2000);//refreshRate_);
+				timerVariable_ = setInterval(pollServer, refreshRate_);
 			}
 			
 			function loadPage(page)
@@ -890,6 +921,26 @@
 				
 			}
 			
+			function savePage() {
+				SavePageAs(page_.name); 
+			}
+
+			function savePageAs(pageName) {
+			
+				Debug.log("Page name: " + pageName);
+				page_.name = pageName;
+				var msg = JSON.stringify(page_);
+				Debug.log(msg);
+				DesktopContent.XMLHttpRequest(
+                                	"Request?RequestType=savePage&PageName=" + page_.name,
+					"Page=" + msg, 
+ 					savePageReqHandler,
+ 					0 /*reqParam*/, 
+                                        0 /*progressHandler*/, 
+                                        0 /*callHandlerOnErr*/, 
+                                        true /*doNoShowLoadingOverlay*/);
+			}
+
 			
 			function setupWidget(id, parameters)
 			{
@@ -1147,7 +1198,15 @@
 				if(editBlock_.isHidden)
 				{
 					//Make sure pv list is up-to-date
-					DesktopContent.XMLHttpRequest("Request?RequestType=getList", "", pvListReqHandler);
+					DesktopContent.XMLHttpRequest(
+						"Request?RequestType=getList",
+						"", 
+						pvListReqHandler /*returnHandler*/, 
+						0 /*reqParam*/, 
+						0 /*progressHandler*/, 
+						0 /*callHandlerOnErr*/, 
+						false /*doNoShowLoadingOverlay*/);
+						
 					//window.clearInterval(timerVariable_);
 					mainBlock_.el.classList.add("editMode");
 //					cover.style.backgroundColor = "rgba(0,0,0,0.4)";
@@ -1187,7 +1246,7 @@
 					{
 						for(widgetCover in covers)
 						{
-							covers[widgetCover].style["z-index"] = "-9";
+							//COMMENTED 4.18.19 covers[widgetCover].style["z-index"] = "-9";
 						}
 					}
 					//dissable all right clicks

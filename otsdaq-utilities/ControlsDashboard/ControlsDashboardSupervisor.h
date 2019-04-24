@@ -35,12 +35,13 @@ public:
     virtual void			forceSupervisorPropertyValues				(void) override; //override to force supervisor property values (and ignore user settings)
 
 
-    void Poll                                    (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID) 	;
-    void GetPVSettings                           (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList);
-    void GenerateUID                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist);
+    void Poll                                    (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string UID) 			;
+    void GetPVSettings                           (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvList)			;
+    void GenerateUID                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pvlist)			;
     void GetList                                 (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
     void GetPages                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 				 	;
-    void loadPage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page)	;
+    void loadPage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string page)                       ;
+    void SavePage                                (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut, std::string pageName, std::string page)	;
     void Subscribe                               (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
     void Unsubscribe                             (cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut) 					;
 
@@ -55,13 +56,16 @@ private:
 	//SlowControlsInterface
     //AllSupervisorInfo 						allSupervisorInfo_;
 	//EpicsInterface                        * interface_;
-    SlowControlsVInterface*                     interface_;
+    
 //    ConfigurationManager*          			theConfigurationManager_;
 //    RemoteWebUsers							theRemoteWebUsers_;
 //	std::string                             username;
 	std::map<int, std::set<std::string>> 	pvDependencyLookupMap_;
 	int										UID_;
 
+public:
+	SlowControlsVInterface*                 interface_;
+	std::mutex                            	pluginBusyMutex_;
 
 };
 }
