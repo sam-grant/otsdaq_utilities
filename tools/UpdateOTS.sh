@@ -26,12 +26,14 @@ echo -e "UpdateOTS.sh [${LINENO}]  "
 #replace StartOTS.sh in any setup file!
 sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
-if [ "x$1" == "x" ] || [[ "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchall            \t #will fetch otsdaq repositories in srcs/"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull otsdaq repositories in srcs/"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push otsdaq repositories in srcs/"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
@@ -158,6 +160,8 @@ GIT_COMMENT=
 ALL_REPOS=0
 TABLES_ONLY=0
 
+FETCH_ONLY=0
+
 if [ "$1"  == "--tables" ]; then
 	TABLES_ONLY=1
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Updating tables only!"
@@ -187,6 +191,16 @@ if [ "$1"  == "--push" ]; then
 fi
 if [ "$1"  == "--pull" ]; then		
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq repositories!"
+fi
+
+if [ "$1"  == "--fetchall" ]; then
+	ALL_REPOS=1
+	FETCH_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching all repositories (i.e. not only otsdaq)!"
+fi
+if [ "$1"  == "--fetch" ]; then		
+	FETCH_ONLY=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching otsdaq repositories!"
 fi
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t REPO_FILTER = ${REPO_FILTER}"
@@ -237,9 +251,17 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
+	
 	cd $p
-	git pull
+	
+	if [ $FETCH_ONLY = 1 ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Fetching updates from $p"
+		git fetch
+	else
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling updates from $p"
+		git pull
+	fi
+	
 	echo -e "UpdateOTS.sh [${LINENO}]  \t ==================" >> $CHECKIN_LOG_PATH
 	pwd >> $CHECKIN_LOG_PATH
 	git status &>> $CHECKIN_LOG_PATH
@@ -267,7 +289,7 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 
 #######################################################################################################################
 #handle manual updates that should take place ONLY if it is UPDATING not committing
-if [ "x$GIT_COMMENT" == "x" ]; then
+if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update status will be logged here: $UPDATE_LOG_PATH"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Update log start:" > $UPDATE_LOG_PATH
