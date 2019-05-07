@@ -258,9 +258,10 @@
 			
 			function dir(parentElement, path, fullPathToPage)
 			{
-				//var parentElement = document.getElementById(baseDir);
-				var ol;
-				var pathToPath;
+			    //var parentElement = document.getElementById(baseDir);
+			    var ol;
+			    var pathToPath;
+
 			    if(fullPathToPage != path)
 			    	parentID = (fullPathToPage.substring(0, fullPathToPage.search(path)));
 			    else
@@ -300,23 +301,23 @@
 					{
 						var li = document.createElement("li");
 						li.id = path.substring(0, path.search("/")) + "-li";
-					    var input = document.createElement("input");
-					    input.type = "checkbox";
-					    input.id = path.substring(0, path.search("/"));
-					    var label = document.createElement("label");
-					    label.htmlFor = input.id;
-					    label.innerHTML = input.id
+					    	var input = document.createElement("input");
+					    	input.type = "checkbox";
+					    	input.id = path.substring(0, path.search("/"));
+					    	var label = document.createElement("label");
+					    	label.htmlFor = input.id;
+					    	label.innerHTML = input.id
 					    
-					    ol = document.createElement("ol");
- 					    ol.id = parentID + "-ol";
+					    	ol = document.createElement("ol");
+						ol.id = parentID + "-ol";
 					    
-					    li.appendChild(label);
-					    li.appendChild(input);
-					    li.appendChild(ol);
-					    parentElement.appendChild(li);
+					    	li.appendChild(label);
+					    	li.appendChild(input);
+					    	li.appendChild(ol);
+					    	parentElement.appendChild(li);
 
 					    
-					    //console.log(path.substring(path.search("/") + 1));
+					    	//console.log(path.substring(path.search("/") + 1));
 						dir(ol, path.substring(path.search("/") + 1), fullPathToPage);
 
 					}
@@ -338,16 +339,16 @@
 			{
 				Debug.log("Saving....");
 				Debug.log(window.parent.pvList_);
-                                window.parent.savePage();
-			}
+                window.parent.document.getElementById("mailbox").innerHTML = "Save";
+            }
 
-                        function saveAs()
-                        {
-	                	Debug.log("Saving As....");
+            function saveAs()
+            {
+	            Debug.log("Saving As....");
 				Debug.log(window.parent.pvList_);
-				window.parent.savePageAs();
+                window.parent.document.getElementById("mailbox").innerHTML = "SaveAs";
 
-                        }
+            }
 
 			function redrawWindow(clicked, hover) {
 				Debug.log("redrawWindow() to " + window.innerWidth + " - " + window.innerHeight);
@@ -389,7 +390,7 @@
 					//console.log(window.parent.pagesList_);
 					
 					window.parent.pagesList_.forEach(function(page){
-						dir(document.getElementById("pagesFolder-ol"), page, page)
+						if(page != "undefined"){dir(document.getElementById("pagesFolder-ol"), page, page)} //FIXME, if pass undefined as filename -> throws error
 					});
 						
 					var saveButton = document.createElement("button");
