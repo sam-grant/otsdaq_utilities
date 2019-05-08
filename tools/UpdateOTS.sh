@@ -305,7 +305,7 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	#echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh"
 	#cp $OTSDAQ_DIR/../otsdaq_demo/tools/reset_ots_tutorial.sh $OTSDAQ_DIR/../../reset_ots_tutorial.sh
 	wget https://cdcvs.fnal.gov/redmine/projects/otsdaq/repository/demo/revisions/develop/raw/tools/reset_ots_tutorial.sh -P $MRB_SOURCE/../ --no-check-certificate	
-	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh
+	chmod 744 $MRB_SOURCE/../reset_ots_tutorial.sh
 	
 	rm $MRB_SOURCE/../reset_ots_artdaq_tutorial.sh &>/dev/null 2>&1 #hide output
 	#now there is only one reset_tutorial script (that includes the artdaq tutorial), so do not get script
