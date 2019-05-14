@@ -127,7 +127,9 @@ function updateUserData
 	
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/"
 	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_Wizard_CMake.xml $USER_DATA/XDAQConfigurations/
-	
+	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/"
+	cp $OTSDAQ_DIR/data-core/XDAQConfigurations/otsConfigurationNoRU_MacroMaker_CMake.xml $USER_DATA/XDAQConfigurations/
+		
 	echo -e "UpdateOTS.sh [${LINENO}]  \t cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/"
 	cp $OTSDAQ_DIR/data-core/MessageFacilityConfigurations/* $USER_DATA/MessageFacilityConfigurations/ # undo c++ style comment for Eclipse viewing*/
 		
@@ -437,6 +439,15 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t Update status (not shown above) was logged
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo
+
+for p in ${REPO_DIR[@]}; do
+    if [ -d $p ]; then
+    if [ -d $p/.git ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory handled: $(basename $p)"
+	fi
+    fi	   
+done
+
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"
