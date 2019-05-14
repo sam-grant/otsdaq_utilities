@@ -275,7 +275,7 @@ DesktopContent.getParameter = function(index,name) {
 			spliti = params[index].indexOf('=');
 			if(spliti < 0) continue; //poorly formed parameter?	
 			vs = [params[index].substr(0,spliti),params[index].substr(spliti+1)];
-			if(vs[0] == name)
+			if(decodeURIComponent(vs[0]) == name)
 				return decodeURIComponent(vs[1]);
 		}
 		return; //return undefined .. name not found

@@ -533,6 +533,7 @@
 			var timeToPoll_ = false;
 			var hiddenWidth_;
 			var unhiddenWidth_;
+			var mailbox_;
 			//BEGIN 
 			var xPos_;
 			var yPos_;
@@ -574,6 +575,10 @@
 				
 				Debug.log("init() was called");
 
+				var parameterPageName = DesktopContent.getParameter(0,"page_name");
+				
+				Debug.log("Parameter filename: " + parameterPageName);
+				
 				fileBlock_.el = document.getElementById('fileBlock');//red
 				mainBlock_.el = document.getElementById('mainBlock');//yellow
 				editBlock_.el = document.getElementById('editBlock');//green
@@ -606,7 +611,8 @@
 				menu_= document.getElementById("contextMenu");
 				//menu_.addEventListener("mouseleave", toggleContextMenuOff, true);
 				hud_ = document.getElementById("coordinatesHUD");
-				
+				mailbox_ = document.getElementById("mailbox");
+				var myTimer = setInterval(checkMailbox, 1000);
 //				addPVMenuDiv_ = document.getElementById("addPVMenuDiv");
 //				addPVMenu_ = document.getElementById("addPVMenu");
 
@@ -624,14 +630,14 @@
 				pagesList_ = "Loading";
 				//get frame and set some text to loading
 
-				DesktopContent.XMLHttpRequest(
-					"Request?RequestType=getList",
-					"", 
-					pvListReqHandler,
-					0 /*reqParam*/, 
-					0 /*progressHandler*/, 
-					0 /*callHandlerOnErr*/, 
-					true /*doNoShowLoadingOverlay*/);
+//				DesktopContent.XMLHttpRequest(
+//					"Request?RequestType=getList",
+//					"", 
+//					pvListReqHandler,
+//					0 /*reqParam*/, 
+//					0 /*progressHandler*/, 
+//					0 /*callHandlerOnErr*/, 
+//					true /*doNoShowLoadingOverlay*/);
 
 				var fileFrame = document.createElement("iframe");
 				fileFrame.id = "fileFrame";
@@ -671,7 +677,36 @@
 				window.onresize = redrawWindow;
 				redrawWindow(); //redraw window for first time
 				
-			}	
+			}
+
+            function checkMailbox(){
+            	if(mailbox_.innerHTML != "")
+            	{
+            		Debug.log("There is new mail: " + mailbox_.innerHTML);
+            		var msg = mailbox_.innerHTML;
+            		mailbox_.innerHTML = "";
+            		handleMail(msg);
+           		}
+            }
+            
+            function handleMail(mail) {
+            	
+            	if(mail == "Save") {
+            		savePage();
+
+            	}
+            	else if(mail == "SaveAs") {
+     				savePageAs("Default");
+            	}
+            	else
+            	{
+            		
+            		Debug.log("Don't know what to do with mail: " + mail);
+            	}
+            	
+            }
+            
+	
 			function pagesReqHandler(req){
 			
 				pagesList_ = []; //overwrite the loading text
@@ -723,12 +758,12 @@
 		
 			
 			function loadPageReqHandler(req) {
-				//Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
+				Debug.log("loadPageReqHandler() was called. Req: " + req.responseText);
 				//console.log(req.responseText);
 				toggleFileMenu();
-				var page = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
-				//console.log(page);
-				
+				page_ = JSON.parse(DesktopContent.getXMLValue(req, "JSON"));
+				console.log(page_);
+				/*
 				page_.createPage;
 				page_.widgets = {};
 				clearBlock(mainBlock_.el);
@@ -758,11 +793,17 @@
 					}
 					//END Determine how quickly we have to poll the server
 					drawWidget(widget, false, page[widget].x, page[widget].y, page[widget].size_x, page[widget].size_y);	
+				*/
+				
+				for (var widget in page_.widgets)
+				{
+					console.log(widget + " " + page_.widgets[widget].x + " " + page_.widgets[widget].y + " " + page_.widgets[widget].size_x + " " + page_.widgets[widget].size_y);
+					drawWidget(widget, false, page_.widgets[widget].x, page_.widgets[widget].y, page_.widgets[widget].size_x, page_.widgets[widget].size_y);	
 				}
 
 				updateRefreshInterval();
 				
-		    		pageOffSetX_ = 0;
+		    	pageOffSetX_ = 0;
 				pageOffSetY_ = 0;
 				redrawWindow();
 				turnOnWidgets();
@@ -922,17 +963,20 @@
 			}
 			
 			function savePage() {
-				SavePageAs(page_.name); 
+				savePageAs("MyFirstPage.dat"); 
 			}
 
 			function savePageAs(pageName) {
 			
 				Debug.log("Page name: " + pageName);
-				page_.name = pageName;
-				var msg = JSON.stringify(page_);
+				this.page_.name = pageName;
+				var msg = JSON.stringify(this.page_);
+
 				Debug.log(msg);
+					
+					
 				DesktopContent.XMLHttpRequest(
-                                	"Request?RequestType=savePage&PageName=" + page_.name,
+                                	"Request?RequestType=savePage&PageName=" + this.page_.name,
 					"Page=" + msg, 
  					savePageReqHandler,
  					0 /*reqParam*/, 
@@ -1076,7 +1120,7 @@
 				{
 					if(typeof page_.widgets == 'undefined')
 					{
-						page_.widgets = [];
+						page_.widgets = {};
 					}
 					
 					widgetFrame.id = "widget" + Object.keys(page_.widgets).length;//page[widget].Display_Name;
@@ -1089,7 +1133,7 @@
 						}
 					}
 					
-					var widgetObject = [];
+					var widgetObject = {};
 					widgetObject.type = widget;
 
 					widgetObject.size_x = width;
@@ -2275,6 +2319,7 @@
 			<div class="editWidgetAttributesPopup-footer" id="editWidgetAttributesPopup-footer"></div>
 		</div>
 		<datalist id="pvDatalist"></datalist>
+		<p hidden id="mailbox"></p>
 		
 	</body>
 	

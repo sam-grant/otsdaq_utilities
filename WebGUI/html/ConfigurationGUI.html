@@ -573,6 +573,7 @@
 		
 		var _memberMapForGroupSave = {}; //used by saveTableGroupAsNewKey()
 	
+		var firstInit_ = true;
 		
 		
 		//init called once body has loaded
@@ -723,10 +724,12 @@
 				
 
 				DesktopContent.XMLHttpRequest("Request?RequestType=getGroupAliases&" +
-						"reloadActiveGroups=1", //reload persistent active groups (persistent active config group will be modified when state machine configures) 
+						"reloadActiveGroups=" + (firstInit_?"0":"1"), //reload persistent active groups (persistent active config group will be modified when state machine configures) 
 						"", 
 						groupAliasesRequestHandler,anchorTarget,
 						0/*progressHandler*/,true /*callHandlerOnErr*/);	
+						
+				firstInit_ = false;
 								}); //end getLastTableGroups
 								
 

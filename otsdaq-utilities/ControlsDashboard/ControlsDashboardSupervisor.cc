@@ -161,10 +161,11 @@ void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc:
 //
 	try
 	{
-	
-		if (!pluginBusyMutex_.try_lock()) 
+		
+		if (requestType != "getPages" &&
+			!pluginBusyMutex_.try_lock()) 
 		{
-			__SUP_SS__ << "Controls plugin is busy!" << __E__;
+			__SUP_SS__ << "Controls plugin is still initializing. Please try again in a few minutes!" << __E__;
 			__SUP_SS_THROW__;
 		}
 		
@@ -557,7 +558,14 @@ void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
 					   std::string	    page)
 {
 	std::string file = PAGES_DIRECTORY;
-        file += "/" + pageName;
+        file += pageName;
+
+        std::string extension = file.substr(file.length() -4 , 4);
+        if(extension != ".dat")
+        {
+             __SUP_COUT__ << "Extension : " << extension << std::endl;
+             file += std::string(".dat");
+        }
         __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
                  << "Trying to save page: " << page << std::endl;
         __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()

@@ -141,6 +141,14 @@ else {
 
 			if(!Desktop.isWizardMode()) 
 		    { //This is satisfied for  Digest Access Authorization and No Security on OTS
+		    	
+		    	var err;
+		    	if((err = Desktop.getXMLValue(req,"Error")) && err != "")
+		    	{
+		    		Debug.log("Error: " + err, Debug.HIGH_PRIORITY);
+		    		return;		    		
+		    	}
+		    	
 		    	iconArray = Desktop.getXMLValue(req,"iconList"); 
 				//Debug.log("icon Array unsplit: " + iconArray);
 				iconArray = iconArray.split(","); 
