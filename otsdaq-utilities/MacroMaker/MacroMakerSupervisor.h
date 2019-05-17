@@ -31,6 +31,17 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	                                                            // settings)
 
   private:
+
+
+	//start MacroMaker only functions
+	void        generateURL(void);
+	void verification(xgi::Input* in, xgi::Output* out) throw(xgi::exception::Exception);
+	void requestIcons(xgi::Input* in, xgi::Output* out) throw(xgi::exception::Exception);
+	void tooltipRequest(xgi::Input*  in,xgi::Output* out) throw(xgi::exception::Exception);
+	void requestWrapper(xgi::Input* in, xgi::Output* out);
+	//end MacroMaker only functions
+
+
 	void handleRequest(const std::string  Command,
 	                   HttpXmlDocument&   xmldoc,
 	                   cgicc::Cgicc&      cgi,
@@ -95,6 +106,9 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	    FEPluginTypetoFEsMap_;
 	std::map<std::string /*FE UID*/, std::string /*FE Type*/>
 	    FEtoPluginTypeMap_;
+
+	std::string              securityCode_;
+	bool                     defaultSequence_;
 
 };  // end MacroMakerSupervisor declaration
 

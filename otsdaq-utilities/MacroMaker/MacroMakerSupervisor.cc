@@ -30,6 +30,12 @@
 #define MACROS_HIST_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroHistory/"
 #define MACROS_EXPORT_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroExport/"
 
+
+#define SEQUENCE_FILE_NAME \
+	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
+#define SEQUENCE_OUT_FILE_NAME \
+	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
+
 using namespace ots;
 
 #undef __MF_SUBJECT__
@@ -53,8 +59,19 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	           "FECommunication",
 	           XDAQ_NS_URI);
 
+	//start requests for MacroMaker only mode
+	if(CorePropertySupervisorBase::allSupervisorInfo_.isMacroMakerMode())
+	{
+		xgi::bind(this, &MacroMakerSupervisor::requestIcons, "requestIcons");
+		xgi::bind(this, &MacroMakerSupervisor::verification, "Verify");
+		xgi::bind(this, &MacroMakerSupervisor::tooltipRequest, "TooltipRequest");
+		xgi::bind(this, &MacroMakerSupervisor::requestWrapper, "Request");
+		generateURL();
+	}
+	//end requests for MacroMaker only mode
+
 	init();
-}
+} //end constructor
 
 //========================================================================================================================
 MacroMakerSupervisor::~MacroMakerSupervisor(void) { destroy(); }
@@ -66,7 +83,8 @@ void MacroMakerSupervisor::init(void)
 
 	// MacroMaker should consider all FE compatible types..
 	allFESupervisorInfo_ = allSupervisorInfo_.getAllFETypeSupervisorInfo();
-}
+
+} //end init()
 
 //========================================================================================================================
 void MacroMakerSupervisor::destroy(void)
@@ -81,7 +99,328 @@ void MacroMakerSupervisor::forceSupervisorPropertyValues()
 {
 	//	CorePropertySupervisorBase::setSupervisorProperty(CorePropertySupervisorBase::SUPERVISOR_PROPERTIES.NeedUsernameRequestTypes,
 	//			"getPermission");
-}
+} // end forceSupervisorPropertyValues()
+
+//========================================================================================================================
+void MacroMakerSupervisor::tooltipRequest(xgi::Input*  in,
+                                      xgi::Output* out) throw(xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+
+	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
+	//__COUT__ << "Command = " << Command << std::endl;
+
+	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+
+	// SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!"
+		         << std::endl;
+		return;
+	}
+//	else
+//	{
+//		__COUT__ << "***Successfully authenticated security sequence." << std::endl;
+//	}
+	// SECURITY CHECK END ****
+
+	HttpXmlDocument xmldoc;
+
+	if(Command == "check")
+	{
+		WebUsers::tooltipCheckForUsername(WebUsers::DEFAULT_ADMIN_USERNAME,
+		                                  &xmldoc,
+		                                  CgiDataUtilities::getData(cgi, "srcFile"),
+		                                  CgiDataUtilities::getData(cgi, "srcFunc"),
+		                                  CgiDataUtilities::getData(cgi, "srcId"));
+	}
+	else if(Command == "setNeverShow")
+	{
+		WebUsers::tooltipSetNeverShowForUsername(
+		    WebUsers::DEFAULT_ADMIN_USERNAME,
+		    &xmldoc,
+		    CgiDataUtilities::getData(cgi, "srcFile"),
+		    CgiDataUtilities::getData(cgi, "srcFunc"),
+		    CgiDataUtilities::getData(cgi, "srcId"),
+		    CgiDataUtilities::getData(cgi, "doNeverShow") == "1" ? true : false,
+		    CgiDataUtilities::getData(cgi, "temporarySilence") == "1" ? true : false);
+	}
+	else
+		__COUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
+
+	xmldoc.outputXmlDocument((std::ostringstream*)out, false, true);
+} //end tooltipRequest()
+
+//========================================================================================================================
+void MacroMakerSupervisor::verification(xgi::Input*  in,
+                                    xgi::Output* out) throw(xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+	std::string  submittedSequence = CgiDataUtilities::getData(cgi, "code");
+	__COUT__ << "submittedSequence=" << submittedSequence << " " << time(0) << std::endl;
+
+	std::string securityWarning = "";
+
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match!"
+		         << std::endl;
+		*out << "Invalid code.";
+		return;
+	}
+	else
+	{
+		// defaultSequence_ = false;
+		__COUT__ << "*** Successfully authenticated security sequence "
+		         << "@ " << time(0) << std::endl;
+
+		if(defaultSequence_)
+		{
+			//__COUT__ << " UNSECURE!!!" << std::endl;
+			securityWarning = "&secure=False";
+		}
+	}
+
+	*out << "<!DOCTYPE HTML><html lang='en'><head><title>ots wiz</title>" <<
+	    // show ots icon
+	    //	from http://www.favicon-generator.org/
+	    "<link rel='apple-touch-icon' sizes='57x57' href='/WebPath/images/otsdaqIcons/apple-icon-57x57.png'>\
+		<link rel='apple-touch-icon' sizes='60x60' href='/WebPath/images/otsdaqIcons/apple-icon-60x60.png'>\
+		<link rel='apple-touch-icon' sizes='72x72' href='/WebPath/images/otsdaqIcons/apple-icon-72x72.png'>\
+		<link rel='apple-touch-icon' sizes='76x76' href='/WebPath/images/otsdaqIcons/apple-icon-76x76.png'>\
+		<link rel='apple-touch-icon' sizes='114x114' href='/WebPath/images/otsdaqIcons/apple-icon-114x114.png'>\
+		<link rel='apple-touch-icon' sizes='120x120' href='/WebPath/images/otsdaqIcons/apple-icon-120x120.png'>\
+		<link rel='apple-touch-icon' sizes='144x144' href='/WebPath/images/otsdaqIcons/apple-icon-144x144.png'>\
+		<link rel='apple-touch-icon' sizes='152x152' href='/WebPath/images/otsdaqIcons/apple-icon-152x152.png'>\
+		<link rel='apple-touch-icon' sizes='180x180' href='/WebPath/images/otsdaqIcons/apple-icon-180x180.png'>\
+		<link rel='icon' type='image/png' sizes='192x192'  href='/WebPath/images/otsdaqIcons/android-icon-192x192.png'>\
+		<link rel='icon' type='image/png' sizes='32x32' href='/WebPath/images/otsdaqIcons/favicon-32x32.png'>\
+		<link rel='icon' type='image/png' sizes='96x96' href='/WebPath/images/otsdaqIcons/favicon-96x96.png'>\
+		<link rel='icon' type='image/png' sizes='16x16' href='/WebPath/images/otsdaqIcons/favicon-16x16.png'>\
+		<link rel='manifest' href='/WebPath/images/otsdaqIcons/manifest.json'>\
+		<meta name='msapplication-TileColor' content='#ffffff'>\
+		<meta name='msapplication-TileImage' content='/ms-icon-144x144.png'>\
+		<meta name='theme-color' content='#ffffff'>"
+	     <<
+	    // end show ots icon
+	    "</head>"
+	     << "<frameset col='100%' row='100%'><frame src='/WebPath/html/MacroMakerSupervisor.html?urn="
+	     << this->getApplicationDescriptor()->getLocalId() << securityWarning
+	     << "'></frameset></html>";
+}  // end verification()
+
+//========================================================================================================================
+void MacroMakerSupervisor::generateURL()
+{
+	defaultSequence_ = true;
+
+	int   length = 4;
+	FILE* fp     = fopen((SEQUENCE_FILE_NAME).c_str(), "r");
+	if(fp)
+	{
+		__SUP_COUT_INFO__ << "Sequence length file found: " << SEQUENCE_FILE_NAME
+		              << std::endl;
+		char line[100];
+		fgets(line, 100, fp);
+		sscanf(line, "%d", &length);
+		fclose(fp);
+		if(length < 4)
+			length = 4;  // don't allow shorter than 4
+		else
+			defaultSequence_ = false;
+		srand(time(0));  // randomize differently each "time"
+	}
+	else
+	{
+		__SUP_COUT_INFO__
+		    << "(Reverting to default wiz security) Sequence length file NOT found: "
+		    << SEQUENCE_FILE_NAME << std::endl;
+		srand(0);  // use same seed for convenience if file not found
+	}
+
+	__SUP_COUT__ << "Sequence length = " << length << std::endl;
+
+	securityCode_ = "";
+
+	static const char alphanum[] =
+	    "0123456789"
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	    "abcdefghijklmnopqrstuvwxyz";
+
+	for(int i = 0; i < length; ++i)
+	{
+		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
+	}
+
+	__SUP_COUT__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":"
+	         << getenv("PORT") << "/urn:xdaq-application:lid="
+	         << this->getApplicationDescriptor()->getLocalId()
+	         << "/Verify?code=" << securityCode_ << std::endl;
+
+	// Note: print out handled by StartOTS.sh now
+	// std::thread([&](WizardSupervisor *ptr, std::string securityCode)
+	//		{printURL(ptr,securityCode);},this,securityCode_).detach();
+
+	fp = fopen((SEQUENCE_OUT_FILE_NAME).c_str(), "w");
+	if(fp)
+	{
+		fprintf(fp, "%s", securityCode_.c_str());
+		fclose(fp);
+	}
+	else
+		__SUP_COUT_ERR__ << "Sequence output file NOT found: " << SEQUENCE_OUT_FILE_NAME
+		             << std::endl;
+
+	return;
+} //end generateURL()
+//========================================================================================================================
+void MacroMakerSupervisor::requestIcons(xgi::Input*  in,
+                                    xgi::Output* out) throw(xgi::exception::Exception)
+{
+	cgicc::Cgicc cgi(in);
+
+	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
+
+	// SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match! "
+		         << time(0) << std::endl;
+		return;
+	}
+	else
+	{
+		__COUT__ << "***Successfully authenticated security sequence. " << time(0)
+		         << std::endl;
+	}
+	// SECURITY CHECK END ****
+
+	// an icon is 7 fields.. give comma-separated
+	// 0 - subtext = text below icon
+	// 1 - altText = text for icon if image set to 0
+	// 2 - uniqueWin = if true, only one window is allowed, else multiple instances of
+	// window  3 - permissions = security level needed to see icon  4 - picfn = icon image
+	// filename, 0 for no image  5 - linkurl = url of the window to open  6 - folderPath =
+	// folder and subfolder location
+
+	*out <<
+	    "Macro Maker "
+	    ",MM,0,1,icon-MacroMaker.png,/WebPath/html/"
+	    "MacroMaker.html?urn=290,/"
+		",FE Macros"
+		",CFG,0,1,icon-Configure.png,/WebPath/html/"
+		"FEMacroTest.html?urn=290,/"
+	     << "";
+	return;
+}  // end requestIcons()
+
+
+//========================================================================================================================
+// requestWrapper ~
+//	wrapper for MacroMaker mode Supervisor request call
+void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
+
+{
+	// checkSupervisorPropertySetup();
+
+	cgicc::Cgicc cgiIn(in);
+
+	std::string submittedSequence = CgiDataUtilities::postData(cgiIn, "sequence");
+
+	// SECURITY CHECK START ****
+	if(securityCode_.compare(submittedSequence) != 0)
+	{
+		__COUT__ << "Unauthorized Request made, security sequence doesn't match! "
+				 << time(0) << std::endl;
+		return;
+	}
+	else
+	{
+		__COUT__ << "***Successfully authenticated security sequence. " << time(0)
+				 << std::endl;
+	}
+	// SECURITY CHECK END ****
+
+	std::string  requestType = CgiDataUtilities::getData(cgiIn, "RequestType");
+
+	//__SUP_COUT__ << "requestType " << requestType << " files: " <<
+	// cgiIn.getFiles().size() << __E__;
+
+	HttpXmlDocument           xmlOut;
+	WebUsers::RequestUserInfo userInfo(
+	    requestType, CgiDataUtilities::getOrPostData(cgiIn, "CookieCode"));
+
+	CorePropertySupervisorBase::getRequestUserInfo(userInfo);
+
+	if(!userInfo.automatedCommand_)
+		__SUP_COUT__ << "requestType: " << requestType << __E__;
+
+	if(userInfo.NonXMLRequestType_)
+	{
+		try
+		{
+			nonXmlRequest(requestType, cgiIn, *out, userInfo);
+		}
+		catch(const std::runtime_error& e)
+		{
+			__SUP_SS__ << "An error was encountered handling requestType '" << requestType
+			           << "':" << e.what() << __E__;
+			__SUP_COUT_ERR__ << "\n" << ss.str();
+			__SUP_MOUT_ERR__ << "\n" << ss.str();
+		}
+		catch(...)
+		{
+			__SUP_SS__ << "An unknown error was encountered handling requestType '"
+			           << requestType << ".' "
+			           << "Please check the printouts to debug." << __E__;
+			__SUP_COUT_ERR__ << "\n" << ss.str();
+			__SUP_MOUT_ERR__ << "\n" << ss.str();
+		}
+		return;
+	}
+	// else xml request type
+
+	try
+	{
+		// call derived class' request()
+		request(requestType, cgiIn, xmlOut, userInfo);
+	}
+	catch(const std::runtime_error& e)
+	{
+		__SUP_SS__ << "An error was encountered handling requestType '" << requestType
+		           << "':" << e.what() << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+	catch(...)
+	{
+		__SUP_SS__ << "An unknown error was encountered handling requestType '"
+		           << requestType << ".' "
+		           << "Please check the printouts to debug." << __E__;
+		__SUP_COUT_ERR__ << "\n" << ss.str();
+		xmlOut.addTextElementToData("Error", ss.str());
+	}
+
+	// report any errors encountered
+	{
+		unsigned int occurance = 0;
+		std::string  err       = xmlOut.getMatchingValue("Error", occurance++);
+		while(err != "")
+		{
+			__SUP_COUT_ERR__ << "'" << requestType << "' ERROR encountered: " << err
+			                 << __E__;
+			__SUP_MOUT_ERR__ << "'" << requestType << "' ERROR encountered: " << err
+			                 << __E__;
+			err = xmlOut.getMatchingValue("Error", occurance++);
+		}
+	}
+
+	// return xml doc holding server response
+	xmlOut.outputXmlDocument((std::ostringstream*)out,
+	                         false /*print to cout*/,
+							 !userInfo.NoXmlWhiteSpace_ /*allow whitespace*/);
+} //end requestWrapper()
 
 //========================================================================================================================
 void MacroMakerSupervisor::request(const std::string&               requestType,
