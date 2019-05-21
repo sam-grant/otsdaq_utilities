@@ -65,7 +65,7 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 		xgi::bind(this, &MacroMakerSupervisor::requestIcons, "requestIcons");
 		xgi::bind(this, &MacroMakerSupervisor::verification, "Verify");
 		xgi::bind(this, &MacroMakerSupervisor::tooltipRequest, "TooltipRequest");
-		xgi::bind(this, &MacroMakerSupervisor::requestWrapper, "Request");
+		xgi::bind(this, &MacroMakerSupervisor::macroMakerModeRequestWrapper, "Request");
 		generateURL();
 	}
 	//end requests for MacroMaker only mode
@@ -319,7 +319,7 @@ void MacroMakerSupervisor::requestIcons(xgi::Input*  in,
 //========================================================================================================================
 // requestWrapper ~
 //	wrapper for MacroMaker mode Supervisor request call
-void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
+void MacroMakerSupervisor::macroMakerModeRequestWrapper(xgi::Input* in, xgi::Output* out)
 
 {
 	// checkSupervisorPropertySetup();
@@ -344,8 +344,8 @@ void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 
 	std::string  requestType = CgiDataUtilities::getData(cgiIn, "RequestType");
 
-	//__SUP_COUT__ << "requestType " << requestType << " files: " <<
-	// cgiIn.getFiles().size() << __E__;
+	__SUP_COUT__ << "requestType " << requestType << " files: " <<
+			cgiIn.getFiles().size() << __E__;
 
 	HttpXmlDocument           xmlOut;
 	WebUsers::RequestUserInfo userInfo(

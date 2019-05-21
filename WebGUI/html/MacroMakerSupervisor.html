@@ -1,0 +1,112 @@
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+		<title>ots</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/ots.css">
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/Desktop.css">
+
+		<style type="text/css">		
+			
+		</style>		
+		
+		<!--link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Donegal+One'-->
+		<link href='/WebPath/css/fonts.css?family=Comfortaa:700,400&subset=latin,greek' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Inconsolata:400' rel='stylesheet' type='text/css'>
+		<link href='/WebPath/css/fonts.css?family=Donegal+One:400' rel='stylesheet' type='text/css'>
+
+		<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>	
+		<script type="text/JavaScript" src="/WebPath/js/Desktop.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/js_lib/SimpleContextMenu.js"></script>
+
+		<!-- MultiSelectBox: Must include .css style sheet and .js functionality -->
+		<link rel="stylesheet" type="text/css" href="/WebPath/css/MultiSelectBox.css">
+		<script src="/WebPath/js/js_lib/MultiSelectBox.js"></script>	
+
+		<!-- adding DesktopWindowContentCode for tooltip functionality -->
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindowContentCode.js"></script> 
+
+		<script type="text/JavaScript" src="/WebPath/js/DesktopDashboard.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopWindow.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopIcons.js"></script>
+		<script type="text/JavaScript" src="/WebPath/js/DesktopLogin.js"></script>
+
+
+		<script>
+			
+
+			var urnLid    = DesktopContent.getDesktopWindowParameter(0,"urn");//(window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+			
+			Debug.log("Application URN-LID #" + urnLid);
+
+			function init() {				
+				Desktop.init(window.parent.window.location.search.split("?")[1].split("&")[0].split("=")[1]);
+				Desktop.desktop.icons.resetWithPermissions(255);
+				
+				
+				var notSecure = DesktopContent.getDesktopWindowParameter(0,"secure");
+				if(!notSecure) notSecure = "";
+				//			var notSecure = "";
+				//		        if ((window.location.search.split("?")[1].split("&").length > 1) )
+				//		            notSecure = (window.location.search.split("?")[1].split("&")[1].split("=")[1]);
+
+
+								
+				DesktopContent.tooltip("MacroMaker-mode Introduction",
+			                        "Welcome to the otsdaq MacroMaker-mode Desktop. MacroMaker-mode is designed to be " +						 
+						"a quick and dirty playground for your front-end interfaces. Here, you can develop communcation " +
+						"sequences without having to worry about managing a configuration or controlling a state machine. \n\n" + 
+						"The MacroMaker-mode desktop environment behaves similar to a personal computer desktop, but there are just a few " +
+						"special apps available in MacroMaker-mode:\n" +
+						
+						"\n\t- <b>Macro Maker:</b> " +
+						"<INDENT>" +
+						"You can execute Reads and Writes, and create sequences of Reads and Writes." +				
+						"</INDENT>" +		
+						
+						"\n\t- <b>FE Macro Test:</b> " +
+						"<INDENT>" +
+						"You can execute macros (sequneces of reads and writes) that have already been created!" +
+						"</INDENT>" +						
+						
+						"\n\nRemember, if you would like to take a look at the available online documentation, " +
+						"click the question mark at the top-right of the Desktop."
+				);				
+				
+			}			            
+
+
+
+			        
+                                
+			
+        </script>
+		
+
+        <!-- Note: usually this page is in frame and ots icon is shown by C++ -->
+        <!-- start ots icon handling -->
+        <link rel="apple-touch-icon" sizes="57x57" href="/WebPath/images/otsdaqIcons/apple-icon-57x57.png">
+        <link rel="apple-touch-icon" sizes="60x60" href="/WebPath/images/otsdaqIcons/apple-icon-60x60.png">
+        <link rel="apple-touch-icon" sizes="72x72" href="/WebPath/images/otsdaqIcons/apple-icon-72x72.png">
+        <link rel="apple-touch-icon" sizes="76x76" href="/WebPath/images/otsdaqIcons/apple-icon-76x76.png">
+        <link rel="apple-touch-icon" sizes="114x114" href="/WebPath/images/otsdaqIcons/apple-icon-114x114.png">
+        <link rel="apple-touch-icon" sizes="120x120" href="/WebPath/images/otsdaqIcons/apple-icon-120x120.png">
+        <link rel="apple-touch-icon" sizes="144x144" href="/WebPath/images/otsdaqIcons/apple-icon-144x144.png">
+        <link rel="apple-touch-icon" sizes="152x152" href="/WebPath/images/otsdaqIcons/apple-icon-152x152.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="/WebPath/images/otsdaqIcons/apple-icon-180x180.png">
+        <link rel="icon" type="image/png" sizes="192x192"  href="/WebPath/images/otsdaqIcons/android-icon-192x192.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/WebPath/images/otsdaqIcons/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="96x96" href="/WebPath/images/otsdaqIcons/favicon-96x96.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/WebPath/images/otsdaqIcons/favicon-16x16.png">
+        <link rel="manifest" href="/WebPath/images/otsdaqIcons/manifest.json">
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+        <meta name="theme-color" content="#ffffff">
+        <!-- end ots icon handling -->
+	</head>	
+	
+	<body onload='init();'>
+	</body>
+	
+</html>
