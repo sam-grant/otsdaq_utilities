@@ -22,11 +22,11 @@ using namespace ots;
 XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 
 #define USER_CONSOLE_PREF_PATH \
-	std::string(getenv("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ConsolePreferences/"
 #define USERS_PREFERENCES_FILETYPE "pref"
 
 #define QUIET_CFG_FILE                    \
-	std::string(getenv("USER_DATA")) +    \
+	std::string(__ENV__("USER_DATA")) +    \
 	    "/MessageFacilityConfigurations/" \
 	    "QuietForwarder.cfg"
 

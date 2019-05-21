@@ -26,15 +26,15 @@
 #include <thread>  //for std::thread
 #include "otsdaq-core/TableCore/TableGroupKey.h"
 
-#define MACROS_DB_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroData/"
-#define MACROS_HIST_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroHistory/"
-#define MACROS_EXPORT_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/MacroExport/"
+#define MACROS_DB_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroData/"
+#define MACROS_HIST_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroHistory/"
+#define MACROS_EXPORT_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/MacroExport/"
 
 
 #define SEQUENCE_FILE_NAME \
-	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.dat"
 #define SEQUENCE_OUT_FILE_NAME \
-	std::string(getenv("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/OtsWizardData/sequence.out"
 
 using namespace ots;
 
@@ -47,6 +47,8 @@ XDAQ_INSTANTIATOR_IMPL(MacroMakerSupervisor)
 MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
     : CoreSupervisorBase(stub)
 {
+	__SUP_COUT__ << "Constructing..." << __E__;
+
 	INIT_MF("MacroMaker");
 
 	// make macro directories in case they don't exist
@@ -62,15 +64,22 @@ MacroMakerSupervisor::MacroMakerSupervisor(xdaq::ApplicationStub* stub)
 	//start requests for MacroMaker only mode
 	if(CorePropertySupervisorBase::allSupervisorInfo_.isMacroMakerMode())
 	{
+		__SUP_COUT__ << "Starting constructor for Macro Maker mode." << __E__;
+
 		xgi::bind(this, &MacroMakerSupervisor::requestIcons, "requestIcons");
 		xgi::bind(this, &MacroMakerSupervisor::verification, "Verify");
 		xgi::bind(this, &MacroMakerSupervisor::tooltipRequest, "TooltipRequest");
-		xgi::bind(this, &MacroMakerSupervisor::macroMakerModeRequestWrapper, "Request");
+		xgi::bind(this, &MacroMakerSupervisor::requestWrapper, "Request");
 		generateURL();
+		__SUP_COUT__ << "Completed constructor for Macro Maker mode." << __E__;
 	}
+	else
+		__SUP_COUT__ << "Not Macro Maker only mode." << __E__;
 	//end requests for MacroMaker only mode
 
 	init();
+
+	__SUP_COUT__ << "Constructed." << __E__;
 } //end constructor
 
 //========================================================================================================================
@@ -103,12 +112,12 @@ void MacroMakerSupervisor::forceSupervisorPropertyValues()
 
 //========================================================================================================================
 void MacroMakerSupervisor::tooltipRequest(xgi::Input*  in,
-                                      xgi::Output* out) throw(xgi::exception::Exception)
+                                      xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
 
 	std::string Command = CgiDataUtilities::getData(cgi, "RequestType");
-	//__COUT__ << "Command = " << Command << std::endl;
+	//__COUT__ << "Command = " << Command << __E__;
 
 	std::string submittedSequence = CgiDataUtilities::postData(cgi, "sequence");
 
@@ -116,12 +125,12 @@ void MacroMakerSupervisor::tooltipRequest(xgi::Input*  in,
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__COUT__ << "Unauthorized Request made, security sequence doesn't match!"
-		         << std::endl;
+		         << __E__;
 		return;
 	}
 //	else
 //	{
-//		__COUT__ << "***Successfully authenticated security sequence." << std::endl;
+//		__COUT__ << "***Successfully authenticated security sequence." << __E__;
 //	}
 	// SECURITY CHECK END ****
 
@@ -147,25 +156,25 @@ void MacroMakerSupervisor::tooltipRequest(xgi::Input*  in,
 		    CgiDataUtilities::getData(cgi, "temporarySilence") == "1" ? true : false);
 	}
 	else
-		__COUT__ << "Command Request, " << Command << ", not recognized." << std::endl;
+		__COUT__ << "Command Request, " << Command << ", not recognized." << __E__;
 
 	xmldoc.outputXmlDocument((std::ostringstream*)out, false, true);
 } //end tooltipRequest()
 
 //========================================================================================================================
 void MacroMakerSupervisor::verification(xgi::Input*  in,
-                                    xgi::Output* out) throw(xgi::exception::Exception)
+                                    xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
 	std::string  submittedSequence = CgiDataUtilities::getData(cgi, "code");
-	__COUT__ << "submittedSequence=" << submittedSequence << " " << time(0) << std::endl;
+	__COUT__ << "submittedSequence=" << submittedSequence << " " << time(0) << __E__;
 
 	std::string securityWarning = "";
 
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__COUT__ << "Unauthorized Request made, security sequence doesn't match!"
-		         << std::endl;
+		         << __E__;
 		*out << "Invalid code.";
 		return;
 	}
@@ -173,11 +182,11 @@ void MacroMakerSupervisor::verification(xgi::Input*  in,
 	{
 		// defaultSequence_ = false;
 		__COUT__ << "*** Successfully authenticated security sequence "
-		         << "@ " << time(0) << std::endl;
+		         << "@ " << time(0) << __E__;
 
 		if(defaultSequence_)
 		{
-			//__COUT__ << " UNSECURE!!!" << std::endl;
+			//__COUT__ << " UNSECURE!!!" << __E__;
 			securityWarning = "&secure=False";
 		}
 	}
@@ -220,7 +229,7 @@ void MacroMakerSupervisor::generateURL()
 	if(fp)
 	{
 		__SUP_COUT_INFO__ << "Sequence length file found: " << SEQUENCE_FILE_NAME
-		              << std::endl;
+		              << __E__;
 		char line[100];
 		fgets(line, 100, fp);
 		sscanf(line, "%d", &length);
@@ -235,15 +244,15 @@ void MacroMakerSupervisor::generateURL()
 	{
 		__SUP_COUT_INFO__
 		    << "(Reverting to default wiz security) Sequence length file NOT found: "
-		    << SEQUENCE_FILE_NAME << std::endl;
+		    << SEQUENCE_FILE_NAME << __E__;
 		srand(0);  // use same seed for convenience if file not found
 	}
 
-	__SUP_COUT__ << "Sequence length = " << length << std::endl;
+	__SUP_COUT__ << "Sequence length = " << length << __E__;
 
 	securityCode_ = "";
 
-	static const char alphanum[] =
+	const char alphanum[] =
 	    "0123456789"
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	    "abcdefghijklmnopqrstuvwxyz";
@@ -253,12 +262,12 @@ void MacroMakerSupervisor::generateURL()
 		securityCode_ += alphanum[rand() % (sizeof(alphanum) - 1)];
 	}
 
-	__SUP_COUT__ << getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER") << ":"
-	         << getenv("PORT") << "/urn:xdaq-application:lid="
+	__SUP_COUT__ << __ENV__("HOSTNAME") << ":"
+	         << __ENV__("PORT") << "/urn:xdaq-application:lid="
 	         << this->getApplicationDescriptor()->getLocalId()
-	         << "/Verify?code=" << securityCode_ << std::endl;
+	         << "/Verify?code=" << securityCode_ << __E__;
 
-	// Note: print out handled by StartOTS.sh now
+	// Note: print out handled by start ots script now
 	// std::thread([&](WizardSupervisor *ptr, std::string securityCode)
 	//		{printURL(ptr,securityCode);},this,securityCode_).detach();
 
@@ -270,13 +279,13 @@ void MacroMakerSupervisor::generateURL()
 	}
 	else
 		__SUP_COUT_ERR__ << "Sequence output file NOT found: " << SEQUENCE_OUT_FILE_NAME
-		             << std::endl;
+		             << __E__;
 
 	return;
 } //end generateURL()
 //========================================================================================================================
 void MacroMakerSupervisor::requestIcons(xgi::Input*  in,
-                                    xgi::Output* out) throw(xgi::exception::Exception)
+                                    xgi::Output* out)
 {
 	cgicc::Cgicc cgi(in);
 
@@ -286,13 +295,13 @@ void MacroMakerSupervisor::requestIcons(xgi::Input*  in,
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__COUT__ << "Unauthorized Request made, security sequence doesn't match! "
-		         << time(0) << std::endl;
+		         << time(0) << __E__;
 		return;
 	}
 	else
 	{
 		__COUT__ << "***Successfully authenticated security sequence. " << time(0)
-		         << std::endl;
+		         << __E__;
 	}
 	// SECURITY CHECK END ****
 
@@ -319,9 +328,18 @@ void MacroMakerSupervisor::requestIcons(xgi::Input*  in,
 //========================================================================================================================
 // requestWrapper ~
 //	wrapper for MacroMaker mode Supervisor request call
-void MacroMakerSupervisor::macroMakerModeRequestWrapper(xgi::Input* in, xgi::Output* out)
-
+void MacroMakerSupervisor::requestWrapper(xgi::Input* in, xgi::Output* out)
 {
+	//use default wrapper if not Macro Maker mode
+	if(!CorePropertySupervisorBase::allSupervisorInfo_.isMacroMakerMode())
+	{
+		//__SUP_COUT__ << "Default request wrapper" << __E__;
+		return CoreSupervisorBase::requestWrapper(in,out);
+	}
+	//else Macro Maker mode!
+
+	//__SUP_COUT__ << "MacroMaker mode request handler!" << __E__;
+
 	// checkSupervisorPropertySetup();
 
 	cgicc::Cgicc cgiIn(in);
@@ -332,20 +350,20 @@ void MacroMakerSupervisor::macroMakerModeRequestWrapper(xgi::Input* in, xgi::Out
 	if(securityCode_.compare(submittedSequence) != 0)
 	{
 		__COUT__ << "Unauthorized Request made, security sequence doesn't match! "
-				 << time(0) << std::endl;
+				 << time(0) << __E__;
 		return;
 	}
 	else
 	{
 		__COUT__ << "***Successfully authenticated security sequence. " << time(0)
-				 << std::endl;
+				 << __E__;
 	}
 	// SECURITY CHECK END ****
 
 	std::string  requestType = CgiDataUtilities::getData(cgiIn, "RequestType");
 
-	__SUP_COUT__ << "requestType " << requestType << " files: " <<
-			cgiIn.getFiles().size() << __E__;
+	//__SUP_COUT__ << "requestType " << requestType << " files: " <<
+	//		cgiIn.getFiles().size() << __E__;
 
 	HttpXmlDocument           xmlOut;
 	WebUsers::RequestUserInfo userInfo(
@@ -353,7 +371,13 @@ void MacroMakerSupervisor::macroMakerModeRequestWrapper(xgi::Input* in, xgi::Out
 
 	CorePropertySupervisorBase::getRequestUserInfo(userInfo);
 
-	if(!userInfo.automatedCommand_)
+	//copied from WebUsers::checkRequestAccess
+	userInfo.username_               = "admin";
+	userInfo.displayName_            = "Admin";
+	userInfo.usernameWithLock_       = "admin";
+	userInfo.activeUserSessionIndex_ = 0;
+
+	if(1 || !userInfo.automatedCommand_)
 		__SUP_COUT__ << "requestType: " << requestType << __E__;
 
 	if(userInfo.NonXMLRequestType_)

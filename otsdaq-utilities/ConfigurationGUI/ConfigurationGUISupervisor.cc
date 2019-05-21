@@ -22,7 +22,7 @@ using namespace ots;
 #undef __MF_SUBJECT__
 #define __MF_SUBJECT__ "CfgGUI"
 
-#define TABLE_INFO_PATH std::string(getenv("TABLE_INFO_PATH")) + "/"
+#define TABLE_INFO_PATH std::string(__ENV__("TABLE_INFO_PATH")) + "/"
 #define TABLE_INFO_EXT std::string("Info.xml")
 
 /*! the XDAQ_INSTANTIATOR_IMPL(ns1::ns2::...) macro needs to be put into the
@@ -261,7 +261,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		if(requestType == "flattenToSystemAliases" &&
 				CorePropertySupervisorBase::allSupervisorInfo_.isWizardMode())
 		{
-			hostnames.push_back(getenv("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER"));
+			hostnames.push_back(__ENV__("OTS_CONFIGURATION_WIZARD_SUPERVISOR_SERVER"));
 			__SUP_COUT__ << "hostname = " << hostnames.back() << __E__;
 		}
 		else
@@ -312,7 +312,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		for(const auto& hostname : hostnames)
 		{
-			std::string fn = (std::string(getenv("SERVICE_DATA_PATH")) +
+			std::string fn = (std::string(__ENV__("SERVICE_DATA_PATH")) +
 			                  "/StartOTS_action_" + hostname + ".cmd");
 			FILE*       fp = fopen(fn.c_str(), "w");
 			if(fp)
@@ -338,7 +338,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//	{
 	//		__SUP_COUT_WARN__ << "launchOTS command received! Launching... " << __E__;
 	//
-	//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//				"/StartOTS_action.cmd").c_str(),"w");
 	//		if(fp)
 	//		{
@@ -347,14 +347,14 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//		}
 	//		else
 	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(getenv("SERVICE_DATA_PATH")) +
+	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//					"/StartOTS_action.cmd") << __E__;
 	//	}
 	//	else if(requestType == "launchWiz")
 	//	{
 	//		__SUP_COUT_WARN__ << "launchWiz command received! Launching... " << __E__;
 	//
-	//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//				"/StartOTS_action.cmd").c_str(),"w");
 	//		if(fp)
 	//		{
@@ -363,7 +363,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//		}
 	//		else
 	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(getenv("SERVICE_DATA_PATH")) +
+	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//					"/StartOTS_action.cmd") << __E__;
 	//	}
 	//	else if(requestType == "flattenToSystemAliases")
@@ -372,7 +372,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//<<
 	//__E__;
 	//
-	//		FILE* fp = fopen((std::string(getenv("SERVICE_DATA_PATH")) +
+	//		FILE* fp = fopen((std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//				"/StartOTS_action.cmd").c_str(),"w");
 	//		if(fp)
 	//		{
@@ -381,7 +381,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	//		}
 	//		else
 	//			__SUP_COUT_ERR__ << "Unable to open command file: " <<
-	//(std::string(getenv("SERVICE_DATA_PATH")) +
+	//(std::string(__ENV__("SERVICE_DATA_PATH")) +
 	//					"/StartOTS_action.cmd") << __E__;
 	//	}
 	else if(requestType == "versionTracking")

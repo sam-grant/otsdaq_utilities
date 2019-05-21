@@ -17,7 +17,7 @@
 
 using namespace ots;
 
-const std::string LOGBOOK_PATH = getenv("LOGBOOK_DATA_PATH") + std::string("/");
+const std::string LOGBOOK_PATH = __ENV__("LOGBOOK_DATA_PATH") + std::string("/");
 #define LOGBOOK_EXPERIMENT_LIST_PATH LOGBOOK_PATH + "experiment_list.xml"
 #define LOGBOOK_EXPERIMENT_DIR_PREFACE "log_"
 #define LOGBOOK_UPLOADS_PATH "uploads/"  // within experiment directory

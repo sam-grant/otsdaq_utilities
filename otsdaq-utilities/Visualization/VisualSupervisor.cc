@@ -30,15 +30,15 @@
 
 #include <iostream>
 
-#define ROOT_BROWSER_PATH getenv("ROOT_BROWSER_PATH")
-#define ROOT_DISPLAY_CONFIG_PATH getenv("ROOT_DISPLAY_CONFIG_PATH")
+#define ROOT_BROWSER_PATH __ENV__("ROOT_BROWSER_PATH")
+#define ROOT_DISPLAY_CONFIG_PATH __ENV__("ROOT_DISPLAY_CONFIG_PATH")
 
 #define LIVEDQM_DIR std::string("LIVE_DQM")
 #define PRE_MADE_ROOT_CFG_DIR std::string("Pre-made Views")
 
 #define PRE_MADE_ROOT_CFG_FILE_EXT std::string(".rcfg")
 
-#define PREFERENCES_PATH std::string(getenv("SERVICE_DATA_PATH")) + "/VisualizerData/"
+#define PREFERENCES_PATH std::string(__ENV__("SERVICE_DATA_PATH")) + "/VisualizerData/"
 #define PREFERENCES_FILE_EXT ".pref"
 
 #define ROOT_VIEWER_PERMISSIONS_THRESHOLD 100
@@ -434,7 +434,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 		// return directory structure for requested ROOT path, types are "dir" and "file"
 
 		std::string path     = CgiDataUtilities::postData(cgiIn, "RootPath");
-		std::string fullPath = std::string(getenv("ROOT_BROWSER_PATH")) + path;
+		std::string fullPath = std::string(__ENV__("ROOT_BROWSER_PATH")) + path;
 
 		//__SUP_COUT__ << "Full path:-" << fullPath << "-" << __E__;
 

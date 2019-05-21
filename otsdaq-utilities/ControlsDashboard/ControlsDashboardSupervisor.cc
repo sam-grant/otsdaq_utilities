@@ -11,7 +11,7 @@
 using namespace ots;
 
 #define CONTROLS_SUPERVISOR_DATA_PATH \
-	std::string(getenv("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
+	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
 #define PAGES_DIRECTORY \
 	CONTROLS_SUPERVISOR_DATA_PATH + "pages/"
 

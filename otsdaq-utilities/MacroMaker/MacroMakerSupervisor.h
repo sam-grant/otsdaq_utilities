@@ -35,10 +35,10 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 
 	//start MacroMaker only functions
 	void        generateURL(void);
-	void verification(xgi::Input* in, xgi::Output* out) throw(xgi::exception::Exception);
-	void requestIcons(xgi::Input* in, xgi::Output* out) throw(xgi::exception::Exception);
-	void tooltipRequest(xgi::Input*  in,xgi::Output* out) throw(xgi::exception::Exception);
-	void macroMakerModeRequestWrapper(xgi::Input* in, xgi::Output* out);
+	void verification(xgi::Input* in, xgi::Output* out);
+	void requestIcons(xgi::Input* in, xgi::Output* out);
+	void tooltipRequest(xgi::Input*  in,xgi::Output* out);
+	void requestWrapper(xgi::Input* in, xgi::Output* out);
 	//end MacroMaker only functions
 
 
