@@ -452,9 +452,27 @@ void MacroMakerSupervisor::request(const std::string&               requestType,
                                    HttpXmlDocument&                 xmlOut,
                                    const WebUsers::RequestUserInfo& userInfo) try
 {
+	//sanitize username
+	std::string username = "";
+	for(unsigned int i=0;i<userInfo.username_.size();++i)
+		if(
+				(userInfo.username_[i] >= 'a' && userInfo.username_[i] <= 'z') ||
+				(userInfo.username_[i] >= 'A' && userInfo.username_[i] <= 'Z') ||
+				(userInfo.username_[i] >= '0' && userInfo.username_[i] <= '9') ||
+				userInfo.username_[i] >= '-' || userInfo.username_[i] <= '_'
+						)
+			username += userInfo.username_[i];
+
+	if(username.size() < 2)
+	{
+		__SUP_SS__ << "Illegal username '" << userInfo.username_ << "' received." << __E__;
+		__SUP_SS_THROW__;
+	}
+
 	__SUP_COUT__ << "User name is " << userInfo.username_ << "." << __E__;
 	__SUP_COUT__ << "User permission level for request '" << requestType << "' is "
 	             << unsigned(userInfo.permissionLevel_) << "." << __E__;
+
 
 	// handle request per requestType
 	if(requestType == "getPermission")
@@ -525,7 +543,7 @@ void MacroMakerSupervisor::handleRequest(const std::string  Command,
 		runFEMacro(xmldoc, cgi, username);
 	else
 		xmldoc.addTextElementToData("Error", "Unrecognized command '" + Command + "'");
-}
+} //end handleRequest()
 
 //========================================================================================================================
 xoap::MessageReference MacroMakerSupervisor::frontEndCommunicationRequest(
@@ -724,10 +742,12 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 	SOAPParameters rxParameters;  // params for xoap to recv
 	rxParameters.addParameter("FEList");
+	rxParameters.addParameter("frontEndError"); //if there were errors recorded (during configuration, e.g. in Macro Maker only mode)
 
 	SupervisorInfoMap::const_iterator it;
 	std::string                       oneInterface;
 	std::string                       rxFEList;
+	std::string                       rxFrontEndError;
 
 	size_t lastColonIndex;
 
@@ -754,17 +774,23 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 		}
 		catch(const xdaq::exception::Exception& e)
 		{
-			__SS__ << "Error transmitting request to FE Supervisor LID = "
+			__SUP_SS__ << "Error transmitting request to FE Supervisor LID = "
 			       << appInfo.second.getId() << " name = " << appInfo.second.getName()
 			       << ". \n\n"
 			       << e.what() << __E__;
-			__SUP_COUT_ERR__ << ss.str();
-			return;
+			__SUP_SS_THROW__;
 		}
 
 		rxFEList = rxParameters.getValue("FEList");
+		rxFrontEndError = rxParameters.getValue("frontEndError");
 
 		__SUP_COUT__ << "FE List received: \n" << rxFEList << __E__;
+
+		if(rxFrontEndError != "")
+		{
+			__SUP_SS__ << "FE Errors received: \n" << rxFrontEndError << __E__;
+			__SUP_SS_THROW__;
+		}
 
 		std::istringstream allInterfaces(rxFEList);
 		while(std::getline(allInterfaces, oneInterface))
@@ -777,7 +803,7 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 			{
 				__SUP_SS__ << "Last colon could not be found in " << oneInterface
 				           << __E__;
-				__SS_THROW__;
+				__SUP_SS_THROW__;
 			}
 			oneInterface = oneInterface.substr(lastColonIndex);
 
