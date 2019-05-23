@@ -819,7 +819,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 			}
 			
 			//if not calling handler on error, then get and display errors for user
-			var errArr = callHandlerOnErr?[]:DesktopContent.getXMLRequestErrors(req);
+			var errArr = (callHandlerOnErr || !req.responseXML)?[]:DesktopContent.getXMLRequestErrors(req);
 			if(errArr.length && !callHandlerOnErr)
 			{
 				for(var i=0;i<errArr.length;++i)
