@@ -60,8 +60,8 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	theDataManager_ = DataManagerSingleton::getInstance<VisualDataManager>(
 	    theConfigurationManager_->getNode(
 	        theConfigurationManager_->__GET_CONFIG__(XDAQContextTable)->getTableName()),
-			CorePropertySupervisorBase::getSupervisorConfigurationPath(),
-			CorePropertySupervisorBase::getSupervisorUID());
+	    CorePropertySupervisorBase::getSupervisorConfigurationPath(),
+	    CorePropertySupervisorBase::getSupervisorUID());
 
 	CoreSupervisorBase::theStateMachineImplementation_.push_back(theDataManager_);
 
@@ -73,7 +73,7 @@ VisualSupervisor::VisualSupervisor(xdaq::ApplicationStub* stub)
 	mkdir(((std::string)PREFERENCES_PATH).c_str(), 0755);
 
 	__SUP_COUT__ << "Constructed." << __E__;
-} //end constructor
+}  // end constructor
 
 //========================================================================================================================
 VisualSupervisor::~VisualSupervisor(void)
@@ -91,10 +91,9 @@ void VisualSupervisor::destroy(void)
 	// called by destructor
 	// delete theConfigurationManager_;
 
-	DataManagerSingleton::deleteInstance(
-	    CorePropertySupervisorBase::getSupervisorUID());
+	DataManagerSingleton::deleteInstance(CorePropertySupervisorBase::getSupervisorUID());
 	theStateMachineImplementation_.pop_back();
-} //end destroy()
+}  // end destroy()
 //
 ////========================================================================================================================
 // void VisualSupervisor::defaultPage(xgi::Input * in, xgi::Output * out )
@@ -520,8 +519,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						TString s = obj->GetName();
 						if(s.Index(re) == kNPOS)
 							continue;
-						__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName()
-						             << __E__;
+						__SUP_COUT__ << "Class Name: " << obj->IsA()->GetName() << __E__;
 						xmlOut.addTextElementToData(
 						    (std::string(obj->IsA()->GetName()).find("Directory") !=
 						     std::string::npos)
@@ -539,8 +537,7 @@ void VisualSupervisor::request(const std::string&               requestType,
 						TString s = key->GetName();
 						if(s.Index(re) == kNPOS)
 							continue;
-						__SUP_COUT__ << "Class Name: " << key->GetClassName()
-						             << __E__;
+						__SUP_COUT__ << "Class Name: " << key->GetClassName() << __E__;
 						xmlOut.addTextElementToData(
 						    (std::string(key->GetClassName()).find("Directory") !=
 						     std::string::npos)

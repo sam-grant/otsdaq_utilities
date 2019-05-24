@@ -1,19 +1,18 @@
 #include "otsdaq-utilities/ControlsDashboard/ControlsDashboardSupervisor.h"
-#include <sys/stat.h> //for stat() quickly checking if file exists
-#include <dirent.h> //for DIR
+#include <dirent.h>    //for DIR
 #include <dirent.h>    //for DIR
 #include <sys/stat.h>  //for stat() quickly checking if file exists
-#include <thread>  //for std::thread
+#include <sys/stat.h>  //for stat() quickly checking if file exists
+#include <thread>      //for std::thread
 
-#include "otsdaq-core/SlowControlsCore/SlowControlsVInterface.h"
 #include "otsdaq-core/PluginMakers/MakeSlowControls.h"
+#include "otsdaq-core/SlowControlsCore/SlowControlsVInterface.h"
 
 using namespace ots;
 
 #define CONTROLS_SUPERVISOR_DATA_PATH \
 	std::string(__ENV__("SERVICE_DATA_PATH")) + "/ControlsDashboardData/"
-#define PAGES_DIRECTORY \
-	CONTROLS_SUPERVISOR_DATA_PATH + "pages/"
+#define PAGES_DIRECTORY CONTROLS_SUPERVISOR_DATA_PATH + "pages/"
 
 XDAQ_INSTANTIATOR_IMPL(ControlsDashboardSupervisor)
 
@@ -28,11 +27,11 @@ ControlsDashboardSupervisor::ControlsDashboardSupervisor(xdaq::ApplicationStub* 
 	// make controls dashboard supervisor directories in case they don't exist
 	mkdir(((std::string)(CONTROLS_SUPERVISOR_DATA_PATH)).c_str(), 0755);
 	mkdir(((std::string)(PAGES_DIRECTORY)).c_str(), 0755);
-	
+
 	init();
 
 	__SUP_COUT__ << "Constructed." << __E__;
-} //end constructor
+}  // end constructor
 
 //========================================================================================================================
 ControlsDashboardSupervisor::~ControlsDashboardSupervisor(void)
@@ -47,7 +46,7 @@ void ControlsDashboardSupervisor::destroy(void)
 {
 	// called by destructor
 	delete interface_;
-} // end destroy()
+}  // end destroy()
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::init(void)
@@ -56,34 +55,35 @@ void ControlsDashboardSupervisor::init(void)
 	UID_ = 0;
 
 	__SUP_COUT__ << std::endl;
-	ConfigurationTree node = CorePropertySupervisorBase::getSupervisorTableNode();
-	std::string pluginType = node.getNode("ControlsInterfacePluginType").getValue();
+	ConfigurationTree node       = CorePropertySupervisorBase::getSupervisorTableNode();
+	std::string       pluginType = node.getNode("ControlsInterfacePluginType").getValue();
 	__SUP_COUTV__(pluginType);
 
-	interface_ = makeSlowControls(
-			  pluginType
-			, node.getUIDAsString()
-			, CorePropertySupervisorBase::getContextTreeNode()
-			, CorePropertySupervisorBase::getSupervisorConfigurationPath());
+	interface_ =
+	    makeSlowControls(pluginType,
+	                     node.getUIDAsString(),
+	                     CorePropertySupervisorBase::getContextTreeNode(),
+	                     CorePropertySupervisorBase::getSupervisorConfigurationPath());
 	__COUT__ << std::endl;
 
 	__SUP_COUT__ << "Finished init() w/ interface: " << pluginType << std::endl;
 
-	//interface_->initialize();
-	std::thread([](ControlsDashboardSupervisor* cs)
-		{
-			
-			// lockout the messages array for the remainder of the scope
-			// this guarantees the reading thread can safely access the messages
-			std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
-		
-			cs->interface_->initialize();
-			
-			
-			
-		}, this).detach(); //thread completes after creating, subscribing, and getting parameters for all pvs
+	// interface_->initialize();
+	std::thread(
+	    [](ControlsDashboardSupervisor* cs) {
 
-} //end init()
+		    // lockout the messages array for the remainder of the scope
+		    // this guarantees the reading thread can safely access the messages
+		    std::lock_guard<std::mutex> lock(cs->pluginBusyMutex_);
+
+		    cs->interface_->initialize();
+
+	    },
+	    this)
+	    .detach();  // thread completes after creating, subscribing, and getting
+	                // parameters for all pvs
+
+}  // end init()
 
 //========================================================================================================================
 // setSupervisorPropertyDefaults
@@ -105,103 +105,107 @@ void ControlsDashboardSupervisor::forceSupervisorPropertyValues()
 }
 
 //========================================================================================================================
-void ControlsDashboardSupervisor::request(const std::string& requestType, cgicc::Cgicc& cgiIn,
-		HttpXmlDocument& xmlOut, const WebUsers::RequestUserInfo& userInfo)
-{		
-//	__SUP_COUT__ << std::endl;
-//	cgicc::Cgicc cgi(in);
-//	__SUP_COUT__ << std::endl;
-//	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
-//	__SUP_COUT__ << request << std::endl;
-//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << requestType << " : end"<< std::endl;
+void ControlsDashboardSupervisor::request(const std::string&               requestType,
+                                          cgicc::Cgicc&                    cgiIn,
+                                          HttpXmlDocument&                 xmlOut,
+                                          const WebUsers::RequestUserInfo& userInfo)
+{
+	//	__SUP_COUT__ << std::endl;
+	//	cgicc::Cgicc cgi(in);
+	//	__SUP_COUT__ << std::endl;
+	//	std::string requestType = CgiDataUtilities::getData(cgi,"RequestType");
+	//	__SUP_COUT__ << request << std::endl;
+	//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " <<
+	//requestType << " : end"<< std::endl;
 
-
-//	if(requestType == "")
-//	{
-//		Default(in, out);
-//		return;
-//	}
-//
-//	HttpXmlDocument xmldoc;
-//	uint64_t activeSessionIndex;
-//	std::string user;
-//	uint8_t userPermissions;
-//
-//	//**** start LOGIN GATEWAY CODE ***//
-//	{
-//		bool automaticCommand = requestType == "poll"; //automatic commands should not refresh cookie code.. only user initiated commands should!
-//		bool checkLock   = true;
-//		bool getUser     = false;
-//		bool requireLock = false;
-//
-//		if(!theRemoteWebUsers_.xmlRequestToGateway(
-//				cgi,
-//				out,
-//				&xmldoc,
-//				allSupervisorInfo_,
-//				&userPermissions,  		//acquire user's access level (optionally null pointer)
-//				!automaticCommand,			//true/false refresh cookie code
-//				1, //set access level requirement to pass gateway
-//				checkLock,					//true/false enable check that system is unlocked or this user has the lock
-//				requireLock,				//true/false requires this user has the lock to proceed
-//				0,//&userWithLock,			//acquire username with lock (optionally null pointer)
-//				//(getUser?&user:0),				//acquire username of this user (optionally null pointer)
-//				&username,
-//				0,						//acquire user's Display Name
-//				&activeSessionIndex		//acquire user's session index associated with the cookieCode
-//		))
-//		{	//failure
-//			__SUP_COUT__ << "Failed Login Gateway: " <<
-//					out->str() << std::endl; //print out return string on failure
-//			return;
-//		}
-//	}
-//	//**** end LOGIN GATEWAY CODE ***//
-//
-//
+	//	if(requestType == "")
+	//	{
+	//		Default(in, out);
+	//		return;
+	//	}
+	//
+	//	HttpXmlDocument xmldoc;
+	//	uint64_t activeSessionIndex;
+	//	std::string user;
+	//	uint8_t userPermissions;
+	//
+	//	//**** start LOGIN GATEWAY CODE ***//
+	//	{
+	//		bool automaticCommand = requestType == "poll"; //automatic commands should not
+	//refresh cookie code.. only user initiated commands should! 		bool checkLock   =
+	//true; 		bool getUser     = false; 		bool requireLock = false;
+	//
+	//		if(!theRemoteWebUsers_.xmlRequestToGateway(
+	//				cgi,
+	//				out,
+	//				&xmldoc,
+	//				allSupervisorInfo_,
+	//				&userPermissions,  		//acquire user's access level (optionally null
+	//pointer) 				!automaticCommand,			//true/false refresh cookie code
+	//				1, //set access level requirement to pass gateway
+	//				checkLock,					//true/false enable check that system is unlocked or
+	//this user has the lock
+	//				requireLock,				//true/false requires this user has the lock to
+	//proceed
+	//				0,//&userWithLock,			//acquire username with lock (optionally null
+	//pointer)
+	//				//(getUser?&user:0),				//acquire username of this user (optionally null
+	//pointer) 				&username,
+	//				0,						//acquire user's Display Name
+	//				&activeSessionIndex		//acquire user's session index associated with the
+	//cookieCode
+	//		))
+	//		{	//failure
+	//			__SUP_COUT__ << "Failed Login Gateway: " <<
+	//					out->str() << std::endl; //print out return string on failure
+	//			return;
+	//		}
+	//	}
+	//	//**** end LOGIN GATEWAY CODE ***//
+	//
+	//
 	try
 	{
-		
-		if (requestType != "getPages" &&
-			!pluginBusyMutex_.try_lock()) 
+		if(requestType != "getPages" && !pluginBusyMutex_.try_lock())
 		{
-			__SUP_SS__ << "Controls plugin is still initializing. Please try again in a few minutes!" << __E__;
+			__SUP_SS__ << "Controls plugin is still initializing. Please try again in a "
+			              "few minutes!"
+			           << __E__;
 			__SUP_SS_THROW__;
 		}
-		
-	
+
 		__SUP_COUT__ << "User name is " << userInfo.username_ << "." << __E__;
-		__SUP_COUT__ << "User permission level for request '" << requestType << "' is " <<
-				unsigned(userInfo.permissionLevel_) << "." << __E__;
-	
-	
-		//handle request per requestType
-		handleRequest(requestType,xmlOut,cgiIn,userInfo.username_);
+		__SUP_COUT__ << "User permission level for request '" << requestType << "' is "
+		             << unsigned(userInfo.permissionLevel_) << "." << __E__;
+
+		// handle request per requestType
+		handleRequest(requestType, xmlOut, cgiIn, userInfo.username_);
 	}
 	catch(const std::runtime_error& e)
 	{
-		__SUP_SS__ << "Error occurred handling request '" << requestType <<
-				"': " << e.what() << __E__;
+		__SUP_SS__ << "Error occurred handling request '" << requestType
+		           << "': " << e.what() << __E__;
 		__SUP_COUT__ << ss.str();
-		xmlOut.addTextElementToData("Error",ss.str());
+		xmlOut.addTextElementToData("Error", ss.str());
 	}
 	catch(...)
 	{
-		__SS__ << "Unknown error occurred handling request '" << requestType <<
-				"!'" << __E__;
+		__SS__ << "Unknown error occurred handling request '" << requestType << "!'"
+		       << __E__;
 		__SUP_COUT__ << ss.str();
-		xmlOut.addTextElementToData("Error",ss.str());
+		xmlOut.addTextElementToData("Error", ss.str());
 	}
-	   		
-    pluginBusyMutex_.unlock();
 
-} //end request()
+	pluginBusyMutex_.unlock();
+
+}  // end request()
 //========================================================================================================================
-void ControlsDashboardSupervisor::handleRequest(const std::string Command,
-		HttpXmlDocument& xmlOut, cgicc::Cgicc& cgiIn,
-		const std::string &username)
+void ControlsDashboardSupervisor::handleRequest(const std::string  Command,
+                                                HttpXmlDocument&   xmlOut,
+                                                cgicc::Cgicc&      cgiIn,
+                                                const std::string& username)
 {
-	//return xml doc holding server response
+	// return xml doc holding server response
 	__SUP_COUT__ << std::endl;
 
 	if(Command == "poll")
@@ -222,7 +226,7 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 	}
 	else if(Command == "getList")
 	{
-                __SUP_COUT__ << "PV List requested from server! " << std::endl;
+		__SUP_COUT__ << "PV List requested from server! " << std::endl;
 		GetList(cgiIn, xmlOut);
 	}
 	else if(Command == "getPages")
@@ -234,21 +238,20 @@ void ControlsDashboardSupervisor::handleRequest(const std::string Command,
 	{
 		std::string page = CgiDataUtilities::getData(cgiIn, "Page");
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " " << page
-		         << std::endl;
+		             << std::endl;
 
 		loadPage(cgiIn, xmlOut, page);
-	} 
+	}
 	else if(Command == "savePage")
-        {
-        	std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
-                std::string page = CgiDataUtilities::getOrPostData(cgiIn, "Page");
-                SavePage(cgiIn, xmlOut, pageName, page);
-        }
+	{
+		std::string pageName = CgiDataUtilities::getData(cgiIn, "PageName");
+		std::string page     = CgiDataUtilities::getOrPostData(cgiIn, "Page");
+		SavePage(cgiIn, xmlOut, pageName, page);
+	}
 	__SUP_COUT__ << "" << std::endl;
 
 	// xmlOut.outputXmlDocument((std::ostringstream*) out, true);
-} //end handleRequest
-
+}  // end handleRequest
 
 //========================================================================================================================
 void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
@@ -256,7 +259,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
                                        std::string      UID)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-	         << "Polling on UID:" << UID << std::endl;
+	             << "Polling on UID:" << UID << std::endl;
 
 	std::map<int, std::set<std::string>>::iterator mapReference;
 
@@ -274,7 +277,7 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 			// interface_->getCurrentPVValue(pv);
 			std::array<std::string, 4> pvInformation = interface_->getCurrentValue(pv);
 			__SUP_COUT__ << pv << ": " << pvInformation[1] << " : " << pvInformation[3]
-			         << std::endl;
+			             << std::endl;
 
 			if(pvInformation[0] != "NO_CHANGE")
 			{
@@ -305,8 +308,8 @@ void ControlsDashboardSupervisor::Poll(cgicc::Cgicc&    cgiIn,
 
 			//__SUP_COUT__ << pv  << ":" << (pvInfo?"Good":"Bad") << std::endl;
 			//__SUP_COUT__ << pv  << ":" << pvInfo->mostRecentBufferIndex -1 << std::endl;
-			//__SUP_COUT__ << pv << " : " << pvInfo->dataCache[(pvInfo->mostRecentBufferIndex
-			//-1)].second << std::endl;
+			//__SUP_COUT__ << pv << " : " <<
+			//pvInfo->dataCache[(pvInfo->mostRecentBufferIndex -1)].second << std::endl;
 		}
 
 		JSONMessage = JSONMessage.substr(0, JSONMessage.length() - 1);
@@ -346,7 +349,7 @@ void ControlsDashboardSupervisor::GetPVSettings(cgicc::Cgicc&    cgiIn,
                                                 std::string      pvList)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-	         << "Getting settings for " << pvList << std::endl;
+	             << "Getting settings for " << pvList << std::endl;
 
 	std::string JSONMessage = "{ ";
 
@@ -397,7 +400,7 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
                                               std::string      pvlist)
 {
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " "
-	         << "Generating UID" << std::endl;
+	             << "Generating UID" << std::endl;
 
 	std::set<std::string> pvDependencies;
 	std::string           uid;
@@ -428,33 +431,32 @@ void ControlsDashboardSupervisor::GenerateUID(cgicc::Cgicc&    cgiIn,
 	else
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		         << " PVList invalid: " << pvlist << std::endl;
+		             << " PVList invalid: " << pvlist << std::endl;
 		uid = "{ \"message\": \"-1\"}";
 	}
 
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << " NEW UID: " << UID_
-	         << std::endl;
+	             << std::endl;
 
 	xmlOut.addTextElementToData("JSON", uid);  // add to response
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetList(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
 {
-
 	if(interface_ != NULL)
-    	{
-    	
-    		__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
-        //	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
-	    	std::cout << " "	<< interface_->getList("JSON") << std::endl;
+	{
+		__SUP_COUT__ << "Interface is defined! Attempting to get list!" << std::endl;
+		//	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId() << std::endl;
+		std::cout << " " << interface_->getList("JSON") << std::endl;
 
-    		xmlOut.addTextElementToData("JSON", interface_->getList("JSON")); //add to response
-    	}
-    	else
-    	{
-        	__SUP_COUT__ << "Interface undefined! Failed to get list!" << std::endl;
-        	xmlOut.addTextElementToData("JSON","[\"None\"]");
-    	}
+		xmlOut.addTextElementToData("JSON",
+		                            interface_->getList("JSON"));  // add to response
+	}
+	else
+	{
+		__SUP_COUT__ << "Interface undefined! Failed to get list!" << std::endl;
+		xmlOut.addTextElementToData("JSON", "[\"None\"]");
+	}
 }
 //========================================================================================================================
 void ControlsDashboardSupervisor::GetPages(cgicc::Cgicc& cgiIn, HttpXmlDocument& xmlOut)
@@ -517,25 +519,25 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 	if(page.find("..") != std::string::npos)
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		         << "Error! Request using '..': " << page << std::endl;
+		             << "Error! Request using '..': " << page << std::endl;
 	}
 	else if(page.find("~") != std::string::npos)
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		         << "Error! Request using '~': " << page << std::endl;
+		             << "Error! Request using '~': " << page << std::endl;
 	}
 	else if(!(stat(page.c_str(), &buffer) == 0))
 	{
 		__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-		         << "Error! File not found: " << page << std::endl;
+		             << "Error! File not found: " << page << std::endl;
 	}
 
 	std::string file = PAGES_DIRECTORY;
 	file += "/" + page;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-	         << "Trying to load page: " << page << std::endl;
+	             << "Trying to load page: " << page << std::endl;
 	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-	         << "Trying to load page: " << file << std::endl;
+	             << "Trying to load page: " << file << std::endl;
 	// read file
 	// for each line in file
 
@@ -555,32 +557,32 @@ void ControlsDashboardSupervisor::loadPage(cgicc::Cgicc&    cgiIn,
 void ControlsDashboardSupervisor::SavePage(cgicc::Cgicc&    cgiIn,
                                            HttpXmlDocument& xmlOut,
                                            std::string      pageName,
-					   std::string	    page)
+                                           std::string      page)
 {
 	std::string file = PAGES_DIRECTORY;
-        file += pageName;
+	file += pageName;
 
-        std::string extension = file.substr(file.length() -4 , 4);
-        if(extension != ".dat")
-        {
-             __SUP_COUT__ << "Extension : " << extension << std::endl;
-             file += std::string(".dat");
-        }
-        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-                 << "Trying to save page: " << page << std::endl;
-        __SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
-                 << "Trying to save page as: " << file << std::endl;
-        // read file
-        // for each line in file
+	std::string extension = file.substr(file.length() - 4, 4);
+	if(extension != ".dat")
+	{
+		__SUP_COUT__ << "Extension : " << extension << std::endl;
+		file += std::string(".dat");
+	}
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to save page: " << page << std::endl;
+	__SUP_COUT__ << this->getApplicationDescriptor()->getLocalId()
+	             << "Trying to save page as: " << file << std::endl;
+	// read file
+	// for each line in file
 
-        std::ofstream outputFile;
+	std::ofstream outputFile;
 	outputFile.open(file);
 
-        outputFile << page;
+	outputFile << page;
 	outputFile.close();
 
 	std::cout << "Finished writing file" << std::endl;
-	
+
 	return;
 }
 //========================================================================================================================
