@@ -70,7 +70,7 @@ class ConfigurationGUISupervisor : public CoreSupervisorBase
 	                            ConfigurationManagerRW* cfgMgr,
 	                            const std::string&      groupName,
 	                            TableGroupKey           groupKey,
-								bool					ignoreWarnings = false);
+	                            bool                    ignoreWarnings = false);
 	void handleGetTableGroupTypeXML(HttpXmlDocument&        xmldoc,
 	                                ConfigurationManagerRW* cfgMgr,
 	                                const std::string&      configList);

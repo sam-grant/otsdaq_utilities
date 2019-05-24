@@ -31,16 +31,13 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	                                                            // settings)
 
   private:
-
-
-	//start MacroMaker only functions
-	void        generateURL(void);
+	// start MacroMaker only functions
+	void generateURL(void);
 	void verification(xgi::Input* in, xgi::Output* out);
 	void requestIcons(xgi::Input* in, xgi::Output* out);
-	void tooltipRequest(xgi::Input*  in,xgi::Output* out);
+	void tooltipRequest(xgi::Input* in, xgi::Output* out);
 	void requestWrapper(xgi::Input* in, xgi::Output* out);
-	//end MacroMaker only functions
-
+	// end MacroMaker only functions
 
 	void handleRequest(const std::string  Command,
 	                   HttpXmlDocument&   xmldoc,
@@ -66,9 +63,9 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	               const std::string& username = "");
 	void loadMacros(HttpXmlDocument& xmldoc, const std::string& username);
 	void loadMacroNames(
-			const std::string& username,
-			std::pair<std::vector<std::string> /*public macros*/,
-				std::vector<std::string> /*private macros*/>& returnMacroNames);
+	    const std::string&                                      username,
+	    std::pair<std::vector<std::string> /*public macros*/,
+	              std::vector<std::string> /*private macros*/>& returnMacroNames);
 	void appendCommandToHistory(std::string        command,
 	                            std::string        Format,
 	                            std::string        time,
@@ -88,7 +85,9 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	void exportFEMacro(HttpXmlDocument&   xmldoc,
 	                   cgicc::Cgicc&      cgi,
 	                   const std::string& username);
-	void runFEMacro(HttpXmlDocument& xmldoc, cgicc::Cgicc& cgi, const std::string& username);
+	void runFEMacro(HttpXmlDocument&   xmldoc,
+	                cgicc::Cgicc&      cgi,
+	                const std::string& username);
 
 	std::string generateHexArray(const std::string& sourceHexString, int& numOfBytes);
 	bool        isArgumentVariable(const std::string& argumentString);
@@ -103,12 +102,11 @@ class MacroMakerSupervisor : public CoreSupervisorBase
 	std::map<std::string /*FE UID*/, unsigned int /*superivisor index*/>
 	    FEtoSupervisorMap_;
 	std::map<std::string /*FE Type*/, std::set<std::string> /*FE UIDs*/>
-	    FEPluginTypetoFEsMap_;
-	std::map<std::string /*FE UID*/, std::string /*FE Type*/>
-	    FEtoPluginTypeMap_;
+	                                                          FEPluginTypetoFEsMap_;
+	std::map<std::string /*FE UID*/, std::string /*FE Type*/> FEtoPluginTypeMap_;
 
-	std::string              securityCode_;
-	bool                     defaultSequence_;
+	std::string securityCode_;
+	bool        defaultSequence_;
 
 };  // end MacroMakerSupervisor declaration
 

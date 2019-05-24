@@ -58,8 +58,8 @@ class ConsoleSupervisor : public CoreSupervisorBase
 			fields[LABEL].set("Label", 6, -1);
 			fields[SOURCEID].set("SourceID", 7, -1);  // number
 			fields[SOURCE].set("Source", 9, -1);
-			//fields[MSG].set(
-			 //   "Msg", 10, -1);
+			// fields[MSG].set(
+			//   "Msg", 10, -1);
 			// the message facility contents have changed!
 #if MESSAGEFACILITY_HEX_VERSION >= 0x20201
 			fields[MSG].set("Msg", 12, -1);

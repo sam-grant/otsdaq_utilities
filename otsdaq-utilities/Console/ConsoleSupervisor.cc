@@ -26,7 +26,7 @@ XDAQ_INSTANTIATOR_IMPL(ConsoleSupervisor)
 #define USERS_PREFERENCES_FILETYPE "pref"
 
 #define QUIET_CFG_FILE                    \
-	std::string(__ENV__("USER_DATA")) +    \
+	std::string(__ENV__("USER_DATA")) +   \
 	    "/MessageFacilityConfigurations/" \
 	    "QuietForwarder.cfg"
 
@@ -184,7 +184,7 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
 
 			if(selfGeneratedMessageCount)
 				--selfGeneratedMessageCount;  // decrement internal message count
-			else // reset heartbeat if external messages are coming through
+			else  // reset heartbeat if external messages are coming through
 				heartbeatCount = 0;
 
 			//__COUT__ << buffer << std::endl;
