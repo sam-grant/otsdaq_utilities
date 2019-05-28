@@ -21,11 +21,26 @@ qual_set="${QUAL}"
 build_type=${BUILDTYPE}
 
 case ${qual_set} in
-s67:e15)
-	basequal=e15
-	squal=s67
-	artver=v2_11_01
-	;;
+    s82:e19)
+        basequal=e19
+        squal=s82
+        artver=v3_02_04
+        ;;
+    s82:e17)
+        basequal=e17
+        squal=s82
+        artver=v3_02_04
+        ;;
+    s73:e17)
+        basequal=e17
+        squal=s73
+        artver=v2_11_05
+        ;;
+    s67:e15)
+	    basequal=e15
+	    squal=s67
+	    artver=v2_11_01
+	    ;;
     s65:e15)
         basequal=e15
         squal=s65
