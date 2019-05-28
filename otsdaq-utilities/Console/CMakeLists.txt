@@ -18,6 +18,7 @@ cet_make(LIBRARY_NAME Console
 		 WebUsersUtilities
 #		 MessageFacility
 		 NetworkUtilities
+         Macros
 )
 
 install_headers()

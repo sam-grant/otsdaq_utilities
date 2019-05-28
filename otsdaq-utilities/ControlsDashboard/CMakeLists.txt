@@ -11,9 +11,8 @@ cet_make(LIBRARY_NAME ControlsDashboard
 		 XmlUtilities
 		 CgiDataUtilities
 		 FiniteStateMachine
-		 
 		 CoreSupervisors
-         
+         Macros
 	     ${MF_MESSAGELOGGER}
 	     ${MF_UTILITIES}
 )
