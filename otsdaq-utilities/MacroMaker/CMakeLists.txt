@@ -13,6 +13,8 @@ cet_make(LIBRARY_NAME MacroMaker
 		 XmlUtilities
          MF_MessageLogger
          CodeEditor
+		 WebUsersUtilities
+		 SupervisorInfo
 		 FECore
          Macros
          ${Boost_SYSTEM_LIBRARY}
