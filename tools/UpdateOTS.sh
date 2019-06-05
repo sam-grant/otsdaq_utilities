@@ -470,6 +470,28 @@ for p in ${REPO_DIR[@]}; do
     fi	   
 done
 
+echo
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+echo
+ls ${MRB_SOURCE}/../ | grep localProducts
+echo
+echo
+
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
+curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
+echo
+echo
+
+echo
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
+echo
+ls ${MRB_SOURCE}/../ | grep localProducts
+echo
+echo
+
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
 echo -e "UpdateOTS.sh [${LINENO}]  \t *******************************"

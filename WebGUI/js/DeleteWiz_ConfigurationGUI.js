@@ -18,7 +18,7 @@
 //		- steps:
 //			- (error if unrecognized base path)
 //			- "what is the name of your <delete type>?"
-//				- note the active context and config group being modified, with dropdown to 
+//				- note the active context and table group being modified, with dropdown to 
 //					change them.		
 //			- "which one?"
 //				- "How deep?"

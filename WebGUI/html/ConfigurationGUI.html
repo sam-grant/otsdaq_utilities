@@ -15,7 +15,7 @@
 		//groupAliasesRequestHandler(req,anchorTarget)		 
 		
 		//setupGroupViewMode(anchorTarget)							//gets all table groups
-		//configGroupsRequestHandler(req,anchorTarget)
+		//tableGroupsRequestHandler(req,anchorTarget)
 		//groupSearchSelectionHandler(el)
 		//makeGroupInfoDisplayString(groupName,allKeys,latestKey,latestMembersHdr,backLinkToList)
 		//gotoSelectedMSGroup()
@@ -40,7 +40,7 @@
 		//launchRecordDeletionWizard(typeOfLaunch)
 	
 	//tree-view focused
-		//setupTableGroupTreeView(configGroupName,configGroupKey,backLinkStr)
+		//setupTableGroupTreeView(tableGroupName,tableGroupKey,backLinkStr)
 		//treeViewHandler(req,parentId,errStr)
 		//recursiveDrawTree(parent,depth,path,parentIdString)
 		//getTreeViewTableStrings(tableLinkName)
@@ -745,7 +745,7 @@
 			var el = document.getElementById("display");
 			el.innerHTML = "Loading...";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTableGroups", "", 
-					configGroupsRequestHandler, anchorTarget,
+					tableGroupsRequestHandler, anchorTarget,
 					0/*progressHandler*/,true /*callHandlerOnErr*/);		
 		} //end setupGroupViewMode()
 		
@@ -1224,8 +1224,8 @@
 			el.innerHTML = str;
 		}
 		
-		//configGroupsRequestHandler ~
-		function configGroupsRequestHandler(req, anchorTarget) 
+		//tableGroupsRequestHandler ~
+		function tableGroupsRequestHandler(req, anchorTarget) 
 		{				
 			var err = DesktopContent.getXMLValue(req,"Error");
 			if(err) 
@@ -1250,9 +1250,9 @@
 			var str = "";
 			str += "<div style='display:none'>Group View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
-			var tableNames, configVersions;
+			var tableNames, tableVersions;
 			var backLinkStr;
-			var tableName, configVersion;									
+			var tableName, tableVersion;									
 			
 			backLinkStr = "setupGroupViewMode();"; 
 
@@ -1447,7 +1447,7 @@
 				Debug.log("anchorTarget = " + anchorTarget);
 				jump(anchorTarget);
 			}
-		} //end configGroupsRequestHandler()
+		} //end tableGroupsRequestHandler()
 		
 		//groupSearchSelectionHandler ~~
 		//	make group search selection handler
@@ -1545,14 +1545,14 @@
 
 			//members are only returned for the latest
 			tableNames = latestMembersHdr.getElementsByTagName("MemberName");
-			configVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
+			tableVersions = latestMembersHdr.getElementsByTagName("MemberVersion");
 				
 			Debug.log("CfgGUI requestHandler tableNames.length " + tableNames.length);
 
 			for(var j=0;j<tableNames.length;++j)
 			{
 				tableName = tableNames[j].getAttribute("value");
-				configVersion = configVersions[j].getAttribute("value");
+				tableVersion = tableVersions[j].getAttribute("value");
 				backLinkStr = "setupGroupViewMode(\\\"anchorTag-" + 
 						groupName + "-" + tableName + "\\\");"; 
 
@@ -1561,9 +1561,9 @@
 				str += "<a name='anchorTag-" + 
 						groupName + "-" + tableName + "'></a>";
 				str += "<a href='#' onclick='setupSpecificTable(\"" + tableName +
-						"\",\"" + configVersion + "\",\"" + backLinkStr + "\"); return false;'>";
+						"\",\"" + tableVersion + "\",\"" + backLinkStr + "\"); return false;'>";
 				str += niceName(tableName) + "</a><br>" + 
-						((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
+						((tableVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:tableVersion);
 				str += "</td>";
 			}
 			str += "</tr></table>";	
@@ -1592,14 +1592,14 @@
 		function tableViewRequestHandler(req, anchorTarget)
 		{					
 			var tableNames = req.responseXML.getElementsByTagName("TableName");
-			var configVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
+			var tableVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
 			
 			var el = document.getElementById("display");
 
 			var str = "";
 			str += "<div style='display:none'>Table View</div>"; //Note: this is children[0] tag is used in some place to determine mode after a series of events
 			
-			var configVersions;
+			var tableVersions;
 			var tableName, version;
 			var backLinkStr;
 
@@ -1618,14 +1618,14 @@
 				str += niceName(tableName);
 				str += "</a><br><table style='margin-left:40px'><tr>";
 
-				configVersions = configVersionHdr[i].getElementsByTagName("Version");
+				tableVersions = tableVersionHdr[i].getElementsByTagName("Version");
 				
 				//Debug.log("CfgGUI requestHandler config= " + tableName +
-				//				+ " tableNames.length " + configVersions.length);
+				//				+ " tableNames.length " + tableVersions.length);
 				
-				for(var j=0;j<configVersions.length;++j)
+				for(var j=0;j<tableVersions.length;++j)
 				{
-					version = configVersions[j].getAttribute("value");
+					version = tableVersions[j].getAttribute("value");
 					str += "<td align='center'>";
 					str += "version" + "<br>";
 					str += "<a href='#' onclick='setupSpecificTable(\"" + tableName +
@@ -1783,7 +1783,7 @@
 			str += "<br>";
 
 			str += "<h3><u>Specific Table Group View</u></h3>";
-			str += "<label id='configGroupModified'></label><b>" + 
+			str += "<label id='tableGroupModified'></label><b>" + 
 					groupName + "</b> (group key: " + groupKey + ") ";
 
 			//add tree view link
@@ -2153,7 +2153,7 @@
 				Debug.log("Error?! No tag for versions returned for tableName: " + tableName, Debug.HIGH_PRIORITY);
 				return;
 			}
-			var configVersions = kocVersionHdr[0].getElementsByTagName("Version");
+			var tableVersions = kocVersionHdr[0].getElementsByTagName("Version");
 			
 			var xmlRows = req.responseXML.getElementsByTagName("CurrentVersionRows");
 			if(!xmlRows.length)
@@ -2327,27 +2327,27 @@
 			
 			//display all other version links
 			{
-				var configVersion;
+				var tableVersion;
 				var aliasString;
 				var versionAliases;
-				for(var j=0;j<configVersions.length;++j)
+				for(var j=0;j<tableVersions.length;++j)
 				{
-					configVersion = configVersions[j].getAttribute("value");
+					tableVersion = tableVersions[j].getAttribute("value");
 					
 					aliasString = "";
-					versionAliases = configVersions[j].getElementsByTagName("VersionAlias");
+					versionAliases = tableVersions[j].getElementsByTagName("VersionAlias");
 					for(var k=0;k<versionAliases.length;++k)						
 						aliasString += (k==0?"==>":",") + versionAliases[k].getAttribute("value");
 					
 					str += " ";
-					if(configVersion != version)
+					if(tableVersion != version)
 						str +=  "<a href='#' onclick='setupSpecificTable(\"" + tableName +
-							"\",\"" + configVersion + 
+							"\",\"" + tableVersion + 
 							"\", \"" + backLinkStr + "\"); return false;'>";
-					str += ((configVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:configVersion);
+					str += ((tableVersion|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:tableVersion);
 					//add alias string
 					str += aliasString;
-					if(configVersion != version)
+					if(tableVersion != version)
 						str += "</a>";
 				}
 			}
@@ -2756,8 +2756,8 @@
 			
 			//draw tree		
 			
-			var configGroupName = DesktopContent.getXMLValue(req,"configGroup");
-			var configGroupKey = DesktopContent.getXMLValue(req,"configGroupKey");			
+			var tableGroupName = DesktopContent.getXMLValue(req,"tableGroup");
+			var tableGroupKey = DesktopContent.getXMLValue(req,"tableGroupKey");			
 			
 			
 			//always update tree names
@@ -2781,8 +2781,8 @@
 
 			if(!parentId && 
 					treeViewHandlerStr_ && treeViewHandlerStr_ != "" &&
-					treeGroupName_ == configGroupName &&
-							treeGroupKey_ == configGroupKey)
+					treeGroupName_ == tableGroupName &&
+							treeGroupKey_ == tableGroupKey)
 			{
 				Debug.log("Re-using tree handler string that we already have!");
 				var el = document.getElementById("display");
@@ -2847,12 +2847,12 @@
 			if(treeErr) 
 			{
 				Debug.log("There were errors detected when attempting to verify the group '" +
-						configGroupName + " (" + configGroupKey + ")'. " + 
+						tableGroupName + " (" + tableGroupKey + ")'. " + 
 						"Please see the detailed report below:\n\n" + treeErr,Debug.WARN_PRIORITY);
 			}
 						
-			treeGroupName_ = configGroupName;
-			treeGroupKey_ = configGroupKey;
+			treeGroupName_ = tableGroupName;
+			treeGroupKey_ = tableGroupKey;
 			
 			
 			Debug.log("treeEditingNodeParentIdString_ " + treeEditingNodeParentIdString_);
@@ -2959,10 +2959,10 @@
 				
 				//create group details
 				{
-					var groupComment = DesktopContent.getXMLValue(req,"configGroupComment");	
+					var groupComment = DesktopContent.getXMLValue(req,"tableGroupComment");	
 					groupComment = decodeURIComponent(groupComment);		
-					var groupAuthor = DesktopContent.getXMLValue(req,"configGroupAuthor");
-					var groupCreationTime = DesktopContent.getXMLValue(req,"configGroupCreationTime");
+					var groupAuthor = DesktopContent.getXMLValue(req,"tableGroupAuthor");
+					var groupCreationTime = DesktopContent.getXMLValue(req,"tableGroupCreationTime");
 					groupCreationTime = ConfigurationAPI.getDateString(new Date((groupCreationTime|0)*1000));
 
 					treeViewHandlerStr_ += "<div id='clearDiv'></div>";
@@ -3008,19 +3008,19 @@
 				
 				//add config group header
 				treeViewHandlerStr_ += "<a id='treeView-ConfigGroupLink' " +
-					"href='#' onclick='setupSpecificTableGroup(\"" + configGroupName +
-					"\",\"" + configGroupKey + "\",\"" + backLinkStr + "\"); return false;'>";
-				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupName + "</div>";
-				treeViewHandlerStr_ += "<div style='display:none'>" + configGroupKey + "</div>";
-				treeViewHandlerStr_ += configGroupName + " (" + configGroupKey + ")";
+					"href='#' onclick='setupSpecificTableGroup(\"" + tableGroupName +
+					"\",\"" + tableGroupKey + "\",\"" + backLinkStr + "\"); return false;'>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + tableGroupName + "</div>";
+				treeViewHandlerStr_ += "<div style='display:none'>" + tableGroupKey + "</div>";
+				treeViewHandlerStr_ += tableGroupName + " (" + tableGroupKey + ")";
 				treeViewHandlerStr_ += "</a>";
 
 				treeViewHandlerStr_ += "&nbsp;&nbsp;&nbsp;";
 				
 				//add Activate link
 				treeViewHandlerStr_ += " <a id='treeView-ConfigGroupActivateLink' " +
-						"onclick='activateSystemConfig(\"" + configGroupName +
-						"\",\"" + configGroupKey + "\"); return false;'>";
+						"onclick='activateSystemConfig(\"" + tableGroupName +
+						"\",\"" + tableGroupKey + "\"); return false;'>";
 				treeViewHandlerStr_ += "Activate</a>";
 				
 				treeViewHandlerStr_ += "<div id='clearDiv' style='margin-bottom:10px'></div>";	
@@ -4530,7 +4530,7 @@
 			//Debug.log("idString: " + idString);
 			
 			var el = document.getElementById("treeNode-ChildrenOf-" + idString);
-			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			var tableGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
 			var str = el.innerHTML;
 			
 			if(str != "") //if children already exist, then toggle display
@@ -4577,8 +4577,8 @@
 						
 				
 				DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-						"&configGroup=" + configGroupEls[0].innerHTML + 
-						"&configGroupKey=" + configGroupEls[1].innerHTML +
+						"&tableGroup=" + tableGroupEls[0].innerHTML + 
+						"&tableGroupKey=" + tableGroupEls[1].innerHTML +
 						"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 						"&depth=1", 
 						"startPath=" + path + nodeName + "/"+ 
@@ -4592,15 +4592,15 @@
 		}
 		
 		//setupTableGroupTreeView ~
-		function setupTableGroupTreeView(configGroupName, configGroupKey, backLinkStr)
+		function setupTableGroupTreeView(tableGroupName, tableGroupKey, backLinkStr)
 		{
 			if(backLinkStr && backLinkStr != "")
 				treeViewBackLinkStr_ = backLinkStr;
 			else 
 				treeViewBackLinkStr_ = "";
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" +
-					"&configGroup=" + configGroupName + 
-					"&configGroupKey=" + configGroupKey +
+					"&tableGroup=" + tableGroupName + 
+					"&tableGroupKey=" + tableGroupKey +
 					"&hideStatusFalse=" + (treeViewHideStatus_?1:0) +
 					"&depth=1", 
 					"startPath=/",treeViewHandler,
@@ -5213,9 +5213,9 @@
 			str += "<br><br>";
 			
 			var tableNames = req.responseXML.getElementsByTagName("TableName");
-			var configVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
+			var tableVersionHdr = req.responseXML.getElementsByTagName("TableVersions");
 			var name;
-			var configVersions, version;
+			var tableVersions, version;
 		
 			Debug.log("tableNames.length " + tableNames.length);
 			
@@ -5256,15 +5256,15 @@
 				str += "</a>";
 				str += "</input>";
 
-				configVersions = configVersionHdr[i].getElementsByTagName("Version");
-				//Debug.log("CfgGUI requestHandler tableNames.length " + configVersions.length);
+				tableVersions = tableVersionHdr[i].getElementsByTagName("Version");
+				//Debug.log("CfgGUI requestHandler tableNames.length " + tableVersions.length);
 
 				str += "</td><td>";
 				
 				str += "<select id='select-" + name + "'>";
-				for(var j=0;j<configVersions.length;++j)
+				for(var j=0;j<tableVersions.length;++j)
 				{
-					version = configVersions[j].getAttribute("value");
+					version = tableVersions[j].getAttribute("value");
 					str += "<option value='" + version + "'>";
 					str += version;	//can display however
 					str += "</option>";
@@ -6151,8 +6151,8 @@
 				}
 
 			DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-					"&configGroup=" + treeGroupName_ + 
-					"&configGroupKey=" + treeGroupKey_ +
+					"&tableGroup=" + treeGroupName_ + 
+					"&tableGroupKey=" + treeGroupKey_ +
 					"&hideStatusFalse=" + 1 +
 					"&depth=1", 
 					"startPath=" + "/" + 
@@ -6918,8 +6918,8 @@
 								}
 
 							DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-									"&configGroup=" + treeGroupName_ + 
-									"&configGroupKey=" + treeGroupKey_ +
+									"&tableGroup=" + treeGroupName_ + 
+									"&tableGroupKey=" + treeGroupKey_ +
 									"&hideStatusFalse=" + 1 +
 									"&depth=1", 
 									"startPath=" + "/" + 
@@ -8303,11 +8303,11 @@
 			
 			//get affected groups
 			//	and save member map to hidden div for Save action			
-			var configGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
+			var tableGroupEls = document.getElementById("treeView-ConfigGroupLink").childNodes;
 			///////////////////////////////////////////////////////////
 			DesktopContent.XMLHttpRequest("Request?RequestType=getAffectedActiveGroups" +	
-					"&groupName=" + configGroupEls[0].innerHTML + 
-					"&groupKey=" + configGroupEls[1].innerHTML,
+					"&groupName=" + tableGroupEls[0].innerHTML + 
+					"&groupKey=" + tableGroupEls[1].innerHTML,
 					"&modifiedTables=" + modifiedTables,
 					function(req) 
 					{
@@ -13904,7 +13904,7 @@
 									Debug.log("groupAliasName=" + groupAliasName);
 									Debug.log("groupAliasVersion=" + groupAliasVersion);
 									var tableNames = req.responseXML.getElementsByTagName("oldBackboneName");
-									var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+									var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 									//make a new backbone with old versions of everything except Group Alias 
 									var tableMap = "tableList=";
@@ -13921,7 +13921,7 @@
 										}
 										//else use old member
 										tableMap += name + "," + 
-												configVersions[i].getAttribute("value") + ",";							
+												tableVersions[i].getAttribute("value") + ",";							
 									}
 									Debug.log(tableMap);
 
@@ -14231,7 +14231,7 @@
 			str += "</div>";
 			el.innerHTML = str + "<br>" + dispStr + "<div id='clearDiv'></div>" + str;
 			
-			el = document.getElementById("configGroupModified");
+			el = document.getElementById("tableGroupModified");
 			el.innerHTML = "*Modified* "; //mark modified
 
 			el = document.getElementById("saveGroupWithWarningsIgnored");
@@ -14520,7 +14520,7 @@
 									Debug.log("groupAliasName=" + groupAliasName);
 									Debug.log("groupAliasVersion=" + groupAliasVersion);
 									var tableNames = req.responseXML.getElementsByTagName("oldBackboneName");
-									var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+									var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 									//make a new backbone with old versions of everything except Group Alias 
 									var tableMap = "tableList=";
@@ -14537,7 +14537,7 @@
 										}
 										//else use old member
 										tableMap += name + "," + 
-												configVersions[i].getAttribute("value") + ",";							
+												tableVersions[i].getAttribute("value") + ",";							
 									}
 									Debug.log(tableMap);
 
@@ -15054,24 +15054,24 @@
 							else
 								Debug.log("Skipped merger of context groups due to empty group name.", Debug.INFO_PRIORITY);
 							
-							var configGroupName = DesktopContent.getXMLValue(req,"ConfigGroupName");
-							var configGroupKey = DesktopContent.getXMLValue(req,"ConfigGroupKey");
-							var didConfigMerge = configGroupName && configGroupName != "";
+							var tableGroupName = DesktopContent.getXMLValue(req,"ConfigGroupName");
+							var tableGroupKey = DesktopContent.getXMLValue(req,"ConfigGroupKey");
+							var didConfigMerge = tableGroupName && tableGroupName != "";
 
 							if(didConfigMerge)
 							{
 								Debug.log("The config groups, " + groupANameConfig + "(" + groupAKeyConfig + ") & " +
 										groupBNameConfig + "(" + groupBKeyConfig + "), were successfully merged into a new group, " + 
-										configGroupName + "(" + configGroupKey + ")!",Debug.INFO_PRIORITY);
+										tableGroupName + "(" + tableGroupKey + ")!",Debug.INFO_PRIORITY);
 								Debug.log("Click here to <a onclick='activateSystemConfig(\"" +
-										configGroupName + "\",\"" + configGroupKey + "\");'>Activate " + 
-										configGroupName + "(" + configGroupKey + ")</a> (to avoid errors, activate the config group before the context group), or goto " + 
+										tableGroupName + "\",\"" + tableGroupKey + "\");'>Activate " + 
+										tableGroupName + "(" + tableGroupKey + ")</a> (to avoid errors, activate the config group before the context group), or goto " + 
 										"<a onclick='setupSpecificTableGroup(\"" +
-										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
-										configGroupName + "(" + configGroupKey + ") Group-view</a> or " + 
+										tableGroupName + "\",\"" + tableGroupKey + "\");'>" + 
+										tableGroupName + "(" + tableGroupKey + ") Group-view</a> or " + 
 										"<a onclick='setupTableGroupTreeView(\"" +
-										configGroupName + "\",\"" + configGroupKey + "\");'>" + 
-										configGroupName + "(" + configGroupKey + ") Tree-view</a>!"
+										tableGroupName + "\",\"" + tableGroupKey + "\");'>" + 
+										tableGroupName + "(" + tableGroupKey + ") Tree-view</a>!"
 										,Debug.INFO_PRIORITY);
 							}
 							else
@@ -15081,7 +15081,7 @@
 //							if(didContextMerge && !didConfigMerge) //group view							
 //								setupSpecificTableGroup(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
 //							else if(!didContextMerge && didConfigMerge) //group view							
-//								setupSpecificTableGroup(configGroupName,configGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
+//								setupSpecificTableGroup(tableGroupName,tableGroupKey,"setupSystemViewMode();" /*backLinkStr*/);
 //							else //both, so tree view of contex
 //								setupTableGroupTreeView(contextGroupName,contextGroupKey,"setupSystemViewMode();" /*backLinkStr*/)
 							

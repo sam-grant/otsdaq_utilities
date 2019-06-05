@@ -3,7 +3,7 @@
 # This script is expected to be in otsdaq utilities repository in a specific directory
 # but it can be executed from any path (do not source it, execute with ./ )
 #
-# ./path/to/script/OnlineDocPushUpdate.sh <do NOT do mrb z> <only transfer main page>
+# ./path/to/script/OnlineDocPushUpdate.sh <do NOT do mrb z> <only transfer main page> <transfer to dev area>
 #
 echo 
 echo
@@ -52,6 +52,11 @@ if [ "x$2" == "x" ]; then
 else
 	echo -e "OnlineDoc [${LINENO}]  \t Only regenerating and updating main.html"
 fi
+SCP_LOC="/docs/dev"
+if [ "x$3" == "x" ]; then    
+	SCP_LOC="/docs/code"
+fi
+echo -e "OnlineDoc [${LINENO}]  \t Transferring to location otsdaq.fnal.gov${SCP_LOC}"
 
 if [ $DO_MRBZ == 1 ]; then
 	echo -e "OnlineDoc [${LINENO}]  \t Cleaning all so that doxygen will run... mrb z..."
@@ -112,9 +117,9 @@ for p in ${REPO_DIR[@]}; do
 		doxygen_main_editor $p/doc/html/index.html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_$(basename $p).html $SCRIPT_DIR/../../../srcs/otsdaq_utilities/onlineDoc/inject_otsdaq_head.html
 
 		if [ $ONLY_MAIN == 1 ]; then
-			echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/"
-			#scp -r $p/doc/html/main.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/
-			scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)/
+			echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/$(basename $p)/"
+			#scp -r $p/doc/html/main.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/${SCP_LOC}/$(basename $p)/
+			scp -r $p/doc/html/index.html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/$(basename $p)/
 			continue
 		fi
 
@@ -124,13 +129,23 @@ for p in ${REPO_DIR[@]}; do
 		echo
 		echo
 		
-		echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)"
-		scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)
-		echo -e "OnlineDoc [${LINENO}]  \t Done with .... scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs/docs/code/$(basename $p)"
+		echo -e "OnlineDoc [${LINENO}]  \t scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/$(basename $p)"
+		scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/$(basename $p)
+		echo -e "OnlineDoc [${LINENO}]  \t Done with .... scp -r $p/doc/html web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/$(basename $p)"
 	fi
     fi	   
 done
 
+
+echo
+echo -e "OnlineDoc [${LINENO}]  \t =================="
+echo -e "OnlineDoc [${LINENO}]  \t Transferring shared content..."
+echo
+echo
+echo -e "OnlineDoc [${LINENO}]  \t scp -r ${SCRIPT_DIR}/../onlineDoc/otsdaq_doc_library.js web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/"
+scp -r ${SCRIPT_DIR}/../onlineDoc/otsdaq_doc_library.js web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/
+echo -e "OnlineDoc [${LINENO}]  \t scp -r ${SCRIPT_DIR}/../onlineDoc/contentData web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/"
+scp -r ${SCRIPT_DIR}/../onlineDoc/contentData web-otsdaq@otsdaq.fnal.gov:/web/sites/otsdaq.fnal.gov/htdocs${SCP_LOC}/
 
 
 
