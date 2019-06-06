@@ -78,6 +78,7 @@ void ConsoleSupervisor::destroy(void)
 //	Thread for printing Message Facility messages without decorations
 //	Note: Uses std::mutex to avoid conflict with reading thread.
 void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
+try
 {
 	__COUT__ << std::endl;
 
@@ -277,6 +278,15 @@ void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
 	}
 
 }  // end messageFacilityReceiverWorkLoop()
+ catch(const std::runtime_error& e)
+   {
+     __COUT_ERR__ << "Error caught at Console Supervisor thread: " << e.what() << __E__;
+   }
+ catch(...)
+   {
+     __COUT_ERR__ << "Unknown error caught at Console Supervisor thread." << __E__;
+   }
+
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
