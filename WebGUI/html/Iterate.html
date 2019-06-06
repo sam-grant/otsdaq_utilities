@@ -677,8 +677,8 @@
 		var _forceUseOfAliases;// = Do not provide user with option to use an arbitrary group
 		var _forceGroupsOnly;//= Do not provide user with option to use Macros
 		
-		var _ITERATE_BASE_PATH = "IterateConfiguration";	
-		var _PLAN_BASE_PATH = "IterationPlanConfiguration";	
+		var _ITERATE_BASE_PATH = "IterateTable";	
+		var _PLAN_BASE_PATH = "IterationPlanTable";	
 		var _recordsAlias = "Iteration Plan";
 		
 		//global vars for iteration plan records
@@ -689,9 +689,9 @@
 		var _modifiedTables;
 		
 		//global vars for editing plans
-		var _configGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups
+		var _tableGroupAliases = []; //array of objects:{alias,name,key,groupComment,aliasComment}, only configuration groups
 		var _fsmNames = [];	//array of names
-		var _configGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
+		var _tableGroups = []; //array of objects:{name,key,groupComment}, only configuration groups
         var _commands = [];
         
 		var _COMMAND_TYPES = {}; //for now, keys are same as value, but value is (intended to be) display name
@@ -985,8 +985,8 @@
                 });
                 commands.push({		//CONFIGURE_ALIAS aliasMap[0]
                 "type" : _COMMAND_TYPES.CONFIGURE_ALIAS,
-                "param" : {"SystemAlias":(_configGroupAliases.length? //use first alias, if any exist
-                		_configGroupAliases[0].alias
+                "param" : {"SystemAlias":(_tableGroupAliases.length? //use first alias, if any exist
+                		_tableGroupAliases[0].alias
 						:"")},
                 });
                 commands.push({		//RUN 5 minutes
@@ -2021,10 +2021,10 @@
 					var groupTypes = req.responseXML.getElementsByTagName("GroupType");
 					var aliasComments = req.responseXML.getElementsByTagName("AliasComment");
 	
-					_configGroupAliases = [];
+					_tableGroupAliases = [];
 					for(var i=0;i<groupAliases.length;++i) 
 						if(groupTypes[i].getAttribute('value') == "Configuration")
-							_configGroupAliases.push({
+							_tableGroupAliases.push({
 									"alias" : groupAliases[i].getAttribute('value'),
 									"name" : groupNames[i].getAttribute('value'),
 									"key" : groupKeys[i].getAttribute('value'),
@@ -2032,7 +2032,7 @@
 									"aliasComment" : aliasComments[i].getAttribute('value')
 						});
 	
-					console.log("_configGroupAliases",_configGroupAliases);
+					console.log("_tableGroupAliases",_tableGroupAliases);
 	
 	
 						}); //end getGroupAliases handler
@@ -2050,16 +2050,16 @@
 					var groupTypes = req.responseXML.getElementsByTagName("TableGroupType");
 					var groupComments = req.responseXML.getElementsByTagName("TableGroupComment");
 					
-					_configGroups = [];
+					_tableGroups = [];
 					for(var i=0;i<groupNames.length;++i) 
 						if(groupTypes[i].getAttribute('value') == "Configuration")
-							_configGroups.push({								
+							_tableGroups.push({								
 									"name" : groupNames[i].getAttribute('value'),
 									"key" : groupKeys[i].getAttribute('value'),
 									"groupComment" : groupComments[i].getAttribute('value')
 						});
 					
-					console.log("_configGroups",_configGroups);
+					console.log("_tableGroups",_tableGroups);
 					
 						}); //end getTableGroups handler
 						
@@ -2111,12 +2111,12 @@
 					function(members)
 					{
 				Debug.log("getGroupTypeMemberNames handler");				
-				var configMapStr = "configList=";
+				var tableMapStr = "tableList=";
 				for(var i=0;i<members.length;++i)
-					configMapStr += members[i] + ",-1,";
+					tableMapStr += members[i] + ",-1,";
 				ConfigurationAPI.saveGroupAndActivate(
 						"iterateDefaultGroup",
-						configMapStr,
+						tableMapStr,
 						responseHandler, //pass handler to be called
 						true /*doReturnParams*/						
 						)			
@@ -2407,8 +2407,8 @@
 											_fsmNames[0]
 													  :"")]);
 							addCommand(_COMMAND_TYPES.CONFIGURE_ALIAS,
-									[(_configGroupAliases.length? //use first alias, if any exist
-											_configGroupAliases[0].alias
+									[(_tableGroupAliases.length? //use first alias, if any exist
+											_tableGroupAliases[0].alias
 											:"")]);//"SystemAlias"
 							addCommand(_COMMAND_TYPES.BEGIN_LABEL,
 									["Main"]);
@@ -2840,14 +2840,14 @@
 
 									});
 
-							for(var j=0;j<_configGroupAliases.length;++j)
+							for(var j=0;j<_tableGroupAliases.length;++j)
 								str += htmlOpen("option" +
-										(_configGroupAliases[j].alias == initValue? //select the init value if match
+										(_tableGroupAliases[j].alias == initValue? //select the init value if match
 												" selected":""),
 												{
-														"value":_configGroupAliases[j].alias
+														"value":_tableGroupAliases[j].alias
 												},
-												_configGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
+												_tableGroupAliases[j].alias/*innerHTML*/, true /*closeTag*/);
 
 							str += "</select>";	
 
@@ -2855,9 +2855,9 @@
 									{
 											"id":"popUp-param-systemAliasDetails"										
 									});
-							if(_configGroupAliases.length)
+							if(_tableGroupAliases.length)
 								str += popUpParamSystemAliasOnChange(
-										_configGroupAliases[0].alias);
+										_tableGroupAliases[0].alias);
 							str += "</div>";
 							hDelta += 90;						
 						}
@@ -3877,9 +3877,9 @@
 			var str = "";
 			
 
-			for(var j=0;j<_configGroupAliases.length;++j)
+			for(var j=0;j<_tableGroupAliases.length;++j)
 			{
-				if(_configGroupAliases[j].alias == value)
+				if(_tableGroupAliases[j].alias == value)
 				{
 					//found details
 					str += htmlClearDiv();
@@ -3887,18 +3887,18 @@
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Translates to:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].name + " (" +
-							_configGroupAliases[j].key +
+							_tableGroupAliases[j].name + " (" +
+							_tableGroupAliases[j].key +
 							")</td></tr>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Group comment:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].groupComment +
+							_tableGroupAliases[j].groupComment +
 							"</td></tr>";
 					str += "<tr><td style='white-space:nowrap;font-weight:bold;'>" +
 							"Alias comment:</td>";
 					str += "<td style='white-space:nowrap'>" +
-							_configGroupAliases[j].aliasComment +
+							_tableGroupAliases[j].aliasComment +
 							"</td></tr>";
 					str += "</table>";
 							

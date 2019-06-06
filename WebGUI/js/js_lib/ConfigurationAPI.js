@@ -379,8 +379,8 @@ ConfigurationAPI.getSubsetRecords = function(subsetBasePath,
 	if(filterList === undefined) filterList = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" +
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
 			"&hideStatusFalse=0" + 
 			"&depth=1", //end get data 
 			"startPath=/" + subsetBasePath +  
@@ -436,8 +436,8 @@ ConfigurationAPI.getTree = function(treeBasePath,depth,modifiedTables,
 	if(treeBasePath == "/") treeBasePath = ""; //server does not like // for root
 
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" +
+			"&tableGroup=" +
+			"&tableGroupKey=-1" +
 			"&hideStatusFalse=0" + 
 			"&depth=" + depth, //end get data 
 			"startPath=/" + treeBasePath +
@@ -670,8 +670,8 @@ ConfigurationAPI.getFieldsOfRecords = function(subsetBasePath,recordArr,fieldLis
 	if(subsetBasePath == "/") subsetBasePath = "";
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeCommonFields" + 
-			"&configGroup=" +
-			"&configGroupKey=-1" + 
+			"&tableGroup=" +
+			"&tableGroupKey=-1" + 
 			"&depth=" + (maxDepth|0), //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
@@ -795,8 +795,8 @@ ConfigurationAPI.getFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 	}	
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getTreeNodeFieldValues" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +
 			"&fieldList=" + fieldListStr + 
@@ -880,8 +880,8 @@ ConfigurationAPI.getUniqueFieldValuesForRecords = function(subsetBasePath,record
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=getUniqueFieldValuesForRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data
 			"startPath=/" + subsetBasePath + 
 			"&recordList=" + recordListStr +  
 			"&fieldList=" + fieldList +
@@ -1005,8 +1005,8 @@ ConfigurationAPI.setFieldValuesForRecords = function(subsetBasePath,recordArr,fi
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=setTreeNodeFieldValues" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&valueList=" + valueListStr +
@@ -2400,7 +2400,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 	Debug.log("groupAliasVersion=" + groupAliasVersion);
 
 	var configNames = req.responseXML.getElementsByTagName("oldBackboneName");
-	var configVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
+	var tableVersions = req.responseXML.getElementsByTagName("oldBackboneVersion");
 
 	//make a new backbone with old versions of everything except Group Alias 
 	var tableMap = "tableList=";
@@ -2417,7 +2417,7 @@ ConfigurationAPI.newWizBackboneMemberHandler = function(req,params)
 		}
 		//else use old member
 		tableMap += name + "," + 
-				configVersions[i].getAttribute("value") + ",";							
+				tableVersions[i].getAttribute("value") + ",";							
 	}
 	
 	console.log("backbone tableMap",tableMap);
@@ -5457,8 +5457,8 @@ ConfigurationAPI.addSubsetRecords = function(subsetBasePath,
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=addTreeNodeRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&modifiedTables=" + modifiedTablesListStr, //end post data
@@ -5544,8 +5544,8 @@ ConfigurationAPI.deleteSubsetRecords = function(subsetBasePath,
 		recordListStr = encodeURIComponent(recordArr);
 	
 	DesktopContent.XMLHttpRequest("Request?RequestType=deleteTreeNodeRecords" + 
-			"&configGroup=" +
-			"&configGroupKey=-1", //end get data 
+			"&tableGroup=" +
+			"&tableGroupKey=-1", //end get data 
 			"startPath=/" + subsetBasePath +  
 			"&recordList=" + recordListStr +
 			"&modifiedTables=" + modifiedTablesListStr, //end post data

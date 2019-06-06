@@ -1634,8 +1634,8 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 							// get tree looking for empty children
 							DesktopContent.XMLHttpRequest("Request?RequestType=getTreeView" + 
-									"&configGroup=" +
-									"&configGroupKey=-1" +
+									"&tableGroup=" +
+									"&tableGroupKey=-1" +
 									"&hideStatusFalse=0" + 
 									"&depth=3", //make sure to see empty parents 
 									"startPath=/" + getParentTable(generationsBack) +  
