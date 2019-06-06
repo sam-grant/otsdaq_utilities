@@ -774,16 +774,16 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeView")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string filterList     = CgiDataUtilities::postData(cgiIn, "filterList");
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 		bool hideStatusFalse = CgiDataUtilities::getDataAsInt(cgiIn, "hideStatusFalse");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "depth: " << depth << __E__;
 		__SUP_COUT__ << "hideStatusFalse: " << hideStatusFalse << __E__;
@@ -792,8 +792,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		handleFillTreeViewXML(xmlOut,
 		                      cfgMgr,
-		                      configGroup,
-		                      TableGroupKey(configGroupKey),
+		                      tableGroup,
+		                      TableGroupKey(tableGroupKey),
 		                      startPath,
 		                      depth,
 		                      hideStatusFalse,
@@ -802,16 +802,16 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeNodeCommonFields")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 		int         depth          = CgiDataUtilities::getDataAsInt(cgiIn, "depth");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "depth: " << depth << __E__;
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
@@ -820,8 +820,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		handleFillTreeNodeCommonFieldsXML(xmlOut,
 		                                  cfgMgr,
-		                                  configGroup,
-		                                  TableGroupKey(configGroupKey),
+		                                  tableGroup,
+		                                  TableGroupKey(tableGroupKey),
 		                                  startPath,
 		                                  depth,
 		                                  modifiedTables,
@@ -830,15 +830,15 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getUniqueFieldValuesForRecords")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
@@ -846,8 +846,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		handleFillUniqueFieldValuesForRecordsXML(xmlOut,
 		                                         cfgMgr,
-		                                         configGroup,
-		                                         TableGroupKey(configGroupKey),
+		                                         tableGroup,
+		                                         TableGroupKey(tableGroupKey),
 		                                         startPath,
 		                                         modifiedTables,
 		                                         recordList,
@@ -855,15 +855,15 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeNodeFieldValues")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
@@ -871,8 +871,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		handleFillGetTreeNodeFieldValuesXML(xmlOut,
 		                                    cfgMgr,
-		                                    configGroup,
-		                                    TableGroupKey(configGroupKey),
+		                                    tableGroup,
+		                                    TableGroupKey(tableGroupKey),
 		                                    startPath,
 		                                    modifiedTables,
 		                                    recordList,
@@ -880,16 +880,16 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "setTreeNodeFieldValues")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 		std::string valueList      = CgiDataUtilities::postData(cgiIn, "valueList");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
 		__SUP_COUT__ << "valueList: " << valueList << __E__;
@@ -898,8 +898,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		handleFillSetTreeNodeFieldValuesXML(xmlOut,
 		                                    cfgMgr,
-		                                    configGroup,
-		                                    TableGroupKey(configGroupKey),
+		                                    tableGroup,
+		                                    TableGroupKey(tableGroupKey),
 		                                    startPath,
 		                                    modifiedTables,
 		                                    recordList,
@@ -909,22 +909,22 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "addTreeNodeRecords")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
 		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
 
 		handleFillCreateTreeNodeRecordsXML(xmlOut,
 		                                   cfgMgr,
-		                                   configGroup,
-		                                   TableGroupKey(configGroupKey),
+		                                   tableGroup,
+		                                   TableGroupKey(tableGroupKey),
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList,
@@ -932,22 +932,22 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "deleteTreeNodeRecords")
 	{
-		std::string configGroup    = CgiDataUtilities::getData(cgiIn, "configGroup");
-		std::string configGroupKey = CgiDataUtilities::getData(cgiIn, "configGroupKey");
+		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
 
-		__SUP_COUT__ << "configGroup: " << configGroup << __E__;
-		__SUP_COUT__ << "configGroupKey: " << configGroupKey << __E__;
+		__SUP_COUT__ << "tableGroup: " << tableGroup << __E__;
+		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
 		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
 
 		handleFillDeleteTreeNodeRecordsXML(xmlOut,
 		                                   cfgMgr,
-		                                   configGroup,
-		                                   TableGroupKey(configGroupKey),
+		                                   tableGroup,
+		                                   TableGroupKey(tableGroupKey),
 		                                   startPath,
 		                                   modifiedTables,
 		                                   recordList);
@@ -1539,8 +1539,8 @@ void ConfigurationGUISupervisor::setupActiveTablesXML(
 	// if(accumulatedErrors)
 	//	*accumulatedErrors = "";
 
-	xmlOut.addTextElementToData("configGroup", groupName);
-	xmlOut.addTextElementToData("configGroupKey", groupKey.toString());
+	xmlOut.addTextElementToData("tableGroup", groupName);
+	xmlOut.addTextElementToData("tableGroupKey", groupKey.toString());
 
 	bool usingActiveGroups = (groupName == "" || groupKey.isInvalid());
 
