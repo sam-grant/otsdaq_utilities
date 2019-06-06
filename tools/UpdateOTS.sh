@@ -26,7 +26,7 @@ echo -e "UpdateOTS.sh [${LINENO}]  "
 #replace StartOTS.sh in any setup file!
 sed -i s/StartOTS\.sh/ots/g ${MRB_SOURCE}/../setup_*
 
-if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
+if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchall" && "$1" != "--pull" && "$1" != "--push" && "$1" != "--pullcore" && "$1" != "--pushcore" && "$1" != "--pullall" && "$1" != "--pushall" && "$1" != "--tables" ]]; then
     echo -e "UpdateOTS.sh [${LINENO}]  \t Usage: Parameter 1 is the operation and, for pushes, Parameter 2 is the comment for git commit"
 	echo -e "UpdateOTS.sh [${LINENO}]  "
     echo -e "UpdateOTS.sh [${LINENO}]  \t Note: git status will be logged here: $CHECKIN_LOG_PATH"
@@ -34,8 +34,10 @@ if [ "x$1" == "x" ] || [[ "$1" != "--fetch" && "$1" != "--fetchall" && "$1" != "
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Parameter 1 operations:"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetch               \t #will fetch otsdaq repositories in srcs/"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --fetchall            \t #will fetch otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull otsdaq repositories in srcs/"
-	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push otsdaq repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pull                \t #will pull otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --push \"comment\"    \t #will push otsdaq user repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullcore            \t #will pull otsdaq core repositories in srcs/"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushcore \"comment\"\t #will push otsdaq core repositories in srcs/"
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pullall             \t #will pull all    repositories in srcs/ (i.e. not just otsdaq)."
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --pushall \"comment\" \t #will push all    repositories in srcs/ (i.e. not just otsdaq)."
 	echo -e "UpdateOTS.sh [${LINENO}]  \t\t --tables              \t #will not pull or push; it will just update tables."
@@ -161,6 +163,8 @@ GIT_COMMENT=
 
 ALL_REPOS=0
 TABLES_ONLY=0
+SKIP_CORE=0
+ONLY_CORE=0
 
 FETCH_ONLY=0
 
@@ -184,15 +188,30 @@ if [ "$1"  == "--pushall" ]; then
 	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing all repositories (i.e. not only otsdaq)!"
 fi
 if [ "$1"  == "--push" ]; then
+	SKIP_CORE=1
 	GIT_COMMENT=$2
 	if [ "x$2" == "x" ]; then
 		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
 		exit
 	fi
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq repositories!"
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq user repositories!"
 fi
 if [ "$1"  == "--pull" ]; then		
-	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq repositories!"
+	SKIP_CORE=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq user repositories!"
+fi
+if [ "$1"  == "--pushcore" ]; then
+	ONLY_CORE=1
+	GIT_COMMENT=$2	
+	if [ "x$2" == "x" ]; then
+		echo -e "UpdateOTS.sh [${LINENO}]  \t For git push, a comment must be placed in Parameter 2!"
+		exit
+	fi
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pushing otsdaq core repositories!"
+fi
+if [ "$1"  == "--pullcore" ]; then	
+	ONLY_CORE=1
+	echo -e "UpdateOTS.sh [${LINENO}]  \t Pulling otsdaq core repositories!"
 fi
 
 if [ "$1"  == "--fetchall" ]; then
@@ -224,16 +243,23 @@ if [ $ALL_REPOS = 1 ]; then
 else
 	REPO_DIR="$(find $MRB_SOURCE -maxdepth 1 -iname 'otsdaq*')"
 fi
-						
-
+					
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $(basename $p)"
+    
+    	bp=$(basename $p)
+    	if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+    		continue #skip core repos
+		fi
+		if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+			continue #skip non-core repos
+		fi
+    	
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory found as: $bp"
 	fi
     fi	   
 done
-
 
 
  
@@ -253,6 +279,14 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t log start:" > $CHECKIN_LOG_PATH
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
+
+	bp=$(basename $p)
+	if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+		continue #skip core repos
+	fi
+	if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+		continue #skip non-core repos
+	fi
 	
 	cd $p
 	
@@ -465,7 +499,17 @@ echo
 for p in ${REPO_DIR[@]}; do
     if [ -d $p ]; then
     if [ -d $p/.git ]; then
-		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory handled: $(basename $p)"
+    
+
+		bp=$(basename $p)
+		if [ $SKIP_CORE = 1 ] && [[ $bp = "otsdaq" || $bp = "otsdaq_utilities" || $bp = "otsdaq_components" ]]; then
+			continue #skip core repos
+		fi
+		if [ $ONLY_CORE = 1 ] && [[ $bp != "otsdaq" && $bp != "otsdaq_utilities" && $bp != "otsdaq_components" ]]; then
+			continue #skip non-core repos
+		fi
+    
+		echo -e "UpdateOTS.sh [${LINENO}]  \t Repo directory handled: $bp"
 	fi
     fi	   
 done
@@ -481,6 +525,13 @@ echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
 curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
+echo -e "UpdateOTS.sh [${LINENO}]  \t ... to determine the available qualifiers go here in your browser:"
+echo -e "\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_02_00 -q s67:e15:prof"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace v2_02_00 with your target version. and s67:e15:prof with your qualifiers"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
 echo
 echo
 
@@ -491,6 +542,7 @@ echo
 ls ${MRB_SOURCE}/../ | grep localProducts
 echo
 echo
+
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t =================="
 echo -e "UpdateOTS.sh [${LINENO}]  \t ots update script done"
