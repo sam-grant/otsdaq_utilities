@@ -335,6 +335,9 @@ if [[ "x$GIT_COMMENT" == "x" && $FETCH_ONLY = 0 ]]; then
 	#copy tutorial launching scripts
 	echo
 	echo -e "UpdateOTS.sh [${LINENO}]  \t updating tutorial launch scripts..."
+	chmod 755 $MRB_SOURCE/../get_tutorial_data.sh #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../get_tutorial_database.sh #make sure permissions allow deleting
+	chmod 755 $MRB_SOURCE/../reset_ots_tutorial.sh #make sure permissions allow deleting
 	rm $MRB_SOURCE/../get_tutorial_data.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../get_tutorial_database.sh &>/dev/null 2>&1 #hide output
 	rm $MRB_SOURCE/../reset_ots_tutorial.sh &>/dev/null 2>&1 #hide output
@@ -523,14 +526,16 @@ echo
 echo
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
+echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v
+echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
 echo -e "UpdateOTS.sh [${LINENO}]  \t ... to determine the available qualifiers go here in your browser:"
 echo -e "\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
 echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_02_00 -q s67:e15:prof"
-echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace v2_02_00 with your target version. and s67:e15:prof with your qualifiers"
+echo -e "UpdateOTS.sh [${LINENO}]  \t ...and replace 'v2_02_00' with your target version. and 's67:e15:prof' with your qualifiers"
 echo -e "UpdateOTS.sh [${LINENO}]  \t ...a new localProducts directory will be created, which you should use when you setup ots."
 echo
 echo
