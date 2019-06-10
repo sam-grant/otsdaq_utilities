@@ -1,0 +1,26 @@
+{
+	"existing_features" 	:
+	[
+	 {
+		"name" 			: "State Machine",
+		"description"	: "The state machine is defined by a number of states and \
+				the transitions between the states. Each transition is defined by a \
+				set of operations, which could be unique for each entity in the system.",
+		"images"		: ["state_machine","state_machine_full"],
+		"keywords" 		: ["State Machine","FSM","Finite State Machine","State","Transition"],
+		"links"			: ["State Machine"]
+	 }
+	 
+	 ],
+	
+	
+	"horizon_features" 	: 
+	[
+	 {
+		"name" 			: "Application Status Management",
+		"keywords" 		: ["Status","Application","DQM","Quality","Management"],
+		"links"			: ["State Machine"]		
+	 }
+	 
+	 ]	
+}

@@ -1,0 +1,24 @@
+{
+	"existing_features" 	:
+	[
+	 {
+		"name" 			: "State Machine",
+		"description"	: "state_machine",
+		"images"		: ["state_machine","state_machine_full"],
+		"keywords" 		: ["State Machine","FSM","Finite State Machine","State","Transition"],
+		"links"			: ["State Machine"]
+	 }
+	 
+	 ],
+	
+	
+	"horizon_features" 	: 
+	[
+	 {
+		"name" 			: "Application Status Management",
+		"keywords" 		: ["Status","Application","DQM","Quality","Management"],
+		"links"			: ["State Machine"]		
+	 }
+	 
+	 ]	
+}

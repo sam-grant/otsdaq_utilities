@@ -1,0 +1,439 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>State Machine Transition Stepper</title>
+
+
+<script>
+
+//functions:
+	//init()
+
+</script>
+
+<link rel='stylesheet' type='text/css' href='/WebPath/css/fonts.css?family=Donegal+One'>
+
+<style type="text/css">			
+			body {
+				background-color: rgb(5,10,50);
+			}
+
+			a, input[type=submit] {
+				cursor: pointer;
+			}
+			
+			#clearDiv {
+				clear: both;
+			}
+			
+			
+		</style>
+
+
+<script type="text/JavaScript" src="/WebPath/js/Globals.js"></script>
+<script type="text/JavaScript" src="/WebPath/js/Debug.js"></script>
+<script type="text/JavaScript"src="/WebPath/js/DesktopWindowContentCode.js"></script>
+<script type="text/JavaScript" src="/WebPath/js/js_lib/ConfigurationAPI.js"></script>
+
+<script>		
+
+			
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			var transitionSteps_ = [
+									{
+			"name" : "initialize"				
+									},
+									{
+											"name" : "initialize"				
+									},
+			];
+			
+			//init called once body has loaded
+			function init()
+			{
+				Debug.log("init()");
+				return;
+				
+
+				//get state machine from server
+				DesktopContent.XMLHttpRequest(
+						"Request?RequestType=getStateMachine" + 
+						"&fsmName=" + _fsmName, "", 
+						smRequestHandler);	
+				
+			} //end init()
+
+			
+			//smRequestHandler
+			//handle receiving state machine
+			//xml format:
+			//	<state 'X'>
+			//		<state_name "aaa"/>
+			//		<state_transition 'X'/>
+			//		<state_transition_action 'aaa'/>
+			//		<state_transition_name 'aaa'/>
+			//		<state_transition 'X'/>  
+			//		<state_transition_action 'aaa'/>
+			//		<state_transition_name 'aaa'/> ...
+			//	</state>			
+			function smRequestHandler(req) 
+			{			
+			    Debug.log("Physics smRequestHandler" + req.responseText);	    
+			    
+				var states = req.responseXML.getElementsByTagName("state");
+
+                Debug.log("Physics smRequestHandler " + states.length);
+                
+                //clear state machine structures
+                _states = [];
+                _stateNames = [];
+                _transitions = [];
+                _transitionNames = [];
+                _transitionParameters = [];
+                _transitionActions = [];
+                
+                //get all states and state names
+                for(var i=0;i<states.length;++i)
+                {
+                	_states[i] = states[i].getAttribute("value");
+                	_stateNames[i] = states[i].getElementsByTagName("state_name")[0].getAttribute("value");
+                }
+                Debug.log("Physics _states " + _states);
+
+                //get all transitions, names, and actions
+                for(var i=0;i<states.length;++i)
+                {
+                	var transArr = states[i].getElementsByTagName("state_transition");
+                	var transNamesArr = states[i].getElementsByTagName("state_transition_name");
+                	var transParametersArr = states[i].getElementsByTagName("state_transition_parameter");
+                	var transActionsArr = states[i].getElementsByTagName("state_transition_action");
+                	
+                	
+                    for(var t=0;t<transArr.length;++t)	
+						for(var j=0;j<_states.length;++j) //determine the transition state index for each transition 
+							if(_states[j] == transArr[t].getAttribute("value"))
+							{ 
+								_transitions.push([i,j]); 
+								_transitionNames.push(transNamesArr[t].getAttribute("value"));
+								_transitionParameters.push(transParametersArr[t].getAttribute("value"));
+								_transitionActions.push(transActionsArr[t].getAttribute("value"));
+								break; 
+							}
+                    
+                }
+
+                Debug.log("Physics _transitions \n\t" + _transitions + "\n\t" + _transitionNames + "\n\t" + _transitionActions);
+                
+                getCurrentState();	
+                
+                //==========================
+                //	Build alternative view grid
+                //
+                //grid is _ALT_GRID_WIDTH wide (could be translated for window view)
+                //	constraint is Initial in top left corner
+                //	then place by connections
+                _altStateGrid = [];
+                
+                var emptyRow = [];
+                for(var i=0;i<_ALT_GRID_WIDTH;++i)
+                	emptyRow.push(-1);
+                
+                //find initial 'I'
+                var ii;
+                _altPlacedStates = [];
+                for(var i=0;i<_states.length;++i)
+                {
+                	if(_states[i] == 'I') ii = i;
+                	_altPlacedStates.push([-1,-1]); //init to not placed
+                }
+                if(ii === undefined)
+                {
+                	Debug.log("Critical Error: Alternative view could not be configured, Initial state not found.",
+                			Debug.HIGH_PRIORITY);
+                	return;
+                }
+                
+                
+                //local function 
+                //	localPlaceState
+                //		place state index s 
+                //		adjacent to position (adjr, adjc) in grid
+                //		if the position is specified
+                var localPlaceState = function(s,adjr,adjc) {
+                	
+                	
+                	//find first available opening
+                	//	:= no states to bottom or right
+                	
+                	var r;
+                	var c;
+                	
+                	if(adjr  !== undefined)
+                	{
+                		if(_altPlacedStates[s][0] != -1) return; //already placed
+                		
+                		var placed = false;
+                		//look for openings adjacent starting to right
+                		for(var i=0;i<3 && !placed;++i)
+                			for(var j=0;j<3;++j)
+                			{
+                				r = adjr + ((1+i)%3-1);
+                				c = adjc + ((2+j)%3-1);
+                				
+                				//skip illegal locations
+                				if(r < 0 || r >= _altStateGrid.length) continue;
+                				if(c < 0 || c >= _ALT_GRID_WIDTH) continue;
+                				if(_altStateGrid[r][c] != -1) continue;  
+                				
+                				placed = true;
+                				break;
+                			}
+                		
+                		if(!placed)
+                		{
+                			//no adjacent spots found
+                			//solution: 
+                			//	add a row below
+                			//	if (last row)
+                			//		place directly below
+                			//	else
+                			//		place at opposite extreme of adjc (favor 0 for middle adjc)
+                			//	
+                			
+                			_altStateGrid = _altStateGrid.slice(0,adjr+1).concat(
+                					[emptyRow.slice()],  //copy of emptyRow
+									_altStateGrid.slice(adjr+1)
+                					);
+                			
+                			r = adjr + 1;
+                			if(r + 1 == _altStateGrid.length) //last row added
+                				c = adjc;
+                			else if(adjc == 0 || adjc == _ALT_GRID_WIDTH-1) //extremes
+                				c = (_ALT_GRID_WIDTH - 1) - adjc;
+                			else //favor 0 for middle adjc
+                				c = adjc - 1;
+                		}
+                	}
+                	else //place state with no adjacent requirement
+                	{
+                		if(_altPlacedStates[s][0] != -1) return; //already placed
+                	
+
+                    	r =_altStateGrid.length-1;
+                    	c = -1;
+                    	
+						if(r < 0) //empty grid, add first row
+						{
+							_altStateGrid.push(emptyRow.slice());	//copy of emptyRow
+							r = _altStateGrid.length-1;
+							c = 0;
+						}
+						else 
+						{
+							//check last row, assume best place to look                		
+							for(var i=0;i<_altStateGrid[r].length;++i)
+								if(_altStateGrid[r][i] == -1)
+								{
+									//found free place
+									c = i; 
+									break; 
+								}
+							if(c == -1) //no space found, add a new row
+							{
+								_altStateGrid.push(emptyRow.slice());	//copy of emptyRow
+								r = _altStateGrid.length-1;
+								c = 0;                			
+							}
+						}                	
+                	}
+                	
+                	//at this point position (r,c) has been decided
+                	//	and grid has been potentially resized
+                	_altStateGrid[r][c] = s;                	
+					_altPlacedStates[s] = [r,c];
+                	
+                	Debug.log("placed " + r + "," + c);
+                	console.log(_altPlacedStates);                	
+                	for(var i=0;i<_altStateGrid.length;++i)
+                		console.log("grid",_altStateGrid[i]);
+
+                	//place all transition states adjacent to this
+                	for(var i=0;i<_transitions.length;++i)
+                		if(_transitions[i][0] == -1 ||
+                				(_transitions[i][0] == -2 && _transitions[i][1] != s) ||
+								_transitions[i][0] == s)
+                			localPlaceState(_transitions[i][1],r,c);
+                }
+                
+                
+                //add first row 
+                
+                localPlaceState(ii); //place initialize
+                
+                //then all others
+                for(var i=0;i<_states.length;++i)
+                	if(i != ii)	//skip initial state which was already placed
+                		localPlaceState(i);                
+			}
+			
+
+			//=====================================================================================
+			//getCurrentState ~~
+			function getCurrentState() 
+			{
+				DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
+						"&fsmName=" + _fsmName, 
+						"", currStateRequestHandler, //end request handler
+						0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+						true /*doNoShowLoadingOverlay*/);				
+			} //end getCurrentState()
+			
+
+			//=====================================================================================
+			//currStateRequestHandler ~~
+			//	poll current state of state machine
+			function currStateRequestHandler(req,id,err) 
+			{		
+
+            	if(!req) //error! stop handler
+            	{            		
+            		window.clearTimeout(_verifyStateTimeout);
+            		window.clearInterval(_timeUpdateTimeout);
+            		Debug.log("Error: " + err, Debug.HIGH_PRIORITY); 
+            		return;
+            	}            	
+            	
+			    var cs = DesktopContent.getXMLValue(req,"current_state");
+			    var inTrans = DesktopContent.getXMLValue(req,"in_transition") == "1";
+			    
+			    Debug.log("Physics currStateRequestHandler: " + cs + " -- " + inTrans);
+
+			    
+			} //end currStateRequestHandler()
+			
+
+            //physicsLaunchHandler ~~
+            //  handle response to launch of physics state change
+            function physicsLaunchHandler(req,transitionAttempted) {
+            	            	
+            	Debug.log("Physics physicsLaunchHandler " + req.responseText);
+            	return;
+            	
+                if(transitionAttempted)
+                {
+					var success = DesktopContent.getXMLValue(req,"state_tranisition_attempted") == "1";
+					if(!success) 
+					{
+						var err = DesktopContent.getXMLValue(req,"state_tranisition_attempted_err");
+						if(err)
+							Debug.log(err,Debug.HIGH_PRIORITY);
+						Debug.log("Server indicated failure to attempt state transition. Attempting to refresh state machine...",Debug.HIGH_PRIORITY);
+						//alert("Server indicated failure to attempt state transition.");                	
+						_inAnimation = false;
+						
+						//refresh FSM
+						_transitionProgress = -1; 
+						window.clearInterval(_transitionTimer);
+						_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);
+						return;
+					}
+					
+                }
+                
+            } //end physicsLaunchHandler()
+            
+
+            //handleCheckTransitionProgress ~~
+            function handleCheckTransitionProgress(req,id,err) {
+            	
+                Debug.log("Physics handleCheckTransitionProgress " + req.responseText);
+            	return;
+            	
+            	if(!req) //error! stop checking progress..
+            	{            		
+            		Debug.log("Physics handleCheckTransitionProgress Error: " + err, Debug.HIGH_PRIORITY);
+            		
+//            		//show refresh link            		
+//            		var str = "";
+//            		str += "<div style='margin:10px'>";
+//            		str += "Did the server crash? If it's back, try a ";
+//            		str += "<a onclick='_transitionProgress = -1; " + 
+//					"window.clearInterval(_transitionTimer);" +
+//					"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//						">Refresh</a>.";
+//            		str += "</div>";
+//            		_blackoutReveal.innerHTML = str;
+            		return;
+            	}
+            	_blackoutReveal.innerHTML = ""; //clear blackout reveal refresh
+
+			    var inTransition = DesktopContent.getXMLValue(req,"in_transition")=="1";			    
+			    var progress = DesktopContent.getXMLValue(req,"transition_progress");		    
+			    
+			    _transitionResultingState = DesktopContent.getXMLValue(req,"current_state");
+			    
+			    if(!inTransition)
+			    {
+			    	_transitionProgress = 100;
+			    	
+					//update run number
+					document.getElementById("run-number").innerHTML = DesktopContent.getXMLValue(req,"run_number");
+			    }
+			    else
+			    {
+			    	if(progress > 99) progress = 99; //if not completed with transition, make sure progress is a legal value
+			    	else if(progress < 0) progress = 0;
+			    	
+			    	if(_transitionProgress == -1) //if first time receiving progress, setup progress view
+			    	{
+	            		//draw state from on left
+				    	_context.clearRect(0, 0, _canvas.width, _canvas.height);
+				    	drawState(_currState,_canvas.width/6,_canvas.height/2+15);
+				    	drawState(_transitions[_currStateTransArr[_selectedTransition]][1],_canvas.width*5/6,_canvas.height/2+15);
+					    _blackout.style.backgroundColor = 'rgba(' + _TRANS_BLACKOUT_COLOR + ',0)'; //remove blackout for to and from state display
+			    	}
+			    	if(progress != _transitionProgress)
+			    		Debug.log("Physics handleCheckTransitionProgress " + progress);
+			    	_transitionProgress = progress;
+			    	
+//			    	//show refresh link            		
+//			    	var str = "";
+//			    	str += "<div style='margin:10px'>";
+//
+//			    	str += "<a onclick='_transitionProgress = -1; " + 
+//			    			"window.clearInterval(_transitionTimer);" +
+//							"_transitionTimer = window.setInterval(transitionTimerHandler,_TRANS_TRANSLATE_PERIOD);' " +
+//							">Refresh</a>";
+//			    	str += "</div>";
+//			    	_blackoutReveal.innerHTML = str;
+			    }
+
+		    	_progressBar.style.width = _transitionProgress + "%";
+            	
+            	if(_transitionProgress < 100)	
+            		window.setTimeout(function(){
+            			DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
+    			    			"&fsmName=" + _fsmName,  
+            					"", handleCheckTransitionProgress, //end request handler
+								0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
+								true /*doNoShowLoadingOverlay*/);
+            		},10); //attempt to get current state again in 10ms
+			    	
+            }
+            
+           
+		</script>
+</head>
+
+
+<body onload='Javascript:init();'>
+		
+	<div id='transitionButtons'></div>
+	<div id='transitionStatus'></div>
+
+
+</body>
+
+</html>

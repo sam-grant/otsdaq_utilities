@@ -4840,9 +4840,8 @@ ConfigurationAPI.handleEditableFieldClick = function(depth,uid,editClick,type)
 								"margin:-2px 0 -" + (el.offsetHeight+6) + "px 0;" +							
 								"width:" + 
 								ww + "px; height:" + (el.offsetHeight+6) + "px" + 
-								"'>";					
-						str += "";
-						str += "</input>";	
+								"' " + //end style
+								"></input>";	
 
 						str += "<div style='display:block;" +
 								"margin: -2px 0 -7px 14px;" +
@@ -5058,9 +5057,14 @@ ConfigurationAPI.handleEditableFieldFixedChoiceEditToggle = function()
 		tel.style.display = "none";
 	}
 	else
-	{
-		tel.style.width = (sel.offsetWidth-2) + "px";
+	{		
+		tel.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)-2) + "px";
+		tel.parentNode.style.width = ((sel.offsetWidth>150?sel.offsetWidth:150)+50) + "px"; //div may need to expand to accommodate pencil in display				
 		sel.style.display = "none";
+
+		if(tel.value == "") //fill with oldvalue for user convenience, if blank
+			tel.value = ConfigurationAPI.editableFieldEditingOldValue_;
+
 		tel.style.display = "block";
 		ConfigurationAPI.setCaretPosition(tel,0,tel.value.length);
 	}
