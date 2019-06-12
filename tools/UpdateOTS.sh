@@ -530,7 +530,9 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v
 echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
-echo -e "UpdateOTS.sh [${LINENO}]  \t ... to determine the available qualifiers go here in your browser:"
+echo
+echo
+echo -e "UpdateOTS.sh [${LINENO}]  \t To determine the available qualifiers go here in your browser:"
 echo -e "\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
 echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
 echo
