@@ -451,57 +451,6 @@
 				"flattenToSystemAliases();" +
 				"'>Flatten to System Aliases</a>."
 				;
-//		var _OTS_RELAUNCH_STR =  
-//				//Normal mode
-//				"Click here to relaunch ots in " +
-//				"<a onclick='" +
-//				"DesktopContent.popUpVerification(" + 
-//				"\"Are you sure you want to relaunch otsdaq in Normal Mode?\", " +
-//				"function() {" + 
-//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchOTS\"," +
-//				"\"\",handleOtsRelaunchResponse,0);" +
-//				"},0,\"#efeaea\",0,\"#770000\");" +
-//				"'>Normal Mode</a>" +
-//				" or " +
-//				//Wiz Mode
-//				"<a onclick='" +
-//				"DesktopContent.popUpVerification(" + 
-//				"\"Are you sure you want to relaunch otsdaq in Wiz Mode?\", " +
-//				"function() {" + 
-//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=gatewayLaunchWiz\"," +
-//				"\"\",handleOtsRelaunchResponse,1);" +
-//				"},0,\"#efeaea\",0,\"#770000\");" +
-//				"'>Wiz Mode</a>." +
-//				"<br>" +
-//				//Toggle Version Tracking
-//				"Click here to " +
-//				"<a id='versionTrackingSystemLink' onclick='" +
-//				"var el = this;" +
-//				"if(el.textContent == \"Turn Version Tracking OFF\")" +
-//				"DesktopContent.popUpVerification(" + 
-//				"\"Are you sure you want to turn OFF your configuration version tracking?\", " +
-//				"function() {" + 
-//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=OFF\",\"\",versionTrackingHandler);" +
-//				"},0,\"#efeaea\",0,\"#770000\");" +
-//				"else " +
-//				"DesktopContent.popUpVerification(" + 
-//				"\"Are you sure you want to turn ON your configuration version tracking?\", " +
-//				"function() {" + 
-//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=versionTracking&Type=ON\",\"\",versionTrackingHandler);" +
-//				"},0,\"#efeaea\",0,\"#770000\");" +
-//				"'>Turn Version Tracking OFF</a>." +
-//				//Flatten Versions
-//				"<br>" +
-//				"Click here to " +
-//				"<a onclick='" +
-//				"DesktopContent.popUpVerification(" + 
-//				"\"Are you sure you want to remove all unused groups and tables based on the currently active System Aliases?\", " +
-//				"function() {" + 
-//				"DesktopContent.XMLHttpRequest(\"Request?RequestType=flattenToSystemAliases\"," +
-//				"\"\",handleFlattenSystemAliasesResponse);" +
-//				"},0,\"#efeaea\",0,\"#770000\");" +
-//				"'>Flatten to System Aliases</a>."
-//				;
 	
 		var _currentConfigName, _associatedGroupName, _associatedGroupKey;
 		var _editingCell = false;
@@ -815,6 +764,11 @@
 						DesktopContent._blockSystemCheckMailbox.innerHTML = "";
 						Debug.log("And we are back!",Debug.INFO_PRIORITY);
 						setupSystemViewMode();
+						DesktopContent.XMLHttpRequest("Request?" +
+								"RequestType=clearTableCachedVersions" +
+								"&tableName=*" +
+								"&refresh=1"
+								);
 						return;
 					}
 					localCountDown();

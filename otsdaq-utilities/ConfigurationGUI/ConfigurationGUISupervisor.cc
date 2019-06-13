@@ -758,7 +758,12 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 
 		try
 		{
-			cfgMgr->clearCachedVersions(tableName);
+			if(tableName == "*")
+				cfgMgr->clearAllCachedVersions();
+			else
+				cfgMgr->clearCachedVersions(tableName);
+
+			cfgMgr->getAllTableInfo(true /*refresh*/);
 		}
 		catch(std::runtime_error& e)
 		{

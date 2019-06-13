@@ -521,7 +521,7 @@ echo
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
 echo
-ls ${MRB_SOURCE}/../ | grep localProducts
+ls ${MRB_SOURCE}/../ | grep localProducts | grep -v href #-v is inverse grep
 echo
 echo
 
@@ -533,7 +533,9 @@ echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq relea
 echo
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t To determine the available qualifiers go here in your browser:"
-echo -e "\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
+echo
+echo -e "\t\t\t\t http://scisoft.fnal.gov/scisoft/bundles/otsdaq/"
+echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t ... then click the version, and manifest folder to view qualifiers."
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t To switch qualifiers, do the following: mrb newDev -v v2_02_00 -q s67:e15:prof"
