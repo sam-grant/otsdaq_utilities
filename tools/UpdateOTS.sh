@@ -527,7 +527,8 @@ echo
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
 echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
-curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href
+#-s for silent, sed to remove closing </a>
+curl -s http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
 echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
 echo
