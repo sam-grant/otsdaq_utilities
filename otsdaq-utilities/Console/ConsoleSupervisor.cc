@@ -243,8 +243,9 @@ try
 			// every 60 heartbeatCount (2 seconds each = 1 sleep and 1 timeout) print a
 			// heartbeat message
 			if(i != 200 ||  // show first message, if not already a message
-			   (heartbeatCount < 60 * 5 &&
-			    heartbeatCount % 60 == 59))  // every ~2 min for first 5 messages
+			   //(heartbeatCount < 60 * 5 &&
+			    heartbeatCount % 60 == 59//)
+				)  // every ~2 min for first 5 messages
 			{
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting... (if no messages, next "
