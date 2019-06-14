@@ -1217,6 +1217,13 @@
 	
 	<body onload='Javascript:init();'>			
 
+
+		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: left; margin: -1px 10px 0px 10px; cursor: pointer;'>			
+			<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: rgb(15,34,105);'></div>
+			<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(15,34,105);'></div>
+			<div style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(15,34,105);'></div>				
+		</div>
+		
 		<div id='consoleInstructions'>
 			<a onclick='toggleColorScheme();' title='Toggle Color Scheme' class='consoleLink' id='userLinkColor'>Toggle Color Scheme</a>
 		</div>
@@ -1233,11 +1240,6 @@
 			<a onclick='clearConsoleMessages();' title='Clear Console Messages' class='consoleLink' id='userLinkText'>Clear Console</a>		 
 		</div>
 		
-		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: right; margin: -2px 0px 0px 0px; cursor: pointer'>			
-			<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: rgb(15,34,105);'></div>
-			<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(15,34,105);'></div>
-			<div style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(15,34,105);'></div>				
-		</div>
 						
 		<div id='consoleHistoryContainer'>
 			<div id='consoleHistory' class='consoleEntry' <!--to match nowrap --> >
