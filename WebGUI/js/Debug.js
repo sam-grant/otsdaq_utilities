@@ -797,7 +797,7 @@ Debug.downloadMessages = function() {
 	link.setAttribute("download", "otsdaq_Messages_download.txt");
 	document.body.appendChild(link); // Required for FF
 
-	link.click(); // This will download the data file named "my_data.csv"
+	link.click(); // This will download the data file named "otsdaq_Messages_download.txt"
 
 	link.parentNode.removeChild(link);
 	
