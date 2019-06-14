@@ -77,8 +77,7 @@ void ConsoleSupervisor::destroy(void)
 // messageFacilityReceiverWorkLoop ~~
 //	Thread for printing Message Facility messages without decorations
 //	Note: Uses std::mutex to avoid conflict with reading thread.
-void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs)
-try
+void ConsoleSupervisor::messageFacilityReceiverWorkLoop(ConsoleSupervisor* cs) try
 {
 	__COUT__ << std::endl;
 
@@ -242,10 +241,10 @@ try
 
 			// every 60 heartbeatCount (2 seconds each = 1 sleep and 1 timeout) print a
 			// heartbeat message
-			if(i != 200 ||  // show first message, if not already a message
-			   //(heartbeatCount < 60 * 5 &&
-			    heartbeatCount % 60 == 59//)
-				)  // every ~2 min for first 5 messages
+			if(i != 200 ||                // show first message, if not already a message
+			                              //(heartbeatCount < 60 * 5 &&
+			   heartbeatCount % 60 == 59  //)
+			   )                          // every ~2 min for first 5 messages
 			{
 				++selfGeneratedMessageCount;  // increment internal message count
 				__MOUT__ << "Console is alive and waiting... (if no messages, next "
@@ -279,15 +278,14 @@ try
 	}
 
 }  // end messageFacilityReceiverWorkLoop()
- catch(const std::runtime_error& e)
-   {
-     __COUT_ERR__ << "Error caught at Console Supervisor thread: " << e.what() << __E__;
-   }
- catch(...)
-   {
-     __COUT_ERR__ << "Unknown error caught at Console Supervisor thread." << __E__;
-   }
-
+catch(const std::runtime_error& e)
+{
+	__COUT_ERR__ << "Error caught at Console Supervisor thread: " << e.what() << __E__;
+}
+catch(...)
+{
+	__COUT_ERR__ << "Unknown error caught at Console Supervisor thread." << __E__;
+}
 
 //========================================================================================================================
 void ConsoleSupervisor::defaultPage(xgi::Input* in, xgi::Output* out)
