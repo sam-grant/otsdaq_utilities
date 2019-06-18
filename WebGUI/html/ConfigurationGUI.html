@@ -1913,7 +1913,7 @@
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + tableName + "-currentVersionLink' " +
 						"href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForTableGroup()!!
-				str += "(Current version: ";
+				str += "(Member version: ";
 				str += "<label id='" + tableName + "-currentVersion'>";					
 				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
 				str += "</label>";
@@ -11103,18 +11103,108 @@
 			var c = _editingCellPos[1];
 			
 			//if child link cell or boolean cell
-			var sel;
-			if((sel = _editingCellEl.getElementsByTagName("select")).length)
+			try
 			{
-				sel = sel[0]; //assume the first select in the cell is the select
-
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);	
-				
-				//check if displayed
-				if(sel.style.display == "none")
+				var sel;
+				if((sel = _editingCellEl.getElementsByTagName("select")).length)
 				{
-					//if not displayed assume first input field is ours!
-					//take "normal cell" approach from below
+					sel = sel[0]; //assume the first select in the cell is the select
+
+					Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c);	
+
+					//check if displayed
+					if(sel.style.display == "none")
+					{
+						//if not displayed assume first input field is ours!
+						//take "normal cell" approach from below
+						var str = "";
+						try
+						{				
+							str = _editingCellEl.getElementsByTagName("input")[0].value;
+							Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+									str);
+						}
+						catch(err)
+						{
+							Debug.log("Error try-catch: " + err);
+						}
+
+						_editingCellEl.innerHTML = "";
+
+						if(_editingCellType.indexOf("ChildLink-") == 0 && 
+								str != "NO_LINK")
+						{
+							var astr = "";
+							astr += "<a href='#'>"; //for show
+							astr += str;
+							astr += "</a>";
+							_editingCellEl.innerHTML = astr;
+						}
+						else
+							_editingCellEl.appendChild(document.createTextNode(str));					
+					}
+					else
+					{		
+						if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
+						var selVal = sel.options[sel.selectedIndex].value;
+
+						Debug.log("CfgGUI editCellOK = " + 
+								selVal);
+
+						str = "";
+						str += selVal;
+
+						_editingCellEl.innerHTML = "";
+
+						if(_editingCellType.indexOf("ChildLink-") == 0 && 
+								str != "NO_LINK")
+						{
+							var astr = "";
+							astr += "<a href='#'>"; //for show
+							astr += str;
+							astr += "</a>";
+							_editingCellEl.innerHTML = astr;
+						}
+						else						
+							_editingCellEl.appendChild(document.createTextNode(str)); //_editingCellEl.innerHTML = str;		
+
+						//assume no child link will be named a boolean word
+						var boolTypeTrues =  ["On","True","Yes"];
+						var statusTypeFalses =  ["Off","False","No"];
+
+						//determine if true value
+						var isTrue = false;
+						var isFalse = false;
+						for(var i=0;i<boolTypeTrues.length;++i)
+							if(boolTypeTrues[i] == selVal)
+							{
+								isTrue = true; break;
+							}
+						for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
+							if(statusTypeFalses[i] == selVal)
+							{
+								isFalse = true; break;
+							}
+
+						if(isTrue)
+							_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
+						else if(isFalse)
+							_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
+					}
+				}
+				else if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData
+				{
+					sel = sel[0]; //assume the first textarea in the cell is the textarea
+
+					Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
+							sel.value);
+
+					var str = sel.value;
+					_editingCellEl.innerHTML = "";
+					_editingCellEl.appendChild(document.createTextNode(str));
+				}
+				else //normal cell
+				{
 					var str = "";
 					try
 					{				
@@ -11126,7 +11216,7 @@
 					{
 						Debug.log("Error try-catch: " + err);
 					}
-					
+
 					_editingCellEl.innerHTML = "";
 
 					if(_editingCellType.indexOf("ChildLink-") == 0 && 
@@ -11139,95 +11229,13 @@
 						_editingCellEl.innerHTML = astr;
 					}
 					else
-						_editingCellEl.appendChild(document.createTextNode(str));					
+						_editingCellEl.appendChild(document.createTextNode(str));
 				}
-				else
-				{		
-					if(sel.selectedIndex < 0) sel.selectedIndex = 0; //default to default
-					var selVal = sel.options[sel.selectedIndex].value;
-	
-					Debug.log("CfgGUI editCellOK = " + 
-							selVal);
-	
-					str = "";
-					str += selVal;
 
-					_editingCellEl.innerHTML = "";
-					
-					if(_editingCellType.indexOf("ChildLink-") == 0 && 
-							str != "NO_LINK")
-					{
-						var astr = "";
-						astr += "<a href='#'>"; //for show
-						astr += str;
-						astr += "</a>";
-						_editingCellEl.innerHTML = astr;
-					}
-					else						
-						_editingCellEl.appendChild(document.createTextNode(str)); //_editingCellEl.innerHTML = str;		
-					
-					//assume no child link will be named a boolean word
-					var boolTypeTrues =  ["On","True","Yes"];
-					var statusTypeFalses =  ["Off","False","No"];
-					
-					//determine if true value
-					var isTrue = false;
-					var isFalse = false;
-					for(var i=0;i<boolTypeTrues.length;++i)
-						if(boolTypeTrues[i] == selVal)
-						{
-							isTrue = true; break;
-						}
-					for(var i=0;!isTrue && i<statusTypeFalses.length;++i)
-						if(statusTypeFalses[i] == selVal)
-						{
-							isFalse = true; break;
-						}
-					
-					if(isTrue)
-						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_TRUE_COLOR;
-					else if(isFalse)
-						_editingCellEl.style.backgroundColor = _TABLE_BOOL_TYPE_FALSE_COLOR;
-				}
-			}
-			else if((sel = _editingCellEl.getElementsByTagName("textarea")).length) //for MultilineData
+			} //catch to make sure editing cell goes false
+			catch(err)
 			{
-				sel = sel[0]; //assume the first textarea in the cell is the textarea
-
-				Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
-						sel.value);
-				
-				var str = sel.value;
-				_editingCellEl.innerHTML = "";
-				_editingCellEl.appendChild(document.createTextNode(str));
-			}
-			else //normal cell
-			{
-				var str = "";
-				try
-				{				
-					str = _editingCellEl.getElementsByTagName("input")[0].value;
-					Debug.log("CfgGUI editCellOK editing r,c:" + r + "," + c + " = " +
-						str);
-				}
-				catch(err)
-				{
-					Debug.log("Error try-catch: " + err);
-				}
-				
-				_editingCellEl.innerHTML = "";
-
-				if(_editingCellType.indexOf("ChildLink-") == 0 && 
-						str != "NO_LINK")
-				{
-					var astr = "";
-					astr += "<a href='#'>"; //for show
-					astr += str;
-					astr += "</a>";
-					_editingCellEl.innerHTML = astr;
-				}
-				else
-					_editingCellEl.appendChild(document.createTextNode(str));
+				Debug.log("Error try-catch: " + err);
 			}
 			
 			_editingCell = false;
@@ -13096,7 +13104,9 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 
 						//fill any missing columns up to special columns
@@ -13112,7 +13122,9 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 						
 					}
@@ -13129,7 +13141,9 @@
 						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 
 						//fill any missing columns up to special columns
@@ -13143,7 +13157,9 @@
 						for(c;srcc<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -14096,7 +14112,7 @@
 				else
 					str += linkSplitArr[i];				
 			}
-			str.href = str;
+			el.href = str;
 			
 			//update existing
 			el = document.getElementById(tableName + "-versions");
@@ -14334,7 +14350,7 @@
 							Debug.log("There were problems identified in the tree view of the " +
 									"attempted new group '" +
 									attemptedNewGroupName +
-									"'.\nThe new group was not created.\n\n" +									
+									".'\nThe new group was not created.\n\n" +									
 									"You can save the group anyway (if you think it is a good idea) by clicking " +
 									"the button in the pop-up dialog " +
 									"'<u>Save Group with Warnings Ignored</u>.' " +

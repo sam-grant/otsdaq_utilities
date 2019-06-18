@@ -31,7 +31,7 @@
 //	This code also handles server requests and response handlers for the content code:
 //		-DesktopContent.XMLHttpRequest(requestURL, data, returnHandler <optional>, 
 //			reqParam <optional>, progressHandler <optional>, callHandlerOnErr <optional>, 
-//			doNoShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
+//			doNotShowLoadingOverlay <optional>, targetSupervisor <optional>, ignoreSystemBlock <optional>)
 //
 //			... here is an example request:
 //
@@ -53,7 +53,7 @@
 //						Debug.log("Success!",Debug.INFO_PRIORITY);
 //					}, //end request handler
 //					0 /*reqParam*/, 0 /*progressHandler*/, false /*callHandlerOnErr*/, 
-//					false /*doNoShowLoadingOverlay*/);  //end XMLHttpRequest() call
+//					false /*doNotShowLoadingOverlay*/);  //end XMLHttpRequest() call
 //
 //			... after a server request, returnHandler is called with response in req and reqParam if user defined
 //			... here is a returnHandler declaration example:
@@ -118,7 +118,7 @@ if (typeof Globals == 'undefined')
 
 
 //"public" function list: 
-//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay, targetSupervisor, ignoreSystemBlock)
+//	DesktopContent.XMLHttpRequest(requestURL, data, returnHandler, reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay, targetSupervisor, ignoreSystemBlock)
 //	DesktopContent.getXMLValue(req, name)
 //	DesktopContent.getXMLNode(req, name)
 //	DesktopContent.getXMLDataNode(req)
@@ -626,7 +626,7 @@ DesktopContent.hideLoading = function()	{
 //	otherwise, handler will not be called on error.
 //
 DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler, 
-		reqParam, progressHandler, callHandlerOnErr, doNoShowLoadingOverlay,
+		reqParam, progressHandler, callHandlerOnErr, doNotShowLoadingOverlay,
 		targetSupervisor, ignoreSystemBlock) {
 
 	// Sequence is used as an alternative approach to cookieCode (e.g. ots Config Wizard).
@@ -704,7 +704,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 		{  //when readyState=4 return complete, status=200 for success, status=400 for fail
 			window.clearTimeout(timeoutTimer);
 			
-			if(!doNoShowLoadingOverlay)
+			if(!doNotShowLoadingOverlay)
 				DesktopContent.hideLoading();
 			
 			if(req.status==200)
@@ -892,7 +892,7 @@ DesktopContent.XMLHttpRequest = function(requestURL, data, returnHandler,
 	}
 	
 
-	if(!doNoShowLoadingOverlay)
+	if(!doNotShowLoadingOverlay)
 		DesktopContent.showLoading();
 	
 	

@@ -590,10 +590,13 @@ SmartLaunch.create = function() {
 		DesktopContent.XMLHttpRequest("Request?RequestType=getCurrentState" + 
 				"&fsmName=" + _fsmName, 
 				"", 
-				localGetStateHandler,
-				0, //handler param				
-				0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
-				true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
+				localGetStateHandler,/*returnHandler*/
+				0 /*reqParam*/, 				
+				0 /*progressHandler*/,
+				0 /*callHandlerOnErr*/,
+				true /*doNotShowLoadingOverlay*/, 
+				true /*targetSupervisor*/, 
+				true /*ignoreSystemBlock*/);
 
 		//===========
 		function localGetStateHandler(req,id,err)
@@ -906,7 +909,7 @@ SmartLaunch.create = function() {
 
 					}, //end gatewayLaunchOTS req handler
 					0, //handler param
-					0,0,true, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,false, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/, true /*ignoreSystemBlock*/);
 		} // end localDelayedLaunch()
 		
@@ -1071,7 +1074,7 @@ SmartLaunch.create = function() {
 				_runFSMTimer = window.setTimeout(localRun,3000); //wait 3 seconds before doing anything
 					},	 // end handler				
 					0, //handler param				
-					0,0,false, //progressHandler, callHandlerOnErr, showLoadingOverlay
+					0,0,true, //progressHandler, callHandlerOnErr, doNotShowLoadingOverlay
 					true /*targetSupervisor*/);
 
 		}

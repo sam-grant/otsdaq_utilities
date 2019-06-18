@@ -779,8 +779,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeView")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string filterList     = CgiDataUtilities::postData(cgiIn, "filterList");
@@ -807,8 +807,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeNodeCommonFields")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
@@ -835,8 +835,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getUniqueFieldValuesForRecords")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
@@ -860,8 +860,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "getTreeNodeFieldValues")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
@@ -885,8 +885,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "setTreeNodeFieldValues")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string fieldList      = CgiDataUtilities::postData(cgiIn, "fieldList");
@@ -914,8 +914,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "addTreeNodeRecords")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
@@ -937,8 +937,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 	}
 	else if(requestType == "deleteTreeNodeRecords")
 	{
-		std::string tableGroup    = CgiDataUtilities::getData(cgiIn, "tableGroup");
-		std::string tableGroupKey = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
+		std::string tableGroup     = CgiDataUtilities::getData(cgiIn, "tableGroup");
+		std::string tableGroupKey  = CgiDataUtilities::getData(cgiIn, "tableGroupKey");
 		std::string startPath      = CgiDataUtilities::postData(cgiIn, "startPath");
 		std::string modifiedTables = CgiDataUtilities::postData(cgiIn, "modifiedTables");
 		std::string recordList     = CgiDataUtilities::postData(cgiIn, "recordList");
@@ -2473,7 +2473,7 @@ void ConfigurationGUISupervisor::handleFillTreeNodeCommonFieldsXML(
 //		modifiedTables := CSV of table/version pairs
 //		recordList := CSV of records to search for unique values
 //		fieldList := CSV of fields relative-to-record-path for which to get list of unique
-//values 			fieldList = AUTO is a special keyword
+// values 			fieldList = AUTO is a special keyword
 //				if AUTO, then server picks filter fields (usually 3, with preference
 //				for GroupID, On/Off, and FixedChoice fields.
 //

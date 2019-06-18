@@ -521,13 +521,14 @@ echo
 echo
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: Here are your localProducts directories..."
 echo
-ls ${MRB_SOURCE}/../ | grep localProducts | grep -v href #-v is inverse grep
+ls ${MRB_SOURCE}/../ | grep localProducts
 echo
 echo
 
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: below are the available otsdaq releases..."
 echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
-curl http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v
+#-s for silent, sed to remove closing </a>
+curl -s http://scisoft.fnal.gov/scisoft/bundles/otsdaq/ | grep \<\/a\> | grep _ | grep v  | grep --invert-match href | sed -e 's/<.*//'
 echo -e "UpdateOTS.sh [${LINENO}]  \t ----------------------------"
 echo -e "UpdateOTS.sh [${LINENO}]  \t Note: above are the available otsdaq releases..."
 echo

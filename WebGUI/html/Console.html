@@ -33,7 +33,7 @@
 			}
 			
 			
-			#userLink, #clearConsoleLink {
+			#userLink, #clearConsoleLink, #downloadIconDiv {
 				float: right;
 				margin: 2px 2px 2px 20px;
 			}
@@ -256,6 +256,7 @@
 				//clearFilterControls(field)
 				//togglePauseControls()
 				//clearConsoleMessages()
+				//downloadMessages()
 			
 			var _linkEl, _consoleEl, _historyEl, _historyContainerEl, _usersEl, _usersContainerEl;
 			var _controlsContainerEl, _controlsEl;
@@ -1182,6 +1183,32 @@
 					_userMouseInput = false;
 			}
 			
+
+			//=====================================================================================
+			function downloadMessages() 
+			{				
+				console.log("downloading messages...");
+				
+				//create CSV data string from html table
+				var dataStr = "data:text/txt;charset=utf-8,";
+				dataStr += encodeURIComponent(chatText.innerText);
+//				var lines = Debug._errBox.innerText.split('\n');
+//				for(var i=2;i<lines.length-2;++i)
+//				{
+//					dataStr += encodeURIComponent(lines[i] + "\n"); //encoded \n
+//				}
+				
+				var link = document.createElement("a");
+				link.setAttribute("href", dataStr); //double encode, so encoding remains in CSV
+				link.setAttribute("style", "display:none");
+				link.setAttribute("download", "otsdaq_Console_download.txt");
+				document.body.appendChild(link); // Required for FF
+
+				link.click(); // This will download the data file named "otsdaq_Messages_download.txt"
+
+				link.parentNode.removeChild(link);
+				
+			} //end Debug.downloadMessages 
 			
 		</script>
 		
@@ -1190,21 +1217,29 @@
 	
 	<body onload='Javascript:init();'>			
 
+
+		<div id='downloadIconDiv' onmouseup='downloadMessages()' title='Download console messages to text file.' style='float: left; margin: -1px 10px 0px 10px; cursor: pointer;'>			
+			<div style='display: block; margin-left: 3px; height:7px; width: 6px; background-color: rgb(15,34,105);'></div>
+			<div style='display: block; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid rgb(15,34,105);'></div>
+			<div style='position: relative; top: 2px; width: 12px; height: 2px; display: block; background-color: rgb(15,34,105);'></div>				
+		</div>
+		
 		<div id='consoleInstructions'>
-			<a href='Javascript:toggleColorScheme();' title='Toggle Color Scheme' class='consoleLink' id='userLinkColor'>Toggle Color Scheme</a>
+			<a onclick='toggleColorScheme();' title='Toggle Color Scheme' class='consoleLink' id='userLinkColor'>Toggle Color Scheme</a>
 		</div>
 		
 		<div id='consoleConnectionStatus'>
-			<a href='Javascript:getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
+			<a onclick='getConsoleUpdates();' title='Attempt to Reconnect Console' class='consoleLink'>*** DISCONNECTED ***</a>
 		</div>
 		
 		<div id='userLink'>
-			<a href='Javascript:toggleSideBar();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
+			<a onclick='toggleSideBar();' title='Toggle User Side Pane' class='consoleLink' id='userLinkText'></a>		 
 		</div>
 
 		<div id='clearConsoleLink'>
-			<a href='Javascript:clearConsoleMessages();' title='Clear Console Messages' class='consoleLink' id='userLinkText'>Clear Console</a>		 
+			<a onclick='clearConsoleMessages();' title='Clear Console Messages' class='consoleLink' id='userLinkText'>Clear Console</a>		 
 		</div>
+		
 						
 		<div id='consoleHistoryContainer'>
 			<div id='consoleHistory' class='consoleEntry' <!--to match nowrap --> >

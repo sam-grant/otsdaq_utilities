@@ -738,9 +738,10 @@ void MacroMakerSupervisor::getFElist(HttpXmlDocument& xmldoc)
 
 	SOAPParameters rxParameters;  // params for xoap to recv
 	rxParameters.addParameter("FEList");
-	rxParameters.addParameter("frontEndError");  // if there were errors recorded (during
-	                                             // configuration, e.g. in Macro Maker only
-	                                             // mode)
+	rxParameters.addParameter(
+	    "frontEndError");  // if there were errors recorded (during
+	                       // configuration, e.g. in Macro Maker only
+	                       // mode)
 
 	SupervisorInfoMap::const_iterator it;
 	std::string                       oneInterface;

@@ -1496,8 +1496,10 @@ Desktop.mouseMoveSubscriber = function(newHandler) {
 
 //Desktop.handleBodyMouseMove ~~
 //	handle resizing and moving events for desktop
+//	Returning true is important for allowing selection of text of Debug popup windows
+//		(Does it break anything to return true?)
 Desktop.handleBodyMouseMove = function(mouseEvent) {
-
+	
 	//call each subscriber
 	for(var i=0; i<Desktop._mouseMoveSubscribers.length; ++i)
 		Desktop._mouseMoveSubscribers[i](mouseEvent); 
@@ -1525,10 +1527,10 @@ Desktop.handleBodyMouseMove = function(mouseEvent) {
 				}
 				,10);
 				
-		return false;
+		return true;
 	}
 			
-	if(!Desktop.desktop.getForeWindow()) return false;
+	if(!Desktop.desktop.getForeWindow()) return true;
 	
 	if(Desktop.foreWinLastMouse[0] != -1)			//window selected and mouse moving now so do something
 	{		
@@ -1554,8 +1556,8 @@ Desktop.handleBodyMouseMove = function(mouseEvent) {
                 ,10);
 	}
 
-	return false;
-}
+	return true;
+} //end Desktop.handleBodyMouseMove()
 
 
 //handle resizing and moving events for desktop

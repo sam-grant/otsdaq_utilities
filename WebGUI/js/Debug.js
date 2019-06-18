@@ -376,7 +376,10 @@ Debug.errorPop = function(err,severity) {
 					"{font-family: 'Comfortaa', arial;" +//"{font-family: 'Inconsolata', monospace;" +
 					"font-weight: 200;" +
 					"font-size: 18px;" +
-					"color: rgb(255,200,100);" +
+					"color: rgb(255,200,100);" +	
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			
@@ -426,6 +429,9 @@ Debug.errorPop = function(err,severity) {
 					"overflow-y: scroll;" +
 					"overflow-x: auto;" +
 					"width: 100%;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err i" +
@@ -436,6 +442,9 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,200,100); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +				
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			css += //"#" + Debug._errBoxId + "-err i" +
@@ -447,6 +456,9 @@ Debug.errorPop = function(err,severity) {
 					"font-family: 'Comfortaa', arial;" +
 					"left: 8px, top: 8px; margin-right: 8px;" +
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 			
 			css += "#" + Debug._errBoxId + "-err b" +
@@ -454,6 +466,9 @@ Debug.errorPop = function(err,severity) {
 					"color: rgb(255,225,200); font-size: 18px;" +
 					"font-family: 'Comfortaa', arial;" +
 					"text-align: left;" +
+					"-webkit-user-select: 	text;" +
+					"-moz-user-select: 		text;" +
+					"user-select:			text;" +
 					"}\n\n";
 
 			css += "#" + Debug._errBoxId + " ." + Debug._errBoxId + "-localCallOut" + 
@@ -782,7 +797,7 @@ Debug.downloadMessages = function() {
 	link.setAttribute("download", "otsdaq_Messages_download.txt");
 	document.body.appendChild(link); // Required for FF
 
-	link.click(); // This will download the data file named "my_data.csv"
+	link.click(); // This will download the data file named "otsdaq_Messages_download.txt"
 
 	link.parentNode.removeChild(link);
 	

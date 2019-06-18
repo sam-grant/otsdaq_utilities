@@ -18,7 +18,7 @@
 		#subsystemDiv div, #refreshLink a {
 			color: rgb(136, 102, 102);
 			font-size: 20px;
-			font-family: "Comfortaa";
+			font-family: "Comfortaa", arial;
 		}
 
 		
@@ -113,7 +113,9 @@
 			text-align:left;
 		
 			padding: 20px 0px 20px 20px;
-			color: rgb(136, 102, 102);			
+			color: rgb(136, 102, 102);	
+
+			font-family: "Comfortaa";
 		}
 		
 		

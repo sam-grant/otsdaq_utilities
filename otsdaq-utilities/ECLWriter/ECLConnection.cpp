@@ -1,10 +1,10 @@
 #include <openssl/md5.h>
 #include <otsdaq-utilities/ECLWriter/ECLConnection.h>
+#include <boost/algorithm/string.hpp>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
-#include <boost/algorithm/string.hpp>
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
 
