@@ -819,6 +819,7 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "depth: " << depth << __E__;
+		if(depth == -1) depth = 10; //protect users who probably do not actually mean -1
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
 		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
