@@ -1913,7 +1913,7 @@
 				str += "<div style='float:left;white-space:nowrap;'>";	//open name div
 				str += "<a id='" + tableName + "-currentVersionLink' " +
 						"href='javascript:" + replaceScreenJS + "'>"; //FIXME .. back to onclick, but L12808  changeMemberVersionForTableGroup()!!
-				str += "(Current version: ";
+				str += "(Member version: ";
 				str += "<label id='" + tableName + "-currentVersion'>";					
 				str += ((version|0) == ConfigurationAPI._SCRATCH_VERSION?_SCRATCH_VIEW_NAME:version);
 				str += "</label>";
@@ -13104,7 +13104,9 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 
 						//fill any missing columns up to special columns
@@ -13120,7 +13122,9 @@
 						{
 							if(rowOffset + r == 0) cols[c] = [];
 							if(!c) cols[0][rowOffset + r] = rowOffset + r; //insert row number
-							cols[c+1][rowOffset + r] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[c+1][rowOffset + r] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 						
 					}
@@ -13137,7 +13141,9 @@
 						for(var c=0;c<src[r].length-3 && c<colTypes.length-3-1;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 
 						//fill any missing columns up to special columns
@@ -13151,7 +13157,9 @@
 						for(c;srcc<src[r].length;++c)
 						{
 							if(!c) cols[rowOffset + r][0] = rowOffset + r; //insert row number
-							cols[rowOffset + r][c+1] = decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
+							cols[rowOffset + r][c+1] = src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n"); //swap commas and newlines back in
+							//seems like no need to decode URI component on import side
+							//decodeURIComponent(src[r][srcc++].replace(/CCCOMMACCC/g, ",").replace(/NNNEWLINNE/g, "\n")); //swap commas and newlines back in
 						}
 					}
 				}
@@ -14104,7 +14112,7 @@
 				else
 					str += linkSplitArr[i];				
 			}
-			str.href = str;
+			el.href = str;
 			
 			//update existing
 			el = document.getElementById(tableName + "-versions");
@@ -14342,7 +14350,7 @@
 							Debug.log("There were problems identified in the tree view of the " +
 									"attempted new group '" +
 									attemptedNewGroupName +
-									"'.\nThe new group was not created.\n\n" +									
+									".'\nThe new group was not created.\n\n" +									
 									"You can save the group anyway (if you think it is a good idea) by clicking " +
 									"the button in the pop-up dialog " +
 									"'<u>Save Group with Warnings Ignored</u>.' " +
