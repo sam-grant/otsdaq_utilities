@@ -324,6 +324,8 @@ Desktop.createDesktop = function(security) {
 	    		Debug.log("_openWindowMailbox.innerHTML=" + _openWindowMailbox.innerHTML);
 		    	Debug.log("requestingWindowId=" + requestingWindowId);
 		    	Debug.log("windowPath=" + windowPath);
+		    	while(windowPath.length && windowPath[0] == '?') windowPath = windowPath.substr(1); //remove leading ?'s
+		    	Debug.log("modified windowPath=" + windowPath);
 		    	Debug.log("windowName=" + windowName);
 		    	Debug.log("windowSubname=" + windowSubname);
 		    	Debug.log("windowUnique=" + windowUnique);
@@ -362,10 +364,9 @@ Desktop.createDesktop = function(security) {
 					if(windowPath != "undefined") //add parameters if defined
 					{
 						Debug.log("Adding parameter path " + windowPath);
-						if(pathStr.indexOf('&') > 0) //then assume already parameters
+						if(pathStr.indexOf('?') >= 0) //then assume already parameters
 							pathStr += "&";
-						else if(pathStr.length && 
-								pathStr[pathStr.lengh-1] != '?') //then assume need ?
+						else if(pathStr.length) //then assume need ?
 							pathStr += '?';
 						windowPath = pathStr + windowPath;
 					}
