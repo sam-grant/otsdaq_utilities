@@ -9454,7 +9454,11 @@
 						Debug.log("Invalid tree member table targeted, could not find able '" +
 								treeEditingTargetTable_ + "' in the list of tree tables. " +
 								"Perhaps the tree needs to be refreshed? " + 
-								"Or the table needs to be added to one of the active groups?",Debug.HIGH_PRIORITY);
+								"Or the table needs to be added to one of the active groups?" +
+								"\n\n" + 
+								"To add a table to a group, click the group name to go to the " + 
+								"group view, then click 'Add/Remove/Modify Member Tables.' You " +
+								"can then add or remove tables and save the new group.",Debug.HIGH_PRIORITY);
 						return;					
 					}
 

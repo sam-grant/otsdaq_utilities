@@ -158,7 +158,7 @@ if (typeof Globals == 'undefined')
 //	DesktopContent.checkCookieCodeRace()
 //	DesktopContent.clearPopUpVerification(func)
 //	DesktopContent.parseColor(colorStr)
-//	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,alwaysShow)
+//	DesktopContent.tooltipSetAlwaysShow(srcFunc,srcFile,srcId,neverShow,temporarySilence)
 //	DesktopContent.tooltipConditionString(str);
 
 DesktopContent._isFocused = false;
@@ -1087,7 +1087,7 @@ DesktopContent.tooltip = function(id,tip) {
 			//add checkbox
 			if(id != "ALWAYS")
 			{
-				str += "<input checked type='checkbox' " +
+				str += "<input type='checkbox' " +
 						"id='DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
 						id + "' " +
 						"onclick='" + 					
@@ -1106,7 +1106,7 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", el.checked);" +
 						"'>";
-				str += "Always show the Tooltip below, or...";
+				str += "Never show the Tooltip below, or...";
 				str += "</a>";
 				str +="</input>";
 				
@@ -1119,7 +1119,7 @@ DesktopContent.tooltip = function(id,tip) {
 						"DesktopContent.tooltipSetAlwaysShow(\"" + 
 						srcFunc + "\",\"" +
 						srcFile + "\",\"" +
-						id + "\", this.checked,1);" + "'>";
+						id + "\", 0 /*neverShow*/, this.checked);" + "'>";
 				str += " ";
 				str += "<a onclick='" +
 						"var el = document.getElementById(\"" +
@@ -1129,9 +1129,9 @@ DesktopContent.tooltip = function(id,tip) {
 						"DesktopContent.tooltipSetAlwaysShow(\"" + 
 						srcFunc + "\",\"" +
 						srcFile + "\",\"" +
-						id + "\", el.checked,1);" +
+						id + "\", 0 /*neverShow*/, el.checked);" +
 						"'>";
-				str += "Silence this Tooltip for an hour:";
+				str += "Silence this Tooltip for a week (can be reset in Settings):";
 				str += "</a>";
 				str +="</input>";
 			}
@@ -1152,7 +1152,7 @@ DesktopContent.tooltip = function(id,tip) {
 			//add checkbox
 			if(id != "ALWAYS")
 			{
-				str += "<input checked type='checkbox' " +
+				str += "<input type='checkbox' " +
 						"id='DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
 						id + "' " +
 						"onclick='" + 					
@@ -1171,7 +1171,7 @@ DesktopContent.tooltip = function(id,tip) {
 						srcFile + "\",\"" +
 						id + "\", el.checked);" +
 						"'>";
-				str += "Always show the Tooltip above.";
+				str += "Never show the Tooltip above.";
 				str += "</a>";
 				str +="</input>";
 			}
@@ -1213,16 +1213,17 @@ DesktopContent.toggleSecurityCodeGenerationHandler = function(req) {
 //=====================================================================================
 //tooltipSetNeverShow ~~
 //	set value of never show for target tip to 1/0 based on alwaysShow
-DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,temporarySilence) {
-	Debug.log("alwaysShow = " + alwaysShow);
+DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,neverShow,temporarySilence) {
+	Debug.log("neverShow = " + neverShow + " tempSilence = " + temporarySilence);
+
 	if(temporarySilence)
-		alwaysShow = 1; //force temporary to have priority
+		neverShow = false; //force temporary to have priority
 	DesktopContent.XMLHttpRequest(
 			"TooltipRequest?RequestType=setNeverShow" + 
 			"&srcFunc=" + srcFunc +
 			"&srcFile=" + srcFile +
 			"&srcId=" + id + 
-			"&doNeverShow=" + (alwaysShow?0:1) + 
+			"&doNeverShow=" + (neverShow?1:0) + 
 			"&temporarySilence=" + (temporarySilence?1:0) 
 			,""
 			,0,0,0,0,true,true); //show loading, and target supervisor
@@ -1231,10 +1232,10 @@ DesktopContent.tooltipSetAlwaysShow = function(srcFunc,srcFile,id,alwaysShow,tem
 	
 	//make sure all checkboxes mirror choice
 	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-below-" +
-			id).checked = alwaysShow;
+			id).checked = neverShow;
 	document.getElementById("DesktopContent-tooltip-SetNeverShowCheckbox-above-" +
-			id).checked = alwaysShow;
-}
+			id).checked = neverShow;
+} //end DesktopContent.tooltipSetAlwaysShow
 		
 //=====================================================================================
 //popUpVerification ~~

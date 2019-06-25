@@ -1,15 +1,16 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
+
+#include "otsdaq-core/TablePlugins/IterateTable.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
-#include "otsdaq-core/TablePluginDataFormats/IterateTable.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #if MESSAGEFACILITY_HEX_VERSION > 0x20100
 #include <boost/stacktrace.hpp>
 #endif
 
-#include "otsdaq-core/TablePluginDataFormats/XDAQContextTable.h"  //for context relaunch
+#include "otsdaq-core/TablePlugins/XDAQContextTable.h"  //for context relaunch
 
 #include <xdaq/NamespaceURI.h>
 
@@ -2548,7 +2549,7 @@ void ConfigurationGUISupervisor::handleFillUniqueFieldValuesForRecordsXML(
 				std::vector<ConfigurationTree::RecordField> retFieldList;
 				std::vector<std::string /*relative-path*/>  fieldAcceptList,
 				    fieldRejectList;
-				fieldRejectList.push_back("*CommentDescription");
+				fieldRejectList.push_back("*" + TableViewColumnInfo::COL_NAME_COMMENT);
 				retFieldList = startNode.getCommonFields(
 				    records, fieldAcceptList, fieldRejectList, 5, true /*auto*/);
 
@@ -5996,7 +5997,7 @@ void ConfigurationGUISupervisor::handleSetGroupAliasInBackboneXML(
 			row         = configView->addRow();
 
 			// set all columns in new row
-			col = configView->findCol("CommentDescription");
+			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
 			configView->setValue(
 			    "This Group Alias was automatically setup by the server.", row, col);
 			col = configView->findCol("GroupKeyAlias");
@@ -6174,7 +6175,7 @@ void ConfigurationGUISupervisor::handleSetVersionAliasInBackboneXML(
 			row         = configView->addRow();
 
 			// set all columns in new row
-			col = configView->findCol("CommentDescription");
+			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
 			configView->setValue(
 			    std::string("Entry was added by server in ") +
 			        "ConfigurationGUISupervisor::setVersionAliasInActiveBackbone().",
@@ -6375,7 +6376,7 @@ void ConfigurationGUISupervisor::handleAliasGroupMembersInBackboneXML(
 			row                   = configView->addRow();
 
 			// set all columns in new row
-			col = configView->findCol("CommentDescription");
+			col = configView->findCol(TableViewColumnInfo::COL_NAME_COMMENT);
 			configView->setValue(
 			    std::string("Entry was added by server in ") +
 			        "ConfigurationGUISupervisor::setVersionAliasInActiveBackbone().",
@@ -6501,7 +6502,7 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		xmlOut.addTextElementToData("GroupKey", groupKey);
 		xmlOut.addTextElementToData(
 		    "AliasComment",
-		    aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT).getValueAsString());
 
 		// get group comment
 		groupComment = "";  // clear just in case failure
@@ -6577,7 +6578,7 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 		    "Version", aliasNodePair.second.getNode("Version").getValueAsString());
 		xmlOut.addTextElementToData(
 		    "Comment",
-		    aliasNodePair.second.getNode("CommentDescription").getValueAsString());
+		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT).getValueAsString());
 	}
 }
 

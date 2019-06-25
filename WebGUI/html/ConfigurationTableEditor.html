@@ -151,7 +151,8 @@
 			//configReplace()
 		
 			//keyHandler(e)
-			//descriptionKeyHandler(e)
+			//descriptionKeyHandler(e,tel)
+			//fixedChoiceKeyHandler(e,c) 
 		
 			//handlefixedChoiceArbitraryCheckbox(c,inverted)
 			//addFixedChoice(c)
@@ -905,6 +906,7 @@
 					str += "<table cellpadding='2px' cellspacing='2px' border='0' >"; //open table
 					str += "<tr><td>";
 					str += "<input type='text' id='newChoiceInput-" + c + "' value='My New Choice' " +
+							"onkeydown='fixedChoiceKeyHandler(event," + c + ")' " +
 							"onmouseup='event.stopPropagation();' " +
 							"onclick='event.stopPropagation();" +
 							"if(this.value == \"My New Choice\") setCaretPosition(this,0,this.value.length);' " +
@@ -1287,6 +1289,26 @@
             elem.focus();
             elem.setSelectionRange(caretPos, endPos);
 		}
+		
+		//fixedChoiceKeyHandler
+		//	enter and tab key adds to list without popup success message
+		function fixedChoiceKeyHandler(e,c) 
+		{
+			var TABKEY = 9;
+			var ENTERKEY = 13;
+			
+			//handle special keys for text area
+			if(e.keyCode == TABKEY || 
+					e.keyCode == ENTERKEY)
+			{
+				Debug.log("tab/enter for column " + c);
+				if(e.preventDefault) 
+					e.preventDefault();
+
+				addFixedChoice(c,true /*quiet*/);
+			}
+			return false; //done
+		} //end fixedChoiceKeyHandler()
 
 		//descriptionKeyHandler
 		//	add tab character to textareal element value
@@ -1307,7 +1329,7 @@
 				tel.selectionStart = tel.selectionEnd = j+1;
 			}
 			return false; //done if text area was identified
-		}
+		} //end descriptionKeyHandler()
 		
 		//keyHandler
 		function keyHandler(e) 
@@ -1419,7 +1441,7 @@
 				editCellCancel();
 				return false;
 			}
-		}
+		} //end keyHandler
 		
 		//editCellOK
 		function editCellOK() 
@@ -1738,7 +1760,7 @@
 		
 		//addFixedChoice ~~
 		//	for column c
-		function addFixedChoice(c)
+		function addFixedChoice(c,quiet)
 		{
 			//if not already in choices, add it		
 			
@@ -1789,12 +1811,20 @@
 			else						//first value
 				_colChoicesArr[c] = "arbitraryBool=0," + encodedVal;
 			
-			setupTable();
-			Debug.log("Value '" + val + 
+			setupTable();			
+			
+			if(!quiet)
+				Debug.log("Value '" + val + 
 					"' was successfully added as a fixed choice option for column '" + 
 					_colHdrArr[c] + "'",
-					Debug.INFO_PRIORITY);			
-		}
+					Debug.INFO_PRIORITY);
+			
+			//select text again
+			
+			var el = document.getElementById("newChoiceInput-" + c);
+			setCaretPosition(el,0,el.value.length);
+			
+		} // end addFixedChoice()
 		
 		//handlefixedChoiceArbitraryCheckbox ~~
 		//	set the value in fixed choice array

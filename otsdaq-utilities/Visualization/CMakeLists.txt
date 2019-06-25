@@ -18,9 +18,9 @@ cet_make(LIBRARY_NAME Visualization
 		 ConfigurationInterface
 		 Macros
 		 TableCore
-		 #otsdaq-core_TablePluginDataFormats_DataManagerConfiguration_table
-		 #otsdaq-core_TablePluginDataFormats_DataBufferConfiguration_table
-		 otsdaq-core_TablePluginDataFormats_XDAQContextTable_table
+		 #otsdaq-core_TablePlugins_DataManagerConfiguration_table
+		 #otsdaq-core_TablePlugins_DataBufferConfiguration_table
+		 otsdaq-core_TablePlugins_XDAQContextTable_table
 		 otsdaq-core_DataProcessorPlugins_RawDataVisualizerConsumer_processor
 		 XmlUtilities
 		 SOAPUtilities

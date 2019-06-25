@@ -53,7 +53,7 @@ cet_make( LIBRARY_NAME ECLWriter EXCLUDE ECLConnection.cpp  ECL.cxx
 		 FiniteStateMachine
 		 ConfigurationInterface
 		 TableCore
-		 otsdaq-core_TablePluginDataFormats_XDAQContextTable_table
+		 otsdaq-core_TablePlugins_XDAQContextTable_table
 		 MF_MessageLogger
     crypto
     ${CURL_LIBRARIES}
