@@ -2692,7 +2692,10 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 											//if no apps in context, create XDAQ App
 											//	with made up name
 
-											var appName = ConfigurationAPI.createNewRecordName(getApp(),allApps);
+											var appName = ConfigurationAPI.createNewRecordName(
+													getApp() +
+													_paramObjMap[_STEP_GET_RECORD_NAME].recordName,
+													allApps);
 											
 											//store app name for later
 											_paramObjMap[_STEP_WHICH_APP]["appName"] = appName;
