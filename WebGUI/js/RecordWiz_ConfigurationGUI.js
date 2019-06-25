@@ -380,7 +380,7 @@ RecordWiz.createWiz = function(doneHandler, recordsAliasFastForward) {
 
 		//set position and size
 		var w = 480;
-		var h = 340;//250;
+		var h = 350;//250;
 
 		var str = "";
 		var stepString = "stepIndex-" + stepIndex + "-";
