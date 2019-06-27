@@ -141,15 +141,16 @@ void ControlsDashboardSupervisor::request(const std::string&               reque
 	//				&userPermissions,  		//acquire user's access level (optionally null
 	// pointer) 				!automaticCommand,			//true/false refresh cookie
 	// code 				1, //set access level requirement to pass gateway
-	//				checkLock,					//true/false enable check that system is unlocked
-	//or  this user has the lock 				requireLock,				//true/false
-	//requires this user has the lock to  proceed 				0,//&userWithLock,
+	//				checkLock,					//true/false enable check that system is
+	//unlocked  or  this user has the lock 				requireLock,
+	// //true/false  requires this user has the lock to  proceed
+	// 0,//&userWithLock,
 	////acquire username with lock (optionally null  pointer)
-	//				//(getUser?&user:0),				//acquire username of this user (optionally
-	//null  pointer) 				&username,
+	//				//(getUser?&user:0),				//acquire username of this user
+	//(optionally  null  pointer) 				&username,
 	//				0,						//acquire user's Display Name
 	//				&activeSessionIndex		//acquire user's session index associated with
-	//the  cookieCode
+	// the  cookieCode
 	//		))
 	//		{	//failure
 	//			__SUP_COUT__ << "Failed Login Gateway: " <<

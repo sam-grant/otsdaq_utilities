@@ -1,9 +1,9 @@
 #include "otsdaq-utilities/ConfigurationGUI/ConfigurationGUISupervisor.h"
 
-#include "otsdaq-core/TablePlugins/IterateTable.h"
 #include "otsdaq-core/CgiDataUtilities/CgiDataUtilities.h"
 #include "otsdaq-core/Macros/CoutMacros.h"
 #include "otsdaq-core/MessageFacility/MessageFacility.h"
+#include "otsdaq-core/TablePlugins/IterateTable.h"
 #include "otsdaq-core/XmlUtilities/HttpXmlDocument.h"
 
 #if MESSAGEFACILITY_HEX_VERSION > 0x20100
@@ -820,7 +820,8 @@ void ConfigurationGUISupervisor::request(const std::string&               reques
 		__SUP_COUT__ << "tableGroupKey: " << tableGroupKey << __E__;
 		__SUP_COUT__ << "startPath: " << startPath << __E__;
 		__SUP_COUT__ << "depth: " << depth << __E__;
-		if(depth == -1) depth = 10; //protect users who probably do not actually mean -1
+		if(depth == -1)
+			depth = 10;  // protect users who probably do not actually mean -1
 		__SUP_COUT__ << "fieldList: " << fieldList << __E__;
 		__SUP_COUT__ << "recordList: " << recordList << __E__;
 		__SUP_COUT__ << "modifiedTables: " << modifiedTables << __E__;
@@ -6502,7 +6503,8 @@ void ConfigurationGUISupervisor::handleGroupAliasesXML(HttpXmlDocument&        x
 		xmlOut.addTextElementToData("GroupKey", groupKey);
 		xmlOut.addTextElementToData(
 		    "AliasComment",
-		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT).getValueAsString());
+		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
+		        .getValueAsString());
 
 		// get group comment
 		groupComment = "";  // clear just in case failure
@@ -6578,7 +6580,8 @@ void ConfigurationGUISupervisor::handleVersionAliasesXML(HttpXmlDocument&       
 		    "Version", aliasNodePair.second.getNode("Version").getValueAsString());
 		xmlOut.addTextElementToData(
 		    "Comment",
-		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT).getValueAsString());
+		    aliasNodePair.second.getNode(TableViewColumnInfo::COL_NAME_COMMENT)
+		        .getValueAsString());
 	}
 }
 
