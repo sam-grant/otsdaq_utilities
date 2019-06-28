@@ -1,0 +1,220 @@
+<!DOCTYPE HTML>
+<html lang="en"> 
+	<head>
+		<title>Text</title>
+		<style type="text/css">			
+			body {
+				background-color: rgb(41,46,55);
+			}
+			a{
+				color: green;
+				height: auto;
+		    	text-align: center;
+			}
+			div{
+			padding: 2.5px;
+			}
+			table{
+				height:100%;
+			}
+			tr {
+				margin: auto;
+				padding: auto;
+			}
+			
+			.title-card {
+				overflow: hidden;
+				text-align:right;
+			}
+									
+		</style>
+		
+
+		
+		<script>		
+			
+			
+		
+			//functions:			
+				//init()					
+				
+								
+			/////////////////////////////////////////////////////////////////////////////////////////
+			/////////////////////////////////////////////////////////////////////////////////////////
+			
+			//init called once body has loaded
+			function init()
+			{
+				console.log("init()");
+				console.log(window.frameElement.id)
+				window.parent.setupWidget(window.frameElement.id, getParameters());
+			}
+			
+			function setupPVs(settings)
+			{
+				console.log("setupPVs() : " , settings);
+			}
+			
+			function newWidget(widget, parameters) 
+			{			
+				var table = document.createElement('table');
+				table.id = "display-table";
+				table.style.height = "100%";
+				table.style.width = "100%";
+
+				var counter = 0;
+				for(var pv in widget.PVList)
+				{
+					counter++;
+				}
+				
+				var rows = Math.round(Math.sqrt(counter));
+				var columns = Math.ceil(counter / rows);
+				
+				for(var col = 1; col <= columns; col++)
+				{
+					var tr = document.createElement('tr');
+					tr.id = "tr" + col;
+					//tr.style.width = tr.parentElement.innerWidth / columns;
+					for(var cell = 1; cell <= rows; cell++)
+					{
+						var td = document.createElement('td');
+						td.id = "td" + col + "-" + cell;
+						//td.style.height = td.parentElement.innerHeight / rows;
+						//console.log(td.id);
+						tr.appendChild(td);
+					}
+					table.appendChild(tr);
+				}
+				document.getElementById("display").innerHTML = "";
+				document.getElementById("display").appendChild(table);
+
+
+				//console.log("newWidget() called *************************************");
+				if(counter > 1){counter = 2;}
+				console.log("counter" + counter);
+				for(var pv in widget.PVList)
+				{
+					
+					var a = document.createElement('a');
+					a.id = pv;
+					a.innerHTML = "N/A";
+					a.style.width = "100%";
+					a.style.height = "60%";
+					
+					var a_title = document.createElement('a');
+					a_title.id = pv + "-title";
+					a_title.classList.add("title-card");
+					a_title.innerHTML = pv + "\n";
+					a_title.style.width = "50px";
+					a_title.style.height = "40%";
+					
+//					document.getElementById("display").appendChild(a);	
+//					a = document.getElementById(pv);
+//					console.log("td" + Math.floor(counter/columns) + "-" + (counter%rows +1));
+					var center = document.createElement("center");
+					center.appendChild(a_title);
+					center.appendChild(a);
+					console.log(document.body);
+					var first = Math.floor(counter/columns);
+					if(first < 1) {first = 1;}				
+					console.log("td" + first + "-" + (counter%rows +1));
+					document.getElementById("td" + first + "-" + (counter%rows +1)).appendChild(center);
+					counter++;
+//					console.log(counter);
+//					console.log(columns);
+//					console.log(rows);
+
+				}
+			}
+			
+			function getParameters()
+			{
+				paramters = {
+							"param1": "",
+							"param2": "",
+							"param3": "",
+							"param4": "",
+							"param5": "",
+							"param6": "",
+							"param7": ""};
+				return paramters;
+			}
+
+			function newValue(pvName, pvValue, pvTime, pvStatus, pvSeverity)
+			{
+
+				/*if(document.getElementById(pvName) == null)
+				{
+					var div = document.createElement('div');
+					var a = document.createElement('a');
+					a.id = pvName;
+					div.appendChild(a);
+					document.getElementById("display").appendChild(div);
+				}*/
+				console.log("newValue() reached", pvName, pvValue);
+				
+				document.getElementById(pvName).innerHTML = (pvValue);// + " @ " + pvTime);
+				document.getElementById(pvName).title = pvName + ":" + pvTime;
+				document.getElementById(pvName).parentElement.style.border = pvName + ":" + pvTime;
+				document.getElementById(pvName).parentElement.style["background-color"] = "transparent";
+				if(pvSeverity == "NO_ALARM")
+				{
+					document.getElementById(pvName).parentElement.style.color = "green"
+				}
+				else if(pvSeverity == "MINOR")
+				{
+					document.getElementById(pvName).parentElement.style.color = "yellow"
+				}else if(pvSeverity == "MAJOR")
+				{
+					document.getElementById(pvName).parentElement.style.color = "red"
+				}else if(pvSeverity == "INVALID")
+				{
+					document.getElementById(pvName).parentElement.style.color = "DimGray";
+				}
+				else if(pvSeverity == "DC")
+				{
+					document.getElementById(pvName).parentElement.style.color = "Light Grey";
+				}
+				
+				if(pvStatus == "NO_ALARM")
+				{
+					document.getElementById(pvName).parentElement.style.border = "thin dotted green";
+				}
+				else if(pvStatus == "HIHI")
+				{
+					document.getElementById(pvName).parentElement.style.border = "thick solid red"
+				}else if(pvStatus == "LOLO")
+				{
+					document.getElementById(pvName).parentElement.style.border = "thick solid MediumSlateBlue";
+				}else if(pvStatus == "HIGH")
+				{
+					document.getElementById(pvName).parentElement.style.border = "thin dotted red";
+				}else if(pvStatus == "LOW")
+				{
+					document.getElementById(pvName).parentElement.style.border = "thing dotted blue";
+				}else if(pvStatus == "DC")
+				{
+					document.getElementById(pvName).parentElement.style["background-color"] = "Gainsboro";
+				}else if(pvStatus == "UDF")
+				{
+					document.getElementById(pvName).parentElement.style["background-color"] = "yellow";
+				}
+				
+			}
+
+		</script>
+		
+	</head>
+	
+	
+	<body onload='Javascript:init();'>	
+			
+	<div id="display" width="100%" height="100%">
+
+	</div>
+				
+		
+	</body>
+	
+</html>
